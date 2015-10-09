@@ -15,11 +15,10 @@ var express = require('express'),
 process.on('uncaughtException', function (err) {
   log.error('Caught exception: ' + err);
 });
+
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
 var app = express();
-
-//app.use(express.bodyParser());
 
 app.use (function(req, res, next) {
     var data='';
@@ -64,6 +63,7 @@ app.use(function (req, res, next) {
 
 var port = config.pep_port || 80;
 if (config.https.enabled) port = config.https.port || 443;
+
 app.set('port', port);
 
 for (var p in config.public_paths) {

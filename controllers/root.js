@@ -1,6 +1,7 @@
 var config = require('./../config.js'),
     proxy = require('./../lib/HTTPClient.js'),
     IDM = require('./../lib/idm.js').IDM,
+    TMF = require('./../lib/tmf.js').TMF,
     AZF = require('./../lib/azf.js').AZF;
 
 var log = require('./../lib/logger').logger.getLogger("Root");
@@ -44,7 +45,13 @@ var Root = (function() {
 
                     AZF.check_permissions(auth_token, user_info, resource, action, function () {
 
-                        redir_request(req, res, user_info);
+                        // Check TMF Permissions
+                        TMF.check_permissions(req, user_info, function() {
+                            redir_request(req, res, user_info);
+                        }, function() {
+                            log.error('User not authorized to modify backend resource');
+                            res.send(403, 'You are not authorized to access the specified resource');
+                        });
 
                     }, function (status, e) {
                         if (status === 401) {
@@ -57,7 +64,13 @@ var Root = (function() {
 
                     });
                 } else {
-                    redir_request(req, res, user_info);
+                    // Check TMF Permissions
+                    TMF.check_permissions(req, user_info, function() {
+                        redir_request(req, res, user_info);
+                    }, function() {
+                        log.error('User not authorized to modify backend resource');
+                        res.send(403, 'You are not authorized to access the specified resource');
+                    });
                 }
 
 
