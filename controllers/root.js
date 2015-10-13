@@ -8,20 +8,36 @@ var log = require('./../lib/logger').logger.getLogger("Root");
 
 var Root = (function() {
 
+    var sendUnauthorized = function(res, msg) {
+        log.error(msg);
+        var auth_header = 'IDM uri = ' + config.account_host;
+        res.set('WWW-Authenticate', auth_header);
+        res.send(401, msg);
+    };
+
     var pep = function(req, res) {
     	
     	var auth_token = req.headers['x-auth-token'];
 
         if (auth_token === undefined && req.headers['authorization'] !== undefined) {
-            var header_auth = req.headers['authorization'].split(' ')[1];
-            auth_token = new Buffer(header_auth, 'base64').toString();
+            var sp_token = req.headers['authorization'].split(' ');
+            var token_type = sp_token[0].toLowerCase();
+
+            // Check if the token type is valid
+            if (token_type !== 'basic' && token_type !== 'bearer') {
+                sendUnauthorized(res, 'The provided auth-token does not have a valid type');
+            }
+
+            auth_token = sp_token[1];
+
+            // If the access token is of type basic it is needed to decode it
+            if (token_type === 'basic') {
+                auth_token = new Buffer(header_auth, 'base64').toString();
+            }
         }
 
     	if (auth_token === undefined) {
-            log.error('Auth-token not found in request header');
-            var auth_header = 'IDM uri = ' + config.account_host;
-            res.set('WWW-Authenticate', auth_header);
-    		res.send(401, 'Auth-token not found in request header');
+            sendUnauthorized(res, 'Auth-token not found in request header');
     	} else {
 
             if (config.magic_key && config.magic_key === auth_token) {
@@ -55,8 +71,7 @@ var Root = (function() {
 
                     }, function (status, e) {
                         if (status === 401) {
-                            log.error('User access-token not authorized: ', e);
-                            res.send(401, 'User token not authorized');
+                            sendUnauthorized(res, 'User access-token not authorized');
                         } else {
                             log.error('Error in AZF communication ', e);
                             res.send(503, 'Error in AZF communication');
@@ -76,8 +91,7 @@ var Root = (function() {
 
     		}, function (status, e) {
     			if (status === 404) {
-                    log.error('User access-token not authorized');
-                    res.send(401, 'User token not authorized');
+                    sendUnauthorized(res, 'User access-token not authorized');
                 } else {
                     log.error('Error in IDM communication ', e);
                     res.send(503, 'Error in IDM communication');
