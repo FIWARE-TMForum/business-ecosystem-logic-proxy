@@ -11,12 +11,21 @@ config.https = {
 };
 
 config.account_host = 'https://account.lab.fiware.org';
+config.account_provider_role = '106'
 
 config.keystone_host = 'cloud.lab.fiware.org';
 config.keystone_port = 4731;
 
 config.app_host = 'www.google.es';
 config.app_port = '80';
+
+// Configure TMForum paths
+config.tmf = {};
+
+config.tmf.catalog_path = '';
+config.tmf.ordering_path = '';
+config.tmf.inventory_path = '';
+
 // Use true if the app server listens in https
 config.app_ssl = false;
 

@@ -36,11 +36,6 @@ app.use (function(req, res, next) {
 app.configure(function () {
     "use strict";
     app.use(express.errorHandler({ dumpExceptions: true, showStack: true }));
-    //app.use(express.logger());
-    //app.use(express.static(__dirname + dirName));
-    //app.set('views', __dirname + '/../views/');
-    //disable layout
-    //app.set("view options", {layout: false});
 });
 
 app.use(function (req, res, next) {
