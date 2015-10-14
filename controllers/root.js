@@ -64,9 +64,9 @@ var Root = (function() {
                         // Check TMF Permissions
                         TMF.check_permissions(req, user_info, function() {
                             redir_request(req, res, user_info);
-                        }, function() {
-                            log.error('User not authorized to modify backend resource');
-                            res.send(403, 'You are not authorized to access the specified resource');
+                        }, function(status, errMsg) {
+                            log.error(errMsg);
+                            res.send(status, errMsg);
                         });
 
                     }, function (status, e) {
@@ -82,9 +82,9 @@ var Root = (function() {
                     // Check TMF Permissions
                     TMF.check_permissions(req, user_info, function() {
                         redir_request(req, res, user_info);
-                    }, function() {
-                        log.error('User not authorized to modify backend resource');
-                        res.send(403, 'You are not authorized to access the specified resource');
+                    }, function(status, errMsg) {
+                        log.error(errMsg);
+                        res.send(status, errMsg);
                     });
                 }
 
