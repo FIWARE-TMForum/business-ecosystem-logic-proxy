@@ -11,7 +11,11 @@ config.https = {
 };
 
 config.account_host = 'https://account.lab.fiware.org';
-config.account_provider_role = '106'
+config.roles = {
+    'account_provider': '106',
+    'customer': '',
+    'seller': ''
+};
 
 config.keystone_host = 'cloud.lab.fiware.org';
 config.keystone_port = 4731;
