@@ -2,6 +2,7 @@ var config = require('./../config.js'),
     httpClient = require('./../lib/HTTPClient.js'),
     idm = require('./../lib/idm.js').idm,
     tmf = require('./../lib/tmf.js').tmf,
+    utils = require('./../lib/utils/headers.js'),
     AZF = require('./../lib/azf.js').AZF;
     log = require('./../lib/logger').logger.getLogger("Root");
 
@@ -21,26 +22,20 @@ var root = (function() {
         var headers = JSON.parse(JSON.stringify(req.headers));
         var FORWARDED_HEADER_NAME = 'x-forwarded-for';
         var userIp = req.connection.remoteAddress;
-        var forwardedHeader = headers[FORWARDED_HEADER_NAME];
 
         headers[FORWARDED_HEADER_NAME] = headers[FORWARDED_HEADER_NAME] ? 
                 headers[FORWARDED_HEADER_NAME] + ',' + userIp : 
                 userIp;
 
         return headers;
-    }
+    };
 
     var redirRequest = function (req, res, userInfo) {
 
         if (userInfo) {
 
             log.info('Access-token OK. Redirecting to app...');
-
-            req.headers['X-Nick-Name'] = userInfo.id;
-            req.headers['X-Display-Name'] = userInfo.displayName;
-            req.headers['X-Roles'] = userInfo.roles;
-            req.headers['X-Organizations'] = userInfo.organizations;
-
+            utils.attachUserHeaders(req.headers, userInfo);
         } else {
             log.info('Public path. Redirecting to app...');
         }
@@ -66,7 +61,7 @@ var root = (function() {
             log.error(errMsg);
             res.send(status, { error: errMsg });
         });
-    }
+    };
 
     var pep = function(req, res) {
     	
@@ -154,7 +149,7 @@ var root = (function() {
                     }
                 });
             }
-        };
+        }
     };
 
     var public = function(req, res) {
