@@ -1,36 +1,34 @@
-var config = require('./../config.js'),
-    proxy = require('./HTTPClient.js'),
+var config = require('./../../config.js'),
+    proxy = require('./../../lib/HTTPClient.js'),
     url = require('url');
 
 // Validator to check user permissions for accessing TMForum resources
 var catalog = (function() {
 
     // Check whether the owner role is included in the info field
-    var isOwner = function (user_info, info) {
+    var isOwner = function (userInfo, info) {
         var status = false;
         if (info.relatedParty) {
             var parties = info.relatedParty;
-            var i = 0;
 
-            while(!status && i < parties.length) {
+            for(var i = 0; !status && i < parties.length; i++) {
                 var party = parties[i];
 
-                if (party.role == 'Owner' && party.id == user_info.id) {
+                if (party.role == 'Owner' && party.id == userInfo.id) {
                     status = true
                 }
-                i++;
             }
         }
 
         return status;
     };
 
-    var check_role = function (user_info, role) {
+    var checkRole = function (userInfo, role) {
         var valid = false;
 
         // Search for provider role
-        for (var i = 0; i < user_info.roles.length && !valid; i++) {
-            if (user_info.roles[i].id === role) {
+        for (var i = 0; i < userInfo.roles.length && !valid; i++) {
+            if (userInfo.roles[i].id === role) {
                 valid = true;
             }
         }
@@ -39,19 +37,19 @@ var catalog = (function() {
     };
 
     // Retrieves the product belonging to a given offering
-    var retrieve_product = function(user_info, offering_info, callback, callbackError) {
-        var product_url = offering_info.productSpecification.href;
-        var product_path = url.parse(product_url).pathname;
+    var retrieveProduct = function(userInfo, offeringInfo, callback, callbackError) {
+        var productUrl = offeringInfo.productSpecification.href;
+        var productPath = url.parse(productUrl).pathname;
 
         var options = {
-            host: config.app_host,
-            port: config.app_port,
-            path: product_path,
+            host: config.appHost,
+            port: config.appPort,
+            path: productPath,
             method: 'GET',
             headers: {'content-type': 'application/json'}
         };
 
-        var protocol = config.app_ssl ? 'https' : 'http';
+        var protocol = config.appSsl ? 'https' : 'http';
 
         proxy.sendData(protocol, options, '', null, callback, function() {
             callbackError(400, 'The product specification of the given product offering is not valid');
@@ -59,12 +57,12 @@ var catalog = (function() {
     };
 
     // The request is directly allowed without extra validation required
-    var validate_allowed = function(req, user_info, callback) {
+    var validateAllowed = function(req, userInfo, callback) {
         callback();
     };
 
-    var create_handler = function(user_info, resp, callback, callbackError) {
-        if (isOwner(user_info, resp)) {
+    var createHandler = function(userInfo, resp, callback, callbackError) {
+        if (isOwner(userInfo, resp)) {
             callback();
         } else {
             callbackError(403, 'The user making the request and the specified owner are not the same user');
@@ -72,7 +70,7 @@ var catalog = (function() {
     };
 
     // Validate the creation of a resource
-    var validate_creation = function(req, user_info, callback, callbackError) {
+    var validateCreation = function(req, userInfo, callback, callbackError) {
         var body;
 
         // The request body may not be well formed
@@ -84,23 +82,24 @@ var catalog = (function() {
         }
 
         // Check that the user has the seller role
-        if (!check_role(user_info, config.roles.seller)) {
+        if (!checkRole(userInfo, config.roles.seller)) {
             callbackError(403, 'You are not authorized to create resources');
             return;
         }
 
         if (req.url.indexOf('productOffering') > -1) {
-            retrieve_product(user_info, body, function (status, resp) {
-                create_handler(user_info, JSON.parse(resp), callback, callbackError);
+            // Check that the product exist
+            retrieveProduct(userInfo, body, function (status, resp) {
+                createHandler(userInfo, JSON.parse(resp), callback, callbackError);
             }, callbackError);
 
         } else {
-            create_handler(user_info, body, callback, callbackError);
+            createHandler(userInfo, body, callback, callbackError);
         }
     };
 
-    var update_handler = function(user_info, resp, callback, callbackError) {
-        if (check_user(user_info, resp)) {
+    var updateHandler = function(userInfo, resp, callback, callbackError) {
+        if (checkUser(userInfo, resp)) {
             callback();
         } else {
             callbackError(403, 'The user making the request is not the owner of the accessed resource');
@@ -108,58 +107,58 @@ var catalog = (function() {
     };
 
     // Validate the modification of a resource
-    var validate_update = function(req, user_info, callback, callbackError) {
+    var validateUpdate = function(req, userInfo, callback, callbackError) {
         var options = {
-            host: config.app_host,
-            port: config.app_port,
+            host: config.appHost,
+            port: config.appPort,
             path: req.url,
             method: 'GET',
             headers: proxy.getClientIp(req, req.headers)
         };
 
-        var protocol = config.app_ssl ? 'https' : 'http';
+        var protocol = config.appSsl ? 'https' : 'http';
 
         // Retrieve the resource to be updated or removed
         proxy.sendData(protocol, options, '', {}, function(status, resp) {
-            var parsed_resp = JSON.parse(resp);
+            var parsedResp = JSON.parse(resp);
 
             // Check if the request is an offering
             if (req.url.indexOf('productOffering') > -1) {
-                retrieve_product(user_info, parsed_resp, function (status, response) {
-                    update_handler(user_info, JSON.parse(response), callback, callbackError);
+                retrieveProduct(userInfo, parsedResp, function (status, response) {
+                    updateHandler(userInfo, JSON.parse(response), callback, callbackError);
                 }, callbackError);
 
             } else {
-                update_handler(user_info, parsed_resp, callback, callbackError);
+                updateHandler(userInfo, parsedResp, callback, callbackError);
             }
         });
     };
 
     var validators = {
-        'GET': validate_allowed,
-        'POST': validate_creation,
-        'PATCH': validate_update,
-        'PUT': validate_update,
-        'DELETE': validate_update
+        'GET': validateAllowed,
+        'POST': validateCreation,
+        'PATCH': validateUpdate,
+        'PUT': validateUpdate,
+        'DELETE': validateUpdate
     };
 
     // Check that the user is the owner of the resource
-    var check_user = function(user_info, resp) {
-        return isOwner(user_info, resp);
+    var checkUser = function(userInfo, resp) {
+        return isOwner(userInfo, resp);
     };
 
-    var check_permissions = function (req, user_info, callback, callbackError) {
+    var checkPermissions = function (req, userInfo, callback, callbackError) {
 
         // Check if the user is admin of the application
-        if (check_role(user_info, config.roles.account_provider)) {
+        if (checkRole(userInfo, config.roles.admin)) {
             callback();
         } else {
-            validators[req.method](req, user_info, callback, callbackError);
+            validators[req.method](req, userInfo, callback, callbackError);
         }
     };
 
     return {
-        check_permissions: check_permissions
+        checkPermissions: checkPermissions
     };
 
 })();

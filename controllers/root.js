@@ -1,140 +1,164 @@
 var config = require('./../config.js'),
-    proxy = require('./../lib/HTTPClient.js'),
-    IDM = require('./../lib/idm.js').IDM,
-    TMF = require('./../lib/tmf.js').TMF,
+    httpClient = require('./../lib/HTTPClient.js'),
+    idm = require('./../lib/idm.js').idm,
+    tmf = require('./../lib/tmf.js').tmf,
     AZF = require('./../lib/azf.js').AZF;
+    log = require('./../lib/logger').logger.getLogger("Root");
 
-var log = require('./../lib/logger').logger.getLogger("Root");
+var root = (function() {
 
-var Root = (function() {
-
+    // Auxilar Functions
     var sendUnauthorized = function(res, msg) {
-        log.error(msg);
-        var auth_header = 'IDM uri = ' + config.account_host;
-        res.set('WWW-Authenticate', auth_header);
-        res.send(401, msg);
+        log.warn(msg);
+        var authHeader = 'IDM uri = ' + config.accountHost;
+        res.set('WWW-Authenticate', authHeader);
+        res.send(401, { error: msg });
     };
 
-    var pep = function(req, res) {
-    	
-    	var auth_token = req.headers['x-auth-token'];
+    var proxiedRequestHeaders = function(req) {
 
-        if (auth_token === undefined && req.headers['authorization'] !== undefined) {
-            var sp_token = req.headers['authorization'].split(' ');
-            var token_type = sp_token[0].toLowerCase();
+        // Copy the headers (the original headers are not overwritten)
+        var headers = JSON.parse(JSON.stringify(req.headers));
+        var FORWARDED_HEADER_NAME = 'x-forwarded-for';
+        var userIp = req.connection.remoteAddress;
+        var forwardedHeader = headers[FORWARDED_HEADER_NAME];
 
-            // Check if the token type is valid
-            if (token_type !== 'basic' && token_type !== 'bearer') {
-                sendUnauthorized(res, 'The provided auth-token does not have a valid type');
-            }
+        headers[FORWARDED_HEADER_NAME] = headers[FORWARDED_HEADER_NAME] ? 
+                headers[FORWARDED_HEADER_NAME] + ',' + userIp : 
+                userIp;
 
-            auth_token = sp_token[1];
+        return headers;
+    }
 
-            // If the access token is of type basic it is needed to decode it
-            if (token_type === 'basic') {
-                auth_token = new Buffer(header_auth, 'base64').toString();
-            }
-        }
+    var redirRequest = function (req, res, userInfo) {
 
-    	if (auth_token === undefined) {
-            sendUnauthorized(res, 'Auth-token not found in request header');
-    	} else {
-
-            if (config.magic_key && config.magic_key === auth_token) {
-                var options = {
-                    host: config.app_host,
-                    port: config.app_port,
-                    path: req.url,
-                    method: req.method,
-                    headers: proxy.getClientIp(req, req.headers)
-                };
-                proxy.sendData('http', options, req.body, res);
-                return;
-
-            }
-
-    		IDM.check_token(auth_token, function (user_info) {
-
-                if (config.azf.enabled) {
-                    var action = req.method;
-                    var resource = req.url.substring(1, req.url.length);
-
-                    AZF.check_permissions(auth_token, user_info, resource, action, function () {
-
-                        // Check TMF Permissions
-                        TMF.check_permissions(req, user_info, function() {
-                            redir_request(req, res, user_info);
-                        }, function(status, errMsg) {
-                            log.error(errMsg);
-                            res.send(status, errMsg);
-                        });
-
-                    }, function (status, e) {
-                        if (status === 401) {
-                            sendUnauthorized(res, 'User access-token not authorized');
-                        } else {
-                            log.error('Error in AZF communication ', e);
-                            res.send(503, 'Error in AZF communication');
-                        }
-
-                    });
-                } else {
-                    // Check TMF Permissions
-                    TMF.check_permissions(req, user_info, function() {
-                        redir_request(req, res, user_info);
-                    }, function(status, errMsg) {
-                        log.error(errMsg);
-                        res.send(status, errMsg);
-                    });
-                }
-
-
-    		}, function (status, e) {
-    			if (status === 404) {
-                    sendUnauthorized(res, 'User access-token not authorized');
-                } else {
-                    log.error('Error in IDM communication ', e);
-                    res.send(503, 'Error in IDM communication');
-                }
-    		});
-    	};	
-    };
-
-    var public = function(req, res) {
-        redir_request(req, res);
-    };
-
-    var redir_request = function (req, res, user_info) {
-
-        if (user_info) {
+        if (userInfo) {
 
             log.info('Access-token OK. Redirecting to app...');
 
-            if (config.tokens_engine === 'keystone') {
-                req.headers['X-Nick-Name'] = user_info.token.user.id;
-                req.headers['X-Display-Name'] = user_info.token.user.id;
-                req.headers['X-Roles'] = user_info.token.roles;
-                req.headers['X-Organizations'] = user_info.token.project;
-            } else {
-                req.headers['X-Nick-Name'] = user_info.id;
-                req.headers['X-Display-Name'] = user_info.displayName;
-                req.headers['X-Roles'] = user_info.roles;
-                req.headers['X-Organizations'] = user_info.organizations;
-            }
+            req.headers['X-Nick-Name'] = userInfo.id;
+            req.headers['X-Display-Name'] = userInfo.displayName;
+            req.headers['X-Roles'] = userInfo.roles;
+            req.headers['X-Organizations'] = userInfo.organizations;
+
         } else {
             log.info('Public path. Redirecting to app...');
         }
 
-        var protocol = config.app_ssl ? 'https' : 'http';
+        var protocol = config.appSsl ? 'https' : 'http';
 
         var options = {
-            host: config.app_host,
-            port: config.app_port,
+            host: config.appHost,
+            port: config.appPort,
             path: req.url,
             method: req.method,
-            headers: proxy.getClientIp(req, req.headers)
+            headers: proxiedRequestHeaders(req)
         };
-        proxy.sendData(protocol, options, req.body, res);
+
+        httpClient.request(protocol, options, req.body, res);
+    };
+
+    // Refactor TMF function here
+    var checkTMFPermissions = function(req, res, userInfo) {
+        tmf.checkPermissions(req, userInfo, function() {
+            redirRequest(req, res, userInfo);
+        }, function(status, errMsg) {
+            log.error(errMsg);
+            res.send(status, { error: errMsg });
+        });
+    }
+
+    var pep = function(req, res) {
+    	
+    	var authToken = req.headers['x-auth-token'];
+        var authErrorMessage = '';  // Default error message
+
+        // Get access token
+        if (authToken === undefined) {
+
+            var authHeader = req.headers['authorization'];
+
+            if (authHeader !== undefined) {
+                var spToken = authHeader.split(' ');
+                var tokenType = spToken[0].toLowerCase();
+
+                // Token is only set when the header type is Bearer
+                // Basic Authorization tokes are NOT allowed
+                var VALID_TOKEN_TYPE = 'bearer';
+
+                if (tokenType === VALID_TOKEN_TYPE) {
+                    authToken = spToken[1];
+                } else {
+                    authErrorMessage = 'The type of the provided auth-token (' 
+                        + tokenType + ') does not have a valid type (' + VALID_TOKEN_TYPE + ')';
+                }
+
+            } else {
+                authErrorMessage = 'Auth-token not found in request headers';
+            }
+        }
+
+        // Request can only made when the authorization token is defined
+        if (authToken === undefined) {
+            sendUnauthorized(res, authErrorMessage);
+        } else {
+
+            // If the received auth token is the magic key we are not required to check
+            // the credentials. The request is just proxied to the final server
+            if (config.magicKey && config.magicKey === authToken) {
+                
+                var options = {
+                    host: config.appHost,
+                    port: config.appPort,
+                    path: req.url,
+                    method: req.method,
+                    headers: proxiedRequestHeaders(req)
+                };
+
+                httpClient.request('http', options, req.body, res);
+
+            } else {
+
+                idm.checkToken(authToken, function (userInfo) {
+
+                    // The function to be called if the token is valid
+
+                    if (config.azf.enabled) {
+                        var action = req.method;
+                        var resource = req.url.substring(1, req.url.length);
+
+                        AZF.check_permissions(authToken, userInfo, resource, action, function () {
+                            checkTMFPermissions(req, res, userInfo);
+                        }, function (status, e) {
+                            if (status === 401) {
+                                sendUnauthorized(res, 'User access-token not authorized');
+                            } else {
+                                log.error('Error in AZF communication ', e);
+                                res.send(503, 'Error in AZF communication');
+                            }
+                        });
+                    } else {
+                        checkTMFPermissions(req, res, userInfo);
+                    }
+
+            }, function (status, e) {
+
+                    // The function to be called if the token is not valid
+
+                    if (status === 404) {
+                        log.warn('Invalid access-token', authToken);
+                        sendUnauthorized(res, 'Invalid access-token');
+                    } else {
+                        log.error('Error in IDM communication ', e);
+                        res.send(503, 'Error in IDM communication');
+                    }
+                });
+            }
+        };
+    };
+
+    var public = function(req, res) {
+        redirRequest(req, res);
     };
 
     return {
@@ -143,4 +167,4 @@ var Root = (function() {
     }
 })();
 
-exports.Root = Root;
+exports.root = root;

@@ -1,44 +1,44 @@
 var config = {};
 
-config.pep_port = 80;
+config.pepPort = 80;
 
 // Set this var to undefined if you don't want the server to listen on HTTPS
 config.https = {
     enabled: false,
-    cert_file: 'cert/cert.crt',
-    key_file: 'cert/key.key',
+    certFile: 'cert/cert.crt',
+    keyFile: 'cert/key.key',
     port: 443
 };
 
-config.account_host = 'https://account.lab.fiware.org';
+config.accountHost = 'https://account.lab.fiware.org';
 config.roles = {
-    'account_provider': '106',
+    'admin': '106',
     'customer': '',
     'seller': ''
 };
 
-config.keystone_host = 'cloud.lab.fiware.org';
-config.keystone_port = 4731;
+config.keystoneHost = 'cloud.lab.fiware.org';
+config.keystonePort = 4731;
 
-config.app_host = 'www.google.es';
-config.app_port = '80';
+config.appHost = 'www.google.es';
+config.appPort = '80';
+
+// Use true if the app server listens in https
+config.appSsl = false;
 
 // Configure TMForum paths
 config.tmf = {};
 
-config.tmf.catalog_path = '';
-config.tmf.ordering_path = '';
-config.tmf.inventory_path = '';
-
-// Use true if the app server listens in https
-config.app_ssl = false;
+config.tmf.catalogPath = '';
+config.tmf.orderingPath = '';
+config.tmf.inventoryPath = '';
 
 // Credentials obtained when registering PEP Proxy in Account Portal
 config.username = '';
 config.password = '';
 
 // in seconds
-config.chache_time = 300;
+config.chacheTime = 300;
 
 // if enabled PEP checks permissions with AuthZForce GE. 
 // only compatible with oauth2 tokens engine
@@ -51,11 +51,8 @@ config.azf = {
 
 // list of paths that will not check authentication/authorization
 // example: ['/public/*', '/static/css/']
-config.public_paths = [];
+config.publicPaths = [];
 
-// options: oauth2/keystone
-config.tokens_engine = 'oauth2';
-
-config.magic_key = undefined;
+config.magicKey = undefined;
 
 module.exports = config;
