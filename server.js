@@ -72,7 +72,7 @@ for (var p in config.publicPaths) {
 app.all('/*', root.pep);
 
 // Start Server on the configured PORT
-log.info('Starting PEP proxy in port ' + port + '.');
+log.info('Starting PEP http in port ' + port + '.');
 
 if (config.https.enabled === true) {
     

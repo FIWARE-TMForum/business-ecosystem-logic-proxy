@@ -1,5 +1,6 @@
 var config = require('./../../config.js'),
-    proxy = require('./../../lib/HTTPClient.js'),
+    http = require('./../../lib/HTTPClient.js'),
+    storeClient = require('./../../lib/store.js').storeClient,
     url = require('url');
     log = require('./../../lib/logger').logger.getLogger("Root");
 
@@ -52,7 +53,7 @@ var catalog = (function() {
 
         var protocol = config.appSsl ? 'https' : 'http';
 
-        proxy.sendData(protocol, options, '', null, callback, function() {
+        http.request(protocol, options, '', null, callback, function() {
             callbackError(400, 'The product specification of the given product offering is not valid');
         });
     };
@@ -94,6 +95,10 @@ var catalog = (function() {
                 createHandler(userInfo, JSON.parse(resp), callback, callbackError);
             }, callbackError);
 
+        } else if (req.url.indexOf('productSpecification') > -1) {
+            storeClient.validateProduct(req.body, userInfo, function() {
+                createHandler(userInfo, body, callback, callbackError);
+            }, callbackError);
         } else {
             createHandler(userInfo, body, callback, callbackError);
         }
@@ -114,13 +119,13 @@ var catalog = (function() {
             port: config.endpoints.catalog.port,
             path: req.url,
             method: 'GET',
-            headers: proxy.getClientIp(req, req.headers)
+            headers: http.getClientIp(req, req.headers)
         };
 
         var protocol = config.appSsl ? 'https' : 'http';
 
         // Retrieve the resource to be updated or removed
-        proxy.sendData(protocol, options, '', {}, function(status, resp) {
+        http.request(protocol, options, '', null, function(status, resp) {
             var parsedResp = JSON.parse(resp);
 
             // Check if the request is an offering
