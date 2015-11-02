@@ -1,5 +1,5 @@
 var config = require('./../config.js'),
-    httpClient = require('./../lib/HTTPClient.js'),
+    httpClient = require('./../lib/httpClient.js'),
     idm = require('./../lib/idm.js').idm,
     tmf = require('./../lib/tmf.js').tmf,
     utils = require('./../lib/utils/utils.js'),
@@ -14,20 +14,6 @@ var root = (function() {
         var authHeader = 'IDM uri = ' + config.accountHost;
         res.set('WWW-Authenticate', authHeader);
         res.send(401, { error: msg });
-    };
-
-    var proxiedRequestHeaders = function(req) {
-
-        // Copy the headers (the original headers are not overwritten)
-        var headers = JSON.parse(JSON.stringify(req.headers));
-        var FORWARDED_HEADER_NAME = 'x-forwarded-for';
-        var userIp = req.connection.remoteAddress;
-
-        headers[FORWARDED_HEADER_NAME] = headers[FORWARDED_HEADER_NAME] ? 
-                headers[FORWARDED_HEADER_NAME] + ',' + userIp : 
-                userIp;
-
-        return headers;
     };
 
     var redirRequest = function (req, res, userInfo) {
@@ -46,10 +32,10 @@ var root = (function() {
             port: utils.getAppPort(req),
             path: req.url,
             method: req.method,
-            headers: proxiedRequestHeaders(req)
+            headers: utils.proxiedRequestHeaders(req)
         };
 
-        httpClient.request(protocol, options, req.body, res);
+        httpClient.proxyRequest(protocol, options, req.body, res);
     };
 
     // Refactor TMF function here
@@ -106,10 +92,10 @@ var root = (function() {
                     port: utils.getAppPort(req),
                     path: req.url,
                     method: req.method,
-                    headers: proxiedRequestHeaders(req)
+                    headers: utils.proxiedRequestHeaders(req)
                 };
 
-                httpClient.request('http', options, req.body, res);
+                httpClient.proxyRequest('http', options, req.body, res);
 
             } else {
 

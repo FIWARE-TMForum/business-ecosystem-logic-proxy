@@ -30,7 +30,7 @@ app.use(errorhandler({ dumpExceptions: true, showStack: true }));
 // Middleware: add body field to the request
 app.use (function(req, res, next) {
     
-    var data='';
+    var data = '';
     req.setEncoding('utf8');
     
     req.on('data', function(chunk) { 
@@ -72,7 +72,7 @@ for (var p in config.publicPaths) {
 app.all('/*', root.pep);
 
 // Start Server on the configured PORT
-log.info('Starting PEP http in port ' + port + '.');
+log.info('Starting PEP proxy in port ' + port + '.');
 
 if (config.https.enabled === true) {
     

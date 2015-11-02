@@ -1,7 +1,8 @@
 var config = require('./../../config.js'),
-    http = require('./../../lib/HTTPClient.js'),
+    http = require('./../../lib/httpClient.js'),
     storeClient = require('./../../lib/store.js').storeClient,
-    url = require('url');
+    url = require('url'),
+    utils = require('./../../lib/utils/utils.js'),
     log = require('./../../lib/logger').logger.getLogger("Root");
 
 // Validator to check user permissions for accessing TMForum resources
@@ -53,7 +54,7 @@ var catalog = (function() {
 
         var protocol = config.appSsl ? 'https' : 'http';
 
-        http.request(protocol, options, '', null, callback, function() {
+        http.request(protocol, options, '', callback, function() {
             callbackError(400, 'The product specification of the given product offering is not valid');
         });
     };
@@ -119,13 +120,13 @@ var catalog = (function() {
             port: config.endpoints.catalog.port,
             path: req.url,
             method: 'GET',
-            headers: http.getClientIp(req, req.headers)
+            headers: utils.proxiedRequestHeaders(req, req.headers)
         };
 
         var protocol = config.appSsl ? 'https' : 'http';
 
         // Retrieve the resource to be updated or removed
-        http.request(protocol, options, '', null, function(status, resp) {
+        http.request(protocol, options, '', function(status, resp) {
             var parsedResp = JSON.parse(resp);
 
             // Check if the request is an offering
