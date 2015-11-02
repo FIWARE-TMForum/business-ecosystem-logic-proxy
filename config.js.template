@@ -20,18 +20,34 @@ config.roles = {
 config.keystoneHost = 'cloud.lab.fiware.org';
 config.keystonePort = 4731;
 
-config.appHost = 'www.google.es';
-config.appPort = '80';
+config.appHost = '';
+
+// Configure endpoints
+config.endpoints = {
+    'catalog': {
+        'path': '',
+        'port': ''
+    },
+    'ordering': {
+         'path': '',
+         'port': ''
+    },
+    'inventory': {
+        'path': '',
+        'port': ''
+    },
+    'charging': {
+        'path': '',
+        'port': ''
+    },
+    'rss': {
+        'path': '',
+        'port': ''
+    }
+};
 
 // Use true if the app server listens in https
 config.appSsl = false;
-
-// Configure TMForum paths
-config.tmf = {};
-
-config.tmf.catalogPath = '';
-config.tmf.orderingPath = '';
-config.tmf.inventoryPath = '';
 
 // Credentials obtained when registering PEP Proxy in Account Portal
 config.username = '';

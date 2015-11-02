@@ -2,7 +2,7 @@ var config = require('./../config.js'),
     httpClient = require('./../lib/HTTPClient.js'),
     idm = require('./../lib/idm.js').idm,
     tmf = require('./../lib/tmf.js').tmf,
-    utils = require('./../lib/utils/headers.js'),
+    utils = require('./../lib/utils/utils.js'),
     AZF = require('./../lib/azf.js').AZF;
     log = require('./../lib/logger').logger.getLogger("Root");
 
@@ -33,7 +33,6 @@ var root = (function() {
     var redirRequest = function (req, res, userInfo) {
 
         if (userInfo) {
-
             log.info('Access-token OK. Redirecting to app...');
             utils.attachUserHeaders(req.headers, userInfo);
         } else {
@@ -44,7 +43,7 @@ var root = (function() {
 
         var options = {
             host: config.appHost,
-            port: config.appPort,
+            port: utils.getAppPort(req),
             path: req.url,
             method: req.method,
             headers: proxiedRequestHeaders(req)
@@ -104,7 +103,7 @@ var root = (function() {
                 
                 var options = {
                     host: config.appHost,
-                    port: config.appPort,
+                    port: utils.getAppPort(req),
                     path: req.url,
                     method: req.method,
                     headers: proxiedRequestHeaders(req)

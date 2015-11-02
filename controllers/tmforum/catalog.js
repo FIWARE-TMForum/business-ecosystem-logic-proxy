@@ -1,6 +1,7 @@
 var config = require('./../../config.js'),
     proxy = require('./../../lib/HTTPClient.js'),
     url = require('url');
+    log = require('./../../lib/logger').logger.getLogger("Root");
 
 // Validator to check user permissions for accessing TMForum resources
 var catalog = (function() {
@@ -43,7 +44,7 @@ var catalog = (function() {
 
         var options = {
             host: config.appHost,
-            port: config.appPort,
+            port: config.endpoints.catalog.port,
             path: productPath,
             method: 'GET',
             headers: {'content-type': 'application/json'}
@@ -110,7 +111,7 @@ var catalog = (function() {
     var validateUpdate = function(req, userInfo, callback, callbackError) {
         var options = {
             host: config.appHost,
-            port: config.appPort,
+            port: config.endpoints.catalog.port,
             path: req.url,
             method: 'GET',
             headers: proxy.getClientIp(req, req.headers)
@@ -149,6 +150,7 @@ var catalog = (function() {
 
     var checkPermissions = function (req, userInfo, callback, callbackError) {
 
+        log.info('Checking Catalog permissions');
         // Check if the user is admin of the application
         if (checkRole(userInfo, config.roles.admin)) {
             callback();
