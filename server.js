@@ -12,6 +12,11 @@ var bodyParser = require('body-parser'),
     root = require('./controllers/root').root,
     session = require('express-session');
 
+
+/////////////////////////////////////////////////////////////////////
+////////////////////////// CONFIG CHECKERS //////////////////////////
+/////////////////////////////////////////////////////////////////////
+
 var checkPrefix = function(prefix, byDefault) {
   var finalPrefix = prefix === undefined ? byDefault : prefix;
 
@@ -28,6 +33,12 @@ var checkPrefix = function(prefix, byDefault) {
 
   return finalPrefix;
 }
+
+// TODO: Add more checkers
+
+/////////////////////////////////////////////////////////////////////
+/////////////////////////////// CONFIG //////////////////////////////
+/////////////////////////////////////////////////////////////////////
 
 // Default title for GUI
 var DEFAULT_TITLE = 'TM Forum Portal';
@@ -51,7 +62,7 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
 
 /////////////////////////////////////////////////////////////////////
-/////////////////////////// EXPRESS BASICs //////////////////////////
+////////////////////////////// EXPRESS //////////////////////////////
 /////////////////////////////////////////////////////////////////////
 
 var app = express();
@@ -132,11 +143,14 @@ app.get('/auth/fiware/callback',
 /////////////////////////////// PORTAL //////////////////////////////
 /////////////////////////////////////////////////////////////////////
 
-app.get(config.portalPrefix + '/', ensureAuthenticated, function(req, res) {
+var getProperties = function(req, content, viewName) {
+
+  // TODO: Maybe an object with extra properties.
+  // To be implemented if required!!
 
   var properties = {
-    content: 'home-content',
-    viewName: 'Customer',
+    content: content,
+    viewName: viewName,
     user: req.user,
     title: DEFAULT_TITLE,
     contextPath: config.portalPrefix,
@@ -144,25 +158,20 @@ app.get(config.portalPrefix + '/', ensureAuthenticated, function(req, res) {
     accountHost: config.accountHost
   }
 
+  return properties;
+
+}
+
+app.get(config.portalPrefix + '/', ensureAuthenticated, function(req, res) {
+  var properties = getProperties(req, 'home-content', 'Customer');
   res.render('base', properties);
   res.end();
-
 });
 
 app.get(config.portalPrefix + '/mystock', ensureAuthenticated, function(req, res) {
-
-  var properties = {
-    content: 'mystock-content',
-    viewName: 'Seller',
-    routes: 'mystock-routes',
-    user: req.user,
-    title: DEFAULT_TITLE,
-    contextPath: config.portalPrefix,
-    proxyPath: config.proxyPrefix,
-    accountHost: config.accountHost
-  }
-  
+  var properties = getProperties(req, 'mystock-content', 'Seller');
   res.render('base', properties);
+  res.end();
 });
 
 
