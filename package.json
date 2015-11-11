@@ -4,10 +4,16 @@
   "description": "Logic Layer for the Business API Ecosystem",
   "author": "UPM",
   "dependencies": {
+    "base64url": "1.0.x",
     "express": "4.x",
     "errorhandler": "1.4.x",
-    "xml2json": "0.4.0",
-    "log4js": "0.6.x"
+    "log4js": "0.6.x",
+    "body-parser": "1.14.1",
+    "cookie-parser": "1.4.0",
+    "express-session": "1.12.1",
+    "ejs": "2.3.4",
+    "passport": "0.3.0",
+    "passport-fiware-oauth": "0.1.2"
   },
   "repository": {
     "type": "git",

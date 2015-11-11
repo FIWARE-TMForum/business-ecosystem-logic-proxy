@@ -3,7 +3,6 @@ var config = require('./../config.js'),
     idm = require('./../lib/idm.js').idm,
     tmf = require('./../lib/tmf.js').tmf,
     utils = require('./../lib/utils/utils.js'),
-    AZF = require('./../lib/azf.js').AZF;
     log = require('./../lib/logger').logger.getLogger("Root");
 
 var root = (function() {
@@ -13,7 +12,8 @@ var root = (function() {
         log.warn(msg);
         var authHeader = 'IDM uri = ' + config.accountHost;
         res.set('WWW-Authenticate', authHeader);
-        res.send(401, { error: msg });
+        res.status(401);
+        res.send({ error: msg });
     };
 
     var redirRequest = function (req, res, userInfo) {
@@ -44,7 +44,8 @@ var root = (function() {
             redirRequest(req, res, userInfo);
         }, function(status, errMsg) {
             log.error(errMsg);
-            res.send(status, { error: errMsg });
+            res.status(status);
+            res.send({ error: errMsg });
         });
     };
 
@@ -100,31 +101,10 @@ var root = (function() {
             } else {
 
                 idm.checkToken(authToken, function (userInfo) {
-
                     // The function to be called if the token is valid
-
-                    if (config.azf.enabled) {
-                        var action = req.method;
-                        var resource = req.url.substring(1, req.url.length);
-
-                        AZF.check_permissions(authToken, userInfo, resource, action, function () {
-                            checkTMFPermissions(req, res, userInfo);
-                        }, function (status, e) {
-                            if (status === 401) {
-                                sendUnauthorized(res, 'User access-token not authorized');
-                            } else {
-                                log.error('Error in AZF communication ', e);
-                                res.send(503, 'Error in AZF communication');
-                            }
-                        });
-                    } else {
-                        checkTMFPermissions(req, res, userInfo);
-                    }
-
-            }, function (status, e) {
-
+                    checkTMFPermissions(req, res, userInfo);
+                }, function (status, e) {
                     // The function to be called if the token is not valid
-
                     if (status === 404) {
                         log.warn('Invalid access-token', authToken);
                         sendUnauthorized(res, 'Invalid access-token');

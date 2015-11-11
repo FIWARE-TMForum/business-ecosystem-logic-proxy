@@ -1,0 +1,40 @@
+<div class="row">
+  <div class="col-sm-12">
+    <ol class="breadcrumb text-right">
+      <li><span class="label status-active">Active</span></li>
+      <li><span class="label status-launched">Launched</span></li>
+      <li><span class="label status-retired">Retired</span></li>
+      <li><span class="label status-obsolete">Obsolete</span></li>
+    </ol>
+  </div>
+</div>
+<div class="row" ng-controller="ProductListCtrl">
+  <div class="col-sm-12">
+    <div class="panel panel-default">
+      <div class="panel-body">
+        <form class="form-inline pull-left">
+          <div class="form-group">
+            <div class="input-group">
+              <input type="text" class="form-control" placeholder="Search for">
+              <div class="input-group-btn">
+                <button type="button" class="btn btn-default"><i class="fa fa-search fa-flip-horizontal"></i></button>
+              </div>
+            </div>
+          </div>
+        </form>
+        <div class="pull-right">
+          <button type="button" class="btn btn-primary" bs-tooltip data-title="New product"><i class="fa fa-archive fa-fw"></i></button>
+          <button type="button" class="btn btn-primary" bs-tooltip data-title="New bundle"><i class="fa fa-th-large fa-fw"></i></button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-12">
+    <div class="panel panel-default" ng-repeat="$product in $productList">
+      <div class="panel-heading">
+        <div class="panel-title">{{ $product.name }}</div>
+      </div>
+      <div class="panel-body"></div>
+    </div>
+  </div>
+</div>

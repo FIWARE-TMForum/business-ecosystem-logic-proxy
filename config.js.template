@@ -11,16 +11,26 @@ config.https = {
 };
 
 config.accountHost = 'https://account.lab.fiware.org';
+
 config.roles = {
     'admin': '106',
     'customer': '',
     'seller': ''
 };
 
+config.oauth2 = {
+    'clientID': '--client-id--',
+    'clientSecret': '--client-secret--',
+    'callbackUrl': '--callback-url--'
+}
+
 config.keystoneHost = 'cloud.lab.fiware.org';
 config.keystonePort = 4731;
 
 config.appHost = '';
+
+config.proxyPrefix = 'proxy';
+config.portalPrefix = '';
 
 // Configure endpoints
 config.endpoints = {
