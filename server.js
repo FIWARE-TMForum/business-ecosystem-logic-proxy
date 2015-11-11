@@ -44,7 +44,7 @@ var checkPrefix = function(prefix, byDefault) {
 var DEFAULT_TITLE = 'TM Forum Portal';
 
 // Get preferences and set up default values
-config.azf = config.azf || {};
+config.sessionSecret = config.sessionSecret || 'keyboard cat';
 config.https = config.https || {};
 config.proxyPrefix = checkPrefix(config.proxyPrefix, '/proxy');
 config.portalPrefix = checkPrefix(config.portalPrefix, '');
@@ -77,7 +77,7 @@ app.set('view engine', 'ejs');
 
 // Session
 app.use(session({
-  secret: 'keyboard cat',
+  secret: config.sessionSecret,
   resave: true,
   saveUninitialized: true,
 }));
