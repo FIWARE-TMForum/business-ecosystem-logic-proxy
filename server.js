@@ -186,8 +186,9 @@ var headerAuthentication = function(req, res, next) {
   try {
     var authToken = utils.getAuthToken(req.headers);
     FIWARE_STRATEGY.userProfile(authToken, function(err, userProfile) {
-      if (err) { 
-        res.send({error: "failed to fetch user profile"})
+      if (err) {
+        log.warn("The provider auth-token is not valid");
+        utils.sendUnauthorized(res, "invalid auth-token")
       } else {
         req.user = userProfile;
         next();
@@ -195,7 +196,8 @@ var headerAuthentication = function(req, res, next) {
     })
 
   } catch (err) {
-    res.send({error: err});
+    log.warn(err)
+    utils.sendUnauthorized(res, err);
   }
 }
 
