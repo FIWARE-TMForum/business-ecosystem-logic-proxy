@@ -12,7 +12,7 @@ config.https = {
 };
 
 // Express configuration
-config.proxyPrefix = 'proxy';
+config.proxyPrefix = '/proxy';
 config.portalPrefix = '';
 config.sessionSecret = 'keyboard cat';
 
