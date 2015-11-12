@@ -90,7 +90,7 @@ var catalog = (function() {
         }
 
         // Check that the user has the seller role
-        if (!checkRole(req.user, config.roles.seller)) {
+        if (!checkRole(req.user, config.oauth2.roles.seller)) {
             callbackError(403, 'You are not authorized to create resources');
             return;
         }
@@ -158,7 +158,7 @@ var catalog = (function() {
 
         log.info('Checking Catalog permissions');
         // Check if the user is admin of the application
-        if (checkRole(req.user, config.roles.admin)) {
+        if (checkRole(req.user, config.oauth2.roles.admin)) {
             callback();
         } else {
             validators[req.method](req, callback, callbackError);

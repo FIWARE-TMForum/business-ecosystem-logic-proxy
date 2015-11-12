@@ -53,13 +53,13 @@ var tmf = (function() {
 
         if (apiControllers[api] === undefined) {
             sendError(res, 404, 'Path not found')
+        } else {
+            apiControllers[api].checkPermissions(req, function() {
+                redirRequest(req, res);
+            }, function(status, errMsg) {
+                sendError(res, status, errMsg);
+            });
         }
-
-        apiControllers[api].checkPermissions(req, function() {
-            redirRequest(req, res);
-        }, function(status, errMsg) {
-            sendError(res, status, errMsg);
-        });
     };
 
     var public = function(req, res) {

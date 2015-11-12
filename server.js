@@ -28,7 +28,7 @@ var checkPrefix = function(prefix, byDefault) {
 
   // If a prefix is set, the prefix MUST start with a slash
   // When the prefix is not set, the slash is NOT required
-  if (finalPrefix.length > 0 && finalPrefix.chatAt(0) !== '/') {
+  if (finalPrefix.length > 0 && finalPrefix.charAt(0) !== '/') {
     finalPrefix = '/' + finalPrefix;
   }
 
@@ -52,7 +52,7 @@ config.portalPrefix = checkPrefix(config.portalPrefix, '');
 
 var PORT = config.https.enabled ? 
     config.https.port || 443 :      // HTTPS
-    config.pepPort || 80;           // HTTP
+    config.port || 80;           // HTTP
 
 var FIWARE_STRATEGY = new FIWAREStrategy({
     clientID: config.oauth2.clientID,
@@ -63,8 +63,7 @@ var FIWARE_STRATEGY = new FIWAREStrategy({
   function(accessToken, refreshToken, profile, done) {
     profile['accessToken'] = accessToken;
     done(null, profile);
-  }
-);
+  });
 
 // Avoid existing on uncaught Exceptions
 process.on('uncaughtException', function (err) {
@@ -158,7 +157,7 @@ var getProperties = function(req, content, viewName) {
     title: DEFAULT_TITLE,
     contextPath: config.portalPrefix,
     proxyPath: config.proxyPrefix,
-    accountHost: config.accountHost
+    accountHost: config.oauth2.server
   }
 
   return properties;

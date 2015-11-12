@@ -1,8 +1,7 @@
 var config = {};
 
-config.pepPort = 80;
-
-config.sessionSecret = 'keyboard cat';
+// The PORT used by 
+config.port = 80;
 
 // Set this var to undefined if you don't want the server to listen on HTTPS
 config.https = {
@@ -12,27 +11,26 @@ config.https = {
     port: 443
 };
 
-config.accountHost = 'https://account.lab.fiware.org';
-
-config.roles = {
-    'admin': '106',
-    'customer': '',
-    'seller': ''
-};
-
-config.oauth2 = {
-    'clientID': '--client-id--',
-    'clientSecret': '--client-secret--',
-    'callbackUrl': '--callback-url--'
-}
-
-config.keystoneHost = 'cloud.lab.fiware.org';
-config.keystonePort = 4731;
-
-config.appHost = '';
-
+// Express configuration
 config.proxyPrefix = 'proxy';
 config.portalPrefix = '';
+config.sessionSecret = 'keyboard cat';
+
+// OAuth2 configuration
+config.oauth2 = {
+    'server': 'https://account.lab.fiware.org',
+    'clientID': '--client-id--',
+    'clientSecret': '--client-secret--',
+    'callbackURL': '--callback-url--',
+    'roles': {
+        'admin': '106',
+        'customer': '',
+        'seller': ''
+    }
+}
+
+// TMForum APIs final paths
+config.appHost = '';
 
 // Configure endpoints
 config.endpoints = {
@@ -60,9 +58,6 @@ config.endpoints = {
 
 // Use true if the app server listens in https
 config.appSsl = false;
-
-// in seconds
-config.chacheTime = 300;
 
 // list of paths that will not check authentication/authorization
 // example: ['/public/*', '/static/css/']
