@@ -2,7 +2,7 @@ var config = require('./../../config.js'),
     http = require('./../../lib/httpClient.js'),
     storeClient = require('./../../lib/store.js').storeClient,
     url = require('url'),
-    utils = require('./../../lib/utils/utils.js'),
+    utils = require('./../../lib/utils.js'),
     log = require('./../../lib/logger').logger.getLogger("Root");
 
 // Validator to check user permissions for accessing TMForum resources
@@ -39,6 +39,11 @@ var catalog = (function() {
         return valid;
     };
 
+    // Check that the user is the owner of the resource
+    var checkUser = function(userInfo, resp) {
+        return isOwner(userInfo, resp);
+    };
+
     // Retrieves the product belonging to a given offering
     var retrieveProduct = function(userInfo, offeringInfo, callback, callbackError) {
         var productUrl = offeringInfo.productSpecification.href;
@@ -60,7 +65,7 @@ var catalog = (function() {
     };
 
     // The request is directly allowed without extra validation required
-    var validateAllowed = function(req, userInfo, callback) {
+    var validateAllowed = function(req, callback) {
         callback();
     };
 
@@ -73,7 +78,7 @@ var catalog = (function() {
     };
 
     // Validate the creation of a resource
-    var validateCreation = function(req, userInfo, callback, callbackError) {
+    var validateCreation = function(req, callback, callbackError) {
         var body;
 
         // The request body may not be well formed
@@ -85,23 +90,23 @@ var catalog = (function() {
         }
 
         // Check that the user has the seller role
-        if (!checkRole(userInfo, config.roles.seller)) {
+        if (!checkRole(req.user, config.roles.seller)) {
             callbackError(403, 'You are not authorized to create resources');
             return;
         }
 
         if (req.url.indexOf('productOffering') > -1) {
             // Check that the product exist
-            retrieveProduct(userInfo, body, function (status, resp) {
-                createHandler(userInfo, JSON.parse(resp), callback, callbackError);
+            retrieveProduct(req.user, body, function (status, resp) {
+                createHandler(req.user, JSON.parse(resp), callback, callbackError);
             }, callbackError);
 
         } else if (req.url.indexOf('productSpecification') > -1) {
-            storeClient.validateProduct(req.body, userInfo, function() {
-                createHandler(userInfo, body, callback, callbackError);
+            storeClient.validateProduct(req.body, req.user, function() {
+                createHandler(req.user, body, callback, callbackError);
             }, callbackError);
         } else {
-            createHandler(userInfo, body, callback, callbackError);
+            createHandler(req.user, body, callback, callbackError);
         }
     };
 
@@ -114,7 +119,7 @@ var catalog = (function() {
     };
 
     // Validate the modification of a resource
-    var validateUpdate = function(req, userInfo, callback, callbackError) {
+    var validateUpdate = function(req, callback, callbackError) {
         var options = {
             host: config.appHost,
             port: config.endpoints.catalog.port,
@@ -131,12 +136,12 @@ var catalog = (function() {
 
             // Check if the request is an offering
             if (req.url.indexOf('productOffering') > -1) {
-                retrieveProduct(userInfo, parsedResp, function (status, response) {
-                    updateHandler(userInfo, JSON.parse(response), callback, callbackError);
+                retrieveProduct(req.user, parsedResp, function (status, response) {
+                    updateHandler(req.user, JSON.parse(response), callback, callbackError);
                 }, callbackError);
 
             } else {
-                updateHandler(userInfo, parsedResp, callback, callbackError);
+                updateHandler(req.user, parsedResp, callback, callbackError);
             }
         });
     };
@@ -149,19 +154,14 @@ var catalog = (function() {
         'DELETE': validateUpdate
     };
 
-    // Check that the user is the owner of the resource
-    var checkUser = function(userInfo, resp) {
-        return isOwner(userInfo, resp);
-    };
-
-    var checkPermissions = function (req, userInfo, callback, callbackError) {
+    var checkPermissions = function (req, callback, callbackError) {
 
         log.info('Checking Catalog permissions');
         // Check if the user is admin of the application
-        if (checkRole(userInfo, config.roles.admin)) {
+        if (checkRole(req.user, config.roles.admin)) {
             callback();
         } else {
-            validators[req.method](req, userInfo, callback, callbackError);
+            validators[req.method](req, callback, callbackError);
         }
     };
 

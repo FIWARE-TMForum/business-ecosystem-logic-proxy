@@ -9,8 +9,9 @@ var bodyParser = require('body-parser'),
     https = require('https'),
     log = require('./lib/logger').logger.getLogger("Server"),
     passport = require('passport'),
-    root = require('./controllers/root').root,
-    session = require('express-session');
+    tmf = require('./controllers/tmf').tmf,
+    session = require('express-session'),
+    utils = require('./lib/utils');
 
 
 /////////////////////////////////////////////////////////////////////
@@ -52,6 +53,18 @@ config.portalPrefix = checkPrefix(config.portalPrefix, '');
 var PORT = config.https.enabled ? 
     config.https.port || 443 :      // HTTPS
     config.pepPort || 80;           // HTTP
+
+var FIWARE_STRATEGY = new FIWAREStrategy({
+    clientID: config.oauth2.clientID,
+    clientSecret: config.oauth2.clientSecret,
+    callbackURL: config.oauth2.callbackURL
+  },
+
+  function(accessToken, refreshToken, profile, done) {
+    profile['accessToken'] = accessToken;
+    done(null, profile);
+  }
+);
 
 // Avoid existing on uncaught Exceptions
 process.on('uncaughtException', function (err) {
@@ -113,17 +126,7 @@ passport.deserializeUser(function(obj, done) {
   done(null, obj);
 });
 
-passport.use(new FIWAREStrategy({
-    clientID: config.oauth2.clientID,
-    clientSecret: config.oauth2.clientSecret,
-    callbackURL: config.oauth2.callbackURL
-  },
-
-  function(accessToken, refreshToken, profile, done) {
-    profile['accessToken'] = accessToken;
-    done(null, profile);
-  }
-));
+passport.use(FIWARE_STRATEGY);
 
 // Passport middlewares
 app.use(passport.initialize());
@@ -179,6 +182,24 @@ app.get(config.portalPrefix + '/mystock', ensureAuthenticated, function(req, res
 //////////////////////////////// APIs ///////////////////////////////
 /////////////////////////////////////////////////////////////////////
 
+var headerAuthentication = function(req, res, next) {
+
+  try {
+    var authToken = utils.getAuthToken(req.headers);
+    FIWARE_STRATEGY.userProfile(authToken, function(err, userProfile) {
+      if (err) { 
+        res.send({error: "failed to fetch user profile"})
+      } else {
+        req.user = userProfile;
+        next();
+      }
+    })
+
+  } catch (err) {
+    res.send({error: err});
+  }
+}
+
 // Middleware: Add CORS headers. Handle OPTIONS requests.
 app.use(function (req, res, next) {
     'use strict';
@@ -201,10 +222,10 @@ app.use(function (req, res, next) {
 // Public Paths are not protected by the Proxy
 for (var p in config.publicPaths) {
     log.debug('Public Path', config.publicPaths[p]);
-    app.all(config.proxyPrefix + '/' + config.publicPaths[p], root.public);
+    app.all(config.proxyPrefix + '/' + config.publicPaths[p], tmf.public);
 }
 
-app.all(config.proxyPrefix + '/*', root.pep);
+app.all(config.proxyPrefix + '/*', headerAuthentication, tmf.checkPermissions);
 
 
 /////////////////////////////////////////////////////////////////////
