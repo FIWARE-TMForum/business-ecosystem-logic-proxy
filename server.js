@@ -145,35 +145,35 @@ app.get('/auth/fiware/callback',
 /////////////////////////////// PORTAL //////////////////////////////
 /////////////////////////////////////////////////////////////////////
 
-var getProperties = function(req, content, viewName) {
+var renderTemplate = function(req, res, customTitle, content, viewName) {
 
   // TODO: Maybe an object with extra properties.
   // To be implemented if required!!
+
+  var validCustomTitle = customTitle !== undefined && customTitle !== '';
+  var title = validCustomTitle ? DEFAULT_TITLE + ' - ' + customTitle : DEFAULT_TITLE;
 
   var properties = {
     content: content,
     viewName: viewName,
     user: req.user,
-    title: DEFAULT_TITLE,
+    title: title,
     contextPath: config.portalPrefix,
     proxyPath: config.proxyPrefix,
     accountHost: config.oauth2.server
   }
 
-  return properties;
+  res.render('base', properties);
+  res.end();
 
 }
 
 app.get(config.portalPrefix + '/', ensureAuthenticated, function(req, res) {
-  var properties = getProperties(req, 'home-content', 'Customer');
-  res.render('base', properties);
-  res.end();
+  renderTemplate(req, res, 'Marketplace', 'home-content', 'Customer');
 });
 
 app.get(config.portalPrefix + '/mystock', ensureAuthenticated, function(req, res) {
-  var properties = getProperties(req, 'mystock-content', 'Seller');
-  res.render('base', properties);
-  res.end();
+  renderTemplate(req, res, 'My Stock', 'mystock-content', 'Seller');
 });
 
 
