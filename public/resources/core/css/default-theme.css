@@ -53,6 +53,16 @@ blockquote p {
 }
 
 /* ===================================================================================
+ *   COMPONENT - FLEX-CONTAINER
+ * =================================================================================== */
+
+.flex-container {
+    display: flex;
+    flex-flow: row wrap;
+    justify-content: space-around;
+}
+
+/* ===================================================================================
  *   COMPONENT - FORM-CONTROL
  * =================================================================================== */
 
@@ -136,9 +146,37 @@ blockquote p {
 .btn-primary.disabled,
 .btn-primary[disabled] {
     color: rgb(255, 255, 255);
-    background-color: rgb(120, 150, 180);
-    border-color: rgb(120, 150, 180);
+    background-color: rgb(160, 180, 210);
+    border-color: rgb(160, 180, 210);
 }
+
+.btn-success {
+    color: rgb(60, 130, 60);
+    background-color: rgb(230, 255, 230);
+    border-color: rgb(60, 130, 60);
+}
+.btn-success:hover,
+.btn-success:focus {
+    color: rgb(40, 190, 80);
+    background-color: rgb(230, 255, 230);
+    border-color: rgb(40, 190, 80);
+}
+.btn-success:active,
+.btn-success:active:hover,
+.btn-success:active:focus,
+.btn-success.active,
+.btn-success.active:hover,
+.btn-success.active:focus {
+    color: rgb(255, 255, 255);
+    background-color: rgb(70, 160, 70);
+    border-color: rgb(70, 160, 70);
+}
+.btn-success.disabled,
+.btn-success[disabled] {
+    color: rgb(255, 255, 255);
+    background-color: rgb(130, 200, 130);
+    border-color: rgb(130, 200, 130);
+ }
 
 .btn-sm {
     padding: 4px 8px;
@@ -348,6 +386,21 @@ blockquote p {
 .label {
     border-radius: 0;
 }
+.label-primary {
+    background-color: rgb(010, 060, 140);
+}
+.label-product {
+    background-color: rgb(020, 150, 190);
+}
+.label-product-bundle {
+    background-color: rgb(040, 150, 120);
+}
+
+.label-group {
+    position: relative;
+    display: block;
+    margin-bottom: 15px;
+}
 
 /* ===================================================================================
  *   COMPONENT - LIFECYCLE-STATUS
@@ -508,6 +561,35 @@ a.list-group-item.disabled:focus {
 }
 
 /* ===================================================================================
+ *   COMPONENT - THUMBNAIL
+ * =================================================================================== */
+
+a.thumbnail {
+    padding: 5px;
+    margin-bottom: 15px;
+    background-color: rgb(255, 255, 255);
+    border-color: rgb(030, 060, 110);
+    border-radius: 0;
+    transition: none;
+}
+a.thumbnail:hover,
+a.thumbnail:focus,
+a.thumbnail.active {
+    background-color: rgb(252, 252, 252);
+    border-color: rgb(070, 180, 200);
+}
+a.thumbnail > img {
+    position: relative;
+    top: 50%;
+    max-height: 100%;
+    -webkit-transform: translateY(-50%);
+       -moz-transform: translateY(-50%);
+        -ms-transform: translateY(-50%);
+         -o-transform: translateY(-50%);
+            transform: translateY(-50%);
+}
+
+/* ===================================================================================
  *   COMPONENT - PANEL
  * =================================================================================== */
 
@@ -530,11 +612,17 @@ a.list-group-item.disabled:focus {
     line-height: 20px;
     text-transform: uppercase;
 }
-.panel-title + .panel-options {
-    margin-top: 5px;
-}
 .panel-title > small {
     font-size: 80%;
+}
+
+.panel-subtitle {
+    font-size: 12px;
+    line-height: 20px;
+}
+
+.panel-options {
+    margin-top: 5px;
 }
 
 .panel-default {
@@ -546,6 +634,12 @@ a.list-group-item.disabled:focus {
 }
 .panel-default > .panel-heading > .panel-title > small {
     color: rgb(150, 150, 150);
+}
+.panel-default > .panel-heading > .panel-subtitle {
+    color: rgb(120, 120, 120);
+}
+.panel-default.active {
+    border-color: rgb(070, 180, 200);
 }
 
 /* ===================================================================================
@@ -570,4 +664,20 @@ a.list-group-item.disabled:focus {
     line-height: 20px;
     text-transform: uppercase;
     color: rgb(040, 140, 150);
+}
+
+/* ===================================================================================
+ *   COMPONENT - PRODUCT
+ * =================================================================================== */
+
+.product {
+    position: relative;
+    width: 250px;
+    margin: 0 5px 15px;
+}
+.product .product-logo {
+    height: 180px;
+}
+.product > .panel-body {
+    padding-top: 0;
 }

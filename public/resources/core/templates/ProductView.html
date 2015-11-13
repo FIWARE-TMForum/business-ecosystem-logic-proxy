@@ -14,27 +14,65 @@
       <div class="panel-body">
         <form class="form-inline pull-left">
           <div class="form-group">
-            <div class="input-group">
-              <input type="text" class="form-control" placeholder="Search for">
-              <div class="input-group-btn">
-                <button type="button" class="btn btn-default"><i class="fa fa-search fa-flip-horizontal"></i></button>
-              </div>
-            </div>
+            <label>Search by:</label>
+            <select class="form-control" ng-model="filters.type" ng-change="filterList()">
+              <option value="" selected>Any type</option>
+              <option ng-repeat="(key, value) in $productTypeList" value="{{ key }}">{{ value }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <select class="form-control" ng-model="filters.status" ng-change="filterList()">
+              <option value="" selected>Any status</option>
+              <option ng-repeat="(key, value) in $productStatusList" value="{{ key }}">{{ value }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <select class="form-control" ng-model="filters.brand" ng-change="filterList()">
+              <option value="" selected>Any brand</option>
+              <option ng-repeat="name in $productBrandList" value="{{ name }}">{{ name }}</option>
+            </select>
           </div>
         </form>
         <div class="pull-right">
-          <button type="button" class="btn btn-primary" bs-tooltip data-title="New product"><i class="fa fa-archive fa-fw"></i></button>
-          <button type="button" class="btn btn-primary" bs-tooltip data-title="New bundle"><i class="fa fa-th-large fa-fw"></i></button>
+          <button type="button" class="btn btn-primary" bs-tooltip data-title="New product"><i class="fa fa-file fa-fw"></i>&nbsp;New product</button>
+          <button type="button" class="btn btn-primary" bs-tooltip data-title="New product bundle" ng-disabled="!canCreateBundle()"><i class="fa fa-archive fa-fw"></i>&nbsp;New bundle</button>
         </div>
       </div>
     </div>
   </div>
-  <div class="col-sm-12">
-    <div class="panel panel-default" ng-repeat="$product in $productList">
+  <div class="col-sm-12 flex-container">
+    <div class="alert alert-warning" ng-if="noResults">
+      There are no results that match your search.
+    </div>
+    <div class="panel panel-default product product-grid" ng-repeat="$product in $productList" ng-class="{'active': isSelected($product)}">
       <div class="panel-heading">
+        <a class="thumbnail product-logo">
+          <img src="{{ getPicture($product) }}">
+        </a>
         <div class="panel-title">{{ $product.name }}</div>
+        <div class="panel-subtitle"><span ng-if="$product.version">v{{ $product.version }}&nbsp;·&nbsp;</span>{{ $product.brand }}</div>
+        <div class="panel-options text-right">
+          <button type="button" class="btn btn-sm btn-primary" bs-tooltip data-title="Add to bundle" ng-class="{'active': isSelected($product)}" ng-click="selectProduct($product)"><i class="fa fa-clipboard fa-fw"></i></button>
+          <button type="button" class="btn btn-sm btn-default" bs-tooltip data-title="View details" ng-click="showUpdateForm()"><i class="fa fa-list-alt fa-fw"></i></button>
+        </div>
       </div>
-      <div class="panel-body"></div>
+      <div class="panel-body">
+        <div class="label-group">
+          <div ng-switch on="$product.isBundle">
+            <div ng-switch-when="false">
+              <span class="label label-product">Product</span>
+            </div>
+            <div ng-switch-default>
+              <span class="label label-product-bundle">Product bandle</span>
+            </div>
+          </div>
+        </div>
+        <div class="lifecycle-status-group">
+          <div class="lifecycle-status-item active" data-type="{{ $product.lifecycleStatus | lowercase }}" data-title="{{ $product.lifecycleStatus }}">
+            <span class="status" bs-tooltip data-original-title="{{ $product.lifecycleStatus }}"></span>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
