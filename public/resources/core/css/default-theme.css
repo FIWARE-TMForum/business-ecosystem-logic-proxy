@@ -1,0 +1,683 @@
+/*!
+ *
+ */
+
+body {
+    background-color: rgb(250, 250, 250);
+}
+
+footer {
+    margin-top: 50px;
+}
+
+a {
+    cursor: pointer;
+    color: rgb(030, 060, 110);
+}
+a:hover,
+a:focus {
+    color: rgb(070, 180, 200);
+    text-decoration: none;
+}
+
+hr {
+    margin-top: 0;
+    margin-bottom: 15px;
+}
+hr.fiware-line {
+    height: 1px;
+    background-color: rgb(240, 230, 040);
+    border-top: 1px solid rgb(070, 185, 200);
+    border-bottom: 1px solid rgb(025, 060, 105);
+}
+
+.text-ellipsis {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+blockquote {
+    padding: 10px 15px;
+    margin-bottom: 15px;
+    font-size: 14px;
+    line-height: 20px;
+    border-left: 4px solid rgb(230, 230, 230);
+}
+blockquote p {
+    color: rgb(100, 100, 100);
+}
+
+.fa-fw {
+    width: 1.4em;
+}
+
+/* ===================================================================================
+ *   COMPONENT - FLEX-CONTAINER
+ * =================================================================================== */
+
+.flex-container {
+    display: flex;
+    flex-flow: row wrap;
+    justify-content: space-around;
+}
+
+/* ===================================================================================
+ *   COMPONENT - FORM-CONTROL
+ * =================================================================================== */
+
+.form-inline {
+    margin-bottom: 15px;
+}
+
+.form-control {
+    border-color: rgb(200, 200, 200);
+    border-radius: 0;
+}
+
+/* ===================================================================================
+ *   COMPONENT - BUTTON
+ * =================================================================================== */
+
+.btn {
+    border-radius: 0;
+}
+.btn:active,
+.btn.active {
+    -webkit-box-shadow: none;
+            box-shadow: none;
+}
+.btn[disabled],
+.btn.disabled {
+    cursor: pointer;
+    pointer-events: none;
+    opacity: 1;
+}
+
+.btn-default {
+    color: rgb(080, 080, 080);
+    background-color: rgb(250, 250, 250);
+    border-color: rgb(200, 200, 200);
+}
+.btn-default:hover,
+.btn-default:focus {
+    color: rgb(250, 120, 040);
+    background-color: rgb(250, 250, 250);
+    border-color: rgb(250, 120, 040);
+}
+.btn-default:active,
+.btn-default:active:hover,
+.btn-default:active:focus,
+.btn-default.active,
+.btn-default.active:hover,
+.btn-default.active:focus {
+    color: rgb(255, 255, 255);
+    background-color: rgb(210, 080, 020);
+    border-color: rgb(210, 080, 020);
+}
+.btn-default.disabled,
+.btn-default[disabled] {
+    color: rgb(210, 210, 210);
+    background-color: rgb(252, 252, 252);
+    border-color: rgb(210, 210, 210);
+}
+
+.btn-primary {
+    color: rgb(010, 060, 140);
+    background-color: rgb(230, 240, 250);
+    border-color: rgb(010, 060, 140);
+}
+.btn-primary:hover,
+.btn-primary:focus {
+    color: rgb(070, 180, 200);
+    background-color: rgb(230, 240, 250);
+    border-color: rgb(070, 180, 200);
+}
+.btn-primary:active,
+.btn-primary:active:hover,
+.btn-primary:active:focus,
+.btn-primary.active,
+.btn-primary.active:hover,
+.btn-primary.active:focus {
+    color: rgb(255, 255, 255);
+    background-color: rgb(030, 060, 110);
+    border-color: rgb(030, 060, 110);
+}
+.btn-primary.disabled,
+.btn-primary[disabled] {
+    color: rgb(255, 255, 255);
+    background-color: rgb(160, 180, 210);
+    border-color: rgb(160, 180, 210);
+}
+
+.btn-success {
+    color: rgb(60, 130, 60);
+    background-color: rgb(230, 255, 230);
+    border-color: rgb(60, 130, 60);
+}
+.btn-success:hover,
+.btn-success:focus {
+    color: rgb(40, 190, 80);
+    background-color: rgb(230, 255, 230);
+    border-color: rgb(40, 190, 80);
+}
+.btn-success:active,
+.btn-success:active:hover,
+.btn-success:active:focus,
+.btn-success.active,
+.btn-success.active:hover,
+.btn-success.active:focus {
+    color: rgb(255, 255, 255);
+    background-color: rgb(70, 160, 70);
+    border-color: rgb(70, 160, 70);
+}
+.btn-success.disabled,
+.btn-success[disabled] {
+    color: rgb(255, 255, 255);
+    background-color: rgb(130, 200, 130);
+    border-color: rgb(130, 200, 130);
+ }
+
+.btn-sm {
+    padding: 4px 8px;
+    font-size: 14px;
+    line-height: 20px;
+    border-radius: 0;
+}
+.btn-sm > .fa {
+    font-size: 90%;
+}
+
+.btn-circle {
+    border-radius: 50%;
+}
+
+/* ===================================================================================
+ *   COMPONENT - DROPDOWN-MENU
+ * =================================================================================== */
+
+.dropdown-menu {
+    padding: 2px 0;
+    border-color: rgb(220, 220, 220);
+    border-radius: 0;
+}
+.dropdown-menu > li > a {
+    padding: 5px 15px;
+    line-height: 20px;
+    color: rgb(030, 060, 110);
+}
+.dropdown-menu > li + li > a {
+    margin-top: 2px;
+}
+.dropdown-menu > li > a:hover,
+.dropdown-menu > li > a:focus {
+    color: rgb(070, 180, 200);
+    background-color: rgb(252, 252, 252);
+}
+
+/* ===================================================================================
+ *   COMPONENT - NAV-TABS
+ * =================================================================================== */
+
+.nav-tabs {
+    margin-bottom: 15px;
+}
+
+/* ===================================================================================
+ *   COMPONENT - NAV-PILLS
+ * =================================================================================== */
+
+.nav-pills > li > a {
+    margin: 0 2px;
+    color: rgb(030, 060, 110);
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+}
+.nav-pills > li > a:hover,
+.nav-pills > li > a:focus {
+    color: rgb(070, 180, 200);
+    background-color: rgb(252, 252, 252);
+    border-color: rgb(070, 180, 200);
+}
+.nav-pills > li.active > a,
+.nav-pills > li.active > a:hover,
+.nav-pills > li.active > a:focus {
+    color: rgb(250, 120, 040);
+    background-color: rgb(252, 252, 252);
+    border-color: rgb(250, 120, 040);
+}
+
+/* ===================================================================================
+ *   COMPONENT - NAVBAR
+ * =================================================================================== */
+
+.navbar {
+    margin-bottom: 15px;
+}
+
+@media (min-width: 768px) {
+    .navbar {
+        border-radius: 0;
+    }
+}
+
+.navbar-brand {
+    height: 70px;
+    padding: 10px 0;
+}
+
+@media (min-width: 768px) {
+    .navbar > .container .navbar-brand {
+        margin-left: 0;
+    }
+    .navbar-brand > img {
+        height: 35px;
+    }
+    .navbar-brand > span {
+        display: block;
+        margin-bottom: 0;
+        padding-right: 2px;
+        font-size: 11px;
+        font-weight: 700;
+        line-height: 15px;
+        text-transform: uppercase;
+    }
+
+    .navbar-nav > li > a {
+        margin-top: 18px;
+        border-bottom: 2px solid transparent;
+    }
+    .navbar-nav > li + li > a {
+        margin-left: 5px;
+    }
+
+    .navbar-right {
+        margin-right: 0;
+    }
+}
+
+.navbar-default {
+    background-color: rgb(255, 255, 255);
+    border-color: rgb(220, 220, 220);
+}
+.navbar-default .navbar-brand {
+    color: rgb(030, 060, 110);
+}
+.navbar-default .navbar-brand:hover,
+.navbar-default .navbar-brand:focus {
+    color: rgb(070, 180, 200);
+}
+
+.navbar-default .navbar-nav > li > a {
+    color: rgb(030, 060, 110);
+}
+.navbar-default .navbar-nav > li > a:hover,
+.navbar-default .navbar-nav > li > a:focus {
+    color: rgb(070, 180, 200);
+    background-color: rgb(252, 252, 252);
+    border-color: rgb(070, 180, 200);
+}
+.navbar-default .navbar-nav > .active > a,
+.navbar-default .navbar-nav > .active > a:hover,
+.navbar-default .navbar-nav > .active > a:focus,
+.navbar-default .navbar-nav > .open > a,
+.navbar-default .navbar-nav > .open > a:hover,
+.navbar-default .navbar-nav > .open > a:focus {
+    color: rgb(250, 120, 040);
+    background-color: rgb(252, 252, 252);
+    border-color: rgb(250, 120, 040);
+}
+
+.navbar-static-top {
+    margin-bottom: 50px;
+}
+
+/* ===================================================================================
+ *   COMPONENT - BREADCRUMB
+ * =================================================================================== */
+
+.breadcrumb {
+    padding: 10px 15px;
+    margin-bottom: 15px;
+    background-color: rgb(250, 250, 250);
+    border-radius: 0;
+}
+.breadcrumb > li + li:before {
+    display: inline-block;
+    font-size: 12px;
+    line-height: 16px;
+    color: rgb(120, 120, 120);
+}
+
+/* ===================================================================================
+ *   COMPONENT - PAGER
+ * =================================================================================== */
+
+.pager {
+    margin: 0 0 15px;
+}
+.pager > li > a {
+    padding: 5px 15px;
+    color: rgb(030, 060, 110);
+    background-color: rgb(255, 255, 255);
+    border-color: rgb(200, 200, 200);
+    border-radius: 0;
+}
+.pager > li > a:hover,
+.pager > li > a:focus {
+    color: rgb(070, 180, 200);
+    background-color: rgb(252, 252, 252);
+    border-color: rgb(070, 180, 200);
+}
+.pager > li.disabled > a,
+.pager > li.disabled > a:hover,
+.pager > li.disabled > a:focus {
+    cursor: pointer;
+    pointer-events: none;
+    color: rgb(210, 210, 210);
+    background-color: rgb(252, 252, 252);
+    border-color: rgb(210, 210, 210);
+}
+
+/* ===================================================================================
+ *   COMPONENT - LABEL
+ * =================================================================================== */
+
+.label {
+    border-radius: 0;
+}
+.label-primary {
+    background-color: rgb(010, 060, 140);
+}
+.label-product {
+    background-color: rgb(020, 150, 190);
+}
+.label-product-bundle {
+    background-color: rgb(040, 150, 120);
+}
+
+.label-group {
+    position: relative;
+    display: block;
+    margin-bottom: 15px;
+}
+
+/* ===================================================================================
+ *   COMPONENT - LIFECYCLE-STATUS
+ * =================================================================================== */
+
+.lifecycle-status-group {
+    display: table;
+    width: 100%;
+    margin-bottom: 15px;
+    table-layout: fixed;
+}
+
+.lifecycle-status-item {
+    position: relative;
+    display: table-cell;
+    text-align: center;
+}
+.lifecycle-status-item:before {
+    position: absolute;
+    display: block;
+    content: " ";
+    top: 10px;
+    width: 100%;
+    height: 1px;
+    background-color: rgb(220, 220, 220);
+}
+.lifecycle-status-item:after {
+    display: block;
+    font-size: 14px;
+    line-height: 20px;
+    color: rgb(80, 80, 80);
+}
+.lifecycle-status-item > .status {
+    position: relative;
+    display: inline-block;
+    padding: 5px;
+    background-color: rgb(200, 200, 200);
+    border-radius: 50%;
+    vertical-align: middle;
+}
+
+.lifecycle-status-item.active:after,
+.lifecycle-status-item.active + .lifecycle-status-item:hover:after {
+    content: attr(data-title);
+}
+.list-group-item > .status-active,
+.lifecycle-status-item.active[data-type="active"]:before,
+.lifecycle-status-item.active[data-type="active"] > .status,
+.status-active {
+    background-color: rgb(090, 190, 220);
+}
+.lifecycle-status-item.active[data-type="active"] + .lifecycle-status-item:before,
+.lifecycle-status-item.active[data-type="active"] + .lifecycle-status-item > .status {
+    background-color: rgb(210, 230, 200);
+}
+.list-group-item > .status-launched,
+.list-group-item.active > .status-launched,
+.lifecycle-status-item.active[data-type="active"] + .lifecycle-status-item:hover:before,
+.lifecycle-status-item.active[data-type="active"] + .lifecycle-status-item:hover > .status,
+.lifecycle-status-item.active[data-type="launched"]:before,
+.lifecycle-status-item.active[data-type="launched"] > .status,
+.status-launched {
+    background-color: rgb(090, 180, 090);
+}
+.lifecycle-status-item.active[data-type="launched"] + .lifecycle-status-item:before,
+.lifecycle-status-item.active[data-type="launched"] + .lifecycle-status-item > .status {
+    background-color: rgb(250, 230, 200);
+}
+.list-group-item > .status-retired,
+.lifecycle-status-item.active[data-type="launched"] + .lifecycle-status-item:hover:before,
+.lifecycle-status-item.active[data-type="launched"] + .lifecycle-status-item:hover > .status,
+.lifecycle-status-item.active[data-type="retired"]:before,
+.lifecycle-status-item.active[data-type="retired"] > .status,
+.status-retired {
+    background-color: rgb(240, 170, 080);
+}
+.list-group-item > .status-obsolete,
+.lifecycle-status-item.active[data-type="obsolete"]:before,
+.lifecycle-status-item.active[data-type="obsolete"] > .status,
+.status-obsolete {
+    background-color: rgb(120, 120, 120);
+}
+
+/* ===================================================================================
+ *   COMPONENT - ALERT
+ * =================================================================================== */
+
+.alert {
+    padding: 10px 15px;
+    margin-bottom: 15px;
+    border-radius: 0;
+}
+
+/* ===================================================================================
+ *   COMPONENT - LIST-GROUP
+ * =================================================================================== */
+
+.list-group-item {
+    margin-bottom: 2px;
+    background-color: rgb(255, 255, 255);
+    border: none;
+    border-right: 2px solid transparent;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+}
+.list-group-item:first-child {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+}
+.list-group-item:last-child {
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 0;
+}
+.list-group-item.has-badge {
+    padding-right: 20px;
+}
+
+a.list-group-item {
+    color: rgb(030, 060, 110);
+    background-color: rgb(255, 255, 255);
+}
+a.list-group-item:hover,
+a.list-group-item:focus {
+    color: rgb(070, 180, 200);
+    background-color: rgb(252, 252, 252);
+    border-color: rgb(070, 180, 200);
+}
+a.list-group-item.active,
+a.list-group-item.active:hover,
+a.list-group-item.active:focus {
+    color: rgb(250, 120, 040);
+    background-color: rgb(252, 252, 252);
+    border-color: rgb(250, 120, 040);
+}
+a.list-group-item.disabled,
+a.list-group-item.disabled:hover,
+a.list-group-item.disabled:focus {
+    cursor: pointer;
+    pointer-events: none;
+    color: rgb(210, 210, 210);
+    background-color: rgb(252, 252, 252);
+    border-color: rgb(210, 210, 210);
+}
+
+.list-group-item > .badge-status:empty {
+    display: inline-block;
+}
+.list-group-item > .badge-status {
+    position: absolute;
+    top: 15px;
+    right: 5px;
+    padding: 5px 5px;
+    border-radius: 50%;
+}
+.list-group-item.disabled > .badge-status {
+    background-color: rgb(210, 210, 210);
+}
+
+/* ===================================================================================
+ *   COMPONENT - THUMBNAIL
+ * =================================================================================== */
+
+a.thumbnail {
+    padding: 5px;
+    margin-bottom: 15px;
+    background-color: rgb(255, 255, 255);
+    border-color: rgb(030, 060, 110);
+    border-radius: 0;
+    transition: none;
+}
+a.thumbnail:hover,
+a.thumbnail:focus,
+a.thumbnail.active {
+    background-color: rgb(252, 252, 252);
+    border-color: rgb(070, 180, 200);
+}
+a.thumbnail > img {
+    position: relative;
+    top: 50%;
+    max-height: 100%;
+    -webkit-transform: translateY(-50%);
+       -moz-transform: translateY(-50%);
+        -ms-transform: translateY(-50%);
+         -o-transform: translateY(-50%);
+            transform: translateY(-50%);
+}
+
+/* ===================================================================================
+ *   COMPONENT - PANEL
+ * =================================================================================== */
+
+.panel {
+    margin-bottom: 15px;
+    border-radius: 0;
+}
+.panel-heading {
+    border-bottom: none;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+}
+.panel-body {
+    padding-bottom: 0;
+}
+
+.panel-title {
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 20px;
+    text-transform: uppercase;
+}
+.panel-title > small {
+    font-size: 80%;
+}
+
+.panel-subtitle {
+    font-size: 12px;
+    line-height: 20px;
+}
+
+.panel-options {
+    margin-top: 5px;
+}
+
+.panel-default {
+    border-color: rgb(220, 220, 220);
+}
+.panel-default > .panel-heading {
+    color: rgb(040, 140, 150);
+    background-color: rgb(255, 255, 255);
+}
+.panel-default > .panel-heading > .panel-title > small {
+    color: rgb(150, 150, 150);
+}
+.panel-default > .panel-heading > .panel-subtitle {
+    color: rgb(120, 120, 120);
+}
+.panel-default.active {
+    border-color: rgb(070, 180, 200);
+}
+
+/* ===================================================================================
+ *   COMPONENT - MODAL
+ * =================================================================================== */
+
+.modal-content {
+    border-color: rgb(220, 220, 220);
+    border-radius: 0;
+}
+.modal-header {
+    border-bottom-color: rgb(220, 220, 220);
+}
+.modal-footer {
+    padding-top: 0;
+    border-top: none;
+}
+
+.modal-title {
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 20px;
+    text-transform: uppercase;
+    color: rgb(040, 140, 150);
+}
+
+/* ===================================================================================
+ *   COMPONENT - PRODUCT
+ * =================================================================================== */
+
+.product {
+    position: relative;
+    width: 250px;
+    margin: 0 5px 15px;
+}
+.product .product-logo {
+    height: 180px;
+}
+.product > .panel-body {
+    padding-top: 0;
+}

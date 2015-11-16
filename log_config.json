@@ -11,9 +11,9 @@
   ],
   "levels": {
   	"Server": "DEBUG",
-    "Root": "INFO",
-    "HTTP-Client": "WARN",
-    "AZF-Client": "INFo",
+    "TMF": "INFO",
+    "HTTP-Client": "INFO",
+    "AZF-Client": "INFO",
     "IDM-Client": "INFO"
   }
 }

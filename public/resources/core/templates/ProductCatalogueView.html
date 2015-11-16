@@ -1,0 +1,233 @@
+<div class="row">
+  <div class="col-sm-12">
+    <ol class="breadcrumb text-right">
+      <li><span class="label status-active">Active</span></li>
+      <li><span class="label status-launched">Launched</span></li>
+      <li><span class="label status-retired">Retired</span></li>
+      <li><span class="label status-obsolete">Obsolete</span></li>
+    </ol>
+  </div>
+</div>
+<div class="row">
+  <div class="col-sm-3" ng-controller="CatalogueListCtrl">
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <div class="panel-title">Catalogues <small>as Owner</small></div>
+        <div class="panel-options text-right">
+          <button type="button" class="btn btn-sm btn-primary" bs-tooltip data-title="New catalogue" ng-click="showCreateForm()">
+            <i class="fa fa-plus-circle fa-fw"></i>
+          </button>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div ng-switch="filterByRoleOwner().length">
+          <div ng-switch-when="0">
+            <div class="alert alert-info">No catalogs found.</div>
+          </div>
+          <div ng-switch-default>
+            <div ng-if="hasRoleAsOwner($catalogueItem)">
+              <div class="list-group">
+                <a class="list-group-item has-badge active" ng-click="select($catalogueItem)">
+                  <span class="badge badge-status status-{{ $catalogueItem.lifecycleStatus | lowercase }}"></span>{{ $catalogueItem.name }}
+                </a>
+              </div>
+              <hr>
+            </div>
+            <div class="list-group">
+              <a class="list-group-item has-badge" ng-repeat="$catalogue in filterByRoleOwner()" ng-class="{'disabled': isSelected($catalogue)}" ng-click="select($catalogue)">
+                <span class="badge badge-status status-{{ $catalogue.lifecycleStatus | lowercase }}"></span>{{ $catalogue.name }}
+              </a>
+            </div>
+            <ul class="pager">
+              <li class="disabled"><a><i class="fa fa-arrow-left"></i></a></li>
+              <li class="disabled"><a><i class="fa fa-arrow-right"></i></a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <div class="panel-title">Catalogues <small>as Seller</small></div>
+      </div>
+      <div class="panel-body">
+        <div ng-switch="filterByRoleSeller().length">
+          <div ng-switch-when="0">
+            <div class="alert alert-info">No catalogs found.</div>
+          </div>
+          <div ng-switch-default>
+            <div ng-if="hasRoleAsSeller($catalogueItem)">
+              <div class="list-group">
+                <a class="list-group-item has-badge active" ng-click="select($catalogueItem)">
+                  <span class="badge badge-status status-{{ $catalogueItem.lifecycleStatus | lowercase }}"></span>{{ $catalogueItem.name }}
+                </a>
+              </div>
+              <hr>
+            </div>
+            <div class="list-group">
+              <a class="list-group-item has-badge" ng-repeat="$catalogue in filterByRoleSeller()" ng-class="{'disabled': isSelected($catalogue)}" ng-click="select($catalogue)">
+                <span class="badge badge-status status-{{ $catalogue.lifecycleStatus | lowercase }}"></span>{{ $catalogue.name }}
+              </a>
+            </div>
+            <ul class="pager">
+              <li class="disabled"><a><i class="fa fa-arrow-left"></i></a></li>
+              <li class="disabled"><a><i class="fa fa-arrow-right"></i></a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-9" ng-controller="CatalogueDetailCtrl">
+    <div ng-switch on="!!$catalogue">
+      <div ng-switch-when="false">
+        <div class="alert alert-info">No catalogs found.</div>
+      </div>
+      <div ng-switch-default>
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <div class="panel-title">{{ $catalogue.name }}</div>
+            <div class="panel-options text-right">
+              <button type="button" class="btn btn-sm btn-primary" bs-tooltip data-title="New offering"><i class="fa fa-cube fa-fw"></i></button>
+              <button type="button" class="btn btn-sm btn-default" bs-tooltip data-title="Settings" ng-click="showUpdateForm()"><i class="fa fa-cog fa-fw"></i></button>
+            </div>
+          </div>
+          <div class="panel-body">
+            <blockquote ng-if="$catalogue.description">
+              <p>{{ $catalogue.description }}</p>
+            </blockquote>
+            <div class="lifecycle-status-group">
+              <div class="lifecycle-status-item" data-type="active" data-title="Active" ng-class="{'active': ($catalogue.lifecycleStatus | uppercase) == 'ACTIVE'}">
+                <span class="status" bs-tooltip data-title="Active"></span>
+              </div>
+              <div class="lifecycle-status-item" data-type="launched" data-title="Launched" ng-class="{'active': ($catalogue.lifecycleStatus | uppercase) == 'LAUNCHED'}">
+                <span class="status" bs-tooltip data-title="Launched"></span>
+              </div>
+              <div class="lifecycle-status-item" data-type="retired" data-title="Retired" ng-class="{'active': ($catalogue.lifecycleStatus | uppercase) == 'RETIRED'}">
+                <span class="status" bs-tooltip data-title="Retired"></span>
+              </div>
+              <div class="lifecycle-status-item" data-type="obsolete" data-title="Obsolete" ng-class="{'active': ($catalogue.lifecycleStatus | uppercase) == 'OBSOLETE'}">
+                <span class="status" bs-tooltip data-title="Obsolete"></span>
+              </div>
+            </div>
+            <ul class="nav nav-pills nav-justified">
+              <li ng-class="{'active': activeView == 'OfferingView'}"><a ng-click="showOfferingView()"><i class="fa fa-cube fa-fw"></i>&nbsp;Offerings</a></li>
+              <li ng-class="{'active': activeView == 'PartyView'}"><a ng-click="showPartyView()"><i class="fa fa-user fa-fw"></i>&nbsp;Parties</a></li>
+            </ul>
+          </div>
+        </div>
+        <div ng-switch on="activeView"> 
+          <div ng-switch-when="OfferingView">
+            <div class="panel panel-default">
+              <div class="panel-heading">
+                <div class="panel-title">Catalogue Offerings</div>
+              </div>
+              <div class="panel-body"></div>
+            </div>
+          </div>
+          <div ng-switch-when="PartyView">
+            <div class="panel panel-default">
+              <div class="panel-heading">
+                <div class="panel-title">Catalogue Parties</div>
+              </div>
+              <div class="panel-body">
+                <table class="table table-striped">
+                  <thead>
+                    <tr>
+                      <th>Username</th>
+                      <th>Owner</th>
+                      <th>Seller</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr ng-repeat="$party in $catalogue.relatedParty">
+                      <td>{{ $party.id }}</td>
+                      <td class="text-success"><i class="fa fa-check-circle-o" ng-if="$party.role == 'Owner'"></i></td>
+                      <td class="text-success"><i class="fa fa-check-circle-o" ng-if="$party.role == 'Seller'"></i></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal fade" ng-controller="CatalogueCreateCtrl" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+        <div class="modal-title">New catalogue</div>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <div class="col-sm-10 col-sm-offset-1">
+            <form name="catalogueCreateForm" novalidate>
+              <div class="form-group">
+                <label>Name</label>
+                <input type="text" class="form-control" name="name" ng-model="catalogueInfo.name" required>
+              </div>
+              <div class="form-group">
+                <label>Description</label>
+                <input type="text" class="form-control" name="description" ng-model="catalogueInfo.description" required>
+              </div>
+              <div class="form-group">
+                <label>Start datetime</label>
+                <input type="datetime-local" class="form-control" name="startDateTime" ng-model="catalogueInfo.validFor.startDateTime" required>
+              </div>
+              <div class="form-group">
+                <label>End datetime</label>
+                <input type="datetime-local" class="form-control" name="endDateTime" ng-model="catalogueInfo.validFor.endDateTime">
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-success" ng-click="create()" ng-disabled="!catalogueCreateForm.$valid">Create</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal fade" ng-controller="CatalogueUpdateCtrl" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+        <div class="modal-title">Catalogue settings</div>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <div class="col-sm-10 col-sm-offset-1">
+            <form name="catalogueUpdateForm" novalidate>
+              <div class="form-group">
+                <label>Name</label>
+                <input type="text" class="form-control" name="name" ng-model="$catalogue.name" required>
+              </div>
+              <div class="form-group">
+                <label>Description</label>
+                <input type="text" class="form-control" name="description" ng-model="$catalogue.description" required>
+              </div>
+              <div class="form-group">
+                <label>Start datetime</label>
+                <input type="datetime-local" class="form-control" name="startDateTime" ng-model="$catalogue.validFor.startDateTime" required>
+              </div>
+              <div class="form-group">
+                <label>End datetime</label>
+                <input type="datetime-local" class="form-control" name="endDateTime" ng-model="$catalogue.validFor.endDateTime">
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-success" ng-click="update()" ng-disabled="!catalogueUpdateForm.$valid">Save changes</button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,6 +1,7 @@
 var config = {};
 
-config.pepPort = 80;
+// The PORT used by 
+config.port = 80;
 
 // Set this var to undefined if you don't want the server to listen on HTTPS
 config.https = {
@@ -10,16 +11,25 @@ config.https = {
     port: 443
 };
 
-config.accountHost = 'https://account.lab.fiware.org';
-config.roles = {
-    'admin': '106',
-    'customer': '',
-    'seller': ''
-};
+// Express configuration
+config.proxyPrefix = '/proxy';
+config.portalPrefix = '';
+config.sessionSecret = 'keyboard cat';
 
-config.keystoneHost = 'cloud.lab.fiware.org';
-config.keystonePort = 4731;
+// OAuth2 configuration
+config.oauth2 = {
+    'server': 'https://account.lab.fiware.org',
+    'clientID': '--client-id--',
+    'clientSecret': '--client-secret--',
+    'callbackURL': '--callback-url--',
+    'roles': {
+        'admin': '106',
+        'customer': '',
+        'seller': ''
+    }
+}
 
+// TMForum APIs final paths
 config.appHost = '';
 
 // Configure endpoints
@@ -48,22 +58,6 @@ config.endpoints = {
 
 // Use true if the app server listens in https
 config.appSsl = false;
-
-// Credentials obtained when registering PEP Proxy in Account Portal
-config.username = '';
-config.password = '';
-
-// in seconds
-config.chacheTime = 300;
-
-// if enabled PEP checks permissions with AuthZForce GE. 
-// only compatible with oauth2 tokens engine
-config.azf = {
-	enabled: false,
-    host: 'auth.lab.fiware.org',
-    port: 6019,
-    path: '/authzforce/domains/d698df7f-ffd4-11e4-a09d-ed06f24e1e78/pdp'
-};
 
 // list of paths that will not check authentication/authorization
 // example: ['/public/*', '/static/css/']
