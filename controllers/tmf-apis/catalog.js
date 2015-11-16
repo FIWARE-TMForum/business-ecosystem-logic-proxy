@@ -54,7 +54,7 @@ var catalog = (function() {
             port: config.endpoints.catalog.port,
             path: productPath,
             method: 'GET',
-            headers: {'content-type': 'application/json'}
+            headers: {'accept': 'application/json'}
         };
 
         var protocol = config.appSsl ? 'https' : 'http';
@@ -125,7 +125,7 @@ var catalog = (function() {
             port: config.endpoints.catalog.port,
             path: req.url,
             method: 'GET',
-            headers: utils.proxiedRequestHeaders(req, req.headers)
+            headers: {'accept': 'application/json'}
         };
 
         var protocol = config.appSsl ? 'https' : 'http';
