@@ -1,4 +1,4 @@
-#PEP Proxy - Wilma
+#Business Ecosystem
 
 + [Introduction](#def-introduction)
 + [How to Build & Install](#def-build)
@@ -16,10 +16,10 @@
 
 This project is part of [FIWARE](http://fiware.org). You will find more information about this FIWARE GE [here](http://catalogue.fiware.org/enablers/pep-proxy-wilma).
 
-- You will find the source code of this project in GitHub [here](https://github.com/ging/fiware-pep-proxy)
+- You will find the source code of this project in GitHub [here](https://github.com/FIWARE-TMForum/business-ecosystem-logic-proxy)
 - You will find the documentation of this project in Read the Docs [here](http://fiware-pep-proxy.readthedocs.org/)
 
-Thanks to this component and together with Identity Management and Authorization PDP GEs, you will add authentication and authorization security to your backend applications. Thus, only FIWARE users will be able to access your GEs or REST services. But you will be able also to manage specific permissions and policies to your resources allowing different access levels to your users.
+This component handles the request to the TMForum APIs and applies a business logic layer so only certain users are allowed to perform certain operations. Additionally, this component offers a graphical user interface that can be used by end-users to access this set of APIs in a simpler way (without having REST knowledge).
 
 <a name="def-build"></a>
 ## How to Build & Install
@@ -32,73 +32,63 @@ Thanks to this component and together with Identity Management and Authorization
 
 - Clone Proxy repository:
 
-<pre>
-git clone https://github.com/ging/fiware-pep-proxy.git
-</pre>
+```
+git clone https://github.com/FIWARE-TMForum/business-ecosystem-logic-proxy
+```
 
 - Install the dependencies:
 
-<pre>
-cd fiware-pep-proxy/
+```
+cd business-ecosystem-logic-proxy/
 npm install
-</pre>
+```
 
-- Duplicate config.template in config.js and configure app host there. 
-
-<pre>
-config.app_host = 'www.google.es'; // Hostname to forward authenticated requests
-config.app_port = '80';            // Port where the HTTP server is running
-</pre>
+- Duplicate config.template in config.js and configure the service by setting the empty fields. 
 
 - Start proxy server
 
-<pre>
+```
 sudo node server
-</pre>
+```
 
 <a name="def-docker"></a>
 ### Docker
 
-We also provide a Docker image to facilitate you the building of this GE.
-
-- [Here](https://github.com/ging/fiware-pep-proxy/tree/master/extras/docker) you will find the Dockerfile and the documentation explaining how to use it.
-- In [Docker Hub](https://hub.docker.com/r/ging/fiware-pep-proxy/) you will find the public image.
+TO BE DONE
 
 <a name="def-api"></a>
 ## API Overview
 
-Requests to proxy should be made with a special HTTP Header: X-Auth-Token. 
+Requests to proxy should be made with a special HTTP Header: Authorization.
 This header contains the OAuth access token obtained from FIWARE IDM GE.
 
 Example of request:
 
-<pre>
+```
 GET / HTTP/1.1
 Host: proxy_host
-X-Auth-Token:z2zXk...ANOXvZrmvxvSg
-</pre>
+Authorization: Bearer z2zXk...ANOXvZrmvxvSg
+```
 
 To test the proxy you can generate this request running the following command:
 
-<pre>
-curl --header "X-Auth-Token:z2zXk...ANOXvZrmvxvSg" http://proxy_host
-</pre>
+```
+curl --header "Authorization: Bearer z2zXk...ANOXvZrmvxvSg" http://proxy_host
+```
 
 Once authenticated, the forwarded request will include additional HTTP headers with user info:
 
-<pre>
+```
 X-Nick-Name: nickname of the user in IdM
 X-Display-Name: display name of user in IdM
 X-Roles: roles of the user in IdM
 X-Organizations: organizations in IdM
-</pre>
+```
 
 <a name="def-advanced"></a>
 ## Advanced Documentation
 
-- [How to run tests](http://fiware-pep-proxy.readthedocs.org/en/latest/admin_guide#end-to-end-testing)
-- [User & Programmers Manual](http://fiware-pep-proxy.readthedocs.org/en/latest/user_guide/)
-- [Installation & Administration Guide](http://fiware-pep-proxy.readthedocs.org/en/latest/admin_guide/)
+TO BE DONE
 
 <a name="def-license"></a>
 ## License
