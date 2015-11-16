@@ -19,20 +19,20 @@ var bodyParser = require('body-parser'),
 /////////////////////////////////////////////////////////////////////
 
 var checkPrefix = function(prefix, byDefault) {
-  var finalPrefix = prefix === undefined ? byDefault : prefix;
+    var finalPrefix = prefix === undefined ? byDefault : prefix;
 
-  // Remove the last slash
-  if (finalPrefix.slice(-1) == '/') {
-    finalPrefix = finalPrefix.slice(0, -1);
-  }
+    // Remove the last slash
+    if (finalPrefix.slice(-1) == '/') {
+        finalPrefix = finalPrefix.slice(0, -1);
+    }
 
-  // If a prefix is set, the prefix MUST start with a slash
-  // When the prefix is not set, the slash is NOT required
-  if (finalPrefix.length > 0 && finalPrefix.charAt(0) !== '/') {
-    finalPrefix = '/' + finalPrefix;
-  }
+    // If a prefix is set, the prefix MUST start with a slash
+    // When the prefix is not set, the slash is NOT required
+    if (finalPrefix.length > 0 && finalPrefix.charAt(0) !== '/') {
+        finalPrefix = '/' + finalPrefix;
+    }
 
-  return finalPrefix;
+    return finalPrefix;
 }
 
 // TODO: Add more checkers
@@ -55,19 +55,20 @@ var PORT = config.https.enabled ?
     config.port || 80;           // HTTP
 
 var FIWARE_STRATEGY = new FIWAREStrategy({
-    clientID: config.oauth2.clientID,
-    clientSecret: config.oauth2.clientSecret,
-    callbackURL: config.oauth2.callbackURL
-  },
+        clientID: config.oauth2.clientID,
+        clientSecret: config.oauth2.clientSecret,
+        callbackURL: config.oauth2.callbackURL
+    },
 
-  function(accessToken, refreshToken, profile, done) {
-    profile['accessToken'] = accessToken;
-    done(null, profile);
-  });
+    function(accessToken, refreshToken, profile, done) {
+        profile['accessToken'] = accessToken;
+        done(null, profile);
+    }
+);
 
 // Avoid existing on uncaught Exceptions
 process.on('uncaughtException', function (err) {
-  log.error('Caught exception: ' + err);
+    log.error('Caught exception: ' + err);
 });
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
@@ -89,15 +90,15 @@ app.set('view engine', 'ejs');
 
 // Session
 app.use(session({
-  secret: config.sessionSecret,
-  resave: true,
-  saveUninitialized: true,
+    secret: config.sessionSecret,
+    resave: true,
+    saveUninitialized: true,
 }));
 
 // Generic middlewares for handle requests
 app.use(cookieParser());
 app.use(bodyParser.text({
-  type: '*/*'
+    type: '*/*'
 }));
 
 
@@ -106,23 +107,23 @@ app.use(bodyParser.text({
 /////////////////////////////////////////////////////////////////////
 
 var ensureAuthenticated = function(req, res, next) {
-  if (!req.isAuthenticated()) {
-    var state = {'came_from_path': req.path};
-    var encodedState = base64url(JSON.stringify(state));
-    // This action will redirect the user the FIWARE Account portal,
-    // so the next callback is not required to be called
-    passport.authenticate('fiware', { scope: ['all_info'], state: encodedState })(req, res);
-  } else {
-    next();
-  }
+    if (!req.isAuthenticated()) {
+        var state = {'came_from_path': req.path};
+        var encodedState = base64url(JSON.stringify(state));
+        // This action will redirect the user the FIWARE Account portal,
+        // so the next callback is not required to be called
+        passport.authenticate('fiware', { scope: ['all_info'], state: encodedState })(req, res);
+    } else {
+        next();
+    }
 }
 
 passport.serializeUser(function(user, done) {
-  done(null, user);
+    done(null, user);
 });
 
 passport.deserializeUser(function(obj, done) {
-  done(null, obj);
+    done(null, obj);
 });
 
 passport.use(FIWARE_STRATEGY);
@@ -132,12 +133,11 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // Handler for the callback
-app.get('/auth/fiware/callback', 
-  passport.authenticate('fiware', { failureRedirect: '/error' }),
+app.get('/auth/fiware/callback', passport.authenticate('fiware', { failureRedirect: '/error' }),
   function(req, res) {
-    var state = JSON.parse(base64url.decode(req.query.state));
-    var redirectPath = state.came_from_path !== undefined ? state.came_from_path : '/';
-    res.redirect(redirectPath);
+      var state = JSON.parse(base64url.decode(req.query.state));
+      var redirectPath = state.came_from_path !== undefined ? state.came_from_path : '/';
+      res.redirect(redirectPath);
   });
 
 
@@ -147,33 +147,33 @@ app.get('/auth/fiware/callback',
 
 var renderTemplate = function(req, res, customTitle, content, viewName) {
 
-  // TODO: Maybe an object with extra properties.
-  // To be implemented if required!!
+    // TODO: Maybe an object with extra properties.
+    // To be implemented if required!!
 
-  var validCustomTitle = customTitle !== undefined && customTitle !== '';
-  var title = validCustomTitle ? DEFAULT_TITLE + ' - ' + customTitle : DEFAULT_TITLE;
+    var validCustomTitle = customTitle !== undefined && customTitle !== '';
+    var title = validCustomTitle ? DEFAULT_TITLE + ' - ' + customTitle : DEFAULT_TITLE;
 
-  var properties = {
-    content: content,
-    viewName: viewName,
-    user: req.user,
-    title: title,
-    contextPath: config.portalPrefix,
-    proxyPath: config.proxyPrefix,
-    accountHost: config.oauth2.server
-  }
+    var properties = {
+        content: content,
+        viewName: viewName,
+        user: req.user,
+        title: title,
+        contextPath: config.portalPrefix,
+        proxyPath: config.proxyPrefix,
+        accountHost: config.oauth2.server
+    }
 
-  res.render('base', properties);
-  res.end();
+    res.render('base', properties);
+    res.end();
 
 }
 
 app.get(config.portalPrefix + '/', ensureAuthenticated, function(req, res) {
-  renderTemplate(req, res, 'Marketplace', 'home-content', 'Customer');
+    renderTemplate(req, res, 'Marketplace', 'home-content', 'Customer');
 });
 
 app.get(config.portalPrefix + '/mystock', ensureAuthenticated, function(req, res) {
-  renderTemplate(req, res, 'My Stock', 'mystock-content', 'Seller');
+    renderTemplate(req, res, 'My Stock', 'mystock-content', 'Seller');
 });
 
 
@@ -183,22 +183,22 @@ app.get(config.portalPrefix + '/mystock', ensureAuthenticated, function(req, res
 
 var headerAuthentication = function(req, res, next) {
 
-  try {
-    var authToken = utils.getAuthToken(req.headers);
-    FIWARE_STRATEGY.userProfile(authToken, function(err, userProfile) {
-      if (err) {
-        log.warn("The provider auth-token is not valid");
-        utils.sendUnauthorized(res, "invalid auth-token")
-      } else {
-        req.user = userProfile;
-        next();
-      }
-    })
+    try {
+        var authToken = utils.getAuthToken(req.headers);
+        FIWARE_STRATEGY.userProfile(authToken, function(err, userProfile) {
+            if (err) {
+                log.warn("The provider auth-token is not valid");
+                utils.sendUnauthorized(res, "invalid auth-token")
+            } else {
+                req.user = userProfile;
+                next();
+            }
+        });
 
-  } catch (err) {
-    log.warn(err)
-    utils.sendUnauthorized(res, err);
-  }
+    } catch (err) {
+        log.warn(err)
+        utils.sendUnauthorized(res, err);
+    }
 }
 
 // Middleware: Add CORS headers. Handle OPTIONS requests.

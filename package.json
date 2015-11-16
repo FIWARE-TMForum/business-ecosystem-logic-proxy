@@ -21,20 +21,16 @@
   },
   "contributors": [
     {
-      "name": "Alvaro Alonso",
-      "email": "aalonsog@dit.upm.es"
-    },
-    {
-      "name": "Javier Cerviño",
-      "email": "jcervino@dit.upm.es"
-    },
-    {
       "name": "Francisco de la Vega",
       "email": "fdelavega@conwet.com"
     },
     {
       "name": "Aitor Magán",
       "email": "amagan@conwet.com"
+    },
+    {
+      "name": "Jaime Pajuelo",
+      "email": "jpajuelo@conwet.com"
     }
   ]
 }
