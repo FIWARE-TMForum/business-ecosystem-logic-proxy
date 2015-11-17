@@ -133,12 +133,18 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // Handler for the callback
-app.get('/auth/fiware/callback', passport.authenticate('fiware', { failureRedirect: '/error' }),
-  function(req, res) {
-      var state = JSON.parse(base64url.decode(req.query.state));
-      var redirectPath = state.came_from_path !== undefined ? state.came_from_path : '/';
-      res.redirect(redirectPath);
-  });
+app.get('/auth/fiware/callback', passport.authenticate('fiware', { failureRedirect: '/error' }), function(req, res) {
+    var state = JSON.parse(base64url.decode(req.query.state));
+    var redirectPath = state.came_from_path !== undefined ? state.came_from_path : '/';
+    res.redirect(redirectPath);
+});
+
+// Handler to destroy sessions
+app.all('/logout', function(req, res) {
+    // Destroy the session and redirect the user to the main page
+    req.session.destroy();
+    res.redirect(config.oauth2.server + '/auth/logout');
+});
 
 
 /////////////////////////////////////////////////////////////////////
