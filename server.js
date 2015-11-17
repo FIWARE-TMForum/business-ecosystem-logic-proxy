@@ -211,7 +211,7 @@ var headerAuthentication = function(req, res, next) {
 app.use(function (req, res, next) {
     'use strict';
     res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Methods', 'HEAD, POST, GET, OPTIONS, DELETE');
+    res.header('Access-Control-Allow-Methods', 'HEAD, POST, GET, PATCH, PUT, OPTIONS, DELETE');
     res.header('Access-Control-Allow-Headers', 'origin, content-type, X-Auth-Token, Tenant-ID, Authorization');
     //log.debug("New Request: ", req.method);
     
