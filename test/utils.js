@@ -1,4 +1,5 @@
 var proxyquire =  require('proxyquire'),
+    reporters = require('jasmine-reporters'),
     utils = require('../lib/utils.js');
 
 describe('Utils', function() {
@@ -31,6 +32,13 @@ describe('Utils', function() {
             }
         }
     };
+
+    var junitReporter = new reporters.JUnitXmlReporter({
+        savePath: __dirname + '/..',    // The parent folder
+        consolidateAll: true,
+        filePrefix: 'xunit'
+    });
+    jasmine.getEnv().addReporter(junitReporter);
 
     beforeAll(function() {
         utils = proxyquire('../lib/utils', { './../config.js': config });
