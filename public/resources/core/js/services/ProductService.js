@@ -103,6 +103,17 @@ angular.module('app.services')
                 });
             },
 
+            update: function update($product, next) {
+                return Product.update({id: $product.id}, $product, function ($productUpdated) {
+
+                    if (next != null) {
+                        next($productUpdated);
+                    }
+                }, function (response) {
+                    // TODO: onfailure.
+                });
+            },
+
             getBrands: function getBrands(next) {
                 var params = {'relatedParty.id': LOGGED_USER.ID, 'fields': 'brand'};
 
@@ -124,6 +135,7 @@ angular.module('app.services')
         };
 
         Product = $resource(URLS.PRODUCT, {id: '@id'}, {
+            update: {method:'PUT'}
         });
 
         return service;

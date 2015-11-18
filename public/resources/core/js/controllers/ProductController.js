@@ -99,6 +99,34 @@ angular.module('app.controllers')
 
         $scope.resetCreateForm();
     }])
+    .controller('ProductUpdateCtrl', ['$scope', '$rootScope', 'EVENTS', 'Product', '$element', function ($scope, $rootScope, EVENTS, Product, $element) {
+
+        $scope.$product = {};
+
+        $scope.tabs = [
+            {name: 'General'}
+        ];
+
+        $scope.showTab = function showTab($index) {
+            $scope.tabs.forEach(function (tab) {
+                tab.active = false;
+            });
+            $scope.tabs[$index].active = true;
+        };
+
+        $scope.updateProduct = function updateProduct() {
+            Product.update($scope.$product, function ($productUpdated) {
+                $element.modal('hide');
+                $rootScope.$broadcast(EVENTS.MESSAGE_SHOW, 'success', 'The product <strong>{{ name }}</strong> was updated successfully.', $productUpdated);
+            });
+        };
+
+        $scope.$on(EVENTS.PRODUCT_UPDATEFORM_SHOW, function ($event, $product) {
+            $scope.$product = $product;
+            $scope.showTab(0);
+            $element.modal('show');
+        });
+    }])
     .controller('ProductView', ['$scope', '$rootScope', 'EVENTS', 'Product', function ($scope, $rootScope, EVENTS, Product) {
         Product.list(function () {
         });
