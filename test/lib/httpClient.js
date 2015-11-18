@@ -1,7 +1,8 @@
 var freeport = require('freeport'),
     nock = require('nock'),
     proxyquire =  require('proxyquire'),
-    reporters = require('jasmine-reporters');
+    reporters = require('jasmine-reporters'),
+    testUtils = require('../utils');
 
 describe('HTTP Client', function() {
 
@@ -13,17 +14,7 @@ describe('HTTP Client', function() {
     jasmine.getEnv().addReporter(junitReporter);
 
     var emptyFunction = function() {};
-    var httpClient = proxyquire('../../lib/httpClient.js', { './logger': {
-        logger: {
-            getLogger: function() {
-                return {
-                    'info': emptyFunction,
-                    'warn': emptyFunction,
-                    'err': emptyFunction
-                }
-            }
-        }
-    }});
+    var httpClient = proxyquire('../../lib/httpClient.js', { './logger': testUtils.emptyLogger });
 
     describe('Request', function() {
 

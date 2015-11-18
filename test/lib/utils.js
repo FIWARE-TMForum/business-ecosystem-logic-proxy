@@ -1,37 +1,10 @@
 var proxyquire =  require('proxyquire'),
     reporters = require('jasmine-reporters'),
-    utils = require('../lib/utils');
+    testUtils = require('../utils');
 
 describe('Utils', function() {
 
-    var config = {
-        oauth2: {
-            server: 'https://account.lab.fiware.org'
-        },
-        endpoints: {
-            'catalog': {
-                'path': 'catalog',
-                'port': '99'
-            },
-            'ordering': {
-                'path': 'ordering',
-                'port': '189'
-            },
-            'inventory': {
-                'path': 'inventory',
-                'port': '475'
-            },
-            'charging': {
-                'path': 'charging',
-                'port': '35'
-            },
-            'rss': {
-                'path': 'rss',
-                'port': '753'
-            }
-        }
-    };
-
+    var config = testUtils.getDefaultConfig();
     var utils = proxyquire('../../lib/utils', { './../config.js': config });
 
     // Set up reporter

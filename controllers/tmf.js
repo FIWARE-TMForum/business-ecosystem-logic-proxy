@@ -1,13 +1,13 @@
-var config = require('./../config.js'),
+var config = require('./../config'),
 
     // TMF APIs
-    catalog = require('./tmf-apis/catalog.js').catalog,
-    inventory = require('./tmf-apis/inventory.js').inventory,
-    ordering = require('./tmf-apis/ordering.js').ordering,
+    catalog = require('./tmf-apis/catalog').catalog,
+    inventory = require('./tmf-apis/inventory').inventory,
+    ordering = require('./tmf-apis/ordering').ordering,
     
     // Other dependencies
-    httpClient = require('./../lib/httpClient.js'),
-    utils = require('./../lib/utils.js'),
+    httpClient = require('./../lib/httpClient'),
+    utils = require('./../lib/utils'),
     log = require('./../lib/logger').logger.getLogger("TMF"),
     url = require('url');
 
@@ -52,7 +52,7 @@ var tmf = (function() {
         var api = url.parse(req.url).path.split('/')[1];
 
         if (apiControllers[api] === undefined) {
-            sendError(res, 404, 'Path not found')
+            sendError(res, 404, 'Path not found');
         } else {
             apiControllers[api].checkPermissions(req, function() {
                 redirRequest(req, res);
