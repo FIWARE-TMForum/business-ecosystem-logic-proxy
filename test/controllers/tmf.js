@@ -19,6 +19,9 @@ describe('TMF Controller', function() {
                 'Authorization': 'Bearer EXAMPLE',
                 'Accept': 'application/json'
             }
+        },
+        attachUserHeaders: function(headers, userInfo) {
+            headers['X-Nick-Name'] = userInfo.id;
         }
     }
 
@@ -203,7 +206,14 @@ describe('TMF Controller', function() {
             var tmf = getTmfInstance(httpClient, catalogController, orderingController, inventoryController);
 
             // Actual call
-            var req = { url: 'http://example.com/' + api, body: 'Example', method: method };
+            var req = { 
+                url: 'http://example.com/' + api, 
+                body: 'Example', 
+                method: method, 
+                user: {'id': 'user'}, 
+                headers: {} 
+            };
+            
             var res = jasmine.createSpyObj('res', ['status', 'send', 'end']);
             tmf.checkPermissions(req, res);
 
