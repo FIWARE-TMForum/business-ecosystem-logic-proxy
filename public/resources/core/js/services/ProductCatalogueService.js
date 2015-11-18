@@ -53,13 +53,10 @@ angular.module('app.services')
             create: function create(data, next) {
 
                 angular.extend(data, {
-                    version: "",
-                    type: service.TYPE,
                     lifecycleStatus: service.STATUS.ACTIVE,
-                    category: [],
                     relatedParty: [
                         {
-                            id: LOGGED_USER.USERNAME,
+                            id: LOGGED_USER.ID,
                             href: LOGGED_USER.HREF,
                             role: service.ROLES.OWNER
                         }

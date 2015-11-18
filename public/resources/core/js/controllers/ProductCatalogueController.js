@@ -74,21 +74,25 @@ angular.module('app.controllers')
         });
     }])
     .controller('CatalogueCreateCtrl', ['$scope', '$rootScope', 'EVENTS', 'Catalogue', '$element', function ($scope, $rootScope, EVENTS, Catalogue, $element) {
+        var initialInfo = {};
 
-        $scope.catalogueInfo = {};
-
-        $scope.create = function create() {
-            ProductCatalogue.create($scope.catalogueInfo, function ($catalogueCreated) {
+        $scope.createCatalogue = function createCatalogue() {
+            Catalogue.create($scope.catalogueInfo, function ($catalogueCreated) {
                 $element.modal('hide');
+                $rootScope.$broadcast(EVENTS.MESSAGE_SHOW, 'success', 'The catalogue <strong>{{ name }}</strong> was created successfully.', $catalogueCreated);
             });
         };
 
+        $scope.resetCreateForm = function resetCreateForm() {
+            $scope.catalogueInfo = angular.copy(initialInfo);
+        };
+
         $scope.$on(EVENTS.CATALOGUE_CREATEFORM_SHOW, function ($event) {
-            $scope.catalogueInfo = {
-                validFor: {startDateTime: new Date()}
-            };
+            $scope.resetCreateForm();
             $element.modal('show');
         });
+
+        $scope.resetCreateForm();
     }])
     .controller('CatalogueUpdateCtrl', ['$scope', '$rootScope', 'EVENTS', 'Catalogue', '$element', function ($scope, $rootScope, EVENTS, Catalogue, $element) {
 
