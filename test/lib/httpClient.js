@@ -46,9 +46,8 @@ describe('HTTP Client', function() {
             });
         });
         
-        var testAppropriateCallback = function(statusCode, requestOk, done) {
+        var testAppropriateCallback = function(protocol, statusCode, requestOk, done) {
             // Setting up the environment
-            var protocol = 'http';
             var host = 'example.com';
             var port = '80';
             var path = '/user/1';
@@ -104,16 +103,20 @@ describe('HTTP Client', function() {
         }
 
         it('should call OK callback when status code is 200', function(done) {
-            testAppropriateCallback(200, true, done);
+            testAppropriateCallback('http', 200, true, done);
         });
 
         // Test bug: OK callback was only called for requests with 200 status
         it('should call OK callback when status code is 299', function(done) {
-            testAppropriateCallback(299, true, done);
+            testAppropriateCallback('http', 299, true, done);
         });
 
         it('should call error callback when status code is not 2XX', function(done) {
-            testAppropriateCallback(400, false, done);
+            testAppropriateCallback('http', 400, false, done);
+        });
+
+        it('should use the HTTPs library when required', function(done) {
+            testAppropriateCallback('https', 200, true, done);
         });
 
         var testWithBody = function(method, bodyExpected, done) {
