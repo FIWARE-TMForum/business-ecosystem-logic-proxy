@@ -98,14 +98,27 @@ angular.module('app.controllers')
 
         $scope.$catalogue = {};
 
-        $scope.update = function update() {
+        $scope.tabs = [
+            {name: 'General'}
+        ];
+
+        $scope.updateCatalogue = function updateCatalogue() {
             Catalogue.update($scope.$catalogue, function ($catalogueUpdated) {
                 $element.modal('hide');
+                $rootScope.$broadcast(EVENTS.MESSAGE_SHOW, 'success', 'The catalogue <strong>{{ name }}</strong> was updated successfully.', $catalogueUpdated);
             });
+        };
+
+        $scope.showTab = function showTab($index) {
+            $scope.tabs.forEach(function (tab) {
+                tab.active = false;
+            });
+            $scope.tabs[$index].active = true;
         };
 
         $scope.$on(EVENTS.CATALOGUE_UPDATEFORM_SHOW, function ($event, $catalogue) {
             $scope.$catalogue = $catalogue;
+            $scope.showTab(0);
             $element.modal('show');
         });
     }])
