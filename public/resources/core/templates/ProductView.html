@@ -34,45 +34,93 @@
           </div>
         </form>
         <div class="pull-right">
-          <button type="button" class="btn btn-primary" bs-tooltip data-title="New product"><i class="fa fa-file fa-fw"></i>&nbsp;New product</button>
-          <button type="button" class="btn btn-primary" bs-tooltip data-title="New product bundle" ng-disabled="!canCreateBundle()"><i class="fa fa-archive fa-fw"></i>&nbsp;New bundle</button>
+          <button type="button" class="btn btn-primary" bs-tooltip data-title="New product" ng-click="showCreateForm()"><i class="fa fa-file fa-fw"></i>&nbsp;New product</button>
+          <div class="btn-group">
+            <button type="button" class="btn btn-default" ng-class="{'active': resultsView == 1}" ng-click="changeResultsView(1)"><i class="fa fa-fw fa-th-list"></i></button>
+            <button type="button" class="btn btn-default" ng-class="{'active': resultsView == 0}" ng-click="changeResultsView(0)"><i class="fa fa-fw fa-th"></i></button>
+          </div>
         </div>
       </div>
     </div>
   </div>
-  <div class="col-sm-12 flex-container">
-    <div class="alert alert-warning" ng-if="noResults">
+  <div class="col-sm-12 flex-container" ng-if="!$productList.length">
+    <div class="alert alert-warning">
       There are no results that match your search.
     </div>
-    <div class="panel panel-default product product-grid" ng-repeat="$product in $productList" ng-class="{'active': isSelected($product)}">
-      <div class="panel-heading">
-        <a class="thumbnail product-logo">
-          <img src="{{ getPicture($product) }}">
-        </a>
-        <div class="panel-title">{{ $product.name }}</div>
-        <div class="panel-subtitle"><span ng-if="$product.version">v{{ $product.version }}&nbsp;·&nbsp;</span>{{ $product.brand }}</div>
-        <div class="panel-options text-right">
-          <button type="button" class="btn btn-sm btn-primary" bs-tooltip data-title="Add to bundle" ng-class="{'active': isSelected($product)}" ng-click="selectProduct($product)"><i class="fa fa-clipboard fa-fw"></i></button>
-          <button type="button" class="btn btn-sm btn-default" bs-tooltip data-title="View details" ng-click="showUpdateForm()"><i class="fa fa-list-alt fa-fw"></i></button>
-        </div>
-      </div>
-      <div class="panel-body">
-        <div class="label-group">
-          <div ng-switch on="$product.isBundle">
-            <div ng-switch-when="false">
-              <span class="label label-product">Product</span>
-            </div>
-            <div ng-switch-default>
-              <span class="label label-product-bundle">Product bandle</span>
+  </div>
+  <div ng-switch on="resultsView">
+    <div ng-switch-when="0">
+      <div class="col-sm-12 flex-container">
+        <div class="panel panel-default product product-grid" ng-repeat="$product in $productList" ng-class="{'active': isSelected($product)}">
+          <div class="panel-heading">
+            <a class="thumbnail product-logo" ng-click="showUpdateForm($product)">
+              <img src="{{ getPicture($product) }}">
+            </a>
+            <div class="panel-title">{{ $product.name }}</div>
+            <div class="panel-subtitle"><span ng-if="$product.version">v{{ $product.version }}&nbsp;·&nbsp;</span>{{ $product.brand }}</div>
+            <div class="panel-options text-right">
+              <button type="button" class="btn btn-sm btn-primary" bs-tooltip data-title="Add to bundle" ng-class="{'active': isSelected($product)}" ng-click="selectProduct($product)"><i class="fa fa-clipboard fa-fw"></i></button>
+              <button type="button" class="btn btn-sm btn-default" bs-tooltip data-title="Settings" ng-click="showUpdateForm($product)"><i class="fa fa-cog fa-fw"></i></button>
             </div>
           </div>
-        </div>
-        <div class="lifecycle-status-group">
-          <div class="lifecycle-status-item active" data-type="{{ $product.lifecycleStatus | lowercase }}" data-title="{{ $product.lifecycleStatus }}">
-            <span class="status" bs-tooltip data-original-title="{{ $product.lifecycleStatus }}"></span>
+          <div class="panel-body">
+            <div class="label-group">
+              <div ng-switch on="$product.isBundle">
+                <div ng-switch-when="false">
+                  <span class="label label-product">Product</span>
+                </div>
+                <div ng-switch-default>
+                  <span class="label label-product-bundle">Product bandle</span>
+                </div>
+              </div>
+            </div>
+            <div class="lifecycle-status-group">
+              <div class="lifecycle-status-item active" data-type="{{ $product.lifecycleStatus | lowercase }}" data-title="{{ $product.lifecycleStatus }}">
+                <span class="status" bs-tooltip data-original-title="{{ $product.lifecycleStatus }}"></span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
+    <div ng-switch-default>
+      <div class="col-sm-12">
+        <table class="table table-bordered table-hover" ng-if="$productList.length">
+          <thead>
+            <tr>
+              <th>ID Number</th>
+              <th>Status</th>
+              <th>Name</th>
+              <th>Version</th>
+              <th>Brand</th>
+              <th>Type</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr ng-repeat="$product in $productList" ng-class="{'active': isSelected($product)}">
+              <th>{{ $product.productNumber }}</th>
+              <td><span class="lifecycle-status status-{{ $product.lifecycleStatus | lowercase }}" bs-tooltip data-original-title="{{ $product.lifecycleStatus }}"></span></td>
+              <td><a ng-click="showUpdateForm($product)">{{ $product.name }}</a></td>
+              <td>{{ $product.version }}</td>
+              <td>{{ $product.brand }}</td>
+              <td>
+                <div ng-switch on="$product.isBundle">
+                  <div ng-switch-when="false"><span class="label label-product">Product</span></div>
+                  <div ng-switch-default><span class="label label-product-bundle">Product bandle</span></div>
+                </div>
+              </td>
+              <td><button type="button" class="btn btn-sm btn-primary" bs-tooltip data-title="Add to bundle" ng-class="{'active': isSelected($product)}" ng-click="selectProduct($product)"><i class="fa fa-clipboard fa-fw"></i></button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-12" ng-if="$productList.length">
+    <ul class="pager">
+      <li class="disabled"><a><i class="fa fa-arrow-left"></i></a></li>
+      <li class="disabled"><a><i class="fa fa-arrow-right"></i></a></li>
+    </ul>
   </div>
 </div>

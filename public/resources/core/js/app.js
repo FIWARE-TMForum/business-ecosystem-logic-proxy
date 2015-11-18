@@ -4,6 +4,9 @@
 
 angular.module('app')
     .constant('EVENTS', {
+        PRODUCT_CREATE: '$productCreate',
+        PRODUCT_CREATEFORM_SHOW: '$productCreateFormShow',
+        PRODUCT_UPDATEFORM_SHOW: '$productUpdateFormShow',
         CATALOGUE_SHOW: '$catalogueShow',
         CATALOGUE_SELECT: '$catalogueSelect',
         CATALOGUE_CREATEFORM_SHOW: '$catalogueCreateFormShow',

@@ -18,8 +18,6 @@ angular.module('app.controllers')
             brand: ""
         };
 
-        $scope.noResults = false;
-
         $scope.canCreateBundle = function canCreateBundle() {
             return  $scope.$productBundleList.length > 1;
         };
@@ -27,18 +25,34 @@ angular.module('app.controllers')
         $scope.getPicture = function getPicture($product) {
             var i, src = "";
 
-            for (i = 0; i < $product.attachment.length; i++) {
-                if ($product.attachment[i].type == 'Picture') {
-                    return $product.attachment[i].url;
+            if ('attachment' in $product) {
+                for (i = 0; i < $product.attachment.length && !src.length; i++) {
+                    if ($product.attachment[i].type == 'Picture') {
+                        src = $product.attachment[i].url;
+                    }
                 }
             }
 
             return src;
         };
 
+        $scope.resultsView = 0;
+
+        $scope.changeResultsView = function changeResultsView($index) {
+            $scope.resultsView = $index;
+        };
+
+        $scope.showCreateForm = function showCreateForm() {
+            $rootScope.$broadcast(EVENTS.PRODUCT_CREATEFORM_SHOW, $scope.canCreateBundle() ? $scope.$productBundleList : []);
+        };
+
+        $scope.showUpdateForm = function showUpdateForm($product) {
+            $rootScope.$broadcast(EVENTS.PRODUCT_UPDATEFORM_SHOW, $product);
+        };
+
         $scope.filterList = function filterList() {
+            $scope.$productBundleList.length = 0;
             Product.filter($scope.filters, function ($filteredList) {
-                $scope.noResults = !$filteredList.length;
             });
         };
 
@@ -56,6 +70,10 @@ angular.module('app.controllers')
 
         Product.getBrands(function ($brands) {
             angular.copy($brands, $scope.$productBrandList);
+        });
+
+        $scope.$on(EVENTS.PRODUCT_CREATE, function ($event, $productCreated) {
+            $scope.$productBundleList.length = 0;
         });
     }])
     .controller('ProductView', ['$scope', '$rootScope', 'EVENTS', 'Product', function ($scope, $rootScope, EVENTS, Product) {
