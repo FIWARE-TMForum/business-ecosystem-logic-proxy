@@ -19,7 +19,9 @@
     "jasmine": "2.3.2",
     "jasmine-reporters": "2.0.7",
     "istanbul": "0.4.0",
-    "proxyquire": "1.7.3"
+    "proxyquire": "1.7.3",
+    "freeport": "1.0.5",
+    "nock": "3.1.0"
   },
   "scripts": {
     "test": "./node_modules/.bin/istanbul cover --report cobertura --include-all-sources ./node_modules/.bin/jasmine"

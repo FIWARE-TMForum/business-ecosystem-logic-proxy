@@ -1,10 +1,9 @@
 var proxyquire =  require('proxyquire'),
     reporters = require('jasmine-reporters'),
-    utils = require('../lib/utils.js');
+    utils = require('../lib/utils');
 
 describe('Utils', function() {
 
-    var utils;
     var config = {
         oauth2: {
             server: 'https://account.lab.fiware.org'
@@ -33,16 +32,16 @@ describe('Utils', function() {
         }
     };
 
+    var utils = proxyquire('../../lib/utils', { './../config.js': config });
+
+    // Set up reporter
     var junitReporter = new reporters.JUnitXmlReporter({
-        savePath: __dirname + '/..',    // The parent folder
+        savePath: __dirname + '/../..',    // The main folder of the project
         consolidateAll: true,
         filePrefix: 'xunit'
     });
     jasmine.getEnv().addReporter(junitReporter);
 
-    beforeAll(function() {
-        utils = proxyquire('../lib/utils', { './../config.js': config });
-    });
 
 
     describe('Attach User Headers', function() {
