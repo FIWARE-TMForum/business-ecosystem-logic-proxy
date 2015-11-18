@@ -11,6 +11,7 @@
     <script src="<%= contextPath %>/resources/jquery-1.11.3/js/jquery.js"></script>
     <script src="<%= contextPath %>/resources/bootstrap-3.3.5/js/bootstrap.js"></script>
     <script src="<%= contextPath %>/resources/angular-1.4.7/js/angular.js"></script>
+    <script src="<%= contextPath %>/resources/angular-1.4.7/js/angular-messages.js"></script>
     <script src="<%= contextPath %>/resources/angular-1.4.7/js/angular-resource.js"></script>
     <script src="<%= contextPath %>/resources/angular-1.4.7/js/angular-route.js"></script>
     <script>
@@ -33,6 +34,7 @@
     <script src="<%= contextPath %>/resources/core/js/services/ProductService.js"></script>
     <script src="<%= contextPath %>/resources/core/js/services/ProductCatalogueService.js"></script>
     <script src="<%= contextPath %>/resources/core/js/services/ProductCategoryService.js"></script>
+    <script src="<%= contextPath %>/resources/core/js/controllers/MessageController.js"></script>
     <script src="<%= contextPath %>/resources/core/js/controllers/UserController.js"></script>
     <script src="<%= contextPath %>/resources/core/js/controllers/ProductController.js"></script>
     <script src="<%= contextPath %>/resources/core/js/controllers/ProductOfferingController.js"></script>
@@ -69,6 +71,14 @@
         </div>
       </div>
     </nav>
+    <div class="notification-list" ng-controller="MessageListCtrl">
+      <div class="container" ng-messages="$alert" ng-if="!hidden">
+        <div ng-message="success" class="alert alert-success">
+          <button type="button" class="close" ng-click="resetAlert()"><i class="fa fa-fw fa-remove"></i></button>
+          <span class="alert-message" ng-bind-html="$alert.message"></span>
+        </div>
+      </div>
+    </div>
     <div class="container">
       <%- include(content) %>
       <div id="settings-modal" class="modal fade" tabindex="-1">

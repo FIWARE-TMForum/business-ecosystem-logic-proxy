@@ -9,7 +9,8 @@ angular.module('app')
         CATALOGUE_CREATEFORM_SHOW: '$catalogueCreateFormShow',
         CATALOGUE_UPDATEFORM_SHOW: '$catalogueUpdateFormShow',
         CATEGORY_SHOW: '$categoryShow',
-        CATEGORY_SELECT: '$categorySelect'
+        CATEGORY_SELECT: '$categorySelect',
+        MESSAGE_SHOW: '$messageShow'
     })
     .directive('bsTooltip', function () {
         return {
