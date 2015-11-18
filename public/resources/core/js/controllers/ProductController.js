@@ -76,6 +76,29 @@ angular.module('app.controllers')
             $scope.$productBundleList.length = 0;
         });
     }])
+    .controller('ProductCreateCtrl', ['$scope', '$rootScope', 'EVENTS', 'Product', '$element', function ($scope, $rootScope, EVENTS, Product, $element) {
+        var initialInfo = {version: '0.1', bundledProductSpecification: []};
+
+        $scope.createProduct = function createProduct() {
+            Product.create($scope.productInfo, function ($productCreated) {
+                $element.modal('hide');
+                $rootScope.$broadcast(EVENTS.MESSAGE_SHOW, 'success', 'The product <strong>{{ name }}</strong> was created successfully.', $productCreated);
+                $rootScope.$broadcast(EVENTS.PRODUCT_CREATE, $productCreated);
+            });
+        };
+
+        $scope.resetCreateForm = function resetCreateForm() {
+            $scope.productInfo = angular.copy(initialInfo);
+        };
+
+        $scope.$on(EVENTS.PRODUCT_CREATEFORM_SHOW, function ($event, $productBundleList) {
+            $scope.resetCreateForm();
+            angular.copy($productBundleList, $scope.productInfo.bundledProductSpecification);
+            $element.modal('show');
+        });
+
+        $scope.resetCreateForm();
+    }])
     .controller('ProductView', ['$scope', '$rootScope', 'EVENTS', 'Product', function ($scope, $rootScope, EVENTS, Product) {
         Product.list(function () {
         });

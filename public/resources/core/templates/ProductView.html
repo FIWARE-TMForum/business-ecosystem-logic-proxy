@@ -124,3 +124,81 @@
     </ul>
   </div>
 </div>
+<div class="modal fade" ng-controller="ProductCreateCtrl" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+        <div class="modal-title">{{ productInfo.bundledProductSpecification.length ? 'New bundle product' : 'New product' }}</div>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <div class="col-sm-10 col-sm-offset-1">
+            <ul class="nav nav-steps nav-justified">
+              <li class="active"><a data-target=".tab-product-create-form" data-toggle="tab">1. General</a></li>
+            </ul>
+            <div class="tab-content">
+              <div class="tab-pane tab-product-create-form active">
+                <form name="productCreateForm" novalidate>
+                  <div class="form-group">
+                    <div class="row">
+                      <div class="col-sm-8">
+                        <label>Name</label>
+                        <input type="text" class="form-control" name="name" ng-model="productInfo.name" required>
+                      </div>
+                      <div class="col-sm-4">
+                        <label>Version</label>
+                        <input type="text" class="form-control" name="version" ng-model="productInfo.version" required>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <div class="row">
+                      <div class="col-sm-8">
+                        <label>Brand</label>
+                        <input type="text" class="form-control" name="brand" ng-model="productInfo.brand" required>
+                      </div>
+                      <div class="col-sm-4">
+                        <label>ID Number</label>
+                        <input type="text" class="form-control" name="productNumber" ng-model="productInfo.productNumber" required>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label>Description <small class="text-muted">optional</small></label>
+                    <textarea class="form-control" name="description" rows="3" ng-model="productInfo.description"></textarea>
+                  </div>
+                  <div class="form-group" ng-if="productInfo.bundledProductSpecification.length">
+                    <label>Bundled products</label>
+                    <table class="table table-bordered">
+                      <thead>
+                        <tr>
+                          <th>ID Number</th>
+                          <th>Name</th>
+                          <th>Version</th>
+                          <th>Brand</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr ng-repeat="$product in productInfo.bundledProductSpecification">
+                          <th>{{ $product.productNumber }}</th>
+                          <td>{{ $product.name }}</td>
+                          <td>{{ $product.version }}</td>
+                          <td>{{ $product.brand }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-success" ng-click="createProduct()" ng-disabled="!productCreateForm.$valid">Create</button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -6,6 +6,13 @@ angular.module('app.services')
     .factory('Product', ['$resource', 'URLS', 'User', 'LOGGED_USER', function ($resource, URLS, User, LOGGED_USER) {
         var Product, service;
 
+        var serializeProduct = function serializeProduct($product) {
+            return {
+                id: $product.id,
+                href: $product.href
+            };
+        };
+
         service = {
 
             TYPES: {
@@ -18,6 +25,10 @@ angular.module('app.services')
                 LAUNCHED: 'Launched',
                 RETIRED: 'Retired',
                 OBSOLETE: 'Obsolete'
+            },
+
+            ROLES: {
+                OWNER: 'Owner'
             },
 
             $collection: [],
@@ -58,6 +69,34 @@ angular.module('app.services')
 
                     if (next != null) {
                         next(service.$collection);
+                    }
+                }, function (response) {
+                    // TODO: onfailure.
+                });
+            },
+
+            create: function create(data, next) {
+
+                angular.extend(data, {
+                    lifecycleStatus: service.STATUS.ACTIVE,
+                    isBundle: !!data.bundledProductSpecification.length,
+                    bundledProductSpecification: data.bundledProductSpecification.map(function ($product) {
+                        return serializeProduct($product);
+                    }),
+                    relatedParty: [
+                        {
+                            id: LOGGED_USER.ID,
+                            href: LOGGED_USER.HREF,
+                            role: service.ROLES.OWNER
+                        }
+                    ]
+                });
+
+                return Product.save(data, function ($catalogueCreated) {
+                    service.$collection.unshift($catalogueCreated);
+
+                    if (next != null) {
+                        next($catalogueCreated);
                     }
                 }, function (response) {
                     // TODO: onfailure.
