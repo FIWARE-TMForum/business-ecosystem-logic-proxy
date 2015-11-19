@@ -25,16 +25,8 @@
             <div class="alert alert-info">No catalogs found.</div>
           </div>
           <div ng-switch-default>
-            <div ng-if="hasRoleAsOwner($catalogueItem)">
-              <div class="list-group">
-                <a class="list-group-item has-badge active" ng-click="select($catalogueItem)">
-                  <span class="badge badge-status status-{{ $catalogueItem.lifecycleStatus | lowercase }}"></span>{{ $catalogueItem.name }}
-                </a>
-              </div>
-              <hr>
-            </div>
             <div class="list-group">
-              <a class="list-group-item has-badge" ng-repeat="$catalogue in filterByRoleOwner()" ng-class="{'disabled': isSelected($catalogue)}" ng-click="select($catalogue)">
+              <a class="list-group-item has-badge" ng-repeat="$catalogue in filterByRoleOwner()" ng-class="{'active': isSelected($catalogue)}" ng-click="select($catalogue)">
                 <span class="badge badge-status status-{{ $catalogue.lifecycleStatus | lowercase }}"></span>{{ $catalogue.name }}
               </a>
             </div>
@@ -56,16 +48,8 @@
             <div class="alert alert-info">No catalogs found.</div>
           </div>
           <div ng-switch-default>
-            <div ng-if="hasRoleAsSeller($catalogueItem)">
-              <div class="list-group">
-                <a class="list-group-item has-badge active" ng-click="select($catalogueItem)">
-                  <span class="badge badge-status status-{{ $catalogueItem.lifecycleStatus | lowercase }}"></span>{{ $catalogueItem.name }}
-                </a>
-              </div>
-              <hr>
-            </div>
             <div class="list-group">
-              <a class="list-group-item has-badge" ng-repeat="$catalogue in filterByRoleSeller()" ng-class="{'disabled': isSelected($catalogue)}" ng-click="select($catalogue)">
+              <a class="list-group-item has-badge" ng-repeat="$catalogue in filterByRoleSeller()" ng-class="{'active': isSelected($catalogue)}" ng-click="select($catalogue)">
                 <span class="badge badge-status status-{{ $catalogue.lifecycleStatus | lowercase }}"></span>{{ $catalogue.name }}
               </a>
             </div>
