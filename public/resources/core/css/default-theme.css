@@ -31,6 +31,10 @@ hr.fiware-line {
     border-bottom: 1px solid rgb(025, 060, 105);
 }
 
+p {
+    margin-bottom: 5px;
+}
+
 .text-muted {
     color: rgb(130, 130, 130);
 }
@@ -39,6 +43,11 @@ hr.fiware-line {
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;
+}
+
+.text-small {
+    font-size: 13px;
+    line-height: 20px;
 }
 
 blockquote {
@@ -529,6 +538,7 @@ textarea {
     content: attr(data-title);
 }
 .list-group-item > .status-active,
+.list-group-item.active > .status-active,
 .lifecycle-status-item.active[data-type="active"]:before,
 .lifecycle-status-item.active[data-type="active"] > .status,
 .status-active {
@@ -621,6 +631,8 @@ a.list-group-item:focus {
 a.list-group-item.active,
 a.list-group-item.active:hover,
 a.list-group-item.active:focus {
+    cursor: pointer;
+    pointer-events: none;
     color: rgb(250, 120, 040);
     background-color: rgb(252, 252, 252);
     border-color: rgb(250, 120, 040);
@@ -687,6 +699,7 @@ a.thumbnail > img {
     border-radius: 0;
 }
 .panel-heading {
+    padding: 15px;
     border-bottom: none;
     border-top-left-radius: 0;
     border-top-right-radius: 0;
@@ -696,17 +709,17 @@ a.thumbnail > img {
 }
 
 .panel-title {
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 700;
     line-height: 20px;
     text-transform: uppercase;
 }
 .panel-title > small {
-    font-size: 80%;
+    font-size: 70%;
 }
 
 .panel-subtitle {
-    font-size: 12px;
+    font-size: 13px;
     line-height: 20px;
 }
 
