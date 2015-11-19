@@ -31,6 +31,10 @@ hr.fiware-line {
     border-bottom: 1px solid rgb(025, 060, 105);
 }
 
+.text-muted {
+    color: rgb(130, 130, 130);
+}
+
 .text-ellipsis {
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -63,6 +67,19 @@ blockquote p {
 }
 
 /* ===================================================================================
+ *   COMPONENT - TABLE
+ * =================================================================================== */
+
+.table {
+    margin-bottom: 15px;
+}
+
+.table-hover > tbody > tr.active > th {
+    border-left-width: 2px;
+    border-left-color: rgb(250, 120, 040);
+}
+
+/* ===================================================================================
  *   COMPONENT - FORM-CONTROL
  * =================================================================================== */
 
@@ -70,9 +87,14 @@ blockquote p {
     margin-bottom: 15px;
 }
 
+textarea {
+    resize: none;
+}
+
 .form-control {
     border-color: rgb(200, 200, 200);
     border-radius: 0;
+    box-shadow: none;
 }
 
 /* ===================================================================================
@@ -86,6 +108,11 @@ blockquote p {
 .btn.active {
     -webkit-box-shadow: none;
             box-shadow: none;
+}
+.btn:focus,
+.btn:active:focus,
+.btn.active:focus {
+    outline: none;
 }
 .btn[disabled],
 .btn.disabled {
@@ -221,6 +248,21 @@ blockquote p {
 
 .nav-tabs {
     margin-bottom: 15px;
+    border-bottom-color: rgb(220, 220, 220);
+}
+
+.nav-tabs > li > a:hover,
+.nav-tabs > li > a:focus {
+    background-color: rgb(252, 252, 252);
+    border-color: rgb(252, 252, 252) rgb(252, 252, 252) rgb(220, 220, 220);
+}
+.nav-tabs > li.active > a,
+.nav-tabs > li.active > a:hover,
+.nav-tabs > li.active > a:focus {
+    color: rgb(250, 120, 040);
+    background-color: rgb(255, 255, 255);
+    border-color: rgb(220, 220, 220);
+    border-bottom-color: transparent;
 }
 
 /* ===================================================================================
@@ -245,6 +287,28 @@ blockquote p {
     color: rgb(250, 120, 040);
     background-color: rgb(252, 252, 252);
     border-color: rgb(250, 120, 040);
+}
+
+/* ===================================================================================
+ *   COMPONENT - NAV-STEPS
+ * =================================================================================== */
+
+.nav-steps {
+    margin-bottom: 15px;
+}
+
+.nav-steps > li > a:hover,
+.nav-steps > li > a:focus {
+    color: rgb(070, 180, 200);
+    background-color: rgb(252, 252, 252);
+    border-color: rgb(070, 180, 200);
+}
+.nav-steps > li.active > a,
+.nav-steps > li.active > a:hover,
+.nav-steps > li.active > a:focus {
+    color: rgb(255, 255, 255);
+    background-color: rgb(030, 060, 110);
+    border-color: rgb(030, 060, 110);
 }
 
 /* ===================================================================================
@@ -330,6 +394,23 @@ blockquote p {
 
 .navbar-static-top {
     margin-bottom: 50px;
+}
+
+/* ===================================================================================
+ *   COMPONENT - NOTIFICATION
+ * =================================================================================== */
+
+.notification-list {
+    position: fixed;
+    display: block;
+    z-index: 100;
+    top: 80px;
+    left: 0;
+    right: 0;
+}
+
+.notification-list .alert {
+    display: inline-block;
 }
 
 /* ===================================================================================
@@ -433,7 +514,8 @@ blockquote p {
     line-height: 20px;
     color: rgb(80, 80, 80);
 }
-.lifecycle-status-item > .status {
+.lifecycle-status-item > .status,
+.lifecycle-status {
     position: relative;
     display: inline-block;
     padding: 5px;
@@ -489,9 +571,16 @@ blockquote p {
  * =================================================================================== */
 
 .alert {
+    position: relative;
     padding: 10px 15px;
     margin-bottom: 15px;
     border-radius: 0;
+}
+.alert > .close {
+    margin-left: 5px;
+    margin-right: -5px;
+    font-size: 14px;
+    line-height: 20px;
 }
 
 /* ===================================================================================
@@ -639,7 +728,7 @@ a.thumbnail > img {
     color: rgb(120, 120, 120);
 }
 .panel-default.active {
-    border-color: rgb(070, 180, 200);
+    border-color: rgb(250, 120, 040);
 }
 
 /* ===================================================================================

@@ -34,44 +34,227 @@
           </div>
         </form>
         <div class="pull-right">
-          <button type="button" class="btn btn-primary" bs-tooltip data-title="New product"><i class="fa fa-file fa-fw"></i>&nbsp;New product</button>
-          <button type="button" class="btn btn-primary" bs-tooltip data-title="New product bundle" ng-disabled="!canCreateBundle()"><i class="fa fa-archive fa-fw"></i>&nbsp;New bundle</button>
+          <button type="button" class="btn btn-primary" bs-tooltip data-title="New product" ng-click="showCreateForm()"><i class="fa fa-file fa-fw"></i>&nbsp;New product</button>
+          <div class="btn-group">
+            <button type="button" class="btn btn-default" ng-class="{'active': resultsView == 1}" ng-click="changeResultsView(1)"><i class="fa fa-fw fa-th-list"></i></button>
+            <button type="button" class="btn btn-default" ng-class="{'active': resultsView == 0}" ng-click="changeResultsView(0)"><i class="fa fa-fw fa-th"></i></button>
+          </div>
         </div>
       </div>
     </div>
   </div>
-  <div class="col-sm-12 flex-container">
-    <div class="alert alert-warning" ng-if="noResults">
+  <div class="col-sm-12 flex-container" ng-if="!$productList.length">
+    <div class="alert alert-warning">
       There are no results that match your search.
     </div>
-    <div class="panel panel-default product product-grid" ng-repeat="$product in $productList" ng-class="{'active': isSelected($product)}">
-      <div class="panel-heading">
-        <a class="thumbnail product-logo">
-          <img src="{{ getPicture($product) }}">
-        </a>
-        <div class="panel-title">{{ $product.name }}</div>
-        <div class="panel-subtitle"><span ng-if="$product.version">v{{ $product.version }}&nbsp;·&nbsp;</span>{{ $product.brand }}</div>
-        <div class="panel-options text-right">
-          <button type="button" class="btn btn-sm btn-primary" bs-tooltip data-title="Add to bundle" ng-class="{'active': isSelected($product)}" ng-click="selectProduct($product)"><i class="fa fa-clipboard fa-fw"></i></button>
-          <button type="button" class="btn btn-sm btn-default" bs-tooltip data-title="View details" ng-click="showUpdateForm()"><i class="fa fa-list-alt fa-fw"></i></button>
+  </div>
+  <div ng-switch on="resultsView">
+    <div ng-switch-when="0">
+      <div class="col-sm-12 flex-container">
+        <div class="panel panel-default product product-grid" ng-repeat="$product in $productList" ng-class="{'active': isSelected($product)}">
+          <div class="panel-heading">
+            <a class="thumbnail product-logo" ng-click="showUpdateForm($product)">
+              <img src="{{ getPicture($product) }}">
+            </a>
+            <div class="panel-title">{{ $product.name }}</div>
+            <div class="panel-subtitle"><span ng-if="$product.version">v{{ $product.version }}&nbsp;·&nbsp;</span>{{ $product.brand }}</div>
+            <div class="panel-options text-right">
+              <button type="button" class="btn btn-sm btn-primary" bs-tooltip data-title="Add to bundle" ng-class="{'active': isSelected($product)}" ng-click="selectProduct($product)"><i class="fa fa-clipboard fa-fw"></i></button>
+              <button type="button" class="btn btn-sm btn-default" bs-tooltip data-title="Settings" ng-click="showUpdateForm($product)"><i class="fa fa-cog fa-fw"></i></button>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="label-group">
+              <div ng-switch on="$product.isBundle">
+                <div ng-switch-when="false">
+                  <span class="label label-product">Product</span>
+                </div>
+                <div ng-switch-default>
+                  <span class="label label-product-bundle">Product bandle</span>
+                </div>
+              </div>
+            </div>
+            <div class="lifecycle-status-group">
+              <div class="lifecycle-status-item active" data-type="{{ $product.lifecycleStatus | lowercase }}" data-title="{{ $product.lifecycleStatus }}">
+                <span class="status" bs-tooltip data-original-title="{{ $product.lifecycleStatus }}"></span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-      <div class="panel-body">
-        <div class="label-group">
-          <div ng-switch on="$product.isBundle">
-            <div ng-switch-when="false">
-              <span class="label label-product">Product</span>
-            </div>
-            <div ng-switch-default>
-              <span class="label label-product-bundle">Product bandle</span>
+    </div>
+    <div ng-switch-default>
+      <div class="col-sm-12">
+        <table class="table table-bordered table-hover" ng-if="$productList.length">
+          <thead>
+            <tr>
+              <th>ID Number</th>
+              <th>Status</th>
+              <th>Name</th>
+              <th>Version</th>
+              <th>Brand</th>
+              <th>Type</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr ng-repeat="$product in $productList" ng-class="{'active': isSelected($product)}">
+              <th>{{ $product.productNumber }}</th>
+              <td><span class="lifecycle-status status-{{ $product.lifecycleStatus | lowercase }}" bs-tooltip data-original-title="{{ $product.lifecycleStatus }}"></span></td>
+              <td><a ng-click="showUpdateForm($product)">{{ $product.name }}</a></td>
+              <td>{{ $product.version }}</td>
+              <td>{{ $product.brand }}</td>
+              <td>
+                <div ng-switch on="$product.isBundle">
+                  <div ng-switch-when="false"><span class="label label-product">Product</span></div>
+                  <div ng-switch-default><span class="label label-product-bundle">Product bandle</span></div>
+                </div>
+              </td>
+              <td><button type="button" class="btn btn-sm btn-primary" bs-tooltip data-title="Add to bundle" ng-class="{'active': isSelected($product)}" ng-click="selectProduct($product)"><i class="fa fa-clipboard fa-fw"></i></button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-12" ng-if="$productList.length">
+    <ul class="pager">
+      <li class="disabled"><a><i class="fa fa-arrow-left"></i></a></li>
+      <li class="disabled"><a><i class="fa fa-arrow-right"></i></a></li>
+    </ul>
+  </div>
+</div>
+<div class="modal fade" ng-controller="ProductCreateCtrl" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+        <div class="modal-title">{{ productInfo.bundledProductSpecification.length ? 'New bundle product' : 'New product' }}</div>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <div class="col-sm-10 col-sm-offset-1">
+            <ul class="nav nav-steps nav-justified">
+              <li class="active"><a data-target=".tab-product-create-form" data-toggle="tab">1. General</a></li>
+            </ul>
+            <div class="tab-content">
+              <div class="tab-pane tab-product-create-form active">
+                <form name="productCreateForm" novalidate>
+                  <div class="form-group">
+                    <div class="row">
+                      <div class="col-sm-8">
+                        <label>Name</label>
+                        <input type="text" class="form-control" name="name" ng-model="productInfo.name" required>
+                      </div>
+                      <div class="col-sm-4">
+                        <label>Version</label>
+                        <input type="text" class="form-control" name="version" ng-model="productInfo.version" required>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <div class="row">
+                      <div class="col-sm-8">
+                        <label>Brand</label>
+                        <input type="text" class="form-control" name="brand" ng-model="productInfo.brand" required>
+                      </div>
+                      <div class="col-sm-4">
+                        <label>ID Number</label>
+                        <input type="text" class="form-control" name="productNumber" ng-model="productInfo.productNumber" required>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label>Description <small class="text-muted">optional</small></label>
+                    <textarea class="form-control" name="description" rows="3" ng-model="productInfo.description"></textarea>
+                  </div>
+                  <div class="form-group" ng-if="productInfo.bundledProductSpecification.length">
+                    <label>Bundled products</label>
+                    <table class="table table-bordered">
+                      <thead>
+                        <tr>
+                          <th>ID Number</th>
+                          <th>Name</th>
+                          <th>Version</th>
+                          <th>Brand</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr ng-repeat="$product in productInfo.bundledProductSpecification">
+                          <th>{{ $product.productNumber }}</th>
+                          <td>{{ $product.name }}</td>
+                          <td>{{ $product.version }}</td>
+                          <td>{{ $product.brand }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </form>
+              </div>
             </div>
           </div>
         </div>
-        <div class="lifecycle-status-group">
-          <div class="lifecycle-status-item active" data-type="{{ $product.lifecycleStatus | lowercase }}" data-title="{{ $product.lifecycleStatus }}">
-            <span class="status" bs-tooltip data-original-title="{{ $product.lifecycleStatus }}"></span>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-success" ng-click="createProduct()" ng-disabled="!productCreateForm.$valid">Create</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal fade" ng-controller="ProductUpdateCtrl" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+        <div class="modal-title">Product settings</div>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <div class="col-sm-10 col-sm-offset-1">
+            <ul class="nav nav-tabs">
+              <li ng-repeat="tab in tabs" ng-class="{'active': tab.active}" ng-click="showTab($index)"><a>{{ tab.name }}</a></li>
+            </ul>
+            <div class="tab-content">
+              <div class="tab-pane" ng-class="{'active': tabs[0].active}">
+                <form name="productUpdateForm" novalidate>
+                  <div class="form-group">
+                    <div class="row">
+                      <div class="col-sm-8">
+                        <label>Name</label>
+                        <input type="text" class="form-control" name="name" ng-model="$product.name" required>
+                      </div>
+                      <div class="col-sm-4">
+                        <label>Version</label>
+                        <input type="text" class="form-control" name="version" ng-model="$product.version" required>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <div class="row">
+                      <div class="col-sm-8">
+                        <label>Brand</label>
+                        <input type="text" class="form-control" name="brand" ng-model="$product.brand" required>
+                      </div>
+                      <div class="col-sm-4">
+                        <label>ID Number</label>
+                        <input type="text" class="form-control" name="productNumber" ng-model="$product.productNumber" required>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label>Description</label>
+                    <textarea class="form-control" name="description" rows="3" ng-model="$product.description"></textarea>
+                  </div>
+                </form>
+              </div>
+            </div>
           </div>
         </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-success" ng-click="updateProduct()" ng-disabled="!productUpdateForm.$valid">Save changes</button>
       </div>
     </div>
   </div>

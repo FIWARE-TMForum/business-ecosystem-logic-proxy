@@ -74,34 +74,51 @@ angular.module('app.controllers')
         });
     }])
     .controller('CatalogueCreateCtrl', ['$scope', '$rootScope', 'EVENTS', 'Catalogue', '$element', function ($scope, $rootScope, EVENTS, Catalogue, $element) {
+        var initialInfo = {};
 
-        $scope.catalogueInfo = {};
-
-        $scope.create = function create() {
-            ProductCatalogue.create($scope.catalogueInfo, function ($catalogueCreated) {
+        $scope.createCatalogue = function createCatalogue() {
+            Catalogue.create($scope.catalogueInfo, function ($catalogueCreated) {
                 $element.modal('hide');
+                $rootScope.$broadcast(EVENTS.MESSAGE_SHOW, 'success', 'The catalogue <strong>{{ name }}</strong> was created successfully.', $catalogueCreated);
             });
         };
 
+        $scope.resetCreateForm = function resetCreateForm() {
+            $scope.catalogueInfo = angular.copy(initialInfo);
+        };
+
         $scope.$on(EVENTS.CATALOGUE_CREATEFORM_SHOW, function ($event) {
-            $scope.catalogueInfo = {
-                validFor: {startDateTime: new Date()}
-            };
+            $scope.resetCreateForm();
             $element.modal('show');
         });
+
+        $scope.resetCreateForm();
     }])
     .controller('CatalogueUpdateCtrl', ['$scope', '$rootScope', 'EVENTS', 'Catalogue', '$element', function ($scope, $rootScope, EVENTS, Catalogue, $element) {
 
         $scope.$catalogue = {};
 
-        $scope.update = function update() {
+        $scope.tabs = [
+            {name: 'General'}
+        ];
+
+        $scope.updateCatalogue = function updateCatalogue() {
             Catalogue.update($scope.$catalogue, function ($catalogueUpdated) {
                 $element.modal('hide');
+                $rootScope.$broadcast(EVENTS.MESSAGE_SHOW, 'success', 'The catalogue <strong>{{ name }}</strong> was updated successfully.', $catalogueUpdated);
             });
+        };
+
+        $scope.showTab = function showTab($index) {
+            $scope.tabs.forEach(function (tab) {
+                tab.active = false;
+            });
+            $scope.tabs[$index].active = true;
         };
 
         $scope.$on(EVENTS.CATALOGUE_UPDATEFORM_SHOW, function ($event, $catalogue) {
             $scope.$catalogue = $catalogue;
+            $scope.showTab(0);
             $element.modal('show');
         });
     }])

@@ -53,13 +53,10 @@ angular.module('app.services')
             create: function create(data, next) {
 
                 angular.extend(data, {
-                    version: "",
-                    type: service.TYPE,
                     lifecycleStatus: service.STATUS.ACTIVE,
-                    category: [],
                     relatedParty: [
                         {
-                            id: LOGGED_USER.USERNAME,
+                            id: LOGGED_USER.ID,
                             href: LOGGED_USER.HREF,
                             role: service.ROLES.OWNER
                         }
@@ -78,7 +75,7 @@ angular.module('app.services')
             },
 
             update: function update($catalogue, next) {
-                return $catalogue.$save(function ($catalogueUpdated) {
+                return Catalogue.update({id: $catalogue.id}, $catalogue, function ($catalogueUpdated) {
 
                     if (next != null) {
                         next($catalogueUpdated);
@@ -91,6 +88,7 @@ angular.module('app.services')
         };
 
         Catalogue = $resource(URLS.PRODUCT_CATALOGUE, {id: '@id'}, {
+            update: {method:'PUT'}
         });
 
         return service;
