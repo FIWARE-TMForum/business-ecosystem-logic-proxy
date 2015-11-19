@@ -10,12 +10,14 @@
 
     <script src="<%= contextPath %>/resources/jquery-1.11.3/js/jquery.js"></script>
     <script src="<%= contextPath %>/resources/bootstrap-3.3.5/js/bootstrap.js"></script>
+    <script src="<%= contextPath %>/resources/moment-2.10.6/js/moment.js"></script>
     <script src="<%= contextPath %>/resources/angular-1.4.7/js/angular.js"></script>
     <script src="<%= contextPath %>/resources/angular-1.4.7/js/angular-messages.js"></script>
+    <script src="<%= contextPath %>/resources/angular-1.4.7/js/angular-moment.js"></script>
     <script src="<%= contextPath %>/resources/angular-1.4.7/js/angular-resource.js"></script>
     <script src="<%= contextPath %>/resources/angular-1.4.7/js/angular-route.js"></script>
     <script>
-        angular.module('app', ['ngRoute', 'ngResource', 'app.services', 'app.controllers'])
+        angular.module('app', ['ngRoute', 'angularMoment', 'ngResource', 'app.services', 'app.controllers'])
             .constant('URLS', {
                 TEMPLATE: '<%= contextPath %>/resources/core/templates',
                 PRODUCT: '<%= proxyPath %>/DSPRODUCTCATALOG2/api/catalogManagement/v2/productSpecification/:id',
