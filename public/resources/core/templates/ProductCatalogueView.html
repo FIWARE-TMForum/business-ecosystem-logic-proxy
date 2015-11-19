@@ -12,7 +12,8 @@
   <div class="col-sm-3" ng-controller="CatalogueListCtrl">
     <div class="panel panel-default">
       <div class="panel-heading">
-        <div class="panel-title">Catalogues <small>as Owner</small></div>
+        <div class="panel-title">Catalogues</div>
+        <div class="panel-subtitle">as Owner</div>
         <div class="panel-options text-right">
           <button type="button" class="btn btn-sm btn-primary" bs-tooltip data-title="New catalogue" ng-click="showCreateForm()">
             <i class="fa fa-plus-circle fa-fw"></i>
@@ -40,7 +41,8 @@
     </div>
     <div class="panel panel-default">
       <div class="panel-heading">
-        <div class="panel-title">Catalogues <small>as Seller</small></div>
+        <div class="panel-title">Catalogues</div>
+        <div class="panel-subtitle">as Seller</div>
       </div>
       <div class="panel-body">
         <div ng-switch="filterByRoleSeller().length">
@@ -71,6 +73,7 @@
         <div class="panel panel-default">
           <div class="panel-heading">
             <div class="panel-title">{{ $catalogue.name }}</div>
+            <div class="panel-subtitle">Updated <time am-time-ago="$catalogue.lastUpdate"></time></div>
             <div class="panel-options text-right">
               <button type="button" class="btn btn-sm btn-primary" bs-tooltip data-title="New offering"><i class="fa fa-cube fa-fw"></i></button>
               <button type="button" class="btn btn-sm btn-default" bs-tooltip data-title="Settings" ng-click="showUpdateForm()"><i class="fa fa-cog fa-fw"></i></button>
