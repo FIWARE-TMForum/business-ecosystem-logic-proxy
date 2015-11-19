@@ -1,6 +1,10 @@
 var defaultConfig = {
     oauth2: {
-        server: 'https://account.lab.fiware.org'
+        server: 'https://account.lab.fiware.org',
+        roles: {
+            admin: 106,
+            seller: 77
+        }
     },
     appHost: 'example.com',
     endpoints: {

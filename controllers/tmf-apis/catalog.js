@@ -1,8 +1,8 @@
-var config = require('./../../config.js'),
-    http = require('./../../lib/httpClient.js'),
-    storeClient = require('./../../lib/store.js').storeClient,
+var config = require('./../../config'),
+    http = require('./../../lib/httpClient'),
+    storeClient = require('./../../lib/store').storeClient,
     url = require('url'),
-    utils = require('./../../lib/utils.js'),
+    utils = require('./../../lib/utils'),
     log = require('./../../lib/logger').logger.getLogger("Root");
 
 // Validator to check user permissions for accessing TMForum resources
@@ -17,7 +17,7 @@ var catalog = (function() {
             for(var i = 0; !status && i < parties.length; i++) {
                 var party = parties[i];
 
-                if (party.role == 'Owner' && party.id == userInfo.id) {
+                if (party.role.toLowerCase() == 'owner' && party.id == userInfo.id) {
                     status = true
                 }
             }
@@ -39,11 +39,6 @@ var catalog = (function() {
         return valid;
     };
 
-    // Check that the user is the owner of the resource
-    var checkUser = function(userInfo, resp) {
-        return isOwner(userInfo, resp);
-    };
-
     // Retrieves the product belonging to a given offering
     var retrieveProduct = function(userInfo, offeringInfo, callback, callbackError) {
         var productUrl = offeringInfo.productSpecification.href;
@@ -59,7 +54,7 @@ var catalog = (function() {
 
         var protocol = config.appSsl ? 'https' : 'http';
 
-        http.request(protocol, options, '', callback, function() {
+        http.request(protocol, options, '', callback, function(status, err) {
             callbackError(400, 'The product specification of the given product offering is not valid');
         });
     };
@@ -111,7 +106,7 @@ var catalog = (function() {
     };
 
     var updateHandler = function(userInfo, resp, callback, callbackError) {
-        if (checkUser(userInfo, resp)) {
+        if (isOwner(userInfo, resp)) {
             callback();
         } else {
             callbackError(403, 'The user making the request is not the owner of the accessed resource');
@@ -143,7 +138,7 @@ var catalog = (function() {
             } else {
                 updateHandler(req.user, parsedResp, callback, callbackError);
             }
-        });
+        }, callbackError);
     };
 
     var validators = {
