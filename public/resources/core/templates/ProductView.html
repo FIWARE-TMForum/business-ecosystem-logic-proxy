@@ -246,6 +246,27 @@
                     <label>Description</label>
                     <textarea class="form-control" name="description" rows="3" ng-model="$product.description"></textarea>
                   </div>
+                  <div class="form-group" ng-if="$product.bundledProductSpecification.length">
+                    <label>Bundled products</label>
+                    <table class="table table-bordered">
+                      <thead>
+                        <tr>
+                          <th>ID Number</th>
+                          <th>Name</th>
+                          <th>Version</th>
+                          <th>Brand</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr ng-repeat="$bundledProduct in $product.bundledProductSpecification">
+                          <th>{{ $bundledProduct.productNumber }}</th>
+                          <td>{{ $bundledProduct.name }}</td>
+                          <td>{{ $bundledProduct.version }}</td>
+                          <td>{{ $bundledProduct.brand }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
                 </form>
               </div>
             </div>
