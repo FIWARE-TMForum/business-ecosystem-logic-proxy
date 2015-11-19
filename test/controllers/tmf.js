@@ -1,5 +1,4 @@
 var proxyquire =  require('proxyquire'),
-    reporters = require('jasmine-reporters'),
     testUtils = require('../utils');
 
 
@@ -31,7 +30,6 @@ describe('TMF Controller', function() {
 
     // Function to get a custom tmf.js instance
     var getTmfInstance = function(httpClient, catalog, ordering, inventory) {
-
 
         return proxyquire('../../controllers/tmf', {
             './../lib/httpClient': httpClient, 

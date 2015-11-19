@@ -1,21 +1,10 @@
 var proxyquire =  require('proxyquire'),
-    reporters = require('jasmine-reporters'),
     testUtils = require('../utils');
 
 describe('Utils', function() {
 
     var config = testUtils.getDefaultConfig();
     var utils = proxyquire('../../lib/utils', { './../config.js': config });
-
-    // Set up reporter
-    var junitReporter = new reporters.JUnitXmlReporter({
-        savePath: __dirname + '/../..',    // The main folder of the project
-        consolidateAll: true,
-        filePrefix: 'xunit'
-    });
-    jasmine.getEnv().addReporter(junitReporter);
-
-
 
     describe('Attach User Headers', function() {
 

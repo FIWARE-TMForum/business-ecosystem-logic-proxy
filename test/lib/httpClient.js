@@ -1,17 +1,9 @@
 var freeport = require('freeport'),
     nock = require('nock'),
     proxyquire =  require('proxyquire'),
-    reporters = require('jasmine-reporters'),
     testUtils = require('../utils');
 
 describe('HTTP Client', function() {
-
-    var junitReporter = new reporters.JUnitXmlReporter({
-        savePath: __dirname + '/../..',    // The main folder of the project
-        consolidateAll: true,
-        filePrefix: 'xunit'
-    });
-    jasmine.getEnv().addReporter(junitReporter);
 
     var emptyFunction = function() {};
     var httpClient = proxyquire('../../lib/httpClient.js', { './logger': testUtils.emptyLogger });
