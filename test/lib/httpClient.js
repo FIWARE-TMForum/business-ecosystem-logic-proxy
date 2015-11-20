@@ -7,7 +7,7 @@ var freeport = require('freeport'),
 describe('HTTP Client', function() {
 
     var emptyFunction = function() {};
-    var httpClient = proxyquire('../../lib/httpClient.js', { './logger': testUtils.emptyLogger });
+    var httpClient = proxyquire('../../lib/httpClient', { './logger': testUtils.emptyLogger });
 
     describe('Request', function() {
 
