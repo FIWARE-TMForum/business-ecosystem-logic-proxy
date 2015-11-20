@@ -1,6 +1,7 @@
 var proxyquire =  require('proxyquire'),
     testUtils = require('../utils');
 
+
 describe('Utils', function() {
 
     var config = testUtils.getDefaultConfig();
@@ -27,7 +28,7 @@ describe('Utils', function() {
 
     describe('Proxied Request Headers', function() {
 
-        var executeTest = function(previousForwardedFor, remoteAddress, expectedForwardedFor) {
+        var testProxiedRequestHeaders = function(previousForwardedFor, remoteAddress, expectedForwardedFor) {
 
             var forwardForHeaderName = 'x-forwarded-for';
 
@@ -64,24 +65,24 @@ describe('Utils', function() {
 
         it('should include the first IP', function() {
             var remoteAddress = '127.0.0.1';
-            executeTest(null, remoteAddress, remoteAddress);
+            testProxiedRequestHeaders(null, remoteAddress, remoteAddress);
         });
 
         it ('should include the second IP', function() {
             var previousForwardedFor = '192.168.1.1'
             var remoteAddress = '127.0.0.1';
-            executeTest(previousForwardedFor, remoteAddress, previousForwardedFor + ',' + remoteAddress);
+            testProxiedRequestHeaders(previousForwardedFor, remoteAddress, previousForwardedFor + ',' + remoteAddress);
         });
 
         it('should not include a comma when the header is in blank', function() {
             var remoteAddress = '127.0.0.1';
-            executeTest('', remoteAddress, remoteAddress);
+            testProxiedRequestHeaders('', remoteAddress, remoteAddress);
         })
     });
 
     describe('Get App Port', function() {
 
-        var executeTest = function(path, expectedPort) {            
+        var testgetAppPort = function(path, expectedPort) {            
             var port = utils.getAppPort({url: path});
             expect(port).toBe(expectedPort);
 
@@ -91,11 +92,11 @@ describe('Utils', function() {
         for (var api in config.endpoints) {
             
             it('should return correct port for ' + api + ' API when subpath not included', function() {
-                executeTest('/' + config.endpoints[api].path + '/', config.endpoints[api].port);
+                testgetAppPort('/' + config.endpoints[api].path + '/', config.endpoints[api].port);
             });
 
             it('should return correct port for ' + api + ' API when subpath included', function() {
-                executeTest('/' + config.endpoints[api].path + '/api/', config.endpoints[api].port);
+                testgetAppPort('/' + config.endpoints[api].path + '/api/', config.endpoints[api].port);
             });
         }
     });

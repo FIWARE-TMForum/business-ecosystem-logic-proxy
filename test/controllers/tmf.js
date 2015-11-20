@@ -147,7 +147,8 @@ describe('TMF Controller', function() {
             // Configure the API controller
             var controller = { checkPermissions: checkPermissionsInvalid }; 
 
-            // TMF API
+            // TMF API. Only one API is set, the rest are set to null so we are sure the appropriate
+            // one has been called
             var httpClient = getDefaultHttpClient();
             var catalogController = api.startsWith(config.endpoints.catalog.path) ? controller : null;
             var orderingController = api.startsWith(config.endpoints.ordering.path) ? controller : null;
@@ -159,6 +160,7 @@ describe('TMF Controller', function() {
             var res = jasmine.createSpyObj('res', ['status', 'send', 'end']);
             tmf.checkPermissions(req, res);
 
+            // We have to wait some time until the response has been called
             setTimeout(function() {
                 expect(res.status).toHaveBeenCalledWith(INVALID_API_STATUS);
                 expect(res.send).toHaveBeenCalledWith({ error: INVALID_API_MESSAGE });

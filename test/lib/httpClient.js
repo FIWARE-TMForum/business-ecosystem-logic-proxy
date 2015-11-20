@@ -3,6 +3,7 @@ var freeport = require('freeport'),
     proxyquire =  require('proxyquire'),
     testUtils = require('../utils');
 
+
 describe('HTTP Client', function() {
 
     var emptyFunction = function() {};
@@ -10,8 +11,7 @@ describe('HTTP Client', function() {
 
     describe('Request', function() {
 
-        it('should call error callback when server is unreachable', function(done) {
-
+        var testServerUnreachable = function(protocol, done) {
             freeport(function(err, port) {
 
                 var options = {
@@ -20,13 +20,21 @@ describe('HTTP Client', function() {
                     method: 'GET'
                 }
 
-                httpClient.request('http', options, null, null, function(code, err) {
+                httpClient.request(protocol, options, null, null, function(code, err) {
                     expect(code).toBe(503);
                     expect(err.code).toBe('ECONNREFUSED');
                     done();
                 });
 
             });
+        }
+
+        it('should call error callback when server is unreachable (HTTP)', function(done) {
+            testServerUnreachable('http', done);
+        });
+
+        it('should call error callback when server is unreachable (HTTPS)', function(done) {
+            testServerUnreachable('https', done);
         });
         
         var testAppropriateCallback = function(protocol, statusCode, requestOk, done) {
@@ -271,8 +279,10 @@ describe('HTTP Client', function() {
         it('should proxy request when server is not available', function(done) {
             freeport(function(err, port) {
 
+                var localhost = '127.0.0.1';
+
                 var options = {
-                    host: 'localhost',
+                    host: localhost,
                     port: port,
                     method: 'GET'
                 }
@@ -284,6 +294,13 @@ describe('HTTP Client', function() {
                 setTimeout(function() {
                     // Check the response
                     expect(res.statusCode).toBe(503);
+
+                    // Check the body
+                    var body = res.write.calls.argsFor(0)[0];
+                    expect(body.code).toBe('ECONNREFUSED');
+                    expect(body.port).toBe(port);
+                    expect(body.address).toBe(localhost);
+
                     done();
                 }, 500);
 
