@@ -114,6 +114,29 @@ angular.module('app.services')
                 });
             },
 
+            getBundledProductsOf: function getBundledProductsOf($product, next) {
+                var params = {
+                    'relatedParty.id': LOGGED_USER.ID,
+                    'id': $product.bundledProductSpecification.map(function (data) {
+                        return data.id;
+                    }).join()
+                };
+
+                if ($product.isBundle) {
+                    Product.query(params, function ($collection) {
+                        angular.copy($collection.slice(), $product.bundledProductSpecification);
+
+                        if (next != null) {
+                            next($product.bundledProductSpecification);
+                        }
+                    }, function (response) {
+
+                    });
+                } else {
+                    next($product.bundledProductSpecification);
+                }
+            },
+
             getBrands: function getBrands(next) {
                 var params = {'relatedParty.id': LOGGED_USER.ID, 'fields': 'brand'};
 
@@ -134,7 +157,7 @@ angular.module('app.services')
 
         };
 
-        Product = $resource(URLS.PRODUCT, {id: '@id'}, {
+        Product = $resource(URLS.PRODUCT, {productId: '@id'}, {
             update: {method:'PUT'}
         });
 

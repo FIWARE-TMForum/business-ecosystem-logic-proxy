@@ -123,8 +123,11 @@ angular.module('app.controllers')
 
         $scope.$on(EVENTS.PRODUCT_UPDATEFORM_SHOW, function ($event, $product) {
             $scope.$product = $product;
-            $scope.showTab(0);
-            $element.modal('show');
+
+            Product.getBundledProductsOf($product, function ($bundledProducts) {
+                $scope.showTab(0);
+                $element.modal('show');
+            });
         });
     }])
     .controller('ProductView', ['$scope', '$rootScope', 'EVENTS', 'Product', function ($scope, $rootScope, EVENTS, Product) {

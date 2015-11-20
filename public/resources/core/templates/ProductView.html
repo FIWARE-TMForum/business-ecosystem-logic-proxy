@@ -57,21 +57,20 @@
               <img src="{{ getPicture($product) }}">
             </a>
             <div class="panel-title">{{ $product.name }}</div>
-            <div class="panel-subtitle"><span ng-if="$product.version">v{{ $product.version }}&nbsp;·&nbsp;</span>{{ $product.brand }}</div>
+            <div class="panel-subtitle">Updated <time am-time-ago="$product.lastUpdate"></time></div>
             <div class="panel-options text-right">
               <button type="button" class="btn btn-sm btn-primary" bs-tooltip data-title="Add to bundle" ng-class="{'active': isSelected($product)}" ng-click="selectProduct($product)"><i class="fa fa-clipboard fa-fw"></i></button>
               <button type="button" class="btn btn-sm btn-default" bs-tooltip data-title="Settings" ng-click="showUpdateForm($product)"><i class="fa fa-cog fa-fw"></i></button>
             </div>
           </div>
           <div class="panel-body">
-            <div class="label-group">
-              <div ng-switch on="$product.isBundle">
-                <div ng-switch-when="false">
-                  <span class="label label-product">Product</span>
-                </div>
-                <div ng-switch-default>
-                  <span class="label label-product-bundle">Product bandle</span>
-                </div>
+            <p class="text-muted text-small">v{{ $product.version }}&nbsp;·&nbsp;{{ $product.brand }}</p>
+            <div class="label-group" ng-switch on="$product.isBundle">
+              <div ng-switch-when="false">
+                <span class="label label-product">Product</span>
+              </div>
+              <div ng-switch-default>
+                <span class="label label-product-bundle">Product bandle</span>
               </div>
             </div>
             <div class="lifecycle-status-group">
@@ -245,6 +244,27 @@
                   <div class="form-group">
                     <label>Description</label>
                     <textarea class="form-control" name="description" rows="3" ng-model="$product.description"></textarea>
+                  </div>
+                  <div class="form-group" ng-if="$product.bundledProductSpecification.length">
+                    <label>Bundled products</label>
+                    <table class="table table-bordered">
+                      <thead>
+                        <tr>
+                          <th>ID Number</th>
+                          <th>Name</th>
+                          <th>Version</th>
+                          <th>Brand</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr ng-repeat="$bundledProduct in $product.bundledProductSpecification">
+                          <th>{{ $bundledProduct.productNumber }}</th>
+                          <td>{{ $bundledProduct.name }}</td>
+                          <td>{{ $bundledProduct.version }}</td>
+                          <td>{{ $bundledProduct.brand }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
                   </div>
                 </form>
               </div>
