@@ -58,6 +58,42 @@ angular.module('app.services')
                 default:
                     // TODO: do nothing.
                 }
+            },
+
+            filter: function filter(userQuery, next) {
+                var params = {};
+
+                if (userQuery.type in service.TYPES) {
+                    params.isBundle = (service.TYPES[userQuery.type] !== service.TYPES.OFFERING);
+                }
+
+                if (userQuery.status in service.STATUS) {
+                    params.lifecycleStatus = service.STATUS[userQuery.status];
+                }
+
+                Product.list(function ($productList) {
+                    var products = {};
+
+                    params['productSpecification.id'] = $productList.map(function ($product) {
+                        products[$product.id] = $product;
+                        return $product.id;
+                    }).join();
+
+                    Offering.query(params, function ($collection) {
+
+                        angular.copy($collection, service.$collection);
+
+                        service.$collection.forEach(function ($offering) {
+                            $offering.productSpecification = products[$offering.productSpecification.id];
+                        });
+
+                        if (next != null) {
+                            next(service.$collection);
+                        }
+                    }, function (response) {
+                        // TODO: onfailure.
+                    });
+                });
             }
 
         };
