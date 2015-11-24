@@ -56,11 +56,10 @@
             <a class="thumbnail product-logo" ng-click="showUpdateForm($product)">
               <img src="{{ getPicture($product) }}">
             </a>
-            <div class="panel-title">{{ $product.name }}</div>
+            <a class="panel-title" ng-click="showUpdateForm($product)">{{ $product.name }}</a>
             <div class="panel-subtitle">Updated <time am-time-ago="$product.lastUpdate"></time></div>
             <div class="panel-options text-right">
-              <button type="button" class="btn btn-sm btn-primary" bs-tooltip data-title="Add to bundle" ng-class="{'active': isSelected($product)}" ng-click="selectProduct($product)"><i class="fa fa-clipboard fa-fw"></i></button>
-              <button type="button" class="btn btn-sm btn-default" bs-tooltip data-title="Settings" ng-click="showUpdateForm($product)"><i class="fa fa-cog fa-fw"></i></button>
+              <button type="button" class="btn btn-sm btn-default" bs-tooltip data-title="Add to bundle" ng-class="{'active': isSelected($product)}" ng-click="selectProduct($product)"><i class="fa fa-clipboard fa-fw"></i></button>
             </div>
           </div>
           <div class="panel-body">
@@ -109,7 +108,9 @@
                   <div ng-switch-default><span class="label label-product-bundle">Product bandle</span></div>
                 </div>
               </td>
-              <td><button type="button" class="btn btn-sm btn-primary" bs-tooltip data-title="Add to bundle" ng-class="{'active': isSelected($product)}" ng-click="selectProduct($product)"><i class="fa fa-clipboard fa-fw"></i></button></td>
+              <td>
+                <button type="button" class="btn btn-sm btn-default" bs-tooltip data-title="Add to bundle" ng-class="{'active': isSelected($product)}" ng-click="selectProduct($product)"><i class="fa fa-clipboard fa-fw"></i></button>
+              </td>
             </tr>
           </tbody>
         </table>
