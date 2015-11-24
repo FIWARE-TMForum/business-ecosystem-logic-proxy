@@ -22,11 +22,11 @@ describe('TMF Controller', function() {
         attachUserHeaders: function(headers, userInfo) {
             headers['X-Nick-Name'] = userInfo.id;
         }
-    }
+    };
 
     var getDefaultHttpClient = function() {
         return jasmine.createSpyObj('httpClient', ['proxyRequest']);
-    }
+    };
 
     // Function to get a custom tmf.js instance
     var getTmfInstance = function(httpClient, catalog, ordering, inventory) {
@@ -40,7 +40,7 @@ describe('TMF Controller', function() {
             './tmf-apis/ordering': {ordering: ordering},
             './tmf-apis/inventory': { inventory: inventory }
         }).tmf;
-    }
+    };
 
     describe('public paths', function() {
 
@@ -69,11 +69,11 @@ describe('TMF Controller', function() {
                 path: req.url,
                 method: method,
                 headers: utils.proxiedRequestHeaders()
-            }
+            };
 
             expect(httpClient.proxyRequest).toHaveBeenCalledWith(protocol, expectedOptions, req.body, res);
 
-        }
+        };
 
         it('should redirect HTTP GET requests', function() {
             testPublic('http', 'GET');
@@ -121,11 +121,11 @@ describe('TMF Controller', function() {
 
         var checkPermissionsValid = function(req, callback, callbackError) {
             callback();
-        }
+        };
 
         var checkPermissionsInvalid = function(req, callback, callbackError) {
             callbackError(INVALID_API_STATUS, INVALID_API_MESSAGE);
-        }
+        };
 
         it('should return 404 for invalid API', function() {
             // TMF API
@@ -171,7 +171,7 @@ describe('TMF Controller', function() {
                 done();
 
             }, 100);
-        }
+        };
 
         it('should not redirect the request to the actual catalog API when controller rejects it', function(done) {
             testApiReturnsError('catalog', done);
@@ -225,14 +225,14 @@ describe('TMF Controller', function() {
                     path: req.url,
                     method: method,
                     headers: utils.proxiedRequestHeaders()
-                }
+                };
 
                 expect(httpClient.proxyRequest).toHaveBeenCalledWith(protocol, expectedOptions, req.body, res);
 
                 done();
 
             }, 100);
-        }
+        };
 
         it('should redirect the request to the actual catalog API when controller does not reject it (root)', function(done) {
             testApiOk('catalog', done);

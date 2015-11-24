@@ -4,6 +4,7 @@ var config = require('./../config'),
     catalog = require('./tmf-apis/catalog').catalog,
     inventory = require('./tmf-apis/inventory').inventory,
     ordering = require('./tmf-apis/ordering').ordering,
+    charging = require('./tmf-apis/charging').charging,
     
     // Other dependencies
     httpClient = require('./../lib/httpClient'),
@@ -17,6 +18,7 @@ var tmf = (function() {
     apiControllers[config.endpoints.catalog.path] = catalog;
     apiControllers[config.endpoints.ordering.path] = ordering;
     apiControllers[config.endpoints.inventory.path] = inventory;
+    apiControllers[config.endpoints.charging.path] = charging;
 
     var sendError = function(res, status, errMsg) {
         log.warn(errMsg);
