@@ -20,9 +20,10 @@
         angular.module('app', ['ngRoute', 'angularMoment', 'ngResource', 'app.services', 'app.controllers'])
             .constant('URLS', {
                 TEMPLATE: '<%= contextPath %>/resources/core/templates',
-                PRODUCT: '<%= proxyPath %>/DSPRODUCTCATALOG2/api/catalogManagement/v2/productSpecification/:id',
-                PRODUCT_CATALOGUE: '<%= proxyPath %>/DSPRODUCTCATALOG2/api/catalogManagement/v2/catalog/:id',
-                PRODUCT_CATEGORY: '<%= proxyPath %>/DSPRODUCTCATALOG2/api/catalogManagement/v2/category/:id'
+                PRODUCT: '<%= proxyPath %>/DSPRODUCTCATALOG2/api/catalogManagement/v2/productSpecification/:productId',
+                PRODUCT_OFFERING: '<%= proxyPath %>/DSPRODUCTCATALOG2/api/catalogManagement/v2/productOffering/:offeringId',
+                PRODUCT_CATALOGUE: '<%= proxyPath %>/DSPRODUCTCATALOG2/api/catalogManagement/v2/catalog/:catalogueId',
+                PRODUCT_CATEGORY: '<%= proxyPath %>/DSPRODUCTCATALOG2/api/catalogManagement/v2/category/:categoryId'
             })
             .constant('LOGGED_USER', {
                 ID: '<%= user.id %>',
@@ -34,6 +35,7 @@
     <script src="<%= contextPath %>/resources/core/js/app.js"></script>
     <script src="<%= contextPath %>/resources/core/js/services/UserService.js"></script>
     <script src="<%= contextPath %>/resources/core/js/services/ProductService.js"></script>
+    <script src="<%= contextPath %>/resources/core/js/services/ProductOfferingService.js"></script>
     <script src="<%= contextPath %>/resources/core/js/services/ProductCatalogueService.js"></script>
     <script src="<%= contextPath %>/resources/core/js/services/ProductCategoryService.js"></script>
     <script src="<%= contextPath %>/resources/core/js/controllers/MessageController.js"></script>

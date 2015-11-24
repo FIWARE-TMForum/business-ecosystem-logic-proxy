@@ -87,7 +87,7 @@ angular.module('app.services')
 
         };
 
-        Catalogue = $resource(URLS.PRODUCT_CATALOGUE, {id: '@id'}, {
+        Catalogue = $resource(URLS.PRODUCT_CATALOGUE, {catalogueId: '@id'}, {
             update: {method:'PUT'}
         });
 

@@ -83,9 +83,38 @@ blockquote p {
     margin-bottom: 15px;
 }
 
-.table-hover > tbody > tr.active > th {
-    border-left-width: 2px;
-    border-left-color: rgb(250, 120, 040);
+.table > tbody > tr.active > th {
+    color: rgb(250, 120, 40);
+}
+.table > tbody > tr.active > td,
+.table > tbody > tr.active > th {
+    background-color: rgb(245, 245, 245);
+    border-bottom-color: rgb(250, 120, 40);
+}
+
+.table-hover > tbody > tr:hover {
+    background-color: rgb(245, 245, 245);
+    border-bottom-color: rgb(70, 180, 200);
+}
+.table-hover > tbody > tr:hover > th {
+    color: rgb(70, 180, 200);
+}
+.table-hover > tbody > tr:hover > td,
+.table-hover > tbody > tr:hover > th {
+    border-bottom-color: rgb(70, 180, 200);
+}
+
+.table-hover > tbody > tr.active:hover > td,
+.table-hover > tbody > tr.active:hover > th {
+    background-color: rgb(245, 245, 245);
+}
+
+.table-selectable > tbody > tr {
+    cursor: pointer;
+}
+.table-selectable > tbody > tr.active {
+    cursor: pointer;
+    pointer-events: none;
 }
 
 /* ===================================================================================
@@ -306,18 +335,79 @@ textarea {
     margin-bottom: 15px;
 }
 
+.nav-steps > li > a {
+    background-color: rgb(240, 245, 250);
+}
 .nav-steps > li > a:hover,
 .nav-steps > li > a:focus {
     color: rgb(070, 180, 200);
-    background-color: rgb(252, 252, 252);
-    border-color: rgb(070, 180, 200);
+    background-color: rgb(240, 245, 250);
 }
+
 .nav-steps > li.active > a,
 .nav-steps > li.active > a:hover,
 .nav-steps > li.active > a:focus {
+    cursor: pointer;
+    pointer-events: none;
     color: rgb(255, 255, 255);
     background-color: rgb(030, 060, 110);
-    border-color: rgb(030, 060, 110);
+}
+
+.nav-steps.nav-stacked > li + li {
+    margin-top: 5px;
+}
+
+.nav-steps.nav-stacked > li > a {
+    margin-right: 15px;
+    margin-left: 32px;
+    border-right: none;
+}
+.nav-steps.nav-stacked > li > a:before {
+    position: absolute;
+    padding: 10px 5px;
+    margin-left: -32px;
+    width: 30px;
+    content: attr(data-step);
+    left: 0;
+    top: 0;
+    font-size: 14px;
+    line-height: 20px;
+    background-color: rgb(240, 245, 250);
+    text-align: center;
+    vertical-align: middle;
+}
+.nav-steps.nav-stacked > li > a:after {
+    position: absolute;
+    height: 0;
+    content: "";
+    right: -15px;
+    top: 0;
+    width: 0;
+    border-top: 20px solid transparent;
+    border-bottom: 20px solid transparent;
+    border-left: 15px solid rgb(240, 245, 250);
+}
+
+.nav-steps.nav-stacked > li.active > a:before {
+    color: rgb(255, 255, 255);
+    background-color: rgb(030, 060, 110);
+}
+.nav-steps.nav-stacked > li.active > a:after {
+    border-left-color: rgb(030, 060, 110);
+}
+
+.nav-steps > li.disabled > a {
+    cursor: pointer;
+    pointer-events: none;
+    color: rgb(190, 190, 190);
+    background-color: rgb(245, 245, 245);
+}
+.nav-steps > li.disabled > a:before {
+    color: rgb(190, 190, 190);
+    background-color: rgb(245, 245, 245);
+}
+.nav-steps > li.disabled > a:after {
+    border-left-color: rgb(245, 245, 245);
 }
 
 /* ===================================================================================
@@ -479,9 +569,11 @@ textarea {
 .label-primary {
     background-color: rgb(010, 060, 140);
 }
+.label-offering,
 .label-product {
     background-color: rgb(020, 150, 190);
 }
+.label-offering-bundle,
 .label-product-bundle {
     background-color: rgb(040, 150, 120);
 }
@@ -744,6 +836,14 @@ a.thumbnail > img {
     border-color: rgb(250, 120, 040);
 }
 
+.panel-default > .panel-heading > a.panel-title {
+    color: rgb(030, 060, 110);
+}
+.panel-default > .panel-heading > a.panel-title:hover,
+.panel-default > .panel-heading > a.panel-title:focus {
+    color: rgb(070, 180, 200);
+}
+
 /* ===================================================================================
  *   COMPONENT - MODAL
  * =================================================================================== */
@@ -777,9 +877,14 @@ a.thumbnail > img {
     width: 250px;
     margin: 0 5px 15px;
 }
-.product .product-logo {
-    height: 180px;
-}
 .product > .panel-body {
     padding-top: 0;
 }
+
+.product-logo {
+    height: 180px;
+}
+
+/* ===================================================================================
+ *   COMPONENT - OFFERING
+ * =================================================================================== */
