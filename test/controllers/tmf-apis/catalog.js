@@ -13,30 +13,7 @@ describe('Catalog API', function() {
             './../../lib/logger': testUtils.emptyLogger,
             './../../lib/store': storeClient
         }).catalog;
-    }
-
-
-    //////////////////////////////////////////////////////////////////////////////////////////////
-    //////////////////////////////////////////// ADMIN ///////////////////////////////////////////
-    //////////////////////////////////////////////////////////////////////////////////////////////
-    
-    it('should call OK callback when user is admin', function(done) {
-
-        var catalogApi = getCatalogApi({});
-
-        req = {
-            user: {
-                roles: [{
-                    id: config.oauth2.roles.admin
-                }]
-            }
-        }
-
-        catalogApi.checkPermissions(req, function() {
-            // Callback function. It's called without arguments...
-            done();
-        });
-    });
+    };
 
 
     //////////////////////////////////////////////////////////////////////////////////////////////
@@ -50,7 +27,7 @@ describe('Catalog API', function() {
         var req = {
             method: 'GET',
             user: { roles: [] }
-        }
+        };
 
         catalogApi.checkPermissions(req, function() {
             // Callback function. It's called without arguments...
@@ -63,11 +40,9 @@ describe('Catalog API', function() {
     /////////////////////////////////////////// CREATE ///////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
 
-    var testCreateBasic = function(user, body, seller, error, expectedStatus, expectedErr, done) {
+    var testCreateBasic = function(user, body, roles, error, expectedStatus, expectedErr, done) {
 
         var catalogApi = getCatalogApi({});
-
-        var roles = seller === false ? [] : [{ id: config.oauth2.roles.seller }]
 
         var req = {
             url: '/catalog/a/b',
@@ -77,7 +52,7 @@ describe('Catalog API', function() {
                 id: user, 
                 roles: roles 
             }
-        }
+        };
 
         catalogApi.checkPermissions(req, function() {
             // Ok callback is only called when error is false
@@ -94,27 +69,27 @@ describe('Catalog API', function() {
             done();
         });
 
-    }
+    };
 
     it('should call error callback when creating resources with invalid JSON', function(done) {
-        testCreateBasic('test', '{', false, true, 400, 'The resource is not a valid JSON document', done);
+        testCreateBasic('test', '{', [], true, 400, 'The resource is not a valid JSON document', done);
     });
 
     it('should call error callback when user is not a seller', function(done) {
-        testCreateBasic('test', '{}', false, true, 403, 'You are not authorized to create resources', done);
+        testCreateBasic('test', '{}', [], true, 403, 'You are not authorized to create resources', done);
     });
 
     it('should call error callback when the user is not the owner of the created resource', function(done) {
         var user = 'test';
         var resource = {
             relatedParty: [{ id: user, role: 'invalid role' }]
-        }
+        };
 
-        testCreateBasic(user, JSON.stringify(resource), true, true, 403, 'The user making the request and the specified owner are not the same user', done);
+        testCreateBasic(user, JSON.stringify(resource), [{ id: config.oauth2.roles.seller }], true, 403, 'The user making the request and the specified owner are not the same user', done);
     });
 
     it('should call error callback when the resource does not contains the relatedParty field', function(done) {
-        testCreateBasic('test', JSON.stringify({ }), true, true, 403, 'The user making the request and the specified owner are not the same user', done);
+        testCreateBasic('test', JSON.stringify({ }), [{ id: config.oauth2.roles.seller }], true, 403, 'The user making the request and the specified owner are not the same user', done);
     });
 
     it('should call ok callback when the user is the owner of the created resource', function(done) {
@@ -125,7 +100,15 @@ describe('Catalog API', function() {
         };
 
         // Error parameters are not required when the resource can be created
-        testCreateBasic(user, JSON.stringify(resource), true, false, null, null, done);
+        testCreateBasic(user, JSON.stringify(resource), [{ id: config.oauth2.roles.seller }], false, null, null, done);
+    });
+
+    it('should call ok callback when the user is admin', function(done) {
+        var user = 'admin';
+        var resource = {
+            relatedParty: [{ id: 'test', role: 'OwNeR' }]
+        };
+        testCreateBasic(user, JSON.stringify(resource), [{ id: config.oauth2.roles.admin }], false, null, null, done);
     });
 
     var testCreateOffering = function(isOwner, productRequestFails, errorStatus, errorMsg, done) {
@@ -171,7 +154,7 @@ describe('Catalog API', function() {
                     href: config.appHost + ':' + config.endpoints.catalog.port + productPath
                 }
             })
-        }
+        };
 
         catalogApi.checkPermissions(req, function() {
             // The user is the owner of the offering. To check this, the attached product must
@@ -192,7 +175,7 @@ describe('Catalog API', function() {
             done();
 
         });
-    }
+    };
 
     it('should call OK callback when creating an offering with an owned product', function(done) {
         testCreateOffering(true, false, null, null, done);
@@ -215,7 +198,7 @@ describe('Catalog API', function() {
             storeClient: {
                 validateProduct: storeValidator
             }
-        }
+        };
 
         var catalogApi = getCatalogApi(storeClient);
 
@@ -240,7 +223,7 @@ describe('Catalog API', function() {
                 roles: [{ id: config.oauth2.roles.seller }]
             },
             body: JSON.stringify(body)
-        }
+        };
 
         catalogApi.checkPermissions(req, function() {
             // This function should only be called when no errors are expected
@@ -256,11 +239,11 @@ describe('Catalog API', function() {
             done();
 
         });
-    }
+    };
 
     var storeValidatorOk = function(body, user, callback, callbackError) {
         callback();
-    }
+    };
 
     it('should call OK callback when creating an owned product', function(done) {
         testCreateProduct(true, storeValidatorOk, null, null, done);
@@ -320,7 +303,7 @@ describe('Catalog API', function() {
                 id: userName,
                 roles: []
             }
-        }
+        };
 
         catalogApi.checkPermissions(req, function() {
             // This function should only be called when the user is the owner of the resource
@@ -347,7 +330,7 @@ describe('Catalog API', function() {
             done();
 
         });
-    }
+    };
 
     it('should call OK callback when user tries to update (PUT) a resource that owns', function(done) {
         testUpdate('PUT', true, false, done);
@@ -406,7 +389,7 @@ describe('Catalog API', function() {
                 // The catalog server will be used instead
                 href: config.appHost + ':' + config.endpoints.catalog.port + productPath
             }
-        }
+        };
 
         var serverOffering = nock(serverUrl).get(offeringPath).reply(200, bodyGetOffering);
 
@@ -436,7 +419,7 @@ describe('Catalog API', function() {
                 id: userName,
                 roles: []
             }
-        }
+        };
 
         catalogApi.checkPermissions(req, function() {
             // This function should only be called when the user is the owner of the offering
@@ -452,11 +435,11 @@ describe('Catalog API', function() {
             expect(!isOwner || productRequestFails).toBe(true);
 
             expect(status).toBe(expectedErrorStatus);
-            expect(errorMsg).toBe(expectedErrorMsg)
+            expect(errorMsg).toBe(expectedErrorMsg);
 
             done();
         });
-    }
+    };
 
     it('should call OK callback when user tries to update an offering that owns', function(done) {
         testUpdateProductOffering(true, false, null, null, done);

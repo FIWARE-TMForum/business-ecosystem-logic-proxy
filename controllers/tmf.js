@@ -23,7 +23,7 @@ var tmf = (function() {
         res.status(status);
         res.send({error: errMsg});
         res.end();
-    }
+    };
 
     var redirRequest = function (req, res) {
 

@@ -11,7 +11,9 @@ var catalog = (function() {
     // Check whether the owner role is included in the info field
     var isOwner = function (userInfo, info) {
         var status = false;
-        if (info.relatedParty) {
+        if (checkRole(userInfo, config.oauth2.roles.admin)) {
+            status = true;
+        } else if (info.relatedParty) {
             var parties = info.relatedParty;
 
             for(var i = 0; !status && i < parties.length; i++) {
@@ -84,8 +86,10 @@ var catalog = (function() {
             return;
         }
 
-        // Check that the user has the seller role
-        if (!checkRole(req.user, config.oauth2.roles.seller)) {
+        // Check that the user has the seller role or is an admin
+        if (!checkRole(req.user, config.oauth2.roles.seller) &&
+                !checkRole(req.user, config.oauth2.roles.admin)) {
+
             callbackError(403, 'You are not authorized to create resources');
             return;
         }
@@ -150,14 +154,8 @@ var catalog = (function() {
     };
 
     var checkPermissions = function (req, callback, callbackError) {
-
         log.info('Checking Catalog permissions');
-        // Check if the user is admin of the application
-        if (checkRole(req.user, config.oauth2.roles.admin)) {
-            callback();
-        } else {
-            validators[req.method](req, callback, callbackError);
-        }
+        validators[req.method](req, callback, callbackError);
     };
 
     return {
