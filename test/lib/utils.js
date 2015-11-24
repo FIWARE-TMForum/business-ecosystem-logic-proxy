@@ -14,7 +14,17 @@ describe('Utils', function() {
             var headers = {};
             var userInfo = {
                 id: 'user-1',
-                displayName: 'User 1'
+                displayName: 'User 1',
+                roles: [{
+                    'id': '106',
+                    'name': 'Provider'
+                }, {
+                    'id': '77',
+                    'name': 'seller'
+                }, {
+                    'id': '100',
+                    'name': 'Purchaser'
+                }]
             };
 
             // This function should modify headers
@@ -23,6 +33,7 @@ describe('Utils', function() {
             // Check that heacers has been modified appropriately
             expect(headers['X-Nick-Name']).toBe(userInfo.id);
             expect(headers['X-Display-Name']).toBe(userInfo.displayName);
+            expect(headers['X-Roles']).toBe('provider,seller,');
         });
     });
 
