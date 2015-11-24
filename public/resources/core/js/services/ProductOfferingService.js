@@ -6,6 +6,13 @@ angular.module('app.services')
     .factory('Offering', ['$resource', 'URLS', 'User', 'Product', 'LOGGED_USER', function ($resource, URLS, User, Product, LOGGED_USER) {
         var Offering, service;
 
+        var serializeProduct = function serializeProduct($product) {
+            return {
+                id: $product.id,
+                href: $product.href
+            };
+        };
+
         service = {
 
             STATUS: {
@@ -93,6 +100,34 @@ angular.module('app.services')
                     }, function (response) {
                         // TODO: onfailure.
                     });
+                });
+            },
+
+            create: function create(offeringInfo, catalogueInfo, next) {
+                var $product;
+
+                if (offeringInfo.productSpecification.lifecycleStatus == service.STATUS.ACTIVE) {
+                    offeringInfo.productSpecification.lifecycleStatus = service.STATUS.LAUNCHED;
+                    Product.update(offeringInfo.productSpecification);
+                }
+
+                $product = offeringInfo.productSpecification;
+
+                angular.extend(offeringInfo, {
+                    lifecycleStatus: service.STATUS.ACTIVE
+                });
+
+                offeringInfo.productSpecification = serializeProduct(offeringInfo.productSpecification);
+
+                Offering.save(offeringInfo, function ($offeringCreated) {
+                    $offeringCreated.productSpecification = $product;
+                    service.$collection.unshift($offeringCreated);
+
+                    if (next != null) {
+                        next($offeringCreated);
+                    }
+                }, function (response) {
+                    // TODO: onfailure.
                 });
             }
 
