@@ -25,7 +25,7 @@ angular.module('app.services')
 
         };
 
-        Category = $resource(URLS.PRODUCT_CATEGORY, {id: '@id'}, {
+        Category = $resource(URLS.PRODUCT_CATEGORY, {categoryId: '@id'}, {
         });
 
         return service;
