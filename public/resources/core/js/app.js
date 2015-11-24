@@ -7,6 +7,7 @@ angular.module('app')
         PRODUCT_CREATE: '$productCreate',
         PRODUCT_CREATEFORM_SHOW: '$productCreateFormShow',
         PRODUCT_UPDATEFORM_SHOW: '$productUpdateFormShow',
+        OFFERING_CREATE: '$offeringCreate',
         CATALOGUE_SHOW: '$catalogueShow',
         CATALOGUE_SELECT: '$catalogueSelect',
         CATALOGUE_CREATEFORM_SHOW: '$catalogueCreateFormShow',
