@@ -23,9 +23,9 @@ config.oauth2 = {
     'clientSecret': '--client-secret--',
     'callbackURL': '--callback-url--',
     'roles': {
-        'admin': '106',
-        'customer': '',
-        'seller': ''
+        'admin': 'provider',
+        'customer': 'customer',
+        'seller': 'seller'
     }
 }
 

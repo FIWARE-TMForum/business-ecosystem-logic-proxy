@@ -33,7 +33,7 @@ var checkPrefix = function(prefix, byDefault) {
     }
 
     return finalPrefix;
-}
+};
 
 // TODO: Add more checkers
 
@@ -92,7 +92,7 @@ app.set('view engine', 'ejs');
 app.use(session({
     secret: config.sessionSecret,
     resave: true,
-    saveUninitialized: true,
+    saveUninitialized: true
 }));
 
 // Generic middlewares for handle requests
@@ -116,7 +116,7 @@ var ensureAuthenticated = function(req, res, next) {
     } else {
         next();
     }
-}
+};
 
 passport.serializeUser(function(user, done) {
     done(null, user);
@@ -167,12 +167,12 @@ var renderTemplate = function(req, res, customTitle, content, viewName) {
         contextPath: config.portalPrefix,
         proxyPath: config.proxyPrefix,
         accountHost: config.oauth2.server
-    }
+    };
 
     res.render('base', properties);
     res.end();
 
-}
+};
 
 app.get(config.portalPrefix + '/', ensureAuthenticated, function(req, res) {
     renderTemplate(req, res, 'Marketplace', 'home-content', 'Customer');
@@ -202,10 +202,10 @@ var headerAuthentication = function(req, res, next) {
         });
 
     } catch (err) {
-        log.warn(err)
+        log.warn(err);
         utils.sendUnauthorized(res, err);
     }
-}
+};
 
 // Middleware: Add CORS headers. Handle OPTIONS requests.
 app.use(function (req, res, next) {

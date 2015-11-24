@@ -33,7 +33,7 @@ var catalog = (function() {
 
         // Search for provider role
         for (var i = 0; i < userInfo.roles.length && !valid; i++) {
-            if (userInfo.roles[i].id === role) {
+            if (userInfo.roles[i].name.toLowerCase() === role.toLowerCase()) {
                 valid = true;
             }
         }

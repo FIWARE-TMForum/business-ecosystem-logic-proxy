@@ -82,14 +82,14 @@ describe('Catalog API', function() {
     it('should call error callback when the user is not the owner of the created resource', function(done) {
         var user = 'test';
         var resource = {
-            relatedParty: [{ id: user, role: 'invalid role' }]
+            relatedParty: [{ name: user, role: 'invalid role' }]
         };
 
-        testCreateBasic(user, JSON.stringify(resource), [{ id: config.oauth2.roles.seller }], true, 403, 'The user making the request and the specified owner are not the same user', done);
+        testCreateBasic(user, JSON.stringify(resource), [{ name: config.oauth2.roles.seller }], true, 403, 'The user making the request and the specified owner are not the same user', done);
     });
 
     it('should call error callback when the resource does not contains the relatedParty field', function(done) {
-        testCreateBasic('test', JSON.stringify({ }), [{ id: config.oauth2.roles.seller }], true, 403, 'The user making the request and the specified owner are not the same user', done);
+        testCreateBasic('test', JSON.stringify({ }), [{ name: config.oauth2.roles.seller }], true, 403, 'The user making the request and the specified owner are not the same user', done);
     });
 
     it('should call ok callback when the user is the owner of the created resource', function(done) {
@@ -100,7 +100,7 @@ describe('Catalog API', function() {
         };
 
         // Error parameters are not required when the resource can be created
-        testCreateBasic(user, JSON.stringify(resource), [{ id: config.oauth2.roles.seller }], false, null, null, done);
+        testCreateBasic(user, JSON.stringify(resource), [{ name: config.oauth2.roles.seller }], false, null, null, done);
     });
 
     it('should call ok callback when the user is admin', function(done) {
@@ -108,7 +108,7 @@ describe('Catalog API', function() {
         var resource = {
             relatedParty: [{ id: 'test', role: 'OwNeR' }]
         };
-        testCreateBasic(user, JSON.stringify(resource), [{ id: config.oauth2.roles.admin }], false, null, null, done);
+        testCreateBasic(user, JSON.stringify(resource), [{ name: config.oauth2.roles.admin }], false, null, null, done);
     });
 
     var testCreateOffering = function(isOwner, productRequestFails, errorStatus, errorMsg, done) {
@@ -145,7 +145,7 @@ describe('Catalog API', function() {
             url: offeringPath,
             user: {
                 id: userName,
-                roles: [{ id: config.oauth2.roles.seller }]
+                roles: [{ name: config.oauth2.roles.seller }]
             },
             body: JSON.stringify({
                 productSpecification: {
@@ -220,7 +220,7 @@ describe('Catalog API', function() {
             url: offeringPath,
             user: {
                 id: userName,
-                roles: [{ id: config.oauth2.roles.seller }]
+                roles: [{ name: config.oauth2.roles.seller }]
             },
             body: JSON.stringify(body)
         };
