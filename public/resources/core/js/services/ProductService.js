@@ -115,14 +115,16 @@ angular.module('app.services')
             },
 
             getBundledProductsOf: function getBundledProductsOf($product, next) {
-                var params = {
-                    'relatedParty.id': LOGGED_USER.ID,
-                    'id': $product.bundledProductSpecification.map(function (data) {
-                        return data.id;
-                    }).join()
-                };
+                var params;
 
                 if ($product.isBundle) {
+                    params = {
+                        'relatedParty.id': LOGGED_USER.ID,
+                        'id': $product.bundledProductSpecification.map(function (data) {
+                            return data.id;
+                        }).join()
+                    };
+
                     Product.query(params, function ($collection) {
                         angular.copy($collection.slice(), $product.bundledProductSpecification);
 
@@ -133,6 +135,11 @@ angular.module('app.services')
 
                     });
                 } else {
+
+                    if (!angular.isArray($product.bundledProductSpecification)) {
+                        $product.bundledProductSpecification = [];
+                    }
+
                     next($product.bundledProductSpecification);
                 }
             },
