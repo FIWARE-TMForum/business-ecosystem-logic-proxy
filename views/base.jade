@@ -1,0 +1,98 @@
+doctype html
+html(lang="en")
+  head
+    title #{ title }
+
+    meta(charset="utf-8")
+    meta(name="viewport",content="width=device-width, initial-scale=1")
+
+    each cssFilePath in cssFilesToInject
+      link(rel="stylesheet", href="#{ contextPath }/#{ cssFilePath }")
+
+    each jsFilePath in jsDepFilesToInject
+      script(src="#{ contextPath }/#{ jsFilePath }")
+
+    script.
+      angular.module('app', ['ngRoute', 'angularMoment', 'ngResource', 'app.services', 'app.controllers'])
+        .constant('URLS', {
+          TEMPLATE: '#{ contextPath }/resources/core/templates',
+          PRODUCT: 'http://130.206.121.54/DSPRODUCTCATALOG2/api/catalogManagement/v2/productSpecification/:productId',
+          PRODUCT_OFFERING: 'http://130.206.121.54/DSPRODUCTCATALOG2/api/catalogManagement/v2/productOffering/:offeringId',
+          PRODUCT_CATALOGUE: 'http://130.206.121.54/DSPRODUCTCATALOG2/api/catalogManagement/v2/catalog/:catalogueId',
+          PRODUCT_CATEGORY: 'http://130.206.121.54/DSPRODUCTCATALOG2/api/catalogManagement/v2/category/:categoryId'
+        })
+        .constant('LOGGED_USER', {
+          ID: '#{ user.id }',
+          ROLE: '#{ userRole }',
+          HREF: '#{ accountHost }/idm/user/#{ user.id }',
+          BEARER_TOKEN: 'Bearer #{ user.accessToken }'
+        });
+
+    each jsFilePath in jsAppFilesToInject
+      script(src="#{ contextPath }/#{ jsFilePath }")
+
+  body(ng-app="app", ng-controller="UserCtrl")
+
+    .navbar.navbar-default.navbar-static-top
+      .container
+        .navbar-header
+          a.navbar-brand(href="#{ contextPath }/")
+            img(src="#{ contextPath }/resources/core/images/tmforum-logo.png")
+            span.text-right Portal
+        .navbar-collapse.collapse
+          ul.nav.navbar-nav.navbar-right
+            li(ng-class="{'active': $userRole == 'Customer'}")
+              a(href="#{ contextPath }/")
+                i.fa.fa-newspaper-o.fa-fw
+                | &nbsp;Marketplace
+            li(ng-class="{'active': $userRole == 'Seller'}")
+              a(href="#{ contextPath }/mystock")
+                i.fa.fa-cubes.fa-fw
+                | &nbsp;My stock
+            li.dropdown
+              a.dropdown-toggle(data-toggle="dropdown")
+                i.fa.fa-user.fa-fw
+                | &nbsp;#{ user.displayName }
+                i.fa.fa-caret-down.fa-fw
+              ul.dropdown-menu
+                li
+                  a(data-toggle="modal", data-target=".user-update-modal")
+                    i.fa.fa-cog.fa-fw
+                    | &nbsp;Settings
+                li
+                  a(ng-click="signOut()")
+                    i.fa.fa-sign-out.fa-fw
+                    | &nbsp;Sign out
+
+    .notification-list(ng-controller="MessageListCtrl")
+      .container(ng-messages="$alert", ng-if="!hidden")
+        .alert.alert-success(ng-message="success")
+          button.close(type="button", ng-click="resetAlert()")
+            i.fa.fa-remove.fa-fw
+          span.alert-message(ng-bind-html="$alert.message")
+
+    .container
+      block content
+
+    ng-include(src="'/includes/user-detail-view.jade'")
+    form(name="signOutForm", method="post", action="#{ contextPath }/logout")
+
+    footer.clearfix
+      hr.fiware-line
+      .col-sm-6
+        ul.list-inline
+          li.text-muted
+            small © 2015 CoNWeT Lab., Universidad Politécnica de Madrid
+      .col-sm-6
+        ul.list-inline.pull-right
+          li
+            small
+              a(href="https://www.fiware.org") FIWARE
+          li
+            small ·
+          li
+            small
+              a(href="https://www.tmforum.org") TM FORUM
+
+    script(type="text/ng-template", id="/includes/user-detail-view.jade")
+      include ./includes/user-detail-view.jade

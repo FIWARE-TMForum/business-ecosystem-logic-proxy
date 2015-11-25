@@ -1,0 +1,57 @@
+extends ./base.jade
+
+block content
+  .row(ng-controller="UserCustomerView")
+    .col-sm-3
+      .panel.panel-default(ng-controller="CatalogueListCtrl")
+        .panel-heading
+          .panel-title Catalogues
+        .panel-body
+          .list-group
+            a.list-group-item(ng-class="{'active': !$catalogueItem}", ng-click="select()")
+              i.fa.fa-home.fa-fw
+              | &nbsp;Home
+            a.list-group-item.active(ng-click="select($catalogueItem)", ng-if="$catalogueItem != null")
+              | {{ $catalogueItem.name }}
+          hr
+          .list-group
+            a.list-group-item(ng-repeat="$catalogue in $catalogueList", ng-class="{'disabled': isSelected($catalogue)}", ng-click="select($catalogue)")
+              | {{ $catalogue.name }}
+          ul.pager
+            li.disabled
+              a
+                i.fa.fa-arrow-left
+            li.disabled
+              a
+                i.fa.fa-arrow-right
+      .panel.panel-default(ng-controller="CategoryListCtrl")
+        .panel-heading
+          .panel-title Categories
+        .panel-body
+          .list-group
+            a.list-group-item(ng-class="{'active': !$categoryItem}", ng-click="select()")
+              i.fa.fa-tags.fa-fw
+              | &nbsp;All offerings
+            a.list-group-item.active(ng-click="select($categoryItem)", ng-if="!$categoryItem")
+              | {{ $categoryItem.name }}
+          hr
+          .list-group
+            a.list-group-item(ng-repeat="$category in $categoryList", ng-class="{'disabled': $category.active}", ng-click="select($category)")
+              | {{ $category.name }}
+          ul.pager
+            li.disabled
+              a
+                i.fa.fa-arrow-left
+            li.disabled
+              a
+                i.fa.fa-arrow-right
+    .col-sm-9(ng-controller="CatalogueDetailCtrl")
+      .panel.panel-default(ng-if="$catalogue != null")
+        .panel-heading
+          .panel-title {{ $catalogue.name }}
+          .panel-options.text-right
+            button.btn.btn-sm.btn-primary(type="button", bs-tooltip, data-title="New offering")
+              i.fa.fa-cube.fa-fw
+        .panel-body
+          blockquote(ng-if="$catalogue.description")
+            p {{ $catalogue.description }}
