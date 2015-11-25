@@ -135,59 +135,112 @@
         <div class="row">
           <div class="col-sm-10 col-sm-offset-1">
             <ul class="nav nav-steps nav-justified">
-              <li class="active"><a data-target=".tab-product-create-form" data-toggle="tab">1. General</a></li>
+              <li ng-class="{'active': (getActiveTab() === 1)}"
+                  ng-click="setActiveTab(1)"><a data-target=".tab-product-create-form" data-toggle="tab">1. General</a></li>
+              <li ng-class="{'active': (getActiveTab() === 2)}"
+                  ng-click="setActiveTab(2)"><a data-target=".tab-product-create-form" data-toggle="tab">2. Characteristics</a></li>
+              <li ng-class="{'active': (getActiveTab() === 3)}"
+                  ng-click="setActiveTab(3)"><a data-target=".tab-product-create-form" data-toggle="tab">3. Assets</a></li>
             </ul>
             <div class="tab-content">
               <div class="tab-pane tab-product-create-form active">
                 <form name="productCreateForm" novalidate>
-                  <div class="form-group">
-                    <div class="row">
-                      <div class="col-sm-8">
-                        <label>Name</label>
-                        <input type="text" class="form-control" name="name" ng-model="productInfo.name" required>
-                      </div>
-                      <div class="col-sm-4">
-                        <label>Version</label>
-                        <input type="text" class="form-control" name="version" ng-model="productInfo.version" required>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="form-group">
-                    <div class="row">
-                      <div class="col-sm-8">
-                        <label>Brand</label>
-                        <input type="text" class="form-control" name="brand" ng-model="productInfo.brand" required>
-                      </div>
-                      <div class="col-sm-4">
-                        <label>ID Number</label>
-                        <input type="text" class="form-control" name="productNumber" ng-model="productInfo.productNumber" required>
+                  <div ng-show="getActiveTab() === 1">
+                    <div class="form-group">
+                      <div class="row">
+                        <div class="col-sm-8">
+                          <label>Name</label>
+                          <input type="text" class="form-control" name="name" ng-model="productInfo.name" required>
+                        </div>
+                        <div class="col-sm-4">
+                          <label>Version</label>
+                          <input type="text" class="form-control" name="version" ng-model="productInfo.version" required>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div class="form-group">
-                    <label>Description <small class="text-muted">optional</small></label>
-                    <textarea class="form-control" name="description" rows="3" ng-model="productInfo.description"></textarea>
-                  </div>
-                  <div class="form-group" ng-if="productInfo.bundledProductSpecification.length">
-                    <label>Bundled products</label>
-                    <table class="table table-bordered">
-                      <thead>
+                    <div class="form-group">
+                      <div class="row">
+                        <div class="col-sm-8">
+                          <label>Brand</label>
+                          <input type="text" class="form-control" name="brand" ng-model="productInfo.brand" required>
+                        </div>
+                        <div class="col-sm-4">
+                          <label>ID Number</label>
+                          <input type="text" class="form-control" name="productNumber" ng-model="productInfo.productNumber" required>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label>Description <small class="text-muted">optional</small></label>
+                      <textarea class="form-control" name="description" rows="3" ng-model="productInfo.description"></textarea>
+                    </div>
+                    <div class="form-group" ng-if="productInfo.bundledProductSpecification.length">
+                      <label>Bundled products</label>
+                      <table class="table table-bordered">
+                        <thead>
                         <tr>
                           <th>ID Number</th>
                           <th>Name</th>
                           <th>Version</th>
                           <th>Brand</th>
                         </tr>
-                      </thead>
-                      <tbody>
+                        </thead>
+                        <tbody>
                         <tr ng-repeat="$product in productInfo.bundledProductSpecification">
                           <th>{{ $product.productNumber }}</th>
                           <td>{{ $product.name }}</td>
                           <td>{{ $product.version }}</td>
                           <td>{{ $product.brand }}</td>
                         </tr>
-                      </tbody>
-                    </table>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  <div ng-show="getActiveTab() === 2">
+                    Characteristics
+                  </div>
+                  <div ng-show="getActiveTab() === 3">
+                    <div ng-show="assetTypes.length">
+                      <div class="form-group">
+                        <div class="row">
+                          <div class="col-sm-8">
+                            <label>Digital Asset Type</label>
+                            <select class="form-control" name="asset"
+                                    ng-model="productInfo.productSpecCharacteristic[0].productSpecCharacteristicValue[0].value" ng-change="setCurrentType()">
+                              <option ng-repeat="asset in assetTypes" value="{{ asset.name }}">{{ asset.name }}</option>
+                            </select>
+                          </div>
+                          <div class="col-sm-4">
+                            <label>How to provide?</label>
+                            <select class="form-control" ng-model="currFormat">
+                              <option ng-repeat="format in getCurrentType().formats" value="{{ format }}">{{ format }}</option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="form-group" ng-show="isSelected('URL')">
+                        <label>Asset URL</label>
+                        <input type="url" class="form-control" ng-model="productInfo.productSpecCharacteristic[2].productSpecCharacteristicValue[0].value">
+                      </div>
+                      <div class="form-group" ng-show="isSelected('FILE')">
+                        <label>Asset File</label>
+                        <input type="file" class="form-control" >
+                      </div>
+                      <div class="form-group">
+                        <label>Media Type</label>
+                        <div ng-show="!getCurrentType().mediaTypes.length">
+                          <input type="text" class="form-control" ng-model="productInfo.productSpecCharacteristic[1].productSpecCharacteristicValue[0].value">
+                        </div>
+                        <div ng-show="getCurrentType().mediaTypes.length">
+                          <select class="form-control" ng-model="productInfo.productSpecCharacteristic[1].productSpecCharacteristicValue[0].value">
+                            <option ng-repeat="media in getCurrentType().mediaTypes" value="{{ media }}">{{ media }}</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                    <div ng-show="!assetTypes.length">
+                      <div class="alert alert-info">There isn't any digital asset type supported.</div>
+                    </div>
                   </div>
                 </form>
               </div>

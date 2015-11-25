@@ -76,25 +76,101 @@ angular.module('app.controllers')
             $scope.$productBundleList.length = 0;
         });
     }])
-    .controller('ProductCreateCtrl', ['$scope', '$rootScope', 'EVENTS', 'Product', '$element', function ($scope, $rootScope, EVENTS, Product, $element) {
-        var initialInfo = {version: '0.1', bundledProductSpecification: []};
+    .controller('ProductCreateCtrl', ['$scope', '$rootScope', 'EVENTS', 'Product', 'Asset', '$element', function ($scope, $rootScope, EVENTS, Product, Asset, $element) {
+        var initialInfo = {
+            version: '0.1',
+            bundledProductSpecification: [],
+            productSpecCharacteristic: []
+        };
+        var activeTab = 1;
+        var currentType;
+
+        $scope.assetTypes = [];
+
+        var includeCharacteristic = function(name, description, value) {
+            $scope.productInfo.productSpecCharacteristic.push({
+                "name": name,
+                "description": description,
+                "valueType": "string",
+                "configurable": false,
+                "validFor": {
+                    "startDateTime": "",
+                    "endDateTime": ""
+                },
+                "productSpecCharacteristicValue": [
+                    {
+                        "valueType": "string",
+                        "default": true,
+                        "value": value,
+                        "unitOfMeasure": "",
+                        "valueFrom": "",
+                        "valueTo": "",
+                        "validFor": {
+                            "startDateTime": "",
+                            "endDateTime": ""
+                        }
+                    }
+                ]
+            });
+        };
+
+        $scope.getActiveTab = function getActiveTab() {
+            return activeTab;
+        };
+
+        $scope.setActiveTab = function setActiveTab(active) {
+            activeTab = active;
+        };
+
+        $scope.setCurrentType = function() {
+            var found = false;
+            for (var i = 0; i < $scope.assetTypes.length && !found; i++) {
+                var assetType = $scope.productInfo.productSpecCharacteristic[0].productSpecCharacteristicValue[0].value;
+
+                if (assetType === $scope.assetTypes[i].name) {
+                    found = true;
+                    currentType = $scope.assetTypes[i];
+                }
+            }
+            $scope.currFormat = currentType.formats[0];
+        };
+
+        $scope.getCurrentType = function() {
+            return currentType;
+        };
+
+        $scope.isSelected = function isSelected(format) {
+            return $scope.currFormat === format;
+        };
 
         $scope.createProduct = function createProduct() {
             Product.create($scope.productInfo, function ($productCreated) {
                 $element.modal('hide');
-                $rootScope.$broadcast(EVENTS.MESSAGE_SHOW, 'success', 'The product <strong>{{ name }}</strong> was created successfully.', $productCreated);
+                $rootScope.$broadcast(EVENTS.MESSAGE_SHOW, 'success', 'The product <strong>{{ name }}</strong> was successfully created.', $productCreated);
                 $rootScope.$broadcast(EVENTS.PRODUCT_CREATE, $productCreated);
             });
         };
 
         $scope.resetCreateForm = function resetCreateForm() {
+            activeTab = 1;
             $scope.productInfo = angular.copy(initialInfo);
         };
 
         $scope.$on(EVENTS.PRODUCT_CREATEFORM_SHOW, function ($event, $productBundleList) {
-            $scope.resetCreateForm();
-            angular.copy($productBundleList, $scope.productInfo.bundledProductSpecification);
-            $element.modal('show');
+            Asset.list(function(types) {
+                $scope.assetTypes = types;
+                $scope.resetCreateForm();
+                angular.copy($productBundleList, $scope.productInfo.bundledProductSpecification);
+                if (types.length) {
+                    includeCharacteristic('Asset type', 'Type of the digital asset described in this product specification', '');
+                    includeCharacteristic('Media type', 'Media type of the digital asset described in this product specification', '');
+                    includeCharacteristic('Location', 'URL pointing to the digital asset described in this product specification', '');
+                    currentType = types[0];
+                    $scope.currFormat = currentType.formats[0];
+                    $scope.productInfo.productSpecCharacteristic[0].productSpecCharacteristicValue[0].value = types[0].name;
+                }
+                $element.modal('show');
+            });
         });
 
         $scope.resetCreateForm();
