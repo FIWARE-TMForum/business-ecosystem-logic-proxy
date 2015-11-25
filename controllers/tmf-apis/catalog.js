@@ -101,7 +101,7 @@ var catalog = (function() {
             }, callbackError);
 
         } else if (req.url.indexOf('productSpecification') > -1) {
-            storeClient.validateProduct(req.body, req.user, function() {
+            storeClient.validateProduct(body, req.user, function() {
                 createHandler(req.user, body, callback, callbackError);
             }, callbackError);
         } else {

@@ -31,7 +31,7 @@ describe('Store Client', function() {
 
         // Call the validator
         var productInfo = { 'a': 'b', 'example': 'c' };
-        storeClient.validateProduct(JSON.stringify(productInfo), {id: 'test'}, function(status, body, headers) {
+        storeClient.validateProduct(productInfo, {id: 'test'}, function(status, body, headers) {
 
             var expectedBody = {
                 action: 'create',
@@ -70,7 +70,7 @@ describe('Store Client', function() {
 
         // Call the validator
         var productInfo = { 'a': 'b', 'example': 'c' };
-        storeClient.validateProduct(JSON.stringify(productInfo), {id: 'test'}, null, function(status, body) {
+        storeClient.validateProduct(productInfo, {id: 'test'}, null, function(status, body) {
 
             var expectedBody = {
                 action: 'create',
