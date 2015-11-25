@@ -1,11 +1,14 @@
 
-var proxyquire =  require('proxyquire');
+var proxyquire =  require('proxyquire'),
+    testUtils = require('../../utils');
 
 
 describe('Charging API', function () {
 
     var getChargingAPI = function() {
-        return proxyquire('../../../controllers/tmf-apis/charging', {}).charging;
+        return proxyquire('../../../controllers/tmf-apis/charging', {
+            './../../lib/logger': testUtils.emptyLogger
+        }).charging;
     };
 
     it('should redirect the request to the charging backend API', function(done) {
