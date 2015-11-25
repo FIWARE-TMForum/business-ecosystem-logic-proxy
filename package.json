@@ -13,7 +13,7 @@
     "express-session": "1.12.1",
     "ejs": "2.3.4",
     "passport": "0.3.0",
-    "passport-fiware-oauth": "0.1.4"
+    "passport-fiware-oauth": "0.1.5"
   },
   "devDependencies": {
     "freeport": "1.0.5",

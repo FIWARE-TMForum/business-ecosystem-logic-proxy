@@ -196,8 +196,14 @@ var headerAuthentication = function(req, res, next) {
                 log.warn("The provider auth-token is not valid");
                 utils.sendUnauthorized(res, "invalid auth-token")
             } else {
-                req.user = userProfile;
-                next();
+                // Check that the provided access token is valid for the given application
+                if (userProfile.appId !== config.oauth2.clientID) {
+                    log.warn("The provider auth-token scope is not valid for the current application");
+                    utils.sendUnauthorized(res, "The auth-token scope is not valid for the current application");
+                } else {
+                    req.user = userProfile;
+                    next();
+                }
             }
         });
 

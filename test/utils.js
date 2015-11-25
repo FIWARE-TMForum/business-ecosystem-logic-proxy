@@ -29,12 +29,12 @@ var defaultConfig = {
             'port': '753'
         }
     }
-}
+};
 
 exports.getDefaultConfig = function() {
     // Return a copy to avoid side effects
     return JSON.parse(JSON.stringify(defaultConfig));
-}
+};
 
 var emptyFunction = function() {};
 exports.emptyLogger = {
@@ -47,4 +47,4 @@ exports.emptyLogger = {
             }
         }
     }
-}
+};
