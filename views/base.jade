@@ -16,10 +16,10 @@ html(lang="en")
       angular.module('app', ['ngRoute', 'angularMoment', 'ngResource', 'app.services', 'app.controllers'])
         .constant('URLS', {
           TEMPLATE: '#{ contextPath }/resources/core/templates',
-          PRODUCT: 'http://130.206.121.54/DSPRODUCTCATALOG2/api/catalogManagement/v2/productSpecification/:productId',
-          PRODUCT_OFFERING: 'http://130.206.121.54/DSPRODUCTCATALOG2/api/catalogManagement/v2/productOffering/:offeringId',
-          PRODUCT_CATALOGUE: 'http://130.206.121.54/DSPRODUCTCATALOG2/api/catalogManagement/v2/catalog/:catalogueId',
-          PRODUCT_CATEGORY: 'http://130.206.121.54/DSPRODUCTCATALOG2/api/catalogManagement/v2/category/:categoryId'
+          PRODUCT: '#{ proxyPath }/DSPRODUCTCATALOG2/api/catalogManagement/v2/productSpecification/:productId',
+          PRODUCT_OFFERING: '#{ proxyPath }/DSPRODUCTCATALOG2/api/catalogManagement/v2/productOffering/:offeringId',
+          PRODUCT_CATALOGUE: '#{ proxyPath }/DSPRODUCTCATALOG2/api/catalogManagement/v2/catalog/:catalogueId',
+          PRODUCT_CATEGORY: '#{ proxyPath }/DSPRODUCTCATALOG2/api/catalogManagement/v2/category/:categoryId'
         })
         .constant('LOGGED_USER', {
           ID: '#{ user.id }',
