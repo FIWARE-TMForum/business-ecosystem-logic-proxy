@@ -1,0 +1,22 @@
+.modal.fade.user-update-modal(tabindex="-1")
+  .modal-dialog
+    .modal-content
+      .modal-header
+        button.close(type="button", data-dismiss="modal")
+          span &times;
+        .modal-title Settings
+      .modal-body
+        .row
+          .col-sm-10.col-sm-offset-1
+            ul.nav.nav-tabs
+              li.active
+                a Profile
+            form(name="userUpdateForm")
+              .form-group
+                label Username
+                input.form-control(type="text", placeholder="#{ user.displayName }", readonly)
+              .form-group
+                label Email
+                input.form-control(type="text", placeholder="#{ user.email }", readonly)
+      .modal-footer
+        button.btn.btn-default(type="button", data-dismiss="modal") Close

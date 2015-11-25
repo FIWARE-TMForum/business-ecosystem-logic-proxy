@@ -86,7 +86,7 @@ app.use(errorhandler({ dumpExceptions: true, showStack: true }));
 // Static files && templates
 app.use(config.portalPrefix + '/', express.static(__dirname + '/public'));
 app.set('views', __dirname + '/views');
-app.set('view engine', 'ejs');
+app.set('view engine', 'jade');
 
 // Session
 app.use(session({
@@ -151,7 +151,48 @@ app.all('/logout', function(req, res) {
 /////////////////////////////// PORTAL //////////////////////////////
 /////////////////////////////////////////////////////////////////////
 
-var renderTemplate = function(req, res, customTitle, content, viewName) {
+var cssFilesToInject = [
+    'bootstrap-3.3.5/css/bootstrap.css',
+    'font-awesome-4.4.0/css/font-awesome.css',
+    'core/css/default-theme.css'
+].map(function(path) {
+    return 'resources/' + path;
+});
+
+var jsDepFilesToInject = [
+    // Dependencies:
+    'jquery-1.11.3/js/jquery.js',
+    'bootstrap-3.3.5/js/bootstrap.js',
+    'moment-2.10.6/js/moment.js',
+    'angular-1.4.7/js/angular.js',
+    // Angular Dependencies:
+    'angular-1.4.7/js/angular-messages.js',
+    'angular-1.4.7/js/angular-moment.js',
+    'angular-1.4.7/js/angular-resource.js',
+    'angular-1.4.7/js/angular-route.js'
+].map(function(path) {
+    return 'resources/' + path;
+});
+
+var jsAppFilesToInject = [
+    'app.js',
+    'services/UserService.js',
+    'services/ProductService.js',
+    'services/ProductOfferingService.js',
+    'services/ProductCatalogueService.js',
+    'services/ProductCategoryService.js',
+    'controllers/MessageController.js',
+    'controllers/UserController.js',
+    'controllers/ProductController.js',
+    'controllers/ProductOfferingController.js',
+    'controllers/ProductCatalogueController.js',
+    'controllers/ProductCategoryController.js',
+    'routes.js'
+].map(function(path) {
+    return 'resources/core/js/' + path;
+});
+
+var renderTemplate = function(req, res, customTitle, viewName, userRole) {
 
     // TODO: Maybe an object with extra properties.
     // To be implemented if required!!
@@ -160,16 +201,18 @@ var renderTemplate = function(req, res, customTitle, content, viewName) {
     var title = validCustomTitle ? DEFAULT_TITLE + ' - ' + customTitle : DEFAULT_TITLE;
 
     var properties = {
-        content: content,
-        viewName: viewName,
         user: req.user,
+        userRole: userRole,
         title: title,
         contextPath: config.portalPrefix,
         proxyPath: config.proxyPrefix,
+        cssFilesToInject: cssFilesToInject,
+        jsDepFilesToInject: jsDepFilesToInject,
+        jsAppFilesToInject: jsAppFilesToInject,
         accountHost: config.oauth2.server
     };
 
-    res.render('base', properties);
+    res.render(viewName, properties);
     res.end();
 
 };
