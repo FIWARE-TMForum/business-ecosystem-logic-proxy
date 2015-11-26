@@ -29,14 +29,12 @@ block content
           .panel-title Categories
         .panel-body
           .list-group
-            a.list-group-item(ng-class="{'active': !$categoryItem}", ng-click="select()")
+            a.list-group-item(ng-class="{'active': !$categoryActive}", ng-click="refreshList()")
               i.fa.fa-tags.fa-fw
               | &nbsp;All offerings
-            a.list-group-item.active(ng-click="select($categoryItem)", ng-if="!$categoryItem")
-              | {{ $categoryItem.name }}
           hr
           .list-group
-            a.list-group-item(ng-repeat="$category in $categoryList", ng-class="{'disabled': $category.active}", ng-click="select($category)")
+            a.list-group-item(ng-repeat="$category in $categoryList", ng-class="{'active': isActive($category)}", ng-click="showCategory($category)")
               | {{ $category.name }}
           ul.pager
             li.disabled

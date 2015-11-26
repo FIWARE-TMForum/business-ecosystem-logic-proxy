@@ -11,7 +11,9 @@ angular.module('app.services')
             $collection: [],
 
             list: function list(next) {
-                return Category.query(function ($collection) {
+                var params = {'isRoot': true, 'fields': 'name'};
+
+                return Category.query(params, function ($collection) {
 
                     angular.copy($collection, service.$collection);
 
