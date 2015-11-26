@@ -434,16 +434,7 @@ textarea {
         margin-left: 0;
     }
     .navbar-brand > img {
-        height: 35px;
-    }
-    .navbar-brand > span {
-        display: block;
-        margin-bottom: 0;
-        padding-right: 2px;
-        font-size: 11px;
-        font-weight: 700;
-        line-height: 15px;
-        text-transform: uppercase;
+        height: 50px;
     }
 
     .navbar-nav > li > a {
