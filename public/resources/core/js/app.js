@@ -24,6 +24,19 @@ angular.module('app')
             }
         };
     })
+    .directive('fileModel', ['$parse', function($parse) {
+        return {
+            restrict: 'A',
+            link: function(scope, element, attrs) {
+                var fileSetter = $parse(attrs.fileModel).assign;
+                element.on('change', function() {
+                    scope.$apply(function() {
+                        fileSetter(scope, element[0].files[0]);
+                    });
+                });
+            }
+        }
+    }])
     .config(['$httpProvider', 'LOGGED_USER', function ($httpProvider, LOGGED_USER) {
         $httpProvider.defaults.headers.common['AUTHORIZATION'] = LOGGED_USER.BEARER_TOKEN;
     }]);

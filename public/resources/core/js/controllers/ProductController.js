@@ -76,7 +76,9 @@ angular.module('app.controllers')
             $scope.$productBundleList.length = 0;
         });
     }])
-    .controller('ProductCreateCtrl', ['$scope', '$rootScope', 'EVENTS', 'Product', 'Asset', '$element', function ($scope, $rootScope, EVENTS, Product, Asset, $element) {
+    .controller('ProductCreateCtrl', ['$scope', '$rootScope', 'EVENTS', 'Product', 'Asset', 'AssetType', '$element',
+        function ($scope, $rootScope, EVENTS, Product, Asset, AssetType, $element) {
+
         var initialInfo = {
             version: '0.1',
             bundledProductSpecification: [],
@@ -143,12 +145,36 @@ angular.module('app.controllers')
             return $scope.currFormat === format;
         };
 
-        $scope.createProduct = function createProduct() {
+        var saveProduct = function() {
             Product.create($scope.productInfo, function ($productCreated) {
                 $element.modal('hide');
                 $rootScope.$broadcast(EVENTS.MESSAGE_SHOW, 'success', 'The product <strong>{{ name }}</strong> was successfully created.', $productCreated);
                 $rootScope.$broadcast(EVENTS.PRODUCT_CREATE, $productCreated);
             });
+        };
+        $scope.createProduct = function createProduct() {
+            // If the format is file upload it to the asset manager
+            if ($scope.currFormat === 'FILE') {
+                var reader = new FileReader();
+
+                reader.onload = function(e) {
+                    var data = {
+                        'content': {
+                            'name': $scope.assetFile.name,
+                            'data': btoa(e.target.result)
+                        },
+                        'contentType': $scope.productInfo.productSpecCharacteristic[1].productSpecCharacteristicValue[0].value
+                    };
+                    Asset.create(data, function(result) {
+                        // Set file location
+                        $scope.productInfo.productSpecCharacteristic[2].productSpecCharacteristicValue[0].value = result.content;
+                        saveProduct();
+                    });
+                };
+                reader.readAsBinaryString($scope.assetFile);
+            } else {
+                saveProduct();
+            }
         };
 
         $scope.resetCreateForm = function resetCreateForm() {
@@ -157,7 +183,7 @@ angular.module('app.controllers')
         };
 
         $scope.$on(EVENTS.PRODUCT_CREATEFORM_SHOW, function ($event, $productBundleList) {
-            Asset.list(function(types) {
+            AssetType.list(function(types) {
                 $scope.assetTypes = types;
                 $scope.resetCreateForm();
                 angular.copy($productBundleList, $scope.productInfo.bundledProductSpecification);
