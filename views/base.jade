@@ -16,10 +16,7 @@ html(lang="en")
       angular.module('app', ['ngRoute', 'angularMoment', 'ngResource', 'app.services', 'app.controllers'])
         .constant('URLS', {
           TEMPLATE: '#{ contextPath }/resources/core/templates',
-          PRODUCT: '#{ proxyPath }/DSProductCatalog/api/catalogManagement/v2/productSpecification/:productId',
-          PRODUCT_OFFERING: '#{ proxyPath }/DSProductCatalog/api/catalogManagement/v2/productOffering/:offeringId',
-          PRODUCT_CATALOGUE: '#{ proxyPath }/DSProductCatalog/api/catalogManagement/v2/catalog/:catalogueId',
-          PRODUCT_CATEGORY: '#{ proxyPath }/DSProductCatalog/api/catalogManagement/v2/category/:categoryId',
+          CATALOGUE_MANAGEMENT: '#{ proxyPath }/DSProductCatalog/api/catalogManagement/v2',
           ASSET_TYPE: '#{ proxyPath }/charging/api/assetManagement/assetTypes/:typeId',
           ASSET: '#{ proxyPath }/charging/api/assetManagement/assets/uploadJob'
         })

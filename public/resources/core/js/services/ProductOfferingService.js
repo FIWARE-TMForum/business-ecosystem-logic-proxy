@@ -133,7 +133,7 @@ angular.module('app.services')
 
         };
 
-        Offering = $resource(URLS.PRODUCT_OFFERING, {offeringId: '@id'}, {
+        Offering = $resource(URLS.CATALOGUE_MANAGEMENT + '/productOffering/:offeringId', {offeringId: '@id'}, {
         });
 
         return service;
