@@ -16,10 +16,10 @@ html(lang="en")
       angular.module('app', ['ngRoute', 'angularMoment', 'ngResource', 'app.services', 'app.controllers'])
         .constant('URLS', {
           TEMPLATE: '#{ contextPath }/resources/core/templates',
-          PRODUCT: '#{ proxyPath }/DSPRODUCTCATALOG2/api/catalogManagement/v2/productSpecification/:productId',
-          PRODUCT_OFFERING: '#{ proxyPath }/DSPRODUCTCATALOG2/api/catalogManagement/v2/productOffering/:offeringId',
-          PRODUCT_CATALOGUE: '#{ proxyPath }/DSPRODUCTCATALOG2/api/catalogManagement/v2/catalog/:catalogueId',
-          PRODUCT_CATEGORY: '#{ proxyPath }/DSPRODUCTCATALOG2/api/catalogManagement/v2/category/:categoryId',
+          PRODUCT: '#{ proxyPath }/DSProductCatalog/api/catalogManagement/v2/productSpecification/:productId',
+          PRODUCT_OFFERING: '#{ proxyPath }/DSProductCatalog/api/catalogManagement/v2/productOffering/:offeringId',
+          PRODUCT_CATALOGUE: '#{ proxyPath }/DSProductCatalog/api/catalogManagement/v2/catalog/:catalogueId',
+          PRODUCT_CATEGORY: '#{ proxyPath }/DSProductCatalog/api/catalogManagement/v2/category/:categoryId',
           ASSET_TYPE: '#{ proxyPath }/charging/api/assetManagement/assetTypes/:typeId',
           ASSET: '#{ proxyPath }/charging/api/assetManagement/assets/uploadJob'
         })
@@ -39,8 +39,7 @@ html(lang="en")
       .container
         .navbar-header
           a.navbar-brand(href="#{ contextPath }/")
-            img(src="#{ contextPath }/resources/core/images/tmforum-logo.png")
-            span.text-right Portal
+            img(src="#{ contextPath }/resources/core/images/fiware-tmforum-logo.png")
         .navbar-collapse.collapse
           ul.nav.navbar-nav.navbar-right
             li(ng-class="{'active': $userRole == 'Customer'}")
