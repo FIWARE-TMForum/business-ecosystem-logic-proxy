@@ -167,4 +167,70 @@ describe('Utils', function() {
         });
 
     });
+
+    describe('Get Referer Path', function() {
+
+        var getBasicReq = function(hostname, port) {
+            return {
+                hostname: hostname,
+                app: {
+                    settings: {
+                        port: port
+                    }
+                }
+            }
+        };
+
+        it('should return no referer when referer is not set', function() {
+            var req = getBasicReq('fiware.org', 8080);
+            req.headers = {};
+            expect(utils.getRefererPath(req)).toBe('');
+        });
+
+        it('should return referer when hosts match', function() {
+
+            var hostname = 'fiware.org';
+            var port = 8080;
+            var path = '/home/unit';
+            var req = getBasicReq(hostname, port);
+
+            req.headers = {
+                'referer': 'http://' + hostname + ':' + port + path
+            };
+
+            expect(utils.getRefererPath(req)).toBe(path);
+        });
+
+        it('should not return referer when hostnames do not match', function() {
+
+            var hostname1 = 'fiware.org';
+            var hostname2 = 'nofiware.es';
+            var port = 8080;
+            var path = '/home/unit';
+            var req = getBasicReq(hostname1, port);
+
+            req.headers = {
+                'referer': 'http://' + hostname2 + ':' + port + path
+            };
+
+            expect(utils.getRefererPath(req)).toBe('');
+        });
+
+        it('should not return referer when ports do not match', function() {
+
+            var hostname = 'fiware.org';
+            var port1 = 8080;
+            var port2 = 7777;
+            var path = '/home/unit';
+            var req = getBasicReq(hostname, port1);
+
+            req.headers = {
+                'referer': 'http://' + hostname + ':' + port2 + path
+            };
+
+            expect(utils.getRefererPath(req)).toBe('');
+        });
+
+
+    })
 });

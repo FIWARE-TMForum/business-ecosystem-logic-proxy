@@ -8,6 +8,7 @@ var defaultConfig = {
         }
     },
     appHost: 'example.com',
+    appSsl: false,
     endpoints: {
         'catalog': {
             'path': 'catalog',

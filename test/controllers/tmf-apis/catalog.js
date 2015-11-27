@@ -26,13 +26,55 @@ describe('Catalog API', function() {
 
         var req = {
             method: 'GET',
-            user: { roles: [] }
+            // user: { roles: [] }
         };
 
         catalogApi.checkPermissions(req, function() {
             // Callback function. It's called without arguments...
             done();
         });
+    });
+
+
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////// NOT AUTHENTICATED /////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////////////
+
+    var testNotLoggedIn = function(method, done) {
+
+        var catalogApi = getCatalogApi({});
+        var path = '/catalog/product/1';
+
+        // Call the method
+        var req = {
+            method: method,
+            url: path
+        };
+
+        catalogApi.checkPermissions(req, function(err) {
+
+            expect(err).not.toBe(null);
+            expect(err.status).toBe(401);
+            expect(err.message).toBe('You need to be authenticated to create/update/delete resources');
+
+            done();
+        });
+    };
+
+    it('should reject not authenticated POST requests', function(done) {
+        testNotLoggedIn('POST', done);
+    });
+
+    it('should reject not authenticated PUT requests', function(done) {
+        testNotLoggedIn('PUT', done);
+    });
+
+    it('should reject not authenticated PATCH requests', function(done) {
+        testNotLoggedIn('PATCH', done);
+    });
+
+    it('should reject not authenticated DELETE requests', function(done) {
+        testNotLoggedIn('DELETE', done);
     });
 
 
