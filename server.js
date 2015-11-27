@@ -106,18 +106,6 @@ app.use(bodyParser.text({
 ////////////////////////////// PASSPORT /////////////////////////////
 /////////////////////////////////////////////////////////////////////
 
-var ensureAuthenticated = function(req, res, next) {
-    if (!req.isAuthenticated()) {
-        var state = {'came_from_path': req.path};
-        var encodedState = base64url(JSON.stringify(state));
-        // This action will redirect the user the FIWARE Account portal,
-        // so the next callback is not required to be called
-        passport.authenticate('fiware', { scope: ['all_info'], state: encodedState })(req, res);
-    } else {
-        next();
-    }
-};
-
 passport.serializeUser(function(user, done) {
     done(null, user);
 });
@@ -132,10 +120,23 @@ passport.use(FIWARE_STRATEGY);
 app.use(passport.initialize());
 app.use(passport.session());
 
+// Handler for logging in...
+app.all('/login', function(req, res) {
+
+    var state = {};
+    var refererPath = utils.getRefererPath(req);
+    var encodedState = base64url((JSON.stringify(refererPath ? {'came_from_path': refererPath} : {} )));
+
+    passport.authenticate('fiware', { scope: ['all_info'], state: encodedState })(req, res);
+});
+
 // Handler for the callback
 app.get('/auth/fiware/callback', passport.authenticate('fiware', { failureRedirect: '/error' }), function(req, res) {
+
+    var redirectPath = '/';
     var state = JSON.parse(base64url.decode(req.query.state));
-    var redirectPath = state.came_from_path !== undefined ? state.came_from_path : '/';
+    redirectPath = state.came_from_path !== undefined ? state.came_from_path : '/';
+
     res.redirect(redirectPath);
 });
 
@@ -218,11 +219,11 @@ var renderTemplate = function(req, res, customTitle, viewName, userRole) {
 
 };
 
-app.get(config.portalPrefix + '/', ensureAuthenticated, function(req, res) {
+app.get(config.portalPrefix + '/', function(req, res) {
     renderTemplate(req, res, 'Marketplace', 'home-content', 'Customer');
 });
 
-app.get(config.portalPrefix + '/mystock', ensureAuthenticated, function(req, res) {
+app.get(config.portalPrefix + '/mystock', function(req, res) {
     renderTemplate(req, res, 'My Stock', 'mystock-content', 'Seller');
 });
 
@@ -237,13 +238,13 @@ var headerAuthentication = function(req, res, next) {
         var authToken = utils.getAuthToken(req.headers);
         FIWARE_STRATEGY.userProfile(authToken, function(err, userProfile) {
             if (err) {
-                log.warn("The provider auth-token is not valid");
-                utils.sendUnauthorized(res, "invalid auth-token")
+                log.warn('The provider auth-token is not valid');
+                utils.sendUnauthorized(res, 'invalid auth-token')
             } else {
                 // Check that the provided access token is valid for the given application
                 if (userProfile.appId !== config.oauth2.clientID) {
-                    log.warn("The provider auth-token scope is not valid for the current application");
-                    utils.sendUnauthorized(res, "The auth-token scope is not valid for the current application");
+                    log.warn('The provider auth-token scope is not valid for the current application');
+                    utils.sendUnauthorized(res, 'The auth-token scope is not valid for the current application');
                 } else {
                     req.user = userProfile;
                     next();
@@ -253,7 +254,12 @@ var headerAuthentication = function(req, res, next) {
 
     } catch (err) {
         log.warn(err);
-        utils.sendUnauthorized(res, err);
+
+        if (err.name === 'AuthorizationTokenNotFound') {
+            next();
+        } else {
+            utils.sendUnauthorized(res, err.message);
+        }
     }
 };
 

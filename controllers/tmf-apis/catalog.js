@@ -1,4 +1,5 @@
-var config = require('./../../config'),
+var async = require('async'),
+    config = require('./../../config'),
     http = require('./../../lib/httpClient'),
     storeClient = require('./../../lib/store').storeClient,
     url = require('url'),
@@ -42,7 +43,7 @@ var catalog = (function() {
     };
 
     // Retrieves the product belonging to a given offering
-    var retrieveProduct = function(userInfo, offeringInfo, callback, callbackError) {
+    var retrieveProduct = function(userInfo, offeringInfo, callback) {
         var productUrl = offeringInfo.productSpecification.href;
         var productPath = url.parse(productUrl).pathname;
 
@@ -56,8 +57,15 @@ var catalog = (function() {
 
         var protocol = config.appSsl ? 'https' : 'http';
 
-        http.request(protocol, options, '', callback, function(status, err) {
-            callbackError(400, 'The product specification of the given product offering is not valid');
+        http.request(protocol, options, null, function(err, result) {
+            if (err) {
+                callback({
+                    status: 400,
+                    message: 'The product specification of the given product offering is not valid'
+                })
+            } else {
+                callback(null, result);
+            }
         });
     };
 
@@ -66,59 +74,94 @@ var catalog = (function() {
         callback();
     };
 
-    var createHandler = function(userInfo, resp, callback, callbackError) {
+    //
+    // Checks if the user is logged in
+    var validateLoggedIn = function(req, callback) {
+        if (req.user) {
+            callback();
+        } else {
+            callback({
+                status: 401,
+                message: 'You need to be authenticated to create/update/delete resources'
+            });
+        }
+    };
+
+    var createHandler = function(userInfo, resp, callback) {
         if (isOwner(userInfo, resp)) {
             callback();
         } else {
-            callbackError(403, 'The user making the request and the specified owner are not the same user');
+            callback({
+                status: 403,
+                message: 'The user making the request and the specified owner are not the same user'
+            });
         }
     };
 
     // Validate the creation of a resource
-    var validateCreation = function(req, callback, callbackError) {
+    var validateCreation = function(req, callback) {
+
         var body;
 
         // The request body may not be well formed
         try {
             body = JSON.parse(req.body);
         } catch (e) {
-            callbackError(400, 'The resource is not a valid JSON document');
-            return;
+            callback({
+                status: 400,
+                message: 'The resource is not a valid JSON document'
+            });
+
+            return; // EXIT
         }
 
         // Check that the user has the seller role or is an admin
-        if (!checkRole(req.user, config.oauth2.roles.seller) &&
-                !checkRole(req.user, config.oauth2.roles.admin)) {
+        if (!checkRole(req.user, config.oauth2.roles.seller) && !checkRole(req.user, config.oauth2.roles.admin)) {
+            callback({
+                status: 403,
+                message: 'You are not authorized to create resources'
+            });
 
-            callbackError(403, 'You are not authorized to create resources');
-            return;
+            return; // EXIT
         }
 
         if (req.url.indexOf('productOffering') > -1) {
-            // Check that the product exist
-            retrieveProduct(req.user, body, function (status, resp) {
-                createHandler(req.user, JSON.parse(resp), callback, callbackError);
-            }, callbackError);
-
+            // Check that the product attached to the
+            retrieveProduct(req.user, body, function(err, result) {
+               if (err) {
+                   callback(err);
+               } else {
+                   createHandler(req.user, JSON.parse(result.body), callback);
+               }
+            });
         } else if (req.url.indexOf('productSpecification') > -1) {
-            storeClient.validateProduct(body, req.user, function() {
-                createHandler(req.user, body, callback, callbackError);
-            }, callbackError);
+            // Check that the
+            storeClient.validateProduct(body, req.user, function(err) {
+               if (err) {
+                   callback(err);
+               } else {
+                   createHandler(req.user, body, callback);
+               }
+            });
         } else {
-            createHandler(req.user, body, callback, callbackError);
+            createHandler(req.user, body, callback);
         }
     };
 
-    var updateHandler = function(userInfo, resp, callback, callbackError) {
+    var updateHandler = function(userInfo, resp, callback) {
         if (isOwner(userInfo, resp)) {
             callback();
         } else {
-            callbackError(403, 'The user making the request is not the owner of the accessed resource');
+            callback({
+                status: 403,
+                message: 'The user making the request is not the owner of the accessed resource'
+            });
         }
     };
 
     // Validate the modification of a resource
-    var validateUpdate = function(req, callback, callbackError) {
+    var validateUpdate = function(req, callback) {
+
         var options = {
             host: config.appHost,
             port: config.endpoints.catalog.port,
@@ -130,32 +173,49 @@ var catalog = (function() {
         var protocol = config.appSsl ? 'https' : 'http';
 
         // Retrieve the resource to be updated or removed
-        http.request(protocol, options, '', function(status, resp) {
-            var parsedResp = JSON.parse(resp);
-
-            // Check if the request is an offering
-            if (req.url.indexOf('productOffering') > -1) {
-                retrieveProduct(req.user, parsedResp, function (status, response) {
-                    updateHandler(req.user, JSON.parse(response), callback, callbackError);
-                }, callbackError);
-
+        http.request(protocol, options, '', function (err, result) {
+            if (err) {
+                callback({
+                    status: err.status,
+                    message: err.body
+                });
             } else {
-                updateHandler(req.user, parsedResp, callback, callbackError);
+                var parsedResp = JSON.parse(result.body);
+
+                // Check if the request is an offering
+                if (req.url.indexOf('productOffering') > -1) {
+                    retrieveProduct(req.user, parsedResp, function(err, result) {
+                        if (err) {
+                            callback(err, result);
+                        } else {
+                            updateHandler(req.user, JSON.parse(response), callback);
+                        }
+                    });
+                } else {
+                    updateHandler(req.user, parsedResp, callback);
+                }
             }
-        }, callbackError);
+        });
     };
 
     var validators = {
-        'GET': validateAllowed,
-        'POST': validateCreation,
-        'PATCH': validateUpdate,
-        'PUT': validateUpdate,
-        'DELETE': validateUpdate
+        'GET': [ validateAllowed ],
+        'POST': [ validateLoggedIn, validateCreation ],
+        'PATCH': [ validateLoggedIn, validateUpdate ],
+        'PUT': [ validateLoggedIn, validateUpdate ],
+        'DELETE': [ validateLoggedIn, validateUpdate ]
     };
 
-    var checkPermissions = function (req, callback, callbackError) {
+    var checkPermissions = function (req, callback) {
         log.info('Checking Catalog permissions');
-        validators[req.method](req, callback, callbackError);
+
+        var reqValidators = [];
+
+        for (var i in validators[req.method]) {
+            reqValidators.push(validators[req.method][i].bind(this, req));
+        }
+
+        async.series(reqValidators, callback);
     };
 
     return {
