@@ -3,14 +3,14 @@
  */
 
 angular.module('app.services')
-    .factory('Asset', ['$resource', 'URLS', 'User', 'LOGGED_USER', function ($resource, URLS, User, LOGGED_USER) {
+    .factory('AssetType', ['$resource', 'URLS', 'User', 'LOGGED_USER', function ($resource, URLS, User, LOGGED_USER) {
 
-        var Asset, service = {
+        var AssetType, service = {
             $collection: [],
 
             list: function list(next) {
 
-                return Asset.query(null, function ($collection) {
+                return AssetType.query(null, function ($collection) {
 
                     angular.copy($collection, service.$collection);
 
@@ -23,6 +23,6 @@ angular.module('app.services')
             }
         };
 
-        Asset = $resource(URLS.ASSET_TYPE, {typeId: '@id'});
+        AssetType = $resource(URLS.ASSET_TYPE, {typeId: '@id'});
         return service;
     }]);

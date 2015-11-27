@@ -182,6 +182,7 @@ var jsAppFilesToInject = [
     'services/ProductOfferingService.js',
     'services/ProductCatalogueService.js',
     'services/ProductCategoryService.js',
+    'services/AssetService.js',
     'services/AssetTypeService.js',
     'controllers/MessageController.js',
     'controllers/UserController.js',
