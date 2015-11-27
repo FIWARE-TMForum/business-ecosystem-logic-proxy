@@ -510,7 +510,7 @@ textarea {
 .breadcrumb {
     padding: 10px 15px;
     margin-bottom: 15px;
-    background-color: rgb(250, 250, 250);
+    background-color: transparent;
     border-radius: 0;
 }
 .breadcrumb > li + li:before {
