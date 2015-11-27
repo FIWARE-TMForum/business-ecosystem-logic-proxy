@@ -162,7 +162,7 @@ app.get('/auth/fiware/callback', passport.authenticate('fiware', { failureRedire
 app.all(config.logOutPath, function(req, res) {
     // Destroy the session and redirect the user to the main page
     req.session.destroy();
-    res.redirect(config.oauth2.server + '/auth/logout');
+    res.redirect(config.portalPrefix + '/');
 });
 
 
