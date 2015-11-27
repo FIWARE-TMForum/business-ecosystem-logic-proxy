@@ -34,19 +34,19 @@ var tmf = (function() {
     var redirRequest = function (req, res) {
 
         if (req.user) {
-            log.info('Access-token OK. Redirecting to app...');
+            log.info('Request with auth credentials');
             utils.attachUserHeaders(req.headers, req.user);
         } else {
-            log.info('Public path. Redirecting to app...');
+            log.info('Request without auth credentials');
         }
 
         var protocol = config.appSsl ? 'https' : 'http';
-
+        var path = req.url.substr(config.proxyPrefix.length);
 
         var options = {
             host: config.appHost,
             port: utils.getAppPort(req),
-            path: req.url,
+            path: path,
             method: req.method,
             headers: utils.proxiedRequestHeaders(req)
         };

@@ -188,7 +188,7 @@ var catalog = (function() {
                         if (err) {
                             callback(err, result);
                         } else {
-                            updateHandler(req.user, JSON.parse(response), callback);
+                            updateHandler(req.user, JSON.parse(result.body), callback);
                         }
                     });
                 } else {

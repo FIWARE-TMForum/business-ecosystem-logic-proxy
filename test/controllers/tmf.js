@@ -119,12 +119,15 @@ describe('TMF Controller', function() {
 
     describe('check permissions', function() {
 
-        var checkPermissionsValid = function(req, callback, callbackError) {
+        var checkPermissionsValid = function(req, callback) {
             callback();
         };
 
-        var checkPermissionsInvalid = function(req, callback, callbackError) {
-            callbackError(INVALID_API_STATUS, INVALID_API_MESSAGE);
+        var checkPermissionsInvalid = function(req, callback) {
+            callback({
+                status: INVALID_API_STATUS,
+                message: INVALID_API_MESSAGE
+            });
         };
 
         it('should return 404 for invalid API', function() {

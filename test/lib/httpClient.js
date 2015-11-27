@@ -20,9 +20,9 @@ describe('HTTP Client', function() {
                     method: 'GET'
                 }
 
-                httpClient.request(protocol, options, null, null, function(code, err) {
-                    expect(code).toBe(503);
-                    expect(err.code).toBe('ECONNREFUSED');
+                httpClient.request(protocol, options, null, function(err) {
+                    expect(err.status).toBe(503);
+                    expect(JSON.parse(err.body).code).toBe('ECONNREFUSED');
                     done();
                 });
 
@@ -70,26 +70,33 @@ describe('HTTP Client', function() {
                 path: path,
                 method: 'GET',
                 headers: reqHeaders
-            }
+            };
 
-            var callback = function(status, resp, headers) {
-                expect(status).toBe(statusCode);
-                expect(JSON.parse(resp)).toEqual(answer);
-                expect(acceptHeaderValue).toBe(reqHeaders['accept']);
-                expect(xCustomValue).toBe(reqHeaders['x-custom']);
+            var callback = function(err, result) {
 
-                // Headers are not sent when the error callback is called
+                var checkResponse = function(res) {
+                    expect(res.status).toBe(statusCode);
+                    expect(JSON.parse(res.body)).toEqual(answer);
+                    expect(acceptHeaderValue).toBe(reqHeaders['accept']);
+                    expect(xCustomValue).toBe(reqHeaders['x-custom']);
+
+                    expect(res.headers).toEqual(resHeaders);
+                }
+
                 if (requestOk) {
-                    expect(headers).toEqual(resHeaders);
+                    expect(err).toBe(null);
+                    expect(result).not.toBe(null);
+                    checkResponse(result);
+                } else {
+                    expect(err).not.toBe(null);
+                    expect(result).toBe(null);
+                    checkResponse(err);
                 }
 
                 done();
-            }
+            };
 
-            var callbackOk = requestOk === true ? callback : null;
-            var callbackError = requestOk === false ? callback : null;
-
-            httpClient.request(protocol, options, null, callbackOk, callbackError);
+            httpClient.request(protocol, options, null, callback);
 
         }
 
@@ -136,11 +143,12 @@ describe('HTTP Client', function() {
                 method: method
             }
 
-            httpClient.request(protocol, options, body, function(status, resp, headers) {
+            httpClient.request(protocol, options, body, function(err, resp) {
                 var expectedBody = bodyExpected ? body : '';
+                expect(err).toBe(null);
                 expect(receivedBody).toEqual(expectedBody);
-                expect(status).toBe(statusCode);
-                expect(JSON.parse(resp)).toEqual(answer);
+                expect(resp.status).toBe(statusCode);
+                expect(JSON.parse(resp.body)).toEqual(answer);
                 done();
             });
         }
@@ -235,7 +243,7 @@ describe('HTTP Client', function() {
 
                 done();
             }, 150);
-        }
+        };
 
         it('should proxy request when status code is 200 (GET)', function(done) {
             testPorxyRequest(200, 'GET', false, true, done);
@@ -296,7 +304,7 @@ describe('HTTP Client', function() {
                     expect(res.statusCode).toBe(503);
 
                     // Check the body
-                    var body = res.write.calls.argsFor(0)[0];
+                    var body = JSON.parse(res.write.calls.argsFor(0)[0]);
                     expect(body.code).toBe('ECONNREFUSED');
                     expect(body.port).toBe(port);
                     expect(body.address).toBe(localhost);

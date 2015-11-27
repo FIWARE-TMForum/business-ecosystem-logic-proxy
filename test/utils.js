@@ -1,4 +1,5 @@
 var defaultConfig = {
+    proxyPrefix: '',
     oauth2: {
         server: 'https://account.lab.fiware.org',
         roles: {

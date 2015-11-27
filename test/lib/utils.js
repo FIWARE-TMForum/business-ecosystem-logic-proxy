@@ -136,13 +136,19 @@ describe('Utils', function() {
         });
 
         it('should throw expection when X-Auth-Token and Authorization is not included', function() {
-            expect(utils.getAuthToken.bind(this, {})).toThrow('Auth-token not found in request headers');
+            expect(utils.getAuthToken.bind(this, {})).toThrow({
+                name: 'AuthorizationTokenNotFound',
+                message: 'Auth-token not found in request headers'
+            });
         });
 
         it('should throw expection when Authorization type is invalid', function() {
             var TOKEN_TYPE = 'basic';
             expect(utils.getAuthToken.bind(this, {'authorization': TOKEN_TYPE + ' example'}))
-                    .toThrow('Invalid Auth-Token type (' + TOKEN_TYPE + ')');
+                    .toThrow({
+                        name: 'InvalidAuthorizationTokenException',
+                        message: 'Invalid Auth-Token type (' + TOKEN_TYPE + ')'
+                    });
         });
     });
 
