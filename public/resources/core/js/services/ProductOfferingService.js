@@ -3,8 +3,7 @@
  */
 
 angular.module('app.services')
-    .factory('Offering', ['$resource', 'URLS', 'User', 'Product', 'LOGGED_USER', function ($resource, URLS, User, Product, LOGGED_USER) {
-        var Offering, service;
+    .factory('Offering', ['$resource', 'URLS', 'User', 'Product', function ($resource, URLS, User, Product) {
 
         var serializeProduct = function serializeProduct($product) {
             return {
@@ -13,7 +12,7 @@ angular.module('app.services')
             };
         };
 
-        service = {
+        var Offering, service = {
 
             STATUS: {
                 ACTIVE: 'Active',
@@ -29,10 +28,10 @@ angular.module('app.services')
 
             $collection: [],
 
-            list: function list(role, next) {
+            list: function list(next) {
                 var params = {};
 
-                switch (role) {
+                switch (User.getRole()) {
                 case User.ROLES.CUSTOMER:
                     break;
                 case User.ROLES.SELLER:

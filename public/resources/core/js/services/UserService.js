@@ -3,17 +3,45 @@
  */
 
 angular.module('app.services')
-    .factory('User', ['$resource', 'URLS', 'LOGGED_USER', function ($resource, URLS, LOGGED_USER) {
-        var service;
+    .factory('User', ['$resource', '$injector', function ($resource, $injector) {
+        var LOGGED_USER, service;
+
+        if ($injector.has('LOGGED_USER')) {
+            LOGGED_USER = $injector.get('LOGGED_USER');
+        }
 
         service = {
 
             ROLES: {
                 CUSTOMER: 'Customer',
-                SELLER: 'Seller',
+                OWNER: 'Owner',
+                SELLER: 'Seller'
             },
 
-            $collection: []
+            getID: function getID() {
+                return LOGGED_USER.ID;
+            },
+
+            getRole: function getRole() {
+
+                if (service.isAuthenticated()) {
+                    return LOGGED_USER.ROLE;
+                }
+
+                return service.ROLES.CUSTOMER;
+            },
+
+            serialize: function serialize() {
+                return {
+                    id: service.getID(),
+                    href: LOGGED_USER.HREF,
+                    role: service.ROLES.OWNER
+                };
+            },
+
+            isAuthenticated: function isAuthenticated() {
+                return LOGGED_USER != null;
+            }
 
         };
 

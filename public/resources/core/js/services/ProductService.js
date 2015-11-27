@@ -3,8 +3,7 @@
  */
 
 angular.module('app.services')
-    .factory('Product', ['$resource', 'URLS', 'User', 'LOGGED_USER', function ($resource, URLS, User, LOGGED_USER) {
-        var Product, service;
+    .factory('Product', ['$resource', 'URLS', 'User', function ($resource, URLS, User) {
 
         var serializeProduct = function serializeProduct($product) {
             return {
@@ -13,7 +12,7 @@ angular.module('app.services')
             };
         };
 
-        service = {
+        var Product, service = {
 
             TYPES: {
                 PRODUCT: 'Product',
@@ -27,16 +26,12 @@ angular.module('app.services')
                 OBSOLETE: 'Obsolete'
             },
 
-            ROLES: {
-                OWNER: 'Owner'
-            },
-
             $collection: [],
 
             list: function list(next) {
-                var params = {'relatedParty.id': LOGGED_USER.ID};
+                var params = {'relatedParty.id': User.getID()};
 
-                return Product.query(params, function ($collection) {
+                Product.query(params, function ($collection) {
 
                     angular.copy($collection, service.$collection);
 
@@ -49,7 +44,7 @@ angular.module('app.services')
             },
 
             filter: function filter(userQuery, next) {
-                var params = {'relatedParty.id': LOGGED_USER.ID};
+                var params = {'relatedParty.id': User.getID()};
 
                 if (userQuery.type in service.TYPES) {
                     params.isBundle = (service.TYPES[userQuery.type] !== service.TYPES.PRODUCT);
@@ -63,7 +58,7 @@ angular.module('app.services')
                     params.brand = userQuery.brand;
                 }
 
-                return Product.query(params, function ($collection) {
+                Product.query(params, function ($collection) {
 
                     angular.copy($collection, service.$collection);
 
@@ -83,16 +78,11 @@ angular.module('app.services')
                     bundledProductSpecification: data.bundledProductSpecification.map(function ($product) {
                         return serializeProduct($product);
                     }),
-                    relatedParty: [
-                        {
-                            id: LOGGED_USER.ID,
-                            href: LOGGED_USER.HREF,
-                            role: service.ROLES.OWNER
-                        }
-                    ]
+                    relatedParty: [User.serialize()]
                 });
 
-                return Product.save(data, function ($catalogueCreated) {
+                Product.save(data, function ($catalogueCreated) {
+
                     service.$collection.unshift($catalogueCreated);
 
                     if (next != null) {
@@ -104,7 +94,11 @@ angular.module('app.services')
             },
 
             update: function update($product, next) {
-                return Product.update({id: $product.id}, $product, function ($productUpdated) {
+                var index = service.$collection.indexOf($product);
+
+                Product.update({id: $product.id}, $product, function ($productUpdated) {
+
+                    service.$collection[index] = $productUpdated;
 
                     if (next != null) {
                         next($productUpdated);
@@ -119,7 +113,7 @@ angular.module('app.services')
 
                 if ($product.isBundle) {
                     params = {
-                        'relatedParty.id': LOGGED_USER.ID,
+                        'relatedParty.id': User.getID(),
                         'id': $product.bundledProductSpecification.map(function (data) {
                             return data.id;
                         }).join()
@@ -145,9 +139,9 @@ angular.module('app.services')
             },
 
             getBrands: function getBrands(next) {
-                var params = {'relatedParty.id': LOGGED_USER.ID, 'fields': 'brand'};
+                var params = {'relatedParty.id': User.getID(), 'fields': 'brand'};
 
-                return Product.query(params, function ($collection) {
+                Product.query(params, function ($collection) {
                     var brandSet = {};
 
                     $collection.forEach(function ($product) {

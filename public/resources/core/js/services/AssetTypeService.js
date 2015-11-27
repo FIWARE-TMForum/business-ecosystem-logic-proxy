@@ -3,7 +3,7 @@
  */
 
 angular.module('app.services')
-    .factory('AssetType', ['$resource', 'URLS', 'User', 'LOGGED_USER', function ($resource, URLS, User, LOGGED_USER) {
+    .factory('AssetType', ['$resource', 'URLS', function ($resource, URLS) {
 
         var AssetType, service = {
             $collection: [],
