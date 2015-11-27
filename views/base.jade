@@ -1,7 +1,8 @@
 doctype html
 html(lang="en")
   head
-    title #{ title }
+    title TM Forum Portal
+      block title
 
     meta(charset="utf-8")
     meta(name="viewport",content="width=device-width, initial-scale=1")
@@ -46,7 +47,7 @@ html(lang="en")
             img(src="#{ contextPath }/resources/core/images/fiware-tmforum-logo.png")
         .navbar-collapse.collapse
           h3.navbar-text
-            block title
+            block navbar-title
           if user
             ul.nav.navbar-nav.navbar-right
               li.dropdown
