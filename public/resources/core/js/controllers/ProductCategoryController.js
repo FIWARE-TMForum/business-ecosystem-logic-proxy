@@ -28,10 +28,12 @@ angular.module('app.controllers')
         $scope.$categoryBreadcrumb = [];
         $scope.$categoryActive = null;
         $scope.$subCategoryList = [];
+        $scope.$subCategoryListHidden = true;
 
         var _showCategory = function _showCategory($category) {
             $scope.$categoryActive = $category;
             $scope.$subCategoryList = Category.$collectionById[$category.id];
+            $scope.$subCategoryListHidden = true;
             Category.get($category);
         };
 
@@ -53,6 +55,11 @@ angular.module('app.controllers')
             $scope.$categoryBreadcrumb.length = 0;
             $scope.$categoryActive = null;
             $scope.$subCategoryList.length = 0;
+            $scope.$subCategoryListHidden = true;
+        };
+
+        $scope.showSubCategoryList = function showSubCategoryList() {
+            $scope.$subCategoryListHidden = !$scope.$subCategoryListHidden;
         };
 
         $scope.$on(EVENTS.CATEGORY_SHOW, function ($event, $category) {

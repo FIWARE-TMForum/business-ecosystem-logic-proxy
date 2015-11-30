@@ -43,7 +43,7 @@ angular.module('app.services')
             },
 
             hasRoleAs: function hasRoleAs($catalogue, partyRole) {
-                return $catalogue.relatedParty.some(function (user) {
+                return $catalogue.relatedParty.some(function (party) {
                     return party.id == User.getID() && party.role == partyRole;
                 });
             },

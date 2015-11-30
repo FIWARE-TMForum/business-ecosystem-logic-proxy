@@ -75,6 +75,11 @@ blockquote p {
     justify-content: space-around;
 }
 
+.flex-container-column {
+    display: flex;
+    flex-flow: column wrap;
+}
+
 /* ===================================================================================
  *   COMPONENT - TABLE
  * =================================================================================== */
@@ -547,6 +552,16 @@ textarea {
     color: rgb(120, 120, 120);
 }
 
+.breadcrumb > li.active > a:first-child {
+    cursor: pointer;
+    pointer-events: none;
+    color: rgb(100, 100, 100);
+}
+
+.breadcrumb-default {
+    background-color: rgb(240, 245, 250);
+}
+
 /* ===================================================================================
  *   COMPONENT - PAGER
  * =================================================================================== */
@@ -707,6 +722,10 @@ textarea {
  *   COMPONENT - LIST-GROUP
  * =================================================================================== */
 
+.list-group {
+    margin-bottom: 15px;
+}
+
 .list-group-item {
     margin-bottom: 2px;
     background-color: rgb(255, 255, 255);
@@ -725,7 +744,7 @@ textarea {
     border-bottom-left-radius: 0;
 }
 .list-group-item.has-badge {
-    padding-right: 20px;
+    padding-right: 30px;
 }
 
 a.list-group-item {
@@ -763,12 +782,16 @@ a.list-group-item.disabled:focus {
 .list-group-item > .badge-status {
     position: absolute;
     top: 15px;
-    right: 5px;
+    right: 10px;
     padding: 5px 5px;
     border-radius: 50%;
 }
 .list-group-item.disabled > .badge-status {
     background-color: rgb(210, 210, 210);
+}
+
+.flex-container-column > .list-group-item {
+    width: 25%;
 }
 
 /* ===================================================================================
@@ -810,6 +833,7 @@ a.thumbnail > img {
 }
 .panel-heading {
     padding: 15px;
+    padding-bottom: 0;
     border-bottom: none;
     border-top-left-radius: 0;
     border-top-right-radius: 0;
@@ -906,3 +930,7 @@ a.thumbnail > img {
 /* ===================================================================================
  *   COMPONENT - OFFERING
  * =================================================================================== */
+
+.list-subcategories {
+    max-height: 90px;
+}

@@ -15,19 +15,19 @@
         <div class="panel-title">Catalogues</div>
         <div class="panel-subtitle">as Owner</div>
         <div class="panel-options text-right">
-          <button type="button" class="btn btn-sm btn-primary" bs-tooltip data-title="New catalogue" ng-click="showCreateForm()">
-            <i class="fa fa-plus-circle fa-fw"></i>
+          <button type="button" class="btn btn-sm btn-primary" ng-click="showCreateForm()">
+            <i class="fa fa-plus fa-fw"></i>&nbsp;New catalogue
           </button>
         </div>
       </div>
       <div class="panel-body">
         <div ng-switch="filterByRoleOwner().length">
           <div ng-switch-when="0">
-            <div class="alert alert-info">No catalogs found.</div>
+            <div class="alert alert-info">No catalogues created yet.</div>
           </div>
           <div ng-switch-default>
             <div class="list-group">
-              <a class="list-group-item has-badge" ng-repeat="$catalogue in filterByRoleOwner()" ng-class="{'active': isSelected($catalogue)}" ng-click="select($catalogue)">
+              <a class="list-group-item has-badge" ng-repeat="$catalogue in filterByRoleOwner()" ng-class="{'active': isActive($catalogue)}" ng-click="showCatalogue($catalogue)">
                 <span class="badge badge-status status-{{ $catalogue.lifecycleStatus | lowercase }}"></span>{{ $catalogue.name }}
               </a>
             </div>
@@ -39,28 +39,21 @@
         </div>
       </div>
     </div>
-    <div class="panel panel-default">
+    <div class="panel panel-default" ng-if="filterByRoleSeller().length">
       <div class="panel-heading">
         <div class="panel-title">Catalogues</div>
         <div class="panel-subtitle">as Seller</div>
       </div>
       <div class="panel-body">
-        <div ng-switch="filterByRoleSeller().length">
-          <div ng-switch-when="0">
-            <div class="alert alert-info">No catalogs found.</div>
-          </div>
-          <div ng-switch-default>
-            <div class="list-group">
-              <a class="list-group-item has-badge" ng-repeat="$catalogue in filterByRoleSeller()" ng-class="{'active': isSelected($catalogue)}" ng-click="select($catalogue)">
-                <span class="badge badge-status status-{{ $catalogue.lifecycleStatus | lowercase }}"></span>{{ $catalogue.name }}
-              </a>
-            </div>
-            <ul class="pager">
-              <li class="disabled"><a><i class="fa fa-arrow-left"></i></a></li>
-              <li class="disabled"><a><i class="fa fa-arrow-right"></i></a></li>
-            </ul>
-          </div>
+        <div class="list-group">
+          <a class="list-group-item has-badge" ng-repeat="$catalogue in filterByRoleSeller()" ng-class="{'active': isActive($catalogue)}" ng-click="showCatalogue($catalogue)">
+            <span class="badge badge-status status-{{ $catalogue.lifecycleStatus | lowercase }}"></span>{{ $catalogue.name }}
+          </a>
         </div>
+        <ul class="pager">
+          <li class="disabled"><a><i class="fa fa-arrow-left"></i></a></li>
+          <li class="disabled"><a><i class="fa fa-arrow-right"></i></a></li>
+        </ul>
       </div>
     </div>
   </div>
