@@ -14,22 +14,24 @@ block content
           .panel-title Catalogues
         .panel-body
           .list-group
-            a.list-group-item(ng-class="{'active': !$catalogueItem}", ng-click="select()")
+            a.list-group-item(ng-class="{'active': !$catalogueActive}", ng-click="refreshList()")
               i.fa.fa-home.fa-fw
               | &nbsp;Home
-            a.list-group-item.active(ng-click="select($catalogueItem)", ng-if="$catalogueItem != null")
-              | {{ $catalogueItem.name }}
           hr
-          .list-group
-            a.list-group-item(ng-repeat="$catalogue in $catalogueList", ng-class="{'disabled': isSelected($catalogue)}", ng-click="select($catalogue)")
-              | {{ $catalogue.name }}
-          ul.pager
-            li.disabled
-              a
-                i.fa.fa-arrow-left
-            li.disabled
-              a
-                i.fa.fa-arrow-right
+          div(ng-switch="$catalogueList.length")
+            div(ng-switch-when="0")
+              .alert.alert-info No catalogues launched yet.
+            div(ng-switch-default)
+              .list-group
+                a.list-group-item(ng-repeat="$catalogue in $catalogueList", ng-class="{'active': isActive($catalogue)}", ng-click="showCatalogue($catalogue)")
+                  | {{ $catalogue.name }}
+              ul.pager
+                li.disabled
+                  a
+                    i.fa.fa-arrow-left
+                li.disabled
+                  a
+                    i.fa.fa-arrow-right
       .panel.panel-default(ng-controller="CategoryListCtrl")
         .panel-heading
           .panel-title Categories
