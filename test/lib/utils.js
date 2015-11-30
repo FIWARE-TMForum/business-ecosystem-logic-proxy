@@ -184,7 +184,7 @@ describe('Utils', function() {
         it('should return no referer when referer is not set', function() {
             var req = getBasicReq('fiware.org', 8080);
             req.headers = {};
-            expect(utils.getRefererPath(req)).toBe('');
+            expect(utils.getRefererPath(req)).toBe('/');
         });
 
         it('should return referer when hosts match', function() {
@@ -213,7 +213,7 @@ describe('Utils', function() {
                 'referer': 'http://' + hostname2 + ':' + port + path
             };
 
-            expect(utils.getRefererPath(req)).toBe('');
+            expect(utils.getRefererPath(req)).toBe('/');
         });
 
         it('should not return referer when ports do not match', function() {
@@ -228,7 +228,7 @@ describe('Utils', function() {
                 'referer': 'http://' + hostname + ':' + port2 + path
             };
 
-            expect(utils.getRefererPath(req)).toBe('');
+            expect(utils.getRefererPath(req)).toBe('/');
         });
 
 

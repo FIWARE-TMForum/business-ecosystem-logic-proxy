@@ -116,7 +116,7 @@ var getOAuth2State = function(path) {
     state[OAUTH2_CAME_FROM_FIELD] = path;
     var encodedState = base64url(JSON.stringify(state));
     return encodedState;
-}
+};
 
 var ensureAuthenticated = function(req, res, next) {
     if (!req.isAuthenticated()) {

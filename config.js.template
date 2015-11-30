@@ -14,6 +14,8 @@ config.https = {
 // Express configuration
 config.proxyPrefix = '/proxy';
 config.portalPrefix = '';
+config.logInPath = '/login';
+config.logOutPath = '/logOut';
 config.sessionSecret = 'keyboard cat';
 
 // OAuth2 configuration
