@@ -3,37 +3,35 @@
  */
 
 angular.module('app.controllers')
-    .controller('CatalogueListCtrl', ['$scope', '$rootScope', 'EVENTS', 'Catalogue', function ($scope, $rootScope, EVENTS, Catalogue) {
+    .controller('CatalogueListCtrl', ['$scope', '$rootScope', 'EVENTS', 'Catalogue', 'User', function ($scope, $rootScope, EVENTS, Catalogue, User) {
 
         $scope.$catalogueList = Catalogue.$collection;
-        $scope.$catalogueItem = null;
+        $scope.$catalogueActive = null;
 
-        $scope.select = function select($catalogue) {
-            $scope.$catalogueItem = $catalogue;
+        $scope.refreshList = function refreshList() {
+            $scope.$categoryActive = null;
+            Catalogue.list();
+            $rootScope.$broadcast(EVENTS.CATALOGUE_SHOW, null);
+        };
+
+        $scope.showCatalogue = function showCatalogue($catalogue) {
+            $scope.$catalogueActive = $catalogue;
             $rootScope.$broadcast(EVENTS.CATALOGUE_SHOW, $catalogue);
         };
 
-        $scope.isSelected = function isSelected($catalogue) {
-            return $scope.$catalogueItem != null && angular.equals($scope.$catalogueItem, $catalogue);
-        };
-
-        $scope.hasRoleAsOwner = function hasRoleAsOwner($catalogue) {
-            return $catalogue != null && Catalogue.hasRoleAs($catalogue, Catalogue.ROLES.OWNER);
-        };
-
-        $scope.hasRoleAsSeller = function hasRoleAsSeller($catalogue) {
-            return $catalogue != null && Catalogue.hasRoleAs($catalogue, Catalogue.ROLES.SELLER);
+        $scope.isActive = function isActive($catalogue) {
+            return angular.equals($scope.$catalogueActive, $catalogue);
         };
 
         $scope.filterByRoleOwner = function filterByRoleOwner() {
             return $scope.$catalogueList.filter(function ($catalogue) {
-                return Catalogue.hasRoleAs($catalogue, Catalogue.ROLES.OWNER);
+                return Catalogue.hasRoleAs($catalogue, User.ROLES.OWNER);
             });
         };
 
         $scope.filterByRoleSeller = function filterByRoleSeller() {
             return $scope.$catalogueList.filter(function ($catalogue) {
-                return Catalogue.hasRoleAs($catalogue, Catalogue.ROLES.SELLER);
+                return Catalogue.hasRoleAs($catalogue, User.ROLES.SELLER);
             });
         };
 
@@ -42,7 +40,7 @@ angular.module('app.controllers')
         };
 
         $scope.$on(EVENTS.CATALOGUE_SELECT, function ($event, $catalogue) {
-            $scope.select($catalogue);
+            $scope.showCatalogue($catalogue);
         });
     }])
     .controller('CatalogueDetailCtrl', ['$scope', '$rootScope', 'EVENTS', 'Catalogue', function ($scope, $rootScope, EVENTS, Catalogue) {
