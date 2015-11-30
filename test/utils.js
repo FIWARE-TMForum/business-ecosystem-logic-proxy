@@ -1,4 +1,5 @@
 var defaultConfig = {
+    proxyPrefix: '',
     oauth2: {
         server: 'https://account.lab.fiware.org',
         roles: {
@@ -7,6 +8,7 @@ var defaultConfig = {
         }
     },
     appHost: 'example.com',
+    appSsl: false,
     endpoints: {
         'catalog': {
             'path': 'catalog',

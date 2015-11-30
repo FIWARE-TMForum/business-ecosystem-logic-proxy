@@ -36,9 +36,6 @@ angular.module('app')
                 });
             }
         }
-    }])
-    .config(['$httpProvider', 'LOGGED_USER', function ($httpProvider, LOGGED_USER) {
-        $httpProvider.defaults.headers.common['AUTHORIZATION'] = LOGGED_USER.BEARER_TOKEN;
     }]);
 
 angular.module('app.services', []);

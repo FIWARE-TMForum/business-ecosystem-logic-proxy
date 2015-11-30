@@ -35,20 +35,22 @@ var checkPrefix = function(prefix, byDefault) {
     return finalPrefix;
 };
 
-// TODO: Add more checkers
+// TODO: Add more checkers (if required)
 
 /////////////////////////////////////////////////////////////////////
 /////////////////////////////// CONFIG //////////////////////////////
 /////////////////////////////////////////////////////////////////////
 
-// Default title for GUI
-var DEFAULT_TITLE = 'TM Forum Portal';
+// OAuth2 Came From Field
+var OAUTH2_CAME_FROM_FIELD = 'came_from_path';
 
 // Get preferences and set up default values
 config.sessionSecret = config.sessionSecret || 'keyboard cat';
 config.https = config.https || {};
 config.proxyPrefix = checkPrefix(config.proxyPrefix, '/proxy');
 config.portalPrefix = checkPrefix(config.portalPrefix, '');
+config.logInPath = config.logInPath || '/login';
+config.logOutPath = config.logOutPath || '/logout';
 
 var PORT = config.https.enabled ? 
     config.https.port || 443 :      // HTTPS
@@ -106,10 +108,16 @@ app.use(bodyParser.text({
 ////////////////////////////// PASSPORT /////////////////////////////
 /////////////////////////////////////////////////////////////////////
 
+var getOAuth2State = function(path) {
+    var state = {};
+    state[OAUTH2_CAME_FROM_FIELD] = path;
+    var encodedState = base64url(JSON.stringify(state));
+    return encodedState;
+};
+
 var ensureAuthenticated = function(req, res, next) {
     if (!req.isAuthenticated()) {
-        var state = {'came_from_path': req.path};
-        var encodedState = base64url(JSON.stringify(state));
+        var encodedState = getOAuth2State(req.path);
         // This action will redirect the user the FIWARE Account portal,
         // so the next callback is not required to be called
         passport.authenticate('fiware', { scope: ['all_info'], state: encodedState })(req, res);
@@ -132,18 +140,26 @@ passport.use(FIWARE_STRATEGY);
 app.use(passport.initialize());
 app.use(passport.session());
 
+// Handler for logging in...
+app.all(config.logInPath, function(req, res) {
+    var encodedState = getOAuth2State(utils.getRefererPath(req));
+    passport.authenticate('fiware', { scope: ['all_info'], state: encodedState })(req, res);
+});
+
 // Handler for the callback
 app.get('/auth/fiware/callback', passport.authenticate('fiware', { failureRedirect: '/error' }), function(req, res) {
+
     var state = JSON.parse(base64url.decode(req.query.state));
-    var redirectPath = state.came_from_path !== undefined ? state.came_from_path : '/';
+    var redirectPath = state[OAUTH2_CAME_FROM_FIELD] !== undefined ? state[OAUTH2_CAME_FROM_FIELD] : '/';
+
     res.redirect(redirectPath);
 });
 
 // Handler to destroy sessions
-app.all('/logout', function(req, res) {
+app.all(config.logOutPath, function(req, res) {
     // Destroy the session and redirect the user to the main page
     req.session.destroy();
-    res.redirect(config.oauth2.server + '/auth/logout');
+    res.redirect(config.portalPrefix + '/');
 });
 
 
@@ -194,18 +210,13 @@ var jsAppFilesToInject = [
     return 'resources/core/js/' + path;
 });
 
-var renderTemplate = function(req, res, customTitle, viewName, userRole) {
+var renderTemplate = function(req, res, viewName, userRole) {
 
-    // TODO: Maybe an object with extra properties.
-    // To be implemented if required!!
-
-    var validCustomTitle = customTitle !== undefined && customTitle !== '';
-    var title = validCustomTitle ? DEFAULT_TITLE + ' - ' + customTitle : DEFAULT_TITLE;
+    // TODO: Maybe an object with extra properties (if required)
 
     var properties = {
         user: req.user,
         userRole: userRole,
-        title: title,
         contextPath: config.portalPrefix,
         proxyPath: config.proxyPrefix,
         cssFilesToInject: cssFilesToInject,
@@ -219,12 +230,12 @@ var renderTemplate = function(req, res, customTitle, viewName, userRole) {
 
 };
 
-app.get(config.portalPrefix + '/', ensureAuthenticated, function(req, res) {
-    renderTemplate(req, res, 'Marketplace', 'home-content', 'Customer');
+app.get(config.portalPrefix + '/', function(req, res) {
+    renderTemplate(req, res, 'home-content', 'Customer');
 });
 
 app.get(config.portalPrefix + '/mystock', ensureAuthenticated, function(req, res) {
-    renderTemplate(req, res, 'My Stock', 'mystock-content', 'Seller');
+    renderTemplate(req, res, 'mystock-content', 'Seller');
 });
 
 
@@ -238,13 +249,13 @@ var headerAuthentication = function(req, res, next) {
         var authToken = utils.getAuthToken(req.headers);
         FIWARE_STRATEGY.userProfile(authToken, function(err, userProfile) {
             if (err) {
-                log.warn("The provider auth-token is not valid");
-                utils.sendUnauthorized(res, "invalid auth-token")
+                log.warn('The provider auth-token is not valid');
+                utils.sendUnauthorized(res, 'invalid auth-token')
             } else {
                 // Check that the provided access token is valid for the given application
                 if (userProfile.appId !== config.oauth2.clientID) {
-                    log.warn("The provider auth-token scope is not valid for the current application");
-                    utils.sendUnauthorized(res, "The auth-token scope is not valid for the current application");
+                    log.warn('The provider auth-token scope is not valid for the current application');
+                    utils.sendUnauthorized(res, 'The auth-token scope is not valid for the current application');
                 } else {
                     req.user = userProfile;
                     next();
@@ -254,7 +265,12 @@ var headerAuthentication = function(req, res, next) {
 
     } catch (err) {
         log.warn(err);
-        utils.sendUnauthorized(res, err);
+
+        if (err.name === 'AuthorizationTokenNotFound') {
+            next();
+        } else {
+            utils.sendUnauthorized(res, err.message);
+        }
     }
 };
 
@@ -290,7 +306,7 @@ app.all(config.proxyPrefix + '/*', headerAuthentication, tmf.checkPermissions);
 //////////////////////////// START SERVER ///////////////////////////
 /////////////////////////////////////////////////////////////////////
 
-log.info('Starting PEP proxy in port ' + PORT + '.');
+log.info('Starting BELP in port ' + PORT + '.');
 
 if (config.https.enabled === true) {
     

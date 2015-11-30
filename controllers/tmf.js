@@ -9,7 +9,7 @@ var config = require('./../config'),
     // Other dependencies
     httpClient = require('./../lib/httpClient'),
     utils = require('./../lib/utils'),
-    log = require('./../lib/logger').logger.getLogger("TMF"),
+    log = require('./../lib/logger').logger.getLogger('TMF'),
     url = require('url');
 
 var tmf = (function() {
@@ -20,7 +20,11 @@ var tmf = (function() {
     apiControllers[config.endpoints.inventory.path] = inventory;
     apiControllers[config.endpoints.charging.path] = charging;
 
-    var sendError = function(res, status, errMsg) {
+    var sendError = function(res, err) {
+
+        var status = err.status;
+        var errMsg = err.message;
+
         log.warn(errMsg);
         res.status(status);
         res.send({error: errMsg});
@@ -30,18 +34,19 @@ var tmf = (function() {
     var redirRequest = function (req, res) {
 
         if (req.user) {
-            log.info('Access-token OK. Redirecting to app...');
+            log.info('Request with auth credentials');
             utils.attachUserHeaders(req.headers, req.user);
         } else {
-            log.info('Public path. Redirecting to app...');
+            log.info('Request without auth credentials');
         }
 
         var protocol = config.appSsl ? 'https' : 'http';
+        var path = req.url.substr(config.proxyPrefix.length);
 
         var options = {
             host: config.appHost,
             port: utils.getAppPort(req),
-            path: req.url,
+            path: path,
             method: req.method,
             headers: utils.proxiedRequestHeaders(req)
         };
@@ -54,12 +59,17 @@ var tmf = (function() {
         var api = url.parse(req.url).path.split('/')[1];
 
         if (apiControllers[api] === undefined) {
-            sendError(res, 404, 'Path not found');
+            sendError(res, {
+                status: 404,
+                message: 'Path not found'
+            });
         } else {
-            apiControllers[api].checkPermissions(req, function() {
-                redirRequest(req, res);
-            }, function(status, errMsg) {
-                sendError(res, status, errMsg);
+            apiControllers[api].checkPermissions(req, function(err) {
+                if (err) {
+                    sendError(res, err);
+                } else {
+                    redirRequest(req, res);
+                }
             });
         }
     };

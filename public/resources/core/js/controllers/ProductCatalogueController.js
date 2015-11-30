@@ -3,7 +3,7 @@
  */
 
 angular.module('app.controllers')
-    .controller('CatalogueListCtrl', ['$scope', '$rootScope', 'EVENTS', 'Catalogue', 'LOGGED_USER', function ($scope, $rootScope, EVENTS, Catalogue, LOGGED_USER) {
+    .controller('CatalogueListCtrl', ['$scope', '$rootScope', 'EVENTS', 'Catalogue', function ($scope, $rootScope, EVENTS, Catalogue) {
 
         $scope.$catalogueList = Catalogue.$collection;
         $scope.$catalogueItem = null;
@@ -13,33 +13,27 @@ angular.module('app.controllers')
             $rootScope.$broadcast(EVENTS.CATALOGUE_SHOW, $catalogue);
         };
 
-        var hasRole = function hasRole($catalogue, partyRole, partyId) {
-            return $catalogue.relatedParty.some(function (party) {
-                return party.id == partyId && party.role == partyRole;
-            });
-        };
-
         $scope.isSelected = function isSelected($catalogue) {
             return $scope.$catalogueItem != null && angular.equals($scope.$catalogueItem, $catalogue);
         };
 
         $scope.hasRoleAsOwner = function hasRoleAsOwner($catalogue) {
-            return $catalogue != null && hasRole($catalogue, Catalogue.ROLES.OWNER, LOGGED_USER.ID);
+            return $catalogue != null && Catalogue.hasRoleAs($catalogue, Catalogue.ROLES.OWNER);
         };
 
         $scope.hasRoleAsSeller = function hasRoleAsSeller($catalogue) {
-            return $catalogue != null && hasRole($catalogue, Catalogue.ROLES.SELLER, LOGGED_USER.ID);
+            return $catalogue != null && Catalogue.hasRoleAs($catalogue, Catalogue.ROLES.SELLER);
         };
 
         $scope.filterByRoleOwner = function filterByRoleOwner() {
             return $scope.$catalogueList.filter(function ($catalogue) {
-                return hasRole($catalogue, Catalogue.ROLES.OWNER, LOGGED_USER.ID);
+                return Catalogue.hasRoleAs($catalogue, Catalogue.ROLES.OWNER);
             });
         };
 
         $scope.filterByRoleSeller = function filterByRoleSeller() {
             return $scope.$catalogueList.filter(function ($catalogue) {
-                return hasRole($catalogue, Catalogue.ROLES.SELLER, LOGGED_USER.ID);
+                return Catalogue.hasRoleAs($catalogue, Catalogue.ROLES.SELLER);
             });
         };
 
@@ -122,8 +116,8 @@ angular.module('app.controllers')
             $element.modal('show');
         });
     }])
-    .controller('CatalogueView', ['$scope', '$rootScope', 'EVENTS', 'Catalogue', 'User', function ($scope, $rootScope, EVENTS, Catalogue, User) {
-        Catalogue.list(User.ROLES.SELLER, function ($catalogueList) {
+    .controller('CatalogueView', ['$scope', '$rootScope', 'EVENTS', 'Catalogue', function ($scope, $rootScope, EVENTS, Catalogue) {
+        Catalogue.list(function ($catalogueList) {
             $rootScope.$broadcast(EVENTS.CATALOGUE_SELECT, $catalogueList.length ? $catalogueList[0] : null);
         });
     }]);

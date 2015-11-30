@@ -26,13 +26,55 @@ describe('Catalog API', function() {
 
         var req = {
             method: 'GET',
-            user: { roles: [] }
+            // user: { roles: [] }
         };
 
         catalogApi.checkPermissions(req, function() {
             // Callback function. It's called without arguments...
             done();
         });
+    });
+
+
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////// NOT AUTHENTICATED /////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////////////
+
+    var testNotLoggedIn = function(method, done) {
+
+        var catalogApi = getCatalogApi({});
+        var path = '/catalog/product/1';
+
+        // Call the method
+        var req = {
+            method: method,
+            url: path
+        };
+
+        catalogApi.checkPermissions(req, function(err) {
+
+            expect(err).not.toBe(null);
+            expect(err.status).toBe(401);
+            expect(err.message).toBe('You need to be authenticated to create/update/delete resources');
+
+            done();
+        });
+    };
+
+    it('should reject not authenticated POST requests', function(done) {
+        testNotLoggedIn('POST', done);
+    });
+
+    it('should reject not authenticated PUT requests', function(done) {
+        testNotLoggedIn('PUT', done);
+    });
+
+    it('should reject not authenticated PATCH requests', function(done) {
+        testNotLoggedIn('PATCH', done);
+    });
+
+    it('should reject not authenticated DELETE requests', function(done) {
+        testNotLoggedIn('DELETE', done);
     });
 
 
@@ -54,18 +96,15 @@ describe('Catalog API', function() {
             }
         };
 
-        catalogApi.checkPermissions(req, function() {
-            // Ok callback is only called when error is false
-            expect(error).toBe(false);
+        catalogApi.checkPermissions(req, function(err) {
 
-            done();
-        }, function(status, errMsg) {
-            // Error callback is only called when error is true
-            expect(error).toBe(true);
+            if (!error) {
+                expect(err).toBe(null);
+            } else {
+                expect(err.status).toBe(expectedStatus);
+                expect(err.message).toBe(expectedErr);
+            }
 
-            // Check the received parameters1
-            expect(status).toBe(expectedStatus);
-            expect(errMsg).toBe(expectedErr);
             done();
         });
 
@@ -156,24 +195,16 @@ describe('Catalog API', function() {
             })
         };
 
-        catalogApi.checkPermissions(req, function() {
-            // The user is the owner of the offering. To check this, the attached product must
-            // be retrieved (since the product is the object that contains this information)
-            expect(isOwner).toBe(true);
-            expect(productRequestFails).toBe(false);
+        catalogApi.checkPermissions(req, function(err) {
+
+            if (isOwner && !productRequestFails) {
+                expect(err).toBe(null);
+            } else {
+                expect(err.status).toBe(errorStatus);
+                expect(err.message).toBe(errorMsg);
+            }
 
             done();
-        }, function(status, errMsg) {
-
-            // Check that this callback is only called when the user is not the owner
-            // or when the product attached to the offering cannot be checked
-            expect(!isOwner || productRequestFails).toBe(true);
-
-            expect(status).toBe(errorStatus);
-            expect(errMsg).toBe(errMsg);
-
-            done();
-
         });
     };
 
@@ -225,23 +256,21 @@ describe('Catalog API', function() {
             body: JSON.stringify(body)
         };
 
-        catalogApi.checkPermissions(req, function() {
-            // This function should only be called when no errors are expected
-            expect(errorStatus).toBe(null);
-            expect(errorMsg).toBe(null);
+        catalogApi.checkPermissions(req, function(err) {
+
+            if (errorStatus == null && errorMsg == null) {
+                expect(err).toBe(null);
+            } else {
+                expect(err.status).toBe(errorStatus);
+                expect(err.message).toBe(errorMsg);
+
+            }
 
             done();
-        }, function(status, errMsg) {
-
-            expect(status).toBe(errorStatus);
-            expect(errMsg).toBe(errorMsg);
-
-            done();
-
         });
     };
 
-    var storeValidatorOk = function(body, user, callback, callbackError) {
+    var storeValidatorOk = function(body, user, callback) {
         callback();
     };
 
@@ -258,9 +287,9 @@ describe('Catalog API', function() {
         var storeErrorStatus = 400;
         var storeErrorMessage = 'Invalid product';
 
-        var storeValidatorErr = function(body, user, callback, callbackError) {
-            callbackError(storeErrorStatus, storeErrorMessage);
-        }
+        var storeValidatorErr = function(body, user, callback) {
+            callback({ status: storeErrorStatus, message: storeErrorMessage });
+        };
 
         // Actual call
         // isOwner does not matter when productRequestFails is set to true
@@ -305,30 +334,19 @@ describe('Catalog API', function() {
             }
         };
 
-        catalogApi.checkPermissions(req, function() {
-            // This function should only be called when the user is the owner of the resource
-            // (To check this, the GET request to the resource should not fail)
-            expect(isOwner).toBe(true);
-            expect(requestFails).toBe(false);
+        catalogApi.checkPermissions(req, function(err) {
 
-            done();
-        }, function(status, errMsg) {
-
-            // Check that this callback is only called when the user is not the owner
-            // or when the product cannot be got from the server
-            expect(!isOwner || requestFails).toBe(true);
-
-            if (requestFails) {
-                expect(status).toBe(statusErr);
-                expect(errMsg).toBe(bodyErr);
-            } else {    
-                // The user is not the owner of the updated resource
-                expect(status).toBe(403);
-                expect(errMsg).toBe('The user making the request is not the owner of the accessed resource');
+            if (isOwner && !requestFails) {
+                expect(err).toBe(null);
+            } else if (requestFails) {
+                expect(err.status).toBe(statusErr);
+                expect(err.message).toBe(bodyErr);
+            } else {
+                expect(err.status).toBe(403);
+                expect(err.message).toBe('The user making the request is not the owner of the accessed resource');
             }
 
             done();
-
         });
     };
 
@@ -421,21 +439,14 @@ describe('Catalog API', function() {
             }
         };
 
-        catalogApi.checkPermissions(req, function() {
-            // This function should only be called when the user is the owner of the offering
-            // (The attached product is obtained to check this)
-            expect(isOwner).toBe(true);
-            expect(productRequestFails).toBe(false);
+        catalogApi.checkPermissions(req, function(err) {
 
-            done();
-        }, function(status, errorMsg) {
-
-            // Check that this callback is only called when the user is not the owner
-            // or when the attached product cannot be checked
-            expect(!isOwner || productRequestFails).toBe(true);
-
-            expect(status).toBe(expectedErrorStatus);
-            expect(errorMsg).toBe(expectedErrorMsg);
+            if (isOwner && !productRequestFails) {
+                expect(err).toBe(null);
+            } else {
+                expect(err.status).toBe(expectedErrorStatus);
+                expect(err.message).toBe(expectedErrorMsg);
+            }
 
             done();
         });

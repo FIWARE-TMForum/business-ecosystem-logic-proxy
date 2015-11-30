@@ -8,7 +8,7 @@ describe('TMF Controller', function() {
     var INVALID_API_MESSAGE = 'Not authorized to perform this operation';
 
     // Modified dependencies
-    var config = testUtils.getDefaultConfig();
+    var config;
     var utils = {
         getAppPort: function() {
             return 1234;
@@ -42,9 +42,16 @@ describe('TMF Controller', function() {
         }).tmf;
     };
 
+    // Clean configuration for every test
+    beforeEach(function() {
+        config = testUtils.getDefaultConfig();
+    });
+
     describe('public paths', function() {
 
-        var testPublic = function(protocol, method) {
+        var testPublic = function(protocol, method, proxyPrefix) {
+
+            proxyPrefix = proxyPrefix === undefined ? '' : proxyPrefix;
 
             // TMF API
             var httpClient = getDefaultHttpClient();
@@ -52,9 +59,11 @@ describe('TMF Controller', function() {
 
             // Depending on the desired protocol, the config.appSsl var has to be set up
             config.appSsl = protocol === 'https' ? true : false;
+            config.proxyPrefix = proxyPrefix;
+            var path = '/example/url?a=b&c=d';
 
             var req = {
-                url: '/example/url?a=b&c=d',
+                url: proxyPrefix + path,
                 body: 'This is an example',
                 method: method
             };
@@ -66,7 +75,7 @@ describe('TMF Controller', function() {
             var expectedOptions = {
                 host: config.appHost,
                 port: utils.getAppPort(),
-                path: req.url,
+                path: path,
                 method: method,
                 headers: utils.proxiedRequestHeaders()
             };
@@ -115,16 +124,23 @@ describe('TMF Controller', function() {
             testPublic('https', 'DELETE');
         });
 
+        it('should redirect to the correct path if proxy path is not empty', function() {
+            testPublic('http', 'GET', '/proxy');
+        });
+
     });
 
     describe('check permissions', function() {
 
-        var checkPermissionsValid = function(req, callback, callbackError) {
+        var checkPermissionsValid = function(req, callback) {
             callback();
         };
 
-        var checkPermissionsInvalid = function(req, callback, callbackError) {
-            callbackError(INVALID_API_STATUS, INVALID_API_MESSAGE);
+        var checkPermissionsInvalid = function(req, callback) {
+            callback({
+                status: INVALID_API_STATUS,
+                message: INVALID_API_MESSAGE
+            });
         };
 
         it('should return 404 for invalid API', function() {
@@ -193,7 +209,6 @@ describe('TMF Controller', function() {
 
             var protocol = 'http';
             var method = 'GET';
-            config.appSsl = false;
 
             // Configure the API controller
             var controller = { checkPermissions: checkPermissionsValid }; 

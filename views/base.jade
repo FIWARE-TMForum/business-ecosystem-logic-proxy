@@ -1,7 +1,8 @@
 doctype html
 html(lang="en")
   head
-    title #{ title }
+    title TM Forum Portal
+      block title
 
     meta(charset="utf-8")
     meta(name="viewport",content="width=device-width, initial-scale=1")
@@ -16,19 +17,23 @@ html(lang="en")
       angular.module('app', ['ngRoute', 'angularMoment', 'ngResource', 'app.services', 'app.controllers'])
         .constant('URLS', {
           TEMPLATE: '#{ contextPath }/resources/core/templates',
-          PRODUCT: '#{ proxyPath }/DSProductCatalog/api/catalogManagement/v2/productSpecification/:productId',
-          PRODUCT_OFFERING: '#{ proxyPath }/DSProductCatalog/api/catalogManagement/v2/productOffering/:offeringId',
-          PRODUCT_CATALOGUE: '#{ proxyPath }/DSProductCatalog/api/catalogManagement/v2/catalog/:catalogueId',
-          PRODUCT_CATEGORY: '#{ proxyPath }/DSProductCatalog/api/catalogManagement/v2/category/:categoryId',
+          CATALOGUE_MANAGEMENT: '#{ proxyPath }/DSProductCatalog/api/catalogManagement/v2',
           ASSET_TYPE: '#{ proxyPath }/charging/api/assetManagement/assetTypes/:typeId',
           ASSET: '#{ proxyPath }/charging/api/assetManagement/assets/uploadJob'
-        })
-        .constant('LOGGED_USER', {
-          ID: '#{ user.id }',
-          ROLE: '#{ userRole }',
-          HREF: '#{ accountHost }/idm/user/#{ user.id }',
-          BEARER_TOKEN: 'Bearer #{ user.accessToken }'
         });
+
+    if user
+      script.
+        angular.module('app')
+          .constant('LOGGED_USER', {
+            ID: '#{ user.id }',
+            ROLE: '#{ userRole }',
+            HREF: '#{ accountHost }/idm/user/#{ user.id }',
+            BEARER_TOKEN: 'Bearer #{ user.accessToken }'
+          })
+          .config(['$httpProvider', 'LOGGED_USER', function ($httpProvider, LOGGED_USER) {
+            $httpProvider.defaults.headers.common['AUTHORIZATION'] = LOGGED_USER.BEARER_TOKEN;
+          }]);
 
     each jsFilePath in jsAppFilesToInject
       script(src="#{ contextPath }/#{ jsFilePath }")
@@ -41,29 +46,34 @@ html(lang="en")
           a.navbar-brand(href="#{ contextPath }/")
             img(src="#{ contextPath }/resources/core/images/fiware-tmforum-logo.png")
         .navbar-collapse.collapse
-          ul.nav.navbar-nav.navbar-right
-            li(ng-class="{'active': $userRole == 'Customer'}")
-              a(href="#{ contextPath }/")
-                i.fa.fa-newspaper-o.fa-fw
-                | &nbsp;Marketplace
-            li(ng-class="{'active': $userRole == 'Seller'}")
-              a(href="#{ contextPath }/mystock")
-                i.fa.fa-cubes.fa-fw
-                | &nbsp;My stock
-            li.dropdown
-              a.dropdown-toggle(data-toggle="dropdown")
-                i.fa.fa-user.fa-fw
-                | &nbsp;#{ user.displayName }
-                i.fa.fa-caret-down.fa-fw
-              ul.dropdown-menu
-                li
-                  a(data-toggle="modal", data-target=".user-update-modal")
-                    i.fa.fa-cog.fa-fw
-                    | &nbsp;Settings
-                li
-                  a(ng-click="signOut()")
-                    i.fa.fa-sign-out.fa-fw
-                    | &nbsp;Sign out
+          h3.navbar-text
+            block navbar-title
+          if user
+            ul.nav.navbar-nav.navbar-right
+              li.dropdown
+                a.dropdown-toggle(data-toggle="dropdown")
+                  span.fa-stack
+                    i.fa.fa-circle-thin.fa-stack-2x
+                    i.fa.fa-user.fa-stack-1x
+                  | &nbsp;#{ user.displayName }
+                ul.dropdown-menu
+                  li.dropdown-header.text-center
+                    span.fa-stack.fa-3x
+                      i.fa.fa-circle.fa-stack-2x
+                      i.fa.fa-user.fa-inverse.fa-stack-1x
+                    p #{ user.displayName }
+                    p.text-muted #{ user.email }
+                  li
+                    a(href="#{ contextPath }/mystock")
+                      i.fa.fa-database.fa-fw
+                      | &nbsp;My stock
+                  li.divider
+                  li
+                    a(ng-click="signOut()")
+                      i.fa.fa-sign-out.fa-fw
+                      | &nbsp;Sign out
+          else
+            a.btn.btn-primary.navbar-btn.navbar-right(href="#{ contextPath }/login") Sign in
 
     .notification-list(ng-controller="MessageListCtrl")
       .container(ng-messages="$alert", ng-if="!hidden")
@@ -74,9 +84,6 @@ html(lang="en")
 
     .container
       block content
-
-    ng-include(src="'/includes/user-detail-view.jade'")
-    form(name="signOutForm", method="post", action="#{ contextPath }/logout")
 
     footer.clearfix
       hr.fiware-line
@@ -95,5 +102,5 @@ html(lang="en")
             small
               a(href="https://www.tmforum.org") TM FORUM
 
-    script(type="text/ng-template", id="/includes/user-detail-view.jade")
-      include ./includes/user-detail-view.jade
+    if user
+      form(name="signOutForm", method="post", action="#{ contextPath }/logout")

@@ -33,7 +33,7 @@ angular.module('app.controllers')
             Offering.filter($scope.filters, function ($offeringList) {});
         };
     }])
-    .controller('OfferingCreateCtrl', ['$scope', '$rootScope', 'EVENTS', 'Offering', '$element', 'Product', 'Catalogue', 'User', 'LOGGED_USER', function ($scope, $rootScope, EVENTS, Offering, $element, Product, Catalogue, User, LOGGED_USER) {
+    .controller('OfferingCreateCtrl', ['$scope', '$rootScope', 'EVENTS', 'Offering', '$element', 'Product', 'Catalogue', function ($scope, $rootScope, EVENTS, Offering, $element, Product, Catalogue) {
         var initialInfo = {version: '0.1', productSpecification: null};
 
         $scope.selectProduct = function selectProduct($product) {
@@ -95,11 +95,11 @@ angular.module('app.controllers')
         };
 
         $scope.hasRoleAsOwner = function hasRoleAsOwner($catalogue) {
-            return $catalogue != null && hasRole($catalogue, Catalogue.ROLES.OWNER, LOGGED_USER.ID);
+            return $catalogue != null && Catalogue.hasRoleAs($catalogue, Catalogue.ROLES.OWNER);
         };
 
         $scope.hasRoleAsSeller = function hasRoleAsSeller($catalogue) {
-            return $catalogue != null && hasRole($catalogue, Catalogue.ROLES.SELLER, LOGGED_USER.ID);
+            return $catalogue != null && Catalogue.hasRoleAs($catalogue, Catalogue.ROLES.SELLER);
         };
 
         $scope.resetCreateForm();
@@ -108,9 +108,9 @@ angular.module('app.controllers')
         Product.list();
 
         $scope.$catalogueList = Catalogue.$collection;
-        Catalogue.list(User.ROLES.SELLER);
+        Catalogue.list();
     }])
-    .controller('OfferingView', ['$scope', '$rootScope', 'Offering', 'User', 'EVENTS', function ($scope, $rootScope, Offering, User, EVENTS) {
+    .controller('OfferingView', ['$scope', '$rootScope', 'Offering', 'EVENTS', function ($scope, $rootScope, Offering, EVENTS) {
 
         $scope.createFormHidden = true;
 
@@ -122,5 +122,5 @@ angular.module('app.controllers')
             $scope.changeView();
         });
 
-        Offering.list(User.ROLES.SELLER, function ($offeringList) {});
+        Offering.list();
     }]);

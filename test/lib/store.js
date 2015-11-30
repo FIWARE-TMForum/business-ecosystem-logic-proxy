@@ -31,20 +31,20 @@ describe('Store Client', function() {
 
         // Call the validator
         var productInfo = { 'a': 'b', 'example': 'c' };
-        storeClient.validateProduct(productInfo, {id: 'test'}, function(status, body, headers) {
+        storeClient.validateProduct(productInfo, {id: 'test'}, function(err) {
 
             var expectedBody = {
                 action: 'create',
                 product: productInfo
-            }
+            };
 
             expect(receivedBody).toEqual(expectedBody);
-            expect(status).toBe(200);
+            expect(err).toBe(undefined);
 
             done();
         });
 
-    }
+    };
 
     it('should validate product (HTTP)', function(done) {
         testValidateProductOk('http', done);
@@ -70,7 +70,7 @@ describe('Store Client', function() {
 
         // Call the validator
         var productInfo = { 'a': 'b', 'example': 'c' };
-        storeClient.validateProduct(productInfo, {id: 'test'}, null, function(status, body) {
+        storeClient.validateProduct(productInfo, {id: 'test'}, function(err) {
 
             var expectedBody = {
                 action: 'create',
@@ -81,8 +81,8 @@ describe('Store Client', function() {
             expect(receivedBody).toEqual(expectedBody);
  
             // Check the parameters used to call this callback
-            expect(status).toBe(errorStatus);
-            expect(body).toBe(expectedErrMsg);
+            expect(err.status).toBe(errorStatus);
+            expect(err.message).toBe(expectedErrMsg);
 
             done();
         });
