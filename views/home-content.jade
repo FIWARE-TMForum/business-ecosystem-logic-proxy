@@ -41,23 +41,51 @@ block content
               i.fa.fa-tags.fa-fw
               | &nbsp;All offerings
           hr
-          .list-group
-            a.list-group-item(ng-repeat="$category in $categoryList", ng-class="{'active': isActive($category)}", ng-click="showCategory($category)")
-              | {{ $category.name }}
-          ul.pager
-            li.disabled
-              a
-                i.fa.fa-arrow-left
-            li.disabled
-              a
-                i.fa.fa-arrow-right
-    .col-sm-9(ng-controller="CatalogueDetailCtrl")
-      .panel.panel-default(ng-if="$catalogue != null")
-        .panel-heading
-          .panel-title {{ $catalogue.name }}
-          .panel-options.text-right
-            button.btn.btn-sm.btn-primary(type="button", bs-tooltip, data-title="New offering")
-              i.fa.fa-cube.fa-fw
-        .panel-body
-          blockquote(ng-if="$catalogue.description")
-            p {{ $catalogue.description }}
+          div(ng-switch="$categoryList.length")
+            div(ng-switch-when="0")
+              .alert.alert-info No categories launched yet.
+            div(ng-switch-default)
+              .list-group
+                a.list-group-item(ng-repeat="$category in $categoryList", ng-class="{'active': isActive($category)}", ng-click="showCategory($category)")
+                  | {{ $category.name }}
+              ul.pager
+                li.disabled
+                  a
+                    i.fa.fa-arrow-left
+                li.disabled
+                  a
+                    i.fa.fa-arrow-right
+    .col-sm-9
+      .row
+        .col-sm-12(ng-controller="CatalogueDetailCtrl")
+          .panel.panel-default(ng-if="$catalogue != null")
+            .panel-heading
+              .panel-title {{ $catalogue.name }}
+              .panel-options.text-right
+                button.btn.btn-sm.btn-primary(type="button", bs-tooltip, data-title="New offering")
+                  i.fa.fa-cube.fa-fw
+            .panel-body
+              blockquote(ng-if="$catalogue.description")
+                p {{ $catalogue.description }}
+        .col-sm-12(ng-controller="CategoryDetailCtrl")
+          .panel.panel-default(ng-if="$categoryBreadcrumb.length")
+            .panel-heading
+              .panel-title Filter by category
+            .panel-body
+              ol.breadcrumb.breadcrumb-default
+                li(ng-repeat="$category in $categoryBreadcrumb", ng-class="{'active': isActive($category)}")
+                  a(ng-click="refreshCategory($category)")
+                    | {{ $category.name }}
+                  a(ng-if="isActive($category) && $subCategoryList.length")
+                    i.fa.fa-fw(ng-class="$subCategoryListHidden ? 'fa-caret-down': 'fa-caret-up'", ng-click="showSubCategoryList()")
+              div(ng-if="$subCategoryList.length && !$subCategoryListHidden")
+                .list-group.flex-container-column.list-subcategories
+                  a.list-group-item(ng-repeat="$category in $subCategoryList", ng-click="showCategory($category)")
+                    | {{ $category.name }}
+                ul.pager
+                  li.disabled
+                    a
+                      i.fa.fa-arrow-left
+                  li.disabled
+                    a
+                      i.fa.fa-arrow-right
