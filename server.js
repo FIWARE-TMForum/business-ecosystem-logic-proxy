@@ -41,9 +41,6 @@ var checkPrefix = function(prefix, byDefault) {
 /////////////////////////////// CONFIG //////////////////////////////
 /////////////////////////////////////////////////////////////////////
 
-// Default title for GUI
-var DEFAULT_TITLE = 'TM Forum Portal';
-
 // OAuth2 Came From Field
 var OAUTH2_CAME_FROM_FIELD = 'came_from_path';
 
@@ -162,7 +159,7 @@ app.get('/auth/fiware/callback', passport.authenticate('fiware', { failureRedire
 app.all(config.logOutPath, function(req, res) {
     // Destroy the session and redirect the user to the main page
     req.session.destroy();
-    res.redirect(config.oauth2.server + '/auth/logout');
+    res.redirect(config.portalPrefix + '/');
 });
 
 
@@ -213,17 +210,13 @@ var jsAppFilesToInject = [
     return 'resources/core/js/' + path;
 });
 
-var renderTemplate = function(req, res, customTitle, viewName, userRole) {
+var renderTemplate = function(req, res, viewName, userRole) {
 
     // TODO: Maybe an object with extra properties (if required)
-
-    var validCustomTitle = customTitle !== undefined && customTitle !== '';
-    var title = validCustomTitle ? DEFAULT_TITLE + ' - ' + customTitle : DEFAULT_TITLE;
 
     var properties = {
         user: req.user,
         userRole: userRole,
-        title: title,
         contextPath: config.portalPrefix,
         proxyPath: config.proxyPrefix,
         cssFilesToInject: cssFilesToInject,
@@ -238,11 +231,11 @@ var renderTemplate = function(req, res, customTitle, viewName, userRole) {
 };
 
 app.get(config.portalPrefix + '/', function(req, res) {
-    renderTemplate(req, res, 'Marketplace', 'home-content', 'Customer');
+    renderTemplate(req, res, 'home-content', 'Customer');
 });
 
 app.get(config.portalPrefix + '/mystock', ensureAuthenticated, function(req, res) {
-    renderTemplate(req, res, 'My Stock', 'mystock-content', 'Seller');
+    renderTemplate(req, res, 'mystock-content', 'Seller');
 });
 
 

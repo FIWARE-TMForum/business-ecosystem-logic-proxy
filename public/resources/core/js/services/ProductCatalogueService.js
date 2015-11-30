@@ -3,17 +3,9 @@
  */
 
 angular.module('app.services')
-    .factory('Catalogue', ['$resource', 'URLS', 'User', 'LOGGED_USER', function ($resource, URLS, User, LOGGED_USER) {
-        var Catalogue, service;
+    .factory('Catalogue', ['$resource', 'URLS', 'User', function ($resource, URLS, User) {
 
-        service = {
-
-            TYPE: 'Product Catalog',
-
-            ROLES: {
-                OWNER: 'Owner',
-                SELLER: 'Seller',
-            },
+        var Catalogue, service = {
 
             STATUS: {
                 ACTIVE: 'Active',
@@ -24,21 +16,21 @@ angular.module('app.services')
 
             $collection: [],
 
-            list: function list(role, next) {
+            list: function list(next) {
                 var params = {};
 
-                switch (role) {
+                switch (User.getRole()) {
                 case User.ROLES.CUSTOMER:
                     params = {'lifecycleStatus': service.STATUS.LAUNCHED};
                     break;
                 case User.ROLES.SELLER:
-                    params = {'relatedParty.id': LOGGED_USER.ID};
+                    params = {'relatedParty.id': User.getID()};
                     break;
                 default:
                     // TODO: do nothing.
                 }
 
-                return Catalogue.query(params, function ($collection) {
+                Catalogue.query(params, function ($collection) {
 
                     angular.copy($collection, service.$collection);
 
@@ -50,20 +42,21 @@ angular.module('app.services')
                 });
             },
 
+            hasRoleAs: function hasRoleAs($catalogue, partyRole) {
+                return $catalogue.relatedParty.some(function (user) {
+                    return party.id == User.getID() && party.role == partyRole;
+                });
+            },
+
             create: function create(data, next) {
 
                 angular.extend(data, {
                     lifecycleStatus: service.STATUS.ACTIVE,
-                    relatedParty: [
-                        {
-                            id: LOGGED_USER.ID,
-                            href: LOGGED_USER.HREF,
-                            role: service.ROLES.OWNER
-                        }
-                    ]
+                    relatedParty: [User.serialize()]
                 });
 
-                return Catalogue.save(data, function ($catalogueCreated) {
+                Catalogue.save(data, function ($catalogueCreated) {
+
                     service.$collection.unshift($catalogueCreated);
 
                     if (next != null) {
@@ -75,7 +68,11 @@ angular.module('app.services')
             },
 
             update: function update($catalogue, next) {
-                return Catalogue.update({id: $catalogue.id}, $catalogue, function ($catalogueUpdated) {
+                var index = service.$collection.indexOf($catalogue);
+
+                Catalogue.update({id: $catalogue.id}, $catalogue, function ($catalogueUpdated) {
+
+                    service.$collection[index] = $catalogueUpdated;
 
                     if (next != null) {
                         next($catalogueUpdated);
@@ -87,7 +84,7 @@ angular.module('app.services')
 
         };
 
-        Catalogue = $resource(URLS.PRODUCT_CATALOGUE, {catalogueId: '@id'}, {
+        Catalogue = $resource(URLS.CATALOGUE_MANAGEMENT + '/catalog/:catalogueId', {catalogueId: '@id'}, {
             update: {method:'PUT'}
         });
 

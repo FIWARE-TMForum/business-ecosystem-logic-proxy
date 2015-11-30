@@ -3,9 +3,10 @@
  */
 
 angular.module('app')
-    .config(['$routeProvider', 'LOGGED_USER', 'URLS', function ($routeProvider, LOGGED_USER, URLS) {
+    .config(['$routeProvider', '$injector', 'URLS', function ($routeProvider, $injector, URLS) {
+        var userRole = $injector.has('LOGGED_USER') ? $injector.get('LOGGED_USER').ROLE : 'Customer';
 
-        switch (LOGGED_USER.ROLE) {
+        switch (userRole) {
         case 'Customer':
             break;
         case 'Seller':
