@@ -43,10 +43,11 @@ angular.module('app.controllers')
             $scope.showCatalogue($catalogue);
         });
     }])
-    .controller('CatalogueDetailCtrl', ['$scope', '$rootScope', 'EVENTS', 'Catalogue', function ($scope, $rootScope, EVENTS, Catalogue) {
+    .controller('CatalogueDetailCtrl', ['$scope', '$rootScope', 'EVENTS', 'Catalogue', 'Offering', function ($scope, $rootScope, EVENTS, Catalogue, Offering) {
 
         $scope.$catalogue = null;
         $scope.activeView = 'OfferingView';
+        $scope.$catalogueOfferingList = Offering.$collection;
 
         $scope.showOfferingView = function showOfferingView() {
             $scope.activeView = 'OfferingView';
@@ -63,6 +64,7 @@ angular.module('app.controllers')
         $scope.$on(EVENTS.CATALOGUE_SHOW, function (event, $catalogue) {
             $scope.showOfferingView();
             $scope.$catalogue = $catalogue;
+            Offering.list($catalogue);
         });
     }])
     .controller('CatalogueCreateCtrl', ['$scope', '$rootScope', 'EVENTS', 'Catalogue', '$element', function ($scope, $rootScope, EVENTS, Catalogue, $element) {

@@ -28,7 +28,7 @@ angular.module('app.services')
 
             $collection: [],
 
-            list: function list(next) {
+            list: function list($catalogue, next) {
                 var params = {};
 
                 switch (User.getRole()) {
@@ -39,25 +39,32 @@ angular.module('app.services')
                     Product.list(function ($productList) {
                         var products = {};
 
-                        params['productSpecification.id'] = $productList.map(function ($product) {
-                            products[$product.id] = $product;
-                            return $product.id;
-                        }).join();
+                        if ($productList.length) {
 
-                        Offering.query(params, function ($collection) {
-
-                            angular.copy($collection, service.$collection);
-
-                            service.$collection.forEach(function ($offering) {
-                                $offering.productSpecification = products[$offering.productSpecification.id];
-                            });
-
-                            if (next != null) {
-                                next(service.$collection);
+                            if ($catalogue != null) {
+                                params['catalogueId'] = $catalogue.id;
                             }
-                        }, function (response) {
-                            // TODO: onfailure.
-                        });
+
+                            params['productSpecification.id'] = $productList.map(function ($product) {
+                                products[$product.id] = $product;
+                                return $product.id;
+                            }).join();
+
+                            Offering.query(params, function ($collection) {
+
+                                angular.copy($collection, service.$collection);
+
+                                service.$collection.forEach(function ($offering) {
+                                    $offering.productSpecification = products[$offering.productSpecification.id];
+                                });
+
+                                if (next != null) {
+                                    next(service.$collection);
+                                }
+                            }, function (response) {
+                                // TODO: onfailure.
+                            });
+                        }
                     });
 
                     break;
@@ -102,7 +109,7 @@ angular.module('app.services')
                 });
             },
 
-            create: function create(offeringInfo, catalogueInfo, next) {
+            create: function create(offeringInfo, $catalogue, next) {
                 var $product;
 
                 if (offeringInfo.productSpecification.lifecycleStatus == service.STATUS.ACTIVE) {
@@ -118,7 +125,7 @@ angular.module('app.services')
 
                 offeringInfo.productSpecification = serializeProduct(offeringInfo.productSpecification);
 
-                Offering.save(offeringInfo, function ($offeringCreated) {
+                Offering.save({catalogueId: $catalogue.id}, offeringInfo, function ($offeringCreated) {
                     $offeringCreated.productSpecification = $product;
                     service.$collection.unshift($offeringCreated);
 
@@ -132,7 +139,7 @@ angular.module('app.services')
 
         };
 
-        Offering = $resource(URLS.CATALOGUE_MANAGEMENT + '/productOffering/:offeringId', {offeringId: '@id'}, {
+        Offering = $resource(URLS.CATALOGUE_MANAGEMENT + '/:catalogueId/productOffering/:offeringId', {offeringId: '@id'}, {
         });
 
         return service;
