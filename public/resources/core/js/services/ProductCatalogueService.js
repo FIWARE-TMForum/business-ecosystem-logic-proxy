@@ -3,9 +3,14 @@
  */
 
 angular.module('app.services')
-    .factory('Catalogue', ['$resource', 'URLS', 'User', function ($resource, URLS, User) {
+    .factory('Catalogue', ['$rootScope', '$resource', 'URLS', 'EVENTS', 'User', function ($rootScope, $resource, URLS, EVENTS, User) {
 
         var Catalogue, service = {
+
+            MESSAGES: {
+                CREATED: 'The catalogue <strong>{{ name }}</strong> was created successfully.',
+                UPDATED: 'The catalogue <strong>{{ name }}</strong> was updated successfully.'
+            },
 
             STATUS: {
                 ACTIVE: 'Active',
@@ -95,6 +100,7 @@ angular.module('app.services')
 
                     if (cached) {
                         service.$collection.unshift($catalogueCreated);
+                        $rootScope.$broadcast(EVENTS.MESSAGE_SHOW, 'success', service.MESSAGES.CREATED, $catalogueCreated);
                     }
 
                     if (next != null) {
@@ -117,6 +123,8 @@ angular.module('app.services')
                     if (cached) {
                         angular.copy($catalogueUpdated, service.$collection[index]);
                         service.$collectionById[$catalogueUpdated.id] = service.$collection[index];
+
+                        $rootScope.$broadcast(EVENTS.MESSAGE_SHOW, 'success', service.MESSAGES.UPDATED, $catalogueUpdated);
                     }
 
                     if (next != null) {

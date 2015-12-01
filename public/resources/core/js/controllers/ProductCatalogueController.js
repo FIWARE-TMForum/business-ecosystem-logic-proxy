@@ -73,7 +73,6 @@ angular.module('app.controllers')
         $scope.createCatalogue = function createCatalogue() {
             Catalogue.create($scope.catalogueInfo, function ($catalogueCreated) {
                 $element.modal('hide');
-                $rootScope.$broadcast(EVENTS.MESSAGE_SHOW, 'success', 'The catalogue <strong>{{ name }}</strong> was created successfully.', $catalogueCreated);
             });
         };
 
@@ -99,7 +98,6 @@ angular.module('app.controllers')
         $scope.updateCatalogue = function updateCatalogue() {
             Catalogue.update($scope.$catalogue, function ($catalogueUpdated) {
                 $element.modal('hide');
-                $rootScope.$broadcast(EVENTS.MESSAGE_SHOW, 'success', 'The catalogue <strong>{{ name }}</strong> was updated successfully.', $catalogueUpdated);
             });
         };
 
