@@ -80,7 +80,11 @@ angular.module('app.services')
                 });
             },
 
-            create: function create(data, next) {
+            create: function create(data, next, cached) {
+
+                if (typeof cached !== 'boolean') {
+                    cached = true;
+                }
 
                 angular.extend(data, {
                     lifecycleStatus: service.STATUS.ACTIVE,
@@ -89,7 +93,9 @@ angular.module('app.services')
 
                 Catalogue.save(data, function ($catalogueCreated) {
 
-                    service.$collection.unshift($catalogueCreated);
+                    if (cached) {
+                        service.$collection.unshift($catalogueCreated);
+                    }
 
                     if (next != null) {
                         next($catalogueCreated);
