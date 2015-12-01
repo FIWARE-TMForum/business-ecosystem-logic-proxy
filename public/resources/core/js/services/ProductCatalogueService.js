@@ -42,6 +42,26 @@ angular.module('app.services')
                 });
             },
 
+            find: function find(params, next, cached) {
+
+                if (typeof cached !== 'boolean') {
+                    cached = true;
+                }
+
+                Catalogue.query(params, function ($collection) {
+
+                    if (cached) {
+                        angular.copy($collection, service.$collection);
+                    }
+
+                    if (next != null) {
+                        next(cached ? service.$collection : $collection);
+                    }
+                }, function (response) {
+                    // TODO: onfailure.
+                });
+            },
+
             hasRoleAs: function hasRoleAs($catalogue, partyRole) {
                 return $catalogue.relatedParty.some(function (party) {
                     return party.id == User.getID() && party.role == partyRole;
