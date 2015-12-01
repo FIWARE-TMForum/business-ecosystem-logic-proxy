@@ -16,8 +16,14 @@ angular.module('app.services')
 
             $collection: [],
 
-            list: function list(next) {
+            $collectionById: {},
+
+            list: function list(next, cached) {
                 var params = {};
+
+                if (typeof cached !== 'boolean') {
+                    cached = true;
+                }
 
                 switch (User.getRole()) {
                 case User.ROLES.CUSTOMER:
@@ -32,10 +38,16 @@ angular.module('app.services')
 
                 Catalogue.query(params, function ($collection) {
 
-                    angular.copy($collection, service.$collection);
+                    if (cached) {
+                        angular.copy($collection, service.$collection);
+
+                        service.$collection.forEach(function ($catalogue) {
+                            service.$collectionById[$catalogue.id] = $catalogue;
+                        });
+                    }
 
                     if (next != null) {
-                        next(service.$collection);
+                        next(cached ? service.$collection : $collection);
                     }
                 }, function (response) {
                     // TODO: onfailure.
