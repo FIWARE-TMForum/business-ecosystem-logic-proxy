@@ -99,15 +99,22 @@ angular.module('app.services')
                 });
             },
 
-            update: function update($catalogue, next) {
-                var index = service.$collection.indexOf($catalogue);
+            update: function update($catalogue, next, cached) {
+                var index = service.$collection.indexOf(service.$collectionById[$catalogue.id]);
+
+                if (typeof cached !== 'boolean') {
+                    cached = true;
+                }
 
                 Catalogue.update({id: $catalogue.id}, $catalogue, function ($catalogueUpdated) {
 
-                    service.$collection[index] = $catalogueUpdated;
+                    if (cached) {
+                        angular.copy($catalogueUpdated, service.$collection[index]);
+                        service.$collectionById[$catalogueUpdated.id] = service.$collection[index];
+                    }
 
                     if (next != null) {
-                        next($catalogueUpdated);
+                        next(cached ? service.$collection[index] : $catalogueUpdated);
                     }
                 }, function (response) {
                     // TODO: onfailure.
