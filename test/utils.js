@@ -4,7 +4,8 @@ var defaultConfig = {
         server: 'https://account.lab.fiware.org',
         roles: {
             admin: 'provider',
-            seller: 'seller'
+            seller: 'seller',
+            customer: 'customer'
         }
     },
     appHost: 'example.com',

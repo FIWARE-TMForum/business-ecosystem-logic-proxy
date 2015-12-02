@@ -14,6 +14,7 @@ describe('Store Client', function() {
         }
     }).storeClient;
 
+
     var testValidateProductOk = function(protocol, done) {
 
         // Mock the server
@@ -39,7 +40,7 @@ describe('Store Client', function() {
             };
 
             expect(receivedBody).toEqual(expectedBody);
-            expect(err).toBe(undefined);
+            expect(err).toBe(null);
 
             done();
         });
@@ -59,7 +60,8 @@ describe('Store Client', function() {
         config.appSsl = false;
         var serverUrl = 'http' + '://' + config.appHost + ':' + config.endpoints.charging.port;
         var receivedBody;
-        var server = nock(serverUrl, {
+
+        nock(serverUrl, {
             reqheaders: {
                 'content-type': 'application/json'
             }
@@ -75,7 +77,7 @@ describe('Store Client', function() {
             var expectedBody = {
                 action: 'create',
                 product: productInfo
-            }
+            };
 
             // Check the body received by the server
             expect(receivedBody).toEqual(expectedBody);
@@ -87,7 +89,7 @@ describe('Store Client', function() {
             done();
         });
 
-    }
+    };
 
     it('should not validate product when store returns 400', function(done) {
         var message = 'Invalid field X';
@@ -108,4 +110,44 @@ describe('Store Client', function() {
         testValidateProductError(500, 'Internal Server Error', 'The server has failed validating the product specification', done);
     });
 
+    it('should notify the store the creation of a product order', function(done) {
+        // Only a case is tested in since this method relies on makeStoreRequest
+        // which has been already tested
+
+        var redirectUrl = 'http://redirecturl.com';
+
+        // Mock the server
+        var serverUrl = 'http' + '://' + config.appHost + ':' + config.endpoints.charging.port;
+        var receivedBody;
+        var response = {
+            'redirectUrl': redirectUrl
+        };
+
+        nock(serverUrl, {
+            reqheaders: {
+                'content-type': 'application/json'
+            }
+        }).post('/charging/api/orderManagement/orders', function(body) {
+            receivedBody = body;
+            return true;
+        }).reply(200, response);
+
+        // Call the validator
+        var orderInfo = { 'a': 'b', 'example': 'c' };
+        storeClient.notifyOrder(orderInfo, {id: 'test'}, function(err, res) {
+            expect(receivedBody).toEqual(orderInfo);
+            expect(err).toBe(null);
+
+            var expectedResponse = {
+                status: 200,
+                body: '{"redirectUrl":"' + redirectUrl + '"}',
+                headers: {
+                    'content-type': 'application/json'
+                }
+            };
+
+            expect(res).toEqual(expectedResponse);
+            done();
+        });
+    });
 });

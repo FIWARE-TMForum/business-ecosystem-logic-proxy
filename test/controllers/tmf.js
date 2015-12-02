@@ -80,7 +80,7 @@ describe('TMF Controller', function() {
                 headers: utils.proxiedRequestHeaders()
             };
 
-            expect(httpClient.proxyRequest).toHaveBeenCalledWith(protocol, expectedOptions, req.body, res);
+            expect(httpClient.proxyRequest).toHaveBeenCalledWith(protocol, expectedOptions, req.body, res, null);
 
         };
 
@@ -242,7 +242,7 @@ describe('TMF Controller', function() {
                     headers: utils.proxiedRequestHeaders()
                 };
 
-                expect(httpClient.proxyRequest).toHaveBeenCalledWith(protocol, expectedOptions, req.body, res);
+                expect(httpClient.proxyRequest).toHaveBeenCalledWith(protocol, expectedOptions, req.body, res, null);
 
                 done();
 
@@ -273,6 +273,80 @@ describe('TMF Controller', function() {
             testApiOk('inventory/complex?a=b', done);
         });
 
+
+        var executePostValidationOk = function(req, callback) {
+            var response = {
+                extraHdrs: {
+                    'X-Redirect-URL': 'http://redirecturl.com'
+                }
+            };
+            callback(null, response)
+        };
+
+        var executeValidationError = function(req, callback) {
+            var err = {
+                status: INVALID_API_STATUS,
+                message: INVALID_API_MESSAGE
+            };
+            callback(err);
+        };
+
+        var testAPIPostValidation = function(postValidator, error,  done) {
+
+            // Configure the API controller
+            var controller = {
+                checkPermissions: checkPermissionsValid,
+                executePostValidation: postValidator
+            };
+
+            var proxyCallback = jasmine.createSpy('callback');
+            var proxyRequest = function(protocol, options, data, proxiedRes, postAction) {
+                postAction(proxyCallback);
+            };
+
+            // TMF API
+            var httpClient = getDefaultHttpClient();
+            httpClient.proxyRequest = proxyRequest;
+
+            var tmf = getTmfInstance(httpClient, null, controller, null);
+
+            // Actual call
+            var req = {
+                url: 'http://example.com/ordering',
+                body: 'Example',
+                method: 'POST',
+                user: {'id': 'user'},
+                headers: {}
+            };
+
+            var res = jasmine.createSpyObj('res', ['status', 'send', 'end']);
+
+            tmf.checkPermissions(req, res);
+
+            setTimeout(function() {
+                if (error) {
+                    expect(res.status).toHaveBeenCalledWith(INVALID_API_STATUS);
+                    expect(res.send).toHaveBeenCalledWith({ error: INVALID_API_MESSAGE });
+                    expect(res.end).toHaveBeenCalledWith();
+
+                    expect(proxyCallback).not.toHaveBeenCalled();
+                } else {
+                    expect(proxyCallback).toHaveBeenCalledWith({
+                        'X-Redirect-URL': 'http://redirecturl.com'
+                    });
+                }
+                done();
+
+            }, 100);
+        };
+
+        it ('should inject extra headers after calling post validation method', function(done) {
+            testAPIPostValidation(executePostValidationOk, false, done);
+        });
+
+        it('should send an error message after executing post validation method', function(done) {
+            testAPIPostValidation(executeValidationError, true, done);
+        })
     });
 
 });
