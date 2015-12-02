@@ -16,6 +16,10 @@ angular.module('app')
         CATEGORY_SELECT: '$categorySelect',
         MESSAGE_SHOW: '$messageShow'
     })
+    .constant('PARTY_ROLES', {
+        OWNER: 'Owner',
+        SELLER: 'Seller'
+    })
     .constant('LIFECYCLE_STATUS', {
         ACTIVE: 'Active',
         LAUNCHED: 'Launched',
