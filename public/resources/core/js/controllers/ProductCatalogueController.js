@@ -3,7 +3,7 @@
  */
 
 angular.module('app.controllers')
-    .controller('CatalogueListCtrl', ['$scope', '$rootScope', 'EVENTS', 'Catalogue', 'User', function ($scope, $rootScope, EVENTS, Catalogue, User) {
+    .controller('CatalogueListCtrl', ['$scope', '$rootScope', 'EVENTS', 'Catalogue', function ($scope, $rootScope, EVENTS, Catalogue) {
 
         $scope.$catalogueList = Catalogue.$collection;
         $scope.$catalogueActive = null;
@@ -23,25 +23,34 @@ angular.module('app.controllers')
             return angular.equals($scope.$catalogueActive, $catalogue);
         };
 
-        $scope.filterByRoleOwner = function filterByRoleOwner() {
-            return $scope.$catalogueList.filter(function ($catalogue) {
-                return Catalogue.hasRoleAs($catalogue, User.ROLES.OWNER);
-            });
-        };
+        $scope.$on(EVENTS.CATALOGUE_SELECT, function ($event, $catalogue) {
+            $scope.showCatalogue($catalogue);
+        });
+    }])
+    .controller('CatalogueSearchCtrl', ['$scope', '$rootScope', 'EVENTS', 'Catalogue', function ($scope, $rootScope, EVENTS, Catalogue) {
 
-        $scope.filterByRoleSeller = function filterByRoleSeller() {
-            return $scope.$catalogueList.filter(function ($catalogue) {
-                return Catalogue.hasRoleAs($catalogue, User.ROLES.SELLER);
-            });
+        $scope.$catalogueList = Catalogue.$collection;
+        $scope.params = {};
+        $scope.searchFailed = false;
+
+        $scope.search = function search() {
+            $scope.searchFailed = false;
+
+            if ($scope.params.status || $scope.params.role) {
+                Catalogue.filter($scope.params, function ($catalogueList) {
+                    $scope.searchFailed = !$catalogueList.length;
+                    $rootScope.$broadcast(EVENTS.CATALOGUE_SELECT, $catalogueList.length ? $catalogueList[0] : null);
+                });
+            } else {
+                Catalogue.list(function ($catalogueList) {
+                    $rootScope.$broadcast(EVENTS.CATALOGUE_SELECT, $catalogueList.length ? $catalogueList[0] : null);
+                });
+            }
         };
 
         $scope.showCreateForm = function showCreateForm() {
             $rootScope.$broadcast(EVENTS.CATALOGUE_CREATEFORM_SHOW);
         };
-
-        $scope.$on(EVENTS.CATALOGUE_SELECT, function ($event, $catalogue) {
-            $scope.showCatalogue($catalogue);
-        });
     }])
     .controller('CatalogueDetailCtrl', ['$scope', '$rootScope', 'EVENTS', 'Catalogue', 'Offering', function ($scope, $rootScope, EVENTS, Catalogue, Offering) {
 

@@ -3,7 +3,7 @@
  */
 
 angular.module('app.services')
-    .factory('Catalogue', ['$rootScope', '$resource', 'URLS', 'EVENTS', 'LIFECYCLE_STATUS', 'User', function ($rootScope, $resource, URLS, EVENTS, LIFECYCLE_STATUS, User) {
+    .factory('Catalogue', ['$rootScope', '$resource', 'URLS', 'EVENTS', 'LIFECYCLE_STATUS', 'PARTY_ROLES', 'User', function ($rootScope, $resource, URLS, EVENTS, LIFECYCLE_STATUS, PARTY_ROLES, User) {
 
         var Catalogue, service = {
 
@@ -32,6 +32,39 @@ angular.module('app.services')
                     break;
                 default:
                     // TODO: do nothing.
+                }
+
+                Catalogue.query(params, function ($collection) {
+
+                    if (cached) {
+                        angular.copy($collection, service.$collection);
+
+                        service.$collection.forEach(function ($catalogue) {
+                            service.$collectionById[$catalogue.id] = $catalogue;
+                        });
+                    }
+
+                    if (next != null) {
+                        next(cached ? service.$collection : $collection);
+                    }
+                }, function (response) {
+                    // TODO: onfailure.
+                });
+            },
+
+            filter: function filter(userQuery, next, cached) {
+                var params = {'relatedParty.id': User.getID()};
+
+                if (typeof cached !== 'boolean') {
+                    cached = true;
+                }
+
+                if (userQuery.status in LIFECYCLE_STATUS) {
+                    params['lifecycleStatus'] = LIFECYCLE_STATUS[userQuery.status];
+                }
+
+                if (userQuery.role in PARTY_ROLES) {
+                    params['relatedParty.role'] = PARTY_ROLES[userQuery.role];
                 }
 
                 Catalogue.query(params, function ($collection) {

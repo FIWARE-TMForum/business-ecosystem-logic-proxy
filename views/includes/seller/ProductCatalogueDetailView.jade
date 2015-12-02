@@ -1,60 +1,57 @@
 .row
   .col-sm-12(ng-controller="CatalogueDetailCtrl")
-    div(ng-switch on="!!$catalogue")
-      div(ng-switch-when="false")
-        .alert.alert-info No catalogue selected for watching.
-      div(ng-switch-default)
-        .panel.panel-default
-          .panel-heading
-            .panel-title {{ $catalogue.name }}
-            .panel-subtitle
-              | Updated 
-              time(am-time-ago="$catalogue.lastUpdate")
-            .panel-options.text-right
-              button.btn.btn-sm.btn-default(type="button", ng-click="showUpdateForm()")
-                i.fa.fa-fw.fa-cog
-                | &nbsp;Settings
-          .panel-body
-            blockquote(ng-if="$catalogue.description")
-              p {{ $catalogue.description }}
-            .lifecycle-status-group
-              .lifecycle-status-item(
-                ng-repeat="status in LIFECYCLE_STATUS_LIST"
-                data-type="{{ status.id }}"
-                data-title="{{ status.title }}"
-                ng-class="{ 'active' : ($catalogue.lifecycleStatus | lowercase) == status.id }"
-              )
-                span.status(bs-tooltip, data-original-title="{{ status.title }}")
-            ul.nav.nav-pills.nav-justified
-              li(ng-class="{ 'active' : activeView == 'OfferingView' }")
-                a(ng-click="showOfferingView()")
-                  i.fa.fa-fw.fa-cube
-                  | &nbsp;Offerings
-              li(ng-class="{ 'active' : activeView == 'PartyView' }")
-                a(ng-click="showPartyView()")
-                  i.fa.fa-fw.fa-user
-                  | &nbsp;Parties
-        div(ng-switch, on="activeView")
-          div(ng-switch-when="OfferingView")
-            .panel.panel-default
-              .panel-heading
-                .panel-title Catalogue Offerings
-              .panel-body
-          div(ng-switch-when="PartyView")
-            .panel.panel-default
-              .panel-heading
-                .panel-title Catalogue Parties
-              .panel-body
-                table.table.table-striped
-                  thead
-                    tr
-                      th Username
-                      th Owner
-                      th Seller
-                  tbody
-                    tr(ng-repeat="$party in $catalogue.relatedParty")
-                      td {{ $party.id }}
-                      td.text-success
-                        i.fa.fa-check-circle-o(ng-if="$party.role == 'Owner'")
-                      td.text-success
-                        i.fa.fa-check-circle-o(ng-if="$party.role == 'Seller'")
+    div(ng-if="$catalogue != null")
+      .panel.panel-default()
+        .panel-heading
+          .panel-title {{ $catalogue.name }}
+          .panel-subtitle
+            | Updated 
+            time(am-time-ago="$catalogue.lastUpdate")
+          .panel-options.text-right
+            button.btn.btn-sm.btn-default(type="button", ng-click="showUpdateForm()")
+              i.fa.fa-fw.fa-cog
+              | &nbsp;Settings
+        .panel-body
+          blockquote(ng-if="$catalogue.description")
+            p {{ $catalogue.description }}
+          .lifecycle-status-group
+            .lifecycle-status-item(
+              ng-repeat="status in LIFECYCLE_STATUS_LIST"
+              data-type="{{ status.id }}"
+              data-title="{{ status.title }}"
+              ng-class="{ 'active' : ($catalogue.lifecycleStatus | lowercase) == status.id }"
+            )
+              span.status(bs-tooltip, data-original-title="{{ status.title }}")
+          ul.nav.nav-pills.nav-justified
+            li(ng-class="{ 'active' : activeView == 'OfferingView' }")
+              a(ng-click="showOfferingView()")
+                i.fa.fa-fw.fa-cube
+                | &nbsp;Offerings
+            li(ng-class="{ 'active' : activeView == 'PartyView' }")
+              a(ng-click="showPartyView()")
+                i.fa.fa-fw.fa-user
+                | &nbsp;Parties
+      div(ng-switch, on="activeView")
+        div(ng-switch-when="OfferingView")
+          .panel.panel-default
+            .panel-heading
+              .panel-title Catalogue Offerings
+            .panel-body
+        div(ng-switch-when="PartyView")
+          .panel.panel-default
+            .panel-heading
+              .panel-title Catalogue Parties
+            .panel-body
+              table.table.table-striped
+                thead
+                  tr
+                    th Username
+                    th Owner
+                    th Seller
+                tbody
+                  tr(ng-repeat="$party in $catalogue.relatedParty")
+                    td {{ $party.id }}
+                    td.text-success
+                      i.fa.fa-check-circle-o(ng-if="$party.role == 'Owner'")
+                    td.text-success
+                      i.fa.fa-check-circle-o(ng-if="$party.role == 'Seller'")

@@ -1,0 +1,20 @@
+.row
+  .col-sm-12(ng-controller="CatalogueSearchCtrl")
+    .panel.panel-default
+      .panel-body
+        form.form-inline.pull-left
+          .form-group
+            label Search by
+            select.form-control(ng-model="params.status", ng-change="search()")
+              option(value="", selected) Any status
+              option(ng-repeat="(key, value) in LIFECYCLE_STATUS", value="{{ key }}") {{ value }}
+          .form-group
+            select.form-control(ng-model="params.role", ng-change="search()")
+              option(value="", selected) Any role
+              option(ng-repeat="(key, value) in PARTY_ROLES", value="{{ key }}") {{ value }}
+        .pull-right
+          button.btn.btn-primary(type="button", ng-click="showCreateForm()")
+            i.fa.fa-fw.fa-plus
+            | &nbsp;New catalogue
+    .alert.alert-info.text-center(ng-if="!$catalogueList.length")
+      | {{ searchFailed ? 'There are no catalogues that match your search.' : 'No catalogues created yet.' }}
