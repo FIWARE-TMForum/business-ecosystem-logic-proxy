@@ -28,5 +28,5 @@ block content
     .col-sm-12
       ol.breadcrumb.text-right
         li(ng-repeat="status in LIFECYCLE_STATUS_LIST")
-          span.label(ng-class="'status-{{ status.id }}'") {{ status.title }}
+          span.label(ng-class="'status-{{ status.id | lowercase }}'") {{ status.title }}
     .col-sm-12(ng-view)

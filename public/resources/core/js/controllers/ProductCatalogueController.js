@@ -9,7 +9,7 @@ angular.module('app.controllers')
         $scope.$catalogueActive = null;
 
         $scope.refreshList = function refreshList() {
-            $scope.$categoryActive = null;
+            $scope.$catalogueActive = null;
             Catalogue.list();
             $rootScope.$broadcast(EVENTS.CATALOGUE_SHOW, null);
         };
@@ -72,6 +72,13 @@ angular.module('app.controllers')
 
         $scope.hasRoleAsOwner = function hasRoleAsOwner() {
             return $scope.$catalogue != null && Catalogue.hasRoleAs($scope.$catalogue, PARTY_ROLES.OWNER);
+        };
+
+        $scope.updateStatus = function updateStatus(lifecycleStatus) {
+            Catalogue.updateStatus($scope.$catalogue, lifecycleStatus, function ($catalogueUpdated) {
+                $scope.$catalogue = $catalogueUpdated;
+                Offering.list($scope.$catalogue);
+            });
         };
 
         $scope.$on(EVENTS.CATALOGUE_SHOW, function (event, $catalogue) {

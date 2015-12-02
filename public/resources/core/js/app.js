@@ -27,10 +27,10 @@ angular.module('app')
         OBSOLETE: 'Obsolete'
     })
     .constant('LIFECYCLE_STATUS_LIST', [
-        {id: 'active', title: 'Active'},
-        {id: 'launched', title: 'Launched'},
-        {id: 'retired', title: 'Retired'},
-        {id: 'obsolete', title: 'Obsolete'}
+        {id: 'ACTIVE', title: 'Active'},
+        {id: 'LAUNCHED', title: 'Launched'},
+        {id: 'RETIRED', title: 'Retired'},
+        {id: 'OBSOLETE', title: 'Obsolete'}
     ])
     .directive('bsTooltip', function () {
         return {

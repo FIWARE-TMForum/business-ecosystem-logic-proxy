@@ -159,6 +159,32 @@ angular.module('app.services')
                 }, function (response) {
                     // TODO: onfailure.
                 });
+            },
+
+            updateStatus: function updateStatus($catalogue, lifecycleStatus, next, cached) {
+                var index = service.$collection.indexOf(service.$collectionById[$catalogue.id]);
+
+                if (typeof cached !== 'boolean') {
+                    cached = true;
+                }
+
+                $catalogue.lifecycleStatus = lifecycleStatus;
+
+                Catalogue.update({id: $catalogue.id}, $catalogue, function ($catalogueUpdated) {
+
+                    if (cached) {
+                        angular.copy($catalogueUpdated, service.$collection[index]);
+                        service.$collectionById[$catalogueUpdated.id] = service.$collection[index];
+
+                        $rootScope.$broadcast(EVENTS.MESSAGE_SHOW, 'success', service.MESSAGES.UPDATED, $catalogueUpdated);
+                    }
+
+                    if (next != null) {
+                        next(cached ? service.$collection[index] : $catalogueUpdated);
+                    }
+                }, function (response) {
+                    // TODO: onfailure.
+                });
             }
 
         };

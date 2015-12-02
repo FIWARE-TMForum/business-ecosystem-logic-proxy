@@ -14,14 +14,15 @@
         .panel-body
           blockquote(ng-if="$catalogue.description")
             p {{ $catalogue.description }}
-          .lifecycle-status-group
+          .lifecycle-status-group.no-user-select(ng-class="{ 'readonly' : !hasRoleAsOwner() }")
             .lifecycle-status-item(
               ng-repeat="status in LIFECYCLE_STATUS_LIST"
-              data-type="{{ status.id }}"
+              data-type="{{ status.id | lowercase }}"
               data-title="{{ status.title }}"
-              ng-class="{ 'active' : ($catalogue.lifecycleStatus | lowercase) == status.id }"
+              ng-class="{ 'active' : $catalogue.lifecycleStatus == status.title }"
+              ng-click="updateStatus(status.title)"
             )
-              span.status(bs-tooltip, data-original-title="{{ status.title }}")
+              span.status
           ul.nav.nav-pills.nav-justified
             li(ng-class="{ 'active' : activeView == 'OfferingView' }")
               a(ng-click="showOfferingView()")
