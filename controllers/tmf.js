@@ -51,7 +51,23 @@ var tmf = (function() {
             headers: utils.proxiedRequestHeaders(req)
         };
 
-        httpClient.proxyRequest(protocol, options, req.body, res);
+        var api = url.parse(req.url).path.split('/')[1];
+        var postAction = null;
+
+        if (apiControllers[api] !== undefined && apiControllers[api].executePostValidation) {
+            postAction = function(callback) {
+                apiControllers[api].executePostValidation(req, function(err, retRes) {
+                    if (err) {
+                        sendError(res, err);
+                    } else {
+                        callback(retRes.extraHdrs);
+                    }
+                });
+            }
+
+        }
+
+        httpClient.proxyRequest(protocol, options, req.body, res, postAction);
     };
 
     var checkPermissions = function(req, res) {

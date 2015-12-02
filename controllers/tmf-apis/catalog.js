@@ -4,43 +4,11 @@ var async = require('async'),
     storeClient = require('./../../lib/store').storeClient,
     url = require('url'),
     utils = require('./../../lib/utils'),
+    tmfUtils = require('./../../lib/tmfUtils'),
     log = require('./../../lib/logger').logger.getLogger("Root");
 
 // Validator to check user permissions for accessing TMForum resources
 var catalog = (function() {
-
-    // Check whether the owner role is included in the info field
-    var isOwner = function (userInfo, info) {
-        var status = false;
-        if (checkRole(userInfo, config.oauth2.roles.admin)) {
-            status = true;
-        } else if (info.relatedParty) {
-            var parties = info.relatedParty;
-
-            for(var i = 0; !status && i < parties.length; i++) {
-                var party = parties[i];
-
-                if (party.role.toLowerCase() == 'owner' && party.id == userInfo.id) {
-                    status = true
-                }
-            }
-        }
-
-        return status;
-    };
-
-    var checkRole = function (userInfo, role) {
-        var valid = false;
-
-        // Search for provider role
-        for (var i = 0; i < userInfo.roles.length && !valid; i++) {
-            if (userInfo.roles[i].name.toLowerCase() === role.toLowerCase()) {
-                valid = true;
-            }
-        }
-
-        return valid;
-    };
 
     // Retrieves the product belonging to a given offering
     var retrieveProduct = function(userInfo, offeringInfo, callback) {
@@ -74,21 +42,8 @@ var catalog = (function() {
         callback();
     };
 
-    //
-    // Checks if the user is logged in
-    var validateLoggedIn = function(req, callback) {
-        if (req.user) {
-            callback();
-        } else {
-            callback({
-                status: 401,
-                message: 'You need to be authenticated to create/update/delete resources'
-            });
-        }
-    };
-
     var createHandler = function(userInfo, resp, callback) {
-        if (isOwner(userInfo, resp)) {
+        if (tmfUtils.isOwner(userInfo, resp)) {
             callback();
         } else {
             callback({
@@ -116,7 +71,8 @@ var catalog = (function() {
         }
 
         // Check that the user has the seller role or is an admin
-        if (!checkRole(req.user, config.oauth2.roles.seller) && !checkRole(req.user, config.oauth2.roles.admin)) {
+        if (!tmfUtils.checkRole(req.user, config.oauth2.roles.seller) && !
+                tmfUtils.checkRole(req.user, config.oauth2.roles.admin)) {
             callback({
                 status: 403,
                 message: 'You are not authorized to create resources'
@@ -149,7 +105,7 @@ var catalog = (function() {
     };
 
     var updateHandler = function(userInfo, resp, callback) {
-        if (isOwner(userInfo, resp)) {
+        if (tmfUtils.isOwner(userInfo, resp)) {
             callback();
         } else {
             callback({
@@ -200,10 +156,10 @@ var catalog = (function() {
 
     var validators = {
         'GET': [ validateAllowed ],
-        'POST': [ validateLoggedIn, validateCreation ],
-        'PATCH': [ validateLoggedIn, validateUpdate ],
-        'PUT': [ validateLoggedIn, validateUpdate ],
-        'DELETE': [ validateLoggedIn, validateUpdate ]
+        'POST': [ tmfUtils.validateLoggedIn, validateCreation ],
+        'PATCH': [ tmfUtils.validateLoggedIn, validateUpdate ],
+        'PUT': [ tmfUtils.validateLoggedIn, validateUpdate ],
+        'DELETE': [ tmfUtils.validateLoggedIn, validateUpdate ]
     };
 
     var checkPermissions = function (req, callback) {

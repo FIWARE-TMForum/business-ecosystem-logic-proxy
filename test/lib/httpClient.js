@@ -18,7 +18,7 @@ describe('HTTP Client', function() {
                     host: 'localhost',
                     port: port,
                     method: 'GET'
-                }
+                };
 
                 httpClient.request(protocol, options, null, function(err) {
                     expect(err.status).toBe(503);
@@ -27,7 +27,7 @@ describe('HTTP Client', function() {
                 });
 
             });
-        }
+        };
 
         it('should call error callback when server is unreachable (HTTP)', function(done) {
             testServerUnreachable('http', done);
@@ -81,7 +81,7 @@ describe('HTTP Client', function() {
                     expect(xCustomValue).toBe(reqHeaders['x-custom']);
 
                     expect(res.headers).toEqual(resHeaders);
-                }
+                };
 
                 if (requestOk) {
                     expect(err).toBe(null);
@@ -98,7 +98,7 @@ describe('HTTP Client', function() {
 
             httpClient.request(protocol, options, null, callback);
 
-        }
+        };
 
         it('should call OK callback when status code is 200', function(done) {
             testAppropriateCallback('http', 200, true, done);
@@ -141,7 +141,7 @@ describe('HTTP Client', function() {
                 port: port,
                 path: path,
                 method: method
-            }
+            };
 
             httpClient.request(protocol, options, body, function(err, resp) {
                 var expectedBody = bodyExpected ? body : '';
@@ -151,7 +151,7 @@ describe('HTTP Client', function() {
                 expect(JSON.parse(resp.body)).toEqual(answer);
                 done();
             });
-        }
+        };
 
         it('should send body in POST requests', function(done) {
             testWithBody('POST', true, done);
@@ -176,7 +176,11 @@ describe('HTTP Client', function() {
 
     describe('Proxied Request', function() {
 
-        var testPorxyRequest = function(statusCode, method, bodyExpected, headersExpected, done) {
+        var extraHdrs = {
+            'X-Redirect-URL': 'http://redirecturl.com'
+        };
+
+        var testProxyRequest = function(statusCode, method, bodyExpected, headersExpected, postAction, done) {
 
             // Set up mock
             var protocol = 'http';
@@ -215,10 +219,10 @@ describe('HTTP Client', function() {
                 path: path,
                 method: method,
                 headers: reqHeaders
-            }
+            };
 
             var res = jasmine.createSpyObj('res', ['statusCode', 'setHeader', 'write', 'end']);
-            httpClient.proxyRequest(protocol, options, body, res);
+            httpClient.proxyRequest(protocol, options, body, res, postAction);
 
             // Wait until the response parameters has been set
             setTimeout(function() {
@@ -235,6 +239,12 @@ describe('HTTP Client', function() {
                 expect(res.write).toHaveBeenCalledWith(JSON.stringify(answer));
                 expect(res.end).toHaveBeenCalledWith();
 
+                // Set the extra headers to the expected headers if postAction must have been called
+                if (postAction && statusCode >= 200) {
+                    for (var header in extraHdrs) {
+                        headersExpected[header] = extraHdrs[header];
+                    }
+                }
                 if (headersExpected) {
                     for (var header in resHeaders) {
                         expect(res.setHeader).toHaveBeenCalledWith(header, resHeaders[header]);
@@ -246,42 +256,54 @@ describe('HTTP Client', function() {
         };
 
         it('should proxy request when status code is 200 (GET)', function(done) {
-            testPorxyRequest(200, 'GET', false, true, done);
+            testProxyRequest(200, 'GET', false, true, null, done);
         });
         it('should proxy request when status code is 200 (POST)', function(done) {
-            testPorxyRequest(200, 'POST', true, true, done);
+            testProxyRequest(200, 'POST', true, true, null, done);
         });
 
         it('should proxy request when status code is 200 (PUT)', function(done) {
-            testPorxyRequest(200, 'PUT', true, true, done);
+            testProxyRequest(200, 'PUT', true, true, null, done);
         });
 
         it('should proxy request when status code is 200 (PATCH)', function(done) {
-            testPorxyRequest(200, 'PATCH', true, true, done);
+            testProxyRequest(200, 'PATCH', true, true, null, done);
         });
 
         it('should proxy request when status code is 200 (DELETE)', function(done) {
-            testPorxyRequest(200, 'DELETE', false, true, done);
+            testProxyRequest(200, 'DELETE', false, true, null, done);
         });
 
-        it('should proxy request when satus code is not 2XX (GET)', function(done) {
-            testPorxyRequest(400, 'GET', false, false, done);
+        it('should proxy request when status code is not 2XX (GET)', function(done) {
+            testProxyRequest(400, 'GET', false, false, null, done);
         });
 
-        it('should proxy request when satus code is not 2XX (POST)', function(done) {
-            testPorxyRequest(400, 'POST', true, false, done);
+        it('should proxy request when status code is not 2XX (POST)', function(done) {
+            testProxyRequest(400, 'POST', true, false, null, done);
         });
 
-        it('should proxy request when satus code is not 2XX (PUT)', function(done) {
-            testPorxyRequest(400, 'PUT', true, false, done);
+        it('should proxy request when status code is not 2XX (PUT)', function(done) {
+            testProxyRequest(400, 'PUT', true, false, null, done);
         });
 
-        it('should proxy request when satus code is not 2XX (PATCH)', function(done) {
-            testPorxyRequest(400, 'PATCH', true, false, done);
+        it('should proxy request when status code is not 2XX (PATCH)', function(done) {
+            testProxyRequest(400, 'PATCH', true, false, null, done);
         });
 
-        it('should proxy request when satus code is not 2XX (DELETE)', function(done) {
-            testPorxyRequest(400, 'DELETE', false, false, done);
+        it('should proxy request when status code is not 2XX (DELETE)', function(done) {
+            testProxyRequest(400, 'DELETE', false, false, null, done);
+        });
+
+        var postAction = function(callback) {
+            callback(extraHdrs);
+        };
+
+        it('should proxy request when a postAction is provided', function(done) {
+            testProxyRequest(200, 'POST', true, true, postAction, done);
+        });
+
+        it('should proxy request when a postAction is required and status code is not 2xx', function(done) {
+            testProxyRequest(400, 'POST', true, false, postAction, done);
         });
 
         it('should proxy request when server is not available', function(done) {
@@ -293,7 +315,7 @@ describe('HTTP Client', function() {
                     host: localhost,
                     port: port,
                     method: 'GET'
-                }
+                };
 
                 var res = jasmine.createSpyObj('res', ['statusCode', 'write', 'end']);
                 httpClient.proxyRequest('http', options, null, res);
