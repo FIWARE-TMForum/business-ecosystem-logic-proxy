@@ -93,7 +93,7 @@ var ordering = (function(){
     };
 
     var checkPermissions = function (req, callback) {
-        log.info('Checking Catalog permissions');
+        log.info('Checking Ordering permissions');
 
         var reqValidators = [];
 
