@@ -3,7 +3,7 @@
  */
 
 angular.module('app.services')
-    .factory('Offering', ['$resource', 'URLS', 'User', 'Product', function ($resource, URLS, User, Product) {
+    .factory('Offering', ['$resource', 'URLS', 'LIFECYCLE_STATUS', 'User', 'Product', function ($resource, URLS, LIFECYCLE_STATUS, User, Product) {
 
         var serializeProduct = function serializeProduct($product) {
             return {
@@ -13,13 +13,6 @@ angular.module('app.services')
         };
 
         var Offering, service = {
-
-            STATUS: {
-                ACTIVE: 'Active',
-                LAUNCHED: 'Launched',
-                RETIRED: 'Retired',
-                OBSOLETE: 'Obsolete'
-            },
 
             TYPES: {
                 OFFERING: 'Offering',
@@ -80,8 +73,8 @@ angular.module('app.services')
                     params.isBundle = (service.TYPES[userQuery.type] !== service.TYPES.OFFERING);
                 }
 
-                if (userQuery.status in service.STATUS) {
-                    params.lifecycleStatus = service.STATUS[userQuery.status];
+                if (userQuery.status in LIFECYCLE_STATUS) {
+                    params.lifecycleStatus = LIFECYCLE_STATUS[userQuery.status];
                 }
 
                 Product.list(function ($productList) {
@@ -112,15 +105,15 @@ angular.module('app.services')
             create: function create(offeringInfo, $catalogue, next) {
                 var $product;
 
-                if (offeringInfo.productSpecification.lifecycleStatus == service.STATUS.ACTIVE) {
-                    offeringInfo.productSpecification.lifecycleStatus = service.STATUS.LAUNCHED;
+                if (offeringInfo.productSpecification.lifecycleStatus == LIFECYCLE_STATUS.ACTIVE) {
+                    offeringInfo.productSpecification.lifecycleStatus = LIFECYCLE_STATUS.LAUNCHED;
                     Product.update(offeringInfo.productSpecification);
                 }
 
                 $product = offeringInfo.productSpecification;
 
                 angular.extend(offeringInfo, {
-                    lifecycleStatus: service.STATUS.ACTIVE
+                    lifecycleStatus: LIFECYCLE_STATUS.ACTIVE
                 });
 
                 offeringInfo.productSpecification = serializeProduct(offeringInfo.productSpecification);

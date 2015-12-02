@@ -3,20 +3,13 @@
  */
 
 angular.module('app.services')
-    .factory('Catalogue', ['$rootScope', '$resource', 'URLS', 'EVENTS', 'User', function ($rootScope, $resource, URLS, EVENTS, User) {
+    .factory('Catalogue', ['$rootScope', '$resource', 'URLS', 'EVENTS', 'LIFECYCLE_STATUS', 'User', function ($rootScope, $resource, URLS, EVENTS, LIFECYCLE_STATUS, User) {
 
         var Catalogue, service = {
 
             MESSAGES: {
                 CREATED: 'The catalogue <strong>{{ name }}</strong> was created successfully.',
                 UPDATED: 'The catalogue <strong>{{ name }}</strong> was updated successfully.'
-            },
-
-            STATUS: {
-                ACTIVE: 'Active',
-                LAUNCHED: 'Launched',
-                RETIRED: 'Retired',
-                OBSOLETE: 'Obsolete'
             },
 
             $collection: [],
@@ -32,7 +25,7 @@ angular.module('app.services')
 
                 switch (User.getRole()) {
                 case User.ROLES.CUSTOMER:
-                    params = {'lifecycleStatus': service.STATUS.LAUNCHED};
+                    params = {'lifecycleStatus': LIFECYCLE_STATUS.LAUNCHED};
                     break;
                 case User.ROLES.SELLER:
                     params = {'relatedParty.id': User.getID()};
@@ -92,7 +85,7 @@ angular.module('app.services')
                 }
 
                 angular.extend(data, {
-                    lifecycleStatus: service.STATUS.ACTIVE,
+                    lifecycleStatus: LIFECYCLE_STATUS.ACTIVE,
                     relatedParty: [User.serialize()]
                 });
 

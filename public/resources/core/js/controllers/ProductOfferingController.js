@@ -3,12 +3,12 @@
  */
 
 angular.module('app.controllers')
-    .controller('OfferingListCtrl', ['$scope', '$rootScope', 'EVENTS', 'Offering', function ($scope, $rootScope, EVENTS, Offering) {
+    .controller('OfferingListCtrl', ['$scope', '$rootScope', 'EVENTS', 'LIFECYCLE_STATUS', 'Offering', function ($scope, $rootScope, EVENTS, LIFECYCLE_STATUS, Offering) {
 
         $scope.$offeringList = Offering.$collection;
 
         $scope.$offeringTypeList = Offering.TYPES;
-        $scope.$offeringStatusList = Offering.STATUS;
+        $scope.$offeringStatusList = LIFECYCLE_STATUS;
 
         $scope.filters = {
             type: "",

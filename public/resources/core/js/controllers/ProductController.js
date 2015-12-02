@@ -3,13 +3,13 @@
  */
 
 angular.module('app.controllers')
-    .controller('ProductListCtrl', ['$scope', '$rootScope', 'EVENTS', 'Product', function ($scope, $rootScope, EVENTS, Product) {
+    .controller('ProductListCtrl', ['$scope', '$rootScope', 'EVENTS', 'LIFECYCLE_STATUS', 'Product', function ($scope, $rootScope, EVENTS, LIFECYCLE_STATUS, Product) {
 
         $scope.$productList = Product.$collection;
         $scope.$productBundleList = [];
 
         $scope.$productTypeList = Product.TYPES;
-        $scope.$productStatusList = Product.STATUS;
+        $scope.$productStatusList = LIFECYCLE_STATUS;
         $scope.$productBrandList = [];
 
         $scope.filters = {

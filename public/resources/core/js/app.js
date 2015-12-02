@@ -16,6 +16,18 @@ angular.module('app')
         CATEGORY_SELECT: '$categorySelect',
         MESSAGE_SHOW: '$messageShow'
     })
+    .constant('LIFECYCLE_STATUS', {
+        ACTIVE: 'Active',
+        LAUNCHED: 'Launched',
+        RETIRED: 'Retired',
+        OBSOLETE: 'Obsolete'
+    })
+    .constant('LIFECYCLE_STATUS_LIST', [
+        {id: 'active', title: 'Active'},
+        {id: 'launched', title: 'Launched'},
+        {id: 'retired', title: 'Retired'},
+        {id: 'obsolete', title: 'Obsolete'}
+    ])
     .directive('bsTooltip', function () {
         return {
             restrict: 'A',

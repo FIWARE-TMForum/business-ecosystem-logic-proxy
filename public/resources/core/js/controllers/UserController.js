@@ -19,7 +19,9 @@ angular.module('app.controllers')
 
         Category.list();
     }])
-    .controller('UserSellerView', ['$scope', '$rootScope', function ($scope, $rootScope) {
+    .controller('UserSellerView', ['$scope', '$rootScope', 'LIFECYCLE_STATUS_LIST', function ($scope, $rootScope, LIFECYCLE_STATUS_LIST) {
+
+        $scope.LIFECYCLE_STATUS_LIST = LIFECYCLE_STATUS_LIST;
 
         $scope.$on("$routeChangeStart", function (event, next) {
             $scope.activeController = next.controller;
