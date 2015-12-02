@@ -10,7 +10,7 @@ var async = require('async'),
 
 var ordering = (function(){
 
-    var isCustomer = function(userInfo, resourceInfo) {
+    var isOrderingCustomer = function(userInfo, resourceInfo) {
         var isCust = false;
 
         for (var i = 0; i < resourceInfo.relatedParty.length && !isCust; i++) {
@@ -65,7 +65,7 @@ var ordering = (function(){
             }
 
         // Check that the user is the specified customer
-        if (!isCustomer(req.user, body)) {
+        if (!isOrderingCustomer(req.user, body)) {
             callback({
                 status: 403,
                 message: 'The customer specified in the product order is not the user making the request'
@@ -74,7 +74,7 @@ var ordering = (function(){
             return; // EXIT
         }
 
-        callback()
+        callback();
     };
 
     var validateUpdate = function(req, callback) {
