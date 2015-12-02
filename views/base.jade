@@ -105,7 +105,5 @@ html(lang="en")
     if user
       form(name="signOutForm", method="post", action="#{ contextPath }/logout")
 
-    script(type="text/ng-template", id="catalogue-create-view")
-      include ./includes/catalogue-create-view.jade
-    script(type="text/ng-template", id="catalogue-update-view")
-      include ./includes/catalogue-update-view.jade
+    script(type="text/ng-template", id="seller/catalogue-view")
+      include ./includes/seller/ProductCatalogueView.jade

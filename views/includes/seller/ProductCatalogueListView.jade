@@ -1,0 +1,50 @@
+.row
+  .col-sm-12(ng-controller="CatalogueListCtrl")
+    .panel.panel-default
+      .panel-heading
+        .panel-title Catalogues
+        .panel-subtitle as Owner
+        .panel-options.text-right
+          button.btn.btn-sm.btn-primary(type="button", ng-click="showCreateForm()")
+            i.fa.fa-fw.fa-plus
+            | &nbsp;New catalogue
+      .panel-body
+        div(ng-switch="filterByRoleOwner().length")
+          div(ng-switch-when="0")
+            .alert.alert-info No catalogues created yet.
+          div(ng-switch-default)
+            .list-group
+              a.list-group-item.has-badge(
+                ng-repeat="$catalogue in filterByRoleOwner()"
+                ng-class="{ 'active' : isActive($catalogue) }"
+                ng-click="showCatalogue($catalogue)"
+              )
+                span.badge.badge-status(ng-class="'status-{{ $catalogue.lifecycleStatus | lowercase }}'")
+                | {{ $catalogue.name }}
+            ul.pager
+              li.disabled
+                a
+                  i.fa.fa-arrow-left
+              li.disabled
+                a
+                  i.fa.fa-arrow-right
+    .panel.panel-default(ng-if="filterByRoleSeller().length")
+      .panel-heading
+        .panel-title Catalogues
+        .panel-subtitle as Seller
+      .panel-body
+        .list-group
+          a.list-group-item.has-badge(
+            ng-repeat="$catalogue in filterByRoleSeller()"
+            ng-class="{ 'active' : isActive($catalogue) }"
+            ng-click="showCatalogue($catalogue)"
+          )
+            span.badge.badge-status(ng-class="'status-{{ $catalogue.lifecycleStatus | lowercase }}'")
+            | {{ $catalogue.name }}
+        ul.pager
+          li.disabled
+            a
+              i.fa.fa-arrow-left
+          li.disabled
+            a
+              i.fa.fa-arrow-right
