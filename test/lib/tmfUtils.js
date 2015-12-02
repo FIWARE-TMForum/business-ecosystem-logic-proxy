@@ -10,16 +10,14 @@ describe('TMF Utils', function() {
         });
     };
 
-    var testCheckRoles = function (userInfo, expected, done) {
+    var testCheckRoles = function (userInfo, expected) {
         var tmfUtils = getTmfUtils();
 
         result = tmfUtils.checkRole(userInfo, 'role');
         expect(result).toBe(expected);
-
-        done();
     };
 
-    it ('should return true when checking the given role', function(done) {
+    it ('should return true when checking the given role', function() {
         var userInfo = {
             roles: [{
                 name: 'norole'
@@ -27,28 +25,26 @@ describe('TMF Utils', function() {
                 name: 'role'
             }]
         };
-        testCheckRoles(userInfo, true, done);
+        testCheckRoles(userInfo, true);
     });
 
-    it ('should return false when checking the given role', function(done) {
+    it ('should return false when checking the given role', function() {
         var userInfo = {
             roles: [{
                 name: 'norole'
             }]
         };
-        testCheckRoles(userInfo, false, done);
+        testCheckRoles(userInfo, false);
     });
 
-    var testIsOwner = function(userInfo, info, expected, done) {
+    var testIsOwner = function(userInfo, info, expected) {
         var tmfUtils = getTmfUtils();
 
         result = tmfUtils.isOwner(userInfo, info);
         expect(result).toBe(expected);
-
-        done();
     };
 
-    it ('should return true when the user is owner of the given resource', function(done) {
+    it ('should return true when the user is owner of the given resource', function() {
         var userInfo = {
             roles: [],
             id: 'test'
@@ -61,10 +57,10 @@ describe('TMF Utils', function() {
             }]
         };
 
-        testIsOwner(userInfo, info, true, done);
+        testIsOwner(userInfo, info, true);
     });
 
-    it ('should return true when the user is an admin', function(done) {
+    it ('should return true when the user is an admin', function() {
         var userInfo = {
             roles: [{
                 name: 'provider'
@@ -73,10 +69,10 @@ describe('TMF Utils', function() {
         };
 
         var info = {};
-        testIsOwner(userInfo, info, true, done);
+        testIsOwner(userInfo, info, true);
     });
 
-    it ('should return false when the user is not owner of the resource', function(done) {
+    it ('should return false when the user is not owner of the resource', function() {
         var userInfo = {
             roles: [],
             id: 'test'
@@ -89,17 +85,17 @@ describe('TMF Utils', function() {
             }]
         };
 
-        testIsOwner(userInfo, info, false, done);
+        testIsOwner(userInfo, info, false);
     });
 
-    it ('should return false when the resource does not contain related party field', function(done) {
+    it ('should return false when the resource does not contain related party field', function() {
         var userInfo = {
             roles: [],
             id: 'test'
         };
 
         var info = {};
-        testIsOwner(userInfo, info, false, done);
+        testIsOwner(userInfo, info, false);
     });
 
     it ('should call the callback with OK when the user is logged', function(done) {
