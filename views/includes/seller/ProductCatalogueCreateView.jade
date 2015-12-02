@@ -1,0 +1,40 @@
+.modal.fade(tabindex="-1", ng-controller="CatalogueCreateCtrl")
+  .modal-dialog
+    .modal-content
+      .modal-header
+        button.close(type="button", data-dismiss="modal")
+          span &times;
+        .modal-title New catalogue
+      .modal-body
+        .row
+          .col-sm-10.col-sm-offset-1
+            form(name="catalogueCreateForm", novalidate)
+              .form-group(
+                ng-class="{ 'has-error' : catalogueCreateForm.name.$invalid && (catalogueCreateForm.name.$dirty || catalogueCreateForm.name.$touched) }"
+              )
+                label Name
+                input.form-control(
+                  type="text"
+                  name="name"
+                  ng-model="catalogueInfo.name"
+                  required
+                  ng-minlength="5"
+                  ng-maxlength="30"
+                  ensure-unique="Catalogue"
+                )
+                .help-block(
+                  ng-messages="catalogueCreateForm.name.$error"
+                  ng-show="catalogueCreateForm.name.$invalid && (catalogueCreateForm.name.$dirty || catalogueCreateForm.name.$touched)"
+                )
+                  span(ng-message="required") This field is required.
+                  span(ng-message="minlength") This field must contain at least 5 chars.
+                  span(ng-message="maxlength") This field must not exceed 30 chars.
+                  span(ng-message="unique") This name is already taken.
+              .form-group
+                label
+                  | Description 
+                  small.text-muted optional
+                textarea.form-control(rows="3", name="description", ng-model="catalogueInfo.description")
+      .modal-footer
+        button.btn.btn-default(type="button", data-dismiss="modal") Cancel
+        button.btn.btn-success(type="button", ng-click="createCatalogue()" ng-disabled="!catalogueCreateForm.$valid") Create

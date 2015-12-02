@@ -14,7 +14,7 @@ html(lang="en")
       script(src="#{ contextPath }/#{ jsFilePath }")
 
     script.
-      angular.module('app', ['ngRoute', 'angularMoment', 'ngResource', 'app.services', 'app.controllers'])
+      angular.module('app', ['ngRoute', 'ngResource', 'ngMessages', 'angularMoment', 'app.services', 'app.controllers'])
         .constant('URLS', {
           TEMPLATE: '#{ contextPath }/resources/core/templates',
           CATALOGUE_MANAGEMENT: '#{ proxyPath }/DSProductCatalog/api/catalogManagement/v2',
@@ -31,8 +31,8 @@ html(lang="en")
             HREF: '#{ accountHost }/idm/user/#{ user.id }',
             BEARER_TOKEN: 'Bearer #{ user.accessToken }'
           })
-          .config(['$httpProvider', 'LOGGED_USER', function ($httpProvider, LOGGED_USER) {
-            $httpProvider.defaults.headers.common['AUTHORIZATION'] = LOGGED_USER.BEARER_TOKEN;
+          .run(['$http', 'LOGGED_USER', function ($http, LOGGED_USER) {
+            $http.defaults.headers.common.Authorization = LOGGED_USER.BEARER_TOKEN;
           }]);
 
     each jsFilePath in jsAppFilesToInject
@@ -104,3 +104,6 @@ html(lang="en")
 
     if user
       form(name="signOutForm", method="post", action="#{ contextPath }/logout")
+
+    script(type="text/ng-template", id="seller/catalogue-view")
+      include ./includes/seller/ProductCatalogueView.jade

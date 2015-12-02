@@ -3,7 +3,7 @@
  */
 
 angular.module('app.services')
-    .factory('Product', ['$resource', 'URLS', 'User', function ($resource, URLS, User) {
+    .factory('Product', ['$resource', 'URLS', 'LIFECYCLE_STATUS', 'User', function ($resource, URLS, LIFECYCLE_STATUS, User) {
 
         var serializeProduct = function serializeProduct($product) {
             return {
@@ -17,13 +17,6 @@ angular.module('app.services')
             TYPES: {
                 PRODUCT: 'Product',
                 PRODUCT_BUNDLE: 'Product Bundle'
-            },
-
-            STATUS: {
-                ACTIVE: 'Active',
-                LAUNCHED: 'Launched',
-                RETIRED: 'Retired',
-                OBSOLETE: 'Obsolete'
             },
 
             $collection: [],
@@ -50,8 +43,8 @@ angular.module('app.services')
                     params.isBundle = (service.TYPES[userQuery.type] !== service.TYPES.PRODUCT);
                 }
 
-                if (userQuery.status in service.STATUS) {
-                    params.lifecycleStatus = service.STATUS[userQuery.status];
+                if (userQuery.status in LIFECYCLE_STATUS) {
+                    params.lifecycleStatus = LIFECYCLE_STATUS[userQuery.status];
                 }
 
                 if (userQuery.brand) {
@@ -73,7 +66,7 @@ angular.module('app.services')
             create: function create(data, next) {
 
                 angular.extend(data, {
-                    lifecycleStatus: service.STATUS.ACTIVE,
+                    lifecycleStatus: LIFECYCLE_STATUS.ACTIVE,
                     isBundle: !!data.bundledProductSpecification.length,
                     bundledProductSpecification: data.bundledProductSpecification.map(function ($product) {
                         return serializeProduct($product);

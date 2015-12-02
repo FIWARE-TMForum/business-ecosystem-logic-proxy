@@ -16,6 +16,22 @@ angular.module('app')
         CATEGORY_SELECT: '$categorySelect',
         MESSAGE_SHOW: '$messageShow'
     })
+    .constant('PARTY_ROLES', {
+        OWNER: 'Owner',
+        SELLER: 'Seller'
+    })
+    .constant('LIFECYCLE_STATUS', {
+        ACTIVE: 'Active',
+        LAUNCHED: 'Launched',
+        RETIRED: 'Retired',
+        OBSOLETE: 'Obsolete'
+    })
+    .constant('LIFECYCLE_STATUS_LIST', [
+        {id: 'ACTIVE', title: 'Active'},
+        {id: 'LAUNCHED', title: 'Launched'},
+        {id: 'RETIRED', title: 'Retired'},
+        {id: 'OBSOLETE', title: 'Obsolete'}
+    ])
     .directive('bsTooltip', function () {
         return {
             restrict: 'A',
@@ -36,6 +52,23 @@ angular.module('app')
                 });
             }
         }
+    }])
+    .directive('ensureUnique', ['$http', '$injector', function ($http, $injector) {
+        return {
+            require: 'ngModel',
+            link: function (scope, element, attrs, controller) {
+                scope.$watch(attrs.ngModel, function (newValue) {
+                    var params = {};
+
+                    if (newValue && $injector.has(attrs.ensureUnique)) {
+                        params[attrs.name] = newValue;
+                        $injector.get(attrs.ensureUnique).find(params, function ($collection) {
+                            controller.$setValidity('unique', !$collection.length);
+                        }, false);
+                    }
+                });
+            }
+        };
     }]);
 
 angular.module('app.services', []);

@@ -16,7 +16,7 @@ angular.module('app')
                     controller: 'ProductView'
                 })
                 .when('/catalogues', {
-                    templateUrl: URLS.TEMPLATE + '/ProductCatalogueView.html',
+                    templateUrl: 'seller/catalogue-view',
                     controller: 'CatalogueView'
                 })
                 .when('/offerings', {

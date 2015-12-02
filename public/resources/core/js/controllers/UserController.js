@@ -19,7 +19,11 @@ angular.module('app.controllers')
 
         Category.list();
     }])
-    .controller('UserSellerView', ['$scope', '$rootScope', function ($scope, $rootScope) {
+    .controller('UserSellerView', ['$scope', '$rootScope', 'PARTY_ROLES', 'LIFECYCLE_STATUS', 'LIFECYCLE_STATUS_LIST', function ($scope, $rootScope, PARTY_ROLES, LIFECYCLE_STATUS, LIFECYCLE_STATUS_LIST) {
+
+        $scope.PARTY_ROLES = PARTY_ROLES;
+        $scope.LIFECYCLE_STATUS = LIFECYCLE_STATUS;
+        $scope.LIFECYCLE_STATUS_LIST = LIFECYCLE_STATUS_LIST;
 
         $scope.$on("$routeChangeStart", function (event, next) {
             $scope.activeController = next.controller;

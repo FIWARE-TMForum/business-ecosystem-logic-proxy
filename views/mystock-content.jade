@@ -25,4 +25,8 @@ block content
               a(href="#/offerings")
                 i.fa.fa-cube.fa-fw
                 | &nbsp;Offerings
+    .col-sm-12
+      ol.breadcrumb.text-right
+        li(ng-repeat="status in LIFECYCLE_STATUS_LIST")
+          span.label(ng-class="'status-{{ status.id | lowercase }}'") {{ status.title }}
     .col-sm-12(ng-view)

@@ -65,6 +65,13 @@ blockquote p {
     width: 1.4em;
 }
 
+.no-user-select {
+    -webkit-user-select: none;  /* Chrome all / Safari all */
+       -moz-user-select: none;     /* Firefox all */
+        -ms-user-select: none;      /* IE 10+ */
+            user-select: none;          /* Likely future */
+}
+
 /* ===================================================================================
  *   COMPONENT - FLEX-CONTAINER
  * =================================================================================== */
@@ -138,6 +145,16 @@ textarea {
     border-color: rgb(200, 200, 200);
     border-radius: 0;
     box-shadow: none;
+}
+
+@media (min-width: 768px) {
+    .form-inline > .form-group > label {
+        margin-right: 10px;
+    }
+
+    .form-inline > .form-group + .form-group {
+        margin-left: 5px;
+    }
 }
 
 /* ===================================================================================
@@ -632,6 +649,8 @@ textarea {
     position: relative;
     display: table-cell;
     text-align: center;
+    cursor: default;
+    pointer-events: none;
 }
 .lifecycle-status-item:before {
     position: absolute;
@@ -644,24 +663,21 @@ textarea {
 }
 .lifecycle-status-item:after {
     display: block;
+    content: attr(data-title);
     font-size: 14px;
     line-height: 20px;
-    color: rgb(80, 80, 80);
+    color: rgb(130, 130, 130);
 }
 .lifecycle-status-item > .status,
 .lifecycle-status {
     position: relative;
     display: inline-block;
     padding: 5px;
-    background-color: rgb(200, 200, 200);
+    background-color: rgb(220, 220, 220);
     border-radius: 50%;
     vertical-align: middle;
 }
 
-.lifecycle-status-item.active:after,
-.lifecycle-status-item.active + .lifecycle-status-item:hover:after {
-    content: attr(data-title);
-}
 .list-group-item > .status-active,
 .list-group-item.active > .status-active,
 .lifecycle-status-item.active[data-type="active"]:before,
@@ -669,6 +685,7 @@ textarea {
 .status-active {
     background-color: rgb(090, 190, 220);
 }
+
 .lifecycle-status-item.active[data-type="active"] + .lifecycle-status-item:before,
 .lifecycle-status-item.active[data-type="active"] + .lifecycle-status-item > .status {
     background-color: rgb(210, 230, 200);
@@ -687,6 +704,7 @@ textarea {
     background-color: rgb(250, 230, 200);
 }
 .list-group-item > .status-retired,
+.list-group-item.active > .status-retired,
 .lifecycle-status-item.active[data-type="launched"] + .lifecycle-status-item:hover:before,
 .lifecycle-status-item.active[data-type="launched"] + .lifecycle-status-item:hover > .status,
 .lifecycle-status-item.active[data-type="retired"]:before,
@@ -694,11 +712,35 @@ textarea {
 .status-retired {
     background-color: rgb(240, 170, 080);
 }
+.lifecycle-status-item.active[data-type="retired"] + .lifecycle-status-item:before,
+.lifecycle-status-item.active[data-type="retired"] + .lifecycle-status-item > .status {
+    background-color: rgb(180, 180, 180);
+}
+
 .list-group-item > .status-obsolete,
+.list-group-item.active > .status-obsolete,
+.lifecycle-status-item.active[data-type="retired"] + .lifecycle-status-item:hover:before,
+.lifecycle-status-item.active[data-type="retired"] + .lifecycle-status-item:hover > .status,
 .lifecycle-status-item.active[data-type="obsolete"]:before,
 .lifecycle-status-item.active[data-type="obsolete"] > .status,
 .status-obsolete {
     background-color: rgb(120, 120, 120);
+}
+
+.lifecycle-status-item.active + .lifecycle-status-item {
+    cursor: pointer;
+    pointer-events: initial;
+}
+
+.lifecycle-status-item.active:after,
+.lifecycle-status-item.active + .lifecycle-status-item:hover:after {
+    color: rgb(080, 080, 080);
+}
+
+.lifecycle-status-group.readonly > .lifecycle-status-item.active + .lifecycle-status-item,
+.lifecycle-status-group.readonly > .lifecycle-status-item.active + .lifecycle-status-item:hover {
+    cursor: default;
+    pointer-events: none;
 }
 
 /* ===================================================================================
@@ -832,6 +874,7 @@ a.thumbnail > img {
     border-radius: 0;
 }
 .panel-heading {
+    position: relative;
     padding: 15px;
     padding-bottom: 0;
     border-bottom: none;
@@ -843,6 +886,7 @@ a.thumbnail > img {
 }
 
 .panel-title {
+    margin: 5px 0;
     font-size: 16px;
     font-weight: 700;
     line-height: 20px;
@@ -859,6 +903,12 @@ a.thumbnail > img {
 
 .panel-options {
     margin-top: 5px;
+}
+.panel-options.static-right {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    margin-top: 0;
 }
 
 .panel-default {
