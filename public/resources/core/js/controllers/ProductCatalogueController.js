@@ -52,7 +52,7 @@ angular.module('app.controllers')
             $rootScope.$broadcast(EVENTS.CATALOGUE_CREATEFORM_SHOW);
         };
     }])
-    .controller('CatalogueDetailCtrl', ['$scope', '$rootScope', 'EVENTS', 'Catalogue', 'Offering', function ($scope, $rootScope, EVENTS, Catalogue, Offering) {
+    .controller('CatalogueDetailCtrl', ['$scope', '$rootScope', 'EVENTS', 'PARTY_ROLES', 'Catalogue', 'Offering', function ($scope, $rootScope, EVENTS, PARTY_ROLES, Catalogue, Offering) {
 
         $scope.$catalogue = null;
         $scope.activeView = 'OfferingView';
@@ -68,6 +68,10 @@ angular.module('app.controllers')
 
         $scope.showUpdateForm = function showUpdateForm() {
             $rootScope.$broadcast(EVENTS.CATALOGUE_UPDATEFORM_SHOW, $scope.$catalogue);
+        };
+
+        $scope.hasRoleAsOwner = function hasRoleAsOwner() {
+            return $scope.$catalogue != null && Catalogue.hasRoleAs($scope.$catalogue, PARTY_ROLES.OWNER);
         };
 
         $scope.$on(EVENTS.CATALOGUE_SHOW, function (event, $catalogue) {

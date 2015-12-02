@@ -1,13 +1,13 @@
 .row
   .col-sm-12(ng-controller="CatalogueDetailCtrl")
     div(ng-if="$catalogue != null")
-      .panel.panel-default()
+      .panel.panel-default
         .panel-heading
           .panel-title {{ $catalogue.name }}
           .panel-subtitle
             | Updated 
             time(am-time-ago="$catalogue.lastUpdate")
-          .panel-options.text-right
+          .panel-options.static-right(ng-if="hasRoleAsOwner()")
             button.btn.btn-sm.btn-default(type="button", ng-click="showUpdateForm()")
               i.fa.fa-fw.fa-cog
               | &nbsp;Settings
