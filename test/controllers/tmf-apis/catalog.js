@@ -193,7 +193,7 @@ describe('Catalog API', function() {
         testCreateBasic(user, JSON.stringify(resource), [{ name: config.oauth2.roles.admin }], false, null, null, checkRoleTrue, isOwnerTrue, done);
     });
 
-    var testCreateOffering = function(isOwner, productRequestFails, errorStatus, errorMsg, isOwnerMethod, done) {
+    var testCreateOffering = function(productRequestFails, errorStatus, errorMsg, isOwnerMethod, done) {
 
         var tmfUtils = {
             validateLoggedIn: validateLoggedOk,
@@ -215,14 +215,14 @@ describe('Catalog API', function() {
         var statusErr = 500;
         var statusCodeGetProduct = productRequestFails ? statusErr : statusOk;
 
-        var role = isOwner ? 'Owner': 'Seller';
+        var role = isOwnerMethod() ? 'Owner': 'Seller';
         var bodyOk = { relatedParty: [{id: userName, role: role}]};
         var bodyErr = 'Internal Server Error';
         var bodyGetProduct = productRequestFails ? bodyErr : bodyOk;
 
-        var serverProduct = nock(serverUrl)
-                .get(productPath)
-                .reply(statusCodeGetProduct, bodyGetProduct);
+        nock(serverUrl)
+            .get(productPath)
+            .reply(statusCodeGetProduct, bodyGetProduct);
 
         // Call the method
         var req = {
@@ -246,7 +246,7 @@ describe('Catalog API', function() {
 
         catalogApi.checkPermissions(req, function(err) {
 
-            if (isOwner && !productRequestFails) {
+            if (isOwnerMethod() && !productRequestFails) {
                 expect(err).toBe(null);
             } else {
                 expect(err.status).toBe(errorStatus);
@@ -258,20 +258,20 @@ describe('Catalog API', function() {
     };
 
     it('should call OK callback when creating an offering with an owned product', function(done) {
-        testCreateOffering(true, false, null, null, isOwnerTrue, done);
+        testCreateOffering(false, null, null, isOwnerTrue, done);
     });
 
 
     it('should call error callback when creating an offering with a non owned product', function(done) {
-        testCreateOffering(false, false, 403, 'The user making the request and the specified owner are not the same user', isOwnerFalse, done);
+        testCreateOffering(false, 403, 'The user making the request and the specified owner are not the same user', isOwnerFalse, done);
     });
 
     it('should call error callback when creating an offering and the attached product cannot be checked', function(done) {
         // isOwner does not matter when productRequestFails is set to true
-        testCreateOffering(false, true, 400, 'The product specification of the given product offering is not valid', isOwnerTrue, done);
+        testCreateOffering(true, 400, 'The product specification of the given product offering is not valid', isOwnerTrue, done);
     });
 
-    var testCreateProduct = function(isOwner, storeValidator, errorStatus, errorMsg, isOwnerMethod, done) {
+    var testCreateProduct = function(storeValidator, errorStatus, errorMsg, isOwnerMethod, done) {
 
         // Store Client
         var storeClient = {
@@ -291,10 +291,7 @@ describe('Catalog API', function() {
         // Basic properties
         var userName = 'test';
         var offeringPath = '/catalog/productSpecification/1';
-        var productPath = '/product/7';
-        var protocol = config.appSsl ? 'https' : 'http';
-        var serverUrl = protocol + '://' + config.appHost + ':' + config.endpoints.catalog.port;
-        var role = isOwner ? 'Owner': 'Seller';
+        var role = isOwnerMethod() ? 'Owner': 'Seller';
         var body = { relatedParty: [{id: userName, role: role}]};
 
         // Call the method
@@ -330,11 +327,11 @@ describe('Catalog API', function() {
     };
 
     it('should call OK callback when creating an owned product', function(done) {
-        testCreateProduct(true, storeValidatorOk, null, null, isOwnerTrue, done);
+        testCreateProduct(storeValidatorOk, null, null, isOwnerTrue, done);
     });
 
     it('should call error callback when creating a non owned product', function(done) {
-        testCreateProduct(false, storeValidatorOk, 403, 'The user making the request and the specified owner are not the same user', isOwnerFalse,  done);
+        testCreateProduct(storeValidatorOk, 403, 'The user making the request and the specified owner are not the same user', isOwnerFalse,  done);
     });
 
     it('should call error callback when creating a product that cannot be checked by the store', function(done) {
@@ -348,7 +345,7 @@ describe('Catalog API', function() {
 
         // Actual call
         // isOwner does not matter when productRequestFails is set to true
-        testCreateProduct(false, storeValidatorErr, storeErrorStatus, storeErrorMessage, isOwnerTrue, done);
+        testCreateProduct(storeValidatorErr, storeErrorStatus, storeErrorMessage, isOwnerTrue, done);
     });
 
 
@@ -356,7 +353,7 @@ describe('Catalog API', function() {
     /////////////////////////////////////// UPDATE & DELETE //////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
 
-    var testUpdate = function(method, isOwner, requestFails, isOwnerMethod, done) {
+    var testUpdate = function(method, requestFails, isOwnerMethod, done) {
 
         var tmfUtils = {
             validateLoggedIn: validateLoggedOk,
@@ -370,7 +367,7 @@ describe('Catalog API', function() {
         var path = '/catalog/product/1';
         var protocol = config.appSsl ? 'https' : 'http';
         var url = protocol + '://' + config.appHost + ':' + config.endpoints.catalog.port;
-        var role = isOwner ? 'Owner': 'Seller';
+        var role = isOwnerMethod() ? 'Owner': 'Seller';
 
         // statusCode depends on whether the request fails or not 
         var statusOk = 200;
@@ -383,7 +380,9 @@ describe('Catalog API', function() {
         var returnedBody = requestFails ? bodyErr : bodyOk;
 
         // The mock server that will handle the request
-        var server = nock(url).get(path).reply(statusCode, returnedBody);
+        nock(url)
+            .get(path)
+            .reply(statusCode, returnedBody);
 
         // Call the method
         var req = {
@@ -397,7 +396,7 @@ describe('Catalog API', function() {
 
         catalogApi.checkPermissions(req, function(err) {
 
-            if (isOwner && !requestFails) {
+            if (isOwnerMethod() && !requestFails) {
                 expect(err).toBe(null);
             } else if (requestFails) {
                 expect(err.status).toBe(statusErr);
@@ -412,45 +411,45 @@ describe('Catalog API', function() {
     };
 
     it('should call OK callback when user tries to update (PUT) a resource that owns', function(done) {
-        testUpdate('PUT', true, false, isOwnerTrue, done);
+        testUpdate('PUT', false, isOwnerTrue, done);
     });
 
     it('should call error callback when user tries to update (PUT) a resource that does not owns', function(done) {
-        testUpdate('PUT', false, false, isOwnerFalse, done);
+        testUpdate('PUT', false, isOwnerFalse, done);
     });
 
     it('should call error callback when user tries to update (PUT) a resource that cannot be checked', function(done) {
         // The value of isOwner does not matter when requestFails is set to true
-        testUpdate('PUT', false, true, isOwnerTrue, done);
+        testUpdate('PUT', true, isOwnerTrue, done);
     });
 
     it('should call OK callback when user tries to update (PATCH) a resource that owns', function(done) {
-        testUpdate('PATCH', true, false, isOwnerTrue, done);
+        testUpdate('PATCH', false, isOwnerTrue, done);
     });
 
     it('should call error callback when user tries to update (PATCH) a resource that does not owns', function(done) {
-        testUpdate('PATCH', false, false, isOwnerFalse, done);
+        testUpdate('PATCH', false, isOwnerFalse, done);
     });
 
     it('should call error callback when user tries to update (PATCH) a resource that cannot be checked', function(done) {
         // The value of isOwner does not matter when requestFails is set to true
-        testUpdate('PATCH', false, true, isOwnerTrue, done);
+        testUpdate('PATCH', true, isOwnerTrue, done);
     });
 
     it('should call OK callback when user tries to delete a resource that owns', function(done) {
-        testUpdate('DELETE', true, false, isOwnerTrue, done);
+        testUpdate('DELETE', false, isOwnerTrue, done);
     });
 
     it('should call error callback when user tries to delete a resource that does not owns', function(done) {
-        testUpdate('DELETE', false, false, isOwnerFalse, done);
+        testUpdate('DELETE', false, isOwnerFalse, done);
     });
 
     it('should call error callback when user tries to delete a resource that cannot be checked', function(done) {
         // The value of isOwner does not matter when requestFails is set to true
-        testUpdate('DELETE', false, true, isOwnerTrue, done);
+        testUpdate('DELETE', true, isOwnerTrue, done);
     });
 
-    var testUpdateProductOffering = function(isOwner, productRequestFails, expectedErrorStatus, expectedErrorMsg, isOwnerMethod, done) {
+    var testUpdateProductOffering = function(productRequestFails, expectedErrorStatus, expectedErrorMsg, isOwnerMethod, done) {
 
         var tmfUtils = {
             validateLoggedIn: validateLoggedOk,
@@ -476,21 +475,23 @@ describe('Catalog API', function() {
             }
         };
 
-        var serverOffering = nock(serverUrl).get(offeringPath).reply(200, bodyGetOffering);
+        nock(serverUrl)
+            .get(offeringPath)
+            .reply(200, bodyGetOffering);
 
         // HTTP MOCK - PRODUCT (THE ONE ATTACHED TO THE OFFERING)
         var statusOk = 200;
         var statusErr = 500;
         var statusCodeGetProduct = productRequestFails ? statusErr : statusOk;
 
-        var role = isOwner ? 'Owner': 'Seller';
+        var role = isOwnerMethod() ? 'Owner': 'Seller';
         var bodyOk = { relatedParty: [{id: userName, role: role}]};
         var bodyErr = 'Internal Server Error';
         var bodyGetProduct = productRequestFails ? bodyErr : bodyOk;
 
-        var serverProduct = nock(serverUrl)
-                .get(productPath)
-                .reply(statusCodeGetProduct, bodyGetProduct);
+        nock(serverUrl)
+            .get(productPath)
+            .reply(statusCodeGetProduct, bodyGetProduct);
 
 
         // Call the method
@@ -508,7 +509,7 @@ describe('Catalog API', function() {
 
         catalogApi.checkPermissions(req, function(err) {
 
-            if (isOwner && !productRequestFails) {
+            if (isOwnerMethod() && !productRequestFails) {
                 expect(err).toBe(null);
             } else {
                 expect(err.status).toBe(expectedErrorStatus);
@@ -520,16 +521,16 @@ describe('Catalog API', function() {
     };
 
     it('should call OK callback when user tries to update an offering that owns', function(done) {
-        testUpdateProductOffering(true, false, null, null, isOwnerTrue, done);
+        testUpdateProductOffering(false, null, null, isOwnerTrue, done);
     });
 
     it('should call error callback when user tries to update an offering that does not owns', function(done) {
-        testUpdateProductOffering(false, false, 403, 'The user making the request is not the owner of the accessed resource', isOwnerFalse, done);
+        testUpdateProductOffering(false, 403, 'The user making the request is not the owner of the accessed resource', isOwnerFalse, done);
     });
 
     it('should call error callback when user tries to update an offering and the attached product cannot be checked', function(done) {
         // isOwner does not matter when productRequestFails is set to true
-        testUpdateProductOffering(false, true, 400, 'The product specification of the given product offering is not valid', isOwnerTrue, done);
+        testUpdateProductOffering(true, 400, 'The product specification of the given product offering is not valid', isOwnerTrue, done);
     });
 
 });
