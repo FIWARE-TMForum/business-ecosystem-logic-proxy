@@ -17,10 +17,9 @@ html(lang="en")
       angular.module('app', ['ngRoute', 'ngResource', 'ngMessages', 'angularMoment', 'app.services', 'app.controllers'])
         .constant('URLS', {
           TEMPLATE: '#{ contextPath }/resources/core/templates',
-          CATALOGUE_MANAGEMENT: '#{ proxyPath }/DSProductCatalog/api/catalogManagement/v2',
-          ASSET_TYPE: '#{ proxyPath }/charging/api/assetManagement/assetTypes/:typeId',
-          ASSET: '#{ proxyPath }/charging/api/assetManagement/assets/uploadJob',
-          USER: '#{ proxyPath }/charging/api/userManagement/users/:username'
+          USER: '#{ proxyPath }/charging/api/userManagement/users/:username',
+          ASSET_MANAGEMENT: '#{ proxyPath }/charging/api/assetManagement',
+          CATALOGUE_MANAGEMENT: '#{ proxyPath }/DSProductCatalog/api/catalogManagement/v2'
         });
 
     if user

@@ -20,6 +20,6 @@ angular.module('app.services')
             }
         };
 
-        Asset = $resource(URLS.ASSET);
+        Asset = $resource(URLS.ASSET_MANAGEMENT + '/assets/uploadJob');
         return service;
     }]);
