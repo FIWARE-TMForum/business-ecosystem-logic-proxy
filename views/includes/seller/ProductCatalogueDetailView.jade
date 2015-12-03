@@ -24,35 +24,30 @@
             )
               span.status
           ul.nav.nav-pills.nav-justified
-            li(ng-class="{ 'active' : activeView == 'OfferingView' }")
-              a(ng-click="showOfferingView()")
-                i.fa.fa-fw.fa-cube
-                | &nbsp;Offerings
-            li(ng-class="{ 'active' : activeView == 'PartyView' }")
-              a(ng-click="showPartyView()")
-                i.fa.fa-fw.fa-user
-                | &nbsp;Parties
-      div(ng-switch, on="activeView")
-        div(ng-switch-when="OfferingView")
+            li(
+              ng-repeat="tab in tabs"
+              ng-class="{ 'active' : $index == tabActive }"
+            )
+              a(ng-click="showView($index)")
+                i.fa.fa-fw(ng-class="'{{ tab.icon }}'")
+                | &nbsp;{{ tab.title }}
+      div(ng-switch="tabActive")
+        div(ng-switch-when="0")
           .panel.panel-default
             .panel-heading
               .panel-title Catalogue Offerings
             .panel-body
-        div(ng-switch-when="PartyView")
-          .panel.panel-default
-            .panel-heading
-              .panel-title Catalogue Parties
-            .panel-body
-              table.table.table-striped
-                thead
-                  tr
-                    th Username
-                    th Owner
-                    th Seller
-                tbody
-                  tr(ng-repeat="$party in $catalogue.relatedParty")
-                    td {{ $party.id }}
-                    td.text-success
-                      i.fa.fa-check-circle-o(ng-if="$party.role == 'Owner'")
-                    td.text-success
-                      i.fa.fa-check-circle-o(ng-if="$party.role == 'Seller'")
+        div(ng-switch-when="1")
+          table.table.table-bordered
+            thead
+              tr
+                th Username
+                th Owner
+                th Seller
+            tbody
+              tr(ng-repeat="$party in $catalogue.relatedParty")
+                td {{ $party.id }}
+                td.text-success
+                  i.fa.fa-check-circle-o(ng-if="$party.role == 'Owner'")
+                td.text-success
+                  i.fa.fa-check-circle-o(ng-if="$party.role == 'Seller'")
