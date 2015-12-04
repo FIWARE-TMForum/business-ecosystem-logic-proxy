@@ -107,8 +107,9 @@ html(lang="en")
 
     if user
       form(name="signOutForm", method="post", action="#{ contextPath }/logout")
+      include ./includes/UserProfile.jade
 
-    include ./includes/UserProfile.jade
-
+    script(type="text/ng-template", id="seller/product-view")
+      include ./includes/seller/product/ProductView.jade
     script(type="text/ng-template", id="seller/catalogue-view")
       include ./includes/seller/product-catalogue/ProductCatalogueView.jade

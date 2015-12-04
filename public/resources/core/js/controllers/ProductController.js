@@ -3,20 +3,10 @@
  */
 
 angular.module('app.controllers')
-    .controller('ProductListCtrl', ['$scope', '$rootScope', 'EVENTS', 'LIFECYCLE_STATUS', 'Product', function ($scope, $rootScope, EVENTS, LIFECYCLE_STATUS, Product) {
+    .controller('ProductListCtrl', ['$scope', '$rootScope', 'EVENTS', 'Product', function ($scope, $rootScope, EVENTS, Product) {
 
         $scope.$productList = Product.$collection;
         $scope.$productBundleList = [];
-
-        $scope.$productTypeList = Product.TYPES;
-        $scope.$productStatusList = LIFECYCLE_STATUS;
-        $scope.$productBrandList = [];
-
-        $scope.filters = {
-            type: "",
-            status: "",
-            brand: ""
-        };
 
         $scope.canCreateBundle = function canCreateBundle() {
             return  $scope.$productBundleList.length > 1;
@@ -36,24 +26,8 @@ angular.module('app.controllers')
             return src;
         };
 
-        $scope.resultsView = 0;
-
-        $scope.changeResultsView = function changeResultsView($index) {
-            $scope.resultsView = $index;
-        };
-
-        $scope.showCreateForm = function showCreateForm() {
-            $rootScope.$broadcast(EVENTS.PRODUCT_CREATEFORM_SHOW, $scope.canCreateBundle() ? $scope.$productBundleList : []);
-        };
-
         $scope.showUpdateForm = function showUpdateForm($product) {
             $rootScope.$broadcast(EVENTS.PRODUCT_UPDATEFORM_SHOW, $product);
-        };
-
-        $scope.filterList = function filterList() {
-            $scope.$productBundleList.length = 0;
-            Product.filter($scope.filters, function ($filteredList) {
-            });
         };
 
         $scope.selectProduct = function selectProduct($product) {
@@ -68,12 +42,42 @@ angular.module('app.controllers')
             return $scope.$productBundleList.indexOf($product) != -1;
         };
 
-        Product.getBrands(function ($brands) {
-            angular.copy($brands, $scope.$productBrandList);
-        });
-
         $scope.$on(EVENTS.PRODUCT_CREATE, function ($event, $productCreated) {
             $scope.$productBundleList.length = 0;
+        });
+    }])
+    .controller('ProductSearchCtrl', ['$scope', '$rootScope', 'EVENTS', 'Product', function ($scope, $rootScope, EVENTS, Product) {
+
+        $scope.$productList = Product.$collection;
+        $scope.$productBrandList = [];
+
+        $scope.resultView = 1;
+
+        $scope.params = {};
+        $scope.searchFailed = false;
+
+        $scope.showResultView = function showResultsView($index) {
+            $scope.resultView = $index;
+        };
+
+        $scope.search = function search() {
+            $scope.searchFailed = false;
+
+            if ($scope.params.status) {
+                Product.filter($scope.params, function ($productList) {
+                    $scope.searchFailed = !$productList.length;
+                });
+            } else {
+                Product.list();
+            }
+        };
+
+        $scope.showCreateForm = function showCreateForm() {
+            $rootScope.$broadcast(EVENTS.PRODUCT_CREATEFORM_SHOW);
+        };
+
+        Product.getBrands(function ($brandList) {
+            angular.copy($brandList, $scope.$productBrandList);
         });
     }])
     .controller('ProductCreateCtrl', ['$scope', '$rootScope', 'EVENTS', 'Product', 'Asset', 'AssetType', '$element',
@@ -233,6 +237,8 @@ angular.module('app.controllers')
         });
     }])
     .controller('ProductView', ['$scope', '$rootScope', 'EVENTS', 'Product', function ($scope, $rootScope, EVENTS, Product) {
-        Product.list(function () {
-        });
+
+        $scope.PRODUCT_TYPES = Product.TYPES;
+
+        Product.list();
     }]);
