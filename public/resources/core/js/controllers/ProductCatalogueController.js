@@ -135,6 +135,8 @@ angular.module('app.controllers')
 
         $scope.$on(EVENTS.CATALOGUE_UPDATEFORM_SHOW, function ($event, $catalogue) {
             angular.copy($catalogue, $scope.$catalogue);
+            $scope.$catalogueOriginal = $catalogue;
+
             $scope.showTab(0);
             $element.modal('show');
         });

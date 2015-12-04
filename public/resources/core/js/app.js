@@ -54,18 +54,21 @@ angular.module('app')
             }
         }
     }])
-    .directive('ensureUnique', ['$http', '$injector', function ($http, $injector) {
+    .directive('fieldUnique', ['$http', '$injector', function ($http, $injector) {
         return {
             require: 'ngModel',
             link: function (scope, element, attrs, controller) {
                 scope.$watch(attrs.ngModel, function (newValue) {
                     var params = {};
 
-                    if (newValue && $injector.has(attrs.ensureUnique)) {
-                        params[attrs.name] = newValue;
-                        $injector.get(attrs.ensureUnique).find(params, function ($collection) {
-                            controller.$setValidity('unique', !$collection.length);
-                        }, false);
+                    if (newValue && $injector.has(attrs.fieldUnique)) {
+                        if (attrs.fieldOriginalValue != newValue) {
+                            params[attrs.name] = newValue;
+
+                            $injector.get(attrs.fieldUnique).find(params, function ($collection) {
+                                controller.$setValidity('unique', !$collection.length);
+                            }, false);
+                        }
                     }
                 });
             }
