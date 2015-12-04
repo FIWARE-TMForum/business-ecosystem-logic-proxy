@@ -279,6 +279,10 @@ textarea {
     border-radius: 50%;
 }
 
+.pull-right > .btn + .btn-group {
+    margin-left: 5px;
+}
+
 /* ===================================================================================
  *   COMPONENT - DROPDOWN-MENU
  * =================================================================================== */
@@ -359,6 +363,22 @@ textarea {
     color: rgb(250, 120, 040);
     background-color: rgb(252, 252, 252);
     border-color: rgb(250, 120, 040);
+}
+
+.nav-pills.nav-justified > li.divider {
+    position: relative;
+}
+.nav-pills.nav-justified > li.divider:before {
+    position: absolute;
+    display: block;
+    content: "";
+    border-right: 1px solid rgb(220, 220, 220);
+    border-left: 1px solid rgb(220, 220, 220);
+    left: 0;
+    right: 0;
+    margin: 0 15px;
+    top: 0;
+    bottom: 0;
 }
 
 /* ===================================================================================
