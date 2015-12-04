@@ -14,7 +14,8 @@ angular.module('app')
         CATALOGUE_UPDATEFORM_SHOW: '$catalogueUpdateFormShow',
         CATEGORY_SHOW: '$categoryShow',
         CATEGORY_SELECT: '$categorySelect',
-        MESSAGE_SHOW: '$messageShow'
+        MESSAGE_SHOW: '$messageShow',
+        PROFILE_UPDATE: '$profileUpdate'
     })
     .constant('PARTY_ROLES', {
         OWNER: 'Owner',

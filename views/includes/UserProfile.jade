@@ -1,0 +1,117 @@
+.modal.fade(tabindex="-1", ng-controller="UserProfileCtrl")
+   .modal-dialog
+      .modal-content
+         .modal-header
+            button.close(type="button", data-dismiss="modal")
+               span &times;
+            .modal-title User Profile
+         .modal-body
+            .row
+               .col-sm-10.col-sm-offset-1
+                  ul.nav.nav-steps.nav-justified
+                     li(ng-class="{'active': (getActiveTab() === 1)}", ng-click="setActiveTab(1)")
+                        a(data-target=".tab-profile-form", data-toggle="tab") 1. General
+
+                     li(ng-class="{'active': (getActiveTab() === 2)}", ng-click="setActiveTab(2)")
+                        a(data-target=".tab-profile-form", data-toggle="tab") 2. Billing Address
+                  .tab-content
+                     .tab-pane.tab-profile-form.active
+                        div(ng-show="getActiveTab() === 1")
+                           label User Name
+                           p {{ userInfo.id }}
+                           label Complete Name
+                           p {{ userInfo.completeName }}
+                           label Access Token
+                           p {{ getAccessToken() }}
+                        div(ng-show="getActiveTab() === 2")
+                           form(name="updateBillingForm", novalidate)
+                              .row
+                                 .col-sm-8
+                                    .form-group(
+                                       ng-class="{'has-error': updateBillingForm.street.$invalid && (updateBillingForm.street.$dirty || updateBillingForm.street.$touched) }"
+                                    )
+                                       label Street
+                                       input.form-control(
+                                          type="text"
+                                          name="street"
+                                          ng-model="userInfo.billingAddress.street"
+                                          required
+                                       )
+                                       .help-block(
+                                          ng-messages="updateBillingForm.street.$error"
+                                          ng-show="updateBillingForm.street.$invalid && (updateBillingForm.street.$dirty || updateBillingForm.street.$touched)"
+                                       )
+                                          span(ng-message="required") This field is required.
+
+                                 .col-sm-4
+                                    .form-group(
+                                       ng-class="{'has-error': updateBillingForm.postal.$invalid && (updateBillingForm.postal.$dirty || updateBillingForm.postal.$touched) }"
+                                    )
+                                       label Zip Code
+                                       input.form-control(
+                                          type="text"
+                                          name="postal"
+                                          ng-model="userInfo.billingAddress.postal"
+                                          required
+                                       )
+                                       .help-block(
+                                          ng-messages="updateBillingForm.postal.$error"
+                                          ng-show="updateBillingForm.postal.$invalid && (updateBillingForm.postal.$dirty || updateBillingForm.postal.$touched)"
+                                       )
+                                          span(ng-message="required") This field is required.
+
+                              .row
+                                 .col-sm-6
+                                    .form-group(
+                                       ng-class="{'has-error': updateBillingForm.city.$invalid && (updateBillingForm.city.$dirty || updateBillingForm.city.$touched) }"
+                                    )
+                                       label City
+                                       input.form-control(
+                                          type="text"
+                                          name="city"
+                                          ng-model="userInfo.billingAddress.city"
+                                          required
+                                       )
+                                       .help-block(
+                                          ng-messages="updateBillingForm.city.$error"
+                                          ng-show="updateBillingForm.city.$invalid && (updateBillingForm.city.$dirty || updateBillingForm.city.$touched)"
+                                       )
+                                          span(ng-message="required") This field is required.
+
+                                 .col-sm-6
+                                    .form-group(
+                                       ng-class="{'has-error': updateBillingForm.province.$invalid && (updateBillingForm.province.$dirty || updateBillingForm.province.$touched) }"
+                                    )
+                                       label Province
+                                       input.form-control(
+                                          type="text"
+                                          name="province"
+                                          ng-model="userInfo.billingAddress.province"
+                                          required
+                                    )
+                                       .help-block(
+                                          ng-messages="updateBillingForm.province.$error"
+                                          ng-show="updateBillingForm.province.$invalid && (updateBillingForm.province.$dirty || updateBillingForm.province.$touched)"
+                                       )
+                                          span(ng-message="required") This field is required.
+
+                              .form-group(
+                                 ng-class="{'has-error': updateBillingForm.country.$invalid && (updateBillingForm.country.$dirty || updateBillingForm.country.$touched) }"
+                              )
+                                 label Country
+                                 input.form-control(
+                                    type="text"
+                                    name="country"
+                                    ng-model="userInfo.billingAddress.country"
+                                    required
+                                 )
+                                 .help-block(
+                                    ng-messages="updateBillingForm.country.$error"
+                                    ng-show="updateBillingForm.country.$invalid && (updateBillingForm.country.$dirty || updateBillingForm.country.$touched)"
+                                 )
+                                    span(ng-message="required") This field is required.
+
+         .modal-footer
+            button.btn.btn-default(type="button", data-dismiss="modal",
+               ng-disabled="!updateBillingForm.$valid && (updateBillingForm.country.$touched || updateBillingForm.province.$touched || updateBillingForm.city.$touched || updateBillingForm.postal.$touched || updateBillingForm.street.$touched)"
+               ng-click="(!updateBillingForm.country.$touched && !updateBillingForm.province.$touched && !updateBillingForm.city.$touched && !updateBillingForm.postal.$touched && !updateBillingForm.street.$touched) || updateProfile()") Accept
