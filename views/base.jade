@@ -19,7 +19,8 @@ html(lang="en")
           TEMPLATE: '#{ contextPath }/resources/core/templates',
           CATALOGUE_MANAGEMENT: '#{ proxyPath }/DSProductCatalog/api/catalogManagement/v2',
           ASSET_TYPE: '#{ proxyPath }/charging/api/assetManagement/assetTypes/:typeId',
-          ASSET: '#{ proxyPath }/charging/api/assetManagement/assets/uploadJob'
+          ASSET: '#{ proxyPath }/charging/api/assetManagement/assets/uploadJob',
+          USER: '#{ proxyPath }/charging/api/userManagement/users/:username'
         });
 
     if user
@@ -64,6 +65,9 @@ html(lang="en")
                     p #{ user.displayName }
                     p.text-muted #{ user.email }
                   li
+                    a(ng-click="updateProfile()")
+                      i.fa.fa-cog.fa-fw
+                      | &nbsp;Profile
                     a(href="#{ contextPath }/mystock")
                       i.fa.fa-database.fa-fw
                       | &nbsp;My stock
@@ -104,6 +108,8 @@ html(lang="en")
 
     if user
       form(name="signOutForm", method="post", action="#{ contextPath }/logout")
+
+    include ./includes/UserProfile.jade
 
     script(type="text/ng-template", id="seller/catalogue-view")
       include ./includes/seller/ProductCatalogueView.jade

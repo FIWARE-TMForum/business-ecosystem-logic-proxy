@@ -3,8 +3,8 @@
  */
 
 angular.module('app.services')
-    .factory('User', ['$resource', '$injector', function ($resource, $injector) {
-        var LOGGED_USER, service;
+    .factory('User', ['$resource', '$injector', 'URLS', function ($resource, $injector, URLS) {
+        var LOGGED_USER, User, service;
 
         if ($injector.has('LOGGED_USER')) {
             LOGGED_USER = $injector.get('LOGGED_USER');
@@ -41,9 +41,21 @@ angular.module('app.services')
 
             isAuthenticated: function isAuthenticated() {
                 return LOGGED_USER != null;
+            },
+
+            get: function(next) {
+                User.get({'username': LOGGED_USER.ID}, next);
+            },
+
+            updatePartial: function(data, next) {
+                User.updatePartial(data, next);
             }
 
         };
+
+        User = $resource(URLS.USER, {username: '@id'}, {
+            updatePartial: {method: 'PATCH'}
+        });
 
         return service;
     }]);
