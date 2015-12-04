@@ -16,6 +16,7 @@ html(lang="en")
     script.
       angular.module('app', ['ngRoute', 'ngResource', 'ngMessages', 'angularMoment', 'app.services', 'app.controllers'])
         .constant('URLS', {
+          IMAGE: '#{ contextPath }/resources/core/images',
           TEMPLATE: '#{ contextPath }/resources/core/templates',
           USER: '#{ proxyPath }/charging/api/userManagement/users/:username',
           ASSET_MANAGEMENT: '#{ proxyPath }/charging/api/assetManagement',

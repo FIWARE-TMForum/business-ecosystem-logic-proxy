@@ -54,6 +54,31 @@ angular.module('app')
             }
         }
     }])
+    .directive('noImage', ['URLS', function (URLS) {
+
+        var setDefaultImage = function setDefaultImage(element) {
+            element.attr('src', URLS.IMAGE + '/default-no-image.png');
+        };
+
+        return {
+            restrict: 'A',
+            link: function link(scope, element, attrs) {
+
+                scope.$watch(function () {
+                    return attrs.ngSrc;
+                }, function () {
+
+                    if (!attrs.ngSrc) {
+                        setDefaultImage(element);
+                    }
+                });
+
+                element.bind('error', function () {
+                    setDefaultImage(element);
+                });
+            }
+        };
+    }])
     .directive('fieldUnique', ['$http', '$injector', function ($http, $injector) {
         return {
             require: 'ngModel',

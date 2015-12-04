@@ -7,7 +7,7 @@
       )
         .panel-heading
           a.thumbnail.product-logo(ng-click="showUpdateForm($product)")
-            img(ng-src="{{ getPicture($product) }}")
+            img(ng-src="{{ getPicture($product) }}", no-image)
           a.panel-title(ng-click="showUpdateForm($product)") {{ $product.name }}
           .panel-subtitle
             | Updated 
