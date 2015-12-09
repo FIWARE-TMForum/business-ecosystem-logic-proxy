@@ -3,7 +3,7 @@
  */
 
 angular.module('app.controllers')
-    .controller('OfferingListCtrl', ['$scope', '$rootScope', 'EVENTS', 'LIFECYCLE_STATUS', 'Offering', function ($scope, $rootScope, EVENTS, LIFECYCLE_STATUS, Offering) {
+    .controller('OfferingListCtrl', ['$scope', '$rootScope', 'EVENTS', 'LIFECYCLE_STATUS', 'Offering', 'Product', function ($scope, $rootScope, EVENTS, LIFECYCLE_STATUS, Offering, Product) {
 
         $scope.$offeringList = Offering.$collection;
 
@@ -15,25 +15,15 @@ angular.module('app.controllers')
             status: ""
         };
 
-        $scope.getPicture = function getPicture($offering) {
-            var i, src = "";
-
-            if ('attachment' in $offering.productSpecification) {
-                for (i = 0; i < $offering.productSpecification.attachment.length && !src.length; i++) {
-                    if ($offering.productSpecification.attachment[i].type == 'Picture') {
-                        src = $offering.productSpecification.attachment[i].url;
-                    }
-                }
-            }
-
-            return src;
+        $scope.getProductPicture = function getProductPicture($offering) {
+            return Product.getPictureOf($offering.productSpecification);
         };
 
         $scope.filterList = function filterList() {
             Offering.filter($scope.filters, function ($offeringList) {});
         };
     }])
-    .controller('OfferingCreateCtrl', ['$scope', '$rootScope', 'EVENTS', 'Offering', '$element', 'Product', 'Catalogue', function ($scope, $rootScope, EVENTS, Offering, $element, Product, Catalogue) {
+    .controller('OfferingCreateCtrl', ['$scope', '$rootScope', 'EVENTS', 'PARTY_ROLES', 'Offering', '$element', 'Product', 'Catalogue', function ($scope, $rootScope, EVENTS, PARTY_ROLES, Offering, $element, Product, Catalogue) {
         var initialInfo = {version: '0.1', productSpecification: null};
 
         $scope.selectProduct = function selectProduct($product) {
@@ -95,11 +85,11 @@ angular.module('app.controllers')
         };
 
         $scope.hasRoleAsOwner = function hasRoleAsOwner($catalogue) {
-            return $catalogue != null && Catalogue.hasRoleAs($catalogue, Catalogue.ROLES.OWNER);
+            return $catalogue != null && Catalogue.hasRoleAs($catalogue, PARTY_ROLES.OWNER);
         };
 
         $scope.hasRoleAsSeller = function hasRoleAsSeller($catalogue) {
-            return $catalogue != null && Catalogue.hasRoleAs($catalogue, Catalogue.ROLES.SELLER);
+            return $catalogue != null && Catalogue.hasRoleAs($catalogue, PARTY_ROLES.SELLER);
         };
 
         $scope.resetCreateForm();

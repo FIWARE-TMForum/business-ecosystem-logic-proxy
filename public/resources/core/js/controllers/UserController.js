@@ -15,12 +15,13 @@ angular.module('app.controllers')
             return document.signOutForm.submit();
         };
     }])
-    .controller('UserCustomerView', ['$scope', '$rootScope', 'EVENTS', 'Catalogue', 'Category', function ($scope, $rootScope, EVENTS, Catalogue, Category) {
+    .controller('UserCustomerView', ['$scope', '$rootScope', 'EVENTS', 'Catalogue', 'Category', 'Offering',function ($scope, $rootScope, EVENTS, Catalogue, Category, Offering) {
 
         Catalogue.list(function ($catalogueList) {
             $rootScope.$broadcast(EVENTS.CATALOGUE_SELECT, null);
         });
 
+        Offering.list();
         Category.list();
     }])
     .controller('UserSellerView', ['$scope', '$rootScope', 'PARTY_ROLES', 'LIFECYCLE_STATUS', 'LIFECYCLE_STATUS_LIST', function ($scope, $rootScope, PARTY_ROLES, LIFECYCLE_STATUS, LIFECYCLE_STATUS_LIST) {
