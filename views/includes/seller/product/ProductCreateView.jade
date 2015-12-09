@@ -1,3 +1,55 @@
+.row
+  .col-sm-12
+    ol.breadcrumb.breadcrumb-default
+      li
+        a(ng-click="showSearchView()")
+          h4 Search Product
+      li.active
+        a
+          h4 New Product
+  .col-sm-12
+    .panel.panel-default
+      .panel-heading
+        .panel-title {{ productInfo.bundledProductSpecification.length ? 'New Bundle Product' : 'New Product' }}
+      .panel-body
+        .row
+          .col-sm-3
+            ul.nav.nav-steps.nav-stacked
+              li(
+                ng-repeat="step in stepList"
+                ng-class="{ 'active' : $index == stepActive, 'disabled' : setStepDisabled($index) }"
+              )
+                a(data-step="{{ $index }}", ng-click="showStep($index)") {{ step.name }}
+          .col-sm-9
+            form(name="stepList[0].form", novalidate, ng-show="stepActive == 0")
+              .form-group
+                .row
+                  .col-sm-8
+                    label Name
+                    input.form-control(type="text", name="name", ng-model="productInfo.name", required)
+                  .col-sm-4
+                    label Version
+                    input.form-control(type="text", name="version", ng-model="productInfo.version", required)
+              .form-group
+                .row
+                  .col-sm-8
+                    label Brand
+                    input.form-control(type="text", name="brand", ng-model="productInfo.brand", required)
+                  .col-sm-4
+                    label ID Number
+                    input.form-control(type="text", name="productNumber", ng-model="productInfo.productNumber", required)
+              .form-group
+                label
+                  | Description 
+                  small.text-muted optional
+                textarea.form-control(rows="3", name="description", ng-model="productInfo.description")
+              .form-group.text-right
+                button.btn.btn-default(type="button", ng-click="showSearchView()")
+                  | Cancel
+                button.btn.btn-primary(type="button", ng-click="nextStep(1)", ng-disabled="!stepList[0].form.$valid") 
+                  | Next&nbsp;
+                  i.fa.fa-arrow-right
+
 .modal.fade(tabindex="-1", ng-controller="ProductCreateCtrl")
   .modal-dialog
     .modal-content

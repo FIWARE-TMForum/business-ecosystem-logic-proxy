@@ -72,7 +72,7 @@ block content
             .panel-heading
               .panel-title Filter by category
             .panel-body
-              ol.breadcrumb.breadcrumb-default
+              ol.breadcrumb.breadcrumb-primary
                 li(ng-repeat="$category in $categoryBreadcrumb", ng-class="{'active': isActive($category)}")
                   a(ng-click="refreshCategory($category)")
                     | {{ $category.name }}
@@ -89,3 +89,9 @@ block content
                   li.disabled
                     a
                       i.fa.fa-arrow-right
+        .col-sm-12(ng-controller="OfferingListCtrl")
+          .panel.panel-default(ng-repeat="$offering in $offeringList")
+            .panel-heading
+              a.thumbnail.item-product-logo
+                img(no-image, ng-src="{{ getProductPicture($offering) }}")
+              .panel-title {{ $offering.name }}

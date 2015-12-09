@@ -40,8 +40,8 @@
       <div class="col-sm-12 flex-container">
         <div class="panel panel-default offering offering-grid" ng-repeat="$offering in $offeringList">
           <div class="panel-heading">
-            <a class="thumbnail product-logo" ng-click="showUpdateForm($offering)">
-              <img src="{{ getPicture($offering) }}">
+            <a class="thumbnail item-product-logo" ng-click="showUpdateForm($offering)">
+              <img no-image ng-src="{{ getProductPicture($offering) }}">
             </a>
             <a class="panel-title" ng-click="showUpdateForm($offering)">{{ $offering.name }}</a>
             <div class="panel-subtitle">Updated <time am-time-ago="$offering.lastUpdate"></time></div>

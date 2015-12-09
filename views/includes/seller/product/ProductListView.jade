@@ -1,6 +1,6 @@
 .row(ng-controller="ProductListCtrl")
-  .col-sm-12(ng-if="$productList.length")
-    table.table.table-bordered.table-hover
+  .col-sm-12(ng-if="productList.length")
+    table.table.table-bordered
       thead
         tr
           th ID Number
@@ -8,28 +8,19 @@
           th Version
           th Brand
           th Type
-          th Actions
       tbody
-        tr(ng-repeat="$product in $productList", ng-class="{ 'active' : isSelected($product) }")
+        tr(ng-repeat="$product in productList")
           th {{ $product.productNumber }}
           td
             span.lifecycle-status(ng-class="'status-{{ $product.lifecycleStatus | lowercase }}'")
-            a(ng-click="showUpdateForm($product)")
-              | &nbsp; {{ $product.name }}
+            | &nbsp; 
+            a(ng-click="showUpdateView($product)")
+              | {{ $product.name }}
           td {{ $product.version }}
           td {{ $product.brand }}
           td 
             span.label(ng-class="$product.isBundle ? 'label-product-bandle' : 'label-product'")
               | {{ $product.isBundle ? 'Product bandle' : 'Product' }}
-          td 
-            button.btn.btn-sm.btn-default(
-              type="button"
-              bs-tooltip
-              data-original-title="Add to bundle"
-              ng-class="{ 'active' : isSelected($product) }"
-              ng-click="selectProduct($product)"
-            )
-              i.fa.fa-fw.fa-clipboard
     ul.pager
       li.disabled
         a

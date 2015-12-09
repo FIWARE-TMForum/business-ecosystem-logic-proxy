@@ -1,31 +1,19 @@
 .row(ng-controller="ProductListCtrl")
-  .col-sm-12(ng-if="$productList.length")
+  .col-sm-12(ng-if="productList.length")
     .flex-container
-      .panel.panel-default.product.product-grid(
-        ng-repeat="$product in $productList"
-        ng-class="{ 'active' : isSelected($product)}"
-      )
+      .panel.panel-default.item-product(ng-repeat="$product in productList")
         .panel-heading
-          a.thumbnail.product-logo(ng-click="showUpdateForm($product)")
-            img(ng-src="{{ getPicture($product) }}", no-image)
-          a.panel-title(ng-click="showUpdateForm($product)") {{ $product.name }}
+          .thumbnail.item-product-logo
+            img(no-image, ng-src="{{ getProductPicture($product) }}")
+          a.panel-title(ng-click="showUpdateView($product)") {{ $product.name }}
           .panel-subtitle
-            | Updated 
-            time(am-time-ago="$product.lastUpdate")
-          .panel-options.text-right
-            button.btn.btn-sm.btn-default(
-              type="button"
-              bs-tooltip
-              data-original-title="Add to bundle"
-              ng-class="{ 'active' : isSelected($product) }"
-              ng-click="selectProduct($product)"
-            )
-              i.fa.fa-fw.fa-clipboard
+            span v{{ $product.version }}
+            span.pull-right
+              time(am-time-ago="$product.lastUpdate")
         .panel-body
-          p.text-muted.text-small v{{ $product.version }}&nbsp;·&nbsp;{{ $product.brand }}
-          .label-group(ng-switch="$product.isBundle")
-            span.label(ng-class="$product.isBundle ? 'label-product-bandle' : 'label-product'")
-              | {{ $product.isBundle ? 'Product bandle' : 'Product' }}
+          .label-group
+            .label(ng-class="$product.isBundle ? 'label-product-bandle' : 'label-product'")
+              {{ $product.isBundle ? 'Product bandle' : 'Product' }}
           .lifecycle-status-group
             .lifecycle-status-item.active(
               data-type="{{ $product.lifecycleStatus | lowercase }}"

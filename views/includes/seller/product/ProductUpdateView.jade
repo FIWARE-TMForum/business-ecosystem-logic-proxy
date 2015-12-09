@@ -1,53 +1,51 @@
-.modal.fade(tabindex="-1", ng-controller="ProductUpdateCtrl")
-  .modal-dialog
-    .modal-content
-      .modal-header
-        button.close(type="button", data-dismiss="modal")
-          span &times;
-        .modal-title {{ $product.isBundle ? 'Product Bundle Settings' : 'Product Settings' }}
-      .modal-body
-        .row
-          .col-sm-10.col-sm-offset-1
-            ul.nav.nav-tabs
-              li(ng-repeat="tab in tabs", ng-class="{ 'active' : tab.active }", ng-click="showTab($index)")
-                a {{ tab.name }}
-            .tab-content
-              .tab-pane(ng-class="{ 'active': tabs[0].active }")
-                form(name="productUpdateForm", novalidate)
-                  .form-group
-                    .row
-                      .col-sm-8
-                        label Name
-                        input.form-control(type="text", name="name", ng-model="$product.name", required)
-                      .col-sm-4
-                        label Version
-                        input.form-control(type="text", name="version", ng-model="$product.version", required)
-                  .form-group
-                    .row
-                      .col-sm-8
-                        label Brand
-                        input.form-control(type="text", name="brand", ng-model="$product.brand", required)
-                      .col-sm-4
-                        label ID Number
-                        input.form-control(type="text", name="productNumber", ng-model="$product.productNumber", required)
-                  .form-group
-                    label Description
-                    textarea.form-control(rows="3", name="description", ng-model="$product.description")
-                  .form-group(ng-if="$product.bundledProductSpecification.length")
-                    label Bundled products
-                    table.table.table-bordered
-                      thead
-                        tr
-                          th ID Number
-                          th Name
-                          th Version
-                          th Brand
-                      tbody
-                        tr(ng-repeat="$bundledProduct in $product.bundledProductSpecification")
-                          th {{ $bundledProduct.productNumber }}
-                          td {{ $bundledProduct.name }}
-                          td {{ $bundledProduct.version }}
-                          td {{ $bundledProduct.brand }}
-      .modal-footer
-        button.btn.btn-success(type="button", ng-click="updateProduct()", ng-disabled="!productUpdateForm.$valid") Save changes
-        button.btn.btn-default(type="button", data-dismiss="modal") Cancel
+.row
+  .col-sm-12
+    ol.breadcrumb.breadcrumb-default
+      li
+        a(ng-click="showSearchView()")
+          h4 Search Product
+      li
+        a(ng-click="showCreateView()")
+          h4 New Product
+      li.active
+        a
+          h4 {{ $product.name }}
+  .col-sm-3
+    .panel.panel-default
+      .panel-heading
+        .thumbnail.item-product-logo
+          img(no-image, ng-src="{{ getProductPicture($product) }}")
+        .panel-title {{ $product.name }}
+      .list-group
+        a.list-group-item(ng-repeat="tab in tabList", ng-class="{'active': tabActive == $index}", ng-click="showTab($index)")
+          | {{ tab.title }}
+  .col-sm-8.col-sm-offset-1
+    .panel.panel-default
+      .panel-heading
+        .panel-title General
+      .panel-body
+        form(name="tabList[0].form", novalidate)
+          .form-group
+            .row
+              .col-sm-8
+                label Name
+                input.form-control(type="text", name="name", ng-model="$product.name", required)
+              .col-sm-4
+                label Version
+                input.form-control(type="text", name="version", ng-model="$product.version", required)
+          .form-group
+            .row
+              .col-sm-8
+                label Brand
+                input.form-control(type="text", name="brand", ng-model="$product.brand", required)
+              .col-sm-4
+                label ID Number
+                input.form-control(type="text", name="productNumber", ng-model="$product.productNumber", required)
+          .form-group
+            label
+              | Description 
+              small.text-muted optional
+            textarea.form-control(rows="3", name="description", ng-model="$product.description")
+          .form-group.text-right
+            button.btn.btn-success(type="button", ng-click="updateProduct()", ng-disabled="!tabList[0].form.$valid") 
+              | Save changes
