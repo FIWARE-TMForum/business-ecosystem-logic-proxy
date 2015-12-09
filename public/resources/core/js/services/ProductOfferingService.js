@@ -12,7 +12,7 @@ angular.module('app.services')
             };
         };
 
-        var Offering, service = {
+        var CatalogueOffering, Offering, service = {
 
             TYPES: {
                 OFFERING: 'Offering',
@@ -26,6 +26,43 @@ angular.module('app.services')
 
                 switch (User.getRole()) {
                 case User.ROLES.CUSTOMER:
+                    params['lifecycleStatus'] = LIFECYCLE_STATUS.LAUNCHED;
+
+                    Offering.query(params, function ($collection) {
+                        var filterParams = {};
+
+                        angular.copy($collection, service.$collection);
+
+                        if (service.$collection.length) {
+
+                            filterParams['id'] = service.$collection.map(function ($offering) {
+                                return $offering.productSpecification.id;
+                            }).join();
+
+                            Product.list(filterParams, function ($productList) {
+                                var products = {};
+
+                                service.$collection.forEach(function ($offering) {
+                                    $productList.forEach(function ($product) {
+                                        if ($offering.productSpecification.id == $product.id) {
+                                            $offering.productSpecification = $product;
+                                        }
+                                    });
+                                });
+
+                                if (next != null) {
+                                    next(service.$collection);
+                                }
+                            });
+                        } else {
+                            if (next != null) {
+                               next(service.$collection);
+                            }
+                        }
+                    }, function (response) {
+                        // TODO: onfailure.
+                    });
+
                     break;
                 case User.ROLES.SELLER:
 
@@ -118,7 +155,7 @@ angular.module('app.services')
 
                 offeringInfo.productSpecification = serializeProduct(offeringInfo.productSpecification);
 
-                Offering.save({catalogueId: $catalogue.id}, offeringInfo, function ($offeringCreated) {
+                CatalogueOffering.save({catalogueId: $catalogue.id}, offeringInfo, function ($offeringCreated) {
                     $offeringCreated.productSpecification = $product;
                     service.$collection.unshift($offeringCreated);
 
@@ -132,8 +169,15 @@ angular.module('app.services')
 
         };
 
-        Offering = $resource(URLS.CATALOGUE_MANAGEMENT + '/:catalogueId/productOffering/:offeringId', {offeringId: '@id'}, {
-        });
+        CatalogueOffering = $resource(URLS.CATALOGUE_MANAGEMENT + '/catalog/:catalogueId/productOffering/:offeringId',
+            {offeringId: '@id'},
+            {}
+        );
+
+        Offering = $resource(URLS.CATALOGUE_MANAGEMENT + '/productOffering/:offeringId',
+            {offeringId: '@id'},
+            {}
+        );
 
         return service;
     }]);
