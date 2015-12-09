@@ -72,6 +72,11 @@ blockquote p {
             user-select: none;          /* Likely future */
 }
 
+h3, h4 {
+    margin-top: 0;
+    margin-bottom: 15px;
+}
+
 /* ===================================================================================
  *   COMPONENT - FLEX-CONTAINER
  * =================================================================================== */
@@ -85,6 +90,11 @@ blockquote p {
 .flex-container-column {
     display: flex;
     flex-flow: column wrap;
+}
+
+.container-spinner {
+    text-align: center;
+    margin-bottom: 15px;
 }
 
 /* ===================================================================================
@@ -155,6 +165,10 @@ textarea {
     .form-inline > .form-group + .form-group {
         margin-left: 5px;
     }
+}
+
+.form-group > .btn + .btn {
+    margin-left: 5px;
 }
 
 /* ===================================================================================
@@ -265,14 +279,22 @@ textarea {
     border-color: rgb(130, 200, 130);
  }
 
+.btn > .btn-icon {
+    width: 1.4em;
+    text-align: left;
+}
+
 .btn-sm {
     padding: 4px 8px;
     font-size: 14px;
     line-height: 20px;
     border-radius: 0;
 }
-.btn-sm > .fa {
+.btn-sm > .btn-icon {
+    width: 1.2em;
     font-size: 90%;
+    text-align: left;
+    vertical-align: baseline;
 }
 
 .btn-circle {
@@ -281,6 +303,20 @@ textarea {
 
 .pull-right > .btn + .btn-group {
     margin-left: 5px;
+}
+
+.btn > .btn-text {
+    display: inline-block;
+    vertical-align: baseline;
+}
+
+/* ===================================================================================
+ *   COMPONENT - BUTTON TOOLBAR
+ * =================================================================================== */
+
+.btn-toolbar {
+    padding: 0 15px;
+    margin-bottom: 15px;
 }
 
 /* ===================================================================================
@@ -579,14 +615,16 @@ textarea {
 .breadcrumb {
     padding: 10px 15px;
     margin-bottom: 15px;
-    background-color: transparent;
+    background-color: rgb(245, 245, 245);
     border-radius: 0;
 }
 .breadcrumb > li + li:before {
+    padding: 0 10px;
     display: inline-block;
-    font-size: 12px;
-    line-height: 16px;
-    color: rgb(120, 120, 120);
+    color: rgb(100, 100, 100);
+    font: normal normal normal 14px/1 FontAwesome;
+    vertical-align: middle;
+    content: "\f105";
 }
 
 .breadcrumb > li.active > a:first-child {
@@ -596,6 +634,23 @@ textarea {
 }
 
 .breadcrumb-default {
+    background-color: rgb(255, 255, 255);
+    border: 1px solid rgb(220, 220, 220);
+}
+.breadcrumb-default > li > a {
+    position: relative;
+    display: inline-block;
+    vertical-align: middle;
+}
+.breadcrumb-default > li > a > * {
+    margin-bottom: 0;
+}
+
+.breadcrumb-default > li > a + a {
+    margin-left: 10px;
+}
+
+.breadcrumb-primary {
     background-color: rgb(240, 245, 250);
 }
 
@@ -651,7 +706,7 @@ textarea {
 .label-group {
     position: relative;
     display: block;
-    margin-bottom: 15px;
+    margin-bottom: 5px;
 }
 
 /* ===================================================================================
@@ -788,15 +843,6 @@ textarea {
     margin-bottom: 15px;
 }
 
-.list-group-item {
-    margin-bottom: 2px;
-    background-color: rgb(255, 255, 255);
-    border: none;
-    border-right: 2px solid transparent;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    overflow: hidden;
-}
 .list-group-item:first-child {
     border-top-left-radius: 0;
     border-top-right-radius: 0;
@@ -805,7 +851,17 @@ textarea {
     border-bottom-right-radius: 0;
     border-bottom-left-radius: 0;
 }
-.list-group-item.has-badge {
+
+a.list-group-item {
+    margin-bottom: 2px;
+    background-color: rgb(255, 255, 255);
+    border: none;
+    border-right: 2px solid transparent;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+}
+a.list-group-item.has-badge {
     padding-right: 30px;
 }
 
@@ -838,27 +894,151 @@ a.list-group-item.disabled:focus {
     border-color: rgb(210, 210, 210);
 }
 
-.list-group-item > .badge-status:empty {
+a.list-group-item > .badge-status:empty {
     display: inline-block;
 }
-.list-group-item > .badge-status {
+a.list-group-item > .badge-status {
     position: absolute;
     top: 15px;
     right: 10px;
     padding: 5px 5px;
     border-radius: 50%;
 }
-.list-group-item.disabled > .badge-status {
+a.list-group-item.disabled > .badge-status {
     background-color: rgb(210, 210, 210);
 }
 
-.flex-container-column > .list-group-item {
+.flex-container-column > a.list-group-item {
     width: 25%;
+}
+
+/* ===================================================================================
+ *   COMPONENT - LIST-GROUP - OPTIONS
+ * =================================================================================== */
+
+.item-toggle {
+    padding: 0 0;
+}
+.item-toggle .toggle {
+    position: relative;
+    display: block;
+    cursor: pointer;
+    padding: 12px 15px;
+    padding-right: 60px;
+    margin-bottom: 0;
+    font-weight: bold;
+
+}
+.item-toggle .toggle .track {
+    position: absolute;
+    top: 50%;
+    right: 15px;
+    transform: translate(0%, -50%);
+}
+
+.item-toggle > .toggle + .list-group {
+    margin-bottom: 0;
+}
+.item-toggle > .toggle + .list-group > .list-group-item {
+    background-color: rgb(250, 250, 250);
+    border-right: none;
+    border-left: none;
+}
+.item-toggle > .toggle + .list-group > .list-group-item:last-child {
+    border-bottom: none;
+}
+
+.toggle .track input {
+    display: none;
+}
+
+.toggle .track input + .fa:before {
+    content: "\f204";
+    color: rgb(120, 120, 120);
+}
+.toggle .track input:checked + .fa:before {
+    content: "\f205";
+    color: rgb(060, 120, 060);
+}
+
+.item-checkbox {
+    padding: 0 0;
+}
+.item-checkbox .checkbox {
+    position: relative;
+    display: block;
+    cursor: pointer;
+    padding: 10px 15px;
+    padding-left: 45px;
+    margin-top: 0;
+    margin-bottom: 0;
+    font-weight: normal;
+}
+.item-checkbox .checkbox .track {
+    position: absolute;
+    top: 50%;
+    left: 15px;
+    transform: translate(0%, -50%);
+}
+
+.checkbox .track input {
+    display: none;
+}
+.checkbox .track input + .fa:before {
+    content: "\f096";
+    color: rgb(120, 120, 120);
+}
+.checkbox .track input:checked + .fa:before {
+    content: "\f046";
+    color: rgb(060, 120, 060);
+}
+
+.item-radio {
+    padding: 0 0;
+}
+.item-radio .radio {
+    position: relative;
+    display: block;
+    cursor: pointer;
+    padding: 10px 15px;
+    padding-left: 45px;
+    margin-top: 0;
+    margin-bottom: 0;
+    font-weight: normal;
+}
+.item-radio .radio .track {
+    position: absolute;
+    top: 50%;
+    left: 15px;
+    transform: translate(0%, -50%);
+}
+
+.radio .track + span {
+    margin-left: 30px;
+}
+
+.radio .track input {
+    display: none;
+}
+.radio .track input + .fa:before {
+    content: "\f1db";
+    color: rgb(120, 120, 120);
+}
+.radio .track input:checked + .fa:before {
+    content: "\f192";
+    color: rgb(060, 120, 060);
 }
 
 /* ===================================================================================
  *   COMPONENT - THUMBNAIL
  * =================================================================================== */
+
+.thumbnail {
+    padding: 5px;
+    margin-bottom: 15px;
+    border-color: rgb(220, 220, 220);
+    border-radius: 0;
+}
 
 a.thumbnail {
     padding: 5px;
@@ -891,7 +1071,9 @@ a.thumbnail > img {
 
 .panel {
     margin-bottom: 15px;
+    background-color: transparent;
     border-radius: 0;
+    box-shadow: none;
 }
 .panel-heading {
     position: relative;
@@ -917,7 +1099,8 @@ a.thumbnail > img {
 }
 
 .panel-subtitle {
-    font-size: 13px;
+    display: block;
+    font-size: 90%;
     line-height: 20px;
 }
 
@@ -932,6 +1115,7 @@ a.thumbnail > img {
 }
 
 .panel-default {
+    background-color: rgb(255, 255, 255);
     border-color: rgb(220, 220, 220);
 }
 .panel-default > .panel-heading {
@@ -984,16 +1168,13 @@ a.thumbnail > img {
  *   COMPONENT - PRODUCT
  * =================================================================================== */
 
-.product {
+.item-product {
     position: relative;
     width: 250px;
     margin: 0 5px 15px;
 }
-.product > .panel-body {
-    padding-top: 0;
-}
 
-.product-logo {
+.item-product-logo {
     height: 180px;
 }
 
