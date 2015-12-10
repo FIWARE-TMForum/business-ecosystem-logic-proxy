@@ -90,8 +90,24 @@ block content
                     a
                       i.fa.fa-arrow-right
         .col-sm-12(ng-controller="OfferingListCtrl")
-          .panel.panel-default(ng-repeat="$offering in $offeringList")
-            .panel-heading
-              a.thumbnail.item-product-logo
-                img(no-image, ng-src="{{ getProductPicture($offering) }}")
-              .panel-title {{ $offering.name }}
+          .flex-container
+            .panel.panel-default.item-product(ng-repeat="$offering in $offeringList")
+              .panel-heading
+                .thumbnail.item-product-logo
+                  img(no-image, ng-src="{{ getProductPicture($offering) }}")
+                a.panel-title {{ $offering.name }}
+                .panel-subtitle
+                  span v{{ $offering.version }}
+                  span.pull-right
+                    time(am-time-ago="$offering.lastUpdate")
+              .panel-body
+              .btn-toolbar(ng-if="isAuthenticated()")
+                .btn-group.btn-group-sm
+                  button.btn.btn-primary(type="button") Add to Cart
+          ul.pager
+            li.disabled
+              a
+                i.fa.fa-arrow-left
+            li.disabled
+              a
+                i.fa.fa-arrow-right

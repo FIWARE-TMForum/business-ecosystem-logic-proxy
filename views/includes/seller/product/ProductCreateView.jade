@@ -1,140 +1,26 @@
-.row
+.row(ng-controller="ProductCreateCtrl")
   .col-sm-12
     ol.breadcrumb.breadcrumb-default
       li
         a(ng-click="showSearchView()")
-          h4 Search Product
+          | Search Product
       li.active
-        a
-          h4 New Product
-  .col-sm-12
+        a(ng-click="showCreateView()")
+          | New Product
+  .col-sm-3
     .panel.panel-default
       .panel-heading
-        .panel-title {{ productInfo.bundledProductSpecification.length ? 'New Bundle Product' : 'New Product' }}
+        .panel-title New Product
       .panel-body
-        .row
-          .col-sm-3
-            ul.nav.nav-steps.nav-stacked
-              li(
-                ng-repeat="step in stepList"
-                ng-class="{ 'active' : $index == stepActive, 'disabled' : setStepDisabled($index) }"
-              )
-                a(data-step="{{ $index }}", ng-click="showStep($index)") {{ step.name }}
-          .col-sm-9
-            form(name="stepList[0].form", novalidate, ng-show="stepActive == 0")
-              .form-group
-                .row
-                  .col-sm-8
-                    label Name
-                    input.form-control(type="text", name="name", ng-model="productInfo.name", required)
-                  .col-sm-4
-                    label Version
-                    input.form-control(type="text", name="version", ng-model="productInfo.version", required)
-              .form-group
-                .row
-                  .col-sm-8
-                    label Brand
-                    input.form-control(type="text", name="brand", ng-model="productInfo.brand", required)
-                  .col-sm-4
-                    label ID Number
-                    input.form-control(type="text", name="productNumber", ng-model="productInfo.productNumber", required)
-              .form-group
-                label
-                  | Description 
-                  small.text-muted optional
-                textarea.form-control(rows="3", name="description", ng-model="productInfo.description")
-              .form-group.text-right
-                button.btn.btn-default(type="button", ng-click="showSearchView()")
-                  | Cancel
-                button.btn.btn-primary(type="button", ng-click="nextStep(1)", ng-disabled="!stepList[0].form.$valid") 
-                  | Next&nbsp;
-                  i.fa.fa-arrow-right
-
-.modal.fade(tabindex="-1", ng-controller="ProductCreateCtrl")
-  .modal-dialog
-    .modal-content
-      .modal-header
-        button.close(type="button", data-dismiss="modal")
-          span &times;
-        .modal-title {{ productInfo.bundledProductSpecification.length ? 'New bundle product' : 'New product' }}
-      .modal-body
-        .row
-          .col-sm-10.col-sm-offset-1
-            ul.nav.nav-steps.nav-justified
-              li(ng-class="{'active': (getActiveTab() === 1)}")
-                a(ng-click="setActiveTab(1)", data-target=".tab-product-create-form", data-toggle="tab") 1. General
-              li(ng-class="{'active': (getActiveTab() === 2)}")
-                a(ng-click="setActiveTab(2)", data-target=".tab-product-create-form", data-toggle="tab") 2. Characteristics
-              li(ng-class="{'active': (getActiveTab() === 3)}")
-                a(ng-click="setActiveTab(3)", data-target=".tab-product-create-form", data-toggle="tab") 3. Assets
-            .tab-content
-              .tab-pane.tab-product-create-form.active
-                form(name="productCreateForm", novalidate)
-                  div(ng-show="getActiveTab() === 1")
-                    .form-group
-                      .row
-                        .col-sm-8
-                          label Name
-                          input.form-control(type="text", name="name", ng-model="productInfo.name", required)
-                        .col-sm-4
-                          label Version
-                          input.form-control(type="text", name="version", ng-model="productInfo.version", required)
-                    .form-group
-                      .row
-                        .col-sm-8
-                          label Brand
-                          input.form-control(type="text", name="brand", ng-model="productInfo.brand", required)
-                        .col-sm-4
-                          label ID Number
-                          input.form-control(type="text", name="productNumber", ng-model="productInfo.productNumber", required)
-                    .form-group
-                      label
-                        | Description 
-                        small.text-muted optional
-                      textarea.form-control(rows="3", name="description", ng-model="productInfo.description")
-                    .form-group(ng-if="productInfo.bundledProductSpecification.length")
-                      label Bundled products
-                      table.table.table-bordered
-                        thead
-                          tr
-                            th ID Number
-                            th Name
-                            th Version
-                            th Brand
-                        tbody
-                          tr(ng-repeat="$product in productInfo.bundledProductSpecification")
-                            th {{ $product.productNumber }}
-                            td {{ $product.name }}
-                            td {{ $product.version }}
-                            td {{ $product.brand }}
-                  div(ng-show="getActiveTab() === 2") Characteristics
-                  div(ng-show="getActiveTab() === 3")
-                    div(ng-show="assetTypes.length")
-                      .form-group
-                        .row
-                          .col-sm-8
-                            label Digital Asset Type
-                            select.form-control(name="asset", ng-model="productInfo.productSpecCharacteristic[0].productSpecCharacteristicValue[0].value", ng-change="setCurrentType()")
-                              option(ng-repeat="asset in assetTypes", value="{{ asset.name }}") {{ asset.name }}
-                          .col-sm-4
-                            label How to provide?
-                            select.form-control(ng-model="currFormat")
-                              option(ng-repeat="format in getCurrentType().formats", value="{{ format }}") {{ format }}
-                      .form-group(ng-show="isSelected('URL')")
-                        label Asset URL
-                        input.form-control(type="url", ng-model="productInfo.productSpecCharacteristic[2].productSpecCharacteristicValue[0].value")
-                      .form-group(ng-show="isSelected('FILE')")
-                        label Asset File
-                        input.form-control(type="file", file-model="assetFile")
-                      .form-group
-                        label Media Type
-                        div(ng-show="!getCurrentType().mediaTypes.length")
-                          input.form-control(type="text", ng-model="productInfo.productSpecCharacteristic[1].productSpecCharacteristicValue[0].value")
-                        div(ng-show="getCurrentType().mediaTypes.length")
-                          select.form-control(ng-model="productInfo.productSpecCharacteristic[1].productSpecCharacteristicValue[0].value")
-                            option(ng-repeat="media in getCurrentType().mediaTypes", value="{{ media }}") {{ media }}
-                    div(ng-show="!assetTypes.length")
-                      .alert.alert-info There isn't any digital asset type supported.
-      .modal-footer
-        button.btn.btn-success(type="button", ng-click="createProduct()", ng-disabled="!productCreateForm.$valid") Create
-        button.btn.btn-default(type="button", data-dismiss="modal") Cancel
+        ul.nav.nav-steps.nav-stacked
+          li(
+            ng-repeat="step in stepList"
+            ng-class="{ 'active' : $index == stepActive, 'disabled' : setStepDisabled($index) }"
+          )
+            a(data-step="{{ $index }}", ng-click="showStep($index)") {{ step.title }}
+  .col-sm-9
+    .panel.panel-default(ng-repeat="step in stepList", ng-show="stepActive == $index")
+      .panel-heading
+        .panel-title {{ step.title }}
+      .panel-body
+        ng-include(src="step.templateUrl")

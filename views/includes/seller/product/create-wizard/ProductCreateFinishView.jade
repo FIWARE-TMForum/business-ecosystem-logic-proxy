@@ -1,0 +1,54 @@
+form(name="step.form", novalidate)
+  .row
+    .col-sm-8
+      .form-group
+        label Name
+        input.form-control(
+          type="text"
+          name="name"
+          ng-model="productInfo.name"
+          readonly
+        )
+    .col-sm-4
+      .form-group
+        label Version
+        input.form-control(
+          type="text"
+          name="version"
+          ng-model="productInfo.version"
+          readonly
+        )
+  .row
+    .col-sm-8
+      .form-group
+        label Brand
+        input.form-control(
+          type="text"
+          name="brand"
+          ng-model="productInfo.brand"
+          readonly
+        )
+    .col-sm-4
+      .form-group
+        label ID Number
+        input.form-control(
+          type="text"
+          name="productNumber"
+          ng-model="productInfo.productNumber"
+          readonly
+        )
+  .form-group
+    label
+      | Description 
+      small.text-muted optional
+    textarea.form-control(
+      rows="3"
+      name="description"
+      ng-model="productInfo.description"
+      readonly
+    )
+  .form-group.text-right
+    button.btn.btn-default(type="button", ng-click="showSearchView()")
+      span Cancel
+    button.btn.btn-success(type="button", ng-click="createProduct()", ng-disabled="!step.form.$valid")
+      span Create

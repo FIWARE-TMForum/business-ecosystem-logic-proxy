@@ -1,0 +1,33 @@
+form(name="step.form", novalidate)
+  div(ng-show="assetTypes.length")
+    .form-group
+      .row
+        .col-sm-8
+          label Digital Asset Type
+          select.form-control(name="asset", ng-model="productInfo.productSpecCharacteristic[0].productSpecCharacteristicValue[0].value", ng-change="setCurrentType()")
+            option(ng-repeat="asset in assetTypes", value="{{ asset.name }}") {{ asset.name }}
+        .col-sm-4
+          label How to provide?
+          select.form-control(ng-model="currFormat")
+            option(ng-repeat="format in getCurrentType().formats", value="{{ format }}") {{ format }}
+    .form-group(ng-show="isSelected('URL')")
+      label Asset URL
+      input.form-control(type="url", ng-model="productInfo.productSpecCharacteristic[2].productSpecCharacteristicValue[0].value")
+    .form-group(ng-show="isSelected('FILE')")
+      label Asset File
+      input.form-control(type="file", file-model="assetFile")
+    .form-group
+      label Media Type
+      div(ng-show="!getCurrentType().mediaTypes.length")
+        input.form-control(type="text", ng-model="productInfo.productSpecCharacteristic[1].productSpecCharacteristicValue[0].value")
+      div(ng-show="getCurrentType().mediaTypes.length")
+        select.form-control(ng-model="productInfo.productSpecCharacteristic[1].productSpecCharacteristicValue[0].value")
+          option(ng-repeat="media in getCurrentType().mediaTypes", value="{{ media }}") {{ media }}
+  div(ng-show="!assetTypes.length")
+    .alert.alert-info There isn't any digital asset type supported.
+  .form-group.text-right
+    button.btn.btn-default(type="button", ng-click="showSearchView()")
+      | Cancel
+    button.btn.btn-primary(type="button", ng-click="nextStep($index + 1)", ng-disabled="!step.form.$valid")
+      span Next
+      span.fa.fa-fw.fa-arrow-right

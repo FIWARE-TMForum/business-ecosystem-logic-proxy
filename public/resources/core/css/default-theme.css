@@ -310,6 +310,10 @@ textarea {
     vertical-align: baseline;
 }
 
+.btn > span + .fa.fa-fw {
+    text-align: right;
+}
+
 /* ===================================================================================
  *   COMPONENT - BUTTON TOOLBAR
  * =================================================================================== */
@@ -352,6 +356,10 @@ textarea {
 
 .dropdown-menu .divider {
     margin: 5px 0;
+}
+
+.dropdown-toggle > .fa-stack + span {
+    vertical-align: middle;
 }
 
 /* ===================================================================================
@@ -619,18 +627,17 @@ textarea {
     border-radius: 0;
 }
 .breadcrumb > li + li:before {
-    padding: 0 10px;
     display: inline-block;
-    color: rgb(100, 100, 100);
-    font: normal normal normal 14px/1 FontAwesome;
-    vertical-align: middle;
     content: "\f105";
+    padding: 0 10px;
+    font: normal normal normal 14px/1 FontAwesome;
+    color: rgb(180, 180, 180);
 }
 
 .breadcrumb > li.active > a:first-child {
     cursor: pointer;
     pointer-events: none;
-    color: rgb(100, 100, 100);
+    color: rgb(80, 80, 80);
 }
 
 .breadcrumb-default {
@@ -640,14 +647,6 @@ textarea {
 .breadcrumb-default > li > a {
     position: relative;
     display: inline-block;
-    vertical-align: middle;
-}
-.breadcrumb-default > li > a > * {
-    margin-bottom: 0;
-}
-
-.breadcrumb-default > li > a + a {
-    margin-left: 10px;
 }
 
 .breadcrumb-primary {

@@ -3,7 +3,7 @@
  */
 
 angular.module('app.services')
-    .factory('Product', ['$resource', 'URLS', 'LIFECYCLE_STATUS', 'User', function ($resource, URLS, LIFECYCLE_STATUS, User) {
+    .factory('Product', ['$rootScope', '$resource', 'URLS', 'LIFECYCLE_STATUS', 'EVENTS', 'User', function ($rootScope, $resource, URLS, LIFECYCLE_STATUS, EVENTS, User) {
 
         var serializeProduct = function serializeProduct($product) {
             return {
@@ -17,7 +17,12 @@ angular.module('app.services')
             EVENTS: {
                 FILTER: '$productFilter',
                 FILTERVIEW_SHOW: '$productFilterViewShow',
+                SEARCHVIEW_SHOW: '$productSearchViewShow',
                 UPDATEVIEW_SHOW: '$productUpdateViewShow'
+            },
+
+            MESSAGES: {
+                CREATED: 'The product <strong>{{ name }}</strong> was created successfully.'
             },
 
             STATUS: LIFECYCLE_STATUS,
@@ -90,12 +95,13 @@ angular.module('app.services')
                     relatedParty: [User.serialize()]
                 });
 
-                Product.save(data, function ($catalogueCreated) {
+                Product.save(data, function ($productCreated) {
 
-                    service.$collection.unshift($catalogueCreated);
+                    service.$collection.unshift($productCreated);
+                    $rootScope.$broadcast(EVENTS.MESSAGE_SHOW, 'success', service.MESSAGES.CREATED, $productCreated);
 
                     if (next != null) {
-                        next($catalogueCreated);
+                        next($productCreated);
                     }
                 }, function (response) {
                     // TODO: onfailure.

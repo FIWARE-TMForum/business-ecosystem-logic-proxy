@@ -3,12 +3,10 @@
     ol.breadcrumb.breadcrumb-default
       li.active
         a(ng-click="showSearchView()")
-          span.fa.fa-fw.fa-search
-          span Search Product
+          | Search Product
       li
         a(ng-click="showCreateView()")
-          span.fa.fa-fw.fa-plus
-          span New Product
+          | New Product
   .col-xs-12(ng-hide="!productList.length && !searchFailed")
     .btn-toolbar.pull-right
       .btn-group

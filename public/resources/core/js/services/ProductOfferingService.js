@@ -71,29 +71,43 @@ angular.module('app.services')
 
                         if ($productList.length) {
 
-                            if ($catalogue != null) {
-                                params['catalogueId'] = $catalogue.id;
-                            }
-
                             params['productSpecification.id'] = $productList.map(function ($product) {
                                 products[$product.id] = $product;
                                 return $product.id;
                             }).join();
 
-                            Offering.query(params, function ($collection) {
+                            if ($catalogue != null) {
+                                params['catalogueId'] = $catalogue.id;
+                                CatalogueOffering.query(params, function ($collection) {
 
-                                angular.copy($collection, service.$collection);
+                                    angular.copy($collection, service.$collection);
 
-                                service.$collection.forEach(function ($offering) {
-                                    $offering.productSpecification = products[$offering.productSpecification.id];
+                                    service.$collection.forEach(function ($offering) {
+                                        $offering.productSpecification = products[$offering.productSpecification.id];
+                                    });
+
+                                    if (next != null) {
+                                        next(service.$collection);
+                                    }
+                                }, function (response) {
+                                    // TODO: onfailure.
                                 });
+                            } else {
+                                Offering.query(params, function ($collection) {
 
-                                if (next != null) {
-                                    next(service.$collection);
-                                }
-                            }, function (response) {
-                                // TODO: onfailure.
-                            });
+                                    angular.copy($collection, service.$collection);
+
+                                    service.$collection.forEach(function ($offering) {
+                                        $offering.productSpecification = products[$offering.productSpecification.id];
+                                    });
+
+                                    if (next != null) {
+                                        next(service.$collection);
+                                    }
+                                }, function (response) {
+                                    // TODO: onfailure.
+                                });
+                            }
                         }
                     });
 
@@ -165,6 +179,10 @@ angular.module('app.services')
                 }, function (response) {
                     // TODO: onfailure.
                 });
+            },
+
+            getProductPictureOf: function getProductPictureOf($offering) {
+                return Product.getPictureOf($offering.productSpecification);
             }
 
         };

@@ -13,7 +13,7 @@
         .panel-body
           .label-group
             .label(ng-class="$product.isBundle ? 'label-product-bandle' : 'label-product'")
-              {{ $product.isBundle ? 'Product bandle' : 'Product' }}
+              | {{ $product.isBundle ? 'Product bandle' : 'Product' }}
           .lifecycle-status-group
             .lifecycle-status-item.active(
               data-type="{{ $product.lifecycleStatus | lowercase }}"
