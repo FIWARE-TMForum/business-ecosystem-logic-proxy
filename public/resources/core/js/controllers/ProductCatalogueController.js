@@ -55,7 +55,8 @@ angular.module('app.controllers')
     .controller('CatalogueDetailCtrl', ['$scope', '$rootScope', 'EVENTS', 'PARTY_ROLES', 'Catalogue', 'Offering', function ($scope, $rootScope, EVENTS, PARTY_ROLES, Catalogue, Offering) {
 
         $scope.$catalogue = null;
-        $scope.$catalogueOfferingList = Offering.$collection;
+        $scope.catalogueOfferingList = Offering.$collection;
+        $scope.catalogueOfferingListWaiting = false;
 
         $scope.tabs = [
             {title: 'Offerings', icon: 'fa-cube'},
@@ -82,6 +83,10 @@ angular.module('app.controllers')
             });
         };
 
+        $scope.getProductPicture = function getProductPicture($offering) {
+            return Offering.getProductPictureOf($offering);
+        };
+
         $scope.$on(EVENTS.CATALOGUE_SHOW, function (event, $catalogue) {
 
             if (!$scope.$catalogue) {
@@ -89,7 +94,10 @@ angular.module('app.controllers')
             }
 
             $scope.$catalogue = $catalogue;
-            Offering.list($catalogue);
+            $scope.catalogueOfferingListWaiting = true;
+            Offering.list($catalogue, function () {
+                $scope.catalogueOfferingListWaiting = false;
+            });
         });
     }])
     .controller('CatalogueCreateCtrl', ['$scope', '$rootScope', 'EVENTS', 'Catalogue', '$element', function ($scope, $rootScope, EVENTS, Catalogue, $element) {
