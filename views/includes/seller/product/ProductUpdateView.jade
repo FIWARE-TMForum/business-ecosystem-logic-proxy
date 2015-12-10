@@ -3,13 +3,13 @@
     ol.breadcrumb.breadcrumb-default
       li
         a(ng-click="showSearchView()")
-          h4 Search Product
+          | Search Product
       li
         a(ng-click="showCreateView()")
-          h4 New Product
+          | New Product
       li.active
-        a
-          h4 {{ $product.name }}
+        a(ng-click="showUpdateView($product)")
+          | {{ $product.name }}
   .col-sm-3
     .panel.panel-default
       .panel-heading
