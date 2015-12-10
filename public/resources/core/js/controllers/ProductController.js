@@ -121,10 +121,10 @@ angular.module('app.controllers')
         };
 
         $scope.stepList = [
-            {name: 'General'},
-            {name: 'Characteristics'},
-            {name: 'Assets'},
-            {name: 'Finish'}
+            {title: 'General', templateUrl: 'seller/product-create-general-view'},
+            //{name: 'Characteristics'},
+            {title: 'Assets', templateUrl: 'seller/product-create-assets-view'},
+            {title: 'Finish', templateUrl: 'seller/product-create-finish-view'}
         ];
 
         $scope.setStepDisabled = function setStepDisabled($index) {
@@ -135,9 +135,6 @@ angular.module('app.controllers')
             $scope.stepActive = $index;
             $scope.stepValid = $index;
         };
-
-        $scope.stepActive = 0;
-        $scope.stepValid = 0;
 
         $scope.showStep = function showStep($index) {
             $scope.stepActive = $index;
@@ -164,13 +161,12 @@ angular.module('app.controllers')
             return $scope.currFormat === format;
         };
 
-        var saveProduct = function() {
+        var saveProduct = function saveProduct() {
             Product.create($scope.productInfo, function ($productCreated) {
-                $element.modal('hide');
-                $rootScope.$broadcast(EVENTS.MESSAGE_SHOW, 'success', 'The product <strong>{{ name }}</strong> was successfully created.', $productCreated);
-                $rootScope.$broadcast(EVENTS.PRODUCT_CREATE, $productCreated);
+                $rootScope.$broadcast(Product.EVENTS.SEARCHVIEW_SHOW);
             });
         };
+
         $scope.createProduct = function createProduct() {
             // If the format is file upload it to the asset manager
             if ($scope.currFormat === 'FILE') {
@@ -197,15 +193,13 @@ angular.module('app.controllers')
         };
 
         $scope.resetCreateForm = function resetCreateForm() {
-            activeTab = 1;
+            $scope.stepActive = 0;
+            $scope.stepValid = 0;
             $scope.productInfo = angular.copy(initialInfo);
-        };
 
-        $scope.$on(EVENTS.PRODUCT_CREATEFORM_SHOW, function ($event, $productBundleList) {
-            AssetType.list(function(types) {
+            AssetType.list(function (types) {
                 $scope.assetTypes = types;
-                $scope.resetCreateForm();
-                angular.copy($productBundleList, $scope.productInfo.bundledProductSpecification);
+
                 if (types.length) {
                     includeCharacteristic('Asset type', 'Type of the digital asset described in this product specification', '');
                     includeCharacteristic('Media type', 'Media type of the digital asset described in this product specification', '');
@@ -214,9 +208,8 @@ angular.module('app.controllers')
                     $scope.currFormat = currentType.formats[0];
                     $scope.productInfo.productSpecCharacteristic[0].productSpecCharacteristicValue[0].value = types[0].name;
                 }
-                $element.modal('show');
             });
-        });
+        };
 
         $scope.resetCreateForm();
     }])
@@ -262,6 +255,10 @@ angular.module('app.controllers')
             $scope.routeActive = '/update';
             $rootScope.$broadcast(Product.EVENTS.UPDATEVIEW_SHOW, $product);
         };
+
+        $scope.$on(Product.EVENTS.SEARCHVIEW_SHOW, function ($event) {
+            $scope.showSearchView();
+        });
 
         $scope.showSearchView();
     }]);
