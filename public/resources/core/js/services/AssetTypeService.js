@@ -23,6 +23,6 @@ angular.module('app.services')
             }
         };
 
-        AssetType = $resource(URLS.ASSET_TYPE, {typeId: '@id'});
+        AssetType = $resource(URLS.ASSET_MANAGEMENT + '/assetTypes/:typeId', {typeId: '@id'});
         return service;
     }]);

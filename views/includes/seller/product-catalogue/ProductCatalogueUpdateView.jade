@@ -25,6 +25,8 @@
                       required
                       ng-minlength="5"
                       ng-maxlength="30"
+                      field-unique="Catalogue"
+                      field-original-value="{{ $catalogueOriginal.name }}"
                     )
                     .help-block(
                       ng-messages="catalogueUpdateForm.name.$error"
@@ -33,6 +35,7 @@
                       span(ng-message="required") This field is required.
                       span(ng-message="minlength") This field must contain at least 5 chars.
                       span(ng-message="maxlength") This field must not exceed 30 chars.
+                      span(ng-message="unique") This name is already taken.
                   .form-group
                     label
                       | Description 

@@ -14,6 +14,14 @@ angular.module('app.services')
 
         var Product, service = {
 
+            EVENTS: {
+                FILTER: '$productFilter',
+                FILTERVIEW_SHOW: '$productFilterViewShow',
+                UPDATEVIEW_SHOW: '$productUpdateViewShow'
+            },
+
+            STATUS: LIFECYCLE_STATUS,
+
             TYPES: {
                 PRODUCT: 'Product',
                 PRODUCT_BUNDLE: 'Product Bundle'
@@ -21,34 +29,42 @@ angular.module('app.services')
 
             $collection: [],
 
-            list: function list(next) {
-                var params = {'relatedParty.id': User.getID()};
+            list: function list() {
+                var next, wasSearch = false, params = {};
 
-                Product.query(params, function ($collection) {
+                switch (User.getRole()) {
+                case User.ROLES.CUSTOMER:
+                    break;
+                case User.ROLES.SELLER:
+                    params['relatedParty.id'] = User.getID();
+                    break;
+                }
 
-                    angular.copy($collection, service.$collection);
+                if (arguments.length > 0) {
+                    if (angular.isFunction(arguments[0])) {
+                        next = arguments[0];
+                    } else {
+                        if (angular.isObject(arguments[0])) {
 
-                    if (next != null) {
-                        next(service.$collection);
+                            var filters = arguments[0];
+
+                            if (filters.type in service.TYPES) {
+                                params.isBundle = (service.TYPES[filters.type] !== service.TYPES.PRODUCT);
+                                wasSearch = true;
+                            }
+
+                            if ('status' in filters && filters.status.length) {
+                                params.lifecycleStatus = filters.status.join();
+                                wasSearch = true;
+                            }
+                        }
+
+                        if (arguments.length > 1) {
+                            if (angular.isFunction(arguments[1])) {
+                                next = arguments[1];
+                            }
+                        }
                     }
-                }, function (response) {
-                    // TODO: onfailure.
-                });
-            },
-
-            filter: function filter(userQuery, next) {
-                var params = {'relatedParty.id': User.getID()};
-
-                if (userQuery.type in service.TYPES) {
-                    params.isBundle = (service.TYPES[userQuery.type] !== service.TYPES.PRODUCT);
-                }
-
-                if (userQuery.status in LIFECYCLE_STATUS) {
-                    params.lifecycleStatus = LIFECYCLE_STATUS[userQuery.status];
-                }
-
-                if (userQuery.brand) {
-                    params.brand = userQuery.brand;
                 }
 
                 Product.query(params, function ($collection) {
@@ -56,7 +72,7 @@ angular.module('app.services')
                     angular.copy($collection, service.$collection);
 
                     if (next != null) {
-                        next(service.$collection);
+                        next(service.$collection, wasSearch);
                     }
                 }, function (response) {
                     // TODO: onfailure.
@@ -99,6 +115,20 @@ angular.module('app.services')
                 }, function (response) {
                     // TODO: onfailure.
                 });
+            },
+
+            getPictureOf: function getPictureOf($product) {
+                var i, src = "";
+
+                if ('attachment' in $product) {
+                    for (i = 0; i < $product.attachment.length && !src.length; i++) {
+                        if ($product.attachment[i].type == 'Picture') {
+                            src = $product.attachment[i].url;
+                        }
+                    }
+                }
+
+                return src;
             },
 
             getBundledProductsOf: function getBundledProductsOf($product, next) {

@@ -12,7 +12,7 @@ angular.module('app')
         case 'Seller':
             $routeProvider
                 .when('/products', {
-                    templateUrl: URLS.TEMPLATE + '/ProductView.html',
+                    templateUrl: 'seller/product-view',
                     controller: 'ProductView'
                 })
                 .when('/catalogues', {

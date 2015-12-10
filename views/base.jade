@@ -16,11 +16,11 @@ html(lang="en")
     script.
       angular.module('app', ['ngRoute', 'ngResource', 'ngMessages', 'angularMoment', 'app.services', 'app.controllers'])
         .constant('URLS', {
+          IMAGE: '#{ contextPath }/resources/core/images',
           TEMPLATE: '#{ contextPath }/resources/core/templates',
-          CATALOGUE_MANAGEMENT: '#{ proxyPath }/DSProductCatalog/api/catalogManagement/v2',
-          ASSET_TYPE: '#{ proxyPath }/charging/api/assetManagement/assetTypes/:typeId',
-          ASSET: '#{ proxyPath }/charging/api/assetManagement/assets/uploadJob',
-          USER: '#{ proxyPath }/charging/api/userManagement/users/:username'
+          USER: '#{ proxyPath }/charging/api/userManagement/users/:username',
+          ASSET_MANAGEMENT: '#{ proxyPath }/charging/api/assetManagement',
+          CATALOGUE_MANAGEMENT: '#{ proxyPath }/DSProductCatalog/api/catalogManagement/v2'
         });
 
     if user
@@ -108,8 +108,9 @@ html(lang="en")
 
     if user
       form(name="signOutForm", method="post", action="#{ contextPath }/logout")
+      include ./includes/UserProfile.jade
 
-    include ./includes/UserProfile.jade
-
+    script(type="text/ng-template", id="seller/product-view")
+      include ./includes/seller/product/ProductView.jade
     script(type="text/ng-template", id="seller/catalogue-view")
-      include ./includes/seller/ProductCatalogueView.jade
+      include ./includes/seller/product-catalogue/ProductCatalogueView.jade

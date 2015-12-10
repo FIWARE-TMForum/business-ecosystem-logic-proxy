@@ -1,0 +1,29 @@
+.row(ng-controller="ProductListCtrl")
+  .col-sm-12(ng-if="productList.length")
+    .flex-container
+      .panel.panel-default.item-product(ng-repeat="$product in productList")
+        .panel-heading
+          .thumbnail.item-product-logo
+            img(no-image, ng-src="{{ getProductPicture($product) }}")
+          a.panel-title(ng-click="showUpdateView($product)") {{ $product.name }}
+          .panel-subtitle
+            span v{{ $product.version }}
+            span.pull-right
+              time(am-time-ago="$product.lastUpdate")
+        .panel-body
+          .label-group
+            .label(ng-class="$product.isBundle ? 'label-product-bandle' : 'label-product'")
+              {{ $product.isBundle ? 'Product bandle' : 'Product' }}
+          .lifecycle-status-group
+            .lifecycle-status-item.active(
+              data-type="{{ $product.lifecycleStatus | lowercase }}"
+              data-title="{{ $product.lifecycleStatus }}"
+            )
+              span.status
+    ul.pager
+      li.disabled
+        a
+          i.fa.fa-arrow-left
+      li.disabled
+        a
+          i.fa.fa-arrow-right

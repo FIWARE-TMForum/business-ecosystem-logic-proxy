@@ -1,0 +1,51 @@
+.row
+  .col-sm-12(ng-controller="CatalogueDetailCtrl")
+    div(ng-if="$catalogue != null")
+      .panel.panel-default
+        .panel-heading
+          .panel-title {{ $catalogue.name }}
+          .panel-subtitle
+            | Updated 
+            time(am-time-ago="$catalogue.lastUpdate")
+          .panel-options.static-right(ng-if="hasRoleAsOwner()")
+            button.btn.btn-sm.btn-default(type="button", ng-click="showUpdateForm()")
+              i.fa.fa-fw.fa-cog
+              | &nbsp;Settings
+        .panel-body
+          blockquote(ng-if="$catalogue.description")
+            p {{ $catalogue.description }}
+          .lifecycle-status-group.no-user-select(ng-class="{ 'readonly' : !hasRoleAsOwner() }")
+            .lifecycle-status-item(
+              ng-repeat="status in LIFECYCLE_STATUS_LIST"
+              data-type="{{ status.id | lowercase }}"
+              data-title="{{ status.title }}"
+              ng-class="{ 'active' : $catalogue.lifecycleStatus == status.title }"
+              ng-click="updateStatus(status.title)"
+            )
+              span.status
+          ul.nav.nav-pills.nav-justified
+            li(
+              ng-repeat="tab in tabs"
+              ng-class="{ 'active' : $index == tabActive }"
+            )
+              a(ng-click="showView($index)")
+                i.fa.fa-fw(ng-class="'{{ tab.icon }}'")
+                | &nbsp;{{ tab.title }}
+      div(ng-switch="tabActive")
+        div(ng-switch-when="0")
+          .alert.alert-info.text-center(ng-if="!$catalogueOfferingList.length")
+            | No offerings created yet.
+        div(ng-switch-when="1")
+          table.table.table-bordered
+            thead
+              tr
+                th Username
+                th Owner
+                th Seller
+            tbody
+              tr(ng-repeat="$party in $catalogue.relatedParty")
+                td {{ $party.id }}
+                td.text-success
+                  i.fa.fa-check-circle-o(ng-if="$party.role == 'Owner'")
+                td.text-success
+                  i.fa.fa-check-circle-o(ng-if="$party.role == 'Seller'")

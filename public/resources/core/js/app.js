@@ -4,9 +4,6 @@
 
 angular.module('app')
     .constant('EVENTS', {
-        PRODUCT_CREATE: '$productCreate',
-        PRODUCT_CREATEFORM_SHOW: '$productCreateFormShow',
-        PRODUCT_UPDATEFORM_SHOW: '$productUpdateFormShow',
         OFFERING_CREATE: '$offeringCreate',
         CATALOGUE_SHOW: '$catalogueShow',
         CATALOGUE_SELECT: '$catalogueSelect',
@@ -54,18 +51,46 @@ angular.module('app')
             }
         }
     }])
-    .directive('ensureUnique', ['$http', '$injector', function ($http, $injector) {
+    .directive('noImage', ['URLS', function (URLS) {
+
+        var setDefaultImage = function setDefaultImage(element) {
+            element.attr('src', URLS.IMAGE + '/default-no-image.png');
+        };
+
+        return {
+            restrict: 'A',
+            link: function link(scope, element, attrs) {
+
+                scope.$watch(function () {
+                    return attrs.ngSrc;
+                }, function () {
+
+                    if (!attrs.ngSrc) {
+                        setDefaultImage(element);
+                    }
+                });
+
+                element.bind('error', function () {
+                    setDefaultImage(element);
+                });
+            }
+        };
+    }])
+    .directive('fieldUnique', ['$http', '$injector', function ($http, $injector) {
         return {
             require: 'ngModel',
             link: function (scope, element, attrs, controller) {
                 scope.$watch(attrs.ngModel, function (newValue) {
                     var params = {};
 
-                    if (newValue && $injector.has(attrs.ensureUnique)) {
-                        params[attrs.name] = newValue;
-                        $injector.get(attrs.ensureUnique).find(params, function ($collection) {
-                            controller.$setValidity('unique', !$collection.length);
-                        }, false);
+                    if (newValue && $injector.has(attrs.fieldUnique)) {
+                        if (attrs.fieldOriginalValue != newValue) {
+                            params[attrs.name] = newValue;
+
+                            $injector.get(attrs.fieldUnique).find(params, function ($collection) {
+                                controller.$setValidity('unique', !$collection.length);
+                            }, false);
+                        }
                     }
                 });
             }

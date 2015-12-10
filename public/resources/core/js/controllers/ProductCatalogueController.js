@@ -55,15 +55,16 @@ angular.module('app.controllers')
     .controller('CatalogueDetailCtrl', ['$scope', '$rootScope', 'EVENTS', 'PARTY_ROLES', 'Catalogue', 'Offering', function ($scope, $rootScope, EVENTS, PARTY_ROLES, Catalogue, Offering) {
 
         $scope.$catalogue = null;
-        $scope.activeView = 'OfferingView';
         $scope.$catalogueOfferingList = Offering.$collection;
 
-        $scope.showOfferingView = function showOfferingView() {
-            $scope.activeView = 'OfferingView';
-        };
+        $scope.tabs = [
+            {title: 'Offerings', icon: 'fa-cube'},
+            {title: 'Parties', icon: 'fa-user'}
+        ];
+        $scope.tabActive = 0;
 
-        $scope.showPartyView = function showPartyView() {
-            $scope.activeView = 'PartyView';
+        $scope.showView = function showView($index) {
+            $scope.tabActive = $index;
         };
 
         $scope.showUpdateForm = function showUpdateForm() {
@@ -82,7 +83,11 @@ angular.module('app.controllers')
         };
 
         $scope.$on(EVENTS.CATALOGUE_SHOW, function (event, $catalogue) {
-            $scope.showOfferingView();
+
+            if (!$scope.$catalogue) {
+                $scope.showView(0);
+            }
+
             $scope.$catalogue = $catalogue;
             Offering.list($catalogue);
         });
@@ -130,6 +135,8 @@ angular.module('app.controllers')
 
         $scope.$on(EVENTS.CATALOGUE_UPDATEFORM_SHOW, function ($event, $catalogue) {
             angular.copy($catalogue, $scope.$catalogue);
+            $scope.$catalogueOriginal = $catalogue;
+
             $scope.showTab(0);
             $element.modal('show');
         });

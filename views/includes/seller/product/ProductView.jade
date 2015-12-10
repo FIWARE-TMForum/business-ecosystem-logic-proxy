@@ -1,0 +1,11 @@
+.row(ng-switch="routeActive")
+  .col-xs-12
+    .row(ng-controller="ProductSearchCtrl")
+      .col-xs-12(ng-switch-when="/search")
+        include ./ProductSearchView.jade
+    .row(ng-controller="ProductCreateCtrl")
+      .col-xs-12(ng-switch-when="/create")
+        include ./ProductCreateView.jade
+    .row(ng-controller="ProductUpdateCtrl")
+      .col-sm-12(ng-switch-when="/update")
+        include ./ProductUpdateView.jade
