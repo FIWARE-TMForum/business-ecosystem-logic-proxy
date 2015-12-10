@@ -11,6 +11,10 @@ angular.module('app.controllers')
             $rootScope.$broadcast(EVENTS.PROFILE_UPDATE);
         };
 
+        $scope.isAuthenticated = function isAuthenticated() {
+            return User.isAuthenticated();
+        };
+
         $scope.signOut = function signOut() {
             return document.signOutForm.submit();
         };

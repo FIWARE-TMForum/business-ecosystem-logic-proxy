@@ -54,6 +54,16 @@ html(lang="en")
               li.dropdown
                 a.dropdown-toggle(data-toggle="dropdown")
                   span.fa-stack
+                    i.fa.fa-circle.fa-stack-2x
+                    i.fa.fa-shopping-cart.fa-stack-1x.fa-inverse
+                  span &nbsp;Shopping Cart&nbsp;
+                  span.label.label-success 0
+                ul.dropdown-menu
+                  li.dropdown-header.text-center
+                    | Your shopping cart is empty.
+              li.dropdown
+                a.dropdown-toggle(data-toggle="dropdown")
+                  span.fa-stack
                     i.fa.fa-circle-thin.fa-stack-2x
                     i.fa.fa-user.fa-stack-1x
                   | &nbsp;#{ user.displayName }
