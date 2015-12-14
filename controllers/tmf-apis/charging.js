@@ -5,7 +5,7 @@ var log = require('./../../lib/logger').logger.getLogger("Root");
 
 var charging = (function() {
 
-    var checkPermissions = function (req, callback, callbackError) {
+    var checkPermissions = function (req, callback) {
         log.info('Redirecting to charging backend APIs');
         callback();
     };

@@ -17,7 +17,7 @@ var ordering = (function(){
             var party = resourceInfo.relatedParty[i];
 
             if (party.role.toLowerCase() === 'customer'
-                && userInfo.id === party.id) {
+                    && userInfo.id === party.id) {
 
                 isCust = true;
             }
@@ -36,6 +36,7 @@ var ordering = (function(){
         try {
             body = JSON.parse(req.body);
         } catch (e) {
+
             callback({
                 status: 400,
                 message: 'The resource is not a valid JSON document'
@@ -46,23 +47,26 @@ var ordering = (function(){
 
         // Check that the related party field has been included
         if (!body.relatedParty) {
+
             callback({
                 status: 400,
                 message: 'A product order must contain a relatedParty field'
             });
+
             return;
         }
 
         // Check that the user has the customer role or is an admin
         if (!tmfUtils.checkRole(req.user, config.oauth2.roles.admin)
-            && !tmfUtils.checkRole(req.user, config.oauth2.roles.customer)) {
-                callback({
-                    status: 403,
-                    message: 'You are not authorized to order products'
-                });
+                && !tmfUtils.checkRole(req.user, config.oauth2.roles.customer)) {
 
-                return; // EXIT
-            }
+            callback({
+                status: 403,
+                message: 'You are not authorized to order products'
+            });
+
+            return; // EXIT
+        }
 
         // Check that the user is the specified customer
         if (!isOrderingCustomer(req.user, body)) {
@@ -80,7 +84,7 @@ var ordering = (function(){
     var validateUpdate = function(req, callback) {
         callback({
             status: 501,
-            message: "The update of product orders is not yet supported"
+            message: 'The update of product orders is not yet supported'
         })
     };
 
@@ -107,14 +111,19 @@ var ordering = (function(){
     var executePostValidation = function(req, callback) {
         // Send ordering notification to the store
         storeClient.notifyOrder(JSON.parse(req.body), req.user, function(err, res) {
+
             if(res) {
+
                 var parsedResp = JSON.parse(res.body);
 
                 res.extraHdrs = {
                     'X-Redirect-URL': parsedResp.redirectUrl
                 };
+
                 callback(null, res);
+
             } else {
+
                 callback(err, res);
             }
         });
