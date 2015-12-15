@@ -14,6 +14,13 @@ angular.module('app')
         MESSAGE_SHOW: '$messageShow',
         PROFILE_UPDATE: '$profileUpdate'
     })
+    .config(function($locationProvider) {
+        // Configure location module
+        $locationProvider.html5Mode({
+            enabled: true,
+            requireBase: false
+        });
+    })
     .constant('PARTY_ROLES', {
         OWNER: 'Owner',
         SELLER: 'Seller'

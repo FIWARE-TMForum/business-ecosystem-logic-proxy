@@ -1,0 +1,12 @@
+extends ./base.jade
+
+block title
+  | &nbsp;- Payment
+
+block navbar-title
+  | Payment
+
+block content
+  .row(ng-controller="PaymentController")
+     .col-sm-12
+       div.alert(ng-class="accepted ? 'alert-info' : 'alert-danger'") {{ status }}

@@ -20,7 +20,8 @@ html(lang="en")
           TEMPLATE: '#{ contextPath }/resources/core/templates',
           USER: '#{ proxyPath }/charging/api/userManagement/users/:username',
           ASSET_MANAGEMENT: '#{ proxyPath }/charging/api/assetManagement',
-          CATALOGUE_MANAGEMENT: '#{ proxyPath }/DSProductCatalog/api/catalogManagement/v2'
+          CATALOGUE_MANAGEMENT: '#{ proxyPath }/DSProductCatalog/api/catalogManagement/v2',
+          PAYMENT: '#{ proxyPath }/charging/api/orderManagement/orders/executeJob'
         });
 
     if user
