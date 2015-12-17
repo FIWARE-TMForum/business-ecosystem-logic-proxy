@@ -103,7 +103,7 @@ block content
               .panel-body
               .btn-toolbar(ng-if="isAuthenticated()")
                 .btn-group.btn-group-sm
-                  button.btn.btn-primary(type="button") Add to Cart
+                  button.btn.btn-primary(type="button", ng-click="orderItem($offering)") Add to Cart
           ul.pager
             li.disabled
               a

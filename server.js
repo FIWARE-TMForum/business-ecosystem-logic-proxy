@@ -192,6 +192,7 @@ var jsDepFilesToInject = [
 
 var jsAppFilesToInject = [
     'app.js',
+    'services/PaymentService.js',
     'services/UserService.js',
     'services/ProductService.js',
     'services/ProductOfferingService.js',
@@ -199,6 +200,7 @@ var jsAppFilesToInject = [
     'services/ProductCategoryService.js',
     'services/AssetService.js',
     'services/AssetTypeService.js',
+    'controllers/PaymentController.js',
     'controllers/MessageController.js',
     'controllers/UserController.js',
     'controllers/ProductController.js',
@@ -238,6 +240,9 @@ app.get(config.portalPrefix + '/mystock', ensureAuthenticated, function(req, res
     renderTemplate(req, res, 'mystock-content', 'Seller');
 });
 
+app.get(config.portalPrefix + '/payment', ensureAuthenticated, function(req, res) {
+    renderTemplate(req, res, 'payment-content', 'Customer');
+});
 
 /////////////////////////////////////////////////////////////////////
 //////////////////////////////// APIs ///////////////////////////////

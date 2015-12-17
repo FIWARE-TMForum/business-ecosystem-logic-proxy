@@ -22,6 +22,10 @@ angular.module('app.controllers')
         $scope.filterList = function filterList() {
             Offering.filter($scope.filters, function ($offeringList) {});
         };
+
+        $scope.orderItem = function orderItem(offering) {
+            $rootScope.$broadcast(EVENTS.ORDER_ADDITION, offering);
+        };
     }])
     .controller('OfferingCreateCtrl', ['$scope', '$rootScope', 'EVENTS', 'PARTY_ROLES', 'Offering', '$element', 'Product', 'Catalogue', function ($scope, $rootScope, EVENTS, PARTY_ROLES, Offering, $element, Product, Catalogue) {
         var initialInfo = {version: '0.1', productSpecification: null};
