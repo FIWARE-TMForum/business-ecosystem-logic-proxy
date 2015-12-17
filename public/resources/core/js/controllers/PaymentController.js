@@ -28,7 +28,7 @@ angular.module('app.controllers')
 
             if (action === 'accept') {
                 data.paymentId = params.paymentId;
-                data.payerId = params.PayerId;
+                data.payerId = params.PayerID;
             }
 
             // Make request to the backend
