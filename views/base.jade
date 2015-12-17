@@ -21,7 +21,7 @@ html(lang="en")
           USER: '#{ proxyPath }/charging/api/userManagement/users/:username',
           ASSET_MANAGEMENT: '#{ proxyPath }/charging/api/assetManagement',
           CATALOGUE_MANAGEMENT: '#{ proxyPath }/DSProductCatalog/api/catalogManagement/v2',
-          PAYMENT: '#{ proxyPath }/charging/api/orderManagement/orders/executeJob'
+          PAYMENT: '#{ proxyPath }/charging/api/orderManagement/orders/:action'
         });
 
     if user

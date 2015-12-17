@@ -5,7 +5,7 @@ angular.module('app.services')
         var Payment, service = {
 
             create: function create(data, next, err) {
-                return Payment.save(data, function ($resp) {
+                return Payment.save({action: data.action}, data, function ($resp) {
                     if (next != null) {
                         next($resp);
                     }
