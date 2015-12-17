@@ -75,4 +75,38 @@ angular.module('app.controllers')
                 $element.modal('show');
             });
         });
+    }])
+    .controller('ShoppingCardCtrl', ['$scope', 'EVENTS', function($scope, EVENTS) {
+        var cart = [];
+
+        var searchOffering = function searchOffering(offering) {
+            var found = false;
+            var index = -1;
+            for (var i = 0; i < cart.length && !found; i++) {
+                if (cart[i].id === offering.id) {
+                    found = true;
+                    index = i;
+                }
+            }
+            return index;
+        };
+
+        $scope.getShoppingCart = function getShoppingCart() {
+            return cart;
+        };
+
+        $scope.createOrder = function createOrder() {
+
+        };
+
+        $scope.removeItem = function removeItem(offering) {
+            cart.splice(searchOffering(offering), 1);
+        };
+
+        $scope.$on(EVENTS.ORDER_ADDITION, function(event, offering) {
+            if (searchOffering(offering) === -1) {
+                cart.push(offering);
+            }
+        });
+
     }]);

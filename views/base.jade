@@ -52,16 +52,26 @@ html(lang="en")
             block navbar-title
           if user
             ul.nav.navbar-nav.navbar-right
-              li.dropdown
+              li.dropdown(ng-controller="ShoppingCardCtrl")
                 a.dropdown-toggle(data-toggle="dropdown")
                   span.fa-stack
                     i.fa.fa-circle.fa-stack-2x
                     i.fa.fa-shopping-cart.fa-stack-1x.fa-inverse
                   span &nbsp;Shopping Cart&nbsp;
-                  span.label.label-success 0
+                  span.label.label-success {{ getShoppingCart().length }}
                 ul.dropdown-menu
-                  li.dropdown-header.text-center
+                  li.dropdown-header.text-center(ng-show="!getShoppingCart().length")
                     | Your shopping cart is empty.
+                  li(ng-repeat="offering in getShoppingCart()")
+                    a
+                      i.fa.fa-cube
+                      | &nbsp;{{ offering.name }}
+                      i.fa.fa-close.float-right(ng-click="removeItem(offering)")
+                  li.divider(ng-show="getShoppingCart().length")
+                  li(ng-show="getShoppingCart().length")
+                    a
+                      i.fa.fa-paypal
+                      | &nbsp;Make order
               li.dropdown
                 a.dropdown-toggle(data-toggle="dropdown")
                   span.fa-stack

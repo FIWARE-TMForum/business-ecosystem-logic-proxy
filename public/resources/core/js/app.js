@@ -12,7 +12,8 @@ angular.module('app')
         CATEGORY_SHOW: '$categoryShow',
         CATEGORY_SELECT: '$categorySelect',
         MESSAGE_SHOW: '$messageShow',
-        PROFILE_UPDATE: '$profileUpdate'
+        PROFILE_UPDATE: '$profileUpdate',
+        ORDER_ADDITION: '$orderAddition'
     })
     .constant('PARTY_ROLES', {
         OWNER: 'Owner',
