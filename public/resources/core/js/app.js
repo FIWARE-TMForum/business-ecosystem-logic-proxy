@@ -4,14 +4,7 @@
 
 angular.module('app')
     .constant('EVENTS', {
-        OFFERING_CREATE: '$offeringCreate',
-        CATALOGUE_SHOW: '$catalogueShow',
-        CATALOGUE_SELECT: '$catalogueSelect',
-        CATALOGUE_CREATEFORM_SHOW: '$catalogueCreateFormShow',
-        CATALOGUE_UPDATEFORM_SHOW: '$catalogueUpdateFormShow',
-        CATEGORY_SHOW: '$categoryShow',
-        CATEGORY_SELECT: '$categorySelect',
-        MESSAGE_SHOW: '$messageShow',
+        MESSAGE_SHOW: '$flashMessageShow',
         PROFILE_UPDATE: '$profileUpdate',
         ORDER_ADDITION: '$orderAddition'
     })
@@ -25,12 +18,6 @@ angular.module('app')
         RETIRED: 'Retired',
         OBSOLETE: 'Obsolete'
     })
-    .constant('LIFECYCLE_STATUS_LIST', [
-        {id: 'ACTIVE', title: 'Active'},
-        {id: 'LAUNCHED', title: 'Launched'},
-        {id: 'RETIRED', title: 'Retired'},
-        {id: 'OBSOLETE', title: 'Obsolete'}
-    ])
     .directive('bsTooltip', function () {
         return {
             restrict: 'A',
@@ -52,9 +39,9 @@ angular.module('app')
             }
         }
     }])
-    .directive('noImage', ['URLS', function (URLS) {
+    .directive('noImage', function (URLS) {
 
-        var setDefaultImage = function setDefaultImage(element) {
+        var setDefaultImage = function (element) {
             element.attr('src', URLS.IMAGE + '/default-no-image.png');
         };
 
@@ -76,11 +63,12 @@ angular.module('app')
                 });
             }
         };
-    }])
-    .directive('fieldUnique', ['$http', '$injector', function ($http, $injector) {
+    })
+    .directive('fieldUnique', function ($http, $injector) {
         return {
             require: 'ngModel',
             link: function (scope, element, attrs, controller) {
+
                 scope.$watch(attrs.ngModel, function (newValue) {
                     var params = {};
 
@@ -88,15 +76,12 @@ angular.module('app')
                         if (attrs.fieldOriginalValue != newValue) {
                             params[attrs.name] = newValue;
 
-                            $injector.get(attrs.fieldUnique).find(params, function ($collection) {
-                                controller.$setValidity('unique', !$collection.length);
-                            }, false);
+                            $injector.get(attrs.fieldUnique).exists(params).then(function (found) {
+                                controller.$setValidity('unique', !found);
+                            });
                         }
                     }
                 });
             }
         };
-    }]);
-
-angular.module('app.services', []);
-angular.module('app.controllers', []);
+    });

@@ -1,0 +1,136 @@
+.navbar.navbar-default.navbar-static-top
+  .container
+    .navbar-header
+      a.navbar-brand(ui-sref="app")
+        img(src="#{ contextPath }/resources/core/images/fiware-tmforum-logo.png")
+    .navbar-text.h3 {{ title }}
+
+    if user
+      ul.nav.navbar-nav.navbar-right
+        li.dropdown(ng-controller="ShoppingCardCtrl")
+          a.dropdown-toggle(data-toggle="dropdown")
+            span.fa-stack
+              i.fa.fa-shopping-cart.fa-stack-2x
+            span.hidden-xs Shopping Cart
+            span.label.label-success {{ getShoppingCart().length }}
+          .dropdown-menu
+            .dropdown-header.text-uppercase My Shopping Cart
+            li.dropdown-header.text-center(ng-show="!getShoppingCart().length")
+              | Your shopping cart is empty.
+            li(ng-repeat="offering in getShoppingCart()")
+              a
+                i.fa.fa-cube
+                | &nbsp;{{ offering.name }}
+                i.fa.fa-close.float-right(ng-click="removeItem(offering)")
+            li.divider(ng-show="getShoppingCart().length")
+            li(ng-show="getShoppingCart().length")
+              a
+                i.fa.fa-paypal
+                | &nbsp;Make order
+        li.dropdown
+          a.dropdown-toggle(data-toggle="dropdown")
+            span.fa-stack
+              i.fa.fa-circle-thin.fa-stack-2x
+              i.fa.fa-user.fa-stack-1x
+            span.hidden-xs #{ user.displayName }
+          .dropdown-menu
+            .dropdown-header.inverse.text-center
+              span.fa-stack.fa-3x
+                i.fa.fa-circle.fa-stack-2x
+                i.fa.fa-user.fa-inverse.fa-stack-1x
+              p #{ user.displayName }
+              p.small #{ user.email }
+            .hidden-md.hidden-lg
+              .dropdown-header
+                strong.text-uppercase My Stock
+              a.dropdown-menu-item(ui-sref="app.stock.catalogue", ui-sref-active="active")
+                span.item-icon.fa.fa-book
+                span.item-text Catalogues
+              a.dropdown-menu-item(ui-sref="app.stock.product", ui-sref-active="active")
+                span.item-icon.fa.fa-file
+                span.item-text Products
+              a.dropdown-menu-item(ui-sref="app.stock.offering", ui-sref-active="active")
+                span.item-icon.fa.fa-cube
+                span.item-text Offerings
+            .dropdown-header
+              strong.text-uppercase My Account
+            a.dropdown-menu-item(ng-click="updateProfile()")
+              span.item-icon.fa.fa-cog
+              span.item-text Settings
+            a.dropdown-menu-item(ng-click="signOut()")
+              span.item-icon.fa.fa-sign-out
+              span.item-text Sign out
+    else
+      a.btn.btn-primary.navbar-btn.navbar-right(href="#{ contextPath }/login")
+        span.item-icon.fa.fa-sign-in
+        span.item-text.hidden-xs Sign in
+
+.notification-list(ng-controller="MessageListCtrl")
+  .container(ng-messages="$alert", ng-if="!hidden")
+    .alert.alert-success(ng-message="success")
+      button.close(type="button", ng-click="resetAlert()")
+        i.fa.fa-remove.fa-fw
+      span.alert-message(ng-bind-html="$alert.message")
+
+.container
+  .row
+    .col-md-3.hidden-xs.hidden-sm
+      .row
+        .panel.panel-default
+          ul.nav.nav-pills.nav-stacked
+            li(ui-sref-active="active")
+              a(ui-sref="app.offering")
+                span.item-icon.fa.fa-home
+                span.item-text Home
+        .panel.panel-default(ng-controller="CatalogueListCtrl")
+          .panel-heading
+            strong.text-uppercase Catalogues
+          .panel-body(ng-show="loading")
+            .spinner
+              span.fa.fa-spinner.fa-lg.fa-spin
+          .panel-body(ng-show="!loading && !catalogueList.length")
+            .alert.alert-info
+              span No catalogues launched.
+          ul.nav.nav-pills.nav-stacked
+            li(ng-repeat="catalogue in catalogueList", ui-sref-active="active")
+              a(ui-sref="app.catalogue.detail.offering({ catalogueId: catalogue.id })")
+                span.item-icon.fa.fa-angle-right
+                span.item-text {{ catalogue.name }}
+        if user
+          .panel.panel-default
+            .panel-heading
+              strong.text-uppercase My Stock
+            ul.nav.nav-pills.nav-stacked
+              li(ui-sref-active="active")
+                a(ui-sref="app.stock.catalogue")
+                  span.item-icon.fa.fa-book
+                  span.item-text Catalogues
+              li(ui-sref-active="active")
+                a(ui-sref="app.stock.product")
+                  span.item-icon.fa.fa-file
+                  span.item-text Products
+              li(ui-sref-active="active")
+                a(ui-sref="app.stock.offering")
+                  span.item-icon.fa.fa-cube
+                  span.item-text Offerings
+    .col-xs-12.col-md-9
+      ui-view
+
+include ./search.filter.jade
+
+footer.clearfix
+  hr.fiware-line
+  .col-sm-6
+    ul.list-inline
+      li.text-muted
+        small © 2015 CoNWeT Lab., Universidad Politécnica de Madrid
+  .col-sm-6
+    ul.list-inline.pull-right
+      li
+        small
+          a(href="https://www.fiware.org") FIWARE
+      li
+        small ·
+      li
+        small
+          a(href="https://www.tmforum.org") TM FORUM
