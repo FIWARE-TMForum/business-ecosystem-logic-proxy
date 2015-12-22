@@ -1,4 +1,4 @@
-form(name="step.form", novalidate)
+form(name="stages[2].form", novalidate)
   .row
     .col-sm-8
       .form-group
@@ -7,6 +7,7 @@ form(name="step.form", novalidate)
           type="text"
           name="name"
           ng-model="productInfo.name"
+          required
           readonly
         )
     .col-sm-4
@@ -16,6 +17,7 @@ form(name="step.form", novalidate)
           type="text"
           name="version"
           ng-model="productInfo.version"
+          required
           readonly
         )
   .row
@@ -26,6 +28,7 @@ form(name="step.form", novalidate)
           type="text"
           name="brand"
           ng-model="productInfo.brand"
+          required
           readonly
         )
     .col-sm-4
@@ -35,12 +38,11 @@ form(name="step.form", novalidate)
           type="text"
           name="productNumber"
           ng-model="productInfo.productNumber"
+          required
           readonly
         )
   .form-group
-    label
-      | Description 
-      small.text-muted optional
+    label Description
     textarea.form-control(
       rows="3"
       name="description"
@@ -48,7 +50,5 @@ form(name="step.form", novalidate)
       readonly
     )
   .form-group.text-right
-    button.btn.btn-default(type="button", ng-click="showSearchView()")
-      span Cancel
-    button.btn.btn-success(type="button", ng-click="createProduct()", ng-disabled="!step.form.$valid")
+    button.btn.btn-success(type="button", ng-click="createProduct()", ng-disabled="!stages[2].form.$valid")
       span Create

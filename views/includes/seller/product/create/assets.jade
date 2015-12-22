@@ -1,4 +1,4 @@
-form(name="step.form", novalidate)
+form(name="stages[1].form", novalidate)
   div(ng-show="assetTypes.length")
     .form-group
       .row
@@ -26,8 +26,6 @@ form(name="step.form", novalidate)
   div(ng-show="!assetTypes.length")
     .alert.alert-info There isn't any digital asset type supported.
   .form-group.text-right
-    button.btn.btn-default(type="button", ng-click="showSearchView()")
-      | Cancel
-    button.btn.btn-primary(type="button", ng-click="nextStep($index + 1)", ng-disabled="!step.form.$valid")
-      span Next
-      span.fa.fa-fw.fa-arrow-right
+    a.btn.btn-default(ui-sref="app.stock.product.create.finish", ng-disabled="!stages[1].form.$valid")
+      span.item-text Next
+      span.item-icon.fa.fa-arrow-right
