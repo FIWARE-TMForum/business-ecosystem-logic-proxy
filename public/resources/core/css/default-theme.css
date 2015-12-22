@@ -20,6 +20,19 @@ a:focus {
     text-decoration: none;
 }
 
+a.active,
+a.active:hover,
+a.active:focus {
+    color: rgb(070, 180, 200);
+    text-decoration: none;
+}
+
+a.disabled {
+    cursor: pointer;
+    pointer-events: none;
+    color: rgb(140, 140, 140);
+}
+
 hr {
     margin-top: 0;
     margin-bottom: 15px;
@@ -36,18 +49,13 @@ p {
 }
 
 .text-muted {
-    color: rgb(130, 130, 130);
+    color: rgb(120, 120, 120);
 }
 
 .text-ellipsis {
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;
-}
-
-.text-small {
-    font-size: 13px;
-    line-height: 20px;
 }
 
 blockquote {
@@ -64,6 +72,10 @@ blockquote p {
 .fa-fw {
     width: 1.4em;
 }
+.fa-fw-right {
+    width: 1.4em;
+    text-align: right;
+}
 
 .no-user-select {
     -webkit-user-select: none;  /* Chrome all / Safari all */
@@ -72,7 +84,7 @@ blockquote p {
             user-select: none;          /* Likely future */
 }
 
-h3, h4 {
+.h2, .h3, .h4, .h5 {
     margin-top: 0;
     margin-bottom: 15px;
 }
@@ -95,14 +107,10 @@ h3, h4 {
     justify-content: space-around;
 }
 
-.flex-container-column {
-    display: flex;
-    flex-flow: column wrap;
-}
-
 .container-spinner {
-    text-align: center;
     margin-bottom: 15px;
+    color: rgb(030, 060, 110);
+    text-align: center;
 }
 
 /* ===================================================================================
@@ -112,39 +120,17 @@ h3, h4 {
 .table {
     margin-bottom: 15px;
 }
-
-.table > tbody > tr.active > th {
-    color: rgb(250, 120, 40);
-}
-.table > tbody > tr.active > td,
-.table > tbody > tr.active > th {
-    background-color: rgb(245, 245, 245);
-    border-bottom-color: rgb(250, 120, 40);
+.table > thead > tr,
+.table > tbody > tr {
+    background-color: rgb(255, 255, 255);
 }
 
 .table-hover > tbody > tr:hover {
-    background-color: rgb(245, 245, 245);
-    border-bottom-color: rgb(70, 180, 200);
-}
-.table-hover > tbody > tr:hover > th {
-    color: rgb(70, 180, 200);
-}
-.table-hover > tbody > tr:hover > td,
-.table-hover > tbody > tr:hover > th {
-    border-bottom-color: rgb(70, 180, 200);
-}
-
-.table-hover > tbody > tr.active:hover > td,
-.table-hover > tbody > tr.active:hover > th {
-    background-color: rgb(245, 245, 245);
+    background-color: rgb(250, 250, 250);
 }
 
 .table-selectable > tbody > tr {
     cursor: pointer;
-}
-.table-selectable > tbody > tr.active {
-    cursor: pointer;
-    pointer-events: none;
 }
 
 /* ===================================================================================
@@ -184,6 +170,7 @@ textarea {
  * =================================================================================== */
 
 .btn {
+    padding: 8px 12px;
     border-radius: 0;
 }
 .btn:active,
@@ -203,16 +190,32 @@ textarea {
     opacity: 1;
 }
 
+.btn .item-icon {
+    width: 1.3em;
+    text-align: center;
+}
+.btn .item-icon + .item-text {
+    margin-left: 5px;
+}
+
+.btn .item-text + .item-icon {
+    text-align: right;
+}
+
+/* ===================================================================================
+ *   COMPONENT - BUTTON DEFAULT
+ * =================================================================================== */
+
 .btn-default {
     color: rgb(080, 080, 080);
-    background-color: rgb(250, 250, 250);
+    background-color: rgb(255, 255, 255);
     border-color: rgb(200, 200, 200);
 }
 .btn-default:hover,
 .btn-default:focus {
-    color: rgb(250, 120, 040);
-    background-color: rgb(250, 250, 250);
-    border-color: rgb(250, 120, 040);
+    color: rgb(030, 060, 110);
+    background-color: rgb(255, 255, 255);
+    border-color: rgb(030, 060, 110);
 }
 .btn-default:active,
 .btn-default:active:hover,
@@ -221,15 +224,19 @@ textarea {
 .btn-default.active:hover,
 .btn-default.active:focus {
     color: rgb(255, 255, 255);
-    background-color: rgb(210, 080, 020);
-    border-color: rgb(210, 080, 020);
+    background-color: rgb(030, 060, 110);
+    border-color: rgb(030, 060, 110);
 }
 .btn-default.disabled,
 .btn-default[disabled] {
-    color: rgb(210, 210, 210);
-    background-color: rgb(252, 252, 252);
+    color: rgb(160, 160, 160);
+    background-color: rgb(254, 254, 254);
     border-color: rgb(210, 210, 210);
 }
+
+/* ===================================================================================
+ *   COMPONENT - BUTTON PRIMARY
+ * =================================================================================== */
 
 .btn-primary {
     color: rgb(010, 060, 140);
@@ -287,11 +294,6 @@ textarea {
     border-color: rgb(130, 200, 130);
  }
 
-.btn > .btn-icon {
-    width: 1.4em;
-    text-align: left;
-}
-
 .btn-sm {
     padding: 4px 8px;
     font-size: 14px;
@@ -313,22 +315,18 @@ textarea {
     margin-left: 5px;
 }
 
-.btn > .btn-text {
-    display: inline-block;
-    vertical-align: baseline;
-}
-
-.btn > span + .fa.fa-fw {
-    text-align: right;
-}
-
 /* ===================================================================================
  *   COMPONENT - BUTTON TOOLBAR
  * =================================================================================== */
 
 .btn-toolbar {
-    padding: 0 15px;
-    margin-bottom: 15px;
+    margin: 0 0 15px;
+}
+.btn-toolbar > .btn-group {
+    margin-left: 0;
+}
+.btn-toolbar > .btn-group + .btn-group {
+    margin-left: 5px;
 }
 
 /* ===================================================================================
@@ -336,38 +334,68 @@ textarea {
  * =================================================================================== */
 
 .dropdown-menu {
-    padding: 0 0;
-    border-color: rgb(220, 220, 220);
+    padding: 0;
+    background-color: rgb(255, 255, 255);
+    border-color: rgb(200, 200, 200);
     border-radius: 0;
 }
-.dropdown-menu > li > a {
-    padding: 10px 15px;
+
+.dropdown-menu .dropdown-menu-item {
+    display: block;
+    padding: 8px 12px;
     line-height: 20px;
-    color: rgb(030, 060, 110);
+    color: rgb(070, 070, 070);
 }
-.dropdown-menu > li + li > a {
-    margin-top: 0;
+.dropdown-menu .dropdown-menu-item .item-icon {
+    width: 1.4em;
+    text-align: center;
 }
-.dropdown-menu > li > a:hover,
-.dropdown-menu > li > a:focus {
-    color: rgb(070, 180, 200);
-    background-color: rgb(252, 252, 252);
+.dropdown-menu .dropdown-menu-item .item-text {
+    margin-left: 5px;
 }
 
-.dropdown-header {
-    padding: 15px 20px;
+.dropdown-menu a.dropdown-menu-item {
+    border-right: 3px solid transparent;
+}
+.dropdown-menu a.dropdown-menu-item:hover,
+.dropdown-menu a.dropdown-menu-item:focus {
+    color: rgb(070, 180, 200);
+    background-color: rgb(248, 248, 248);
+    border-color: rgb(070, 180, 200);
+}
+.dropdown-menu a.dropdown-menu-item.active,
+.dropdown-menu a.dropdown-menu-item.active:hover,
+.dropdown-menu a.dropdown-menu-item.active:focus
+.dropdown-menu a.dropdown-menu-item:active,
+.dropdown-menu a.dropdown-menu-item:active:hover,
+.dropdown-menu a.dropdown-menu-item:active:focus {
+    color: rgb(030, 060, 110);
+    background-color: rgb(248, 248, 248);
+    border-color: rgb(030, 060, 110);
+}
+
+.dropdown-menu .dropdown-header {
+    padding: 10px 15px;
+    margin: 0 0;
     font-size: 14px;
     line-height: 20px;
-    color: rgb(80, 80, 80);
-    background-color: rgb(245, 245, 245);
+    color: rgb(040, 140, 150);
 }
-
-.dropdown-menu .divider {
-    margin: 5px 0;
+.dropdown-menu .dropdown-header.inverse {
+    color: rgb(255, 255, 255);
+    background-color: rgb(060, 060, 060);
+}
+.dropdown-menu .dropdown-header.inverse .fa-inverse {
+    color: rgb(060, 060, 060);
 }
 
 .dropdown-toggle > .fa-stack + span {
+    margin-left: 5px;
     vertical-align: middle;
+}
+
+.dropdown-menu .divider {
+    margin: 0 0;
 }
 
 /* ===================================================================================
@@ -398,44 +426,52 @@ textarea {
  * =================================================================================== */
 
 .nav-pills > li > a {
-    margin: 0 2px;
-    color: rgb(030, 060, 110);
-    border-bottom: 2px solid transparent;
+    padding: 10px 12px;
+    margin: 0;
+    color: rgb(070, 070, 070);
+    border: 0 solid transparent;
     border-radius: 0;
 }
 .nav-pills > li > a:hover,
 .nav-pills > li > a:focus {
     color: rgb(070, 180, 200);
-    background-color: rgb(252, 252, 252);
+    background-color: rgb(250, 250, 250);
     border-color: rgb(070, 180, 200);
 }
 .nav-pills > li.active > a,
 .nav-pills > li.active > a:hover,
 .nav-pills > li.active > a:focus {
-    color: rgb(250, 120, 040);
-    background-color: rgb(252, 252, 252);
-    border-color: rgb(250, 120, 040);
+    color: rgb(030, 060, 110);
+    background-color: rgb(250, 250, 250);
+    border-color: rgb(030, 060, 110);
 }
 
-.nav-pills.nav-justified > li.divider {
-    position: relative;
+.nav-pills > li > a {
+    border-bottom-width: 3px;
 }
-.nav-pills.nav-justified > li.divider:before {
-    position: absolute;
-    display: block;
-    content: "";
-    border-right: 1px solid rgb(220, 220, 220);
-    border-left: 1px solid rgb(220, 220, 220);
-    left: 0;
-    right: 0;
-    margin: 0 15px;
-    top: 0;
-    bottom: 0;
+.nav-pills.nav-stacked > li > a {
+    border-bottom-width: 0;
+    border-right-width: 3px;
 }
 
 /* ===================================================================================
- *   COMPONENT - NAV-STEPS
+ *   COMPONENT - NAV-STAGES
  * =================================================================================== */
+
+.nav-stages > li > a {
+    color: rgb(070, 070, 070);
+}
+.nav-stages > li > a:hover,
+.nav-stages > li > a:focus {
+    color: rgb(070, 180, 200);
+    background-color: rgb(250, 250, 250);
+}
+.nav-stages > li.active > a,
+.nav-stages > li.active > a:hover,
+.nav-stages > li.active > a:focus {
+    color: rgb(255, 255, 255);
+    background-color: rgb(030, 060, 110);
+}
 
 .nav-steps {
     margin-bottom: 15px;
@@ -522,69 +558,118 @@ textarea {
 
 .navbar {
     margin-bottom: 15px;
+    border-radius: 0;
 }
 
-@media (min-width: 768px) {
-    .navbar {
-        border-radius: 0;
-    }
+.navbar .navbar-header {
+    float: left;
+    margin: 0;
 }
-
-.navbar-brand {
-    height: 70px;
+.navbar .navbar-header .navbar-brand {
+    height: 50px;
     padding: 10px 0;
 }
+.navbar .navbar-header .navbar-brand img {
+    height: 30px;
+}
 
 @media (min-width: 768px) {
-    .navbar > .container .navbar-brand {
-        margin-left: 0;
+    .navbar .navbar-header .navbar-brand {
+        height: 70px;
+        padding: 10px 0;
     }
-    .navbar-brand > img {
+    .navbar .navbar-header .navbar-brand img {
         height: 50px;
     }
+}
 
-    .navbar-nav > li > a {
-        margin-top: 10px;
-        border-bottom: 2px solid transparent;
-    }
-    .navbar-nav > li + li > a {
-        margin-left: 5px;
-    }
+.navbar .navbar-text {
+    float: left;
+}
+.navbar .navbar-text.h3 {
+    margin: 15px 10px;
+    font-size: 14px;
+    line-height: 20px;
+}
 
-    .navbar-right {
-        margin-right: 0;
-    }
-
-    .navbar-btn {
-        margin-top: 18px;
-        margin-bottom: 18px;
-    }
-
-    h3.navbar-text {
-        margin-top: 22px;
-        margin-bottom: 22px;
+@media (min-width: 768px) {
+    .navbar .navbar-text.h3 {
+        margin: 22px 15px;
+        font-size: 24px;
+        line-height: 1.1;
     }
 }
+
+.navbar .navbar-btn {
+    margin: 6px 0;
+}
+
+@media (min-width: 768px) {
+    .navbar .navbar-btn {
+        margin: 16px 0;
+    }
+}
+
+.navbar .navbar-nav {
+    margin: 0;
+}
+.navbar .navbar-nav > li {
+    float: left;
+}
+.navbar .navbar-nav > li > a {
+    padding: 11px 10px 8px;
+    margin: 0 0;
+    border-bottom: 3px solid transparent;
+}
+
+@media (min-width: 768px) {
+    .navbar .navbar-nav > li > a {
+        padding: 21px 15px 18px;
+    }
+}
+
+.navbar .navbar-right {
+    float: right;
+    margin-right: 0;
+}
+.navbar .navbar-right .dropdown-menu {
+    right: 0;
+    left: auto;
+}
+
+.nav-justified > li {
+    display: table-cell;
+    width: 1%;
+}
+
+.nav > li > a > .item-icon {
+    width: 1.4em;
+    text-align: center;
+}
+.nav > li > a > .item-icon + .item-text {
+    margin-left: 5px;
+}
+
+/* ===================================================================================
+ *   COMPONENT - NAVBAR DEFAULT
+ * =================================================================================== */
 
 .navbar-default {
-    background-color: rgb(255, 255, 255);
+    background-color: rgb(245, 245, 245);
     border-color: rgb(220, 220, 220);
 }
-.navbar-default .navbar-brand {
-    color: rgb(030, 060, 110);
-}
-.navbar-default .navbar-brand:hover,
-.navbar-default .navbar-brand:focus {
-    color: rgb(070, 180, 200);
+
+.navbar-default .navbar-text {
+  color: rgb(120, 120, 120);
 }
 
 .navbar-default .navbar-nav > li > a {
-    color: rgb(030, 060, 110);
+    color: rgb(060, 060, 060);
 }
 .navbar-default .navbar-nav > li > a:hover,
 .navbar-default .navbar-nav > li > a:focus {
     color: rgb(070, 180, 200);
-    background-color: rgb(252, 252, 252);
+    background-color: rgb(255, 255, 255);
     border-color: rgb(070, 180, 200);
 }
 .navbar-default .navbar-nav > .active > a,
@@ -593,13 +678,9 @@ textarea {
 .navbar-default .navbar-nav > .open > a,
 .navbar-default .navbar-nav > .open > a:hover,
 .navbar-default .navbar-nav > .open > a:focus {
-    color: rgb(250, 120, 040);
-    background-color: rgb(252, 252, 252);
-    border-color: rgb(250, 120, 040);
-}
-
-.navbar-static-top {
-    margin-bottom: 50px;
+    color: rgb(030, 060, 110);
+    background-color: rgb(255, 255, 255);
+    border-color: rgb(030, 060, 110);
 }
 
 .navbar-nav > li > .dropdown-menu {
@@ -631,34 +712,13 @@ textarea {
 .breadcrumb {
     padding: 10px 15px;
     margin-bottom: 15px;
-    background-color: rgb(245, 245, 245);
-    border-radius: 0;
-}
-.breadcrumb > li + li:before {
-    display: inline-block;
-    content: "\f105";
-    padding: 0 10px;
-    font: normal normal normal 14px/1 FontAwesome;
-    color: rgb(180, 180, 180);
-}
-
-.breadcrumb > li.active > a:first-child {
-    cursor: pointer;
-    pointer-events: none;
-    color: rgb(80, 80, 80);
-}
-
-.breadcrumb-default {
     background-color: rgb(255, 255, 255);
     border: 1px solid rgb(220, 220, 220);
-}
-.breadcrumb-default > li > a {
-    position: relative;
-    display: inline-block;
+    border-radius: 0;
 }
 
-.breadcrumb-primary {
-    background-color: rgb(240, 245, 250);
+.breadcrumb > li + li:before {
+    color: rgb(120, 120, 120);
 }
 
 /* ===================================================================================
@@ -760,6 +820,14 @@ textarea {
     vertical-align: middle;
 }
 
+.status {
+    position: relative;
+    display: inline-block;
+    padding: 5px;
+    background-color: rgb(220, 220, 220);
+    border-radius: 50%;
+}
+
 .list-group-item > .status-active,
 .list-group-item.active > .status-active,
 .lifecycle-status-item.active[data-type="active"]:before,
@@ -849,56 +917,74 @@ textarea {
 .list-group {
     margin-bottom: 15px;
 }
+.list-group.list-group-bordered {
+    background-color: rgb(245, 245, 245);
+    border: 1px solid rgb(220, 220, 220);
+}
 
-.list-group-item:first-child {
-    border-top-left-radius: 0;
-    border-top-right-radius: 0;
+.list-group-column {
+    display: flex;
+    flex-flow: column wrap;
 }
+
+.list-group-header {
+    padding: 10px 15px;
+    margin: 0 0;
+    color: rgb(120, 120, 120);
+}
+
+.list-group-item,
+.list-group-item:first-child,
 .list-group-item:last-child {
-    border-bottom-right-radius: 0;
-    border-bottom-left-radius: 0;
+    border-radius: 0;
 }
+
+.list-group-item .item-icon {
+    width: 1.4em;
+}
+
+.list-group-item + hr {
+    margin-top: 15px;
+}
+
+.list-group-spinner {
+    padding: 10px 15px;
+    color: rgb(030, 060, 110);
+    text-align: center;
+}
+
+/* ===================================================================================
+ *   COMPONENT - LIST-GROUP - LINKED ITEMS
+ * =================================================================================== */
 
 a.list-group-item {
-    margin-bottom: 2px;
-    background-color: rgb(255, 255, 255);
-    border: none;
-    border-right: 2px solid transparent;
+    margin-bottom: 0;
+    color: rgb(050, 050, 050);
+    background-color: rgb(245, 245, 245);
+    border-width: 0;
+    border-right: 3px solid transparent;
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;
 }
-a.list-group-item.has-badge {
-    padding-right: 30px;
-}
 
-a.list-group-item {
-    color: rgb(030, 060, 110);
-    background-color: rgb(255, 255, 255);
-}
 a.list-group-item:hover,
 a.list-group-item:focus {
     color: rgb(070, 180, 200);
-    background-color: rgb(252, 252, 252);
+    background-color: rgb(255, 255, 255);
     border-color: rgb(070, 180, 200);
 }
+
 a.list-group-item.active,
 a.list-group-item.active:hover,
 a.list-group-item.active:focus {
-    cursor: pointer;
-    pointer-events: none;
-    color: rgb(250, 120, 040);
-    background-color: rgb(252, 252, 252);
-    border-color: rgb(250, 120, 040);
+    color: rgb(030, 060, 110);
+    background-color: rgb(255, 255, 255);
+    border-color: rgb(030, 060, 110);
 }
-a.list-group-item.disabled,
-a.list-group-item.disabled:hover,
-a.list-group-item.disabled:focus {
-    cursor: pointer;
-    pointer-events: none;
-    color: rgb(210, 210, 210);
-    background-color: rgb(252, 252, 252);
-    border-color: rgb(210, 210, 210);
+
+a.list-group-item.has-badge {
+    padding-right: 30px;
 }
 
 a.list-group-item > .badge-status:empty {
@@ -911,11 +997,8 @@ a.list-group-item > .badge-status {
     padding: 5px 5px;
     border-radius: 50%;
 }
-a.list-group-item.disabled > .badge-status {
-    background-color: rgb(210, 210, 210);
-}
 
-.flex-container-column > a.list-group-item {
+.list-group-column > a.list-group-item {
     width: 25%;
 }
 
@@ -934,7 +1017,8 @@ a.list-group-item.disabled > .badge-status {
     padding-right: 60px;
     margin-bottom: 0;
     font-weight: bold;
-
+    background-color: rgb(255, 255, 255);
+    border-bottom: 1px solid rgb(220, 220, 220);
 }
 .item-toggle .toggle .track {
     position: absolute;
@@ -947,7 +1031,6 @@ a.list-group-item.disabled > .badge-status {
     margin-bottom: 0;
 }
 .item-toggle > .toggle + .list-group > .list-group-item {
-    background-color: rgb(250, 250, 250);
     border-right: none;
     border-left: none;
 }
@@ -980,6 +1063,7 @@ a.list-group-item.disabled > .badge-status {
     margin-top: 0;
     margin-bottom: 0;
     font-weight: normal;
+    background-color: rgb(255, 255, 255);
 }
 .item-checkbox .checkbox .track {
     position: absolute;
@@ -1078,20 +1162,24 @@ a.thumbnail > img {
 
 .panel {
     margin-bottom: 15px;
-    background-color: transparent;
     border-radius: 0;
-    box-shadow: none;
 }
+
 .panel-heading {
     position: relative;
-    padding: 15px;
-    padding-bottom: 0;
-    border-bottom: none;
-    border-top-left-radius: 0;
-    border-top-right-radius: 0;
+    padding: 10px 15px;
+    border-radius: 0;
 }
+.panel-heading:last-child {
+    border-bottom-width: 0;
+}
+.panel-heading > .h4 {
+    margin-bottom: 0;
+}
+
 .panel-body {
     padding-bottom: 0;
+    border-radius: 0;
 }
 
 .panel-title {
@@ -1128,10 +1216,9 @@ a.thumbnail > img {
 .panel-default > .panel-heading {
     color: rgb(040, 140, 150);
     background-color: rgb(255, 255, 255);
+    border-color: rgb(220, 220, 220);
 }
-.panel-default > .panel-heading > .panel-title > small {
-    color: rgb(150, 150, 150);
-}
+
 .panel-default > .panel-heading > .panel-subtitle {
     color: rgb(120, 120, 120);
 }
@@ -1152,30 +1239,41 @@ a.thumbnail > img {
  * =================================================================================== */
 
 .modal-content {
+    background-color: rgb(255, 255, 255);
     border-color: rgb(220, 220, 220);
     border-radius: 0;
 }
+
 .modal-header {
-    border-bottom-color: rgb(220, 220, 220);
+    background-color: rgb(255, 255, 255);
+    border-color: rgb(220, 220, 220);
 }
-.modal-footer {
-    padding-top: 0;
-    border-top: none;
+.modal-header .modal-title {
+    line-height: 20px;
+    color: rgb(040, 140, 150);
+}
+.modal-header .close {
+    position: absolute;
+    right: 15px;
+    top: 15px;
+    font-size: 16px;
+    line-height: 20px;
 }
 
-.modal-title {
-    font-size: 14px;
-    font-weight: 700;
-    line-height: 20px;
-    text-transform: uppercase;
-    color: rgb(040, 140, 150);
+.modal-body {
+    padding-bottom: 0;
+}
+
+.modal-footer {
+    padding-top: 0;
+    border-top-width: 0;
 }
 
 /* ===================================================================================
- *   COMPONENT - PRODUCT
+ *   COMPONENT - ITEM OFFERING
  * =================================================================================== */
 
-.item-product {
+.item-offering {
     position: relative;
     width: 250px;
     margin: 0 5px 15px;
@@ -1189,6 +1287,6 @@ a.thumbnail > img {
  *   COMPONENT - OFFERING
  * =================================================================================== */
 
-.list-subcategories {
+.category-list {
     max-height: 90px;
 }
