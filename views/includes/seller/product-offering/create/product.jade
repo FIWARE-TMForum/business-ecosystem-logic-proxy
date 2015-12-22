@@ -1,0 +1,22 @@
+form(name="stages[1].form", novalidate)
+  .form-group
+    label Choose a product
+    input(type="hidden", ng-model="productChosen.id", required)
+    table.table.table-bordered.table-hover.table-selectable(ng-show="productList.length")
+      thead
+        tr
+          th Status
+          th Name
+          th Updated
+      tbody
+        tr(ng-repeat="product in productList", ng-class="{ 'active': productChosen.id == product.id }", ng-click="selectProduct(product)")
+          td
+            i.status(ng-class="'status-{{ product.lifecycleStatus | lowercase }}'")
+          th
+            span {{ product.name }}
+          td
+            time(am-time-ago="product.lastUpdate")
+  .form-group.text-right
+    a.btn.btn-default(type="button", ui-sref="app.stock.offering.create.catalogue", ng-disabled="!stages[1].form.$valid")
+      span.item-text Next
+      span.item-icon.fa.fa-arrow-right

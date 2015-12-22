@@ -2,200 +2,132 @@
  *
  */
 
-angular.module('app.services')
-    .factory('Offering', ['$resource', 'URLS', 'LIFECYCLE_STATUS', 'User', 'Product', function ($resource, URLS, LIFECYCLE_STATUS, User, Product) {
+angular.module('app')
+    .factory('Offering', function ($resource, $q, URLS, LIFECYCLE_STATUS, User, Product) {
 
-        var serializeProduct = function serializeProduct($product) {
-            return {
-                id: $product.id,
-                href: $product.href
-            };
-        };
-
-        var CatalogueOffering, Offering, service = {
+        var Offering, service = {
 
             TYPES: {
                 OFFERING: 'Offering',
                 OFFERING_BUNDLE: 'Offering bundle'
             },
 
-            $collection: [],
+            list: function list(role, filters) {
+                var deferred = $q.defer(), params = {};
 
-            list: function list($catalogue, next) {
-                var params = {};
+                if (angular.isObject(filters)) {
 
-                switch (User.getRole()) {
+                    if (filters.catalogueId) {
+                        params.catalogue = 'catalog';
+                        params.catalogueId = filters.catalogueId;
+                    }
+
+                    if (filters.status) {
+                        params.lifecycleStatus = filters.status;
+                    }
+                }
+
+                switch (role) {
                 case User.ROLES.CUSTOMER:
-                    params['lifecycleStatus'] = LIFECYCLE_STATUS.LAUNCHED;
+                    params.lifecycleStatus = LIFECYCLE_STATUS.LAUNCHED;
 
-                    Offering.query(params, function ($collection) {
-                        var filterParams = {};
+                    Offering.query(params, function (offeringList) {
+                        var productFilters = {};
 
-                        angular.copy($collection, service.$collection);
+                        if (offeringList.length) {
 
-                        if (service.$collection.length) {
-
-                            filterParams['id'] = service.$collection.map(function ($offering) {
-                                return $offering.productSpecification.id;
+                            productFilters.id = offeringList.map(function (offering) {
+                                return offering.productSpecification.id;
                             }).join();
 
-                            Product.list(filterParams, function ($productList) {
-                                var products = {};
+                            Product.list(role, productFilters).then(function (productList) {
 
-                                service.$collection.forEach(function ($offering) {
-                                    $productList.forEach(function ($product) {
-                                        if ($offering.productSpecification.id == $product.id) {
-                                            $offering.productSpecification = $product;
+                                productList.forEach(function (product) {
+
+                                    offeringList.some(function (offering) {
+
+                                        if (offering.productSpecification.id == product.id) {
+                                            offering.productSpecification = product;
+                                            return true;
                                         }
                                     });
                                 });
 
-                                if (next != null) {
-                                    next(service.$collection);
-                                }
+                                deferred.resolve(offeringList);
                             });
                         } else {
-                            if (next != null) {
-                               next(service.$collection);
-                            }
+                            deferred.resolve(offeringList);
                         }
-                    }, function (response) {
-                        // TODO: onfailure.
                     });
 
                     break;
                 case User.ROLES.SELLER:
 
-                    Product.list(function ($productList) {
+                    Product.list(role).then(function (productList) {
                         var products = {};
 
-                        if ($productList.length) {
+                        if (productList.length) {
 
-                            params['productSpecification.id'] = $productList.map(function ($product) {
-                                products[$product.id] = $product;
-                                return $product.id;
+                            params['productSpecification.id'] = productList.map(function (product) {
+                                products[product.id] = product;
+                                return product.id;
                             }).join();
 
-                            if ($catalogue != null) {
-                                params['catalogueId'] = $catalogue.id;
-                                CatalogueOffering.query(params, function ($collection) {
+                            Offering.query(params, function (offeringList) {
 
-                                    angular.copy($collection, service.$collection);
-
-                                    service.$collection.forEach(function ($offering) {
-                                        $offering.productSpecification = products[$offering.productSpecification.id];
-                                    });
-
-                                    if (next != null) {
-                                        next(service.$collection);
-                                    }
-                                }, function (response) {
-                                    // TODO: onfailure.
+                                offeringList.forEach(function (offering) {
+                                    offering.productSpecification = products[offering.productSpecification.id];
                                 });
-                            } else {
-                                Offering.query(params, function ($collection) {
-
-                                    angular.copy($collection, service.$collection);
-
-                                    service.$collection.forEach(function ($offering) {
-                                        $offering.productSpecification = products[$offering.productSpecification.id];
-                                    });
-
-                                    if (next != null) {
-                                        next(service.$collection);
-                                    }
-                                }, function (response) {
-                                    // TODO: onfailure.
-                                });
-                            }
+                                deferred.resolve(offeringList);
+                            });
+                        } else {
+                            deferred.resolve([]);
                         }
                     });
-
-                    break;
-                default:
-                    // TODO: do nothing.
                 }
+
+                return deferred.promise;
             },
 
-            filter: function filter(userQuery, next) {
-                var params = {};
+            create: function create(data, product, catalogue) {
+                var deferred = $q.defer(), params = {
+                    catalogue: 'catalog',
+                    catalogueId: catalogue.id
+                };
 
-                if (userQuery.type in service.TYPES) {
-                    params.isBundle = (service.TYPES[userQuery.type] !== service.TYPES.OFFERING);
-                }
-
-                if (userQuery.status in LIFECYCLE_STATUS) {
-                    params.lifecycleStatus = LIFECYCLE_STATUS[userQuery.status];
-                }
-
-                Product.list(function ($productList) {
-                    var products = {};
-
-                    params['productSpecification.id'] = $productList.map(function ($product) {
-                        products[$product.id] = $product;
-                        return $product.id;
-                    }).join();
-
-                    Offering.query(params, function ($collection) {
-
-                        angular.copy($collection, service.$collection);
-
-                        service.$collection.forEach(function ($offering) {
-                            $offering.productSpecification = products[$offering.productSpecification.id];
-                        });
-
-                        if (next != null) {
-                            next(service.$collection);
-                        }
-                    }, function (response) {
-                        // TODO: onfailure.
-                    });
+                angular.extend(data, {
+                    lifecycleStatus: LIFECYCLE_STATUS.ACTIVE,
+                    productSpecification: Product.serialize(product)
                 });
+
+                Offering.save(params, data, function (offeringCreated) {
+                    offeringCreated.productSpecification = product;
+                    deferred.resolve(offeringCreated);
+                });
+
+                return deferred.promise;
             },
 
-            create: function create(offeringInfo, $catalogue, next) {
-                var $product;
+            get: function get(offeringId) {
+                var deferred = $q.defer(), params = {
+                    id: offeringId
+                };
 
-                if (offeringInfo.productSpecification.lifecycleStatus == LIFECYCLE_STATUS.ACTIVE) {
-                    offeringInfo.productSpecification.lifecycleStatus = LIFECYCLE_STATUS.LAUNCHED;
-                    Product.update(offeringInfo.productSpecification);
-                }
-
-                $product = offeringInfo.productSpecification;
-
-                angular.extend(offeringInfo, {
-                    lifecycleStatus: LIFECYCLE_STATUS.ACTIVE
+                Offering.query(params, function (catalogueList) {
+                    deferred.resolve(catalogueList[0]);
                 });
 
-                offeringInfo.productSpecification = serializeProduct(offeringInfo.productSpecification);
-
-                CatalogueOffering.save({catalogueId: $catalogue.id}, offeringInfo, function ($offeringCreated) {
-                    $offeringCreated.productSpecification = $product;
-                    service.$collection.unshift($offeringCreated);
-
-                    if (next != null) {
-                        next($offeringCreated);
-                    }
-                }, function (response) {
-                    // TODO: onfailure.
-                });
+                return deferred.promise;
             },
 
-            getProductPictureOf: function getProductPictureOf($offering) {
-                return Product.getPictureOf($offering.productSpecification);
+            getProductPictureOf: function getProductPictureOf(offering) {
+                return Product.getPictureOf(offering.productSpecification);
             }
 
         };
 
-        CatalogueOffering = $resource(URLS.CATALOGUE_MANAGEMENT + '/catalog/:catalogueId/productOffering/:offeringId',
-            {offeringId: '@id'},
-            {}
-        );
-
-        Offering = $resource(URLS.CATALOGUE_MANAGEMENT + '/productOffering/:offeringId',
-            {offeringId: '@id'},
-            {}
-        );
+        Offering = $resource(URLS.CATALOGUE_MANAGEMENT + '/:catalogue/:catalogueId/productOffering/:offeringId', {offeringId: '@id'}, {
+        });
 
         return service;
-    }]);
+    });
