@@ -1,0 +1,9 @@
+.row(ng-switch="loading")
+  .col-xs-12(ng-switch-when="true")
+    .container-spinner
+      span.fa.fa-spinner.fa-3x.fa-spin
+  .col-sm-12(ng-switch-default)
+    .row
+      .col-xs-12
+        .h2.text-muted {{ catalogue.name }}
+    ui-view
