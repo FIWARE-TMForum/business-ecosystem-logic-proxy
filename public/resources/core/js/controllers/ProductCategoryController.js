@@ -1,72 +1,15 @@
 /**
- * 
+ *
  */
 
-angular.module('app.controllers')
-    .controller('CategoryListCtrl', ['$scope', '$rootScope', 'EVENTS', 'Category', function ($scope, $rootScope, EVENTS, Category) {
+angular.module('app')
+    .controller('CategoryListCtrl', function ($scope, $state, Category) {
 
-        $scope.$categoryList = Category.$collection;
-        $scope.$categoryActive = null;
-
-        $scope.refreshList = function refreshList() {
-            $scope.$categoryActive = null;
-            Category.list();
-            $rootScope.$broadcast(EVENTS.CATEGORY_SHOW, null);
-        };
-
-        $scope.isActive = function isActive($category) {
-            return angular.equals($scope.$categoryActive, $category);
-        };
-
-        $scope.showCategory = function showCategory($category) {
-            $scope.$categoryActive = $category;
-            $rootScope.$broadcast(EVENTS.CATEGORY_SHOW, $category);
-        };
-    }])
-    .controller('CategoryDetailCtrl', ['$scope', '$rootScope', 'EVENTS', 'Category', function ($scope, $rootScope, EVENTS, Category) {
-
-        $scope.$categoryBreadcrumb = [];
-        $scope.$categoryActive = null;
-        $scope.$subCategoryList = [];
-        $scope.$subCategoryListHidden = true;
-
-        var _showCategory = function _showCategory($category) {
-            $scope.$categoryActive = $category;
-            $scope.$subCategoryList = Category.$collectionById[$category.id];
-            $scope.$subCategoryListHidden = true;
-            Category.get($category);
-        };
-
-        $scope.isActive = function isActive($category) {
-            return angular.equals($scope.$categoryActive, $category);
-        };
-
-        $scope.refreshCategory = function refreshCategory($category) {
-            $scope.$categoryBreadcrumb.splice($scope.$categoryBreadcrumb.indexOf($category) + 1);
-            _showCategory($category);
-        };
-
-        $scope.showCategory = function showCategory($category) {
-            $scope.$categoryBreadcrumb.push($category);
-            _showCategory($category);
-        };
-
-        $scope.resetView = function resetView() {
-            $scope.$categoryBreadcrumb.length = 0;
-            $scope.$categoryActive = null;
-            $scope.$subCategoryList.length = 0;
-            $scope.$subCategoryListHidden = true;
-        };
-
-        $scope.showSubCategoryList = function showSubCategoryList() {
-            $scope.$subCategoryListHidden = !$scope.$subCategoryListHidden;
-        };
-
-        $scope.$on(EVENTS.CATEGORY_SHOW, function ($event, $category) {
-            $scope.resetView();
-
-            if ($category != null) {
-                $scope.showCategory($category);
-            }
+        Category.list($state.params).then(function (categoryList) {
+            $scope.categoryList = categoryList;
         });
-    }]);
+
+        Category.breadcrumbOf($state.params.categoryId).then(function (categoryBreadcrumb) {
+            $scope.categoryBreadcrumb = categoryBreadcrumb;
+        });
+    });
