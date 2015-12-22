@@ -2,49 +2,27 @@
  *
  */
 
-angular.module('app.controllers')
-    .controller('UserCtrl', ['$scope', '$rootScope', 'User', 'EVENTS', function ($scope, $rootScope, User, EVENTS) {
+angular.module('app')
+    .controller('UserCtrl', function ($scope, $rootScope, EVENTS, User) {
 
-        $scope.$userRole = User.getRole();
-
-        $scope.updateProfile = function() {
+        $scope.updateProfile = function () {
             $rootScope.$broadcast(EVENTS.PROFILE_UPDATE);
         };
 
-        $scope.isAuthenticated = function isAuthenticated() {
+        $scope.isAuthenticated = function () {
             return User.isAuthenticated();
         };
 
-        $scope.signOut = function signOut() {
+        $scope.signOut = function () {
             return document.signOutForm.submit();
         };
-    }])
-    .controller('UserCustomerView', ['$scope', '$rootScope', 'EVENTS', 'Catalogue', 'Category', 'Offering',function ($scope, $rootScope, EVENTS, Catalogue, Category, Offering) {
-
-        Catalogue.list(function ($catalogueList) {
-            $rootScope.$broadcast(EVENTS.CATALOGUE_SELECT, null);
-        });
-
-        Offering.list();
-        Category.list();
-    }])
-    .controller('UserSellerView', ['$scope', '$rootScope', 'PARTY_ROLES', 'LIFECYCLE_STATUS', 'LIFECYCLE_STATUS_LIST', function ($scope, $rootScope, PARTY_ROLES, LIFECYCLE_STATUS, LIFECYCLE_STATUS_LIST) {
-
-        $scope.PARTY_ROLES = PARTY_ROLES;
-        $scope.LIFECYCLE_STATUS = LIFECYCLE_STATUS;
-        $scope.LIFECYCLE_STATUS_LIST = LIFECYCLE_STATUS_LIST;
-
-        $scope.$on("$routeChangeStart", function (event, next) {
-            $scope.activeController = next.controller;
-        });
-    }])
-    .controller('UserProfileCtrl', ['$scope', 'EVENTS', 'User', '$element', '$injector', function($scope, EVENTS, User, $element, $injector){
+    })
+    .controller('UserProfileCtrl', function ($scope, $element, EVENTS, User) {
         var tabIndex = 1;
         var token;
 
-        if ($injector.has('LOGGED_USER')) {
-            var LOGGED_USER = $injector.get('LOGGED_USER');
-            token = LOGGED_USER.BEARER_TOKEN.split(' ')[1];
+        if (User.isAuthenticated()) {
+            token = User.current.bearerToken;
         }
 
         $scope.userInfo = {};
@@ -75,8 +53,8 @@ angular.module('app.controllers')
                 $element.modal('show');
             });
         });
-    }])
-    .controller('ShoppingCardCtrl', ['$scope', 'EVENTS', function($scope, EVENTS) {
+    })
+    .controller('ShoppingCardCtrl', function ($scope, EVENTS) {
         var cart = [];
 
         var searchOffering = function searchOffering(offering) {
@@ -108,5 +86,4 @@ angular.module('app.controllers')
                 cart.push(offering);
             }
         });
-
-    }]);
+    });

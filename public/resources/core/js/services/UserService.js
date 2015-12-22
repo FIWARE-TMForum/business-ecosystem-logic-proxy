@@ -2,60 +2,45 @@
  *
  */
 
-angular.module('app.services')
-    .factory('User', ['$resource', '$injector', 'URLS', function ($resource, $injector, URLS) {
-        var LOGGED_USER, User, service;
+angular.module('app')
+    .factory('User', function ($resource, $injector, URLS, PARTY_ROLES) {
 
-        if ($injector.has('LOGGED_USER')) {
-            LOGGED_USER = $injector.get('LOGGED_USER');
-        }
-
-        service = {
+        var Resource, service = {
 
             ROLES: {
                 CUSTOMER: 'Customer',
-                OWNER: 'Owner',
                 SELLER: 'Seller'
             },
 
-            getID: function getID() {
-                return LOGGED_USER.ID;
-            },
-
-            getRole: function getRole() {
-
-                if (service.isAuthenticated()) {
-                    return LOGGED_USER.ROLE;
-                }
-
-                return service.ROLES.CUSTOMER;
+            isAuthenticated: function isAuthenticated() {
+                return $injector.has('LOGGED_USER');
             },
 
             serialize: function serialize() {
                 return {
-                    id: service.getID(),
-                    href: LOGGED_USER.HREF,
-                    role: service.ROLES.OWNER
+                    id: service.current.id,
+                    href: service.current.href,
+                    role: PARTY_ROLES.OWNER
                 };
             },
 
-            isAuthenticated: function isAuthenticated() {
-                return LOGGED_USER != null;
+            get: function get(next) {
+                Resource.get({'username': service.current.id}, next);
             },
 
-            get: function(next) {
-                User.get({'username': LOGGED_USER.ID}, next);
-            },
-
-            updatePartial: function(data, next) {
-                User.updatePartial(data, next);
+            updatePartial: function updatePartial(data, next) {
+                Resource.updatePartial(data, next);
             }
 
         };
 
-        User = $resource(URLS.USER, {username: '@id'}, {
+        if (service.isAuthenticated()) {
+            service.current = $injector.get('LOGGED_USER');
+        }
+
+        Resource = $resource(URLS.USER, {username: '@id'}, {
             updatePartial: {method: 'PATCH'}
         });
 
         return service;
-    }]);
+    });

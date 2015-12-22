@@ -16,7 +16,6 @@ html(lang="en")
       angular.module('app', ['ngResource', 'ngMessages', 'angularMoment', 'ui.router'])
         .constant('URLS', {
           IMAGE: '#{ contextPath }/resources/core/images',
-          TEMPLATE: '#{ contextPath }/resources/core/templates',
           USER: '#{ proxyPath }/charging/api/userManagement/users/:username',
           ASSET_MANAGEMENT: '#{ proxyPath }/charging/api/assetManagement',
           CATALOGUE_MANAGEMENT: '#{ proxyPath }/DSProductCatalog/api/catalogManagement/v2',
@@ -27,13 +26,13 @@ html(lang="en")
       script.
         angular.module('app')
           .constant('LOGGED_USER', {
-            ID: '#{ user.id }',
-            HREF: '#{ accountHost }/idm/user/#{ user.id }',
-            BEARER_TOKEN: 'Bearer #{ user.accessToken }'
+            id: '#{ user.id }',
+            href: '#{ accountHost }/idm/user/#{ user.id }',
+            bearerToken: '#{ user.accessToken }'
           })
-          .run(['$http', 'LOGGED_USER', function ($http, LOGGED_USER) {
-            $http.defaults.headers.common.Authorization = LOGGED_USER.BEARER_TOKEN;
-          }]);
+          .run(function ($http, LOGGED_USER) {
+            $http.defaults.headers.common.Authorization = 'Bearer ' + LOGGED_USER.bearerToken;
+          });
 
     each jsFilePath in jsAppFilesToInject
       script(src="#{ contextPath }/#{ jsFilePath }")
