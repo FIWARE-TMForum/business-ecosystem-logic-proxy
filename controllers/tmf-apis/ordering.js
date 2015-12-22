@@ -109,24 +109,31 @@ var ordering = (function(){
     };
 
     var executePostValidation = function(req, callback) {
-        // Send ordering notification to the store
-        storeClient.notifyOrder(JSON.parse(req.body), req.user, function(err, res) {
+        if (req.method === 'POST') {
+            // Send ordering notification to the store
+            log.info('Executing Ordering post validation');
+            storeClient.notifyOrder(JSON.parse(req.body), req.user, function(err, res) {
 
-            if(res) {
+                if(res) {
 
-                var parsedResp = JSON.parse(res.body);
+                    var parsedResp = JSON.parse(res.body);
 
-                res.extraHdrs = {
-                    'X-Redirect-URL': parsedResp.redirectUrl
-                };
+                    res.extraHdrs = {
+                        'X-Redirect-URL': parsedResp.redirectUrl
+                    };
 
-                callback(null, res);
+                    callback(null, res);
 
-            } else {
+                } else {
 
-                callback(err, res);
-            }
-        });
+                    callback(err, res);
+                }
+            });
+        } else {
+            callback(null, {
+                extraHdrs: {}
+            });
+        }
     };
 
     return {

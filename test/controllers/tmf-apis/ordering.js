@@ -240,6 +240,7 @@ describe('Ordering API', function() {
         var orderingApi = getOrderingAPI(storeClient, {});
 
         var req = {
+            method: 'POST',
             user: userInf,
             body: JSON.stringify(orderInf)
         };
@@ -267,6 +268,22 @@ describe('Ordering API', function() {
             });
 
             expect(res).toBe(undefined);
+            done();
+        });
+    });
+
+    it('should directly call the callback when the request method is not POST', function(done) {
+        var req = {
+            method: 'GET'
+        };
+
+        var orderingApi = getOrderingAPI({}, {});
+
+        orderingApi.executePostValidation(req, function(err, res) {
+            expect(err).toBe(null);
+            expect(res).toEqual({
+                extraHdrs: {}
+            });
             done();
         });
     });
