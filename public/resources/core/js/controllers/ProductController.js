@@ -3,10 +3,10 @@
  */
 
 angular.module('app')
-    .controller('ProductSearchCtrl', function ($scope, $rootScope, User, Product, productParams, productFilters) {
+    .controller('ProductSearchCtrl', function ($scope, $rootScope, EVENTS, User, Product, productParams, productFilters) {
 
         $scope.showFilters = function () {
-            $rootScope.$broadcast('$searchFilterShow', productFilters);
+            $rootScope.$broadcast(EVENTS.FILTERS_SHOW, productFilters);
         };
 
         $scope.loading = true;

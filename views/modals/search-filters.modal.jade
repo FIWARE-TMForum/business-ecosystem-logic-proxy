@@ -1,0 +1,21 @@
+.modal.fade(ng-controller="SearchFilterListCtrl")
+  .modal-dialog
+    .modal-content
+      .modal-header
+        .modal-title.text-uppercase
+          strong Search Filters
+        button.close(type="button", data-dismiss="modal")
+          i.fa.fa-close
+      .modal-body
+        ul.list-group.no-user-select
+          li.list-group-item.item-toggle
+            label.toggle Status
+            ul.list-group
+              li.list-group-item.item-checkbox(ng-repeat="(key, value) in LIFECYCLE_STATUS")
+                label.checkbox
+                  .track
+                    input(type="checkbox", value="{{ value }}", ng-checked="filterList.status.indexOf(value) != -1", ng-click="toggleItem('status', value)")
+                    i.fa.fa-lg
+                  | {{ value }}
+      .modal-footer
+        button.btn.btn-default(type="button", data-dismiss="modal") Close

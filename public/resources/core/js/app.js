@@ -4,6 +4,7 @@
 
 angular.module('app')
     .constant('EVENTS', {
+        FILTERS_SHOW: '$searchFilterShow',
         MESSAGE_SHOW: '$flashMessageShow',
         PROFILE_UPDATE: '$profileUpdate',
         ORDER_ADDITION: '$orderAddition'

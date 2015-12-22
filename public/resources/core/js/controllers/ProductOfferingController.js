@@ -3,7 +3,11 @@
  */
 
 angular.module('app')
-    .controller('OfferingSearchCtrl', function ($scope, $state, Offering, userRole) {
+    .controller('OfferingSearchCtrl', function ($scope, $rootScope, $state, EVENTS, Offering, userRole, offeringFilters) {
+
+        $scope.showFilters = function () {
+            $rootScope.$broadcast(EVENTS.FILTERS_SHOW, offeringFilters);
+        };
 
         $scope.orderItem = function orderItem(offering) {
             $rootScope.$broadcast(EVENTS.ORDER_ADDITION, offering);

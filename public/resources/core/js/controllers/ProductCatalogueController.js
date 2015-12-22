@@ -12,7 +12,11 @@ angular.module('app')
             $scope.catalogueList = catalogueList;
         });
     })
-    .controller('CatalogueSearchCtrl', function ($scope, $rootScope, User, Catalogue, catalogueParams) {
+    .controller('CatalogueSearchCtrl', function ($scope, $rootScope, EVENTS, User, Catalogue, catalogueParams, catalogueFilters) {
+
+        $scope.showFilters = function () {
+            $rootScope.$broadcast(EVENTS.FILTERS_SHOW, catalogueFilters);
+        };
 
         $scope.loading = true;
 

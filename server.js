@@ -202,6 +202,7 @@ var jsAppFilesToInject = [
     'services/AssetTypeService.js',
     'controllers/PaymentController.js',
     'controllers/MessageController.js',
+    'controllers/SearchFilterController.js',
     'controllers/UserController.js',
     'controllers/ProductController.js',
     'controllers/ProductOfferingController.js',
