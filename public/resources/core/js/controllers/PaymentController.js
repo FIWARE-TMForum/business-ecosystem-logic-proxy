@@ -1,5 +1,5 @@
 
-angular.module('app.controllers')
+angular.module('app')
     .controller('PaymentController', ['$scope', '$location', 'Payment', function($scope, $location, Payment) {
         $scope.status = '';
         $scope.accepted = true;

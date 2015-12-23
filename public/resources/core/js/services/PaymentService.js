@@ -1,5 +1,5 @@
 
-angular.module('app.services')
+angular.module('app')
     .factory('Payment', ['$resource', 'URLS', function ($resource, URLS) {
 
         var Payment, service = {

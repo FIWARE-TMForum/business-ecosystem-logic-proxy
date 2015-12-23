@@ -30,3 +30,6 @@
             span.pull-right
               time(am-time-ago="offering.lastUpdate")
         .panel-body
+          .btn-toolbar(ng-if="isAuthenticated()")
+            .btn-group.btn-group-sm
+              button.btn.btn-primary(type="button", ng-click="orderItem(offering)") Add to Cart

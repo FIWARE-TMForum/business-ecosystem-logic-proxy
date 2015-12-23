@@ -14,19 +14,18 @@
             span.hidden-xs Shopping Cart
             span.label.label-success {{ getShoppingCart().length }}
           .dropdown-menu
-            .dropdown-header.text-uppercase My Shopping Cart
-            li.dropdown-header.text-center(ng-show="!getShoppingCart().length")
-              | Your shopping cart is empty.
-            li(ng-repeat="offering in getShoppingCart()")
-              a
-                i.fa.fa-cube
-                | &nbsp;{{ offering.name }}
-                i.fa.fa-close.float-right(ng-click="removeItem(offering)")
-            li.divider(ng-show="getShoppingCart().length")
-            li(ng-show="getShoppingCart().length")
-              a
-                i.fa.fa-paypal
-                | &nbsp;Make order
+            .dropdown-header
+              strong.text-uppercase My Shopping Cart
+            .alert.alert-info.text-center(ng-show="!getShoppingCart().length")
+              span Your shopping cart is empty.
+            .dropdown-menu-item(ng-repeat="offering in getShoppingCart()")
+              span.item-icon.fa.fa-cube
+              span.item-text {{ offering.name }}
+              i.fa.fa-close.float-right(ng-click="removeItem(offering)")
+            .divider(ng-show="getShoppingCart().length")
+            a.dropdown-menu-item(ng-show="getShoppingCart().length")
+              span.item-icon.fa.fa-paypal
+              span.item-text Make order
         li.dropdown
           a.dropdown-toggle(data-toggle="dropdown")
             span.fa-stack
