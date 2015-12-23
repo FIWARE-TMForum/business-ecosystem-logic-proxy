@@ -1,0 +1,85 @@
+.row
+  .col-xs-12
+    ol.breadcrumb
+      li
+        a(
+          ui-sref="app.stock.offering"
+          ui-sref-opts="{ reload: true }"
+          ui-sref-active-eq="active"
+        )
+          span Search offering
+      li
+        a(
+          ui-sref="app.stock.offering.create"
+          ui-sref-opts="{ reload: true }"
+          ui-sref-active-eq="active"
+        )
+          span New offering
+  .col-xs-12
+    .panel.panel-default
+      .panel-heading.text-uppercase New offering
+      .panel-body
+        .row
+          .col-xs-12.col-md-3
+            ul.nav.nav-stacked.nav-stages
+              li(ui-sref-active-eq="active")
+                a(ui-sref="app.stock.offering.create")
+                  span.item-text 1. General
+              li(ui-sref-active="active")
+                a(ui-sref="app.stock.offering.create.product")
+                  span.item-text 2. Product
+              li(ui-sref-active="active")
+                a(ui-sref="app.stock.offering.create.catalogue")
+                  span.item-text 3. Catalogue
+              li(ui-sref-active="active")
+                a(ui-sref="app.stock.offering.create.finish")
+                  span.item-text 4. Finish
+          .col-xs-12.col-md-9
+            ui-view
+              form(name="stages[0].form", novalidate)
+                .row
+                  .col-sm-8
+                    .form-group(
+                      ng-class="{ 'has-error': stages[0].form.name.$invalid && (stages[0].form.name.$dirty || stages[0].form.name.$touched) }"
+                    )
+                      label Name
+                      input.form-control(
+                        type="text"
+                        name="name"
+                        ng-model="offeringInfo.name"
+                        required
+                        ng-minlength="5"
+                        ng-maxlength="30"
+                      )
+                      .help-block(
+                        ng-messages="stages[0].form.name.$error"
+                        ng-show="stages[0].form.name.$invalid && (stages[0].form.name.$dirty || stages[0].form.name.$touched)"
+                      )
+                        span(ng-message="required") This field is required.
+                        span(ng-message="minlength") This field must contain at least 5 chars.
+                        span(ng-message="maxlength") This field must not exceed 30 chars.
+                  .col-sm-4
+                    .form-group(
+                      ng-class="{ 'has-error': stages[0].form.version.$invalid && (stages[0].form.version.$dirty || stages[0].form.version.$touched) }"
+                    )
+                      label Version
+                      input.form-control(
+                        type="text"
+                        name="version"
+                        ng-model="offeringInfo.version"
+                        required
+                      )
+                      .help-block(
+                        ng-messages="stages[0].form.version.$error"
+                        ng-show="stages[0].form.version.$invalid && (stages[0].form.version.$dirty || stages[0].form.version.$touched)"
+                      )
+                        span(ng-message="required") This field is required.
+                .form-group
+                  label
+                    | Description 
+                    small.text-muted optional
+                  textarea.form-control(rows="3", name="description", ng-model="offeringInfo.description")
+                .form-group.text-right
+                  a.btn.btn-default(type="button", ui-sref="app.stock.offering.create.product", ng-disabled="!stages[0].form.$valid")
+                    span.item-text Next
+                    span.item-icon.fa.fa-arrow-right

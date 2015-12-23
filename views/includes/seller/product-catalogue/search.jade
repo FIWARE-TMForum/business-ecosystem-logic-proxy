@@ -1,0 +1,36 @@
+ui-view
+  .row
+    .col-xs-12
+      ol.breadcrumb
+        li
+          a(ui-sref="app.stock.catalogue", ui-sref-active-eq="active")
+            span Search catalogue
+    .col-xs-12
+      .btn-toolbar.pull-right
+        .btn-group
+          a.btn.btn-default(type="button", ui-sref="app.stock.catalogue.create")
+            span.item-icon.fa.fa-plus-circle
+            span.item-text New catalogue
+          button.btn.btn-default(type="button", ng-click="showFilters()")
+            span.item-icon.fa.fa-sliders
+            span.item-text Filters
+    .col-xs-12
+      .container-spinner(ng-show="loading")
+        span.fa.fa-spinner.fa-3x.fa-spin
+    .col-xs-12(ng-switch="catalogueList.length", ng-if="!loading")
+      .alert.alert-info.text-center(ng-switch-when="0")
+        | No catalogues found.
+      table.table.table-bordered.table-hover(ng-switch-default)
+        thead
+          tr
+            th Status
+            th Name
+            th Updated
+        tbody
+          tr(ng-repeat="catalogue in catalogueList")
+            td
+              i.status(ng-class="'status-{{ catalogue.lifecycleStatus | lowercase }}'")
+            th
+              a(ui-sref="app.stock.catalogue.update({ catalogueId: catalogue.id })") {{ catalogue.name }}
+            td
+              time(am-time-ago="catalogue.lastUpdate")

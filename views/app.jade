@@ -1,0 +1,87 @@
+doctype html
+html(lang="en")
+  head
+    title TM Forum Portal
+
+    meta(charset="utf-8")
+    meta(name="viewport",content="width=device-width, initial-scale=1")
+
+    each cssFilePath in cssFilesToInject
+      link(rel="stylesheet", href="#{ contextPath }/#{ cssFilePath }")
+
+    each jsFilePath in jsDepFilesToInject
+      script(src="#{ contextPath }/#{ jsFilePath }")
+
+    script.
+      angular.module('app', ['ngResource', 'ngMessages', 'angularMoment', 'ui.router'])
+        .constant('URLS', {
+          IMAGE: '#{ contextPath }/resources/core/images',
+          USER: '#{ proxyPath }/charging/api/userManagement/users/:username',
+          ASSET_MANAGEMENT: '#{ proxyPath }/charging/api/assetManagement',
+          CATALOGUE_MANAGEMENT: '#{ proxyPath }/DSProductCatalog/api/catalogManagement/v2',
+          PAYMENT: '#{ proxyPath }/charging/api/orderManagement/orders/:action'
+        });
+
+    if user
+      script.
+        angular.module('app')
+          .constant('LOGGED_USER', {
+            id: '#{ user.id }',
+            href: '#{ accountHost }/idm/user/#{ user.id }',
+            bearerToken: '#{ user.accessToken }'
+          })
+          .run(function ($http, LOGGED_USER) {
+            $http.defaults.headers.common.Authorization = 'Bearer ' + LOGGED_USER.bearerToken;
+          });
+
+    each jsFilePath in jsAppFilesToInject
+      script(src="#{ contextPath }/#{ jsFilePath }")
+
+  body(ng-app="app", ng-controller="UserCtrl")
+    ui-view
+
+    if user
+      form(name="signOutForm", method="post", action="#{ contextPath }/logout")
+      include ./includes/UserProfile.jade
+
+      script(type="text/ng-template", id="seller/product/search")
+        include ./includes/seller/product/search.jade
+      script(type="text/ng-template", id="seller/product/create")
+        include ./includes/seller/product/create.jade
+      script(type="text/ng-template", id="seller/product/create/assets")
+        include ./includes/seller/product/create/assets.jade
+      script(type="text/ng-template", id="seller/product/create/finish")
+        include ./includes/seller/product/create/finish.jade
+      script(type="text/ng-template", id="seller/product/update")
+        include ./includes/seller/product/update.jade
+
+      script(type="text/ng-template", id="seller/product-offering/search")
+        include ./includes/seller/product-offering/search.jade
+      script(type="text/ng-template", id="seller/product-offering/create")
+        include ./includes/seller/product-offering/create.jade
+      script(type="text/ng-template", id="seller/product-offering/create/product")
+        include ./includes/seller/product-offering/create/product.jade
+      script(type="text/ng-template", id="seller/product-offering/create/catalogue")
+        include ./includes/seller/product-offering/create/catalogue.jade
+      script(type="text/ng-template", id="seller/product-offering/create/finish")
+        include ./includes/seller/product-offering/create/finish.jade
+      script(type="text/ng-template", id="seller/product-offering/update")
+        include ./includes/seller/product-offering/update.jade
+
+      script(type="text/ng-template", id="seller/product-catalogue/search")
+        include ./includes/seller/product-catalogue/search.jade
+      script(type="text/ng-template", id="seller/product-catalogue/create")
+        include ./includes/seller/product-catalogue/create.jade
+      script(type="text/ng-template", id="seller/product-catalogue/update")
+        include ./includes/seller/product-catalogue/update.jade
+      script(type="text/ng-template", id="seller/product-catalogue/update/party")
+        include ./includes/seller/product-catalogue/update/party.jade
+      script(type="text/ng-template", id="seller/product-catalogue/update/offering")
+        include ./includes/seller/product-catalogue/update/offering.jade
+
+    script(type="text/ng-template", id="customer/product-offering/search")
+      include ./includes/customer/product-offering/search.jade
+    script(type="text/ng-template", id="customer/product-catalogue/detail")
+      include ./includes/customer/product-catalogue/detail.jade
+    script(type="text/ng-template", id="content")
+      include ./app.content.jade

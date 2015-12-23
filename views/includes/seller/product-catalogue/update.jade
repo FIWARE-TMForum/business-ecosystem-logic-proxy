@@ -1,0 +1,66 @@
+.row(ng-switch="loading")
+  .col-xs-12(ng-switch-when="true")
+    .container-spinner
+      span.fa.fa-spinner.fa-3x.fa-spin
+  .col-sm-12(ng-switch-default)
+    .row
+      .col-xs-12
+        ol.breadcrumb
+          li
+            a(ui-sref="app.stock.catalogue", ui-sref-opts="{ reload: true }", ui-sref-active-eq="active")
+              span Search catalogue
+          li
+            a(ui-sref="app.stock.catalogue.update", ui-sref-opts="{ catalogueId: catalogue.id }", ui-sref-active="active")
+              span {{ catalogue.name }}
+      .col-xs-12
+        .row
+          .col-xs-12
+            .panel.panel-default
+              ul.nav.nav-pills.nav-justified
+                li(ui-sref-active-eq="active")
+                  a(ui-sref="app.stock.catalogue.update({ catalogueId: catalogue.id })")
+                    span.item-icon.fa.fa-newspaper-o
+                    span.item-text.hidden-xs About
+                li(ui-sref-active="active")
+                  a(ui-sref="app.stock.catalogue.update.party({ catalogueId: catalogue.id })")
+                    span.item-icon.fa.fa-user
+                    span.item-text.hidden-xs Parties
+                li(ui-sref-active="active")
+                  a(ui-sref="app.stock.catalogue.update.offering({ catalogueId: catalogue.id })")
+                    span.item-icon.fa.fa-cube
+                    span.item-text.hidden-xs Offerings
+          .col-xs-12
+            ui-view
+              .panel.panel-default
+                .panel-body
+                  form(name="catalogueUpdateForm", novalidate)
+                    .form-group(
+                      ng-class="{ 'has-error': catalogueUpdateForm.name.$invalid && (catalogueUpdateForm.name.$dirty || catalogueUpdateForm.name.$touched) }"
+                    )
+                      label Name
+                      input.form-control(
+                        type="text"
+                        name="name"
+                        ng-model="catalogueInfo.name"
+                        required
+                        ng-minlength="5"
+                        ng-maxlength="30"
+                        field-unique="Catalogue"
+                        field-original-value="{{ catalogue.name }}"
+                      )
+                      .help-block(
+                        ng-messages="catalogueUpdateForm.name.$error"
+                        ng-show="catalogueUpdateForm.name.$invalid && (catalogueUpdateForm.name.$dirty || catalogueUpdateForm.name.$touched)"
+                      )
+                        span(ng-message="required") This field is required.
+                        span(ng-message="minlength") This field must contain at least 5 chars.
+                        span(ng-message="maxlength") This field must not exceed 30 chars.
+                        span(ng-message="unique") This name is already taken.
+                    .form-group
+                      label
+                        | Description 
+                        small.text-muted optional
+                      textarea.form-control(rows="3", name="description", ng-model="catalogueInfo.description")
+                    .form-group.text-right
+                      button.btn.btn-success(type="button", ng-click="updateCatalogue()", ng-disabled="!catalogueUpdateForm.$valid")
+                        | Save changes

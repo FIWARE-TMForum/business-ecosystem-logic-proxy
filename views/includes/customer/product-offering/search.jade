@@ -1,0 +1,35 @@
+.row
+  .col-xs-12
+    .btn-toolbar(ng-controller="CategoryListCtrl")
+      .btn-group
+        a.btn.btn-default(ui-sref="{ categoryId: null }", ui-sref-active="disabled")
+          span.item-icon.fa.fa-tags
+          span.item-text.hidden-xs All categories
+        a.btn.btn-default(ng-repeat="category in categoryBreadcrumb", ui-sref="{ categoryId: category.id }", ui-sref-active="disabled")
+          span.item-icon.fa.fa-tag
+          span.item-text {{ category.name }}
+        a.btn.btn-default.dropdown-toggle(data-toggle="dropdown", ng-show="categoryList.length")
+          span.item-icon.fa.fa-caret-down
+        .dropdown-menu.dropdown-menu-right
+          a.dropdown-menu-item(ng-repeat="category in categoryList", ui-sref="{ categoryId: category.id }")
+            span.item-icon.fa.fa-tag
+            span.item-text {{ category.name }}
+  .col-xs-12
+    .container-spinner(ng-if="loading")
+      span.fa.fa-spinner.fa-3x.fa-spin
+    .alert.alert-info.text-center(ng-if="!loading && !offeringList.length")
+      | No offerings launched.
+    .container-flex
+      .panel.panel-default.item-offering(ng-repeat="offering in offeringList")
+        .panel-heading
+          .thumbnail.item-product-logo
+            img(no-image, ng-src="{{ getProductPicture(offering) }}")
+          a.panel-title {{ offering.name }}
+          .panel-subtitle
+            span v{{ offering.version }}
+            span.pull-right
+              time(am-time-ago="offering.lastUpdate")
+        .panel-body
+          .btn-toolbar(ng-if="isAuthenticated()")
+            .btn-group.btn-group-sm
+              button.btn.btn-primary(type="button", ng-click="orderItem(offering)") Add to Cart

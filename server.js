@@ -185,7 +185,7 @@ var jsDepFilesToInject = [
     'angular-1.4.7/js/angular-messages.js',
     'angular-1.4.7/js/angular-moment.js',
     'angular-1.4.7/js/angular-resource.js',
-    'angular-1.4.7/js/angular-route.js'
+    'angular-1.4.7/js/angular-ui-router.js'
 ].map(function(path) {
     return 'resources/' + path;
 });
@@ -200,48 +200,35 @@ var jsAppFilesToInject = [
     'services/ProductCategoryService.js',
     'services/AssetService.js',
     'services/AssetTypeService.js',
-    'controllers/PaymentController.js',
-    'controllers/MessageController.js',
+    'controllers/FlashMessageController.js',
+    'controllers/SearchFilterController.js',
     'controllers/UserController.js',
     'controllers/ProductController.js',
     'controllers/ProductOfferingController.js',
     'controllers/ProductCatalogueController.js',
     'controllers/ProductCategoryController.js',
-    'routes.js'
+    'controllers/PaymentController.js',
+    'routes.js',
+    'routes/product.js',
+    'routes/product-offering.js',
+    'routes/product-catalogue.js'
 ].map(function(path) {
     return 'resources/core/js/' + path;
 });
 
-var renderTemplate = function(req, res, viewName, userRole) {
+app.get(config.portalPrefix + '/', function(req, res) {
 
-    // TODO: Maybe an object with extra properties (if required)
-
-    var properties = {
+    res.render('app', {
         user: req.user,
-        userRole: userRole,
         contextPath: config.portalPrefix,
         proxyPath: config.proxyPrefix,
         cssFilesToInject: cssFilesToInject,
         jsDepFilesToInject: jsDepFilesToInject,
         jsAppFilesToInject: jsAppFilesToInject,
         accountHost: config.oauth2.server
-    };
+    });
 
-    res.render(viewName, properties);
     res.end();
-
-};
-
-app.get(config.portalPrefix + '/', function(req, res) {
-    renderTemplate(req, res, 'home-content', 'Customer');
-});
-
-app.get(config.portalPrefix + '/mystock', ensureAuthenticated, function(req, res) {
-    renderTemplate(req, res, 'mystock-content', 'Seller');
-});
-
-app.get(config.portalPrefix + '/payment', ensureAuthenticated, function(req, res) {
-    renderTemplate(req, res, 'payment-content', 'Customer');
 });
 
 /////////////////////////////////////////////////////////////////////

@@ -1,0 +1,62 @@
+form(name="stages[3].form", novalidate)
+  .row
+    .col-sm-8
+      .form-group
+        label Name
+        input.form-control(
+          type="text"
+          name="name"
+          ng-model="offeringInfo.name"
+          required
+          readonly
+        )
+    .col-sm-4
+      .form-group
+        label Version
+        input.form-control(
+          type="text"
+          name="version"
+          ng-model="offeringInfo.version"
+          required
+          readonly
+        )
+  .form-group
+    label Description
+    textarea.form-control(rows="3", name="description", ng-model="offeringInfo.description", readonly)
+  .form-group
+    label Product selected
+    input(type="hidden", ng-model="productChosen.id", required)
+    table.table.table-bordered
+      thead
+        tr
+          th Status
+          th Name
+          th Updated
+      tbody
+        tr
+          td
+            i.status(ng-class="'status-{{ productChosen.lifecycleStatus | lowercase }}'")
+          th
+            span {{ productChosen.name }}
+          td
+            time(am-time-ago="productChosen.lastUpdate")
+  .form-group
+    label Catalogue selected
+    input(type="hidden", ng-model="catalogueChosen.id", required)
+    table.table.table-bordered
+      thead
+        tr
+          th Status
+          th Name
+          th Updated
+      tbody
+        tr
+          td
+            i.status(ng-class="'status-{{ catalogueChosen.lifecycleStatus | lowercase }}'")
+          th
+            span {{ catalogueChosen.name }}
+          td
+            time(am-time-ago="catalogueChosen.lastUpdate")
+  .form-group.text-right
+    button.btn.btn-success(type="button", ng-click="createOffering()", ng-disabled="!stages[3].form.$valid")
+      span.item-text Create

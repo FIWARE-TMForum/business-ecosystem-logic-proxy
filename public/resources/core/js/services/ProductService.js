@@ -2,133 +2,106 @@
  *
  */
 
-angular.module('app.services')
-    .factory('Product', ['$rootScope', '$resource', 'URLS', 'LIFECYCLE_STATUS', 'EVENTS', 'User', function ($rootScope, $resource, URLS, LIFECYCLE_STATUS, EVENTS, User) {
+angular.module('app')
+    .factory('Product', function ($rootScope, $resource, $q, URLS, EVENTS, LIFECYCLE_STATUS, User) {
 
-        var serializeProduct = function serializeProduct($product) {
-            return {
-                id: $product.id,
-                href: $product.href
-            };
-        };
+        var messageTemplate = 'The product <strong>{{ name }}</strong> was {{ action }} successfully.';
 
         var Product, service = {
-
-            EVENTS: {
-                FILTER: '$productFilter',
-                FILTERVIEW_SHOW: '$productFilterViewShow',
-                SEARCHVIEW_SHOW: '$productSearchViewShow',
-                UPDATEVIEW_SHOW: '$productUpdateViewShow'
-            },
-
-            MESSAGES: {
-                CREATED: 'The product <strong>{{ name }}</strong> was created successfully.'
-            },
-
-            STATUS: LIFECYCLE_STATUS,
 
             TYPES: {
                 PRODUCT: 'Product',
                 PRODUCT_BUNDLE: 'Product Bundle'
             },
 
-            $collection: [],
+            list: function list(role, filters) {
+                var deferred = $q.defer(), params = {};
 
-            list: function list() {
-                var next, wasSearch = false, params = {};
+                if (angular.isObject(filters)) {
 
-                switch (User.getRole()) {
+                    if (filters.status) {
+                        params['lifecycleStatus'] = filters.status;
+                    }
+                }
+
+                switch (role) {
                 case User.ROLES.CUSTOMER:
                     break;
                 case User.ROLES.SELLER:
-                    params['relatedParty.id'] = User.getID();
+                    params['relatedParty.id'] = User.current.id;
                     break;
                 }
 
-                if (arguments.length > 0) {
-                    if (angular.isFunction(arguments[0])) {
-                        next = arguments[0];
-                    } else {
-                        if (angular.isObject(arguments[0])) {
-
-                            var filters = arguments[0];
-
-                            if (filters.type in service.TYPES) {
-                                params.isBundle = (service.TYPES[filters.type] !== service.TYPES.PRODUCT);
-                                wasSearch = true;
-                            }
-
-                            if ('status' in filters && filters.status.length) {
-                                params.lifecycleStatus = filters.status.join();
-                                wasSearch = true;
-                            }
-                        }
-
-                        if (arguments.length > 1) {
-                            if (angular.isFunction(arguments[1])) {
-                                next = arguments[1];
-                            }
-                        }
-                    }
-                }
-
-                Product.query(params, function ($collection) {
-
-                    angular.copy($collection, service.$collection);
-
-                    if (next != null) {
-                        next(service.$collection, wasSearch);
-                    }
-                }, function (response) {
-                    // TODO: onfailure.
+                Resource.query(params, function (productList) {
+                    deferred.resolve(productList);
                 });
+
+                return deferred.promise;
             },
 
-            create: function create(data, next) {
+            create: function create(data) {
+                var deferred = $q.defer();
 
                 angular.extend(data, {
                     lifecycleStatus: LIFECYCLE_STATUS.ACTIVE,
                     isBundle: !!data.bundledProductSpecification.length,
-                    bundledProductSpecification: data.bundledProductSpecification.map(function ($product) {
-                        return serializeProduct($product);
+                    bundledProductSpecification: data.bundledProductSpecification.map(function (product) {
+                        return Resource.serialize(product);
                     }),
-                    relatedParty: [User.serialize()]
+                    relatedParty: [User.current.id]
                 });
 
-                Product.save(data, function ($productCreated) {
+                Resource.save(data, function (productCreated) {
+                    $rootScope.$broadcast(EVENTS.MESSAGE_SHOW, 'success', messageTemplate, {
+                        name: productCreated.name,
+                        action: 'created'
+                    });
 
-                    service.$collection.unshift($productCreated);
-                    $rootScope.$broadcast(EVENTS.MESSAGE_SHOW, 'success', service.MESSAGES.CREATED, $productCreated);
-
-                    if (next != null) {
-                        next($productCreated);
-                    }
-                }, function (response) {
-                    // TODO: onfailure.
+                    deferred.resolve(productCreated);
                 });
+
+                return deferred.promise;
             },
 
-            update: function update($product, next) {
-                var index = service.$collection.indexOf($product);
+            get: function get(productId) {
+                var deferred = $q.defer(), params = {
+                    productId: productId
+                };
 
-                Product.update({id: $product.id}, $product, function ($productUpdated) {
-
-                    service.$collection[index] = $productUpdated;
-
-                    if (next != null) {
-                        next($productUpdated);
-                    }
-                }, function (response) {
-                    // TODO: onfailure.
+                Resource.get(params, function (productRetrieved) {
+                    deferred.resolve(productRetrieved);
                 });
+
+                return deferred.promise;
             },
 
-            getPictureOf: function getPictureOf($product) {
+            update: function update(product, next) {
+                var deferred = $q.defer(), params = {
+                    productId: product.id
+                };
+
+                Resource.update(params, product, function (productUpdated) {
+                    $rootScope.$broadcast(EVENTS.MESSAGE_SHOW, 'success', messageTemplate, {
+                        name: productUpdated.name,
+                        action: 'updated'
+                    });
+
+                    deferred.resolve(productUpdated);
+                });
+
+                return deferred.promise;
+            },
+
+            serialize: function serialize(product) {
+                return {id: product.id, href: product.href};
+            },
+
+            getPictureOf: function getPictureOf(product) {
                 var i, src = "";
 
-                if ('attachment' in $product) {
-                    for (i = 0; i < $product.attachment.length && !src.length; i++) {
-                        if ($product.attachment[i].type == 'Picture') {
+                if (angular.isArray(product.attachment)) {
+                    for (i = 0; i < product.attachment.length && !src.length; i++) {
+                        if (product.attachment[i].type == 'Picture') {
                             src = $product.attachment[i].url;
                         }
                     }
@@ -137,59 +110,38 @@ angular.module('app.services')
                 return src;
             },
 
-            getBundledProductsOf: function getBundledProductsOf($product, next) {
-                var params;
+            getBundledProductOf: function getBundledProductOf(product, next) {
+                var deferred = $q.defer(), params;
 
-                if ($product.isBundle) {
+                if (product.isBundle) {
                     params = {
-                        'relatedParty.id': User.getID(),
-                        'id': $product.bundledProductSpecification.map(function (data) {
+                        'relatedParty.id': User.current.id,
+                        'id': product.bundledProductSpecification.map(function (data) {
                             return data.id;
                         }).join()
                     };
 
-                    Product.query(params, function ($collection) {
-                        angular.copy($collection.slice(), $product.bundledProductSpecification);
-
-                        if (next != null) {
-                            next($product.bundledProductSpecification);
-                        }
-                    }, function (response) {
-
+                    Resource.query(params, function (productList) {
+                        product.bundledProductSpecification = productList;
+                        deferred.resolve(productList);
                     });
                 } else {
 
-                    if (!angular.isArray($product.bundledProductSpecification)) {
-                        $product.bundledProductSpecification = [];
+                    if (!angular.isArray(product.bundledProductSpecification)) {
+                        product.bundledProductSpecification = [];
                     }
 
-                    next($product.bundledProductSpecification);
+                    deferred.resolve(product.bundledProductSpecification);
                 }
-            },
 
-            getBrands: function getBrands(next) {
-                var params = {'relatedParty.id': User.getID(), 'fields': 'brand'};
-
-                Product.query(params, function ($collection) {
-                    var brandSet = {};
-
-                    $collection.forEach(function ($product) {
-                        brandSet[$product.brand] = 0;
-                    });
-
-                    if (next != null) {
-                        next(Object.keys(brandSet));
-                    }
-                }, function (response) {
-                    // TODO: onfailure.
-                });
+                return deferred.promise;
             }
 
         };
 
-        Product = $resource(URLS.CATALOGUE_MANAGEMENT + '/productSpecification/:productId', {productId: '@id'}, {
+        Resource = $resource(URLS.CATALOGUE_MANAGEMENT + '/productSpecification/:productId', {productId: '@id'}, {
             update: {method:'PUT'}
         });
 
         return service;
-    }]);
+    });

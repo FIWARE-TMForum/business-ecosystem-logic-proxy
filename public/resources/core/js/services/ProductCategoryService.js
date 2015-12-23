@@ -2,62 +2,76 @@
  *
  */
 
-angular.module('app.services')
-    .factory('Category', ['$resource', 'URLS', function ($resource, URLS) {
-        var Category, service;
+angular.module('app')
+    .factory('Category', function ($resource, $q, URLS) {
 
-        service = {
+        var Resource, service = {
 
-            $collection: [],
-
-            $collectionById: {},
-
-            list: function list(next) {
-                var params = {'isRoot': true, 'fields': 'name'};
-
-                Category.query(params, function ($collection) {
-
-                    $collection.forEach(function ($entry) {
-                        if (!Array.isArray(service.$collectionById[$entry.id])) {
-                            service.$collectionById[$entry.id] = [];
-                        }
-                    });
-
-                    angular.copy($collection, service.$collection);
-
-                    if (next != null) {
-                        next(service.$collection);
-                    }
-                }, function (response) {
-                    // TODO: onfailure.
-                });
+            data: {
+                roots: {},
+                subcategories: {}
             },
 
-            get: function get($category, next) {
-                var params = {'parentId': $category.id, 'fields': 'name'};
+            list: function list(filters) {
+                var deferred = $q.defer(), params = {
+                    fields: 'name,isRoot,parentId'
+                };
 
-                Category.query(params, function ($collection) {
+                if (angular.isObject(filters) && filters.categoryId) {
+                    params.parentId = filters.categoryId;
+                } else {
+                    params.isRoot = true;
+                }
 
-                    $collection.forEach(function ($entry) {
-                        if (!Array.isArray(service.$collectionById[$entry.id])) {
-                            service.$collectionById[$entry.id] = [];
-                        }
+                Resource.query(params, function (categoryList) {
+
+                    categoryList.forEach(function (category) {
+                        service.data[category.isRoot ? 'roots' : 'subcategories'][category.id] = category;
                     });
 
-                    angular.copy($collection, service.$collectionById[$category.id]);
-
-                    if (next != null) {
-                        next(service.$collectionById[$category.id]);
-                    }
-                }, function (response) {
-                    // TODO: onfailure.
+                    deferred.resolve(categoryList);
                 });
+
+                return deferred.promise;
+            },
+
+            breadcrumbOf: function breadcrumbOf(categoryId) {
+                var deferred = $q.defer();
+
+                if (categoryId) {
+                    _breadcrumbOf(deferred, [], categoryId);
+                } else {
+                    deferred.resolve([]);
+                }
+
+                return deferred.promise;
             }
 
         };
 
-        Category = $resource(URLS.CATALOGUE_MANAGEMENT + '/category/:categoryId', {categoryId: '@id'}, {
+        var _breadcrumbOf = function _breadcrumbOf(deferred, categoryList, categoryId) {
+
+            if (categoryId in service.data.roots) {
+                categoryList.unshift(service.data.roots[categoryId]);
+                deferred.resolve(categoryList);
+            } else if (categoryId in service.data.subcategories) {
+                categoryList.unshift(service.data.subcategories[categoryId]);
+                _breadcrumbOf(deferred, categoryList, service.data.subcategories[categoryId].parentId);
+            } else {
+                var params = {
+                    fields: 'name,isRoot,parentId',
+                    categoryId: categoryId
+                };
+
+                Resource.get(params, function (category) {
+                    service.data[category.isRoot ? 'roots' : 'subcategories'][category.id] = category;
+                    _breadcrumbOf(deferred, categoryList, category.id);
+                });
+            }
+        };
+
+        Resource = $resource(URLS.CATALOGUE_MANAGEMENT + '/category/:categoryId', {categoryId: '@id'}, {
         });
 
         return service;
-    }]);
+    });

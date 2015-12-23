@@ -3,31 +3,35 @@
  */
 
 angular.module('app')
-    .config(['$routeProvider', '$injector', 'URLS', function ($routeProvider, $injector, URLS) {
-        var userRole = $injector.has('LOGGED_USER') ? $injector.get('LOGGED_USER').ROLE : 'Customer';
+    .config(function ($stateProvider, $urlRouterProvider, $injector) {
 
-        switch (userRole) {
-        case 'Customer':
-            break;
-        case 'Seller':
-            $routeProvider
-                .when('/products', {
-                    templateUrl: 'seller/product-view',
-                    controller: 'ProductView'
-                })
-                .when('/catalogues', {
-                    templateUrl: 'seller/catalogue-view',
-                    controller: 'CatalogueView'
-                })
-                .when('/offerings', {
-                    templateUrl: URLS.TEMPLATE + '/ProductOfferingView.html',
-                    controller: 'OfferingView'
-                })
-                .otherwise({
-                    redirectTo: '/products'
+        $urlRouterProvider.otherwise('/offering');
+
+        $stateProvider
+            .state('app', {
+                abstract: true,
+                url: '/',
+                templateUrl: 'content',
+                controller: function ($scope, LIFECYCLE_STATUS) {
+
+                    $scope.LIFECYCLE_STATUS = LIFECYCLE_STATUS;
+
+                    $scope.$on("$stateChangeSuccess", function (event, toState) {
+                        $scope.title = toState.data.title;
+                    });
+                }
+            });
+
+        if ($injector.has('LOGGED_USER')) {
+
+            $stateProvider
+                .state('app.stock', {
+                    abstract: true,
+                    url: 'stock',
+                    template: '<ui-view/>',
+                    data: {
+                        title: 'My Stock'
+                    }
                 });
-            break;
-        default:
-            // do nothing.
         }
-    }]);
+    });

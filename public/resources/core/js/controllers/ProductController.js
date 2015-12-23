@@ -2,85 +2,22 @@
  *
  */
 
-angular.module('app.controllers')
-    .controller('ProductListCtrl', ['$scope', '$rootScope', 'Product', function ($scope, $rootScope, Product) {
+angular.module('app')
+    .controller('ProductSearchCtrl', function ($scope, $rootScope, EVENTS, User, Product, productParams, productFilters) {
 
-        $scope.getProductPicture = function getProductPicture($product) {
-            return Product.getPictureOf($product);
+        $scope.showFilters = function () {
+            $rootScope.$broadcast(EVENTS.FILTERS_SHOW, productFilters);
         };
 
-        $scope.productList = Product.$collection;
-    }])
-    .controller('ProductSearchCtrl', ['$scope', '$rootScope', 'EVENTS', 'Product', function ($scope, $rootScope, EVENTS, Product) {
+        $scope.loading = true;
 
-        $scope.showFilterView = function showFilterView() {
-            $rootScope.$broadcast(Product.EVENTS.FILTERVIEW_SHOW);
-        };
-
-        $scope.showResultView = function showResultsView($index) {
-            $scope.resultView = $index;
-        };
-
-        $scope.resultView = 1;
-        $scope.searchFailed = false;
-
-        $scope.productList = Product.$collection;
-        $scope.productListWaiting = false;
-
-        $scope.$on(Product.EVENTS.FILTER, function ($event, params) {
-            $scope.searchFailed = false;
-            $scope.productListWaiting = true;
-
-            Product.list(params, function ($collection, wasSearch) {
-                $scope.productListWaiting = false;
-
-                if (wasSearch) {
-                    $scope.searchFailed = !$collection.length;
-                }
-            });
+        Product.list(User.ROLES.SELLER, productParams).then(function (productList) {
+            $scope.loading = false;
+            $scope.productList = productList;
         });
-    }])
-    .controller('ProductSearchFilterCtrl', ['$scope', '$rootScope', '$element', 'Product', function ($scope, $rootScope, $element, Product) {
+    })
+    .controller('ProductCreateCtrl', function ($scope, $state, Product, Asset, AssetType) {
 
-        var searchProduct = function searchProduct() {
-            $rootScope.$broadcast(Product.EVENTS.FILTER, $scope.params);
-        };
-
-        $scope.toggleStatus = function toggleStatus(status) {
-            var index = $scope.params.status.indexOf(status);
-
-            if (index != -1) {
-                $scope.params.status.splice(index, 1);
-            } else {
-                $scope.params.status.push(status);
-            }
-        };
-
-        $scope.PRODUCT_TYPES = Product.TYPES;
-
-        $scope.params = {
-            status: [Product.STATUS.ACTIVE, Product.STATUS.LAUNCHED]
-        };
-
-        $element.on('hidden.bs.modal', function (event) {
-            searchProduct();
-        });
-
-        $scope.$on(Product.EVENTS.FILTERVIEW_SHOW, function ($event) {
-            $element.modal('show');
-        });
-
-        searchProduct();
-    }])
-    .controller('ProductCreateCtrl', ['$scope', '$rootScope', 'EVENTS', 'Product', 'Asset', 'AssetType', '$element',
-        function ($scope, $rootScope, EVENTS, Product, Asset, AssetType, $element) {
-
-        var initialInfo = {
-            version: '0.1',
-            bundledProductSpecification: [],
-            productSpecCharacteristic: []
-        };
-        var activeTab = 1;
         var currentType;
 
         $scope.assetTypes = [];
@@ -120,26 +57,6 @@ angular.module('app.controllers')
             activeTab = active;
         };
 
-        $scope.stepList = [
-            {title: 'General', templateUrl: 'seller/product-create-general-view'},
-            //{name: 'Characteristics'},
-            {title: 'Assets', templateUrl: 'seller/product-create-assets-view'},
-            {title: 'Finish', templateUrl: 'seller/product-create-finish-view'}
-        ];
-
-        $scope.setStepDisabled = function setStepDisabled($index) {
-            return $index != $scope.stepActive && $index > $scope.stepValid;
-        };
-
-        $scope.nextStep = function nextStep($index) {
-            $scope.stepActive = $index;
-            $scope.stepValid = $index;
-        };
-
-        $scope.showStep = function showStep($index) {
-            $scope.stepActive = $index;
-        };
-
         $scope.setCurrentType = function() {
             var found = false;
             for (var i = 0; i < $scope.assetTypes.length && !found; i++) {
@@ -162,12 +79,14 @@ angular.module('app.controllers')
         };
 
         var saveProduct = function saveProduct() {
-            Product.create($scope.productInfo, function ($productCreated) {
-                $rootScope.$broadcast(Product.EVENTS.SEARCHVIEW_SHOW);
+            Product.create($scope.productInfo).then(function (productCreated) {
+                $state.go('app.stock.product.update', {
+                    productId: productCreated.id
+                });
             });
         };
 
-        $scope.createProduct = function createProduct() {
+        $scope.createProduct = function () {
             // If the format is file upload it to the asset manager
             if ($scope.currFormat === 'FILE') {
                 var reader = new FileReader();
@@ -192,73 +111,41 @@ angular.module('app.controllers')
             }
         };
 
-        $scope.resetCreateForm = function resetCreateForm() {
-            $scope.stepActive = 0;
-            $scope.stepValid = 0;
-            $scope.productInfo = angular.copy(initialInfo);
-
-            AssetType.list(function (types) {
-                $scope.assetTypes = types;
-
-                if (types.length) {
-                    includeCharacteristic('Asset type', 'Type of the digital asset described in this product specification', '');
-                    includeCharacteristic('Media type', 'Media type of the digital asset described in this product specification', '');
-                    includeCharacteristic('Location', 'URL pointing to the digital asset described in this product specification', '');
-                    currentType = types[0];
-                    $scope.currFormat = currentType.formats[0];
-                    $scope.productInfo.productSpecCharacteristic[0].productSpecCharacteristicValue[0].value = types[0].name;
-                }
-            });
+        $scope.productInfo = {
+            version: '0.1',
+            bundledProductSpecification: [],
+            productSpecCharacteristic: []
         };
 
-        $scope.resetCreateForm();
-    }])
-    .controller('ProductUpdateCtrl', ['$scope', '$rootScope', 'EVENTS', 'Product', '$element', function ($scope, $rootScope, EVENTS, Product, $element) {
+        AssetType.list(function (types) {
+            $scope.assetTypes = types;
 
-        $scope.showTab = function showTab($index) {
-            $scope.tabActive = $index;
-        };
-
-        $scope.updateProduct = function updateProduct() {
-            Product.update($scope.$product, function ($productUpdated) {
-                $element.modal('hide');
-                $rootScope.$broadcast(EVENTS.MESSAGE_SHOW, 'success', 'The product <strong>{{ name }}</strong> was updated successfully.', $productUpdated);
-            });
-        };
-
-        $scope.tabList = [
-            {title: 'General'},
-            {title: 'Characteristics'},
-            {title: 'Attachments'}
-        ];
-        $scope.$product = {};
-
-        $scope.$on(Product.EVENTS.UPDATEVIEW_SHOW, function ($event, $product) {
-            angular.copy($product, $scope.$product);
-            $scope.showTab(0);
-
-            Product.getBundledProductsOf($scope.$product, function ($bundledProducts) {
-            });
+            if (types.length) {
+                includeCharacteristic('Asset type', 'Type of the digital asset described in this product specification', '');
+                includeCharacteristic('Media type', 'Media type of the digital asset described in this product specification', '');
+                includeCharacteristic('Location', 'URL pointing to the digital asset described in this product specification', '');
+                currentType = types[0];
+                $scope.currFormat = currentType.formats[0];
+                $scope.productInfo.productSpecCharacteristic[0].productSpecCharacteristicValue[0].value = types[0].name;
+            }
         });
-    }])
-    .controller('ProductView', ['$scope', '$rootScope', 'EVENTS', 'Product', function ($scope, $rootScope, EVENTS, Product) {
+    })
+    .controller('ProductUpdateCtrl', function ($scope, $state, Product) {
 
-        $scope.showSearchView = function showSearchView() {
-            $scope.routeActive = '/search';
+        $scope.updateProduct = function () {
+            Product.update($scope.productInfo, function (productUpdated) {
+                $state.go('app.stock.product.update', {
+                    productId: productUpdated.id,
+                    reload: true
+                });
+            });
         };
 
-        $scope.showCreateView = function showCreateView() {
-            $scope.routeActive = '/create';
-        };
+        $scope.loading = true;
 
-        $scope.showUpdateView = function showUpdateView($product) {
-            $scope.routeActive = '/update';
-            $rootScope.$broadcast(Product.EVENTS.UPDATEVIEW_SHOW, $product);
-        };
-
-        $scope.$on(Product.EVENTS.SEARCHVIEW_SHOW, function ($event) {
-            $scope.showSearchView();
+        Product.get($state.params.productId).then(function (product) {
+            $scope.loading = false;
+            $scope.product = product;
+            $scope.productInfo = angular.copy(product);
         });
-
-        $scope.showSearchView();
-    }]);
+    });
