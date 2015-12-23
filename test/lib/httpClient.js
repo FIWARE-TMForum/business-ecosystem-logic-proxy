@@ -294,7 +294,7 @@ describe('HTTP Client', function() {
             testProxyRequest(400, 'DELETE', false, false, null, done);
         });
 
-        var postAction = function(callback) {
+        var postAction = function(result, callback) {
             callback(extraHdrs);
         };
 

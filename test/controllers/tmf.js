@@ -301,7 +301,8 @@ describe('TMF Controller', function() {
 
             var proxyCallback = jasmine.createSpy('callback');
             var proxyRequest = function(protocol, options, data, proxiedRes, postAction) {
-                postAction(proxyCallback);
+                var result = {};
+                postAction(result, proxyCallback);
             };
 
             // TMF API

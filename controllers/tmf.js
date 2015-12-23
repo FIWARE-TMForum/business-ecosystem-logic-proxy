@@ -55,8 +55,10 @@ var tmf = (function() {
         var postAction = null;
 
         if (apiControllers[api] !== undefined && apiControllers[api].executePostValidation) {
-            postAction = function(callback) {
-                apiControllers[api].executePostValidation(req, function(err, retRes) {
+            postAction = function(result, callback) {
+                result.user = req.user;
+                result.method = req.method;
+                apiControllers[api].executePostValidation(result, function(err, retRes) {
                     if (err) {
                         sendError(res, err);
                     } else {
