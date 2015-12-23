@@ -2,7 +2,7 @@
  *
  */
 
-angular.module('app.services')
+angular.module('app')
     .factory('AssetType', ['$resource', 'URLS', function ($resource, URLS) {
 
         var AssetType, service = {
