@@ -65,12 +65,12 @@
         span.item-icon.fa.fa-sign-in
         span.item-text.hidden-xs Sign in
 
-.notification-list(ng-controller="MessageListCtrl")
-  .container(ng-messages="$alert", ng-if="!hidden")
+.notification-list(ng-controller="FlashMessageListCtrl")
+  .container(ng-messages="alert", ng-if="!hidden")
     .alert.alert-success(ng-message="success")
       button.close(type="button", ng-click="resetAlert()")
         i.fa.fa-remove.fa-fw
-      span.alert-message(ng-bind-html="$alert.message")
+      span.alert-message(ng-bind-html="alert.message")
 
 .container
   .row

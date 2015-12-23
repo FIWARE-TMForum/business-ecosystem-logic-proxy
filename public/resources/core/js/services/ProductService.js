@@ -3,7 +3,9 @@
  */
 
 angular.module('app')
-    .factory('Product', function ($resource, $q, URLS, LIFECYCLE_STATUS, User) {
+    .factory('Product', function ($rootScope, $resource, $q, URLS, EVENTS, LIFECYCLE_STATUS, User) {
+
+        var messageTemplate = 'The product <strong>{{ name }}</strong> was {{ action }} successfully.';
 
         var Product, service = {
 
@@ -50,6 +52,11 @@ angular.module('app')
                 });
 
                 Resource.save(data, function (productCreated) {
+                    $rootScope.$broadcast(EVENTS.MESSAGE_SHOW, 'success', messageTemplate, {
+                        name: productCreated.name,
+                        action: 'created'
+                    });
+
                     deferred.resolve(productCreated);
                 });
 
@@ -74,6 +81,11 @@ angular.module('app')
                 };
 
                 Resource.update(params, product, function (productUpdated) {
+                    $rootScope.$broadcast(EVENTS.MESSAGE_SHOW, 'success', messageTemplate, {
+                        name: productUpdated.name,
+                        action: 'updated'
+                    });
+
                     deferred.resolve(productUpdated);
                 });
 

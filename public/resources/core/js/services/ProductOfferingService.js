@@ -3,7 +3,9 @@
  */
 
 angular.module('app')
-    .factory('Offering', function ($resource, $q, URLS, LIFECYCLE_STATUS, User, Product) {
+    .factory('Offering', function ($rootScope, $resource, $q, URLS, EVENTS, LIFECYCLE_STATUS, User, Product) {
+
+        var messageTemplate = 'The offering <strong>{{ name }}</strong> was {{ action }} successfully.';
 
         var Offering, service = {
 
@@ -101,6 +103,11 @@ angular.module('app')
                 });
 
                 Offering.save(params, data, function (offeringCreated) {
+                    $rootScope.$broadcast(EVENTS.MESSAGE_SHOW, 'success', messageTemplate, {
+                        name: offeringCreated.name,
+                        action: 'created'
+                    });
+
                     offeringCreated.productSpecification = product;
                     deferred.resolve(offeringCreated);
                 });

@@ -3,7 +3,9 @@
  */
 
 angular.module('app')
-    .factory('Catalogue', function ($rootScope, $resource, $q, URLS, LIFECYCLE_STATUS, PARTY_ROLES, User) {
+    .factory('Catalogue', function ($rootScope, $resource, $q, URLS, EVENTS, LIFECYCLE_STATUS, PARTY_ROLES, User) {
+
+        var messageTemplate = 'The catalogue <strong>{{ name }}</strong> was {{ action }} successfully.';
 
         var Resource, service = {
 
@@ -56,6 +58,11 @@ angular.module('app')
                 });
 
                 Resource.save(data, function (catalogueCreated) {
+                    $rootScope.$broadcast(EVENTS.MESSAGE_SHOW, 'success', messageTemplate, {
+                        name: catalogueCreated.name,
+                        action: 'created'
+                    });
+
                     deferred.resolve(catalogueCreated);
                 });
 
@@ -80,6 +87,11 @@ angular.module('app')
                 };
 
                 Resource.update(params, catalogue, function (catalogueUpdated) {
+                    $rootScope.$broadcast(EVENTS.MESSAGE_SHOW, 'success', messageTemplate, {
+                        name: catalogueUpdated.name,
+                        action: 'updated'
+                    });
+
                     deferred.resolve(catalogueUpdated);
                 });
 
