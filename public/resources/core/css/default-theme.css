@@ -454,6 +454,62 @@ textarea {
     border-right-width: 3px;
 }
 
+.nav-pills.nav-stacked > li + li {
+    margin-top: 0;
+}
+
+.nav-pills.nav-responsive > li > a {
+    padding: 0;
+    border-width: 0;
+}
+.nav-pills.nav-responsive > li > a > .item-icon-container,
+.nav-pills.nav-responsive > li > a > .item-text {
+    display: table-cell;
+    padding: 10px 12px;
+}
+.nav-pills.nav-responsive > li > a.h4 > .item-icon-container,
+.nav-pills.nav-responsive > li > a.h4 > .item-text {
+    padding-top: 12px;
+    padding-bottom: 12px;
+}
+
+.nav-pills.nav-responsive > li > a > .item-icon-container {
+    text-align: center;
+}
+.nav-pills.nav-responsive > li > a > .item-text {
+    width: 100%;
+}
+
+.nav-pills.nav-responsive > li > a.bg-green > .item-icon-container,
+.nav-pills.nav-responsive > li > a.bg-green:hover,
+.nav-pills.nav-responsive > li > a.bg-green:focus,
+.nav-pills.nav-responsive > li.active > a.bg-green,
+.nav-pills.nav-responsive > li.active > a.bg-green:hover,
+.nav-pills.nav-responsive > li.active > a.bg-green:focus {
+    color: rgb(255, 255, 255);
+    background-color: rgb(55, 190, 155);
+}
+
+.nav-pills.nav-responsive > li > a.bg-inverse > .item-icon-container,
+.nav-pills.nav-responsive > li > a.bg-inverse:hover,
+.nav-pills.nav-responsive > li > a.bg-inverse:focus,
+.nav-pills.nav-responsive > li.active > a.bg-inverse,
+.nav-pills.nav-responsive > li.active > a.bg-inverse:hover,
+.nav-pills.nav-responsive > li.active > a.bg-inverse:focus {
+    color: rgb(255, 255, 255);
+    background-color: rgb(20, 30, 40);
+}
+
+.nav-pills.nav-responsive > li > a.bg-warning-dark > .item-icon-container,
+.nav-pills.nav-responsive > li > a.bg-warning-dark:hover,
+.nav-pills.nav-responsive > li > a.bg-warning-dark:focus,
+.nav-pills.nav-responsive > li.active > a.bg-warning-dark,
+.nav-pills.nav-responsive > li.active > a.bg-warning-dark:hover,
+.nav-pills.nav-responsive > li.active > a.bg-warning-dark:focus {
+    color: rgb(255, 255, 255);
+    background-color: rgb(245, 120, 0);
+}
+
 /* ===================================================================================
  *   COMPONENT - NAV-STAGES
  * =================================================================================== */

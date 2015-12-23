@@ -5,8 +5,6 @@
 angular.module('app')
     .config(function ($stateProvider, $urlRouterProvider, $injector) {
 
-        $urlRouterProvider.otherwise('/offering');
-
         $stateProvider
             .state('app', {
                 abstract: true,
@@ -20,17 +18,38 @@ angular.module('app')
                         $scope.title = toState.data.title;
                     });
                 }
+            })
+            .state('app.payment', {
+                url: 'payment',
+                    data: {
+                        title: 'Payment'
+                    },
+                views: {
+                    content: {
+                        templateUrl: 'payment/content',
+                        controller: 'PaymentController'
+                    }
+                }
             });
 
         if ($injector.has('LOGGED_USER')) {
 
             $stateProvider
                 .state('app.stock', {
-                    abstract: true,
                     url: 'stock',
-                    template: '<ui-view/>',
                     data: {
                         title: 'My Stock'
+                    },
+                    views: {
+                        sidebar: {
+                            templateUrl: 'stock/sidebar',
+                            controller: function ($state) {
+                                $state.go('app.stock.catalogue');
+                            }
+                        },
+                        content: {
+                            template: '<ui-view/>'
+                        }
                     }
                 });
         }

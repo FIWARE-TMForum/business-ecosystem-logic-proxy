@@ -1,5 +1,5 @@
 doctype html
-html(lang="en")
+html(ng-app="app", lang="en")
   head
     title TM Forum Portal
 
@@ -16,10 +16,10 @@ html(lang="en")
       angular.module('app', ['ngResource', 'ngMessages', 'angularMoment', 'ui.router'])
         .constant('URLS', {
           IMAGE: '#{ contextPath }/resources/core/images',
-          USER: '#{ proxyPath }/charging/api/userManagement/users/:username',
-          ASSET_MANAGEMENT: '#{ proxyPath }/charging/api/assetManagement',
-          CATALOGUE_MANAGEMENT: '#{ proxyPath }/DSProductCatalog/api/catalogManagement/v2',
-          PAYMENT: '#{ proxyPath }/charging/api/orderManagement/orders/:action'
+          USER: 'http://130.206.121.54/charging/api/userManagement/users/:username',
+          ASSET_MANAGEMENT: 'http://130.206.121.54/charging/api/assetManagement',
+          CATALOGUE_MANAGEMENT: 'http://130.206.121.54/DSProductCatalog/api/catalogManagement/v2',
+          PAYMENT: 'http://130.206.121.54/charging/api/orderManagement/orders/:action'
         });
 
     if user
@@ -28,7 +28,7 @@ html(lang="en")
           .constant('LOGGED_USER', {
             id: '#{ user.id }',
             href: '#{ accountHost }/idm/user/#{ user.id }',
-            bearerToken: '#{ user.accessToken }'
+            bearerToken: 'xjXrLD98txHDumxCKFCC1NWfFeylhb'
           })
           .run(function ($http, LOGGED_USER) {
             $http.defaults.headers.common.Authorization = 'Bearer ' + LOGGED_USER.bearerToken;
@@ -37,12 +37,22 @@ html(lang="en")
     each jsFilePath in jsAppFilesToInject
       script(src="#{ contextPath }/#{ jsFilePath }")
 
-  body(ng-app="app", ng-controller="UserCtrl")
+    script.
+      angular.module('app')
+      .config(function ($stateProvider, $urlRouterProvider, $injector) {
+
+        $urlRouterProvider.otherwise('/offering');
+      });
+
+  body(ng-controller="UserCtrl")
     ui-view
 
     if user
       form(name="signOutForm", method="post", action="#{ contextPath }/logout")
       include ./includes/UserProfile.jade
+
+      script(type="text/ng-template", id="stock/sidebar")
+        include ./partials/stock/stock.sidebar.jade
 
       script(type="text/ng-template", id="seller/product/search")
         include ./includes/seller/product/search.jade
@@ -85,3 +95,6 @@ html(lang="en")
       include ./includes/customer/product-catalogue/detail.jade
     script(type="text/ng-template", id="content")
       include ./app.content.jade
+
+    script(type="text/ng-template", id="payment/content")
+      include ./app.payment.content.jade
