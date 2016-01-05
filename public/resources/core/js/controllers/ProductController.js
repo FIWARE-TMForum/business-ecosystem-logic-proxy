@@ -5,6 +5,16 @@
 angular.module('app')
     .controller('ProductSearchCtrl', function ($scope, $rootScope, EVENTS, User, Product, productParams, productFilters) {
 
+        var isList = false;
+
+        $scope.isListView = function isListView() {
+            return isList;
+        };
+
+        $scope.setListView = function setListView(state) {
+            isList = state;
+        };
+
         $scope.showFilters = function () {
             $rootScope.$broadcast(EVENTS.FILTERS_SHOW, productFilters);
         };
