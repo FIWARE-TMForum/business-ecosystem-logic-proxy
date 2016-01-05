@@ -53,12 +53,24 @@ ui-view
             tr
               th Status
               th Name
+              th Version
+              th Brand
+              th Type
               th Updated
           tbody
             tr(ng-repeat="product in productList")
               td
-                i.status(ng-class="'status-{{ product.lifecycleStatus | lowercase }}'")
+                i.status(ng-class="'status-{{ product.lifecycleStatus | lowercase }}'")    
+                {{ product.lifecycleStatus }}
               th
                 a(ui-sref="app.stock.product.update({ productId: product.id })") {{ product.name }}
+              td
+                {{ product.version }}
+              td
+                {{ product.brand  }}
+              td
+                .label-group
+                  .label(ng-class="product.isBundle ? 'label-product-bandle' : 'label-product'")
+                    | {{ product.isBundle ? 'Product bundle' : 'Product' }}
               td
                 time(am-time-ago="product.lastUpdate")
