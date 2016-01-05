@@ -16,10 +16,10 @@ html(ng-app="app", lang="en")
       angular.module('app', ['ngResource', 'ngMessages', 'angularMoment', 'ui.router'])
         .constant('URLS', {
           IMAGE: '#{ contextPath }/resources/core/images',
-          USER: 'http://130.206.121.54/charging/api/userManagement/users/:username',
-          ASSET_MANAGEMENT: 'http://130.206.121.54/charging/api/assetManagement',
-          CATALOGUE_MANAGEMENT: 'http://130.206.121.54/DSProductCatalog/api/catalogManagement/v2',
-          PAYMENT: 'http://130.206.121.54/charging/api/orderManagement/orders/:action'
+          USER: '#{ contextPath }/charging/api/userManagement/users/:username',
+          ASSET_MANAGEMENT: #{ contextPath }'/charging/api/assetManagement',
+          CATALOGUE_MANAGEMENT: '#{ contextPath }/DSProductCatalog/api/catalogManagement/v2',
+          PAYMENT: '#{ contextPath }/charging/api/orderManagement/orders/:action'
         });
 
     if user
@@ -28,7 +28,7 @@ html(ng-app="app", lang="en")
           .constant('LOGGED_USER', {
             id: '#{ user.id }',
             href: '#{ accountHost }/idm/user/#{ user.id }',
-            bearerToken: 'xjXrLD98txHDumxCKFCC1NWfFeylhb'
+            bearerToken: '#{ user.accessToken }'
           })
           .run(function ($http, LOGGED_USER) {
             $http.defaults.headers.common.Authorization = 'Bearer ' + LOGGED_USER.bearerToken;
