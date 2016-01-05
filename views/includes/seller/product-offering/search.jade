@@ -10,6 +10,13 @@ ui-view
           )
             span Search offering
     .col-xs-12
+      .btn-toolbar.pull-left
+        .btn-group
+          button.btn.btn-default(type="button", ng-class="{ 'active': !isListView() }", ng-click="setListView(false)")
+            span.item-icon.fa.fa-fw.fa-th
+          button.btn.btn-default(type="button", ng-class="{ 'active': isListView() }", ng-click="setListView(true)")
+            span.item-icon.fa.fa-fw.fa-th-list
+
       .btn-toolbar.pull-right
         .btn-group
           a.btn.btn-default(type="button", ui-sref="app.stock.offering.create")
@@ -24,17 +31,47 @@ ui-view
     .col-xs-12(ng-switch="offeringList.length", ng-if="!loading")
       .alert.alert-info.text-center(ng-switch-when="0")
         | No offerings found.
-      table.table.table-bordered.table-hover(ng-switch-default)
-        thead
-          tr
-            th Status
-            th Name
-            th Updated
-        tbody
-          tr(ng-repeat="offering in offeringList")
-            td
-              i.status(ng-class="'status-{{ offering.lifecycleStatus | lowercase }}'")
-            th
-              a(ui-sref="app.stock.offering.update({ offeringId: offering.id })") {{ offering.name }}
-            td
-              time(am-time-ago="offering.lastUpdate")
+      div(ng-switch-default)
+        .flex-container(ng-show="!isListView()")
+          .panel.panel-default.item-product(ng-repeat="offering in offeringList")
+            .panel-heading
+              .thumbnail.item-product-logo
+                img(no-image, ng-src="{{ getProductPicture(offering) }}")
+              a.panel-title(ui-sref="app.stock.offering.update({ offeringId: offering.id })") {{ offering.name }}
+              .panel-subtitle
+                span v{{ offering.version }}
+                span.pull-right
+                  time(am-time-ago="offering.lastUpdate")
+            .panel-body
+              .label-group
+                .label(ng-class="offering.isBundle ? 'label-offering-bandle' : 'label-offering'")
+                  | {{ product.isBundle ? 'Offering bundle' : 'Offering' }}
+              .lifecycle-status-group
+                .lifecycle-status-item.active(
+                  data-type="{{ offering.lifecycleStatus | lowercase }}"
+                  data-title="{{ offering.lifecycleStatus }}"
+                )
+                  span.status
+        table.table.table-bordered.table-hover(ng-show="isListView()")
+          thead
+            tr
+              th Status
+              th Name
+              th Product Spec
+              th Type
+              th Updated
+          tbody
+            tr(ng-repeat="offering in offeringList")
+              td
+                i.status(ng-class="'status-{{ offering.lifecycleStatus | lowercase }}'")
+                {{ offering.lifecycleStatus }}
+              th
+                a(ui-sref="app.stock.offering.update({ offeringId: offering.id })") {{ offering.name }}
+              th
+                a(ui-sref="app.stock.product.update({ productId: offering.productSpecification.id })") {{ offering.productSpecification.name }}
+              td
+                .label-group
+                  .label(ng-class="offering.isBundle ? 'label-offering-bandle' : 'label-offering'")
+                    | {{ product.isBundle ? 'Offering bundle' : 'Offering' }}
+              td
+                time(am-time-ago="offering.lastUpdate")

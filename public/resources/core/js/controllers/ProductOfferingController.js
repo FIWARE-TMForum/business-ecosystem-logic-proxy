@@ -4,6 +4,15 @@
 
 angular.module('app')
     .controller('OfferingSearchCtrl', function ($scope, $rootScope, $state, EVENTS, Offering, userRole, offeringFilters) {
+        var isList = false;
+
+        $scope.isListView = function isListView() {
+            return isList;
+        };
+
+        $scope.setListView = function setListView(state) {
+            isList = state;
+        };
 
         $scope.showFilters = function () {
             $rootScope.$broadcast(EVENTS.FILTERS_SHOW, offeringFilters);
