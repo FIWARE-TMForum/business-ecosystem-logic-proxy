@@ -216,9 +216,11 @@ var jsAppFilesToInject = [
     return 'resources/core/js/' + path;
 });
 
-app.get(config.portalPrefix + '/', function(req, res) {
+var renderTemplate = function(req, res, viewName) {
 
-    res.render('app', {
+    // TODO: Maybe an object with extra properties (if required)
+
+    res.render(viewName, {
         user: req.user,
         contextPath: config.portalPrefix,
         proxyPath: config.proxyPrefix,
@@ -229,6 +231,14 @@ app.get(config.portalPrefix + '/', function(req, res) {
     });
 
     res.end();
+};
+
+app.get(config.portalPrefix + '/', function(req, res) {
+    renderTemplate(req, res, 'app');
+});
+
+app.get(config.portalPrefix + '/payment', ensureAuthenticated, function(req, res) {
+    renderTemplate(req, res, 'app-payment');
 });
 
 /////////////////////////////////////////////////////////////////////

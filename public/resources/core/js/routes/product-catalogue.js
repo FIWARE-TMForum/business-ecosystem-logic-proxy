@@ -9,9 +9,13 @@ angular.module('app')
             .state('app.catalogue', {
                 abstract: true,
                 url: 'catalogue',
-                template: '<ui-view/>',
                 data: {
                     title: 'Catalogues'
+                },
+                views: {
+                    content: {
+                        template: '<ui-view/>'
+                    }
                 }
             })
             .state('app.catalogue.detail', {

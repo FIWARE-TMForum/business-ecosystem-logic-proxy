@@ -75,45 +75,42 @@
   .row
     .col-md-3.hidden-xs.hidden-sm
       .row
-        .panel.panel-default
-          ul.nav.nav-pills.nav-stacked
+        .panel.panel-default()
+          ul.nav.nav-stacked.nav-responsive.nav-pills
             li(ui-sref-active="active")
-              a(ui-sref="app.offering")
-                span.item-icon.fa.fa-home
+              a.h4.bg-inverse(ui-sref="app.offering")
+                span.item-icon-container
+                  i.fa.fa-fw.fa-home
                 span.item-text Home
-        .panel.panel-default(ng-controller="CatalogueListCtrl")
-          .panel-heading
-            strong.text-uppercase Catalogues
-          .panel-body(ng-show="loading")
-            .spinner
-              span.fa.fa-spinner.fa-lg.fa-spin
-          .panel-body(ng-show="!loading && !catalogueList.length")
-            .alert.alert-info
-              span No catalogues launched.
-          ul.nav.nav-pills.nav-stacked
-            li(ng-repeat="catalogue in catalogueList", ui-sref-active="active")
-              a(ui-sref="app.catalogue.detail.offering({ catalogueId: catalogue.id })")
-                span.item-icon.fa.fa-angle-right
-                span.item-text {{ catalogue.name }}
-        if user
-          .panel.panel-default
+            li(ui-sref-active="active")
+              a.h4.bg-green(ui-sref="app.stock", ui-sref-opts="{ reload: true }")
+                span.item-icon-container
+                  i.fa.fa-fw.fa-database
+                span.item-text My stock
+            li(ui-sref-active="active")
+              a.h4.bg-warning-dark(ui-sref="app.inventory")
+                span.item-icon-container
+                  i.fa.fa-fw.fa-archive
+                span.item-text My inventory
+        ui-view(name="sidebar")
+          .panel.panel-default(ng-controller="CatalogueListCtrl")
             .panel-heading
-              strong.text-uppercase My Stock
+              strong.text-uppercase Catalogues
+            .panel-body(ng-show="loading")
+              .spinner
+                span.fa.fa-spinner.fa-lg.fa-spin
+            .panel-body(ng-show="!loading && !catalogueList.length")
+              .alert.alert-info
+                span No catalogues launched.
             ul.nav.nav-pills.nav-stacked
-              li(ui-sref-active="active")
-                a(ui-sref="app.stock.catalogue")
-                  span.item-icon.fa.fa-book
-                  span.item-text Catalogues
-              li(ui-sref-active="active")
-                a(ui-sref="app.stock.product")
-                  span.item-icon.fa.fa-file
-                  span.item-text Products
-              li(ui-sref-active="active")
-                a(ui-sref="app.stock.offering")
-                  span.item-icon.fa.fa-cube
-                  span.item-text Offerings
+              li(ng-repeat="catalogue in catalogueList", ui-sref-active="active")
+                a(ui-sref="app.catalogue.detail.offering({ catalogueId: catalogue.id })")
+                  span.item-icon.fa.fa-angle-right
+                  span.item-text {{ catalogue.name }}
+
+
     .col-xs-12.col-md-9
-      ui-view
+      ui-view(name="content")
 
 footer.clearfix
   hr.fiware-line
