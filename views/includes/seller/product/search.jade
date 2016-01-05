@@ -6,6 +6,13 @@ ui-view
           a(ui-sref="app.stock.product", ui-sref-opts="{ reload: true }", ui-sref-active-eq="active")
             span Search product specifications
     .col-xs-12
+      .btn-toolbar.pull-left
+        .btn-group
+          button.btn.btn-default(type="button", ng-class="{ 'active': !isListView() }", ng-click="setListView(false)")
+            span.item-icon.fa.fa-fw.fa-th
+          button.btn.btn-default(type="button", ng-class="{ 'active': isListView() }", ng-click="setListView(true)")
+            span.item-icon.fa.fa-fw.fa-th-list
+
       .btn-toolbar.pull-right
         .btn-group
           a.btn.btn-default(type="button", ui-sref="app.stock.product.create")
@@ -14,12 +21,6 @@ ui-view
           button.btn.btn-default(type="button", ng-click="showFilters()")
             span.item-icon.fa.fa-sliders
             span.item-text Filters
-
-        .btn-group
-          button.btn.btn-default(type="button", ng-class="{ 'active': !isListView() }", ng-click="setListView(false)")
-            span.item-icon.fa.fa-fw.fa-th
-          button.btn.btn-default(type="button", ng-class="{ 'active': isListView() }", ng-click="setListView(true)")
-            span.item-icon.fa.fa-fw.fa-th-list
 
     .col-xs-12
       .container-spinner(ng-show="loading")

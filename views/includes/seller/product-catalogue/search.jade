@@ -30,6 +30,7 @@ ui-view
           tr(ng-repeat="catalogue in catalogueList")
             td
               i.status(ng-class="'status-{{ catalogue.lifecycleStatus | lowercase }}'")
+              {{ catalogue.lifecycleStatus }}
             th
               a(ui-sref="app.stock.catalogue.update({ catalogueId: catalogue.id })") {{ catalogue.name }}
             td
