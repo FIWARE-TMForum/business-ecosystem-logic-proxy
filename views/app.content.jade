@@ -75,23 +75,25 @@
   .row
     .col-md-3.hidden-xs.hidden-sm
       .row
-        .panel.panel-default()
-          ul.nav.nav-stacked.nav-responsive.nav-pills
-            li(ui-sref-active="active")
-              a.h4.bg-inverse(ui-sref="app.offering")
-                span.item-icon-container
-                  i.fa.fa-fw.fa-home
-                span.item-text Home
-            li(ui-sref-active="active")
-              a.h4.bg-green(ui-sref="app.stock", ui-sref-opts="{ reload: true }")
-                span.item-icon-container
-                  i.fa.fa-fw.fa-database
-                span.item-text My stock
-            li(ui-sref-active="active")
-              a.h4.bg-warning-dark(ui-sref="app.inventory")
-                span.item-icon-container
-                  i.fa.fa-fw.fa-archive
-                span.item-text My inventory
+        if user
+          .panel.panel-default()
+            ul.nav.nav-stacked.nav-responsive.nav-pills
+              li(ui-sref-active="active")
+                a.h4.bg-inverse(ui-sref="app.offering")
+                  span.item-icon-container
+                    i.fa.fa-fw.fa-home
+                  span.item-text Home
+              li(ui-sref-active="active")
+                a.h4.bg-green(ui-sref="app.stock", ui-sref-opts="{ reload: true }")
+                  span.item-icon-container
+                    i.fa.fa-fw.fa-database
+                  span.item-text My stock
+              li(ui-sref-active="active")
+                a.h4.bg-warning-dark(ui-sref="app.inventory")
+                  span.item-icon-container
+                    i.fa.fa-fw.fa-archive
+                  span.item-text My inventory
+
         ui-view(name="sidebar")
           .panel.panel-default(ng-controller="CatalogueListCtrl")
             .panel-heading
