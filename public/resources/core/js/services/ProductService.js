@@ -3,7 +3,7 @@
  */
 
 angular.module('app')
-    .factory('Product', function ($rootScope, $resource, $q, URLS, EVENTS, LIFECYCLE_STATUS, User) {
+    .factory('Product', function ($rootScope, $resource, $q, URLS, EVENTS, LIFECYCLE_STATUS, User, $location) {
 
         var messageTemplate = 'The product <strong>{{ name }}</strong> was {{ action }} successfully.';
 
@@ -48,7 +48,11 @@ angular.module('app')
                     bundledProductSpecification: data.bundledProductSpecification.map(function (product) {
                         return Resource.serialize(product);
                     }),
-                    relatedParty: [User.current.id]
+                    relatedParty: [{
+                        id: User.current.id,
+                        href: $location.protocol() + '://' + $location.host() + ':' + $location.port() + User.current.href,
+                        role: 'Owner'
+                    }]
                 });
 
                 Resource.save(data, function (productCreated) {

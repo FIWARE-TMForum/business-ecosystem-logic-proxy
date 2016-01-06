@@ -27,7 +27,7 @@ html(ng-app="app", lang="en")
         angular.module('app')
           .constant('LOGGED_USER', {
             id: '#{ user.id }',
-            href: '#{ accountHost }/idm/user/#{ user.id }',
+            href: '#{ contextPath }/charging/api/userManagement/users/#{ user.id }',
             bearerToken: '#{ user.accessToken }'
           })
           .run(function ($http, LOGGED_USER) {
