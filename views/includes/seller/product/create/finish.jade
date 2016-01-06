@@ -49,6 +49,25 @@ form(name="stages[2].form", novalidate)
       ng-model="productInfo.description"
       readonly
     )
+
+  .row
+    .col-sm-12
+      label Characteristics
+      table.table.table-bordered
+        thead
+          tr
+            th Name
+            th Type
+            th Is Configurable
+        tbody(ng-show="charList.length")
+          tr(ng-repeat="char in charList")
+            td
+              span {{ char.name }}
+            td
+              span {{ char.valueType }}
+            td
+              span {{ char.configurable }}
+
   .form-group.text-right
     button.btn.btn-success(type="button", ng-click="createProduct()", ng-disabled="!stages[2].form.$valid")
       span Create

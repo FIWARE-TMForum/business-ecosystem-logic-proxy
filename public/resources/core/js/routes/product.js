@@ -32,6 +32,14 @@ angular.module('app')
                     url: '/assets',
                     templateUrl: 'seller/product/create/assets'
                 })
+                .state('app.stock.product.create.chars', {
+                    url: '/chars',
+                    templateUrl: 'seller/product/create/chars'
+                })
+                .state('app.stock.product.create.attachments', {
+                    url: '/attachments',
+                    templateUrl: 'seller/product/create/attachments'
+                })
                 .state('app.stock.product.create.finish', {
                     url: '/finish',
                     templateUrl: 'seller/product/create/finish'

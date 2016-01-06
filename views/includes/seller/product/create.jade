@@ -7,7 +7,7 @@
           ui-sref-opts="{ reload: true }"
           ui-sref-active-eq="active"
         )
-          span Search product specifications
+          span Search product specification
       li
         a(
           ui-sref="app.stock.product.create"
@@ -27,11 +27,17 @@
                 a(ui-sref="app.stock.product.create")
                   span.item-text 1. General
               li(ui-sref-active="active")
+                a(ui-sref="app.stock.product.create.chars")
+                  span.item-text 2. Characteristics
+              li(ui-sref-active="active")
+                a(ui-sref="app.stock.product.create.attachments")
+                  span.item-text 3. Attachments
+              li(ui-sref-active="active")
                 a(ui-sref="app.stock.product.create.assets")
-                  span.item-text 2. Assets
+                  span.item-text 4. Digital asset
               li(ui-sref-active="active")
                 a(ui-sref="app.stock.product.create.finish")
-                  span.item-text 3. Finish
+                  span.item-text 5. Finish
           .col-xs-12.col-md-9
             ui-view
               form(name="stages[0].form", novalidate)
@@ -83,7 +89,6 @@
                         name="brand"
                         ng-model="productInfo.brand"
                         required
-                        ng-minlength="5"
                         ng-maxlength="30"
                       )
                       .help-block(
@@ -91,7 +96,6 @@
                         ng-show="stages[0].form.brand.$invalid && (stages[0].form.brand.$dirty || stages[0].form.brand.$touched)"
                       )
                         span(ng-message="required") This field is required.
-                        span(ng-message="minlength") This field must contain at least 5 chars.
                         span(ng-message="maxlength") This field must not exceed 30 chars.
                   .col-sm-4
                     .form-group(
@@ -115,6 +119,6 @@
                     small.text-muted optional
                   textarea.form-control(rows="3", name="description", ng-model="productInfo.description")
                 .form-group.text-right
-                  a.btn.btn-default(ui-sref="app.stock.product.create.assets", ng-disabled="!stages[0].form.$valid")
+                  a.btn.btn-default(ui-sref="app.stock.product.create.chars", ng-disabled="!stages[0].form.$valid")
                     span.item-text Next
                     span.item-icon.fa.fa-arrow-right

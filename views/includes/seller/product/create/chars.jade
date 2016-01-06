@@ -1,0 +1,178 @@
+form(name="stages[1].form", novalidate)
+  .row
+    .col-sm-12
+      label Characteristics
+      table.table.table-bordered
+        thead
+          tr
+            th Name
+            th Type
+            th Is Configurable
+            th Delete
+        tbody(ng-show="charList.length")
+          tr(ng-repeat="char in charList")
+            td
+              span {{ char.name }}
+            td
+              span {{ char.valueType }}
+            td
+              span {{ char.configurable }}
+            td
+              i.fa.fa-close(ng-click="removeCharacteristic(char)")
+  .row
+    .col-sm-5
+      .form-group(
+        ng-class="{ 'has-error': stages[1].form.name.$invalid && (stages[1].form.name.$dirty || stages[1].form.name.$touched) }"
+      )
+        label Name
+        input.form-control(
+          type="text"
+          name="name"
+          ng-model="currentChar.name"
+          required
+          ng-maxlength="30"
+        )
+        .help-block(
+          ng-messages="stages[1].form.name.$error"
+          ng-show="stages[1].form.name.$invalid && (stages[1].form.name.$dirty || stages[1].form.name.$touched)"
+        )
+          span(ng-message="required") This field is required.
+          span(ng-message="maxlength") This field must not exceed 30 chars.
+
+    .col-sm-4
+      label Type
+      select.form-control(
+        name="type"
+        ng-model="currentChar.valueType"
+      )
+        option(value="string") String
+        option(value="number") Number
+
+    .col-sm-3
+      label Configurable?
+      input.form-control(
+        type="checkbox",
+        name="configurable",
+        ng-model="currentChar.configurable"
+      )
+  .row
+    .col-sm-12
+      .form-group
+        label
+          | Description 
+          small.text-muted optional
+        textarea.form-control(rows="3", name="description", ng-model="currentChar.description")
+
+  .row(ng-show="currentChar.valueType === 'string'")
+    .col-sm-12
+      .form-group(
+        ng-class="{ 'has-error': stages[1].form.name.$invalid && (stages[1].form.name.$dirty || stages[1].form.name.$touched) }"
+      )
+        label Value
+        input.form-control(
+          type="text"
+          name="valueStr"
+          ng-model="currentValue.value"
+          ng-required="currentChar.valueType === 'string'"
+          ng-maxlength="30"
+        )
+        .help-block(
+          ng-messages="stages[1].form.name.$error"
+          ng-show="stages[1].form.name.$invalid && (stages[1].form.name.$dirty || stages[1].form.name.$touched)"
+        )
+          span(ng-message="required") This field is required.
+          span(ng-message="maxlength") This field must not exceed 30 chars.
+
+  .row(ng-show="currentChar.valueType === 'number'")
+    .col-sm-4
+      label Value type
+      select.form-control(
+        name="value-type"
+        ng-model="currentValueType"
+      )
+        option(value="value") Single Value
+        option(value="range") Range
+
+    .col-sm-8
+      .form-group(
+        ng-class="{ 'has-error': stages[1].form.name.$invalid && (stages[1].form.name.$dirty || stages[1].form.name.$touched) }"
+      )
+        label Unit of measure
+        input.form-control(
+          type="text"
+          name="unit"
+          ng-model="currentValue.unitOfMeasure"
+          ng-required="currentChar.valueType === 'number'"
+          ng-maxlength="30"
+        )
+        .help-block(
+          ng-messages="stages[1].form.name.$error"
+          ng-show="stages[1].form.name.$invalid && (stages[1].form.name.$dirty || stages[1].form.name.$touched)"
+        )
+          span(ng-message="required") This field is required.
+          span(ng-message="maxlength") This field must not exceed 30 chars.
+
+  .row(ng-show="currentChar.valueType === 'number'")
+    .col-sm-12(ng-show="currentValueType === 'value'")
+      .form-group(
+        ng-class="{ 'has-error': stages[1].form.name.$invalid && (stages[1].form.name.$dirty || stages[1].form.name.$touched) }"
+      )
+        label Value
+        input.form-control(
+          type="number"
+          name="valueNum"
+          ng-model="currentValue.value"
+          ng-required="currentChar.valueType === 'number' && currentValueType === 'value'"
+        )
+        .help-block(
+          ng-messages="stages[1].form.name.$error"
+          ng-show="stages[1].form.name.$invalid && (stages[1].form.name.$dirty || stages[1].form.name.$touched)"
+        )
+          span(ng-message="required") This field is required.
+          span(ng-message="pattern") This field must be a number.
+
+    .col-sm-6(ng-show="currentValueType === 'range'")
+      .form-group(
+        ng-class="{ 'has-error': stages[1].form.name.$invalid && (stages[1].form.name.$dirty || stages[1].form.name.$touched) }"
+      )
+        label Value from
+        input.form-control(
+          type="number"
+          name="valueFrom"
+          ng-model="currentValue.valueFrom"
+          ng-required="currentChar.valueType === 'number' && currentValueType === 'range'"
+        )
+        .help-block(
+          ng-messages="stages[1].form.name.$error"
+          ng-show="stages[1].form.name.$invalid && (stages[1].form.name.$dirty || stages[1].form.name.$touched)"
+        )
+          span(ng-message="required") This field is required.
+          span(ng-message="pattern") This field must be a number.
+
+    .col-sm-6(ng-show="currentValueType === 'range'")
+      .form-group(
+        ng-class="{ 'has-error': stages[1].form.name.$invalid && (stages[1].form.name.$dirty || stages[1].form.name.$touched) }"
+      )
+        label Value to
+        input.form-control(
+          type="number"
+          name="valueTo"
+          ng-model="currentValue.valueTo"
+          ng-required="currentChar.valueType === 'number' && currentValueType === 'range'"
+        )
+        .help-block(
+          ng-messages="stages[1].form.name.$error"
+          ng-show="stages[1].form.name.$invalid && (stages[1].form.name.$dirty || stages[1].form.name.$touched)"
+        )
+          span(ng-message="required") This field is required.
+          span(ng-message="pattern") This field must be a number.
+
+  .form-group.text-left
+    a.btn.btn-default(ng-click="saveCharacteristic()", ng-disabled="!stages[1].form.$valid")
+      span.item-icon.fa.fa-save
+      span.item-text Save
+
+  .form-group.text-right
+    a.btn.btn-default(ui-sref="app.stock.product.create.attachments")
+      span.item-text Next
+      span.item-icon.fa.fa-arrow-right

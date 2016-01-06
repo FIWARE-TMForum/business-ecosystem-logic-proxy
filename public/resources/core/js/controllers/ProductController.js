@@ -31,6 +31,18 @@ angular.module('app')
         var currentType;
 
         $scope.assetTypes = [];
+        $scope.charList = [];
+
+        var initChars = function initChars() {
+            $scope.currentChar = {
+                "valueType": "string",
+                "configurable": false
+            };
+            $scope.currentValueType = "value";
+            $scope.currentValue = {
+                "default": true
+            }
+        };
 
         var includeCharacteristic = function(name, description, value) {
             $scope.productInfo.productSpecCharacteristic.push({
@@ -59,12 +71,32 @@ angular.module('app')
             });
         };
 
-        $scope.getActiveTab = function getActiveTab() {
-            return activeTab;
+        $scope.saveCharacteristic = function saveCharacteristic () {
+            var newChar = $scope.currentChar;
+
+            // Clean fields that can contain invalid values due to hidden models
+            if (newChar.valueType === 'string') {
+                $scope.currentValue.unitOfMeasure = '';
+                $scope.currentValue.valueFrom = '';
+                $scope.currentValue.valueTo = '';
+            } else if ($scope.currentValueType === 'value'){
+                $scope.currentValue.valueFrom = '';
+                $scope.currentValue.valueTo = '';
+            } else {
+                $scope.currentValue.value = '';
+            }
+
+            newChar.productSpecCharacteristicValue = [$scope.currentValue];
+            $scope.charList.push(newChar);
+            initChars();
         };
 
-        $scope.setActiveTab = function setActiveTab(active) {
-            activeTab = active;
+        $scope.removeCharacteristic = function removeCharacteristic(characteristic) {
+            var index = $scope.charList.indexOf(characteristic);
+
+            if (index > -1) {
+                $scope.charList.splice(index, 1);
+            }
         };
 
         $scope.setCurrentType = function() {
@@ -89,6 +121,8 @@ angular.module('app')
         };
 
         var saveProduct = function saveProduct() {
+            // Append product characteristics
+            $scope.productInfo.productSpecCharacteristic = $scope.productInfo.productSpecCharacteristic.concat($scope.charList);
             Product.create($scope.productInfo).then(function (productCreated) {
                 $state.go('app.stock.product.update', {
                     productId: productCreated.id
@@ -126,6 +160,7 @@ angular.module('app')
             bundledProductSpecification: [],
             productSpecCharacteristic: []
         };
+        initChars();
 
         AssetType.list(function (types) {
             $scope.assetTypes = types;
