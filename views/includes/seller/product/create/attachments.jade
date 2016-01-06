@@ -1,1 +1,23 @@
-form(name="attachments", novalidate)
+form(name="stages[2].form", novalidate)
+  .row
+    .col-sm-12
+      .form-group(
+        ng-class="{ 'has-error': stages[2].form.name.$invalid && (stages[2].form.name.$dirty || stages[2].form.name.$touched) }"
+      )
+        label Picture URL
+        input.form-control(
+          type="url"
+          name="picture"
+          ng-model="productInfo.attachment[0].url"
+        )
+        .help-block(
+          ng-messages="stages[2].form.name.$error"
+          ng-show="stages[2].form.name.$invalid && (stages[2].form.name.$dirty || stages[2].form.name.$touched)"
+        )
+          span(ng-message="pattern") This field must be a valid URL.
+
+  .form-group.text-right
+    a.btn.btn-default(ui-sref="app.stock.product.create.assets")
+      span.item-text Next
+      span.item-icon.fa.fa-arrow-right
+

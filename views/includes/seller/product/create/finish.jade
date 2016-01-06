@@ -67,6 +67,16 @@ form(name="stages[2].form", novalidate)
               span {{ char.valueType }}
             td
               span {{ char.configurable }}
+  .row
+    .col-sm-12
+      .form-group
+        label Picture URL
+        input.form-control(
+          type="url"
+          name="picture"
+          ng-model="productInfo.attachment[0].url"
+          readonly
+        )
 
   .form-group.text-right
     button.btn.btn-success(type="button", ng-click="createProduct()", ng-disabled="!stages[2].form.$valid")

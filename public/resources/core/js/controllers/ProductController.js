@@ -19,6 +19,10 @@ angular.module('app')
             $rootScope.$broadcast(EVENTS.FILTERS_SHOW, productFilters);
         };
 
+        $scope.getProductPicture = function getProductPicture(product) {
+            return Product.getPictureOf(product);
+        };
+
         $scope.loading = true;
 
         Product.list(User.ROLES.SELLER, productParams).then(function (productList) {
@@ -158,7 +162,10 @@ angular.module('app')
         $scope.productInfo = {
             version: '0.1',
             bundledProductSpecification: [],
-            productSpecCharacteristic: []
+            productSpecCharacteristic: [],
+            attachment: [{
+                type: 'Picture'
+            }]
         };
         initChars();
 

@@ -106,7 +106,7 @@ angular.module('app')
                 if (angular.isArray(product.attachment)) {
                     for (i = 0; i < product.attachment.length && !src.length; i++) {
                         if (product.attachment[i].type == 'Picture') {
-                            src = $product.attachment[i].url;
+                            src = product.attachment[i].url;
                         }
                     }
                 }
