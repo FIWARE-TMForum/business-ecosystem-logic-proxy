@@ -66,7 +66,7 @@ form(name="stages[1].form", novalidate)
   .row(ng-show="currentChar.valueType === 'string'")
     .col-sm-12
       .form-group(
-        ng-class="{ 'has-error': stages[1].form.name.$invalid && (stages[1].form.name.$dirty || stages[1].form.name.$touched) }"
+        ng-class="{ 'has-error': stages[1].form.valueStr.$invalid && (stages[1].form.valueStr.$dirty || stages[1].form.valueStr.$touched) }"
       )
         label Value
         input.form-control(
@@ -77,8 +77,8 @@ form(name="stages[1].form", novalidate)
           ng-maxlength="30"
         )
         .help-block(
-          ng-messages="stages[1].form.name.$error"
-          ng-show="stages[1].form.name.$invalid && (stages[1].form.name.$dirty || stages[1].form.name.$touched)"
+          ng-messages="stages[1].form.valueStr.$error"
+          ng-show="stages[1].form.valueStr.$invalid && (stages[1].form.valueStr.$dirty || stages[1].form.valueStr.$touched)"
         )
           span(ng-message="required") This field is required.
           span(ng-message="maxlength") This field must not exceed 30 chars.
@@ -95,7 +95,7 @@ form(name="stages[1].form", novalidate)
 
     .col-sm-8
       .form-group(
-        ng-class="{ 'has-error': stages[1].form.name.$invalid && (stages[1].form.name.$dirty || stages[1].form.name.$touched) }"
+        ng-class="{ 'has-error': stages[1].form.unit.$invalid && (stages[1].form.unit.$dirty || stages[1].form.unit.$touched) }"
       )
         label Unit of measure
         input.form-control(
@@ -106,8 +106,8 @@ form(name="stages[1].form", novalidate)
           ng-maxlength="30"
         )
         .help-block(
-          ng-messages="stages[1].form.name.$error"
-          ng-show="stages[1].form.name.$invalid && (stages[1].form.name.$dirty || stages[1].form.name.$touched)"
+          ng-messages="stages[1].form.unit.$error"
+          ng-show="stages[1].form.unit.$invalid && (stages[1].form.unit.$dirty || stages[1].form.unit.$touched)"
         )
           span(ng-message="required") This field is required.
           span(ng-message="maxlength") This field must not exceed 30 chars.
@@ -115,7 +115,7 @@ form(name="stages[1].form", novalidate)
   .row(ng-show="currentChar.valueType === 'number'")
     .col-sm-12(ng-show="currentValueType === 'value'")
       .form-group(
-        ng-class="{ 'has-error': stages[1].form.name.$invalid && (stages[1].form.name.$dirty || stages[1].form.name.$touched) }"
+        ng-class="{ 'has-error': stages[1].form.valueNum.$invalid && (stages[1].form.valueNum.$dirty || stages[1].form.valueNum.$touched) }"
       )
         label Value
         input.form-control(
@@ -125,15 +125,15 @@ form(name="stages[1].form", novalidate)
           ng-required="currentChar.valueType === 'number' && currentValueType === 'value'"
         )
         .help-block(
-          ng-messages="stages[1].form.name.$error"
-          ng-show="stages[1].form.name.$invalid && (stages[1].form.name.$dirty || stages[1].form.name.$touched)"
+          ng-messages="stages[1].form.valueNum.$error"
+          ng-show="stages[1].form.valueNum.$invalid && (stages[1].form.valueNum.$dirty || stages[1].form.valueNum.$touched)"
         )
           span(ng-message="required") This field is required.
-          span(ng-message="pattern") This field must be a number.
+          span(ng-message="number") This field must be a number.
 
     .col-sm-6(ng-show="currentValueType === 'range'")
       .form-group(
-        ng-class="{ 'has-error': stages[1].form.name.$invalid && (stages[1].form.name.$dirty || stages[1].form.name.$touched) }"
+        ng-class="{ 'has-error': stages[1].form.valueFrom.$invalid && (stages[1].form.valueFrom.$dirty || stages[1].form.valueFrom.$touched) }"
       )
         label Value from
         input.form-control(
@@ -143,15 +143,15 @@ form(name="stages[1].form", novalidate)
           ng-required="currentChar.valueType === 'number' && currentValueType === 'range'"
         )
         .help-block(
-          ng-messages="stages[1].form.name.$error"
-          ng-show="stages[1].form.name.$invalid && (stages[1].form.name.$dirty || stages[1].form.name.$touched)"
+          ng-messages="stages[1].form.valueFrom.$error"
+          ng-show="stages[1].form.valueFrom.$invalid && (stages[1].form.valueFrom.$dirty || stages[1].form.valueFrom.$touched)"
         )
           span(ng-message="required") This field is required.
-          span(ng-message="pattern") This field must be a number.
+          span(ng-message="number") This field must be a number.
 
     .col-sm-6(ng-show="currentValueType === 'range'")
       .form-group(
-        ng-class="{ 'has-error': stages[1].form.name.$invalid && (stages[1].form.name.$dirty || stages[1].form.name.$touched) }"
+        ng-class="{ 'has-error': stages[1].form.valueTo.$invalid && (stages[1].form.valueTo.$dirty || stages[1].form.valueTo.$touched) }"
       )
         label Value to
         input.form-control(
@@ -161,11 +161,11 @@ form(name="stages[1].form", novalidate)
           ng-required="currentChar.valueType === 'number' && currentValueType === 'range'"
         )
         .help-block(
-          ng-messages="stages[1].form.name.$error"
-          ng-show="stages[1].form.name.$invalid && (stages[1].form.name.$dirty || stages[1].form.name.$touched)"
+          ng-messages="stages[1].form.valueTo.$error"
+          ng-show="stages[1].form.valueTo.$invalid && (stages[1].form.valueTo.$dirty || stages[1].form.valueTo.$touched)"
         )
           span(ng-message="required") This field is required.
-          span(ng-message="pattern") This field must be a number.
+          span(ng-message="number") This field must be a number.
 
   .form-group.text-left
     a.btn.btn-default(ng-click="saveCharacteristic()", ng-disabled="!stages[1].form.$valid")
