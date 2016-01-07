@@ -22,6 +22,10 @@ angular.module('app')
             $rootScope.$broadcast(EVENTS.ORDER_ADDITION, offering);
         };
 
+        $scope.getProductPicture = function getProductPicture(offering) {
+            return Offering.getProductPictureOf(offering);
+        };
+
         $scope.loading = true;
 
         Offering.list(userRole, $state.params).then(function (offeringList) {
