@@ -1,0 +1,13 @@
+.panel.panel-default
+   .panel-heading
+      strong.text-uppercase My Inventory
+   ul.nav.nav-pills.nav-stacked
+      li(ui-sref-active="active")
+         a(ui-sref="app.inventory.order")
+            span.item-icon.fa.fa-book
+            span.item-text Orders
+      li(ui-sref-active="active")
+         a(ui-sref="app.inventory.product")
+            span.item-icon.fa.fa-file
+            span.item-text Products
+

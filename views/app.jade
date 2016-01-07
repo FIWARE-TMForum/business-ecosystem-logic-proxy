@@ -95,6 +95,13 @@ html(ng-app="app", lang="en")
       script(type="text/ng-template", id="seller/product-catalogue/update/offering")
         include ./includes/seller/product-catalogue/update/offering.jade
 
+      script(type="text/ng-template", id="inventory/sidebar")
+        include ./partials/inventory/inventory.sidebar.jade
+      script(type="text/ng-template", id="customer/inventory-order/search")
+        include ./includes/customer/inventory-order/search.jade
+      script(type="text/ng-template", id="customer/inventory-product/search")
+        include ./includes/customer/inventory-product/search.jade
+
     script(type="text/ng-template", id="customer/product-offering/search")
       include ./includes/customer/product-offering/search.jade
     script(type="text/ng-template", id="customer/product-catalogue/detail")

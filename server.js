@@ -211,7 +211,10 @@ var jsAppFilesToInject = [
     'routes.js',
     'routes/product.js',
     'routes/product-offering.js',
-    'routes/product-catalogue.js'
+    'routes/product-catalogue.js',
+    'routes/inventory-order.js',
+    'routes/inventory-product.js'
+
 ].map(function(path) {
     return 'resources/core/js/' + path;
 });

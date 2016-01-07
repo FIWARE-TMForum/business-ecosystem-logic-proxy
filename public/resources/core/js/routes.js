@@ -51,6 +51,23 @@ angular.module('app')
                             template: '<ui-view/>'
                         }
                     }
+                })
+                .state('app.inventory', {
+                    url: 'inventory',
+                    data: {
+                        title: 'My Inventory'
+                    },
+                    views: {
+                        sidebar: {
+                            templateUrl: 'inventory/sidebar',
+                            controller: function ($state) {
+                                $state.go('app.inventory.order');
+                            }
+                        },
+                        content: {
+                            template: '<ui-view/>'
+                        }
+                    }
                 });
         }
     });
