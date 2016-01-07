@@ -32,8 +32,11 @@
                 a(ui-sref="app.stock.offering.create.catalogue")
                   span.item-text 3. Catalogue
               li(ui-sref-active="active")
+                a(ui-sref="app.stock.offering.create.pricing")
+                  span.item-text 4. Pricing
+              li(ui-sref-active="active")
                 a(ui-sref="app.stock.offering.create.finish")
-                  span.item-text 4. Finish
+                  span.item-text 5. Finish
           .col-xs-12.col-md-9
             ui-view
               form(name="stages[0].form", novalidate)

@@ -76,6 +76,10 @@ angular.module('app')
                     },
                     controller: 'CatalogueSearchCtrl'
                 })
+                .state('app.stock.offering.create.pricing', {
+                    url: '/pricing',
+                    templateUrl: 'seller/product-offering/create/pricing'
+                })
                 .state('app.stock.offering.create.finish', {
                     url: '/finish',
                     templateUrl: 'seller/product-offering/create/finish'

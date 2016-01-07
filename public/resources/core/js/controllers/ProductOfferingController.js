@@ -31,6 +31,46 @@ angular.module('app')
     })
     .controller('OfferingCreateCtrl', function ($scope, $state, Offering) {
 
+        var initPricing = function initPricing() {
+            $scope.currentPricing = {
+                priceType: 'one time',
+                price: {
+                    taxRate: 20,
+                    currencyCode: 'EUR',
+                    percentage: 0
+                },
+                recurringChargePeriod: 'weekly'
+            };
+        };
+
+        $scope.savePricing = function savePricing() {
+            // Clean pricing fields
+            if ($scope.currentPricing.priceType === 'one time') {
+                $scope.currentPricing.unitOfMeasure = '';
+                $scope.currentPricing.recurringChargePeriod = '';
+            } else if ($scope.currentPricing.priceType === 'recurring') {
+                $scope.currentPricing.unitOfMeasure = '';
+            } else {
+                $scope.currentPricing.recurringChargePeriod = '';
+            }
+
+            // Calculate duty free amount
+            var taxInc = $scope.currentPricing.price.taxIncludedAmount;
+            var taxRate = $scope.currentPricing.price.taxRate;
+
+            $scope.currentPricing.price.dutyFreeAmount = taxInc - ((taxInc*taxRate) / 100);
+            $scope.offeringInfo.productOfferingPrice.push($scope.currentPricing);
+            initPricing();
+        };
+
+        $scope.removePricing = function removePricing(pricing) {
+            var index = $scope.offeringInfo.productOfferingPrice.indexOf(pricing);
+
+            if (index > -1) {
+                $scope.offeringInfo.productOfferingPrice.splice(index, 1);
+            }
+        };
+
         $scope.selectProduct = function (product) {
             $scope.productChosen = product;
         };
@@ -48,8 +88,10 @@ angular.module('app')
         };
 
         $scope.offeringInfo = {
-            version: '0.1'
+            version: '0.1',
+            productOfferingPrice: []
         };
+        initPricing();
     })
     .controller('OfferingUpdateCtrl', function ($scope, $state, Offering) {
 

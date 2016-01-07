@@ -17,6 +17,6 @@ form(name="stages[2].form", novalidate)
           td
             time(am-time-ago="catalogue.lastUpdate")
   .form-group.text-right
-    a.btn.btn-default(type="button", ui-sref="app.stock.offering.create.finish", ng-disabled="!stages[2].form.$valid")
+    a.btn.btn-default(type="button", ui-sref="app.stock.offering.create.pricing", ng-disabled="!stages[2].form.$valid")
       span.item-text Next
       span.item-icon.fa.fa-arrow-right
