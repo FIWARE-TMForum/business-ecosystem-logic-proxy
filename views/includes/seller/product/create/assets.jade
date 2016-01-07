@@ -1,4 +1,4 @@
-form(name="stages[1].form", novalidate)
+form(name="stages[3].form", novalidate)
   div(ng-show="assetTypes.length")
     .form-group
       .row
@@ -8,8 +8,8 @@ form(name="stages[1].form", novalidate)
             option(ng-repeat="asset in assetTypes", value="{{ asset.name }}") {{ asset.name }}
         .col-sm-4
           label How to provide?
-          select.form-control(ng-model="currFormat")
-            option(ng-repeat="format in getCurrentType().formats", value="{{ format }}") {{ format }}
+          select.form-control(ng-model="$parent.currFormat", ng-options="format for format in getCurrentType().formats")
+
     .form-group(ng-show="isSelected('URL')")
       label Asset URL
       input.form-control(type="url", ng-model="productInfo.productSpecCharacteristic[2].productSpecCharacteristicValue[0].value")
@@ -26,6 +26,6 @@ form(name="stages[1].form", novalidate)
   div(ng-show="!assetTypes.length")
     .alert.alert-info There isn't any digital asset type supported.
   .form-group.text-right
-    a.btn.btn-default(ui-sref="app.stock.product.create.finish", ng-disabled="!stages[1].form.$valid")
+    a.btn.btn-default(ui-sref="app.stock.product.create.finish", ng-disabled="!stages[3].form.$valid")
       span.item-text Next
       span.item-icon.fa.fa-arrow-right
