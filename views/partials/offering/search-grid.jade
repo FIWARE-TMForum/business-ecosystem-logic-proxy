@@ -1,0 +1,19 @@
+.container-flex
+  .panel.panel-default.item-product(ng-repeat="offering in searchVM.list")
+    .panel-heading
+      .thumbnail.item-product-logo
+        img(no-image, ng-src="{{ offering.getPicture() }}")
+      a.h4(ui-sref="offering.detail({ offeringId: offering.id })", ui-sref-opts="{ inherit: false }") {{ offering.name }}
+    .panel-body
+      p.text-muted
+        span v{{ offering.version }}
+        span.pull-right
+          time(am-time-ago="offering.lastUpdate")
+      p
+        span.label(ng-class="offering.isBundle ? 'label-bundle' : 'label-single'")
+          | {{ offering.isBundle ? 'Bundle' : 'Single' }}
+      .btn-toolbar(ng-show="user.isAuthenticated()")
+        .btn-group.pull-right
+          a.btn.btn-sm.btn-default(ng-click="user.order(offering)", ng-disabled="user.contains(offering)")
+            span.item-icon.fa.fa-shopping-cart
+            span.item-text {{ user.contains(offering) ? 'Added' : 'Add to Cart' }}

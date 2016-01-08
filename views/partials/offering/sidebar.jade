@@ -1,0 +1,14 @@
+.panel.panel-default
+  .panel-heading
+    strong.text-uppercase Catalogues
+  .panel-body(ng-show="!listVM.list.loaded")
+    .spinner
+      span.fa.fa-spinner.fa-lg.fa-spin
+  .panel-body(ng-show="listVM.list.loaded && !listVM.list.length")
+    .alert.alert-info
+      span No catalogues launched.
+  ul.nav.nav-stacked.nav-pills
+    li(ng-repeat="catalogue in listVM.list", ui-sref-active="active")
+      a(ui-sref="offering({ catalogueId: catalogue.id })", ui-sref-opts="{ reload: true, inherit: false }")
+        span.item-icon.fa.fa-angle-right
+        span.item-text {{ catalogue.name }}

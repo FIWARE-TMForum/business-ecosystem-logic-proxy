@@ -1,0 +1,13 @@
+.btn-group(ng-controller="CategorySearchCtrl as searchVM")
+  a.btn.btn-default(ui-sref="{ categoryId: null }", ui-sref-active="active")
+    span.item-icon.fa.fa-tags
+    span.item-text.hidden-xs All categories
+  a.btn.btn-default(ng-repeat="category in searchVM.breadcrumb", ui-sref="{ categoryId: category.id }", ui-sref-active="active")
+    span.item-icon.fa.fa-tag
+    span.item-text {{ category.name }}
+  a.btn.btn-default.dropdown-toggle(data-toggle="dropdown", ng-show="!searchVM.list.loaded || searchVM.list.length")
+    span.item-icon.fa(ng-class="searchVM.list.loaded ? 'fa-caret-down' : ['fa-spinner', 'fa-spin']")
+  .dropdown-menu.dropdown-menu-right
+    a.dropdown-menu-item(ng-repeat="category in searchVM.list", ui-sref="{ categoryId: category.id }")
+      span.item-icon.fa.fa-tag
+      span.item-text {{ category.name }}

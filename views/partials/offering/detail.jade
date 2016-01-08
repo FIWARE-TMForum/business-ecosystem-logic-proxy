@@ -1,0 +1,31 @@
+.row(ng-switch="detailVM.item.loaded")
+  div(ng-switch-when="true")
+    .col-xs-12.col-md-3
+      .panel.panel-default
+        .panel-heading
+          .thumbnail.item-product-logo
+            img(no-image, ng-src="{{ detailVM.item.getPicture() }}")
+          .h4 {{ detailVM.item.name }}
+        ul.nav.nav-responsive.nav-pills
+          li(ui-sref-active-eq="active")
+            a(ui-sref="offering.detail")
+              span.item-icon.fa.fa-newspaper-o
+              span.item-text.hidden-xs About
+      .btn-toolbar(ng-show="user.isAuthenticated()")
+        .btn-group.btn-group-justified
+          a.btn.btn-default(ng-click="user.order(detailVM.item)", ng-disabled="user.contains(detailVM.item)")
+            span.item-icon.fa.fa-shopping-cart
+            span.item-text {{ user.contains(detailVM.item) ? 'Added' : 'Add to Cart' }}
+    .col-xs-12.col-md-9
+      .panel.panel-default
+        .panel-body
+          dl
+            dt Version
+            dd {{ detailVM.item.version }}
+            dt Update date
+            dd
+              time(am-time-ago="detailVM.item.lastUpdate")
+  div(ng-switch-default)
+    .col-xs-12
+      .container-spinner
+        span.fa.fa-spinner.fa-spin.fa-2x

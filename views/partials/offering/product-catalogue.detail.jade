@@ -1,0 +1,9 @@
+.row(ng-controller="CatalogueDetailCtrl as detailVM")
+  .col-xs-12
+    .panel.panel-default(ng-show="detailVM.catalogueId")
+      .panel-body
+        span.text-muted.pull-right
+          time(am-time-ago="detailVM.item.lastUpdate")
+        .h2.text-muted {{ detailVM.item.name }}
+        blockquote(ng-if="detailVM.item.description")
+          p {{ detailVM.item.description }}
