@@ -93,6 +93,8 @@
                             ng-show="updateBillingForm.province.$invalid && (updateBillingForm.province.$dirty || updateBillingForm.province.$touched)"
                           )
                             span(ng-message="required") This field is required.
+                    .row
+                      .col-sm-12
                         .form-group(
                           ng-class="{'has-error': updateBillingForm.country.$invalid && (updateBillingForm.country.$dirty || updateBillingForm.country.$touched) }"
                         )
