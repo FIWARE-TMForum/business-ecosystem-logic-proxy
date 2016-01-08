@@ -97,6 +97,28 @@ form(name="step.form", novalidate)
               span {{ pricing.recurringChargePeriod }}
             td(ng-if="pricing.priceType == 'usage'")
               span {{ pricing.unitOfMeasure }}
+  .form-group(ng-show="createVM.data.isBundle")
+    label Bundled Offering
+    .table-responsive
+      table.table.table-bordered
+        thead
+          tr
+            th Status
+            th Name
+            th Type
+            th Updated
+        tbody
+          tr(ng-repeat="offering in createVM.data.bundledProductOffering")
+            td
+              .status-item(class="status-{{ offering.lifecycleStatus | lowercase }}")
+                span.item-icon
+                span.item-text {{ offering.lifecycleStatus }}
+            th {{ offering.name }}
+            td
+              span.label(ng-class="offering.isBundle ? 'label-bundle' : 'label-single'")
+                | {{ offering.isBundle ? 'Bundle' : 'Single' }}
+            td
+              time(am-time-ago="offering.lastUpdate")
   .form-group.text-right
     a.btn.btn-success(ng-click="createVM.create()", ng-disabled="!step.form.$valid")
       span.item-text Create

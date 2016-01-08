@@ -42,6 +42,10 @@
                 templateUrl: 'stock/product-offering/create/general'
             },
             {
+                title: 'Bundle',
+                templateUrl: 'stock/product-offering/create/bundle'
+            },
+            {
                 title: 'Select product',
                 templateUrl: 'stock/product-offering/create/product'
             },
@@ -69,6 +73,11 @@
         vm.savePricing = savePricing;
         vm.removePricing = removePricing;
 
+        vm.toggleBundle = toggleBundle;
+        vm.hasOffering = hasOffering;
+        vm.toggleOffering = toggleOffering;
+
+
         initPricing();
 
         function create() {
@@ -81,6 +90,26 @@
                     name: offeringCreated.name
                 });
             });
+        }
+
+        function toggleOffering(offering) {
+            var index = vm.data.bundledProductOffering.indexOf(offering);
+
+            if (index !== -1) {
+                vm.data.bundledProductOffering.splice(index, 1);
+            } else {
+                vm.data.bundledProductOffering.push(offering);
+            }
+        }
+
+        function toggleBundle() {
+            if (!vm.data.isBundle) {
+                vm.data.bundledProductOffering.length = 0;
+            }
+        }
+
+        function hasOffering(offering) {
+            return vm.data.bundledProductOffering.indexOf(offering) !== -1;
         }
 
         function initPricing() {
