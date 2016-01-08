@@ -1,0 +1,19 @@
+.table-responsive
+  table.table.table-bordered.table-hover
+    thead
+      tr
+        th Status
+        th Name
+        th Rol
+        th Updated
+    tbody
+      tr(ng-repeat="catalogue in searchVM.list")
+        td
+          .status-item(class="status-{{ catalogue.lifecycleStatus | lowercase }}")
+            span.item-icon
+            span.item-text {{ catalogue.lifecycleStatus }}
+        th
+          a(ui-sref="stock.catalogue.update({ catalogueId: catalogue.id })", ui-sref-opts="{ inherit: false }") {{ catalogue.name }}
+        td {{ catalogue.getRoleOf(user.id) }}
+        td
+          time(am-time-ago="catalogue.lastUpdate")
