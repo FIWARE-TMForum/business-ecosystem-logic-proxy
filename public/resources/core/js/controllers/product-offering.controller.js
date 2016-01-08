@@ -50,7 +50,7 @@
                 templateUrl: 'stock/product-offering/create/catalogue'
             },
             {
-                title: 'Pricing',
+                title: 'Pricing models',
                 templateUrl: 'stock/product-offering/create/pricing'
             },
             {
