@@ -1,0 +1,18 @@
+.container-flex
+  .panel.panel-default.item-product(ng-repeat="offering in searchVM.list")
+    .panel-heading
+      .thumbnail.item-product-logo
+        img(no-image, ng-src="{{ offering.getPicture() }}")
+      a.h4(ui-sref="stock.offering.update({ offeringId: offering.id })", ui-sref-opts="{ inherit: false }") {{ offering.name }}
+    .panel-body
+      p.text-muted
+        span v{{ offering.version }}
+        span.pull-right
+          time(am-time-ago="offering.lastUpdate")
+      p
+        span.label(ng-class="offering.isBundle ? 'label-bundle' : 'label-single'")
+          | {{ offering.isBundle ? 'Bundle' : 'Single' }}
+      .status-group
+        .status-item.active(class="status-{{ offering.lifecycleStatus | lowercase }}")
+          span.item-icon
+          span.item-text {{ offering.lifecycleStatus }}

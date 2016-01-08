@@ -1,0 +1,30 @@
+form(name="step.form", novalidate)
+  .form-group(
+    ng-class="{ 'has-error': createForm.hasError(step.form.name) }"
+  )
+    label Name
+    input.form-control(
+      type="text"
+      name="name"
+      ng-model="createVM.data.name"
+      required
+      ng-minlength="5"
+      ng-maxlength="30"
+      field-unique="Catalogue"
+    )
+    .help-block(
+      ng-messages="step.form.name.$error"
+      ng-show="createForm.hasError(step.form.name)"
+    )
+      span(ng-message="required") This field is required.
+      span(ng-message="minlength") This field must contain at least 5 chars.
+      span(ng-message="maxlength") This field must not exceed 30 chars.
+      span(ng-message="unique") This name is already taken.
+  .form-group
+    label
+      | Description 
+      small.text-muted optional
+    textarea.form-control(rows="3", name="description", ng-model="createVM.data.description")
+  .form-group.text-right
+    a.btn.btn-default(ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])", ng-disabled="!step.form.$valid")
+      span.item-text Next

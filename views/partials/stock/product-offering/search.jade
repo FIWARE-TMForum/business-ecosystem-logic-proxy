@@ -1,0 +1,16 @@
+ui-view
+  .row
+    .col-xs-12
+      include ./search-toolbar.jade
+    .col-xs-12(ng-switch="searchVM.list.loaded")
+      div(ng-switch-when="true", ng-switch="searchVM.list.length")
+        div(ng-switch-when="0")
+          .alert.alert-info.text-center No offerings found.
+        div(ng-switch-default, ng-switch="searchVM.list.flow")
+          div(ng-switch-when="1")
+            include ./search-list.jade
+          div(ng-switch-when="2")
+            include ./search-grid.jade
+      div(ng-switch-default)
+        .container-spinner
+          span.fa.fa-spinner.fa-spin.fa-2x

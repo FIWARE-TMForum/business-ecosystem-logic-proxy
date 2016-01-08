@@ -1,0 +1,20 @@
+form(name="step.form", novalidate)
+  .row
+    .col-sm-12
+      .form-group(
+        ng-class="{ 'has-error': createForm.hasError(step.form.picture) }"
+      )
+        label Picture URL
+        input.form-control(
+          type="url"
+          name="picture"
+          ng-model="createVM.data.attachment[0].url"
+        )
+        .help-block(
+          ng-messages="step.form.name.$error"
+          ng-show="createForm.hasError(step.form.picture)"
+        )
+          span(ng-message="pattern") This field must be a valid URL.
+  .form-group.text-right
+    a.btn.btn-default(ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])", ng-disabled="!step.form.$valid")
+      span.item-text Next

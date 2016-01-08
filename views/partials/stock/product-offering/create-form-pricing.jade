@@ -1,0 +1,120 @@
+form(name="step.createform", novalidate)
+   .row
+      .col-sm-12
+         table.table.table-bordered(ng-show="createVM.data.productOfferingPrice.length")
+            thead
+               tr
+                  th Name
+                  th Type
+                  th Unit
+                  th Delete
+            tbody
+               tr(ng-repeat="pricing in createVM.data.productOfferingPrice")
+                  td
+                     span {{ pricing.name }}
+                  td
+                     span {{ pricing.priceType }}
+                  td(ng-if="pricing.priceType == 'one time'")
+                     span {{ pricing.priceType }}
+                  td(ng-if="pricing.priceType == 'recurring'")
+                     span {{ pricing.recurringChargePeriod }}
+                  td(ng-if="pricing.priceType == 'usage'")
+                     span {{ pricing.unitOfMeasure }}
+                  td
+                     i.fa.fa-close(ng-click="createVM.removePricing(pricing)")
+
+   .row
+      .col-md-8
+         .form-group(
+            ng-class="{ 'has-error': createForm.hasError(step.createform.name) }"
+         )
+            label Name
+            input.form-control(
+               type="text"
+               name="name"
+               ng-model="createVM.currentPricing.name"
+               required
+               ng-maxlength="30"
+            )
+            .help-block(
+               ng-messages="step.createform.name.$error"
+               ng-show="createForm.hasError(step.createform.name)"
+            )
+               span(ng-message="required") This field is required.
+               span(ng-message="maxlength") This field must not exceed 30 chars.
+
+      .col-md-4
+         label Type
+         select.form-control(ng-model="createVM.currentPricing.priceType")
+            option(value="one time") One time
+            option(value="recurring") Recurring
+            option(value="usage") Usage
+
+   .row
+      .col-md-12
+         .form-group
+            label
+               | Description 
+               small.text-muted optional
+            textarea.form-control(rows="3", name="description", ng-model="createVM.currentPricing.description")
+
+   .row
+      .col-md-3
+         .form-group(
+            ng-class="{ 'has-error': createForm.hasError(step.createform.valueNum) }"
+         )
+            label Price
+            input.form-control(
+               type="number"
+               name="valueNum"
+               ng-model="createVM.currentPricing.price.taxIncludedAmount"
+               required
+            )
+            .help-block(
+               ng-messages="step.createform.valueNum.$error"
+               ng-show="createForm.hasError(step.createform.valueNum)"
+            )
+               span(ng-message="required") This field is required.
+               span(ng-message="number") This field must be a number.
+
+      .col-md-3
+         label Currency
+         select.form-control(ng-model="createVM.currentPricing.price.currencyCode")
+            option(value="EUR") EUR
+            option(value="USD") USD
+            option(value="CAD") CAD
+
+      .col-md-6(ng-show="createVM.currentPricing.priceType === 'usage'")
+         .form-group(
+            ng-class="{ 'has-error': createForm.hasError(step.createform.unit) }"
+         )
+            label Unit of measure
+            input.form-control(
+               type="text"
+               name="unit"
+               ng-model="createVM.currentPricing.unitOfMeasure"
+               ng-required="createVM.currentPricing.priceType == 'usage'"
+               ng-maxlength="30"
+            )
+            .help-block(
+               ng-messages="step.createform.unit.$error"
+               ng-show="createForm.hasError(step.createform.unit)"
+            )
+               span(ng-message="required") This field is required.
+               span(ng-message="maxlength") This field must not exceed 30 chars.
+
+      .col-md-6(ng-show="createVM.currentPricing.priceType === 'recurring'")
+         label Charge period
+         select.form-control(ng-model="createVM.currentPricing.recurringChargePeriod")
+            option(value="weekly") Weekly
+            option(value="monthly") monthly
+            option(value="yearly") Yearly
+
+   .form-group.text-left
+      a.btn.btn-success(ng-click="createVM.savePricing()", ng-disabled="!step.createform.$valid")
+         span.item-icon.fa.fa-save
+         span.item-text Add pricing model
+form(name="step.form", novalidate)
+  .form-group.text-right
+    a.btn.btn-default(ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])", ng-disabled="!step.form.$valid")
+      span.item-text Next

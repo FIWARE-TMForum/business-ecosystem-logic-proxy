@@ -1,0 +1,178 @@
+doctype html
+html(ng-app="app")
+  head
+    title TM Forum Portal
+
+    meta(charset="utf-8")
+    meta(name="viewport", content="width=device-width, initial-scale=1")
+
+    each cssFilePath in cssFilesToInject
+      link(rel="stylesheet", href="#{ contextPath }/#{ cssFilePath }")
+
+    each jsFilePath in jsDepFilesToInject
+      script(src="#{ contextPath }/#{ jsFilePath }")
+
+    each jsFilePath in jsAppFilesToInject
+      script(src="#{ contextPath }/#{ jsFilePath }")
+
+    script.
+      angular.module('app')
+        .constant('URLS', {
+          IMAGE: '#{ contextPath }/resources/core/images',
+          USER: '#{ proxyPath }/charging/api/userManagement/users/:username',
+          ASSET_MANAGEMENT: '#{ proxyPath }/charging/api/assetManagement',
+          CATALOGUE_MANAGEMENT: '#{ proxyPath }/DSProductCatalog/api/catalogManagement/v2',
+          PAYMENT: '#{ proxyPath }/charging/api/orderManagement/orders/:action'
+        });
+
+    if user
+      script.
+        angular.module('app')
+          .constant('LOGGED_USER', {
+            id: '#{ user.id }',
+            href: '#{ contextPath }/charging/api/userManagement/users/#{ user.id }',
+            bearerToken: '#{ user.accessToken }'
+          })
+          .run(function ($http, LOGGED_USER) {
+            $http.defaults.headers.common.Authorization = 'Bearer ' + LOGGED_USER.bearerToken;
+          });
+
+    block scripts
+  body(ng-controller="UserCtrl as user")
+    .navbar.navbar-default.navbar-static-top
+      .container
+        .navbar-header
+          a.navbar-brand(href="#{ contextPath }")
+            img(src="#{ contextPath }/resources/core/images/fiware-tmforum-logo.png")
+        .navbar-text.h3 {{ title }}
+
+        if user
+          ul.nav.navbar-nav.navbar-right
+            block navbars
+            li.dropdown
+              a.dropdown-toggle(data-toggle="dropdown")
+                span.fa-stack
+                  i.fa.fa-circle-thin.fa-stack-2x
+                  i.fa.fa-user.fa-stack-1x
+                span.hidden-xs #{ user.displayName }
+              .dropdown-menu
+                .dropdown-header.inverse.text-center
+                  span.fa-stack.fa-3x
+                    i.fa.fa-circle.fa-stack-2x
+                    i.fa.fa-user.fa-inverse.fa-stack-1x
+                  p #{ user.displayName }
+                  p.small #{ user.email }
+                .dropdown-header
+                  strong.text-uppercase My Account
+                a.dropdown-menu-item(ng-click="user.showProfile()")
+                  span.item-icon.fa.fa-cog
+                  span.item-text My profile
+                a.dropdown-menu-item(ng-click="user.signOut()")
+                  span.item-icon.fa.fa-sign-out
+                  span.item-text Sign out
+          form(name="signOutForm", method="post", action="#{ contextPath }/logout")
+        else
+          a.btn.btn-default.navbar-btn.navbar-right(href="#{ contextPath }/login")
+            span.item-icon.fa.fa-sign-in
+            span.item-text.hidden-xs Sign in
+
+    .container(ng-controller="FlashMessageListCtrl as listVM")
+      .alert-group(ng-show="listVM.list.length")
+        .alert-item(ng-repeat="alert in listVM.list")
+          .alert(class="alert-{{ alert.state }}")
+            a.close(ng-click="listVM.hideAlert($index)")
+              i.fa.fa-fw.fa-remove
+            span.alert-message(ng-bind-html="alert.message")
+
+    block content
+
+    footer.clearfix
+      hr.fiware-line
+      .col-sm-6
+        ul.list-inline
+          li.small © 2015 CoNWeT Lab., Universidad Politécnica de Madrid
+      .col-sm-6
+        ul.list-inline.pull-right
+          li.small
+            a(href="https://www.fiware.org") FIWARE
+          li.small ·
+          li.small
+            a(href="https://www.tmforum.org") TM FORUM
+
+    if user
+      include ./modals/user-profile.modal.jade
+
+    script(type="text/ng-template", id="offering/sidebar")
+      include ./partials/offering/sidebar.jade
+    script(type="text/ng-template", id="offering/search")
+      include ./partials/offering/search.jade
+    script(type="text/ng-template", id="offering/detail")
+      include ./partials/offering/detail.jade
+
+    script(type="text/ng-template", id="stock/sidebar")
+      include ./partials/stock/sidebar.jade
+
+    script(type="text/ng-template", id="stock/product/search")
+      include ./partials/stock/product/search.jade
+    script(type="text/ng-template", id="stock/product/create")
+      include ./partials/stock/product/create.jade
+    script(type="text/ng-template", id="stock/product/create/general")
+      include ./partials/stock/product/create-form.jade
+    script(type="text/ng-template", id="stock/product/create/bundle")
+      include ./partials/stock/product/create-form-bundle.jade
+    script(type="text/ng-template", id="stock/product/create/characteristics")
+      include ./partials/stock/product/create-form-characteristics.jade
+    script(type="text/ng-template", id="stock/product/create/attachments")
+      include ./partials/stock/product/create-form-attachments.jade
+    script(type="text/ng-template", id="stock/product/create/assets")
+      include ./partials/stock/product/create-form-assets.jade
+    script(type="text/ng-template", id="stock/product/create/finish")
+      include ./partials/stock/product/create-form-finish.jade
+    script(type="text/ng-template", id="stock/product/update")
+      include ./partials/stock/product/update.jade
+    script(type="text/ng-template", id="stock/product/update/bundled")
+      include ./partials/stock/product/update.jade
+
+    script(type="text/ng-template", id="stock/product-offering/search")
+      include ./partials/stock/product-offering/search.jade
+    script(type="text/ng-template", id="stock/product-offering/create")
+      include ./partials/stock/product-offering/create.jade
+    script(type="text/ng-template", id="stock/product-offering/create/general")
+      include ./partials/stock/product-offering/create-form.jade
+    script(type="text/ng-template", id="stock/product-offering/create/bundle")
+      include ./partials/stock/product-offering/create-form-bundle.jade
+    script(type="text/ng-template", id="stock/product-offering/create/pricing")
+      include ./partials/stock/product-offering/create-form-pricing.jade
+    script(type="text/ng-template", id="stock/product-offering/create/product")
+      include ./partials/stock/product-offering/create-form-product.jade
+    script(type="text/ng-template", id="stock/product-offering/create/catalogue")
+      include ./partials/stock/product-offering/create-form-catalogue.jade
+    script(type="text/ng-template", id="stock/product-offering/create/finish")
+      include ./partials/stock/product-offering/create-form-finish.jade
+    script(type="text/ng-template", id="stock/product-offering/update")
+      include ./partials/stock/product-offering/update.jade
+
+    script(type="text/ng-template", id="stock/product-catalogue/search")
+      include ./partials/stock/product-catalogue/search.jade
+    script(type="text/ng-template", id="stock/product-catalogue/create")
+      include ./partials/stock/product-catalogue/create.jade
+    script(type="text/ng-template", id="stock/product-catalogue/create/general")
+      include ./partials/stock/product-catalogue/create-form.jade
+    script(type="text/ng-template", id="stock/product-catalogue/create/finish")
+      include ./partials/stock/product-catalogue/create-form-finish.jade
+    script(type="text/ng-template", id="stock/product-catalogue/update")
+      include ./partials/stock/product-catalogue/update.jade
+    script(type="text/ng-template", id="stock/product-catalogue/update/party")
+      include ./partials/stock/product-catalogue/update-party.jade
+    script(type="text/ng-template", id="stock/product-catalogue/update/offering")
+      include ./partials/stock/product-catalogue/update-offering.jade
+
+    script(type="text/ng-template", id="inventory/sidebar")
+      include ./partials/inventory/sidebar.jade
+    script(type="text/ng-template", id="inventory/order/search")
+      include ./partials/inventory/order.search.jade
+    script(type="text/ng-template", id="inventory/product/search")
+      include ./partials/inventory/product.search.jade
+
+    script(type="text/ng-template", id="shopping-cart/list")
+      include ./partials/shopping-cart/list.jade

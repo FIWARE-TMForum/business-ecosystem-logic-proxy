@@ -1,0 +1,14 @@
+.panel.panel-default
+  ul.nav.nav-responsive.nav-pills
+    li(ui-sref-active="active")
+      a(ui-sref="stock.catalogue", ui-sref-opts="{ reload: true, inherit: false }")
+        span.item-icon.fa.fa-book
+        span.item-text.hidden-xs Catalogues
+    li(ui-sref-active="active")
+      a(ui-sref="stock.product", ui-sref-opts="{ reload: true, inherit: false }")
+        span.item-icon.fa.fa-file
+        span.item-text.hidden-xs Products
+    li(ui-sref-active="active")
+      a(ui-sref="stock.offering", ui-sref-opts="{ reload: true, inherit: false }")
+        span.item-icon.fa.fa-cube
+        span.item-text.hidden-xs Offerings

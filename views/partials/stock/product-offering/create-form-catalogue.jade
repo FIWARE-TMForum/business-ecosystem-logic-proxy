@@ -1,0 +1,24 @@
+form(name="step.form", novalidate)
+  .form-group(ng-controller="CatalogueSearchCtrl as searchVM")
+    input(type="hidden", ng-model="createVM.catalogue.id", required)
+    .table-responsive
+      table.table.table-bordered.table-hover.table-selectable
+        thead
+          tr
+            th Status
+            th Name
+            th Rol
+            th Updated
+        tbody
+          tr(ng-repeat="catalogue in searchVM.list | status:STATUS.ACTIVE:STATUS.LAUNCHED as results", ng-class="{ active: createVM.catalogue.id == catalogue.id }", ng-click="createVM.setCatalogue(catalogue)")
+            td
+              .status-item(class="status-{{ catalogue.lifecycleStatus | lowercase }}")
+                span.item-icon
+                span.item-text {{ catalogue.lifecycleStatus }}
+            th {{ catalogue.name }}
+            td {{ catalogue.getRoleOf(user.id) }}
+            td
+              time(am-time-ago="catalogue.lastUpdate")
+  .form-group.text-right
+    a.btn.btn-default(ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])", ng-disabled="!step.form.$valid")
+      span.item-text Next

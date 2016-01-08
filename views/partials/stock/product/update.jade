@@ -1,0 +1,23 @@
+.row
+  .col-xs-12
+    include ./update-toolbar.jade
+  .col-xs-12(ng-switch="updateVM.item.loaded")
+    .row(ng-switch-when="true")
+      .col-xs-12
+        .panel.panel-default
+          ul.nav.nav-justified.nav-pills
+            li(ui-sref-active-eq="active")
+              a(ui-sref="stock.product.update")
+                span.item-icon.fa.fa-newspaper-o
+                span.item-text.hidden-xs About
+            li(ui-sref-active-eq="active", ng-show="updateVM.item.isBundle")
+              a(ui-sref="stock.product.update.bundled")
+                span.item-icon.fa.fa-file
+                span.item-text.hidden-xs Bundled product
+      .col-xs-12
+        ui-view
+          .panel.panel-default(ng-controller="FormWizardCtrl as updateForm")
+            .panel-body
+              include ./update-form.jade
+    .container-spinner(ng-switch-default)
+      span.fa.fa-spinner.fa-spin.fa-2x

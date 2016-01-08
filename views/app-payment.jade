@@ -1,8 +1,7 @@
-extends ./app.jade
+extends ./base.jade
 
-block extraJS
-  script.
-    angular.module('app')
-    .config(function ($stateProvider, $urlRouterProvider, $injector) {
-        $urlRouterProvider.otherwise('/payment');
-    });
+block content
+  .container
+    .row(ng-controller="PaymentController")
+      .col-sm-12
+        .alert(ng-class="accepted ? 'alert-info' : 'alert-danger'") {{ status }}

@@ -1,0 +1,85 @@
+form(name="step.form", novalidate)
+  .row
+    .col-sm-8
+      .form-group(
+        ng-class="{ 'has-error': createForm.hasError(step.form.name) }"
+      )
+        label Name
+        input.form-control(
+          type="text"
+          name="name"
+          ng-model="createVM.data.name"
+          required
+          ng-minlength="5"
+          ng-maxlength="30"
+          field-unique="Product"
+        )
+        .help-block(
+          ng-messages="step.form.name.$error"
+          ng-show="createForm.hasError(step.form.name)"
+        )
+          span(ng-message="required") This field is required.
+          span(ng-message="minlength") This field must contain at least 5 chars.
+          span(ng-message="maxlength") This field must not exceed 30 chars.
+          span(ng-message="unique") This name is already taken.
+    .col-sm-4
+      .form-group(
+        ng-class="{ 'has-error' : createForm.hasError(step.form.version) }"
+      )
+        label Version
+        input.form-control(
+          type="text"
+          name="version"
+          ng-model="createVM.data.version"
+          required
+        )
+        .help-block(
+          ng-messages="step.form.version.$error"
+          ng-show="createForm.hasError(step.form.version)"
+        )
+          span(ng-message="required") This field is required.
+  .row
+    .col-sm-8
+      .form-group(
+        ng-class="{ 'has-error' : createForm.hasError(step.form.brand) }"
+      )
+        label Brand
+        input.form-control(
+          type="text"
+          name="brand"
+          ng-model="createVM.data.brand"
+          required
+          ng-minlength="5"
+          ng-maxlength="30"
+        )
+        .help-block(
+          ng-messages="step.form.brand.$error"
+          ng-show="createForm.hasError(step.form.brand)"
+        )
+          span(ng-message="required") This field is required.
+          span(ng-message="minlength") This field must contain at least 5 chars.
+          span(ng-message="maxlength") This field must not exceed 30 chars.
+    .col-sm-4
+      .form-group(
+        ng-class="{ 'has-error' : createForm.hasError(step.form.productNumber) }"
+      )
+        label ID Number
+        input.form-control(
+          type="text"
+          name="productNumber"
+          ng-model="createVM.data.productNumber"
+          required
+        )
+        .help-block(
+          ng-messages="step.form.productNumber.$error"
+          ng-show="createForm.hasError(step.form.productNumber)"
+        )
+          span(ng-message="required") This field is required.
+  .form-group
+    label
+      | Description 
+      small.text-muted optional
+    textarea.form-control(rows="3", name="description", ng-model="createVM.data.description")
+  .form-group.text-right
+    a.btn.btn-default(ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])", ng-disabled="!step.form.$valid")
+      span.item-text Next

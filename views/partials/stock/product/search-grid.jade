@@ -1,0 +1,18 @@
+.container-flex
+  .panel.panel-default.item-product(ng-repeat="product in searchVM.list")
+    .panel-heading
+      .thumbnail.item-product-logo
+        img(no-image, ng-src="{{ product.getPicture() }}")
+      a.h4(ui-sref="stock.product.update({ productId: product.id })", ui-sref-opts="{ inherit: false }") {{ product.name }}
+    .panel-body
+      p.text-muted
+        span v{{ product.version }}
+        span.pull-right
+          time(am-time-ago="product.lastUpdate")
+      p
+        span.label(ng-class="product.isBundle ? 'label-bundle' : 'label-single'")
+          | {{ product.isBundle ? 'Bundle' : 'Single' }}
+      .status-group
+        .status-item.active(class="status-{{ product.lifecycleStatus | lowercase }}")
+          span.item-icon
+          span.item-text {{ product.lifecycleStatus }}

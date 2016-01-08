@@ -1,113 +1,57 @@
-doctype html
-html(ng-app="app", lang="en")
-  head
-    title TM Forum Portal
+extends ./base.jade
 
-    meta(charset="utf-8")
-    meta(name="viewport",content="width=device-width, initial-scale=1")
-
-    each cssFilePath in cssFilesToInject
-      link(rel="stylesheet", href="#{ contextPath }/#{ cssFilePath }")
-
-    each jsFilePath in jsDepFilesToInject
-      script(src="#{ contextPath }/#{ jsFilePath }")
-
-    script.
-      angular.module('app', ['ngResource', 'ngMessages', 'angularMoment', 'ui.router'])
-        .constant('URLS', {
-          IMAGE: '#{ contextPath }/resources/core/images',
-          USER: '#{ contextPath }/charging/api/userManagement/users/:username',
-          ASSET_MANAGEMENT: #{ contextPath }'/charging/api/assetManagement',
-          CATALOGUE_MANAGEMENT: '#{ contextPath }/DSProductCatalog/api/catalogManagement/v2',
-          PAYMENT: '#{ contextPath }/charging/api/orderManagement/orders/:action'
-        });
-
-    if user
-      script.
-        angular.module('app')
-          .constant('LOGGED_USER', {
-            id: '#{ user.id }',
-            href: '#{ contextPath }/charging/api/userManagement/users/#{ user.id }',
-            bearerToken: '#{ user.accessToken }'
-          })
-          .run(function ($http, LOGGED_USER) {
-            $http.defaults.headers.common.Authorization = 'Bearer ' + LOGGED_USER.bearerToken;
-          });
-
-    each jsFilePath in jsAppFilesToInject
-      script(src="#{ contextPath }/#{ jsFilePath }")
-
-    script.
-      angular.module('app')
-      .config(function ($stateProvider, $urlRouterProvider, $injector) {
-
+block scripts
+  script.
+    angular
+      .module('app')
+      .config(function ($urlRouterProvider) {
         $urlRouterProvider.otherwise('/offering');
       });
 
-  body(ng-controller="UserCtrl")
-    ui-view
+block navbars
+  li.dropdown(ng-controller="UserShoppingCartCtrl as listVM")
+    a.dropdown-toggle(data-toggle="dropdown")
+      span.fa-stack.icon-shopping-cart
+        span.fa.fa-shopping-cart.fa-stack-2x
+        span.badge {{ listVM.list.length }}
+      span.hidden-xs Shopping Cart
+    .dropdown-menu
+      .dropdown-header
+        strong.text-uppercase My Shopping Cart
+      .alert.alert-info.text-center(ng-show="!listVM.list.length")
+        span Your shopping cart is empty.
+      .dropdown-menu-item.item-offering-ordered(ng-repeat="offering in listVM.list")
+        span.item-icon.fa.fa-cube
+        span.item-text {{ offering.name }}
+        span.fa.fa-close(ng-click="listVM.remove(offering)")
+      .divider(ng-show="listVM.list.length")
+      a.dropdown-menu-item(ng-show="listVM.list.length", ui-sref="shopping-cart")
+        span.item-icon.fa.fa-paypal
+        span.item-text Make order
 
-    if user
-      form(name="signOutForm", method="post", action="#{ contextPath }/logout")
-      include ./includes/UserProfile.jade
-
-      script(type="text/ng-template", id="stock/sidebar")
-        include ./partials/stock/stock.sidebar.jade
-
-      script(type="text/ng-template", id="seller/product/search")
-        include ./includes/seller/product/search.jade
-      script(type="text/ng-template", id="seller/product/create")
-        include ./includes/seller/product/create.jade
-      script(type="text/ng-template", id="seller/product/create/chars")
-        include ./includes/seller/product/create/chars.jade
-      script(type="text/ng-template", id="seller/product/create/attachments")
-        include ./includes/seller/product/create/attachments.jade
-      script(type="text/ng-template", id="seller/product/create/assets")
-        include ./includes/seller/product/create/assets.jade
-      script(type="text/ng-template", id="seller/product/create/finish")
-        include ./includes/seller/product/create/finish.jade
-      script(type="text/ng-template", id="seller/product/update")
-        include ./includes/seller/product/update.jade
-
-      script(type="text/ng-template", id="seller/product-offering/search")
-        include ./includes/seller/product-offering/search.jade
-      script(type="text/ng-template", id="seller/product-offering/create")
-        include ./includes/seller/product-offering/create.jade
-      script(type="text/ng-template", id="seller/product-offering/create/product")
-        include ./includes/seller/product-offering/create/product.jade
-      script(type="text/ng-template", id="seller/product-offering/create/catalogue")
-        include ./includes/seller/product-offering/create/catalogue.jade
-      script(type="text/ng-template", id="seller/product-offering/create/pricing")
-        include ./includes/seller/product-offering/create/pricing.jade
-      script(type="text/ng-template", id="seller/product-offering/create/finish")
-        include ./includes/seller/product-offering/create/finish.jade
-      script(type="text/ng-template", id="seller/product-offering/update")
-        include ./includes/seller/product-offering/update.jade
-
-      script(type="text/ng-template", id="seller/product-catalogue/search")
-        include ./includes/seller/product-catalogue/search.jade
-      script(type="text/ng-template", id="seller/product-catalogue/create")
-        include ./includes/seller/product-catalogue/create.jade
-      script(type="text/ng-template", id="seller/product-catalogue/update")
-        include ./includes/seller/product-catalogue/update.jade
-      script(type="text/ng-template", id="seller/product-catalogue/update/party")
-        include ./includes/seller/product-catalogue/update/party.jade
-      script(type="text/ng-template", id="seller/product-catalogue/update/offering")
-        include ./includes/seller/product-catalogue/update/offering.jade
-
-      script(type="text/ng-template", id="inventory/sidebar")
-        include ./partials/inventory/inventory.sidebar.jade
-      script(type="text/ng-template", id="customer/inventory-order/search")
-        include ./includes/customer/inventory-order/search.jade
-      script(type="text/ng-template", id="customer/inventory-product/search")
-        include ./includes/customer/inventory-product/search.jade
-
-    script(type="text/ng-template", id="customer/product-offering/search")
-      include ./includes/customer/product-offering/search.jade
-    script(type="text/ng-template", id="customer/product-catalogue/detail")
-      include ./includes/customer/product-catalogue/detail.jade
-    script(type="text/ng-template", id="content")
-      include ./app.content.jade
-
-    script(type="text/ng-template", id="payment/content")
-      include ./app.payment.content.jade
+block content
+  .container
+    .row
+      .col-xs-12.col-md-3
+        .panel.panel-default
+          ul.nav.nav-stacked.nav-router.nav-pills
+            li(ui-sref-active="active")
+              a.bg-view1(ui-sref="offering", ui-sref-opts="{ reload: true, inherit: false }")
+                span.item-icon-container
+                  i.fa.fa-fw.fa-home
+                strong.item-text Home
+            if user
+              li(ui-sref-active="active")
+                a.bg-view2(ui-sref="stock", ui-sref-opts="{ reload: true, inherit: false }")
+                  span.item-icon-container
+                    i.fa.fa-fw.fa-database
+                  strong.item-text My stock
+              li(ui-sref-active="active")
+                a.bg-view3(ui-sref="inventory", ui-sref-opts="{ reload: true, inherit: false }")
+                  span.item-icon-container
+                    i.fa.fa-fw.fa-archive
+                  strong.item-text My inventory
+        ui-view(name="sidebar")
+      .col-xs-12.col-md-9
+        ui-view(name="content")
+  include ./modals/search-filters.modal.jade

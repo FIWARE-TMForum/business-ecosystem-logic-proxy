@@ -1,0 +1,19 @@
+.row
+  .col-xs-12
+    include ./product-catalogue.detail.jade
+  .col-xs-12
+    .btn-toolbar
+      include ../product-category.search.jade
+      .btn-group.pull-right
+        a.btn.btn-default(ng-click="searchVM.showFilters()")
+          span.item-icon.fa.fa-sliders
+          span.item-text.hidden-xs Filters
+  .col-xs-12(ng-switch="searchVM.list.loaded")
+    div(ng-switch-when="true", ng-switch="searchVM.list.length")
+      div(ng-switch-when="0")
+        .alert.alert-info.text-center No offerings found.
+      div(ng-switch-default)
+        include ./search-grid.jade
+    div(ng-switch-default)
+      .container-spinner
+        span.fa.fa-spinner.fa-spin.fa-2x

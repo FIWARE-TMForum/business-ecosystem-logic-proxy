@@ -1,0 +1,20 @@
+.row
+  .col-xs-12
+    include ./create-toolbar.jade
+  .col-xs-12
+    .panel.panel-default
+      .panel-heading
+        strong.text-uppercase New catalogue
+      .panel-body
+        .row(ng-controller="FormWizardCtrl as createForm")
+          .col-xs-12.col-md-3
+            ul.nav.nav-steps
+              li(ng-repeat="step in createVM.stepList", ng-class="{ active: createForm.stepIndex == $index, disabled: createForm.isDisabled($index, step) }")
+                a(ng-click="createForm.nextStep($index, step)")
+                  span.item-icon {{ $index + 1 }}
+                  span.item-text.hidden-xs {{ step.title }}
+          .col-xs-12.col-md-9
+            .row(ng-repeat="step in createVM.stepList", ng-show="createForm.stepIndex == $index")
+              .col-xs-12
+                .h3 {{ step.title }}
+                ng-include(src="step.templateUrl")

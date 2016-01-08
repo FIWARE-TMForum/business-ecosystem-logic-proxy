@@ -1,0 +1,10 @@
+.btn-toolbar
+  .btn-group
+    a.btn.btn-default(ui-sref="stock.offering", ui-sref-opts="{ reload: true, inherit: false }", ui-sref-active-eq="active")
+      span.item-icon.fa.fa-search
+      span.item-text.hidden-xs Search offering
+    a.btn.btn-default(ui-sref="stock.offering.update", ui-sref-opts="{ reload: true }", ui-sref-active="active")
+      span.item-icon
+        i.fa.fa-spinner.fa-spin(ng-show="!updateVM.item.loaded")
+        i.fa.fa-edit(ng-show="updateVM.item.loaded")
+      span.item-text.hidden-xs {{ updateVM.item.name }}
