@@ -8,9 +8,9 @@ ui-view
           .alert.alert-info.text-center No offerings found.
         div(ng-switch-default, ng-switch="searchVM.list.flow")
           div(ng-switch-when="1")
-            include ./search-list.jade
-          div(ng-switch-when="2")
             include ./search-grid.jade
+          div(ng-switch-when="2")
+            include ./search-list.jade
       div(ng-switch-default)
         .container-spinner
           span.fa.fa-spinner.fa-spin.fa-2x
