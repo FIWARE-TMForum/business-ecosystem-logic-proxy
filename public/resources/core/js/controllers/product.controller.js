@@ -49,6 +49,14 @@
                 templateUrl: 'stock/product/create/assets'
             },
             {
+                title: 'Characteristics',
+                templateUrl: 'stock/product/create/characteristics'
+            },
+            {
+                title: 'Attachments',
+                templateUrl: 'stock/product/create/attachments'
+            },
+            {
                 title: 'Finish',
                 templateUrl: 'stock/product/create/finish'
             }
@@ -57,9 +65,21 @@
         vm.data = Product.buildInitialData();
         vm.stepList = stepList;
         vm.assetTypes = [];
+        vm.charList = [];
 
         vm.create = create;
-        vm.setAssetType = setAssetType;
+        vm.setCurrentType = setCurrentType;
+
+        vm.toggleBundle = toggleBundle;
+
+        vm.hasProduct = hasProduct;
+        vm.toggleProduct = toggleProduct;
+
+        vm.isSelected = isSelected;
+        vm.saveCharacteristic = saveCharacteristic;
+        vm.removeCharacteristic = removeCharacteristic;
+
+        initChars();
 
         AssetType.search().then(function (typeList) {
             angular.copy(typeList, vm.assetTypes);
@@ -68,21 +88,53 @@
                 addCharacteristic('Asset type', 'Type of the digital asset described in this product specification', '');
                 addCharacteristic('Media type', 'Media type of the digital asset described in this product specification', '');
                 addCharacteristic('Location', 'URL pointing to the digital asset described in this product specification', '');
-                vm.assetType = typeList[0];
-                vm.assetFormat = vm.assetType.formats[0];
+                vm.currentType = typeList[0];
+                vm.currFormat = vm.currentType.formats[0];
                 vm.data.productSpecCharacteristic[0].productSpecCharacteristicValue[0].value = typeList[0].name;
             }
         });
 
-        vm.toggleBundle = toggleBundle;
+        function removeCharacteristic(characteristic) {
+            var index = vm.charList.indexOf(characteristic);
 
-        vm.hasProduct = hasProduct;
-        vm.toggleProduct = toggleProduct;
+            if (index > -1) {
+                vm.charList.splice(index, 1);
+            }
+        }
 
-        vm.isSelected = isSelected;
+        function saveCharacteristic() {
+            var newChar = vm.currentChar;
+
+            // Clean fields that can contain invalid values due to hidden models
+            if (newChar.valueType === 'string') {
+                vm.currentValue.unitOfMeasure = '';
+                vm.currentValue.valueFrom = '';
+                vm.currentValue.valueTo = '';
+            } else if (vm.currentValueType === 'value'){
+                vm.currentValue.valueFrom = '';
+                vm.currentValue.valueTo = '';
+            } else {
+                vm.currentValue.value = '';
+            }
+
+            newChar.productSpecCharacteristicValue = [vm.currentValue];
+            vm.charList.push(newChar);
+            initChars();
+        }
+
+        function initChars() {
+            vm.currentChar = {
+                valueType: 'string',
+                configurable: false
+            };
+            vm.currentValueType = 'value';
+            vm.currentValue = {
+                default: true
+            };
+        }
 
         function isSelected(format) {
-            return vm.assetFormat === format;
+            return vm.currFormat === format;
         }
 
         function toggleProduct(product) {
@@ -107,18 +159,18 @@
 
         function create() {
             // If the format is file upload it to the asset manager
-            if (vm.assetFormat === 'FILE') {
+            if (vm.currFormat === 'FILE') {
                 var reader = new FileReader();
 
                 reader.onload = function(e) {
                     var data = {
-                        'content': {
-                            'name': vm.assetFile.name,
-                            'data': btoa(e.target.result)
+                        content: {
+                            name: vm.assetFile.name,
+                            data: btoa(e.target.result)
                         },
-                        'contentType': vm.data.productSpecCharacteristic[1].productSpecCharacteristicValue[0].value
+                        contentType: vm.data.productSpecCharacteristic[1].productSpecCharacteristicValue[0].value
                     };
-                    Asset.create(data, function(result) {
+                    Asset.create(data).then(function (result) {
                         // Set file location
                         vm.data.productSpecCharacteristic[2].productSpecCharacteristicValue[0].value = result.content;
                         saveProduct();
@@ -132,46 +184,48 @@
 
         function addCharacteristic(name, description, value) {
             vm.data.productSpecCharacteristic.push({
-                "name": name,
-                "description": description,
-                "valueType": "string",
-                "configurable": false,
-                "validFor": {
-                    "startDateTime": "",
-                    "endDateTime": ""
+                name: name,
+                description: description,
+                valueType: 'string',
+                configurable: false,
+                validFor: {
+                    startDateTime: "",
+                    endDateTime: ""
                 },
-                "productSpecCharacteristicValue": [
+                productSpecCharacteristicValue: [
                     {
-                        "valueType": "string",
-                        "default": true,
-                        "value": value,
-                        "unitOfMeasure": "",
-                        "valueFrom": "",
-                        "valueTo": "",
-                        "validFor": {
-                            "startDateTime": "",
-                            "endDateTime": ""
+                        valueType: 'string',
+                        default: true,
+                        value: value,
+                        unitOfMeasure: "",
+                        valueFrom: "",
+                        valueTo: "",
+                        validFor: {
+                            startDateTime: "",
+                            endDateTime: ""
                         }
                     }
                 ]
             });
         }
 
-        function setAssetType() {
-            var found = false;
+        function setCurrentType() {
+            var i, found = false;
+            var assetType = vm.data.productSpecCharacteristic[0].productSpecCharacteristicValue[0].value;
 
-            for (var i = 0; i < vm.assetTypes.length && !found; i++) {
-                var assetType = vm.data.productSpecCharacteristic[0].productSpecCharacteristicValue[0].value;
+            for (i = 0; i < vm.assetTypes.length && !found; i++) {
 
                 if (assetType === vm.assetTypes[i].name) {
                     found = true;
-                    currentType = vm.assetTypes[i];
+                    vm.currentType = vm.assetTypes[i];
                 }
             }
-            vm.assetFormat = currentType.formats[0];
+            vm.currFormat = vm.currentType.formats[0];
         }
 
         function saveProduct() {
+            // Append product characteristics
+            vm.data.productSpecCharacteristic = vm.data.productSpecCharacteristic.concat(vm.charList);
             Product.create(vm.data).then(function (productCreated) {
                 $state.go('stock.product.update', {
                     productId: productCreated.id

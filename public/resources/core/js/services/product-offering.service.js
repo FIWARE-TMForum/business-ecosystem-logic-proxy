@@ -185,7 +185,8 @@
             return {
                 version: '0.1',
                 lifecycleStatus: LIFECYCLE_STATUS.ACTIVE,
-                isBundle: false
+                isBundle: false,
+                productOfferingPrice: []
             };
         }
 

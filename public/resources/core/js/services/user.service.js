@@ -10,7 +10,7 @@
         .module('app')
         .factory('User', UserService);
 
-    function UserService($resource, $injector, URLS, PARTY_ROLES) {
+    function UserService($resource, $injector, $location, URLS, PARTY_ROLES) {
         var resource = $resource(URLS.USER, {
             username: '@id'
         }, {
@@ -44,7 +44,7 @@
         function serialize() {
             return {
                 id: loggedUser.id,
-                href: loggedUser.href,
+                href: $location.protocol() + '://' + $location.host() + ':' + $location.port() + loggedUser.href,
                 role: PARTY_ROLES.OWNER
             };
         }

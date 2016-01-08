@@ -1,25 +1,32 @@
 /**
- * Created by francisco on 26/11/15.
+ * @author Francisco de la Vega <fdelavega@conwet.com>
+ *         Jaime Pajuelo <jpajuelo@conwet.com>
  */
 
+(function () {
 
-angular.module('app')
-    .factory('Asset', ['$resource', 'URLS', function ($resource, URLS) {
+    'use strict';
 
-        var Asset, service = {
+    angular
+        .module('app')
+        .factory('Asset', AssetService);
 
-            create: function create(data, next) {
-                return Asset.save(data, function ($resp) {
+    function AssetService($q, $resource, URLS) {
+        var resource = $resource(URLS.ASSET_MANAGEMENT + '/assets/uploadJob');
 
-                    if (next != null) {
-                        next($resp);
-                    }
-                }, function (response) {
-                    // TODO: onfailure.
-                });
-            }
+        return {
+            create: create
         };
 
-        Asset = $resource(URLS.ASSET_MANAGEMENT + '/assets/uploadJob');
-        return service;
-    }]);
+        function create(data) {
+            var deferred = $q.defer();
+
+            resource.save(data, function (response) {
+                deferred.resolve(response);
+            });
+
+            return deferred.promise;
+        }
+    }
+
+})();

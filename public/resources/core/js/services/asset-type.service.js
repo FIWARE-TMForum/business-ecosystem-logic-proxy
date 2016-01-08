@@ -1,5 +1,6 @@
 /**
- *
+ * @author Francisco de la Vega <fdelavega@conwet.com>
+ *         Jaime Pajuelo <jpajuelo@conwet.com>
  */
 
 (function () {
@@ -12,11 +13,11 @@
 
     function AssetTypeService($q, $resource, URLS) {
         var resource = $resource(URLS.ASSET_MANAGEMENT + '/assetTypes/:typeId', {
-            'typeId': '@id'
+            typeId: '@id'
         });
 
         return {
-            'search': search
+            search: search
         };
 
         function search() {

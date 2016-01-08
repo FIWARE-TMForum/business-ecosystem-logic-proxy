@@ -50,6 +50,10 @@
                 templateUrl: 'stock/product-offering/create/catalogue'
             },
             {
+                title: 'Pricing',
+                templateUrl: 'stock/product-offering/create/pricing'
+            },
+            {
                 title: 'Finish',
                 templateUrl: 'stock/product-offering/create/finish'
             }
@@ -62,6 +66,11 @@
         vm.setProduct = setProduct;
         vm.setCatalogue = setCatalogue;
 
+        vm.savePricing = savePricing;
+        vm.removePricing = removePricing;
+
+        initPricing();
+
         function create() {
             Offering.create(vm.data, vm.product, vm.catalogue).then(function (offeringCreated) {
                 $state.go('stock.offering.update', {
@@ -72,6 +81,46 @@
                     name: offeringCreated.name
                 });
             });
+        }
+
+        function initPricing() {
+            vm.currentPricing = {
+                priceType: 'one time',
+                price: {
+                    taxRate: 20,
+                    currencyCode: 'EUR',
+                    percentage: 0
+                },
+                recurringChargePeriod: 'weekly'
+            };
+        }
+
+        function savePricing() {
+            // Clean pricing fields
+            if (vm.currentPricing.priceType === 'one time') {
+                vm.currentPricing.unitOfMeasure = '';
+                vm.currentPricing.recurringChargePeriod = '';
+            } else if (vm.currentPricing.priceType === 'recurring') {
+                vm.currentPricing.unitOfMeasure = '';
+            } else {
+                vm.currentPricing.recurringChargePeriod = '';
+            }
+
+            // Calculate duty free amount
+            var taxInc = vm.currentPricing.price.taxIncludedAmount;
+            var taxRate = vm.currentPricing.price.taxRate;
+
+            vm.currentPricing.price.dutyFreeAmount = taxInc - ((taxInc*taxRate) / 100);
+            vm.data.productOfferingPrice.push(vm.currentPricing);
+            initPricing();
+        }
+
+        function removePricing(pricing) {
+            var index = vm.data.productOfferingPrice.indexOf(pricing);
+
+            if (index > -1) {
+                vm.data.productOfferingPrice.splice(index, 1);
+            }
         }
 
         function setProduct(product) {

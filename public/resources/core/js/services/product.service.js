@@ -139,6 +139,11 @@
                 isBundle: false,
                 bundledProductSpecification: [],
                 productSpecCharacteristic: [],
+                attachment: [
+                    {
+                        type: 'Picture'
+                    }
+                ],
                 relatedParty: [
                     User.serialize()
                 ]
