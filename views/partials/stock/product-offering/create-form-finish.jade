@@ -1,0 +1,81 @@
+form(name="step.form", novalidate)
+  .row
+    .col-sm-8
+      .form-group
+        label Name
+        input.form-control(
+          type="text"
+          name="name"
+          ng-model="createVM.data.name"
+          required
+          readonly
+        )
+    .col-sm-4
+      .form-group
+        label Version
+        input.form-control(
+          type="text"
+          name="version"
+          ng-model="createVM.data.version"
+          required
+          readonly
+        )
+  .form-group
+    label Status
+    .status-group
+      .status-item(ng-repeat="status in FILTER_STATUS", class="status-{{ status.value | lowercase }}", ng-class="{ active: createVM.data.lifecycleStatus == status.value }")
+        span.item-icon
+        span.item-text {{ status.value }}
+  .form-group
+    label Description
+    textarea.form-control(
+      rows="3"
+      name="description"
+      ng-model="createVM.data.description"
+      readonly
+    )
+  .form-group
+    label Product
+    input(type="hidden", ng-model="createVM.product.id", required)
+    .table-responsive
+      table.table.table-bordered
+        thead
+          tr
+            th Status
+            th Name
+            th Type
+            th Updated
+        tbody
+          tr
+            td
+              .status-item(class="status-{{ createVM.product.lifecycleStatus | lowercase }}")
+                span.item-icon
+                span.item-text {{ createVM.product.lifecycleStatus }}
+            th {{ createVM.product.name }}
+            td {{ createVM.product.isBundle ? 'Bundle' : 'Single' }}
+            td
+              time(am-time-ago="createVM.product.lastUpdate")
+  .form-group
+    label Catalogue
+    input(type="hidden", ng-model="createVM.catalogue.id", required)
+    .table-responsive
+      table.table.table-bordered
+        thead
+          tr
+            th Status
+            th Name
+            th Rol
+            th Updated
+        tbody
+          tr
+            td
+              .status-item(class="status-{{ createVM.catalogue.lifecycleStatus | lowercase }}")
+                span.item-icon
+                span.item-text {{ createVM.catalogue.lifecycleStatus }}
+            th {{ createVM.catalogue.name }}
+            td {{ createVM.catalogue.getRoleOf(user.id) }}
+            td
+              time(am-time-ago="createVM.catalogue.lastUpdate")
+  .form-group.text-right
+    a.btn.btn-success(ng-click="createVM.create()", ng-disabled="!step.form.$valid")
+      span.item-text Create
