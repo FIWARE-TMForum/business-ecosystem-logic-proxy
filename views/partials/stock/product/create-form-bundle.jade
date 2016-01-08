@@ -1,13 +1,13 @@
 form(name="step.form", novalidate)
   .item-toggle
-    label.toggle A new bundled product
+    label.toggle A new bundled product?
       .track
         input(
           type="checkbox"
           ng-model="createVM.data.isBundle"
           ng-change="createVM.toggleBundle()"
         )
-        i.fa.fa-lg
+        i.fa.fa-2x
   div(ng-if="createVM.data.isBundle", ng-controller="ProductSearchCtrl as searchVM")
     div(ng-switch="searchVM.list.loaded")
       div(ng-switch-when="true", ng-switch="searchVM.list.length")
