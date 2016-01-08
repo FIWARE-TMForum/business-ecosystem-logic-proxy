@@ -20,7 +20,9 @@ form(name="step.form", novalidate)
             th {{ product.name }}
             td {{ product.productNumber }}
             td {{ product.brand }}
-            td {{ product.isBundle ? 'Bundle' : 'Single' }}
+            td
+              span.label(ng-class="product.isBundle ? 'label-bundle' : 'label-single'")
+                | {{ product.isBundle ? 'Bundle' : 'Single' }}
             td
               time(am-time-ago="product.lastUpdate")
   .form-group.text-right

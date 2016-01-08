@@ -52,7 +52,9 @@ form(name="step.form", novalidate)
                 span.item-icon
                 span.item-text {{ createVM.product.lifecycleStatus }}
             th {{ createVM.product.name }}
-            td {{ createVM.product.isBundle ? 'Bundle' : 'Single' }}
+            td
+              span.label(ng-class="createVM.product.isBundle ? 'label-bundle' : 'label-single'")
+                | {{ createVM.product.isBundle ? 'Bundle' : 'Single' }}
             td
               time(am-time-ago="createVM.product.lastUpdate")
   .form-group

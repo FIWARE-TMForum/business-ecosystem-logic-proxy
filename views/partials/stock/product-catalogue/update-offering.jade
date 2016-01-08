@@ -11,23 +11,7 @@
       div(ng-switch-when="0")
         .alert.alert-info.text-center No offerings found.
       div(ng-switch-default)
-        .table-responsive
-          table.table.table-bordered.table-hover
-            thead
-              tr
-                th Status
-                th Name
-                th Updated
-            tbody
-              tr(ng-repeat="offering in searchVM.list")
-                td
-                  .status-item(class="status-{{ offering.lifecycleStatus | lowercase }}")
-                    span.item-icon
-                    span.item-text {{ offering.lifecycleStatus }}
-                th
-                  a(ui-sref="stock.offering.update({ offeringId: offering.id })") {{ offering.name }}
-                td
-                  time(am-time-ago="offering.lastUpdate")
+        include ../product-offering/search-list.jade
     div(ng-switch-default)
       .container-spinner
         span.fa.fa-spinner.fa-spin.fa-2x

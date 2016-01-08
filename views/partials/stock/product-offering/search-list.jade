@@ -17,6 +17,8 @@
           a(ui-sref="stock.offering.update({ offeringId: offering.id })", ui-sref-opts="{ inherit: false }") {{ offering.name }}
         th
           a(ui-sref="stock.product.update({ productId: offering.productSpecification.id })") {{ offering.productSpecification.name }}
-        td {{ offering.isBundle ? 'Bundle' : 'Single' }}
+        td
+          span.label(ng-class="offering.isBundle ? 'label-bundle' : 'label-single'")
+            | {{ offering.isBundle ? 'Bundle' : 'Single' }}
         td
           time(am-time-ago="offering.lastUpdate")
