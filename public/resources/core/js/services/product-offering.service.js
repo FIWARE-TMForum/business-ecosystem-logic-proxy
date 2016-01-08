@@ -165,7 +165,7 @@
             function extendBundledProductOffering(offering) {
 
                 if (!angular.isArray(offering.bundledProductOffering)) {
-                    product.bundledProductOffering = [];
+                    offering.bundledProductOffering = [];
                 }
 
                 if (offering.isBundle) {
