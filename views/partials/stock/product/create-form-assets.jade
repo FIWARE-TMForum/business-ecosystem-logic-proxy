@@ -1,0 +1,30 @@
+form(name="step.form", novalidate)
+  div(ng-show="createVM.assetTypes.length")
+    .form-group
+      .row
+        .col-sm-8
+          label Digital Asset Type
+          select.form-control(name="asset", ng-model="createVM.data.productSpecCharacteristic[0].productSpecCharacteristicValue[0].value", ng-change="createVM.setAssetType()")
+            option(ng-repeat="asset in createVM.assetTypes", value="{{ asset.name }}") {{ asset.name }}
+        .col-sm-4
+          label How to provide?
+          select.form-control(ng-model="createVM.data.assetFormat")
+            option(ng-repeat="format in createVM.assetType.formats", value="{{ format }}") {{ format }}
+    .form-group(ng-show="createVM.isSelected('URL')")
+      label Asset URL
+      input.form-control(type="url", ng-model="createVM.data.productSpecCharacteristic[2].productSpecCharacteristicValue[0].value")
+    .form-group(ng-show="createVM.isSelected('FILE')")
+      label Asset File
+      input.form-control(type="file", file-model="createVM.assetFile")
+    .form-group
+      label Media Type
+      div(ng-show="!createVM.assetType.mediaTypes.length")
+        input.form-control(type="text", ng-model="createVM.data.productSpecCharacteristic[1].productSpecCharacteristicValue[0].value")
+      div(ng-show="createVM.assetType.mediaTypes.length")
+        select.form-control(ng-model="createVM.data.productSpecCharacteristic[1].productSpecCharacteristicValue[0].value")
+          option(ng-repeat="media in createVM.assetType.mediaTypes", value="{{ media }}") {{ media }}
+  div(ng-show="!createVM.assetTypes.length")
+    .alert.alert-info There isn't any digital asset type supported.
+  .form-group.text-right
+    a.btn.btn-default(ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])", ng-disabled="!step.form.$valid")
+      span.item-text Next

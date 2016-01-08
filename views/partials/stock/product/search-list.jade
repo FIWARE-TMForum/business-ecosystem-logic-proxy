@@ -1,0 +1,23 @@
+.table-responsive
+  table.table.table-bordered.table-hover
+    thead
+      tr
+        th Status
+        th Name
+        th ID
+        th Brand
+        th Type
+        th Updated
+    tbody
+      tr(ng-repeat="product in searchVM.list")
+        td
+          .status-item(class="status-{{ product.lifecycleStatus | lowercase }}")
+            span.item-icon
+            span.item-text {{ product.lifecycleStatus }}
+        th
+          a(ui-sref="stock.product.update({ productId: product.id })", ui-sref-opts="{ inherit: false }") {{ product.name }}
+        td {{ product.productNumber }}
+        td {{ product.brand }}
+        td {{ product.isBundle ? 'Bundle' : 'Single' }}
+        td
+          time(am-time-ago="product.lastUpdate")
