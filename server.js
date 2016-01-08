@@ -168,61 +168,63 @@ app.all(config.logOutPath, function(req, res) {
 /////////////////////////////////////////////////////////////////////
 
 var cssFilesToInject = [
-    'bootstrap-3.3.5/css/bootstrap.css',
-    'font-awesome-4.4.0/css/font-awesome.css',
-    'core/css/default-theme.css'
-].map(function(path) {
-    return 'resources/' + path;
+    'bootstrap-3.3.5/css/bootstrap',
+    'font-awesome-4.4.0/css/font-awesome',
+    'core/css/default-theme'
+].map(function (path) {
+    return 'resources/' + path + '.css';
 });
 
 var jsDepFilesToInject = [
     // Dependencies:
-    'jquery-1.11.3/js/jquery.js',
-    'bootstrap-3.3.5/js/bootstrap.js',
-    'moment-2.10.6/js/moment.js',
-    'angular-1.4.7/js/angular.js',
+    'jquery-1.11.3/js/jquery',
+    'bootstrap-3.3.5/js/bootstrap',
+    'moment-2.10.6/js/moment',
+    'angular-1.4.7/js/angular',
     // Angular Dependencies:
-    'angular-1.4.7/js/angular-messages.js',
-    'angular-1.4.7/js/angular-moment.js',
-    'angular-1.4.7/js/angular-resource.js',
-    'angular-1.4.7/js/angular-ui-router.js'
-].map(function(path) {
-    return 'resources/' + path;
+    'angular-1.4.7/js/angular-messages',
+    'angular-1.4.7/js/angular-moment',
+    'angular-1.4.7/js/angular-resource',
+    'angular-1.4.7/js/angular-ui-router'
+].map(function (path) {
+    return 'resources/' + path + '.js';
 });
 
 var jsAppFilesToInject = [
-    'app.js',
-    'services/PaymentService.js',
-    'services/UserService.js',
-    'services/ProductService.js',
-    'services/ProductOfferingService.js',
-    'services/ProductCatalogueService.js',
-    'services/ProductCategoryService.js',
-    'services/AssetService.js',
-    'services/AssetTypeService.js',
-    'controllers/FlashMessageController.js',
-    'controllers/SearchFilterController.js',
-    'controllers/UserController.js',
-    'controllers/ProductController.js',
-    'controllers/ProductOfferingController.js',
-    'controllers/ProductCatalogueController.js',
-    'controllers/ProductCategoryController.js',
-    'controllers/PaymentController.js',
-    'routes.js',
-    'routes/product.js',
-    'routes/product-offering.js',
-    'routes/product-catalogue.js',
-    'routes/inventory-order.js',
-    'routes/inventory-product.js'
-
-].map(function(path) {
-    return 'resources/core/js/' + path;
+    'app.config',
+    'app.filters',
+    'app.directives',
+    'services/user.service',
+    'services/payment.service',
+    'services/product.service',
+    'services/product-category.service',
+    'services/product-offering.service',
+    'services/product-catalogue.service',
+    'services/asset.service',
+    'services/asset-type.service',
+    'controllers/form-wizard.controller',
+    'controllers/flash-message.controller',
+    'controllers/user.controller',
+    'controllers/search-filter.controller',
+    'controllers/payment.controller',
+    'controllers/product.controller',
+    'controllers/product-category.controller',
+    'controllers/product-offering.controller',
+    'controllers/product-catalogue.controller',
+    'routes/offering.routes',
+    'routes/stock.routes',
+    'routes/stock.product.routes',
+    'routes/stock.product-offering.routes',
+    'routes/stock.product-catalogue.routes',
+    'routes/inventory.routes',
+    'routes/shopping-cart.routes'
+].map(function (path) {
+    return 'resources/core/js/' + path + '.js';
 });
 
 var renderTemplate = function(req, res, viewName) {
 
     // TODO: Maybe an object with extra properties (if required)
-
     res.render(viewName, {
         user: req.user,
         contextPath: config.portalPrefix,
