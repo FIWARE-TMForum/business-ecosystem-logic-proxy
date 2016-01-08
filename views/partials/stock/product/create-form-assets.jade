@@ -4,12 +4,11 @@ form(name="step.form", novalidate)
       .row
         .col-sm-8
           label Digital Asset Type
-          select.form-control(name="asset", ng-model="createVM.data.productSpecCharacteristic[0].productSpecCharacteristicValue[0].value", ng-change="createVM.setAssetType()")
+          select.form-control(name="asset", ng-model="createVM.data.productSpecCharacteristic[0].productSpecCharacteristicValue[0].value", ng-change="createVM.setCurrentType()")
             option(ng-repeat="asset in createVM.assetTypes", value="{{ asset.name }}") {{ asset.name }}
         .col-sm-4
           label How to provide?
-          select.form-control(ng-model="createVM.data.assetFormat")
-            option(ng-repeat="format in createVM.assetType.formats", value="{{ format }}") {{ format }}
+          select.form-control(ng-model="createVM.currFormat", ng-options="format for format in createVM.currentType.formats")
     .form-group(ng-show="createVM.isSelected('URL')")
       label Asset URL
       input.form-control(type="url", ng-model="createVM.data.productSpecCharacteristic[2].productSpecCharacteristicValue[0].value")
@@ -20,9 +19,9 @@ form(name="step.form", novalidate)
       label Media Type
       div(ng-show="!createVM.assetType.mediaTypes.length")
         input.form-control(type="text", ng-model="createVM.data.productSpecCharacteristic[1].productSpecCharacteristicValue[0].value")
-      div(ng-show="createVM.assetType.mediaTypes.length")
+      div(ng-show="createVM.currentType.mediaTypes.length")
         select.form-control(ng-model="createVM.data.productSpecCharacteristic[1].productSpecCharacteristicValue[0].value")
-          option(ng-repeat="media in createVM.assetType.mediaTypes", value="{{ media }}") {{ media }}
+          option(ng-repeat="media in createVM.currentType.mediaTypes", value="{{ media }}") {{ media }}
   div(ng-show="!createVM.assetTypes.length")
     .alert.alert-info There isn't any digital asset type supported.
   .form-group.text-right

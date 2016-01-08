@@ -76,6 +76,27 @@ form(name="step.form", novalidate)
             td {{ createVM.catalogue.getRoleOf(user.id) }}
             td
               time(am-time-ago="createVM.catalogue.lastUpdate")
+  .row
+    .col-sm-12
+      label Pricing models
+      table.table.table-bordered
+        thead
+          tr
+            th Name
+            th Type
+            th Unit
+        tbody(ng-show="createVM.data.productOfferingPrice.length")
+          tr(ng-repeat="pricing in createVM.data.productOfferingPrice")
+            td
+              span {{ pricing.name }}
+            td
+              span {{ pricing.priceType }}
+            td(ng-if="pricing.priceType == 'one time'")
+              span {{ pricing.priceType }}
+            td(ng-if="pricing.priceType == 'recurring'")
+              span {{ pricing.recurringChargePeriod }}
+            td(ng-if="pricing.priceType == 'usage'")
+              span {{ pricing.unitOfMeasure }}
   .form-group.text-right
     a.btn.btn-success(ng-click="createVM.create()", ng-disabled="!step.form.$valid")
       span.item-text Create

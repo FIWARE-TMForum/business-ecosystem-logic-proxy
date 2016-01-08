@@ -47,6 +47,23 @@ form(name="step.form", novalidate)
           required
           readonly
         )
+  .row
+    .col-sm-12
+      label Characteristics
+      table.table.table-bordered
+        thead
+          tr
+            th Name
+            th Type
+            th Is Configurable
+        tbody(ng-show="createVM.charList.length")
+          tr(ng-repeat="char in createVM.charList")
+            td
+              span {{ char.name }}
+            td
+              span {{ char.valueType }}
+            td
+              span {{ char.configurable }}
   .form-group
     label Description
     textarea.form-control(
@@ -55,6 +72,16 @@ form(name="step.form", novalidate)
       ng-model="createVM.data.description"
       readonly
     )
+  .row
+    .col-sm-12
+      .form-group
+        label Picture URL
+        input.form-control(
+          type="url"
+          name="picture"
+          ng-model="createVM.data.attachment[0].url"
+          readonly
+        )
   .form-group(ng-show="createVM.data.isBundle")
     label Bundled Product
     .table-responsive

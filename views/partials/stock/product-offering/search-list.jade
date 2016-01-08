@@ -4,6 +4,7 @@
       tr
         th Status
         th Name
+        th Product
         th Type
         th Updated
     tbody
@@ -14,6 +15,8 @@
             span.item-text {{ offering.lifecycleStatus }}
         th
           a(ui-sref="stock.offering.update({ offeringId: offering.id })", ui-sref-opts="{ inherit: false }") {{ offering.name }}
+        th
+          a(ui-sref="stock.product.update({ productId: offering.productSpecification.id })") {{ offering.productSpecification.name }}
         td {{ offering.isBundle ? 'Bundle' : 'Single' }}
         td
           time(am-time-ago="offering.lastUpdate")
