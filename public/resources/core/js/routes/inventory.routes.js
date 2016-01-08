@@ -9,9 +9,9 @@
 
     angular
         .module('app')
-        .config(InventoryRouteConfig);
+        .config(RouteConfig);
 
-    function InventoryRouteConfig($stateProvider, $injector) {
+    function RouteConfig($stateProvider, $injector) {
 
         if ($injector.has('LOGGED_USER')) {
 
