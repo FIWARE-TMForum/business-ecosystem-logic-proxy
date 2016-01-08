@@ -97,12 +97,12 @@ app.use(session({
     saveUninitialized: true
 }));
 
-// Generic middlewares for handle requests
+
 app.use(cookieParser());
 app.use(bodyParser.text({
-    type: '*/*'
+    type: '*/*',
+    limit: '50mb'
 }));
-
 
 /////////////////////////////////////////////////////////////////////
 ////////////////////////////// PASSPORT /////////////////////////////
