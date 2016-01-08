@@ -49,7 +49,7 @@ form(name="step.form", novalidate)
           name="brand"
           ng-model="createVM.data.brand"
           required
-          ng-minlength="5"
+
           ng-maxlength="30"
         )
         .help-block(
@@ -57,7 +57,6 @@ form(name="step.form", novalidate)
           ng-show="createForm.hasError(step.form.brand)"
         )
           span(ng-message="required") This field is required.
-          span(ng-message="minlength") This field must contain at least 5 chars.
           span(ng-message="maxlength") This field must not exceed 30 chars.
     .col-sm-4
       .form-group(
