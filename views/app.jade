@@ -33,14 +33,14 @@ block content
   .container
     .row
       .col-xs-12.col-md-3
-        .panel.panel-default
-          ul.nav.nav-stacked.nav-router.nav-pills
-            li(ui-sref-active="active")
-              a.bg-view1(ui-sref="offering", ui-sref-opts="{ reload: true, inherit: false }")
-                span.item-icon-container
-                  i.fa.fa-fw.fa-home
-                strong.item-text Home
-            if user
+        if user
+          .panel.panel-default
+            ul.nav.nav-stacked.nav-router.nav-pills
+              li(ui-sref-active="active")
+                a.bg-view1(ui-sref="offering", ui-sref-opts="{ reload: true, inherit: false }")
+                  span.item-icon-container
+                    i.fa.fa-fw.fa-home
+                  strong.item-text Home
               li(ui-sref-active="active")
                 a.bg-view2(ui-sref="stock", ui-sref-opts="{ reload: true, inherit: false }")
                   span.item-icon-container

@@ -8,6 +8,9 @@
     .alert.alert-info
       span No catalogues launched.
   ul.nav.nav-stacked.nav-pills
+    li(ui-sref-active-eq="active")
+      a(ui-sref="offering({ catalogueId: '' })", ui-sref-opts="{ reload: true, inherit: false }")
+        span.item-text All
     li(ng-repeat="catalogue in listVM.list", ui-sref-active="active")
       a(ui-sref="offering({ catalogueId: catalogue.id })", ui-sref-opts="{ reload: true, inherit: false }")
         span.item-icon.fa.fa-angle-right
