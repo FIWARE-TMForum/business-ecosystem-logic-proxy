@@ -211,6 +211,7 @@ var jsAppFilesToInject = [
     'controllers/product-category.controller',
     'controllers/product-offering.controller',
     'controllers/product-catalogue.controller',
+    'controllers/purchase-options.controller',
     'routes/offering.routes',
     'routes/stock.routes',
     'routes/stock.product.routes',

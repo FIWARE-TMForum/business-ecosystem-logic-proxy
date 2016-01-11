@@ -216,7 +216,8 @@
                 isBundle: false,
                 bundledProductOffering: [],
                 productOfferingPrice: [],
-                category: []
+                category: [],
+                validFor: {}
             };
         }
 

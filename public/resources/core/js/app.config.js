@@ -14,6 +14,7 @@
             MESSAGE_ADDED: '$eventMessageAdded',
             PROFILE_OPENED: '$eventProfileOpened',
             OFFERING_ORDERED: '$eventOfferingOrdered',
+            OFFERING_CONFIGURED: '$eventOfferingConfigured',
             OFFERING_REMOVED: '$eventOfferingRemoved'
         })
         .constant('PARTY_ROLES', {

@@ -39,6 +39,13 @@
             offeringList.splice(getIndexOf(offering, offeringList), 1);
         });
 
+        // Append configured offering
+        $scope.$on(EVENTS.OFFERING_CONFIGURED, function(event, offering) {
+            if (!vm.contains(offering)) {
+                offeringList.push(offering);
+            }
+        });
+
         function isAuthenticated() {
             return User.isAuthenticated();
         }
@@ -48,11 +55,8 @@
         }
 
         function order(offering) {
-
-            if (getIndexOf(offering, offeringList) === -1) {
-                offeringList.push(offering);
-                $rootScope.$broadcast(EVENTS.OFFERING_ORDERED, offering);
-            }
+            // Open options modal
+            $rootScope.$broadcast(EVENTS.OFFERING_ORDERED, offering);
         }
 
         function showProfile() {
@@ -110,7 +114,7 @@
 
         vm.remove = remove;
 
-        $scope.$on(EVENTS.OFFERING_ORDERED, function (event, offering) {
+        $scope.$on(EVENTS.OFFERING_CONFIGURED, function (event, offering) {
             if (getIndexOf(offering, vm.list) === -1) {
                 vm.list.push(offering);
             }

@@ -22,7 +22,7 @@ block navbars
         span Your shopping cart is empty.
       .dropdown-menu-item.item-offering-ordered(ng-repeat="offering in listVM.list")
         span.item-icon.fa.fa-cube
-        span.item-text {{ offering.name }}
+        span.item-text {{ offering.offering.name }}
         span.fa.fa-close(ng-click="listVM.remove(offering)")
       .divider(ng-show="listVM.list.length")
       a.dropdown-menu-item(ng-show="listVM.list.length", ui-sref="shopping-cart")
