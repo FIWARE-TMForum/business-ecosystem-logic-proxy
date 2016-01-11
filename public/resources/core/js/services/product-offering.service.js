@@ -215,7 +215,8 @@
                 lifecycleStatus: LIFECYCLE_STATUS.ACTIVE,
                 isBundle: false,
                 bundledProductOffering: [],
-                productOfferingPrice: []
+                productOfferingPrice: [],
+                category: []
             };
         }
 
