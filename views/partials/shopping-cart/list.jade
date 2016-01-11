@@ -1,0 +1,44 @@
+.row
+  .col-xs-12
+    .panel.panel-default
+      .panel-heading
+        strong.text-uppercase New Order
+      .panel-body
+        form(name="order.form", novalidate)
+          .row
+            .col-xs-12
+              .form-group
+                label
+                  | Description 
+                  small.text-muted optional
+                textarea.form-control(rows="3", name="description")
+          .row
+            .col-xs-6
+              .form-group
+                label External ID
+                input.form-control(
+                  type="text"
+                  name="ext-id"
+                )
+            .col-xs-6
+              .form-group
+                label Notification Contact
+                input.form-control(
+                  type="email"
+                  name="contact"
+                )
+          .row
+            .col-xs-12
+              .form-group
+                label
+                  | Note 
+                  small.text-muted optional
+                textarea.form-control(rows="3", name="note")
+          .row
+            .col-xs-12
+              .form-group
+                label Order Items
+
+          .form-group.text-right
+            a.btn.btn-success(ng-disabled="!order.form.$valid")
+              span.item-text Create
