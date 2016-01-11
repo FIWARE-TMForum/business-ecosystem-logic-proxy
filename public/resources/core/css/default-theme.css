@@ -462,6 +462,7 @@ textarea {
     color: rgb(030, 060, 110);
     background-color: rgb(250, 250, 250);
     border-color: rgb(030, 060, 110);
+    font-weight: bold;
 }
 
 .nav-pills > li > a {
