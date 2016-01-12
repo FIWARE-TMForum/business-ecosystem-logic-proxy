@@ -182,11 +182,14 @@
     function OfferingUpdateController($state, $rootScope, EVENTS, Offering) {
         /* jshint validthis: true */
         var vm = this;
+        var initialData = {};
+        var pachable = ['name', 'version', 'description', 'lifecycleStatus'];
 
         vm.update = update;
         vm.updateStatus = updateStatus;
 
         Offering.detail($state.params.offeringId).then(function (offeringRetrieved) {
+            initialData = angular.copy(offeringRetrieved);
             vm.data = angular.copy(offeringRetrieved);
             vm.item = offeringRetrieved;
             vm.item.loaded = true;
@@ -206,7 +209,16 @@
         }
 
         function update() {
-            Offering.update(vm.data).then(function (offeringUpdated) {
+            var updatedData = {};
+
+            for (var i = 0; i < pachable.length; i++) {
+                if (initialData[pachable[i]] !== vm.data[pachable[i]]) {
+                    updatedData[pachable[i]] = vm.data[pachable[i]];
+                }
+            }
+
+            // Check what info has been modified
+            Offering.update(initialData, updatedData).then(function (offeringUpdated) {
                 $state.go('stock.offering.update', {
                     offeringId: offeringUpdated.id
                 }, {
