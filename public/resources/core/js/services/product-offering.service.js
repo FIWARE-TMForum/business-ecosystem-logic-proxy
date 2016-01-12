@@ -16,7 +16,7 @@
             offeringId: '@id'
         }, {
             update: {
-                method: 'PUT'
+                method: 'PATCH'
             }
         });
 
@@ -185,19 +185,15 @@
             }
         }
 
-        function update(offering) {
+        function update(offering, data) {
             var deferred = $q.defer();
             var params = {
                 catalogue: 'catalog',
                 catalogueId: getCatalogueId(offering),
                 offeringId: offering.id
             };
-            var product = offering.productSpecification;
 
-            offering.productSpecification = product.serialize();
-
-            resource.update(params, offering, function (offeringUpdated) {
-                offeringUpdated.productSpecification = product;
+            resource.update(params, data, function (offeringUpdated) {
                 deferred.resolve(offeringUpdated);
             });
 
