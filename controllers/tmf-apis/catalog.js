@@ -82,7 +82,8 @@ var catalog = (function() {
         }
 
         if (req.url.indexOf('productOffering') > -1) {
-            // Check that the product attached to the
+            // Check that the product attached to the offering is owned by
+            // the same user
             retrieveProduct(req.user, body, function(err, result) {
                if (err) {
                    callback(err);
@@ -91,7 +92,8 @@ var catalog = (function() {
                }
             });
         } else if (req.url.indexOf('productSpecification') > -1) {
-            // Check that the
+            // Check that the product specification contains a valid product
+            // according to the charging backed
             storeClient.validateProduct(body, req.user, function(err) {
                if (err) {
                    callback(err);
