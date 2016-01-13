@@ -11,6 +11,8 @@ var LIFE_CYCLE = 'lifecycleStatus';
 
 var ACTIVE_STATE = 'active';
 var LAUNCHED_STATE = 'launched';
+var RETIRED_STATE = 'retired';
+var OBSOLETE_STATE = 'obsolete';
 
 
 // Validator to check user permissions for accessing TMForum resources
@@ -322,48 +324,57 @@ var catalog = (function() {
 
     };
 
-    var validateInvolvedOfferingsState = function(assetBody, offeringsPath, callback) {
+    var validateInvolvedOfferingsState = function(assertType, assetBody, offeringsPath, callback) {
+
+        // For each state to be validated, this map contains the list of valid states of the offerings
+        // attached to the asset whose state is going to be changed and the message to be returned
+        // in case the asset cannot be updated
+        var validatedStates = {};
+
+        validatedStates[RETIRED_STATE] = {
+            offeringsValidStates: [RETIRED_STATE, OBSOLETE_STATE],
+            errorMsg: 'All the attached offerings must be retired or obsolete to retire a ' + assertType
+        };
+
+        validatedStates[OBSOLETE_STATE] = {
+            offeringsValidStates: [OBSOLETE_STATE],
+            errorMsg: 'All the attached offerings must be obsolete to make obsolete a ' + assertType
+        };
 
         try {
 
             var parsedBody = JSON.parse(assetBody);
+            var newLifeCycle = LIFE_CYCLE in parsedBody ? parsedBody[LIFE_CYCLE].toLowerCase() : null;
 
-            if (LIFE_CYCLE in parsedBody) {
+            if (newLifeCycle in validatedStates) {
 
-                var newLifeCyle = parsedBody[LIFE_CYCLE].toLowerCase();
+                retrieveAsset(offeringsPath, 'Attached offerings cannot be retrieved', function(err, result) {
 
-                if (newLifeCyle === 'obsolete' || newLifeCyle === 'retired') {
+                    if (err) {
 
-                    retrieveAsset(offeringsPath, 'Attached offerings cannot be retrieved', function(err, result) {
+                        callback(err);
 
-                        if (err) {
+                    } else {
 
-                            callback(err);
+                        var offerings = JSON.parse(result.body);
+                        var offeringsValid = true;
 
-                        } else {
+                        for (var i = 0; i < offerings.length && offeringsValid; i++) {
 
-                            var offerings = JSON.parse(result.body);
-                            var allOfferingsInSameState = true;
-
-                            for (var i = 0; i < offerings.length && allOfferingsInSameState; i++) {
-
-                                allOfferingsInSameState = offerings[i][LIFE_CYCLE].toLowerCase() === newLifeCyle;
-                            }
-
-                            if (allOfferingsInSameState) {
-                                callback();
-                            } else {
-                                callback({
-                                    status: 400,
-                                    message: 'There are at least one attached offering that is not this new state'
-                                });
-                            }
+                            offeringsValid = validatedStates[newLifeCycle]['offeringsValidStates'].indexOf(
+                                    offerings[i][LIFE_CYCLE].toLowerCase()) >= 0;
                         }
-                    });
 
-                } else {
-                    callback();
-                }
+                        if (offeringsValid) {
+                            callback();
+                        } else {
+                            callback({
+                                status: 400,
+                                message: validatedStates[newLifeCycle]['errorMsg']
+                            });
+                        }
+                    }
+                });
 
             } else {
                 callback();
@@ -384,7 +395,7 @@ var catalog = (function() {
         var slash = req.url.endsWith('/') ? '' : '/';
         var offeringsInCatalogPath = req.url + slash + 'productOffering';
 
-        validateInvolvedOfferingsState(req.body, offeringsInCatalogPath, callback);
+        validateInvolvedOfferingsState('catalog', req.body, offeringsInCatalogPath, callback);
     };
 
     var validateProductCycle = function(req, callback) {
@@ -403,7 +414,7 @@ var catalog = (function() {
 
         var offeringsContainProductPath = baseUrl + '/productOffering?productSpecification.id=' + productId;
 
-        validateInvolvedOfferingsState(req.body, offeringsContainProductPath, callback);
+        validateInvolvedOfferingsState('product', req.body, offeringsContainProductPath, callback);
     };
 
     var validateCycles = function(req, callback) {
