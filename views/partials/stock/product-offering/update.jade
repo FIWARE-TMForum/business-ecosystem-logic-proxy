@@ -1,6 +1,8 @@
 .row
   .col-xs-12
-    include ./update-toolbar.jade
+    .btn-toolbar
+      .btn-group
+        include ./breadcrumb.jade
   .col-xs-12(ng-switch="updateVM.item.loaded")
     .row(ng-switch-when="true")
       .col-xs-12

@@ -31,6 +31,8 @@
         /* jshint validthis: true */
         var vm = this;
 
+        vm.state = $state;
+
         vm.list = [];
 
         vm.showFilters = showFilters;
