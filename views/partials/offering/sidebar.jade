@@ -1,14 +1,14 @@
 .panel.panel-default
   .panel-heading
-    strong.text-uppercase Catalogues
+    strong.text-uppercase Catalogs
   .panel-body(ng-show="!listVM.list.loaded")
     .spinner
       span.fa.fa-spinner.fa-lg.fa-spin
   .panel-body(ng-show="listVM.list.loaded && !listVM.list.length")
     .alert.alert-info
-      span No catalogues launched.
+      span No catalogs launched.
   ul.nav.nav-stacked.nav-pills
-    li(ui-sref-active-eq="active")
+    li(ui-sref-active-eq="active" ng-show="listVM.list.loaded && listVM.list.length > 0")
       a(ui-sref="offering({ catalogueId: '' })", ui-sref-opts="{ reload: true, inherit: false }")
         span.item-text All
     li(ng-repeat="catalogue in listVM.list", ui-sref-active="active")

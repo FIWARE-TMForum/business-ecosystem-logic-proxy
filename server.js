@@ -54,7 +54,7 @@ config.logOutPath = config.logOutPath || '/logout';
 
 var PORT = config.https.enabled ? 
     config.https.port || 443 :      // HTTPS
-    config.port || 80;           // HTTP
+    config.port || 80;              // HTTP
 
 var FIWARE_STRATEGY = new FIWAREStrategy({
         clientID: config.oauth2.clientID,

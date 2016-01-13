@@ -18,6 +18,8 @@
         /* jshint validthis: true */
         var vm = this;
 
+        vm.state = $state;
+
         vm.list = [];
         vm.list.flow = $state.params.flow;
 
