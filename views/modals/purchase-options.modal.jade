@@ -9,11 +9,13 @@
          .modal-body
             .row
                .col-xs-12
-                  ul.nav.nav-justified.nav-pills(ng-show="options.confChars.length && options.pricingModels.length")
-                     li.active(ng-click="options.tab = 1")
+                  ul.nav.nav-justified.nav-pills
+                     li.active(ng-click="options.tab = 1", ng-show="options.pricingModels.length"
+                       ng-class="{ 'active': (!options.confChars.length && options.pricingModels.length) || options.tab == 1}")
                         a(data-target=".tab-profile-form", data-toggle="tab")
                            span.item-text Pricing
-                     li(ng-click="options.tab = 2")
+                     li(ng-click="options.tab = 2", ng-show="options.confChars.length"
+                       ng-class="{ 'active': options.confChars.length && !options.pricingModels.length || options.tab == 2}")
                         a(data-target=".tab-profile-form", data-toggle="tab")
                            span.item-text Characteristics
 
