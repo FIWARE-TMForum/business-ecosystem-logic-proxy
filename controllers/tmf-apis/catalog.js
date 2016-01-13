@@ -5,10 +5,13 @@ var async = require('async'),
     url = require('url'),
     utils = require('./../../lib/utils'),
     tmfUtils = require('./../../lib/tmfUtils'),
-    log = require('./../../lib/logger').logger.getLogger("Root");
+    log = require('./../../lib/logger').logger.getLogger('Root');
 
 var LIFE_CYCLE = 'lifecycleStatus';
-var LAUNCHED = 'launched';
+
+var ACTIVE_STATE = 'active';
+var LAUNCHED_STATE = 'launched';
+
 
 // Validator to check user permissions for accessing TMForum resources
 var catalog = (function() {
@@ -49,9 +52,37 @@ var catalog = (function() {
         retrieveAsset(productPath, errMsg, callback);
     };
 
+    var checkAssetStatusByBody = function(assetBody, validStates) {
+
+        return validStates.indexOf(assetBody[LIFE_CYCLE].toLowerCase()) >= 0;
+    };
+
+    // Retrieves an asset and che
+    var checkAssetStatusByPath = function(assetPath, validStates, callback) {
+
+        retrieveAsset(assetPath, 'The asset cannot be retrieved', function(err, result) {
+
+            if (err) {
+
+                callback(err);
+
+            } else {
+
+                var assetInfo = JSON.parse(result.body);
+                callback(null, checkAssetStatusByBody(assetInfo, validStates));
+            }
+
+        });
+    };
+
     // The request is directly allowed without extra validation required
     var validateAllowed = function(req, callback) {
         callback();
+    };
+
+    var catalogPathFromOfferingUrl = function(offeringUrl) {
+        var productOfferingPos = offeringUrl.indexOf('/productOffering');
+        return url.parse(offeringUrl.substring(0, productOfferingPos)).pathname;
     };
 
     var createHandler = function(userInfo, resp, callback) {
@@ -63,6 +94,54 @@ var catalog = (function() {
                 message: 'The user making the request and the specified owner are not the same user'
             });
         }
+    };
+
+    var validateOfferingCreation = function(user, offeringBody, catalogPath, callback) {
+
+        var validStates = [ACTIVE_STATE, LAUNCHED_STATE];
+
+        // Check that the catalog attached to the offering is active or launched
+        checkAssetStatusByPath(catalogPath, validStates, function(err, result) {
+
+            if (err) {
+                callback({
+                    status: 400,
+                    message: 'The catalog attached to the offering cannot be read'
+                });
+            } else {
+
+                if (result === true) {
+
+                    // Check that the product attached to the offering is owned by
+                    // the same user
+                    retrieveProduct(offeringBody, function (err, result) {
+
+                        if (err) {
+                            callback(err);
+                        } else {
+
+                            var product = JSON.parse(result.body);
+
+                            if (checkAssetStatusByBody(product, validStates)) {
+                                createHandler(user, product, callback);
+                            } else {
+                                callback({
+                                    status: 400,
+                                    message: 'Offerings can only be attached to active or launched products'
+                                });
+                            }
+                        }
+                    });
+
+                } else {
+                    callback({
+                        status: 400,
+                        message: 'Offerings can only be created in a catalog that are active or launched'
+                    });
+                }
+
+            }
+        });
     };
 
     // Validate the creation of a resource
@@ -94,15 +173,10 @@ var catalog = (function() {
         }
 
         if (req.url.indexOf('productOffering') > -1) {
-            // Check that the product attached to the offering is owned by
-            // the same user
-            retrieveProduct(body, function(err, result) {
-               if (err) {
-                   callback(err);
-               } else {
-                   createHandler(req.user, JSON.parse(result.body), callback);
-               }
-            });
+
+            var catalogPath = catalogPathFromOfferingUrl(req.url);
+            validateOfferingCreation(req.user, body, catalogPath, callback);
+
         } else if (req.url.indexOf('productSpecification') > -1) {
             // Check that the product specification contains a valid product
             // according to the charging backed
@@ -171,28 +245,6 @@ var catalog = (function() {
         });
     };
 
-    var checkAssetStatus = function(assetPath, status, callback) {
-
-        retrieveAsset(assetPath, 'The asset cannot be retrieved', function(err, result) {
-
-            if (err) {
-
-                callback(err);
-
-            } else {
-
-                var assetInfo = JSON.parse(result.body);
-
-                if (assetInfo[LIFE_CYCLE].toLowerCase() === status) {
-                    callback(null, true);
-                } else {
-                    callback(null, false);
-                }
-            }
-
-        });
-    };
-
     var validateOfferingCycle = function(req, callback) {
 
         var pattern = new RegExp('/catalog/\\d+/productOffering/\\d+');
@@ -205,7 +257,7 @@ var catalog = (function() {
 
                 var body = JSON.parse(req.body);
 
-                if (LIFE_CYCLE in body && body[LIFE_CYCLE].toLowerCase() == LAUNCHED) {
+                if (LIFE_CYCLE in body && body[LIFE_CYCLE].toLowerCase() == LAUNCHED_STATE) {
 
                     var offeringPath = url.parse(req.url).pathname;
 
@@ -225,8 +277,8 @@ var catalog = (function() {
                             var catalogPath  = url.parse(req.url.substring(0, productOfferingPos)).pathname;
 
                             var tasks = [];
-                            tasks.push(checkAssetStatus.bind(this, catalogPath, LAUNCHED));
-                            tasks.push(checkAssetStatus.bind(this, productPath, LAUNCHED));
+                            tasks.push(checkAssetStatusByPath.bind(this, catalogPath, [LAUNCHED_STATE]));
+                            tasks.push(checkAssetStatusByPath.bind(this, productPath, [LAUNCHED_STATE]));
 
                             async.parallel(tasks, function(err, results) {
 
