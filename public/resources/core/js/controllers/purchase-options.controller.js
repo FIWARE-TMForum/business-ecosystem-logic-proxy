@@ -18,8 +18,9 @@
             // Read selected options
             var offeringInfo = {
                 id: vm.offering.id,
-                options: options,
-                offering: vm.offering
+                href: vm.offering.href,
+                name: vm.offering.name,
+                options: options
             };
             $rootScope.$broadcast(EVENTS.OFFERING_CONFIGURED, offeringInfo);
         };
@@ -71,6 +72,7 @@
             vm.tab = 1;
             vm.confChars = [];
             vm.pricingModels = [];
+            options = {};
 
             Product.detail(vm.offering.productSpecification.id).then(function(productInfo) {
                 // Check if there are configurable characteristics in the product
@@ -85,6 +87,8 @@
 
                 if (vm.offering.productOfferingPrice && vm.offering.productOfferingPrice.length > 1) {
                     vm.pricingModels = vm.offering.productOfferingPrice;
+                } else if (vm.offering.productOfferingPrice && vm.offering.productOfferingPrice.length == 1) {
+                    options.pricing = vm.offering.productOfferingPrice[0];
                 }
 
                 // In there is something that require configuration show the modal

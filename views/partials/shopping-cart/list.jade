@@ -1,44 +1,111 @@
-.row
-  .col-xs-12
-    .panel.panel-default
-      .panel-heading
-        strong.text-uppercase New Order
-      .panel-body
-        form(name="order.form", novalidate)
-          .row
-            .col-xs-12
-              .form-group
-                label
-                  | Description 
-                  small.text-muted optional
-                textarea.form-control(rows="3", name="description")
-          .row
-            .col-xs-6
-              .form-group
-                label External ID
-                input.form-control(
-                  type="text"
-                  name="ext-id"
-                )
-            .col-xs-6
-              .form-group
-                label Notification Contact
-                input.form-control(
-                  type="email"
-                  name="contact"
-                )
-          .row
-            .col-xs-12
-              .form-group
-                label
-                  | Note 
-                  small.text-muted optional
-                textarea.form-control(rows="3", name="note")
-          .row
-            .col-xs-12
-              .form-group
-                label Order Items
+ui-view
+  .row
+    .col-xs-12
+      .panel.panel-default
+        .panel-heading
+          strong.text-uppercase New Order
+        .panel-body
+          form(name="order.form", novalidate)
+            .row
+              .col-xs-12
+                .form-group
+                  label
+                    | Description 
+                    small.text-muted optional
+                  textarea.form-control(rows="3", name="description", ng-model="orderVM.orderInfo.description")
+            .row
+              .col-xs-6
+                .form-group
+                  label
+                    | External ID 
+                    small.text-muted optional
+                  input.form-control(
+                    type="text"
+                    name="ext-id"
+                    ng-model="orderVM.orderInfo.externalId"
+                  )
+              .col-xs-6
+                .form-group
+                  label
+                    | Notification Contact 
+                    small.text-muted optional
+                  input.form-control(
+                    type="email"
+                    name="contact"
+                    ng-model="orderVM.orderInfo.notificationContact"
+                  )
+            .row
+              .col-xs-12
+                .form-group
+                  label
+                    | Note 
+                    small.text-muted optional
+                  textarea.form-control(rows="3", name="note")
+            .row
+              .col-xs-12
+                .form-group
+                  label Order Items
 
-          .form-group.text-right
-            a.btn.btn-success(ng-disabled="!order.form.$valid")
-              span.item-text Create
+            div(ng-repeat="item in orderVM.orderInfo.orderItem")
+              .row
+                .col-xs-4
+                  .form-group
+                    label.text-muted Name
+                    input.form-control(
+                      type="text"
+                      ng-model="item.productOffering.name"
+                      readonly
+                    )
+                .col-xs-8
+                  .form-group
+                    label.text-muted Href
+                    input.form-control(
+                      type="url"
+                      ng-model="item.productOffering.href"
+                      readonly
+                    )
+
+              .row
+                .col-xs-12
+                  label.text-muted Pricing
+                  table.table.table-bordered.table-responsive
+                    thead
+                      tr
+                        th Name
+                        th Type
+                        th Unit
+                        th Price
+                        th Currency
+                    tbody
+                      tr
+                        td
+                          span {{ item.product.productPrice[0].name }}
+                        td
+                          span {{ item.product.productPrice[0].priceType }}
+                        td(ng-if="item.product.productPrice[0].priceType == 'one time'")
+                          span {{ item.product.productPrice[0].priceType }}
+                        td(ng-if="item.product.productPrice[0].priceType == 'recurring'")
+                          span {{ item.product.productPrice[0].recurringChargePeriod }}
+                        td(ng-if="item.product.productPrice[0].priceType == 'usage'")
+                          span {{ item.product.productPrice[0].unitOfMeasure }}
+                        td
+                          span {{ item.product.productPrice[0].price.amount }}
+                        td
+                          span {{ item.product.productPrice[0].price.currency }}
+              .row(ng-show="item.product.productCharacteristic.length")
+                .col-xs-12
+                  label.text-muted Characteristics
+                  table.table.table-bordered.table-responsive
+                    thead
+                      tr
+                        th Name
+                        th Value
+                    tbody
+                      tr(ng-repeat="char in item.product.productCharacteristic")
+                        td
+                          span {{ char.name }}
+                        td
+                          span {{ char.value }}
+            .form-group.text-right
+              a.btn.btn-success(ng-disabled="!order.form.$valid", ng-click="orderVM.makeOrder()")
+                span.item-text Create

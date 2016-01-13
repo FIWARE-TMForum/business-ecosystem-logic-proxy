@@ -15,7 +15,8 @@
             PROFILE_OPENED: '$eventProfileOpened',
             OFFERING_ORDERED: '$eventOfferingOrdered',
             OFFERING_CONFIGURED: '$eventOfferingConfigured',
-            OFFERING_REMOVED: '$eventOfferingRemoved'
+            OFFERING_REMOVED: '$eventOfferingRemoved',
+            ORDER_CREATED: '$eventOrderCreated'
         })
         .constant('PARTY_ROLES', {
             OWNER: 'Owner',
