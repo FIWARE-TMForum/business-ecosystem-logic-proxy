@@ -205,10 +205,16 @@ describe('Catalog API', function() {
 
         // Basic properties
         var userName = 'test';
-        var offeringPath = '/catalog/productOffering/1';
+        var catalogPath = '/catalog/7';
+        var offeringPath = catalogPath + '/productOffering/1';
         var productPath = '/product/7';
         var protocol = config.appSsl ? 'https' : 'http';
         var serverUrl = protocol + '://' + config.appHost + ':' + config.endpoints.catalog.port;
+
+        // The mock server that will handle the request when the catalog is requested
+        nock(serverUrl)
+            .get(catalogPath)
+            .reply(200, { lifecycleStatus: 'active' });
 
         // The mock server that will handle the request when the product is requested
         var statusOk = 200;
@@ -216,7 +222,7 @@ describe('Catalog API', function() {
         var statusCodeGetProduct = productRequestFails ? statusErr : statusOk;
 
         var role = isOwnerMethod() ? 'Owner': 'Seller';
-        var bodyOk = { relatedParty: [{id: userName, role: role}]};
+        var bodyOk = { relatedParty: [{id: userName, role: role}], lifecycleStatus: 'active'};
         var bodyErr = 'Internal Server Error';
         var bodyGetProduct = productRequestFails ? bodyErr : bodyOk;
 
