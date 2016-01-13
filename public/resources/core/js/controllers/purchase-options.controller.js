@@ -13,6 +13,7 @@
     function AcquireOptionsController($scope, $rootScope, $element, EVENTS, Product) {
         var vm = this;
         var options = {};
+        var nonConf;
 
         vm.order = function() {
             // Read selected options
@@ -64,7 +65,7 @@
         };
 
         vm.isInvalid = function() {
-            return ((vm.pricingModels.length && !options.pricing) || (vm.confChars.length && (!options.characteristics || options.characteristics.length != vm.confChars.length)));
+            return ((vm.pricingModels.length && !options.pricing) || (vm.confChars.length && (!options.characteristics || options.characteristics.length != vm.confChars.length + nonConf)));
         };
 
         $scope.$on(EVENTS.OFFERING_ORDERED, function(event, off) {
@@ -73,6 +74,7 @@
             vm.confChars = [];
             vm.pricingModels = [];
             options = {};
+            nonConf = 0;
 
             Product.detail(vm.offering.productSpecification.id).then(function(productInfo) {
                 // Check if there are configurable characteristics in the product
@@ -81,9 +83,12 @@
                         var characteristic = productInfo.productSpecCharacteristic[i];
                         if (characteristic.configurable) {
                             vm.confChars.push(characteristic);
+                        } else {
+                            vm.setCharacteristicValue(characteristic, characteristic.productSpecCharacteristicValue[0]);
                         }
                     }
                 }
+                nonConf = options.characteristics.length;
 
                 if (vm.offering.productOfferingPrice && vm.offering.productOfferingPrice.length > 1) {
                     vm.pricingModels = vm.offering.productOfferingPrice;
