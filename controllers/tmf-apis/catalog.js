@@ -218,6 +218,7 @@ var catalog = (function() {
 
         // Retrieve the resource to be updated or removed
         http.request(protocol, options, '', function (err, result) {
+
             if (err) {
 
                 callback({
@@ -247,70 +248,116 @@ var catalog = (function() {
 
     var validateOfferingCycle = function(req, callback) {
 
-        var pattern = new RegExp('/catalog/\\d+/productOffering/\\d+');
+        try {
 
-        if (pattern.exec(req.url)) {
+            var body = JSON.parse(req.body);
 
-            // Check life cycle just for offerings
+            if (LIFE_CYCLE in body && body[LIFE_CYCLE].toLowerCase() == LAUNCHED_STATE) {
 
-            try {
+                var offeringPath = url.parse(req.url).pathname;
 
-                var body = JSON.parse(req.body);
+                retrieveAsset(offeringPath, 'The offering cannot be retrieved', function(err, result) {
 
-                if (LIFE_CYCLE in body && body[LIFE_CYCLE].toLowerCase() == LAUNCHED_STATE) {
+                    if (err) {
 
-                    var offeringPath = url.parse(req.url).pathname;
+                        callback(err, result);
 
-                    retrieveAsset(offeringPath, 'The offering cannot be retrieved', function(err, result) {
+                    } else {
 
-                        if (err) {
+                        var productPath = JSON.parse(result.body).productSpecification.href;
 
-                            callback(err, result);
+                        // Check the catalog life cycle only when the offering life cycle is being updated
 
-                        } else {
+                        var productOfferingPos = req.url.indexOf('/productOffering/');
+                        var catalogPath  = url.parse(req.url.substring(0, productOfferingPos)).pathname;
 
-                            var productPath = JSON.parse(result.body).productSpecification.href;
+                        var tasks = [];
+                        tasks.push(checkAssetStatusByPath.bind(this, catalogPath, [LAUNCHED_STATE]));
+                        tasks.push(checkAssetStatusByPath.bind(this, productPath, [LAUNCHED_STATE]));
 
-                            // Check the catalog life cycle only when the offering life cycle is being updated
+                        async.parallel(tasks, function(err, results) {
 
-                            var productOfferingPos = req.url.indexOf('/productOffering/');
-                            var catalogPath  = url.parse(req.url.substring(0, productOfferingPos)).pathname;
+                            if (err) {
 
-                            var tasks = [];
-                            tasks.push(checkAssetStatusByPath.bind(this, catalogPath, [LAUNCHED_STATE]));
-                            tasks.push(checkAssetStatusByPath.bind(this, productPath, [LAUNCHED_STATE]));
+                                callback({
+                                    status: 400,
+                                    message: 'The product and/or the catalog attached to the offering ' +
+                                            'cannot be checked'
+                                });
 
-                            async.parallel(tasks, function(err, results) {
+                            } else {
 
-                                if (err) {
+                                var valid = true;
+                                for (var i = 0; i < results.length && valid; i++) {
+                                    valid = results[i];
+                                }
+
+                                if (valid) {
+
+                                    // The correct case: attached product and catalog are launched!
+                                    callback();
+                                } else {
 
                                     callback({
                                         status: 400,
-                                        message: 'The product and/or the catalog attached to the offering ' +
-                                                'cannot be checked'
+                                        message: 'Offerings can only be launched when the associated catalog ' +
+                                                'and/or product are launched'
                                     });
-
-                                } else {
-
-                                    var valid = true;
-                                    for (var i = 0; i < results.length && valid; i++) {
-                                        valid = results[i];
-                                    }
-
-                                    if (valid) {
-
-                                        // The correct case: attached product and catalog are launched!
-                                        callback();
-                                    } else {
-
-                                        callback({
-                                            status: 400,
-                                            message: 'Offerings can only be launched when the associated catalog ' +
-                                                    'and/or product are launched'
-                                        });
-                                    }
                                 }
-                            });
+                            }
+                        });
+                    }
+                });
+
+            } else {
+                callback();
+            }
+
+        } catch (e) {
+            callback({
+                status: 400,
+                message: 'The resource is not a valid JSON document'
+            });
+        }
+
+    };
+
+    var validateInvolvedOfferingsState = function(assetBody, offeringsPath, callback) {
+
+        try {
+
+            var parsedBody = JSON.parse(assetBody);
+
+            if (LIFE_CYCLE in parsedBody) {
+
+                var newLifeCyle = parsedBody[LIFE_CYCLE].toLowerCase();
+
+                if (newLifeCyle === 'obsolete' || newLifeCyle === 'retired') {
+
+                    retrieveAsset(offeringsPath, 'Attached offerings cannot be retrieved', function(err, result) {
+
+                        if (err) {
+
+                            callback(err);
+
+                        } else {
+
+                            var offerings = JSON.parse(result.body);
+                            var allOfferingsInSameState = true;
+
+                            for (var i = 0; i < offerings.length && allOfferingsInSameState; i++) {
+
+                                allOfferingsInSameState = offerings[i][LIFE_CYCLE].toLowerCase() === newLifeCyle;
+                            }
+
+                            if (allOfferingsInSameState) {
+                                callback();
+                            } else {
+                                callback({
+                                    status: 400,
+                                    message: 'There are at least one attached offering that is not this new state'
+                                });
+                            }
                         }
                     });
 
@@ -318,14 +365,67 @@ var catalog = (function() {
                     callback();
                 }
 
-            } catch (e) {
-                callback({
-                    status: 400,
-                    message: 'The resource is not a valid JSON document'
-                });
+            } else {
+                callback();
             }
 
+        } catch (e) {
+            callback({
+                status: 400,
+                message: 'The resource is not a valid JSON document'
+            });
+        }
+
+    };
+
+    var validateCatalogCycle = function(req, callback) {
+
+        // Retrieve all the offerings contained in the catalog
+        var slash = req.url.endsWith('/') ? '' : '/';
+        var offeringsInCatalogPath = req.url + slash + 'productOffering';
+
+        validateInvolvedOfferingsState(req.body, offeringsInCatalogPath, callback);
+    };
+
+    var validateProductCycle = function(req, callback) {
+
+        var url = req.url;
+
+        if (url.endsWith('/')) {
+            url = url.slice(0, -1);
+        }
+
+        var urlParts = url.split('/');
+        var productId = urlParts[urlParts.length - 1];
+
+        var productSpecificationPos = req.url.indexOf('/productSpecification');
+        var baseUrl = req.url.substring(0, productSpecificationPos);
+
+        var offeringsContainProductPath = baseUrl + '/productOffering?productSpecification.id=' + productId;
+
+        validateInvolvedOfferingsState(req.body, offeringsContainProductPath, callback);
+    };
+
+    var validateCycles = function(req, callback) {
+
+        var catalogsPattern = new RegExp('/catalog/[^/]+/?$');
+        var offeringsPattern = new RegExp('/catalog/[^/]+/productOffering/[^/]+/?$');
+        var productsPattern = new RegExp('/productSpecification/[^/]+/?$');
+
+        if (catalogsPattern.test(req.url)) {
+
+            validateCatalogCycle(req, callback);
+
+        } else if (offeringsPattern.test(req.url)) {
+
+            validateOfferingCycle(req, callback);
+
+        } else if (productsPattern.test(req.url)) {
+
+            validateProductCycle(req, callback);
+
         } else {
+
             callback();
         }
 
@@ -334,8 +434,8 @@ var catalog = (function() {
     var validators = {
         'GET': [ validateAllowed ],
         'POST': [ tmfUtils.validateLoggedIn, validateCreation ],
-        'PATCH': [ tmfUtils.validateLoggedIn, validateUpdate, validateOfferingCycle ],
-        'PUT': [ tmfUtils.validateLoggedIn, validateUpdate, validateOfferingCycle ],
+        'PATCH': [ tmfUtils.validateLoggedIn, validateUpdate, validateCycles ],
+        'PUT': [ tmfUtils.validateLoggedIn, validateUpdate, validateCycles ],
         'DELETE': [ tmfUtils.validateLoggedIn, validateUpdate ]
     };
 
