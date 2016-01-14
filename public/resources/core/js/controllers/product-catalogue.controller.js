@@ -1,11 +1,16 @@
 /**
  * @author Francisco de la Vega <fdelavega@conwet.com>
  *         Jaime Pajuelo <jpajuelo@conwet.com>
+ *         Aitor Magán <amagan@conwet.com>
  */
 
 (function () {
 
     'use strict';
+
+    var LOADED = 'LOADED';
+    var LOADING = 'LOADING';
+    var ERROR = 'ERROR';
 
     angular
         .module('app')
@@ -23,7 +28,10 @@
 
         Catalogue.search().then(function (catalogueList) {
             angular.copy(catalogueList, vm.list);
-            vm.list.loaded = true;
+            vm.list.status = LOADED;
+        }, function(reason) {
+            vm.error = reason;
+            vm.list.status = ERROR;
         });
     }
 
@@ -34,12 +42,16 @@
         vm.state = $state;
 
         vm.list = [];
+        vm.list.status = LOADING;
 
         vm.showFilters = showFilters;
 
         Catalogue.search($state.params).then(function (catalogueList) {
             angular.copy(catalogueList, vm.list);
-            vm.list.loaded = true;
+            vm.list.status = LOADED;
+        }, function(reason) {
+            vm.error = reason;
+            vm.list.status = ERROR;
         });
 
         function showFilters() {
@@ -75,6 +87,10 @@
                     resource: 'catalogue',
                     name: catalogueCreated.name
                 });
+            }, function(reason) {
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                    error: reason
+                });
             });
         }
     }
@@ -100,18 +116,15 @@
         vm.update = update;
         vm.updateStatus = updateStatus;
 
+        vm.item = {};
+
         Catalogue.detail($state.params.catalogueId).then(function (catalogueRetrieved) {
             vm.data = angular.copy(catalogueRetrieved);
             vm.item = catalogueRetrieved;
-            vm.item.loaded = true;
-        }, function (status) {
-            switch (status) {
-            case 404:
-                $state.go('stock.catalogue', {
-                    reload: true
-                });
-                break;
-            }
+            vm.item.status = LOADED;
+        }, function (reason) {
+            vm.error = reason;
+            vm.item.status = ERROR;
         });
 
         function updateStatus(status) {
@@ -129,6 +142,10 @@
                 $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'updated', {
                     resource: 'catalogue',
                     name: catalogueUpdated.name
+                });
+            }, function(reason) {
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                    error: reason
                 });
             });
         }

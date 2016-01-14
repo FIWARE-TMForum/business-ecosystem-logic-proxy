@@ -1,6 +1,7 @@
 /**
  * @author Francisco de la Vega <fdelavega@conwet.com>
  *         Jaime Pajuelo <jpajuelo@conwet.com>
+ *         Aitor Magán <amagan@conwet.com>
  */
 
 (function () {
@@ -16,7 +17,8 @@
         var vm = this;
         var messages = {
             created: 'The {{ resource }} <strong>{{ name }}</strong> was created successfully.',
-            updated: 'The {{ resource }} <strong>{{ name }}</strong> was updated successfully.'
+            updated: 'The {{ resource }} <strong>{{ name }}</strong> was updated successfully.',
+            error: '{{ error }}'
         };
 
         vm.list = [];
@@ -49,6 +51,9 @@
             case 'created':
             case 'updated':
                 state = 'success';
+                break;
+            case 'error':
+                state = 'danger';
                 break;
             }
 

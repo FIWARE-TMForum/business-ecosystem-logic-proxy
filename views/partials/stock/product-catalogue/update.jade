@@ -3,8 +3,8 @@
     .btn-toolbar
       .btn-group
         include ./breadcrumb.jade
-  .col-xs-12(ng-switch="updateVM.item.loaded")
-    .row(ng-switch-when="true")
+  .col-xs-12(ng-switch="updateVM.item.status")
+    .row(ng-switch-when="LOADED")
       .col-xs-12
         .panel.panel-default
           ul.nav.nav-justified.nav-pills
@@ -25,5 +25,7 @@
           .panel.panel-default(ng-controller="FormWizardCtrl as updateForm")
             .panel-body
               include ./update-form.jade
+    div(ng-switch-when="ERROR")
+      .alert.alert-danger.text-center {{ updateVM.error }}
     .container-spinner(ng-switch-default)
       span.fa.fa-spinner.fa-spin.fa-2x
