@@ -13,10 +13,9 @@
         .controller('UserProfileCtrl', UserProfileController)
         .controller('UserShoppingCartCtrl', UserShoppingCartController);
 
-    function UserController($scope, $rootScope, EVENTS, LIFECYCLE_STATUS, FILTER_STATUS, User) {
+    function UserController($scope, $rootScope, EVENTS, LIFECYCLE_STATUS, FILTER_STATUS, User, ShoppingCart) {
         /* jshint validthis: true */
         var vm = this;
-        var offeringList = [];
 
         $scope.STATUS = LIFECYCLE_STATUS;
         $scope.FILTER_STATUS = FILTER_STATUS;
@@ -35,23 +34,12 @@
             $scope.title = toState.data.title;
         });
 
-        $scope.$on(EVENTS.OFFERING_REMOVED, function (event, offering) {
-            offeringList.splice(getIndexOf(offering, offeringList), 1);
-        });
-
-        // Append configured offering
-        $scope.$on(EVENTS.OFFERING_CONFIGURED, function(event, offering) {
-            if (!vm.contains(offering)) {
-                offeringList.push(offering);
-            }
-        });
-
         function isAuthenticated() {
             return User.isAuthenticated();
         }
 
         function contains(offering) {
-            return getIndexOf(offering, offeringList) !== -1;
+            return ShoppingCart.containsItem(offering);
         }
 
         function order(offering) {
@@ -106,36 +94,24 @@
         });
     }
 
-    function UserShoppingCartController($scope, $rootScope, EVENTS) {
+    function UserShoppingCartController($scope, EVENTS, ShoppingCart) {
         /* jshint validthis: true */
         var vm = this;
 
-        vm.list = [];
-
         vm.remove = remove;
+        vm.getItems = getItems;
 
         $scope.$on(EVENTS.OFFERING_CONFIGURED, function (event, offering) {
-            if (getIndexOf(offering, vm.list) === -1) {
-                vm.list.push(offering);
-            }
+            ShoppingCart.addItem(offering);
         });
 
         function remove(offering) {
-            vm.list.splice(getIndexOf(offering, vm.list), 1);
-            $rootScope.$broadcast(EVENTS.OFFERING_REMOVED, offering);
-        }
-    }
-
-    function getIndexOf(offering, list) {
-        var i, index = -1;
-
-        for (i = 0; i < list.length && index === -1; i++) {
-            if (list[i].id === offering.id) {
-                index = i;
-            }
+            ShoppingCart.removeItem(offering);
         }
 
-        return index;
+        function getItems() {
+            return ShoppingCart.getItems();
+        }
     }
 
 })();

@@ -26,7 +26,8 @@
                             template: '<ui-view>'
                         },
                         content: {
-                            templateUrl: 'shopping-cart/list'
+                            templateUrl: 'shopping-cart/list',
+                            controller: 'CreateOrderCtrl as orderVM'
                         }
                     }
                 });

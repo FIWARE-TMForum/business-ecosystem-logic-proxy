@@ -13,13 +13,15 @@
     function AcquireOptionsController($scope, $rootScope, $element, EVENTS, Product) {
         var vm = this;
         var options = {};
+        var nonConf;
 
         vm.order = function() {
             // Read selected options
             var offeringInfo = {
                 id: vm.offering.id,
-                options: options,
-                offering: vm.offering
+                href: vm.offering.href,
+                name: vm.offering.name,
+                options: options
             };
             $rootScope.$broadcast(EVENTS.OFFERING_CONFIGURED, offeringInfo);
         };
@@ -63,7 +65,7 @@
         };
 
         vm.isInvalid = function() {
-            return ((vm.pricingModels.length && !options.pricing) || (vm.confChars.length && (!options.characteristics || options.characteristics.length != vm.confChars.length)));
+            return ((vm.pricingModels.length && !options.pricing) || (vm.confChars.length && (!options.characteristics || options.characteristics.length != vm.confChars.length + nonConf)));
         };
 
         $scope.$on(EVENTS.OFFERING_ORDERED, function(event, off) {
@@ -71,6 +73,8 @@
             vm.tab = 1;
             vm.confChars = [];
             vm.pricingModels = [];
+            options = {};
+            nonConf = 0;
 
             Product.detail(vm.offering.productSpecification.id).then(function(productInfo) {
                 // Check if there are configurable characteristics in the product
@@ -79,12 +83,17 @@
                         var characteristic = productInfo.productSpecCharacteristic[i];
                         if (characteristic.configurable) {
                             vm.confChars.push(characteristic);
+                        } else {
+                            vm.setCharacteristicValue(characteristic, characteristic.productSpecCharacteristicValue[0]);
                         }
                     }
                 }
+                nonConf = options.characteristics.length;
 
                 if (vm.offering.productOfferingPrice && vm.offering.productOfferingPrice.length > 1) {
                     vm.pricingModels = vm.offering.productOfferingPrice;
+                } else if (vm.offering.productOfferingPrice && vm.offering.productOfferingPrice.length == 1) {
+                    options.pricing = vm.offering.productOfferingPrice[0];
                 }
 
                 // In there is something that require configuration show the modal

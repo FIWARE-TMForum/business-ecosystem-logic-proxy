@@ -26,7 +26,8 @@
             updatePartial: updatePartial,
             loggedUser: loggedUser,
             isAuthenticated: isAuthenticated,
-            serialize: serialize
+            serialize: serialize,
+            serializeBasic: serializeBasic
         };
 
         function detail(next) {
@@ -42,10 +43,16 @@
         }
 
         function serialize() {
+            var userInfo = serializeBasic();
+            userInfo.role = PARTY_ROLES.OWNER;
+
+            return userInfo;
+        }
+
+        function serializeBasic() {
             return {
                 id: loggedUser.id,
                 href: $location.protocol() + '://' + $location.host() + ':' + $location.port() + loggedUser.href,
-                role: PARTY_ROLES.OWNER
             };
         }
     }
