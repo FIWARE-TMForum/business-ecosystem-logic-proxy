@@ -32,6 +32,10 @@
             buildInitialData: buildInitialData
         };
 
+        function parseError(data, defaultMessage) {
+            return data !== null && 'error' in data ? data['error'] : defaultMessage;
+        }
+
         function search(filters) {
             var deferred = $q.defer();
             var params = {};
@@ -50,6 +54,8 @@
 
             resource.query(params, function (productList) {
                 deferred.resolve(productList);
+            }, function (response) {
+                deferred.reject(parseError(response['data'], 'It was impossible to load the list of products'));
             });
 
             return deferred.promise;
@@ -76,6 +82,10 @@
 
             resource.save(data, function (productCreated) {
                 deferred.resolve(productCreated);
+            }, function (response) {
+                var defaultMessage = 'There was an unexpected error that prevented the ' +
+                    'system from creating a new product';
+                deferred.reject(parseError(response.data, defaultMessage));
             });
 
             return deferred.promise;
@@ -90,7 +100,7 @@
             resource.get(params, function (productRetrieved) {
                 extendBundledProduct(productRetrieved);
             }, function (response) {
-                deferred.reject(response.status);
+                deferred.reject(parseError(response.data, 'The given product could not be retrieved'));
             });
 
             return deferred.promise;
@@ -112,6 +122,9 @@
                     resource.query(params, function (productList) {
                         product.bundledProductSpecification = productList;
                         deferred.resolve(product);
+                    }, function (response) {
+                        var defaultMessage = 'It was impossible to load all the products that compose this bundle';
+                        deferred.reject(parseError(response.data, defaultMessage));
                     });
                 } else {
                     deferred.resolve(product);
@@ -127,6 +140,10 @@
 
             resource.update(params, product, function (productUpdated) {
                 deferred.resolve(productUpdated);
+            }, function (response) {
+                var defaultMessage = 'There was an unexpected error that prevented the ' +
+                    'system from updating the given product';
+                deferred.reject(parseError(response.data, defaultMessage));
             });
 
             return deferred.promise;

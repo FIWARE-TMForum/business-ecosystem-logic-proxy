@@ -23,10 +23,6 @@
 
         resource.prototype.getRoleOf = getRoleOf;
 
-        function parseError(data, defaultMessage) {
-            return data !== null && 'error' in data ? data['error'] : defaultMessage;
-        }
-
         return {
             search: search,
             exists: exists,
@@ -35,6 +31,10 @@
             update: update,
             buildInitialData: buildInitialData
         };
+
+        function parseError(data, defaultMessage) {
+            return data !== null && 'error' in data ? data['error'] : defaultMessage;
+        }
 
         function search(filters) {
             var deferred = $q.defer();
@@ -100,7 +100,7 @@
             resource.get(params, function (catalogueRetrieved) {
                 deferred.resolve(catalogueRetrieved);
             }, function (response) {
-                deferred.reject(parseError(response.data, 'The given catalog cannot be retrieved'));
+                deferred.reject(parseError(response.data, 'The given catalog could not be retrieved'));
             });
 
             return deferred.promise;

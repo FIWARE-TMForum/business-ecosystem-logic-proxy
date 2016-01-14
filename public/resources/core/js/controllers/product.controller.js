@@ -26,7 +26,10 @@
 
         Product.search($state.params).then(function (productList) {
             angular.copy(productList, vm.list);
-            vm.list.loaded = true;
+            vm.list.status = 'LOADED';
+        }, function (reason) {
+            vm.error = reason;
+            vm.list.status = 'ERROR';
         });
 
         function showFilters() {
@@ -236,6 +239,10 @@
                     resource: 'product',
                     name: productCreated.name
                 });
+            }, function (reason) {
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                    error: reason
+                });
             });
         }
     }
@@ -276,6 +283,10 @@
                 $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'updated', {
                     resource: 'product',
                     name: productUpdated.name
+                });
+            }, function(reason) {
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                    error: reason
                 });
             });
         }
