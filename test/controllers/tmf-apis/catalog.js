@@ -405,8 +405,8 @@ describe('Catalog API', function() {
             if (isOwnerMethod() && !requestFails) {
                 expect(err).toBe(null);
             } else if (requestFails) {
-                expect(err.status).toBe(statusErr);
-                expect(err.message).toBe(bodyErr);
+                expect(err.status).toBe(400);
+                expect(err.message).toBe('The TMForum APIs fails to retrieve the object you are trying to update/delete');
             } else {
                 expect(err.status).toBe(403);
                 expect(err.message).toBe('The user making the request is not the owner of the accessed resource');
