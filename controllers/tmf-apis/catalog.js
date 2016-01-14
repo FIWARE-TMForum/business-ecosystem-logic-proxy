@@ -208,26 +208,12 @@ var catalog = (function() {
     // Validate the modification of a resource
     var validateUpdate = function(req, callback) {
 
-        var options = {
-            host: config.appHost,
-            port: config.endpoints.catalog.port,
-            path: req.url,
-            method: 'GET',
-            headers: {'accept': 'application/json'}
-        };
-
-        var protocol = config.appSsl ? 'https' : 'http';
-
         // Retrieve the resource to be updated or removed
-        http.request(protocol, options, '', function (err, result) {
+        var errorMessage = 'The TMForum APIs fails to retrieve the object you are trying to update/delete';
+        retrieveAsset(req.url, errorMessage, function(err, result) {
 
             if (err) {
-
-                callback({
-                    status: err.status,
-                    message: err.body
-                });
-
+                callback(err, result);
             } else {
 
                 var parsedResp = JSON.parse(result.body);
