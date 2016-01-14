@@ -1,11 +1,16 @@
 /**
  * @author Francisco de la Vega <fdelavega@conwet.com>
  *         Jaime Pajuelo <jpajuelo@conwet.com>
+ *         Aitor Magán <amagan@conwet.com>
  */
 
 (function () {
 
     'use strict';
+
+    var LOADING = 'LOADING';
+    var LOADED = 'LOADED';
+    var ERROR = 'ERROR';
 
     angular
         .module('app')
@@ -13,6 +18,11 @@
         .controller('OfferingCreateCtrl', OfferingCreateController)
         .controller('OfferingDetailCtrl', OfferingDetailController)
         .controller('OfferingUpdateCtrl', OfferingUpdateController);
+
+    function parseError(response, defaultMessage) {
+        var data = response['data']
+        return data !== null && 'error' in data ? data['error'] : defaultMessage;
+    }
 
     function OfferingSearchController($state, $rootScope, EVENTS, Offering) {
         /* jshint validthis: true */
@@ -27,7 +37,10 @@
 
         Offering.search($state.params).then(function (offeringList) {
             angular.copy(offeringList, vm.list);
-            vm.list.loaded = true;
+            vm.list.status = LOADED;
+        }, function (response) {
+            vm.error = parseError(response, 'It was impossible to load the list of offerings');
+            vm.list.status = ERROR;
         });
 
         function showFilters() {
@@ -90,6 +103,15 @@
                 $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'created', {
                     resource: 'offering',
                     name: offeringCreated.name
+                });
+            }, function (response) {
+
+                var defaultMessage = 'There was an unexpected error that prevented the ' +
+                    'system from creating a new offering';
+                var error = parseError(response, defaultMessage);
+
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                    error: error
                 });
             });
         }
@@ -167,17 +189,14 @@
         /* jshint validthis: true */
         var vm = this;
 
+        vm.item = {};
+
         Offering.detail($state.params.offeringId).then(function (offeringRetrieved) {
             vm.item = offeringRetrieved;
-            vm.item.loaded = true;
-        }, function (status) {
-            switch (status) {
-            case 404:
-                $state.go('offering', {
-                    reload: true
-                });
-                break;
-            }
+            vm.item.status = LOADED;
+        }, function (response) {
+            vm.error = parseError(response, 'The requested offering could not be retrieved');
+            vm.item.status = ERROR;
         });
     }
 
@@ -190,19 +209,16 @@
         vm.update = update;
         vm.updateStatus = updateStatus;
 
+        vm.item = {};
+
         Offering.detail($state.params.offeringId).then(function (offeringRetrieved) {
             initialData = angular.copy(offeringRetrieved);
             vm.data = angular.copy(offeringRetrieved);
             vm.item = offeringRetrieved;
-            vm.item.loaded = true;
-        }, function (status) {
-            switch (status) {
-            case 404:
-                $state.go('stock.offering', {
-                    reload: true
-                });
-                break;
-            }
+            vm.item.status = LOADED;
+        }, function (reason) {
+            vm.error = parseError(reason, 'The requested offering could not be retrieved');
+            vm.item.status = ERROR;
         });
 
         function updateStatus(status) {
@@ -229,6 +245,15 @@
                 $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'updated', {
                     resource: 'offering',
                     name: offeringUpdated.name
+                });
+            }, function (response) {
+
+                var defaultMessage = 'There was an unexpected error that prevented the ' +
+                    'system from updating the given offering';
+                var error = parseError(response, defaultMessage);
+
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                    error: error
                 });
             });
         }

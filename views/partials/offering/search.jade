@@ -8,12 +8,14 @@
         a.btn.btn-default(ng-click="searchVM.showFilters()")
           span.item-icon.fa.fa-sliders
           span.item-text.hidden-xs Filters
-  .col-xs-12(ng-switch="searchVM.list.loaded")
-    div(ng-switch-when="true", ng-switch="searchVM.list.length")
+  .col-xs-12(ng-switch="searchVM.list.status")
+    div(ng-switch-when="LOADED", ng-switch="searchVM.list.length")
       div(ng-switch-when="0")
         .alert.alert-info.text-center No offerings found.
       div(ng-switch-default)
         include ./search-grid.jade
+    div(ng-switch-when="ERROR")
+      .alert.alert-danger.text-center {{ searchVM.error }}
     div(ng-switch-default)
       .container-spinner
         span.fa.fa-spinner.fa-spin.fa-2x

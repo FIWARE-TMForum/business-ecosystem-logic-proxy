@@ -9,8 +9,8 @@ form(name="step.form", novalidate)
         )
         i.fa.fa-2x
   div(ng-if="createVM.data.isBundle", ng-controller="OfferingSearchCtrl as searchVM")
-    div(ng-switch="searchVM.list.loaded")
-      div(ng-switch-when="true", ng-switch="searchVM.list.length")
+    div(ng-switch="searchVM.list.status")
+      div(ng-switch-when="LOADED", ng-init="results = (searchVM.list | status:STATUS.ACTIVE)" ng-switch="results.length")
         div(ng-switch-when="0")
           .alert.alert-info.text-center No offerings found.
         .table-responsive(ng-switch-default)
@@ -22,7 +22,7 @@ form(name="step.form", novalidate)
                 th Type
                 th Updated
             tbody
-              tr(ng-repeat="offering in searchVM.list | status:STATUS.ACTIVE as results", ng-class="{ active: createVM.hasOffering(offering) }", ng-click="createVM.toggleOffering(offering)")
+              tr(ng-repeat="offering in results", ng-class="{ active: createVM.hasOffering(offering) }", ng-click="createVM.toggleOffering(offering)")
                 td
                   .status-item(class="status-{{ offering.lifecycleStatus | lowercase }}")
                     span.item-icon
@@ -33,6 +33,8 @@ form(name="step.form", novalidate)
                     | {{ offering.isBundle ? 'Bundle' : 'Single' }}
                 td
                   time(am-time-ago="offering.lastUpdate")
+      div(ng-switch-when="ERROR")
+        .alert.alert-danger.text-center {{ searchVM.error }}
       .container-spinner(ng-switch-default)
         span.fa.fa-spinner.fa-spin.fa-2x
 

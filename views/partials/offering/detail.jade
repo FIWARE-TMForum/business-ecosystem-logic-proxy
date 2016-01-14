@@ -1,5 +1,5 @@
-.row(ng-switch="detailVM.item.loaded")
-  div(ng-switch-when="true")
+.row(ng-switch="detailVM.item.status")
+  div(ng-switch-when="LOADED")
     .col-xs-12.col-md-3
       .panel.panel-default
         .panel-heading
@@ -25,6 +25,8 @@
             dt Update date
             dd
               time(am-time-ago="detailVM.item.lastUpdate")
+  div(ng-switch-when="ERROR")
+    .alert.alert-danger.text-center {{ detailVM.error }}
   div(ng-switch-default)
     .col-xs-12
       .container-spinner

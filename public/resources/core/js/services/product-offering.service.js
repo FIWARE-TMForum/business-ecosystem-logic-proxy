@@ -1,6 +1,7 @@
 /**
  * @author Francisco de la Vega <fdelavega@conwet.com>
  *         Jaime Pajuelo <jpajuelo@conwet.com>
+ *         Aitor Magán <amagan@conwet.com>
  */
 
 (function () {
@@ -70,10 +71,14 @@
                                 offering.productSpecification = products[offering.productSpecification.id];
                             });
                             deferred.resolve(offeringList);
+                        }, function(response) {
+                            deferred.reject(response);
                         });
                     } else {
                         deferred.resolve([]);
                     }
+                }, function(response) {
+                    deferred.reject(response);
                 });
             } else {
                 params['lifecycleStatus'] = LIFECYCLE_STATUS.LAUNCHED;
@@ -100,6 +105,8 @@
                     } else {
                         deferred.resolve(offeringList);
                     }
+                }, function (response) {
+                    deferred.reject(response);
                 });
             }
 
@@ -135,6 +142,8 @@
                 offeringCreated.productSpecification = product;
                 offeringCreated.bundledProductOffering = bundledProductOffering;
                 deferred.resolve(offeringCreated);
+            }, function (response) {
+                deferred.reject(response);
             });
 
             return deferred.promise;
@@ -158,6 +167,8 @@
                 } else {
                     deferred.reject(404);
                 }
+            }, function (response) {
+                deferred.reject(response);
             });
 
             return deferred.promise;
@@ -178,6 +189,8 @@
                     resource.query(params, function (offeringList) {
                         offering.bundledProductOffering = offeringList;
                         deferred.resolve(offering);
+                    }, function (response) {
+                        deferred.reject(response);
                     });
                 } else {
                     deferred.resolve(offering);
@@ -195,6 +208,8 @@
 
             resource.update(params, data, function (offeringUpdated) {
                 deferred.resolve(offeringUpdated);
+            }, function (response) {
+                deferred.reject(response);
             });
 
             return deferred.promise;
