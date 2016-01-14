@@ -1,11 +1,16 @@
 /**
  * @author Francisco de la Vega <fdelavega@conwet.com>
  *         Jaime Pajuelo <jpajuelo@conwet.com>
+ *         Aitor Magán <amagan@conwet.com>
  */
 
 (function () {
 
     'use strict';
+
+    var LOADING = 'LOADING';
+    var LOADED = 'LOADED';
+    var ERROR = 'ERROR';
 
     angular
         .module('app')
@@ -26,10 +31,10 @@
 
         Product.search($state.params).then(function (productList) {
             angular.copy(productList, vm.list);
-            vm.list.status = 'LOADED';
+            vm.list.status = LOADED;
         }, function (reason) {
             vm.error = reason;
-            vm.list.status = 'ERROR';
+            vm.list.status = ERROR;
         });
 
         function showFilters() {
@@ -251,21 +256,18 @@
         /* jshint validthis: true */
         var vm = this;
 
+        vm.item = {};
+
         vm.update = update;
         vm.updateStatus = updateStatus;
 
         Product.detail($state.params.productId).then(function (productRetrieved) {
             vm.data = angular.copy(productRetrieved);
             vm.item = productRetrieved;
-            vm.item.loaded = true;
-        }, function (status) {
-            switch (status) {
-            case 404:
-                $state.go('stock.product', {
-                    reload: true
-                });
-                break;
-            }
+            vm.item.status = LOADED;
+        }, function (reason) {
+            vm.error = reason;
+            vm.item.status = ERROR;
         });
 
         function updateStatus(status) {

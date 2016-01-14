@@ -8,8 +8,8 @@
 
     'use strict';
 
-    var LOADED = 'LOADED';
     var LOADING = 'LOADING';
+    var LOADED = 'LOADED';
     var ERROR = 'ERROR';
 
     angular
