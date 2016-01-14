@@ -213,7 +213,8 @@
                 bundledProductOffering: [],
                 productOfferingPrice: [],
                 category: [],
-                validFor: {}
+                validFor: {},
+                description: ''
             };
         }
 
