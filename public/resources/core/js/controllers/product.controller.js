@@ -68,6 +68,8 @@
         vm.stepList = stepList;
         vm.assetTypes = [];
         vm.charList = [];
+        vm.isDigital = false;
+        vm.digitalChars = [];
 
         vm.create = create;
         vm.setCurrentType = setCurrentType;
@@ -87,12 +89,13 @@
             angular.copy(typeList, vm.assetTypes);
 
             if (typeList.length) {
-                addCharacteristic('Asset type', 'Type of the digital asset described in this product specification', '');
-                addCharacteristic('Media type', 'Media type of the digital asset described in this product specification', '');
-                addCharacteristic('Location', 'URL pointing to the digital asset described in this product specification', '');
+                // Initialize digital asset characteristics
+                vm.digitalChars.push(buildCharacteristic('Asset type', 'Type of the digital asset described in this product specification', ''));
+                vm.digitalChars.push(buildCharacteristic('Media type', 'Media type of the digital asset described in this product specification', ''));
+                vm.digitalChars.push(buildCharacteristic('Location', 'URL pointing to the digital asset described in this product specification', ''));
                 vm.currentType = typeList[0];
                 vm.currFormat = vm.currentType.formats[0];
-                vm.data.productSpecCharacteristic[0].productSpecCharacteristicValue[0].value = typeList[0].name;
+                vm.digitalChars[0].productSpecCharacteristicValue[0].value = typeList[0].name;
             }
         });
 
@@ -161,7 +164,7 @@
 
         function create() {
             // If the format is file upload it to the asset manager
-            if (vm.currFormat === 'FILE') {
+            if (vm.isDigital && vm.currFormat === 'FILE') {
                 var reader = new FileReader();
 
                 reader.onload = function(e) {
@@ -170,11 +173,11 @@
                             name: vm.assetFile.name,
                             data: btoa(e.target.result)
                         },
-                        contentType: vm.data.productSpecCharacteristic[1].productSpecCharacteristicValue[0].value
+                        contentType: vm.digitalChars[1].productSpecCharacteristicValue[0].value
                     };
                     Asset.create(data).then(function (result) {
                         // Set file location
-                        vm.data.productSpecCharacteristic[2].productSpecCharacteristicValue[0].value = result.content;
+                        vm.digitalChars[2].productSpecCharacteristicValue[0].value = result.content;
                         saveProduct();
                     });
                 };
@@ -184,8 +187,8 @@
             }
         }
 
-        function addCharacteristic(name, description, value) {
-            vm.data.productSpecCharacteristic.push({
+        function buildCharacteristic(name, description, value) {
+            return {
                 name: name,
                 description: description,
                 valueType: 'string',
@@ -208,12 +211,12 @@
                         }
                     }
                 ]
-            });
+            };
         }
 
         function setCurrentType() {
             var i, found = false;
-            var assetType = vm.data.productSpecCharacteristic[0].productSpecCharacteristicValue[0].value;
+            var assetType = vm.digitalChars[0].productSpecCharacteristicValue[0].value;
 
             for (i = 0; i < vm.assetTypes.length && !found; i++) {
 
@@ -227,7 +230,12 @@
 
         function saveProduct() {
             // Append product characteristics
-            vm.data.productSpecCharacteristic = vm.data.productSpecCharacteristic.concat(vm.charList);
+            vm.data.productSpecCharacteristic = vm.charList;
+
+            if (vm.isDigital) {
+                vm.data.productSpecCharacteristic = vm.data.productSpecCharacteristic.concat(vm.digitalChars);
+            }
+
             Product.create(vm.data).then(function (productCreated) {
                 $state.go('stock.product.update', {
                     productId: productCreated.id
