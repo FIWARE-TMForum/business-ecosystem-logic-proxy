@@ -20,6 +20,11 @@
         .controller('CatalogueDetailCtrl', CatalogueDetailController)
         .controller('CatalogueUpdateCtrl', CatalogueUpdateController);
 
+    function parseError(response, defaultMessage) {
+        var data = response['data'];
+        return data !== null && 'error' in data ? data['error'] : defaultMessage;
+    }
+
     function CatalogueListController(Catalogue) {
         /* jshint validthis: true */
         var vm = this;
@@ -29,8 +34,8 @@
         Catalogue.search().then(function (catalogueList) {
             angular.copy(catalogueList, vm.list);
             vm.list.status = LOADED;
-        }, function(reason) {
-            vm.error = reason;
+        }, function (response) {
+            vm.error = parseError(response, 'It was impossible to load the list of catalogs');
             vm.list.status = ERROR;
         });
     }
@@ -49,8 +54,8 @@
         Catalogue.search($state.params).then(function (catalogueList) {
             angular.copy(catalogueList, vm.list);
             vm.list.status = LOADED;
-        }, function(reason) {
-            vm.error = reason;
+        }, function (response) {
+            vm.error = parseError(response, 'It was impossible to load the list of catalogs');
             vm.list.status = ERROR;
         });
 
@@ -87,9 +92,14 @@
                     resource: 'catalogue',
                     name: catalogueCreated.name
                 });
-            }, function(reason) {
+            }, function (response) {
+
+                var defaultMessage = 'There was an unexpected error that prevented the ' +
+                    'system from creating a new catalog';
+                var error = parseError(response, defaultMessage);
+
                 $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
-                    error: reason
+                    error: error
                 });
             });
         }
@@ -99,12 +109,17 @@
         /* jshint validthis: true */
         var vm = this;
 
+        vm.item = {};
+
         vm.catalogueId = $state.params.catalogueId;
 
         if (vm.catalogueId) {
             Catalogue.detail(vm.catalogueId).then(function (catalogueRetrieved) {
                 vm.item = catalogueRetrieved;
-                vm.item.loaded = true;
+                vm.item.status = LOADED;
+            }, function (response) {
+                vm.error = parseError(response, 'The requested catalog could not be retrieved');
+                vm.item.status = ERROR;
             });
         }
     }
@@ -122,8 +137,8 @@
             vm.data = angular.copy(catalogueRetrieved);
             vm.item = catalogueRetrieved;
             vm.item.status = LOADED;
-        }, function (reason) {
-            vm.error = reason;
+        }, function (response) {
+            vm.error = parseError(response, 'The requested catalog could not be retrieved');
             vm.item.status = ERROR;
         });
 
@@ -143,9 +158,14 @@
                     resource: 'catalogue',
                     name: catalogueUpdated.name
                 });
-            }, function(reason) {
+            }, function (response) {
+
+                var defaultMessage = 'There was an unexpected error that prevented the ' +
+                    'system from updating the given catalog';
+                var error = parseError(response, defaultMessage);
+
                 $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
-                    error: reason
+                    error: error
                 });
             });
         }

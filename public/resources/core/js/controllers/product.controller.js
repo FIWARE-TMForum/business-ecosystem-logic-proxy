@@ -18,6 +18,11 @@
         .controller('ProductCreateCtrl', ProductCreateController)
         .controller('ProductUpdateCtrl', ProductUpdateController);
 
+    function parseError(response, defaultMessage) {
+        var data = response['data'];
+        return data !== null && 'error' in data ? data['error'] : defaultMessage;
+    }
+
     function ProductSearchController($state, $rootScope, EVENTS, Product) {
         /* jshint validthis: true */
         var vm = this;
@@ -32,8 +37,8 @@
         Product.search($state.params).then(function (productList) {
             angular.copy(productList, vm.list);
             vm.list.status = LOADED;
-        }, function (reason) {
-            vm.error = reason;
+        }, function (response) {
+            vm.error = parseError(response, 'It was impossible to load the list of products');
             vm.list.status = ERROR;
         });
 
@@ -244,9 +249,14 @@
                     resource: 'product',
                     name: productCreated.name
                 });
-            }, function (reason) {
+            }, function (response) {
+
+                var defaultMessage = 'There was an unexpected error that prevented the ' +
+                    'system from creating a new product';
+                var error = parseError(response, defaultMessage);
+
                 $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
-                    error: reason
+                    error: error
                 });
             });
         }
@@ -265,8 +275,8 @@
             vm.data = angular.copy(productRetrieved);
             vm.item = productRetrieved;
             vm.item.status = LOADED;
-        }, function (reason) {
-            vm.error = reason;
+        }, function (response) {
+            vm.error = parseError(response, 'The requested product could not be retrieved');
             vm.item.status = ERROR;
         });
 
@@ -286,9 +296,14 @@
                     resource: 'product',
                     name: productUpdated.name
                 });
-            }, function(reason) {
+            }, function (response) {
+
+                var defaultMessage = 'There was an unexpected error that prevented the ' +
+                    'system from updating the given product';
+                var error = parseError(response, defaultMessage);
+
                 $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
-                    error: reason
+                    error: error
                 });
             });
         }

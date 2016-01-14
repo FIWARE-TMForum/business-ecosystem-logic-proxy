@@ -32,10 +32,6 @@
             buildInitialData: buildInitialData
         };
 
-        function parseError(data, defaultMessage) {
-            return data !== null && 'error' in data ? data['error'] : defaultMessage;
-        }
-
         function search(filters) {
             var deferred = $q.defer();
             var params = {};
@@ -60,8 +56,8 @@
 
             resource.query(params, function (catalogueList) {
                 deferred.resolve(catalogueList);
-            }, function(response) {
-                deferred.reject(parseError(response.data, 'It was impossible to load the list of catalogs'));
+            }, function (response) {
+                deferred.reject(response);
             });
 
             return deferred.promise;
@@ -82,10 +78,8 @@
 
             resource.save(data, function (catalogueCreated) {
                 deferred.resolve(catalogueCreated);
-            }, function(response) {
-                var defaultMessage = 'There was an unexpected error that prevented the ' +
-                    'system from creating a new catalog';
-                deferred.reject(parseError(response.data, defaultMessage));
+            }, function (response) {
+                deferred.reject(response);
             });
 
             return deferred.promise;
@@ -100,7 +94,7 @@
             resource.get(params, function (catalogueRetrieved) {
                 deferred.resolve(catalogueRetrieved);
             }, function (response) {
-                deferred.reject(parseError(response.data, 'The given catalog could not be retrieved'));
+                deferred.reject(response);
             });
 
             return deferred.promise;
@@ -115,9 +109,7 @@
             resource.update(params, catalogue, function (catalogueUpdated) {
                 deferred.resolve(catalogueUpdated);
             }, function (response) {
-                var defaultMessage = 'There was an unexpected error that prevented the ' +
-                    'system from updating the given catalog';
-                deferred.reject(parseError(response.data, defaultMessage));
+                deferred.reject(response);
             });
 
             return deferred.promise;
