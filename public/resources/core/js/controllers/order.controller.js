@@ -6,7 +6,7 @@
         .module('app')
         .controller('CreateOrderCtrl', CreateOrderController);
 
-    function CreateOrderController($state, Order, User, ShoppingCart, $window) {
+    function CreateOrderController($rootScope, $state, Order, User, ShoppingCart, $window, $interval, EVENTS) {
         var vm = this;
 
         vm.makeOrder = makeOrder;
@@ -85,10 +85,23 @@
 
             Order.create(vm.orderInfo).then(function(orderCreated) {
                 if ('x-redirect-url' in orderCreated.headers) {
-                    $window.open(orderCreated.headers['x-redirect-url'], '_blank');
+                    var ppalWindow = $window.open(orderCreated.headers['x-redirect-url'], '_blank');
+
+                    // Display a message and wait until the new tab has been closed to redirect the page
+                    $rootScope.$emit(EVENTS.MESSAGE_CREATED);
+                    var interval = $interval(function() {
+                        if (ppalWindow.closed) {
+                            $interval.cancel(interval);
+                            $rootScope.$emit(EVENTS.MESSAGE_CLOSED);
+                            ShoppingCart.cleanItems();
+                            $state.go('inventory.order');
+                        }
+                    }, 500);
+
+                } else {
+                    ShoppingCart.cleanItems();
+                    $state.go('inventory.order');
                 }
-                ShoppingCart.cleanItems();
-                $state.go('inventory.order');
             });
         }
 

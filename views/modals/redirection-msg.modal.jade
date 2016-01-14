@@ -1,0 +1,15 @@
+.modal.fade(ng-controller="MessageCtrl")
+  .modal-dialog
+    .modal-content
+      .modal-header
+        .modal-title
+          strong.text-uppercase Payment in progress
+            button.close(type="button", data-dismiss="modal")
+               i.fa.fa-close
+      .modal-body
+        span The payment approval process is opened in another tab
+      .modal-footer
+        a.btn.btn-success(
+          data-dismiss="modal"
+        )
+          | Accept
