@@ -20,7 +20,7 @@
         .controller('OfferingUpdateCtrl', OfferingUpdateController);
 
     function parseError(response, defaultMessage) {
-        var data = response['data']
+        var data = response['data'];
         return data !== null && 'error' in data ? data['error'] : defaultMessage;
     }
 
