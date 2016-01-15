@@ -15,6 +15,9 @@
         var options = {};
         var nonConf;
 
+        vm.pricingModels = [];
+        vm.confChars = [];
+
         vm.order = function() {
             // Read selected options
             var offeringInfo = {
