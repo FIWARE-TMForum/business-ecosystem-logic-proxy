@@ -151,11 +151,21 @@ describe('Ordering API', function() {
             }],
             orderItem: [{
                 product: {
+                    relatedParty: [{
+                        id: 'admin',
+                        role: 'customer'
+                    }]
                 }
             }]
         };
 
-        testOrderCreation(user, JSON.stringify(body), null, done);
+        testOrderCreation(user, JSON.stringify(body), null, done, function(req){
+            var newBody = JSON.parse(req.body);
+            expect(newBody.orderItem[0].product.relatedParty).toEqual([{
+                id: 'admin',
+                role: 'customer'
+            }]);
+        });
     });
 
     it('should fail when the order is not well formed JSON', function(done) {
