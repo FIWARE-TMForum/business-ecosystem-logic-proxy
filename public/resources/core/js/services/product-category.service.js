@@ -1,6 +1,7 @@
 /**
  * @author Francisco de la Vega <fdelavega@conwet.com>
  *         Jaime Pajuelo <jpajuelo@conwet.com>
+ *         Aitor Magán <amagan@conwet.com>
  */
 
 (function () {
@@ -46,6 +47,8 @@
                     saveCategory(category);
                 });
                 deferred.resolve(categoryList);
+            }, function (response) {
+                deferred.reject(response);
             });
 
             return deferred.promise;
@@ -60,6 +63,8 @@
             resource.get(params, function (category) {
                 saveCategory(category);
                 deferred.resolve(category);
+            }, function (response) {
+                deferred.reject(response);
             });
 
             return deferred.promise;
