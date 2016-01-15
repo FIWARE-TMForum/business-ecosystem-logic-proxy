@@ -94,13 +94,13 @@
                             $interval.cancel(interval);
                             $rootScope.$emit(EVENTS.MESSAGE_CLOSED);
                             ShoppingCart.cleanItems();
-                            $state.go('inventory.order');
+                            $state.go('inventory');
                         }
                     }, 500);
 
                 } else {
                     ShoppingCart.cleanItems();
-                    $state.go('inventory.order');
+                    $state.go('inventory');
                 }
             });
         }

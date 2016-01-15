@@ -1,0 +1,7 @@
+ol.breadcrumb
+  li
+    a(ui-sref="inventory.product", ui-sref-opts="{ reload: true, inherit: false }", ui-sref-active-eq="active")
+      span.item-text.hidden-xs Products
+  li(ng-show="searchVM.state.includes('inventory.product.detail')")
+    a(ui-sref="inventory.product.detail", ui-sref-opts="{ reload: true }", ui-sref-active="active")
+      span.item-text.hidden-xs {{ detailVM.item.name }}
