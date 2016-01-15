@@ -87,7 +87,7 @@ describe('Ordering API', function() {
         return valid;
     };
 
-    var testOrderCreation = function(userInfo, body, expectedRes, done) {
+    var testOrderCreation = function(userInfo, body, expectedRes, done, checkReq) {
 
         var tmfUtils = {
             validateLoggedIn: validateLoggedOk,
@@ -104,6 +104,11 @@ describe('Ordering API', function() {
 
         orderingApi.checkPermissions(req, function(err) {
             expect(err).toEqual(expectedRes);
+
+            if (checkReq) {
+                checkReq(req);
+            }
+
             done();
         });
 
@@ -118,9 +123,20 @@ describe('Ordering API', function() {
             relatedParty: [{
                 id: 'cust',
                 role: 'customer'
+            }],
+            orderItem: [{
+                product: {
+                }
             }]
         };
-        testOrderCreation(user, JSON.stringify(body), null, done);
+        testOrderCreation(user, JSON.stringify(body), null, done, function(req) {
+            var newBody = JSON.parse(req.body);
+            expect(newBody.orderItem[0].product.relatedParty).toEqual([{
+                id: 'cust',
+                role: 'Customer',
+                href: ''
+            }]);
+        });
     });
 
     it('should call the callback after validating the request when the user is admin', function(done) {
@@ -132,6 +148,10 @@ describe('Ordering API', function() {
             relatedParty: [{
                 id: 'admin',
                 role: 'customer'
+            }],
+            orderItem: [{
+                product: {
+                }
             }]
         };
 
@@ -183,6 +203,25 @@ describe('Ordering API', function() {
         testOrderCreation(user, JSON.stringify({}), expected, done);
     });
 
+    it('should fail when a customer has not been specified', function(done) {
+        var user = {
+            id: 'cust'
+        };
+
+        var expected = {
+            status: 403,
+            message: 'It is required to specify a customer in the relatedParty field'
+        };
+
+        var body = {
+            relatedParty: [{
+                id: 'cust',
+                role: 'seller'
+            }]
+        };
+        testOrderCreation(user, JSON.stringify(body), expected, done);
+    });
+
     it('should fail when the specified customer is not the user making the request', function(done) {
         var user = {
             id: 'cust'
@@ -199,6 +238,74 @@ describe('Ordering API', function() {
                 role: 'customer'
             }]
         };
+        testOrderCreation(user, JSON.stringify(body), expected, done);
+    });
+
+    it('should fail when the request does not include an orderItem field', function(done) {
+        var user = {
+           id: 'cust'
+        };
+
+        var expected = {
+            status: 400,
+            message: 'A product order must contain an orderItem field'
+        };
+
+        var body = {
+            relatedParty: [{
+                id: 'cust',
+                role: 'customer'
+            }]
+        };
+        testOrderCreation(user, JSON.stringify(body), expected, done);
+    });
+
+    it('should fail when the request does not include a product in an orderItem', function(done) {
+        var user = {
+            id: 'cust'
+        };
+
+        var expected = {
+            status: 400,
+            message: 'The product order item 1 must contain a product field'
+        };
+
+        var body = {
+            relatedParty: [{
+                id: 'cust',
+                role: 'customer'
+            }],
+            orderItem: [{id: '1'}]
+        };
+        testOrderCreation(user, JSON.stringify(body), expected, done);
+    });
+
+    it('should fail when an invalid customer has been specified in a product of an orderItem', function(done) {
+        var user = {
+            id: 'cust'
+        };
+
+        var expected = {
+            status: 403,
+            message: 'The customer specified in the order item 1 is not the user making the request'
+        };
+
+        var body = {
+            relatedParty: [{
+                id: 'cust',
+                role: 'customer'
+            }],
+            orderItem: [{
+                id: '1',
+                product: {
+                    relatedParty: [{
+                        id: 'test',
+                        role: 'Customer'
+                    }]
+                }
+            }]
+        };
+
         testOrderCreation(user, JSON.stringify(body), expected, done);
     });
 
