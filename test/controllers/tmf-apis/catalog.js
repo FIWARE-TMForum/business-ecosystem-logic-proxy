@@ -193,12 +193,16 @@ describe('Catalog API', function() {
         testCreateBasic(user, JSON.stringify(resource), [{ name: config.oauth2.roles.admin }], false, null, null, checkRoleTrue, isOwnerTrue, done);
     });
 
-    var testCreateOffering = function(productRequestFails, errorStatus, errorMsg, isOwnerMethod, done) {
+    var testCreateOffering = function(productRequestInfo, catalogRequestInfo, errorStatus, errorMsg, done) {
+
+        var defaultErrorMessage = 'Internal Server Error';
 
         var tmfUtils = {
             validateLoggedIn: validateLoggedOk,
             checkRole: checkRoleTrue,
-            isOwner: isOwnerMethod
+            isOwner: function () {
+                return productRequestInfo.role.toLowerCase() === 'owner';
+            }
         };
 
         var catalogApi = getCatalogApi({}, tmfUtils);
@@ -212,23 +216,27 @@ describe('Catalog API', function() {
         var serverUrl = protocol + '://' + config.appHost + ':' + config.endpoints.catalog.port;
 
         // The mock server that will handle the request when the catalog is requested
+        var bodyGetCatalogOk = {lifecycleStatus: catalogRequestInfo.lifecycleStatus};
+        var bodyGetCatalog = catalogRequestInfo.requestStatus === 200 ? bodyGetCatalogOk : defaultErrorMessage;
+
         nock(serverUrl)
             .get(catalogPath)
-            .reply(200, { lifecycleStatus: 'active' });
+            .reply(catalogRequestInfo.requestStatus, bodyGetCatalog);
 
         // The mock server that will handle the request when the product is requested
-        var statusOk = 200;
-        var statusErr = 500;
-        var statusCodeGetProduct = productRequestFails ? statusErr : statusOk;
+        // The mock server cannot be set if the cataog is not valid
+        if (catalogRequestInfo.requestStatus === 200 && ['active', 'launched'].indexOf(catalogRequestInfo.lifecycleStatus.toLowerCase()) >= 0) {
 
-        var role = isOwnerMethod() ? 'Owner': 'Seller';
-        var bodyOk = { relatedParty: [{id: userName, role: role}], lifecycleStatus: 'active'};
-        var bodyErr = 'Internal Server Error';
-        var bodyGetProduct = productRequestFails ? bodyErr : bodyOk;
+            var bodyGetProductOk = {
+                relatedParty: [{id: userName, role: productRequestInfo.role}],
+                lifecycleStatus: productRequestInfo.lifecycleStatus
+            };
+            var bodyGetProduct = productRequestInfo.requestStatus === 200 ? bodyGetProductOk : defaultErrorMessage;
 
-        nock(serverUrl)
-            .get(productPath)
-            .reply(statusCodeGetProduct, bodyGetProduct);
+            nock(serverUrl)
+                .get(productPath)
+                .reply(productRequestInfo.requestStatus, bodyGetProduct);
+        }
 
         // Call the method
         var req = {
@@ -252,11 +260,12 @@ describe('Catalog API', function() {
 
         catalogApi.checkPermissions(req, function(err) {
 
-            if (isOwnerMethod() && !productRequestFails) {
-                expect(err).toBe(null);
-            } else {
+            if (errorStatus && errorMsg) {
+                expect(err).not.toBe(null);
                 expect(err.status).toBe(errorStatus);
                 expect(err.message).toBe(errorMsg);
+            } else {
+                expect(err).toBe(null);
             }
 
             done();
@@ -264,17 +273,106 @@ describe('Catalog API', function() {
     };
 
     it('should call OK callback when creating an offering with an owned product', function(done) {
-        testCreateOffering(false, null, null, isOwnerTrue, done);
+
+        var productRequestInfo = {
+            requestStatus: 200,
+            role: 'Owner',
+            lifecycleStatus: 'active'
+        };
+
+        var catalogRequestInfo = {
+            requestStatus: 200,
+            lifecycleStatus: 'launched'
+        };
+
+        testCreateOffering(productRequestInfo, catalogRequestInfo, null, null, done);
     });
 
-
     it('should call error callback when creating an offering with a non owned product', function(done) {
-        testCreateOffering(false, 403, 'The user making the request and the specified owner are not the same user', isOwnerFalse, done);
+
+        var productRequestInfo = {
+            requestStatus: 200,
+            role: 'Seller',
+            lifecycleStatus: 'active'
+        };
+
+        var catalogRequestInfo = {
+            requestStatus: 200,
+            lifecycleStatus: 'active'
+        };
+
+        testCreateOffering(productRequestInfo, catalogRequestInfo, 403, 'The user making the request ' +
+            'and the specified owner are not the same user', done);
+    });
+
+    it('should call error callback when creating an offering in a retired catalogue', function(done) {
+
+        var productRequestInfo = {
+            requestStatus: 200,
+            role: 'Owner',
+            lifecycleStatus: 'active'
+        };
+
+        var catalogRequestInfo = {
+            requestStatus: 200,
+            lifecycleStatus: 'retired'
+        };
+
+        testCreateOffering(productRequestInfo, catalogRequestInfo, 400, 'Offerings can only be created in a ' +
+            'catalog that is active or launched', done);
+    });
+
+    it('should call error callback when creating an offering for a retired product', function(done) {
+
+        var productRequestInfo = {
+            requestStatus: 200,
+            role: 'Owner',
+            lifecycleStatus: 'retired'
+        };
+
+        var catalogRequestInfo = {
+            requestStatus: 200,
+            lifecycleStatus: 'active'
+        };
+
+        testCreateOffering(productRequestInfo, catalogRequestInfo, 400, 'Offerings can only be attached to ' +
+            'active or launched products', done);
     });
 
     it('should call error callback when creating an offering and the attached product cannot be checked', function(done) {
+
+        var productRequestInfo = {
+            requestStatus: 500,
+            role: 'Owner',
+            lifeCycleStatus: 'active'
+        };
+
+        var catalogRequestInfo = {
+            requestStatus: 200,
+            lifecycleStatus: 'active'
+        };
+
         // isOwner does not matter when productRequestFails is set to true
-        testCreateOffering(true, 400, 'The product specification of the given product offering is not valid', isOwnerTrue, done);
+        testCreateOffering(productRequestInfo, catalogRequestInfo, 400, 'The product specification of the ' +
+            'given product offering is not valid', done);
+    });
+
+    it('should call error callback when creating an offering and the attached catalog cannot be checked', function(done) {
+
+        var productRequestInfo = {
+            requestStatus: 200,
+            role: 'Owner',
+            lifeCycleStatus: 'active'
+        };
+
+        var catalogRequestInfo = {
+            requestStatus: 500,
+            lifecycleStatus: 'active'
+        };
+
+        // isOwner does not matter when productRequestFails is set to true
+        testCreateOffering(productRequestInfo, catalogRequestInfo, 400, 'The catalog attached to the offering ' +
+            'cannot be read', done);
     });
 
     var testCreateProduct = function(storeValidator, errorStatus, errorMsg, isOwnerMethod, done) {

@@ -138,7 +138,7 @@ var catalog = (function() {
                 } else {
                     callback({
                         status: 400,
-                        message: 'Offerings can only be created in a catalog that are active or launched'
+                        message: 'Offerings can only be created in a catalog that is active or launched'
                     });
                 }
 
