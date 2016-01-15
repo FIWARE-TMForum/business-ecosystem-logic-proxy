@@ -107,6 +107,7 @@ var ordering = (function(){
                     status: 400,
                     message: 'The product order item ' + body.orderItem[i].id + ' must contain a product field'
                 });
+                return;
             }
 
             if (!body.orderItem[i].product.relatedParty) {

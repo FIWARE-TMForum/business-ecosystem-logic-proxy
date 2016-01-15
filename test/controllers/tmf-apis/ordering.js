@@ -275,7 +275,9 @@ describe('Ordering API', function() {
                 id: 'cust',
                 role: 'customer'
             }],
-            orderItem: [{id: '1'}]
+            orderItem: [{
+                id: '1'
+            }]
         };
         testOrderCreation(user, JSON.stringify(body), expected, done);
     });
