@@ -132,6 +132,9 @@
             var bundledProductOffering = data.bundledProductOffering;
 
             angular.extend(data, {
+                category: data.category.map(function (category) {
+                    return category.serialize();
+                }),
                 productSpecification: product.serialize(),
                 bundledProductOffering: data.bundledProductOffering.map(function (offering) {
                     return offering.serialize();

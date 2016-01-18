@@ -1,0 +1,34 @@
+.btn-toolbar(ng-controller="CategoryCreateCtrl as categoryCreateVM")
+  .btn-group.btn-group-responsive
+    a.btn.btn-default(ng-click="categoryCreateVM.show()", ng-class="{ 'active': categoryCreateVM.categoryId == null }")
+      span.item-icon.fa.fa-tags
+      span.item-text.hidden-xs All categories
+    a.btn.btn-default(ng-repeat="category in categoryCreateVM.breadcrumb", ng-click="categoryCreateVM.show(category.id)", ng-class="{ 'active': category.id == categoryCreateVM.categoryId }")
+      span.item-icon.fa.fa-tag
+      span.item-text {{ category.name }}
+    a.btn.btn-default.dropdown-toggle(data-toggle="dropdown", ng-show="(categoryCreateVM.list.status === 'LOADED' && categoryCreateVM.list.length > 0) || categoryCreateVM.list.status === 'LOADING'")
+      span.item-icon.fa(ng-class="categoryCreateVM.list.status === 'LOADED' ? 'fa-caret-down' : ['fa-spinner', 'fa-spin']")
+    .dropdown-menu.dropdown-menu-right
+      a.dropdown-menu-item(ng-repeat="category in categoryCreateVM.list", ng-click="categoryCreateVM.show(category.id)")
+        span.item-icon.fa.fa-tag
+        span.item-text {{ category.name }}
+  .btn-group.pull-right
+    a.btn.btn-success(ng-click="createVM.appendCategory(categoryCreateVM.breadcrumb) && categoryCreateVM.show()", ng-disabled="categoryCreateVM.categoryId == null")
+      span.item-icon.fa.fa-save
+      span.item-text Save
+form(name="step.form", novalidate)
+  .form-group(ng-show="createVM.categoryBreadcrumbs.length")
+    label Categories selected
+    .btn-toolbar(ng-repeat="breadcrumb in createVM.categoryBreadcrumbs")
+      .btn-group.btn-group-responsive
+        a.btn.btn-default
+          span.item-icon.fa.fa-tags
+        a.btn.btn-default(ng-repeat="category in breadcrumb", ng-class="{ 'active': $last }")
+          span.item-icon.fa.fa-tag
+          span.item-text {{ category.name }}
+      .btn-group.pull-right
+        a.btn.btn-danger(ng-click="createVM.removeCategory($index)")
+          span.item-icon.fa.fa-trash
+  .form-group.text-right
+    a.btn.btn-default(ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])", ng-disabled="!step.form.$valid")
+      span.item-text Next

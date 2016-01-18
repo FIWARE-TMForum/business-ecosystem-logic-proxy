@@ -22,6 +22,8 @@
             subcategories: {}
         };
 
+        resource.prototype.serialize = serialize;
+
         return {
             search: search,
             detail: detail,
@@ -100,6 +102,16 @@
                     });
                 }
             }
+        }
+
+        function serialize() {
+            /* jshint validthis: true */
+            return {
+                id: this.id,
+                href: this.href,
+                //version: this.version,
+                //name: this.name
+            };
         }
     }
 

@@ -14,7 +14,8 @@
 
     angular
         .module('app')
-        .controller('CategorySearchCtrl', CategorySearchController);
+        .controller('CategorySearchCtrl', CategorySearchController)
+        .controller('CategoryCreateCtrl', CategoryCreateController);
 
     function parseError(response, defaultMessage) {
         var data = response['data'];
@@ -45,6 +46,38 @@
             angular.copy(categoryList, vm.breadcrumb);
             vm.breadcrumb.loaded = true;
         });
+    }
+
+    function CategoryCreateController($state, $rootScope, EVENTS, Category) {
+        /* jshint validthis: true */
+        var vm = this;
+
+        vm.breadcrumb = [];
+        vm.list = [];
+
+        vm.show = show;
+
+        refresh();
+
+        function show(categoryId) {
+            vm.categoryId = categoryId;
+            refresh();
+        }
+
+        function refresh() {
+            vm.list.status = LOADING;
+
+            Category.search({categoryId: vm.categoryId}).then(function (categoryList) {
+                angular.copy(categoryList, vm.list);
+                vm.list.status = LOADED;
+            }, function (response) {
+            });
+
+            Category.getBreadcrumbOf(vm.categoryId).then(function (categoryList) {
+                vm.breadcrumb = categoryList;
+                vm.breadcrumb.loaded = true;
+            });
+        }
     }
 
 })();
