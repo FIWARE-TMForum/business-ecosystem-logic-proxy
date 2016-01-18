@@ -54,6 +54,10 @@
                 params['isBundle'] = filters.type == 'Bundle';
             }
 
+            if (filters.categoryId) {
+                params['category.id'] = filters.categoryId;
+            }
+
             if (filters.owner) {
                 productFilters['owner'] = true;
 
