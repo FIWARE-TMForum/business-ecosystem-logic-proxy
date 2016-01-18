@@ -150,6 +150,8 @@ textarea {
 }
 
 .form-control {
+    padding: 8px 12px;
+    height: initial;
     border-color: rgb(200, 200, 200);
     border-radius: 0;
     box-shadow: none;
@@ -332,6 +334,10 @@ textarea {
 }
 .btn-toolbar > .btn-group + .btn-group {
     margin-left: 5px;
+}
+
+.btn-group-responsive .btn:not(.active) > .item-text {
+    display: none;
 }
 
 /* ===================================================================================
@@ -783,6 +789,55 @@ textarea {
 
 .breadcrumb > li + li:before {
     color: rgb(120, 120, 120);
+}
+
+.breadcrumb-triangle {
+    border: 1px solid rgb(220, 220, 220);
+}
+.breadcrumb-triangle:after {
+    display: table;
+    content: "";
+    clear: both;
+}
+
+.breadcrumb-triangle > a {
+    position: relative;
+    display: block;
+    float: left;
+    padding: 10px 15px 10px 30px;
+    background-color: rgb(255, 255, 255);
+    border-radius: 0;
+}
+.breadcrumb-triangle > a:first-child {
+    padding-left: 15px;
+}
+.breadcrumb-triangle > a:after {
+    position: absolute;
+    content: "";
+    z-index: 1;
+    top: 0px;
+    right: -20px;
+    background-color: rgba(0, 0, 0, 0);
+    border: 20px solid rgb(255, 255, 255);
+    border-left-color: rgba(0, 0, 0, 0);
+    border-bottom-color: rgba(0, 0, 0, 0);
+    transform: scale(0.7) rotate(45deg);
+}
+.breadcrumb-triangle > a:last-child:after {
+    content: none;
+}
+
+.breadcrumb-triangle > a > .item-icon {
+    width: 1.4em;
+    text-align: center;
+}
+.breadcrumb-triangle > a > .item-icon + .item-text {
+    margin-left: 5px;
+}
+
+.breadcrumb-triangle > a.active {
+    color: rgb(255, 255, 255);
+    background-color: rgb(030, 060, 110);
 }
 
 /* ===================================================================================
