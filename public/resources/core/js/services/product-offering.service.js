@@ -54,6 +54,10 @@
                 params['isBundle'] = filters.type == 'Bundle';
             }
 
+            if (filters.categoryId) {
+                params['category.id'] = filters.categoryId;
+            }
+
             if (filters.owner) {
                 productFilters['owner'] = true;
 
@@ -132,6 +136,9 @@
             var bundledProductOffering = data.bundledProductOffering;
 
             angular.extend(data, {
+                category: data.category.map(function (category) {
+                    return category.serialize();
+                }),
                 productSpecification: product.serialize(),
                 bundledProductOffering: data.bundledProductOffering.map(function (offering) {
                     return offering.serialize();

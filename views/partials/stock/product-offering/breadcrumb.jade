@@ -1,10 +1,10 @@
-ol.breadcrumb
-  li
-    a(ui-sref="stock.offering", ui-sref-opts="{ reload: true, inherit: false }", ui-sref-active-eq="active")
-      span.item-text.hidden-xs Offerings
-  li(ng-show="searchVM.state.includes('stock.offering.update')")
-    a(ui-sref="stock.offering.update", ui-sref-opts="{ reload: true }", ui-sref-active="active")
-      span.item-text.hidden-xs {{ updateVM.item.name }}
-  li(ng-show="searchVM.state.includes('stock.offering.create')")
-    a(ui-sref="stock.offering.create", ui-sref-opts="{ reload: true }", ui-sref-active-eq="active")
-      span.item-text.hidden-xs New Offering
+.breadcrumb-triangle
+  a(ui-sref="stock.offering", ui-sref-opts="{ reload: true, inherit: false }", ui-sref-active-eq="active")
+    span.item-icon.fa.fa-server
+    span.item-text.hidden-xs Offerings
+  a.active(ng-if="searchVM.state.includes('stock.offering.update')", ui-sref="stock.offering.update", ui-sref-opts="{ reload: true }")
+    span.item-icon.fa.fa-cube
+    span.item-text.hidden-xs {{ updateVM.item.name }}
+  a.active(ng-if="searchVM.state.includes('stock.offering.create')", ui-sref="stock.offering.create", ui-sref-opts="{ reload: true }")
+    span.item-icon.fa.fa-plus-circle
+    span.item-text.hidden-xs New Offering
