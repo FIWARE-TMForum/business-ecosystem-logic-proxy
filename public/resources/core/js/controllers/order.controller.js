@@ -6,6 +6,11 @@
         .module('app')
         .controller('CreateOrderCtrl', CreateOrderController);
 
+    function parseError(response, defaultMessage) {
+        var data = response['data'];
+        return data !== null && 'error' in data ? data['error'] : defaultMessage;
+    }
+
     function CreateOrderController($rootScope, $state, Order, User, ShoppingCart, $window, $interval, EVENTS) {
         var vm = this;
 
@@ -102,6 +107,15 @@
                     ShoppingCart.cleanItems();
                     $state.go('inventory');
                 }
+            }, function (response) {
+
+                var defaultMessage = 'There was an unexpected error that prevented the ' +
+                    'system from creating a new order';
+                var error = parseError(response, defaultMessage);
+
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                    error: error
+                });
             });
         }
 
