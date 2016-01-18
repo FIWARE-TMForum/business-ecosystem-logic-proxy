@@ -1314,6 +1314,15 @@ a.list-group-item > .badge-status {
     color: rgb(070, 180, 200);
 }
 
+.panel-default.second-level > .panel-heading {
+    background-color: rgb(245, 245, 245);
+}
+
+.panel-default.second-level > .panel-heading:hover {
+    cursor: pointer;
+    color: rgb(070, 180, 200);
+}
+
 /* ===================================================================================
  *   COMPONENT - MODAL
  * =================================================================================== */

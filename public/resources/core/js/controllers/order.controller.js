@@ -15,6 +15,11 @@
         var vm = this;
 
         vm.makeOrder = makeOrder;
+        vm.toggleCollapse = toggleCollapse;
+
+        function toggleCollapse(id) {
+            $('#' + id).collapse('toggle');
+        }
 
         var initOrder = function initOrder() {
             var orderItems = ShoppingCart.getItems();
@@ -74,6 +79,7 @@
                     };
                     item.product.productPrice = [price];
                 }
+
                 // Include the item to the order
                 vm.orderInfo.orderItem.push(item);
             }
@@ -81,14 +87,15 @@
 
         function makeOrder() {
             // Fix display fields to accommodate API restrictions
-            for (var i = 0; i < vm.orderInfo.orderItem.length; i++) {
-                delete vm.orderInfo.orderItem[i].productOffering.name;
-                if (!vm.orderInfo.orderItem[i].product.productCharacteristic.length) {
-                    vm.orderInfo.orderItem[i].product.productCharacteristic.push({});
+            var apiInfo = angular.copy(vm.orderInfo);
+            for (var i = 0; i < apiInfo.orderItem.length; i++) {
+                delete apiInfo.orderItem[i].productOffering.name;
+                if (!apiInfo.orderItem[i].product.productCharacteristic.length) {
+                    apiInfo.orderItem[i].product.productCharacteristic.push({});
                 }
             }
 
-            Order.create(vm.orderInfo).then(function(orderCreated) {
+            Order.create(apiInfo).then(function(orderCreated) {
                 if ('x-redirect-url' in orderCreated.headers) {
                     var ppalWindow = $window.open(orderCreated.headers['x-redirect-url'], '_blank');
 
