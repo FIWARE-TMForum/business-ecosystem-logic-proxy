@@ -21,7 +21,7 @@
         return data !== null && 'error' in data ? data['error'] : defaultMessage;
     }
 
-    function InventorySearchController($state, $rootScope, EVENTS, InventoryProduct) {
+    function InventorySearchController($state, $rootScope, EVENTS, InventoryProduct, INVENTORY_STATUS) {
         /* jshint validthis: true */
         var vm = this;
 
@@ -41,7 +41,7 @@
         });
 
         function showFilters() {
-            $rootScope.$broadcast(EVENTS.FILTERS_OPENED);
+            $rootScope.$broadcast(EVENTS.FILTERS_OPENED, INVENTORY_STATUS);
         }
     }
 })();

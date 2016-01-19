@@ -14,19 +14,26 @@
     function SearchFilterController($state, $scope, $element, EVENTS) {
         /* jshint validthis: true */
         var vm = this;
+        var statusStates = [];
 
         vm.exists = exists;
         vm.checkboxChecked = checkboxChecked;
+        vm.getStatusStates = getStatusStates;
         vm.toggleCheckbox = toggleCheckbox;
 
         $element.on('hidden.bs.modal', function (event) {
             $state.go($state.current.name, vm.filters);
         });
 
-        $scope.$on(EVENTS.FILTERS_OPENED, function (event) {
+        $scope.$on(EVENTS.FILTERS_OPENED, function (event, states) {
             vm.filters = angular.copy($state.params);
+            statusStates = states;
             $element.modal('show');
         });
+
+        function getStatusStates() {
+            return statusStates;
+        }
 
         function toggleCheckbox(name, value) {
             var items = convertToArray(name);

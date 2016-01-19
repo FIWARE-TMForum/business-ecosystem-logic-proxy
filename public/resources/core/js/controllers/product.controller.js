@@ -23,7 +23,7 @@
         return data !== null && 'error' in data ? data['error'] : defaultMessage;
     }
 
-    function ProductSearchController($state, $rootScope, EVENTS, Product) {
+    function ProductSearchController($state, $rootScope, EVENTS, Product, LIFECYCLE_STATUS) {
         /* jshint validthis: true */
         var vm = this;
 
@@ -43,7 +43,7 @@
         });
 
         function showFilters() {
-            $rootScope.$broadcast(EVENTS.FILTERS_OPENED);
+            $rootScope.$broadcast(EVENTS.FILTERS_OPENED, LIFECYCLE_STATUS);
         }
     }
 

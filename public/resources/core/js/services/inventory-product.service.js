@@ -36,7 +36,7 @@
             }
 
             if (filters.status) {
-                params['lifecycleStatus'] = filters.status;
+                params['status'] = filters.status;
             }
 
             resource.query(params, function (productList) {

@@ -30,6 +30,12 @@
             RETIRED: 'Retired',
             OBSOLETE: 'Obsolete'
         })
+        .constant('INVENTORY_STATUS', {
+            CREATED: 'Created',
+            ACTIVE: 'Active',
+            SUSPENDED: 'Suspended',
+            TERMINATED: 'Terminated'
+        })
         .constant('FILTER_STATUS', [
             {value: 'Active'},
             {value: 'Launched'},
