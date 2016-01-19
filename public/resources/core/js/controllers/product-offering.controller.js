@@ -288,7 +288,7 @@
         function update() {
             var updatedData = {};
 
-            for (var i = 0; i < pachable.hlength; i++) {
+            for (var i = 0; i < pachable.length; i++) {
                 if (initialData[pachable[i]] !== vm.data[pachable[i]]) {
                     updatedData[pachable[i]] = vm.data[pachable[i]];
                 }
