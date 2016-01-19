@@ -194,6 +194,7 @@ var jsAppFilesToInject = [
     'app.config',
     'app.filters',
     'app.directives',
+    'directives/product-offering.directives',
     'services/user.service',
     'services/payment.service',
     'services/product.service',

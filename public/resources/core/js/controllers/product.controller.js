@@ -18,7 +18,7 @@
         .controller('ProductCreateCtrl', ProductCreateController)
         .controller('ProductUpdateCtrl', ProductUpdateController);
 
-    function ProductSearchController($state, $rootScope, EVENTS, Product, Utils) {
+    function ProductSearchController($state, $rootScope, EVENTS, Product, LIFECYCLE_STATUS, Utils) {
         /* jshint validthis: true */
         var vm = this;
 
@@ -38,7 +38,7 @@
         });
 
         function showFilters() {
-            $rootScope.$broadcast(EVENTS.FILTERS_OPENED);
+            $rootScope.$broadcast(EVENTS.FILTERS_OPENED, LIFECYCLE_STATUS);
         }
     }
 

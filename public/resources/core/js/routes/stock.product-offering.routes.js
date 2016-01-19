@@ -37,6 +37,18 @@
                     url: '/:offeringId',
                     templateUrl: 'stock/product-offering/update',
                     controller: 'OfferingUpdateCtrl as updateVM'
+                })
+                .state('stock.offering.update.product', {
+                    url: '/product',
+                    templateUrl: 'stock/product-offering/update/product'
+                })
+                .state('stock.offering.update.pricing', {
+                    url: '/pricing',
+                    templateUrl: 'stock/product-offering/update/pricing'
+                })
+                .state('stock.offering.update.category', {
+                    url: '/category',
+                    templateUrl: 'stock/product-offering/update/category'
                 });
         }
     }

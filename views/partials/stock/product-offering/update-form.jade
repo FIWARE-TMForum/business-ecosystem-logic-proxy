@@ -50,6 +50,29 @@ form(name="updateVM.form", novalidate)
       | Description 
       small.text-muted optional
     textarea.form-control(rows="3", name="description", ng-model="updateVM.data.description")
+  .form-group(ng-show="updateVM.item.isBundle")
+    label Bundled Offerings
+    .table-responsive
+      table.table.table-bordered
+        thead
+          tr
+            th Status
+            th Name
+            th Type
+            th Updated
+        tbody
+          tr(ng-repeat="offering in updateVM.item.bundledProductOffering")
+            td
+              .status-item(class="status-{{ offering.lifecycleStatus | lowercase }}")
+                span.item-icon
+                span.item-text {{ offering.lifecycleStatus }}
+            th
+              a(ui-sref="stock.offering.update({ offeringId: offering.id })", ui-sref-opts="{ inherit: false }") {{ offering.name }}
+            td
+              span.label(ng-class="offering.isBundle ? 'label-bundle' : 'label-single'")
+                | {{ offering.isBundle ? 'Bundle' : 'Single' }}
+            td
+              time(am-time-ago="offering.lastUpdate")
   .form-group.text-right
     a.btn.btn-success(ng-click="updateVM.update()", ng-disabled="!updateVM.form.$valid")
       span.item-text Save changes

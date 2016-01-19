@@ -19,7 +19,7 @@
         .controller('OfferingDetailCtrl', OfferingDetailController)
         .controller('OfferingUpdateCtrl', OfferingUpdateController);
 
-    function OfferingSearchController($state, $rootScope, EVENTS, Offering, Utils) {
+    function OfferingSearchController($state, $rootScope, EVENTS, Offering, LIFECYCLE_STATUS, Utils) {
         /* jshint validthis: true */
         var vm = this;
 
@@ -39,7 +39,7 @@
         });
 
         function showFilters() {
-            $rootScope.$broadcast(EVENTS.FILTERS_OPENED);
+            $rootScope.$broadcast(EVENTS.FILTERS_OPENED, LIFECYCLE_STATUS);
         }
     }
 
@@ -263,12 +263,18 @@
         vm.updateStatus = updateStatus;
 
         vm.item = {};
+        vm.categoryBreadcrumbs = [];
 
         Offering.detail($state.params.offeringId).then(function (offeringRetrieved) {
             initialData = angular.copy(offeringRetrieved);
             vm.data = angular.copy(offeringRetrieved);
             vm.item = offeringRetrieved;
             vm.item.status = LOADED;
+
+            offeringRetrieved.getCategoryBreadcrumbs().then(function (breadcrumbs) {
+                vm.categoryBreadcrumbs = breadcrumbs;
+                vm.categoryBreadcrumbs.status = LOADED;
+            });
         }, function (reason) {
             vm.error = Utils.parseError(reason, 'The requested offering could not be retrieved');
             vm.item.status = ERROR;

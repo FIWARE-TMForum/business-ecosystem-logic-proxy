@@ -36,13 +36,17 @@
             }
 
             if (filters.status) {
-                params['lifecycleStatus'] = filters.status;
+                params['status'] = filters.status;
             }
 
             resource.query(params, function (productList) {
-                // Include offering with the product
-                var completeList = angular.copy(productList);
-                attachOfferingInfo(deferred, productList, completeList);
+                if (productList.length) {
+                    // Include offering with the product
+                    var completeList = angular.copy(productList);
+                    attachOfferingInfo(deferred, productList, completeList);
+                } else {
+                    deferred.resolve(productList);
+                }
             }, function (response) {
                 deferred.reject(response);
             });

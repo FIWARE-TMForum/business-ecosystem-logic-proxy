@@ -35,7 +35,7 @@
         });
     }
 
-    function CatalogueSearchController($state, $rootScope, EVENTS, Catalogue, Utils) {
+    function CatalogueSearchController($state, $rootScope, EVENTS, Catalogue, LIFECYCLE_STATUS, Utils) {
         /* jshint validthis: true */
         var vm = this;
 
@@ -55,7 +55,7 @@
         });
 
         function showFilters() {
-            $rootScope.$broadcast(EVENTS.FILTERS_OPENED);
+            $rootScope.$broadcast(EVENTS.FILTERS_OPENED, LIFECYCLE_STATUS);
         }
     }
 

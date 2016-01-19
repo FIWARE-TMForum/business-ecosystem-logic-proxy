@@ -16,7 +16,7 @@
         .module('app')
         .controller('InventorySearchCtrl', InventorySearchController);
 
-    function InventorySearchController($state, $rootScope, EVENTS, InventoryProduct, Utils) {
+    function InventorySearchController($state, $rootScope, EVENTS, InventoryProduct, INVENTORY_STATUS, Utils) {
         /* jshint validthis: true */
         var vm = this;
 
@@ -28,15 +28,15 @@
         vm.showFilters = showFilters;
 
         InventoryProduct.search($state.params).then(function (productList) {
-            angular.copy(productList, vm.list);
             vm.list.status = LOADED;
+            angular.copy(productList, vm.list);
         }, function (response) {
             vm.error = Utils.parseError(response, 'It was impossible to load the list of products');
             vm.list.status = ERROR;
         });
 
         function showFilters() {
-            $rootScope.$broadcast(EVENTS.FILTERS_OPENED);
+            $rootScope.$broadcast(EVENTS.FILTERS_OPENED, INVENTORY_STATUS);
         }
     }
 })();

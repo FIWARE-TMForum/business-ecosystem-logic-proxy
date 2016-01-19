@@ -10,7 +10,7 @@
         .form-group.no-user-select(ng-show="filterVM.exists('status')")
           label Status
           ul.list-group
-            li.list-group-item.item-checkbox(ng-repeat="(key, value) in STATUS")
+            li.list-group-item.item-checkbox(ng-repeat="(key, value) in filterVM.getStatusStates()")
               label.checkbox
                 .track
                   input(type="checkbox", value="{{ value }}", ng-checked="filterVM.checkboxChecked('status', value)", ng-click="filterVM.toggleCheckbox('status', value)")
