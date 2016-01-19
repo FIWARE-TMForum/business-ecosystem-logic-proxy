@@ -268,12 +268,18 @@
         vm.updateStatus = updateStatus;
 
         vm.item = {};
+        vm.categoryBreadcrumbs = [];
 
         Offering.detail($state.params.offeringId).then(function (offeringRetrieved) {
             initialData = angular.copy(offeringRetrieved);
             vm.data = angular.copy(offeringRetrieved);
             vm.item = offeringRetrieved;
             vm.item.status = LOADED;
+
+            offeringRetrieved.getCategoryBreadcrumbs().then(function (breadcrumbs) {
+                vm.categoryBreadcrumbs = breadcrumbs;
+                vm.categoryBreadcrumbs.status = LOADED;
+            });
         }, function (reason) {
             vm.error = parseError(reason, 'The requested offering could not be retrieved');
             vm.item.status = ERROR;

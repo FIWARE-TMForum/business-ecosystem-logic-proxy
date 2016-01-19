@@ -1390,6 +1390,7 @@ a.list-group-item > .badge-status {
 
 .item-product-logo {
     height: 180px;
+    min-width: 200px;
 }
 
 /* ===================================================================================
@@ -1430,4 +1431,10 @@ a.list-group-item > .badge-status {
 .item-offering-ordered .fa-close:hover {
     cursor: pointer;
     color: rgb(217, 83, 79);
+}
+
+.panel[offering-priceplan] {
+    position: relative;
+    width: 250px;
+    margin: 0 5px 15px;
 }

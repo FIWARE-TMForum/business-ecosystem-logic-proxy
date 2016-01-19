@@ -42,6 +42,14 @@
                         controller: 'OfferingDetailCtrl as detailVM'
                     }
                 }
+            })
+            .state('offering.detail.pricing', {
+                url: '/pricing',
+                views: {
+                    'offering-content': {
+                        templateUrl: 'offering/detail/pricing'
+                    }
+                }
             });
     }
 
