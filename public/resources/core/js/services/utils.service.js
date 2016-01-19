@@ -36,7 +36,7 @@
 
                 finalErrorMessage = type + ' - ' + message + ': ' + description;
 
-            } else if (typeof(data) === 'object' && 'error' in data) {
+            } else if (typeof(data) === 'object' && data !== null && 'error' in data) {
                 // JSON
                 finalErrorMessage = data['error'];
             }

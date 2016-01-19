@@ -39,8 +39,8 @@
                 message: message
             });
 
-            $timeout(function () {
-                hideAlert(length - 1);
+            vm.list[length - 1].hideTrigger = $timeout(function () {
+                hideAlert(0);
             }, 2500);
         }
 
@@ -61,7 +61,8 @@
         }
 
         function hideAlert(index) {
-            vm.list.splice(index, 1);
+            var item = vm.list.splice(index, 1)[0];
+            $timeout.cancel(item.hideTrigger);
         }
     }
 
