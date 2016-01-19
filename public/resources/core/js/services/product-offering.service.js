@@ -12,7 +12,7 @@
         .module('app')
         .factory('Offering', OfferingService);
 
-    function OfferingService($q, $resource, URLS, LIFECYCLE_STATUS, User, Product) {
+    function OfferingService($q, $resource, URLS, LIFECYCLE_STATUS, User, Product, Category) {
         var resource = $resource(URLS.CATALOGUE_MANAGEMENT + '/:catalogue/:catalogueId/productOffering/:offeringId', {
             offeringId: '@id'
         }, {
@@ -22,6 +22,7 @@
         });
 
         resource.prototype.getPicture = getPicture;
+        resource.prototype.getCategoryBreadcrumbs = getCategoryBreadcrumbs;
         resource.prototype.serialize = serialize;
 
         return {
@@ -251,6 +252,55 @@
         function getPicture() {
             /* jshint validthis: true */
             return this.productSpecification.getPicture();
+        }
+
+        function getCategoryBreadcrumbs() {
+            /* jshint validthis: true */
+            var deferred = $q.defer();
+            var breadcrumbs = [];
+
+            if (angular.isArray(this.category) && this.category.length) {
+                this.category.forEach(function (data, index, array) {
+                    Category.getBreadcrumbOf(data.id).then(function (breadcrumb) {
+                        breadcrumbs.push(breadcrumb);
+
+                        if (breadcrumbs.length === array.length) {
+                            deferred.resolve(filterBreadcrumbs());
+                        }
+                    });
+                });
+            } else {
+                deferred.resolve(breadcrumbs);
+            }
+
+            return deferred.promise;
+
+            function filterBreadcrumbs() {
+                var i, found;
+
+                for (i = breadcrumbs.length - 1; i >= 0; i--) {
+                    found = breadcrumbs.some(function (breadcrumb, index) {
+                        var j, flag = false;
+
+                        if (index !== i && breadcrumb.length > breadcrumbs[i].length) {
+                            flag = true;
+                            for (j = 0; j < breadcrumbs[i].length && flag; j++) {
+                                if (breadcrumbs[i][j].id !== breadcrumb[j].id) {
+                                    flag = false;
+                                }
+                            }
+                        }
+
+                        return flag;
+                    });
+
+                    if (found) {
+                        breadcrumbs.splice(i, 1);
+                    }
+                }
+
+                return breadcrumbs;
+            }
         }
     }
 

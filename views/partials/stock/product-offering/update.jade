@@ -12,6 +12,18 @@
               a(ui-sref="stock.offering.update")
                 span.item-icon.fa.fa-newspaper-o
                 span.item-text.hidden-xs About
+            li(ui-sref-active-eq="active")
+              a(ui-sref="stock.offering.update.product")
+                span.item-icon.fa.fa-file
+                span.item-text.hidden-xs Product Spec.
+            li(ui-sref-active-eq="active")
+              a(ui-sref="stock.offering.update.pricing")
+                span.item-icon.fa.fa-credit-card
+                span.item-text.hidden-xs Price Plans
+            li(ui-sref-active-eq="active")
+              a(ui-sref="stock.offering.update.category")
+                span.item-icon.fa.fa-tag
+                span.item-text.hidden-xs Categories
       .col-xs-12
         ui-view
           .panel.panel-default(ng-controller="FormWizardCtrl as updateForm")

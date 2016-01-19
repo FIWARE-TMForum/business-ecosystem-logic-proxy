@@ -1,0 +1,11 @@
+.row
+  .col-xs-12(ng-switch="updateVM.categoryBreadcrumbs.status")
+    .container-spinner(ng-switch-default)
+      span.fa.fa-spinner.fa-spin.fa-2x
+    div(ng-switch-when="LOADED", ng-switch="updateVM.categoryBreadcrumbs.length")
+      .alert.alert-info.text-center(ng-switch-when="0") No categories found.
+      .btn-toolbar(ng-switch-default, ng-repeat="breadcrumb in updateVM.categoryBreadcrumbs")
+        .btn-group.btn-group-responsive
+          a.btn.btn-default(ng-repeat="category in breadcrumb", ng-class="{ 'active': $last }")
+            span.item-icon.fa.fa-tag
+            span.item-text {{ category.name }}
