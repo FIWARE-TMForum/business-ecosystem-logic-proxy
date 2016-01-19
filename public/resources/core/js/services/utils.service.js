@@ -1,6 +1,7 @@
 /**
- * Created by aitor on 19/01/16.
+ * @author Aitor Magán <amagan@conwet.com>
  */
+
 
 (function () {
 
