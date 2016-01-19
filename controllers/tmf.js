@@ -20,6 +20,14 @@ var tmf = (function() {
     apiControllers[config.endpoints.inventory.path] = inventory;
     apiControllers[config.endpoints.charging.path] = charging;
 
+    var getAPIPath = function(accessedUrl) {
+        return url.parse(accessedUrl).path.substring(config.proxyPrefix.length);
+    };
+
+    var getAPIName = function(apiPath) {
+        return apiPath.split('/')[1];
+    };
+
     var sendError = function(res, err) {
 
         var status = err.status;
@@ -41,17 +49,17 @@ var tmf = (function() {
         }
 
         var protocol = config.appSsl ? 'https' : 'http';
-        var path = req.url.substr(config.proxyPrefix.length);
+        var api = getAPIName(req.apiPath);
 
         var options = {
             host: config.appHost,
-            port: utils.getAppPort(req),
-            path: path,
+            port: utils.getAPIPort(api),
+            path: req.apiPath,
             method: req.method,
             headers: utils.proxiedRequestHeaders(req)
         };
 
-        var api = url.parse(req.url).path.split('/')[1];
+        // The proxy prefix must be removed!!
         var postAction = null;
 
         if (apiControllers[api] !== undefined && apiControllers[api].executePostValidation) {
@@ -74,7 +82,8 @@ var tmf = (function() {
 
     var checkPermissions = function(req, res) {
 
-        var api = url.parse(req.url).path.split('/')[1];
+        req.apiPath = getAPIPath(req.url);
+        var api = getAPIName(req.apiPath);
 
         if (apiControllers[api] === undefined) {
             sendError(res, {

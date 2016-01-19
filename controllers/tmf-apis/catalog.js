@@ -211,11 +211,11 @@ var catalog = (function() {
             return; // EXIT
         }
 
-        if (req.url.indexOf('productOffering') > -1) {
+        if (req.apiPath.indexOf('productOffering') > -1) {
 
-            validateOffering(req.user, req.url, null, body, callback);
+            validateOffering(req.user, req.apiPath, null, body, callback);
 
-        } else if (req.url.indexOf('productSpecification') > -1) {
+        } else if (req.apiPath.indexOf('productSpecification') > -1) {
 
             // Check that the product specification contains a valid product
             // according to the charging backed
@@ -310,7 +310,7 @@ var catalog = (function() {
 
         // Retrieve the resource to be updated or removed
         var errorMessage = 'The TMForum APIs fails to retrieve the object you are trying to update/delete';
-        retrieveAsset(req.url, errorMessage, function(err, result) {
+        retrieveAsset(req.apiPath, errorMessage, function(err, result) {
 
             if (err) {
                 callback(err, result);
@@ -321,25 +321,25 @@ var catalog = (function() {
                     var parsedBody = emptyObject(req.body) ? null : JSON.parse(req.body);
                     var previousBody = JSON.parse(result.body);
 
-                    if (offeringsPattern.test(req.url)) {
+                    if (offeringsPattern.test(req.apiPath)) {
 
-                        validateOffering(req.user, req.url, previousBody, parsedBody, callback);
+                        validateOffering(req.user, req.apiPath, previousBody, parsedBody, callback);
 
                     } else {
 
                         if (tmfUtils.isOwner(req.user, previousBody)) {
 
-                            if (catalogsPattern.test(req.url)) {
+                            if (catalogsPattern.test(req.apiPath)) {
 
                                 // Retrieve all the offerings contained in the catalog
-                                var slash = req.url.endsWith('/') ? '' : '/';
-                                var offeringsInCatalogPath = req.url + slash + 'productOffering';
+                                var slash = req.apiPath.endsWith('/') ? '' : '/';
+                                var offeringsInCatalogPath = req.apiPath + slash + 'productOffering';
 
                                 validateInvolvedOfferingsState('catalog', parsedBody, offeringsInCatalogPath, callback);
 
-                            } else if (productsPattern.test(req.url)) {
+                            } else if (productsPattern.test(req.apiPath)) {
 
-                                var url = req.url;
+                                var url = req.apiPath;
 
                                 if (url.endsWith('/')) {
                                     url = url.slice(0, -1);
@@ -348,8 +348,8 @@ var catalog = (function() {
                                 var urlParts = url.split('/');
                                 var productId = urlParts[urlParts.length - 1];
 
-                                var productSpecificationPos = req.url.indexOf('/productSpecification');
-                                var baseUrl = req.url.substring(0, productSpecificationPos);
+                                var productSpecificationPos = req.apiPath.indexOf('/productSpecification');
+                                var baseUrl = req.apiPath.substring(0, productSpecificationPos);
 
                                 var offeringsContainProductPath = baseUrl + '/productOffering?productSpecification.id=' + productId;
 
