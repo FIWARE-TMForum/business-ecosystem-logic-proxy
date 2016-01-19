@@ -78,6 +78,15 @@ form(name="step.form", novalidate)
             td {{ createVM.catalogue.getRoleOf(user.id) }}
             td
               time(am-time-ago="createVM.catalogue.lastUpdate")
+  .form-group(ng-show="createVM.categoryBreadcrumbs.length")
+    label Categories
+    .btn-toolbar(ng-repeat="breadcrumb in createVM.categoryBreadcrumbs")
+      .btn-group.btn-group-responsive
+        a.btn.btn-default
+          span.item-icon.fa.fa-tags
+        a.btn.btn-default(ng-repeat="category in breadcrumb", ng-class="{ 'active': $last }")
+          span.item-icon.fa.fa-tag
+          span.item-text {{ category.name }}
   .row
     .col-sm-12
       label Pricing models

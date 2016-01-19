@@ -37,7 +37,7 @@
     function InventoryController($state) {
 
         if ($state.is('inventory')) {
-            $state.go('inventory.order');
+            $state.go('inventory.product');
         }
     }
 

@@ -121,4 +121,18 @@ describe('TMF Utils', function() {
             done();
         });
     });
+
+    it('should call the callback with a 405 error message', function(done) {
+        var tmfutils = getTmfUtils();
+        var req = {
+            method: 'DELETE'
+        };
+
+        tmfutils.methodNotAllowed(req, function(err) {
+            expect(err).not.toBe(null);
+            expect(err.status).toBe(405);
+            expect(err.message).toBe('The HTTP method DELETE is not allowed in the accessed API');
+            done();
+        })
+    });
 });

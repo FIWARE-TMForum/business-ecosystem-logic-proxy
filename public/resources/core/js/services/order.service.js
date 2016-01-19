@@ -26,6 +26,8 @@
                     order: orderCreated,
                     headers:getResponseHeaders()
                 });
+            }, function (response) {
+                deferred.reject(response);
             });
 
             return deferred.promise;

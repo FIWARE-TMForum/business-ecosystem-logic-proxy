@@ -151,6 +151,8 @@ html(ng-app="app")
       include ./partials/stock/product-offering/create-form-product.jade
     script(type="text/ng-template", id="stock/product-offering/create/catalogue")
       include ./partials/stock/product-offering/create-form-catalogue.jade
+    script(type="text/ng-template", id="stock/product-offering/create/categories")
+      include ./partials/stock/product-offering/create-form-categories.jade
     script(type="text/ng-template", id="stock/product-offering/create/finish")
       include ./partials/stock/product-offering/create-form-finish.jade
     script(type="text/ng-template", id="stock/product-offering/update")
@@ -174,9 +176,9 @@ html(ng-app="app")
     script(type="text/ng-template", id="inventory/sidebar")
       include ./partials/inventory/sidebar.jade
     script(type="text/ng-template", id="inventory/order/search")
-      include ./partials/inventory/order.search.jade
+      include partials/inventory/order/search
     script(type="text/ng-template", id="inventory/product/search")
-      include ./partials/inventory/product.search.jade
+      include partials/inventory/product/search
 
     script(type="text/ng-template", id="shopping-cart/list")
-      include ./partials/shopping-cart/list.jade
+      include partials/shopping-cart/create

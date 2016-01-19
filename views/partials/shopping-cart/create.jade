@@ -1,0 +1,112 @@
+ui-view
+  .row
+    .col-xs-12
+      .panel.panel-default
+        .panel-heading
+          strong.text-uppercase New Order
+        .panel-body
+          form(name="order.form", novalidate)
+            .row
+              .col-xs-12
+                .form-group
+                  label
+                    | Description 
+                    small.text-muted optional
+                  textarea.form-control(rows="3", name="description", ng-model="orderVM.orderInfo.description")
+            .row
+              .col-xs-6
+                .form-group
+                  label
+                    | External ID 
+                    small.text-muted optional
+                  input.form-control(
+                    type="text"
+                    name="ext-id"
+                    ng-model="orderVM.orderInfo.externalId"
+                  )
+              .col-xs-6
+                .form-group
+                  label
+                    | Notification Contact 
+                    small.text-muted optional
+                  input.form-control(
+                    type="email"
+                    name="contact"
+                    ng-model="orderVM.orderInfo.notificationContact"
+                  )
+            .row
+              .col-xs-12
+                .form-group
+                  label
+                    | Note 
+                    small.text-muted optional
+                  textarea.form-control(rows="3", name="note")
+            .row
+              .col-xs-12
+                .form-group
+                  label Order Items
+
+            .panel-group(ng-repeat="item in orderVM.orderInfo.orderItem", role="tablist", aria-multiselectable="true", id="accordion-{{item.id}}",)
+              .panel.panel-default.second-level
+                .panel-heading(ng-click="orderVM.toggleCollapse(item.id)", role="tab")
+                  h4.panel-title
+                    a( role="button", data-toggle="collapse" data-parent="#accordion" data-taget="{{ item.id }}", aria-expanded="false" aria-controls="{{ item.id }}")
+                      | {{ item.productOffering.name }}
+                      span.pull-right
+                        | {{ item.product.productPrice[0].price.amount }} {{item.product.productPrice[0].price.currency}}
+                .panel-collapse.collapse(id="{{ item.id }}", role="tabpanel", aria-expanded="false", style="height: 0px;")
+                  .panel-body
+                    .row
+                      .col-xs-12
+                        .form-group
+                          label.text-muted Href
+                          input.form-control(
+                            type="url"
+                            ng-model="item.productOffering.href"
+                            readonly
+                          )
+
+                    .row
+                      .col-xs-12
+                        label.text-muted Pricing
+                        table.table.table-bordered.table-responsive
+                          thead
+                            tr
+                              th Name
+                              th Type
+                              th Unit
+                              th Price
+                              th Currency
+                          tbody
+                            tr
+                              td
+                                span {{ item.product.productPrice[0].name }}
+                              td
+                                span {{ item.product.productPrice[0].priceType }}
+                              td(ng-if="item.product.productPrice[0].priceType == 'one time'")
+                                span {{ item.product.productPrice[0].priceType }}
+                              td(ng-if="item.product.productPrice[0].priceType == 'recurring'")
+                                span {{ item.product.productPrice[0].recurringChargePeriod }}
+                              td(ng-if="item.product.productPrice[0].priceType == 'usage'")
+                                span {{ item.product.productPrice[0].unitOfMeasure }}
+                              td
+                                span {{ item.product.productPrice[0].price.amount }}
+                              td
+                                span {{ item.product.productPrice[0].price.currency }}
+                    .row(ng-show="item.product.productCharacteristic.length")
+                      .col-xs-12
+                        label.text-muted Characteristics
+                        table.table.table-bordered.table-responsive
+                          thead
+                            tr
+                              th Name
+                              th Value
+                          tbody
+                            tr(ng-repeat="char in item.product.productCharacteristic")
+                              td
+                                span {{ char.name }}
+                              td
+                                span {{ char.value }}
+            .form-group.text-right
+              a.btn.btn-success(ng-disabled="!order.form.$valid", ng-click="orderVM.makeOrder()")
+                span.item-text Create
