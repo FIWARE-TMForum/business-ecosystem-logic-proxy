@@ -1,9 +1,11 @@
 .container-flex
   .panel.panel-default.item-product(ng-repeat="product in searchVM.list")
-    .panel-heading
+    .panel-heading(
+        ui-sref="stock.product.update({ productId: product.id })",
+        ui-sref-opts="{ inherit: false }")
       .thumbnail.item-product-logo
         img(no-image, ng-src="{{ product.getPicture() }}")
-      a.h4(ui-sref="stock.product.update({ productId: product.id })", ui-sref-opts="{ inherit: false }") {{ product.name }}
+      a.h4 {{ product.name }}
     .panel-body
       p.text-muted
         span v{{ product.version }}
