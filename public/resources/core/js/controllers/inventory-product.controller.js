@@ -33,8 +33,8 @@
         vm.showFilters = showFilters;
 
         InventoryProduct.search($state.params).then(function (productList) {
-            angular.copy(productList, vm.list);
             vm.list.status = LOADED;
+            angular.copy(productList, vm.list);
         }, function (response) {
             vm.error = parseError(response, 'It was impossible to load the list of products');
             vm.list.status = ERROR;
