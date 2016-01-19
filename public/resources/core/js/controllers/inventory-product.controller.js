@@ -16,12 +16,7 @@
         .module('app')
         .controller('InventorySearchCtrl', InventorySearchController);
 
-    function parseError(response, defaultMessage) {
-        var data = response['data'];
-        return data !== null && 'error' in data ? data['error'] : defaultMessage;
-    }
-
-    function InventorySearchController($state, $rootScope, EVENTS, InventoryProduct) {
+    function InventorySearchController($state, $rootScope, EVENTS, InventoryProduct, Utils) {
         /* jshint validthis: true */
         var vm = this;
 
@@ -36,7 +31,7 @@
             angular.copy(productList, vm.list);
             vm.list.status = LOADED;
         }, function (response) {
-            vm.error = parseError(response, 'It was impossible to load the list of products');
+            vm.error = Utils.parseError(response, 'It was impossible to load the list of products');
             vm.list.status = ERROR;
         });
 

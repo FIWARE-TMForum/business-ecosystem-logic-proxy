@@ -17,12 +17,7 @@
         .controller('CategorySearchCtrl', CategorySearchController)
         .controller('CategoryCreateCtrl', CategoryCreateController);
 
-    function parseError(response, defaultMessage) {
-        var data = response['data'];
-        return data !== null && 'error' in data ? data['error'] : defaultMessage;
-    }
-
-    function CategorySearchController($state, Category, $rootScope, EVENTS) {
+    function CategorySearchController($state, Category, $rootScope, EVENTS, Utils) {
         /* jshint validthis: true */
         var vm = this;
 
@@ -38,7 +33,7 @@
             vm.list.status = ERROR;
 
             $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
-                error: parseError(response, 'It was impossible to load the list of categories')
+                error: Utils.parseError(response, 'It was impossible to load the list of categories')
             });
         });
 

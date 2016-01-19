@@ -19,12 +19,7 @@
         .controller('OfferingDetailCtrl', OfferingDetailController)
         .controller('OfferingUpdateCtrl', OfferingUpdateController);
 
-    function parseError(response, defaultMessage) {
-        var data = response['data'];
-        return data !== null && 'error' in data ? data['error'] : defaultMessage;
-    }
-
-    function OfferingSearchController($state, $rootScope, EVENTS, Offering) {
+    function OfferingSearchController($state, $rootScope, EVENTS, Offering, Utils) {
         /* jshint validthis: true */
         var vm = this;
 
@@ -39,7 +34,7 @@
             angular.copy(offeringList, vm.list);
             vm.list.status = LOADED;
         }, function (response) {
-            vm.error = parseError(response, 'It was impossible to load the list of offerings');
+            vm.error = Utils.parseError(response, 'It was impossible to load the list of offerings');
             vm.list.status = ERROR;
         });
 
@@ -48,7 +43,7 @@
         }
     }
 
-    function OfferingCreateController($state, $rootScope, EVENTS, Offering) {
+    function OfferingCreateController($state, $rootScope, EVENTS, Offering, Utils) {
         /* jshint validthis: true */
         var vm = this;
         var stepList = [
@@ -116,7 +111,7 @@
 
                 var defaultMessage = 'There was an unexpected error that prevented the ' +
                     'system from creating a new offering';
-                var error = parseError(response, defaultMessage);
+                var error = Utils.parseError(response, defaultMessage);
 
                 $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
                     error: error
@@ -243,7 +238,7 @@
         }
     }
 
-    function OfferingDetailController($state, Offering) {
+    function OfferingDetailController($state, Offering, Utils) {
         /* jshint validthis: true */
         var vm = this;
 
@@ -253,12 +248,12 @@
             vm.item = offeringRetrieved;
             vm.item.status = LOADED;
         }, function (response) {
-            vm.error = parseError(response, 'The requested offering could not be retrieved');
+            vm.error = Utils.parseError(response, 'The requested offering could not be retrieved');
             vm.item.status = ERROR;
         });
     }
 
-    function OfferingUpdateController($state, $rootScope, EVENTS, Offering) {
+    function OfferingUpdateController($state, $rootScope, EVENTS, Offering, Utils) {
         /* jshint validthis: true */
         var vm = this;
         var initialData = {};
@@ -275,7 +270,7 @@
             vm.item = offeringRetrieved;
             vm.item.status = LOADED;
         }, function (reason) {
-            vm.error = parseError(reason, 'The requested offering could not be retrieved');
+            vm.error = Utils.parseError(reason, 'The requested offering could not be retrieved');
             vm.item.status = ERROR;
         });
 
@@ -287,7 +282,7 @@
         function update() {
             var updatedData = {};
 
-            for (var i = 0; i < pachable.length; i++) {
+            for (var i = 0; i < pachable.hlength; i++) {
                 if (initialData[pachable[i]] !== vm.data[pachable[i]]) {
                     updatedData[pachable[i]] = vm.data[pachable[i]];
                 }
@@ -308,7 +303,7 @@
 
                 var defaultMessage = 'There was an unexpected error that prevented the ' +
                     'system from updating the given offering';
-                var error = parseError(response, defaultMessage);
+                var error = Utils.parseError(response, defaultMessage);
 
                 $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
                     error: error

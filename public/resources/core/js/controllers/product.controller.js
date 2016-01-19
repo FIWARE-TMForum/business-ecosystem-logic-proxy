@@ -18,12 +18,7 @@
         .controller('ProductCreateCtrl', ProductCreateController)
         .controller('ProductUpdateCtrl', ProductUpdateController);
 
-    function parseError(response, defaultMessage) {
-        var data = response['data'];
-        return data !== null && 'error' in data ? data['error'] : defaultMessage;
-    }
-
-    function ProductSearchController($state, $rootScope, EVENTS, Product) {
+    function ProductSearchController($state, $rootScope, EVENTS, Product, Utils) {
         /* jshint validthis: true */
         var vm = this;
 
@@ -38,7 +33,7 @@
             angular.copy(productList, vm.list);
             vm.list.status = LOADED;
         }, function (response) {
-            vm.error = parseError(response, 'It was impossible to load the list of products');
+            vm.error = Utils.parseError(response, 'It was impossible to load the list of products');
             vm.list.status = ERROR;
         });
 
@@ -47,7 +42,7 @@
         }
     }
 
-    function ProductCreateController($state, $rootScope, EVENTS, Product, Asset, AssetType) {
+    function ProductCreateController($state, $rootScope, EVENTS, Product, Asset, AssetType, Utils) {
         /* jshint validthis: true */
         var vm = this;
         var stepList = [
@@ -261,7 +256,7 @@
 
                 var defaultMessage = 'There was an unexpected error that prevented the ' +
                     'system from creating a new product';
-                var error = parseError(response, defaultMessage);
+                var error = Utils.parseError(response, defaultMessage);
 
                 $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
                     error: error
@@ -270,7 +265,7 @@
         }
     }
 
-    function ProductUpdateController($state, $rootScope, EVENTS, Product) {
+    function ProductUpdateController($state, $rootScope, EVENTS, Product, Utils) {
         /* jshint validthis: true */
         var vm = this;
 
@@ -284,7 +279,7 @@
             vm.item = productRetrieved;
             vm.item.status = LOADED;
         }, function (response) {
-            vm.error = parseError(response, 'The requested product could not be retrieved');
+            vm.error = Utils.parseError(response, 'The requested product could not be retrieved');
             vm.item.status = ERROR;
         });
 
@@ -308,7 +303,7 @@
 
                 var defaultMessage = 'There was an unexpected error that prevented the ' +
                     'system from updating the given product';
-                var error = parseError(response, defaultMessage);
+                var error = Utils.parseError(response, defaultMessage);
 
                 $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
                     error: error

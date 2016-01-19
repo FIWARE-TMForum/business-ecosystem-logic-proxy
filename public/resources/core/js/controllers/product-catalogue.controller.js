@@ -20,12 +20,7 @@
         .controller('CatalogueDetailCtrl', CatalogueDetailController)
         .controller('CatalogueUpdateCtrl', CatalogueUpdateController);
 
-    function parseError(response, defaultMessage) {
-        var data = response['data'];
-        return data !== null && 'error' in data ? data['error'] : defaultMessage;
-    }
-
-    function CatalogueListController(Catalogue) {
+    function CatalogueListController(Catalogue, Utils) {
         /* jshint validthis: true */
         var vm = this;
 
@@ -35,12 +30,12 @@
             angular.copy(catalogueList, vm.list);
             vm.list.status = LOADED;
         }, function (response) {
-            vm.error = parseError(response, 'It was impossible to load the list of catalogs');
+            vm.error = Utils.parseError(response, 'It was impossible to load the list of catalogs');
             vm.list.status = ERROR;
         });
     }
 
-    function CatalogueSearchController($state, $rootScope, EVENTS, Catalogue) {
+    function CatalogueSearchController($state, $rootScope, EVENTS, Catalogue, Utils) {
         /* jshint validthis: true */
         var vm = this;
 
@@ -55,7 +50,7 @@
             angular.copy(catalogueList, vm.list);
             vm.list.status = LOADED;
         }, function (response) {
-            vm.error = parseError(response, 'It was impossible to load the list of catalogs');
+            vm.error = Utils.parseError(response, 'It was impossible to load the list of catalogs');
             vm.list.status = ERROR;
         });
 
@@ -64,7 +59,7 @@
         }
     }
 
-    function CatalogueCreateController($state, $rootScope, EVENTS, Catalogue) {
+    function CatalogueCreateController($state, $rootScope, EVENTS, Catalogue, Utils) {
         /* jshint validthis: true */
         var vm = this;
         var stepList = [
@@ -96,7 +91,7 @@
 
                 var defaultMessage = 'There was an unexpected error that prevented the ' +
                     'system from creating a new catalog';
-                var error = parseError(response, defaultMessage);
+                var error = Utils.parseError(response, defaultMessage);
 
                 $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
                     error: error
@@ -105,7 +100,7 @@
         }
     }
 
-    function CatalogueDetailController($state, Catalogue) {
+    function CatalogueDetailController($state, Catalogue, Utils) {
         /* jshint validthis: true */
         var vm = this;
 
@@ -118,13 +113,13 @@
                 vm.item = catalogueRetrieved;
                 vm.item.status = LOADED;
             }, function (response) {
-                vm.error = parseError(response, 'The requested catalog could not be retrieved');
+                vm.error = Utils.parseError(response, 'The requested catalog could not be retrieved');
                 vm.item.status = ERROR;
             });
         }
     }
 
-    function CatalogueUpdateController($state, $rootScope, EVENTS, Catalogue) {
+    function CatalogueUpdateController($state, $rootScope, EVENTS, Catalogue, Utils) {
         /* jshint validthis: true */
         var vm = this;
 
@@ -138,7 +133,7 @@
             vm.item = catalogueRetrieved;
             vm.item.status = LOADED;
         }, function (response) {
-            vm.error = parseError(response, 'The requested catalog could not be retrieved');
+            vm.error = Utils.parseError(response, 'The requested catalog could not be retrieved');
             vm.item.status = ERROR;
         });
 
@@ -162,7 +157,7 @@
 
                 var defaultMessage = 'There was an unexpected error that prevented the ' +
                     'system from updating the given catalog';
-                var error = parseError(response, defaultMessage);
+                var error = Utils.parseError(response, defaultMessage);
 
                 $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
                     error: error
