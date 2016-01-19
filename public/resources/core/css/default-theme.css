@@ -964,10 +964,19 @@ textarea {
     background-color: rgb(090, 190, 220);
 }
 
+.status-group > .status-created.active:before,
 .status-group > .status-launched.active:before,
+
+.status-group > .status-created.active > .item-icon,
 .status-group > .status-launched.active > .item-icon,
+
+.status-group > .status-item.enabled + .status-created:before,
 .status-group > .status-item.enabled + .status-launched:before,
+
+.status-group > .status-item.enabled + .status-created > .item-icon,
 .status-group > .status-item.enabled + .status-launched > .item-icon,
+
+.status-created > .item-icon,
 .status-launched > .item-icon {
     background-color: rgb(090, 180, 090);
 }
