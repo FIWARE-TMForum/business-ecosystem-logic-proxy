@@ -11,6 +11,7 @@ var bodyParser = require('body-parser'),
     passport = require('passport'),
     tmf = require('./controllers/tmf').tmf,
     session = require('express-session'),
+    url = require('url'),
     utils = require('./lib/utils');
 
 
@@ -317,7 +318,12 @@ for (var p in config.publicPaths) {
     app.all(config.proxyPrefix + '/' + config.publicPaths[p], tmf.public);
 }
 
-app.all(config.proxyPrefix + '/*', headerAuthentication, tmf.checkPermissions);
+app.all(config.proxyPrefix + '/*', headerAuthentication, function(req, res) {
+
+    // The API path is the actual path that should be used to access the resource
+    req.apiPath = url.parse(req.url).path.substring(config.proxyPrefix.length);
+    tmf.checkPermissions(req, res);
+});
 
 
 /////////////////////////////////////////////////////////////////////

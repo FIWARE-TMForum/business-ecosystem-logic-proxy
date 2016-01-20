@@ -22,7 +22,8 @@ describe('HTTP Client', function() {
 
                 httpClient.request(protocol, options, null, function(err) {
                     expect(err.status).toBe(503);
-                    expect(JSON.parse(err.body).code).toBe('ECONNREFUSED');
+                    expect(JSON.parse(err.body).error).toBe('Service unreachable');
+                    //expect(JSON.parse(err.body).code).toBe('ECONNREFUSED');
                     done();
                 });
 
@@ -327,9 +328,10 @@ describe('HTTP Client', function() {
 
                     // Check the body
                     var body = JSON.parse(res.write.calls.argsFor(0)[0]);
-                    expect(body.code).toBe('ECONNREFUSED');
-                    expect(body.port).toBe(port);
-                    expect(body.address).toBe(localhost);
+                    expect(body.error).toBe('Service unreachable');
+                    //expect(body.code).toBe('ECONNREFUSED');
+                    //expect(body.port).toBe(port);
+                    //expect(body.address).toBe(localhost);
 
                     done();
                 }, 500);

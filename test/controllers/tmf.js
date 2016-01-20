@@ -49,9 +49,7 @@ describe('TMF Controller', function() {
 
     describe('public paths', function() {
 
-        var testPublic = function(protocol, method, proxyPrefix) {
-
-            proxyPrefix = proxyPrefix === undefined ? '' : proxyPrefix;
+        var testPublic = function(protocol, method) {
 
             // TMF API
             var httpClient = getDefaultHttpClient();
@@ -59,11 +57,10 @@ describe('TMF Controller', function() {
 
             // Depending on the desired protocol, the config.appSsl var has to be set up
             config.appSsl = protocol === 'https' ? true : false;
-            config.proxyPrefix = proxyPrefix;
             var path = '/example/url?a=b&c=d';
 
             var req = {
-                url: proxyPrefix + path,
+                apiPath: path,
                 body: 'This is an example',
                 method: method
             };
@@ -74,7 +71,7 @@ describe('TMF Controller', function() {
 
             var expectedOptions = {
                 host: config.appHost,
-                port: utils.getAppPort(),
+                port: utils.getAPIPort(),
                 path: path,
                 method: method,
                 headers: utils.proxiedRequestHeaders()
@@ -123,11 +120,6 @@ describe('TMF Controller', function() {
         it('should redirect HTTPS DELETE requests', function() {
             testPublic('https', 'DELETE');
         });
-
-        it('should redirect to the correct path if proxy path is not empty', function() {
-            testPublic('http', 'GET', '/proxy');
-        });
-
     });
 
     describe('check permissions', function() {
@@ -148,7 +140,7 @@ describe('TMF Controller', function() {
             var httpClient = getDefaultHttpClient();
             var tmf = getTmfInstance(httpClient);
 
-            var req = { 'url': 'http://example.com/nonexistingapi' };
+            var req = { 'apiPath': '/nonexistingapi' };
             var res = jasmine.createSpyObj('res', ['status', 'send', 'end']);
 
             tmf.checkPermissions(req, res);
@@ -172,7 +164,7 @@ describe('TMF Controller', function() {
             var tmf = getTmfInstance(httpClient, catalogController, orderingController, inventoryController);
 
             // Actual call
-            var req = { url: 'http://example.com/' + api };
+            var req = { apiPath: '/' + api };
             var res = jasmine.createSpyObj('res', ['status', 'send', 'end']);
             tmf.checkPermissions(req, res);
 
@@ -222,7 +214,7 @@ describe('TMF Controller', function() {
 
             // Actual call
             var req = { 
-                url: 'http://example.com/' + api, 
+                apiPath: '/' + api,
                 body: 'Example', 
                 method: method, 
                 user: {'id': 'user'}, 
@@ -236,8 +228,8 @@ describe('TMF Controller', function() {
 
                 var expectedOptions = {
                     host: config.appHost,
-                    port: utils.getAppPort(),
-                    path: req.url,
+                    port: utils.getAPIPort(),
+                    path: req.apiPath,
                     method: method,
                     headers: utils.proxiedRequestHeaders()
                 };
@@ -313,7 +305,7 @@ describe('TMF Controller', function() {
 
             // Actual call
             var req = {
-                url: 'http://example.com/ordering',
+                apiPath: '/ordering',
                 body: 'Example',
                 method: 'POST',
                 user: {'id': 'user'},

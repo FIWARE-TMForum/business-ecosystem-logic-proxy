@@ -20,10 +20,6 @@ var tmf = (function() {
     apiControllers[config.endpoints.inventory.path] = inventory;
     apiControllers[config.endpoints.charging.path] = charging;
 
-    var getAPIPath = function(accessedUrl) {
-        return url.parse(accessedUrl).path.substring(config.proxyPrefix.length);
-    };
-
     var getAPIName = function(apiPath) {
         return apiPath.split('/')[1];
     };
@@ -63,9 +59,12 @@ var tmf = (function() {
         var postAction = null;
 
         if (apiControllers[api] !== undefined && apiControllers[api].executePostValidation) {
+
             postAction = function(result, callback) {
+
                 result.user = req.user;
                 result.method = req.method;
+
                 apiControllers[api].executePostValidation(result, function(err, retRes) {
                     if (err) {
                         sendError(res, err);
@@ -74,7 +73,6 @@ var tmf = (function() {
                     }
                 });
             }
-
         }
 
         httpClient.proxyRequest(protocol, options, req.body, res, postAction);
@@ -82,7 +80,6 @@ var tmf = (function() {
 
     var checkPermissions = function(req, res) {
 
-        req.apiPath = getAPIPath(req.url);
         var api = getAPIName(req.apiPath);
 
         if (apiControllers[api] === undefined) {

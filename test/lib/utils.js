@@ -91,23 +91,18 @@ describe('Utils', function() {
         })
     });
 
-    describe('Get App Port', function() {
+    describe('Get API Port', function() {
 
-        var testgetAppPort = function(path, expectedPort) {            
-            var port = utils.getAppPort({url: path});
+        var testgetAPIPort = function(api, expectedPort) {
+            var port = utils.getAPIPort(api);
             expect(port).toBe(expectedPort);
-
-        }
+        };
 
         // Execute tests for all the registerd APIs
         for (var api in config.endpoints) {
             
-            it('should return correct port for ' + api + ' API when subpath not included', function() {
-                testgetAppPort('/' + config.endpoints[api].path + '/', config.endpoints[api].port);
-            });
-
-            it('should return correct port for ' + api + ' API when subpath included', function() {
-                testgetAppPort('/' + config.endpoints[api].path + '/api/', config.endpoints[api].port);
+            it('should return correct port for ' + api, function() {
+                testgetAPIPort(api, config.endpoints[api].port);
             });
         }
     });
