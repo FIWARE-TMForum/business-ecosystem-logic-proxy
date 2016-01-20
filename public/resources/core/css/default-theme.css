@@ -1377,6 +1377,11 @@ a.list-group-item > .badge-status {
     margin: 0 5px 15px;
 }
 
+.item-product > .panel-heading:hover {
+    cursor: pointer;
+    background-color: rgb(250, 250, 250);
+}
+
 /* ===================================================================================
  *   COMPONENT - ITEM OFFERING
  * =================================================================================== */

@@ -1,17 +1,19 @@
 .container-flex
-   .panel.panel-default.item-product(ng-repeat="product in searchVM.list")
-      .panel-heading
-         .thumbnail.item-product-logo
-            img(no-image, ng-src="{{ product.productOffering.getPicture() }}")
-         a.h4(ui-sref="inventory.product.detail({ productId: product.id })", ui-sref-opts="{ inherit: false }") {{ product.productOffering.name }}
-      .panel-body
-         p.text-muted
-            span v{{ product.productOffering.version }}
-            span.pull-right
-               time(am-time-ago="product.orderDate")
+  .panel.panel-default.item-product(ng-repeat="product in searchVM.list")
+    .panel-heading(
+        ui-sref="inventory.product.detail({ productId: product.id })",
+        ui-sref-opts="{ inherit: false }")
+      .thumbnail.item-product-logo
+        img(no-image, ng-src="{{ product.productOffering.getPicture() }}")
+      a.h4 {{ product.productOffering.name }}
+    .panel-body
+      p.text-muted
+        span v{{ product.productOffering.version }}
+        span.pull-right
+          time(am-time-ago="product.orderDate")
 
-         .status-group
-            .status-item.active(class="status-{{ product.status | lowercase }}")
-               span.item-icon
-               span.item-text {{ product.status }}
+      .status-group
+        .status-item.active(class="status-{{ product.status | lowercase }}")
+          span.item-icon
+          span.item-text {{ product.status }}
 
