@@ -12,7 +12,7 @@
 
     function AcquireOptionsController($scope, $rootScope, $element, EVENTS, Product) {
         var vm = this;
-        var options = {};
+        var options;
         var nonConf;
 
         vm.pricingModels = [];
@@ -48,9 +48,6 @@
         };
 
         vm.setCharacteristicValue = function(char, value) {
-            if (!options.characteristics) {
-                options.characteristics = [];
-            }
 
             var index = getIndexOfChar(char);
             if (index > -1) {
@@ -76,7 +73,7 @@
             vm.tab = 1;
             vm.confChars = [];
             vm.pricingModels = [];
-            options = {};
+            options = { characteristics: [] };
             nonConf = 0;
 
             Product.detail(vm.offering.productSpecification.id).then(function(productInfo) {
