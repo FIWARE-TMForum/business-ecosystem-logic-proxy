@@ -19,12 +19,12 @@ html(ng-app="app")
       angular.module('app')
         .constant('URLS', {
           IMAGE: '#{ contextPath }/resources/core/images',
-          USER: '#{ proxyPath }/charging/api/userManagement/users/:username',
-          ASSET_MANAGEMENT: '#{ proxyPath }/charging/api/assetManagement',
-          CATALOGUE_MANAGEMENT: '#{ proxyPath }/DSProductCatalog/api/catalogManagement/v2',
-          ORDERING: '#{ proxyPath }/DSProductOrdering/api/productOrdering/v2',
-          INVENTORY: '#{ proxyPath }/DSProductInventory/api/productInventory/v2',
-          PAYMENT: '#{ proxyPath }/charging/api/orderManagement/orders/:action'
+          USER: '#{ proxyPath }/#{ chargingPath }/api/userManagement/users/:username',
+          ASSET_MANAGEMENT: '#{ proxyPath }/#{ chargingPath }/api/assetManagement',
+          CATALOGUE_MANAGEMENT: '#{ proxyPath }/#{ catalogPath }/api/catalogManagement/v2',
+          ORDERING: '#{ proxyPath }/#{ orderingPath }/api/productOrdering/v2',
+          INVENTORY: '#{ proxyPath }/#{ inventoryPath }/api/productInventory/v2',
+          PAYMENT: '#{ proxyPath }/#{ chargingPath }/api/orderManagement/orders/:action'
         });
 
     if user
