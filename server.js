@@ -282,6 +282,7 @@ var headerAuthentication = function(req, res, next) {
                     utils.sendUnauthorized(res, 'The auth-token scope is not valid for the current application');
                 } else {
                     req.user = userProfile;
+                    req.user.accessToken = authToken;
                     next();
                 }
             }

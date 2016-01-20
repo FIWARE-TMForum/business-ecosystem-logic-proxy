@@ -1411,14 +1411,14 @@ a.list-group-item > .badge-status {
     position: relative;
 }
 .icon-shopping-cart .badge {
-        position: absolute;
+    position: absolute;
     font-size: 80%;
     top: -6px;
     left: 0;
     padding: 2px 5px;
     /* right: 3px; */
     color: rgb(255, 255, 255);
-        background-color: rgb(90, 185, 90);
+    background-color: rgb(90, 185, 90);
     text-align: center;
     transform: translate(-50%, 0%);
     left: 55%;
