@@ -9,8 +9,9 @@ var bodyParser = require('body-parser'),
     https = require('https'),
     log = require('./lib/logger').logger.getLogger("Server"),
     passport = require('passport'),
-    tmf = require('./controllers/tmf').tmf,
     session = require('express-session'),
+    shoppingCart = require('./controllers/shoppingCart').shoppingCart,
+    tmf = require('./controllers/tmf').tmf,
     url = require('url'),
     utils = require('./lib/utils');
 
@@ -245,6 +246,7 @@ var renderTemplate = function(req, res, viewName) {
         orderingPath: config.endpoints.ordering.path,
         inventoryPath: config.endpoints.inventory.path,
         chargingPath: config.endpoints.charging.path,
+        shoppingCartPath: config.shoppingCartPath,
         rssPath: config.endpoints.rss.path,
         cssFilesToInject: cssFilesToInject,
         jsDepFilesToInject: jsDepFilesToInject,
@@ -262,6 +264,7 @@ app.get(config.portalPrefix + '/', function(req, res) {
 app.get(config.portalPrefix + '/payment', ensureAuthenticated, function(req, res) {
     renderTemplate(req, res, 'app-payment');
 });
+
 
 /////////////////////////////////////////////////////////////////////
 //////////////////////////////// APIs ///////////////////////////////
@@ -329,6 +332,17 @@ app.all(config.proxyPrefix + '/*', headerAuthentication, function(req, res) {
     req.apiPath = url.parse(req.url).path.substring(config.proxyPrefix.length);
     tmf.checkPermissions(req, res);
 });
+
+
+/////////////////////////////////////////////////////////////////////
+/////////////////////////// SHOPPING CART ///////////////////////////
+/////////////////////////////////////////////////////////////////////
+
+app.get(config.shoppingCartPath + '/item/', headerAuthentication, ensureAuthenticated, shoppingCart.getCart);
+app.get(config.shoppingCartPath + '/item/:id', headerAuthentication, ensureAuthenticated, shoppingCart.getItem);
+app.delete(config.shoppingCartPath + '/item/:id', headerAuthentication, ensureAuthenticated, shoppingCart.remove);
+app.post(config.shoppingCartPath + '/item/:id', headerAuthentication, ensureAuthenticated, shoppingCart.add);
+app.post(config.shoppingCartPath + '/empty', headerAuthentication, ensureAuthenticated, shoppingCart.empty);
 
 
 /////////////////////////////////////////////////////////////////////
