@@ -2,6 +2,7 @@
 /**
  * @author Francisco de la Vega <fdelavega@conwet.com>
  *         Jaime Pajuelo <jpajuelo@conwet.com>
+ *         Aitor Magán <amagan@conwet.com>
  */
 
 (function () {
@@ -12,52 +13,70 @@
         .module('app')
         .factory('ShoppingCart', ShoppingCartService);
 
-    function ShoppingCartService() {
-        var orderItems = [];
+    function ShoppingCartService($q, $resource, URLS) {
 
-        var getIndexOf = function getIndexOf(item) {
-            var i, index = -1;
-
-            for (i = 0; i < orderItems.length && index === -1; i++) {
-                if (orderItems[i].id === item.id) {
-                    index = i;
-                }
-            }
-
-            return index;
-        };
+        var resource = $resource(URLS.SHOPPING_CART, {
+            id: '@id',
+            action: '@action'
+        });
 
         return {
-            containsItem: containsItem,
             addItem: addItem,
             removeItem: removeItem,
             getItems: getItems,
             cleanItems: cleanItems
         };
 
-
-        function containsItem(item) {
-            return getIndexOf(item) !== -1;
-        }
-
         function addItem(item) {
-            if (!containsItem(item)) {
-                orderItems.push(item);
-            }
+
+            var deferred = $q.defer();
+
+            resource.save({ action: 'item', id: item.id }, item, function () {
+                deferred.resolve({});
+            }, function (response) {
+                deferred.reject(response);
+            });
+
+            return deferred.promise;
         }
 
         function removeItem(item) {
-            if (containsItem(item)) {
-                orderItems.splice(getIndexOf(item), 1);
-            }
+
+            var deferred = $q.defer();
+
+            resource.delete({ action: 'item', id: item.id }, function () {
+                deferred.resolve({});
+            }, function (response) {
+                deferred.reject(response);
+            });
+
+            return deferred.promise;
         }
 
         function getItems() {
-            return orderItems;
+
+            var deferred = $q.defer();
+
+            resource.query({ action: 'item' }, function (items) {
+                deferred.resolve(items);
+            }, function (response) {
+                deferred.reject(response);
+            });
+
+            return deferred.promise;
         }
 
         function cleanItems() {
-            orderItems = [];
+
+            var deferred = $q.defer();
+
+            resource.delete({ action: 'empty' }, function () {
+                deferred.resolve({});
+            }, function (response) {
+                deferred.reject(response);
+            });
+
+            return deferred.promise;
         }
     }
 })();

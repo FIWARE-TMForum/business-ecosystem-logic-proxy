@@ -1,11 +1,19 @@
 /**
  * @author Francisco de la Vega <fdelavega@conwet.com>
  *         Jaime Pajuelo <jpajuelo@conwet.com>
+*          Aitor Magán <amagan@conwet.com>
  */
 
 (function () {
 
     'use strict';
+
+    var LOADING = 'LOADING';
+    var LOADED = 'LOADED';
+    var ERROR = 'ERROR';
+
+    // Cache to avoid asking the server if the item is contained or not several times
+    var shoppingCartCache = [];
 
     angular
         .module('app')
@@ -13,9 +21,10 @@
         .controller('UserProfileCtrl', UserProfileController)
         .controller('UserShoppingCartCtrl', UserShoppingCartController);
 
-    function UserController($scope, $rootScope, EVENTS, LIFECYCLE_STATUS, FILTER_STATUS, User, ShoppingCart) {
+    function UserController($scope, $rootScope, EVENTS, LIFECYCLE_STATUS, FILTER_STATUS, User) {
         /* jshint validthis: true */
         var vm = this;
+        vm.itemsContained = {};
 
         $scope.STATUS = LIFECYCLE_STATUS;
         $scope.FILTER_STATUS = FILTER_STATUS;
@@ -30,7 +39,7 @@
         vm.showProfile = showProfile;
         vm.isAuthenticated = isAuthenticated;
 
-        $scope.$on("$stateChangeSuccess", function (event, toState) {
+        $scope.$on('$stateChangeSuccess', function (event, toState) {
             $scope.title = toState.data.title;
         });
 
@@ -39,7 +48,14 @@
         }
 
         function contains(offering) {
-            return ShoppingCart.containsItem(offering);
+
+            var found = false;
+
+            for (var i = 0; i < shoppingCartCache.length && !found; i++) {
+                found = offering.id == shoppingCartCache[i].id;
+            }
+
+            return found;
         }
 
         function order(offering) {
@@ -94,24 +110,91 @@
         });
     }
 
-    function UserShoppingCartController($scope, EVENTS, ShoppingCart) {
+    function UserShoppingCartController($rootScope, $scope, EVENTS, ShoppingCart, Utils) {
         /* jshint validthis: true */
         var vm = this;
 
+        vm.list = shoppingCartCache;
         vm.remove = remove;
-        vm.getItems = getItems;
 
         $scope.$on(EVENTS.OFFERING_CONFIGURED, function (event, offering) {
-            ShoppingCart.addItem(offering);
+
+            ShoppingCart.addItem(offering).then(function () {
+
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {
+                    message: 'The offering <strong>' + offering.name + '</strong> was added to your cart.'
+                });
+
+                // The list of items in the cart can be updated now!
+                updateItemsList();
+
+            }, function (response) {
+
+                var defaultError = 'There was an error that prevented from adding the offering ' +  offering.name +
+                    ' to your cart.';
+
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                    error: Utils.parseError(response, defaultError)
+                });
+
+                // Update cache - The requests has probably failed because the cache is invalid
+                updateItemsList();
+
+            });
         });
 
         function remove(offering) {
-            ShoppingCart.removeItem(offering);
+            ShoppingCart.removeItem(offering).then(function() {
+
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {
+                    message: 'The offering <strong>' + offering.name + '</strong> was removed to your cart.'
+                });
+
+                // The list of items in the cart can be updated now!
+                updateItemsList();
+
+            }, function (response) {
+
+                var defaultError = 'There was an error that prevented from removing the offering ' + offering.name +
+                    ' to your cart.';
+
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                    error: Utils.parseError(response, defaultError)
+                });
+
+                // Update cache - The requests has probably failed because the cache is invalid
+                updateItemsList();
+            });
         }
 
-        function getItems() {
-            return ShoppingCart.getItems();
+        function updateItemsList(showLoadError) {
+
+            vm.list.status = LOADING;
+
+            ShoppingCart.getItems().then(function (items) {
+
+                vm.list.splice(0, vm.list.length);  // Empty the list
+                vm.list.push.apply(vm.list, items);
+                vm.list.status = LOADED;
+
+            }, function (response) {
+
+                vm.list.splice(0, vm.list.length);
+                vm.list.status = ERROR;
+
+                if (showLoadError) {
+
+                    var defaultError = 'There was an error while loading your shopping cart.';
+
+                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                        error: Utils.parseError(response, defaultError)
+                    });
+                }
+            });
         }
+
+        // Init the list of items
+        updateItemsList(true);
     }
 
 })();
