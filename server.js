@@ -8,6 +8,7 @@ var bodyParser = require('body-parser'),
     fs = require('fs'),
     https = require('https'),
     log = require('./lib/logger').logger.getLogger("Server"),
+    mongoose = require('mongoose'),
     passport = require('passport'),
     session = require('express-session'),
     shoppingCart = require('./controllers/shoppingCart').shoppingCart,
@@ -79,6 +80,34 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
 
 /////////////////////////////////////////////////////////////////////
+////////////////////////// MONGOOSE CONFIG //////////////////////////
+/////////////////////////////////////////////////////////////////////
+
+var mongoCredentials = '';
+
+if (config.mongoDb.user && config.mongoDb.password) {
+    mongoCredentials = config.mongoDb.user + ':' + config.mongoDb.password;
+}
+
+var mongoUrl = 'mongodb://' + mongoCredentials + '@' + config.mongoDb.server + ':' +
+    config.mongoDb.port + '/' + config.mongoDb.db;
+
+mongoose.connect(mongoUrl, function(err) {
+    if (err) {
+        log.error('MongoDB has not been initialized');
+    }
+});
+
+mongoose.connection.on('disconnected', function() {
+    log.error('Connection with MongoDB lost');
+});
+
+mongoose.connection.on('reconnected', function() {
+    log.info('Connection with MongoDB reopened');
+});
+
+
+/////////////////////////////////////////////////////////////////////
 ////////////////////////////// EXPRESS //////////////////////////////
 /////////////////////////////////////////////////////////////////////
 
@@ -105,6 +134,7 @@ app.use(bodyParser.text({
     type: '*/*',
     limit: '50mb'
 }));
+
 
 /////////////////////////////////////////////////////////////////////
 ////////////////////////////// PASSPORT /////////////////////////////
@@ -285,6 +315,7 @@ var headerAuthentication = function(req, res, next) {
                     utils.sendUnauthorized(res, 'The auth-token scope is not valid for the current application');
                 } else {
                     req.user = userProfile;
+                    req.user.accessToken = authToken;
                     next();
                 }
             }
@@ -338,10 +369,28 @@ app.all(config.proxyPrefix + '/*', headerAuthentication, function(req, res) {
 /////////////////////////// SHOPPING CART ///////////////////////////
 /////////////////////////////////////////////////////////////////////
 
+var checkMongoUp = function(req, res, next) {
+
+    // We lost connection!
+    if (mongoose.connection.readyState !== 1) {
+
+        // Connection is down!
+
+        res.status(500);
+        res.json({ error: 'It was impossible to connect with the database. Please, try again in a few seconds.' });
+        res.end();
+
+    }  else {
+        next();
+    }
+
+};
+
+app.use(config.shoppingCartPath + '/*', checkMongoUp);
 app.get(config.shoppingCartPath + '/item/', headerAuthentication, ensureAuthenticated, shoppingCart.getCart);
+app.post(config.shoppingCartPath + '/item/', headerAuthentication, ensureAuthenticated, shoppingCart.add);
 app.get(config.shoppingCartPath + '/item/:id', headerAuthentication, ensureAuthenticated, shoppingCart.getItem);
 app.delete(config.shoppingCartPath + '/item/:id', headerAuthentication, ensureAuthenticated, shoppingCart.remove);
-app.post(config.shoppingCartPath + '/item/:id', headerAuthentication, ensureAuthenticated, shoppingCart.add);
 app.post(config.shoppingCartPath + '/empty', headerAuthentication, ensureAuthenticated, shoppingCart.empty);
 
 

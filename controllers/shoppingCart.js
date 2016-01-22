@@ -1,11 +1,6 @@
 var CartItem = require('../db/schemas/cartItem');
-var mongoose = require('mongoose');
-
-var connection = mongoose.connect('mongodb://localhost:27017/shoppingCartItems');
 
 var shoppingCart = (function() {
-
-
 
     var endRequest = function(res, code, content) {
         res.statusCode = code;
@@ -20,7 +15,7 @@ var shoppingCart = (function() {
         CartItem.find({ user: userName }, function(err, result) {
 
             if (err) {
-                endRequest(res, 500, err);
+                endRequest(res, 500, { error: err.message });
             } else {
 
                 var items = [];
@@ -42,7 +37,7 @@ var shoppingCart = (function() {
         CartItem.findOne({ user: userName, itemId: itemId }, function(err, result) {
 
             if (err) {
-                endRequest(res, 500, err);
+                endRequest(res, 500, { error: err.message });
             } else {
                 if (result) {
                     endRequest(res, 200, result.itemObject);
@@ -56,23 +51,41 @@ var shoppingCart = (function() {
 
     var add = function(req, res) {
 
-        var itemId = req.params.id;
         var userName = req.user.id;
 
         try {
+
             var item = new CartItem();
             item.user = userName;
-            item.itemId = itemId;
             item.itemObject = JSON.parse(req.body);
-            item.itemObject.id = itemId;
 
-            item.save(function (err) {
-                if (err) {
-                    endRequest(res, 404, err);
-                } else {
-                    endRequest(res, 200, {status: 'ok'});
-                }
-            });
+            var itemId = item.itemObject.id;
+
+            if (itemId) {
+
+                item.itemId = itemId;
+
+                item.save(function (err) {
+
+                    if (err) {
+
+                        if (err.code === 11000) {
+                            // duplicate key
+                            endRequest(res, 409, { error: 'This item is already in your shopping cart' })
+                        } else {
+                            // other errors
+                            endRequest(res, 500, { error: err.message });
+                        }
+
+                    } else {
+                        endRequest(res, 200, {status: 'ok'});
+                    }
+                });
+
+            } else {
+                endRequest(res, 400, { error: 'Cart Item ID missing' });
+            }
+
         } catch (e) {
             endRequest(res, 400, { error: 'Invalid Cart Item' });
         }
@@ -86,7 +99,7 @@ var shoppingCart = (function() {
         CartItem.remove({ user: userName, itemId: itemId }, function(err, dbRes) {
 
             if (err) {
-                endRequest(res, 500, err);
+                endRequest(res, 500, { error: err.message });
             } else {
 
                 if (dbRes.result['n'] > 0) {
@@ -106,7 +119,7 @@ var shoppingCart = (function() {
         CartItem.remove({ user: userName }, function(err, result) {
 
             if (err) {
-                endRequest(res, 500, err);
+                endRequest(res, 500, { error: err.message });
             } else {
                 endRequest(res, 200, { status: 'ok' });
             }

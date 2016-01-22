@@ -96,9 +96,8 @@
                         }).join();
 
                         Product.search(productFilters).then(function (productList) {
-                            productList.forEach(function (product) {
-                                offeringList.some(function (offering) {
-
+                            offeringList.forEach(function(offering) {
+                                productList.some(function(product) {
                                     if (offering.productSpecification.id == product.id) {
                                         offering.productSpecification = product;
                                         return true;

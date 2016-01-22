@@ -2,9 +2,13 @@
   .panel.panel-default.item-product(ng-repeat="product in searchVM.list")
     .panel-heading(
         ui-sref="inventory.product.detail({ productId: product.id })",
-        ui-sref-opts="{ inherit: false }")
+        ui-sref-opts="{ inherit: false }",
+        ng-mouseenter="hovering = product.id",
+        ng-mouseleave="hovering = null"
+    )
       .thumbnail.item-product-logo
         img(no-image, ng-src="{{ product.productOffering.getPicture() }}")
+        div.item-shadow(ng-class="{'item-shadow-hover': hovering === product.id}")
       a.h4 {{ product.productOffering.name }}
     .panel-body
       p.text-muted

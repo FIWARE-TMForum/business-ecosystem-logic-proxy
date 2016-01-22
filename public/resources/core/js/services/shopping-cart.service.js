@@ -31,7 +31,7 @@
 
             var deferred = $q.defer();
 
-            resource.save({ action: 'item', id: item.id }, item, function () {
+            resource.save({ action: 'item', id: '' }, item, function () {
                 deferred.resolve({});
             }, function (response) {
                 deferred.reject(response);
