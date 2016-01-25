@@ -52,6 +52,7 @@ config.sessionSecret = config.sessionSecret || 'keyboard cat';
 config.https = config.https || {};
 config.proxyPrefix = checkPrefix(config.proxyPrefix, '/proxy');
 config.portalPrefix = checkPrefix(config.portalPrefix, '');
+config.shoppingCartPath = checkPrefix(config.shoppingCartPath, '/shoppingCart');
 config.logInPath = config.logInPath || '/login';
 config.logOutPath = config.logOutPath || '/logout';
 config.mongoDb = config.mongoDb || {};
