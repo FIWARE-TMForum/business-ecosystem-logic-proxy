@@ -54,6 +54,12 @@ config.proxyPrefix = checkPrefix(config.proxyPrefix, '/proxy');
 config.portalPrefix = checkPrefix(config.portalPrefix, '');
 config.logInPath = config.logInPath || '/login';
 config.logOutPath = config.logOutPath || '/logout';
+config.mongoDb = config.mongoDb || {};
+config.mongoDb.user = config.mongoDb.user || '';
+config.mongoDb.password = config.mongoDb.password || '';
+config.mongoDb.server = config.mongoDb.server || 'localhost';
+config.mongoDb.port = config.mongoDb.port || 27017;
+config.mongoDb.db = config.mongoDb.db || 'belp';
 
 var PORT = config.https.enabled ? 
     config.https.port || 443 :      // HTTPS

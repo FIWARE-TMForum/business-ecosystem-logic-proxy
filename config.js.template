@@ -36,7 +36,7 @@ config.mongoDb = {
     port: 27017,
     user: '',
     password: '',
-    db: 'shoppingCart'
+    db: 'belp'
 };
 
 // TMForum APIs final paths
