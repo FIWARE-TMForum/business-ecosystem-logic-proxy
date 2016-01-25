@@ -102,6 +102,10 @@
                 } else {
                     vm.order();
                 }
+            }, function (response) {
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                    error: 'It was impossible to load the properties of the offering you want to add to your cart'
+                });
             });
         });
     }

@@ -8,9 +8,11 @@ var bodyParser = require('body-parser'),
     fs = require('fs'),
     https = require('https'),
     log = require('./lib/logger').logger.getLogger("Server"),
+    mongoose = require('mongoose'),
     passport = require('passport'),
-    tmf = require('./controllers/tmf').tmf,
     session = require('express-session'),
+    shoppingCart = require('./controllers/shoppingCart').shoppingCart,
+    tmf = require('./controllers/tmf').tmf,
     url = require('url'),
     utils = require('./lib/utils');
 
@@ -52,6 +54,12 @@ config.proxyPrefix = checkPrefix(config.proxyPrefix, '/proxy');
 config.portalPrefix = checkPrefix(config.portalPrefix, '');
 config.logInPath = config.logInPath || '/login';
 config.logOutPath = config.logOutPath || '/logout';
+config.mongoDb = config.mongoDb || {};
+config.mongoDb.user = config.mongoDb.user || '';
+config.mongoDb.password = config.mongoDb.password || '';
+config.mongoDb.server = config.mongoDb.server || 'localhost';
+config.mongoDb.port = config.mongoDb.port || 27017;
+config.mongoDb.db = config.mongoDb.db || 'belp';
 
 var PORT = config.https.enabled ? 
     config.https.port || 443 :      // HTTPS
@@ -75,6 +83,34 @@ process.on('uncaughtException', function (err) {
 });
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+
+
+/////////////////////////////////////////////////////////////////////
+////////////////////////// MONGOOSE CONFIG //////////////////////////
+/////////////////////////////////////////////////////////////////////
+
+var mongoCredentials = '';
+
+if (config.mongoDb.user && config.mongoDb.password) {
+    mongoCredentials = config.mongoDb.user + ':' + config.mongoDb.password;
+}
+
+var mongoUrl = 'mongodb://' + mongoCredentials + '@' + config.mongoDb.server + ':' +
+    config.mongoDb.port + '/' + config.mongoDb.db;
+
+mongoose.connect(mongoUrl, function(err) {
+    if (err) {
+        log.error('MongoDB has not been initialized');
+    }
+});
+
+mongoose.connection.on('disconnected', function() {
+    log.error('Connection with MongoDB lost');
+});
+
+mongoose.connection.on('reconnected', function() {
+    log.info('Connection with MongoDB reopened');
+});
 
 
 /////////////////////////////////////////////////////////////////////
@@ -104,6 +140,39 @@ app.use(bodyParser.text({
     type: '*/*',
     limit: '50mb'
 }));
+
+var headerAuthentication = function(req, res, next) {
+
+    try {
+        var authToken = utils.getAuthToken(req.headers);
+        FIWARE_STRATEGY.userProfile(authToken, function(err, userProfile) {
+            if (err) {
+                log.warn('The provider auth-token is not valid');
+                utils.sendUnauthorized(res, 'invalid auth-token')
+            } else {
+                // Check that the provided access token is valid for the given application
+                if (userProfile.appId !== config.oauth2.clientID) {
+                    log.warn('The provider auth-token scope is not valid for the current application');
+                    utils.sendUnauthorized(res, 'The auth-token scope is not valid for the current application');
+                } else {
+                    req.user = userProfile;
+                    req.user.accessToken = authToken;
+                    next();
+                }
+            }
+        });
+
+    } catch (err) {
+        log.warn(err);
+
+        if (err.name === 'AuthorizationTokenNotFound') {
+            next();
+        } else {
+            utils.sendUnauthorized(res, err.message);
+        }
+    }
+};
+
 
 /////////////////////////////////////////////////////////////////////
 ////////////////////////////// PASSPORT /////////////////////////////
@@ -162,6 +231,35 @@ app.all(config.logOutPath, function(req, res) {
     req.session.destroy();
     res.redirect(config.portalPrefix + '/');
 });
+
+
+/////////////////////////////////////////////////////////////////////
+/////////////////////////// SHOPPING CART ///////////////////////////
+/////////////////////////////////////////////////////////////////////
+
+var checkMongoUp = function(req, res, next) {
+
+    // We lost connection!
+    if (mongoose.connection.readyState !== 1) {
+
+        // Connection is down!
+
+        res.status(500);
+        res.json({ error: 'It was impossible to connect with the database. Please, try again in a few seconds.' });
+        res.end();
+
+    }  else {
+        next();
+    }
+
+};
+
+app.use(config.shoppingCartPath + '/*', checkMongoUp);
+app.get(config.shoppingCartPath + '/item/', headerAuthentication, ensureAuthenticated, shoppingCart.getCart);
+app.post(config.shoppingCartPath + '/item/', headerAuthentication, ensureAuthenticated, shoppingCart.add);
+app.get(config.shoppingCartPath + '/item/:id', headerAuthentication, ensureAuthenticated, shoppingCart.getItem);
+app.delete(config.shoppingCartPath + '/item/:id', headerAuthentication, ensureAuthenticated, shoppingCart.remove);
+app.post(config.shoppingCartPath + '/empty', headerAuthentication, ensureAuthenticated, shoppingCart.empty);
 
 
 /////////////////////////////////////////////////////////////////////
@@ -245,6 +343,7 @@ var renderTemplate = function(req, res, viewName) {
         orderingPath: config.endpoints.ordering.path,
         inventoryPath: config.endpoints.inventory.path,
         chargingPath: config.endpoints.charging.path,
+        shoppingCartPath: config.shoppingCartPath,
         rssPath: config.endpoints.rss.path,
         cssFilesToInject: cssFilesToInject,
         jsDepFilesToInject: jsDepFilesToInject,
@@ -263,41 +362,10 @@ app.get(config.portalPrefix + '/payment', ensureAuthenticated, function(req, res
     renderTemplate(req, res, 'app-payment');
 });
 
+
 /////////////////////////////////////////////////////////////////////
 //////////////////////////////// APIs ///////////////////////////////
 /////////////////////////////////////////////////////////////////////
-
-var headerAuthentication = function(req, res, next) {
-
-    try {
-        var authToken = utils.getAuthToken(req.headers);
-        FIWARE_STRATEGY.userProfile(authToken, function(err, userProfile) {
-            if (err) {
-                log.warn('The provider auth-token is not valid');
-                utils.sendUnauthorized(res, 'invalid auth-token')
-            } else {
-                // Check that the provided access token is valid for the given application
-                if (userProfile.appId !== config.oauth2.clientID) {
-                    log.warn('The provider auth-token scope is not valid for the current application');
-                    utils.sendUnauthorized(res, 'The auth-token scope is not valid for the current application');
-                } else {
-                    req.user = userProfile;
-                    req.user.accessToken = authToken;
-                    next();
-                }
-            }
-        });
-
-    } catch (err) {
-        log.warn(err);
-
-        if (err.name === 'AuthorizationTokenNotFound') {
-            next();
-        } else {
-            utils.sendUnauthorized(res, err.message);
-        }
-    }
-};
 
 // Middleware: Add CORS headers. Handle OPTIONS requests.
 app.use(function (req, res, next) {

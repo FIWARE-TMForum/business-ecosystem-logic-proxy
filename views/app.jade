@@ -10,25 +10,29 @@ block scripts
 
 block navbars
   li.dropdown(ng-controller="UserShoppingCartCtrl as listVM")
-    a.dropdown-toggle(data-toggle="dropdown")
-      span.fa-stack.icon-shopping-cart
-        span.fa.fa-shopping-cart.fa-stack-2x
-        span.badge {{ listVM.getItems().length }}
-      span.hidden-xs Shopping Cart
-    .dropdown-menu
-      .dropdown-header
-        strong.text-uppercase My Shopping Cart
-      .alert.alert-info.text-center(ng-show="!listVM.getItems().length")
-        span Your shopping cart is empty.
-      a.dropdown-menu-item.item-offering-ordered(ng-repeat="offering in listVM.getItems()")
-        div(ui-sref="offering.detail({ offeringId: offering.id })")
-          span.item-icon.fa.fa-cube
-          span.item-text {{ offering.name }}
-        span.fa.fa-close(ng-click="listVM.remove(offering)")
-      .divider(ng-show="listVM.getItems().length")
-      a.dropdown-menu-item(ng-show="listVM.getItems().length", ui-sref="shopping-cart")
-        span.item-icon.fa.fa-paypal
-        span.item-text Make order
+      a.dropdown-toggle(data-toggle="dropdown")
+        span.fa-stack.icon-shopping-cart(ng-switch="listVM.list.status")
+          span.fa.fa-shopping-cart.fa-stack-2x
+          span.badge.badge-success(ng-switch-when="LOADED") {{ listVM.list.length }}
+          span.badge(ng-switch-when="LOADING") ...
+          span.badge.badge-error(ng-switch-when="ERROR") !!!
+        span.hidden-xs Shopping Cart
+      .dropdown-menu(ng-switch="listVM.list.status")
+        .dropdown-header
+          strong.text-uppercase My Shopping Cart
+        .alert.alert-info.text-center(ng-switch-when="LOADED", ng-show="!listVM.list.length")
+          span Your shopping cart is empty.
+        .alert.alert-danger.text-center(ng-switch-when="ERROR")
+          span Your shopping cart cannot be loaded.
+        a.dropdown-menu-item.item-offering-ordered(ng-switch-when="LOADED", ng-repeat="offering in listVM.list")
+          div(ui-sref="offering.detail({ offeringId: offering.id })")
+            span.item-icon.fa.fa-cube
+            span.item-text {{ offering.name }}
+          span.fa.fa-close(ng-click="listVM.remove(offering)")
+        .divider(ng-show="listVM.list.length")
+        a.dropdown-menu-item(ng-switch-when="LOADED", ng-show="listVM.list.length", ui-sref="shopping-cart")
+          span.item-icon.fa.fa-paypal
+          span.item-text Make order
 
 block content
   .container

@@ -31,6 +31,14 @@ config.oauth2 = {
     }
 }
 
+config.mongoDb = {
+    server: 'localhost',
+    port: 27017,
+    user: '',
+    password: '',
+    db: 'belp'
+};
+
 // TMForum APIs final paths
 config.appHost = '';
 

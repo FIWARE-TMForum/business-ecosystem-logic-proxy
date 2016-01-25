@@ -18,6 +18,7 @@
         var messages = {
             created: 'The {{ resource }} <strong>{{ name }}</strong> was created successfully.',
             updated: 'The {{ resource }} <strong>{{ name }}</strong> was updated successfully.',
+            success: '{{ message }}',
             error: '{{ error }}'
         };
 
@@ -50,6 +51,7 @@
             switch (action) {
             case 'created':
             case 'updated':
+            case 'success':
                 state = 'success';
                 break;
             case 'error':

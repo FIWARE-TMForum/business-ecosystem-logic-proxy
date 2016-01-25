@@ -18,7 +18,8 @@
             OFFERING_REMOVED: '$eventOfferingRemoved',
             ORDER_CREATED: '$eventOrderCreated',
             MESSAGE_CREATED: '$eventMessageCreated',
-            MESSAGE_CLOSED: '$eventMessageClosed'
+            MESSAGE_CLOSED: '$eventMessageClosed',
+            ORDERING_COMPLETED: '$eventOrderingCompleted'
         })
         .constant('PARTY_ROLES', {
             OWNER: 'Owner',

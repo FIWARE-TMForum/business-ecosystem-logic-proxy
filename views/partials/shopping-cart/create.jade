@@ -4,8 +4,8 @@ ui-view
       .panel.panel-default
         .panel-heading
           strong.text-uppercase New Order
-        .panel-body
-          form(name="order.form", novalidate)
+        .panel-body(ng-switch="orderVM.loadingStatus")
+          form(ng-switch-when="LOADED", name="order.form", novalidate)
             .row
               .col-xs-12
                 .form-group
@@ -110,3 +110,8 @@ ui-view
             .form-group.text-right
               a.btn.btn-success(ng-disabled="!order.form.$valid", ng-click="orderVM.makeOrder()")
                 span.item-text Create
+          div(ng-switch-when="ERROR")
+            .alert.alert-danger.text-center {{ orderVM.error }}
+          div(ng-switch-default)
+            .container-spinner
+              span.fa.fa-spinner.fa-spin.fa-2x

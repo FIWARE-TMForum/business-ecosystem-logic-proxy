@@ -2,6 +2,10 @@
 
     'use strict';
 
+    var LOADING = 'LOADING';
+    var LOADED = 'LOADED';
+    var ERROR = 'ERROR';
+
     angular
         .module('app')
         .controller('CreateOrderCtrl', CreateOrderController);
@@ -17,70 +21,87 @@
         }
 
         var initOrder = function initOrder() {
-            var orderItems = ShoppingCart.getItems();
 
-            // Initialize order
-            vm.orderInfo = {
-                state: 'Acknowledged',
-                orderItem: [],
-                relatedParty: [User.serializeBasic()]
-            };
+            vm.loadingStatus = LOADING;
 
-            vm.orderInfo.relatedParty[0].role = 'Customer';
+            ShoppingCart.getItems().then(function(orderItems) {
 
-            // Build order items. This information is created using the shopping card and is not editable in this view
-            for (var i = 0; i < orderItems.length; i++) {
-                var item = {
-                    id: i.toString(),
-                    action: 'add',
+                vm.loadingStatus = LOADED;
+
+                // Initialize order
+                vm.orderInfo = {
                     state: 'Acknowledged',
-                    productOffering: {
-                        id: orderItems[i].id,
-                        name: orderItems[i].name,
-                        href: orderItems[i].href
-                    },
-                    product: {
-                        productCharacteristic: []
-                    },
-                    billingAccount: [User.serializeBasic()]
+                    orderItem: [],
+                    relatedParty: [User.serializeBasic()]
                 };
 
-                // Use pricing and characteristics to build the product property
-                if (orderItems[i].options.characteristics) {
-                    for (var j = 0; j < orderItems[i].options.characteristics.length; j++) {
-                        var char = orderItems[i].options.characteristics[j].characteristic;
-                        var selectedValue = orderItems[i].options.characteristics[j].value;
-                        var value;
+                vm.orderInfo.relatedParty[0].role = 'Customer';
 
-                        if (char.valueType.toLowerCase() === 'string' ||
-                            (char.valueType.toLowerCase() === 'number' && selectedValue.value)) {
-                            value = selectedValue.value;
-                        } else {
-                            value = selectedValue.valueFrom + '-' + selectedValue.valueTo;
-                        }
-
-                        item.product.productCharacteristic.push({
-                            name: char.name,
-                            value: value
-                        });
-                    }
-                }
-
-                if (orderItems[i].options.pricing) {
-                    var price = orderItems[i].options.pricing;
-                    price.price = {
-                        amount: orderItems[i].options.pricing.price.taxIncludedAmount,
-                        currency: orderItems[i].options.pricing.price.currencyCode
+                // Build order items. This information is created using the shopping card and is not editable in this view
+                for (var i = 0; i < orderItems.length; i++) {
+                    var item = {
+                        id: i.toString(),
+                        action: 'add',
+                        state: 'Acknowledged',
+                        productOffering: {
+                            id: orderItems[i].id,
+                            name: orderItems[i].name,
+                            href: orderItems[i].href
+                        },
+                        product: {
+                            productCharacteristic: []
+                        },
+                        billingAccount: [User.serializeBasic()]
                     };
-                    item.product.productPrice = [price];
+
+                    // Use pricing and characteristics to build the product property
+                    if (orderItems[i].options.characteristics) {
+                        for (var j = 0; j < orderItems[i].options.characteristics.length; j++) {
+                            var char = orderItems[i].options.characteristics[j].characteristic;
+                            var selectedValue = orderItems[i].options.characteristics[j].value;
+                            var value;
+
+                            if (char.valueType.toLowerCase() === 'string' ||
+                                (char.valueType.toLowerCase() === 'number' && selectedValue.value)) {
+                                value = selectedValue.value;
+                            } else {
+                                value = selectedValue.valueFrom + '-' + selectedValue.valueTo;
+                            }
+
+                            item.product.productCharacteristic.push({
+                                name: char.name,
+                                value: value
+                            });
+                        }
+                    }
+
+                    if (orderItems[i].options.pricing) {
+                        var price = orderItems[i].options.pricing;
+                        price.price = {
+                            amount: orderItems[i].options.pricing.price.taxIncludedAmount,
+                            currency: orderItems[i].options.pricing.price.currencyCode
+                        };
+                        item.product.productPrice = [price];
+                    }
+
+                    // Include the item to the order
+                    vm.orderInfo.orderItem.push(item);
                 }
 
-                // Include the item to the order
-                vm.orderInfo.orderItem.push(item);
-            }
+            }, function (response) {
+                vm.error = Utils.parseError(response, 'It was impossible to load your shopping cart');
+                vm.loadingStatus = ERROR;
+            });
         };
 
         function makeOrder() {
+
+            var cleanCartItems = function() {
+                ShoppingCart.cleanItems().then(function() {
+                    $rootScope.$broadcast(EVENTS.ORDER_CREATED);
+                });
+            };
+
             // Fix display fields to accommodate API restrictions
             var apiInfo = angular.copy(vm.orderInfo);
             for (var i = 0; i < apiInfo.orderItem.length; i++) {
@@ -100,13 +121,13 @@
                         if (ppalWindow.closed) {
                             $interval.cancel(interval);
                             $rootScope.$emit(EVENTS.MESSAGE_CLOSED);
-                            ShoppingCart.cleanItems();
+                            cleanCartItems();
                             $state.go('inventory');
                         }
                     }, 500);
 
                 } else {
-                    ShoppingCart.cleanItems();
+                    cleanCartItems();
                     $state.go('inventory');
                 }
             }, function (response) {
