@@ -64,6 +64,7 @@ var tmf = (function() {
 
                 result.user = req.user;
                 result.method = req.method;
+                result.path = req.path;
 
                 apiControllers[api].executePostValidation(result, function(err, retRes) {
                     if (err) {

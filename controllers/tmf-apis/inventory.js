@@ -5,29 +5,34 @@ var async = require('async'),
 var inventory = (function() {
 
     var validateRetrieving = function(req, callback) {
-        if (!req.query['relatedParty.id']) {
-            callback({
-                'status': 400,
-                'message': 'Missing required param relatedParty.id'
-            });
-            return;
-        }
+        // Check if requesting a list of a single product
+        if(req.path.endsWith('product')) {
+            if (!req.query['relatedParty.id']) {
+                callback({
+                    'status': 400,
+                    'message': 'Missing required param relatedParty.id'
+                });
+                return;
+            }
 
-        if (!req.query['relatedParty.role']) {
-            callback({
-                'status': 400,
-                'message': 'Missing required param relatedParty.role'
-            });
-            return;
-        }
+            if (!req.query['relatedParty.role']) {
+                callback({
+                    'status': 400,
+                    'message': 'Missing required param relatedParty.role'
+                });
+                return;
+            }
 
-        if (req.query['relatedParty.id'] !== req.user.id || req.query['relatedParty.role'] !== 'Customer') {
-            callback({
-                'status': 403,
-                'message': 'Your are not authorized to retrieve the specified products'
-            });
-            return;
+            if (req.query['relatedParty.id'] !== req.user.id || req.query['relatedParty.role'] !== 'Customer') {
+                callback({
+                    'status': 403,
+                    'message': 'Your are not authorized to retrieve the specified products'
+                });
+                return;
+            }
         }
+        // For validating the retrieving of a single product it is necessary to read the product first
+        // so it is done is postvalidation method
         callback();
     };
 
@@ -52,8 +57,26 @@ var inventory = (function() {
 
     };
 
+    var executePostValidation = function(req, callback) {
+        log.info("Executing inventory post validation");
+
+        if (req.method == 'GET' && !req.path.endsWith('product') &&
+            (!tmfUtils.isOrderingCustomer(req.user, JSON.parse(req.body))[0]
+            || !tmfUtils.isOrderingCustomer(req.user, JSON.parse(req.body))[1])) {
+            callback({
+                'status': 403,
+                'message': 'Your are not authorized to retrieve the specified product'
+            })
+        } else {
+            callback(null, {
+                extraHdrs: {}
+            });
+        }
+    };
+
     return {
-        checkPermissions: checkPermissions
+        checkPermissions: checkPermissions,
+        executePostValidation: executePostValidation
     }
 })();
 

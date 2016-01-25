@@ -44,10 +44,27 @@ describe('Inventory API', function() {
         testNotAllowedMethod('DELETE', done);
     });
 
-    it('should redirect the inventory request', function(done){
+    it('should redirect the inventory request when asking for a concrete product', function(done) {
+        var inventory = getInventoryAPI();
+        var req = {
+            path: 'DSProductCatalog/api/productManagement/product/10',
+            method: 'GET',
+            user: {
+                id: 'test'
+            }
+        };
+
+        inventory.checkPermissions(req, function(err) {
+            expect(err).toBe(null);
+            done();
+        });
+    });
+
+    it('should redirect the inventory request when asking for a set of products', function(done){
         var inventory = getInventoryAPI();
 
         var req = {
+            path: 'DSProductCatalog/api/productManagement/product',
             method: 'GET',
             user: {
                 id: 'test'
@@ -68,6 +85,7 @@ describe('Inventory API', function() {
         var inventory = getInventoryAPI();
 
         var req = {
+            path: 'DSProductCatalog/api/productManagement/product',
             method: 'GET',
             user: {
                 id: 'test'
@@ -115,5 +133,67 @@ describe('Inventory API', function() {
         };
         var msg = 'Your are not authorized to retrieve the specified products';
         testGetRequestError(query, 403, msg, done);
+    });
+
+    var testCorrectPostValidation = function(req, done) {
+        var inventory = getInventoryAPI();
+
+        inventory.executePostValidation(req, function(err, resp) {
+            expect(err).toBe(null);
+            expect(resp).toEqual({
+                extraHdrs: {}
+            });
+            done();
+        });
+    };
+
+    it('should redirect the request if pot validating a collection request', function(done) {
+        testCorrectPostValidation({
+            method: 'GET',
+            path: 'DSProductCatalog/api/productManagement/product'
+        }, done)
+    });
+
+    it('should redirect the request after validating permissions of retrieving a single product', function(done) {
+        testCorrectPostValidation({
+            method: 'GET',
+            path: 'DSProductCatalog/api/productManagement/product/10',
+            user: {
+                id: 'test'
+            },
+            body: JSON.stringify({
+                relatedParty: [{
+                    id: 'test',
+                    role: 'Customer'
+                }]
+            })
+        }, done)
+    });
+
+    it('should give a 403 error when the user is not the customer who acquired the product', function(done) {
+        var inventory = getInventoryAPI();
+
+        var req = {
+            method: 'GET',
+            path: 'DSProductCatalog/api/productManagement/product/10',
+            user: {
+                id: 'test'
+            },
+            body: JSON.stringify({
+                relatedParty: [{
+                    id: 'owner',
+                    role: 'Customer'
+                }]
+            })
+       };
+
+        inventory.executePostValidation(req, function(err, resp) {
+            expect(resp).toBe(undefined);
+            expect(err).toEqual({
+                'status': 403,
+                'message': 'Your are not authorized to retrieve the specified product'
+            });
+            done();
+        });
     });
 });

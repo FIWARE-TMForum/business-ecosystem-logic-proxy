@@ -10,23 +10,6 @@ var async = require('async'),
 
 var ordering = (function(){
 
-    var isOrderingCustomer = function(userInfo, resourceInfo) {
-        var isCust = false;
-        var custIncluded = false;
-
-        for (var i = 0; i < resourceInfo.relatedParty.length && !isCust; i++) {
-            var party = resourceInfo.relatedParty[i];
-
-            if (party.role.toLowerCase() === 'customer') {
-                custIncluded = true;
-                if (userInfo.id === party.id) {
-                    isCust = true;
-                }
-            }
-        }
-        return [custIncluded, isCust];
-    };
-
     var validateRetrieving = function(req, callback) {
         callback();
     };
@@ -71,7 +54,7 @@ var ordering = (function(){
         }
 
         // Check that the user is the specified customer
-        var customerCheck = isOrderingCustomer(req.user, body);
+        var customerCheck = tmfUtils.isOrderingCustomer(req.user, body);
         if (!customerCheck[0]) {
             callback({
                 status: 403,
@@ -113,7 +96,7 @@ var ordering = (function(){
             if (!body.orderItem[i].product.relatedParty) {
                 body.orderItem[i].product.relatedParty = [];
             }
-            var itemCustCheck = isOrderingCustomer(req.user, body.orderItem[i].product);
+            var itemCustCheck = tmfUtils.isOrderingCustomer(req.user, body.orderItem[i].product);
 
             if (itemCustCheck[0] && !itemCustCheck[1]) {
                 callback({

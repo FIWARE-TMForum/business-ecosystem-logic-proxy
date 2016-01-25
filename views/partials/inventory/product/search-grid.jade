@@ -14,7 +14,7 @@
       p.text-muted
         span v{{ product.productOffering.version }}
         span.pull-right
-          time(am-time-ago="product.orderDate")
+          time(am-time-ago="product.startDate")
 
       .status-group
         .status-item.active(class="status-{{ product.status | lowercase }}")

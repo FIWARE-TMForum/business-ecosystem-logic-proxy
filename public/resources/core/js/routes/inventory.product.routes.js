@@ -31,7 +31,8 @@
                 })
                 .state('inventory.product.detail', {
                     url: '/:productId',
-                    templateUrl: 'inventory/product/detail'
+                    templateUrl: 'inventory/product/detail',
+                    controller: 'InventoryDetailsCtrl as detailVM'
                 });
         }
     }

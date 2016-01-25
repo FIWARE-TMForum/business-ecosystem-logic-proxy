@@ -1,3 +1,36 @@
-//
-   Created by francisco on 15/01/16.
-
+.row(ng-switch="detailVM.status")
+  div(ng-switch-when="LOADED")
+    .col-xs-12
+      .panel.panel-default
+        .panel-body
+          .media
+            .media-left
+              .thumbnail.item-product-logo
+                img(no-image, ng-src="{{ detailVM.product.productOffering.getPicture() }}")
+              .h4.text-center {{ detailVM.product.productOffering.name }}
+              ul.nav.nav-responsive.nav-pills
+                li(ui-sref-active-eq="active")
+                  a(ui-sref="inventory.product.detail")
+                    span.item-icon.fa.fa-newspaper-o
+                    span.item-text.hidden-xs About
+                li(ui-sref-active-eq="active")
+                  a(ui-sref="inventory.product.detail.pricing")
+                    span.item-icon.fa.fa-credit-card
+                    span.item-text.hidden-xs Price Plans
+                li(ui-sref-active-eq="active")
+                  a(ui-sref="inventory.product.detail.characteristics")
+            .media-body
+              ui-view(name="product-content")
+                blockquote {{ detailVM.product.description ? detailVM.product.description : 'No description provided.' }}
+                dl
+                  dt Offering version
+                  dd {{ detailVM.item.productSpecification.version }}
+                  dt Start date
+                  dd
+                    time(am-time-ago="detailVM.item.lastUpdate")
+  div(ng-switch-when="ERROR")
+    .alert.alert-danger.text-center {{ detailVM.error }}
+  div(ng-switch-default)
+    .col-xs-12
+      .container-spinner
+        span.fa.fa-spinner.fa-spin.fa-2x
