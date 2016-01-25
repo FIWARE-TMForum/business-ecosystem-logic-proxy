@@ -70,7 +70,8 @@
 
             var deferred = $q.defer();
 
-            resource.delete({ action: 'empty' }, function () {
+            // Save makes post requests!!
+            resource.save({ action: 'empty' }, function () {
                 deferred.resolve({});
             }, function (response) {
                 deferred.reject(response);
