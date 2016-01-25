@@ -143,7 +143,14 @@
             });
         });
 
+        // Once that the order has been created, the items are removed from the cart.
+        // Once that the items have been removed, the items cache must be updated.
+        $scope.$on(EVENTS.ORDER_CREATED, function() {
+            updateItemsList();
+        });
+
         function remove(offering) {
+
             ShoppingCart.removeItem(offering).then(function() {
 
                 $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {

@@ -95,6 +95,13 @@
         };
 
         function makeOrder() {
+
+            var cleanCartItems = function() {
+                ShoppingCart.cleanItems().then(function() {
+                    $rootScope.$broadcast(EVENTS.ORDER_CREATED);
+                });
+            };
+
             // Fix display fields to accommodate API restrictions
             var apiInfo = angular.copy(vm.orderInfo);
             for (var i = 0; i < apiInfo.orderItem.length; i++) {
@@ -114,13 +121,13 @@
                         if (ppalWindow.closed) {
                             $interval.cancel(interval);
                             $rootScope.$emit(EVENTS.MESSAGE_CLOSED);
-                            ShoppingCart.cleanItems();
+                            cleanCartItems();
                             $state.go('inventory');
                         }
                     }, 500);
 
                 } else {
-                    ShoppingCart.cleanItems();
+                    cleanCartItems();
                     $state.go('inventory');
                 }
             }, function (response) {
