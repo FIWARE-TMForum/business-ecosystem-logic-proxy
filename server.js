@@ -141,6 +141,38 @@ app.use(bodyParser.text({
     limit: '50mb'
 }));
 
+var headerAuthentication = function(req, res, next) {
+
+    try {
+        var authToken = utils.getAuthToken(req.headers);
+        FIWARE_STRATEGY.userProfile(authToken, function(err, userProfile) {
+            if (err) {
+                log.warn('The provider auth-token is not valid');
+                utils.sendUnauthorized(res, 'invalid auth-token')
+            } else {
+                // Check that the provided access token is valid for the given application
+                if (userProfile.appId !== config.oauth2.clientID) {
+                    log.warn('The provider auth-token scope is not valid for the current application');
+                    utils.sendUnauthorized(res, 'The auth-token scope is not valid for the current application');
+                } else {
+                    req.user = userProfile;
+                    req.user.accessToken = authToken;
+                    next();
+                }
+            }
+        });
+
+    } catch (err) {
+        log.warn(err);
+
+        if (err.name === 'AuthorizationTokenNotFound') {
+            next();
+        } else {
+            utils.sendUnauthorized(res, err.message);
+        }
+    }
+};
+
 
 /////////////////////////////////////////////////////////////////////
 ////////////////////////////// PASSPORT /////////////////////////////
@@ -199,6 +231,35 @@ app.all(config.logOutPath, function(req, res) {
     req.session.destroy();
     res.redirect(config.portalPrefix + '/');
 });
+
+
+/////////////////////////////////////////////////////////////////////
+/////////////////////////// SHOPPING CART ///////////////////////////
+/////////////////////////////////////////////////////////////////////
+
+var checkMongoUp = function(req, res, next) {
+
+    // We lost connection!
+    if (mongoose.connection.readyState !== 1) {
+
+        // Connection is down!
+
+        res.status(500);
+        res.json({ error: 'It was impossible to connect with the database. Please, try again in a few seconds.' });
+        res.end();
+
+    }  else {
+        next();
+    }
+
+};
+
+app.use(config.shoppingCartPath + '/*', checkMongoUp);
+app.get(config.shoppingCartPath + '/item/', headerAuthentication, ensureAuthenticated, shoppingCart.getCart);
+app.post(config.shoppingCartPath + '/item/', headerAuthentication, ensureAuthenticated, shoppingCart.add);
+app.get(config.shoppingCartPath + '/item/:id', headerAuthentication, ensureAuthenticated, shoppingCart.getItem);
+app.delete(config.shoppingCartPath + '/item/:id', headerAuthentication, ensureAuthenticated, shoppingCart.remove);
+app.post(config.shoppingCartPath + '/empty', headerAuthentication, ensureAuthenticated, shoppingCart.empty);
 
 
 /////////////////////////////////////////////////////////////////////
@@ -306,38 +367,6 @@ app.get(config.portalPrefix + '/payment', ensureAuthenticated, function(req, res
 //////////////////////////////// APIs ///////////////////////////////
 /////////////////////////////////////////////////////////////////////
 
-var headerAuthentication = function(req, res, next) {
-
-    try {
-        var authToken = utils.getAuthToken(req.headers);
-        FIWARE_STRATEGY.userProfile(authToken, function(err, userProfile) {
-            if (err) {
-                log.warn('The provider auth-token is not valid');
-                utils.sendUnauthorized(res, 'invalid auth-token')
-            } else {
-                // Check that the provided access token is valid for the given application
-                if (userProfile.appId !== config.oauth2.clientID) {
-                    log.warn('The provider auth-token scope is not valid for the current application');
-                    utils.sendUnauthorized(res, 'The auth-token scope is not valid for the current application');
-                } else {
-                    req.user = userProfile;
-                    req.user.accessToken = authToken;
-                    next();
-                }
-            }
-        });
-
-    } catch (err) {
-        log.warn(err);
-
-        if (err.name === 'AuthorizationTokenNotFound') {
-            next();
-        } else {
-            utils.sendUnauthorized(res, err.message);
-        }
-    }
-};
-
 // Middleware: Add CORS headers. Handle OPTIONS requests.
 app.use(function (req, res, next) {
     'use strict';
@@ -369,35 +398,6 @@ app.all(config.proxyPrefix + '/*', headerAuthentication, function(req, res) {
     req.apiPath = url.parse(req.url).path.substring(config.proxyPrefix.length);
     tmf.checkPermissions(req, res);
 });
-
-
-/////////////////////////////////////////////////////////////////////
-/////////////////////////// SHOPPING CART ///////////////////////////
-/////////////////////////////////////////////////////////////////////
-
-var checkMongoUp = function(req, res, next) {
-
-    // We lost connection!
-    if (mongoose.connection.readyState !== 1) {
-
-        // Connection is down!
-
-        res.status(500);
-        res.json({ error: 'It was impossible to connect with the database. Please, try again in a few seconds.' });
-        res.end();
-
-    }  else {
-        next();
-    }
-
-};
-
-app.use(config.shoppingCartPath + '/*', checkMongoUp);
-app.get(config.shoppingCartPath + '/item/', headerAuthentication, ensureAuthenticated, shoppingCart.getCart);
-app.post(config.shoppingCartPath + '/item/', headerAuthentication, ensureAuthenticated, shoppingCart.add);
-app.get(config.shoppingCartPath + '/item/:id', headerAuthentication, ensureAuthenticated, shoppingCart.getItem);
-app.delete(config.shoppingCartPath + '/item/:id', headerAuthentication, ensureAuthenticated, shoppingCart.remove);
-app.post(config.shoppingCartPath + '/empty', headerAuthentication, ensureAuthenticated, shoppingCart.empty);
 
 
 /////////////////////////////////////////////////////////////////////
