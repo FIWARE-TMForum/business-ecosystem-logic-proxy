@@ -2,8 +2,17 @@ var CartItem = require('../db/schemas/cartItem');
 
 var shoppingCart = (function() {
 
-    var endRequest = function(res, code, content) {
+    var endRequest = function(res, code, headers, content) {
+
         res.statusCode = code;
+
+        // Headers
+        if (headers) {
+            for (var header in headers) {
+                res.setHeader(header, headers[header]);
+            }
+        }
+
         res.json(content);
         res.end();
     };
@@ -15,7 +24,7 @@ var shoppingCart = (function() {
         CartItem.find({ user: userName }, function(err, result) {
 
             if (err) {
-                endRequest(res, 500, { error: err.message });
+                endRequest(res, 500, null, { error: err.message });
             } else {
 
                 var items = [];
@@ -24,7 +33,7 @@ var shoppingCart = (function() {
                     items.push(cartItem.itemObject);
                 });
 
-                endRequest(res, 200, items);
+                endRequest(res, 200, null, items);
             }
         });
     };
@@ -37,12 +46,12 @@ var shoppingCart = (function() {
         CartItem.findOne({ user: userName, itemId: itemId }, function(err, result) {
 
             if (err) {
-                endRequest(res, 500, { error: err.message });
+                endRequest(res, 500, null, { error: err.message });
             } else {
                 if (result) {
-                    endRequest(res, 200, result.itemObject);
+                    endRequest(res, 200, null, result.itemObject);
                 } else {
-                    endRequest(res, 404, { error: 'Item not found in your cart' });
+                    endRequest(res, 404, null, { error: 'Item not found in your cart' });
                 }
             }
 
@@ -71,23 +80,26 @@ var shoppingCart = (function() {
 
                         if (err.code === 11000) {
                             // duplicate key
-                            endRequest(res, 409, { error: 'This item is already in your shopping cart' })
+                            endRequest(res, 409, null, { error: 'This item is already in your shopping cart' });
                         } else {
                             // other errors
-                            endRequest(res, 500, { error: err.message });
+                            endRequest(res, 500, null, { error: err.message });
                         }
 
                     } else {
-                        endRequest(res, 200, {status: 'ok'});
+
+                        var slash = req.url.slice(-1) === '/' ? '' : '/';
+                        var headers = { 'location': req.url + slash + itemId };
+                        endRequest(res, 201, headers, {status: 'ok'});
                     }
                 });
 
             } else {
-                endRequest(res, 400, { error: 'Cart Item ID missing' });
+                endRequest(res, 400, null, { error: 'Cart Item ID missing' });
             }
 
         } catch (e) {
-            endRequest(res, 400, { error: 'Invalid Cart Item' });
+            endRequest(res, 400, null, { error: 'Invalid Cart Item' });
         }
     };
 
@@ -99,13 +111,14 @@ var shoppingCart = (function() {
         CartItem.remove({ user: userName, itemId: itemId }, function(err, dbRes) {
 
             if (err) {
-                endRequest(res, 500, { error: err.message });
+                endRequest(res, 500, null, { error: err.message });
             } else {
 
                 if (dbRes.result['n'] > 0) {
-                    endRequest(res, 200, { status: 'ok' });
+                    endRequest(res, 200, null, { status: 'ok' });
                 } else {
-                    endRequest(res, 404, { error: 'The given ordering item cannot be deleted since it was not present in your cart'})
+                    endRequest(res, 404, null, { error: 'The given ordering item cannot ' +
+                                                    'be deleted since it was not present in your cart'});
                 }
             }
         });
@@ -119,9 +132,9 @@ var shoppingCart = (function() {
         CartItem.remove({ user: userName }, function(err, result) {
 
             if (err) {
-                endRequest(res, 500, { error: err.message });
+                endRequest(res, 500, null, { error: err.message });
             } else {
-                endRequest(res, 200, { status: 'ok' });
+                endRequest(res, 200, null, { status: 'ok' });
             }
 
         });
