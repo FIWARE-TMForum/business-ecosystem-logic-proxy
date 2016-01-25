@@ -173,9 +173,11 @@ var ordering = (function(){
 
                     var parsedResp = JSON.parse(res.body);
 
-                    res.extraHdrs = {
-                        'X-Redirect-URL': parsedResp.redirectUrl
-                    };
+                    if (parsedResp.redirectUrl) {
+                        res.extraHdrs = {
+                            'X-Redirect-URL': parsedResp.redirectUrl
+                        };
+                    }
 
                     callback(null, res);
 
