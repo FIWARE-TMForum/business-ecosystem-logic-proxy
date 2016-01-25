@@ -13,7 +13,10 @@ var shoppingCart = (function() {
             }
         }
 
-        res.json(content);
+        if (content) {
+            res.json(content);
+        }
+
         res.end();
     };
 
@@ -115,7 +118,7 @@ var shoppingCart = (function() {
             } else {
 
                 if (dbRes.result['n'] > 0) {
-                    endRequest(res, 200, null, { status: 'ok' });
+                    endRequest(res, 204, null, null);
                 } else {
                     endRequest(res, 404, null, { error: 'The given ordering item cannot ' +
                                                     'be deleted since it was not present in your cart'});
@@ -134,7 +137,7 @@ var shoppingCart = (function() {
             if (err) {
                 endRequest(res, 500, null, { error: err.message });
             } else {
-                endRequest(res, 200, null, { status: 'ok' });
+                endRequest(res, 204, null, null);
             }
 
         });
