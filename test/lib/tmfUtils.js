@@ -117,7 +117,7 @@ describe('TMF Utils', function() {
         tmfUtils.validateLoggedIn(req, function(err) {
             expect(err).not.toBe(null);
             expect(err.status).toBe(401);
-            expect(err.message).toBe('You need to be authenticated to create/update/delete resources');
+            expect(err.message).toBe('You need to be authenticated to perform this request');
             done();
         });
     });
