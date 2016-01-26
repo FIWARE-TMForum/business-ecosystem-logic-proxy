@@ -142,6 +142,29 @@ app.use(bodyParser.text({
     limit: '50mb'
 }));
 
+
+/////////////////////////////////////////////////////////////////////
+////////////////////////////// PASSPORT /////////////////////////////
+/////////////////////////////////////////////////////////////////////
+
+var getOAuth2State = function(path) {
+    var state = {};
+    state[OAUTH2_CAME_FROM_FIELD] = path;
+    var encodedState = base64url(JSON.stringify(state));
+    return encodedState;
+};
+
+var ensureAuthenticated = function(req, res, next) {
+    if (!req.isAuthenticated()) {
+        var encodedState = getOAuth2State(req.path);
+        // This action will redirect the user the FIWARE Account portal,
+        // so the next callback is not required to be called
+        passport.authenticate('fiware', { scope: ['all_info'], state: encodedState })(req, res);
+    } else {
+        next();
+    }
+};
+
 var headerAuthentication = function(req, res, next) {
 
     try {
@@ -174,28 +197,36 @@ var headerAuthentication = function(req, res, next) {
     }
 };
 
+// Replace userProfile function to check
 
-/////////////////////////////////////////////////////////////////////
-////////////////////////////// PASSPORT /////////////////////////////
-/////////////////////////////////////////////////////////////////////
+var tokensCache = {};
 
-var getOAuth2State = function(path) {
-    var state = {};
-    state[OAUTH2_CAME_FROM_FIELD] = path;
-    var encodedState = base64url(JSON.stringify(state));
-    return encodedState;
-};
+FIWARE_STRATEGY._userProfile = FIWARE_STRATEGY.userProfile;
 
-var ensureAuthenticated = function(req, res, next) {
-    if (!req.isAuthenticated()) {
-        var encodedState = getOAuth2State(req.path);
-        // This action will redirect the user the FIWARE Account portal,
-        // so the next callback is not required to be called
-        passport.authenticate('fiware', { scope: ['all_info'], state: encodedState })(req, res);
+FIWARE_STRATEGY.userProfile = function(authToken, callback) {
+
+    // TODO: Remove tokens from the cache every hour...
+
+    if (tokensCache[authToken]) {
+        log.info('Using cached token for user ' +  tokensCache[authToken].id);
+        callback(null, tokensCache[authToken]);
     } else {
-        next();
+
+        FIWARE_STRATEGY._userProfile(authToken, function(err, userProfile) {
+
+            if (err) {
+                callback(err);
+            } else {
+                log.info('Token for user ' + userProfile.id + ' stored');
+                tokensCache[authToken] = userProfile;
+                callback(err, userProfile);
+            }
+        });
     }
 };
+
+
+// Configure Passport to use FIWARE as authentication strategy
 
 passport.serializeUser(function(user, done) {
     done(null, user);
