@@ -10,6 +10,32 @@ var async = require('async'),
 
 var ordering = (function(){
 
+    var makeRequest = function(rawUrl, errMsg, callback) {
+
+        var parsedUrl = url.parse(rawUrl);
+
+        var options = {
+            host: parsedUrl.hostname,
+            port: parsedUrl.port,
+            path: parsedUrl.path,
+            method: 'GET'
+        };
+
+        var protocol = parsedUrl.protocol.indexOf('https') >= 0 ? 'https' : 'http';
+
+        http.request(protocol, options, null, function(err, result) {
+
+            if (err) {
+                callback({
+                    status: 400,
+                    message: errMsg
+                });
+            } else {
+                callback(err, JSON.parse(result.body));
+            }
+        });
+    };
+
     var validateRetrieving = function(req, callback) {
         callback();
     };
@@ -82,21 +108,32 @@ var ordering = (function(){
             return;
         }
 
-        // Inject the related party customer in the order items in order to make this info
-        // available thought the inventory API
-        for (var i = 0; i < body.orderItem.length; i++) {
-            if(!body.orderItem[i].product) {
+        var completeRelatedPartyInfo = function(item, callback) {
+
+            if(!item.product) {
+
                 callback({
                     status: 400,
                     message: 'The product order item ' + body.orderItem[i].id + ' must contain a product field'
                 });
+
                 return;
             }
 
-            if (!body.orderItem[i].product.relatedParty) {
-                body.orderItem[i].product.relatedParty = [];
+            if(!item.productOffering) {
+
+                callback({
+                    status: 400,
+                    message: 'The product order item ' + body.orderItem[i].id + ' must contain a productOffering field'
+                });
+
+                return;
             }
-            var itemCustCheck = tmfUtils.isOrderingCustomer(req.user, body.orderItem[i].product);
+
+            if (!item.product.relatedParty) {
+                item.product.relatedParty = [];
+            }
+            var itemCustCheck = tmfUtils.isOrderingCustomer(req.user, item.product);
 
             if (itemCustCheck[0] && !itemCustCheck[1]) {
                 callback({
@@ -107,16 +144,84 @@ var ordering = (function(){
             }
 
             if (!itemCustCheck[0]) {
-                body.orderItem[i].product.relatedParty.push({
+                item.product.relatedParty.push({
                     id: req.user.id,
                     role: 'Customer',
                     href: ''
                 });
             }
-        }
 
-        req.body = JSON.stringify(body);
-        callback();
+            // Inject customer and seller related parties in the order items in order to make this info
+            // available thought the inventory API
+
+            var errorMessageOffer = 'The system fails to retrieve the offering attached to the ordering item ' + item.id;
+            var errorMessageProduct = 'The system fails to retrieve the product attached to the ordering item ' + item.id;
+
+            makeRequest(item.productOffering.href, errorMessageOffer, function(err, offering) {
+
+                if (err) {
+                    callback(err);
+                } else {
+
+                    makeRequest(offering.productSpecification.href, errorMessageProduct, function(err, product) {
+
+                        if (err) {
+
+                        } else {
+
+                            var owners = product.relatedParty.filter(function (relatedParty) {
+                                return relatedParty['role'].toLowerCase() === 'owner';
+                            });
+
+                            if (!owners) {
+                                callback({
+                                    status: 400,
+                                    message: 'The product cannot be ordered because not owners have been attached'
+                                });
+                                
+                            } else {
+                                owners.forEach(function (owner) {
+                                    item.product.relatedParty.push({
+                                        id: owner.id,
+                                        role: 'Seller',
+                                        href: ''
+                                    });
+                                });
+
+                                callback(null, item);
+                            }
+                        }
+                    });
+
+                }
+            });
+        };
+
+        var asyncTasks = [];
+
+        body.orderItem.forEach(function(item) {
+           asyncTasks.push(completeRelatedPartyInfo.bind(this, item));
+        });
+
+        async.series(asyncTasks, function(err, results) {
+
+            if (err) {
+                callback(err);
+
+            } else {
+
+                body.orderItem = [];
+
+                results.forEach(function(item) {
+                    body.orderItem.push(item);
+                });
+
+                req.body = JSON.stringify(body);
+
+                callback();
+
+            }
+        });
     };
 
     var validateUpdate = function(req, callback) {
