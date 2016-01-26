@@ -16,7 +16,7 @@ var ordering = (function(){
 
         var options = {
             host: parsedUrl.hostname,
-            port: parsedUrl.port,
+            port: parsedUrl.port || 80,
             path: parsedUrl.path,
             method: 'GET'
         };
@@ -114,7 +114,7 @@ var ordering = (function(){
 
                 callback({
                     status: 400,
-                    message: 'The product order item ' + body.orderItem[i].id + ' must contain a product field'
+                    message: 'The product order item ' + item.id + ' must contain a product field'
                 });
 
                 return;
@@ -124,7 +124,7 @@ var ordering = (function(){
 
                 callback({
                     status: 400,
-                    message: 'The product order item ' + body.orderItem[i].id + ' must contain a productOffering field'
+                    message: 'The product order item ' + item.id + ' must contain a productOffering field'
                 });
 
                 return;
@@ -138,7 +138,7 @@ var ordering = (function(){
             if (itemCustCheck[0] && !itemCustCheck[1]) {
                 callback({
                     status: 403,
-                    message: 'The customer specified in the order item ' + body.orderItem[i].id + ' is not the user making the request'
+                    message: 'The customer specified in the order item ' + item.id + ' is not the user making the request'
                 });
                 return;
             }
@@ -166,7 +166,7 @@ var ordering = (function(){
                     makeRequest(offering.productSpecification.href, errorMessageProduct, function(err, product) {
 
                         if (err) {
-
+                            callback(err);
                         } else {
 
                             var owners = product.relatedParty.filter(function (relatedParty) {
@@ -176,9 +176,9 @@ var ordering = (function(){
                             if (!owners) {
                                 callback({
                                     status: 400,
-                                    message: 'The product cannot be ordered because not owners have been attached'
+                                    message: 'You cannot order a product without owners'
                                 });
-                                
+
                             } else {
                                 owners.forEach(function (owner) {
                                     item.product.relatedParty.push({
@@ -210,11 +210,14 @@ var ordering = (function(){
 
             } else {
 
-                body.orderItem = [];
+                // This part only makes sense when the completeRelatedPartyInfo function
+                // does not modify the item but create a new one...
 
-                results.forEach(function(item) {
-                    body.orderItem.push(item);
-                });
+                // body.orderItem = [];
+
+                // results.forEach(function(item) {
+                //     body.orderItem.push(item);
+                // });
 
                 req.body = JSON.stringify(body);
 

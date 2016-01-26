@@ -115,6 +115,12 @@ describe('Ordering API', function() {
     };
 
     it('should call the callback after validating the request when the user is customer', function(done) {
+
+        var server = 'http://example.com';
+        var productOfferingPath = '/productOffering/1';
+        var productSpecPath = '/product/2';
+        var ownerName = 'example';
+
         var user = {
             id: 'cust'
         };
@@ -126,20 +132,43 @@ describe('Ordering API', function() {
             }],
             orderItem: [{
                 product: {
+                },
+                productOffering: {
+                    href: server + productOfferingPath
                 }
             }]
         };
+
+        nock(server)
+            .get(productOfferingPath)
+            .reply(200, { productSpecification: { href: server + productSpecPath } });
+
+        nock(server)
+            .get(productSpecPath)
+            .reply(200, { relatedParty: [ { id: ownerName, role: 'owner' } ] });
+
         testOrderCreation(user, JSON.stringify(body), null, done, function(req) {
             var newBody = JSON.parse(req.body);
             expect(newBody.orderItem[0].product.relatedParty).toEqual([{
                 id: 'cust',
                 role: 'Customer',
                 href: ''
+            },
+            {
+                id: ownerName,
+                role: 'Seller',
+                href: ''
             }]);
         });
     });
 
     it('should call the callback after validating the request when the user is admin', function(done) {
+
+        var server = 'http://example.com';
+        var productOfferingPath = '/productOffering/1';
+        var productSpecPath = '/product/2';
+        var ownerName = 'example';
+
         var user = {
             id: 'admin'
         };
@@ -155,17 +184,115 @@ describe('Ordering API', function() {
                         id: 'admin',
                         role: 'customer'
                     }]
+                },
+                productOffering: {
+                    href: server + productOfferingPath
                 }
             }]
         };
+
+        nock(server)
+            .get(productOfferingPath)
+            .reply(200, { productSpecification: { href: server + productSpecPath } });
+
+        nock(server)
+            .get(productSpecPath)
+            .reply(200, { relatedParty: [ { id: ownerName, role: 'owner' } ] });
 
         testOrderCreation(user, JSON.stringify(body), null, done, function(req){
             var newBody = JSON.parse(req.body);
             expect(newBody.orderItem[0].product.relatedParty).toEqual([{
                 id: 'admin',
                 role: 'customer'
+            },
+            {
+                id: ownerName,
+                role: 'Seller',
+                href: ''
             }]);
         });
+    });
+
+    it('should fail if the offering attached to the order cannot be retrieved', function(done) {
+
+        var server = 'http://example.com';
+        var productOfferingPath = '/productOffering/1';
+
+        var orderItemId = 1;
+
+        var user = {
+            id: 'cust'
+        };
+
+        var body = {
+            relatedParty: [{
+                id: 'cust',
+                role: 'customer'
+            }],
+            orderItem: [{
+                id: orderItemId,
+                product: {
+                },
+                productOffering: {
+                    href: server + productOfferingPath
+                }
+            }]
+        };
+
+        nock(server)
+            .get(productOfferingPath)
+            .reply(500);
+
+        var expected = {
+            status: 400,
+            message: 'The system fails to retrieve the offering attached to the ordering item ' + orderItemId
+        };
+
+        testOrderCreation(user, JSON.stringify(body), expected, done);
+    });
+
+    it('should fail if the product attached to the order cannot be retrieved', function(done) {
+
+        var server = 'http://example.com';
+        var productOfferingPath = '/productOffering/1';
+        var productSpecPath = '/product/2';
+
+        var orderItemId = 1;
+
+        var user = {
+            id: 'cust'
+        };
+
+        var body = {
+            relatedParty: [{
+                id: 'cust',
+                role: 'customer'
+            }],
+            orderItem: [{
+                id: orderItemId,
+                product: {
+                },
+                productOffering: {
+                    href: server + productOfferingPath
+                }
+            }]
+        };
+
+        nock(server)
+            .get(productOfferingPath)
+            .reply(200, { productSpecification: { href: server + productSpecPath } });
+
+        nock(server)
+            .get(productSpecPath)
+            .reply(500);
+
+        var expected = {
+            status: 400,
+            message: 'The system fails to retrieve the product attached to the ordering item ' + orderItemId
+        };
+
+        testOrderCreation(user, JSON.stringify(body), expected, done);
+
     });
 
     it('should fail when the order is not well formed JSON', function(done) {
@@ -292,6 +419,29 @@ describe('Ordering API', function() {
         testOrderCreation(user, JSON.stringify(body), expected, done);
     });
 
+    it('should fail when the request does not include a productOffering in an orderItem', function(done) {
+        var user = {
+            id: 'cust'
+        };
+
+        var expected = {
+            status: 400,
+            message: 'The product order item 1 must contain a productOffering field'
+        };
+
+        var body = {
+            relatedParty: [{
+                id: 'cust',
+                role: 'customer'
+            }],
+            orderItem: [{
+                id: '1',
+                product: {}
+            }]
+        };
+        testOrderCreation(user, JSON.stringify(body), expected, done);
+    });
+
     it('should fail when an invalid customer has been specified in a product of an orderItem', function(done) {
         var user = {
             id: 'cust'
@@ -314,6 +464,9 @@ describe('Ordering API', function() {
                         id: 'test',
                         role: 'Customer'
                     }]
+                },
+                productOffering: {
+                    href: ''
                 }
             }]
         };
