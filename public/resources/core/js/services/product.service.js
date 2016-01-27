@@ -41,6 +41,10 @@
                 filters = {};
             }
 
+            if (filters.id) {
+                params['id'] = filters.id;
+            }
+
             if (filters.status) {
                 params['lifecycleStatus'] = filters.status;
             }
