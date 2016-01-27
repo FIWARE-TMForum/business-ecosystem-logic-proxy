@@ -1,0 +1,41 @@
+.row
+  .col-xs-12
+    .panel.panel-default(ng-repeat="productOrder in searchVM.list")
+      .panel-heading
+        .pull-right
+          a(ui-sref="inventory.productOrder.detail({ productOrderId: productOrder.id })", ui-sref-opts="{ inherit: false }")
+            | View details
+        ul.list-inline
+          li
+            dl
+              dt.text-uppercase State
+              dd {{ productOrder.state }}
+          li
+            dl
+              dt.text-uppercase Placed on
+              dd
+                time(title="{{ productOrder.requestedStartDate | amDateFormat: 'dddd, MMMM Do YYYY, h:mm a' }}")
+                  | {{ productOrder.requestedStartDate | amCalendar }}
+          li
+            dl
+              dt.text-uppercase Placed by
+              dd {{ productOrder.getCustomer().id }}
+      .panel-body
+        .media(ng-repeat="orderItem in productOrder.orderItem")
+          .media-left
+            .thumbnail.item-product-logo
+              img.media-object(no-image, ng-src="{{ orderItem.productOffering.getPicture() }}")
+          .media-body
+            a(ui-sref="offering.detail({ offeringId: orderItem.productOffering.id })", ui-sref-opts="{ inherit: false }")
+              h3.media-heading {{ orderItem.productOffering.name }}
+            dl
+              dt Description
+              dd.text-muted {{ orderItem.productOffering.description ? orderItem.productOffering.description : 'No description provided.' }}
+              dt State
+              dd.text-muted {{ orderItem.state }}
+              dt Price
+              dd.text-success
+                span {{ productOrder.getPriceplanOf($index).price.amount }} 
+                span.fa(class="fa-{{ productOrder.getPriceplanOf($index).price.currency | lowercase }}")
+                span(ng-show="productOrder.getPriceplanOf($index).recurringChargePeriod")  / {{ productOrder.getPriceplanOf($index).recurringChargePeriod }}
+                span(ng-show="productOrder.getPriceplanOf($index).unitOfMeasure")  / {{ productOrder.getPriceplanOf($index).unitOfMeasure }}

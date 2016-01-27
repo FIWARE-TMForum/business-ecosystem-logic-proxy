@@ -27,7 +27,7 @@
                         },
                         content: {
                             templateUrl: 'shopping-cart/list',
-                            controller: 'CreateOrderCtrl as orderVM'
+                            controller: 'ProductOrderCreateCtrl as orderVM'
                         }
                     }
                 });

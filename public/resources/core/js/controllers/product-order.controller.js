@@ -1,3 +1,10 @@
+/**
+ * @author Francisco de la Vega <fdelavega@conwet.com>
+ *         Jaime Pajuelo <jpajuelo@conwet.com>
+ *         Aitor Magán <amagan@conwet.com>
+ */
+
+
 (function () {
 
     'use strict';
@@ -11,9 +18,35 @@
 
     angular
         .module('app')
-        .controller('CreateOrderCtrl', CreateOrderController);
+        .controller('ProductOrderSearchCtrl', ProductOrderSearchController)
+        .controller('ProductOrderCreateCtrl', ProductOrderCreateController);
 
-    function CreateOrderController($rootScope, $state, Order, User, ShoppingCart, $window, $interval, EVENTS, Utils) {
+    function ProductOrderSearchController($state, $rootScope, EVENTS, PRODUCTORDER_LIFECYCLE, ProductOrder, Utils) {
+        /* jshint validthis: true */
+        var vm = this;
+
+        vm.state = $state;
+
+        vm.list = [];
+        vm.list.status = LOADING;
+
+        vm.showFilters = showFilters;
+
+        ProductOrder.search($state.params).then(function (productOrderList) {
+            angular.copy(productOrderList, vm.list);
+            vm.list.status = LOADED;
+        }, function (response) {
+            vm.error = Utils.parseError(response, 'It was impossible to load the list of catalogs');
+            vm.list.status = ERROR;
+        });
+
+        function showFilters() {
+            $rootScope.$broadcast(EVENTS.FILTERS_OPENED, PRODUCTORDER_LIFECYCLE);
+        }
+    }
+
+    function ProductOrderCreateController($state, $rootScope, $window, $interval, User, ProductOrder, ShoppingCart, Utils, EVENTS) {
+        /* jshint validthis: true */
         var vm = this;
 
         vm.makeOrder = makeOrder;
@@ -117,7 +150,7 @@
                 }
             }
 
-            Order.create(apiInfo).then(function(orderCreated) {
+            ProductOrder.create(apiInfo).then(function(orderCreated) {
                 if ('x-redirect-url' in orderCreated.headers) {
                     var ppalWindow = $window.open(orderCreated.headers['x-redirect-url'], '_blank');
 
@@ -154,4 +187,5 @@
 
         initOrder();
     }
+
 })();

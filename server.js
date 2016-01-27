@@ -300,7 +300,7 @@ app.post(config.shoppingCartPath + '/empty', headerAuthentication, ensureAuthent
 
 var cssFilesToInject = [
     'bootstrap-3.3.5/css/bootstrap',
-    'font-awesome-4.4.0/css/font-awesome',
+    'font-awesome-4.5.0/css/font-awesome',
     'core/css/default-theme'
 ].map(function (path) {
     return 'resources/' + path + '.css';
@@ -334,7 +334,7 @@ var jsAppFilesToInject = [
     'services/product-catalogue.service',
     'services/asset.service',
     'services/asset-type.service',
-    'services/order.service',
+    'services/product-order.service',
     'services/shopping-cart.service',
     'services/inventory-product.service',
     'services/utils.service',
@@ -348,7 +348,7 @@ var jsAppFilesToInject = [
     'controllers/product-offering.controller',
     'controllers/product-catalogue.controller',
     'controllers/purchase-options.controller',
-    'controllers/order.controller',
+    'controllers/product-order.controller',
     'controllers/message.controller',
     'controllers/inventory-product.controller',
     'routes/offering.routes',
@@ -357,7 +357,7 @@ var jsAppFilesToInject = [
     'routes/stock.product-offering.routes',
     'routes/stock.product-catalogue.routes',
     'routes/inventory.routes',
-    'routes/inventory.order.routes',
+    'routes/inventory.product-order.routes',
     'routes/inventory.product.routes',
     'routes/shopping-cart.routes'
 ].map(function (path) {
