@@ -334,7 +334,7 @@ var jsAppFilesToInject = [
     'services/product-catalogue.service',
     'services/asset.service',
     'services/asset-type.service',
-    'services/order.service',
+    'services/product-order.service',
     'services/shopping-cart.service',
     'services/inventory-product.service',
     'services/utils.service',

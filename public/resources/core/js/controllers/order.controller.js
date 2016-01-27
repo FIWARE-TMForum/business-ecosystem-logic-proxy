@@ -11,9 +11,10 @@
 
     angular
         .module('app')
-        .controller('CreateOrderCtrl', CreateOrderController);
+        .controller('ProductOrderCreateCtrl', ProductOrderCreateController);
 
-    function CreateOrderController($rootScope, $state, Order, User, ShoppingCart, $window, $interval, EVENTS, Utils) {
+    function ProductOrderCreateController($state, $rootScope, $window, $interval, User, ProductOrder, ShoppingCart, Utils, EVENTS) {
+        /* jshint validthis: true */
         var vm = this;
 
         vm.makeOrder = makeOrder;
@@ -117,7 +118,7 @@
                 }
             }
 
-            Order.create(apiInfo).then(function(orderCreated) {
+            ProductOrder.create(apiInfo).then(function(orderCreated) {
                 if ('x-redirect-url' in orderCreated.headers) {
                     var ppalWindow = $window.open(orderCreated.headers['x-redirect-url'], '_blank');
 
