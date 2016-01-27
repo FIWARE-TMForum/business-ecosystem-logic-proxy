@@ -2,9 +2,12 @@
 
     'use strict';
 
+    // Status for process that takes a while to load (load orders & create order)
     var LOADING = 'LOADING';
     var LOADED = 'LOADED';
     var ERROR = 'ERROR';
+    var INITIAL = 'INITIAL';
+    var FINISHED = 'FINISHED';
 
     angular
         .module('app')
@@ -15,6 +18,7 @@
 
         vm.makeOrder = makeOrder;
         vm.toggleCollapse = toggleCollapse;
+        vm.createOrderStatus = INITIAL;
 
         function toggleCollapse(id) {
             $('#' + id).collapse('toggle');
@@ -96,6 +100,8 @@
 
         function makeOrder() {
 
+            vm.createOrderStatus = LOADING;
+
             var cleanCartItems = function() {
                 ShoppingCart.cleanItems().then(function() {
                     $rootScope.$broadcast(EVENTS.ORDER_CREATED);
@@ -119,6 +125,7 @@
                     $rootScope.$emit(EVENTS.MESSAGE_CREATED);
                     var interval = $interval(function() {
                         if (ppalWindow.closed) {
+                            vm.createOrderStatus = FINISHED;
                             $interval.cancel(interval);
                             $rootScope.$emit(EVENTS.MESSAGE_CLOSED);
                             cleanCartItems();
@@ -127,10 +134,13 @@
                     }, 500);
 
                 } else {
+                    vm.createOrderStatus = FINISHED;
                     cleanCartItems();
                     $state.go('inventory');
                 }
             }, function (response) {
+
+                vm.createOrderStatus = ERROR;
 
                 var defaultMessage = 'There was an unexpected error that prevented the ' +
                     'system from creating a new order';

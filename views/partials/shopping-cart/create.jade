@@ -108,8 +108,9 @@ ui-view
                               td
                                 span {{ char.value }}
             .form-group.text-right
-              a.btn.btn-success(ng-disabled="!order.form.$valid", ng-click="orderVM.makeOrder()")
-                span.item-text Create
+              a.btn.btn-success(ng-disabled="!order.form.$valid || orderVM.createOrderStatus == 'LOADING'", ng-switch="orderVM.createOrderStatus", ng-click="orderVM.makeOrder()")
+                span.item-text(ng-switch-when="LOADING") Creating...
+                span.item-text(ng-switch-default) Create
           div(ng-switch-when="ERROR")
             .alert.alert-danger.text-center {{ orderVM.error }}
           div(ng-switch-default)
