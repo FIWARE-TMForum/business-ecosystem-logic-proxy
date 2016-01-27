@@ -18,7 +18,32 @@
 
     angular
         .module('app')
+        .controller('ProductOrderSearchCtrl', ProductOrderSearchController)
         .controller('ProductOrderCreateCtrl', ProductOrderCreateController);
+
+    function ProductOrderSearchController($state, $rootScope, EVENTS, PRODUCTORDER_LIFECYCLE, ProductOrder, Utils) {
+        /* jshint validthis: true */
+        var vm = this;
+
+        vm.state = $state;
+
+        vm.list = [];
+        vm.list.status = LOADING;
+
+        vm.showFilters = showFilters;
+
+        ProductOrder.search($state.params).then(function (catalogueList) {
+            angular.copy(catalogueList, vm.list);
+            vm.list.status = LOADED;
+        }, function (response) {
+            vm.error = Utils.parseError(response, 'It was impossible to load the list of catalogs');
+            vm.list.status = ERROR;
+        });
+
+        function showFilters() {
+            $rootScope.$broadcast(EVENTS.FILTERS_OPENED, PRODUCTORDER_LIFECYCLE);
+        }
+    }
 
     function ProductOrderCreateController($state, $rootScope, $window, $interval, User, ProductOrder, ShoppingCart, Utils, EVENTS) {
         /* jshint validthis: true */
