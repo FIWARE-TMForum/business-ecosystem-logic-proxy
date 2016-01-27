@@ -37,6 +37,12 @@
             SUSPENDED: 'Suspended',
             TERMINATED: 'Terminated'
         })
+        .constant('PRODUCTORDER_LIFECYCLE', {
+            ACKNOWLEDGED: 'Acknowledged',
+            INPROGRESS: 'InProgress',
+            COMPLETED: 'Completed',
+            FAILED: 'Failed'
+        })
         .constant('FILTER_STATUS', [
             {value: 'Active'},
             {value: 'Launched'},
