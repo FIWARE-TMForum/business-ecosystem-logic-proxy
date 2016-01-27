@@ -32,8 +32,8 @@
 
         vm.showFilters = showFilters;
 
-        ProductOrder.search($state.params).then(function (catalogueList) {
-            angular.copy(catalogueList, vm.list);
+        ProductOrder.search($state.params).then(function (productOrderList) {
+            angular.copy(productOrderList, vm.list);
             vm.list.status = LOADED;
         }, function (response) {
             vm.error = Utils.parseError(response, 'It was impossible to load the list of catalogs');

@@ -1,0 +1,14 @@
+.btn-toolbar
+  .btn-group
+    include ./breadcrumb.jade
+  .btn-group.pull-right
+    a.btn.btn-default(ui-sref="inventory.productOrder({ role: 'Customer' })", ui-sref-active="active")
+      span.item-icon.fa.fa-send
+      span.item-text.hidden-xs Requested
+    a.btn.btn-default(ui-sref="inventory.productOrder({ role: 'Seller' })", ui-sref-active="active")
+      span.item-icon.fa.fa-envelope
+      span.item-text.hidden-xs Received
+  .btn-group.pull-right
+    button.btn.btn-default(type="button", ng-click="searchVM.showFilters()")
+      span.item-icon.fa.fa-sliders
+      span.item-text.hidden-xs Filters

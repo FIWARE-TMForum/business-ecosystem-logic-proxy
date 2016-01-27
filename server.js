@@ -357,7 +357,7 @@ var jsAppFilesToInject = [
     'routes/stock.product-offering.routes',
     'routes/stock.product-catalogue.routes',
     'routes/inventory.routes',
-    'routes/inventory.order.routes',
+    'routes/inventory.product-order.routes',
     'routes/inventory.product.routes',
     'routes/shopping-cart.routes'
 ].map(function (path) {

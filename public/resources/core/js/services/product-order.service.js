@@ -19,6 +19,7 @@
 
         resource.prototype.getCustomer = getCustomer;
         resource.prototype.getRoleOf = getRoleOf;
+        resource.prototype.getPriceplanOf = getPriceplanOf;
 
         return {
             search: search,
@@ -126,6 +127,11 @@
             }
 
             return role;
+        }
+
+        function getPriceplanOf(orderIndex) {
+            /* jshint validthis: true */
+            return this.orderItem[orderIndex].product.productPrice[0];
         }
     }
 
