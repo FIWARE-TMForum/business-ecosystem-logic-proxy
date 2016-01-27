@@ -300,7 +300,7 @@ app.post(config.shoppingCartPath + '/empty', headerAuthentication, ensureAuthent
 
 var cssFilesToInject = [
     'bootstrap-3.3.5/css/bootstrap',
-    'font-awesome-4.4.0/css/font-awesome',
+    'font-awesome-4.5.0/css/font-awesome',
     'core/css/default-theme'
 ].map(function (path) {
     return 'resources/' + path + '.css';
