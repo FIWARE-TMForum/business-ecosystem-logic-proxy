@@ -267,12 +267,7 @@ describe('TMF Controller', function() {
 
 
         var executePostValidationOk = function(req, callback) {
-            var response = {
-                extraHdrs: {
-                    'X-Redirect-URL': 'http://redirecturl.com'
-                }
-            };
-            callback(null, response)
+            callback()
         };
 
         var executeValidationError = function(req, callback) {
@@ -283,7 +278,7 @@ describe('TMF Controller', function() {
             callback(err);
         };
 
-        var testAPIPostValidation = function(postValidator, error,  done) {
+        var testAPIPostValidation = function(postValidator, error, done) {
 
             // Configure the API controller
             var controller = {
@@ -324,9 +319,8 @@ describe('TMF Controller', function() {
 
                     expect(proxyCallback).not.toHaveBeenCalled();
                 } else {
-                    expect(proxyCallback).toHaveBeenCalledWith({
-                        'X-Redirect-URL': 'http://redirecturl.com'
-                    });
+                    expect(res.send).not.toHaveBeenCalled();
+                    expect(proxyCallback).toHaveBeenCalledWith();
                 }
                 done();
 

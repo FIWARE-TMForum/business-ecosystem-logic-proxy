@@ -54,16 +54,56 @@ describe('Ordering API', function() {
         testNotLoggedIn('POST', done);
     });
 
-    it('should reject not authenticated PUT requests', function(done) {
-        testNotLoggedIn('PUT', done);
-    });
-
     it('should reject not authenticated PATCH requests', function(done) {
         testNotLoggedIn('PATCH', done);
     });
 
+
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////// NOT ALLOWED ////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////////////
+
+    var methodNotAllowedStatus = 405;
+    var methodNotAllowedMessage = 'This method used is not allowed in the accessed API';
+
+    var methodNotAllowed = function(req, callback) {
+        callback({
+            status: methodNotAllowedStatus,
+            message: methodNotAllowedMessage
+        });
+    };
+
+    var testMethodNotAllowed = function(method, done) {
+
+        var tmfUtils = {
+            methodNotAllowed: methodNotAllowed
+        }
+
+        var orderingApi = getOrderingAPI({}, tmfUtils);
+        var path = '/ordering';
+
+        // Call the method
+        var req = {
+            method: method,
+            url: path
+        };
+
+        orderingApi.checkPermissions(req, function(err) {
+
+            expect(err).not.toBe(null);
+            expect(err.status).toBe(methodNotAllowedStatus);
+            expect(err.message).toBe(methodNotAllowedMessage);
+
+            done();
+        });
+    }
+
+    it('should reject not authenticated PUT requests', function(done) {
+        testMethodNotAllowed('PUT', done);
+    });
+
     it('should reject not authenticated DELETE requests', function(done) {
-        testNotLoggedIn('DELETE', done);
+        testMethodNotAllowed('DELETE', done);
     });
 
     //////////////////////////////////////////////////////////////////////////////////////////////
@@ -502,7 +542,7 @@ describe('Ordering API', function() {
         callback({status: 500});
     };
 
-    var testPostValidation = function(notifier, checker) {
+    var testPostValidation = function(notifier, headers, checker) {
         var storeClient = {
             storeClient: {
                 notifyOrder: notifier
@@ -514,48 +554,48 @@ describe('Ordering API', function() {
         var req = {
             method: 'POST',
             user: userInf,
-            body: JSON.stringify(orderInf)
+            body: JSON.stringify(orderInf),
+            headers: headers
         };
 
         orderingApi.executePostValidation(req, checker);
     };
 
     it('should inject extra headers after calling notify store', function(done) {
-        testPostValidation(notifyStoreOk, function(err, res) {
+
+        var headers = {};
+
+        testPostValidation(notifyStoreOk, headers, function(err) {
+
             expect(err).toBe(null);
-            expect(res).toEqual({
-                body: '{"redirectUrl": "' + redirectUrl + '"}',
-                extraHdrs: {
-                    'X-Redirect-URL': redirectUrl
-                }
-            });
+            expect(headers).toEqual({ 'X-Redirect-URL': redirectUrl  });
             done();
         });
     });
 
     it('should call the callback function after an error in store notification', function(done) {
-        testPostValidation(notifyStoreErr, function(err, res) {
-            expect(err).toEqual({
-                status: 500
-            });
 
-            expect(res).toBe(undefined);
+        var headers = {};
+
+        testPostValidation(notifyStoreErr, {}, function(err) {
+
+            expect(err).toEqual({ status: 500 });
+            expect(headers).toEqual({});
+
             done();
         });
     });
 
-    it('should directly call the callback when the request method is not POST', function(done) {
+    it('should directly call the callback when the request method is not GET or POST', function(done) {
+
         var req = {
-            method: 'GET'
+            method: 'DELETE'
         };
 
         var orderingApi = getOrderingAPI({}, {});
 
-        orderingApi.executePostValidation(req, function(err, res) {
+        orderingApi.executePostValidation(req, function(err) {
             expect(err).toBe(null);
-            expect(res).toEqual({
-                extraHdrs: {}
-            });
             done();
         });
     });

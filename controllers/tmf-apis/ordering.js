@@ -306,7 +306,9 @@ var ordering = (function(){
 
     var executePostValidation = function(req, callback) {
 
-        var body = JSON.parse(req.body);
+        if (req.body) {
+            var body = JSON.parse(req.body);
+        }
 
         if (req.method === 'GET' && !tmfUtils.checkRole(req.user, config.oauth2.roles.admin)) {
 
@@ -369,7 +371,7 @@ var ordering = (function(){
             // If the body is modified, the content-length header has to be modified
             req.headers['content-length'] = Buffer.byteLength(req.body);
 
-            callback();
+            callback(null);
 
         } else if (req.method === 'POST') {
 
@@ -385,7 +387,7 @@ var ordering = (function(){
                         req.headers['X-Redirect-URL'] = parsedResp.redirectUrl;
                     }
 
-                    callback();
+                    callback(null);
 
                 } else {
 
@@ -393,7 +395,7 @@ var ordering = (function(){
                 }
             });
         } else {
-            callback();
+            callback(null);
         }
     };
 
