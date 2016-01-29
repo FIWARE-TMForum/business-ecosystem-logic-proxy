@@ -21,11 +21,12 @@
         .controller('ProductOrderSearchCtrl', ProductOrderSearchController)
         .controller('ProductOrderCreateCtrl', ProductOrderCreateController);
 
-    function ProductOrderSearchController($state, $rootScope, EVENTS, PRODUCTORDER_LIFECYCLE, ProductOrder, Utils) {
+    function ProductOrderSearchController($state, $rootScope, EVENTS, PRODUCTORDER_STATUS, PRODUCTORDER_LIFECYCLE, ProductOrder, Utils) {
         /* jshint validthis: true */
         var vm = this;
 
         vm.state = $state;
+        vm.role = $state.params.role;
 
         vm.list = [];
         vm.list.status = LOADING;

@@ -2,9 +2,9 @@
   .col-xs-12
     .panel.panel-default(ng-repeat="productOrder in searchVM.list")
       .panel-heading
-        .pull-right
+        .pull-right(ng-if="searchVM.role === 'Customer'")
           a(ui-sref="inventory.productOrder.detail({ productOrderId: productOrder.id })", ui-sref-opts="{ inherit: false }")
-            | View details
+            span.item-text View details
         ul.list-inline
           li
             dl
