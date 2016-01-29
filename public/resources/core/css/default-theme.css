@@ -99,6 +99,7 @@ dl {
 
 .list-inline > li {
     padding: 0;
+    vertical-align: top;
 }
 
 .list-inline > li + li {

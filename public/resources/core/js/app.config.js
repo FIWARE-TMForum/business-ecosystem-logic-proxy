@@ -1,11 +1,20 @@
 /**
  * @author Francisco de la Vega <fdelavega@conwet.com>
  *         Jaime Pajuelo <jpajuelo@conwet.com>
+ *         Aitor Magán <amagan@conwet.com>
  */
+
 
 (function () {
 
     'use strict';
+
+    var PRODUCTORDER_STATUS = {
+        ACKNOWLEDGED: 'Acknowledged',
+        INPROGRESS: 'InProgress',
+        COMPLETED: 'Completed',
+        FAILED: 'Failed'
+    };
 
     angular
         .module('app', ['ngResource', 'ngMessages', 'angularMoment', 'ui.router'])
@@ -37,12 +46,12 @@
             SUSPENDED: 'Suspended',
             TERMINATED: 'Terminated'
         })
-        .constant('PRODUCTORDER_LIFECYCLE', {
-            ACKNOWLEDGED: 'Acknowledged',
-            INPROGRESS: 'InProgress',
-            COMPLETED: 'Completed',
-            FAILED: 'Failed'
-        })
+        .constant('PRODUCTORDER_STATUS', PRODUCTORDER_STATUS)
+        .constant('PRODUCTORDER_LIFECYCLE', [
+            PRODUCTORDER_STATUS.ACKNOWLEDGED,
+            PRODUCTORDER_STATUS.INPROGRESS,
+            PRODUCTORDER_STATUS.COMPLETED
+        ])
         .constant('FILTER_STATUS', [
             {value: 'Active'},
             {value: 'Launched'},

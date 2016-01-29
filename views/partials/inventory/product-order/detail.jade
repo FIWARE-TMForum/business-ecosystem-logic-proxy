@@ -1,0 +1,49 @@
+.row
+  .col-xs-12
+    .btn-toolbar
+      .btn-group
+        include ./breadcrumb.jade
+  .col-xs-12(ng-switch="detailVM.item.status")
+    div(ng-switch-when="LOADED")
+      .h2 Order details
+      .h4.text-muted
+        time(title="{{ detailVM.item.requestedStartDate | amDateFormat: 'dddd, MMMM Do YYYY, h:mm a' }}")
+          | {{ detailVM.item.requestedStartDate | amCalendar }}
+        | , placed by {{ detailVM.item.getCustomer().id }}
+      .panel.panel-default
+        .panel-heading
+          ul.list-inline
+            li
+              dl
+                dt.text-uppercase Status
+                dd {{ detailVM.item.state }}
+        .panel-body
+          .media(ng-repeat="orderItem in detailVM.item.orderItem")
+            .media-left
+              .thumbnail.item-product-logo
+                img.media-object(no-image, ng-src="{{ orderItem.productOffering.getPicture() }}")
+            .media-body
+              a(ui-sref="offering.detail({ offeringId: orderItem.productOffering.id })", ui-sref-opts="{ inherit: false }")
+                h3.media-heading {{ orderItem.productOffering.name }}
+              ul.list-inline
+                li
+                  dl
+                    dt Description
+                    dd.text-muted {{ orderItem.productOffering.description ? orderItem.productOffering.description : 'No description provided.' }}
+                    dt State
+                    dd.text-muted {{ orderItem.state }}
+                    dt Price
+                    dd.text-success
+                      span {{ detailVM.item.getPriceplanOf($index).price.amount }} 
+                      span.fa(class="fa-{{ detailVM.item.getPriceplanOf($index).price.currency | lowercase }}")
+                      span(ng-show="detailVM.item.getPriceplanOf($index).recurringChargePeriod")  / {{ detailVM.item.getPriceplanOf($index).recurringChargePeriod }}
+                      span(ng-show="detailVM.item.getPriceplanOf($index).unitOfMeasure")  / {{ detailVM.item.getPriceplanOf($index).unitOfMeasure }}
+                li
+                  dl
+                    dt Billing address
+                    dd {{ orderItem.billingAccount.billingAddress.street }}
+                    dd {{ orderItem.billingAccount.billingAddress.city }}, {{ orderItem.billingAccount.billingAddress.province }} {{ orderItem.billingAccount.billingAddress.postal }}
+                    dd {{ orderItem.billingAccount.billingAddress.country }}
+    .alert.alert-danger.text-center(ng-switch-when="ERROR") {{ updateVM.error }}
+    .container-spinner(ng-switch-default)
+      span.fa.fa-spinner.fa-spin.fa-2x
