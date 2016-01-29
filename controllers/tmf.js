@@ -66,11 +66,11 @@ var tmf = (function() {
                 result.method = req.method;
                 result.path = req.path;
 
-                apiControllers[api].executePostValidation(result, function(err, retRes) {
+                apiControllers[api].executePostValidation(result, function(err) {
                     if (err) {
                         sendError(res, err);
                     } else {
-                        callback(retRes.extraHdrs);
+                        callback();
                     }
                 });
             }

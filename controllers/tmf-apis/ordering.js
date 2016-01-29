@@ -10,6 +10,9 @@ var async = require('async'),
 
 var ordering = (function(){
 
+    var CUSTOMER = 'Customer';
+    var SELLER = 'Seller';
+
     var makeRequest = function(rawUrl, errMsg, callback) {
 
         var parsedUrl = url.parse(rawUrl);
@@ -37,7 +40,43 @@ var ordering = (function(){
     };
 
     var validateRetrieving = function(req, callback) {
-        callback();
+
+        if (!tmfUtils.checkRole(req.user, config.oauth2.roles.admin)) {
+
+            if (req.query['relatedPary.role'] || req.query['relatedParty.href']) {
+
+                // This is required to control that a user can only access to those order items they are
+                // involved. If this fields are allowed, the user will be able to access all the orderings
+                // because filters applied to a list are independent from other filters applied to the
+                // same list.
+                // For example: relatedParty.id=fiware&relatedParty.role=Seller will return all the orderings
+                // where there is one related party where fiware is involved or where there is a user with
+                // the seller role (all).
+
+                callback({
+                    status: 403,
+                    message: 'You are not allowed to filter order using this filters'
+                });
+
+            } else if (req.query['relatedParty.id'] && req.query['relatedParty.id'] !== req.user.id) {
+
+                callback({
+                    status: 403,
+                    message: 'You are not authorized to retrieve the orderings made by the user ' +
+                            req.query['relatedParty.id']
+                });
+            } else {
+
+                // Non-admin users can only retrieve their offerings
+                var separator = req.apiPath.indexOf('?') >= 0 ? '&' : '?';
+                req.apiPath += separator + 'relatedParty.id=' + req.user.id;
+
+                callback();
+            }
+        } else {
+            // Admin users can get orderings without being filtered
+            callback();
+        }
     };
 
     var validateCreation = function(req, callback) {
@@ -110,7 +149,7 @@ var ordering = (function(){
 
         var completeRelatedPartyInfo = function(item, callback) {
 
-            if(!item.product) {
+            if (!item.product) {
 
                 callback({
                     status: 400,
@@ -120,7 +159,7 @@ var ordering = (function(){
                 return;
             }
 
-            if(!item.productOffering) {
+            if (!item.productOffering) {
 
                 callback({
                     status: 400,
@@ -146,7 +185,7 @@ var ordering = (function(){
             if (!itemCustCheck[0]) {
                 item.product.relatedParty.push({
                     id: req.user.id,
-                    role: 'Customer',
+                    role: CUSTOMER,
                     href: ''
                 });
             }
@@ -183,7 +222,7 @@ var ordering = (function(){
                                 owners.forEach(function (owner) {
                                     item.product.relatedParty.push({
                                         id: owner.id,
-                                        role: 'Seller',
+                                        role: SELLER,
                                         href: ''
                                     });
                                 });
@@ -203,21 +242,32 @@ var ordering = (function(){
            asyncTasks.push(completeRelatedPartyInfo.bind(this, item));
         });
 
-        async.series(asyncTasks, function(err, results) {
+        async.series(asyncTasks, function(err/*, results*/) {
 
             if (err) {
                 callback(err);
 
             } else {
 
-                // This part only makes sense when the completeRelatedPartyInfo function
-                // does not modify the item but create a new one...
+                // Include sellers as related party in the ordering
 
-                // body.orderItem = [];
+                var pushedSellers = [];
 
-                // results.forEach(function(item) {
-                //     body.orderItem.push(item);
-                // });
+                body.orderItem.forEach(function(item) {
+
+                    var sellers = item.product.relatedParty.filter(function(party) {
+                        return party.role.toLowerCase() === SELLER.toLowerCase();
+                    });
+
+                    sellers.forEach(function(seller) {
+
+                        if (pushedSellers.indexOf(seller.id) < 0) {
+                            body.relatedParty.push(seller);
+                            pushedSellers.push(seller.id);
+                        }
+
+                    });
+                });
 
                 req.body = JSON.stringify(body);
 
@@ -238,8 +288,8 @@ var ordering = (function(){
         'GET': [ tmfUtils.validateLoggedIn, validateRetrieving ],
         'POST': [ tmfUtils.validateLoggedIn, validateCreation ],
         'PATCH': [ tmfUtils.validateLoggedIn, validateUpdate ],
-        'PUT': [ tmfUtils.validateLoggedIn, validateUpdate ],
-        'DELETE': [ tmfUtils.validateLoggedIn, validateUpdate ]
+        'PUT': [ tmfUtils.methodNotAllowed ],
+        'DELETE': [ tmfUtils.methodNotAllowed ]
     };
 
     var checkPermissions = function (req, callback) {
@@ -255,32 +305,95 @@ var ordering = (function(){
     };
 
     var executePostValidation = function(req, callback) {
-        if (req.method === 'POST') {
+
+        var body = JSON.parse(req.body);
+
+        if (req.method === 'GET' && !tmfUtils.checkRole(req.user, config.oauth2.roles.admin)) {
+
+            // Elements from the list are only filtered when the user is not the admin of the application!
+
+            var orderings = [];
+            var isArray = true;
+
+            if (!Array.isArray(body)) {
+                orderings = [body];
+                isArray = false;
+            } else {
+                orderings = body;
+            }
+
+            orderings.forEach(function(ordering) {
+
+                var customer = false;
+                var seller = false;
+
+                ordering.relatedParty.forEach(function(party) {
+
+                    if (party.id === req.user.id) {
+
+                        switch (party.role.toLowerCase()){
+                            case CUSTOMER.toLowerCase():
+                                customer = true;
+                                break;
+                            case SELLER.toLowerCase():
+                                seller = true;
+                                break;
+                        }
+                    }
+                });
+
+                if (!customer && !seller) {
+                    // Not supposed to happen
+                    ordering.orderItem = [];
+                } else if (!customer && seller) {
+
+                    // When a user is involved only as a seller in an ordering, only the order items
+                    // where the user is a seller have to be returned
+
+                    ordering.orderItem = ordering.orderItem.filter(function(item) {
+                        return item.product.relatedParty.some(function(party) {
+                            return party.role.toLowerCase() === SELLER.toLowerCase() && party.id === req.user.id;
+                        });
+                    });
+                }
+                // ELSE: If the user is the customer, order items don't have to be filtered
+
+            });
+
+            if (!isArray) {
+                req.body = JSON.stringify(orderings[0]);
+            } else {
+                req.body = JSON.stringify(orderings);
+            }
+
+            // If the body is modified, the content-length header has to be modified
+            req.headers['content-length'] = Buffer.byteLength(req.body);
+
+            callback();
+
+        } else if (req.method === 'POST') {
+
             // Send ordering notification to the store
             log.info('Executing Ordering post validation');
-            storeClient.notifyOrder(JSON.parse(req.body), req.user, function(err, res) {
+            storeClient.notifyOrder(body, req.user, function(err, res) {
 
                 if(res) {
 
                     var parsedResp = JSON.parse(res.body);
 
                     if (parsedResp.redirectUrl) {
-                        res.extraHdrs = {
-                            'X-Redirect-URL': parsedResp.redirectUrl
-                        };
+                        req.headers['X-Redirect-URL'] = parsedResp.redirectUrl;
                     }
 
-                    callback(null, res);
+                    callback();
 
                 } else {
 
-                    callback(err, res);
+                    callback(err);
                 }
             });
         } else {
-            callback(null, {
-                extraHdrs: {}
-            });
+            callback();
         }
     };
 
