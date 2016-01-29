@@ -34,16 +34,20 @@
                 params['relatedParty.id'] = User.loggedUser.id;
             }
 
-            if (filters.role) {
-                params['relatedParty.role'] = filters.role;
-            }
-
             if (filters.status) {
                 params['state'] = filters.status;
             }
 
             resource.query(params, function (productOrderList) {
                 var productOfferingFilters = {};
+
+                productOrderList = productOrderList.filter(function(ordering) {
+
+                    return ordering.relatedParty.some(function(party) {
+                       return party.role === filters.role && party.id === User.loggedUser.id;
+                    });
+
+                });
 
                 if (productOrderList.length) {
                     productOfferingFilters.id = getProductOfferingIds(productOrderList).join();
