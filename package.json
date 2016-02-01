@@ -8,6 +8,7 @@
     "base64url": "1.0.x",
     "body-parser": "1.14.1",
     "cookie-parser": "1.4.0",
+    "deep-equal": "^1.0.1",
     "errorhandler": "1.4.x",
     "express": "4.x",
     "express-session": "1.12.1",
