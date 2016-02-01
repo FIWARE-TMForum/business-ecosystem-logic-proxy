@@ -29,6 +29,11 @@
                     },
                     templateUrl: 'inventory/product-order/search',
                     controller: 'ProductOrderSearchCtrl as searchVM'
+                })
+                .state('inventory.productOrder.detail', {
+                    url: '/:productOrderId',
+                    templateUrl: 'inventory/product-order/detail',
+                    controller: 'ProductOrderDetailCtrl as detailVM'
                 });
         }
     }

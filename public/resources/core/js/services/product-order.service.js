@@ -15,6 +15,10 @@
     function ProductOrderService($q, $resource, URLS, User, Offering) {
         var resource = $resource(URLS.PRODUCTORDER_MANAGEMENT + '/productOrder/:productOrderId', {
             productOrderId: '@id'
+        }, {
+            updatePartial: {
+                method: 'PATCH'
+            }
         });
 
         resource.prototype.getCustomer = getCustomer;
@@ -23,7 +27,9 @@
 
         return {
             search: search,
-            create: create
+            create: create,
+            detail: detail,
+            update: update
         };
 
         function search(filters) {
@@ -105,6 +111,94 @@
             });
 
             return deferred.promise;
+        }
+
+        function detail(productOrderId) {
+            var deferred = $q.defer();
+            var params = {
+                productOrderId: productOrderId
+            };
+
+            resource.get(params, function (productOrderRetrieved) {
+                    var productOfferingFilters = {
+                        id: getProductOfferingIds(productOrderRetrieved).join()
+                    };
+                    var billingAccountCompleted = false, offeringListCompleted = false;
+
+                    User.detail(function (userRetrived) {
+                        replaceBillingAccount(productOrderRetrieved, userRetrived);
+                        billingAccountCompleted = true;
+
+                        if (billingAccountCompleted && offeringListCompleted) {
+                            deferred.resolve(productOrderRetrieved);
+                        }
+                    });
+
+                    Offering.search(productOfferingFilters).then(function (productOfferingList) {
+                        replaceProductOffering(productOrderRetrieved, productOfferingList);
+                        offeringListCompleted = true;
+
+                        if (billingAccountCompleted && offeringListCompleted) {
+                            deferred.resolve(productOrderRetrieved);
+                        }
+                    });
+                deferred.resolve(productOrderRetrieved);
+            }, function (response) {
+                deferred.reject(response);
+            });
+
+            return deferred.promise;
+
+            function replaceBillingAccount(productOrderRetrieved, user) {
+                productOrderRetrieved.orderItem.forEach(function (orderItem) {
+                    orderItem.billingAccount = user;
+                });
+            }
+        }
+
+        function update(productOrder, dataUpdated) {
+            var deferred = $q.defer();
+            var params = {
+                productOrderId: productOrder.id
+            };
+
+            resource.updatePartial(params, dataUpdated, function (productOrderUpdated) {
+                var productOfferingFilters = {
+                    id: getProductOfferingIds(productOrderUpdated).join()
+                };
+
+                Offering.search(productOfferingFilters).then(function (productOfferingList) {
+                    replaceProductOffering(productOrderUpdated, productOfferingList);
+                    deferred.resolve(productOrderUpdated);
+                });
+
+            }, function (response) {
+                deferred.reject(response);
+            });
+
+            return deferred.promise;
+        }
+
+        function getProductOfferingIds(productOrder) {
+            var productOfferingIds = {};
+
+            productOrder.orderItem.forEach(function (orderItem) {
+                productOfferingIds[orderItem.productOffering.id] = {};
+            });
+
+            return Object.keys(productOfferingIds);
+        }
+
+        function replaceProductOffering(productOrder, productOfferingList) {
+            var productOfferings = {};
+
+            productOfferingList.forEach(function (productOffering) {
+                productOfferings[productOffering.id] = productOffering;
+            });
+
+            productOrder.orderItem.forEach(function (orderItem) {
+                orderItem.productOffering = productOfferings[orderItem.productOffering.id];
+            });
         }
 
         function getCustomer() {

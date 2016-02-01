@@ -19,18 +19,23 @@
     angular
         .module('app')
         .controller('ProductOrderSearchCtrl', ProductOrderSearchController)
-        .controller('ProductOrderCreateCtrl', ProductOrderCreateController);
+        .controller('ProductOrderCreateCtrl', ProductOrderCreateController)
+        .controller('ProductOrderDetailCtrl', ProductOrderDetailController);
 
-    function ProductOrderSearchController($state, $rootScope, EVENTS, PRODUCTORDER_LIFECYCLE, ProductOrder, Utils) {
+    function ProductOrderSearchController($state, $rootScope, EVENTS, PRODUCTORDER_STATUS, PRODUCTORDER_LIFECYCLE, ProductOrder, Utils) {
         /* jshint validthis: true */
         var vm = this;
 
         vm.state = $state;
+        vm.role = $state.params.role;
 
         vm.list = [];
         vm.list.status = LOADING;
 
+        vm.isFinalStatus = isFinalStatus;
+        vm.getNextStatus = getNextStatus;
         vm.showFilters = showFilters;
+        vm.updateStatus = updateStatus;
 
         ProductOrder.search($state.params).then(function (productOrderList) {
             angular.copy(productOrderList, vm.list);
@@ -41,7 +46,38 @@
         });
 
         function showFilters() {
-            $rootScope.$broadcast(EVENTS.FILTERS_OPENED, PRODUCTORDER_LIFECYCLE);
+            $rootScope.$broadcast(EVENTS.FILTERS_OPENED, PRODUCTORDER_STATUS);
+        }
+
+        function isFinalStatus(orderItem) {
+            return orderItem.state === PRODUCTORDER_STATUS.COMPLETED || orderItem.state === PRODUCTORDER_STATUS.FAILED;
+        }
+
+        function getNextStatus(orderItem) {
+            var index = PRODUCTORDER_LIFECYCLE.indexOf(orderItem.state);
+            return index !== -1 && (index + 1) !== PRODUCTORDER_LIFECYCLE.length ? PRODUCTORDER_LIFECYCLE[index + 1] : null;
+        }
+
+        function updateStatus(productOrder, index, status) {
+            var dataUpdated = {
+                orderItem: angular.copy(productOrder.orderItem)
+            };
+
+            dataUpdated.orderItem[index].state = status;
+            dataUpdated.orderItem.forEach(function (orderItem) {
+                orderItem.productOffering = orderItem.productOffering.serialize();
+            });
+            ProductOrder.update(productOrder, dataUpdated).then(function (productOrderUpdated) {
+                angular.copy(productOrderUpdated, productOrder);
+            }, function (response) {
+                var defaultMessage = 'There was an unexpected error that prevented the ' +
+                    'system from updating the given product order';
+                var error = Utils.parseError(response, defaultMessage);
+
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                    error: error
+                });
+            });
         }
     }
 
@@ -186,6 +222,21 @@
         }
 
         initOrder();
+    }
+
+    function ProductOrderDetailController($state, ProductOrder) {
+        /* jshint validthis: true */
+        var vm = this;
+
+        vm.item = {};
+
+        ProductOrder.detail($state.params.productOrderId).then(function (productOrderRetrieved) {
+            vm.item = productOrderRetrieved;
+            vm.item.status = LOADED;
+        }, function (response) {
+            vm.error = Utils.parseError(response, 'The requested product order could not be retrieved');
+            vm.item.status = ERROR;
+        });
     }
 
 })();

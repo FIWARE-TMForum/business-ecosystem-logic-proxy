@@ -2,9 +2,9 @@
   .col-xs-12
     .panel.panel-default(ng-repeat="productOrder in searchVM.list")
       .panel-heading
-        .pull-right
+        .pull-right(ng-if="searchVM.role === 'Customer'")
           a(ui-sref="inventory.productOrder.detail({ productOrderId: productOrder.id })", ui-sref-opts="{ inherit: false }")
-            | View details
+            span.item-text View details
         ul.list-inline
           li
             dl
@@ -26,6 +26,15 @@
             .thumbnail.item-product-logo
               img.media-object(no-image, ng-src="{{ orderItem.productOffering.getPicture() }}")
           .media-body
+            .pull-right(ng-if="searchVM.role === 'Seller' && !searchVM.isFinalStatus(orderItem)")
+              p
+                a.btn.btn-block.btn-default(ng-click="searchVM.updateStatus(productOrder, $index, searchVM.getNextStatus(orderItem))")
+                  span.item-text Change to 
+                    strong {{ searchVM.getNextStatus(orderItem) }}
+              p
+                a.btn.btn-block.btn-danger(ng-if="orderItem.state == 'InProgress'", ng-click="searchVM.updateStatus(orderItem, 'Failed')")
+                  span.item-text Change to 
+                    strong Failed
             a(ui-sref="offering.detail({ offeringId: orderItem.productOffering.id })", ui-sref-opts="{ inherit: false }")
               h3.media-heading {{ orderItem.productOffering.name }}
             dl
