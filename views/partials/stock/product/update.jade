@@ -16,6 +16,10 @@
               a(ui-sref="stock.product.update.bundled")
                 span.item-icon.fa.fa-file
                 span.item-text.hidden-xs Bundled product
+            li(ui-sref-active-eq="active")
+              a(ui-sref="stock.product.update.attachment")
+                span.item-icon.fa.fa-paperclip
+                span.item-text.hidden-xs Attachments
       .col-xs-12
         ui-view
           .panel.panel-default(ng-controller="FormWizardCtrl as updateForm")

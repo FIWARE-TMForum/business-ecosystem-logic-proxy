@@ -10,10 +10,10 @@
 
     angular
         .module('app')
-        .factory('Product', ProductService);
+        .factory('ProductSpec', ProductSpecificationService);
 
-    function ProductService($q, $resource, URLS, LIFECYCLE_STATUS, User) {
-        var resource = $resource(URLS.CATALOGUE_MANAGEMENT + '/productSpecification/:productId', {
+    function ProductSpecificationService($q, $resource, URLS, LIFECYCLE_STATUS, User) {
+        var resource = $resource(URLS.CATALOGUE_MANAGEMENT + '/productSpecification/:productSpecId', {
             productId: '@id'
         }, {
             update: {
@@ -53,8 +53,8 @@
                 params['relatedParty.id'] = User.loggedUser.id;
             }
 
-            resource.query(params, function (productList) {
-                deferred.resolve(productList);
+            resource.query(params, function (productSpecList) {
+                deferred.resolve(productSpecList);
             }, function (response) {
                 deferred.reject(response);
             });
@@ -65,8 +65,8 @@
         function exists(params) {
             var deferred = $q.defer();
 
-            resource.query(params, function (productList) {
-                deferred.resolve(!!productList.length);
+            resource.query(params, function (productSpecList) {
+                deferred.resolve(!!productSpecList.length);
             });
 
             return deferred.promise;
@@ -74,15 +74,17 @@
 
         function create(data) {
             var deferred = $q.defer();
+            var bundledProductSpecification = data.bundledProductSpecification;
 
             angular.extend(data, {
-                bundledProductSpecification: data.bundledProductSpecification.map(function (product) {
-                    return product.serialize();
+                bundledProductSpecification: data.bundledProductSpecification.map(function (productSpec) {
+                    return productSpec.serialize();
                 })
             });
 
-            resource.save(data, function (productCreated) {
-                deferred.resolve(productCreated);
+            resource.save(data, function (productSpecCreated) {
+                productSpecCreated.bundledProductSpecification = bundledProductSpecification;
+                deferred.resolve(productSpecCreated);
             }, function (response) {
                 deferred.reject(response);
             });
@@ -90,54 +92,67 @@
             return deferred.promise;
         }
 
-        function detail(productId) {
+        function detail(productSpecId) {
             var deferred = $q.defer();
             var params = {
-                productId: productId
+                productSpecId: productSpecId
             };
 
-            resource.get(params, function (productRetrieved) {
-                extendBundledProduct(productRetrieved);
+            resource.get(params, function (productSpecRetrieved) {
+                extendBundledProductSpec(productSpecRetrieved).then(function (productSpecExtended) {
+                    deferred.resolve(productSpecExtended);
+                },function (response) {
+                    deferred.reject(response);
+                });
             }, function (response) {
                 deferred.reject(response);
             });
 
             return deferred.promise;
+        }
 
-            function extendBundledProduct(product) {
+        function extendBundledProductSpec(productSpec) {
+            var deferred = $q.defer();
 
-                if (!angular.isArray(product.bundledProductSpecification)) {
-                    product.bundledProductSpecification = [];
-                }
-
-                if (product.isBundle) {
-                    var params = {
-                        'relatedParty.id': User.loggedUser.id,
-                        'id': product.bundledProductSpecification.map(function (data) {
-                            return data.id;
-                        }).join()
-                    };
-
-                    resource.query(params, function (productList) {
-                        product.bundledProductSpecification = productList;
-                        deferred.resolve(product);
-                    }, function (response) {
-                        deferred.reject(response);
-                    });
-                } else {
-                    deferred.resolve(product);
-                }
+            if (!angular.isArray(productSpec.bundledProductSpecification)) {
+                productSpec.bundledProductSpecification = [];
             }
+
+            if (productSpec.isBundle) {
+                search({
+                    owner: true,
+                    id: productSpec.bundledProductSpecification.map(function (data) {
+                        return data.id;
+                    }).join()
+                }).then(function (productSpecList) {
+                    productSpec.bundledProductSpecification = productSpecList;
+                    deferred.resolve(productSpec);
+                }, function (response) {
+                    deferred.reject(response);
+                });
+            } else {
+                deferred.resolve(productSpec);
+            }
+
+            return deferred.promise;
         }
 
-        function update(product) {
+        function update(productSpec) {
             var deferred = $q.defer();
             var params = {
-                productId: product.id
+                productSpecId: productSpec.id
             };
+            var bundledProductSpecification = productSpec.bundledProductSpecification;
 
-            resource.update(params, product, function (productUpdated) {
-                deferred.resolve(productUpdated);
+            angular.extend(productSpec, {
+                bundledProductSpecification: productSpec.bundledProductSpecification.map(function (bundledProductSpec) {
+                    return bundledProductSpec.serialize();
+                })
+            });
+
+            resource.update(params, productSpec, function (productSpecUpdated) {
+                productSpecUpdated.bundledProductSpecification = bundledProductSpecification;
+                deferred.resolve(productSpecUpdated);
             }, function (response) {
                 deferred.reject(response);
             });
@@ -163,14 +178,6 @@
             };
         }
 
-        function serialize() {
-            /* jshint validthis: true */
-            return {
-                id: this.id,
-                href: this.href
-            };
-        }
-
         function getPicture() {
             /* jshint validthis: true */
             var i, src = "";
@@ -184,6 +191,14 @@
             }
 
             return src;
+        }
+
+        function serialize() {
+            /* jshint validthis: true */
+            return {
+                id: this.id,
+                href: this.href
+            };
         }
     }
 

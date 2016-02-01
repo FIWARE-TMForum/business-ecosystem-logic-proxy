@@ -1,25 +1,58 @@
-.table-responsive
-  table.table.table-bordered.table-hover
-    thead
-      tr
-        th Status
-        th Name
-        th ID
-        th Brand
-        th Type
-        th Updated
-    tbody
-      tr(ng-repeat="product in updateVM.item.bundledProductSpecification")
-        td
-          .status-item(class="status-{{ product.lifecycleStatus | lowercase }}")
-            span.item-icon
-            span.item-text {{ product.lifecycleStatus }}
-        th
-          a(ui-sref="stock.product.update({ productId: product.id })", ui-sref-opts="{ inherit: false }") {{ product.name }}
-        td {{ product.productNumber }}
-        td {{ product.brand }}
-        td
-          span.label(ng-class="product.isBundle ? 'label-bundle' : 'label-single'")
-            | {{ product.isBundle ? 'Bundle' : 'Single' }}
-        td
-          time(am-time-ago="product.lastUpdate")
+.row
+  .col-xs-12
+    .btn-toolbar
+      .btn-group.pull-right
+        a.btn.btn-default(ui-sref="stock.product.update.bundled({ flow: 1 })", ui-sref-active="active")
+          span.item-icon.fa.fa-th
+        a.btn.btn-default(ui-sref="stock.product.update.bundled({ flow: 2 })", ui-sref-active="active")
+          span.item-icon.fa.fa-th-list
+  .col-xs-12(ng-switch="updateVM.$state.params.flow")
+    .container-flex(ng-switch-when="1")
+      .panel.panel-default.item-product(ng-repeat="product in updateVM.item.bundledProductSpecification")
+        .panel-heading(
+            ui-sref="stock.product.update({ productId: product.id })",
+            ui-sref-opts="{ inherit: false }",
+            ng-mouseenter="hovering = product.id",
+            ng-mouseleave="hovering = null"
+        )
+          .thumbnail.item-product-logo
+            img(no-image, ng-src="{{ product.getPicture() }}")
+            div.item-shadow(ng-class="{'item-shadow-hover': hovering === product.id}")
+          a.h4 {{ product.name }}
+        .panel-body
+          p.text-muted
+            span v{{ product.version }}
+            span.pull-right
+              time(am-time-ago="product.lastUpdate")
+          p
+            span.label(ng-class="product.isBundle ? 'label-bundle' : 'label-single'")
+              | {{ product.isBundle ? 'Bundle' : 'Single' }}
+          .status-group
+            .status-item.active(class="status-{{ product.lifecycleStatus | lowercase }}")
+              span.item-icon
+              span.item-text {{ product.lifecycleStatus }}
+    .table-responsive(ng-switch-when="2")
+      table.table.table-bordered.table-hover
+        thead
+          tr
+            th Status
+            th Name
+            th ID
+            th Brand
+            th Type
+            th Updated
+        tbody
+          tr(ng-repeat="productSpec in updateVM.item.bundledProductSpecification")
+            td
+              .status-item(class="status-{{ productSpec.lifecycleStatus | lowercase }}")
+                span.item-icon
+                span.item-text {{ productSpec.lifecycleStatus }}
+            th
+              a(ui-sref="stock.product.update({ productId: productSpec.id })", ui-sref-opts="{ inherit: false }") {{ productSpec.name }}
+            td {{ productSpec.productNumber }}
+            td {{ productSpec.brand }}
+            td
+              span.label(ng-class="productSpec.isBundle ? 'label-bundle' : 'label-single'")
+                | {{ productSpec.isBundle ? 'Bundle' : 'Single' }}
+            td
+              time(am-time-ago="productSpec.lastUpdate")
