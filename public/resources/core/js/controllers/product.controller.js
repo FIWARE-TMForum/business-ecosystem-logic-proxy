@@ -18,7 +18,7 @@
         .controller('ProductCreateCtrl', ProductCreateController)
         .controller('ProductUpdateCtrl', ProductUpdateController);
 
-    function ProductSearchController($state, $rootScope, EVENTS, Product, LIFECYCLE_STATUS, Utils) {
+    function ProductSearchController($state, $rootScope, EVENTS, ProductSpec, LIFECYCLE_STATUS, Utils) {
         /* jshint validthis: true */
         var vm = this;
 
@@ -29,7 +29,7 @@
 
         vm.showFilters = showFilters;
 
-        Product.search($state.params).then(function (productList) {
+        ProductSpec.search($state.params).then(function (productList) {
             angular.copy(productList, vm.list);
             vm.list.status = LOADED;
         }, function (response) {
@@ -42,7 +42,7 @@
         }
     }
 
-    function ProductCreateController($state, $rootScope, EVENTS, Product, Asset, AssetType, Utils) {
+    function ProductCreateController($state, $rootScope, EVENTS, ProductSpec, Asset, AssetType, Utils) {
         /* jshint validthis: true */
         var vm = this;
         var stepList = [
@@ -72,7 +72,7 @@
             }
         ];
 
-        vm.data = Product.buildInitialData();
+        vm.data = ProductSpec.buildInitialData();
         vm.stepList = stepList;
         vm.assetTypes = [];
         vm.charList = [];
@@ -244,7 +244,7 @@
                 vm.data.productSpecCharacteristic = vm.data.productSpecCharacteristic.concat(vm.digitalChars);
             }
 
-            Product.create(vm.data).then(function (productCreated) {
+            ProductSpec.create(vm.data).then(function (productCreated) {
                 $state.go('stock.product.update', {
                     productId: productCreated.id
                 });
@@ -265,16 +265,17 @@
         }
     }
 
-    function ProductUpdateController($state, $rootScope, EVENTS, Product, Utils) {
+    function ProductUpdateController($state, $rootScope, EVENTS, ProductSpec, Utils) {
         /* jshint validthis: true */
         var vm = this;
 
+        vm.$state = $state;
         vm.item = {};
 
         vm.update = update;
         vm.updateStatus = updateStatus;
 
-        Product.detail($state.params.productId).then(function (productRetrieved) {
+        ProductSpec.detail($state.params.productId).then(function (productRetrieved) {
             vm.data = angular.copy(productRetrieved);
             vm.item = productRetrieved;
             vm.item.status = LOADED;
@@ -289,7 +290,7 @@
         }
 
         function update() {
-            Product.update(vm.data).then(function (productUpdated) {
+            ProductSpec.update(vm.data).then(function (productUpdated) {
                 $state.go('stock.product.update', {
                     productId: productUpdated.id
                 }, {
