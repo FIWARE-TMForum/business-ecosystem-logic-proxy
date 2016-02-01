@@ -40,6 +40,9 @@
                 })
                 .state('stock.product.update.bundled', {
                     url: '/bundled',
+                    params: {
+                        flow: 1
+                    },
                     templateUrl: 'stock/product/update/bundled'
                 });
         }
