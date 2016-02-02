@@ -32,7 +32,7 @@
         vm.list = [];
         vm.list.status = LOADING;
 
-        vm.isFinalStatus = isFinalStatus;
+        vm.isTransitable = isTransitable;
         vm.getNextStatus = getNextStatus;
         vm.showFilters = showFilters;
         vm.updateStatus = updateStatus;
@@ -49,8 +49,11 @@
             $rootScope.$broadcast(EVENTS.FILTERS_OPENED, PRODUCTORDER_STATUS);
         }
 
-        function isFinalStatus(orderItem) {
-            return orderItem.state === PRODUCTORDER_STATUS.COMPLETED || orderItem.state === PRODUCTORDER_STATUS.FAILED;
+        function isTransitable(orderItem) {
+
+            return orderItem.state === PRODUCTORDER_STATUS.ACKNOWLEDGED ||
+                orderItem.state === PRODUCTORDER_STATUS.COMPLETED ||
+                orderItem.state === PRODUCTORDER_STATUS.FAILED;
         }
 
         function getNextStatus(orderItem) {

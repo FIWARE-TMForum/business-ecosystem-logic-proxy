@@ -26,13 +26,13 @@
             .thumbnail.item-product-logo
               img.media-object(no-image, ng-src="{{ orderItem.productOffering.getPicture() }}")
           .media-body
-            .pull-right(ng-if="searchVM.role === 'Seller' && !searchVM.isFinalStatus(orderItem)")
+            .pull-right(ng-if="searchVM.role === 'Seller' && !searchVM.isTransitable(orderItem)")
               p
                 a.btn.btn-block.btn-default(ng-click="searchVM.updateStatus(productOrder, $index, searchVM.getNextStatus(orderItem))")
                   span.item-text Change to 
                     strong {{ searchVM.getNextStatus(orderItem) }}
               p
-                a.btn.btn-block.btn-danger(ng-if="orderItem.state == 'InProgress'", ng-click="searchVM.updateStatus(orderItem, 'Failed')")
+                a.btn.btn-block.btn-danger(ng-if="orderItem.state == 'InProgress'", ng-click="searchVM.updateStatus(productOrder, $index, 'Failed')")
                   span.item-text Change to 
                     strong Failed
             a(ui-sref="offering.detail({ offeringId: orderItem.productOffering.id })", ui-sref-opts="{ inherit: false }")
