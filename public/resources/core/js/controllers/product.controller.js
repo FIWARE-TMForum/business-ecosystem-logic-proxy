@@ -216,6 +216,27 @@
             }
         }
 
+        function pushCustomers() {
+            var i, characteristic;
+
+            if (vm.roles.customer.length) {
+                characteristic = {
+                    name: "Customer",
+                    valueType: 'string',
+                    configurable: true,
+                    productSpecCharacteristicValue: []
+                };
+                vm.data.productSpecCharacteristic.push(characteristic);
+
+                for (i = 0; i < vm.roles.customer.length; i++) {
+                    characteristic.productSpecCharacteristicValue.push({
+                        valueType: 'string',
+                        value: vm.roles.customer[i]
+                    });
+                }
+            }
+        }
+
         function buildCharacteristic(name, description, value) {
             return {
                 name: name,
@@ -264,6 +285,8 @@
             if (vm.isDigital) {
                 vm.data.productSpecCharacteristic = vm.data.productSpecCharacteristic.concat(vm.digitalChars);
             }
+
+            pushCustomers();
 
             ProductSpec.create(vm.data).then(function (productCreated) {
                 $state.go('stock.product.update', {
