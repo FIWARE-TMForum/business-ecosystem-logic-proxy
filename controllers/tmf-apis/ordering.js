@@ -14,6 +14,16 @@ var ordering = (function(){
     var CUSTOMER = 'Customer';
     var SELLER = 'Seller';
 
+    var ACKNOWLEDGED = 'Acknowledged';
+    var IN_PROGRESS = 'InProgress';
+    var COMPLETED = 'Completed';
+    var FAILED = 'Failed';
+    var PARTIAL = 'Partial';
+
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////// COMMON ///////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////////////
+
     var hasRole = function(relatedParties, role, user) {
         return relatedParties.some(function (party) {
             return party.role.toLowerCase() === role.toLowerCase() && party.id === user.id;
@@ -45,6 +55,17 @@ var ordering = (function(){
             }
         });
     };
+
+    var updateBody = function(req, newBody) {
+        req.body = JSON.stringify(newBody);
+        // When the body is updated, the content-length field has to be updated too
+        req.headers['content-length'] = Buffer.byteLength(req.body);
+    };
+
+
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////// RETRIEVAL //////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////////////
 
     var validateRetrieving = function(req, callback) {
 
@@ -85,6 +106,11 @@ var ordering = (function(){
             callback();
         }
     };
+
+
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////// CREATION //////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////////////
 
     var completeRelatedPartyInfo = function(item, user, callback) {
 
@@ -284,6 +310,47 @@ var ordering = (function(){
         });
     };
 
+
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////// UPDATE ///////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////////////
+
+    var calculateOrderingState = function(previousState, orderItems) {
+
+        // STATES
+        // Acknowledged - All the order items are acknowledged
+        // In Progress - All the order items are Acknowledged or In Progress
+        // Completed - All the order items are completed
+        // Partial - There are order items completed or failed and also in progress
+        // Failed - All failed
+        // TODO: This will be implemented directly in the API. Once implemented, remove this part...
+
+        var orderingState = previousState;
+        var currentStates = { };
+        currentStates[ACKNOWLEDGED.toLowerCase()] = 0;
+        currentStates[IN_PROGRESS.toLowerCase()] = 0;
+        currentStates[COMPLETED.toLowerCase()] = 0;
+        currentStates[FAILED.toLowerCase()] = 0;
+
+        orderItems.forEach(function(item) {
+            currentStates[item['state'].toLowerCase()] += 1;
+        });
+
+        if (currentStates[ACKNOWLEDGED.toLowerCase()] === orderItems.length) {
+            orderingState = ACKNOWLEDGED;
+        } else if (currentStates[COMPLETED.toLowerCase()] === orderItems.length) {
+            orderingState = COMPLETED;
+        } else if (currentStates[FAILED.toLowerCase()] === orderItems.length) {
+            orderingState = FAILED;
+        } else if (currentStates[IN_PROGRESS.toLowerCase()] + currentStates[IN_PROGRESS.toLowerCase()] === orderItems.length) {
+            orderingState = IN_PROGRESS;
+        } else {
+            orderingState = PARTIAL;
+        }
+
+        return orderingState;
+    };
+
     var updateItemsState = function(req, updatedOrdering, previousOrdering, callback) {
 
         var error = null;
@@ -342,7 +409,15 @@ var ordering = (function(){
 
                     // If no errors, the state can be updated!
                     if (!error) {
-                        previousOrderItem['state'] = updatedItem['state'];
+
+                        if (previousOrderItem['state'] === ACKNOWLEDGED) {
+                            error = {
+                                status: 403,
+                                message: 'Acknowledged order items cannot be updated manually'
+                            }
+                        } else {
+                            previousOrderItem['state'] = updatedItem['state'];
+                        }
                     }
                 }
             }
@@ -351,12 +426,10 @@ var ordering = (function(){
         if (!error) {
 
             // Sellers can only modify the 'orderItem' field...
-            req.body = JSON.stringify({
-                // TODO: Modify order state!!!
+            updateBody(req, {
+                state: calculateOrderingState(previousOrdering['state'], previousOrdering['orderItem']),
                 orderItem: previousOrdering.orderItem
             });
-
-            req.headers['content-length'] = Buffer.byteLength(req.body);
 
             callback(null);
 
@@ -374,12 +447,20 @@ var ordering = (function(){
 
 
         if (tmfUtils.checkRole(req.user, config.oauth2.roles.admin)) {
-            // Administrators can modify the orderings
+            // Administrators can modify the orderings without checking.
+            // However, the state of the ordering has to be updated accordingly.
+
+            var ordering = JSON.parse(req.body);
+            var orderingState = calculateOrderingState(ordering);
+            ordering['state'] = orderingState;
+
+            updateBody(req, ordering);
+
             callback(null);
 
             return;     // EXIT!
         }
-        
+
         try {
 
             ordering = JSON.parse(req.body);
@@ -437,6 +518,11 @@ var ordering = (function(){
         }
     };
 
+
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////// PRE-VALIDATION ///////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////////////
+
     var validators = {
         'GET': [ tmfUtils.validateLoggedIn, validateRetrieving ],
         'POST': [ tmfUtils.validateLoggedIn, validateCreation ],
@@ -456,6 +542,11 @@ var ordering = (function(){
 
         async.series(reqValidators, callback);
     };
+
+
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////// POST-VALIDATION //////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////////////
 
     var filterOrderItems = function(req, callback) {
 
@@ -495,13 +586,10 @@ var ordering = (function(){
         });
 
         if (!isArray) {
-            req.body = JSON.stringify(orderings[0]);
+            updateBody(orderings[0]);
         } else {
-            req.body = JSON.stringify(orderings);
+            updateBody(orderings);
         }
-
-        // If the body is modified, the content-length header has to be modified
-        req.headers['content-length'] = Buffer.byteLength(req.body);
 
         callback(null);
     };
@@ -550,10 +638,16 @@ var ordering = (function(){
         }
     };
 
+
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////// COMMON ///////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////////////
+
     return {
         checkPermissions: checkPermissions,
         executePostValidation: executePostValidation
     };
+
 })();
 
 exports.ordering = ordering;
