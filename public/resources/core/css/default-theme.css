@@ -27,6 +27,14 @@ a.active:focus {
     text-decoration: none;
 }
 
+a.alert-link-danger {
+    color: #a94442;
+}
+a.alert-link-danger:hover,
+a.alert-link-danger:focus {
+    color: #843534;
+}
+
 a.disabled {
     cursor: pointer;
     pointer-events: none;
