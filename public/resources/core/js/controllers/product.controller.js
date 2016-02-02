@@ -67,6 +67,10 @@
                 templateUrl: 'stock/product/create/attachments'
             },
             {
+                title: 'Party roles',
+                templateUrl: 'stock/product/create/partyrole'
+            },
+            {
                 title: 'Finish',
                 templateUrl: 'stock/product/create/finish'
             }
@@ -90,6 +94,19 @@
         vm.isSelected = isSelected;
         vm.saveCharacteristic = saveCharacteristic;
         vm.removeCharacteristic = removeCharacteristic;
+
+        vm.roles = {
+            provider: {
+                value: "",
+                items: []
+            },
+            customer: {
+                value: "",
+                items: []
+            }
+        };
+        vm.appendRole = appendRole;
+        vm.removeRole = removeRole;
 
         initChars();
 
@@ -171,6 +188,10 @@
         }
 
         function create() {
+            // TODO: the party roles related to OnBoarding API are setting in:
+            // vm.roles.customer.items <- Array of roles (String)
+            // vm.roles.provider.items <- Array of roles (String)
+
             // If the format is file upload it to the asset manager
             if (vm.isDigital && vm.currFormat === 'FILE') {
                 var reader = new FileReader();
@@ -192,6 +213,27 @@
                 reader.readAsBinaryString(vm.assetFile);
             } else {
                 saveProduct();
+            }
+        }
+
+        function pushCustomers() {
+            var i, characteristic;
+
+            if (vm.roles.customer.length) {
+                characteristic = {
+                    name: "Customer",
+                    valueType: 'string',
+                    configurable: true,
+                    productSpecCharacteristicValue: []
+                };
+                vm.data.productSpecCharacteristic.push(characteristic);
+
+                for (i = 0; i < vm.roles.customer.length; i++) {
+                    characteristic.productSpecCharacteristicValue.push({
+                        valueType: 'string',
+                        value: vm.roles.customer[i]
+                    });
+                }
             }
         }
 
@@ -244,6 +286,8 @@
                 vm.data.productSpecCharacteristic = vm.data.productSpecCharacteristic.concat(vm.digitalChars);
             }
 
+            pushCustomers();
+
             ProductSpec.create(vm.data).then(function (productCreated) {
                 $state.go('stock.product.update', {
                     productId: productCreated.id
@@ -262,6 +306,21 @@
                     error: error
                 });
             });
+        }
+
+        function appendRole(type) {
+            var role = vm.roles[type].value;
+            var index = vm.roles[type].items.indexOf(role);
+
+            if (index === -1) {
+                vm.roles[type].items.push(role);
+            }
+
+            vm.roles[type].value = "";
+        }
+
+        function removeRole(type, index) {
+            vm.roles[type].items.splice(index, 1);
         }
     }
 

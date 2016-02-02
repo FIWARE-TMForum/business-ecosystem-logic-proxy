@@ -1,0 +1,45 @@
+form(name="step.form", novalidate)
+  .row
+    .col-sm-6
+      .form-group
+        .input-group
+          input.form-control(
+            type="text"
+            placeholder="Provider role"
+            name="provider"
+            ng-model="createVM.roles.provider.value"
+          )
+          span.input-group-btn
+            a.btn.btn-default(ng-disabled="!createVM.roles.provider.value", ng-click="createVM.appendRole('provider')") Add
+      .alert.alert-info(ng-if="!createVM.roles.provider.items.length")
+        | No provider roles created.
+      table.table.table-bordered(ng-if="createVM.roles.provider.items.length")
+        tbody
+          tr(ng-repeat="role in createVM.roles.provider.items")
+            td
+              a.alert-link-danger.pull-right(ng-click="createVM.removeRole('provider', $index)")
+                span.fa.fa-remove
+              strong {{ role }}
+    .col-sm-6
+      .form-group
+        .input-group
+          input.form-control(
+            type="text"
+            placeholder="Customer role"
+            name="customer"
+            ng-model="createVM.roles.customer.value"
+          )
+          span.input-group-btn
+            a.btn.btn-default(ng-disabled="!createVM.roles.customer.value", ng-click="createVM.appendRole('customer')") Add
+      .alert.alert-info(ng-if="!createVM.roles.customer.items.length")
+        | No customer roles created.
+      table.table.table-bordered(ng-if="createVM.roles.customer.items.length")
+        tbody
+          tr(ng-repeat="role in createVM.roles.customer.items")
+            td
+              a.alert-link-danger.pull-right(ng-click="createVM.removeRole('customer', $index)")
+                span.fa.fa-remove
+              strong {{ role }}
+  .form-group.text-right
+    a.btn.btn-default(ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])", ng-disabled="!step.form.$valid")
+      span.item-text Next
