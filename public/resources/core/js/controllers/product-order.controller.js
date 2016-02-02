@@ -227,7 +227,7 @@
         initOrder();
     }
 
-    function ProductOrderDetailController($state, ProductOrder) {
+    function ProductOrderDetailController($state, Utils, ProductOrder) {
         /* jshint validthis: true */
         var vm = this;
 
