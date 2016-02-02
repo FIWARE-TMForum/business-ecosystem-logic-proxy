@@ -47,8 +47,66 @@ var onboarding = (function() {
         });
     };
 
+    var buildTaskBody = function(task) {
+        var body = {
+            id: task.id,
+            href: task.href,
+            status: task.status
+        };
+
+        if (task.description) {
+            body.description = task.description;
+        }
+
+        return body;
+    };
+
     var validateRetrieving = function(req, callback) {
-        callback();
+        // Check if a requests to the on boarding server, or to this (Job)
+        if (req.path.indexOf('partnershipJob') != -1) {
+            // Check if asking for all jobs
+            var parsedPath = req.path.split('/');
+
+            var lastPath = parsedPath[parsedPath.length - 1];
+            if (lastPath != 'partnershipJob') {
+                // Find one Job
+                OnBoardingTask.findOne({"_id": lastPath}, function(err, task) {
+                    if (err) {
+                        callback({
+                            status: 404,
+                            message: 'The specified Job does not exists'
+                        });
+                    } else {
+                        callback({
+                            status: 200,
+                            body: buildTaskBody(task)
+                        });
+                    }
+                });
+            } else {
+                // Find all Jobs
+                OnBoardingTask.find({}, function(err, resp) {
+                    if (err) {
+                        callback({
+                            status: 500,
+                            message: 'It has not been possible to read existing Jobs'
+                        });
+                    } else {
+                        var body = [];
+                        for (var i = 0; i < resp.length; i++) {
+                            body.push(buildTaskBody(resp[i]));
+                        }
+                        callback({
+                            status: 200,
+                            body: body
+                        });
+                    }
+                });
+            }
+        } else {
+            req.headers['X-API-Key'] = apiKey;
+            callback();
+        }
     };
 
     var createPartyRole = function(body, roleInfo, partnershipInfo, partyInfo, task) {
