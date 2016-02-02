@@ -97,16 +97,29 @@
 
         vm.roles = {
             provider: {
-                value: "",
+                title: 'Provider',
                 items: []
             },
             customer: {
-                value: "",
+                title: 'Customer',
                 items: []
             }
         };
+        vm.roleActive = vm.roles.provider;
+        vm.roleForm = {
+            role: "",
+            agreement: "",
+            party: "",
+            parties: []
+        };
+
+        vm.isRoleFormValid = isRoleFormValid;
+        vm.appendParty = appendParty;
+        vm.removeParty = removeParty;
+
         vm.appendRole = appendRole;
         vm.removeRole = removeRole;
+        vm.changeRole = changeRole;
 
         initChars();
 
@@ -219,19 +232,19 @@
         function pushCustomers() {
             var i, characteristic;
 
-            if (vm.roles.customer.length) {
+            if (vm.roles.customer.items.length) {
                 characteristic = {
-                    name: "Customer",
+                    name: "Customer role",
                     valueType: 'string',
                     configurable: true,
                     productSpecCharacteristicValue: []
                 };
                 vm.data.productSpecCharacteristic.push(characteristic);
 
-                for (i = 0; i < vm.roles.customer.length; i++) {
+                for (i = 0; i < vm.roles.customer.items.length; i++) {
                     characteristic.productSpecCharacteristicValue.push({
                         valueType: 'string',
-                        value: vm.roles.customer[i]
+                        value: vm.roles.customer.items[i].name
                     });
                 }
             }
@@ -308,15 +321,53 @@
             });
         }
 
-        function appendRole(type) {
-            var role = vm.roles[type].value;
-            var index = vm.roles[type].items.indexOf(role);
+        function isRoleFormValid() {
+            if (vm.roleActive.title === 'Customer') {
+                return vm.roleForm.role.length && vm.roleForm.agreement.length;
+            } else {// Provider
+                return vm.roleForm.role.length && vm.roleForm.parties.length;
+            }
+        }
+
+        function appendParty() {
+            var index = vm.roleForm.parties.indexOf(vm.roleForm.party);
 
             if (index === -1) {
-                vm.roles[type].items.push(role);
+                vm.roleForm.parties.push(vm.roleForm.party);
             }
 
-            vm.roles[type].value = "";
+            vm.roleForm.party = "";
+        }
+
+        function removeParty(index) {
+            vm.roleForm.parties.splice(index, 1);
+        }
+
+        function changeRole(name) {
+            vm.roleActive = vm.roles[name];
+
+            if (vm.roleActive.title === 'Customer') {
+                vm.roleForm.agreement = "";
+            } else {
+                vm.roleForm.party = "";
+                vm.roleForm.parties = [];
+            }
+        }
+
+        function appendRole() {
+            var newRole = {
+                name: vm.roleForm.role
+            };
+
+            if (vm.roleActive.title === 'Customer') {
+                newRole.agreement = vm.roleForm.agreement;
+            } else {
+                newRole.parties = vm.roleForm.parties;
+            }
+
+            vm.roleActive.items.push(newRole);
+            changeRole(vm.roleActive.title.toLowerCase());
+            vm.roleForm.role = "";
         }
 
         function removeRole(type, index) {
