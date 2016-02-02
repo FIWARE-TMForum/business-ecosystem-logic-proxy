@@ -1,6 +1,6 @@
 .container-flex
   .panel.panel-default.item-product(ng-repeat="product in searchVM.list")
-    .panel-heading(
+    .panel-heading.panel-product(
         ui-sref="stock.product.update({ productId: product.id })",
         ui-sref-opts="{ inherit: false }",
         ng-mouseenter="hovering = product.id",

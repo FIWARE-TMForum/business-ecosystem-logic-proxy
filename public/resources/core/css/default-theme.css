@@ -1276,6 +1276,11 @@ a.list-group-item > .badge-status {
     padding: 10px 15px;
     border-radius: 0;
 }
+
+.panel-heading.panel-product {
+    background-color: rgb(255, 255, 255);
+}
+
 .panel-heading:last-child {
     border-bottom-width: 0;
 }
