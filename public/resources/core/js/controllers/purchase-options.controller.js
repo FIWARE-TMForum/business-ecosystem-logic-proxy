@@ -10,7 +10,7 @@
         .module('app')
         .controller('AcquireOptionsCtrl', AcquireOptionsController);
 
-    function AcquireOptionsController($scope, $rootScope, $element, EVENTS, Product) {
+    function AcquireOptionsController($scope, $rootScope, $element, EVENTS, ProductSpec) {
         var vm = this;
         var options;
         var nonConf;
@@ -76,7 +76,7 @@
             options = { characteristics: [] };
             nonConf = 0;
 
-            Product.detail(vm.offering.productSpecification.id).then(function(productInfo) {
+            ProductSpec.detail(vm.offering.productSpecification.id).then(function(productInfo) {
                 // Check if there are configurable characteristics in the product
                 if (productInfo.productSpecCharacteristic) {
                     for(var i = 0; i < productInfo.productSpecCharacteristic.length; i++) {

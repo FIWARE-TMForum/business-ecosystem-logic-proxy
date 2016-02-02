@@ -12,7 +12,7 @@
         .module('app')
         .factory('Offering', OfferingService);
 
-    function OfferingService($q, $resource, URLS, LIFECYCLE_STATUS, User, Product, Category) {
+    function OfferingService($q, $resource, URLS, LIFECYCLE_STATUS, User, ProductSpec, Category) {
         var resource = $resource(URLS.CATALOGUE_MANAGEMENT + '/:catalogue/:catalogueId/productOffering/:offeringId', {
             offeringId: '@id'
         }, {
@@ -66,7 +66,7 @@
             if (filters.owner) {
                 productFilters['owner'] = true;
 
-                Product.search(productFilters).then(function (productList) {
+                ProductSpec.search(productFilters).then(function (productList) {
                     var products = {};
 
                     if (productList.length) {
@@ -99,7 +99,7 @@
                             return offering.productSpecification.id;
                         }).join();
 
-                        Product.search(productFilters).then(function (productList) {
+                        ProductSpec.search(productFilters).then(function (productList) {
                             offeringList.forEach(function(offering) {
                                 productList.some(function(product) {
                                     if (offering.productSpecification.id == product.id) {
@@ -171,7 +171,7 @@
                 if (offeringList.length) {
                     var offeringRetrieved = offeringList[0];
 
-                    Product.detail(offeringRetrieved.productSpecification.id).then(function (productRetrieved) {
+                    ProductSpec.detail(offeringRetrieved.productSpecification.id).then(function (productRetrieved) {
                         offeringRetrieved.productSpecification = productRetrieved;
                         extendBundledProductOffering(offeringRetrieved);
                     });

@@ -40,7 +40,14 @@
                 })
                 .state('stock.product.update.bundled', {
                     url: '/bundled',
+                    params: {
+                        flow: 1
+                    },
                     templateUrl: 'stock/product/update/bundled'
+                })
+                .state('stock.product.update.attachment', {
+                    url: '/attachment',
+                    templateUrl: 'stock/product/update/attachment'
                 });
         }
     }

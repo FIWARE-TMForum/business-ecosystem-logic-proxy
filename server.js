@@ -328,7 +328,7 @@ var jsAppFilesToInject = [
     'directives/product-offering.directives',
     'services/user.service',
     'services/payment.service',
-    'services/product.service',
+    'services/product-specification.service',
     'services/product-category.service',
     'services/product-offering.service',
     'services/product-catalogue.service',
