@@ -32,7 +32,6 @@
 
             if(filters.customer) {
                 params['relatedParty.id'] = User.loggedUser.id;
-                params['relatedParty.role'] = 'Customer';
             }
 
             if (filters.status) {
@@ -53,7 +52,7 @@
 
             return deferred.promise;
 
-            function attachOfferingInfo(deffered, productList, completeList) {
+            function attachOfferingInfo(deferred, productList, completeList) {
                 // Get element to process
                 var item = productList.shift();
 
@@ -67,10 +66,10 @@
                         deferred.resolve(completeList);
                     } else {
                         // Process the rest of the list
-                        attachOfferingInfo(deffered, productList, completeList);
+                        attachOfferingInfo(deferred, productList, completeList);
                     }
                 }, function(response){
-                    deffered.reject(response);
+                    deferred.reject(response);
                 });
             }
         }

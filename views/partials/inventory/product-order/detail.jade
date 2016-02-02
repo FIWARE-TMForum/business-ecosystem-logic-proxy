@@ -44,6 +44,6 @@
                     dd {{ orderItem.billingAccount.billingAddress.street }}
                     dd {{ orderItem.billingAccount.billingAddress.city }}, {{ orderItem.billingAccount.billingAddress.province }} {{ orderItem.billingAccount.billingAddress.postal }}
                     dd {{ orderItem.billingAccount.billingAddress.country }}
-    .alert.alert-danger.text-center(ng-switch-when="ERROR") {{ updateVM.error }}
+    .alert.alert-danger.text-center(ng-switch-when="ERROR") {{ detailVM.error }}
     .container-spinner(ng-switch-default)
       span.fa.fa-spinner.fa-spin.fa-2x

@@ -1,4 +1,5 @@
 var async = require('async'),
+    config = require('./../../config'),
     tmfUtils = require('./../../lib/tmfUtils'),
     log = require('./../../lib/logger').logger.getLogger("Root");
 
@@ -7,33 +8,13 @@ var inventory = (function() {
     var validateRetrieving = function(req, callback) {
         // Check if requesting a list of a single product
         if(req.path.endsWith('product')) {
-            if (!req.query['relatedParty.id']) {
-                callback({
-                    'status': 400,
-                    'message': 'Missing required param relatedParty.id'
-                });
-                return;
-            }
-
-            if (!req.query['relatedParty.role']) {
-                callback({
-                    'status': 400,
-                    'message': 'Missing required param relatedParty.role'
-                });
-                return;
-            }
-
-            if (req.query['relatedParty.id'] !== req.user.id || req.query['relatedParty.role'] !== 'Customer') {
-                callback({
-                    'status': 403,
-                    'message': 'Your are not authorized to retrieve the specified products'
-                });
-                return;
-            }
+            tmfUtils.filterRelatedPartyFields(req, callback);
+        } else {
+            callback();
         }
+
         // For validating the retrieving of a single product it is necessary to read the product first
         // so it is done is postvalidation method
-        callback();
     };
 
     var validators = {
@@ -58,20 +39,42 @@ var inventory = (function() {
     };
 
     var executePostValidation = function(req, callback) {
-        log.info("Executing inventory post validation");
 
-        if (req.method == 'GET' && !req.path.endsWith('product') &&
-            (!tmfUtils.isOrderingCustomer(req.user, JSON.parse(req.body))[0]
-            || !tmfUtils.isOrderingCustomer(req.user, JSON.parse(req.body))[1])) {
-            callback({
-                'status': 403,
-                'message': 'Your are not authorized to retrieve the specified product'
-            })
+        log.info('Executing inventory post validation');
+
+        var body = JSON.parse(req.body);
+
+        var orderings = [];
+        var isArray = true;
+
+        if (!Array.isArray(body)) {
+            orderings = [body];
+            isArray = false;
         } else {
-            callback(null, {
-                extraHdrs: {}
-            });
+            orderings = body;
         }
+
+        var filteredOrders = orderings.filter(function(order) {
+            return tmfUtils.hasRole(order.relatedParty, 'customer', req.user);
+        });
+
+        if (!isArray) {
+
+            if (filteredOrders.length === 0) {
+                callback({
+                    status: 403,
+                    message: 'You are not authorized to retrieve the specified offering from the inventory'
+                });
+            } else {
+                tmfUtils.updateBody(req, filteredOrders[0]);
+                callback(null);
+            }
+
+        } else {
+            tmfUtils.updateBody(req, filteredOrders);
+            callback(null);
+        }
+
     };
 
     return {

@@ -2,11 +2,11 @@ var async = require('async'),
     config = require('./../../config'),
     equal = require('deep-equal'),
     http = require('./../../lib/httpClient'),
-    url = require('url'),
+    log = require('./../../lib/logger').logger.getLogger("Root"),
     storeClient = require('./../../lib/store').storeClient,
-    utils = require('./../../lib/utils'),
     tmfUtils = require('./../../lib/tmfUtils'),
-    log = require('./../../lib/logger').logger.getLogger("Root");
+    url = require('url'),
+    utils = require('./../../lib/utils');
 
 
 var ordering = (function(){
@@ -23,12 +23,6 @@ var ordering = (function(){
     //////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////////// COMMON ///////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
-
-    var hasRole = function(relatedParties, role, user) {
-        return relatedParties.some(function (party) {
-            return party.role.toLowerCase() === role.toLowerCase() && party.id === user.id;
-        });
-    };
 
     var makeRequest = function(rawUrl, errMsg, callback) {
 
@@ -56,55 +50,12 @@ var ordering = (function(){
         });
     };
 
-    var updateBody = function(req, newBody) {
-        req.body = JSON.stringify(newBody);
-        // When the body is updated, the content-length field has to be updated too
-        req.headers['content-length'] = Buffer.byteLength(req.body);
-    };
-
-
     //////////////////////////////////////////////////////////////////////////////////////////////
     ///////////////////////////////////////// RETRIEVAL //////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
 
     var validateRetrieving = function(req, callback) {
-
-        if (!tmfUtils.checkRole(req.user, config.oauth2.roles.admin)) {
-
-            if (req.query['relatedPary.role'] || req.query['relatedParty.href']) {
-
-                // This is required to control that a user can only access to those order items they are
-                // involved. If this fields are allowed, the user will be able to access all the orderings
-                // because filters applied to a list are independent from other filters applied to the
-                // same list.
-                // For example: relatedParty.id=fiware&relatedParty.role=Seller will return all the orderings
-                // where there is one related party where fiware is involved or where there is a user with
-                // the seller role (all).
-
-                callback({
-                    status: 403,
-                    message: 'You are not allowed to filter order using this filters'
-                });
-
-            } else if (req.query['relatedParty.id'] && req.query['relatedParty.id'] !== req.user.id) {
-
-                callback({
-                    status: 403,
-                    message: 'You are not authorized to retrieve the orderings made by the user ' +
-                            req.query['relatedParty.id']
-                });
-            } else {
-
-                // Non-admin users can only retrieve their offerings
-                var separator = req.apiPath.indexOf('?') >= 0 ? '&' : '?';
-                req.apiPath += separator + 'relatedParty.id=' + req.user.id;
-
-                callback();
-            }
-        } else {
-            // Admin users can get orderings without being filtered
-            callback();
-        }
+        tmfUtils.filterRelatedPartyFields(req, callback);
     };
 
 
@@ -228,9 +179,8 @@ var ordering = (function(){
             return;
         }
 
-        // Check that the user has the customer role or is an admin
-        if (!tmfUtils.checkRole(req.user, config.oauth2.roles.admin)
-                && !tmfUtils.checkRole(req.user, config.oauth2.roles.customer)) {
+        // Check that the user has the customer role
+        if (!tmfUtils.checkRole(req.user, config.oauth2.roles.customer)) {
 
             callback({
                 status: 403,
@@ -342,10 +292,12 @@ var ordering = (function(){
             orderingState = COMPLETED;
         } else if (currentStates[FAILED.toLowerCase()] === orderItems.length) {
             orderingState = FAILED;
-        } else if (currentStates[IN_PROGRESS.toLowerCase()] + currentStates[IN_PROGRESS.toLowerCase()] === orderItems.length) {
-            orderingState = IN_PROGRESS;
         } else {
-            orderingState = PARTIAL;
+            if (currentStates[COMPLETED.toLowerCase()] === 0 && currentStates[FAILED.toLowerCase()] === 0) {
+                orderingState = IN_PROGRESS;
+            } else {
+                orderingState = PARTIAL;
+            }
         }
 
         return orderingState;
@@ -372,7 +324,7 @@ var ordering = (function(){
 
             } else {
 
-                var isSeller = hasRole(previousOrderItem.product.relatedParty, SELLER, req.user);
+                var isSeller = tmfUtils.hasRole(previousOrderItem.product.relatedParty, SELLER, req.user);
 
                 if (!isSeller) {
 
@@ -426,7 +378,7 @@ var ordering = (function(){
         if (!error) {
 
             // Sellers can only modify the 'orderItem' field...
-            updateBody(req, {
+            tmfUtils.updateBody(req, {
                 state: calculateOrderingState(previousOrdering['state'], previousOrdering['orderItem']),
                 orderItem: previousOrdering.orderItem
             });
@@ -445,22 +397,6 @@ var ordering = (function(){
         var orderingUrl = protocol + '://' + orderingServer + req.apiPath;
         var ordering;
 
-
-        if (tmfUtils.checkRole(req.user, config.oauth2.roles.admin)) {
-            // Administrators can modify the orderings without checking.
-            // However, the state of the ordering has to be updated accordingly.
-
-            var ordering = JSON.parse(req.body);
-            var orderingState = calculateOrderingState(ordering);
-            ordering['state'] = orderingState;
-
-            updateBody(req, ordering);
-
-            callback(null);
-
-            return;     // EXIT!
-        }
-
         try {
 
             ordering = JSON.parse(req.body);
@@ -470,8 +406,8 @@ var ordering = (function(){
                     callback(err, res);
                 } else {
 
-                    var isSeller = hasRole(previousOrdering.relatedParty, SELLER, req.user);
-                    var isCustomer = hasRole(previousOrdering.relatedParty, CUSTOMER, req.user);
+                    var isSeller = tmfUtils.hasRole(previousOrdering.relatedParty, SELLER, req.user);
+                    var isCustomer = tmfUtils.hasRole(previousOrdering.relatedParty, CUSTOMER, req.user);
 
                     if (isCustomer && !isSeller) {
                         // Customers cannot modify the status of the order items
@@ -552,8 +488,6 @@ var ordering = (function(){
 
         var body = JSON.parse(req.body);
 
-        // Elements from the list are only filtered when the user is not the admin of the application!
-
         var orderings = [];
         var isArray = true;
 
@@ -564,21 +498,21 @@ var ordering = (function(){
             orderings = body;
         }
 
-        orderings.forEach(function(ordering) {
+        orderings.forEach(function(ordering, i) {
 
-            var customer = hasRole(ordering.relatedParty, CUSTOMER, req.user);
-            var seller = hasRole(ordering.relatedParty, SELLER, req.user);
+            var customer = tmfUtils.hasRole(ordering.relatedParty, CUSTOMER, req.user);
+            var seller = tmfUtils.hasRole(ordering.relatedParty, SELLER, req.user);
 
             if (!customer && !seller) {
-                // Not supposed to happen
-                ordering.orderItem = [];
+                // This can happen when a user ask for a specific ordering.
+                orderings.splice(i, 1);
             } else if (!customer && seller) {
 
                 // When a user is involved only as a seller in an ordering, only the order items
                 // where the user is a seller have to be returned
 
                 ordering.orderItem = ordering.orderItem.filter(function(item) {
-                    return hasRole(item.product.relatedParty, SELLER, req.user);
+                    return tmfUtils.hasRole(item.product.relatedParty, SELLER, req.user);
                 });
             }
             // ELSE: If the user is the customer, order items don't have to be filtered
@@ -586,9 +520,18 @@ var ordering = (function(){
         });
 
         if (!isArray) {
-            updateBody(orderings[0]);
+
+            if (orderings.length === 0) {
+                callback({
+                    status: 403,
+                    message: 'You are not authorized to retrieve the specified ordering'
+                });
+            } else {
+                tmfUtils.updateBody(req, orderings[0]);
+            }
+
         } else {
-            updateBody(orderings);
+            tmfUtils.updateBody(req, orderings);
         }
 
         callback(null);
@@ -625,7 +568,7 @@ var ordering = (function(){
 
     var executePostValidation = function(req, callback) {
 
-        if (req.method === 'GET' && !tmfUtils.checkRole(req.user, config.oauth2.roles.admin)) {
+        if (req.method === 'GET') {
 
             filterOrderItems(req, callback);
 
