@@ -3,5 +3,7 @@ extends ./base.jade
 block content
   .container
     .row(ng-controller="PaymentController")
-      .col-sm-12
-        .alert(ng-class="accepted ? 'alert-info' : 'alert-danger'") {{ status }}
+      .col-sm-12(ng-switch="state")
+        .container-spinner(ng-switch-when="LOADING")
+          span.fa.fa-spinner.fa-spin.fa-2x
+        .alert(ng-switch-default, ng-class="state === 'ACCEPTED' ? 'alert-info' : 'alert-danger'") {{ message }}

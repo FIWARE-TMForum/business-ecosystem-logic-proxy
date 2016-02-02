@@ -1,8 +1,13 @@
 
 angular.module('app')
     .controller('PaymentController', ['$scope', '$location', 'Payment', function($scope, $location, Payment) {
-        $scope.status = '';
-        $scope.accepted = true;
+
+        var LOADING = 'LOADING';
+        var ACCEPTED = 'ACCEPTED';
+        var ERROR = 'ERROR';
+
+        $scope.message = '';
+        $scope.state = LOADING;
 
         // Get related information from the location URL
         var params = $location.search();
@@ -11,8 +16,8 @@ angular.module('app')
         var ref = params.ref;
 
         if (!ref) {
-            $scope.accepted = false;
-            $scope.status = "It hasn't been provided any ordering reference, so your payment cannot be executed";
+            $scope.state = ERROR;
+            $scope.message = 'It has not been provided any ordering reference, so your payment cannot be executed';
         } else {
             var action = params.action;
 
@@ -34,14 +39,15 @@ angular.module('app')
             // Make request to the backend
             Payment.create(data, function() {
                 if (action === 'accept') {
-                    $scope.status = 'Your payment has been accepted'
+                    $scope.message = 'Your payment has been accepted. You can close this tab.';
+                    $scope.state = ACCEPTED;
                 } else {
-                    $scope.accepted = false;
-                    $scope.status = 'Your payment has been canceled'
+                    $scope.accepted = ERROR;
+                    $scope.message = 'Your payment has been canceled. You can close this tab.'
                 }
             }, function(response) {
-                $scope.accepted = false;
-                $scope.status = response.data.message;
+                $scope.state = ACCEPTED;
+                $scope.message = response.data.message;
             });
         }
 
