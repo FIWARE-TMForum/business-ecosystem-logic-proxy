@@ -27,13 +27,19 @@ var tmf = (function() {
     };
 
     var sendError = function(res, err) {
-
         var status = err.status;
-        var errMsg = err.message;
+        var content;
 
-        log.warn(errMsg);
+        if (!err.body) {
+            var errMsg = err.message;
+            log.warn(errMsg);
+            content = {error: errMsg};
+        } else {
+            content = err.body;
+        }
+
         res.status(status);
-        res.send({error: errMsg});
+        res.send(content);
         res.end();
     };
 
