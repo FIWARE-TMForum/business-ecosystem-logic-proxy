@@ -4,6 +4,7 @@ var config = require('./../config'),
     catalog = require('./tmf-apis/catalog').catalog,
     inventory = require('./tmf-apis/inventory').inventory,
     ordering = require('./tmf-apis/ordering').ordering,
+    onboarding = require('./tmf-apis/onboarding').onboarding,
     charging = require('./tmf-apis/charging').charging,
     
     // Other dependencies
@@ -18,6 +19,7 @@ var tmf = (function() {
     apiControllers[config.endpoints.catalog.path] = catalog;
     apiControllers[config.endpoints.ordering.path] = ordering;
     apiControllers[config.endpoints.inventory.path] = inventory;
+    apiControllers[config.endpoints.onboarding.path] = onboarding;
     apiControllers[config.endpoints.charging.path] = charging;
 
     var getAPIName = function(apiPath) {

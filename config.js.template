@@ -56,6 +56,10 @@ config.endpoints = {
         'path': '',
         'port': ''
     },
+    'onboarding': {
+        'path': '',
+        'port': ''
+    },
     'charging': {
         'path': '',
         'port': ''
