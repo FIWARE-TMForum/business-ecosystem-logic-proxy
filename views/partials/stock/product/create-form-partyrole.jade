@@ -1,45 +1,74 @@
 form(name="step.form", novalidate)
+  br
   .row
-    .col-sm-6
+    .col-sm-12
       .form-group
+        label Role
         .input-group
-          input.form-control(
-            type="text"
-            placeholder="Provider role"
-            name="provider"
-            ng-model="createVM.roles.provider.value"
-          )
-          span.input-group-btn
-            a.btn.btn-default(ng-disabled="!createVM.roles.provider.value", ng-click="createVM.appendRole('provider')") Add
+          input.form-control(type="text", placeholder="Enter a role name", ng-model="createVM.roleForm.role")
+          .input-group-btn
+            a.btn.btn-default.dropdown-toggle(data-toggle="dropdown")
+              span As {{ createVM.roleActive.title | lowercase }} 
+              span.caret
+            ul.dropdown-menu
+              li
+                a(ng-click="createVM.changeRole('customer')") As {{ createVM.roles.customer.title | lowercase }}
+              li
+                a(ng-click="createVM.changeRole('provider')") As {{ createVM.roles.provider.title | lowercase }}
+    .col-sm-12(ng-if="createVM.roleActive.title === 'Customer'")
+      .row
+        .col-sm-9
+          .form-group
+            label Agreement
+            textarea.form-control(rows="3", ng-model="createVM.roleForm.agreement")
+    .col-sm-12(ng-if="createVM.roleActive.title === 'Provider'")
+      .row
+        .col-sm-9
+          .form-group
+            label Party related
+            .input-group
+              input.form-control(type="text", placeholder="Enter an username", ng-model="createVM.roleForm.party")
+              .input-group-btn
+                a.btn.btn-default(ng-disabled="!createVM.roleForm.party" ng-click="createVM.appendParty()")
+                  span.item-text Assign
+          .alert.alert-warning(ng-if="!createVM.roleForm.parties.length")
+            | No party related.
+          table.table.table-bordered(ng-if="createVM.roleForm.parties.length")
+            tbody
+              tr(ng-repeat="party in createVM.roleForm.parties")
+                td
+                  a.alert-link-danger.pull-right(ng-click="createVM.removeParty($index)")
+                    span.fa.fa-remove
+                  strong {{ party }}
+    .col-sm-12
+      .pull-right
+        a.btn.btn-block.btn-default(ng-disabled="!createVM.isRoleFormValid()", ng-click="createVM.appendRole()")
+          span.item-text Add
+    .col-sm-12
+      br
+      hr
+    .col-sm-6
+      .h4 Providers
       .alert.alert-info(ng-if="!createVM.roles.provider.items.length")
-        | No provider roles created.
+        | No roles created.
       table.table.table-bordered(ng-if="createVM.roles.provider.items.length")
         tbody
           tr(ng-repeat="role in createVM.roles.provider.items")
             td
               a.alert-link-danger.pull-right(ng-click="createVM.removeRole('provider', $index)")
                 span.fa.fa-remove
-              strong {{ role }}
+              strong {{ role.name }}
     .col-sm-6
-      .form-group
-        .input-group
-          input.form-control(
-            type="text"
-            placeholder="Customer role"
-            name="customer"
-            ng-model="createVM.roles.customer.value"
-          )
-          span.input-group-btn
-            a.btn.btn-default(ng-disabled="!createVM.roles.customer.value", ng-click="createVM.appendRole('customer')") Add
+      .h4 Customers
       .alert.alert-info(ng-if="!createVM.roles.customer.items.length")
-        | No customer roles created.
+        | No roles created.
       table.table.table-bordered(ng-if="createVM.roles.customer.items.length")
         tbody
           tr(ng-repeat="role in createVM.roles.customer.items")
             td
               a.alert-link-danger.pull-right(ng-click="createVM.removeRole('customer', $index)")
                 span.fa.fa-remove
-              strong {{ role }}
+              strong {{ role.name }}
   .form-group.text-right
     a.btn.btn-default(ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])", ng-disabled="!step.form.$valid")
       span.item-text Next
