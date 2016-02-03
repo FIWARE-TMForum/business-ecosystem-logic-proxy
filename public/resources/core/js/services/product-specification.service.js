@@ -22,6 +22,7 @@
         });
 
         resource.prototype.getPicture = getPicture;
+        resource.prototype.getCharacteristicDefaultValue = getCharacteristicDefaultValue;
         resource.prototype.serialize = serialize;
 
         return {
@@ -176,6 +177,18 @@
                     User.serialize()
                 ]
             };
+        }
+
+        function getCharacteristicDefaultValue(index) {
+            var value, i;
+
+            for (var i = 0; i < this.productSpecCharacteristic[index].productSpecCharacteristicValue.length; i++) {
+                if (this.productSpecCharacteristic[index].productSpecCharacteristicValue[i].default) {
+                    value = this.productSpecCharacteristic[index].productSpecCharacteristicValue[i];
+                }
+            }
+
+            return value;
         }
 
         function getPicture() {

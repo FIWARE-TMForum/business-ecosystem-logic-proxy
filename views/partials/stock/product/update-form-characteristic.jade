@@ -1,0 +1,28 @@
+.row
+  .col-sm-12
+    .alert.alert-info.text-center(ng-if="!updateVM.item.productSpecCharacteristic.length")
+      span No characteristics included.
+    .panel.panel-default(ng-repeat="characteristic in updateVM.item.productSpecCharacteristic")
+      .panel-heading
+        ul.list-inline.pull-right
+          li
+            dl
+              dt.text-uppercase Default
+              dd {{ updateVM.item.getCharacteristicDefaultValue($index).value }}
+          li
+            dl
+              dt.text-uppercase Configurable
+              dd {{ characteristic.configurable ? 'Yes' : 'No' }}
+        ul.list-inline
+          li
+            dl
+              dt.text-uppercase Name
+              dd {{ characteristic.name }}
+          li
+            dl
+              dt.text-uppercase Description
+              dd {{ characteristic.description ? characteristic.description : 'No description provided.' }}
+      .panel-body
+        .form-group(ng-repeat="characteristicValue in characteristic.productSpecCharacteristicValue")
+          span.fa.fa-fw(ng-class="characteristicValue.default ? 'fa-circle' : 'fa-circle-thin'")
+          span  {{ characteristicValue.value }}
