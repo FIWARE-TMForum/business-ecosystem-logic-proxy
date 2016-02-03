@@ -7,7 +7,11 @@
         .controller('MessageCtrl', MessageController);
 
     function MessageController($rootScope, $element, EVENTS) {
-        $rootScope.$on(EVENTS.MESSAGE_CREATED, function() {
+
+        var vm = this;
+
+        $rootScope.$on(EVENTS.MESSAGE_CREATED, function(type, paypalUrl) {
+            vm.paypalUrl = paypalUrl;
             $element.modal('show');
         });
 

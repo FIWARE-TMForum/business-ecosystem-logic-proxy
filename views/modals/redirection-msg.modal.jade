@@ -1,4 +1,4 @@
-.modal.fade(ng-controller="MessageCtrl")
+.modal.fade(ng-controller="MessageCtrl as ctrl")
   .modal-dialog
     .modal-content
       .modal-header
@@ -7,9 +7,13 @@
             button.close(type="button", data-dismiss="modal")
                i.fa.fa-close
       .modal-body
-        span The payment approval process is opened in another tab
+        span
+          | The payment approval process should have been opened in a new tab. If the a new tab has not been opened,
+          a(href="{{ ctrl.paypalUrl }}" target="_blank") click here
+          | . Please, remind that you have <b>5 minutes</b> to complete the payment. If the payment is not completed
+          | in that time, the ordering will be marked as <b>Failed</b>.
       .modal-footer
         a.btn.btn-success(
           data-dismiss="modal"
         )
-          | Accept
+          | Payment Completed

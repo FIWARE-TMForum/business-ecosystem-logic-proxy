@@ -194,16 +194,19 @@
                     var ppalWindow = $window.open(orderCreated.headers['x-redirect-url'], '_blank');
 
                     // Display a message and wait until the new tab has been closed to redirect the page
-                    $rootScope.$emit(EVENTS.MESSAGE_CREATED);
-                    var interval = $interval(function() {
-                        if (ppalWindow.closed) {
-                            vm.createOrderStatus = FINISHED;
-                            $interval.cancel(interval);
-                            $rootScope.$emit(EVENTS.MESSAGE_CLOSED);
-                            cleanCartItems();
-                            $state.go('inventory');
-                        }
-                    }, 500);
+                    $rootScope.$emit(EVENTS.MESSAGE_CREATED, orderCreated.headers['x-redirect-url']);
+
+                    if (ppalWindow) {
+                        var interval = $interval(function () {
+                            if (ppalWindow.closed) {
+                                vm.createOrderStatus = FINISHED;
+                                $interval.cancel(interval);
+                                $rootScope.$emit(EVENTS.MESSAGE_CLOSED);
+                                cleanCartItems();
+                                $state.go('inventory');
+                            }
+                        }, 500);
+                    }
 
                 } else {
                     vm.createOrderStatus = FINISHED;
