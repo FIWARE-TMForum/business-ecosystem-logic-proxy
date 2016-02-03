@@ -337,6 +337,7 @@ var jsAppFilesToInject = [
     'services/product-order.service',
     'services/shopping-cart.service',
     'services/inventory-product.service',
+    'services/partnership-job.service',
     'services/utils.service',
     'controllers/form-wizard.controller',
     'controllers/flash-message.controller',

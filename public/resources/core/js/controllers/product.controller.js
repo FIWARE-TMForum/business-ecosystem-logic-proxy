@@ -42,7 +42,7 @@
         }
     }
 
-    function ProductCreateController($state, $rootScope, EVENTS, ProductSpec, Asset, AssetType, Utils) {
+    function ProductCreateController($state, $rootScope, EVENTS, ProductSpec, Asset, AssetType, PartnershipJob, Utils) {
         /* jshint validthis: true */
         var vm = this;
         var stepList = [
@@ -220,12 +220,12 @@
                     Asset.create(data).then(function (result) {
                         // Set file location
                         vm.digitalChars[2].productSpecCharacteristicValue[0].value = result.content;
-                        saveProduct();
+                        createPartnership();
                     });
                 };
                 reader.readAsBinaryString(vm.assetFile);
             } else {
-                saveProduct();
+                createPartnership();
             }
         }
 
@@ -289,6 +289,76 @@
                 }
             }
             vm.currFormat = vm.currentType.formats[0];
+        }
+
+        function createPartnership() {
+            var data;
+
+            if (vm.roles.customer.items.length || vm.roles.provider.items.length) {
+                data = {
+                    name: vm.data.name,
+                    roleType: serializeRoles(),
+                    partyrole: serializeParties()
+                };
+                PartnershipJob.create(data).then(function (jobCreated) {
+                    saveProduct();
+                }, function (response) {
+                    var defaultMessage = 'There was an unexpected error that prevented the ' +
+                        'system from creating a partnership job';
+                    var error = Utils.parseError(response, defaultMessage);
+
+                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                        error: error
+                    });
+                });
+            } else {
+                saveProduct();
+            }
+        }
+
+        function serializeRoles() {
+            return vm.roles.customer.items.map(function (role) {
+                return {
+                    name: role.name,
+                    agreementSpecification: {
+                        name: "agreement",
+                        version: "0.1",
+                        description: role.agreement
+                    }
+                };
+            }).concat(vm.roles.provider.items.map(function (role) {
+                return {
+                    name: role.name,
+                    agreementSpecification: {
+                        name: "agreement",
+                        version: "0.1",
+                        description: ""
+                    }
+                };
+            }));
+        }
+
+        function serializeParties() {
+            var parties = [];
+
+            vm.roles.provider.items.forEach(function (role) {
+                parties = parties.concat(role.parties.map(function (party) {
+                    return {
+                        name: role.name,
+                        status: "Created",
+                        engagedParty: {
+                            type: "individual",
+                            givenName: party,
+                            characteristic: [],
+                            fullName: party,
+                            familyName: party,
+                            status: "Validated"
+                        }
+                    };
+                }));
+            });
+
+            return parties;
         }
 
         function saveProduct() {
