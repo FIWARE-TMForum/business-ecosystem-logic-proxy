@@ -36,10 +36,6 @@ describe('Inventory API', function() {
         testNotAllowedMethod('PUT', done);
     });
 
-    it('should give a 405 error with a PATCH request', function(done) {
-        testNotAllowedMethod('PATCH', done);
-    });
-
     it('should give a 405 error with a DELETE request', function(done) {
         testNotAllowedMethod('DELETE', done);
     });
@@ -63,15 +59,17 @@ describe('Inventory API', function() {
     it('should redirect the inventory request when asking for a set of products', function(done){
         var inventory = getInventoryAPI();
 
+        var path = 'DSProductCatalog/api/productManagement/product';
+
         var req = {
-            path: 'DSProductCatalog/api/productManagement/product',
+            apiPath: path,
+            path: path,
             method: 'GET',
             user: {
                 id: 'test'
             },
             query: {
                 'relatedParty.id': 'test',
-                'relatedParty.role': 'Customer'
             }
         };
 
@@ -82,10 +80,14 @@ describe('Inventory API', function() {
     });
 
     var testGetRequestError = function(query, code, msg, done) {
+
         var inventory = getInventoryAPI();
 
+        var path = 'DSProductCatalog/api/productManagement/product';
+
         var req = {
-            path: 'DSProductCatalog/api/productManagement/product',
+            apiPath: path,
+            path: path,
             method: 'GET',
             user: {
                 id: 'test'
@@ -105,54 +107,29 @@ describe('Inventory API', function() {
         var query = {
             'relatedParty.role': 'Customer'
         };
-        var msg = 'Missing required param relatedParty.id';
-        testGetRequestError(query, 400, msg, done);
+        var msg = 'You are not allowed to filter items using these filters';
+        testGetRequestError(query, 403, msg, done);
     });
 
-    it('should give a 400 error when the role is not provided', function(done) {
-        var query = {
-            'relatedParty.id': 'test'
-        };
-        var msg = 'Missing required param relatedParty.role';
-        testGetRequestError(query, 400, msg, done);
-    });
 
     it('should give a 403 error when the user is the owner of the product', function(done) {
         var query = {
-            'relatedParty.id': 'notowner',
-            'relatedParty.role': 'Customer'
+            'relatedParty.id': 'otheruser',
         };
-        var msg = 'Your are not authorized to retrieve the specified products';
+        var msg = 'You are not authorized to retrieve the orderings made by the user ' + query['relatedParty.id'];
         testGetRequestError(query, 403, msg, done);
     });
 
-    it('should give a 403 error when not searching for the customer role', function(done) {
-        var query = {
-            'relatedParty.id': 'test',
-            'relatedParty.role': 'Seller'
-        };
-        var msg = 'Your are not authorized to retrieve the specified products';
-        testGetRequestError(query, 403, msg, done);
-    });
 
     var testCorrectPostValidation = function(req, done) {
         var inventory = getInventoryAPI();
 
         inventory.executePostValidation(req, function(err, resp) {
             expect(err).toBe(null);
-            expect(resp).toEqual({
-                extraHdrs: {}
-            });
+            expect(resp).toEqual();
             done();
         });
     };
-
-    it('should redirect the request if pot validating a collection request', function(done) {
-        testCorrectPostValidation({
-            method: 'GET',
-            path: 'DSProductCatalog/api/productManagement/product'
-        }, done)
-    });
 
     it('should redirect the request after validating permissions of retrieving a single product', function(done) {
         testCorrectPostValidation({
@@ -161,6 +138,7 @@ describe('Inventory API', function() {
             user: {
                 id: 'test'
             },
+            headers: {},
             body: JSON.stringify({
                 relatedParty: [{
                     id: 'test',
@@ -191,7 +169,7 @@ describe('Inventory API', function() {
             expect(resp).toBe(undefined);
             expect(err).toEqual({
                 'status': 403,
-                'message': 'Your are not authorized to retrieve the specified product'
+                'message': 'You are not authorized to retrieve the specified offering from the inventory'
             });
             done();
         });

@@ -202,57 +202,6 @@ describe('Ordering API', function() {
         });
     });
 
-    it('should call the callback after validating the request when the user is admin', function(done) {
-
-        var server = 'http://example.com';
-        var productOfferingPath = '/productOffering/1';
-        var productSpecPath = '/product/2';
-        var ownerName = 'example';
-
-        var user = {
-            id: 'admin'
-        };
-
-        var body = {
-            relatedParty: [{
-                id: 'admin',
-                role: 'customer'
-            }],
-            orderItem: [{
-                product: {
-                    relatedParty: [{
-                        id: 'admin',
-                        role: 'customer'
-                    }]
-                },
-                productOffering: {
-                    href: server + productOfferingPath
-                }
-            }]
-        };
-
-        nock(server)
-            .get(productOfferingPath)
-            .reply(200, { productSpecification: { href: server + productSpecPath } });
-
-        nock(server)
-            .get(productSpecPath)
-            .reply(200, { relatedParty: [ { id: ownerName, role: 'owner' } ] });
-
-        testOrderCreation(user, JSON.stringify(body), null, done, function(req){
-            var newBody = JSON.parse(req.body);
-            expect(newBody.orderItem[0].product.relatedParty).toEqual([{
-                id: 'admin',
-                role: 'customer'
-            },
-            {
-                id: ownerName,
-                role: 'Seller',
-                href: ''
-            }]);
-        });
-    });
-
     it('should fail if the offering attached to the order cannot be retrieved', function(done) {
 
         var server = 'http://example.com';

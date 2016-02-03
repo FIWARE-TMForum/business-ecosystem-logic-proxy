@@ -427,6 +427,7 @@ for (var p in config.publicPaths) {
 app.all(config.proxyPrefix + '/*', headerAuthentication, function(req, res) {
 
     // The API path is the actual path that should be used to access the resource
+    // This path contains the query string!!
     req.apiPath = url.parse(req.url).path.substring(config.proxyPrefix.length);
     tmf.checkPermissions(req, res);
 });
