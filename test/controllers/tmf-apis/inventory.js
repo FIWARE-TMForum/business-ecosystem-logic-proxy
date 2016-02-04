@@ -80,10 +80,7 @@ describe('Inventory API', function() {
             });
         });
 
-        it('should call callback with error when retrieving list of products and filter related party fields fails', function (done) {
-
-            var errorStatus = 401;
-            var errorMessage = 'You need to be authenticated to create/update/delete resources';
+        var testRetrieval = function (filterRelatedPartyFields, expectedErr, done) {
 
             var tmfUtils = {
 
@@ -91,12 +88,7 @@ describe('Inventory API', function() {
                     callback(null);
                 },
 
-                filterRelatedPartyFields: function (req, callback) {
-                    callback({
-                        status: errorStatus,
-                        message: errorMessage
-                    });
-                }
+                filterRelatedPartyFields: filterRelatedPartyFields
             };
 
             var req = {
@@ -107,40 +99,34 @@ describe('Inventory API', function() {
             var inventoryApi = getInventoryAPI(tmfUtils);
 
             inventoryApi.checkPermissions(req, function (err) {
-
-                expect(err).not.toBe(null);
-                expect(err.status).toBe(errorStatus);
-                expect(err.message).toBe(errorMessage);
-
+                expect(err).toEqual(expectedErr);
                 done();
             });
+
+        };
+
+        it('should call callback with error when retrieving list of products and filter related party fields fails', function (done) {
+
+            var error = {
+                status: 401,
+                message: 'Invalid filters'
+            };
+
+            var filterRelatedPartyFields = function (req, callback) {
+                callback(error);
+            };
+
+            testRetrieval(filterRelatedPartyFields, error, done);
 
         });
 
-        it('should call callback without error when user is allowed to retrieve the list of products', function (done) {
+        it('should call callback without errors when user is allowed to retrieve the list of products', function (done) {
 
-            var tmfUtils = {
-
-                validateLoggedIn: function (req, callback) {
-                    callback(null);
-                },
-
-                filterRelatedPartyFields: function (req, callback) {
-                    callback(null);
-                }
+            var filterRelatedPartyFields = function (req, callback) {
+                callback();
             };
 
-            var req = {
-                method: 'GET',
-                path: '/example/api/path/product'
-            };
-
-            var inventoryApi = getInventoryAPI(tmfUtils);
-
-            inventoryApi.checkPermissions(req, function (err) {
-                expect(err).toBe(null);
-                done();
-            });
+            testRetrieval(filterRelatedPartyFields, null, done);
 
         });
 
