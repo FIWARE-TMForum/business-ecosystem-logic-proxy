@@ -3,175 +3,266 @@ var proxyquire =  require('proxyquire'),
 
 describe('Inventory API', function() {
 
-    var getInventoryAPI = function() {
+    var getInventoryAPI = function(tmfUtils) {
         return proxyquire('../../../controllers/tmf-apis/inventory', {
-            './../../lib/logger': testUtils.emptyLogger
+            './../../lib/logger': testUtils.emptyLogger,
+            './../../lib/tmfUtils': tmfUtils
         }).inventory;
     };
 
-    //////////////////////////////////////////////////////////////////////////////////////////////
-    ///////////////////////////////////////// NOT ALLOWED ////////////////////////////////////////
-    //////////////////////////////////////////////////////////////////////////////////////////////
+    describe('Check Permissions', function() {
 
-    var testNotAllowedMethod = function(method, done) {
-        var inventory = getInventoryAPI();
 
-        var req = {
-            method: method
+        //////////////////////////////////////////////////////////////////////////////////////////////
+        ///////////////////////////////////////// NOT ALLOWED ////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////////////////////////
+
+        var testNotAllowedMethod = function (method, done) {
+            var inventory = getInventoryAPI({});
+
+            var req = {
+                method: method
+            };
+
+            inventory.checkPermissions(req, function (err) {
+                expect(err).not.toBe(null);
+                expect(err.status).toBe(405);
+                expect(err.message).toBe('The HTTP method ' + method + ' is not allowed in the accessed API');
+                done();
+            });
         };
 
-        inventory.checkPermissions(req, function(err) {
-            expect(err).not.toBe(null);
-            expect(err.status).toBe(405);
-            expect(err.message).toBe('The HTTP method ' + method + ' is not allowed in the accessed API');
-            done();
+        it('should give a 405 error with a POST request', function (done) {
+            testNotAllowedMethod('POST', done);
         });
-    };
 
-    it('should give a 405 error with a POST request', function(done) {
-        testNotAllowedMethod('POST', done);
-    });
+        it('should give a 405 error with a PUT request', function (done) {
+            testNotAllowedMethod('PUT', done);
+        });
 
-    it('should give a 405 error with a PUT request', function(done) {
-        testNotAllowedMethod('PUT', done);
-    });
+        it('should give a 405 error with a DELETE request', function (done) {
+            testNotAllowedMethod('DELETE', done);
+        });
 
-    it('should give a 405 error with a DELETE request', function(done) {
-        testNotAllowedMethod('DELETE', done);
-    });
 
-    it('should redirect the inventory request when asking for a concrete product', function(done) {
-        var inventory = getInventoryAPI();
-        var req = {
-            path: 'DSProductCatalog/api/productManagement/product/10',
-            method: 'GET',
-            user: {
-                id: 'test'
-            }
-        };
+        //////////////////////////////////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////// RETRIEVAL /////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////////////////////////
 
-        inventory.checkPermissions(req, function(err) {
-            expect(err).toBe(null);
-            done();
+        it('should call callback with error when user is not logged in', function (done) {
+
+            var errorStatus = 401;
+            var errorMessage = 'You need to be authenticated to create/update/delete resources';
+
+            var tmfUtils = {
+                validateLoggedIn: function (req, callback) {
+                    callback({
+                        status: errorStatus,
+                        message: errorMessage
+                    });
+                }
+            };
+
+            var inventoryApi = getInventoryAPI(tmfUtils);
+
+            // Call the method
+            var req = {
+                method: 'GET'
+            };
+
+            inventoryApi.checkPermissions(req, function (err) {
+
+                expect(err).not.toBe(null);
+                expect(err.status).toBe(errorStatus);
+                expect(err.message).toBe(errorMessage);
+
+                done();
+            });
+        });
+
+        it('should call callback with error when retrieving list of products and filter related party fields fails', function (done) {
+
+            var errorStatus = 401;
+            var errorMessage = 'You need to be authenticated to create/update/delete resources';
+
+            var tmfUtils = {
+
+                validateLoggedIn: function (req, callback) {
+                    callback(null);
+                },
+
+                filterRelatedPartyFields: function (req, callback) {
+                    callback({
+                        status: errorStatus,
+                        message: errorMessage
+                    });
+                }
+            };
+
+            var req = {
+                method: 'GET',
+                path: '/example/api/path/product'
+            };
+
+            var inventoryApi = getInventoryAPI(tmfUtils);
+
+            inventoryApi.checkPermissions(req, function (err) {
+
+                expect(err).not.toBe(null);
+                expect(err.status).toBe(errorStatus);
+                expect(err.message).toBe(errorMessage);
+
+                done();
+            });
+
+        });
+
+        it('should call callback without error when user is allowed to retrieve the list of products', function (done) {
+
+            var tmfUtils = {
+
+                validateLoggedIn: function (req, callback) {
+                    callback(null);
+                },
+
+                filterRelatedPartyFields: function (req, callback) {
+                    callback(null);
+                }
+            };
+
+            var req = {
+                method: 'GET',
+                path: '/example/api/path/product'
+            };
+
+            var inventoryApi = getInventoryAPI(tmfUtils);
+
+            inventoryApi.checkPermissions(req, function (err) {
+                expect(err).toBe(null);
+                done();
+            });
+
+        });
+
+        it('should call callback without error when retrieving a single product', function (done) {
+
+            var tmfUtils = {
+                validateLoggedIn: function (req, callback) {
+                    callback(null);
+                }
+            };
+
+            var req = {
+                method: 'GET',
+                path: '/example/api/path/product/7'
+            };
+
+            var inventoryApi = getInventoryAPI(tmfUtils);
+
+            inventoryApi.checkPermissions(req, function (err) {
+                expect(err).toBe(null);
+                done();
+            });
+
         });
     });
 
-    it('should redirect the inventory request when asking for a set of products', function(done){
-        var inventory = getInventoryAPI();
+    describe('Execute Post Validation', function() {
 
-        var path = 'DSProductCatalog/api/productManagement/product';
+        var testCorrectPostValidation = function (req, done) {
+            var inventory = getInventoryAPI({});
 
-        var req = {
-            apiPath: path,
-            path: path,
-            method: 'GET',
-            user: {
-                id: 'test'
-            },
-            query: {
-                'relatedParty.id': 'test',
-            }
+            inventory.executePostValidation(req, function (err, resp) {
+                expect(err).toBe(null);
+                expect(resp).toEqual();
+                done();
+            });
         };
 
-        inventory.checkPermissions(req, function(err) {
-            expect(err).toBe(null);
-            done();
+        it('should redirect the request after validating permissions of retrieving a single product', function (done) {
+            testCorrectPostValidation({
+                method: 'GET',
+                path: 'DSProductCatalog/api/productManagement/product/10',
+                user: {
+                    id: 'test'
+                },
+                headers: {},
+                body: JSON.stringify({
+                    relatedParty: [{
+                        id: 'test',
+                        role: 'Customer'
+                    }]
+                })
+            }, done)
         });
-    });
 
-    var testGetRequestError = function(query, code, msg, done) {
+        it('should give a 403 error when the user is not the customer who acquired the product', function (done) {
+            var inventory = getInventoryAPI({});
 
-        var inventory = getInventoryAPI();
+            var req = {
+                method: 'GET',
+                path: 'DSProductCatalog/api/productManagement/product/10',
+                user: {
+                    id: 'test'
+                },
+                body: JSON.stringify({
+                    relatedParty: [{
+                        id: 'owner',
+                        role: 'Customer'
+                    }]
+                })
+            };
 
-        var path = 'DSProductCatalog/api/productManagement/product';
-
-        var req = {
-            apiPath: path,
-            path: path,
-            method: 'GET',
-            user: {
-                id: 'test'
-            },
-            query: query
-        };
-
-        inventory.checkPermissions(req, function(err) {
-            expect(err).not.toBe(null);
-            expect(err.status).toBe(code);
-            expect(err.message).toBe(msg);
-            done();
+            inventory.executePostValidation(req, function (err) {
+                expect(err).toEqual({
+                    'status': 403,
+                    'message': 'You are not authorized to retrieve the specified offering from the inventory'
+                });
+                done();
+            });
         });
-    };
 
-    it('should give a 400 error when the customer id is not provided', function(done) {
-        var query = {
-            'relatedParty.role': 'Customer'
-        };
-        var msg = 'You are not allowed to filter items using these filters';
-        testGetRequestError(query, 403, msg, done);
-    });
+        it('should filter non-owned products when retrieving list of products', function(done) {
 
+            var tmfUtils = jasmine.createSpyObj('tmfUtils', ['updateBody']);
+            var inventory = getInventoryAPI(tmfUtils);
 
-    it('should give a 403 error when the user is the owner of the product', function(done) {
-        var query = {
-            'relatedParty.id': 'otheruser',
-        };
-        var msg = 'You are not authorized to retrieve the orderings made by the user ' + query['relatedParty.id'];
-        testGetRequestError(query, 403, msg, done);
-    });
-
-
-    var testCorrectPostValidation = function(req, done) {
-        var inventory = getInventoryAPI();
-
-        inventory.executePostValidation(req, function(err, resp) {
-            expect(err).toBe(null);
-            expect(resp).toEqual();
-            done();
-        });
-    };
-
-    it('should redirect the request after validating permissions of retrieving a single product', function(done) {
-        testCorrectPostValidation({
-            method: 'GET',
-            path: 'DSProductCatalog/api/productManagement/product/10',
-            user: {
-                id: 'test'
-            },
-            headers: {},
-            body: JSON.stringify({
+            var validProduct = {
                 relatedParty: [{
                     id: 'test',
-                    role: 'Customer'
+                    role: 'customEr'
                 }]
-            })
-        }, done)
-    });
+            };
 
-    it('should give a 403 error when the user is not the customer who acquired the product', function(done) {
-        var inventory = getInventoryAPI();
+            var req = {
+                method: 'GET',
+                path: 'DSProductCatalog/api/productManagement/product',
+                user: {
+                    id: 'test'
+                },
+                body: JSON.stringify([{
+                    relatedParty: [{
+                        id: 'owner',
+                        role: 'Customer'
+                    }]
+                },{
+                    relatedParty: [{
+                        id: 'test',
+                        role: 'customEr'
+                    }]
+                },{
+                    relatedParty: [{
+                        id: 'test',
+                        role: 'Seller'
+                    }]
+                }])
+            };
 
-        var req = {
-            method: 'GET',
-            path: 'DSProductCatalog/api/productManagement/product/10',
-            user: {
-                id: 'test'
-            },
-            body: JSON.stringify({
-                relatedParty: [{
-                    id: 'owner',
-                    role: 'Customer'
-                }]
-            })
-       };
-
-        inventory.executePostValidation(req, function(err, resp) {
-            expect(resp).toBe(undefined);
-            expect(err).toEqual({
-                'status': 403,
-                'message': 'You are not authorized to retrieve the specified offering from the inventory'
+            inventory.executePostValidation(req, function(err) {
+                expect(err).toBe(null);
+                expect(tmfUtils.updateBody).toHaveBeenCalledWith(req, [validProduct]);
+                done();
             });
-            done();
         });
     });
 });
