@@ -128,7 +128,7 @@ var ordering = (function(){
                             return relatedParty['role'].toLowerCase() === 'owner';
                         });
 
-                        if (!owners) {
+                        if (!owners.length) {
                             callback({
                                 status: 400,
                                 message: 'You cannot order a product without owners'
