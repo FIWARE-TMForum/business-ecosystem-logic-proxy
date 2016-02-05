@@ -585,6 +585,10 @@ describe('Ordering API', function() {
 
     describe('Post Validation', function() {
 
+        //////////////////////////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////// NOTIFY STORE ////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////////////////////////
+
         var orderInf = {a: 'a'};
         var userInf = {
             id: 'test'
@@ -666,5 +670,223 @@ describe('Ordering API', function() {
                 done();
             });
         });
+
+        //////////////////////////////////////////////////////////////////////////////////////////////
+        ////////////////////////////////////// FILTER ORDERINGS //////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////////////////////////
+
+        it('should fail if the ordering does not belong to the user', function(done) {
+
+            var tmfUtils = {
+                hasRole: function() {
+                    return false;
+                }
+            };
+
+            var req = {
+                method: 'GET',
+                body: '{}'
+            };
+
+            var orderingApi = getOrderingAPI({}, tmfUtils);
+
+            orderingApi.executePostValidation(req, function(err) {
+                expect(err).toEqual({
+                    status: 403,
+                    message: 'You are not authorized to retrieve the specified ordering'
+                });
+
+                done();
+            });
+        });
+
+        var testFilterOrders = function(orders, done) {
+
+            var user = { id: 'fiware' };
+
+            // Not consumer but seller
+            var hasRolesReturnValues =  [];
+            orders.map(function(order) {
+                hasRolesReturnValues.push(order.isInvolved);
+                hasRolesReturnValues.push(order.isInvolved);
+            });
+
+            var tmfUtils = jasmine.createSpyObj('tmfUtils', ['hasRole']);
+            tmfUtils.hasRole.and.returnValues.apply(tmfUtils.hasRole, hasRolesReturnValues);
+            tmfUtils.updateBody = function(req, newBody) {
+
+                var expectedOrderItem = [];
+
+                orders.forEach(function(order) {
+                    if (order.isInvolved) {
+                        expectedOrderItem.push(order.item);
+                    }
+                });
+
+                expect(newBody).toEqual(expectedOrderItem);
+            };
+
+            var body = orders.map(function(order) {
+                return order.item;
+            });
+
+            var req = {
+                method: 'GET',
+                body: JSON.stringify(body),
+                user: user
+            };
+
+            var orderingApi = getOrderingAPI({}, tmfUtils);
+
+            orderingApi.executePostValidation(req, function(err) {
+
+                expect(err).toBe(null);
+
+                orders.forEach(function(order) {
+                    expect(tmfUtils.hasRole).toHaveBeenCalledWith(order.item.relatedParty, 'Customer', user);
+                    expect(tmfUtils.hasRole).toHaveBeenCalledWith(order.item.relatedParty, 'Seller', user);
+                });
+
+                expect(tmfUtils.hasRole.calls.count()).toBe(orders.length * 2); // One for customer and one for seller
+
+                done();
+            });
+        };
+
+        it('should not filter the order as the user is involved in', function(done) {
+
+            var order = { item: { orderItems: [ {}, {}, {} ] }, isInvolved: true };
+            testFilterOrders([order], done);
+        });
+
+        it('should filter the order as the user is not involved in', function(done) {
+
+            var order = { item: { orderItems: [ {}, {}, {} ] }, isInvolved: false };
+            testFilterOrders([order], done);
+        });
+
+        it('should filter just one order as the user is involved in the other one', function(done) {
+
+            var order1 = { item: { orderItems: [ {}, {}, {} ] }, isInvolved: false };
+            var order2 = { item: { orderItems: [ {}, {}, {} ] }, isInvolved: true };
+            testFilterOrders([ order1, order2 ], done);
+        });
+
+        it('should not fail and not filter items when the user is customer', function(done) {
+
+            var user = { id: 'fiware' };
+            var orderingRelatedParties =  [ {id: 'fiware'} ];
+            var originalBody = {
+                relatedParty: orderingRelatedParties,
+                orderItem: [ { product: { relatedParty: [{ id: 'fiware', role: 'customer' }], id: 7 } } ]
+            };
+            var expectedBody = JSON.parse(JSON.stringify(originalBody));
+
+            var tmfUtils = jasmine.createSpyObj('tmfUtils', ['hasRole']);
+            tmfUtils.hasRole.and.returnValues.apply(tmfUtils.hasRole, [true, false]);
+            tmfUtils.updateBody = function(req, newBody) {
+                expect(newBody).toEqual(expectedBody);
+            };
+
+            var req = {
+                method: 'GET',
+                body: JSON.stringify(originalBody),
+                user: user
+            };
+
+            var orderingApi = getOrderingAPI({}, tmfUtils);
+
+            orderingApi.executePostValidation(req, function(err) {
+                expect(err).toEqual(null);
+                expect(tmfUtils.hasRole).toHaveBeenCalledWith(orderingRelatedParties, 'Customer', user);
+                expect(tmfUtils.hasRole).toHaveBeenCalledWith(orderingRelatedParties, 'Seller', user);
+                expect(tmfUtils.hasRole.calls.count()).toBe(2);
+
+                done();
+            });
+        });
+
+        var testSeller = function(orderItems, done) {
+
+            var user = { id: 'fiware' };
+            var orderingRelatedParties = [];
+            var originalBody = { relatedParty: orderingRelatedParties, orderItem: []  };
+
+            orderItems.forEach(function(item) {
+                originalBody.orderItem.push(item.item);
+            });
+
+            // Not consumer but seller
+            var hasRolesReturnValues = [false, true];
+            orderItems.forEach(function(item) {
+               hasRolesReturnValues.push(item.isSeller);
+            });
+
+            var tmfUtils = jasmine.createSpyObj('tmfUtils', ['hasRole']);
+            tmfUtils.hasRole.and.returnValues.apply(tmfUtils.hasRole, hasRolesReturnValues);
+            tmfUtils.updateBody = function(req, newBody) {
+
+                var expectedOrderItem = [];
+
+                orderItems.forEach(function(item) {
+                    if (item.isSeller) {
+                       expectedOrderItem.push(item.item);
+                    }
+                });
+
+                expect(newBody).toEqual({ relatedParty: orderingRelatedParties, orderItem: expectedOrderItem });
+            };
+
+            var req = {
+                method: 'GET',
+                body: JSON.stringify(originalBody),
+                user: user
+            };
+
+            var orderingApi = getOrderingAPI({}, tmfUtils);
+
+            orderingApi.executePostValidation(req, function(err) {
+
+                expect(err).toEqual(null);
+
+                expect(tmfUtils.hasRole).toHaveBeenCalledWith(orderingRelatedParties, 'Customer', user);
+                expect(tmfUtils.hasRole).toHaveBeenCalledWith(orderingRelatedParties, 'Seller', user);
+
+                orderItems.forEach(function(item) {
+                    expect(tmfUtils.hasRole).toHaveBeenCalledWith(item.item.product.relatedParty, 'Seller', user);
+                });
+
+                done();
+            });
+        };
+
+        it('should not fail if user is seller and item is not filtered as use is the seller', function(done) {
+
+            var orderItemRelatedParties = [{ id: 'fiware', role: 'seller' }];
+            var orderItem =  { item: { product: { relatedParty: orderItemRelatedParties, id: 7 } }, isSeller: true };
+
+            testSeller([orderItem], done);
+        });
+
+
+        it('should not fail if user is seller but item is filtered as user is not the seller', function(done) {
+
+            var orderItemRelatedParties = [{ id: 'other-seller', role: 'seller' }];
+            var orderItem =  { item: { product: { relatedParty: orderItemRelatedParties, id: 7 } }, isSeller: false };
+
+            testSeller([orderItem], done);
+        });
+
+        it('should not fail if user is seller and filter some items', function(done) {
+
+            var orderItem1RelatedParties = [{ id: 'other-seller', role: 'seller' }];
+            var orderItem2RelatedParties = [{ id: 'fiware', role: 'seller' }];
+            var orderItem1 = { item: { product: { relatedParty: orderItem1RelatedParties, id: 7 } }, isSeller: false };
+            var orderItem2 = { item: { product: { relatedParty: orderItem2RelatedParties, id: 8 } }, isSeller: true };
+
+
+            testSeller([orderItem1, orderItem2], done);
+        });
+
     });
 });
