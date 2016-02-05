@@ -500,14 +500,14 @@ var ordering = (function(){
 
         // This array is needed as the length of the array cannot be modified while it's being iterated
         var orderingsToRemove = [];
-        orderings.forEach(function(ordering, i) {
+        orderings.forEach(function(ordering) {
 
             var customer = tmfUtils.hasRole(ordering.relatedParty, CUSTOMER, req.user);
             var seller = tmfUtils.hasRole(ordering.relatedParty, SELLER, req.user);
 
             if (!customer && !seller) {
                 // This can happen when a user ask for a specific ordering.
-                orderingsToRemove.push(i);
+                orderingsToRemove.push(ordering);
             } else if (!customer && seller) {
 
                 // When a user is involved only as a seller in an ordering, only the order items
@@ -521,8 +521,8 @@ var ordering = (function(){
 
         });
 
-        orderingsToRemove.forEach(function(pos) {
-            orderings.splice(pos, 1);
+        orderings = orderings.filter(function(ordering) {
+            return orderingsToRemove.indexOf(ordering) < 0;
         });
 
         if (!isArray) {

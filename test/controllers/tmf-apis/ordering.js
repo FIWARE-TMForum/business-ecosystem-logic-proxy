@@ -753,22 +753,37 @@ describe('Ordering API', function() {
             });
         };
 
-        it('should not filter the order as the user is involved in', function(done) {
+        it('should not filter the ordering as the user is involved in', function(done) {
 
             var order = { item: { orderItems: [ {}, {}, {} ] }, isInvolved: true };
             testFilterOrders([order], done);
         });
 
-        it('should filter the order as the user is not involved in', function(done) {
+        it('should filter the ordering as the user is not involved in', function(done) {
 
             var order = { item: { orderItems: [ {}, {}, {} ] }, isInvolved: false };
             testFilterOrders([order], done);
         });
 
-        it('should filter just one order as the user is involved in the other one', function(done) {
+        it('should filter just one ordering as the user is involved in the other one', function(done) {
 
             var order1 = { item: { orderItems: [ {}, {}, {} ] }, isInvolved: false };
             var order2 = { item: { orderItems: [ {}, {}, {} ] }, isInvolved: true };
+            testFilterOrders([ order1, order2 ], done);
+        });
+
+        it('should not filter orderings as the user is involved in both', function(done) {
+
+            var order1 = { item: { orderItems: [ {}, {}, {} ] }, isInvolved: true };
+            var order2 = { item: { orderItems: [ {}, {}, {} ] }, isInvolved: true };
+            testFilterOrders([ order1, order2 ], done);
+        });
+
+
+        it('should filter all the orderings as the user is not involved in either of them', function(done) {
+
+            var order1 = { item: { orderItems: [ {}, {}, {} ] }, isInvolved: false };
+            var order2 = { item: { orderItems: [ {}, {}, {} ] }, isInvolved: false };
             testFilterOrders([ order1, order2 ], done);
         });
 
@@ -860,7 +875,7 @@ describe('Ordering API', function() {
             });
         };
 
-        it('should not fail if user is seller and item is not filtered as use is the seller', function(done) {
+        it('should not fail and not filter the only item', function(done) {
 
             var orderItemRelatedParties = [{ id: 'fiware', role: 'seller' }];
             var orderItem =  { item: { product: { relatedParty: orderItemRelatedParties, id: 7 } }, isSeller: true };
@@ -869,7 +884,7 @@ describe('Ordering API', function() {
         });
 
 
-        it('should not fail if user is seller but item is filtered as user is not the seller', function(done) {
+        it('should not fail and filter the only item', function(done) {
 
             var orderItemRelatedParties = [{ id: 'other-seller', role: 'seller' }];
             var orderItem =  { item: { product: { relatedParty: orderItemRelatedParties, id: 7 } }, isSeller: false };
@@ -877,7 +892,7 @@ describe('Ordering API', function() {
             testSeller([orderItem], done);
         });
 
-        it('should not fail if user is seller and filter some items', function(done) {
+        it('should not fail and filter one order item', function(done) {
 
             var orderItem1RelatedParties = [{ id: 'other-seller', role: 'seller' }];
             var orderItem2RelatedParties = [{ id: 'fiware', role: 'seller' }];
@@ -888,5 +903,26 @@ describe('Ordering API', function() {
             testSeller([orderItem1, orderItem2], done);
         });
 
+        it('should not fail and not filter items', function(done) {
+
+            var orderItemRelatedParties = [{ id: 'fiware', role: 'seller' }];
+            var orderItem1 = { item: { product: { relatedParty: orderItemRelatedParties, id: 7 } }, isSeller: true };
+            var orderItem2 = { item: { product: { relatedParty: orderItemRelatedParties, id: 8 } }, isSeller: true };
+
+
+            testSeller([orderItem1, orderItem2], done);
+        });
+
+        it('should not fail and filter two order items', function(done) {
+
+            var nowOwnerRelatedParties = [{ id: 'other-seller', role: 'seller' }];
+            var ownerRelatedParties = [{ id: 'fiware', role: 'seller' }];
+            var orderItem1 = { item: { product: { relatedParty: nowOwnerRelatedParties, id: 7 } }, isSeller: false };
+            var orderItem2 = { item: { product: { relatedParty: ownerRelatedParties, id: 8 } }, isSeller: false };
+            var orderItem3 = { item: { product: { relatedParty: ownerRelatedParties, id: 9 } }, isSeller: true };
+
+
+            testSeller([orderItem1, orderItem2, orderItem3], done);
+        });
     });
 });
