@@ -3,7 +3,9 @@ var nock = require('nock'),
     testUtils = require('../../utils');
 
 describe('Ordering API', function() {
+
     var config = testUtils.getDefaultConfig();
+    var SERVER = (config.appSsl ? 'https' : 'http') + '://' + config.appHost + ':' + config.endpoints.ordering.port;
 
     var getOrderingAPI = function(storeClient, tmfUtils) {
         return proxyquire('../../../controllers/tmf-apis/ordering', {
@@ -230,7 +232,7 @@ describe('Ordering API', function() {
             };
 
             var testValidOrdering = function (nOrderItems, done) {
-                var server = 'http://example.com';
+
                 var productOfferingPath = '/productOffering/1';
                 var productSpecPath = '/product/2';
                 var ownerName = 'example';
@@ -245,7 +247,7 @@ describe('Ordering API', function() {
                     orderItems.push({
                         product: {},
                         productOffering: {
-                            href: server + productOfferingPath
+                            href: SERVER + productOfferingPath
                         }
                     });
                 }
@@ -258,12 +260,12 @@ describe('Ordering API', function() {
                     orderItem: orderItems
                 };
 
-                nock(server)
+                nock(SERVER)
                     .get(productOfferingPath)
                     .times(nOrderItems)
-                    .reply(200, {productSpecification: {href: server + productSpecPath}});
+                    .reply(200, {productSpecification: {href: SERVER + productSpecPath}});
 
-                nock(server)
+                nock(SERVER)
                     .get(productSpecPath)
                     .times(nOrderItems)
                     .reply(200, {relatedParty: [{id: ownerName, role: 'owner'}]});
@@ -293,7 +295,6 @@ describe('Ordering API', function() {
 
             it('should fail if the product has not owners', function (done) {
 
-                var server = 'http://example.com';
                 var productOfferingPath = '/productOffering/1';
                 var productSpecPath = '/product/2';
                 var ownerName = 'example';
@@ -310,16 +311,16 @@ describe('Ordering API', function() {
                     orderItem: [{
                         product: {},
                         productOffering: {
-                            href: server + productOfferingPath
+                            href: SERVER + productOfferingPath
                         }
                     }]
                 };
 
-                nock(server)
+                nock(SERVER)
                     .get(productOfferingPath)
-                    .reply(200, {productSpecification: {href: server + productSpecPath}});
+                    .reply(200, {productSpecification: {href: SERVER + productSpecPath}});
 
-                nock(server)
+                nock(SERVER)
                     .get(productSpecPath)
                     .reply(200, {relatedParty: [{id: ownerName, role: 'other_role'}]});
 
@@ -334,7 +335,7 @@ describe('Ordering API', function() {
 
             it('should fail if the offering attached to the order cannot be retrieved', function (done) {
 
-                var server = 'http://example.com';
+                var SERVER = 'http://example.com';
                 var productOfferingPath = '/productOffering/1';
 
                 var orderItemId = 1;
@@ -352,12 +353,12 @@ describe('Ordering API', function() {
                         id: orderItemId,
                         product: {},
                         productOffering: {
-                            href: server + productOfferingPath
+                            href: SERVER + productOfferingPath
                         }
                     }]
                 };
 
-                nock(server)
+                nock(SERVER)
                     .get(productOfferingPath)
                     .reply(500);
 
@@ -371,7 +372,7 @@ describe('Ordering API', function() {
 
             it('should fail if the product attached to the order cannot be retrieved', function (done) {
 
-                var server = 'http://example.com';
+                var SERVER = 'http://example.com';
                 var productOfferingPath = '/productOffering/1';
                 var productSpecPath = '/product/2';
 
@@ -390,16 +391,16 @@ describe('Ordering API', function() {
                         id: orderItemId,
                         product: {},
                         productOffering: {
-                            href: server + productOfferingPath
+                            href: SERVER + productOfferingPath
                         }
                     }]
                 };
 
-                nock(server)
+                nock(SERVER)
                     .get(productOfferingPath)
-                    .reply(200, {productSpecification: {href: server + productSpecPath}});
+                    .reply(200, {productSpecification: {href: SERVER + productSpecPath}});
 
-                nock(server)
+                nock(SERVER)
                     .get(productSpecPath)
                     .reply(500);
 
@@ -626,9 +627,43 @@ describe('Ordering API', function() {
 
             });
 
+            it('should fail when the ordering cannot be retrieved', function(done) {
+
+                var SERVER = 'http://example.com:189';
+                var productOfferingPath = '/productOrdering/ordering/7';
+
+                var orderingApi = getOrderingAPI({}, {});
+
+                var user = {
+                    id: 'fiware',
+                    href: 'http://www.fiware.org/user/fiware'
+                };
+
+                var req = {
+                    user: user,
+                    method: 'PATCH',
+                    body: JSON.stringify({}),
+                    apiPath: productOfferingPath
+                };
+
+                nock(SERVER)
+                    .get(productOfferingPath)
+                    .reply(500, {  });
+
+                orderingApi.checkPermissions(req, function (err) {
+
+                    expect(err).toEqual({
+                        status: 400,
+                        message: 'The requested ordering cannot be retrieved'
+                    });
+
+                    done();
+                });
+            });
+
             var testUpdate = function(hasRoleResponses, body, previousOrderItems, expectedError, expectedBody, done) {
 
-                var server = 'http://example.com:189';
+                var SERVER = 'http://example.com:189';
                 var productOfferingPath = '/productOrdering/ordering/7';
 
                 var tmfUtils = jasmine.createSpyObj('tmfUtils', ['hasRole', 'updateBody']);
@@ -651,7 +686,7 @@ describe('Ordering API', function() {
 
                 var orderingRelatedParties = [{}, {}];
 
-                nock(server)
+                nock(SERVER)
                     .get(productOfferingPath)
                     .reply(200, { relatedParty: orderingRelatedParties, orderItem: previousOrderItems });
 

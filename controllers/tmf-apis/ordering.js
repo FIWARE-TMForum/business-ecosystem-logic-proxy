@@ -404,7 +404,7 @@ var ordering = (function(){
 
             ordering = JSON.parse(req.body);
 
-            makeRequest(orderingUrl, 'The ordering cannot be retrieved', function(err, previousOrdering) {
+            makeRequest(orderingUrl, 'The requested ordering cannot be retrieved', function(err, previousOrdering) {
                 if (err) {
                     callback(err);
                 } else {
