@@ -303,7 +303,7 @@ var ordering = (function(){
         return orderingState;
     };
 
-    var updateItemsState = function(req, updatedOrdering, previousOrdering, callback) {
+    var updateItemsState = function(req, updatedOrdering, previousOrdering, includeOtherFields, callback) {
 
         var error = null;
 
@@ -339,7 +339,7 @@ var ordering = (function(){
                     if (Object.keys(updatedItem).length !== Object.keys(previousOrderItem).length) {
                         error = {
                             status: 403,
-                            message: 'You cannot add or remove items to an order item'
+                            message: 'The fields of an order item cannot be modified'
                         }
                     }
 
@@ -359,15 +359,16 @@ var ordering = (function(){
                         }
                     }
 
-                    // If no errors, the state can be updated!
                     if (!error) {
 
+                        // Only the charging backend (Store) can change the state from acknowledged to in progress
                         if (previousOrderItem['state'] === ACKNOWLEDGED) {
                             error = {
                                 status: 403,
                                 message: 'Acknowledged order items cannot be updated manually'
                             }
                         } else {
+                            // If no errors, the state can be updated!
                             previousOrderItem['state'] = updatedItem['state'];
                         }
                     }
@@ -378,10 +379,12 @@ var ordering = (function(){
         if (!error) {
 
             // Sellers can only modify the 'orderItem' field...
-            tmfUtils.updateBody(req, {
-                state: calculateOrderingState(previousOrdering['state'], previousOrdering['orderItem']),
-                orderItem: previousOrdering.orderItem
-            });
+            // State is automatically calculated
+            var finalBody = includeOtherFields ? updatedOrdering : {};
+            finalBody['state'] = calculateOrderingState(previousOrdering['state'], previousOrdering['orderItem']);
+            finalBody['orderItem'] = previousOrdering.orderItem;
+
+            tmfUtils.updateBody(req, finalBody);
 
             callback(null);
 
@@ -403,22 +406,31 @@ var ordering = (function(){
 
             makeRequest(orderingUrl, 'The ordering cannot be retrieved', function(err, previousOrdering) {
                 if (err) {
-                    callback(err, res);
+                    callback(err);
                 } else {
 
-                    var isSeller = tmfUtils.hasRole(previousOrdering.relatedParty, SELLER, req.user);
                     var isCustomer = tmfUtils.hasRole(previousOrdering.relatedParty, CUSTOMER, req.user);
+                    var isSeller = tmfUtils.hasRole(previousOrdering.relatedParty, SELLER, req.user);
 
-                    if (isCustomer && !isSeller) {
-                        // Customers cannot modify the status of the order items
+                    if (isCustomer) {
 
-                        if ('orderItem' in ordering || 'relatedParty' in ordering) {
-
+                        if ('relatedParty' in ordering) {
                             callback({
                                 status: 403,
-                                message: 'The items of the ordering cannot be modified'
+                                message: 'Related parties cannot be modified'
                             });
+                        } else if ('orderItem' in ordering) {
 
+                            if (isSeller) {
+                                // Customers can be sellers at the same time
+                                updateItemsState(req, ordering, previousOrdering, true, callback);
+                            } else {
+                                // Customers cannot modify the status of the order items
+                                callback({
+                                    status: 403,
+                                    message: 'Order items can only be modified by sellers'
+                                });
+                            }
                         } else {
                             callback(null);
                         }
@@ -426,11 +438,11 @@ var ordering = (function(){
                     } else if (isSeller) {
 
                         if (Object.keys(ordering).length == 1 && 'orderItem' in ordering) {
-                            updateItemsState(req, ordering, previousOrdering, callback);
+                            updateItemsState(req, ordering, previousOrdering, false, callback);
                         } else {
                             callback({
                                 status: 403,
-                                message: 'As a seller, you can only modify the order items of the ordering'
+                                message: 'Sellers can only modify order items'
                             });
                         }
 
@@ -445,12 +457,11 @@ var ordering = (function(){
 
         } catch (e) {
 
-            log.error(e);
-
             callback({
                 status: 400,
-                message: 'An expected error prevented the system from updating the ordering'
+                message: 'The resource is not a valid JSON document'
             });
+
         }
     };
 

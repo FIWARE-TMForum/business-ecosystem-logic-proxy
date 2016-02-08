@@ -14,54 +14,62 @@ describe('Ordering API', function() {
         }).ordering;
     };
 
+    var validateLoggedOk = function (req, callback) {
+        callback();
+    };
+
     describe('Get Permissions', function() {
 
         //////////////////////////////////////////////////////////////////////////////////////////////
         ////////////////////////////////////// NOT AUTHENTICATED /////////////////////////////////////
         //////////////////////////////////////////////////////////////////////////////////////////////
 
-        var validateLoggedError = function (req, callback) {
-            callback({
-                status: 401,
-                message: 'You need to be authenticated to create/update/delete resources'
-            });
-        };
+        describe('Not Authenticated Requests', function() {
 
-        var testNotLoggedIn = function (method, done) {
-
-            var tmfUtils = {
-                validateLoggedIn: validateLoggedError
+            var validateLoggedError = function (req, callback) {
+                callback({
+                    status: 401,
+                    message: 'You need to be authenticated to create/update/delete resources'
+                });
             };
 
-            var orderingApi = getOrderingAPI({}, tmfUtils);
-            var path = '/ordering';
+            var testNotLoggedIn = function (method, done) {
 
-            // Call the method
-            var req = {
-                method: method,
-                url: path
+                var tmfUtils = {
+                    validateLoggedIn: validateLoggedError
+                };
+
+                var orderingApi = getOrderingAPI({}, tmfUtils);
+                var path = '/ordering';
+
+                // Call the method
+                var req = {
+                    method: method,
+                    url: path
+                };
+
+                orderingApi.checkPermissions(req, function (err) {
+
+                    expect(err).not.toBe(null);
+                    expect(err.status).toBe(401);
+                    expect(err.message).toBe('You need to be authenticated to create/update/delete resources');
+
+                    done();
+                });
             };
 
-            orderingApi.checkPermissions(req, function (err) {
-
-                expect(err).not.toBe(null);
-                expect(err.status).toBe(401);
-                expect(err.message).toBe('You need to be authenticated to create/update/delete resources');
-
-                done();
+            it('should reject not authenticated GET requests', function (done) {
+                testNotLoggedIn('GET', done);
             });
-        };
 
-        it('should reject not authenticated GET requests', function (done) {
-            testNotLoggedIn('GET', done);
-        });
+            it('should reject not authenticated POST requests', function (done) {
+                testNotLoggedIn('POST', done);
+            });
 
-        it('should reject not authenticated POST requests', function (done) {
-            testNotLoggedIn('POST', done);
-        });
+            it('should reject not authenticated PATCH requests', function (done) {
+                testNotLoggedIn('PATCH', done);
+            });
 
-        it('should reject not authenticated PATCH requests', function (done) {
-            testNotLoggedIn('PATCH', done);
         });
 
 
@@ -69,102 +77,109 @@ describe('Ordering API', function() {
         ///////////////////////////////////////// NOT ALLOWED ////////////////////////////////////////
         //////////////////////////////////////////////////////////////////////////////////////////////
 
-        var methodNotAllowedStatus = 405;
-        var methodNotAllowedMessage = 'This method used is not allowed in the accessed API';
+        describe('Not allowed methods', function() {
 
-        var methodNotAllowed = function (req, callback) {
-            callback({
-                status: methodNotAllowedStatus,
-                message: methodNotAllowedMessage
-            });
-        };
+            var methodNotAllowedStatus = 405;
+            var methodNotAllowedMessage = 'This method used is not allowed in the accessed API';
 
-        var testMethodNotAllowed = function (method, done) {
-
-            var tmfUtils = {
-                methodNotAllowed: methodNotAllowed
+            var methodNotAllowed = function (req, callback) {
+                callback({
+                    status: methodNotAllowedStatus,
+                    message: methodNotAllowedMessage
+                });
             };
 
-            var orderingApi = getOrderingAPI({}, tmfUtils);
-            var path = '/ordering';
+            var testMethodNotAllowed = function (method, done) {
 
-            // Call the method
-            var req = {
-                method: method,
-                url: path
+                var tmfUtils = {
+                    methodNotAllowed: methodNotAllowed
+                };
+
+                var orderingApi = getOrderingAPI({}, tmfUtils);
+                var path = '/ordering';
+
+                // Call the method
+                var req = {
+                    method: method,
+                    url: path
+                };
+
+                orderingApi.checkPermissions(req, function (err) {
+
+                    expect(err).not.toBe(null);
+                    expect(err.status).toBe(methodNotAllowedStatus);
+                    expect(err.message).toBe(methodNotAllowedMessage);
+
+                    done();
+                });
             };
 
-            orderingApi.checkPermissions(req, function (err) {
-
-                expect(err).not.toBe(null);
-                expect(err.status).toBe(methodNotAllowedStatus);
-                expect(err.message).toBe(methodNotAllowedMessage);
-
-                done();
+            it('should reject not authenticated PUT requests', function (done) {
+                testMethodNotAllowed('PUT', done);
             });
-        };
 
-        it('should reject not authenticated PUT requests', function (done) {
-            testMethodNotAllowed('PUT', done);
-        });
+            it('should reject not authenticated DELETE requests', function (done) {
+                testMethodNotAllowed('DELETE', done);
+            });
 
-        it('should reject not authenticated DELETE requests', function (done) {
-            testMethodNotAllowed('DELETE', done);
         });
 
         //////////////////////////////////////////////////////////////////////////////////////////////
         ///////////////////////////////////////// RETRIEVAL //////////////////////////////////////////
         //////////////////////////////////////////////////////////////////////////////////////////////
 
-        var testRetrieval = function (filterRelatedPartyFields, expectedErr, done) {
+        describe('GET', function() {
 
-            var tmfUtils = {
+            var testRetrieval = function (filterRelatedPartyFields, expectedErr, done) {
 
-                validateLoggedIn: function (req, callback) {
-                    callback(null);
-                },
+                var tmfUtils = {
 
-                filterRelatedPartyFields: filterRelatedPartyFields
+                    validateLoggedIn: function (req, callback) {
+                        callback(null);
+                    },
+
+                    filterRelatedPartyFields: filterRelatedPartyFields
+                };
+
+                var req = {
+                    method: 'GET'
+                };
+
+                var orderingApi = getOrderingAPI({}, tmfUtils);
+
+                orderingApi.checkPermissions(req, function (err) {
+
+                    expect(err).toEqual(expectedErr);
+
+                    done();
+                });
+
             };
 
-            var req = {
-                method: 'GET'
-            };
+            it('should call callback with error when retrieving list of orderings and using invalid filters', function (done) {
 
-            var orderingApi = getOrderingAPI({}, tmfUtils);
+                var error = {
+                    status: 401,
+                    message: 'Invalid filters'
+                };
 
-            orderingApi.checkPermissions(req, function (err) {
+                var filterRelatedPartyFields = function (req, callback) {
+                    callback(error);
+                };
 
-                expect(err).toEqual(expectedErr);
+                testRetrieval(filterRelatedPartyFields, error, done);
 
-                done();
             });
 
-        };
+            it('should call callback without errors when user is allowed to retrieve the list of orderings', function (done) {
 
-        it('should call callback with error when retrieving list of orderings and using invalid filters', function (done) {
+                var filterRelatedPartyFields = function (req, callback) {
+                    callback();
+                };
 
-            var error = {
-                status: 401,
-                message: 'Invalid filters'
-            };
+                testRetrieval(filterRelatedPartyFields, null, done);
 
-            var filterRelatedPartyFields = function (req, callback) {
-                callback(error);
-            };
-
-            testRetrieval(filterRelatedPartyFields, error, done);
-
-        });
-
-        it('should call callback without errors when user is allowed to retrieve the list of orderings', function (done) {
-
-            var filterRelatedPartyFields = function (req, callback) {
-                callback();
-            };
-
-            testRetrieval(filterRelatedPartyFields, null, done);
-
+            });
         });
 
 
@@ -172,414 +187,831 @@ describe('Ordering API', function() {
         ////////////////////////////////////////// CREATION //////////////////////////////////////////
         //////////////////////////////////////////////////////////////////////////////////////////////
 
-        var validateLoggedOk = function (req, callback) {
-            callback();
-        };
+        describe('Creation', function() {
 
-        var checkRole = function (userInfo, role) {
-            var valid = false;
+            var checkRole = function (userInfo, role) {
+                var valid = false;
 
-            if (userInfo.id == 'cust' && role == 'customer') {
-                valid = true;
-            }
-
-            if (userInfo.id == 'admin' && role == 'provider') {
-                valid = true;
-            }
-            return valid;
-        };
-
-        var testOrderCreation = function (userInfo, body, expectedRes, done, checkReq) {
-
-            var tmfUtils = {
-                validateLoggedIn: validateLoggedOk,
-                checkRole: checkRole
-            };
-
-            var orderingApi = getOrderingAPI({}, tmfUtils);
-
-            var req = {
-                user: userInfo,
-                method: 'POST',
-                body: body
-            };
-
-            orderingApi.checkPermissions(req, function (err) {
-                expect(err).toEqual(expectedRes);
-
-                if (checkReq) {
-                    checkReq(req);
+                if (userInfo.id == 'cust' && role == 'customer') {
+                    valid = true;
                 }
 
-                done();
-            });
-
-        };
-
-        var testValidOrdering = function(nOrderItems, done) {
-            var server = 'http://example.com';
-            var productOfferingPath = '/productOffering/1';
-            var productSpecPath = '/product/2';
-            var ownerName = 'example';
-
-            var user = {
-                id: 'cust'
+                if (userInfo.id == 'admin' && role == 'provider') {
+                    valid = true;
+                }
+                return valid;
             };
 
-            var orderItems = [];
+            var testOrderCreation = function (userInfo, body, expectedRes, done, checkReq) {
 
-            for (var i = 0; i < nOrderItems; i++) {
-                orderItems.push({
-                    product: {},
-                    productOffering: {
-                        href: server + productOfferingPath
+                var tmfUtils = {
+                    validateLoggedIn: validateLoggedOk,
+                    checkRole: checkRole
+                };
+
+                var orderingApi = getOrderingAPI({}, tmfUtils);
+
+                var req = {
+                    user: userInfo,
+                    method: 'POST',
+                    body: body
+                };
+
+                orderingApi.checkPermissions(req, function (err) {
+                    expect(err).toEqual(expectedRes);
+
+                    if (checkReq) {
+                        checkReq(req);
+                    }
+
+                    done();
+                });
+
+            };
+
+            var testValidOrdering = function (nOrderItems, done) {
+                var server = 'http://example.com';
+                var productOfferingPath = '/productOffering/1';
+                var productSpecPath = '/product/2';
+                var ownerName = 'example';
+
+                var user = {
+                    id: 'cust'
+                };
+
+                var orderItems = [];
+
+                for (var i = 0; i < nOrderItems; i++) {
+                    orderItems.push({
+                        product: {},
+                        productOffering: {
+                            href: server + productOfferingPath
+                        }
+                    });
+                }
+
+                var body = {
+                    relatedParty: [{
+                        id: 'cust',
+                        role: 'customer'
+                    }],
+                    orderItem: orderItems
+                };
+
+                nock(server)
+                    .get(productOfferingPath)
+                    .times(nOrderItems)
+                    .reply(200, {productSpecification: {href: server + productSpecPath}});
+
+                nock(server)
+                    .get(productSpecPath)
+                    .times(nOrderItems)
+                    .reply(200, {relatedParty: [{id: ownerName, role: 'owner'}]});
+
+                testOrderCreation(user, JSON.stringify(body), null, done, function (req) {
+                    var newBody = JSON.parse(req.body);
+                    expect(newBody.orderItem[0].product.relatedParty).toEqual([{
+                        id: 'cust',
+                        role: 'Customer',
+                        href: ''
+                    },
+                        {
+                            id: ownerName,
+                            role: 'Seller',
+                            href: ''
+                        }]);
+                });
+            };
+
+            it('should call the callback after validating the request when the user is customer (1 order item)', function (done) {
+                testValidOrdering(1, done);
+            });
+
+            it('should call the callback after validating the request when the user is customer (2 order items)', function (done) {
+                testValidOrdering(2, done);
+            });
+
+            it('should fail if the product has not owners', function (done) {
+
+                var server = 'http://example.com';
+                var productOfferingPath = '/productOffering/1';
+                var productSpecPath = '/product/2';
+                var ownerName = 'example';
+
+                var user = {
+                    id: 'cust'
+                };
+
+                var body = {
+                    relatedParty: [{
+                        id: 'cust',
+                        role: 'customer'
+                    }],
+                    orderItem: [{
+                        product: {},
+                        productOffering: {
+                            href: server + productOfferingPath
+                        }
+                    }]
+                };
+
+                nock(server)
+                    .get(productOfferingPath)
+                    .reply(200, {productSpecification: {href: server + productSpecPath}});
+
+                nock(server)
+                    .get(productSpecPath)
+                    .reply(200, {relatedParty: [{id: ownerName, role: 'other_role'}]});
+
+                var expected = {
+                    status: 400,
+                    message: 'You cannot order a product without owners'
+                };
+
+                testOrderCreation(user, JSON.stringify(body), expected, done);
+
+            });
+
+            it('should fail if the offering attached to the order cannot be retrieved', function (done) {
+
+                var server = 'http://example.com';
+                var productOfferingPath = '/productOffering/1';
+
+                var orderItemId = 1;
+
+                var user = {
+                    id: 'cust'
+                };
+
+                var body = {
+                    relatedParty: [{
+                        id: 'cust',
+                        role: 'customer'
+                    }],
+                    orderItem: [{
+                        id: orderItemId,
+                        product: {},
+                        productOffering: {
+                            href: server + productOfferingPath
+                        }
+                    }]
+                };
+
+                nock(server)
+                    .get(productOfferingPath)
+                    .reply(500);
+
+                var expected = {
+                    status: 400,
+                    message: 'The system fails to retrieve the offering attached to the ordering item ' + orderItemId
+                };
+
+                testOrderCreation(user, JSON.stringify(body), expected, done);
+            });
+
+            it('should fail if the product attached to the order cannot be retrieved', function (done) {
+
+                var server = 'http://example.com';
+                var productOfferingPath = '/productOffering/1';
+                var productSpecPath = '/product/2';
+
+                var orderItemId = 1;
+
+                var user = {
+                    id: 'cust'
+                };
+
+                var body = {
+                    relatedParty: [{
+                        id: 'cust',
+                        role: 'customer'
+                    }],
+                    orderItem: [{
+                        id: orderItemId,
+                        product: {},
+                        productOffering: {
+                            href: server + productOfferingPath
+                        }
+                    }]
+                };
+
+                nock(server)
+                    .get(productOfferingPath)
+                    .reply(200, {productSpecification: {href: server + productSpecPath}});
+
+                nock(server)
+                    .get(productSpecPath)
+                    .reply(500);
+
+                var expected = {
+                    status: 400,
+                    message: 'The system fails to retrieve the product attached to the ordering item ' + orderItemId
+                };
+
+                testOrderCreation(user, JSON.stringify(body), expected, done);
+
+            });
+
+            it('should fail when the order is not well formed JSON', function (done) {
+                var user = {
+                    id: 'customer'
+                };
+
+                var expected = {
+                    status: 400,
+                    message: 'The resource is not a valid JSON document'
+                };
+
+                testOrderCreation(user, 'invalid', expected, done);
+            });
+
+            it('should fail when the user does not have the customer role', function (done) {
+                var user = {
+                    id: 'test'
+                };
+
+                var expected = {
+                    status: 403,
+                    message: 'You are not authorized to order products'
+                };
+
+                var body = {
+                    relatedParty: [{
+                        id: 'test',
+                        role: 'customer'
+                    }]
+                };
+                testOrderCreation(user, JSON.stringify(body), expected, done);
+            });
+
+            it('should fail when the relatedParty field has not been included', function (done) {
+                var user = {
+                    id: 'cust'
+                };
+
+                var expected = {
+                    status: 400,
+                    message: 'A product order must contain a relatedParty field'
+                };
+
+                testOrderCreation(user, JSON.stringify({}), expected, done);
+            });
+
+            it('should fail when a customer has not been specified', function (done) {
+                var user = {
+                    id: 'cust'
+                };
+
+                var expected = {
+                    status: 403,
+                    message: 'It is required to specify a customer in the relatedParty field'
+                };
+
+                var body = {
+                    relatedParty: [{
+                        id: 'cust',
+                        role: 'seller'
+                    }]
+                };
+                testOrderCreation(user, JSON.stringify(body), expected, done);
+            });
+
+            it('should fail when the specified customer is not the user making the request', function (done) {
+                var user = {
+                    id: 'cust'
+                };
+
+                var expected = {
+                    status: 403,
+                    message: 'The customer specified in the product order is not the user making the request'
+                };
+
+                var body = {
+                    relatedParty: [{
+                        id: 'test',
+                        role: 'customer'
+                    }]
+                };
+                testOrderCreation(user, JSON.stringify(body), expected, done);
+            });
+
+            it('should fail when the request does not include an orderItem field', function (done) {
+                var user = {
+                    id: 'cust'
+                };
+
+                var expected = {
+                    status: 400,
+                    message: 'A product order must contain an orderItem field'
+                };
+
+                var body = {
+                    relatedParty: [{
+                        id: 'cust',
+                        role: 'customer'
+                    }]
+                };
+
+                testOrderCreation(user, JSON.stringify(body), expected, done);
+            });
+
+            it('should fail when the request does not include a product in an orderItem', function (done) {
+                var user = {
+                    id: 'cust'
+                };
+
+                var expected = {
+                    status: 400,
+                    message: 'The product order item 1 must contain a product field'
+                };
+
+                var body = {
+                    relatedParty: [{
+                        id: 'cust',
+                        role: 'customer'
+                    }],
+                    orderItem: [{
+                        id: '1'
+                    }]
+                };
+
+                testOrderCreation(user, JSON.stringify(body), expected, done);
+            });
+
+            it('should fail when the request does not include a productOffering in an orderItem', function (done) {
+                var user = {
+                    id: 'cust'
+                };
+
+                var expected = {
+                    status: 400,
+                    message: 'The product order item 1 must contain a productOffering field'
+                };
+
+                var body = {
+                    relatedParty: [{
+                        id: 'cust',
+                        role: 'customer'
+                    }],
+                    orderItem: [{
+                        id: '1',
+                        product: {}
+                    }]
+                };
+
+                testOrderCreation(user, JSON.stringify(body), expected, done);
+            });
+
+            it('should fail when an invalid customer has been specified in a product of an orderItem', function (done) {
+                var user = {
+                    id: 'cust'
+                };
+
+                var expected = {
+                    status: 403,
+                    message: 'The customer specified in the order item 1 is not the user making the request'
+                };
+
+                var body = {
+                    relatedParty: [{
+                        id: 'cust',
+                        role: 'customer'
+                    }],
+                    orderItem: [{
+                        id: '1',
+                        product: {
+                            relatedParty: [{
+                                id: 'test',
+                                role: 'Customer'
+                            }]
+                        },
+                        productOffering: {
+                            href: ''
+                        }
+                    }]
+                };
+
+                testOrderCreation(user, JSON.stringify(body), expected, done);
+            });
+        });
+
+
+        //////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////// UPDATE ///////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////////////////////////
+
+        describe('Update (PATCH)', function() {
+
+            it('should fail when the body is invalid', function (done) {
+
+                var tmfUtils = {
+                    validateLoggedIn: validateLoggedOk
+                };
+
+                var orderingApi = getOrderingAPI({}, tmfUtils);
+
+                var req = {
+                    method: 'PATCH',
+                    body: '{ invalid JSON'
+                };
+
+                orderingApi.checkPermissions(req, function (err) {
+                    expect(err).toEqual({
+                        status: 400,
+                        message: 'The resource is not a valid JSON document'
+                    });
+
+                    done();
+                });
+
+            });
+
+            var testUpdate = function(hasRoleResponses, body, previousOrderItems, expectedError, expectedBody, done) {
+
+                var server = 'http://example.com:189';
+                var productOfferingPath = '/productOrdering/ordering/7';
+
+                var tmfUtils = jasmine.createSpyObj('tmfUtils', ['hasRole', 'updateBody']);
+                tmfUtils.hasRole.and.returnValues.apply(tmfUtils.hasRole, hasRoleResponses);
+                tmfUtils.validateLoggedIn = validateLoggedOk;
+
+                var orderingApi = getOrderingAPI({}, tmfUtils);
+
+                var user = {
+                    id: 'fiware',
+                    href: 'http://www.fiware.org/user/fiware'
+                };
+
+                var req = {
+                    user: user,
+                    method: 'PATCH',
+                    body: JSON.stringify(body),
+                    apiPath: productOfferingPath
+                };
+
+                var orderingRelatedParties = [{}, {}];
+
+                nock(server)
+                    .get(productOfferingPath)
+                    .reply(200, { relatedParty: orderingRelatedParties, orderItem: previousOrderItems });
+
+                orderingApi.checkPermissions(req, function (err) {
+
+                    expect(err).toEqual(expectedError);
+
+                    expect(tmfUtils.hasRole).toHaveBeenCalledWith(jasmine.arrayContaining(orderingRelatedParties), 'Customer', user);
+                    expect(tmfUtils.hasRole).toHaveBeenCalledWith(jasmine.arrayContaining(orderingRelatedParties), 'Seller', user);
+
+                    if (expectedBody) {
+                        expect(tmfUtils.updateBody).toHaveBeenCalledWith(req, expectedBody);
+                    }
+
+                    done();
+                });
+
+            };
+
+            it('should fail when the user is not consumer or seller in the ordering', function (done) {
+
+                var expectedError = {
+                    status: 403,
+                    message: 'You are not authorized to modify this ordering'
+                };
+
+                testUpdate([false, false], {}, [], expectedError, null, done);
+            });
+
+            it('should fail when a customer tries to modify the orderItem field', function (done) {
+
+                var expectedError = {
+                    status: 403,
+                    message: 'Order items can only be modified by sellers'
+                };
+
+                testUpdate([true, false], { orderItem: [] }, [], expectedError, null, done);
+            });
+
+            it('should fail when a customer tries to modify the relatedParty field', function (done) {
+
+                var expectedError = {
+                    status: 403,
+                    message: 'Related parties cannot be modified'
+                };
+
+                testUpdate([true, false], { relatedParty: [] }, [], expectedError, null, done);
+            });
+
+            it('should not fail when a customer tries to modify the description', function (done) {
+                testUpdate([true, false], { description: 'New description' }, [], null, null, done);
+            });
+
+            it('should fail when a seller tries to modify the description', function (done) {
+
+                var expectedError = {
+                    status: 403,
+                    message: 'Sellers can only modify order items'
+                };
+
+                testUpdate([false, true], { description: 'New description', orderItem: [] }, [], expectedError, null, done);
+            });
+
+            it('should not fail when seller does not include any order item', function (done) {
+
+                var previousOrderItems = [ { id: 1, state: 'InProgress' } ];
+                testUpdate([false, true], { orderItem: [] }, previousOrderItems, null, { state: 'InProgress', orderItem: previousOrderItems }, done);
+            });
+
+            it('should not fail when seller (that it is also the customer) does not include any order item', function (done) {
+
+                var previousOrderItems = [ { id: 1, state: 'InProgress' } ];
+                var updatedOrderings = {
+                    description: 'Example description',
+                    orderItem: []
+                };
+
+                var expectedBody = JSON.parse(JSON.stringify(updatedOrderings));
+                expectedBody['state'] = 'InProgress';
+                expectedBody['orderItem'] = previousOrderItems;
+
+                testUpdate([true, true], updatedOrderings, previousOrderItems, null, expectedBody, done);
+            });
+
+            it('should fail when the seller tries to edit a non existing item', function (done) {
+
+                var previousOrderItems = [ { id: 1, state: 'InProgress' } ];
+                var updatedOrderings = {
+                    orderItem: [ { id: 2 } ]
+                };
+
+                var expectedError = {
+                    status: 400,
+                    message: 'You are trying to edit an non-existing item'
+                };
+
+                testUpdate([false, true], updatedOrderings, previousOrderItems, expectedError, null, done);
+            });
+
+            it('should fail when the seller tries to edit a non owned item', function (done) {
+
+                var previousOrderItems = [ { id: 1, state: 'InProgress', product: { relatedParty: [] } } ];
+                var updatedOrderings = {
+                    orderItem: [ { id: 1 } ]
+                };
+
+                var expectedError = {
+                    status: 403,
+                    message: 'You cannot modify an order item if you are not seller'
+                };
+
+                testUpdate([false, true, false], updatedOrderings, previousOrderItems, expectedError, null, done);
+            });
+
+            it('should fail when the seller tries to add a new field to the item', function (done) {
+
+                var previousOrderItems = [ { id: 1, state: 'InProgress', product: { relatedParty: [] } } ];
+                var updatedOrderings = {
+                    orderItem: [ { id: 1, name: 'Order Item', state: 'InProgress', product: { relatedParty: [] } } ]
+                };
+
+                var expectedError = {
+                    status: 403,
+                    message: 'The fields of an order item cannot be modified'
+                };
+
+                testUpdate([false, true, true], updatedOrderings, previousOrderItems, expectedError, null, done);
+            });
+
+            it('should fail when the seller tries to remove a field from the item', function (done) {
+
+                var previousOrderItems = [ { id: 1, name: 'Order Item', state: 'InProgress', product: { relatedParty: [] } } ];
+                var updatedOrderings = {
+                    orderItem: [ { id: 1, state: 'InProgress', product: { relatedParty: [] } } ]
+                };
+
+                var expectedError = {
+                    status: 403,
+                    message: 'The fields of an order item cannot be modified'
+                };
+
+                testUpdate([false, true, true], updatedOrderings, previousOrderItems, expectedError, null, done);
+            });
+
+            it('should fail when the seller tries to modify the value of a field in the item', function (done) {
+
+                var previousOrderItems = [ { id: 1, name: 'Order Item', state: 'InProgress', product: { relatedParty: [] } } ];
+                var updatedOrderings = {
+                    orderItem: [ { id: 1, name: 'Order Item #2', state: 'InProgress', product: { relatedParty: [] } } ]
+                };
+
+                var expectedError = {
+                    status: 403,
+                    message: 'The value of the field name cannot be changed'
+                };
+
+                testUpdate([false, true, true], updatedOrderings, previousOrderItems, expectedError, null, done);
+            });
+
+            it('should fail when the seller tries to modify the value of a field in the item', function (done) {
+
+                var previousOrderItems = [ { id: 1, state: 'Acknowledged', product: { relatedParty: [] } } ];
+                var updatedOrderings = {
+                    orderItem: [ { id: 1, state: 'InProgress', product: { relatedParty: [] } } ]
+                };
+
+                var expectedError = {
+                    status: 403,
+                    message: 'Acknowledged order items cannot be updated manually'
+                };
+
+                testUpdate([false, true, true], updatedOrderings, previousOrderItems, expectedError, null, done);
+            });
+
+            it('should not fail when the user tries to modify the state of an item appropriately', function (done) {
+
+                var previousOrderItems = [ { id: 1, state: 'InProgress', product: { relatedParty: [] } } ];
+                var updatedOrderings = {
+                    orderItem: [ { id: 1, state: 'Completed', product: { relatedParty: [] } } ]
+                };
+
+                var expectedBody = {
+                    state: 'Completed',
+                    orderItem: updatedOrderings.orderItem
+                };
+
+                testUpdate([false, true, true], updatedOrderings, previousOrderItems, null, expectedBody, done);
+            });
+
+            // FIXME: Maybe this test can be skipped
+            it('should fail when the seller tries to edit a non existing item when there are more than one item', function (done) {
+
+                var previousOrderItems = [ { id: 1, state: 'InProgress' }, {id: 3, state: 'InProgress'} ];
+                var updatedOrderings = {
+                    orderItem: [ { id: 2 } ]
+                };
+
+                var expectedError = {
+                    status: 400,
+                    message: 'You are trying to edit an non-existing item'
+                };
+
+                testUpdate([false, true], updatedOrderings, previousOrderItems, expectedError, null, done);
+            });
+
+            it('should include the items that belong to another sellers', function(done) {
+
+                var previousOrderItems = [
+                    { id: 1, state: 'InProgress', name: 'Product1', product: { relatedParty: [] } },
+                    { id: 2, state: 'InProgress', name: 'Product2', product: { relatedParty: [] } }
+                ];
+                var updatedOrderings = {
+                    orderItem: [
+                        { id: 1, state: 'Completed', name: 'Product1', product: { relatedParty: [] } }
+                    ]
+                };
+
+                var expectedOrderItems = JSON.parse(JSON.stringify(previousOrderItems));
+                expectedOrderItems.forEach(function(item) {
+
+                    var updateOrderItem = updatedOrderings.orderItem.filter(function(updatedItem) {
+                        return item.id == updatedItem.id;
+                    })[0];
+
+                    if (updateOrderItem) {
+                        item.state = updateOrderItem.state;
                     }
                 });
-            }
 
-            var body = {
-                relatedParty: [{
-                    id: 'cust',
-                    role: 'customer'
-                }],
-                orderItem: orderItems
-            };
+                var expectedBody = {
+                    state: 'Partial',
+                    orderItem: expectedOrderItems
+                };
 
-            nock(server)
-                .get(productOfferingPath)
-                .times(nOrderItems)
-                .reply(200, {productSpecification: {href: server + productSpecPath}});
+                testUpdate([false, true, true], updatedOrderings, previousOrderItems, null, expectedBody, done);
 
-            nock(server)
-                .get(productSpecPath)
-                .times(nOrderItems)
-                .reply(200, {relatedParty: [{id: ownerName, role: 'owner'}]});
-
-            testOrderCreation(user, JSON.stringify(body), null, done, function (req) {
-                var newBody = JSON.parse(req.body);
-                expect(newBody.orderItem[0].product.relatedParty).toEqual([{
-                    id: 'cust',
-                    role: 'Customer',
-                    href: ''
-                },
-                {
-                    id: ownerName,
-                    role: 'Seller',
-                    href: ''
-                }]);
             });
-        };
 
-        it('should call the callback after validating the request when the user is customer (1 order item)', function (done) {
-            testValidOrdering(1, done);
+            // STATES
+            it('should set state as partial when one item is completed and the other in progress', function (done) {
+
+                var previousOrderItems = [
+                    { id: 1, state: 'InProgress', product: { relatedParty: [] } },
+                    { id: 2, state: 'InProgress', product: { relatedParty: [] } }
+                ];
+                var updatedOrderings = {
+                    orderItem: [
+                        { id: 1, state: 'Completed', product: { relatedParty: [] } },
+                        { id: 2, state: 'InProgress', product: { relatedParty: [] } }
+                    ]
+                };
+
+                var expectedBody = {
+                    state: 'Partial',
+                    orderItem: updatedOrderings.orderItem
+                };
+
+                testUpdate([false, true, true, true], updatedOrderings, previousOrderItems, null, expectedBody, done);
+            });
+
+            it('should set state as partial when one item is failed and the other in progress', function (done) {
+
+                var previousOrderItems = [
+                    { id: 1, state: 'InProgress', product: { relatedParty: [] } },
+                    { id: 2, state: 'InProgress', product: { relatedParty: [] } }
+                ];
+                var updatedOrderings = {
+                    orderItem: [
+                        { id: 1, state: 'Failed', product: { relatedParty: [] } },
+                        { id: 2, state: 'InProgress', product: { relatedParty: [] } }
+                    ]
+                };
+
+                var expectedBody = {
+                    state: 'Partial',
+                    orderItem: updatedOrderings.orderItem
+                };
+
+                testUpdate([false, true, true, true], updatedOrderings, previousOrderItems, null, expectedBody, done);
+            });
+
+            it('should set state as failed when all the order items are failed', function (done) {
+
+                var previousOrderItems = [
+                    { id: 1, state: 'InProgress', product: { relatedParty: [] } },
+                    { id: 2, state: 'Failed', product: { relatedParty: [] } }
+                ];
+                var updatedOrderings = {
+                    orderItem: [
+                        { id: 1, state: 'Failed', product: { relatedParty: [] } },
+                        { id: 2, state: 'Failed', product: { relatedParty: [] } }
+                    ]
+                };
+
+                var expectedBody = {
+                    state: 'Failed',
+                    orderItem: updatedOrderings.orderItem
+                };
+
+                testUpdate([false, true, true, true], updatedOrderings, previousOrderItems, null, expectedBody, done);
+            });
+
+            it('should set state as completed when all the order items are completed', function (done) {
+
+                var previousOrderItems = [
+                    { id: 1, state: 'InProgress', product: { relatedParty: [] } },
+                    { id: 2, state: 'Completed', product: { relatedParty: [] } }
+                ];
+                var updatedOrderings = {
+                    orderItem: [
+                        { id: 1, state: 'Completed', product: { relatedParty: [] } },
+                        { id: 2, state: 'Completed', product: { relatedParty: [] } }
+                    ]
+                };
+
+                var expectedBody = {
+                    state: 'Completed',
+                    orderItem: updatedOrderings.orderItem
+                };
+
+                testUpdate([false, true, true, true], updatedOrderings, previousOrderItems, null, expectedBody, done);
+            });
+
+            it('should set state as acknowledged when all the order items are acknowledged', function (done) {
+
+                var previousOrderItems = [
+                    { id: 1, state: 'Acknowledged', product: { relatedParty: [] } },
+                    { id: 2, state: 'Acknowledged', product: { relatedParty: [] } }
+                ];
+                var updatedOrderings = {
+                    orderItem: [ ]
+                };
+
+                var expectedBody = {
+                    state: 'Acknowledged',
+                    orderItem: previousOrderItems
+                };
+
+                testUpdate([false, true, true, true], updatedOrderings, previousOrderItems, null, expectedBody, done);
+            });
+
+            it('should set state as in progress when all the order items are in progress', function (done) {
+
+                var previousOrderItems = [
+                    { id: 1, state: 'InProgress', product: { relatedParty: [] } },
+                    { id: 2, state: 'InProgress', product: { relatedParty: [] } }
+                ];
+                var updatedOrderings = {
+                    orderItem: previousOrderItems
+                };
+
+                var expectedBody = {
+                    state: 'InProgress',
+                    orderItem: updatedOrderings.orderItem
+                };
+
+                testUpdate([false, true, true, true], updatedOrderings, previousOrderItems, null, expectedBody, done);
+            });
         });
 
-        it('should call the callback after validating the request when the user is customer (2 order items)', function (done) {
-            testValidOrdering(2, done);
-        });
-
-        it('should fail if the product has not owners', function (done) {
-
-            var server = 'http://example.com';
-            var productOfferingPath = '/productOffering/1';
-            var productSpecPath = '/product/2';
-            var ownerName = 'example';
-
-            var user = {
-                id: 'cust'
-            };
-
-            var body = {
-                relatedParty: [{
-                    id: 'cust',
-                    role: 'customer'
-                }],
-                orderItem: [{
-                    product: {},
-                    productOffering: {
-                        href: server + productOfferingPath
-                    }
-                }]
-            };
-
-            nock(server)
-                .get(productOfferingPath)
-                .reply(200, {productSpecification: {href: server + productSpecPath}});
-
-            nock(server)
-                .get(productSpecPath)
-                .reply(200, {relatedParty: [{id: ownerName, role: 'other_role'}]});
-
-            var expected = {
-                status: 400,
-                message: 'You cannot order a product without owners'
-            };
-
-            testOrderCreation(user, JSON.stringify(body), expected, done);
-
-        });
-
-        it('should fail if the offering attached to the order cannot be retrieved', function (done) {
-
-            var server = 'http://example.com';
-            var productOfferingPath = '/productOffering/1';
-
-            var orderItemId = 1;
-
-            var user = {
-                id: 'cust'
-            };
-
-            var body = {
-                relatedParty: [{
-                    id: 'cust',
-                    role: 'customer'
-                }],
-                orderItem: [{
-                    id: orderItemId,
-                    product: {},
-                    productOffering: {
-                        href: server + productOfferingPath
-                    }
-                }]
-            };
-
-            nock(server)
-                .get(productOfferingPath)
-                .reply(500);
-
-            var expected = {
-                status: 400,
-                message: 'The system fails to retrieve the offering attached to the ordering item ' + orderItemId
-            };
-
-            testOrderCreation(user, JSON.stringify(body), expected, done);
-        });
-
-        it('should fail if the product attached to the order cannot be retrieved', function (done) {
-
-            var server = 'http://example.com';
-            var productOfferingPath = '/productOffering/1';
-            var productSpecPath = '/product/2';
-
-            var orderItemId = 1;
-
-            var user = {
-                id: 'cust'
-            };
-
-            var body = {
-                relatedParty: [{
-                    id: 'cust',
-                    role: 'customer'
-                }],
-                orderItem: [{
-                    id: orderItemId,
-                    product: {},
-                    productOffering: {
-                        href: server + productOfferingPath
-                    }
-                }]
-            };
-
-            nock(server)
-                .get(productOfferingPath)
-                .reply(200, {productSpecification: {href: server + productSpecPath}});
-
-            nock(server)
-                .get(productSpecPath)
-                .reply(500);
-
-            var expected = {
-                status: 400,
-                message: 'The system fails to retrieve the product attached to the ordering item ' + orderItemId
-            };
-
-            testOrderCreation(user, JSON.stringify(body), expected, done);
-
-        });
-
-        it('should fail when the order is not well formed JSON', function (done) {
-            var user = {
-                id: 'customer'
-            };
-
-            var expected = {
-                status: 400,
-                message: 'The resource is not a valid JSON document'
-            };
-
-            testOrderCreation(user, 'invalid', expected, done);
-        });
-
-        it('should fail when the user does not have the customer role', function (done) {
-            var user = {
-                id: 'test'
-            };
-
-            var expected = {
-                status: 403,
-                message: 'You are not authorized to order products'
-            };
-
-            var body = {
-                relatedParty: [{
-                    id: 'test',
-                    role: 'customer'
-                }]
-            };
-            testOrderCreation(user, JSON.stringify(body), expected, done);
-        });
-
-        it('should fail when the relatedParty field has not been included', function (done) {
-            var user = {
-                id: 'cust'
-            };
-
-            var expected = {
-                status: 400,
-                message: 'A product order must contain a relatedParty field'
-            };
-
-            testOrderCreation(user, JSON.stringify({}), expected, done);
-        });
-
-        it('should fail when a customer has not been specified', function (done) {
-            var user = {
-                id: 'cust'
-            };
-
-            var expected = {
-                status: 403,
-                message: 'It is required to specify a customer in the relatedParty field'
-            };
-
-            var body = {
-                relatedParty: [{
-                    id: 'cust',
-                    role: 'seller'
-                }]
-            };
-            testOrderCreation(user, JSON.stringify(body), expected, done);
-        });
-
-        it('should fail when the specified customer is not the user making the request', function (done) {
-            var user = {
-                id: 'cust'
-            };
-
-            var expected = {
-                status: 403,
-                message: 'The customer specified in the product order is not the user making the request'
-            };
-
-            var body = {
-                relatedParty: [{
-                    id: 'test',
-                    role: 'customer'
-                }]
-            };
-            testOrderCreation(user, JSON.stringify(body), expected, done);
-        });
-
-        it('should fail when the request does not include an orderItem field', function (done) {
-            var user = {
-                id: 'cust'
-            };
-
-            var expected = {
-                status: 400,
-                message: 'A product order must contain an orderItem field'
-            };
-
-            var body = {
-                relatedParty: [{
-                    id: 'cust',
-                    role: 'customer'
-                }]
-            };
-
-            testOrderCreation(user, JSON.stringify(body), expected, done);
-        });
-
-        it('should fail when the request does not include a product in an orderItem', function (done) {
-            var user = {
-                id: 'cust'
-            };
-
-            var expected = {
-                status: 400,
-                message: 'The product order item 1 must contain a product field'
-            };
-
-            var body = {
-                relatedParty: [{
-                    id: 'cust',
-                    role: 'customer'
-                }],
-                orderItem: [{
-                    id: '1'
-                }]
-            };
-
-            testOrderCreation(user, JSON.stringify(body), expected, done);
-        });
-
-        it('should fail when the request does not include a productOffering in an orderItem', function (done) {
-            var user = {
-                id: 'cust'
-            };
-
-            var expected = {
-                status: 400,
-                message: 'The product order item 1 must contain a productOffering field'
-            };
-
-            var body = {
-                relatedParty: [{
-                    id: 'cust',
-                    role: 'customer'
-                }],
-                orderItem: [{
-                    id: '1',
-                    product: {}
-                }]
-            };
-
-            testOrderCreation(user, JSON.stringify(body), expected, done);
-        });
-
-        it('should fail when an invalid customer has been specified in a product of an orderItem', function (done) {
-            var user = {
-                id: 'cust'
-            };
-
-            var expected = {
-                status: 403,
-                message: 'The customer specified in the order item 1 is not the user making the request'
-            };
-
-            var body = {
-                relatedParty: [{
-                    id: 'cust',
-                    role: 'customer'
-                }],
-                orderItem: [{
-                    id: '1',
-                    product: {
-                        relatedParty: [{
-                            id: 'test',
-                            role: 'Customer'
-                        }]
-                    },
-                    productOffering: {
-                        href: ''
-                    }
-                }]
-            };
-
-            testOrderCreation(user, JSON.stringify(body), expected, done);
-        });
     });
 
 

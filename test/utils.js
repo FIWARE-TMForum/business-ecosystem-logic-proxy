@@ -46,7 +46,7 @@ exports.emptyLogger = {
             return {
                 'info': emptyFunction,
                 'warn': emptyFunction,
-                'err': emptyFunction
+                'error': emptyFunction,
             }
         }
     }
