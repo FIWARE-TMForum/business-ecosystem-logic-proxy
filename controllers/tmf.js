@@ -20,8 +20,8 @@ var tmf = (function() {
     apiControllers[config.endpoints.inventory.path] = inventory;
     apiControllers[config.endpoints.charging.path] = charging;
 
-    var getAPIName = function(apiPath) {
-        return apiPath.split('/')[1];
+    var getAPIName = function(apiUrl) {
+        return apiUrl.split('/')[1];
     };
 
     var sendError = function(res, err) {
@@ -45,12 +45,12 @@ var tmf = (function() {
         }
 
         var protocol = config.appSsl ? 'https' : 'http';
-        var api = getAPIName(req.apiPath);
+        var api = getAPIName(req.apiUrl);
 
         var options = {
             host: config.appHost,
             port: utils.getAPIPort(api),
-            path: req.apiPath,
+            path: req.apiUrl,
             method: req.method,
             headers: utils.proxiedRequestHeaders(req)
         };
@@ -81,7 +81,7 @@ var tmf = (function() {
 
     var checkPermissions = function(req, res) {
 
-        var api = getAPIName(req.apiPath);
+        var api = getAPIName(req.apiUrl);
 
         if (apiControllers[api] === undefined) {
             sendError(res, {

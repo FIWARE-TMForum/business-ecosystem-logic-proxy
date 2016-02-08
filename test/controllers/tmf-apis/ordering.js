@@ -643,7 +643,7 @@ describe('Ordering API', function() {
                     user: user,
                     method: 'PATCH',
                     body: JSON.stringify({}),
-                    apiPath: productOfferingPath
+                    apiUrl: productOfferingPath
                 };
 
                 nock(SERVER)
@@ -681,7 +681,7 @@ describe('Ordering API', function() {
                     user: user,
                     method: 'PATCH',
                     body: JSON.stringify(body),
-                    apiPath: productOfferingPath
+                    apiUrl: productOfferingPath
                 };
 
                 var orderingRelatedParties = [{}, {}];

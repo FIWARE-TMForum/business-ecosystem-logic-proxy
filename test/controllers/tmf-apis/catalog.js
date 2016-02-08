@@ -64,7 +64,7 @@ describe('Catalog API', function() {
         // Call the method
         var req = {
             method: method,
-            apiPath: path
+            apiUrl: path
         };
 
         catalogApi.checkPermissions(req, function(err) {
@@ -130,7 +130,7 @@ describe('Catalog API', function() {
         var catalogApi = getCatalogApi({}, tmfUtils);
 
         var req = {
-            apiPath: '/catalog/a/b',
+            apiUrl: '/catalog/a/b',
             method: 'POST',
             body: body,
             user: {
@@ -238,7 +238,7 @@ describe('Catalog API', function() {
         // Call the method
         var req = {
             method: 'POST',
-            apiPath: offeringPath,
+            apiUrl: offeringPath,
             user: {
                 id: userName,
                 roles: [{ name: config.oauth2.roles.seller }]
@@ -394,7 +394,7 @@ describe('Catalog API', function() {
         // Call the method
         var req = {
             method: 'POST',
-            apiPath: offeringPath,
+            apiUrl: offeringPath,
             user: {
                 id: userName,
                 roles: [{ name: config.oauth2.roles.seller }]
@@ -484,7 +484,7 @@ describe('Catalog API', function() {
         // Call the method
         var req = {
             method: method,
-            apiPath: path,
+            apiUrl: path,
             user: {
                 id: userName,
                 roles: []
@@ -606,7 +606,7 @@ describe('Catalog API', function() {
             // requests are handled in the same way so here we do not need additional tests
             // for the different HTTP verbs.
             method: 'PUT',
-            apiPath: offeringPath,
+            apiUrl: offeringPath,
             user: {
                 id: userName,
                 roles: []
@@ -786,7 +786,7 @@ describe('Catalog API', function() {
             // requests are handled in the same way so here we do not need additional tests
             // for the different HTTP verbs.
             method: 'PATCH',
-            apiPath: assetPath,
+            apiUrl: assetPath,
             user: {
                 id: userName,
                 roles: [{ name: config.oauth2.roles.seller }]

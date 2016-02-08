@@ -15,7 +15,7 @@ describe('TMF Utils', function() {
         var testCheckRoles = function (userInfo, expected) {
             var tmfUtils = getTmfUtils();
 
-            result = tmfUtils.checkRole(userInfo, 'role');
+            var result = tmfUtils.checkRole(userInfo, 'role');
             expect(result).toBe(expected);
         };
 
@@ -46,7 +46,7 @@ describe('TMF Utils', function() {
         var testIsOwner = function(userInfo, info, expected) {
             var tmfUtils = getTmfUtils();
 
-            result = tmfUtils.isOwner(userInfo, info);
+            var result = tmfUtils.isOwner(userInfo, info);
             expect(result).toBe(expected);
         };
 
@@ -149,16 +149,16 @@ describe('TMF Utils', function() {
                 return queryArray.join('&');
             };
 
-            var originalApiPath = '/example/api/path';
+            var originalApiUrl = '/example/api/path';
             var queryIncluded = query && Object.keys(query).length > 0;
 
             if (queryIncluded) {
-                originalApiPath += '?' + buildQueryString(query);
+                originalApiUrl += '?' + buildQueryString(query);
             }
 
             var tmfUtils = getTmfUtils();
             var req = {
-                apiPath: originalApiPath,
+                apiUrl: originalApiUrl,
                 query : query,
                 user: user
             };
@@ -170,14 +170,14 @@ describe('TMF Utils', function() {
                 if (!err) {
                     var newQueryParamsExpected = newQueryParams && Object.keys(newQueryParams).length > 0;
 
-                    var expectedApiPath = originalApiPath;
+                    var expectedApiUrl = originalApiUrl;
 
                     if (newQueryParamsExpected) {
                         var separator = queryIncluded ? '&' : '?';
-                        expectedApiPath = originalApiPath + separator + buildQueryString(newQueryParams);
+                        expectedApiUrl = originalApiUrl + separator + buildQueryString(newQueryParams);
                     }
 
-                    expect(req.apiPath).toBe(expectedApiPath);
+                    expect(req.apiUrl).toBe(expectedApiUrl);
                 }
 
                 done();

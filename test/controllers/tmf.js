@@ -60,7 +60,7 @@ describe('TMF Controller', function() {
             var path = '/example/url?a=b&c=d';
 
             var req = {
-                apiPath: path,
+                apiUrl: path,
                 body: 'This is an example',
                 method: method
             };
@@ -140,7 +140,7 @@ describe('TMF Controller', function() {
             var httpClient = getDefaultHttpClient();
             var tmf = getTmfInstance(httpClient);
 
-            var req = { 'apiPath': '/nonexistingapi' };
+            var req = { 'apiUrl': '/nonexistingapi' };
             var res = jasmine.createSpyObj('res', ['status', 'send', 'end']);
 
             tmf.checkPermissions(req, res);
@@ -164,7 +164,7 @@ describe('TMF Controller', function() {
             var tmf = getTmfInstance(httpClient, catalogController, orderingController, inventoryController);
 
             // Actual call
-            var req = { apiPath: '/' + api };
+            var req = { apiUrl: '/' + api };
             var res = jasmine.createSpyObj('res', ['status', 'send', 'end']);
             tmf.checkPermissions(req, res);
 
@@ -214,7 +214,7 @@ describe('TMF Controller', function() {
 
             // Actual call
             var req = { 
-                apiPath: '/' + api,
+                apiUrl: '/' + api,
                 body: 'Example', 
                 method: method, 
                 user: {'id': 'user'}, 
@@ -229,7 +229,7 @@ describe('TMF Controller', function() {
                 var expectedOptions = {
                     host: config.appHost,
                     port: utils.getAPIPort(),
-                    path: req.apiPath,
+                    path: req.apiUrl,
                     method: method,
                     headers: utils.proxiedRequestHeaders()
                 };
@@ -300,7 +300,7 @@ describe('TMF Controller', function() {
 
             // Actual call
             var req = {
-                apiPath: '/ordering',
+                apiUrl: '/ordering',
                 body: 'Example',
                 method: 'POST',
                 user: {'id': 'user'},

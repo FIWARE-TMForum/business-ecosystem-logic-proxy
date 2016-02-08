@@ -397,7 +397,7 @@ var ordering = (function(){
 
         var protocol = config.appSsl ? 'https' : 'http';
         var orderingServer = config.appHost + ':' + config.endpoints.ordering.port;
-        var orderingUrl = protocol + '://' + orderingServer + req.apiPath;
+        var orderingUrl = protocol + '://' + orderingServer + req.apiUrl;
         var ordering;
 
         try {
