@@ -45,6 +45,14 @@
                     }
                 }
             })
+            .state('offering.detail.product', {
+                url: '/product',
+                views: {
+                    'offering-content': {
+                        templateUrl: 'offering/detail/product'
+                    }
+                }
+            })
             .state('offering.detail.pricing', {
                 url: '/pricing',
                 views: {

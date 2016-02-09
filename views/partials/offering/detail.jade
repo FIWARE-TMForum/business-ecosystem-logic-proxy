@@ -1,39 +1,60 @@
+.row
+  .col-xs-12
+    .btn-toolbar
+      .btn-group
+        .breadcrumb-triangle
+          a(ui-sref="offering", ui-sref-opts="{ reload: true, inherit: false }", ui-sref-active-eq="active")
+            span.item-icon.fa.fa-search
+            span.item-text.hidden-xs Offerings
+          a.active(ng-if="detailVM.$state.includes('offering.detail')", ui-sref="offering.detail", ui-sref-opts="{ reload: true }")
+            span.item-icon.fa.fa-cube
+            span.item-text.hidden-xs Offering details
 .row(ng-switch="detailVM.item.status")
-  div(ng-switch-when="LOADED")
-    .col-xs-12
-      .panel.panel-default
-        .panel-body
-          .media
-            .media-left
-              .thumbnail.item-product-logo
-                img(no-image, ng-src="{{ detailVM.item.getPicture() }}")
-              .h4.text-center {{ detailVM.item.name }}
-              ul.nav.nav-responsive.nav-pills
-                li(ui-sref-active-eq="active")
-                  a(ui-sref="offering.detail")
-                    span.item-icon.fa.fa-newspaper-o
-                    span.item-text.hidden-xs About
-                li(ui-sref-active-eq="active")
-                  a(ui-sref="offering.detail.pricing")
-                    span.item-icon.fa.fa-credit-card
-                    span.item-text.hidden-xs Price Plans
-              .btn-toolbar(ng-show="user.isAuthenticated()")
-                .btn-group.btn-group-justified
-                  a.btn.btn-default(ng-click="user.order(detailVM.item)", ng-disabled="user.contains(detailVM.item)")
-                    span.item-icon.fa.fa-shopping-cart
-                    span.item-text {{ user.contains(detailVM.item) ? 'Added' : 'Add to Cart' }}
-            .media-body
-              ui-view(name="offering-content")
-                blockquote {{ detailVM.item.description ? detailVM.item.description : 'No description provided.' }}
-                dl
-                  dt Version
-                  dd {{ detailVM.item.productSpecification.version }}
-                  dt Update date
-                  dd
-                    time(am-time-ago="detailVM.item.lastUpdate")
-  div(ng-switch-when="ERROR")
+  .col-xs-12(ng-switch-when="LOADED")
+    .row
+      .col-xs-12
+        .panel.panel-default
+          .panel-body
+            .media
+              .media-left
+                .thumbnail.item-product-logo
+                  img(no-image, ng-src="{{ detailVM.item.getPicture() }}")
+              .media-body
+                .pull-right(ng-show="user.isAuthenticated()")
+                  .form-group
+                    a.btn.btn-default(ng-click="user.order(detailVM.item)", ng-disabled="user.contains(detailVM.item)")
+                      span.item-icon.fa.fa-shopping-cart
+                      span.item-text {{ user.contains(detailVM.item) ? 'Added' : 'Add to Cart' }}
+                  .h3.text-right.text-success(ng-if="detailVM.item.getCheapestPriceplan() != null")
+                    strong
+                      span {{ detailVM.item.getCheapestPriceplan().price.taxRate }} 
+                      span.fa(class="fa-{{ detailVM.item.getCheapestPriceplan().price.currencyCode | lowercase }}")
+                .h2.media-heading {{ detailVM.item.name }}
+                p.text-muted
+                  time {{ detailVM.item.lastUpdate | amDateFormat: 'dddd, MMMM Do YYYY, h:mm a' }}
+                blockquote
+                  span.text-danger(ng-if="!detailVM.item.description") No description provided.
+                  span {{ detailVM.item.description }}
+                .label-group(ng-if="!detailVM.item.category.length")
+                  span.label.label-success(ng-repeat="category in detailVM.item.category") {{ category.name }}
+          ul.nav.nav-justified.nav-pills
+            li(ui-sref-active-eq="active")
+              a(ui-sref="offering.detail")
+                span.item-icon.fa.fa-newspaper-o
+                span.item-text.hidden-xs About
+            li(ui-sref-active-eq="active")
+              a(ui-sref="offering.detail.product")
+                span.item-icon.fa.fa-file
+                span.item-text.hidden-xs Product Spec.
+            li(ui-sref-active-eq="active")
+              a(ui-sref="offering.detail.pricing")
+                span.item-icon.fa.fa-credit-card
+                span.item-text.hidden-xs Price Plans
+      .col-xs-12
+        ui-view(name="offering-content")
+          include ./detail-about.jade
+  .col-xs-12(ng-switch-when="ERROR")
     .alert.alert-danger.text-center {{ detailVM.error }}
-  div(ng-switch-default)
-    .col-xs-12
-      .container-spinner
-        span.fa.fa-spinner.fa-spin.fa-2x
+  .col-xs-12(ng-switch-default)
+    .container-spinner
+      span.fa.fa-spinner.fa-spin.fa-2x

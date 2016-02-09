@@ -92,6 +92,9 @@ blockquote p {
 dl {
     margin-bottom: 15px;
 }
+dl > dd + dt {
+    margin-top: 5px;
+}
 
 .list-inline {
     margin: 0 0 15px;
@@ -907,6 +910,10 @@ textarea {
     background-color: rgb(040, 150, 120);
 }
 
+.label + .label {
+    margin-left: 5px;
+}
+
 /* ===================================================================================
  *   COMPONENT - LIFECYCLE-STATUS
  * =================================================================================== */
@@ -1284,6 +1291,7 @@ a.list-group-item > .badge-status {
 .panel-heading:last-child {
     border-bottom-width: 0;
 }
+.panel-heading > .h3,
 .panel-heading > .h4 {
     margin-bottom: 0;
 }

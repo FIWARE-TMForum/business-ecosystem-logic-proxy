@@ -1,0 +1,46 @@
+.panel.panel-default
+  .panel-heading
+    .h4 Product Specification
+  .panel-body
+    dl
+      dt Name
+      dd {{ detailVM.item.productSpecification.name }}
+      dt Version
+      dd {{ detailVM.item.productSpecification.version }}
+      dt Description
+      dd
+        span.text-danger(ng-if="!detailVM.item.productSpecification.description") No description provided.
+        span {{ detailVM.item.productSpecification.description }}
+      dt Updated
+      dd
+        time {{ detailVM.item.productSpecification.lastUpdate | amDateFormat: 'dddd, MMMM Do YYYY, h:mm a' }}
+      dt Brand
+      dd {{ detailVM.item.productSpecification.brand }}
+      dt ID Number
+      dd {{ detailVM.item.productSpecification.productNumber }}
+.panel.panel-default
+  .panel-heading
+    .h4 Product Characteristics
+  .panel-body
+    .alert.alert-info.text-center(ng-if="!detailVM.item.productSpecification.productSpecCharacteristic.length")
+      | No characteristics included.
+    .form-group(ng-repeat="characteristic in detailVM.item.productSpecification.productSpecCharacteristic")
+      ul.list-inline
+        li
+          dl
+            dt Name
+            dd {{ characteristic.name }}
+        li
+          dl
+            dt Configurable
+            dd {{ characteristic.configurable ? 'Yes' : 'No' }}
+        li
+          dl
+            dt Description
+            dd 
+              span.text-danger(ng-if="!characteristic.description") No description provided.
+              span {{ characteristic.description }}
+      p(ng-repeat="characteristicValue in characteristic.productSpecCharacteristicValue")
+        span.fa.fa-fw.fa-circle-thin
+        span  {{ characteristicValue.value }} 
+        span.label.label-default(ng-if="characteristicValue.default") Default

@@ -1,0 +1,16 @@
+.panel.panel-default
+  .panel-heading
+    .h4 About
+  .panel-body
+    dl
+      dt Name
+      dd {{ detailVM.item.name }}
+      dt Version
+      dd {{ detailVM.item.version }}
+      dt Description
+      dd
+        span.text-danger(ng-if="!detailVM.item.description") No description provided.
+        span {{ detailVM.item.description }}
+      dt Updated
+      dd
+        time {{ detailVM.item.lastUpdate | amDateFormat: 'dddd, MMMM Do YYYY, h:mm a' }}

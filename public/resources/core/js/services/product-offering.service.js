@@ -22,6 +22,7 @@
         });
 
         resource.prototype.getPicture = getPicture;
+        resource.prototype.getCheapestPriceplan = getCheapestPriceplan;
         resource.prototype.getCategoryBreadcrumbs = getCategoryBreadcrumbs;
         resource.prototype.serialize = serialize;
 
@@ -304,6 +305,21 @@
 
                 return breadcrumbs;
             }
+        }
+
+        function getCheapestPriceplan() {
+            /* jshint validthis: true */
+            var i, priceplan;
+
+            for (i = 0; i < this.productOfferingPrice.length; i++) {
+                if (this.productOfferingPrice[i].priceType === 'one time') {
+                    if (priceplan == null || priceplan.price.taxRate > this.productOfferingPrice[i].price.taxRate) {
+                        priceplan = this.productOfferingPrice[i];
+                    }
+                }
+            }
+
+            return priceplan;
         }
     }
 

@@ -243,6 +243,7 @@
         var vm = this;
 
         vm.item = {};
+        vm.$state = $state;
 
         Offering.detail($state.params.offeringId).then(function (offeringRetrieved) {
             vm.item = offeringRetrieved;
