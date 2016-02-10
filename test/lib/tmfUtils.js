@@ -136,7 +136,7 @@ describe('TMF Utils', function() {
 
     describe('Filter Related Party Fields', function() {
 
-        var testFilterRelatedPartyFileds = function(user, query, expectedErr, newQueryParams, done) {
+        var testFilterRelatedPartyFields = function(user, query, expectedErr, newQueryParams, done) {
 
             var buildQueryString = function(query) {
 
@@ -200,7 +200,7 @@ describe('TMF Utils', function() {
                 message: 'You are not allowed to filter items using these filters'
             };
 
-            testFilterRelatedPartyFileds(user, query, err, null, done);
+            testFilterRelatedPartyFields(user, query, err, null, done);
         });
 
         it('should call callback with error when Related Party field includes role', function(done) {
@@ -218,7 +218,7 @@ describe('TMF Utils', function() {
                 message: 'You are not allowed to filter items using these filters'
             };
 
-            testFilterRelatedPartyFileds(user, query, err, null, done);
+            testFilterRelatedPartyFields(user, query, err, null, done);
         });
 
         it('should call callback with error when asking for items from another user', function(done) {
@@ -236,7 +236,7 @@ describe('TMF Utils', function() {
                 message: 'You are not authorized to retrieve the orderings made by the user ' + query['relatedParty.id']
             };
 
-            testFilterRelatedPartyFileds(user, query, err, null, done);
+            testFilterRelatedPartyFields(user, query, err, null, done);
         });
 
         it('should call callback without error when asking for their own items', function(done) {
@@ -249,7 +249,7 @@ describe('TMF Utils', function() {
                 'relatedParty.id': user.id
             };
 
-            testFilterRelatedPartyFileds(user, query, null, null, done);
+            testFilterRelatedPartyFields(user, query, null, null, done);
         });
 
         it('should include party id when not included in the original request', function(done) {
@@ -262,7 +262,7 @@ describe('TMF Utils', function() {
                 'relatedParty.id': user.id
             };
 
-            testFilterRelatedPartyFileds(user, {}, null, newQueryParams, done);
+            testFilterRelatedPartyFields(user, {}, null, newQueryParams, done);
         });
 
         it('should include party id when not included in the original request and extra query params', function(done) {
@@ -279,7 +279,7 @@ describe('TMF Utils', function() {
                 'relatedParty.id': user.id
             };
 
-            testFilterRelatedPartyFileds(user, query, null, newQueryParams, done);
+            testFilterRelatedPartyFields(user, query, null, newQueryParams, done);
         });
 
     });
