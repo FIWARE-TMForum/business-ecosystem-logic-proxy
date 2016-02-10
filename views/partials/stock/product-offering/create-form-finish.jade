@@ -1,4 +1,6 @@
 form(name="step.form", novalidate)
+  .h4
+    strong General
   .row
     .col-sm-8
       .form-group
@@ -34,8 +36,9 @@ form(name="step.form", novalidate)
       ng-model="createVM.data.description"
       readonly
     )
+  .h4
+    strong Product Spec.
   .form-group
-    label Product
     input(type="hidden", ng-model="createVM.product.id", required)
     .table-responsive
       table.table.table-bordered
@@ -57,8 +60,9 @@ form(name="step.form", novalidate)
                 | {{ createVM.product.isBundle ? 'Bundle' : 'Single' }}
             td
               time(am-time-ago="createVM.product.lastUpdate")
+  .h4
+    strong Catalogue
   .form-group
-    label Catalogue
     input(type="hidden", ng-model="createVM.catalogue.id", required)
     .table-responsive
       table.table.table-bordered

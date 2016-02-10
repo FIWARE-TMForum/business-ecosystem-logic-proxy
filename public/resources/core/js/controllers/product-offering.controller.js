@@ -52,23 +52,23 @@
                 templateUrl: 'stock/product-offering/create/general'
             },
             {
-                title: 'Bundle',
+                title: 'Bundled Offering',
                 templateUrl: 'stock/product-offering/create/bundle'
             },
             {
-                title: 'Select product',
+                title: 'Product Spec.',
                 templateUrl: 'stock/product-offering/create/product'
             },
             {
-                title: 'Select catalogue',
+                title: 'Catalogue',
                 templateUrl: 'stock/product-offering/create/catalogue'
             },
             {
-                title: 'Choose categories',
+                title: 'Category',
                 templateUrl: 'stock/product-offering/create/categories'
             },
             {
-                title: 'Price plans',
+                title: 'Price Plans',
                 templateUrl: 'stock/product-offering/create/priceplan'
             },
             {
