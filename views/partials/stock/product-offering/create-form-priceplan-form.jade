@@ -1,0 +1,94 @@
+form(name="step.pricePlanForm", novalidate)
+  .row
+    .col-md-8
+      .form-group(ng-class="{ 'has-error': createForm.hasError(step.pricePlanForm.name) }")
+        label Enter a name
+        input.form-control(
+          type="text",
+          name="name"
+          ng-model="createVM.pricePlan.name"
+          required
+          ng-maxlength="30"
+        )
+        .help-block(
+          ng-messages="step.pricePlanForm.name.$error"
+          ng-show="createForm.hasError(step.pricePlanForm.name)"
+        )
+          span(ng-message="required") This field is required.
+          span(ng-message="maxlength") This field must not exceed 30 chars.
+    .col-md-4
+      .form-group
+        label Choose a type
+        .dropdown
+          a.btn.btn-block.btn-default.dropdown-toggle(data-toggle="dropdown")
+            span.item-text {{ createVM.pricePlan.priceType }}
+            span.item-icon.fa.fa-caret-down
+          ul.dropdown-menu.dropdown-menu-right
+            li(ng-repeat="(key, value) in createVM.PRICE_TYPES")
+              a(ng-click="createVM.selectPriceType(key)")
+                span.item-text {{ value }}
+  .row
+    .col-md-8
+      .form-group(ng-class="{ 'has-error': createForm.hasError(step.pricePlanForm.taxIncludedAmount) }")
+        label Enter a price
+        .input-group
+          input.form-control(
+            type="number"
+            name="taxIncludedAmount"
+            ng-model="createVM.pricePlan.price.taxIncludedAmount"
+            required
+            min="0"
+          )
+          .input-group-btn
+            a.btn.btn-default.dropdown-toggle(data-toggle="dropdown")
+              span.item-text {{ createVM.pricePlan.price.currencyCode | uppercase }}
+              span.item-icon.fa.fa-caret-down
+            ul.dropdown-menu.dropdown-menu-right
+              li(ng-repeat="(key, value) in createVM.PRICE_CURRENCIES")
+                a(ng-click="createVM.selectCurrencyCode(key)")
+                  span.item-text {{ value }}
+        .help-block(
+           ng-messages="step.pricePlanForm.taxIncludedAmount.$error"
+           ng-show="createForm.hasError(step.pricePlanForm.taxIncludedAmount)"
+        )
+          span(ng-message="required") This field is required.
+          span(ng-message="min") This field must not be a negative number.
+          span(ng-message="number") This field must be a valid number.
+    .col-md-4(ng-if="createVM.pricePlan.priceType === createVM.PRICE_TYPES.USAGE")
+      .form-group(ng-class="{ 'has-error': createForm.hasError(step.pricePlanForm.unitOfMeasure) }")
+        label Enter a unit
+        .input-group
+          span.input-group-addon /
+          input.form-control(
+            type="text"
+            name="unitOfMeasure"
+            ng-model="createVM.pricePlan.unitOfMeasure"
+            required
+            ng-maxlength="20"
+          )
+        .help-block(
+          ng-messages="step.pricePlanForm.unitOfMeasure.$error"
+          ng-show="createForm.hasError(step.pricePlanForm.unitOfMeasure)"
+        )
+         span(ng-message="required") This field is required.
+         span(ng-message="maxlength") This field must not exceed 20 chars.
+    .col-md-4(ng-if="createVM.pricePlan.priceType === createVM.PRICE_TYPES.RECURRING")
+      .form-group
+        label Choose a charge period
+        .input-group
+          span.input-group-addon /
+          select.form-control(
+            name="recurringChargePeriod"
+            ng-model="createVM.pricePlan.recurringChargePeriod"
+          )
+            option(ng-repeat="(key, value) in createVM.PRICE_PERIODS", value="{{ value }}") {{ value }}
+  .row
+    .col-md-12
+      .form-group
+        label
+          span Enter a description
+          small.text-muted (optional)
+        textarea.form-control(name="description", rows="3", ng-model="createVM.pricePlan.description")
+  .form-group.text-right
+    a.btn.btn-success(ng-disabled="!step.pricePlanForm.$valid", ng-click="createVM.createPricePlan() && createForm.resetForm(step.pricePlanForm)")
+      span.item-text Save changes
