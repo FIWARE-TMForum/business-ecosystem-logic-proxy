@@ -157,12 +157,24 @@ dl > dd + dt {
     margin-bottom: 0;
 }
 
+.alert-link-danger {
+    color: #a94442;
+}
+a.alert-link-danger:hover,
+a.alert-link-danger:focus {
+    color: #843534;
+}
+
 /* ===================================================================================
  *   COMPONENT - FORM-CONTROL
  * =================================================================================== */
 
 .form-inline {
     margin-bottom: 15px;
+}
+
+label > span + small {
+    margin-left: 5px;
 }
 
 textarea {
