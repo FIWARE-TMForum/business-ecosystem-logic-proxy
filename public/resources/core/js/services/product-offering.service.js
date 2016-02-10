@@ -21,12 +21,33 @@
             }
         });
 
+        var PRICE_TYPES = {
+            ONE_TIME: 'One time',
+            RECURRING: 'Recurring',
+            USAGE: 'Usage'
+        };
+
+        var PRICE_CURRENCIES = {
+            EUR: 'Euro',
+            USD: 'US Dollar',
+            CAD: 'Canadian Dollar'
+        };
+
+        var PRICE_PERIODS = {
+            WEEKLY: 'Weekly',
+            MONTHLY: 'Monthly',
+            YEARLY: 'Yearly'
+        };
+
         resource.prototype.getPicture = getPicture;
         resource.prototype.getCheapestPriceplan = getCheapestPriceplan;
         resource.prototype.getCategoryBreadcrumbs = getCategoryBreadcrumbs;
         resource.prototype.serialize = serialize;
 
         return {
+            PRICE_TYPES: PRICE_TYPES,
+            PRICE_CURRENCIES: PRICE_CURRENCIES,
+            PRICE_PERIODS: PRICE_PERIODS,
             search: search,
             exists: exists,
             create: create,
