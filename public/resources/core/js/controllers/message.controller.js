@@ -10,9 +10,10 @@
 
         var vm = this;
 
-        $rootScope.$on(EVENTS.MESSAGE_CREATED, function(type, paypalUrl) {
+        $rootScope.$on(EVENTS.MESSAGE_CREATED, function(type, paypalUrl, closeCallback) {
             vm.paypalUrl = paypalUrl;
             $element.modal('show');
+            $element.on('hide.bs.modal', closeCallback);
         });
 
         $rootScope.$on(EVENTS.MESSAGE_CLOSED, function() {

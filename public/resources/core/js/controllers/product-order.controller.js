@@ -191,19 +191,34 @@
 
             ProductOrder.create(apiInfo).then(function(orderCreated) {
                 if ('x-redirect-url' in orderCreated.headers) {
+
                     var ppalWindow = $window.open(orderCreated.headers['x-redirect-url'], '_blank');
+                    var interval;
+
+                    // The function to be called when the payment process has ended
+                    var paymentFinished = function(closeModal) {
+
+                        if (interval) {
+                            $interval.cancel(interval);
+                        }
+
+                        if (closeModal) {
+                            $rootScope.$emit(EVENTS.MESSAGE_CLOSED);
+                        }
+
+                        vm.createOrderStatus = FINISHED;
+                        cleanCartItems();
+                        $state.go('inventory');
+
+                    };
 
                     // Display a message and wait until the new tab has been closed to redirect the page
-                    $rootScope.$emit(EVENTS.MESSAGE_CREATED, orderCreated.headers['x-redirect-url']);
+                    $rootScope.$emit(EVENTS.MESSAGE_CREATED, orderCreated.headers['x-redirect-url'], paymentFinished.bind(this, false));
 
                     if (ppalWindow) {
-                        var interval = $interval(function () {
+                        interval = $interval(function () {
                             if (ppalWindow.closed) {
-                                vm.createOrderStatus = FINISHED;
-                                $interval.cancel(interval);
-                                $rootScope.$emit(EVENTS.MESSAGE_CLOSED);
-                                cleanCartItems();
-                                $state.go('inventory');
+                                paymentFinished(true);
                             }
                         }, 500);
                     }
