@@ -50,7 +50,7 @@ var OAUTH2_CAME_FROM_FIELD = 'came_from_path';
 // Get preferences and set up default values
 config.sessionSecret = config.sessionSecret || 'keyboard cat';
 config.https = config.https || {};
-config.proxyPrefix = checkPrefix(config.proxyPrefix, '/proxy');
+config.proxyPrefix = checkPrefix(config.proxyPrefix, '');
 config.portalPrefix = checkPrefix(config.portalPrefix, '');
 config.shoppingCartPath = checkPrefix(config.shoppingCartPath, '/shoppingCart');
 config.logInPath = config.logInPath || '/login';
@@ -244,7 +244,7 @@ app.use(passport.session());
 
 // Handler for logging in...
 app.all(config.logInPath, function(req, res) {
-    var encodedState = getOAuth2State(utils.getRefererPath(req));
+    var encodedState = getOAuth2State(utils.getCameFrom(req));
     passport.authenticate('fiware', { scope: ['all_info'], state: encodedState })(req, res);
 });
 

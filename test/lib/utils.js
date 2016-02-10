@@ -163,7 +163,7 @@ describe('Utils', function() {
 
     });
 
-    describe('Get Referer Path', function() {
+    describe('Get ReturnTo Path', function() {
 
         var getBasicReq = function(hostname, port) {
             return {
@@ -179,7 +179,8 @@ describe('Utils', function() {
         it('should return no referer when referer is not set', function() {
             var req = getBasicReq('fiware.org', 8080);
             req.headers = {};
-            expect(utils.getRefererPath(req)).toBe('/');
+            req.query = {};
+            expect(utils.getCameFrom(req)).toBe('/');
         });
 
         it('should return referer when hosts match', function() {
@@ -189,11 +190,12 @@ describe('Utils', function() {
             var path = '/home/unit';
             var req = getBasicReq(hostname, port);
 
+            req.query = {};
             req.headers = {
                 'referer': 'http://' + hostname + ':' + port + path
             };
 
-            expect(utils.getRefererPath(req)).toBe(path);
+            expect(utils.getCameFrom(req)).toBe(path);
         });
 
         it('should not return referer when hostnames do not match', function() {
@@ -204,11 +206,12 @@ describe('Utils', function() {
             var path = '/home/unit';
             var req = getBasicReq(hostname1, port);
 
+            req.query = {};
             req.headers = {
                 'referer': 'http://' + hostname2 + ':' + port + path
             };
 
-            expect(utils.getRefererPath(req)).toBe('/');
+            expect(utils.getCameFrom(req)).toBe('/');
         });
 
         it('should not return referer when ports do not match', function() {
@@ -219,11 +222,41 @@ describe('Utils', function() {
             var path = '/home/unit';
             var req = getBasicReq(hostname, port1);
 
+            req.query = {};
             req.headers = {
                 'referer': 'http://' + hostname + ':' + port2 + path
             };
 
-            expect(utils.getRefererPath(req)).toBe('/');
+            expect(utils.getCameFrom(req)).toBe('/');
+        });
+
+        it('should return came_from query param when defined', function() {
+
+            var hostname = 'fiware.org';
+            var port = 8080;
+            var cameFrom = '/#/shopping-cart';
+
+            var req = getBasicReq(hostname, port);
+            req.query = { 'came_from': cameFrom };
+            req.headers = {};
+
+            expect(utils.getCameFrom(req)).toBe(cameFrom);
+        });
+
+        it('should return came_from query param when defined even if referer is valid', function() {
+
+            var hostname = 'fiware.org';
+            var port = 8080;
+            var path = '/home/unit';
+            var cameFrom = '/#/shopping-cart';
+            var req = getBasicReq(hostname, port);
+
+            req.query = { 'came_from': cameFrom };
+            req.headers = {
+                'referer': 'http://' + hostname + ':' + port + path
+            };
+
+            expect(utils.getCameFrom(req)).toBe(cameFrom);
         });
 
 
