@@ -18,6 +18,9 @@
       p
         span.label(ng-class="offering.isBundle ? 'label-bundle' : 'label-single'")
           | {{ offering.isBundle ? 'Bundle' : 'Single' }}
+      .h5.text-right.text-success(ng-if="offering.getCheapestPriceplan() != null")
+        strong
+          span From {{ offering.getCheapestPriceplan().price.taxIncludedAmount }} {{ offering.getCheapestPriceplan().price.currencyCode | uppercase }}
       .status-group
         .status-item.active(class="status-{{ offering.lifecycleStatus | lowercase }}")
           span.item-icon

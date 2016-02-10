@@ -21,14 +21,13 @@
                   img(no-image, ng-src="{{ detailVM.item.getPicture() }}")
               .media-body
                 .pull-right(ng-show="user.isAuthenticated()")
-                  .form-group
+                  .form-group.text-right
                     a.btn.btn-default(ng-click="user.order(detailVM.item)", ng-disabled="user.contains(detailVM.item)")
                       span.item-icon.fa.fa-shopping-cart
                       span.item-text {{ user.contains(detailVM.item) ? 'Added' : 'Add to Cart' }}
-                  .h3.text-right.text-success(ng-if="detailVM.item.getCheapestPriceplan() != null")
+                  .h4.text-right.text-success(ng-if="detailVM.item.getCheapestPriceplan() != null")
                     strong
-                      span {{ detailVM.item.getCheapestPriceplan().price.taxRate }} 
-                      span.fa(class="fa-{{ detailVM.item.getCheapestPriceplan().price.currencyCode | lowercase }}")
+                      span From {{ detailVM.item.getCheapestPriceplan().price.taxIncludedAmount }} {{ detailVM.item.getCheapestPriceplan().price.currencyCode | uppercase }}
                 .h2.media-heading {{ detailVM.item.name }}
                 p.text-muted
                   time {{ detailVM.item.lastUpdate | amDateFormat: 'dddd, MMMM Do YYYY, h:mm a' }}

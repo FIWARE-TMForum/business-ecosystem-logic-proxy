@@ -3,7 +3,7 @@
 .panel-body
   blockquote {{ priceplan.description ? priceplan.description : 'No description provided.' }}
   .alert.text-center(class="alert-{{ alertType }}")
-    span {{ priceplan.price.taxRate }} 
+    span {{ priceplan.price.taxIncludedAmount }} 
     span.fa(class="fa-{{ priceplan.price.currencyCode | lowercase }}")
     span(ng-show="priceplan.recurringChargePeriod")  / {{ priceplan.recurringChargePeriod }}
     span(ng-show="priceplan.unitOfMeasure")  / {{ priceplan.unitOfMeasure }}
