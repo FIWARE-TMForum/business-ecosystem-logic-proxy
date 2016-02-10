@@ -53,7 +53,8 @@
             create: create,
             detail: detail,
             update: update,
-            buildInitialData: buildInitialData
+            buildInitialData: buildInitialData,
+            createPricePlan: createPricePlan
         };
 
         function search(filters) {
@@ -341,6 +342,23 @@
             }
 
             return priceplan;
+        }
+
+        function createPricePlan() {
+            return {
+                name: "",
+                description: "",
+                priceType: PRICE_TYPES.ONE_TIME,
+                recurringChargePeriod: "",
+                unitOfMeasure: "",
+                price: {
+                    taxRate: 20,
+                    taxIncludedAmount: 0,
+                    dutyFreeAmount: 0,
+                    percentage: 0,
+                    currencyCode: 'EUR'
+                }
+            };
         }
     }
 
