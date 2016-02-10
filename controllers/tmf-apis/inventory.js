@@ -18,7 +18,7 @@ var inventory = (function() {
     };
 
     var validators = {
-        'GET': [ tmfUtils.validateLoggedIn, validateRetrieving ],
+        'GET': [ tmfUtils.validateLoggedIn, tmfUtils.ensureRelatedPartyIncluded, validateRetrieving ],
         'POST': [ tmfUtils.methodNotAllowed ],
         'PATCH': [ tmfUtils.methodNotAllowed ],
         'PUT': [ tmfUtils.methodNotAllowed ],

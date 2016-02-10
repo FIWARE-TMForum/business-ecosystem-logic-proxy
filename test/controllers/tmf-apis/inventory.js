@@ -82,13 +82,20 @@ describe('Inventory API', function() {
 
         var testRetrieval = function (filterRelatedPartyFields, expectedErr, done) {
 
+            var ensureRelatedPartyIncludedCalled = false;
+
             var tmfUtils = {
 
                 validateLoggedIn: function (req, callback) {
                     callback(null);
                 },
 
-                filterRelatedPartyFields: filterRelatedPartyFields
+                filterRelatedPartyFields: filterRelatedPartyFields,
+
+                ensureRelatedPartyIncluded: function(req, callback) {
+                    ensureRelatedPartyIncludedCalled = true;
+                    callback(null);
+                }
             };
 
             var req = {
@@ -99,6 +106,7 @@ describe('Inventory API', function() {
             var inventoryApi = getInventoryAPI(tmfUtils);
 
             inventoryApi.checkPermissions(req, function (err) {
+                expect(ensureRelatedPartyIncludedCalled).toBe(true);
                 expect(err).toEqual(expectedErr);
                 done();
             });
@@ -132,8 +140,15 @@ describe('Inventory API', function() {
 
         it('should call callback without error when retrieving a single product', function (done) {
 
+            var ensureRelatedPartyIncludedCalled = false;
+
             var tmfUtils = {
                 validateLoggedIn: function (req, callback) {
+                    callback(null);
+                },
+
+                ensureRelatedPartyIncluded: function(req, callback) {
+                    ensureRelatedPartyIncludedCalled = true;
                     callback(null);
                 }
             };
@@ -146,6 +161,7 @@ describe('Inventory API', function() {
             var inventoryApi = getInventoryAPI(tmfUtils);
 
             inventoryApi.checkPermissions(req, function (err) {
+                expect(ensureRelatedPartyIncludedCalled).toBe(true);
                 expect(err).toBe(null);
                 done();
             });

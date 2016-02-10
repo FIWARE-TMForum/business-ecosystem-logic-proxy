@@ -471,7 +471,7 @@ var ordering = (function(){
     //////////////////////////////////////////////////////////////////////////////////////////////
 
     var validators = {
-        'GET': [ tmfUtils.validateLoggedIn, validateRetrieving ],
+        'GET': [ tmfUtils.validateLoggedIn, tmfUtils.ensureRelatedPartyIncluded, validateRetrieving ],
         'POST': [ tmfUtils.validateLoggedIn, validateCreation ],
         'PATCH': [ tmfUtils.validateLoggedIn, validateUpdate ],
         'PUT': [ tmfUtils.methodNotAllowed ],

@@ -134,13 +134,20 @@ describe('Ordering API', function() {
 
             var testRetrieval = function (filterRelatedPartyFields, expectedErr, done) {
 
+                var ensureRelatedPartyIncludedCalled = false;
+
                 var tmfUtils = {
 
                     validateLoggedIn: function (req, callback) {
                         callback(null);
                     },
 
-                    filterRelatedPartyFields: filterRelatedPartyFields
+                    filterRelatedPartyFields: filterRelatedPartyFields,
+
+                    ensureRelatedPartyIncluded: function(req, callback) {
+                        ensureRelatedPartyIncludedCalled = true;
+                        callback(null);
+                    }
                 };
 
                 var req = {
@@ -151,6 +158,7 @@ describe('Ordering API', function() {
 
                 orderingApi.checkPermissions(req, function (err) {
 
+                    expect(ensureRelatedPartyIncludedCalled).toBe(true);
                     expect(err).toEqual(expectedErr);
 
                     done();

@@ -284,6 +284,85 @@ describe('TMF Utils', function() {
 
     });
 
+    describe('Ensure Related Party Field', function() {
+
+        var testEnsureRelatedParty = function(originalApiUrl, query, expectedApiUrl) {
+            var req = {
+                apiUrl: originalApiUrl,
+                query: query
+            };
+
+            var tmfUtils = getTmfUtils();
+            var callback = jasmine.createSpy();
+
+            tmfUtils.ensureRelatedPartyIncluded(req, callback);
+
+            expect(callback).toHaveBeenCalledWith(null);
+            expect(req.apiUrl).toBe(expectedApiUrl);
+        };
+
+        var urlNotModified = function(originalApiUrl, query) {
+            testEnsureRelatedParty(originalApiUrl, query, originalApiUrl);
+        };
+
+        var urlNotModifiedFields = function(fields) {
+            urlNotModified('/product?fields=' + fields, { fields: fields });
+        };
+
+        it('should not modify the API URL when query is not included', function() {
+            urlNotModified('/product', {});
+        });
+
+        it('should not modify the API URL when query included but fields is not included', function() {
+
+            var name = 'fiware';
+            urlNotModified('/product?name=' + name, { name: name });
+        });
+
+        it('should not modify the API URL when fields include related party at the beginning', function() {
+
+            var fields = 'relatedParty,name';
+            urlNotModifiedFields(fields);
+        });
+
+        it('should not modify the API URL when fields include related party at the end', function() {
+
+            var fields = 'relatedParty,name';
+            urlNotModifiedFields(fields);
+        });
+
+        it('should not modify the API URL when fields include related party in the middle', function() {
+
+            var fields = 'name,relatedParty,version';
+            urlNotModifiedFields(fields);
+        });
+
+        it('should modify the API URL when related party is not included in the fields query param ' +
+                'and there are no more query params', function() {
+
+            var fields = 'name';
+            var originalApiUrl = '/product?fields=' + fields;
+            var expectedApiUrl = originalApiUrl + ',relatedParty';
+
+            testEnsureRelatedParty(originalApiUrl, { fields: fields }, expectedApiUrl);
+        });
+
+
+        it('should modify the API URL when related party is not included in the fields query param ' +
+                'and there are more query params', function() {
+
+            var version = '1';
+            var fields = 'name';
+
+            var urlPattern = '/product?fields=FIELDS&version=' + version;
+            var originalApiUrl = urlPattern.replace('FIELDS', fields);
+            var expectedApiUrl = urlPattern.replace('FIELDS', fields + ',relatedParty');
+
+            testEnsureRelatedParty(originalApiUrl, { fields: fields, version: version }, expectedApiUrl);
+        });
+
+    });
+
     describe('Has Role', function() {
 
         it('should return false when related Party is empty', function() {
