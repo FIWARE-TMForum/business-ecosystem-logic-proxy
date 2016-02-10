@@ -11,30 +11,27 @@
         .module('app')
         .config(RouteConfig);
 
-    function RouteConfig($stateProvider, $injector) {
+    function RouteConfig($stateProvider) {
 
-        if ($injector.has('LOGGED_USER')) {
+        $stateProvider
+            .state('inventory.product', {
+                url: '/product?status',
+                params: {
+                    customer: true,
+                    flow: 1
+                },
+                data: {
+                    filters: ['status'],
+                },
+                templateUrl: 'inventory/product/search',
+                controller: 'InventorySearchCtrl as searchVM'
 
-            $stateProvider
-                .state('inventory.product', {
-                    url: '/product?status',
-                    params: {
-                        customer: true,
-                        flow: 1
-                    },
-                    data: {
-                        filters: ['status']
-                    },
-                    templateUrl: 'inventory/product/search',
-                    controller: 'InventorySearchCtrl as searchVM'
-
-                })
-                .state('inventory.product.detail', {
-                    url: '/:productId',
-                    templateUrl: 'inventory/product/detail',
-                    controller: 'InventoryDetailsCtrl as detailVM'
-                });
-        }
+            })
+            .state('inventory.product.detail', {
+                url: '/:productId',
+                templateUrl: 'inventory/product/detail',
+                controller: 'InventoryDetailsCtrl as detailVM'
+            });
     }
 
 })();

@@ -11,27 +11,25 @@
         .module('app')
         .config(StockRouteConfig);
 
-    function StockRouteConfig($stateProvider, $injector) {
+    function StockRouteConfig($stateProvider) {
 
-        if ($injector.has('LOGGED_USER')) {
-
-            $stateProvider
-                .state('stock', {
-                    url: '/stock',
-                    data: {
-                        title: 'My Stock'
+        $stateProvider
+            .state('stock', {
+                url: '/stock',
+                data: {
+                    title: 'My Stock',
+                    loggingRequired: true
+                },
+                views: {
+                    sidebar: {
+                        templateUrl: 'stock/sidebar',
+                        controller: StockController
                     },
-                    views: {
-                        sidebar: {
-                            templateUrl: 'stock/sidebar',
-                            controller: StockController
-                        },
-                        content: {
-                            template: '<ui-view>'
-                        }
+                    content: {
+                        template: '<ui-view>'
                     }
-                });
-        }
+                }
+            });
     }
 
     function StockController($state) {

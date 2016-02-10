@@ -18,6 +18,7 @@
                 url: '/offering?catalogueId&categoryId&type',
                 data: {
                     title: 'Marketplace',
+                    loggingRequired: false,
                     filters: ['type']
                 },
                 views: {

@@ -11,27 +11,25 @@
         .module('app')
         .config(RouteConfig);
 
-    function RouteConfig($stateProvider, $injector) {
+    function RouteConfig($stateProvider) {
 
-        if ($injector.has('LOGGED_USER')) {
-
-            $stateProvider
-                .state('inventory', {
-                    url: '/inventory',
-                    data: {
-                        title: 'My Inventory'
+        $stateProvider
+            .state('inventory', {
+                url: '/inventory',
+                data: {
+                    title: 'My Inventory',
+                    loggingRequired: true
+                },
+                views: {
+                    sidebar: {
+                        templateUrl: 'inventory/sidebar',
+                        controller: InventoryController
                     },
-                    views: {
-                        sidebar: {
-                            templateUrl: 'inventory/sidebar',
-                            controller: InventoryController
-                        },
-                        content: {
-                            template: '<ui-view>'
-                        }
+                    content: {
+                        template: '<ui-view>'
                     }
-                });
-        }
+                }
+            });
     }
 
     function InventoryController($state) {

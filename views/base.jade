@@ -26,6 +26,20 @@ html(ng-app="app")
           INVENTORY: '#{ proxyPath }/#{ inventoryPath }/api/productInventory/v2',
           PAYMENT: '#{ proxyPath }/#{ chargingPath }/api/orderManagement/orders/:action',
           SHOPPING_CART: '#{ shoppingCartPath }/:action/:id'
+        })
+        .run(function($rootScope, $state, $injector) {
+
+          $rootScope.$on('$stateChangeStart', function (e, toState, toParams) {
+
+            var loggingRequired = toState.data.loggingRequired;
+
+            if (loggingRequired && !$injector.has('LOGGED_USER')) {
+              e.preventDefault();
+              var cameFrom = encodeURIComponent('/' + $state.href(toState.name, toParams));
+              window.location = '#{ contextPath }/login?came_from=' + cameFrom;
+            }
+          });
+
         });
 
     if user

@@ -11,27 +11,25 @@
         .module('app')
         .config(ShoppingCartRouteConfig);
 
-    function ShoppingCartRouteConfig($stateProvider, $injector) {
+    function ShoppingCartRouteConfig($stateProvider) {
 
-        if ($injector.has('LOGGED_USER')) {
-
-            $stateProvider
-                .state('shopping-cart', {
-                    url: '/shopping-cart',
-                    data: {
-                        title: 'My Shopping Cart'
+        $stateProvider
+            .state('shopping-cart', {
+                url: '/shopping-cart',
+                data: {
+                    title: 'My Shopping Cart',
+                    loggingRequired: true
+                },
+                views: {
+                    sidebar: {
+                        template: '<ui-view>'
                     },
-                    views: {
-                        sidebar: {
-                            template: '<ui-view>'
-                        },
-                        content: {
-                            templateUrl: 'shopping-cart/list',
-                            controller: 'ProductOrderCreateCtrl as orderVM'
-                        }
+                    content: {
+                        templateUrl: 'shopping-cart/list',
+                        controller: 'ProductOrderCreateCtrl as orderVM'
                     }
-                });
-        }
+                }
+            });
     }
 
 })();
