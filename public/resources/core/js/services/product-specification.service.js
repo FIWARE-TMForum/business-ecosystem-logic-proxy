@@ -21,17 +21,26 @@
             }
         });
 
+        var VALUE_TYPES = {
+            STRING: 'String',
+            NUMBER: 'Number',
+            NUMBER_RANGE: 'Number range'
+        };
+
         resource.prototype.getPicture = getPicture;
         resource.prototype.getCharacteristicDefaultValue = getCharacteristicDefaultValue;
         resource.prototype.serialize = serialize;
 
         return {
+            VALUE_TYPES: VALUE_TYPES,
             search: search,
             exists: exists,
             create: create,
             detail: detail,
             update: update,
-            buildInitialData: buildInitialData
+            buildInitialData: buildInitialData,
+            createCharacteristic: createCharacteristic,
+            createCharacteristicValue: createCharacteristicValue
         };
 
         function search(filters) {
@@ -76,6 +85,16 @@
         function create(data) {
             var deferred = $q.defer();
             var bundledProductSpecification = data.bundledProductSpecification;
+
+            data.productSpecCharacteristic.forEach(function (characteristic) {
+
+                if (characteristic.valueType === VALUE_TYPES.NUMBER_RANGE) {
+                    characteristic.valueType = VALUE_TYPES.NUMBER;
+                }
+
+                characteristic.valueType = characteristic.valueType.toLowerCase();
+            });
+
 
             angular.extend(data, {
                 bundledProductSpecification: data.bundledProductSpecification.map(function (productSpec) {
@@ -211,6 +230,26 @@
             return {
                 id: this.id,
                 href: this.href
+            };
+        }
+
+        function createCharacteristic(initialInfo) {
+            return angular.extend({
+                name: "",
+                description: "",
+                valueType: VALUE_TYPES.STRING,
+                configurable: false,
+                productSpecCharacteristicValue: []
+            }, initialInfo || {});
+        }
+
+        function createCharacteristicValue() {
+            return {
+                default: false,
+                unitOfMeasure: "",
+                value: "",
+                valueFrom: "",
+                valueTo: ""
             };
         }
     }

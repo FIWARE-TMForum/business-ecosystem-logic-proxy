@@ -88,63 +88,134 @@
         vm.toggleProduct = toggleProduct;
 
         vm.isSelected = isSelected;
-        vm.saveCharacteristic = saveCharacteristic;
-        vm.removeCharacteristic = removeCharacteristic;
 
-        initChars();
+        /* CHARACTERISTICS MEMBERS */
+
+        var characteristic = ProductSpec.createCharacteristic();
+        var characteristicValue = ProductSpec.createCharacteristicValue();
+
+        vm.VALUE_TYPES = ProductSpec.VALUE_TYPES;
+
+        vm.characteristic = angular.copy(characteristic);
+        vm.characteristicValue = angular.copy(characteristicValue);
+        vm.characteristics = [];
+
+        vm.createCharacteristic = createCharacteristic;
+        vm.removeCharacteristic = removeCharacteristic;
+        vm.createCharacteristicValue = createCharacteristicValue;
+        vm.removeCharacteristicValue = removeCharacteristicValue;
+
+        vm.setDefaultValue = setDefaultValue;
+        vm.getDefaultValueOf = getDefaultValueOf;
+
+        vm.resetCharacteristicValue = resetCharacteristicValue;
+        vm.getFormattedValueOf = getFormattedValueOf;
+
+        /* CHARACTERISTICS METHODS */
+
+        function createCharacteristic() {
+            vm.characteristics.push(vm.characteristic);
+            vm.characteristic = angular.copy(characteristic);
+            vm.characteristicValue = angular.copy(characteristicValue);
+
+            return true;
+        }
+
+        function removeCharacteristic(index) {
+            vm.characteristics.splice(index, 1);
+        }
+
+        function createCharacteristicValue() {
+            vm.characteristicValue.default = getDefaultValueOf(vm.characteristic) == null;
+            vm.characteristic.productSpecCharacteristicValue.push(vm.characteristicValue);
+            vm.characteristicValue = angular.copy(characteristicValue);
+
+            if (vm.characteristic.productSpecCharacteristicValue.length > 1) {
+                vm.characteristic.configurable = true;
+            }
+
+            return true;
+        }
+
+        function removeCharacteristicValue(index) {
+            var value = vm.characteristic.productSpecCharacteristicValue[index];
+            vm.characteristic.productSpecCharacteristicValue.splice(index, 1);
+
+            if (value.default && vm.characteristic.productSpecCharacteristicValue.length) {
+                vm.characteristic.productSpecCharacteristicValue[0].default = true;
+            }
+
+            if (vm.characteristic.productSpecCharacteristicValue.length <= 1) {
+                vm.characteristic.configurable = false;
+            }
+        }
+
+        function getDefaultValueOf(characteristic) {
+            var i, defaultValue;
+
+            for (i = 0; i < characteristic.productSpecCharacteristicValue.length; i++) {
+                if (characteristic.productSpecCharacteristicValue[i].default) {
+                    defaultValue = characteristic.productSpecCharacteristicValue[i];
+                }
+            }
+
+            return defaultValue;
+        }
+
+        function getFormattedValueOf(characteristic, characteristicValue) {
+            var result;
+
+            switch (characteristic.valueType) {
+            case ProductSpec.VALUE_TYPES.STRING:
+                result = characteristicValue.value;
+                break;
+            case ProductSpec.VALUE_TYPES.NUMBER:
+                result = characteristicValue.value + " " + characteristicValue.unitOfMeasure;
+                break;
+            case ProductSpec.VALUE_TYPES.NUMBER_RANGE:
+                result = characteristicValue.valueFrom + " - " + characteristicValue.valueFrom + " " + characteristicValue.unitOfMeasure;
+            }
+
+            return result;
+        }
+
+        function resetCharacteristicValue() {
+            vm.characteristicValue = angular.copy(characteristicValue);
+            vm.characteristic.productSpecCharacteristicValue.length = 0;
+        }
+
+        function setDefaultValue(index) {
+            var value = getDefaultValueOf(vm.characteristic);
+
+            if (value != null) {
+                value.default = false;
+            }
+
+            vm.characteristic.productSpecCharacteristicValue[index].default = true;
+        }
 
         AssetType.search().then(function (typeList) {
             angular.copy(typeList, vm.assetTypes);
 
             if (typeList.length) {
                 // Initialize digital asset characteristics
-                vm.digitalChars.push(buildCharacteristic('Asset type', 'Type of the digital asset described in this product specification', ''));
-                vm.digitalChars.push(buildCharacteristic('Media type', 'Media type of the digital asset described in this product specification', ''));
-                vm.digitalChars.push(buildCharacteristic('Location', 'URL pointing to the digital asset described in this product specification', ''));
+                vm.digitalChars.push(ProductSpec.createCharacteristic({
+                    name: "Asset type",
+                    description: "Type of the digital asset described in this product specification"
+                }));
+                vm.digitalChars.push(ProductSpec.createCharacteristic({
+                    name: "Media type",
+                    description: "Media type of the digital asset described in this product specification"
+                }));
+                vm.digitalChars.push(ProductSpec.createCharacteristic({
+                    name: "Location",
+                    description: "URL pointing to the digital asset described in this product specification"
+                }));
                 vm.currentType = typeList[0];
                 vm.currFormat = vm.currentType.formats[0];
                 vm.digitalChars[0].productSpecCharacteristicValue[0].value = typeList[0].name;
             }
         });
-
-        function removeCharacteristic(characteristic) {
-            var index = vm.charList.indexOf(characteristic);
-
-            if (index > -1) {
-                vm.charList.splice(index, 1);
-            }
-        }
-
-        function saveCharacteristic() {
-            var newChar = vm.currentChar;
-
-            // Clean fields that can contain invalid values due to hidden models
-            if (newChar.valueType === 'string') {
-                vm.currentValue.unitOfMeasure = '';
-                vm.currentValue.valueFrom = '';
-                vm.currentValue.valueTo = '';
-            } else if (vm.currentValueType === 'value'){
-                vm.currentValue.valueFrom = '';
-                vm.currentValue.valueTo = '';
-            } else {
-                vm.currentValue.value = '';
-            }
-
-            newChar.productSpecCharacteristicValue = [vm.currentValue];
-            vm.charList.push(newChar);
-            initChars();
-        }
-
-        function initChars() {
-            vm.currentChar = {
-                valueType: 'string',
-                configurable: false
-            };
-            vm.currentValueType = 'value';
-            vm.currentValue = {
-                default: true
-            };
-        }
 
         function isSelected(format) {
             return vm.currFormat === format;
@@ -195,33 +266,6 @@
             }
         }
 
-        function buildCharacteristic(name, description, value) {
-            return {
-                name: name,
-                description: description,
-                valueType: 'string',
-                configurable: false,
-                validFor: {
-                    startDateTime: "",
-                    endDateTime: ""
-                },
-                productSpecCharacteristicValue: [
-                    {
-                        valueType: 'string',
-                        default: true,
-                        value: value,
-                        unitOfMeasure: "",
-                        valueFrom: "",
-                        valueTo: "",
-                        validFor: {
-                            startDateTime: "",
-                            endDateTime: ""
-                        }
-                    }
-                ]
-            };
-        }
-
         function setCurrentType() {
             var i, found = false;
             var assetType = vm.digitalChars[0].productSpecCharacteristicValue[0].value;
@@ -238,7 +282,7 @@
 
         function saveProduct() {
             // Append product characteristics
-            vm.data.productSpecCharacteristic = vm.charList;
+            vm.data.productSpecCharacteristic = vm.characteristics;
 
             if (vm.isDigital) {
                 vm.data.productSpecCharacteristic = vm.data.productSpecCharacteristic.concat(vm.digitalChars);
