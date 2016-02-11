@@ -166,7 +166,7 @@
             var taxInc = vm.currentPricing.price.taxIncludedAmount;
             var taxRate = vm.currentPricing.price.taxRate;
 
-            vm.currentPricing.price.dutyFreeAmount = taxInc - ((taxInc*taxRate) / 100);
+            vm.currentPricing.price.dutyFreeAmount = taxInc / ((100 + taxRate) / 100);
             vm.data.productOfferingPrice.push(vm.currentPricing);
             initPricing();
         }
