@@ -203,9 +203,22 @@ textarea {
     margin-left: 5px;
 }
 
+.form-group > .input-group + .input-group {
+    margin-top: 5px;
+}
+
+.input-group .form-control:focus,
+.input-group .form-control:active {
+    z-index: 3;
+}
+
 /* ===================================================================================
  *   COMPONENT - BUTTON
  * =================================================================================== */
+
+.input-group-btn > .btn:hover, .input-group-btn > .btn:focus, .input-group-btn > .btn:active {
+    z-index: 3;
+}
 
 .btn {
     padding: 8px 12px;
