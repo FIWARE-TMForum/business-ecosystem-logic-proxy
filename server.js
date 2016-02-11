@@ -93,15 +93,15 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 var mongoCredentials = '';
 
 if (config.mongoDb.user && config.mongoDb.password) {
-    mongoCredentials = config.mongoDb.user + ':' + config.mongoDb.password;
+    mongoCredentials = config.mongoDb.user + ':' + config.mongoDb.password + '@';
 }
 
-var mongoUrl = 'mongodb://' + mongoCredentials + '@' + config.mongoDb.server + ':' +
+var mongoUrl = 'mongodb://' + mongoCredentials + config.mongoDb.server + ':' +
     config.mongoDb.port + '/' + config.mongoDb.db;
 
 mongoose.connect(mongoUrl, function(err) {
     if (err) {
-        log.error('MongoDB has not been initialized');
+        log.error('Cannot connect to MongoDB - ' + err.name + ' (' + err.code + '): ' + err.message);
     }
 });
 
