@@ -24,7 +24,7 @@ table.table.table-bordered(ng-if="createVM.pricePlans.length")
         a.alert-link-danger(ng-click="createVM.removePricePlan($index)")
           span.fa.fa-trash
 form(name="step.form", novalidate)
-   input(type="hidden", name="pricePlans", ng-model="createVM.pricePlans", field-array, limit-from="1", required)
+   input(type="hidden", name="pricePlans", ng-model="createVM.pricePlans", field-array, limit-from="0", required)
   .form-group.text-right
     a.btn.btn-default(ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])", ng-disabled="!step.form.$valid")
       span.item-text Next
