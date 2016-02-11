@@ -318,6 +318,7 @@
 
         vm.update = update;
         vm.updateStatus = updateStatus;
+        vm.formatCharacteristicValue = formatCharacteristicValue;
 
         ProductSpec.detail($state.params.productId).then(function (productRetrieved) {
             vm.data = angular.copy(productRetrieved);
@@ -354,6 +355,29 @@
                     error: error
                 });
             });
+        }
+
+        function formatCharacteristicValue(characteristic, characteristicValue) {
+            var result;
+
+            switch (characteristic.valueType) {
+            case ProductSpec.VALUE_TYPES.STRING.toLowerCase():
+                result = characteristicValue.value;
+                break;
+            case ProductSpec.VALUE_TYPES.NUMBER.toLowerCase():
+
+                if (characteristicValue.value && characteristicValue.value.length) {
+                    result = characteristicValue.value;
+                } else {
+                    result = characteristicValue.valueFrom + " - " + characteristicValue.valueFrom;
+                }
+
+                result += " " + characteristicValue.unitOfMeasure;
+
+                break;
+            }
+
+            return result;
         }
     }
 
