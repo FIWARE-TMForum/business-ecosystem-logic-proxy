@@ -7,14 +7,16 @@ var bodyParser = require('body-parser'),
     FIWAREStrategy = require('passport-fiware-oauth').OAuth2Strategy,
     fs = require('fs'),
     https = require('https'),
-    log = require('./lib/logger').logger.getLogger("Server"),
+    logger = require('./lib/logger').logger.getLogger("Server"),
     mongoose = require('mongoose'),
+    onFinished = require('on-finished'),
     passport = require('passport'),
     session = require('express-session'),
     shoppingCart = require('./controllers/shoppingCart').shoppingCart,
     tmf = require('./controllers/tmf').tmf,
     url = require('url'),
-    utils = require('./lib/utils');
+    utils = require('./lib/utils'),
+    uuid = require('node-uuid');
 
 
 /////////////////////////////////////////////////////////////////////
@@ -80,7 +82,8 @@ var FIWARE_STRATEGY = new FIWAREStrategy({
 
 // Avoid existing on uncaught Exceptions
 process.on('uncaughtException', function (err) {
-    log.error('Caught exception: ' + err);
+    logger.fatal('Unexpected unhandled exception - ' + err.name +
+        ': ' + err.message + '. Stack trace:\n' + err.stack);
 });
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
@@ -101,16 +104,16 @@ var mongoUrl = 'mongodb://' + mongoCredentials + config.mongoDb.server + ':' +
 
 mongoose.connect(mongoUrl, function(err) {
     if (err) {
-        log.error('Cannot connect to MongoDB - ' + err.name + ' (' + err.code + '): ' + err.message);
+        logger.error('Cannot connect to MongoDB - ' + err.name + ' (' + err.code + '): ' + err.message);
     }
 });
 
 mongoose.connection.on('disconnected', function() {
-    log.error('Connection with MongoDB lost');
+    logger.error('Connection with MongoDB lost');
 });
 
 mongoose.connection.on('reconnected', function() {
-    log.info('Connection with MongoDB reopened');
+    logger.info('Connection with MongoDB reopened');
 });
 
 
@@ -121,13 +124,6 @@ mongoose.connection.on('reconnected', function() {
 var app = express();
 app.set('port', PORT);
 
-app.use(errorhandler({ dumpExceptions: true, showStack: true }));
-
-// Static files && templates
-app.use(config.portalPrefix + '/', express.static(__dirname + '/public'));
-app.set('views', __dirname + '/views');
-app.set('view engine', 'jade');
-
 // Session
 app.use(session({
     secret: config.sessionSecret,
@@ -135,12 +131,32 @@ app.use(session({
     saveUninitialized: true
 }));
 
-
 app.use(cookieParser());
+
 app.use(bodyParser.text({
     type: '*/*',
     limit: '50mb'
 }));
+
+// Logging Handler
+app.use(function(req, res, next) {
+    req.id = uuid.v4();
+
+    utils.logMessage(logger, 'debug', req, 'Headers: ' + JSON.stringify(req.headers));
+    utils.logMessage(logger, 'debug', req, 'Body: ' + JSON.stringify(req.body));
+
+    onFinished(res, function(err, res) {
+        var logLevel = Math.floor(res.statusCode / 100) < 4 ? 'info': 'warn';
+        utils.logMessage(logger, logLevel, req, 'Status: ' + res.statusCode);
+    });
+
+    next();
+});
+
+// Static files && templates
+app.use(config.portalPrefix + '/', express.static(__dirname + '/public'));
+app.set('views', __dirname + '/views');
+app.set('view engine', 'jade');
 
 
 /////////////////////////////////////////////////////////////////////
@@ -171,12 +187,12 @@ var headerAuthentication = function(req, res, next) {
         var authToken = utils.getAuthToken(req.headers);
         FIWARE_STRATEGY.userProfile(authToken, function(err, userProfile) {
             if (err) {
-                log.warn('The provider auth-token is not valid');
+                utils.logMessage(logger, 'warn', req, 'Token ' + authToken + ' invalid');
                 utils.sendUnauthorized(res, 'invalid auth-token')
             } else {
                 // Check that the provided access token is valid for the given application
                 if (userProfile.appId !== config.oauth2.clientID) {
-                    log.warn('The provider auth-token scope is not valid for the current application');
+                    utils.logMessage(logger, 'warn', req, 'Token ' + authToken + ' is from a different app');
                     utils.sendUnauthorized(res, 'The auth-token scope is not valid for the current application');
                 } else {
                     req.user = userProfile;
@@ -187,11 +203,13 @@ var headerAuthentication = function(req, res, next) {
         });
 
     } catch (err) {
-        log.warn(err);
+
 
         if (err.name === 'AuthorizationTokenNotFound') {
+            utils.logMessage(logger, 'info', req, 'request without authentication');
             next();
         } else {
+            utils.logMessage(logger, 'warn', req, err.message);
             utils.sendUnauthorized(res, err.message);
         }
     }
@@ -208,7 +226,7 @@ FIWARE_STRATEGY.userProfile = function(authToken, callback) {
     // TODO: Remove tokens from the cache every hour...
 
     if (tokensCache[authToken]) {
-        log.info('Using cached token for user ' +  tokensCache[authToken].id);
+        logger.debug('Using cached token for user ' +  tokensCache[authToken].id);
         callback(null, tokensCache[authToken]);
     } else {
 
@@ -217,7 +235,7 @@ FIWARE_STRATEGY.userProfile = function(authToken, callback) {
             if (err) {
                 callback(err);
             } else {
-                log.info('Token for user ' + userProfile.id + ' stored');
+                logger.debug('Token for user ' + userProfile.id + ' stored');
                 tokensCache[authToken] = userProfile;
                 callback(err, userProfile);
             }
@@ -405,11 +423,11 @@ app.use(function (req, res, next) {
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Methods', 'HEAD, POST, GET, PATCH, PUT, OPTIONS, DELETE');
     res.header('Access-Control-Allow-Headers', 'origin, content-type, X-Auth-Token, Tenant-ID, Authorization');
-    //log.debug("New Request: ", req.method);
-    
+
     if (req.method == 'OPTIONS') {
-        log.debug("CORS request");
-        res.statusCode = 200;
+        utils.logMessage(logger, 'debug', req, 'CORS request');
+
+        res.status(200);
         res.header('Content-Length', '0');
         res.send();
         res.end();
@@ -420,11 +438,11 @@ app.use(function (req, res, next) {
 
 // Public Paths are not protected by the Proxy
 for (var p in config.publicPaths) {
-    log.debug('Public Path', config.publicPaths[p]);
+    logger.debug('Public Path', config.publicPaths[p]);
     app.all(config.proxyPrefix + '/' + config.publicPaths[p], tmf.public);
 }
 
-app.all(config.proxyPrefix + '/*', headerAuthentication, function(req, res) {
+app.all(config.proxyPrefix + '/*', headerAuthentication, function(req, res, next) {
 
     // The API path is the actual path that should be used to access the resource
     // This path contains the query string!!
@@ -434,10 +452,31 @@ app.all(config.proxyPrefix + '/*', headerAuthentication, function(req, res) {
 
 
 /////////////////////////////////////////////////////////////////////
+/////////////////////////// ERROR HANDLER ///////////////////////////
+/////////////////////////////////////////////////////////////////////
+
+app.use(function(err, req, res, next) {
+
+    utils.logMessage(logger, 'fatal', req, 'Unexpected unhandled exception - ' + err.name +
+        ': ' + err.message + '. Stack trace:\n' + err.stack);
+
+    res.status(500);
+
+    if (req.headers['accept'].indexOf('text/html') >= 0) {
+        renderTemplate(req, res, 'unexpected-error');
+    } else {
+        res.header('Content-Type', 'application/json');
+        res.json({ error: 'Unexpected error' });
+        res.end();
+    }
+});
+
+
+/////////////////////////////////////////////////////////////////////
 //////////////////////////// START SERVER ///////////////////////////
 /////////////////////////////////////////////////////////////////////
 
-log.info('Starting BELP in port ' + PORT + '.');
+logger.info('Business Ecosystem Logic Proxy starting on port ' + PORT);
 
 if (config.https.enabled === true) {
     

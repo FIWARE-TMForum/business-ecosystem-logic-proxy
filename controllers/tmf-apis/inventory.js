@@ -1,7 +1,6 @@
 var async = require('async'),
     config = require('./../../config'),
-    tmfUtils = require('./../../lib/tmfUtils'),
-    log = require('./../../lib/logger').logger.getLogger("Root");
+    tmfUtils = require('./../../lib/tmfUtils');
 
 var inventory = (function() {
 
@@ -26,7 +25,6 @@ var inventory = (function() {
     };
 
     var checkPermissions = function(req, callback) {
-        log.info('Checking inventory permissions');
 
         var reqValidators = [];
 
@@ -39,8 +37,6 @@ var inventory = (function() {
     };
 
     var executePostValidation = function(req, callback) {
-
-        log.info('Executing inventory post validation');
 
         var body = JSON.parse(req.body);
 

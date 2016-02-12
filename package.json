@@ -1,5 +1,5 @@
 {
-  "name": "fiware-pep-proxy",
+  "name": "business-ecosystem-logic-proxy",
   "version": "0.1.0",
   "description": "Logic Layer for the Business API Ecosystem",
   "author": "UPM",
@@ -15,6 +15,8 @@
     "jade": "^1.11.0",
     "log4js": "0.6.x",
     "mongoose": "^4.3.6",
+    "node-uuid": "^1.4.7",
+    "on-finished": "^2.3.0",
     "passport": "0.3.0",
     "passport-fiware-oauth": "0.1.5"
   },

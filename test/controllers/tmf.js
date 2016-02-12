@@ -62,7 +62,8 @@ describe('TMF Controller', function() {
             var req = {
                 apiUrl: path,
                 body: 'This is an example',
-                method: method
+                method: method,
+                connection: { remoteAddress: '127.0.0.1' }
             };
 
             var res = {};
@@ -140,13 +141,13 @@ describe('TMF Controller', function() {
             var httpClient = getDefaultHttpClient();
             var tmf = getTmfInstance(httpClient);
 
-            var req = { 'apiUrl': '/nonexistingapi' };
-            var res = jasmine.createSpyObj('res', ['status', 'send', 'end']);
+            var req = { 'apiUrl': '/nonexistingapi', headers: {}, connection: { remoteAddress: '127.0.0.1' } };
+            var res = jasmine.createSpyObj('res', ['status', 'json', 'end']);
 
             tmf.checkPermissions(req, res);
 
             expect(res.status).toHaveBeenCalledWith(404);
-            expect(res.send).toHaveBeenCalledWith({ error: 'Path not found' });
+            expect(res.json).toHaveBeenCalledWith({ error: 'Path not found' });
             expect(res.end).toHaveBeenCalledWith();
         });
 
@@ -164,14 +165,14 @@ describe('TMF Controller', function() {
             var tmf = getTmfInstance(httpClient, catalogController, orderingController, inventoryController);
 
             // Actual call
-            var req = { apiUrl: '/' + api };
-            var res = jasmine.createSpyObj('res', ['status', 'send', 'end']);
+            var req = { apiUrl: '/' + api, headers: {}, connection: { remoteAddress: '127.0.0.1' } };
+            var res = jasmine.createSpyObj('res', ['status', 'json', 'end']);
             tmf.checkPermissions(req, res);
 
             // We have to wait some time until the response has been called
             setTimeout(function() {
                 expect(res.status).toHaveBeenCalledWith(INVALID_API_STATUS);
-                expect(res.send).toHaveBeenCalledWith({ error: INVALID_API_MESSAGE });
+                expect(res.json).toHaveBeenCalledWith({ error: INVALID_API_MESSAGE });
                 expect(res.end).toHaveBeenCalledWith();
 
                 expect(httpClient.proxyRequest).not.toHaveBeenCalled();
@@ -218,10 +219,11 @@ describe('TMF Controller', function() {
                 body: 'Example', 
                 method: method, 
                 user: {'id': 'user'}, 
-                headers: {} 
+                headers: {},
+                connection: { remoteAddress: '127.0.0.1' }
             };
             
-            var res = jasmine.createSpyObj('res', ['status', 'send', 'end']);
+            var res = jasmine.createSpyObj('res', ['status', 'json', 'end']);
             tmf.checkPermissions(req, res);
 
             setTimeout(function() {
@@ -304,22 +306,23 @@ describe('TMF Controller', function() {
                 body: 'Example',
                 method: 'POST',
                 user: {'id': 'user'},
-                headers: {}
+                headers: {},
+                connection: { remoteAddress: '127.0.0.1' }
             };
 
-            var res = jasmine.createSpyObj('res', ['status', 'send', 'end']);
+            var res = jasmine.createSpyObj('res', ['status', 'json', 'end']);
 
             tmf.checkPermissions(req, res);
 
             setTimeout(function() {
                 if (error) {
                     expect(res.status).toHaveBeenCalledWith(INVALID_API_STATUS);
-                    expect(res.send).toHaveBeenCalledWith({ error: INVALID_API_MESSAGE });
+                    expect(res.json).toHaveBeenCalledWith({ error: INVALID_API_MESSAGE });
                     expect(res.end).toHaveBeenCalledWith();
 
                     expect(proxyCallback).not.toHaveBeenCalled();
                 } else {
-                    expect(res.send).not.toHaveBeenCalled();
+                    expect(res.json).not.toHaveBeenCalled();
                     expect(proxyCallback).toHaveBeenCalledWith();
                 }
                 done();

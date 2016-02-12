@@ -1,12 +1,10 @@
 /**
  * Created by francisco on 24/11/15.
  */
-var log = require('./../../lib/logger').logger.getLogger("Root");
 
 var charging = (function() {
 
     var checkPermissions = function (req, callback) {
-        log.info('Redirecting to charging backend APIs');
         callback();
     };
 

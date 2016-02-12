@@ -9,7 +9,7 @@ var config = require('./../config'),
     // Other dependencies
     httpClient = require('./../lib/httpClient'),
     utils = require('./../lib/utils'),
-    log = require('./../lib/logger').logger.getLogger('TMF'),
+    logger = require('./../lib/logger').logger.getLogger('TMF'),
     url = require('url');
 
 var tmf = (function() {
@@ -29,19 +29,15 @@ var tmf = (function() {
         var status = err.status;
         var errMsg = err.message;
 
-        log.warn(errMsg);
         res.status(status);
-        res.send({error: errMsg});
+        res.json({ error: errMsg });
         res.end();
     };
 
-    var redirRequest = function (req, res) {
+    var redirectRequest = function (req, res) {
 
         if (req.user) {
-            log.info('Request with auth credentials');
             utils.attachUserHeaders(req.headers, req.user);
-        } else {
-            log.info('Request without auth credentials');
         }
 
         var protocol = config.appSsl ? 'https' : 'http';
@@ -67,9 +63,14 @@ var tmf = (function() {
                 result.path = req.path;
 
                 apiControllers[api].executePostValidation(result, function(err) {
+
+                    var basicLogMessage = 'Post-Validation (' + api + '): ';
+
                     if (err) {
+                        utils.logMessage(logger, 'warn', req, basicLogMessage + err.message);
                         sendError(res, err);
                     } else {
+                        utils.logMessage(logger, 'info', req, basicLogMessage + 'OK');
                         callback();
                     }
                 });
@@ -84,23 +85,32 @@ var tmf = (function() {
         var api = getAPIName(req.apiUrl);
 
         if (apiControllers[api] === undefined) {
+
+            utils.logMessage(logger, 'warn', req, 'API ' + api + ' not defined');
+
             sendError(res, {
                 status: 404,
                 message: 'Path not found'
             });
+
         } else {
             apiControllers[api].checkPermissions(req, function(err) {
+
+                var basicLogMessage = 'Check Permissions (' + api + '): ';
+
                 if (err) {
+                    utils.logMessage(logger, 'warn', req, basicLogMessage + err.message);
                     sendError(res, err);
                 } else {
-                    redirRequest(req, res);
+                    utils.logMessage(logger, 'info', req, basicLogMessage + 'OK');
+                    redirectRequest(req, res);
                 }
             });
         }
     };
 
     var public = function(req, res) {
-        redirRequest(req, res);
+        redirectRequest(req, res);
     };
 
     return {

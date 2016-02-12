@@ -4,8 +4,7 @@ var async = require('async'),
     storeClient = require('./../../lib/store').storeClient,
     url = require('url'),
     utils = require('./../../lib/utils'),
-    tmfUtils = require('./../../lib/tmfUtils'),
-    log = require('./../../lib/logger').logger.getLogger('Root');
+    tmfUtils = require('./../../lib/tmfUtils');
 
 var LIFE_CYCLE = 'lifecycleStatus';
 
@@ -392,7 +391,6 @@ var catalog = (function() {
     };
 
     var checkPermissions = function (req, callback) {
-        log.info('Checking Catalog permissions');
 
         var reqValidators = [];
 

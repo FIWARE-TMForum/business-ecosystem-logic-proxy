@@ -2,12 +2,10 @@ var async = require('async'),
     config = require('./../../config'),
     equal = require('deep-equal'),
     http = require('./../../lib/httpClient'),
-    log = require('./../../lib/logger').logger.getLogger("Root"),
     storeClient = require('./../../lib/store').storeClient,
     tmfUtils = require('./../../lib/tmfUtils'),
     url = require('url'),
     utils = require('./../../lib/utils');
-
 
 var ordering = (function(){
 
@@ -479,7 +477,6 @@ var ordering = (function(){
     };
 
     var checkPermissions = function (req, callback) {
-        log.info('Checking Ordering permissions');
 
         var reqValidators = [];
 
@@ -556,16 +553,12 @@ var ordering = (function(){
 
     var notifyOrder = function(req, callback) {
 
-        log.info('Notifying ordering to the store');
-
         var body = JSON.parse(req.body);
 
         // Send ordering notification to the store
         storeClient.notifyOrder(body, req.user, function(err, res) {
 
             if (res) {
-
-                log.info('The ordering has been notified to the store correctly');
 
                 var parsedResp = JSON.parse(res.body);
 
@@ -576,8 +569,6 @@ var ordering = (function(){
                 callback(null);
 
             } else {
-
-                log.warn('There was a failure when notifying ordering to Store: ' + err.message);
                 callback(err);
             }
         });

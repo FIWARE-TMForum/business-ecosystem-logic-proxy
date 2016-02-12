@@ -222,7 +222,7 @@ describe('HTTP Client', function() {
                 headers: reqHeaders
             };
 
-            var res = jasmine.createSpyObj('res', ['statusCode', 'setHeader', 'write', 'end']);
+            var res = jasmine.createSpyObj('res', ['status', 'setHeader', 'write', 'end']);
             httpClient.proxyRequest(protocol, options, body, res, postAction);
 
             // Wait until the response parameters has been set
@@ -236,7 +236,7 @@ describe('HTTP Client', function() {
                 expect(receivedBody).toBe(expectedBody);
 
                 // Check the response
-                expect(res.statusCode).toBe(statusCode);
+                expect(res.status).toHaveBeenCalledWith(statusCode);
                 expect(res.write).toHaveBeenCalledWith(JSON.stringify(answer));
                 expect(res.end).toHaveBeenCalledWith();
 
@@ -318,13 +318,13 @@ describe('HTTP Client', function() {
                     method: 'GET'
                 };
 
-                var res = jasmine.createSpyObj('res', ['statusCode', 'write', 'end']);
+                var res = jasmine.createSpyObj('res', ['status', 'write', 'end']);
                 httpClient.proxyRequest('http', options, null, res);
 
                 // Wait until response parameters have been set
                 setTimeout(function() {
                     // Check the response
-                    expect(res.statusCode).toBe(503);
+                    expect(res.status).toHaveBeenCalledWith(503);
 
                     // Check the body
                     var body = JSON.parse(res.write.calls.argsFor(0)[0]);
