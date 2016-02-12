@@ -20,6 +20,10 @@ describe('Ordering API', function() {
         callback();
     };
 
+    beforeEach(function() {
+        nock.cleanAll();
+    });
+
     describe('Get Permissions', function() {
 
         //////////////////////////////////////////////////////////////////////////////////////////////
