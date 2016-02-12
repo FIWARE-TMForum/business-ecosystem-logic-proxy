@@ -189,7 +189,7 @@ describe('Shopping Cart', function() {
 
         var addInvalidInput = function(reqBody, expectedStatus, expectedBody, done) {
 
-            var cartItemSchema = function() { return {} };
+            var cartItemSchema = function() { return {}; };
 
             var shoppingCartController = getShoppingCartController(cartItemSchema);
 
@@ -231,7 +231,7 @@ describe('Shopping Cart', function() {
                         itemSaved = this;
                         callback({ code: code, message: expectedBody.error });
                     }
-                }
+                };
             };
 
             var shoppingCartController = getShoppingCartController(cartItemSchema);
@@ -277,7 +277,7 @@ describe('Shopping Cart', function() {
                         itemSaved = this;
                         callback();
                     }
-                }
+                };
             };
 
             var shoppingCartController = getShoppingCartController(cartItemSchema);

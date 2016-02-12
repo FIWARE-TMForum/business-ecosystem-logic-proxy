@@ -188,7 +188,7 @@ var headerAuthentication = function(req, res, next) {
         FIWARE_STRATEGY.userProfile(authToken, function(err, userProfile) {
             if (err) {
                 utils.log(logger, 'warn', req, 'Token ' + authToken + ' invalid');
-                utils.sendUnauthorized(res, 'invalid auth-token')
+                utils.sendUnauthorized(res, 'invalid auth-token');
             } else {
                 // Check that the provided access token is valid for the given application
                 if (userProfile.appId !== config.oauth2.clientID) {

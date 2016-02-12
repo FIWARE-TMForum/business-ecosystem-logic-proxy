@@ -195,7 +195,7 @@ describe('Inventory API', function() {
                         role: 'Customer'
                     }]
                 })
-            }, done)
+            }, done);
         });
 
         it('should give a 403 error when the user is not the customer who acquired the product', function (done) {

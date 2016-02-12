@@ -241,13 +241,14 @@ describe('HTTP Client', function() {
                 expect(res.end).toHaveBeenCalledWith();
 
                 // Set the extra headers to the expected headers if postAction must have been called
+                var header;
                 if (postAction && statusCode >= 200) {
-                    for (var header in extraHdrs) {
+                    for (header in extraHdrs) {
                         headersExpected[header] = extraHdrs[header];
                     }
                 }
                 if (headersExpected) {
-                    for (var header in resHeaders) {
+                    for (header in resHeaders) {
                         expect(res.setHeader).toHaveBeenCalledWith(header, resHeaders[header]);
                     }
                 }

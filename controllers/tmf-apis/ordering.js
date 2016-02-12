@@ -338,7 +338,7 @@ var ordering = (function(){
                         error = {
                             status: 403,
                             message: 'The fields of an order item cannot be modified'
-                        }
+                        };
                     }
 
                     // Check that the value of the fields is not changed (only state can be changed)
@@ -364,7 +364,7 @@ var ordering = (function(){
                             error = {
                                 status: 403,
                                 message: 'Acknowledged order items cannot be updated manually'
-                            }
+                            };
                         } else {
                             // If no errors, the state can be updated!
                             previousOrderItem['state'] = updatedItem['state'];

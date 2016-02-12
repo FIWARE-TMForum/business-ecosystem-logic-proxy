@@ -491,7 +491,7 @@ describe('TMF Utils', function() {
                 expect(err.status).toBe(405);
                 expect(err.message).toBe('The HTTP method DELETE is not allowed in the accessed API');
                 done();
-            })
+            });
         });
     });
 

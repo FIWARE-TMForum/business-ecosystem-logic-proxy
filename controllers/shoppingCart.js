@@ -149,7 +149,7 @@ var shoppingCart = (function() {
         add: add,
         remove: remove,
         empty: empty
-    }
+    };
 
 })();
 

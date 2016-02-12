@@ -39,7 +39,7 @@ var catalog = (function() {
                 callback({
                     status: 400,
                     message: errMsg
-                })
+                });
             } else {
                 callback(null, result);
             }

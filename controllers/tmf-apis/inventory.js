@@ -76,7 +76,7 @@ var inventory = (function() {
     return {
         checkPermissions: checkPermissions,
         executePostValidation: executePostValidation
-    }
+    };
 })();
 
 exports.inventory = inventory;

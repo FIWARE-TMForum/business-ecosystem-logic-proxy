@@ -269,7 +269,7 @@ describe('TMF Controller', function() {
 
 
         var executePostValidationOk = function(req, callback) {
-            callback()
+            callback();
         };
 
         var executeValidationError = function(req, callback) {
@@ -336,7 +336,7 @@ describe('TMF Controller', function() {
 
         it('should send an error message after executing post validation method', function(done) {
             testAPIPostValidation(executeValidationError, true, done);
-        })
+        });
     });
 
 });

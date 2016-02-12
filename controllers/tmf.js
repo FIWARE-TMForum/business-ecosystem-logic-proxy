@@ -74,7 +74,7 @@ var tmf = (function() {
                         callback();
                     }
                 });
-            }
+            };
         }
 
         httpClient.proxyRequest(protocol, options, req.body, res, postAction);
@@ -116,7 +116,7 @@ var tmf = (function() {
     return {
         checkPermissions: checkPermissions,
         public: public
-    }
+    };
 })();
 
 exports.tmf = tmf;
