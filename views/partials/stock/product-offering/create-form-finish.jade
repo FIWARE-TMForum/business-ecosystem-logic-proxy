@@ -1,4 +1,6 @@
 form(name="step.form", novalidate)
+  .h4
+    strong General
   .row
     .col-sm-8
       .form-group
@@ -34,8 +36,9 @@ form(name="step.form", novalidate)
       ng-model="createVM.data.description"
       readonly
     )
+  .h4
+    strong Product Spec.
   .form-group
-    label Product
     input(type="hidden", ng-model="createVM.product.id", required)
     .table-responsive
       table.table.table-bordered
@@ -57,8 +60,9 @@ form(name="step.form", novalidate)
                 | {{ createVM.product.isBundle ? 'Bundle' : 'Single' }}
             td
               time(am-time-ago="createVM.product.lastUpdate")
+  .h4
+    strong Catalogue
   .form-group
-    label Catalogue
     input(type="hidden", ng-model="createVM.catalogue.id", required)
     .table-responsive
       table.table.table-bordered
@@ -89,25 +93,21 @@ form(name="step.form", novalidate)
           span.item-text {{ category.name }}
   .row
     .col-sm-12
-      label Pricing models
+      .h4
+        strong Price plans
       table.table.table-bordered
         thead
           tr
+            th #
             th Name
-            th Type
-            th Unit
-        tbody(ng-show="createVM.data.productOfferingPrice.length")
-          tr(ng-repeat="pricing in createVM.data.productOfferingPrice")
-            td
-              span {{ pricing.name }}
-            td
-              span {{ pricing.priceType }}
-            td(ng-if="pricing.priceType == 'one time'")
-              span {{ pricing.priceType }}
-            td(ng-if="pricing.priceType == 'recurring'")
-              span {{ pricing.recurringChargePeriod }}
-            td(ng-if="pricing.priceType == 'usage'")
-              span {{ pricing.unitOfMeasure }}
+            th Price
+            th Unit / Charge period
+        tbody
+          tr(ng-repeat="pricePlan in createVM.pricePlans")
+            th {{ $index + 1 }}
+            td {{ pricePlan.name }}
+            td {{ pricePlan.price.taxIncludedAmount }} {{ pricePlan.price.currencyCode | uppercase }}
+            td {{ pricePlan.unitOfMeasure }}{{ pricePlan.recurringChargePeriod }}
   .form-group(ng-show="createVM.data.isBundle")
     label Bundled Offering
     .table-responsive

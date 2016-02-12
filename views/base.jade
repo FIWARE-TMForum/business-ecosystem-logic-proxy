@@ -127,6 +127,8 @@ html(ng-app="app")
       include ./partials/offering/search.jade
     script(type="text/ng-template", id="offering/detail")
       include ./partials/offering/detail.jade
+    script(type="text/ng-template", id="offering/detail/product")
+      include ./partials/offering/detail-product.jade
     script(type="text/ng-template", id="offering/detail/pricing")
       include ./partials/offering/detail-pricing.jade
 
@@ -153,6 +155,8 @@ html(ng-app="app")
       include ./partials/stock/product/update.jade
     script(type="text/ng-template", id="stock/product/update/bundled")
       include ./partials/stock/product/update-bundledproduct.jade
+    script(type="text/ng-template", id="stock/product/update/characteristic")
+      include ./partials/stock/product/update-form-characteristic.jade
     script(type="text/ng-template", id="stock/product/update/attachment")
       include ./partials/stock/product/update-form-attachment.jade
 
@@ -164,8 +168,8 @@ html(ng-app="app")
       include ./partials/stock/product-offering/create-form.jade
     script(type="text/ng-template", id="stock/product-offering/create/bundle")
       include ./partials/stock/product-offering/create-form-bundle.jade
-    script(type="text/ng-template", id="stock/product-offering/create/pricing")
-      include ./partials/stock/product-offering/create-form-pricing.jade
+    script(type="text/ng-template", id="stock/product-offering/create/priceplan")
+      include ./partials/stock/product-offering/create-form-priceplan.jade
     script(type="text/ng-template", id="stock/product-offering/create/product")
       include ./partials/stock/product-offering/create-form-product.jade
     script(type="text/ng-template", id="stock/product-offering/create/catalogue")

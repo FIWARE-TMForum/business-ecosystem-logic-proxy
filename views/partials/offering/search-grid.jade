@@ -18,6 +18,9 @@
       p
         span.label(ng-class="offering.isBundle ? 'label-bundle' : 'label-single'")
           | {{ offering.isBundle ? 'Bundle' : 'Single' }}
+      .h5.text-right.text-success(ng-if="offering.getCheapestPriceplan() != null")
+        strong
+          span From {{ offering.getCheapestPriceplan().price.taxIncludedAmount }} {{ offering.getCheapestPriceplan().price.currencyCode | uppercase }}
       .btn-toolbar(ng-show="user.isAuthenticated()")
         .btn-group.pull-right
           a.btn.btn-sm.btn-default(ng-click="user.order(offering)", ng-disabled="user.contains(offering)")

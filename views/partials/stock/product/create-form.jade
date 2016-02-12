@@ -10,7 +10,6 @@ form(name="step.form", novalidate)
           name="name"
           ng-model="createVM.data.name"
           required
-          ng-minlength="5"
           ng-maxlength="30"
           field-unique="Product"
         )
@@ -19,7 +18,6 @@ form(name="step.form", novalidate)
           ng-show="createForm.hasError(step.form.name)"
         )
           span(ng-message="required") This field is required.
-          span(ng-message="minlength") This field must contain at least 5 chars.
           span(ng-message="maxlength") This field must not exceed 30 chars.
           span(ng-message="unique") This name is already taken.
     .col-sm-4

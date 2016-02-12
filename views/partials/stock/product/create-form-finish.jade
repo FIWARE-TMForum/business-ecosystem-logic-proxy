@@ -47,23 +47,28 @@ form(name="step.form", novalidate)
           required
           readonly
         )
+  .h4
+    strong Characteristics
   .row
     .col-sm-12
-      label Characteristics
       table.table.table-bordered
         thead
           tr
+            th #
             th Name
             th Type
-            th Is Configurable
-        tbody(ng-show="createVM.charList.length")
-          tr(ng-repeat="char in createVM.charList")
+            th Values
+            th Default
+        tbody
+          tr(ng-repeat="characteristic in createVM.characteristics")
+            th {{ $index + 1 }}
+            td {{ characteristic.name }}
+            td {{ characteristic.valueType }}
             td
-              span {{ char.name }}
-            td
-              span {{ char.valueType }}
-            td
-              span {{ char.configurable }}
+              span(ng-repeat="value in characteristic.productSpecCharacteristicValue")
+                span(ng-if="!$first") , 
+                span {{ createVM.getFormattedValueOf(characteristic, value) }}
+            td {{ createVM.getFormattedValueOf(characteristic, createVM.getDefaultValueOf(characteristic)) }}
   .form-group
     label Description
     textarea.form-control(

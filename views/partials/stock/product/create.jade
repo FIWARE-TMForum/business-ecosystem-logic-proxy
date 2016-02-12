@@ -18,5 +18,6 @@
           .col-xs-12.col-md-9
             .row(ng-repeat="step in createVM.stepList", ng-show="createForm.stepIndex == $index")
               .col-xs-12
-                .h3 {{ step.title }}
+                .h2 Step {{ $index + 1}}: {{ step.title }}
+                hr
                 ng-include(src="step.templateUrl")

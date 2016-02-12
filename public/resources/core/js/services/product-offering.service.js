@@ -21,17 +21,40 @@
             }
         });
 
+        var PRICE_TYPES = {
+            ONE_TIME: 'One time',
+            RECURRING: 'Recurring',
+            USAGE: 'Usage'
+        };
+
+        var PRICE_CURRENCIES = {
+            EUR: 'Euro',
+            USD: 'US Dollar',
+            CAD: 'Canadian Dollar'
+        };
+
+        var PRICE_PERIODS = {
+            WEEKLY: 'Weekly',
+            MONTHLY: 'Monthly',
+            YEARLY: 'Yearly'
+        };
+
         resource.prototype.getPicture = getPicture;
+        resource.prototype.getCheapestPriceplan = getCheapestPriceplan;
         resource.prototype.getCategoryBreadcrumbs = getCategoryBreadcrumbs;
         resource.prototype.serialize = serialize;
 
         return {
+            PRICE_TYPES: PRICE_TYPES,
+            PRICE_CURRENCIES: PRICE_CURRENCIES,
+            PRICE_PERIODS: PRICE_PERIODS,
             search: search,
             exists: exists,
             create: create,
             detail: detail,
             update: update,
-            buildInitialData: buildInitialData
+            buildInitialData: buildInitialData,
+            createPricePlan: createPricePlan
         };
 
         function search(filters) {
@@ -304,6 +327,38 @@
 
                 return breadcrumbs;
             }
+        }
+
+        function getCheapestPriceplan() {
+            /* jshint validthis: true */
+            var i, priceplan;
+
+            for (i = 0; i < this.productOfferingPrice.length; i++) {
+                if (this.productOfferingPrice[i].priceType === 'one time') {
+                    if (priceplan == null || priceplan.price.taxRate > this.productOfferingPrice[i].price.taxRate) {
+                        priceplan = this.productOfferingPrice[i];
+                    }
+                }
+            }
+
+            return priceplan;
+        }
+
+        function createPricePlan() {
+            return {
+                name: "",
+                description: "",
+                priceType: PRICE_TYPES.ONE_TIME,
+                recurringChargePeriod: "",
+                unitOfMeasure: "",
+                price: {
+                    taxRate: 20,
+                    taxIncludedAmount: 0,
+                    dutyFreeAmount: 0,
+                    percentage: 0,
+                    currencyCode: 'EUR'
+                }
+            };
         }
     }
 

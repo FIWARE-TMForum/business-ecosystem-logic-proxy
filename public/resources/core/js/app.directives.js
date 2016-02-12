@@ -12,7 +12,8 @@
         .directive('bsTooltip', bsTooltipDirective)
         .directive('fileModel', fileModelDirective)
         .directive('noImage', noImageDirective)
-        .directive('fieldUnique', fieldUniqueDirective);
+        .directive('fieldUnique', fieldUniqueDirective)
+        .directive('fieldArray', fieldArrayDirective);
 
     function bsTooltipDirective() {
         return {
@@ -85,6 +86,22 @@
                                 controller.$setValidity('unique', !found);
                             });
                         }
+                    }
+                });
+            }
+        };
+    }
+
+    function fieldArrayDirective($http, $injector) {
+        return {
+            require: 'ngModel',
+            link: function (scope, element, attrs, controller) {
+
+                scope.$watch(attrs.ngModel + ".length", function (arrayLength) {
+                    var params = {};
+
+                    if (arrayLength != null) {
+                        controller.$setValidity('limitFrom', arrayLength >= parseInt(attrs.limitFrom));
                     }
                 });
             }

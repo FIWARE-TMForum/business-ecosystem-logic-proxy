@@ -1,176 +1,35 @@
-form(name="step.createform", novalidate)
-  .row
-    .col-sm-12
-      table.table.table-bordered(ng-show="createVM.charList.length")
-        thead
-          tr
-            th Name
-            th Type
-            th Is Configurable
-            th Delete
-        tbody
-          tr(ng-repeat="char in createVM.charList")
-            td
-              span {{ char.name }}
-            td
-              span {{ char.valueType }}
-            td
-              span {{ char.configurable }}
-            td
-              i.fa.fa-close(ng-click="createVM.removeCharacteristic(char)")
-  .row
-    .col-sm-8
-      .form-group(
-        ng-class="{ 'has-error': createForm.hasError(step.createform.name) }"
-      )
-        label Name
-        input.form-control(
-          type="text"
-          name="name"
-          ng-model="createVM.currentChar.name"
-          required
-          ng-maxlength="30"
-        )
-        .help-block(
-          ng-messages="step.createform.name.$error"
-          ng-show="createForm.hasError(step.createform.name)"
-        )
-          span(ng-message="required") This field is required.
-          span(ng-message="maxlength") This field must not exceed 30 chars.
-    .col-sm-4
-      label Type
-      select.form-control(
-        name="type"
-        ng-model="createVM.currentChar.valueType"
-      )
-        option(value="string") String
-        option(value="number") Number
-  .item-toggle
-    label.toggle Configurable?
-      .track
-        input(
-          type="checkbox"
-          name="configurable"
-          ng-model="createVM.currentChar.configurable"
-        )
-        i.fa.fa-2x
-  .row
-    .col-sm-12
-      .form-group
-        label
-          | Description 
-          small.text-muted optional
-        textarea.form-control(rows="3", name="description", ng-model="createVM.currentChar.description")
-
-  .row(ng-show="createVM.currentChar.valueType === 'string'")
-    .col-sm-12
-      .form-group(
-        ng-class="{ 'has-error': createForm.hasError(step.createform.valueStr) }"
-      )
-        label Value
-        input.form-control(
-          type="text"
-          name="valueStr"
-          ng-model="createVM.currentValue.value"
-          ng-required="createVM.currentChar.valueType === 'string'"
-          ng-maxlength="30"
-        )
-        .help-block(
-          ng-messages="step.createform.valueStr.$error"
-          ng-show="createForm.hasError(step.createform.valueStr)"
-        )
-          span(ng-message="required") This field is required.
-          span(ng-message="maxlength") This field must not exceed 30 chars.
-
-  .row(ng-show="createVM.currentChar.valueType === 'number'")
-    .col-sm-4
-      label Value type
-      select.form-control(
-        name="value-type"
-        ng-model="createVM.currentValueType"
-      )
-        option(value="value") Single Value
-        option(value="range") Range
-
-    .col-sm-8
-      .form-group(
-        ng-class="{ 'has-error': createForm.hasError(step.createform.unit) }"
-      )
-        label Unit of measure
-        input.form-control(
-          type="text"
-          name="unit"
-          ng-model="createVM.currentValue.unitOfMeasure"
-          ng-required="createVM.currentChar.valueType === 'number'"
-          ng-maxlength="30"
-        )
-        .help-block(
-          ng-messages="step.createform.unit.$error"
-          ng-show="createForm.hasError(step.createform.unit)"
-        )
-          span(ng-message="required") This field is required.
-          span(ng-message="maxlength") This field must not exceed 30 chars.
-
-  .row(ng-show="createVM.currentChar.valueType === 'number'")
-    .col-sm-12(ng-show="createVM.currentValueType === 'value'")
-      .form-group(
-        ng-class="{ 'has-error': createForm.hasError(step.createform.valueNum) }"
-      )
-        label Value
-        input.form-control(
-          type="number"
-          name="valueNum"
-          ng-model="createVM.currentValue.value"
-          ng-required="createVM.currentChar.valueType === 'number' && createVM.currentValueType === 'value'"
-        )
-        .help-block(
-          ng-messages="step.createform.valueNum.$error"
-          ng-show="createForm.hasError(step.createform.valueNum)"
-        )
-          span(ng-message="required") This field is required.
-          span(ng-message="number") This field must be a number.
-
-    .col-sm-6(ng-show="createVM.currentValueType === 'range'")
-      .form-group(
-        ng-class="{ 'has-error': createForm.hasError(step.createform.valueFrom) }"
-      )
-        label Value from
-        input.form-control(
-          type="number"
-          name="valueFrom"
-          ng-model="createVM.currentValue.valueFrom"
-          ng-required="createVM.currentChar.valueType === 'number' && createVM.currentValueType === 'range'"
-        )
-        .help-block(
-          ng-messages="step.createform.valueFrom.$error"
-          ng-show="createForm.hasError(step.createform.valueFrom)"
-        )
-          span(ng-message="required") This field is required.
-          span(ng-message="number") This field must be a number.
-
-    .col-sm-6(ng-show="createVM.currentValueType === 'range'")
-      .form-group(
-        ng-class="{ 'has-error': createForm.hasError(step.createform.valueTo) }"
-      )
-        label Value to
-        input.form-control(
-          type="number"
-          name="valueTo"
-          ng-model="createVM.currentValue.valueTo"
-          ng-required="createVM.currentChar.valueType === 'number' && createVM.currentValueType === 'range'"
-        )
-        .help-block(
-          ng-messages="step.createform.valueTo.$error"
-          ng-show="createForm.hasError(step.createform.valueTo)"
-        )
-          span(ng-message="required") This field is required.
-          span(ng-message="number") This field must be a number.
-
-  .form-group.text-left
-    a.btn.btn-success(ng-click="createVM.saveCharacteristic()", ng-disabled="!step.createform.$valid")
-      span.item-icon.fa.fa-save
-      span.item-text Add characteristic
+.h4
+  strong Create a characteristic
+include ./create-form-characteristic-form.jade
+.h4
+  strong Overview
+.alert.alert-warning.text-center(ng-if="!createVM.characteristics.length")
+  | No characteristics created. You must create 
+  strong at least one.
+table.table.table-bordered(ng-show="createVM.characteristics.length")
+  thead
+    tr
+      th #
+      th Name
+      th Type
+      th Values
+      th Default
+      th Delete
+  tbody
+    tr(ng-repeat="characteristic in createVM.characteristics")
+      th {{ $index + 1 }}
+      td {{ characteristic.name }}
+      td {{ characteristic.valueType }}
+      td
+        span(ng-repeat="value in characteristic.productSpecCharacteristicValue")
+          span(ng-if="!$first") , 
+          span {{ createVM.getFormattedValueOf(characteristic, value) }}
+      td {{ createVM.getFormattedValueOf(characteristic, createVM.getDefaultValueOf(characteristic)) }}
+      td
+        a.alert-link-danger(ng-click="createVM.removeCharacteristic($index)")
+          span.fa.fa-trash
 form(name="step.form", novalidate)
+   input(type="hidden", name="characteristics", ng-model="createVM.characteristics", field-array, limit-from="0", required)
   .form-group.text-right
     a.btn.btn-default(ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])", ng-disabled="!step.form.$valid")
       span.item-text Next

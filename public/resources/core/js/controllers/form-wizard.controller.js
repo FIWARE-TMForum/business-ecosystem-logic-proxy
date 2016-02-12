@@ -18,6 +18,8 @@
         vm.hasError = hasError;
         vm.nextStep = nextStep;
         vm.isDisabled = isDisabled;
+        vm.resetForm = resetForm;
+        vm.resetFormField = resetFormField;
 
         function isDisabled(index, step) {
 
@@ -38,6 +40,18 @@
 
         function hasError(field) {
             return field && (field.$invalid && (field.$dirty || field.$touched));
+        }
+
+        function resetForm(form) {
+            form.$setPristine();
+            form.$setUntouched();
+            return true;
+        }
+
+        function resetFormField(formField) {
+            formField.$setPristine();
+            formField.$setUntouched();
+            return true;
         }
     }
 

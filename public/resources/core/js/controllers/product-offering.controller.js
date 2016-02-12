@@ -52,24 +52,24 @@
                 templateUrl: 'stock/product-offering/create/general'
             },
             {
-                title: 'Bundle',
+                title: 'Bundled Offering',
                 templateUrl: 'stock/product-offering/create/bundle'
             },
             {
-                title: 'Select product',
+                title: 'Product Spec.',
                 templateUrl: 'stock/product-offering/create/product'
             },
             {
-                title: 'Select catalogue',
+                title: 'Catalogue',
                 templateUrl: 'stock/product-offering/create/catalogue'
             },
             {
-                title: 'Choose categories',
+                title: 'Category',
                 templateUrl: 'stock/product-offering/create/categories'
             },
             {
-                title: 'Pricing models',
-                templateUrl: 'stock/product-offering/create/pricing'
+                title: 'Price Plans',
+                templateUrl: 'stock/product-offering/create/priceplan'
             },
             {
                 title: 'Finish',
@@ -85,9 +85,6 @@
         vm.setProduct = setProduct;
         vm.setCatalogue = setCatalogue;
 
-        vm.savePricing = savePricing;
-        vm.removePricing = removePricing;
-
         vm.toggleBundle = toggleBundle;
         vm.hasOffering = hasOffering;
         vm.toggleOffering = toggleOffering;
@@ -95,10 +92,26 @@
         vm.appendCategory = appendCategory;
         vm.removeCategory = removeCategory;
 
-        initPricing();
+        /* PRICE PLANS MEMBERS */
+
+        var pricePlan = Offering.createPricePlan();
+
+        vm.PRICE_TYPES = Offering.PRICE_TYPES;
+        vm.PRICE_CURRENCIES = Offering.PRICE_CURRENCIES;
+        vm.PRICE_PERIODS = Offering.PRICE_PERIODS;
+
+        vm.pricePlan = angular.copy(pricePlan);
+        vm.pricePlans = [];
+
+        vm.selectPriceType = selectPriceType;
+        vm.selectCurrencyCode = selectCurrencyCode;
+
+        vm.createPricePlan = createPricePlan;
+        vm.removePricePlan = removePricePlan;
 
         function create() {
             vm.data.category = getCategorySet();
+            vm.productOfferingPrice = vm.pricePlans;
             Offering.create(vm.data, vm.product, vm.catalogue).then(function (offeringCreated) {
                 $state.go('stock.offering.update', {
                     offeringId: offeringCreated.id
@@ -139,43 +152,45 @@
             return vm.data.bundledProductOffering.indexOf(offering) !== -1;
         }
 
-        function initPricing() {
-            vm.currentPricing = {
-                priceType: 'one time',
-                price: {
-                    taxRate: 20,
-                    currencyCode: 'EUR',
-                    percentage: 0
-                },
-                recurringChargePeriod: 'weekly'
-            };
+        /* PRICE PLANS METHODS */
+
+        function createPricePlan() {
+
+            extendDutyFreeAmount();
+            vm.pricePlans.push(vm.pricePlan);
+            vm.pricePlan = angular.copy(pricePlan);
+
+            return true;
         }
 
-        function savePricing() {
-            // Clean pricing fields
-            if (vm.currentPricing.priceType === 'one time') {
-                vm.currentPricing.unitOfMeasure = '';
-                vm.currentPricing.recurringChargePeriod = '';
-            } else if (vm.currentPricing.priceType === 'recurring') {
-                vm.currentPricing.unitOfMeasure = '';
-            } else {
-                vm.currentPricing.recurringChargePeriod = '';
+        function removePricePlan(index) {
+            vm.pricePlans.splice(index, 1);
+        }
+
+        function extendDutyFreeAmount() {
+            var taxIncludedAmount = vm.pricePlan.price.taxIncludedAmount;
+            var taxRate = vm.pricePlan.price.taxRate;
+
+            vm.pricePlan.price.dutyFreeAmount = taxIncludedAmount / ((100 + taxRate) / 100);
+        }
+
+        function selectPriceType(key) {
+
+            if (key in Offering.PRICE_TYPES) {
+                vm.pricePlan.priceType = Offering.PRICE_TYPES[key];
+                vm.pricePlan.unitOfMeasure = "";
+                vm.pricePlan.recurringChargePeriod = "";
+
+                if (vm.pricePlan.priceType === Offering.PRICE_TYPES.RECURRING) {
+                    vm.pricePlan.recurringChargePeriod = Offering.PRICE_PERIODS.WEEKLY;
+                }
             }
-
-            // Calculate duty free amount
-            var taxInc = vm.currentPricing.price.taxIncludedAmount;
-            var taxRate = vm.currentPricing.price.taxRate;
-
-            vm.currentPricing.price.dutyFreeAmount = taxInc / ((100 + taxRate) / 100);
-            vm.data.productOfferingPrice.push(vm.currentPricing);
-            initPricing();
         }
 
-        function removePricing(pricing) {
-            var index = vm.data.productOfferingPrice.indexOf(pricing);
+        function selectCurrencyCode(key) {
 
-            if (index > -1) {
-                vm.data.productOfferingPrice.splice(index, 1);
+            if (key in Offering.PRICE_CURRENCIES) {
+                vm.pricePlan.price.currencyCode = key;
             }
         }
 
@@ -243,6 +258,7 @@
         var vm = this;
 
         vm.item = {};
+        vm.$state = $state;
 
         Offering.detail($state.params.offeringId).then(function (offeringRetrieved) {
             vm.item = offeringRetrieved;
