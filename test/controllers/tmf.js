@@ -17,7 +17,7 @@ describe('TMF Controller', function() {
             return {
                 'Authorization': 'Bearer EXAMPLE',
                 'Accept': 'application/json'
-            }
+            };
         },
         attachUserHeaders: function(headers, userInfo) {
             headers['X-Nick-Name'] = userInfo.id;
