@@ -102,14 +102,6 @@ describe('Catalog API', function() {
         callback();
     };
 
-    var checkRoleFalse = function(userInfo, role) {
-        return false;
-    };
-
-    var checkRoleTrue = function(userInfo, role) {
-        return true;
-    };
-
     var isOwnerFalse = function(userInfo, info) {
         return false;
     };
@@ -119,7 +111,10 @@ describe('Catalog API', function() {
     };
 
     var testCreateBasic = function(user, body, roles, error, expectedStatus, expectedErr,
-                                   checkRoleMethod, owner, done) {
+                                   isSeller, sellerChecked, owner, done) {
+
+        var checkRoleMethod = jasmine.createSpy();
+        checkRoleMethod.and.returnValue(isSeller);
 
         var tmfUtils = {
             validateLoggedIn: validateLoggedOk,
@@ -141,6 +136,12 @@ describe('Catalog API', function() {
 
         catalogApi.checkPermissions(req, function(err) {
 
+            if (sellerChecked) {
+                expect(checkRoleMethod).toHaveBeenCalledWith(req.user, config.oauth2.roles.seller);
+            }
+
+            expect(checkRoleMethod.calls.count()).toBe(sellerChecked ? 1 : 0);
+
             if (!error) {
                 expect(err).toBe(null);
             } else {
@@ -154,12 +155,12 @@ describe('Catalog API', function() {
     };
 
     it('should reject creation requests with invalid JSON', function(done) {
-        testCreateBasic('test', '{', [], true, 400, 'The provided body is not a valid JSON document', checkRoleTrue,
+        testCreateBasic('test', '{', [], true, 400, 'The provided body is not a valid JSON document', true, false,
             true, done);
     });
 
     it('should reject creation requests when user has not the seller role', function(done) {
-        testCreateBasic('test', '{}', [], true, 403, 'You are not authorized to create resources', checkRoleFalse,
+        testCreateBasic('test', '{}', [], true, 403, 'You are not authorized to create resources', false, true,
             false, done);
     });
 
@@ -171,7 +172,7 @@ describe('Catalog API', function() {
         };
 
         testCreateBasic(user, JSON.stringify(resource), [{ name: config.oauth2.roles.seller }], true, 403,
-            'The user making the request and the specified owner are not the same user', checkRoleTrue,
+            'The user making the request and the specified owner are not the same user', true, true,
             false, done);
     });
 
@@ -184,25 +185,19 @@ describe('Catalog API', function() {
 
         // Error parameters are not required when the resource can be created
         testCreateBasic(user, JSON.stringify(resource), [{ name: config.oauth2.roles.seller }], false, null, null,
-            checkRoleTrue, true, done);
-    });
-
-    it('should allow to create resources when user is owner', function(done) {
-        var user = 'admin';
-        var resource = {
-            relatedParty: [{ id: 'test', role: 'OwNeR' }]
-        };
-        testCreateBasic(user, JSON.stringify(resource), [{ name: config.oauth2.roles.admin }], false, null, null,
-            checkRoleTrue, true, done);
+            true, true, true, done);
     });
 
     var testCreateOffering = function(productRequestInfo, catalogRequestInfo, errorStatus, errorMsg, done) {
+
+        var checkRoleMethod = jasmine.createSpy();
+        checkRoleMethod.and.returnValue(true);
 
         var defaultErrorMessage = 'Internal Server Error';
 
         var tmfUtils = {
             validateLoggedIn: validateLoggedOk,
-            checkRole: checkRoleTrue,
+            checkRole: checkRoleMethod,
             isOwner: productRequestInfo.role.toLowerCase() === 'owner' ? isOwnerTrue : isOwnerFalse
         };
 
@@ -370,6 +365,9 @@ describe('Catalog API', function() {
 
     var testCreateProduct = function(storeValidator, errorStatus, errorMsg, owner, done) {
 
+        var checkRoleMethod = jasmine.createSpy();
+        checkRoleMethod.and.returnValue(true);
+
         // Store Client
         var storeClient = {
             storeClient: {
@@ -379,7 +377,7 @@ describe('Catalog API', function() {
 
         var tmfUtils = {
             validateLoggedIn: validateLoggedOk,
-            checkRole: checkRoleTrue,
+            checkRole: checkRoleMethod,
             isOwner: owner ? isOwnerTrue : isOwnerFalse
         };
 
@@ -452,9 +450,12 @@ describe('Catalog API', function() {
 
     var testUpdate = function(method, requestFails, isOwnerMethod, done) {
 
+        var checkRoleMethod = jasmine.createSpy();
+        checkRoleMethod.and.returnValue(true);
+
         var tmfUtils = {
             validateLoggedIn: validateLoggedOk,
-            checkRole: checkRoleTrue,
+            checkRole: checkRoleMethod,
             isOwner: isOwnerMethod
         };
 
@@ -552,11 +553,14 @@ describe('Catalog API', function() {
     var testUpdateProductOffering = function(offeringBody, productRequestInfo, catalogRequestInfo, expectedErrorStatus,
                                              expectedErrorMsg, done) {
 
+        var checkRoleMethod = jasmine.createSpy();
+        checkRoleMethod.and.returnValue(true);
+
         var defaultErrorMessage = 'Internal Server Error';
 
         var tmfUtils = {
             validateLoggedIn: validateLoggedOk,
-            checkRole: checkRoleTrue,
+            checkRole: checkRoleMethod,
             isOwner: productRequestInfo.owner ? isOwnerTrue : isOwnerFalse
         };
 
@@ -749,11 +753,14 @@ describe('Catalog API', function() {
     var testChangeProductCatalogStatus = function(assetPath, offeringsPath, assetBody,
                                                   offeringsInfo, errorStatus, errorMsg, done) {
 
+        var checkRoleMethod = jasmine.createSpy();
+        checkRoleMethod.and.returnValue(true);
+
         var defaultErrorMessage = 'Internal Server Error';
 
         var tmfUtils = {
             validateLoggedIn: validateLoggedOk,
-            checkRole: checkRoleTrue,
+            checkRole: checkRoleMethod,
             isOwner: function () {
                 return true;
             }

@@ -199,8 +199,7 @@ var catalog = (function() {
         }
 
         // Check that the user has the seller role or is an admin
-        if (!tmfUtils.checkRole(req.user, config.oauth2.roles.seller) && !
-                tmfUtils.checkRole(req.user, config.oauth2.roles.admin)) {
+        if (!tmfUtils.checkRole(req.user, config.oauth2.roles.seller)) {
 
             callback({
                 status: 403,
