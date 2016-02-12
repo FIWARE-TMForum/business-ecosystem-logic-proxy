@@ -72,7 +72,7 @@ describe('Utils', function() {
                 }
             }
 
-        }
+        };
 
         it('should include the first IP', function() {
             var remoteAddress = '127.0.0.1';
@@ -80,7 +80,7 @@ describe('Utils', function() {
         });
 
         it ('should include the second IP', function() {
-            var previousForwardedFor = '192.168.1.1'
+            var previousForwardedFor = '192.168.1.1';
             var remoteAddress = '127.0.0.1';
             testProxiedRequestHeaders(previousForwardedFor, remoteAddress, previousForwardedFor + ',' + remoteAddress);
         });
@@ -88,23 +88,35 @@ describe('Utils', function() {
         it('should not include a comma when the header is in blank', function() {
             var remoteAddress = '127.0.0.1';
             testProxiedRequestHeaders('', remoteAddress, remoteAddress);
-        })
+        });
     });
 
     describe('Get API Port', function() {
 
-        var testgetAPIPort = function(api, expectedPort) {
+        var testGetAPIPort = function(api) {
             var port = utils.getAPIPort(api);
-            expect(port).toBe(expectedPort);
+            expect(port).toBe(config.endpoints[api].port);
         };
+        
+        it('should return correct port for catalog', function() {
+            testGetAPIPort('catalog');
+        });        
 
-        // Execute tests for all the registerd APIs
-        for (var api in config.endpoints) {
-            
-            it('should return correct port for ' + api, function() {
-                testgetAPIPort(api, config.endpoints[api].port);
-            });
-        }
+        it('should return correct port for ordering', function() {
+            testGetAPIPort('ordering');
+        });        
+
+        it('should return correct port for inventory', function() {
+            testGetAPIPort('inventory');
+        });        
+
+        it('should return correct port for charging', function() {
+            testGetAPIPort('charging');
+        });
+
+        it('should return correct port for rss', function() {
+            testGetAPIPort('rss');
+        });
     });
 
     describe('Get Auth Token', function() {
@@ -173,7 +185,7 @@ describe('Utils', function() {
                         port: port
                     }
                 }
-            }
+            };
         };
 
         it('should return no referer when referer is not set', function() {
@@ -260,5 +272,5 @@ describe('Utils', function() {
         });
 
 
-    })
+    });
 });
