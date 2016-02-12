@@ -67,10 +67,10 @@ var tmf = (function() {
                     var basicLogMessage = 'Post-Validation (' + api + '): ';
 
                     if (err) {
-                        utils.logMessage(logger, 'warn', req, basicLogMessage + err.message);
+                        utils.log(logger, 'warn', req, basicLogMessage + err.message);
                         sendError(res, err);
                     } else {
-                        utils.logMessage(logger, 'info', req, basicLogMessage + 'OK');
+                        utils.log(logger, 'info', req, basicLogMessage + 'OK');
                         callback();
                     }
                 });
@@ -86,7 +86,7 @@ var tmf = (function() {
 
         if (apiControllers[api] === undefined) {
 
-            utils.logMessage(logger, 'warn', req, 'API ' + api + ' not defined');
+            utils.log(logger, 'warn', req, 'API ' + api + ' not defined');
 
             sendError(res, {
                 status: 404,
@@ -99,10 +99,10 @@ var tmf = (function() {
                 var basicLogMessage = 'Check Permissions (' + api + '): ';
 
                 if (err) {
-                    utils.logMessage(logger, 'warn', req, basicLogMessage + err.message);
+                    utils.log(logger, 'warn', req, basicLogMessage + err.message);
                     sendError(res, err);
                 } else {
-                    utils.logMessage(logger, 'info', req, basicLogMessage + 'OK');
+                    utils.log(logger, 'info', req, basicLogMessage + 'OK');
                     redirectRequest(req, res);
                 }
             });

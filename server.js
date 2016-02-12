@@ -142,12 +142,12 @@ app.use(bodyParser.text({
 app.use(function(req, res, next) {
     req.id = uuid.v4();
 
-    utils.logMessage(logger, 'debug', req, 'Headers: ' + JSON.stringify(req.headers));
-    utils.logMessage(logger, 'debug', req, 'Body: ' + JSON.stringify(req.body));
+    utils.log(logger, 'debug', req, 'Headers: ' + JSON.stringify(req.headers));
+    utils.log(logger, 'debug', req, 'Body: ' + JSON.stringify(req.body));
 
     onFinished(res, function(err, res) {
         var logLevel = Math.floor(res.statusCode / 100) < 4 ? 'info': 'warn';
-        utils.logMessage(logger, logLevel, req, 'Status: ' + res.statusCode);
+        utils.log(logger, logLevel, req, 'Status: ' + res.statusCode);
     });
 
     next();
@@ -187,12 +187,12 @@ var headerAuthentication = function(req, res, next) {
         var authToken = utils.getAuthToken(req.headers);
         FIWARE_STRATEGY.userProfile(authToken, function(err, userProfile) {
             if (err) {
-                utils.logMessage(logger, 'warn', req, 'Token ' + authToken + ' invalid');
+                utils.log(logger, 'warn', req, 'Token ' + authToken + ' invalid');
                 utils.sendUnauthorized(res, 'invalid auth-token')
             } else {
                 // Check that the provided access token is valid for the given application
                 if (userProfile.appId !== config.oauth2.clientID) {
-                    utils.logMessage(logger, 'warn', req, 'Token ' + authToken + ' is from a different app');
+                    utils.log(logger, 'warn', req, 'Token ' + authToken + ' is from a different app');
                     utils.sendUnauthorized(res, 'The auth-token scope is not valid for the current application');
                 } else {
                     req.user = userProfile;
@@ -206,10 +206,10 @@ var headerAuthentication = function(req, res, next) {
 
 
         if (err.name === 'AuthorizationTokenNotFound') {
-            utils.logMessage(logger, 'info', req, 'request without authentication');
+            utils.log(logger, 'info', req, 'request without authentication');
             next();
         } else {
-            utils.logMessage(logger, 'warn', req, err.message);
+            utils.log(logger, 'warn', req, err.message);
             utils.sendUnauthorized(res, err.message);
         }
     }
@@ -425,7 +425,7 @@ app.use(function (req, res, next) {
     res.header('Access-Control-Allow-Headers', 'origin, content-type, X-Auth-Token, Tenant-ID, Authorization');
 
     if (req.method == 'OPTIONS') {
-        utils.logMessage(logger, 'debug', req, 'CORS request');
+        utils.log(logger, 'debug', req, 'CORS request');
 
         res.status(200);
         res.header('Content-Length', '0');
@@ -457,7 +457,7 @@ app.all(config.proxyPrefix + '/*', headerAuthentication, function(req, res, next
 
 app.use(function(err, req, res, next) {
 
-    utils.logMessage(logger, 'fatal', req, 'Unexpected unhandled exception - ' + err.name +
+    utils.log(logger, 'fatal', req, 'Unexpected unhandled exception - ' + err.name +
         ': ' + err.message + '. Stack trace:\n' + err.stack);
 
     res.status(500);
