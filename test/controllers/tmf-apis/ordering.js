@@ -212,7 +212,9 @@ describe('Ordering API', function() {
                 return valid;
             };
 
-            var testOrderCreation = function (userInfo, body, expectedRes, done, checkReq) {
+            var testOrderCreation = function (userInfo, body, customerRoleRequired, expectedRes, done, checkReq) {
+
+                config.customerRoleRequired = customerRoleRequired;
 
                 var tmfUtils = {
                     validateLoggedIn: validateLoggedOk,
@@ -239,14 +241,14 @@ describe('Ordering API', function() {
 
             };
 
-            var testValidOrdering = function (nOrderItems, done) {
+            var testValidOrdering = function (nOrderItems, userName, customerRoleRequired, done) {
 
                 var productOfferingPath = '/productOffering/1';
                 var productSpecPath = '/product/2';
                 var ownerName = 'example';
 
                 var user = {
-                    id: 'cust'
+                    id: userName
                 };
 
                 var orderItems = [];
@@ -262,7 +264,7 @@ describe('Ordering API', function() {
 
                 var body = {
                     relatedParty: [{
-                        id: 'cust',
+                        id: userName,
                         role: 'customer'
                     }],
                     orderItem: orderItems
@@ -278,13 +280,14 @@ describe('Ordering API', function() {
                     .times(nOrderItems)
                     .reply(200, {relatedParty: [{id: ownerName, role: 'owner'}]});
 
-                testOrderCreation(user, JSON.stringify(body), null, done, function (req) {
+                testOrderCreation(user, JSON.stringify(body), customerRoleRequired, null, done, function (req) {
                     var newBody = JSON.parse(req.body);
-                    expect(newBody.orderItem[0].product.relatedParty).toEqual([{
-                        id: 'cust',
-                        role: 'Customer',
-                        href: ''
-                    },
+                    expect(newBody.orderItem[0].product.relatedParty).toEqual([
+                        {
+                            id: userName,
+                            role: 'Customer',
+                            href: ''
+                        },
                         {
                             id: ownerName,
                             role: 'Seller',
@@ -293,12 +296,16 @@ describe('Ordering API', function() {
                 });
             };
 
+            it('should call the callback after validating the request when the user is not customer but customer role not required', function (done) {
+                testValidOrdering(1, 'no_cust', false, done);
+            });
+
             it('should call the callback after validating the request when the user is customer (1 order item)', function (done) {
-                testValidOrdering(1, done);
+                testValidOrdering(1, 'cust', true, done);
             });
 
             it('should call the callback after validating the request when the user is customer (2 order items)', function (done) {
-                testValidOrdering(2, done);
+                testValidOrdering(2, 'cust', true, done);
             });
 
             it('should fail if the product has not owners', function (done) {
@@ -337,7 +344,7 @@ describe('Ordering API', function() {
                     message: 'You cannot order a product without owners'
                 };
 
-                testOrderCreation(user, JSON.stringify(body), expected, done);
+                testOrderCreation(user, JSON.stringify(body), true, expected, done);
 
             });
 
@@ -375,7 +382,7 @@ describe('Ordering API', function() {
                     message: 'The system fails to retrieve the offering attached to the ordering item ' + orderItemId
                 };
 
-                testOrderCreation(user, JSON.stringify(body), expected, done);
+                testOrderCreation(user, JSON.stringify(body), true, expected, done);
             });
 
             it('should fail if the product attached to the order cannot be retrieved', function (done) {
@@ -417,7 +424,7 @@ describe('Ordering API', function() {
                     message: 'The system fails to retrieve the product attached to the ordering item ' + orderItemId
                 };
 
-                testOrderCreation(user, JSON.stringify(body), expected, done);
+                testOrderCreation(user, JSON.stringify(body), true, expected, done);
 
             });
 
@@ -431,7 +438,7 @@ describe('Ordering API', function() {
                     message: 'The resource is not a valid JSON document'
                 };
 
-                testOrderCreation(user, 'invalid', expected, done);
+                testOrderCreation(user, 'invalid', true, expected, done);
             });
 
             it('should fail when the user does not have the customer role', function (done) {
@@ -450,7 +457,7 @@ describe('Ordering API', function() {
                         role: 'customer'
                     }]
                 };
-                testOrderCreation(user, JSON.stringify(body), expected, done);
+                testOrderCreation(user, JSON.stringify(body), true, expected, done);
             });
 
             it('should fail when the relatedParty field has not been included', function (done) {
@@ -463,7 +470,7 @@ describe('Ordering API', function() {
                     message: 'A product order must contain a relatedParty field'
                 };
 
-                testOrderCreation(user, JSON.stringify({}), expected, done);
+                testOrderCreation(user, JSON.stringify({}), true, expected, done);
             });
 
             it('should fail when a customer has not been specified', function (done) {
@@ -482,7 +489,7 @@ describe('Ordering API', function() {
                         role: 'seller'
                     }]
                 };
-                testOrderCreation(user, JSON.stringify(body), expected, done);
+                testOrderCreation(user, JSON.stringify(body), true, expected, done);
             });
 
             it('should fail when the specified customer is not the user making the request', function (done) {
@@ -501,7 +508,7 @@ describe('Ordering API', function() {
                         role: 'customer'
                     }]
                 };
-                testOrderCreation(user, JSON.stringify(body), expected, done);
+                testOrderCreation(user, JSON.stringify(body), true, expected, done);
             });
 
             it('should fail when the request does not include an orderItem field', function (done) {
@@ -521,7 +528,7 @@ describe('Ordering API', function() {
                     }]
                 };
 
-                testOrderCreation(user, JSON.stringify(body), expected, done);
+                testOrderCreation(user, JSON.stringify(body), true, expected, done);
             });
 
             it('should fail when the request does not include a product in an orderItem', function (done) {
@@ -544,7 +551,7 @@ describe('Ordering API', function() {
                     }]
                 };
 
-                testOrderCreation(user, JSON.stringify(body), expected, done);
+                testOrderCreation(user, JSON.stringify(body), true, expected, done);
             });
 
             it('should fail when the request does not include a productOffering in an orderItem', function (done) {
@@ -568,7 +575,7 @@ describe('Ordering API', function() {
                     }]
                 };
 
-                testOrderCreation(user, JSON.stringify(body), expected, done);
+                testOrderCreation(user, JSON.stringify(body), true, expected, done);
             });
 
             it('should fail when an invalid customer has been specified in a product of an orderItem', function (done) {
@@ -600,7 +607,7 @@ describe('Ordering API', function() {
                     }]
                 };
 
-                testOrderCreation(user, JSON.stringify(body), expected, done);
+                testOrderCreation(user, JSON.stringify(body), true, expected, done);
             });
         });
 

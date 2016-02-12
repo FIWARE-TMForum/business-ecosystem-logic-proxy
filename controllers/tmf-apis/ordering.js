@@ -178,7 +178,7 @@ var ordering = (function(){
         }
 
         // Check that the user has the customer role
-        if (!tmfUtils.checkRole(req.user, config.oauth2.roles.customer)) {
+        if (config.customerRoleRequired && !tmfUtils.checkRole(req.user, config.oauth2.roles.customer)) {
 
             callback({
                 status: 403,

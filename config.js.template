@@ -31,6 +31,10 @@ config.oauth2 = {
     }
 }
 
+// Customer Role Required to buy items
+config.customerRoleRequired = false;
+
+// MongoDB
 config.mongoDb = {
     server: 'localhost',
     port: 27017,
