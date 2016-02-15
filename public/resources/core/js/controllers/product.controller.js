@@ -173,7 +173,7 @@
                 result = characteristicValue.value + " " + characteristicValue.unitOfMeasure;
                 break;
             case ProductSpec.VALUE_TYPES.NUMBER_RANGE:
-                result = characteristicValue.valueFrom + " - " + characteristicValue.valueFrom + " " + characteristicValue.unitOfMeasure;
+                result = characteristicValue.valueFrom + " - " + characteristicValue.valueTo + " " + characteristicValue.unitOfMeasure;
             }
 
             return result;
@@ -369,7 +369,7 @@
                 if (characteristicValue.value && characteristicValue.value.length) {
                     result = characteristicValue.value;
                 } else {
-                    result = characteristicValue.valueFrom + " - " + characteristicValue.valueFrom;
+                    result = characteristicValue.valueFrom + " - " + characteristicValue.valueTo;
                 }
 
                 result += " " + characteristicValue.unitOfMeasure;

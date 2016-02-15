@@ -4,8 +4,7 @@ include ./create-form-characteristic-form.jade
 .h4
   strong Overview
 .alert.alert-warning.text-center(ng-if="!createVM.characteristics.length")
-  | No characteristics created. You must create 
-  strong at least one.
+  | No characteristics created.
 table.table.table-bordered(ng-show="createVM.characteristics.length")
   thead
     tr

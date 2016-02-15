@@ -47,7 +47,11 @@
             .state('stock.product.update.attachment', {
                 url: '/attachment',
                 templateUrl: 'stock/product/update/attachment'
-            });
+            })
+            .state('stock.product.update.characteristic', {
+                url: '/characteristic',
+                templateUrl: 'stock/product/update/characteristic'
+            });;
     }
 
 })();
