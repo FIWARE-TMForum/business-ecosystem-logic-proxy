@@ -111,7 +111,7 @@
 
         function create() {
             vm.data.category = getCategorySet();
-            vm.productOfferingPrice = vm.pricePlans;
+            vm.data.productOfferingPrice = vm.pricePlans;
             Offering.create(vm.data, vm.product, vm.catalogue).then(function (offeringCreated) {
                 $state.go('stock.offering.update', {
                     offeringId: offeringCreated.id

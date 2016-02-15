@@ -22,9 +22,9 @@
         });
 
         var PRICE_TYPES = {
-            ONE_TIME: 'One time',
-            RECURRING: 'Recurring',
-            USAGE: 'Usage'
+            ONE_TIME: 'one time',
+            RECURRING: 'recurring',
+            USAGE: 'usage'
         };
 
         var PRICE_CURRENCIES = {
@@ -331,12 +331,15 @@
 
         function getCheapestPriceplan() {
             /* jshint validthis: true */
-            var i, priceplan;
+            var i, priceplan = null;
 
-            for (i = 0; i < this.productOfferingPrice.length; i++) {
-                if (this.productOfferingPrice[i].priceType === 'one time') {
-                    if (priceplan == null || priceplan.price.taxRate > this.productOfferingPrice[i].price.taxRate) {
-                        priceplan = this.productOfferingPrice[i];
+            // There can be offerings without price plan
+            if (this.productOfferingPrice) {
+                for (i = 0; i < this.productOfferingPrice.length; i++) {
+                    if (this.productOfferingPrice[i].priceType === 'one time') {
+                        if (priceplan == null || priceplan.price.taxIncludedAmount > this.productOfferingPrice[i].price.taxIncludedAmount) {
+                            priceplan = this.productOfferingPrice[i];
+                        }
                     }
                 }
             }

@@ -4,8 +4,7 @@ include ./create-form-priceplan-form.jade
 .h4
   strong Overview
 .alert.alert-warning.text-center(ng-if="!createVM.pricePlans.length")
-  | No price plans created. You must create 
-  strong at least one.
+  | No price plans created.
 table.table.table-bordered(ng-if="createVM.pricePlans.length")
   thead
     tr
