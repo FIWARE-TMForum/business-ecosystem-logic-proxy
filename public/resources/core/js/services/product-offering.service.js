@@ -337,7 +337,7 @@
             if (this.productOfferingPrice) {
                 for (i = 0; i < this.productOfferingPrice.length; i++) {
                     if (this.productOfferingPrice[i].priceType === 'one time') {
-                        if (priceplan == null || priceplan.price.taxIncludedAmount > this.productOfferingPrice[i].price.taxIncludedAmount) {
+                        if (priceplan == null || Number(priceplan.price.taxIncludedAmount) > Number(this.productOfferingPrice[i].price.taxIncludedAmount)) {
                             priceplan = this.productOfferingPrice[i];
                         }
                     }
