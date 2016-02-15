@@ -15,7 +15,7 @@
 
         function getGlassfishErrorHtmlProperty(html, property) {
             var regExp = new RegExp('<p><b>' + property + '</b>(.*?)</p>');
-            return regExp.exec(html)[1];    // undefined if the element 1 does not exist
+            return regExp.exec(html)[1];    // Exception thrown if not match
         }
 
         return {
@@ -30,11 +30,17 @@
 
             if (typeof(data) === 'string') {
                 // HTML
-                var type = getGlassfishErrorHtmlProperty(data, 'type');
-                var message = getGlassfishErrorHtmlProperty(data, 'message');
-                var description = getGlassfishErrorHtmlProperty(data, 'description');
 
-                finalErrorMessage = type + ' - ' + message + ': ' + description;
+                try {
+                    var type = getGlassfishErrorHtmlProperty(data, 'type');
+                    var message = getGlassfishErrorHtmlProperty(data, 'message');
+                    var description = getGlassfishErrorHtmlProperty(data, 'description');
+
+                    finalErrorMessage = type + ' - ' + message + ': ' + description;
+
+                } catch (e) {
+                    finalErrorMessage = data;
+                }
 
             } else if (typeof(data) === 'object' && data !== null && 'error' in data) {
                 // JSON
