@@ -1,6 +1,7 @@
 var bodyParser = require('body-parser'),
     base64url = require('base64url'),
     config = require('./config'),
+    constants = require('constants'),
     cookieParser = require('cookie-parser'),
     errorhandler = require('errorhandler'),
     express = require('express'),
@@ -183,35 +184,41 @@ var ensureAuthenticated = function(req, res, next) {
 
 var headerAuthentication = function(req, res, next) {
 
-    try {
-        var authToken = utils.getAuthToken(req.headers);
-        FIWARE_STRATEGY.userProfile(authToken, function(err, userProfile) {
-            if (err) {
-                utils.log(logger, 'warn', req, 'Token ' + authToken + ' invalid');
-                utils.sendUnauthorized(res, 'invalid auth-token');
-            } else {
-                // Check that the provided access token is valid for the given application
-                if (userProfile.appId !== config.oauth2.clientID) {
-                    utils.log(logger, 'warn', req, 'Token ' + authToken + ' is from a different app');
-                    utils.sendUnauthorized(res, 'The auth-token scope is not valid for the current application');
+    // If the user is already logged, this is not required...
+    if (!req.user) {
+
+        try {
+            var authToken = utils.getAuthToken(req.headers);
+            FIWARE_STRATEGY.userProfile(authToken, function (err, userProfile) {
+                if (err) {
+                    utils.log(logger, 'warn', req, 'Token ' + authToken + ' invalid');
+                    utils.sendUnauthorized(res, 'invalid auth-token');
                 } else {
-                    req.user = userProfile;
-                    req.user.accessToken = authToken;
-                    next();
+                    // Check that the provided access token is valid for the given application
+                    if (userProfile.appId !== config.oauth2.clientID) {
+                        utils.log(logger, 'warn', req, 'Token ' + authToken + ' is from a different app');
+                        utils.sendUnauthorized(res, 'The auth-token scope is not valid for the current application');
+                    } else {
+                        req.user = userProfile;
+                        req.user.accessToken = authToken;
+                        next();
+                    }
                 }
+            });
+
+        } catch (err) {
+
+            if (err.name === 'AuthorizationTokenNotFound') {
+                utils.log(logger, 'info', req, 'request without authentication');
+                next();
+            } else {
+                utils.log(logger, 'warn', req, err.message);
+                utils.sendUnauthorized(res, err.message);
             }
-        });
-
-    } catch (err) {
-
-
-        if (err.name === 'AuthorizationTokenNotFound') {
-            utils.log(logger, 'info', req, 'request without authentication');
-            next();
-        } else {
-            utils.log(logger, 'warn', req, err.message);
-            utils.sendUnauthorized(res, err.message);
         }
+
+    } else {
+        next();
     }
 };
 
@@ -479,10 +486,31 @@ app.use(function(err, req, res, next) {
 logger.info('Business Ecosystem Logic Proxy starting on port ' + PORT);
 
 if (config.https.enabled === true) {
-    
+
     var options = {
+        secureOptions: constants.SSL_OP_NO_SSLv3 | constants.SSL_OP_NO_SSLv2,
+        ciphers: [
+            "ECDHE-RSA-AES256-SHA384",
+            "DHE-RSA-AES256-SHA384",
+            "ECDHE-RSA-AES256-SHA256",
+            "DHE-RSA-AES256-SHA256",
+            "ECDHE-RSA-AES128-SHA256",
+            "DHE-RSA-AES128-SHA256",
+            "HIGH",
+            "!aNULL",
+            "!eNULL",
+            "!EXPORT",
+            "!DES",
+            "!RC4",
+            "!MD5",
+            "!PSK",
+            "!SRP",
+            "!CAMELLIA"
+        ].join(':'),
+        honorCipherOrder: true,
         key: fs.readFileSync(config.https.keyFile),
-        cert: fs.readFileSync(config.https.certFile)
+        cert: fs.readFileSync(config.https.certFile),
+        ca: fs.readFileSync(config.https.caFile)
     };
 
     https.createServer(options, function(req,res) {

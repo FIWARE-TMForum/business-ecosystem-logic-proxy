@@ -8,6 +8,7 @@ config.https = {
     enabled: false,
     certFile: 'cert/cert.crt',
     keyFile: 'cert/key.key',
+    caFile: 'cert/ca.crt',
     port: 443
 };
 
