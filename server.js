@@ -469,7 +469,7 @@ app.use(function(err, req, res, next) {
 
     res.status(500);
 
-    if (req.headers['accept'].indexOf('text/html') >= 0) {
+    if (req.accepts('text/html')) {
         renderTemplate(req, res, 'unexpected-error');
     } else {
         res.header('Content-Type', 'application/json');
