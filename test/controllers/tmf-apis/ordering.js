@@ -6,6 +6,7 @@ describe('Ordering API', function() {
 
     var config = testUtils.getDefaultConfig();
     var SERVER = (config.appSsl ? 'https' : 'http') + '://' + config.appHost + ':' + config.endpoints.ordering.port;
+    var CATALOGSERVER = (config.appSsl ? 'https' : 'http') + '://' + config.appHost + ':' + config.endpoints.catalog.port;
 
     var getOrderingAPI = function(storeClient, tmfUtils) {
         return proxyquire('../../../controllers/tmf-apis/ordering', {
@@ -247,6 +248,7 @@ describe('Ordering API', function() {
 
             var testValidOrdering = function (nOrderItems, userName, customerRoleRequired, done) {
 
+                var extServer = 'http://extexample.com';
                 var productOfferingPath = '/productOffering/1';
                 var productSpecPath = '/product/2';
                 var ownerName = 'example';
@@ -261,7 +263,7 @@ describe('Ordering API', function() {
                     orderItems.push({
                         product: {},
                         productOffering: {
-                            href: SERVER + productOfferingPath
+                            href: extServer + productOfferingPath
                         }
                     });
                 }
@@ -274,12 +276,12 @@ describe('Ordering API', function() {
                     orderItem: orderItems
                 };
 
-                nock(SERVER)
+                nock(CATALOGSERVER)
                     .get(productOfferingPath)
                     .times(nOrderItems)
                     .reply(200, {productSpecification: {href: SERVER + productSpecPath}});
 
-                nock(SERVER)
+                nock(CATALOGSERVER)
                     .get(productSpecPath)
                     .times(nOrderItems)
                     .reply(200, {relatedParty: [{id: ownerName, role: 'owner'}]});
@@ -335,11 +337,11 @@ describe('Ordering API', function() {
                     }]
                 };
 
-                nock(SERVER)
+                nock(CATALOGSERVER)
                     .get(productOfferingPath)
                     .reply(200, {productSpecification: {href: SERVER + productSpecPath}});
 
-                nock(SERVER)
+                nock(CATALOGSERVER)
                     .get(productSpecPath)
                     .reply(200, {relatedParty: [{id: ownerName, role: 'other_role'}]});
 
@@ -377,7 +379,7 @@ describe('Ordering API', function() {
                     }]
                 };
 
-                nock(SERVER)
+                nock(CATALOGSERVER)
                     .get(productOfferingPath)
                     .reply(500);
 
@@ -415,11 +417,11 @@ describe('Ordering API', function() {
                     }]
                 };
 
-                nock(SERVER)
+                nock(CATALOGSERVER)
                     .get(productOfferingPath)
                     .reply(200, {productSpecification: {href: SERVER + productSpecPath}});
 
-                nock(SERVER)
+                nock(CATALOGSERVER)
                     .get(productSpecPath)
                     .reply(500);
 

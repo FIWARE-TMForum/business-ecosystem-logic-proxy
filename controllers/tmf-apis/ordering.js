@@ -22,19 +22,7 @@ var ordering = (function(){
     /////////////////////////////////////////// COMMON ///////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
 
-    var makeRequest = function(rawUrl, errMsg, callback) {
-
-        var parsedUrl = url.parse(rawUrl);
-
-        var options = {
-            host: parsedUrl.hostname,
-            port: parsedUrl.port || 80,
-            path: parsedUrl.path,
-            method: 'GET'
-        };
-
-        var protocol = parsedUrl.protocol.indexOf('https') >= 0 ? 'https' : 'http';
-
+    var makeRequest = function(options, protocol, errMsg, callback) {
         http.request(protocol, options, null, function(err, result) {
 
             if (err) {
@@ -110,13 +98,22 @@ var ordering = (function(){
         var errorMessageOffer = 'The system fails to retrieve the offering attached to the ordering item ' + item.id;
         var errorMessageProduct = 'The system fails to retrieve the product attached to the ordering item ' + item.id;
 
-        makeRequest(item.productOffering.href, errorMessageOffer, function(err, offering) {
+        var protocol = config.appSsl ? 'https' : 'http';
+        var offeringPath = url.parse(item.productOffering.href).path;
+        var options = {
+            host: config.appHost,
+            port: config.endpoints.catalog.port,
+            path: offeringPath,
+            method: 'GET'
+        };
+
+        makeRequest(options, protocol, errorMessageOffer, function(err, offering) {
 
             if (err) {
                 callback(err);
             } else {
-
-                makeRequest(offering.productSpecification.href, errorMessageProduct, function(err, product) {
+                options.path = url.parse(offering.productSpecification.href).path;
+                makeRequest(options, protocol, errorMessageProduct, function(err, product) {
 
                     if (err) {
                         callback(err);
@@ -394,15 +391,19 @@ var ordering = (function(){
     var validateUpdate = function(req, callback) {
 
         var protocol = config.appSsl ? 'https' : 'http';
-        var orderingServer = config.appHost + ':' + config.endpoints.ordering.port;
-        var orderingUrl = protocol + '://' + orderingServer + req.apiUrl;
         var ordering;
 
+        var options = {
+            host: config.appHost,
+            port: config.endpoints.ordering.port,
+            path: req.apiUrl,
+            method: 'GET'
+        };
         try {
 
             ordering = JSON.parse(req.body);
 
-            makeRequest(orderingUrl, 'The requested ordering cannot be retrieved', function(err, previousOrdering) {
+            makeRequest(options, protocol, 'The requested ordering cannot be retrieved', function(err, previousOrdering) {
                 if (err) {
                     callback(err);
                 } else {
