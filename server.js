@@ -15,6 +15,7 @@ var bodyParser = require('body-parser'),
     session = require('express-session'),
     shoppingCart = require('./controllers/shoppingCart').shoppingCart,
     tmf = require('./controllers/tmf').tmf,
+    trycatch = require('trycatch'),
     url = require('url'),
     utils = require('./lib/utils'),
     uuid = require('node-uuid');
@@ -81,12 +82,6 @@ var FIWARE_STRATEGY = new FIWAREStrategy({
     }
 );
 
-// Avoid existing on uncaught Exceptions
-process.on('uncaughtException', function (err) {
-    logger.fatal('Unexpected unhandled exception - ' + err.name +
-        ': ' + err.message + '. Stack trace:\n' + err.stack);
-});
-
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
 
@@ -124,6 +119,15 @@ mongoose.connection.on('reconnected', function() {
 
 var app = express();
 app.set('port', PORT);
+
+app.use(function(req, res, next){
+    trycatch(function(){
+        next();
+    }, function(err) {
+        // Call the default Express error handler
+        next(err);
+    });
+});
 
 // Session
 app.use(session({
@@ -180,6 +184,18 @@ var ensureAuthenticated = function(req, res, next) {
     } else {
         next();
     }
+};
+
+var failIfNotAuthenticated = function(req, res, next) {
+
+    if (!req.isAuthenticated()) {
+        res.status(401);
+        res.json({ error: 'You need to be authenticated to access this resource' });
+        res.end();
+    } else {
+        next();
+    }
+
 };
 
 var headerAuthentication = function(req, res, next) {
@@ -311,12 +327,12 @@ var checkMongoUp = function(req, res, next) {
 
 };
 
-app.use(config.shoppingCartPath + '/*', checkMongoUp);
-app.get(config.shoppingCartPath + '/item/', headerAuthentication, ensureAuthenticated, shoppingCart.getCart);
-app.post(config.shoppingCartPath + '/item/', headerAuthentication, ensureAuthenticated, shoppingCart.add);
-app.get(config.shoppingCartPath + '/item/:id', headerAuthentication, ensureAuthenticated, shoppingCart.getItem);
-app.delete(config.shoppingCartPath + '/item/:id', headerAuthentication, ensureAuthenticated, shoppingCart.remove);
-app.post(config.shoppingCartPath + '/empty', headerAuthentication, ensureAuthenticated, shoppingCart.empty);
+app.use(config.shoppingCartPath + '/*', checkMongoUp, headerAuthentication, failIfNotAuthenticated);
+app.get(config.shoppingCartPath + '/item/', shoppingCart.getCart);
+app.post(config.shoppingCartPath + '/item/', shoppingCart.add);
+app.get(config.shoppingCartPath + '/item/:id', shoppingCart.getItem);
+app.delete(config.shoppingCartPath + '/item/:id', shoppingCart.remove);
+app.post(config.shoppingCartPath + '/empty', shoppingCart.empty);
 
 
 /////////////////////////////////////////////////////////////////////
@@ -467,14 +483,29 @@ app.use(function(err, req, res, next) {
     utils.log(logger, 'fatal', req, 'Unexpected unhandled exception - ' + err.name +
         ': ' + err.message + '. Stack trace:\n' + err.stack);
 
+    var applicationJSON = 'application/json';
+    var textHtml = 'text/html';
+
     res.status(500);
 
-    if (req.accepts('text/html')) {
-        renderTemplate(req, res, 'unexpected-error');
-    } else {
-        res.header('Content-Type', 'application/json');
-        res.json({ error: 'Unexpected error' });
-        res.end();
+    switch (req.accepts([applicationJSON, textHtml])) {
+
+        case applicationJSON:
+
+            res.header('Content-Type', applicationJSON);
+            res.json({ error: 'Unexpected error. The error has been notified to the administrators.' });
+            res.end();
+
+            break;
+        case 'text/html':
+
+            res.header('Content-Type', textHtml);
+            renderTemplate(req, res, 'unexpected-error');
+
+            break;
+        default:
+            res.status(406);    // Not Accepted
+            res.end();
     }
 });
 

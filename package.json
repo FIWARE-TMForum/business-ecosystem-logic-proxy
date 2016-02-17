@@ -18,7 +18,8 @@
     "node-uuid": "^1.4.7",
     "on-finished": "^2.3.0",
     "passport": "0.3.0",
-    "passport-fiware-oauth": "0.1.5"
+    "passport-fiware-oauth": "0.1.5",
+    "trycatch": "^1.5.21"
   },
   "devDependencies": {
     "freeport": "1.0.5",
