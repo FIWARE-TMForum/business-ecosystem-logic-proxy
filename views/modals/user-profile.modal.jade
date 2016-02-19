@@ -2,10 +2,8 @@
   .modal-dialog
     .modal-content
       .modal-header
-        .modal-title
-          strong.text-uppercase User Profile
-        button.close(type="button", data-dismiss="modal")
-          i.fa.fa-close
+        .h4
+          strong User profile
       .modal-body
         .row
           .col-xs-12
@@ -110,10 +108,12 @@
                             ng-show="updateBillingForm.country.$invalid && (updateBillingForm.country.$dirty || updateBillingForm.country.$touched)"
                           )
                             span(ng-message="required") This field is required.
-       .modal-footer
-          a.btn.btn-success(
+      .modal-footer
+        a.btn.btn-success.z-depth-1(
             data-dismiss="modal"
             ng-disabled="!updateBillingForm.$valid && (updateBillingForm.country.$touched || updateBillingForm.province.$touched || updateBillingForm.city.$touched || updateBillingForm.postal.$touched || updateBillingForm.street.$touched)"
             ng-click="updateProfile()"
           )
-            | Save changes
+          span.item-text Save changes
+        a.btn.btn-default.z-depth-1(data-dismiss="modal")
+          span.item-text Close
