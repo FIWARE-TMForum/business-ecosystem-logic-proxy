@@ -5,7 +5,7 @@ ui-view
     .col-xs-12(ng-switch="searchVM.list.status")
       div(ng-switch-when="LOADED", ng-switch="searchVM.list.length")
         div(ng-switch-when="0")
-          .alert.alert-info.text-center No catalogues found.
+          .alert.alert-info.text-center No catalogs found.
         div(ng-switch-default)
           include ./search-list.jade
       div(ng-switch-when="ERROR")
