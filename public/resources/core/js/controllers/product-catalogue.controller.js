@@ -84,7 +84,7 @@
                     catalogueId: catalogueCreated.id
                 });
                 $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'created', {
-                    resource: 'catalogue',
+                    resource: 'catalog',
                     name: catalogueCreated.name
                 });
             }, function (response) {
@@ -150,7 +150,7 @@
                     reload: true
                 });
                 $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'updated', {
-                    resource: 'catalogue',
+                    resource: 'catalog',
                     name: catalogueUpdated.name
                 });
             }, function (response) {

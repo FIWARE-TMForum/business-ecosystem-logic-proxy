@@ -253,12 +253,13 @@
         }
     }
 
-    function OfferingDetailController($state, Offering, Utils) {
+    function OfferingDetailController($state, Offering, ProductSpec, Utils) {
         /* jshint validthis: true */
         var vm = this;
 
         vm.item = {};
         vm.$state = $state;
+        vm.formatCharacteristicValue = formatCharacteristicValue;
 
         Offering.detail($state.params.offeringId).then(function (offeringRetrieved) {
             vm.item = offeringRetrieved;
@@ -267,6 +268,26 @@
             vm.error = Utils.parseError(response, 'The requested offering could not be retrieved');
             vm.item.status = ERROR;
         });
+
+        function formatCharacteristicValue(characteristic, characteristicValue) {
+            var result;
+
+            switch (characteristic.valueType) {
+            case ProductSpec.VALUE_TYPES.STRING.toLowerCase():
+                result = characteristicValue.value;
+                break;
+            case ProductSpec.VALUE_TYPES.NUMBER.toLowerCase():
+                if (characteristicValue.value && characteristicValue.value.length) {
+                    result = characteristicValue.value;
+                } else {
+                    result = characteristicValue.valueFrom + " - " + characteristicValue.valueTo;
+                }
+                result += " " + characteristicValue.unitOfMeasure;
+                break;
+            }
+
+            return result;
+        }
     }
 
     function OfferingUpdateController($state, $rootScope, EVENTS, Offering, Utils) {
