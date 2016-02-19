@@ -4,7 +4,7 @@ form(name="step.form", novalidate)
       .form-group(
         ng-class="{ 'has-error': createForm.hasError(step.form.name) }"
       )
-        label Name
+        label Enter a name
         input.form-control(
           type="text"
           name="name"
@@ -24,7 +24,7 @@ form(name="step.form", novalidate)
       .form-group(
         ng-class="{ 'has-error' : createForm.hasError(step.form.version) }"
       )
-        label Version
+        label Enter a version
         input.form-control(
           type="text"
           name="version"
@@ -38,9 +38,9 @@ form(name="step.form", novalidate)
           span(ng-message="required") This field is required.
   .form-group
     label
-      | Description 
-      small.text-muted optional
+      span Enter a description
+      small.text-muted (optional)
     textarea.form-control(rows="3", name="description", ng-model="createVM.data.description")
   .form-group.text-right
-    a.btn.btn-default(ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])", ng-disabled="!step.form.$valid")
+    a.btn.btn-default.z-depth-1(ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])", ng-disabled="!step.form.$valid")
       span.item-text Next

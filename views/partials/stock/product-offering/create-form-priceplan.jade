@@ -1,7 +1,7 @@
-.h4
+.h5.text-dark-secondary
   strong Create a price plan
 include ./create-form-priceplan-form.jade
-.h4
+.h5.text-dark-secondary
   strong Overview
 .alert.alert-warning.text-center(ng-if="!createVM.pricePlans.length")
   | No price plans created.
@@ -25,5 +25,5 @@ table.table.table-bordered(ng-if="createVM.pricePlans.length")
 form(name="step.form", novalidate)
    input(type="hidden", name="pricePlans", ng-model="createVM.pricePlans", field-array, limit-from="0", required)
   .form-group.text-right
-    a.btn.btn-default(ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])", ng-disabled="!step.form.$valid")
+    a.btn.btn-default.z-depth-1(ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])", ng-disabled="!step.form.$valid")
       span.item-text Next

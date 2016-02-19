@@ -1,13 +1,12 @@
 .row
   .col-xs-12
-    .btn-toolbar
-      .btn-group
-        include ./breadcrumb.jade
+    include ./breadcrumb.jade
   .col-xs-12
-    .panel.panel-default
-      .panel-heading
-        strong.text-uppercase New offering
+    .panel.panel-default.z-depth-1
       .panel-body
+        .h4
+          strong New offering
+        hr
         .row(ng-controller="FormWizardCtrl as createForm")
           .col-xs-12.col-md-3
             ul.nav.nav-steps
@@ -18,6 +17,6 @@
           .col-xs-12.col-md-9
             .row(ng-repeat="step in createVM.stepList", ng-show="createForm.stepIndex == $index")
               .col-xs-12
-                .h2 Step {{ $index + 1}}: {{ step.title }}
-                hr
+                .h4.text-dark-secondary
+                  strong Step {{ $index + 1}}: {{ step.title }}
                 ng-include(src="step.templateUrl")

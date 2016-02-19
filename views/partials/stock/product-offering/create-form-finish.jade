@@ -1,5 +1,5 @@
 form(name="step.form", novalidate)
-  .h4
+  .h5.text-dark-secondary
     strong General
   .row
     .col-sm-8
@@ -36,7 +36,7 @@ form(name="step.form", novalidate)
       ng-model="createVM.data.description"
       readonly
     )
-  .h4
+  .h5.text-dark-secondary
     strong Product Spec.
   .form-group
     input(type="hidden", ng-model="createVM.product.id", required)
@@ -60,7 +60,7 @@ form(name="step.form", novalidate)
                 | {{ createVM.product.isBundle ? 'Bundle' : 'Single' }}
             td
               time(am-time-ago="createVM.product.lastUpdate")
-  .h4
+  .h5.text-dark-secondary
     strong Catalogue
   .form-group
     input(type="hidden", ng-model="createVM.catalogue.id", required)
@@ -91,9 +91,9 @@ form(name="step.form", novalidate)
         a.btn.btn-default(ng-repeat="category in breadcrumb", ng-class="{ 'active': $last }")
           span.item-icon.fa.fa-tag
           span.item-text {{ category.name }}
-  .row
+  .row(ng-if="createVM.pricePlans.length")
     .col-sm-12
-      .h4
+      .h5.text-dark-secondary
         strong Price plans
       table.table.table-bordered
         thead

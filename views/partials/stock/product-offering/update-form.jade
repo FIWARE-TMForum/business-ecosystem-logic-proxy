@@ -1,4 +1,6 @@
 form(name="updateVM.form", novalidate)
+  .h4.text-dark-secondary
+    strong General
   .row
     .col-sm-8
       .form-group(
@@ -39,6 +41,16 @@ form(name="updateVM.form", novalidate)
           ng-show="updateForm.hasError(updateVM.form.version)"
         )
           span(ng-message="required") This field is required.
+  .row
+    .col-sm-8
+      .form-group
+        label Product Spec.
+        a.btn.btn-link(ui-sref="stock.product.update({ productId: updateVM.item.productSpecification.id })")
+          span.item-text {{ updateVM.item.productSpecification.name }}
+    .col-sm-4
+      .form-group
+        label Updated
+        input.form-control(type="text", readonly, value="{{ updateVM.item.lastUpdate | amCalendar }}")
   .form-group
     label Status
     .status-group
@@ -47,8 +59,8 @@ form(name="updateVM.form", novalidate)
         span.item-text {{ status.value }}
   .form-group
     label
-      | Description 
-      small.text-muted optional
+      span Description
+      small.text-muted (optional)
     textarea.form-control(rows="3", name="description", ng-model="updateVM.data.description")
   .form-group(ng-show="updateVM.item.isBundle")
     label Bundled Offerings
@@ -74,5 +86,5 @@ form(name="updateVM.form", novalidate)
             td
               time(am-time-ago="offering.lastUpdate")
   .form-group.text-right
-    a.btn.btn-success(ng-click="updateVM.update()", ng-disabled="!updateVM.form.$valid")
+    a.btn.btn-success.z-depth-1(ng-click="updateVM.update()", ng-disabled="!updateVM.form.$valid")
       span.item-text Save changes
