@@ -231,7 +231,8 @@ describe('Ordering API', function() {
                 var req = {
                     user: userInfo,
                     method: 'POST',
-                    body: body
+                    body: body,
+                    headers: {}
                 };
 
                 orderingApi.checkPermissions(req, function (err) {
@@ -288,6 +289,7 @@ describe('Ordering API', function() {
 
                 testOrderCreation(user, JSON.stringify(body), customerRoleRequired, null, done, function (req) {
                     var newBody = JSON.parse(req.body);
+                    //expect(req.headers['content-length']).toBe(newBody.length);
                     expect(newBody.orderItem[0].product.relatedParty).toEqual([
                         {
                             id: userName,

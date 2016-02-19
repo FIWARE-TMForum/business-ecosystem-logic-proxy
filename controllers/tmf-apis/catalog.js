@@ -1,6 +1,6 @@
 var async = require('async'),
     config = require('./../../config'),
-    http = require('./../../lib/httpClient'),
+    request = require('request'),
     storeClient = require('./../../lib/store').storeClient,
     url = require('url'),
     utils = require('./../../lib/utils'),
@@ -23,28 +23,23 @@ var catalog = (function() {
 
     var retrieveAsset = function(assetPath, errMsg, callback) {
 
-        var options = {
-            host: config.appHost,
-            port: config.endpoints.catalog.port,
-            path: assetPath,
-            method: 'GET',
-            headers: {'accept': 'application/json'}
-        };
+        var uri = (config.appSsl ? 'https' : 'http') + '://' + config.appHost + ':' +
+            config.endpoints.catalog.port + assetPath;
 
-        var protocol = config.appSsl ? 'https' : 'http';
+        request(uri, function(err, response, body) {
 
-        http.request(protocol, options, null, function(err, result) {
-            if (err) {
-
+            if (err || response.statusCode >= 400) {
                 callback({
                     status: 400,
                     message: errMsg
                 });
             } else {
-                callback(null, result);
+                callback(null, {
+                    status: response.statusCode,
+                    body: body
+                });
             }
         });
-
     };
 
     // Retrieves the product belonging to a given offering

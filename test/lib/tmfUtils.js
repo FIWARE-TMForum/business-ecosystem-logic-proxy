@@ -66,18 +66,6 @@ describe('TMF Utils', function() {
             testIsOwner(userInfo, info, true);
         });
 
-        it ('should return true when the user is an admin', function() {
-            var userInfo = {
-                roles: [{
-                    name: 'provider'
-                }],
-                id: 'test'
-            };
-
-            var info = {};
-            testIsOwner(userInfo, info, true);
-        });
-
         it ('should return false when the user is not owner of the resource', function() {
             var userInfo = {
                 roles: [],

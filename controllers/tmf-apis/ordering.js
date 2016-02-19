@@ -1,7 +1,7 @@
 var async = require('async'),
     config = require('./../../config'),
     equal = require('deep-equal'),
-    http = require('./../../lib/httpClient'),
+    request = require('request'),
     storeClient = require('./../../lib/store').storeClient,
     tmfUtils = require('./../../lib/tmfUtils'),
     url = require('url'),
@@ -22,18 +22,24 @@ var ordering = (function(){
     /////////////////////////////////////////// COMMON ///////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
 
-    var makeRequest = function(options, protocol, errMsg, callback) {
-        http.request(protocol, options, null, function(err, result) {
+    var makeRequest = function(url, errMsg, callback) {
 
-            if (err) {
+        request(url, function(err, response, body) {
+
+            if (err || response.statusCode >= 400) {
                 callback({
                     status: 400,
                     message: errMsg
                 });
             } else {
-                callback(err, JSON.parse(result.body));
+                callback(null, JSON.parse(body));
             }
         });
+    };
+
+    var getAPIURL = function(port, path) {
+        return (config.appSsl ? 'https' : 'http') + '://' + config.appHost + ':' +
+            port + path;
     };
 
     //////////////////////////////////////////////////////////////////////////////////////////////
@@ -98,22 +104,17 @@ var ordering = (function(){
         var errorMessageOffer = 'The system fails to retrieve the offering attached to the ordering item ' + item.id;
         var errorMessageProduct = 'The system fails to retrieve the product attached to the ordering item ' + item.id;
 
-        var protocol = config.appSsl ? 'https' : 'http';
-        var offeringPath = url.parse(item.productOffering.href).path;
-        var options = {
-            host: config.appHost,
-            port: config.endpoints.catalog.port,
-            path: offeringPath,
-            method: 'GET'
-        };
+        var offeringUrl = getAPIURL(config.endpoints.catalog.port, url.parse(item.productOffering.href).path);
 
-        makeRequest(options, protocol, errorMessageOffer, function(err, offering) {
+        makeRequest(offeringUrl, errorMessageOffer, function(err, offering) {
 
             if (err) {
                 callback(err);
             } else {
-                options.path = url.parse(offering.productSpecification.href).path;
-                makeRequest(options, protocol, errorMessageProduct, function(err, product) {
+
+                var productUrl = getAPIURL(config.endpoints.catalog.port, url.parse(offering.productSpecification.href).path);
+
+                makeRequest(productUrl, errorMessageProduct, function(err, product) {
 
                     if (err) {
                         callback(err);
@@ -247,7 +248,7 @@ var ordering = (function(){
                     });
                 });
 
-                req.body = JSON.stringify(body);
+                tmfUtils.updateBody(req, body);
 
                 callback();
 
@@ -390,20 +391,12 @@ var ordering = (function(){
 
     var validateUpdate = function(req, callback) {
 
-        var protocol = config.appSsl ? 'https' : 'http';
-        var ordering;
-
-        var options = {
-            host: config.appHost,
-            port: config.endpoints.ordering.port,
-            path: req.apiUrl,
-            method: 'GET'
-        };
         try {
 
-            ordering = JSON.parse(req.body);
+            var ordering = JSON.parse(req.body);
+            var orderingUrl = getAPIURL(config.endpoints.ordering.port, req.apiUrl);
 
-            makeRequest(options, protocol, 'The requested ordering cannot be retrieved', function(err, previousOrdering) {
+            makeRequest(orderingUrl, 'The requested ordering cannot be retrieved', function(err, previousOrdering) {
                 if (err) {
                     callback(err);
                 } else {

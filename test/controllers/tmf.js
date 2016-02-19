@@ -10,7 +10,7 @@ describe('TMF Controller', function() {
     // Modified dependencies
     var config;
     var utils = {
-        getAppPort: function() {
+        getAPIPort: function() {
             return 1234;
         },
         proxiedRequestHeaders: function() {
@@ -25,14 +25,14 @@ describe('TMF Controller', function() {
     };
 
     var getDefaultHttpClient = function() {
-        return jasmine.createSpyObj('httpClient', ['proxyRequest']);
+        return jasmine.createSpy('request');
     };
 
     // Function to get a custom tmf.js instance
-    var getTmfInstance = function(httpClient, catalog, ordering, inventory) {
+    var getTmfInstance = function(request, catalog, ordering, inventory) {
 
         return proxyquire('../../controllers/tmf', {
-            './../lib/httpClient': httpClient, 
+            'request': request,
             './../config': config, 
             './../lib/utils': utils,
             './../lib/logger': testUtils.emptyLogger,
@@ -52,8 +52,8 @@ describe('TMF Controller', function() {
         var testPublic = function(protocol, method) {
 
             // TMF API
-            var httpClient = getDefaultHttpClient();
-            var tmf = getTmfInstance(httpClient);
+            var request = getDefaultHttpClient();
+            var tmf = getTmfInstance(request);
 
             // Depending on the desired protocol, the config.appSsl var has to be set up
             config.appSsl = protocol === 'https' ? true : false;
@@ -71,14 +71,13 @@ describe('TMF Controller', function() {
             tmf.public(req, res);
 
             var expectedOptions = {
-                host: config.appHost,
-                port: utils.getAPIPort(),
-                path: path,
+                url: protocol + '://' + config.appHost + ':' + utils.getAPIPort() + path,
                 method: method,
-                headers: utils.proxiedRequestHeaders()
+                headers: utils.proxiedRequestHeaders(),
+                body: req.body
             };
 
-            expect(httpClient.proxyRequest).toHaveBeenCalledWith(protocol, expectedOptions, req.body, res, null);
+            expect(request).toHaveBeenCalledWith(expectedOptions, jasmine.any(Function));
 
         };
 
@@ -125,77 +124,77 @@ describe('TMF Controller', function() {
 
     describe('check permissions', function() {
 
-        var checkPermissionsValid = function(req, callback) {
+        var checkPermissionsValid = function (req, callback) {
             callback();
         };
 
-        var checkPermissionsInvalid = function(req, callback) {
+        var checkPermissionsInvalid = function (req, callback) {
             callback({
                 status: INVALID_API_STATUS,
                 message: INVALID_API_MESSAGE
             });
         };
 
-        it('should return 404 for invalid API', function() {
+        it('should return 404 for invalid API', function () {
             // TMF API
             var httpClient = getDefaultHttpClient();
             var tmf = getTmfInstance(httpClient);
 
-            var req = { 'apiUrl': '/nonexistingapi', headers: {}, connection: { remoteAddress: '127.0.0.1' } };
+            var req = {'apiUrl': '/nonexistingapi', headers: {}, connection: {remoteAddress: '127.0.0.1'}};
             var res = jasmine.createSpyObj('res', ['status', 'json', 'end']);
 
             tmf.checkPermissions(req, res);
 
             expect(res.status).toHaveBeenCalledWith(404);
-            expect(res.json).toHaveBeenCalledWith({ error: 'Path not found' });
+            expect(res.json).toHaveBeenCalledWith({error: 'Path not found'});
             expect(res.end).toHaveBeenCalledWith();
         });
 
-        var testApiReturnsError = function(api, done) {
+        var testApiReturnsError = function (api, done) {
 
             // Configure the API controller
-            var controller = { checkPermissions: checkPermissionsInvalid }; 
+            var controller = {checkPermissions: checkPermissionsInvalid};
 
             // TMF API. Only one API is set, the rest are set to null so we are sure the appropriate
             // one has been called
-            var httpClient = getDefaultHttpClient();
+            var request = getDefaultHttpClient();
             var catalogController = api.startsWith(config.endpoints.catalog.path) ? controller : null;
             var orderingController = api.startsWith(config.endpoints.ordering.path) ? controller : null;
             var inventoryController = api.startsWith(config.endpoints.inventory.path) ? controller : null;
-            var tmf = getTmfInstance(httpClient, catalogController, orderingController, inventoryController);
+            var tmf = getTmfInstance(request, catalogController, orderingController, inventoryController);
 
             // Actual call
-            var req = { apiUrl: '/' + api, headers: {}, connection: { remoteAddress: '127.0.0.1' } };
+            var req = {apiUrl: '/' + api, headers: {}, connection: {remoteAddress: '127.0.0.1'}};
             var res = jasmine.createSpyObj('res', ['status', 'json', 'end']);
             tmf.checkPermissions(req, res);
 
             // We have to wait some time until the response has been called
-            setTimeout(function() {
+            setTimeout(function () {
                 expect(res.status).toHaveBeenCalledWith(INVALID_API_STATUS);
-                expect(res.json).toHaveBeenCalledWith({ error: INVALID_API_MESSAGE });
+                expect(res.json).toHaveBeenCalledWith({error: INVALID_API_MESSAGE});
                 expect(res.end).toHaveBeenCalledWith();
 
-                expect(httpClient.proxyRequest).not.toHaveBeenCalled();
+                expect(request).not.toHaveBeenCalled();
 
                 done();
 
             }, 100);
         };
 
-        it('should not redirect the request to the actual catalog API when controller rejects it', function(done) {
+        it('should not redirect the request to the actual catalog API when controller rejects it', function (done) {
             testApiReturnsError('catalog', done);
         });
 
-        it('should not redirect the request to the actual ordering API when controller rejects it', function(done) {
+        it('should not redirect the request to the actual ordering API when controller rejects it', function (done) {
             testApiReturnsError('ordering', done);
         });
 
-        it('should not redirect the request to the actual inventory API when controller rejects it', function(done) {
+        it('should not redirect the request to the actual inventory API when controller rejects it', function (done) {
             testApiReturnsError('inventory', done);
         });
 
-        var testApiOk = function(api, done) {
-            
+        var testApiOk = function (api, done) {
+
             // 'redirRequest' has been tested by testing the 'public' function. 'checkTmfPermissions'
             // is supposed to use the same function to redirect requests when they are allowed by the
             // API controller. For this reason, we do not check with other protocols or methods
@@ -204,68 +203,71 @@ describe('TMF Controller', function() {
             var method = 'GET';
 
             // Configure the API controller
-            var controller = { checkPermissions: checkPermissionsValid }; 
+            var controller = {checkPermissions: checkPermissionsValid};
 
             // TMF API
-            var httpClient = getDefaultHttpClient();
+            var request = getDefaultHttpClient();
             var catalogController = api.startsWith(config.endpoints.catalog.path) ? controller : null;
             var orderingController = api.startsWith(config.endpoints.ordering.path) ? controller : null;
             var inventoryController = api.startsWith(config.endpoints.inventory.path) ? controller : null;
-            var tmf = getTmfInstance(httpClient, catalogController, orderingController, inventoryController);
+            var tmf = getTmfInstance(request, catalogController, orderingController, inventoryController);
 
             // Actual call
-            var req = { 
+            var req = {
                 apiUrl: '/' + api,
-                body: 'Example', 
-                method: method, 
-                user: {'id': 'user'}, 
+                body: 'Example',
+                method: method,
+                user: {'id': 'user'},
                 headers: {},
-                connection: { remoteAddress: '127.0.0.1' }
+                connection: {remoteAddress: '127.0.0.1'}
             };
-            
+
             var res = jasmine.createSpyObj('res', ['status', 'json', 'end']);
             tmf.checkPermissions(req, res);
 
-            setTimeout(function() {
+            setTimeout(function () {
 
                 var expectedOptions = {
-                    host: config.appHost,
-                    port: utils.getAPIPort(),
-                    path: req.apiUrl,
+                    url: protocol + '://' + config.appHost + ':' + utils.getAPIPort() + req.apiUrl,
                     method: method,
+                    body: req.body,
                     headers: utils.proxiedRequestHeaders()
                 };
 
-                expect(httpClient.proxyRequest).toHaveBeenCalledWith(protocol, expectedOptions, req.body, res, null);
+                expect(request).toHaveBeenCalledWith(expectedOptions, jasmine.any(Function));
 
                 done();
 
             }, 100);
         };
 
-        it('should redirect the request to the actual catalog API when controller does not reject it (root)', function(done) {
+        it('should redirect the request to the actual catalog API when controller does not reject it (root)', function (done) {
             testApiOk('catalog', done);
         });
 
-        it('should redirect the request to the actual ordering API when controller does not reject it (root)', function(done) {
+        it('should redirect the request to the actual ordering API when controller does not reject it (root)', function (done) {
             testApiOk('ordering', done);
         });
 
-        it('should redirect the request to the actual inventory API when controller does not reject it (root)', function(done) {
+        it('should redirect the request to the actual inventory API when controller does not reject it (root)', function (done) {
             testApiOk('inventory', done);
         });
 
-        it('should redirect the request to the actual catalog API when controller does not reject it (non root)', function(done) {
+        it('should redirect the request to the actual catalog API when controller does not reject it (non root)', function (done) {
             testApiOk('catalog/complex?a=b', done);
         });
 
-        it('should redirect the request to the actual ordering API when controller does not reject it (non root)', function(done) {
+        it('should redirect the request to the actual ordering API when controller does not reject it (non root)', function (done) {
             testApiOk('ordering/complex?a=b', done);
         });
 
-        it('should redirect the request to the actual inventory API when controller does not reject it (non root)', function(done) {
+        it('should redirect the request to the actual inventory API when controller does not reject it (non root)', function (done) {
             testApiOk('inventory/complex?a=b', done);
         });
+
+    });
+
+    describe('Proxy', function() {
 
 
         var executePostValidationOk = function(req, callback) {
@@ -280,25 +282,21 @@ describe('TMF Controller', function() {
             callback(err);
         };
 
-        var testAPIPostValidation = function(postValidator, error, done) {
+        it('should return 504 when server is not available', function(done) {
 
             // Configure the API controller
             var controller = {
-                checkPermissions: checkPermissionsValid,
-                executePostValidation: postValidator
-            };
-
-            var proxyCallback = jasmine.createSpy('callback');
-            var proxyRequest = function(protocol, options, data, proxiedRes, postAction) {
-                var result = {};
-                postAction(result, proxyCallback);
+                checkPermissions: function(req, callback) {
+                    callback();
+                }
             };
 
             // TMF API
-            var httpClient = getDefaultHttpClient();
-            httpClient.proxyRequest = proxyRequest;
+            var request = function(options, callback) {
+                callback({ err: 'ECONNREFUSED' });
+            };
 
-            var tmf = getTmfInstance(httpClient, null, controller, null);
+            var tmf = getTmfInstance(request, null, controller, null);
 
             // Actual call
             var req = {
@@ -310,32 +308,141 @@ describe('TMF Controller', function() {
                 connection: { remoteAddress: '127.0.0.1' }
             };
 
-            var res = jasmine.createSpyObj('res', ['status', 'json', 'end']);
+            var res = jasmine.createSpyObj('res', ['status', 'json']);
+            res.status.and.returnValue(res);
 
             tmf.checkPermissions(req, res);
 
             setTimeout(function() {
+
+                expect(res.status).toHaveBeenCalledWith(504);
+                expect(res.json).toHaveBeenCalledWith({ error: 'Service unreachable' });
+
+                done();
+
+            }, 100);
+        });
+
+        var testAPIPostValidation = function(postValidator, responseCode, expectedPostValidatorCalled, error, done) {
+
+            var postValidatorCalled = false;
+
+            var reqMethod = 'POST';
+            var reqBody = 'Example';
+            var reqPath = '/ordering';
+            var userId = 'user';
+
+            var returnedResponse = {
+                statusCode: responseCode,
+                headers: {
+                    'content-type': 'application/json',
+                    'accept': 'application/json',
+                    'x-custom': 'custom-value'
+                }
+            };
+
+            var returnedBody = '%%%%%%%%%---BODY---%%%%%%%%%';
+
+            // Configure the API controller
+            var controller = {
+                checkPermissions: function(req, callback) {
+                    callback();
+                }
+            };
+
+            if (postValidator) {
+                controller.executePostValidation = function(req, callback) {
+
+                    postValidatorCalled = true;
+
+                    expect(req).toEqual(
+                        {
+                            status: returnedResponse.statusCode,
+                            headers: returnedResponse.headers,
+                            body: returnedBody,
+                            user: { id: userId },
+                            method: reqMethod
+                            //path: reqPath
+                        }
+                    );
+
+                    postValidator(req, callback);
+                }
+            }
+
+            // TMF API
+            var request = function(options, callback) {
+
+                expect(options).toEqual(
+                    {
+                        url: 'http://' + config.appHost + ':' + utils.getAPIPort() + reqPath,
+                        method: 'POST',
+                        headers: utils.proxiedRequestHeaders(),
+                        body: reqBody
+                    }
+                );
+
+                callback(null, returnedResponse, returnedBody);
+            };
+
+            var tmf = getTmfInstance(request, null, controller, null);
+
+            // Actual call
+            var req = {
+                apiUrl: reqPath,
+                //path: reqPath,
+                body: reqBody,
+                method: reqMethod,
+                user: {'id': userId },
+                headers: {},
+                connection: { remoteAddress: '127.0.0.1' }
+            };
+
+            var res = jasmine.createSpyObj('res', ['status', 'setHeader', 'json', 'write', 'end']);
+            res.status.and.returnValue(res);
+
+            tmf.checkPermissions(req, res);
+
+            setTimeout(function() {
+
                 if (error) {
+
                     expect(res.status).toHaveBeenCalledWith(INVALID_API_STATUS);
                     expect(res.json).toHaveBeenCalledWith({ error: INVALID_API_MESSAGE });
                     expect(res.end).toHaveBeenCalledWith();
 
-                    expect(proxyCallback).not.toHaveBeenCalled();
                 } else {
-                    expect(res.json).not.toHaveBeenCalled();
-                    expect(proxyCallback).toHaveBeenCalledWith();
+
+                    expect(res.status).toHaveBeenCalledWith(returnedResponse.statusCode);
+                    expect(res.write).toHaveBeenCalledWith(returnedBody);
+
+                    for (var header in returnedResponse.headers) {
+                        expect(res.setHeader).toHaveBeenCalledWith(header, returnedResponse.headers[header]);
+                    }
                 }
+
+                expect(postValidatorCalled).toBe(expectedPostValidatorCalled);
+
                 done();
 
             }, 100);
         };
 
-        it ('should inject extra headers after calling post validation method', function(done) {
-            testAPIPostValidation(executePostValidationOk, false, done);
+        it('should proxy request when no post validation method defined', function(done) {
+           testAPIPostValidation(null, 200, false, false, done);
         });
 
+        it('should not call post validation when return status is higher than 400', function(done) {
+            testAPIPostValidation(jasmine.createSpy(), 404, false, false, done);
+        });
+
+        it ('should inject extra headers after calling post validation method', function(done) {
+            testAPIPostValidation(executePostValidationOk, 200, true, false, done);
+        });
+
+
         it('should send an error message after executing post validation method', function(done) {
-            testAPIPostValidation(executeValidationError, true, done);
+            testAPIPostValidation(executeValidationError, 200, true, true, done);
         });
     });
 

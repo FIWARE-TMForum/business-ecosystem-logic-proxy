@@ -7,10 +7,10 @@ var config = require('./../config'),
     charging = require('./tmf-apis/charging').charging,
     
     // Other dependencies
-    httpClient = require('./../lib/httpClient'),
-    utils = require('./../lib/utils'),
     logger = require('./../lib/logger').logger.getLogger('TMF'),
-    url = require('url');
+    request = require('request'),
+    url = require('url'),
+    utils = require('./../lib/utils');
 
 var tmf = (function() {
 
@@ -40,16 +40,19 @@ var tmf = (function() {
             utils.attachUserHeaders(req.headers, req.user);
         }
 
-        var protocol = config.appSsl ? 'https' : 'http';
         var api = getAPIName(req.apiUrl);
 
+        var url = (config.appSsl ? 'https' : 'http') + '://' + config.appHost + ':' + utils.getAPIPort(api) + req.apiUrl;
+
         var options = {
-            host: config.appHost,
-            port: utils.getAPIPort(api),
-            path: req.apiUrl,
+            url: url,
             method: req.method,
-            headers: utils.proxiedRequestHeaders(req)
+            headers: utils.proxiedRequestHeaders(req),
         };
+
+        if (typeof(req.body) === 'string') {
+            options.body = req.body;
+        }
 
         // The proxy prefix must be removed!!
         var postAction = null;
@@ -60,7 +63,7 @@ var tmf = (function() {
 
                 result.user = req.user;
                 result.method = req.method;
-                result.path = req.path;
+                //result.path = req.path;
 
                 apiControllers[api].executePostValidation(result, function(err) {
 
@@ -77,7 +80,46 @@ var tmf = (function() {
             };
         }
 
-        httpClient.proxyRequest(protocol, options, req.body, res, postAction);
+        request(options, function(err, response, body) {
+
+            var completeRequest = function(result) {
+
+                res.status(result.status);
+
+                for (var header in result.headers) {
+                    res.setHeader(header, result.headers[header]);
+                }
+
+                res.write(result.body);
+                res.end();
+            };
+
+            if (err) {
+                res.status(504).json({ error: 'Service unreachable' });
+            } else {
+
+                var result = {
+                    status: response.statusCode,
+                    headers: response.headers,
+                    body: body
+                };
+
+                if (postAction && response.statusCode < 400) {
+
+                    postAction(result, function(err) {
+                       if (err) {
+                           res.status(err.status).json({ error: err.message });
+                       } else {
+                           completeRequest(result);
+                       }
+                    });
+                } else {
+                    completeRequest(result);
+                }
+
+            }
+
+        });
     };
 
     var checkPermissions = function(req, res) {
