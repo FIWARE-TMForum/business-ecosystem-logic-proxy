@@ -13,7 +13,7 @@
         .module('app')
         .factory('ShoppingCart', ShoppingCartService);
 
-    function ShoppingCartService($q, $resource, URLS) {
+    function ShoppingCartService($q, $resource, URLS, Offering) {
 
         var resource = $resource(URLS.SHOPPING_CART, {
             id: '@id',
@@ -57,8 +57,27 @@
 
             var deferred = $q.defer();
 
-            resource.query({ action: 'item' }, function (items) {
-                deferred.resolve(items);
+            resource.query({ action: 'item' }, function (itemList) {
+                var items = {};
+                var params = {
+                    id: itemList.map(function (item) {
+                        items[item.id] = item;
+                        return item.id;
+                    }).join()
+                };
+
+                if (itemList.length) {
+                    Offering.search(params).then(function (productOfferingList) {
+                        productOfferingList.forEach(function (productOffering) {
+                            items[productOffering.id].productOffering = productOffering;
+                        });
+                        deferred.resolve(itemList);
+                    }, function (response) {
+                        deferred.reject(response);
+                    });
+                } else {
+                    deferred.resolve(itemList);
+                }
             }, function (response) {
                 deferred.reject(response);
             });

@@ -42,6 +42,7 @@
         resource.prototype.getPicture = getPicture;
         resource.prototype.getCheapestPriceplan = getCheapestPriceplan;
         resource.prototype.getCategoryBreadcrumbs = getCategoryBreadcrumbs;
+        resource.prototype.formatCheapestPriceplan = formatCheapestPriceplan;
         resource.prototype.serialize = serialize;
 
         return {
@@ -342,6 +343,28 @@
                         }
                     }
                 }
+            }
+
+            return priceplan;
+        }
+
+        function formatCheapestPriceplan() {
+            /* jshint validthis: true */
+            var i, priceplan = "";
+
+            if (angular.isArray(this.productOfferingPrice) && this.productOfferingPrice.length) {
+
+                for (i = 0; i < this.productOfferingPrice.length; i++) {
+                    if (this.productOfferingPrice[i].priceType === 'one time') {
+                        if (!priceplan || Number(priceplan.price.taxIncludedAmount) > Number(this.productOfferingPrice[i].price.taxIncludedAmount)) {
+                            priceplan = this.productOfferingPrice[i];
+                        }
+                    }
+                }
+
+                priceplan = "From " + priceplan.price.taxIncludedAmount + " " + angular.uppercase(priceplan.price.currencyCode);
+            } else {
+                priceplan = "Free";
             }
 
             return priceplan;
