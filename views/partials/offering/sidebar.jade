@@ -1,23 +1,18 @@
-.panel.panel-default
+.panel.panel-default.z-depth-1(ng-switch="listVM.list.status")
   .panel-heading
-    strong.text-uppercase Catalogs
-  div(ng-switch="listVM.list.status")
-    .panel-body(ng-switch-default)
-      .spinner
-        span.fa.fa-spinner.fa-lg.fa-spin
-    div(ng-switch-when="LOADED", ng-switch="listVM.list.length")
-      .panel-body(ng-switch-when="0")
-        .alert.alert-info
-          span No catalogs launched.
-      ul.nav.nav-stacked.nav-pills(ng-switch-default)
-        li(ui-sref-active-eq="active")
-          a(ui-sref="offering({ catalogueId: '' })", ui-sref-opts="{ reload: true, inherit: false }")
-            span.item-text All
-        li(ng-repeat="catalogue in listVM.list", ui-sref-active="active")
-          a(ui-sref="offering({ catalogueId: catalogue.id })", ui-sref-opts="{ reload: true, inherit: false }")
-            span.item-icon.fa.fa-angle-right
-            span.item-text {{ catalogue.name }}
-    div(ng-switch-when="ERROR")
-      .panel-body
-        .alert.alert-danger
-          span {{ listVM.error }}
+    .h4
+      strong Search by catalog
+  ul.nav.nav-stacked.nav-pills(ng-switch-when="LOADED")
+    li(ui-sref-active-eq="active")
+      a(ui-sref="offering({ catalogueId: null })", ui-sref-opts="{ reload: true, inherit: false }")
+        span.item-icon.fa.fa-angle-right
+        span.item-text All
+    li(ng-repeat="productCatalog in listVM.list", ui-sref-active="active")
+      a(ui-sref="offering({ catalogueId: productCatalog.id })", ui-sref-opts="{ reload: true, inherit: false }")
+        span.item-icon.fa.fa-angle-right
+        span.item-text {{ productCatalog.name }}
+  .panel-body(ng-switch-when="ERROR")
+    .alert.alert-danger.text-center {{ listVM.error }}
+  .panel-body(ng-switch-default)
+    .spinner
+      span.fa.fa-spinner.fa-lg.fa-spin

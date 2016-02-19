@@ -1,28 +1,21 @@
 .container-flex
-  .panel.panel-default.item-product(ng-repeat="offering in searchVM.list")
-    .panel-heading.panel-product(
-        ui-sref="offering.detail({ offeringId: offering.id })",
-        ui-sref-opts="{ inherit: false }",
-        ng-mouseenter="hovering = offering.id",
-        ng-mouseleave="hovering = null"
-     )
-      .thumbnail.item-product-logo
-        img(no-image, ng-src="{{ offering.getPicture() }}")
-        div.item-shadow(ng-class="{'item-shadow-hover': hovering === offering.id}")
-      a.h4 {{ offering.name }}
+  .panel.panel-default.item-offering.z-depth-1(ng-repeat="offering in searchVM.list")
+    a.thumbnail.thumbnail-lg(ui-sref="offering.detail({ offeringId: offering.id })", ui-sref-opts="{ inherit: false }")
+      span.label(class="label-{{ offering.isBundle ? 'bundle' : 'single' }}")
+        | {{ offering.isBundle ? offering.bundledProductOffering.length + ' bundled' : 'Single' }}
+      img(no-image, ng-src="{{ offering.getPicture() }}")
     .panel-body
-      p.text-muted
-        span v{{ offering.version }}
+      .h4
+        strong
+          a(ui-sref="offering.detail({ offeringId: offering.id })", ui-sref-opts="{ inherit: false }") {{ offering.name }}
+      .form-group.text-dark-secondary
         span.pull-right
           time(am-time-ago="offering.lastUpdate")
-      p
-        span.label(ng-class="offering.isBundle ? 'label-bundle' : 'label-single'")
-          | {{ offering.isBundle ? 'Bundle' : 'Single' }}
-      .h5.text-right.text-success(ng-if="offering.getCheapestPriceplan() != null")
-        strong
-          span From {{ offering.getCheapestPriceplan().price.taxIncludedAmount }} {{ offering.getCheapestPriceplan().price.currencyCode | uppercase }}
-      .btn-toolbar(ng-show="user.isAuthenticated()")
-        .btn-group.pull-right
-          a.btn.btn-sm.btn-default(ng-click="user.order(offering)", ng-disabled="user.contains(offering)")
-            span.item-icon.fa.fa-shopping-cart
-            span.item-text {{ user.contains(offering) ? 'Added' : 'Add to Cart' }}
+        p v{{ offering.version }}
+        p.item-description {{ offering.description ? offering.description : 'No description provided.' }}
+      .h5.text-right
+        strong {{ offering.formatCheapestPriceplan() }}
+    .btn-group.btn-group-justified(ng-show="user.isAuthenticated()")
+      a.btn.btn-success.z-depth-1(ng-click="user.order(offering)", ng-disabled="user.contains(offering)")
+        span.item-icon.fa(class="fa-{{ user.contains(offering) ? 'check-circle' : 'shopping-cart' }}")
+        span.item-text {{ user.contains(offering) ? 'Added' : 'Add to cart' }}

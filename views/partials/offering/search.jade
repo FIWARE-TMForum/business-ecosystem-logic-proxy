@@ -2,12 +2,15 @@
   .col-xs-12
     include ./product-catalogue.detail.jade
   .col-xs-12
-    .btn-toolbar
-      include ../product-category.search.jade
-      .btn-group.pull-right
-        a.btn.btn-default(ng-click="searchVM.showFilters()")
-          span.item-icon.fa.fa-sliders
-          span.item-text.hidden-xs Filters
+    .row
+      .col-xs-12.col-sm-6
+        include ../product-category.search.jade
+      .col-xs-12.col-sm-6
+        .btn-toolbar.pull-right
+          .btn-group.z-depth-1
+            a.btn.btn-default(ng-click="searchVM.showFilters()")
+              span.item-icon.fa.fa-sliders
+              span.item-text Filters
   .col-xs-12(ng-switch="searchVM.list.status")
     div(ng-switch-when="LOADED", ng-switch="searchVM.list.length")
       div(ng-switch-when="0")

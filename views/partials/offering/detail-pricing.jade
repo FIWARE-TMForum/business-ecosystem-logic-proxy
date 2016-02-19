@@ -1,4 +1,6 @@
-.alert.alert-info.text-center(ng-show="!detailVM.item.productOfferingPrice.length")
-  | No price plans found.
-.container-flex
-  div(offering-priceplan, ng-repeat="priceplan in detailVM.item.productOfferingPrice")
+.row
+  .col-sm-12
+    .container-flex
+      div(offering-priceplan, ng-repeat="priceplan in detailVM.item.productOfferingPrice")
+  .col-sm-12(ng-if="!detailVM.item.productOfferingPrice.length")
+    .alert.alert-info.text-center No price plans included.
