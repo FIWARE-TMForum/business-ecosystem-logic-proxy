@@ -1,50 +1,35 @@
 .row
   .col-xs-12
-    .panel.panel-default(ng-repeat="productOrder in searchVM.list")
+    .panel.panel-default.z-depth-1(ng-repeat="productOrder in searchVM.list")
       .panel-heading
         .pull-right(ng-if="searchVM.role === 'Customer'")
           a(ui-sref="inventory.productOrder.detail({ productOrderId: productOrder.id })", ui-sref-opts="{ inherit: false }")
             span.item-text View details
-        ul.list-inline
-          li
-            dl
-              dt.text-uppercase State
-              dd {{ productOrder.state }}
-          li
-            dl
-              dt.text-uppercase Placed on
-              dd
-                time(title="{{ productOrder.requestedStartDate | amDateFormat: 'dddd, MMMM Do YYYY, h:mm a' }}")
-                  | {{ productOrder.requestedStartDate | amCalendar }}
-          li
-            dl
-              dt.text-uppercase Placed by
-              dd {{ productOrder.getCustomer().id }}
+        .h4
+          strong
+            time(title="{{ productOrder.requestedStartDate | amDateFormat: 'dddd, MMMM Do YYYY, h:mm a' }}") {{ productOrder.requestedStartDate | amCalendar }}
+          .small by {{ productOrder.getCustomer().id }}
       .panel-body
-        .media(ng-repeat="orderItem in productOrder.orderItem")
-          .media-left
-            .thumbnail.item-product-logo
-              img.media-object(no-image, ng-src="{{ orderItem.productOffering.getPicture() }}")
-          .media-body
-            .pull-right(ng-if="searchVM.role === 'Seller' && !searchVM.isTransitable(orderItem)")
-              p
-                a.btn.btn-block.btn-default(ng-click="searchVM.updateStatus(productOrder, $index, searchVM.getNextStatus(orderItem))")
-                  span.item-text Change to 
-                    strong {{ searchVM.getNextStatus(orderItem) }}
-              p
-                a.btn.btn-block.btn-danger(ng-if="orderItem.state == 'InProgress'", ng-click="searchVM.updateStatus(productOrder, $index, 'Failed')")
-                  span.item-text Change to 
-                    strong Failed
-            a(ui-sref="offering.detail({ offeringId: orderItem.productOffering.id })", ui-sref-opts="{ inherit: false }")
-              h3.media-heading {{ orderItem.productOffering.name }}
+        .row(ng-repeat="orderItem in productOrder.orderItem")
+          hr(ng-if="!$first")
+          .col-xs-12.col-sm-4
+            .thumbnail.thumbnail-lg
+              img(no-image, ng-src="{{ orderItem.productOffering.getPicture() }}")
+            .btn-toolbar(ng-if="searchVM.role === 'Seller' && !searchVM.isTransitable(orderItem)")
+              .btn-group.btn-group-justified.z-depth-1
+                a.btn.btn-default(ng-click="searchVM.updateStatus(productOrder, $index, searchVM.getNextStatus(orderItem))")
+                  span.item-text Complete
+                a.btn.btn-danger(ng-if="orderItem.state == 'InProgress'", ng-click="searchVM.updateStatus(productOrder, $index, 'Failed')")
+                  span.item-text Reject
+          .col-xs-12.col-sm-6
+            .h4
+              strong
+                a(ui-sref="offering.detail({ offeringId: orderItem.productOffering.id })", ui-sref-opts="{ inherit: false }")
+                  span.item-text {{ orderItem.productOffering.name }}
             dl
               dt Description
-              dd.text-muted {{ orderItem.productOffering.description ? orderItem.productOffering.description : 'No description provided.' }}
+              dd.text-dark-secondary {{ orderItem.productOffering.description ? orderItem.productOffering.description : 'No description provided.' }}
               dt State
-              dd.text-muted {{ orderItem.state }}
+              dd.text-dark-secondary {{ orderItem.state }}
               dt Price
-              dd.text-success
-                span {{ productOrder.getPriceplanOf($index).price.amount }} 
-                span.fa(class="fa-{{ productOrder.getPriceplanOf($index).price.currency | lowercase }}")
-                span(ng-show="productOrder.getPriceplanOf($index).recurringChargePeriod")  / {{ productOrder.getPriceplanOf($index).recurringChargePeriod }}
-                span(ng-show="productOrder.getPriceplanOf($index).unitOfMeasure")  / {{ productOrder.getPriceplanOf($index).unitOfMeasure }}
+              dd.text-dark-secondary {{ productOrder.formatPriceplanOf($index) }}

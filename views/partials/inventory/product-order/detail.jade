@@ -1,49 +1,41 @@
 .row
   .col-xs-12
-    .btn-toolbar
-      .btn-group
-        include ./breadcrumb.jade
+    include ./breadcrumb.jade
   .col-xs-12(ng-switch="detailVM.item.status")
     div(ng-switch-when="LOADED")
-      .h2 Order details
-      .h4.text-muted
-        time(title="{{ detailVM.item.requestedStartDate | amDateFormat: 'dddd, MMMM Do YYYY, h:mm a' }}")
-          | {{ detailVM.item.requestedStartDate | amCalendar }}
-        | , placed by {{ detailVM.item.getCustomer().id }}
-      .panel.panel-default
+      .panel.panel-default.z-depth-1
         .panel-heading
-          ul.list-inline
-            li
-              dl
-                dt.text-uppercase Status
-                dd {{ detailVM.item.state }}
+          .h4
+            strong
+              time(title="{{ detailVM.item.requestedStartDate | amDateFormat: 'dddd, MMMM Do YYYY, h:mm a' }}") {{ detailVM.item.requestedStartDate | amCalendar }}
+            .small by {{ detailVM.item.getCustomer().id }}
         .panel-body
-          .media(ng-repeat="orderItem in detailVM.item.orderItem")
-            .media-left
-              .thumbnail.item-product-logo
-                img.media-object(no-image, ng-src="{{ orderItem.productOffering.getPicture() }}")
-            .media-body
-              a(ui-sref="offering.detail({ offeringId: orderItem.productOffering.id })", ui-sref-opts="{ inherit: false }")
-                h3.media-heading {{ orderItem.productOffering.name }}
-              ul.list-inline
-                li
-                  dl
-                    dt Description
-                    dd.text-muted {{ orderItem.productOffering.description ? orderItem.productOffering.description : 'No description provided.' }}
-                    dt State
-                    dd.text-muted {{ orderItem.state }}
-                    dt Price
-                    dd.text-success
-                      span {{ detailVM.item.getPriceplanOf($index).price.amount }} 
-                      span.fa(class="fa-{{ detailVM.item.getPriceplanOf($index).price.currency | lowercase }}")
-                      span(ng-show="detailVM.item.getPriceplanOf($index).recurringChargePeriod")  / {{ detailVM.item.getPriceplanOf($index).recurringChargePeriod }}
-                      span(ng-show="detailVM.item.getPriceplanOf($index).unitOfMeasure")  / {{ detailVM.item.getPriceplanOf($index).unitOfMeasure }}
-                li
-                  dl
-                    dt Billing address
-                    dd {{ orderItem.billingAccount.billingAddress.street }}
-                    dd {{ orderItem.billingAccount.billingAddress.city }}, {{ orderItem.billingAccount.billingAddress.province }} {{ orderItem.billingAccount.billingAddress.postal }}
-                    dd {{ orderItem.billingAccount.billingAddress.country }}
+          .row(ng-repeat="orderItem in detailVM.item.orderItem")
+            hr(ng-if="!$first")
+            .col-xs-12.col-sm-4
+              .thumbnail.thumbnail-lg
+                img(no-image, ng-src="{{ orderItem.productOffering.getPicture() }}")
+            .col-xs-12.col-sm-6
+              .h4
+                strong
+                  a(ui-sref="offering.detail({ offeringId: orderItem.productOffering.id })", ui-sref-opts="{ inherit: false }")
+                    span.item-text {{ orderItem.productOffering.name }}
+              dl
+                dt Description
+                dd.text-dark-secondary {{ orderItem.productOffering.description ? orderItem.productOffering.description : 'No description provided.' }}
+                dt State
+                dd.text-dark-secondary {{ orderItem.state }}
+                dt Price
+                dd.text-dark-secondary {{ detailVM.item.formatPriceplanOf($index) }}
+                dt Billing address
+                dd.text-dark-secondary {{ orderItem.billingAccount.billingAddress.street }}
+                dd.text-dark-secondary {{ orderItem.billingAccount.billingAddress.city }}, {{ orderItem.billingAccount.billingAddress.province }} {{ orderItem.billingAccount.billingAddress.postal }}
+                dd.text-dark-secondary {{ orderItem.billingAccount.billingAddress.country }}
+                dt Characteristics
+                dd(style="padding-left: 15px;")
+                  p(ng-repeat="characteristic in orderItem.product.productCharacteristic")
+                    strong {{ characteristic.name }}:
+                    span.text-dark-secondary  {{ characteristic.value }}
     .alert.alert-danger.text-center(ng-switch-when="ERROR") {{ detailVM.error }}
     .container-spinner(ng-switch-default)
       span.fa.fa-spinner.fa-spin.fa-2x
