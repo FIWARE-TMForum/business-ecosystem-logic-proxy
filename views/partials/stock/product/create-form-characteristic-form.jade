@@ -34,7 +34,7 @@ form(name="step.characteristicForm", novalidate)
         textarea.form-control(name="description", rows="3", ng-model="createVM.characteristic.description")
 form(name="step.characteristicValuesForm", novalidate)
   input(type="hidden", name="values", ng-model="createVM.characteristic.productSpecCharacteristicValue", field-array, limit-from="1", required)
-.h5
+.h5.text-dark-secondary
   strong Create a value
 form(name="step.characteristicValueForm", novalidate)
   .row
@@ -137,26 +137,22 @@ form(name="step.characteristicValueForm", novalidate)
                   span(ng-message="required") This field is required.
                   span(ng-message="maxlength") This field must not exceed 20 chars.
     .col-sm-2.text-right
-      a.btn.btn-default(ng-disabled="!step.characteristicValueForm.$valid", ng-click="createVM.createCharacteristicValue() && createForm.resetForm(step.characteristicValueForm)")
+      a.btn.btn-default.z-depth-1(ng-disabled="!step.characteristicValueForm.$valid", ng-click="createVM.createCharacteristicValue() && createForm.resetForm(step.characteristicValueForm)")
         span.item-icon.fa.fa-plus
 .row
   .col-sm-12(ng-if="createVM.characteristic.productSpecCharacteristicValue.length")
     .form-group
       .input-group(ng-repeat="characteristicValue in createVM.characteristic.productSpecCharacteristicValue")
         .input-group-btn
-          a.btn.btn-default(ng-click="createVM.setDefaultValue($index)")
-            span.item-icon.fa(ng-class="characteristicValue.default ? 'fa-dot-circle-o': 'fa-circle-o'")
+          a.btn.btn-default.z-depth-1(ng-click="createVM.setDefaultValue($index)")
+            span.item-icon.fa(ng-class="characteristicValue.default ? 'fa-check-circle': 'fa-circle-o'")
             span.item-text Default
         input.form-control(type="text", value="{{ createVM.getFormattedValueOf(createVM.characteristic, characteristicValue) }}", readonly)
         .input-group-btn
-          a.btn.btn-danger(ng-click="createVM.removeCharacteristicValue($index)")
+          a.btn.btn-danger.z-depth-1(ng-click="createVM.removeCharacteristicValue($index)")
             span.item-icon.fa.fa-trash
-  .col-sm-12
-    .alert.alert-warning.text-center(ng-if="!createVM.characteristic.productSpecCharacteristicValue.length")
-      | No characteristic values created. You must create 
-      strong at least one.
 .row
   .col-sm-12
     .form-group.text-right
-      a.btn.btn-success(ng-click="createVM.createCharacteristic() && createForm.resetForm(step.characteristicForm)", ng-disabled="!step.characteristicForm.$valid || !step.characteristicValuesForm.$valid")
+      a.btn.btn-success.z-depth-1(ng-click="createVM.createCharacteristic() && createForm.resetForm(step.characteristicForm)", ng-disabled="!step.characteristicForm.$valid || !step.characteristicValuesForm.$valid")
         span.item-text Save changes

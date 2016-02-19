@@ -43,5 +43,5 @@ form(name="step.form", novalidate)
         span.fa.fa-spinner.fa-spin.fa-2x
 
   .form-group.text-right
-    a.btn.btn-default(ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])", ng-disabled="!step.form.$valid")
+    a.btn.btn-default.z-depth-1(ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])", ng-disabled="!step.form.$valid")
       span.item-text Next
