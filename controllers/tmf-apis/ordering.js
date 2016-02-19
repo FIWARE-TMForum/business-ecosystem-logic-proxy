@@ -104,7 +104,8 @@ var ordering = (function(){
         var errorMessageOffer = 'The system fails to retrieve the offering attached to the ordering item ' + item.id;
         var errorMessageProduct = 'The system fails to retrieve the product attached to the ordering item ' + item.id;
 
-        var offeringUrl = getAPIURL(config.endpoints.catalog.port, url.parse(item.productOffering.href).path);
+        var offeringUrl = utils.getAPIURL(config.appSsl, config.appHost, config.endpoints.catalog.port,
+                url.parse(item.productOffering.href).path);
 
         makeRequest(offeringUrl, errorMessageOffer, function(err, offering) {
 
@@ -112,7 +113,8 @@ var ordering = (function(){
                 callback(err);
             } else {
 
-                var productUrl = getAPIURL(config.endpoints.catalog.port, url.parse(offering.productSpecification.href).path);
+                var productUrl = utils.getAPIURL(config.appSsl, config.appHost, config.endpoints.catalog.port,
+                        url.parse(offering.productSpecification.href).path);
 
                 makeRequest(productUrl, errorMessageProduct, function(err, product) {
 
@@ -394,7 +396,7 @@ var ordering = (function(){
         try {
 
             var ordering = JSON.parse(req.body);
-            var orderingUrl = getAPIURL(config.endpoints.ordering.port, req.apiUrl);
+            var orderingUrl = utils.getAPIURL(config.appSsl, config.appHost, config.endpoints.ordering.port, req.apiUrl);
 
             makeRequest(orderingUrl, 'The requested ordering cannot be retrieved', function(err, previousOrdering) {
                 if (err) {

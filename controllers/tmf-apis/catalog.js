@@ -23,9 +23,8 @@ var catalog = (function() {
 
     var retrieveAsset = function(assetPath, errMsg, callback) {
 
-        var uri = (config.appSsl ? 'https' : 'http') + '://' + config.appHost + ':' +
-            config.endpoints.catalog.port + assetPath;
-
+        var uri = utils.getAPIURL(config.appSsl, config.appHost, config.endpoints.catalog.port, assetPath);
+        
         request(uri, function(err, response, body) {
 
             if (err || response.statusCode >= 400) {
