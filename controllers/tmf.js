@@ -54,36 +54,10 @@ var tmf = (function() {
             options.body = req.body;
         }
 
-        // The proxy prefix must be removed!!
-        var postAction = null;
-
-        if (apiControllers[api] !== undefined && apiControllers[api].executePostValidation) {
-
-            postAction = function(result, callback) {
-
-                result.user = req.user;
-                result.method = req.method;
-                //result.path = req.path;
-
-                apiControllers[api].executePostValidation(result, function(err) {
-
-                    var basicLogMessage = 'Post-Validation (' + api + '): ';
-
-                    if (err) {
-                        utils.log(logger, 'warn', req, basicLogMessage + err.message);
-                        sendError(res, err);
-                    } else {
-                        utils.log(logger, 'info', req, basicLogMessage + 'OK');
-                        callback();
-                    }
-                });
-            };
-        }
-
+        // PROXY THE REQUEST
         request(options, function(err, response, body) {
 
             var completeRequest = function(result) {
-
                 res.status(result.status);
 
                 for (var header in result.headers) {
@@ -104,14 +78,26 @@ var tmf = (function() {
                     body: body
                 };
 
-                if (postAction && response.statusCode < 400) {
+                // Execute postValidation if status code is lower than 400 and the
+                // function is defined
+                if (response.statusCode < 400 && apiControllers[api] !== undefined
+                        && apiControllers[api].executePostValidation) {
 
-                    postAction(result, function(err) {
-                       if (err) {
-                           res.status(err.status).json({ error: err.message });
-                       } else {
-                           completeRequest(result);
-                       }
+                    result.user = req.user;
+                    result.method = req.method;
+                    //result.path = req.path;
+
+                    apiControllers[api].executePostValidation(result, function(err) {
+
+                        var basicLogMessage = 'Post-Validation (' + api + '): ';
+
+                        if (err) {
+                            utils.log(logger, 'warn', req, basicLogMessage + err.message);
+                            res.status(err.status).json({ error: err.message });
+                        } else {
+                            utils.log(logger, 'info', req, basicLogMessage + 'OK');
+                            completeRequest(result);
+                        }
                     });
                 } else {
                     completeRequest(result);

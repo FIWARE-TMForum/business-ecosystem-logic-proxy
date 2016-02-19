@@ -409,12 +409,12 @@ describe('TMF Controller', function() {
 
                     expect(res.status).toHaveBeenCalledWith(INVALID_API_STATUS);
                     expect(res.json).toHaveBeenCalledWith({ error: INVALID_API_MESSAGE });
-                    expect(res.end).toHaveBeenCalledWith();
 
                 } else {
 
                     expect(res.status).toHaveBeenCalledWith(returnedResponse.statusCode);
                     expect(res.write).toHaveBeenCalledWith(returnedBody);
+                    expect(res.end).toHaveBeenCalled();
 
                     for (var header in returnedResponse.headers) {
                         expect(res.setHeader).toHaveBeenCalledWith(header, returnedResponse.headers[header]);
@@ -439,7 +439,6 @@ describe('TMF Controller', function() {
         it ('should inject extra headers after calling post validation method', function(done) {
             testAPIPostValidation(executePostValidationOk, 200, true, false, done);
         });
-
 
         it('should send an error message after executing post validation method', function(done) {
             testAPIPostValidation(executeValidationError, 200, true, true, done);
