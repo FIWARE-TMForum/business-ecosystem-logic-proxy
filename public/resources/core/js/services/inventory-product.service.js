@@ -80,13 +80,22 @@
                 productId: productId
             };
 
-            resource.get(params, function (product) {
-                deferred.resolve(product);
+            resource.get(params, function (productRetrieved) {
+                extendProductOffering(productRetrieved);
             }, function (response) {
                 deferred.reject(response);
             });
 
             return deferred.promise;
+
+            function extendProductOffering(productRetrieved) {
+                Offering.detail(productRetrieved.productOffering.id).then(function (productOfferingRetrieved) {
+                    productRetrieved.productOffering = productOfferingRetrieved;
+                    deferred.resolve(productRetrieved);
+                }, function (response) {
+                    deferred.reject(response);
+                });
+            }
         }
     }
 })();
