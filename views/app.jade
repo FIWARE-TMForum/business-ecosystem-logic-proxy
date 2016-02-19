@@ -10,53 +10,55 @@ block scripts
 
 block navbars
   li.dropdown(ng-controller="UserShoppingCartCtrl as listVM")
-      a.dropdown-toggle(data-toggle="dropdown")
-        span.fa-stack.icon-shopping-cart(ng-switch="listVM.list.status")
-          span.fa.fa-shopping-cart.fa-stack-2x
-          span.badge.badge-success(ng-switch-when="LOADED") {{ listVM.list.length }}
-          span.badge(ng-switch-when="LOADING") ...
-          span.badge.badge-error(ng-switch-when="ERROR") !!!
-        span.hidden-xs Shopping Cart
-      .dropdown-menu(ng-switch="listVM.list.status")
-        .dropdown-header
-          strong.text-uppercase My Shopping Cart
-        .alert.alert-info.text-center(ng-switch-when="LOADED", ng-show="!listVM.list.length")
-          span Your shopping cart is empty.
-        .alert.alert-danger.text-center(ng-switch-when="ERROR")
-          span Your shopping cart cannot be loaded.
-        a.dropdown-menu-item.item-offering-ordered(ng-switch-when="LOADED", ng-repeat="offering in listVM.list")
-          div(ui-sref="offering.detail({ offeringId: offering.id })")
-            span.item-icon.fa.fa-cube
-            span.item-text {{ offering.name }}
-          span.fa.fa-close(ng-click="listVM.remove(offering)")
-        .divider(ng-show="listVM.list.length")
-        a.dropdown-menu-item(ng-switch-when="LOADED", ng-show="listVM.list.length", ui-sref="shopping-cart")
-          span.item-icon.fa.fa-paypal
-          span.item-text Make order
+    a.dropdown-toggle(data-toggle="dropdown")
+      span.item-icon.fa.fa-shopping-cart.fa-lg
+      span.item-text {{ listVM.list.length }} item(s)
+    .dropdown-menu.z-depth-3(ng-switch="listVM.list.status")
+      .dropdown-header Shopping Cart
+      .alert.alert-info.text-center(ng-switch-when="LOADED", ng-if="!listVM.list.length")
+        span Your shopping cart is empty!
+      .alert.alert-danger.text-center(ng-switch-when="ERROR")
+        span Your shopping cart cannot be loaded.
+      .dropdown-menu-item(ng-switch-when="LOADED", ng-repeat="offering in listVM.list")
+        .media.item-offering-ordered
+          .media-left
+            .thumbnail.thumbnail-45px.thumbnail-circle
+              img(no-image, ng-src="{{ offering.productOffering.getPicture() }}")
+          .media-body
+            a.pull-right.alert-link-danger
+              span.fa.fa-remove(ng-click="listVM.remove(offering)")
+            .h4.media-heading
+              a(ui-sref="offering.detail({ offeringId: offering.id })") {{ offering.name }}
+            p.text-muted x 1
+      .btn-group.btn-group-justified(ng-switch-when="LOADED", ng-if="listVM.list.length")
+        a.btn.btn-success.z-depth-1(ui-sref="shopping-cart")
+          span.item-icon.fa.fa-share
+          span.item-text Checkout
 
 block content
   .container
     .row
       .col-xs-12.col-md-3
-        if user
-          .panel.panel-default
-            ul.nav.nav-stacked.nav-router.nav-pills
-              li(ui-sref-active="active")
-                a.bg-view1(ui-sref="offering", ui-sref-opts="{ reload: true, inherit: false }")
-                  span.item-icon-container
-                    i.fa.fa-fw.fa-home
-                  strong.item-text Home
-              li(ui-sref-active="active")
-                a.bg-view2(ui-sref="stock", ui-sref-opts="{ reload: true, inherit: false }")
-                  span.item-icon-container
-                    i.fa.fa-fw.fa-database
-                  strong.item-text My stock
-              li(ui-sref-active="active")
-                a.bg-view3(ui-sref="inventory", ui-sref-opts="{ reload: true, inherit: false }")
-                  span.item-icon-container
-                    i.fa.fa-fw.fa-archive
-                  strong.item-text My inventory
-        ui-view(name="sidebar")
+        .row
+          if user
+            .panel.panel-default.z-depth-2.hidden-xs
+              ul.nav.nav-stacked.nav-router.nav-pills
+                li(ui-sref-active="active")
+                  a.bg-view1(ui-sref="offering", ui-sref-opts="{ reload: true, inherit: false }")
+                    span.item-icon-container
+                      i.fa.fa-fw.fa-home
+                    strong.item-text Home
+                li(ui-sref-active="active")
+                  a.bg-view2(ui-sref="stock", ui-sref-opts="{ reload: true, inherit: false }")
+                    span.item-icon-container
+                      i.fa.fa-fw.fa-database
+                    strong.item-text My stock
+                li(ui-sref-active="active")
+                  a.bg-view3(ui-sref="inventory", ui-sref-opts="{ reload: true, inherit: false }")
+                    span.item-icon-container
+                      i.fa.fa-fw.fa-archive
+                    strong.item-text My inventory
+          ui-view(name="sidebar")
       .col-xs-12.col-md-9
         ui-view(name="content")
   include ./modals/search-filters.modal.jade
