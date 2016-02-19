@@ -45,16 +45,16 @@
                     }
                 }
             })
-            .state('offering.detail.product', {
-                url: '/product',
+            .state('offering.detail.productCharacteristic', {
+                url: '/characteristic',
                 views: {
                     'offering-content': {
                         templateUrl: 'offering/detail/product'
                     }
                 }
             })
-            .state('offering.detail.pricing', {
-                url: '/pricing',
+            .state('offering.detail.pricePlan', {
+                url: '/priceplan',
                 views: {
                     'offering-content': {
                         templateUrl: 'offering/detail/pricing'

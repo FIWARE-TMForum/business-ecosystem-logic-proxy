@@ -16,8 +16,8 @@
         /* jshint validthis: true */
         var vm = this;
         var messages = {
-            created: 'The {{ resource }} <strong>{{ name }}</strong> was created successfully.',
-            updated: 'The {{ resource }} <strong>{{ name }}</strong> was updated successfully.',
+            created: 'The {{ resource }} <strong>{{ name }}</strong> was created.',
+            updated: 'The {{ resource }} <strong>{{ name }}</strong> was updated.',
             success: '{{ message }}',
             error: '{{ error }}'
         };
