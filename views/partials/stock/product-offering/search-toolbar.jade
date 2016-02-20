@@ -1,15 +1,18 @@
-.btn-toolbar
-  .btn-group
+.row
+  .col-xs-12.col-sm-6
     include ./breadcrumb.jade
-  .btn-group.pull-right
-    a.btn.btn-default(ui-sref="stock.offering({ flow: 1 })", ui-sref-active="active")
-      span.item-icon.fa.fa-th
-    a.btn.btn-default(ui-sref="stock.offering({ flow: 2 })", ui-sref-active="active")
-      span.item-icon.fa.fa-th-list
-  .btn-group.pull-right
-    a.btn.btn-default(ui-sref="stock.offering.create", ui-sref-opts="{ inherit: false }")
-      span.item-icon.fa.fa-plus-circle
-      span.item-text.hidden-xs New offering
-    button.btn.btn-default(type="button", ng-click="searchVM.showFilters()")
-      span.item-icon.fa.fa-sliders
-      span.item-text.hidden-xs Filters
+  .col-xs-12.col-sm-6
+    .btn-toolbar.pull-right
+      .btn-group.z-depth-1
+        a.btn.btn-success(ui-sref="stock.offering.create", ui-sref-opts="{ inherit: false }")
+          span.item-icon.fa.fa-plus-circle
+          span.item-text New
+      .btn-group.z-depth-1
+        a.btn.btn-default(ng-click="searchVM.showFilters()")
+          span.item-icon.fa.fa-sliders
+          span.item-text Filters
+      .btn-group.z-depth-1
+        a.btn.btn-default(ui-sref="stock.offering({ flow: 1 })", ui-sref-active="active")
+          span.item-icon.fa.fa-th
+        a.btn.btn-default(ui-sref="stock.offering({ flow: 2 })", ui-sref-active="active")
+          span.item-icon.fa.fa-th-list

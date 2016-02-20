@@ -47,10 +47,10 @@ form(name="step.form", novalidate)
           required
           readonly
         )
-  .h4
-    strong Characteristics
-  .row
+  .row(ng-if="createVM.characteristics.length")
     .col-sm-12
+      .h4.text-dark-secondary
+        strong Characteristics
       table.table.table-bordered
         thead
           tr
@@ -79,6 +79,8 @@ form(name="step.form", novalidate)
     )
   .row
     .col-sm-12
+      .h4.text-dark-secondary
+        strong Attachments
       .form-group
         label Picture URL
         input.form-control(
@@ -110,5 +112,5 @@ form(name="step.form", novalidate)
             td
               time(am-time-ago="product.lastUpdate")
   .form-group.text-right
-    a.btn.btn-success(ng-click="createVM.create()", ng-disabled="!step.form.$valid")
+    a.btn.btn-success.z-depth-1(ng-click="createVM.create()", ng-disabled="!step.form.$valid")
       span.item-text Create

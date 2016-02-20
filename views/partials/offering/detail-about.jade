@@ -1,16 +1,32 @@
-.panel.panel-default
-  .panel-heading
-    .h4 About
+.panel.panel-default.z-depth-1
   .panel-body
+    .h4.text-dark-secondary
+      strong Offering information
+    hr
     dl
       dt Name
-      dd {{ detailVM.item.name }}
+      dd.text-dark-secondary {{ detailVM.item.name }}
       dt Version
-      dd {{ detailVM.item.version }}
+      dd.text-dark-secondary {{ detailVM.item.version }}
       dt Description
-      dd
-        span.text-danger(ng-if="!detailVM.item.description") No description provided.
-        span {{ detailVM.item.description }}
+      dd.text-dark-secondary {{ detailVM.item.description ? detailVM.item.description : 'No description provided.' }}
       dt Updated
-      dd
+      dd.text-dark-secondary
         time {{ detailVM.item.lastUpdate | amDateFormat: 'dddd, MMMM Do YYYY, h:mm a' }}
+    .h4.text-dark-secondary
+      strong Product information
+    hr
+    dl
+      dt Name
+      dd.text-dark-secondary {{ detailVM.item.productSpecification.name }}
+      dt Version
+      dd.text-dark-secondary {{ detailVM.item.productSpecification.version }}
+      dt Description
+      dd.text-dark-secondary {{ detailVM.item.productSpecification.description  ? detailVM.item.productSpecification.description : 'No description provided.' }}
+      dt Updated
+      dd.text-dark-secondary
+        time {{ detailVM.item.productSpecification.lastUpdate | amDateFormat: 'dddd, MMMM Do YYYY, h:mm a' }}
+      dt Brand
+      dd.text-dark-secondary {{ detailVM.item.productSpecification.brand }}
+      dt ID Number
+      dd.text-dark-secondary {{ detailVM.item.productSpecification.productNumber }}

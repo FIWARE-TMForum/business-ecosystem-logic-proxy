@@ -84,13 +84,14 @@
         }
     }
 
-    function ProductOrderCreateController($state, $rootScope, $window, $interval, User, ProductOrder, ShoppingCart, Utils, EVENTS) {
+    function ProductOrderCreateController($state, $rootScope, $window, $interval, User, ProductOrder, Offering, ShoppingCart, Utils, EVENTS) {
         /* jshint validthis: true */
         var vm = this;
 
         vm.makeOrder = makeOrder;
         vm.toggleCollapse = toggleCollapse;
         vm.createOrderStatus = INITIAL;
+        vm.formatPriceplan = formatPriceplan;
 
         function toggleCollapse(id) {
             $('#' + id).collapse('toggle');
@@ -169,6 +170,27 @@
                 vm.loadingStatus = ERROR;
             });
         };
+
+        function formatPriceplan(orderItem) {
+            var result, priceplan;
+
+            if (angular.isArray(orderItem.product.productPrice) && orderItem.product.productPrice.length) {
+                priceplan = orderItem.product.productPrice[0];
+                result = priceplan.price.amount + " " + priceplan.price.currency;
+                switch (priceplan.priceType) {
+                case Offering.PRICE_TYPES.RECURRING:
+                    result += " / " + priceplan.recurringChargePeriod;
+                    break;
+                case Offering.PRICE_TYPES.USAGE:
+                    result += " / " + priceplan.unitOfMeasure;
+                    break;
+                }
+            } else {
+                result = "Free";
+            }
+
+            return result;
+        }
 
         function makeOrder() {
 

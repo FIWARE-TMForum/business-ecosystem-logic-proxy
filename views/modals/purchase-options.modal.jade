@@ -1,85 +1,33 @@
-.modal.fade(ng-controller="AcquireOptionsCtrl as options")
-   .modal-dialog
-      .modal-content
-         .modal-header
-            .modal-title
-               strong.text-uppercase Acquire Options
-            button.close(type="button", data-dismiss="modal")
-               i.fa.fa-close
-         .modal-body
-            .row
-               .col-xs-12
-                  ul.nav.nav-justified.nav-pills
-                     li.active(ng-click="options.tab = 1", ng-show="options.pricingModels.length"
-                       ng-class="{ 'active': (!options.confChars.length && options.pricingModels.length) || options.tab == 1}")
-                        a(data-target=".tab-profile-form", data-toggle="tab")
-                           span.item-text Pricing
-                     li(ng-click="options.tab = 2", ng-show="options.confChars.length"
-                       ng-class="{ 'active': options.confChars.length && !options.pricingModels.length || options.tab == 2}")
-                        a(data-target=".tab-profile-form", data-toggle="tab")
-                           span.item-text Characteristics
-
-                  .tab-content
-                     .tab-pane.tab-profile-form.active
-                        div(ng-show="(options.pricingModels.length && options.confChars.length && options.tab === 1) || (options.pricingModels.length && !options.confChars.length)")
-                           .table.table-responsive
-                              table.table.table-bordered.table-hover.table-selectable
-                                 thead
-                                    tr
-                                       th Name
-                                       th Type
-                                       th Unit
-                                       th Price
-                                       th Currency
-                                 tbody
-                                    tr(ng-repeat="pricing in options.pricingModels",
-                                       ng-click="options.setPricing(pricing)",
-                                       ng-class="{ 'active': options.getPricing() === pricing }"
-                                    )
-                                       td
-                                          span {{ pricing.name }}
-                                       td
-                                          span {{ pricing.priceType }}
-                                       td(ng-if="pricing.priceType == 'one time'")
-                                          span {{ pricing.priceType }}
-                                       td(ng-if="pricing.priceType == 'recurring'")
-                                          span {{ pricing.recurringChargePeriod }}
-                                       td(ng-if="pricing.priceType == 'usage'")
-                                          span {{ pricing.unitOfMeasure }}
-                                       td
-                                          span {{ pricing.price.taxIncludedAmount }}
-                                       td
-                                          span {{ pricing.price.currencyCode }}
-
-                        div(ng-show="(options.pricingModels.length && options.confChars.length && options.tab === 2) || (options.confChars.length && !options.pricingModels.length)")
-                           div(ng-repeat="char in options.confChars")
-                              label {{ char.name }}
-                              .table.table-responsive
-                                 table.table.table-bordered.table-hover.table-selectable
-                                    thead
-                                       tr
-                                          th Value
-                                          th Value From
-                                          th Value To
-                                          th Unit
-                                    tbody
-                                       tr(ng-repeat="value in char.productSpecCharacteristicValue",
-                                          ng-click="options.setCharacteristicValue(char, value)",
-                                          ng-class="{ 'active': options.getCharacteristicValue(char) === value }"
-                                       )
-                                          td
-                                             span {{ value.value }}
-                                          td
-                                             span {{ value.valueFrom }}
-                                          td
-                                             span {{ value.valueTo }}
-                                          td
-                                             span {{ value.unitOfMeasure }}
-
-         .modal-footer
-            a.btn.btn-success(
-               data-dismiss="modal"
-               ng-click="options.order()"
-               ng-disabled="options.isInvalid()"
-            )
-               | Accept
+.modal.fade(ng-controller="AcquireOptionsCtrl as createVM")
+  .modal-dialog
+    .modal-content
+      .modal-header
+        .h4
+          strong Available Options
+      .modal-body
+        .row
+          .col-xs-12
+            ul.nav.nav-justified.nav-pills
+              li(ng-repeat="tab in createVM.tabs", ng-class="{ 'active': createVM.tabActive === tab }")
+                a(ng-click="createVM.tabActive = tab")
+                  span.item-text.text-nowrap {{ ($index + 1) + ". " + tab.title }}
+          .col-xs-12(ng-if="createVM.tabActive === createVM.priceplansTab")
+            .h4
+              strong Choose one
+            .container-flex
+              div(offering-priceplan, ng-repeat="priceplan in createVM.priceplans", ng-click="createVM.setPriceplan(priceplan)")
+          .col-xs-12(ng-if="createVM.tabActive === createVM.characteristicsTab")
+            .form-group(ng-repeat="characteristic in createVM.configurableCharacteristics")
+              .h4
+                strong {{ characteristic.name }}
+              hr
+              p.text-dark-secondary {{ characteristic.description ? characteristic.description : 'No description provided.' }}
+              p(ng-repeat="characteristicValue in characteristic.productSpecCharacteristicValue", ng-click="createVM.setCharacteristicValue(characteristic, characteristicValue)")
+                span.fa.fa-fw(ng-class="createVM.getCharacteristicValue(characteristic) === characteristicValue ? 'fa-check-circle': 'fa-circle-o'")
+                span  {{ createVM.formatCharacteristicValue(characteristic, characteristicValue) }}
+      .modal-footer
+        a.btn.btn-success.z-depth-1(data-dismiss="modal", ng-click="createVM.order()", ng-disabled="!createVM.isValid()")
+          span.item-icon.fa.fa-shopping-cart
+          span.item-text Add to cart
+        a.btn.btn-default.z-depth-1(data-dismiss="modal")
+          span.item-text Close

@@ -20,7 +20,7 @@ form(name="step.pricePlanForm", novalidate)
       .form-group
         label Choose a type
         .dropdown
-          a.btn.btn-block.btn-default.dropdown-toggle(data-toggle="dropdown")
+          a.btn.btn-block.btn-default.dropdown-toggle.z-depth-1(data-toggle="dropdown")
             span.item-text {{ createVM.pricePlan.priceType }}
             span.item-icon.fa.fa-caret-down
           ul.dropdown-menu.dropdown-menu-right
@@ -40,7 +40,7 @@ form(name="step.pricePlanForm", novalidate)
             min="0"
           )
           .input-group-btn
-            a.btn.btn-default.dropdown-toggle(data-toggle="dropdown")
+            a.btn.btn-default.dropdown-toggle.z-depth-1(data-toggle="dropdown")
               span.item-text {{ createVM.pricePlan.price.currencyCode | uppercase }}
               span.item-icon.fa.fa-caret-down
             ul.dropdown-menu.dropdown-menu-right
@@ -90,5 +90,5 @@ form(name="step.pricePlanForm", novalidate)
           small.text-muted (optional)
         textarea.form-control(name="description", rows="3", ng-model="createVM.pricePlan.description")
   .form-group.text-right
-    a.btn.btn-success(ng-disabled="!step.pricePlanForm.$valid", ng-click="createVM.createPricePlan() && createForm.resetForm(step.pricePlanForm)")
+    a.btn.btn-success.z-depth-1(ng-disabled="!step.pricePlanForm.$valid", ng-click="createVM.createPricePlan() && createForm.resetForm(step.pricePlanForm)")
       span.item-text Save changes

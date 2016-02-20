@@ -15,7 +15,7 @@
     angular
         .module('app')
         .controller('InventorySearchCtrl', InventorySearchController)
-        .controller('InventoryDetailsCtrl', InventoryDetailController);
+        .controller('InventoryDetailsCtrl', ProductDetailController);
 
     function InventorySearchController($state, $rootScope, EVENTS, InventoryProduct, INVENTORY_STATUS, Utils) {
         /* jshint validthis: true */
@@ -41,16 +41,68 @@
         }
     }
 
-    function InventoryDetailController($state, InventoryProduct, Utils) {
+    function ProductDetailController($scope, $state, InventoryProduct, Utils, ProductSpec) {
+        /* jshint validthis: true */
         var vm = this;
-        vm.product = {};
 
-        InventoryProduct.detail($state.params.productId).then(function(product) {
-            vm.status = LOADED;
-            angular.copy(product, vm.product);
-        }, function(response) {
+        vm.item = {};
+        vm.$state = $state;
+        vm.formatCharacteristicValue = formatCharacteristicValue;
+        vm.characteristicValueSelected = characteristicValueSelected;
+
+        InventoryProduct.detail($state.params.productId).then(function (productRetrieved) {
+            vm.item = productRetrieved;
+            vm.item.status = LOADED;
+            $scope.priceplanSelected = productRetrieved.productPrice[0];
+        }, function (response) {
             vm.error = Utils.parseError(response, 'It was impossible to load product details');
-            vm.status = ERROR;
-        })
+            vm.item.status = ERROR;
+        });
+
+        function characteristicValueSelected(characteristic, characteristicValue) {
+            var result, productCharacteristic, i;
+
+            for (i = 0; i < vm.item.productCharacteristic.length; i++) {
+                if (vm.item.productCharacteristic[i].name === characteristic.name) {
+                    productCharacteristic = vm.item.productCharacteristic[i];
+                }
+            }
+
+            switch (characteristic.valueType) {
+            case ProductSpec.VALUE_TYPES.STRING.toLowerCase():
+                result = characteristicValue.value;
+                break;
+            case ProductSpec.VALUE_TYPES.NUMBER.toLowerCase():
+                if (characteristicValue.value && characteristicValue.value.length) {
+                    result = characteristicValue.value;
+                } else {
+                    result = characteristicValue.valueFrom + "-" + characteristicValue.valueTo;
+                }
+                break;
+            }
+
+            return result === productCharacteristic.value;
+        }
+
+        function formatCharacteristicValue(characteristic, characteristicValue) {
+            var result;
+
+            switch (characteristic.valueType) {
+            case ProductSpec.VALUE_TYPES.STRING.toLowerCase():
+                result = characteristicValue.value;
+                break;
+            case ProductSpec.VALUE_TYPES.NUMBER.toLowerCase():
+                if (characteristicValue.value && characteristicValue.value.length) {
+                    result = characteristicValue.value;
+                } else {
+                    result = characteristicValue.valueFrom + " - " + characteristicValue.valueTo;
+                }
+                result += " " + characteristicValue.unitOfMeasure;
+                break;
+            }
+
+            return result;
+        }
     }
+
 })();

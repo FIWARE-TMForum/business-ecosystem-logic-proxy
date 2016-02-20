@@ -1,9 +1,11 @@
 /**
  * @author Francisco de la Vega <fdelavega@conwet.com>
  *         Jaime Pajuelo <jpajuelo@conwet.com>
+ *         Aitor Magán <amagan@conwet.com>
  */
 
 (function () {
+
     'use strict';
 
     angular
@@ -11,102 +13,175 @@
         .controller('AcquireOptionsCtrl', AcquireOptionsController);
 
     function AcquireOptionsController($scope, $rootScope, $element, EVENTS, ProductSpec) {
+        /* jshint validthis: true */
         var vm = this;
-        var options;
-        var nonConf;
 
-        vm.pricingModels = [];
-        vm.confChars = [];
+        var data = {};
+        var characteristics = [];
+        var priceplan = null;
 
-        vm.order = function() {
-            // Read selected options
-            var offeringInfo = {
-                id: vm.offering.id,
-                href: vm.offering.href,
-                name: vm.offering.name,
-                options: options
+        vm.characteristicsTab = {
+            title: "Characteristics"
+        };
+        vm.priceplansTab = {
+            title: "Price plans"
+        };
+
+        vm.tabs = [];
+        vm.tabActive = null;
+
+        vm.configurableCharacteristics = [];
+        vm.priceplans = [];
+
+        vm.order = order;
+        vm.isValid = isValid;
+        vm.getCharacteristicValue = getCharacteristicValue;
+        vm.setCharacteristicValue = setCharacteristicValue;
+        vm.formatCharacteristicValue = formatCharacteristicValue;
+        vm.getPriceplan = getPriceplan;
+        vm.setPriceplan = setPriceplan;
+
+        $scope.$on(EVENTS.OFFERING_ORDERED, function (event, productOffering) {
+            data = {
+                id: productOffering.id,
+                href: productOffering.href,
+                name: productOffering.name,
+                options: {}
             };
-            $rootScope.$broadcast(EVENTS.OFFERING_CONFIGURED, offeringInfo);
-        };
 
-        vm.setPricing = function(pricing) {
-            options.pricing = pricing;
-        };
+            characteristics = [];
+            priceplan = null;
 
-        vm.getPricing = function() {
-            return options.pricing;
-        };
+            vm.tabs = [];
+            vm.tabActive = null;
+            vm.configurableCharacteristics = [];
+            vm.priceplans = [];
 
-        var getIndexOfChar = function getIndexOfChar(char) {
-            var index = -1;
-            for (var i = 0; i < options.characteristics.length && index == -1; i++) {
-                if (options.characteristics[i].characteristic === char) {
+            loadCharacteristics(productOffering.productSpecification.productSpecCharacteristic);
+            loadPriceplans(productOffering.productOfferingPrice);
+
+            if (vm.configurableCharacteristics.length || vm.priceplans.length) {
+                $element.modal('show');
+            } else {
+                order();
+            }
+        });
+
+        function order() {
+            data.options = {
+                characteristics: characteristics,
+                pricing: priceplan
+            };
+            $rootScope.$broadcast(EVENTS.OFFERING_CONFIGURED, data);
+        }
+
+        function isValid() {
+            return !vm.priceplans.length || priceplan != null;
+        }
+
+        function getCharacteristicValue(characteristic) {
+            return characteristics[indexOfCharacteristic(characteristic)].value;
+        }
+
+        function setCharacteristicValue(characteristic, characteristicValue) {
+            var index = indexOfCharacteristic(characteristic);
+
+            if (index !== -1) {
+                characteristics.splice(index, 1);
+            }
+
+            characteristics.push({
+                characteristic: characteristic,
+                value: characteristicValue
+            });
+        }
+
+        function formatCharacteristicValue(characteristic, characteristicValue) {
+            var result;
+
+            switch (characteristic.valueType) {
+            case ProductSpec.VALUE_TYPES.STRING.toLowerCase():
+                result = characteristicValue.value;
+                break;
+            case ProductSpec.VALUE_TYPES.NUMBER.toLowerCase():
+                if (characteristicValue.value && characteristicValue.value.length) {
+                    result = characteristicValue.value;
+                } else {
+                    result = characteristicValue.valueFrom + " - " + characteristicValue.valueTo;
+                }
+                result += " " + characteristicValue.unitOfMeasure;
+                break;
+            }
+
+            return result;
+        }
+
+        function getPriceplan() {
+            return priceplan;
+        }
+
+        function setPriceplan(productOfferingPrice) {
+            priceplan = productOfferingPrice;
+            $scope.priceplanSelected = productOfferingPrice;
+        }
+
+        function loadCharacteristics(productSpecCharacteristic) {
+
+            if (angular.isArray(productSpecCharacteristic) && productSpecCharacteristic.length) {
+                productSpecCharacteristic.forEach(function (characteristic) {
+                    if (characteristic.configurable) {
+                        vm.configurableCharacteristics.push(characteristic);
+                    }
+                    vm.setCharacteristicValue(characteristic, getDefaultCharacteristicValue(characteristic));
+                });
+            }
+
+            if (vm.configurableCharacteristics.length) {
+                vm.tabs.push(vm.characteristicsTab);
+                vm.tabActive = vm.characteristicsTab;
+            }
+        }
+
+        function loadPriceplans(productOfferingPrice) {
+
+            if (angular.isArray(productOfferingPrice) && productOfferingPrice.length) {
+                if (productOfferingPrice.length === 1) {
+                    priceplan = productOfferingPrice[0];
+                }
+                vm.priceplans = productOfferingPrice;
+            }
+
+            if (vm.priceplans.length) {
+                vm.tabs.push(vm.priceplansTab);
+                if (vm.tabActive == null) {
+                    vm.tabActive = vm.priceplansTab;
+                }
+            }
+        }
+
+        function indexOfCharacteristic(characteristic) {
+            var i, index = -1;
+
+            for (i = 0; i < characteristics.length && index === -1; i++) {
+                if (characteristics[i].characteristic === characteristic) {
                     index = i;
                 }
             }
+
             return index;
-        };
+        }
 
-        vm.setCharacteristicValue = function(char, value) {
+        function getDefaultCharacteristicValue(characteristic) {
+            var i, characteristicValue;
 
-            var index = getIndexOfChar(char);
-            if (index > -1) {
-                options.characteristics.splice(index, 1)
+            for (i = 0; i < characteristic.productSpecCharacteristicValue.length; i++) {
+                if (characteristic.productSpecCharacteristicValue[i].default) {
+                    characteristicValue = characteristic.productSpecCharacteristicValue[i];
+                }
             }
 
-            options.characteristics.push({
-                characteristic: char,
-                value: value
-            });
-        };
-
-        vm.getCharacteristicValue = function(char) {
-            return options.characteristics[getIndexOfChar(char)].value;
-        };
-
-        vm.isInvalid = function() {
-            return ((vm.pricingModels.length && !options.pricing) || (vm.confChars.length && (!options.characteristics || options.characteristics.length != vm.confChars.length + nonConf)));
-        };
-
-        $scope.$on(EVENTS.OFFERING_ORDERED, function(event, off) {
-            vm.offering = off;
-            vm.tab = 1;
-            vm.confChars = [];
-            vm.pricingModels = [];
-            options = { characteristics: [] };
-            nonConf = 0;
-
-            ProductSpec.detail(vm.offering.productSpecification.id).then(function(productInfo) {
-                // Check if there are configurable characteristics in the product
-                if (productInfo.productSpecCharacteristic) {
-                    for(var i = 0; i < productInfo.productSpecCharacteristic.length; i++) {
-                        var characteristic = productInfo.productSpecCharacteristic[i];
-                        if (characteristic.configurable) {
-                            vm.confChars.push(characteristic);
-                        } else {
-                            vm.setCharacteristicValue(characteristic, characteristic.productSpecCharacteristicValue[0]);
-                        }
-                    }
-                }
-                nonConf = options.characteristics.length;
-
-                if (vm.offering.productOfferingPrice && vm.offering.productOfferingPrice.length > 1) {
-                    vm.pricingModels = vm.offering.productOfferingPrice;
-                } else if (vm.offering.productOfferingPrice && vm.offering.productOfferingPrice.length == 1) {
-                    options.pricing = vm.offering.productOfferingPrice[0];
-                }
-
-                // In there is something that require configuration show the modal
-                if (vm.confChars.length || vm.pricingModels.length) {
-                    $element.modal('show');
-                } else {
-                    vm.order();
-                }
-            }, function (response) {
-                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
-                    error: 'It was impossible to load the properties of the offering you want to add to your cart'
-                });
-            });
-        });
+            return characteristicValue;
+        }
     }
+
 })();

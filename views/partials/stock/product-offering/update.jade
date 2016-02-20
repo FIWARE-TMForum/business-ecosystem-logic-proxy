@@ -6,16 +6,17 @@
   .col-xs-12(ng-switch="updateVM.item.status")
     .row(ng-switch-when="LOADED")
       .col-xs-12
-        .panel.panel-default
+        .panel.panel-default.z-depth-1
+          .thumbnail.thumbnail-lg
+            img(no-image, ng-src="{{ updateVM.item.getPicture() }}")
+          .panel-body
+            .h4.text-dark-secondary.text-center
+              strong {{ updateVM.item.name }}
           ul.nav.nav-justified.nav-pills
             li(ui-sref-active-eq="active")
               a(ui-sref="stock.offering.update")
                 span.item-icon.fa.fa-newspaper-o
                 span.item-text.hidden-xs About
-            li(ui-sref-active-eq="active")
-              a(ui-sref="stock.offering.update.product")
-                span.item-icon.fa.fa-file
-                span.item-text.hidden-xs Product Spec.
             li(ui-sref-active-eq="active")
               a(ui-sref="stock.offering.update.pricing")
                 span.item-icon.fa.fa-credit-card
@@ -26,7 +27,7 @@
                 span.item-text.hidden-xs Categories
       .col-xs-12
         ui-view
-          .panel.panel-default(ng-controller="FormWizardCtrl as updateForm")
+          .panel.panel-default.z-depth-1(ng-controller="FormWizardCtrl as updateForm")
             .panel-body
               include ./update-form.jade
     div(ng-switch-when="ERROR")

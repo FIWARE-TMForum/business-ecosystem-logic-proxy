@@ -2,10 +2,8 @@
   .modal-dialog
     .modal-content
       .modal-header
-        .modal-title
-          strong.text-uppercase Search Filters
-        button.close(type="button", data-dismiss="modal")
-          i.fa.fa-close
+        .h4
+          strong Search filters
       .modal-body
         .form-group.no-user-select(ng-show="filterVM.exists('status')")
           label Status
@@ -59,4 +57,5 @@
                   i.fa.fa-lg
                 | Bundle
       .modal-footer
-        button.btn.btn-default(type="button", data-dismiss="modal") Close
+        a.btn.btn-default.z-depth-1(data-dismiss="modal")
+          span.item-text Close

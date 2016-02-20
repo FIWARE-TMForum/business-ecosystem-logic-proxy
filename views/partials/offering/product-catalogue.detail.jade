@@ -1,9 +1,10 @@
 .row(ng-controller="CatalogueDetailCtrl as detailVM")
   .col-xs-12
-    .panel.panel-default(ng-show="detailVM.catalogueId")
+    .panel.panel-default.z-depth-1(ng-if="detailVM.catalogueId")
       .panel-body
-        span.text-muted.pull-right
-          time(am-time-ago="detailVM.item.lastUpdate")
-        .h2.text-muted {{ detailVM.item.name }}
-        blockquote(ng-if="detailVM.item.description")
-          p {{ detailVM.item.description }}
+        .h3
+          strong {{ detailVM.item.name }}
+        .form-group
+          p.text-right.text-dark-secondary
+            time(am-time-ago="detailVM.item.lastUpdate")
+          p.text-dark-secondary {{ detailVM.item.description ? detailVM.item.description : 'No description provided.' }}

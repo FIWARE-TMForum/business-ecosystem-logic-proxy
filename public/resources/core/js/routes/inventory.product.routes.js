@@ -32,6 +32,14 @@
                 url: '/:productId',
                 templateUrl: 'inventory/product/detail',
                 controller: 'InventoryDetailsCtrl as detailVM'
+            })
+            .state('inventory.product.detail.productCharacteristic', {
+                url: '/characteristic',
+                templateUrl: 'inventory/product/detail/characteristic'
+            })
+            .state('inventory.product.detail.productPrice', {
+                url: '/priceplan',
+                templateUrl: 'inventory/product/detail/priceplan'
             });
     }
 

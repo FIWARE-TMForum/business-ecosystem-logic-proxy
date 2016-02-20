@@ -1,34 +1,43 @@
 ui-view
   .row
     .col-xs-12
-      .panel.panel-default
-        .panel-heading
-          strong.text-uppercase New Order
+      .breadcrumb-triangle.z-depth-1
+        a(ui-sref="offering", ui-sref-opts="{ reload: true, inherit: false }")
+          span.item-icon.fa.fa-chevron-left
+          span.item-text Back
+        a.active
+          span.item-icon.fa.fa-share
+          span.item-text Checkout
+    .col-xs-12
+      .panel.panel-default.z-depth-1
         .panel-body(ng-switch="orderVM.loadingStatus")
+          .h4
+            strong Confirm and checkout
+          hr
           form(ng-switch-when="LOADED", name="order.form", novalidate)
             .row
               .col-xs-12
                 .form-group
                   label
-                    | Description 
-                    small.text-muted optional
+                    span Enter a description
+                    small.text-muted (optional)
                   textarea.form-control(rows="3", name="description", ng-model="orderVM.orderInfo.description")
             .row
-              .col-xs-6
+              .col-sm-6
                 .form-group
                   label
-                    | External ID 
-                    small.text-muted optional
+                    span Enter an external ID
+                    small.text-muted (optional)
                   input.form-control(
                     type="text"
                     name="ext-id"
                     ng-model="orderVM.orderInfo.externalId"
                   )
-              .col-xs-6
+              .col-sm-6
                 .form-group
                   label
-                    | Notification Contact 
-                    small.text-muted optional
+                    span Enter a notification contact
+                    small.text-muted (optional)
                   input.form-control(
                     type="email"
                     name="contact"
@@ -38,79 +47,63 @@ ui-view
               .col-xs-12
                 .form-group
                   label
-                    | Note 
-                    small.text-muted optional
+                    span Enter a note
+                    small.text-muted (optional)
                   textarea.form-control(rows="3", name="note")
             .row
               .col-xs-12
-                .form-group
-                  label Order Items
-
-            .panel-group(ng-repeat="item in orderVM.orderInfo.orderItem", role="tablist", aria-multiselectable="true", id="accordion-{{item.id}}",)
-              .panel.panel-default.second-level
-                .panel-heading(ng-click="orderVM.toggleCollapse(item.id)", role="tab")
-                  h4.panel-title
-                    a( role="button", data-toggle="collapse" data-parent="#accordion" data-taget="{{ item.id }}", aria-expanded="false" aria-controls="{{ item.id }}")
-                      | {{ item.productOffering.name }}
-                      span.pull-right
-                        | {{ item.product.productPrice[0].price.amount }} {{item.product.productPrice[0].price.currency}}
-                .panel-collapse.collapse(id="{{ item.id }}", role="tabpanel", aria-expanded="false", style="height: 0px;")
-                  .panel-body
-                    .row
-                      .col-xs-12
-                        .form-group
-                          label.text-muted Href
-                          input.form-control(
-                            type="url"
-                            ng-model="item.productOffering.href"
-                            readonly
-                          )
-
-                    .row
-                      .col-xs-12
-                        label.text-muted Pricing
-                        table.table.table-bordered.table-responsive
-                          thead
-                            tr
-                              th Name
-                              th Type
-                              th Unit
-                              th Price
-                              th Currency
-                          tbody
-                            tr
-                              td
-                                span {{ item.product.productPrice[0].name }}
-                              td
-                                span {{ item.product.productPrice[0].priceType }}
-                              td(ng-if="item.product.productPrice[0].priceType == 'one time'")
-                                span {{ item.product.productPrice[0].priceType }}
-                              td(ng-if="item.product.productPrice[0].priceType == 'recurring'")
-                                span {{ item.product.productPrice[0].recurringChargePeriod }}
-                              td(ng-if="item.product.productPrice[0].priceType == 'usage'")
-                                span {{ item.product.productPrice[0].unitOfMeasure }}
-                              td
-                                span {{ item.product.productPrice[0].price.amount }}
-                              td
-                                span {{ item.product.productPrice[0].price.currency }}
-                    .row(ng-show="item.product.productCharacteristic.length")
-                      .col-xs-12
-                        label.text-muted Characteristics
-                        table.table.table-bordered.table-responsive
-                          thead
-                            tr
-                              th Name
-                              th Value
-                          tbody
-                            tr(ng-repeat="char in item.product.productCharacteristic")
-                              td
-                                span {{ char.name }}
-                              td
-                                span {{ char.value }}
+                .h4.text-dark-secondary
+                  strong Shopping cart
+                .panel-group(id="order-item-list")
+                  .panel.panel-default.z-depth-1(ng-repeat="item in orderVM.orderInfo.orderItem")
+                    .panel-heading
+                      .pull-right
+                        strong {{ orderVM.formatPriceplan(item) }}
+                      .h4
+                        a.btn-block(data-toggle="collapse", data-parent="#order-item-list", data-target="#order-item-{{ $index }}")
+                          span.item-text {{ item.productOffering.name }}
+                    .panel-collapse.collapse(id="order-item-{{ item.id }}")
+                      .panel-body
+                        .h4.text-dark-secondary
+                          strong Overview
+                        .table-responsive
+                          table.table.table-bordered
+                            thead
+                              tr
+                                th Quantity
+                                th Href
+                            tbody
+                              tr
+                                td.text-dark-secondary x 1
+                                td.text-dark-secondary {{ item.productOffering.href }}
+                        .h4.text-dark-secondary(ng-if="item.product.productPrice.length")
+                          strong Price plan
+                        .table-responsive(ng-if="item.product.productPrice.length")
+                          table.table.table-bordered
+                            thead
+                              tr
+                                th Name
+                                th Price
+                            tbody
+                              tr
+                                td.text-dark-secondary {{ item.product.productPrice[0].name }}
+                                td.text-dark-secondary {{ orderVM.formatPriceplan(item) }}
+                        .h4.text-dark-secondary(ng-if="item.product.productCharacteristic.length")
+                          strong Characteristics
+                        .table-responsive(ng-if="item.product.productCharacteristic.length")
+                          table.table.table-bordered
+                            thead
+                              tr
+                                th Name
+                                th Value
+                            tbody
+                              tr(ng-repeat="char in item.product.productCharacteristic")
+                                td.text-dark-secondary {{ char.name }}
+                                td.text-dark-secondary {{ char.value }}
             .form-group.text-right
-              a.btn.btn-success(ng-disabled="!order.form.$valid || orderVM.createOrderStatus == 'LOADING'", ng-switch="orderVM.createOrderStatus", ng-click="orderVM.makeOrder()")
-                span.item-text(ng-switch-when="LOADING") Creating...
-                span.item-text(ng-switch-default) Create
+              a.btn.btn-success.z-depth-1(ng-disabled="!order.form.$valid || orderVM.createOrderStatus == 'LOADING'", ng-click="orderVM.makeOrder()")
+                span.item-icon.fa(ng-class="orderVM.createOrderStatus === 'LOADING' ? ['fa-spinner', 'fa-spin'] : 'fa-share'")
+                span.item-text Checkout
           div(ng-switch-when="ERROR")
             .alert.alert-danger.text-center {{ orderVM.error }}
           div(ng-switch-default)

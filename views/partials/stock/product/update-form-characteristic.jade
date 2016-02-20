@@ -1,27 +1,14 @@
 .row
-  .col-sm-12
-    .alert.alert-info.text-center(ng-if="!updateVM.item.productSpecCharacteristic.length")
-      span No characteristics included.
-    .panel.panel-default(ng-repeat="characteristic in updateVM.item.productSpecCharacteristic")
+  .col-xs-12
+    .panel.panel-default.z-depth-1(ng-repeat="characteristic in updateVM.item.productSpecCharacteristic")
       .panel-heading
-        ul.list-inline
-          li
-            dl
-              dt Name
-              dd {{ characteristic.name }}
-          li
-            dl
-              dt Configurable
-              dd {{ characteristic.configurable ? 'Yes' : 'No' }}
-          li
-            dl
-              dt Description
-              dd
-                span.text-danger(ng-if="!characteristic.description") No description provided.
-                span {{ characteristic.description }}
+        .h4
+          strong {{ characteristic.name }}
       .panel-body
+        p.text-dark-secondary {{ characteristic.description ? characteristic.description : 'No description provided.' }}
         .form-group
           p(ng-repeat="characteristicValue in characteristic.productSpecCharacteristicValue")
-
-            span.fa.fa-fw(ng-class="characteristicValue.default ? 'fa-dot-circle-o': 'fa-circle-o'")
+            span.fa.fa-fw(ng-class="characteristicValue.default ? 'fa-check-circle': 'fa-circle-o'")
             span  {{ updateVM.formatCharacteristicValue(characteristic, characteristicValue) }}
+  .col-xs-12(ng-if="!updateVM.item.productSpecCharacteristic.length")
+    .alert.alert-info.text-center No characteristics included.

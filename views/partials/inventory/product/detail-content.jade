@@ -1,0 +1,36 @@
+.row
+  .col-xs-12
+    .panel.panel-default.z-depth-1.header-product
+      .thumbnail
+        img(no-image, ng-src="{{ detailVM.item.productOffering.getPicture() }}")
+      .panel-body
+        .h3.text-center.item-offering-name
+          strong {{ detailVM.item.productOffering.name }}
+      ul.nav.nav-justified.nav-pills
+        li(ui-sref-active-eq="active")
+          a(ui-sref="inventory.product.detail")
+            span.item-icon.fa.fa-newspaper-o
+            span.item-text.hidden-xs About
+        li(ui-sref-active-eq="active")
+          a(ui-sref="inventory.product.detail.productCharacteristic")
+            span.item-icon.fa.fa-gears
+            span.item-text.hidden-xs Characteristics
+        li(ui-sref-active-eq="active")
+          a(ui-sref="inventory.product.detail.productPrice")
+            span.item-icon.fa.fa-credit-card
+            span.item-text.hidden-xs Price plans
+  .col-xs-12
+    ui-view
+      .panel.panel-default.z-depth-1
+        .panel-body
+          .h4.text-dark-secondary
+            strong General
+          dl
+            dt Description
+            dd.text-dark-secondary {{ detailVM.product.description ? detailVM.product.description : 'No description provided.' }}
+            dt Offering
+            dd
+              a(ui-sref="offering.detail({ offeringId: detailVM.item.productOffering.id })", ui-sref-opts="{ inherit: false }") {{ detailVM.item.productOffering.name }}
+            dt(ng-if="detailVM.item.startDate") Start date
+            dd.text-dark-secondary(ng-if="detailVM.item.startDate")
+              time(am-time-ago="detailVM.item.startDate")

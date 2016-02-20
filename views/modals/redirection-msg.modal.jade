@@ -2,10 +2,8 @@
   .modal-dialog
     .modal-content
       .modal-header
-        .modal-title
-          strong.text-uppercase Payment in progress
-            button.close(type="button", data-dismiss="modal")
-               i.fa.fa-close
+        .h4
+          strong Payment in progress
       .modal-body
         span
           | The payment approval process should have been opened in a new tab. If the a new tab has not been opened, 
@@ -13,7 +11,5 @@
           | . Please, remind that you have <b>5 minutes</b> to complete the payment. If the payment is not completed
           | in that time, the ordering will be marked as <b>Failed</b>.
       .modal-footer
-        a.btn.btn-success(
-          data-dismiss="modal"
-        )
-          | Payment Completed
+        a.btn.btn-success.z-depth-1(data-dismiss="modal")
+          span.item-text Payment Completed

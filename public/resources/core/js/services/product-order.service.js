@@ -24,6 +24,7 @@
         resource.prototype.getCustomer = getCustomer;
         resource.prototype.getRoleOf = getRoleOf;
         resource.prototype.getPriceplanOf = getPriceplanOf;
+        resource.prototype.formatPriceplanOf = formatPriceplanOf;
 
         return {
             search: search,
@@ -230,6 +231,27 @@
         function getPriceplanOf(orderIndex) {
             /* jshint validthis: true */
             return this.orderItem[orderIndex].product.productPrice[0];
+        }
+
+        function formatPriceplanOf(orderIndex) {
+            var result, priceplan, priceplans = this.orderItem[orderIndex].product.productPrice;
+
+            if (priceplans.length) {
+                priceplan = priceplans[0];
+                result = priceplan.price.amount + " " + priceplan.price.currency;
+                switch (priceplan.priceType) {
+                case Offering.PRICE_TYPES.RECURRING:
+                    result += " / " + priceplan.recurringChargePeriod;
+                    break;
+                case Offering.PRICE_TYPES.USAGE:
+                    result += " / " + priceplan.unitOfMeasure;
+                    break;
+                }
+            } else {
+                result = "Free";
+            }
+
+            return result;
         }
     }
 

@@ -26,8 +26,7 @@
         };
 
         function link(scope, element, attrs) {
-            element.addClass('panel panel-default');
-            scope.alertType = types[scope.priceplan.priceType];
+            element.addClass('panel z-depth-1 panel-' + types[scope.priceplan.priceType]);
         }
 
         function templateUrl(element, attrs) {
