@@ -8,7 +8,7 @@
         .h4
           strong
             time(title="{{ productOrder.requestedStartDate | amDateFormat: 'dddd, MMMM Do YYYY, h:mm a' }}") {{ productOrder.requestedStartDate | amCalendar }}
-          .small by {{ productOrder.getCustomer().id }}
+          .small by {{ productOrder.getCustomer().id }}, {{ productOrder.state }}
       .panel-body
         .row(ng-repeat="orderItem in productOrder.orderItem")
           hr(ng-if="!$first")
