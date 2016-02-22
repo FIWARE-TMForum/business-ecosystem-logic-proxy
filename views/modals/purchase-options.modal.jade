@@ -15,7 +15,7 @@
             .h4
               strong Choose one
             .container-flex
-              div(offering-priceplan, ng-repeat="priceplan in createVM.priceplans", ng-click="createVM.setPriceplan(priceplan)")
+              div(offering-priceplan, ng-repeat="priceplan in createVM.priceplans", ng-click="createVM.setPriceplan(priceplan)", selectable="True")
           .col-xs-12(ng-if="createVM.tabActive === createVM.characteristicsTab")
             .form-group(ng-repeat="charObject in createVM.characteristics")
               .h4
