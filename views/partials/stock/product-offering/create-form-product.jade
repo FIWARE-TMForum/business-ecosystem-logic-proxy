@@ -14,7 +14,7 @@ form(name="step.form", novalidate)
         tbody
           tr(ng-repeat="product in searchVM.list | status:STATUS.ACTIVE:STATUS.LAUNCHED as results", ng-class="{ active: createVM.product.id == product.id }", ng-click="createVM.setProduct(product)")
             td
-              .status-item(class="status-{{ product.lifecycleStatus | lowercase }}")
+              .status-item.text-nowrap(class="status-{{ product.lifecycleStatus | lowercase }}")
                 span.item-icon
                 span.item-text {{ product.lifecycleStatus }}
             th {{ product.name }}

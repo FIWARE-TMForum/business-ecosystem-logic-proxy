@@ -5,7 +5,7 @@
         | {{ offering.isBundle ? offering.bundledProductOffering.length + ' bundled' : 'Single' }}
       img(no-image, ng-src="{{ offering.getPicture() }}")
     .panel-body
-      .h4
+      .h4.text-ellipsis
         strong
           a(ui-sref="offering.detail({ offeringId: offering.id })", ui-sref-opts="{ inherit: false }") {{ offering.name }}
       .form-group.text-dark-secondary
