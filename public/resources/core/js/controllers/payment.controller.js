@@ -46,7 +46,7 @@ angular.module('app')
                     $scope.message = 'Your payment has been canceled. You can close this tab.'
                 }
             }, function(response) {
-                $scope.state = ACCEPTED;
+                $scope.state = ERROR;
                 $scope.message = response.data.message;
             });
         }

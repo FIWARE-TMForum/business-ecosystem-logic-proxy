@@ -6,4 +6,4 @@ block content
       .col-sm-12(ng-switch="state")
         .container-spinner(ng-switch-when="LOADING")
           span.fa.fa-spinner.fa-spin.fa-2x
-        .alert(ng-switch-default, ng-class="state === 'ACCEPTED' ? 'alert-info' : 'alert-danger'") {{ message }}
+        .alert.text-center(ng-switch-default, ng-class="state === 'ACCEPTED' ? 'alert-info' : 'alert-danger'") {{ message }}
