@@ -17,14 +17,17 @@
             .container-flex
               div(offering-priceplan, ng-repeat="priceplan in createVM.priceplans", ng-click="createVM.setPriceplan(priceplan)")
           .col-xs-12(ng-if="createVM.tabActive === createVM.characteristicsTab")
-            .form-group(ng-repeat="characteristic in createVM.configurableCharacteristics")
+            .form-group(ng-repeat="charObject in createVM.characteristics")
               .h4
-                strong {{ characteristic.name }}
+                strong {{ charObject.characteristic.name }}
               hr
-              p.text-dark-secondary {{ characteristic.description ? characteristic.description : 'No description provided.' }}
-              p(ng-repeat="characteristicValue in characteristic.productSpecCharacteristicValue", ng-click="createVM.setCharacteristicValue(characteristic, characteristicValue)")
-                span.fa.fa-fw(ng-class="createVM.getCharacteristicValue(characteristic) === characteristicValue ? 'fa-check-circle': 'fa-circle-o'")
-                span  {{ createVM.formatCharacteristicValue(characteristic, characteristicValue) }}
+              p.text-dark-secondary {{ charObject.characteristic.description ? charObject.characteristic.description : 'No description provided.' }}
+              .item-radio(ng-repeat="characteristicValue in charObject.characteristic.productSpecCharacteristicValue")
+                label.radio
+                  .track
+                    input(type="radio", ng-model="charObject.value" ng-value="characteristicValue")
+                    i.fa.fa-lg
+                  | {{ createVM.formatCharacteristicValue(charObject.characteristic, characteristicValue) }}
       .modal-footer
         a.btn.btn-success.z-depth-1(data-dismiss="modal", ng-click="createVM.order()", ng-disabled="!createVM.isValid()")
           span.item-icon.fa.fa-shopping-cart
