@@ -17,7 +17,6 @@
         var vm = this;
 
         var data = {};
-        var characteristics = [];
         var priceplan = null;
 
         vm.characteristicsTab = {
@@ -30,13 +29,11 @@
         vm.tabs = [];
         vm.tabActive = null;
 
-        vm.configurableCharacteristics = [];
+        vm.characteristics = [];
         vm.priceplans = [];
 
         vm.order = order;
         vm.isValid = isValid;
-        vm.getCharacteristicValue = getCharacteristicValue;
-        vm.setCharacteristicValue = setCharacteristicValue;
         vm.formatCharacteristicValue = formatCharacteristicValue;
         vm.getPriceplan = getPriceplan;
         vm.setPriceplan = setPriceplan;
@@ -49,18 +46,19 @@
                 options: {}
             };
 
-            characteristics = [];
             priceplan = null;
 
             vm.tabs = [];
             vm.tabActive = null;
-            vm.configurableCharacteristics = [];
             vm.priceplans = [];
+            vm.characteristics = [];
+
+            $scope.priceplanSelected = null;
 
             loadCharacteristics(productOffering.productSpecification.productSpecCharacteristic);
             loadPriceplans(productOffering.productOfferingPrice);
 
-            if (vm.configurableCharacteristics.length || vm.priceplans.length) {
+            if (vm.characteristics.length || vm.priceplans.length) {
                 $element.modal('show');
             } else {
                 order();
@@ -69,7 +67,7 @@
 
         function order() {
             data.options = {
-                characteristics: characteristics,
+                characteristics: vm.characteristics,
                 pricing: priceplan
             };
             $rootScope.$broadcast(EVENTS.OFFERING_CONFIGURED, data);
@@ -77,23 +75,6 @@
 
         function isValid() {
             return !vm.priceplans.length || priceplan != null;
-        }
-
-        function getCharacteristicValue(characteristic) {
-            return characteristics[indexOfCharacteristic(characteristic)].value;
-        }
-
-        function setCharacteristicValue(characteristic, characteristicValue) {
-            var index = indexOfCharacteristic(characteristic);
-
-            if (index !== -1) {
-                characteristics.splice(index, 1);
-            }
-
-            characteristics.push({
-                characteristic: characteristic,
-                value: characteristicValue
-            });
         }
 
         function formatCharacteristicValue(characteristic, characteristicValue) {
@@ -127,16 +108,18 @@
 
         function loadCharacteristics(productSpecCharacteristic) {
 
-            if (angular.isArray(productSpecCharacteristic) && productSpecCharacteristic.length) {
-                productSpecCharacteristic.forEach(function (characteristic) {
-                    if (characteristic.configurable) {
-                        vm.configurableCharacteristics.push(characteristic);
-                    }
-                    vm.setCharacteristicValue(characteristic, getDefaultCharacteristicValue(characteristic));
-                });
+            if (!angular.isArray(productSpecCharacteristic)) {
+                productSpecCharacteristic = [];
             }
 
-            if (vm.configurableCharacteristics.length) {
+            vm.characteristics = productSpecCharacteristic.map(function (characteristic) {
+                return {
+                    characteristic: characteristic,
+                    value: getDefaultCharacteristicValue(characteristic)
+                };
+            });
+
+            if (vm.characteristics.length) {
                 vm.tabs.push(vm.characteristicsTab);
                 vm.tabActive = vm.characteristicsTab;
             }

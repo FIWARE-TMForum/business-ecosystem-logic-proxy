@@ -79,6 +79,8 @@
         vm.isDigital = false;
         vm.digitalChars = [];
 
+        vm.characteristicEnabled = false;
+
         vm.create = create;
         vm.setCurrentType = setCurrentType;
 
@@ -117,7 +119,7 @@
             vm.characteristics.push(vm.characteristic);
             vm.characteristic = angular.copy(characteristic);
             vm.characteristicValue = angular.copy(characteristicValue);
-
+            vm.characteristicEnabled = false;
             return true;
         }
 

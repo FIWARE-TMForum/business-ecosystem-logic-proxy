@@ -102,6 +102,7 @@
 
         vm.pricePlan = angular.copy(pricePlan);
         vm.pricePlans = [];
+        vm.priceplanEnabled = false;
 
         vm.selectPriceType = selectPriceType;
         vm.selectCurrencyCode = selectCurrencyCode;
@@ -159,6 +160,7 @@
             extendDutyFreeAmount();
             vm.pricePlans.push(vm.pricePlan);
             vm.pricePlan = angular.copy(pricePlan);
+            vm.priceplanEnabled = false;
 
             return true;
         }

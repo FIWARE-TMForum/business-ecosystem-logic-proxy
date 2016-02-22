@@ -1,4 +1,4 @@
-form(name="step.pricePlanForm", novalidate)
+form(name="step.pricePlanForm", novalidate, ng-if="createVM.priceplanEnabled")
   .row
     .col-md-8
       .form-group(ng-class="{ 'has-error': createForm.hasError(step.pricePlanForm.name) }")
@@ -20,13 +20,12 @@ form(name="step.pricePlanForm", novalidate)
       .form-group
         label Choose a type
         .dropdown
-          a.btn.btn-block.btn-default.dropdown-toggle.z-depth-1(data-toggle="dropdown")
+          a.btn.btn-block.btn-default.dropdown-toggle.z-depth-0(data-toggle="dropdown")
             span.item-text {{ createVM.pricePlan.priceType }}
             span.item-icon.fa.fa-caret-down
-          ul.dropdown-menu.dropdown-menu-right
-            li(ng-repeat="(key, value) in createVM.PRICE_TYPES")
-              a(ng-click="createVM.selectPriceType(key)")
-                span.item-text {{ value }}
+          .dropdown-menu.dropdown-menu-right.z-depth-3
+            a.dropdown-menu-item(ng-repeat="(key, value) in createVM.PRICE_TYPES", ng-click="createVM.selectPriceType(key)")
+              span.item-text {{ value }}
   .row
     .col-md-8
       .form-group(ng-class="{ 'has-error': createForm.hasError(step.pricePlanForm.taxIncludedAmount) }")
@@ -40,13 +39,12 @@ form(name="step.pricePlanForm", novalidate)
             min="0"
           )
           .input-group-btn
-            a.btn.btn-default.dropdown-toggle.z-depth-1(data-toggle="dropdown")
+            a.btn.btn-default.dropdown-toggle.z-depth-0(data-toggle="dropdown")
               span.item-text {{ createVM.pricePlan.price.currencyCode | uppercase }}
               span.item-icon.fa.fa-caret-down
-            ul.dropdown-menu.dropdown-menu-right
-              li(ng-repeat="(key, value) in createVM.PRICE_CURRENCIES")
-                a(ng-click="createVM.selectCurrencyCode(key)")
-                  span.item-text {{ value }}
+            .dropdown-menu.dropdown-menu-right.z-depth-3
+              a.dropdown-menu-item(ng-repeat="(key, value) in createVM.PRICE_CURRENCIES", ng-click="createVM.selectCurrencyCode(key)")
+                span.item-text {{ value }}
         .help-block(
            ng-messages="step.pricePlanForm.taxIncludedAmount.$error"
            ng-show="createForm.hasError(step.pricePlanForm.taxIncludedAmount)"
@@ -89,6 +87,8 @@ form(name="step.pricePlanForm", novalidate)
           span Enter a description
           small.text-muted (optional)
         textarea.form-control(name="description", rows="3", ng-model="createVM.pricePlan.description")
-  .form-group.text-right
-    a.btn.btn-success.z-depth-1(ng-disabled="!step.pricePlanForm.$valid", ng-click="createVM.createPricePlan() && createForm.resetForm(step.pricePlanForm)")
-      span.item-text Save changes
+.form-group.text-left
+  a.btn.btn-default.z-depth-1(ng-click="createVM.priceplanEnabled = true", ng-if="!createVM.priceplanEnabled")
+    span.item-text New price plan
+  a.btn.btn-success.z-depth-1(ng-disabled="!step.pricePlanForm.$valid", ng-click="createVM.createPricePlan() && createForm.resetForm(step.pricePlanForm)", ng-if="createVM.priceplanEnabled")
+    span.item-text Add price plan

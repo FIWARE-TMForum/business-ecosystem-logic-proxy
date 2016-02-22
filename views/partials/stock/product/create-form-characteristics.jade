@@ -1,11 +1,4 @@
-.h5.text-dark-secondary
-  strong Create a characteristic
-include ./create-form-characteristic-form.jade
-.h5.text-dark-secondary
-  strong Overview
-.alert.alert-warning.text-center(ng-if="!createVM.characteristics.length")
-  | No characteristics created.
-table.table.table-bordered(ng-show="createVM.characteristics.length")
+table.table.table-bordered(ng-if="createVM.characteristics.length")
   thead
     tr
       th #
@@ -27,6 +20,9 @@ table.table.table-bordered(ng-show="createVM.characteristics.length")
       td
         a.alert-link-danger(ng-click="createVM.removeCharacteristic($index)")
           span.fa.fa-trash
+.alert.alert-info.text-center(ng-if="!createVM.characteristics.length")
+  | No characteristic included.
+include ./create-form-characteristic-form.jade
 form(name="step.form", novalidate)
    input(type="hidden", name="characteristics", ng-model="createVM.characteristics", field-array, limit-from="0", required)
   .form-group.text-right

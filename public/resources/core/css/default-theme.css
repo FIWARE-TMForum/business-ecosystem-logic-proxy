@@ -246,8 +246,7 @@ textarea {
 }
 
 .btn {
-    padding: 7px 12px;
-    border-width: 0;
+    padding: 6px 12px;
     border-radius: 2px;
 }
 .btn:active,
@@ -280,6 +279,10 @@ textarea {
     text-align: right;
 }
 
+.btn.z-depth-0 {
+    box-shadow: none !important;
+}
+
 /* ===================================================================================
  *   COMPONENT - BUTTON DEFAULT
  * =================================================================================== */
@@ -287,11 +290,16 @@ textarea {
 .btn-default {
     color: rgba(0,0,0,0.87);
     background-color: #FFFFFF;
+    border-color: #BDBDBD;
+}
+.btn-default:not(.z-depth-0) {
+    border-color: #FFFFFF;
 }
 .btn-default:hover,
 .btn-default:focus {
     color: rgba(0,0,0,0.87);
-    background-color: #EEEEEE;
+    background-color: #BDBDBD;
+    border-color: #BDBDBD;
 }
 .btn-default:active,
 .btn-default:active:hover,
@@ -301,11 +309,13 @@ textarea {
 .btn-default.active:focus {
     color: rgba(255,255,255,0.87);
     background-color: #082d62;
+    border-color: #082d62;
 }
 .btn-default.disabled,
 .btn-default[disabled] {
     color: rgba(0,0,0,0.87);
     background-color: #EEEEEE;
+    border-color: #EEEEEE;
 }
 
 /* ===================================================================================
@@ -319,9 +329,9 @@ textarea {
 }
 .btn-primary:hover,
 .btn-primary:focus {
-    color: rgb(070, 180, 200);
-    background-color: rgb(230, 240, 250);
-    border-color: rgb(070, 180, 200);
+    color: rgba(255,255,255,0.87);
+    background-color: #082d62;
+    border-color: #082d62;
 }
 .btn-primary:active,
 .btn-primary:active:hover,
@@ -329,15 +339,15 @@ textarea {
 .btn-primary.active,
 .btn-primary.active:hover,
 .btn-primary.active:focus {
-    color: rgb(255, 255, 255);
-    background-color: rgb(030, 060, 110);
-    border-color: rgb(030, 060, 110);
+    color: rgba(255,255,255,0.87);
+    background-color: #082d62;
+    border-color: #082d62;
 }
 .btn-primary.disabled,
 .btn-primary[disabled] {
-    color: rgb(255, 255, 255);
-    background-color: rgb(160, 180, 210);
-    border-color: rgb(160, 180, 210);
+    color: rgba(255,255,255,0.87);
+    background-color: #003d8c;
+    border-color: #003d8c;
 }
 
 /* ===================================================================================
@@ -919,6 +929,7 @@ a.dropdown-menu-item:hover {
 }
 
 .navbar-nav > li > a > .item-icon {
+    position: relative;
     vertical-align: baseline;
 }
 .navbar-nav > li > a > .item-icon + .item-text {
@@ -1480,8 +1491,8 @@ a.list-group-item > .badge-status {
     position: relative;
     display: block;
     cursor: pointer;
-    padding: 10px 15px;
-    padding-left: 45px;
+    padding: 5px 10px;
+    padding-left: 40px;
     margin-top: 0;
     margin-bottom: 0;
     font-weight: normal;
@@ -1513,8 +1524,8 @@ a.list-group-item > .badge-status {
     position: relative;
     display: block;
     cursor: pointer;
-    padding: 10px 15px;
-    padding-left: 45px;
+    padding: 5px 10px;
+    padding-left: 40px;
     margin-top: 0;
     margin-bottom: 0;
     font-weight: normal;
@@ -1540,6 +1551,11 @@ a.list-group-item > .badge-status {
 .radio .track input:checked + .fa:before {
     content: "\f192";
     color: rgb(060, 120, 060);
+}
+
+.item-radio.readonly {
+    cursor: pointer;
+    pointer-events: none;
 }
 
 /* ===================================================================================
@@ -1788,7 +1804,7 @@ a.thumbnail:focus {
     margin-bottom: 5px;
 }
 .item-description {
-    max-height: 40px;
+    height: 40px;
     overflow: hidden;
 }
 
@@ -1815,28 +1831,20 @@ a.thumbnail:focus {
     max-height: 90px;
 }
 
-
-.icon-shopping-cart {
-    position: relative;
-}
-.icon-shopping-cart .badge {
+.fa-shopping-cart .badge {
     position: absolute;
-    font-size: 80%;
-    top: -6px;
-    left: 0;
-    padding: 2px 5px;
-    /* right: 3px; */
-    color: rgb(255, 255, 255);
-    text-align: center;
-    transform: translate(-50%, 0%);
+    font-size: 11px;
+    bottom: 85%;
     left: 55%;
+    padding: 2px 4px;
+    transform: translate(-50%, 0);
 }
 
-.icon-shopping-cart .badge.badge-success {
+.badge.badge-success {
     background-color: rgb(90, 185, 90);
 }
 
-.icon-shopping-cart .badge.badge-error {
+.badge.badge-error {
     background-color: #d43f3a;
 }
 
@@ -1875,6 +1883,10 @@ a.thumbnail:focus {
         margin-right: 5px;
         margin-left: 5px;
     }
+}
+
+.panel.selectable[offering-priceplan] {
+    cursor: pointer;
 }
 
 .panel[offering-priceplan] .priceplan-selected {

@@ -11,8 +11,10 @@ block scripts
 block navbars
   li.dropdown(ng-controller="UserShoppingCartCtrl as listVM")
     a.dropdown-toggle(data-toggle="dropdown")
-      span.item-icon.fa.fa-shopping-cart.fa-lg
-      span.item-text {{ listVM.list.length }} item(s)
+      span.item-icon.fa.fa-shopping-cart.fa-lg(ng-switch="listVM.list.status")
+        span.badge.badge-success(ng-switch-when="LOADED") {{ listVM.list.length }}
+        span.badge(ng-switch-when="LOADING") ...
+        span.badge.badge-error(ng-switch-when="ERROR") !!!
     .dropdown-menu.z-depth-3(ng-switch="listVM.list.status")
       .dropdown-header Shopping Cart
       .alert.alert-info.text-center(ng-switch-when="LOADED", ng-if="!listVM.list.length")
@@ -22,7 +24,7 @@ block navbars
       .dropdown-menu-item(ng-switch-when="LOADED", ng-repeat="offering in listVM.list")
         .media.item-offering-ordered
           .media-left
-            .thumbnail.thumbnail-45px.thumbnail-circle
+            .thumbnail.thumbnail-45px
               img(no-image, ng-src="{{ offering.productOffering.getPicture() }}")
           .media-body
             a.pull-right.alert-link-danger
