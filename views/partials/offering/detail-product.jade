@@ -1,14 +1,17 @@
 .row
   .col-xs-12
-    .panel.panel-default.z-depth-1(ng-repeat="characteristic in detailVM.item.productSpecification.productSpecCharacteristic")
+    .panel.panel-default.z-depth-1(ng-repeat="characteristic in detailVM.item.productSpecification.productSpecCharacteristic", ng-init="characteristicIndex = $index")
       .panel-heading
         .h4
           strong {{ characteristic.name }}
       .panel-body
         p.text-dark-secondary {{ characteristic.description ? characteristic.description : 'No description provided.' }}
         .form-group
-          p(ng-repeat="characteristicValue in characteristic.productSpecCharacteristicValue")
-            span.fa.fa-fw(ng-class="characteristicValue.default ? 'fa-check-circle': 'fa-circle-o'")
-            span  {{ detailVM.formatCharacteristicValue(characteristic, characteristicValue) }}
+          .item-radio.readonly(ng-repeat="characteristicValue in characteristic.productSpecCharacteristicValue")
+            label.radio
+              .track
+                input(type="radio", name="{{ 'detailVM_char' + characteristicIndex }}", ng-checked="{{ characteristicValue.default }}")
+                i.fa.fa-lg
+              | {{ detailVM.formatCharacteristicValue(characteristic, characteristicValue) }}
   .col-xs-12(ng-if="!detailVM.item.productSpecification.productSpecCharacteristic.length")
     .alert.alert-info.text-center No characteristics included.
