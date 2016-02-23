@@ -124,7 +124,7 @@ var tmf = (function() {
         } else {
             apiControllers[api].checkPermissions(req, function(err) {
 
-                var basicLogMessage = 'Check Permissions (' + api + '): ';
+                var basicLogMessage = 'Pre-Validation (' + api + '): ';
 
                 if (err) {
                     utils.log(logger, 'warn', req, basicLogMessage + err.message);
