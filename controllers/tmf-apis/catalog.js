@@ -205,7 +205,21 @@ var catalog = (function() {
 
         if (req.apiUrl.indexOf('productOffering') > -1) {
 
-            validateOffering(req.user, req.apiUrl, null, body, callback);
+            validateOffering(req.user, req.apiUrl, null, body, function(err) {
+
+                if (err) {
+                    callback(err);
+                } else {
+                    storeClient.validateOffering(body, req.user, function(err) {
+                        if (err) {
+                            callback(err);
+                        } else {
+                            callback();
+                        }
+                    });
+                }
+
+            });
 
         } else if (req.apiUrl.indexOf('productSpecification') > -1) {
 

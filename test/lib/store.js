@@ -5,6 +5,18 @@ var nock = require('nock'),
 
 describe('Store Client', function() {
 
+    var OFFERING_ASSET = 'offering';
+    var PRODUCT_ASSET = 'product';
+
+    var ASSETS_URL_MAPPING = {};
+    ASSETS_URL_MAPPING[OFFERING_ASSET] = '/charging/api/assetManagement/assets/offeringJob';
+    ASSETS_URL_MAPPING[PRODUCT_ASSET] = '/charging/api/assetManagement/assets/validateJob';
+
+    var ASSETS_FUNCTION_MAPPING = {};
+    ASSETS_FUNCTION_MAPPING[OFFERING_ASSET] = 'validateOffering';
+    ASSETS_FUNCTION_MAPPING[PRODUCT_ASSET] = 'validateProduct';
+
+
     var config = testUtils.getDefaultConfig();
     
     var storeClient = proxyquire('../../lib/store', {
@@ -15,29 +27,31 @@ describe('Store Client', function() {
     }).storeClient;
 
 
-    var testValidateProductOk = function(protocol, done) {
+    var testValidateAssetOk = function(assetType, protocol, done) {
 
         // Mock the server
         config.appSsl = protocol === 'https' ? true : false;
         var serverUrl = protocol + '://' + config.appHost + ':' + config.endpoints.charging.port;
         var receivedBody;
-        var server = nock(serverUrl, {
+
+        nock(serverUrl, {
             reqheaders: {
                 'content-type': 'application/json'
             }
-        }).post('/charging/api/assetManagement/assets/validateJob', function(body) {
+        }).post(ASSETS_URL_MAPPING[assetType], function(body) {
             receivedBody = body;
             return true;
         }).reply(200);
 
         // Call the validator
-        var productInfo = { 'a': 'b', 'example': 'c' };
-        storeClient.validateProduct(productInfo, {id: 'test'}, function(err) {
+        var assetInfo = { 'a': 'b', 'example': 'c' };
+        storeClient[ASSETS_FUNCTION_MAPPING[assetType]](assetInfo, {id: 'test'}, function(err) {
 
             var expectedBody = {
-                action: 'create',
-                product: productInfo
+                action: 'create'
             };
+
+            expectedBody[assetType] = assetInfo;
 
             expect(receivedBody).toEqual(expectedBody);
             expect(err).toBe(null);
@@ -47,15 +61,28 @@ describe('Store Client', function() {
 
     };
 
+    // Products
+
     it('should validate product (HTTP)', function(done) {
-        testValidateProductOk('http', done);
+        testValidateAssetOk(PRODUCT_ASSET, 'http', done);
     });
 
     it('should validate product (HTTPS)', function(done) {
-        testValidateProductOk('https', done);
+        testValidateAssetOk(PRODUCT_ASSET, 'https', done);
     });
 
-    var testValidateProductError = function(errorStatus, response, expectedErrMsg, done) {
+
+    // Offerings
+
+    it('should validate offering (HTTP)', function(done) {
+        testValidateAssetOk(OFFERING_ASSET, 'http', done);
+    });
+
+    it('should validate offering (HTTPS)', function(done) {
+        testValidateAssetOk(OFFERING_ASSET, 'https', done);
+    });
+
+    var testValidateProductError = function(assetType, errorStatus, response, expectedErrMsg, done) {
         // Mock the server
         config.appSsl = false;
         var serverUrl = 'http' + '://' + config.appHost + ':' + config.endpoints.charging.port;
@@ -65,19 +92,21 @@ describe('Store Client', function() {
             reqheaders: {
                 'content-type': 'application/json'
             }
-        }).post('/charging/api/assetManagement/assets/validateJob', function(body) {
+        }).post(ASSETS_URL_MAPPING[assetType], function(body) {
             receivedBody = body;
             return true;
         }).reply(errorStatus, response);
 
         // Call the validator
-        var productInfo = { 'a': 'b', 'example': 'c' };
-        storeClient.validateProduct(productInfo, {id: 'test'}, function(err) {
+        var assetInfo = { 'a': 'b', 'example': 'c' };
+        storeClient[ASSETS_FUNCTION_MAPPING[assetType]](assetInfo, {id: 'test'}, function(err) {
 
             var expectedBody = {
-                action: 'create',
-                product: productInfo
+                action: 'create'
             };
+
+            expectedBody[assetType] = assetInfo;
+
 
             // Check the body received by the server
             expect(receivedBody).toEqual(expectedBody);
@@ -91,24 +120,43 @@ describe('Store Client', function() {
 
     };
 
+    // Products
+
     it('should not validate product when store returns 400', function(done) {
         var message = 'Invalid field X';
-        testValidateProductError(400, { message: message}, message, done);
+        testValidateProductError(PRODUCT_ASSET, 400, { message: message}, message, done);
     });
 
     it('should not validate product when store returns 403', function(done) {
         var message = 'Forbidden';
-        testValidateProductError(403, { message: message}, message, done);
+        testValidateProductError(PRODUCT_ASSET, 403, { message: message}, message, done);
     });
 
     it('should not validate product when store returns 409', function(done) {
         var message = 'Confict';
-        testValidateProductError(409, { message: message}, message, done);
+        testValidateProductError(PRODUCT_ASSET, 409, { message: message}, message, done);
     });
 
     it('should not validate product when store cannot validate the product', function(done) {
-        testValidateProductError(500, 'Internal Server Error', 'The server has failed validating the product specification', done);
+        testValidateProductError(PRODUCT_ASSET, 500, 'Internal Server Error', 'The server has failed validating the product specification', done);
     });
+
+    // Offerings
+
+    it('should not validate offering when store returns 400', function(done) {
+        var message = 'Invalid field X';
+        testValidateProductError(OFFERING_ASSET, 400, { message: message}, message, done);
+    });
+
+    it('should not validate offering when store returns 403', function(done) {
+        var message = 'Forbidden';
+        testValidateProductError(OFFERING_ASSET, 403, { message: message}, message, done);
+    });
+
+    it('should not validate offering when store cannot validate the product', function(done) {
+        testValidateProductError(OFFERING_ASSET, 500, 'Internal Server Error', 'The server has failed validating the offering', done);
+    });
+
 
     it('should notify the store the creation of a product order', function(done) {
         // Only a case is tested in since this method relies on makeStoreRequest

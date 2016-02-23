@@ -188,8 +188,30 @@ describe('Catalog API', function() {
             true, true, true, done);
     });
 
-    var testCreateOffering = function(productRequestInfo, catalogRequestInfo, errorStatus, errorMsg, done) {
+    var testCreateOffering = function(productRequestInfo, catalogRequestInfo, storeError, errorStatus, errorMsg, done) {
 
+        // Basic properties
+        var userName = 'test';
+        var catalogPath = '/catalog/7';
+        var offeringPath = catalogPath + '/productOffering';
+        var productPath = '/product/7';
+        var protocol = config.appSsl ? 'https' : 'http';
+        var serverUrl = protocol + '://' + config.appHost + ':' + config.endpoints.catalog.port;
+
+        var user = {
+            id: userName,
+            roles: [{ name: config.oauth2.roles.seller }]
+        };
+
+        var body = {
+            productSpecification: {
+                // the server will be avoided by the SW
+                // The catalog server will be used instead
+                href: config.appHost + ':' + config.endpoints.catalog.port + productPath
+            }
+        };
+
+        // Mocks
         var checkRoleMethod = jasmine.createSpy();
         checkRoleMethod.and.returnValue(true);
 
@@ -201,15 +223,19 @@ describe('Catalog API', function() {
             isOwner: productRequestInfo.role.toLowerCase() === 'owner' ? isOwnerTrue : isOwnerFalse
         };
 
-        var catalogApi = getCatalogApi({}, tmfUtils);
+        var storeClient = {
+            storeClient: {
+                validateOffering: function (offeringInfo, userInfo, callback) {
 
-        // Basic properties
-        var userName = 'test';
-        var catalogPath = '/catalog/7';
-        var offeringPath = catalogPath + '/productOffering';
-        var productPath = '/product/7';
-        var protocol = config.appSsl ? 'https' : 'http';
-        var serverUrl = protocol + '://' + config.appHost + ':' + config.endpoints.catalog.port;
+                    expect(offeringInfo).toEqual(body);
+                    expect(userInfo).toEqual(user);
+
+                    callback(storeError);
+                }
+            }
+        };
+
+        var catalogApi = getCatalogApi(storeClient, tmfUtils);
 
         // The mock server that will handle the request when the product is requested
         var bodyGetProductOk = {
@@ -234,10 +260,7 @@ describe('Catalog API', function() {
         var req = {
             method: 'POST',
             apiUrl: offeringPath,
-            user: {
-                id: userName,
-                roles: [{ name: config.oauth2.roles.seller }]
-            },
+            user: user,
             body: JSON.stringify({
                 productSpecification: {
                     // the server will be avoided by the SW
@@ -274,7 +297,29 @@ describe('Catalog API', function() {
             lifecycleStatus: 'launched'
         };
 
-        testCreateOffering(productRequestInfo, catalogRequestInfo, null, null, done);
+        testCreateOffering(productRequestInfo, catalogRequestInfo, null, null, null, done);
+    });
+
+    it('should not allow to create an offering when store validation fails', function(done) {
+
+        var productRequestInfo = {
+            requestStatus: 200,
+            role: 'Owner',
+            lifecycleStatus: 'active'
+        };
+
+        var catalogRequestInfo = {
+            requestStatus: 200,
+            lifecycleStatus: 'launched'
+        };
+
+        var storeResponse = {
+            status: 400,
+            message: 'Invalid pricing'
+        };
+
+        testCreateOffering(productRequestInfo, catalogRequestInfo, storeResponse, storeResponse.status,
+            storeResponse.message, done);
     });
 
     it('should not allow to create an offering with a non owned product', function(done) {
@@ -290,7 +335,7 @@ describe('Catalog API', function() {
             lifecycleStatus: 'active'
         };
 
-        testCreateOffering(productRequestInfo, catalogRequestInfo, 403, 'You are not allowed to create ' +
+        testCreateOffering(productRequestInfo, catalogRequestInfo, null, 403, 'You are not allowed to create ' +
             'offerings for products you do not own', done);
     });
 
@@ -307,7 +352,7 @@ describe('Catalog API', function() {
             lifecycleStatus: 'retired'
         };
 
-        testCreateOffering(productRequestInfo, catalogRequestInfo, 400, 'Offerings can only be created in a ' +
+        testCreateOffering(productRequestInfo, catalogRequestInfo, null, 400, 'Offerings can only be created in a ' +
             'catalog that is active or launched', done);
     });
 
@@ -324,7 +369,7 @@ describe('Catalog API', function() {
             lifecycleStatus: 'active'
         };
 
-        testCreateOffering(productRequestInfo, catalogRequestInfo, 400, 'Offerings can only be attached to ' +
+        testCreateOffering(productRequestInfo, catalogRequestInfo, null, 400, 'Offerings can only be attached to ' +
             'active or launched products', done);
     });
 
@@ -341,7 +386,7 @@ describe('Catalog API', function() {
             lifecycleStatus: 'active'
         };
 
-        testCreateOffering(productRequestInfo, catalogRequestInfo, 400, 'The product attached to the offering ' +
+        testCreateOffering(productRequestInfo, catalogRequestInfo, null, 400, 'The product attached to the offering ' +
             'cannot be read', done);
     });
 
@@ -359,7 +404,7 @@ describe('Catalog API', function() {
         };
 
         // isOwner does not matter when productRequestFails is set to true
-        testCreateOffering(productRequestInfo, catalogRequestInfo, 400, 'The catalog attached to the offering ' +
+        testCreateOffering(productRequestInfo, catalogRequestInfo, null, 400, 'The catalog attached to the offering ' +
             'cannot be read', done);
     });
 
