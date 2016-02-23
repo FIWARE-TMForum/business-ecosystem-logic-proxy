@@ -36,7 +36,7 @@ html(ng-app="app")
             if (loggingRequired && !$injector.has('LOGGED_USER')) {
               e.preventDefault();
               var cameFrom = encodeURIComponent('/' + $state.href(toState.name, toParams));
-              window.location = '#{ contextPath }/login?came_from=' + cameFrom;
+              $state.go('unauthorized', {'came_from': cameFrom });
             }
           });
 
@@ -234,3 +234,6 @@ html(ng-app="app")
 
     script(type="text/ng-template", id="shopping-cart/list")
       include partials/shopping-cart/create
+
+    script(type="text/ng-template", id="unauthorized")
+      include partials/unauthorized

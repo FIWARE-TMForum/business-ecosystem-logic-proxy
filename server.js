@@ -392,6 +392,7 @@ var jsAppFilesToInject = [
     'controllers/product-order.controller',
     'controllers/message.controller',
     'controllers/inventory-product.controller',
+    'controllers/unauthorized.controller',
     'routes/offering.routes',
     'routes/stock.routes',
     'routes/stock.product.routes',
@@ -400,7 +401,8 @@ var jsAppFilesToInject = [
     'routes/inventory.routes',
     'routes/inventory.product-order.routes',
     'routes/inventory.product.routes',
-    'routes/shopping-cart.routes'
+    'routes/shopping-cart.routes',
+    'routes/unauthorized.routes'
 ].map(function (path) {
     return 'resources/core/js/' + path + '.js';
 });
