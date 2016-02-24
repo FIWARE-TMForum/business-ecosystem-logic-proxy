@@ -431,7 +431,7 @@ var ordering = (function(){
                             if (productsInFinalState.length > 0) {
                                 callback({
                                     status: 403,
-                                    message: 'You cannot cancel orders with completed items'
+                                    message: 'You cannot cancel orders with completed, failed or cancelled items'
                                 });
                             } else {
 
