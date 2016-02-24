@@ -51,9 +51,7 @@
 
         function isTransitable(orderItem) {
 
-            return orderItem.state === PRODUCTORDER_STATUS.ACKNOWLEDGED ||
-                orderItem.state === PRODUCTORDER_STATUS.COMPLETED ||
-                orderItem.state === PRODUCTORDER_STATUS.FAILED;
+            return orderItem.state === PRODUCTORDER_STATUS.INPROGRESS;
         }
 
         function getNextStatus(orderItem) {

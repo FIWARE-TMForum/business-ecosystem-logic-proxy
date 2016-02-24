@@ -15,7 +15,7 @@
           .col-xs-12.col-sm-4
             .thumbnail.thumbnail-lg
               img(no-image, ng-src="{{ orderItem.productOffering.getPicture() }}")
-            .btn-toolbar(ng-if="searchVM.role === 'Seller' && !searchVM.isTransitable(orderItem)")
+            .btn-toolbar(ng-if="searchVM.role === 'Seller' && searchVM.isTransitable(orderItem)")
               .btn-group.btn-group-justified.z-depth-1
                 a.btn.btn-default(ng-click="searchVM.updateStatus(productOrder, $index, searchVM.getNextStatus(orderItem))")
                   span.item-text Complete
