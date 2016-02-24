@@ -2,13 +2,20 @@
   .col-xs-12
     .panel.panel-default.z-depth-1(ng-repeat="productOrder in searchVM.list")
       .panel-heading
-        .pull-right(ng-if="searchVM.role === 'Customer'")
-          a(ui-sref="inventory.productOrder.detail({ productOrderId: productOrder.id })", ui-sref-opts="{ inherit: false }")
-            span.item-text View details
+        .pull-right(ng-if="searchVM.role === 'Customer' && searchVM.canCancel(productOrder)")
+          a.btn.btn-xs.btn-danger.z-depth-1(ng-click="searchVM.cancelOrder(productOrder)")
+            span.item-icon.fa(ng-class="searchVM.cancellingOrder ? ['fa-spinner', 'fa-spin'] : 'fa-close'")
+            span.item-text.hidden-xs Cancel
         .h4
           strong
-            time(title="{{ productOrder.requestedStartDate | amDateFormat: 'dddd, MMMM Do YYYY, h:mm a' }}") {{ productOrder.requestedStartDate | amCalendar }}
-          .small by {{ productOrder.getCustomer().id }}, {{ productOrder.state }}
+            a(ng-if="searchVM.role === 'Customer'", ui-sref="inventory.productOrder.detail({ productOrderId: productOrder.id })", ui-sref-opts="{ inherit: false }")
+              time(title="{{ productOrder.requestedStartDate | amDateFormat: 'dddd, MMMM Do YYYY, h:mm a' }}") {{ productOrder.requestedStartDate | amCalendar }}
+            span(ng-if="searchVM.role === 'Seller'")
+              time(title="{{ productOrder.requestedStartDate | amDateFormat: 'dddd, MMMM Do YYYY, h:mm a' }}") {{ productOrder.requestedStartDate | amCalendar }}
+
+          .small
+            | by {{ productOrder.getCustomer().id }},
+            strong  {{ productOrder.state }}
       .panel-body
         .row(ng-repeat="orderItem in productOrder.orderItem")
           hr(ng-if="!$first")

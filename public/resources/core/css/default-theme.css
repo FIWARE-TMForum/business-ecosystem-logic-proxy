@@ -283,6 +283,16 @@ textarea {
     box-shadow: none !important;
 }
 
+.btn-xs,
+.btn-group-xs > .btn {
+    padding: 2px 6px;
+}
+
+.btn-xs .item-icon + .item-text,
+.btn-group-xs > .btn .item-icon + .item-text {
+    margin-left: 2px;
+}
+
 /* ===================================================================================
  *   COMPONENT - BUTTON DEFAULT
  * =================================================================================== */
@@ -409,19 +419,6 @@ textarea {
 .btn-warning[disabled] {
     color: #FFF;
     background-color: #FF9800;
-}
-
-.btn-sm {
-    padding: 4px 8px;
-    font-size: 14px;
-    line-height: 20px;
-    border-radius: 0;
-}
-.btn-sm > .btn-icon {
-    width: 1.2em;
-    font-size: 90%;
-    text-align: left;
-    vertical-align: baseline;
 }
 
 .btn-circle {
