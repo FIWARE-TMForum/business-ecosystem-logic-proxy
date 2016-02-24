@@ -3,7 +3,7 @@
     .panel.panel-default.z-depth-1(ng-repeat="productOrder in searchVM.list")
       .panel-heading
         .pull-right(ng-if="searchVM.role === 'Customer' && searchVM.canCancel(productOrder)")
-          a.btn.btn-xs.btn-danger.z-depth-1(ng-click="searchVM.cancelOrder(productOrder)")
+          a.btn.btn-xs.btn-danger.z-depth-1(ng-click="searchVM.cancelOrder(productOrder)", ng-disabled="searchVM.cancellingOrder === true")
             span.item-icon.fa(ng-class="searchVM.cancellingOrder ? ['fa-spinner', 'fa-spin'] : 'fa-close'")
             span.item-text.hidden-xs Cancel
         .h4
