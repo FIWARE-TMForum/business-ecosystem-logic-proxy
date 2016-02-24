@@ -684,8 +684,14 @@ describe('Ordering API', function() {
                 });
             });
 
-            var testUpdate = function(hasRoleResponses, body, previousOrderItems, expectedError, expectedBody, done) {
+            var testUpdate = function(hasRoleResponses, body, previousOrderItems, refundError, expectedError, expectedBody, done) {
 
+                var user = {
+                    id: 'fiware',
+                    href: 'http://www.fiware.org/user/fiware'
+                };
+
+                var orderId = 7;
                 var SERVER = 'http://example.com:189';
                 var productOfferingPath = '/productOrdering/ordering/7';
 
@@ -693,12 +699,17 @@ describe('Ordering API', function() {
                 tmfUtils.hasRole.and.returnValues.apply(tmfUtils.hasRole, hasRoleResponses);
                 tmfUtils.validateLoggedIn = validateLoggedOk;
 
-                var orderingApi = getOrderingAPI({}, tmfUtils);
-
-                var user = {
-                    id: 'fiware',
-                    href: 'http://www.fiware.org/user/fiware'
+                var storeClient = {
+                    storeClient: {
+                        refund: function(receivedOrderId, receivedUser, callback) {
+                            expect(receivedOrderId).toBe(orderId);
+                            expect(receivedUser).toBe(user);
+                            callback(refundError);
+                        }
+                    }
                 };
+
+                var orderingApi = getOrderingAPI(storeClient, tmfUtils);
 
                 var req = {
                     user: user,
@@ -711,7 +722,7 @@ describe('Ordering API', function() {
 
                 nock(SERVER)
                     .get(productOfferingPath)
-                    .reply(200, { relatedParty: orderingRelatedParties, orderItem: previousOrderItems });
+                    .reply(200, { id: orderId, relatedParty: orderingRelatedParties, orderItem: previousOrderItems });
 
                 orderingApi.checkPermissions(req, function (err) {
 
@@ -736,7 +747,7 @@ describe('Ordering API', function() {
                     message: 'You are not authorized to modify this ordering'
                 };
 
-                testUpdate([false, false], {}, [], expectedError, null, done);
+                testUpdate([false, false], {}, [], null, expectedError, null, done);
             });
 
             it('should fail when a customer tries to modify the orderItem field', function (done) {
@@ -746,7 +757,7 @@ describe('Ordering API', function() {
                     message: 'Order items can only be modified by sellers'
                 };
 
-                testUpdate([true, false], { orderItem: [] }, [], expectedError, null, done);
+                testUpdate([true, false], { orderItem: [] }, [], null, expectedError, null, done);
             });
 
             it('should fail when a customer tries to modify the relatedParty field', function (done) {
@@ -756,11 +767,54 @@ describe('Ordering API', function() {
                     message: 'Related parties cannot be modified'
                 };
 
-                testUpdate([true, false], { relatedParty: [] }, [], expectedError, null, done);
+                testUpdate([true, false], { relatedParty: [] }, [], null, expectedError, null, done);
             });
 
             it('should not fail when a customer tries to modify the description', function (done) {
-                testUpdate([true, false], { description: 'New description' }, [], null, null, done);
+                testUpdate([true, false], { description: 'New description' }, [], null, null, null, done);
+            });
+
+            it('should fail when a customer tries to cancel an ordering with completed items', function (done) {
+
+                var expectedError = {
+                    status: 403,
+                    message: 'You cannot cancel orders with completed items'
+                };
+
+                testUpdate([true, false], { state: 'Cancelled' }, [{state: 'Completed'}], null, expectedError, null, done);
+            });
+
+            it('should fail when refund cannot be completed', function (done) {
+
+                var expectedError = {
+                    status: 403,
+                    message: 'You cannot cancel orders with completed items'
+                };
+
+                testUpdate([true, false], { state: 'Cancelled' }, [], expectedError, expectedError, null, done);
+            });
+
+            it('should not fail when refund can be completed', function (done) {
+
+                var previousItems = [
+                    { state: 'Acknowledged', id: 7 },
+                    { state: 'InProgress', id: 9 }
+                ];
+
+                var requestBody = {
+                    state: 'Cancelled',
+                    description: 'I do not need this items anymore'
+                };
+
+                var expectedItems = JSON.parse(JSON.stringify(previousItems));
+                expectedItems.forEach(function(item) {
+                    item.state = 'Cancelled';
+                });
+
+                var expectedBody = JSON.parse(JSON.stringify(requestBody));
+                expectedBody.orderItem = expectedItems;
+
+                testUpdate([true, false], requestBody, previousItems, null, null, expectedBody, done);
             });
 
             it('should fail when a seller tries to modify the description', function (done) {
@@ -770,13 +824,14 @@ describe('Ordering API', function() {
                     message: 'Sellers can only modify order items'
                 };
 
-                testUpdate([false, true], { description: 'New description', orderItem: [] }, [], expectedError, null, done);
+                testUpdate([false, true], { description: 'New description', orderItem: [] }, [], null, expectedError, null, done);
             });
 
             it('should not fail when seller does not include any order item', function (done) {
 
                 var previousOrderItems = [ { id: 1, state: 'InProgress' } ];
-                testUpdate([false, true], { orderItem: [] }, previousOrderItems, null, { state: 'InProgress', orderItem: previousOrderItems }, done);
+                testUpdate([false, true], { orderItem: [] }, previousOrderItems, null, null,
+                    { state: 'InProgress', orderItem: previousOrderItems }, done);
             });
 
             it('should not fail when seller (that it is also the customer) does not include any order item', function (done) {
@@ -791,7 +846,7 @@ describe('Ordering API', function() {
                 expectedBody['state'] = 'InProgress';
                 expectedBody['orderItem'] = previousOrderItems;
 
-                testUpdate([true, true], updatedOrderings, previousOrderItems, null, expectedBody, done);
+                testUpdate([true, true], updatedOrderings, previousOrderItems, null, null, expectedBody, done);
             });
 
             it('should fail when the seller tries to edit a non existing item', function (done) {
@@ -806,7 +861,7 @@ describe('Ordering API', function() {
                     message: 'You are trying to edit an non-existing item'
                 };
 
-                testUpdate([false, true], updatedOrderings, previousOrderItems, expectedError, null, done);
+                testUpdate([false, true], updatedOrderings, previousOrderItems, null, expectedError, null, done);
             });
 
             it('should fail when the seller tries to edit a non owned item', function (done) {
@@ -821,7 +876,7 @@ describe('Ordering API', function() {
                     message: 'You cannot modify an order item if you are not seller'
                 };
 
-                testUpdate([false, true, false], updatedOrderings, previousOrderItems, expectedError, null, done);
+                testUpdate([false, true, false], updatedOrderings, previousOrderItems, null, expectedError, null, done);
             });
 
             it('should fail when the seller tries to add a new field to the item', function (done) {
@@ -836,7 +891,7 @@ describe('Ordering API', function() {
                     message: 'The fields of an order item cannot be modified'
                 };
 
-                testUpdate([false, true, true], updatedOrderings, previousOrderItems, expectedError, null, done);
+                testUpdate([false, true, true], updatedOrderings, previousOrderItems, null, expectedError, null, done);
             });
 
             it('should fail when the seller tries to remove a field from the item', function (done) {
@@ -851,7 +906,7 @@ describe('Ordering API', function() {
                     message: 'The fields of an order item cannot be modified'
                 };
 
-                testUpdate([false, true, true], updatedOrderings, previousOrderItems, expectedError, null, done);
+                testUpdate([false, true, true], updatedOrderings, previousOrderItems, null, expectedError, null, done);
             });
 
             it('should fail when the seller tries to modify the value of a field in the item', function (done) {
@@ -866,7 +921,7 @@ describe('Ordering API', function() {
                     message: 'The value of the field name cannot be changed'
                 };
 
-                testUpdate([false, true, true], updatedOrderings, previousOrderItems, expectedError, null, done);
+                testUpdate([false, true, true], updatedOrderings, previousOrderItems, null, expectedError, null, done);
             });
 
             it('should fail when the seller tries to modify the value of a field in the item', function (done) {
@@ -881,7 +936,7 @@ describe('Ordering API', function() {
                     message: 'Acknowledged order items cannot be updated manually'
                 };
 
-                testUpdate([false, true, true], updatedOrderings, previousOrderItems, expectedError, null, done);
+                testUpdate([false, true, true], updatedOrderings, previousOrderItems, null, expectedError, null, done);
             });
 
             it('should not fail when the user tries to modify the state of an item appropriately', function (done) {
@@ -896,7 +951,7 @@ describe('Ordering API', function() {
                     orderItem: updatedOrderings.orderItem
                 };
 
-                testUpdate([false, true, true], updatedOrderings, previousOrderItems, null, expectedBody, done);
+                testUpdate([false, true, true], updatedOrderings, previousOrderItems, null, null, expectedBody, done);
             });
 
             // FIXME: Maybe this test can be skipped
@@ -912,7 +967,7 @@ describe('Ordering API', function() {
                     message: 'You are trying to edit an non-existing item'
                 };
 
-                testUpdate([false, true], updatedOrderings, previousOrderItems, expectedError, null, done);
+                testUpdate([false, true], updatedOrderings, previousOrderItems, null, expectedError, null, done);
             });
 
             it('should include the items that belong to another sellers', function(done) {
@@ -944,7 +999,7 @@ describe('Ordering API', function() {
                     orderItem: expectedOrderItems
                 };
 
-                testUpdate([false, true, true], updatedOrderings, previousOrderItems, null, expectedBody, done);
+                testUpdate([false, true, true], updatedOrderings, previousOrderItems, null, null, expectedBody, done);
 
             });
 
@@ -967,7 +1022,7 @@ describe('Ordering API', function() {
                     orderItem: updatedOrderings.orderItem
                 };
 
-                testUpdate([false, true, true, true], updatedOrderings, previousOrderItems, null, expectedBody, done);
+                testUpdate([false, true, true, true], updatedOrderings, previousOrderItems, null, null, expectedBody, done);
             });
 
             it('should set state as partial when one item is failed and the other in progress', function (done) {
@@ -988,7 +1043,7 @@ describe('Ordering API', function() {
                     orderItem: updatedOrderings.orderItem
                 };
 
-                testUpdate([false, true, true, true], updatedOrderings, previousOrderItems, null, expectedBody, done);
+                testUpdate([false, true, true, true], updatedOrderings, previousOrderItems, null, null, expectedBody, done);
             });
 
             it('should set state as failed when all the order items are failed', function (done) {
@@ -1009,7 +1064,7 @@ describe('Ordering API', function() {
                     orderItem: updatedOrderings.orderItem
                 };
 
-                testUpdate([false, true, true, true], updatedOrderings, previousOrderItems, null, expectedBody, done);
+                testUpdate([false, true, true, true], updatedOrderings, previousOrderItems, null, null, expectedBody, done);
             });
 
             it('should set state as completed when all the order items are completed', function (done) {
@@ -1030,7 +1085,7 @@ describe('Ordering API', function() {
                     orderItem: updatedOrderings.orderItem
                 };
 
-                testUpdate([false, true, true, true], updatedOrderings, previousOrderItems, null, expectedBody, done);
+                testUpdate([false, true, true, true], updatedOrderings, previousOrderItems, null, null, expectedBody, done);
             });
 
             it('should set state as acknowledged when all the order items are acknowledged', function (done) {
@@ -1048,7 +1103,7 @@ describe('Ordering API', function() {
                     orderItem: previousOrderItems
                 };
 
-                testUpdate([false, true, true, true], updatedOrderings, previousOrderItems, null, expectedBody, done);
+                testUpdate([false, true, true, true], updatedOrderings, previousOrderItems, null, null, expectedBody, done);
             });
 
             it('should set state as in progress when all the order items are in progress', function (done) {
@@ -1066,7 +1121,7 @@ describe('Ordering API', function() {
                     orderItem: updatedOrderings.orderItem
                 };
 
-                testUpdate([false, true, true, true], updatedOrderings, previousOrderItems, null, expectedBody, done);
+                testUpdate([false, true, true, true], updatedOrderings, previousOrderItems, null, null, expectedBody, done);
             });
         });
 

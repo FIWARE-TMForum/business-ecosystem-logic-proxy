@@ -107,7 +107,6 @@ describe('Store Client', function() {
 
             expectedBody[assetType] = assetInfo;
 
-
             // Check the body received by the server
             expect(receivedBody).toEqual(expectedBody);
  
@@ -198,4 +197,74 @@ describe('Store Client', function() {
             done();
         });
     });
+
+    it('should call callback without errors when refund works', function(done) {
+
+        // Mock the server
+        config.appSsl = false;
+        var serverUrl = 'http://' + config.appHost + ':' + config.endpoints.charging.port;
+        var receivedBody;
+
+        nock(serverUrl, {
+            reqheaders: {
+                'content-type': 'application/json'
+            }
+        }).post('/charging/api/orderManagement/orders/refund', function(body) {
+            receivedBody = body;
+            return true;
+        }).reply(200);
+
+        // Call the validator
+        var orderId = 7;
+        storeClient.refund(orderId, {id: 'test'}, function(err) {
+
+            var expectedBody = {
+                orderId: orderId
+            };
+
+            expect(receivedBody).toEqual(expectedBody);
+            expect(err).toBe(null);
+
+            done();
+        });
+
+    });
+
+    it('should call callback with errors when refund fails', function(done) {
+
+        var errorStatus = 500;
+
+        // Mock the server
+        config.appSsl = false;
+        var serverUrl = 'http://' + config.appHost + ':' + config.endpoints.charging.port;
+        var receivedBody;
+
+        nock(serverUrl, {
+            reqheaders: {
+                'content-type': 'application/json'
+            }
+        }).post('/charging/api/orderManagement/orders/refund', function(body) {
+            receivedBody = body;
+            return true;
+        }).reply(errorStatus);
+
+        // Call the validator
+        var orderId = 7;
+        storeClient.refund(orderId, {id: 'test'}, function(err) {
+
+            var expectedBody = {
+                orderId: orderId
+            };
+
+            expect(receivedBody).toEqual(expectedBody);
+            expect(err).toEqual({
+                status: errorStatus,
+                message: 'The server has failed at the time of refunding the order'
+            });
+
+            done();
+        });
+
+    });
+
 });
