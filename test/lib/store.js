@@ -88,14 +88,16 @@ describe('Store Client', function() {
         var serverUrl = 'http' + '://' + config.appHost + ':' + config.endpoints.charging.port;
         var receivedBody;
 
-        nock(serverUrl, {
-            reqheaders: {
-                'content-type': 'application/json'
-            }
-        }).post(ASSETS_URL_MAPPING[assetType], function(body) {
-            receivedBody = body;
-            return true;
-        }).reply(errorStatus, response);
+        if (errorStatus) {
+            nock(serverUrl, {
+                reqheaders: {
+                    'content-type': 'application/json'
+                }
+            }).post(ASSETS_URL_MAPPING[assetType], function (body) {
+                receivedBody = body;
+                return true;
+            }).reply(errorStatus, response);
+        }
 
         // Call the validator
         var assetInfo = { 'a': 'b', 'example': 'c' };
@@ -107,11 +109,13 @@ describe('Store Client', function() {
 
             expectedBody[assetType] = assetInfo;
 
-            // Check the body received by the server
-            expect(receivedBody).toEqual(expectedBody);
+            if (errorStatus) {
+                // Check the body received by the server
+                expect(receivedBody).toEqual(expectedBody);
+            }
  
             // Check the parameters used to call this callback
-            expect(err.status).toBe(errorStatus);
+            expect(err.status).toBe(errorStatus ? errorStatus : 504);
             expect(err.message).toBe(expectedErrMsg);
 
             done();
@@ -140,6 +144,10 @@ describe('Store Client', function() {
         testValidateProductError(PRODUCT_ASSET, 500, 'Internal Server Error', 'The server has failed validating the product specification', done);
     });
 
+    it('should not validate product when store cannot be accessed', function(done) {
+        testValidateProductError(PRODUCT_ASSET, null, null, 'The server has failed validating the product specification', done);
+    });
+
     // Offerings
 
     it('should not validate offering when store returns 400', function(done) {
@@ -156,6 +164,9 @@ describe('Store Client', function() {
         testValidateProductError(OFFERING_ASSET, 500, 'Internal Server Error', 'The server has failed validating the offering', done);
     });
 
+    it('should not validate offering when store cannot be accessed', function(done) {
+        testValidateProductError(OFFERING_ASSET, null, null, 'The server has failed validating the offering', done);
+    });
 
     it('should notify the store the creation of a product order', function(done) {
         // Only a case is tested in since this method relies on makeStoreRequest
