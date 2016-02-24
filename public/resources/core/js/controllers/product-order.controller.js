@@ -36,6 +36,9 @@
         vm.getNextStatus = getNextStatus;
         vm.showFilters = showFilters;
         vm.updateStatus = updateStatus;
+        vm.canCancel = canCancel;
+        vm.cancelOrder = cancelOrder;
+        vm.cancellingOrder = false;
 
         ProductOrder.search($state.params).then(function (productOrderList) {
             angular.copy(productOrderList, vm.list);
@@ -57,6 +60,34 @@
         function getNextStatus(orderItem) {
             var index = PRODUCTORDER_LIFECYCLE.indexOf(orderItem.state);
             return index !== -1 && (index + 1) !== PRODUCTORDER_LIFECYCLE.length ? PRODUCTORDER_LIFECYCLE[index + 1] : null;
+        }
+
+        function canCancel(productOrder) {
+            return productOrder.orderItem.every(function (orderItem) {
+                return orderItem.state === PRODUCTORDER_STATUS.INPROGRESS;
+            });
+        }
+
+        function cancelOrder(productOrder) {
+            var dataUpdated = {
+                state: PRODUCTORDER_STATUS.CANCELLED
+            };
+
+            vm.cancellingOrder = true;
+
+            ProductOrder.update(productOrder, dataUpdated).then(function (productOrderUpdated) {
+                angular.copy(productOrderUpdated, productOrder);
+                vm.cancellingOrder = false;
+            }, function (response) {
+                var defaultMessage = 'There was an unexpected error that prevented the ' +
+                    'system from updating the status of the given product order';
+                var error = Utils.parseError(response, defaultMessage);
+
+                vm.cancellingOrder = false;
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                    error: error
+                });
+            });
         }
 
         function updateStatus(productOrder, index, status) {

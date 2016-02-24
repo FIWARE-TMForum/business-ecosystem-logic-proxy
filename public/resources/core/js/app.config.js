@@ -13,7 +13,8 @@
         ACKNOWLEDGED: 'Acknowledged',
         INPROGRESS: 'InProgress',
         COMPLETED: 'Completed',
-        FAILED: 'Failed'
+        FAILED: 'Failed',
+        CANCELLED: 'Cancelled'
     };
 
     angular
