@@ -424,11 +424,11 @@ var ordering = (function(){
                         } else if ('state' in ordering && ordering['state'].toLowerCase() === 'cancelled') {
 
                             // Orderings can only be cancelled when there are no completed products
-                            var completedProducts = previousOrdering.orderItem.filter(function(item) {
-                                return item.state.toLowerCase() === 'completed';
+                            var productsInFinalState = previousOrdering.orderItem.filter(function(item) {
+                                return ['completed', 'failed', 'cancelled'].indexOf(item.state.toLowerCase()) >= 0;
                             });
 
-                            if (completedProducts.length > 0) {
+                            if (productsInFinalState.length > 0) {
                                 callback({
                                     status: 403,
                                     message: 'You cannot cancel orders with completed items'
@@ -449,6 +449,7 @@ var ordering = (function(){
                                             item.state = 'Cancelled';
                                         });
 
+                                        // Included order items will be ignored
                                         ordering.orderItem = previousOrdering.orderItem;
                                         tmfUtils.updateBody(req, ordering);
 

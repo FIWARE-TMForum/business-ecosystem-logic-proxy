@@ -784,6 +784,26 @@ describe('Ordering API', function() {
                 testUpdate([true, false], { state: 'Cancelled' }, [{state: 'Completed'}], null, expectedError, null, done);
             });
 
+            it('should fail when a customer tries to cancel an ordering with failed items', function (done) {
+
+                var expectedError = {
+                    status: 403,
+                    message: 'You cannot cancel orders with completed items'
+                };
+
+                testUpdate([true, false], { state: 'Cancelled' }, [{state: 'Failed'}], null, expectedError, null, done);
+            });
+
+            it('should fail when a customer tries to cancel an ordering with cancelled items', function (done) {
+
+                var expectedError = {
+                    status: 403,
+                    message: 'You cannot cancel orders with completed items'
+                };
+
+                testUpdate([true, false], { state: 'Cancelled' }, [{state: 'Cancelled'}], null, expectedError, null, done);
+            });
+
             it('should fail when refund cannot be completed', function (done) {
 
                 var expectedError = {
