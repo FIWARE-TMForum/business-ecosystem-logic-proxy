@@ -11,7 +11,7 @@ var charging = (function() {
                 message: 'This API is private'
             })
         } else {
-            callback();
+            callback(null);
         }
     };
 

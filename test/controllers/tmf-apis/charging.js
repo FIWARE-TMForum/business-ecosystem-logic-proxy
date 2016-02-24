@@ -11,16 +11,37 @@ describe('Charging API', function () {
         }).charging;
     };
 
-    it('should redirect the request to the charging backend API', function(done) {
+    it('should call callback without errors when URL is allowed', function(done) {
         var chargingApi = getChargingAPI();
 
         var req = {
-            method: 'GET'
+            method: 'GET',
+            apiUrl: 'api/orderManagement/orders/accept'
         };
 
-        chargingApi.checkPermissions(req, function() {
-            // Callback function. It's called without arguments...
+        chargingApi.checkPermissions(req, function(err) {
+            expect(err).toBe(null);
             done();
         });
     });
+
+    it('should call callback with errors when URL is not allowed', function(done) {
+        var chargingApi = getChargingAPI();
+
+        var req = {
+            method: 'GET',
+            apiUrl: 'api/orderManagement/orders/refund'
+        };
+
+        chargingApi.checkPermissions(req, function(err) {
+
+            expect(err).toEqual({
+                status: 403,
+                message: 'This API is private'
+            });
+
+            done();
+        });
+    });
+
 });
