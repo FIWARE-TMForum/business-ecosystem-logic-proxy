@@ -421,6 +421,42 @@ var ordering = (function(){
                                     message: 'Order items can only be modified by sellers'
                                 });
                             }
+                        } else if ('state' in ordering && ordering['state'].toLowerCase() === 'cancelled') {
+
+                            // Orderings can only be cancelled when there are no completed products
+                            var completedProducts = previousOrdering.orderItem.filter(function(item) {
+                                return item.state.toLowerCase() === 'completed';
+                            });
+
+                            if (completedProducts.length > 0) {
+                                callback({
+                                    status: 403,
+                                    message: 'You cannot cancel orders with completed items'
+                                });
+                            } else {
+
+                                // Otherwise, the charges has to be refunded to the user.
+                                // If the sales cannot be refunded, the callback will be called with
+                                // the error parameter so the pre validation will fail and the state
+                                // won't be changed.
+                                storeClient.refund(previousOrdering.id, req.user, function(err) {
+
+                                    if (err) {
+                                        callback(err);
+                                    } else {
+                                        // Cancel all order items
+                                        previousOrdering.orderItem.forEach(function(item) {
+                                            item.state = 'Cancelled';
+                                        });
+
+                                        ordering.orderItem = previousOrdering.orderItem;
+                                        tmfUtils.updateBody(req, ordering);
+
+                                        callback();
+                                    }
+                                });
+                            }
+
                         } else {
                             callback(null);
                         }
