@@ -59,6 +59,7 @@ config.portalPrefix = checkPrefix(config.portalPrefix, '');
 config.shoppingCartPath = checkPrefix(config.shoppingCartPath, '/shoppingCart');
 config.logInPath = config.logInPath || '/login';
 config.logOutPath = config.logOutPath || '/logout';
+config.appHost = config.appHost || 'localhost';
 config.mongoDb = config.mongoDb || {};
 config.mongoDb.user = config.mongoDb.user || '';
 config.mongoDb.password = config.mongoDb.password || '';
