@@ -172,8 +172,9 @@ var catalog = (function() {
 
             if (updatedCategory) {
 
+                // Categories are created as root when isRoot is not included
                 var isRoot = 'isRoot' in updatedCategory ? updatedCategory.isRoot :
-                    (oldCategory ? oldCategory.isRoot : null);
+                    (oldCategory ? oldCategory.isRoot : true);
                 var parentId = 'parentId' in updatedCategory ? updatedCategory.parentId :
                     (oldCategory? oldCategory.parentId : null);
 
@@ -190,7 +191,6 @@ var catalog = (function() {
                 } else {
                     callback();
                 }
-
 
             } else {
                 callback();
@@ -235,53 +235,54 @@ var catalog = (function() {
             return; // EXIT
         }
 
-        // Check that the user has the seller role or is an admin
-        if (!tmfUtils.checkRole(req.user, config.oauth2.roles.seller)) {
-
-            callback({
-                status: 403,
-                message: 'You are not authorized to create resources'
-            });
-
-            return; // EXIT
-        }
-
-        if (offeringsPattern.test(req.apiUrl)) {
-
-            validateOffering(req.user, req.apiUrl, null, body, function(err) {
-
-                if (err) {
-                    callback(err);
-                } else {
-                    storeClient.validateOffering(body, req.user, function(err) {
-                        if (err) {
-                            callback(err);
-                        } else {
-                            callback();
-                        }
-                    });
-                }
-
-            });
-
-        } else if (productsPattern.test(req.apiUrl)) {
-
-            // Check that the product specification contains a valid product
-            // according to the charging backed
-            storeClient.validateProduct(body, req.user, function (err) {
-                if (err) {
-                    callback(err);
-                } else {
-                    createHandler(req.user, body, callback);
-                }
-            });
-
-        } else if (categoriesPattern.test(req.apiUrl)) {
+        if (categoriesPattern.test(req.apiUrl)) {
 
             validateCategory(body, null, req.user, 'create', callback);
 
         } else {
-            createHandler(req.user, body, callback);
+
+            // Check that the user has the seller role or is an admin
+            if (!tmfUtils.checkRole(req.user, config.oauth2.roles.seller)) {
+
+                callback({
+                    status: 403,
+                    message: 'You are not authorized to create resources'
+                });
+
+                return; // EXIT
+            }
+
+            if (offeringsPattern.test(req.apiUrl)) {
+
+                validateOffering(req.user, req.apiUrl, null, body, function (err) {
+
+                    if (err) {
+                        callback(err);
+                    } else {
+                        storeClient.validateOffering(body, req.user, function (err) {
+                            if (err) {
+                                callback(err);
+                            } else {
+                                callback();
+                            }
+                        });
+                    }
+
+                });
+            } else if (productsPattern.test(req.apiUrl)) {
+
+                // Check that the product specification contains a valid product
+                // according to the charging backed
+                storeClient.validateProduct(body, req.user, function (err) {
+                    if (err) {
+                        callback(err);
+                    } else {
+                        createHandler(req.user, body, callback);
+                    }
+                });
+            } else {
+                createHandler(req.user, body, callback);
+            }
         }
     };
 

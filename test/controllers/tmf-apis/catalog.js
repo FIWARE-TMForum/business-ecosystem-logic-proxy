@@ -486,6 +486,59 @@ describe('Catalog API', function() {
         testCreateProduct(storeValidatorErr, storeErrorStatus, storeErrorMessage, true, done);
     });
 
+    var testCreateCategory = function(admin, category, errorStatus, errorMsg, done) {
+
+        var checkRoleMethod = jasmine.createSpy();
+        checkRoleMethod.and.returnValues(admin);
+
+        var tmfUtils = {
+            validateLoggedIn: validateLoggedOk,
+            checkRole: checkRoleMethod
+        };
+
+        var catalogApi = getCatalogApi({}, tmfUtils);
+
+        // Basic properties
+        var userName = 'test';
+        var offeringPath = '/catalog/category/';
+
+        // Call the method
+        var req = {
+            method: 'POST',
+            apiUrl: offeringPath,
+            user: {
+                id: userName,
+                roles: [{ name: config.oauth2.roles.seller }]
+            },
+            body: JSON.stringify(category)
+        };
+
+        catalogApi.checkPermissions(req, function(err) {
+
+            if (!errorStatus && !errorMsg ) {
+                expect(err).toBe(null);
+            } else {
+                expect(err.status).toBe(errorStatus);
+                expect(err.message).toBe(errorMsg);
+
+            }
+
+            done();
+        });
+    };
+
+    it('should allow to create category', function(callback) {
+        testCreateCategory(true, { name: 'example' }, null, null, callback);
+    });
+
+    it('should not allow non-admin users to create categories', function(callback) {
+        testCreateCategory(false, {}, 403, 'Only administrators can create categories', callback);
+    });
+
+    it('should not allow to create categories when parentId is included for root categories', function(callback) {
+        testCreateCategory(true, { parentId: 7, isRoot: true }, 400, 'Parent ID cannot be included when the category is root', callback);
+    });
+
 
     //////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////// UPDATE & DELETE //////////////////////////////////////
