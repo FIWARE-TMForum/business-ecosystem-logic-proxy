@@ -159,6 +159,45 @@ var catalog = (function() {
         });
     };
 
+    var validateCategory = function(updatedCategory, oldCategory, user, action, callback) {
+
+        // Categories can only be created by administrators
+        if (!tmfUtils.checkRole(user, config.oauth2.roles.admin)) {
+
+            callback({
+                status: 403,
+                message: 'Only administrators can ' + action + ' categories'
+            });
+        } else {
+
+            if (updatedCategory) {
+
+                var isRoot = 'isRoot' in updatedCategory ? updatedCategory.isRoot :
+                    (oldCategory ? oldCategory.isRoot : null);
+                var parentId = 'parentId' in updatedCategory ? updatedCategory.parentId :
+                    (oldCategory? oldCategory.parentId : null);
+
+                if (isRoot && parentId) {
+                    callback({
+                        status: 400,
+                        message: 'Parent ID cannot be included when the category is root'
+                    });
+                } else if (!isRoot && !parentId) {
+                    callback({
+                        status: 400,
+                        message: 'Non-root categories must contain a parent category'
+                    });
+                } else {
+                    callback();
+                }
+
+
+            } else {
+                callback();
+            }
+        }
+    };
+
 
     //////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////// CREATION //////////////////////////////////////////
@@ -177,6 +216,10 @@ var catalog = (function() {
 
     // Validate the creation of a resource
     var validateCreation = function(req, callback) {
+
+        var offeringsPattern = new RegExp('/productOffering/?$');
+        var productsPattern = new RegExp('/productSpecification/?$');
+        var categoriesPattern = new RegExp('/category/?$');
 
         var body;
 
@@ -203,7 +246,7 @@ var catalog = (function() {
             return; // EXIT
         }
 
-        if (req.apiUrl.indexOf('productOffering') > -1) {
+        if (offeringsPattern.test(req.apiUrl)) {
 
             validateOffering(req.user, req.apiUrl, null, body, function(err) {
 
@@ -221,17 +264,22 @@ var catalog = (function() {
 
             });
 
-        } else if (req.apiUrl.indexOf('productSpecification') > -1) {
+        } else if (productsPattern.test(req.apiUrl)) {
 
             // Check that the product specification contains a valid product
             // according to the charging backed
-            storeClient.validateProduct(body, req.user, function(err) {
-               if (err) {
-                   callback(err);
-               } else {
-                   createHandler(req.user, body, callback);
-               }
+            storeClient.validateProduct(body, req.user, function (err) {
+                if (err) {
+                    callback(err);
+                } else {
+                    createHandler(req.user, body, callback);
+                }
             });
+
+        } else if (categoriesPattern.test(req.apiUrl)) {
+
+            validateCategory(body, null, req.user, 'create', callback);
+
         } else {
             createHandler(req.user, body, callback);
         }
@@ -313,21 +361,27 @@ var catalog = (function() {
         var catalogsPattern = new RegExp('/catalog/[^/]+/?$');
         var offeringsPattern = new RegExp('/catalog/[^/]+/productOffering/[^/]+/?$');
         var productsPattern = new RegExp('/productSpecification/[^/]+/?$');
+        var categoriesPattern = new RegExp('/category/[^/]+/?$');
 
-        // Retrieve the resource to be updated or removed
-        var errorMessage = 'The TMForum APIs fails to retrieve the object you are trying to update/delete';
-        retrieveAsset(req.apiUrl, errorMessage, function(err, result) {
+        try {
 
-            if (err) {
-                callback(err, result);
-            } else {
+            var parsedBody = emptyObject(req.body) ? null : JSON.parse(req.body);
 
-                try {
+            // Retrieve the resource to be updated or removed
+            var errorMessage = 'The TMForum APIs fails to retrieve the object you are trying to update/delete';
+            retrieveAsset(req.apiUrl, errorMessage, function (err, result) {
 
-                    var parsedBody = emptyObject(req.body) ? null : JSON.parse(req.body);
+                if (err) {
+                    callback(err, result);
+                } else {
+
                     var previousBody = JSON.parse(result.body);
 
-                    if (offeringsPattern.test(req.apiUrl)) {
+                    if (categoriesPattern.test(req.apiUrl)) {
+
+                        validateCategory(parsedBody, previousBody, req.user, 'modify', callback);
+
+                    } else if (offeringsPattern.test(req.apiUrl)) {
 
                         validateOffering(req.user, req.apiUrl, previousBody, parsedBody, callback);
 
@@ -373,15 +427,15 @@ var catalog = (function() {
                         }
                     }
 
-                } catch (e) {
-
-                    callback({
-                        status: 400,
-                        message: 'The provided body is not a valid JSON'
-                    });
                 }
-            }
-        });
+            });
+
+        } catch (e) {
+            callback({
+                status: 400,
+                message: 'The provided body is not a valid JSON'
+            });
+        }
     };
 
 

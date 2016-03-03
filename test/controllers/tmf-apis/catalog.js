@@ -430,7 +430,7 @@ describe('Catalog API', function() {
 
         // Basic properties
         var userName = 'test';
-        var offeringPath = '/catalog/productSpecification/1';
+        var offeringPath = '/catalog/productSpecification/';
         var role = owner ? 'Owner': 'Seller';
         var body = { relatedParty: [{id: userName, role: role}]};
 
