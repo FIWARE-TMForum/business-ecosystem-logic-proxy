@@ -539,6 +539,10 @@ describe('Catalog API', function() {
         testCreateCategory(true, { parentId: 7, isRoot: true }, 400, 'Parent ID cannot be included when the category is root', callback);
     });
 
+    it('should not allow to create categories non-root categories without parent', function(callback) {
+        testCreateCategory(true, { isRoot: false }, 400, 'Non-root categories must contain a parent category', callback);
+    });
+
 
     //////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////// UPDATE & DELETE //////////////////////////////////////
@@ -1455,4 +1459,124 @@ describe('Catalog API', function() {
         testChangeCatalogStatus(productBody, offeringsInfo, 400, 'Attached offerings cannot be retrieved', done);
 
     });
+
+    // CATEGORIES
+
+    var testUpdateCategory = function(method, admin, requestFails, updatedCategory, oldCategory,
+                                      errorStatus, errorMessage, done) {
+
+        var checkRoleMethod = jasmine.createSpy();
+        checkRoleMethod.and.returnValue(admin);
+
+        var tmfUtils = {
+            checkRole: checkRoleMethod
+        };
+
+        var catalogApi = getCatalogApi({}, tmfUtils);
+
+        var userName = 'test';
+        var path = '/catalog/category/1';
+        var protocol = config.appSsl ? 'https' : 'http';
+        var url = protocol + '://' + config.appHost + ':' + config.endpoints.catalog.port;
+
+        // statusCode depends on whether the request fails or not
+        var statusOk = 200;
+        var statusErr = 500;
+        var statusCode = requestFails ? statusErr : statusOk;
+
+        // The mock server that will handle the request
+        nock(url)
+            .get(path)
+            .reply(statusCode, JSON.stringify(oldCategory));
+
+        // Call the method
+        var req = {
+            method: method,
+            apiUrl: path,
+            user: {
+                id: userName,
+                roles: []
+            },
+            body: JSON.stringify(updatedCategory)
+        };
+
+        catalogApi.checkPermissions(req, function(err) {
+
+            if (errorStatus && errorMessage) {
+                expect(err.status).toBe(errorStatus);
+                expect(err.message).toBe(errorMessage);
+            } else {
+                expect(err).toBe(null);
+            }
+
+            done();
+        });
+    };
+
+    it('should allow to delete category when admin', function(done) {
+        testUpdateCategory('DELETE', true, false, null, {}, null, null, done);
+    });
+
+    it('should not allow to delete category when no admin', function(done) {
+        testUpdateCategory('DELETE', false, false, null, {}, 403,
+            'Only administrators can modify categories', done);
+    });
+
+    it('should not allow to delete category when category cannot be retrieved', function(done) {
+        testUpdateCategory('DELETE', false, true, null, {}, 400,
+            'The TMForum APIs fails to retrieve the object you are trying to update/delete', done);
+    });
+
+    it('should allow to update category when admin', function(done) {
+        testUpdateCategory('PATCH', true, false, { name: 'correct' }, { name: 'invalid', isRoot: true },
+            null, null, done);
+    });
+
+    it('should not allow to update category when no admin', function(done) {
+        testUpdateCategory('PATCH', false, false, { name: 'correct' }, { name: 'invalid', isRoot: true }, 403,
+            'Only administrators can modify categories', done);
+    });
+
+    it('should not allow to update category when category cannot be retrieved', function(done) {
+        testUpdateCategory('PATCH', true, true, { name: 'correct' }, null, 400,
+            'The TMForum APIs fails to retrieve the object you are trying to update/delete', done);
+    });
+
+    it('should not allow to update category when setting it as non-root without parent', function(done) {
+        testUpdateCategory('PATCH', true, false, { name: 'correct', isRoot: false }, { name: 'invalid' },
+            400, 'Non-root categories must contain a parent category', done);
+    });
+
+    it('should allow to update category when setting it as non-root and parent already set', function(done) {
+        testUpdateCategory('PATCH', true, false, { name: 'correct', isRoot: false }, { name: 'invalid', parentId: 7 },
+            null, null, done);
+    });
+
+    it('should not allow to update category when setting it as root category and parent specified', function(done) {
+        testUpdateCategory('PATCH', true, false, { name: 'correct', isRoot: true, parentId: 7 }, { name: 'invalid'},
+            400, 'Parent ID cannot be included when the category is root', done);
+    });
+
+    it('should not allow to update category when setting it as root category and parent specified #2', function(done) {
+        testUpdateCategory('PATCH', true, false, { name: 'correct', isRoot: true },
+            { name: 'invalid', isRoot: false, parentId: 7 },
+            400, 'Parent ID cannot be included when the category is root', done);
+    });
+
+    it('should allow to update category when setting it as root category and parent removed', function(done) {
+        testUpdateCategory('PATCH', true, false, { name: 'correct', isRoot: true, parentId: null },
+            { name: 'invalid', isRoot: false, parentId: 7 },
+            null, null, done);
+    });
+
+    it('should not allow to update category when adding parent to a root category', function(done) {
+        testUpdateCategory('PATCH', true, false, { name: 'correct', parentId: 7 }, { name: 'invalid', isRoot: true },
+            400, 'Parent ID cannot be included when the category is root', done);
+    });
+
+    it('should allow to update category when adding parent to a root category and setting it as non-root', function(done) {
+        testUpdateCategory('PATCH', true, false, { name: 'correct', parentId: 7, isRoot: false },
+            { name: 'invalid', isRoot: true }, null, null, done);
+    });
+
 });
