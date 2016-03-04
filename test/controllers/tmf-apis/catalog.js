@@ -2,6 +2,23 @@ var nock = require('nock'),
     proxyquire =  require('proxyquire'),
     testUtils = require('../../utils');
 
+// ERRORS
+var PARENT_ID_INCLUDED = 'Parent ID cannot be included when the category is root';
+var MISSING_PARENT_ID = 'Non-root categories must contain a parent category';
+var FAILED_TO_RETRIEVE = 'The TMForum APIs fails to retrieve the object you are trying to update/delete';
+var NEED_AUTHENTICATION = 'You need to be authenticated to create/update/delete resources';
+var INVALID_JSON = 'The provided body is not a valid JSON';
+var OFFERINGS_FOR_NON_OWNED_PRODUCTS = 'You are not allowed to create offerings for products you do not own';
+var INVALID_PRODUCT = 'The product attached to the offering cannot be read';
+var INVALID_USER_CREATE = 'The user making the request and the specified owner are not the same user';
+var INVALID_USER_UPDATE = 'The user making the request is not the owner of the accessed resource';
+var OFFERS_NOT_RETIRED_PRODUCT = 'All the attached offerings must be retired or obsolete to retire a product';
+var OFFERS_NOT_RETIRED_CATALOG = 'All the attached offerings must be retired or obsolete to retire a catalog';
+var OFFERS_NOT_OBSOLETE_PRODUCT = 'All the attached offerings must be obsolete to make a product obsolete';
+var OFFERS_NOT_OBSOLETE_CATALOG = 'All the attached offerings must be obsolete to make a catalog obsolete';
+var ONLY_ADMINS_MODIFY_CATEGORIES = 'Only administrators can modify categories';
+var OFFERINGS_NOT_RETRIEVED = 'Attached offerings cannot be retrieved';
+
 
 describe('Catalog API', function() {
 
@@ -48,7 +65,7 @@ describe('Catalog API', function() {
     var validateLoggedError = function(req, callback) {
         callback({
             status: 401,
-            message: 'You need to be authenticated to create/update/delete resources'
+            message: NEED_AUTHENTICATION
         });
     };
 
@@ -71,7 +88,7 @@ describe('Catalog API', function() {
 
             expect(err).not.toBe(null);
             expect(err.status).toBe(401);
-            expect(err.message).toBe('You need to be authenticated to create/update/delete resources');
+            expect(err.message).toBe(NEED_AUTHENTICATION);
 
             done();
         });
@@ -155,7 +172,7 @@ describe('Catalog API', function() {
     };
 
     it('should reject creation requests with invalid JSON', function(done) {
-        testCreateBasic('test', '{', [], true, 400, 'The provided body is not a valid JSON document', true, false,
+        testCreateBasic('test', '{', [], true, 400, INVALID_JSON, true, false,
             true, done);
     });
 
@@ -172,8 +189,7 @@ describe('Catalog API', function() {
         };
 
         testCreateBasic(user, JSON.stringify(resource), [{ name: config.oauth2.roles.seller }], true, 403,
-            'The user making the request and the specified owner are not the same user', true, true,
-            false, done);
+            INVALID_USER_CREATE, true, true, false, done);
     });
 
     it('should allow to create resources when user is seller', function(done) {
@@ -335,8 +351,7 @@ describe('Catalog API', function() {
             lifecycleStatus: 'active'
         };
 
-        testCreateOffering(productRequestInfo, catalogRequestInfo, null, 403, 'You are not allowed to create ' +
-            'offerings for products you do not own', done);
+        testCreateOffering(productRequestInfo, catalogRequestInfo, null, 403, OFFERINGS_FOR_NON_OWNED_PRODUCTS, done);
     });
 
     it('should not allow to create an offering in a retired catalogue', function(done) {
@@ -386,8 +401,7 @@ describe('Catalog API', function() {
             lifecycleStatus: 'active'
         };
 
-        testCreateOffering(productRequestInfo, catalogRequestInfo, null, 400, 'The product attached to the offering ' +
-            'cannot be read', done);
+        testCreateOffering(productRequestInfo, catalogRequestInfo, null, 400, INVALID_PRODUCT, done);
     });
 
     it('should not allow to create an offering when the attached catalog cannot be retrieved', function(done) {
@@ -468,8 +482,7 @@ describe('Catalog API', function() {
     });
 
     it('should not allow to create non-owned products', function(done) {
-        testCreateProduct(storeValidatorOk, 403, 'The user making the request and the specified ' +
-            'owner are not the same user', false,  done);
+        testCreateProduct(storeValidatorOk, 403, INVALID_USER_CREATE, false,  done);
     });
 
     it('should not allow to create products that cannot be retrieved from the Store', function(done) {
@@ -536,11 +549,11 @@ describe('Catalog API', function() {
     });
 
     it('should not allow to create categories when parentId is included for root categories', function(callback) {
-        testCreateCategory(true, { parentId: 7, isRoot: true }, 400, 'Parent ID cannot be included when the category is root', callback);
+        testCreateCategory(true, { parentId: 7, isRoot: true }, 400, PARENT_ID_INCLUDED, callback);
     });
 
     it('should not allow to create categories non-root categories without parent', function(callback) {
-        testCreateCategory(true, { isRoot: false }, 400, 'Non-root categories must contain a parent category', callback);
+        testCreateCategory(true, { isRoot: false }, 400, MISSING_PARENT_ID, callback);
     });
 
 
@@ -601,10 +614,10 @@ describe('Catalog API', function() {
                 expect(err).toBe(null);
             } else if (requestFails) {
                 expect(err.status).toBe(400);
-                expect(err.message).toBe('The TMForum APIs fails to retrieve the object you are trying to update/delete');
+                expect(err.message).toBe(FAILED_TO_RETRIEVE);
             } else {
                 expect(err.status).toBe(403);
-                expect(err.message).toBe('The user making the request is not the owner of the accessed resource');
+                expect(err.message).toBe(INVALID_USER_UPDATE);
             }
 
             done();
@@ -763,8 +776,7 @@ describe('Catalog API', function() {
             lifecycleStatus: 'active'
         };
 
-        testUpdateProductOffering({}, productRequestInfo, catalogRequestInfo, 403, 'You are not allowed to create ' +
-            'offerings for products you do not own', done);
+        testUpdateProductOffering({}, productRequestInfo, catalogRequestInfo, 403, OFFERINGS_FOR_NON_OWNED_PRODUCTS, done);
     });
 
     it('should not allow to update an offering when the attached product cannot be retrieved', function(done) {
@@ -780,8 +792,7 @@ describe('Catalog API', function() {
             lifecycleStatus: 'active'
         };
 
-        testUpdateProductOffering({}, productRequestInfo, catalogRequestInfo, 400, 'The product attached to the ' +
-            'offering cannot be read', done);
+        testUpdateProductOffering({}, productRequestInfo, catalogRequestInfo, 400, INVALID_PRODUCT, done);
     });
 
     it('should allow to change the status of an offering to launched when product and catalog are launched', function(done) {
@@ -805,7 +816,7 @@ describe('Catalog API', function() {
     });
 
     it('should not allow to update offerings when the body is not a valid JSON', function(done) {
-        testUpdateProductOffering('{ TEST', {}, {}, 400, 'The provided body is not a valid JSON', done);
+        testUpdateProductOffering('{ TEST', {}, {}, 400, INVALID_JSON, done);
     });
 
     it('should not allow to launch an offering when the catalog is active', function(done) {
@@ -938,7 +949,7 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testChangeProductStatus(productBody, offeringsInfo, 400, 'The provided body is not a valid JSON', done);
+        testChangeProductStatus(productBody, offeringsInfo, 400, INVALID_JSON, done);
 
     });
 
@@ -1031,8 +1042,7 @@ describe('Catalog API', function() {
             }]
         };
 
-        testChangeProductStatus(productBody, offeringsInfo, 400, 'All the attached offerings must be retired or ' +
-            'obsolete to retire a product', done);
+        testChangeProductStatus(productBody, offeringsInfo, 400, OFFERS_NOT_RETIRED_PRODUCT, done);
     });
 
     it('should allow to retire a product when there are two attached offerings - one retired and one obsolete', function(done) {
@@ -1068,8 +1078,7 @@ describe('Catalog API', function() {
             }]
         };
 
-        testChangeProductStatus(productBody, offeringsInfo, 400, 'All the attached offerings must be retired or ' +
-            'obsolete to retire a product', done);
+        testChangeProductStatus(productBody, offeringsInfo, 400, OFFERS_NOT_RETIRED_PRODUCT, done);
     });
 
     it('should not allow to retire a product if the attached offerings cannot be retrieved', function(done) {
@@ -1083,7 +1092,7 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testChangeProductStatus(productBody, offeringsInfo, 400, 'Attached offerings cannot be retrieved', done);
+        testChangeProductStatus(productBody, offeringsInfo, 400, OFFERINGS_NOT_RETRIEVED, done);
 
     });
 
@@ -1132,8 +1141,7 @@ describe('Catalog API', function() {
             }]
         };
 
-        testChangeProductStatus(productBody, offeringsInfo, 400, 'All the attached offerings must be obsolete to ' +
-            'make a product obsolete', done);
+        testChangeProductStatus(productBody, offeringsInfo, 400, OFFERS_NOT_OBSOLETE_PRODUCT, done);
     });
 
     it('should allow to make a product obsolete when there are two attached obsolete offerings', function(done) {
@@ -1169,8 +1177,7 @@ describe('Catalog API', function() {
             }]
         };
 
-        testChangeProductStatus(productBody, offeringsInfo, 400, 'All the attached offerings must be obsolete to ' +
-            'make a product obsolete', done);
+        testChangeProductStatus(productBody, offeringsInfo, 400, OFFERS_NOT_OBSOLETE_PRODUCT, done);
     });
 
     it('should not allow to make a product obsolete if the attached offerings cannot be retrieved', function(done) {
@@ -1184,7 +1191,7 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testChangeProductStatus(productBody, offeringsInfo, 400, 'Attached offerings cannot be retrieved', done);
+        testChangeProductStatus(productBody, offeringsInfo, 400, OFFERINGS_NOT_RETRIEVED, done);
 
     });
 
@@ -1208,7 +1215,7 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testChangeCatalogStatus(productBody, offeringsInfo, 400, 'The provided body is not a valid JSON', done);
+        testChangeCatalogStatus(productBody, offeringsInfo, 400, INVALID_JSON, done);
 
     });
 
@@ -1303,8 +1310,7 @@ describe('Catalog API', function() {
             }]
         };
 
-        testChangeCatalogStatus(productBody, offeringsInfo, 400, 'All the attached offerings must be retired or ' +
-            'obsolete to retire a catalog', done);
+        testChangeCatalogStatus(productBody, offeringsInfo, 400, OFFERS_NOT_RETIRED_CATALOG, done);
     });
 
     it('should allow to retire a catalog when there are two attached offerings - one retired and one obsolete', function(done) {
@@ -1340,8 +1346,7 @@ describe('Catalog API', function() {
             }]
         };
 
-        testChangeCatalogStatus(productBody, offeringsInfo, 400, 'All the attached offerings must be retired or ' +
-            'obsolete to retire a catalog', done);
+        testChangeCatalogStatus(productBody, offeringsInfo, 400, OFFERS_NOT_RETIRED_CATALOG, done);
     });
 
     it('should not allow to retire a catalog if the attached offerings cannot be retrieved', function(done) {
@@ -1355,7 +1360,7 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testChangeCatalogStatus(productBody, offeringsInfo, 400, 'Attached offerings cannot be retrieved', done);
+        testChangeCatalogStatus(productBody, offeringsInfo, 400, OFFERINGS_NOT_RETRIEVED, done);
 
     });
 
@@ -1404,8 +1409,7 @@ describe('Catalog API', function() {
             }]
         };
 
-        testChangeCatalogStatus(productBody, offeringsInfo, 400, 'All the attached offerings must be obsolete to ' +
-            'make a catalog obsolete', done);
+        testChangeCatalogStatus(productBody, offeringsInfo, 400, OFFERS_NOT_OBSOLETE_CATALOG, done);
     });
 
     it('should allow to make a catalog obsolete when there are two attached obsolete offerings', function(done) {
@@ -1441,8 +1445,7 @@ describe('Catalog API', function() {
             }]
         };
 
-        testChangeCatalogStatus(productBody, offeringsInfo, 400, 'All the attached offerings must be obsolete to ' +
-            'make a catalog obsolete', done);
+        testChangeCatalogStatus(productBody, offeringsInfo, 400, OFFERS_NOT_OBSOLETE_CATALOG, done);
     });
 
     it('should not allow to make a catalog obsolete if the attached offerings cannot be retrieved', function(done) {
@@ -1456,7 +1459,7 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testChangeCatalogStatus(productBody, offeringsInfo, 400, 'Attached offerings cannot be retrieved', done);
+        testChangeCatalogStatus(productBody, offeringsInfo, 400, OFFERINGS_NOT_RETRIEVED, done);
 
     });
 
@@ -1519,32 +1522,42 @@ describe('Catalog API', function() {
 
     it('should not allow to delete category when no admin', function(done) {
         testUpdateCategory('DELETE', false, false, null, {}, 403,
-            'Only administrators can modify categories', done);
+            ONLY_ADMINS_MODIFY_CATEGORIES, done);
     });
 
     it('should not allow to delete category when category cannot be retrieved', function(done) {
         testUpdateCategory('DELETE', false, true, null, {}, 400,
-            'The TMForum APIs fails to retrieve the object you are trying to update/delete', done);
+            FAILED_TO_RETRIEVE, done);
     });
 
-    it('should allow to update category when admin', function(done) {
+    it('should allow to update name of a root category when admin', function(done) {
         testUpdateCategory('PATCH', true, false, { name: 'correct' }, { name: 'invalid', isRoot: true },
+            null, null, done);
+    });
+
+    it('should allow to update name of a non-root category when admin', function(done) {
+        testUpdateCategory('PATCH', true, false, { name: 'correct' }, { name: 'invalid', isRoot: false, parentId: 7 },
             null, null, done);
     });
 
     it('should not allow to update category when no admin', function(done) {
         testUpdateCategory('PATCH', false, false, { name: 'correct' }, { name: 'invalid', isRoot: true }, 403,
-            'Only administrators can modify categories', done);
+            ONLY_ADMINS_MODIFY_CATEGORIES, done);
     });
 
     it('should not allow to update category when category cannot be retrieved', function(done) {
         testUpdateCategory('PATCH', true, true, { name: 'correct' }, null, 400,
-            'The TMForum APIs fails to retrieve the object you are trying to update/delete', done);
+            FAILED_TO_RETRIEVE, done);
+    });
+
+    it('should not allow to update category when trying to remove parent ID', function(done) {
+        testUpdateCategory('PATCH', true, false, { name: 'correct', parentId: null },
+            { name: 'invalid', isRoot: false, parentId: 9 }, 400, MISSING_PARENT_ID, done);
     });
 
     it('should not allow to update category when setting it as non-root without parent', function(done) {
         testUpdateCategory('PATCH', true, false, { name: 'correct', isRoot: false }, { name: 'invalid' },
-            400, 'Non-root categories must contain a parent category', done);
+            400, MISSING_PARENT_ID, done);
     });
 
     it('should allow to update category when setting it as non-root and parent already set', function(done) {
@@ -1554,13 +1567,13 @@ describe('Catalog API', function() {
 
     it('should not allow to update category when setting it as root category and parent specified', function(done) {
         testUpdateCategory('PATCH', true, false, { name: 'correct', isRoot: true, parentId: 7 }, { name: 'invalid'},
-            400, 'Parent ID cannot be included when the category is root', done);
+            400, PARENT_ID_INCLUDED, done);
     });
 
     it('should not allow to update category when setting it as root category and parent specified #2', function(done) {
         testUpdateCategory('PATCH', true, false, { name: 'correct', isRoot: true },
             { name: 'invalid', isRoot: false, parentId: 7 },
-            400, 'Parent ID cannot be included when the category is root', done);
+            400, PARENT_ID_INCLUDED, done);
     });
 
     it('should allow to update category when setting it as root category and parent removed', function(done) {
@@ -1571,7 +1584,7 @@ describe('Catalog API', function() {
 
     it('should not allow to update category when adding parent to a root category', function(done) {
         testUpdateCategory('PATCH', true, false, { name: 'correct', parentId: 7 }, { name: 'invalid', isRoot: true },
-            400, 'Parent ID cannot be included when the category is root', done);
+            400, PARENT_ID_INCLUDED, done);
     });
 
     it('should allow to update category when adding parent to a root category and setting it as non-root', function(done) {

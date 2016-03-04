@@ -24,7 +24,7 @@ var catalog = (function() {
     var retrieveAsset = function(assetPath, errMsg, callback) {
 
         var uri = utils.getAPIURL(config.appSsl, config.appHost, config.endpoints.catalog.port, assetPath);
-        
+
         request(uri, function(err, response, body) {
 
             if (err || response.statusCode >= 400) {
@@ -229,7 +229,7 @@ var catalog = (function() {
         } catch (e) {
             callback({
                 status: 400,
-                message: 'The provided body is not a valid JSON document'
+                message: 'The provided body is not a valid JSON'
             });
 
             return; // EXIT
