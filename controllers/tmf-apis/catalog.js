@@ -21,7 +21,7 @@ var catalog = (function() {
     /////////////////////////////////////////// COMMON ///////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
 
-    var retrieveAsset = function(assetPath, errMsg, callback) {
+    var retrieveAsset = function(assetPath, callback) {
 
         var uri = utils.getAPIURL(config.appSsl, config.appHost, config.endpoints.catalog.port, assetPath);
 
@@ -29,8 +29,7 @@ var catalog = (function() {
 
             if (err || response.statusCode >= 400) {
                 callback({
-                    status: 400,
-                    message: errMsg
+                    status: response.statusCode ? response.statusCode : 500
                 });
             } else {
                 callback(null, {
@@ -46,9 +45,17 @@ var catalog = (function() {
 
         var productUrl = offeringInfo.productSpecification.href;
         var productPath = url.parse(productUrl).pathname;
-        var errMsg = 'The product attached to the offering cannot be read';
 
-        retrieveAsset(productPath, errMsg, callback);
+        retrieveAsset(productPath, function(err, response) {
+            if (err) {
+                callback({
+                    status: 500,
+                    message: 'The product attached to the offering cannot be read'
+                })
+            } else {
+                callback(err, response);
+            }
+        });
     };
 
     var checkAssetStatus = function(assetBody, validStates) {
@@ -89,6 +96,7 @@ var catalog = (function() {
         }
 
         // Check that the product attached to the offering is owned by the same user
+        // FIXME: Maybe there is a bug here...
         retrieveProduct(previousBody || newBody, function(err, result) {
 
             if (err) {
@@ -108,15 +116,16 @@ var catalog = (function() {
                         // Check that the product is in an appropriate state
                         if (checkAssetStatus(product, validStates)) {
 
-                            var messageError = 'The catalog attached to the offering cannot be read';
-
                             // Retrieve the catalog
                             var catalogPath = catalogPathFromOfferingUrl(offeringPath);
 
-                            retrieveAsset(catalogPath, messageError, function (err, result) {
+                            retrieveAsset(catalogPath, function (err, result) {
 
                                 if (err) {
-                                    callback(err);
+                                    callback({
+                                        status: 500,
+                                        message: 'The catalog attached to the offering cannot be read'
+                                    });
                                 } else {
 
                                     var catalog = JSON.parse(result.body);
@@ -313,11 +322,14 @@ var catalog = (function() {
 
         if (newLifeCycle in validatedStates) {
 
-            retrieveAsset(offeringsPath, 'Attached offerings cannot be retrieved', function(err, result) {
+            retrieveAsset(offeringsPath, function(err, result) {
 
                 if (err) {
 
-                    callback(err);
+                    callback({
+                        status: 500,
+                        message: 'Attached offerings cannot be retrieved'
+                    });
 
                 } else {
 
@@ -369,11 +381,22 @@ var catalog = (function() {
             var parsedBody = emptyObject(req.body) ? null : JSON.parse(req.body);
 
             // Retrieve the resource to be updated or removed
-            var errorMessage = 'The TMForum APIs fails to retrieve the object you are trying to update/delete';
-            retrieveAsset(req.apiUrl, errorMessage, function (err, result) {
+            retrieveAsset(req.apiUrl, function (err, result) {
 
                 if (err) {
-                    callback(err, result);
+
+                    if (err.status === 404) {
+                        callback({
+                            status: 404,
+                            message: 'The required resource does not exist'
+                        });
+                    } else {
+                        callback({
+                            status: 500,
+                            message: 'The TMForum APIs fails to retrieve the object you are trying to update/delete'
+                        })
+                    }
+
                 } else {
 
                     var previousBody = JSON.parse(result.body);

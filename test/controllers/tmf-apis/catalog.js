@@ -401,7 +401,7 @@ describe('Catalog API', function() {
             lifecycleStatus: 'active'
         };
 
-        testCreateOffering(productRequestInfo, catalogRequestInfo, null, 400, INVALID_PRODUCT, done);
+        testCreateOffering(productRequestInfo, catalogRequestInfo, null, 500, INVALID_PRODUCT, done);
     });
 
     it('should not allow to create an offering when the attached catalog cannot be retrieved', function(done) {
@@ -418,7 +418,7 @@ describe('Catalog API', function() {
         };
 
         // isOwner does not matter when productRequestFails is set to true
-        testCreateOffering(productRequestInfo, catalogRequestInfo, null, 400, 'The catalog attached to the offering ' +
+        testCreateOffering(productRequestInfo, catalogRequestInfo, null, 500, 'The catalog attached to the offering ' +
             'cannot be read', done);
     });
 
@@ -563,7 +563,7 @@ describe('Catalog API', function() {
 
     // ANY ASSET
 
-    var testUpdate = function(method, requestFails, isOwnerMethod, done) {
+    var testUpdate = function(method, requestStatus, isOwnerMethod, done) {
 
         var checkRoleMethod = jasmine.createSpy();
         checkRoleMethod.and.returnValue(true);
@@ -582,20 +582,15 @@ describe('Catalog API', function() {
         var url = protocol + '://' + config.appHost + ':' + config.endpoints.catalog.port;
         var role = isOwnerMethod() ? 'Owner': 'Seller';
 
-        // statusCode depends on whether the request fails or not 
-        var statusOk = 200;
-        var statusErr = 500;
-        var statusCode = requestFails ? statusErr : statusOk;
-        
         // User information is send when the request does not fail
         var bodyOk = { relatedParty: [{id: userName, role: role}]};
         var bodyErr = 'Internal Server Error';
-        var returnedBody = requestFails ? bodyErr : bodyOk;
+        var returnedBody = requestStatus != 200 ? bodyErr : bodyOk;
 
         // The mock server that will handle the request
         nock(url)
             .get(path)
-            .reply(statusCode, returnedBody);
+            .reply(requestStatus, returnedBody);
 
         // Call the method
         var req = {
@@ -610,10 +605,13 @@ describe('Catalog API', function() {
 
         catalogApi.checkPermissions(req, function(err) {
 
-            if (isOwnerMethod() && !requestFails) {
+            if (isOwnerMethod() && requestStatus === 200) {
                 expect(err).toBe(null);
-            } else if (requestFails) {
-                expect(err.status).toBe(400);
+            } else if (requestStatus === 404) {
+                expect(err.status).toBe(404);
+                expect(err.message).toBe('The required resource does not exist');
+            } else if ([200, 404].indexOf(requestStatus) < 0) {
+                expect(err.status).toBe(500);
                 expect(err.message).toBe(FAILED_TO_RETRIEVE);
             } else {
                 expect(err.status).toBe(403);
@@ -625,42 +623,57 @@ describe('Catalog API', function() {
     };
 
     it('should allow to to update (PUT) an owned resource', function(done) {
-        testUpdate('PUT', false, isOwnerTrue, done);
+        testUpdate('PUT', 200, isOwnerTrue, done);
     });
 
     it('should not allow to update (PUT) a non-owned resource', function(done) {
-        testUpdate('PUT', false, isOwnerFalse, done);
+        testUpdate('PUT', 200, isOwnerFalse, done);
     });
 
     it('should not allow to update (PUT) a resource that cannot be checked', function(done) {
         // The value of isOwner does not matter when requestFails is set to true
-        testUpdate('PUT', true, isOwnerTrue, done);
+        testUpdate('PUT', 500, isOwnerTrue, done);
+    });
+
+    it('should not allow to update (PUT) a resource that does not exist', function(done) {
+        // The value of isOwner does not matter when requestFails is set to true
+        testUpdate('PUT', 404, isOwnerTrue, done);
     });
 
     it('should allow to to update (PATCH) an owned resource', function(done) {
-        testUpdate('PATCH', false, isOwnerTrue, done);
+        testUpdate('PATCH', 200, isOwnerTrue, done);
     });
 
     it('should not allow to update (PATCH) a non-owned resource', function(done) {
-        testUpdate('PATCH', false, isOwnerFalse, done);
+        testUpdate('PATCH', 200, isOwnerFalse, done);
     });
 
     it('should not allow to update (PATCH) a resource that cannot be checked', function(done) {
         // The value of isOwner does not matter when requestFails is set to true
-        testUpdate('PATCH', true, isOwnerTrue, done);
+        testUpdate('PATCH', 500, isOwnerTrue, done);
+    });
+
+    it('should not allow to update (PATCH) a resource that does not exist', function(done) {
+        // The value of isOwner does not matter when requestFails is set to true
+        testUpdate('PATCH', 404, isOwnerTrue, done);
     });
 
     it('should allow to to delete owned resource', function(done) {
-        testUpdate('DELETE', false, isOwnerTrue, done);
+        testUpdate('DELETE', 200, isOwnerTrue, done);
     });
 
     it('should not allow to delete a non-owned resource', function(done) {
-        testUpdate('DELETE', false, isOwnerFalse, done);
+        testUpdate('DELETE', 200, isOwnerFalse, done);
     });
 
     it('should not allow to delete a resource that cannot be checked', function(done) {
         // The value of isOwner does not matter when requestFails is set to true
-        testUpdate('DELETE', true, isOwnerTrue, done);
+        testUpdate('DELETE', 500, isOwnerTrue, done);
+    });
+
+    it('should not allow to delete a resource that does not exist', function(done) {
+        // The value of isOwner does not matter when requestFails is set to true
+        testUpdate('DELETE', 404, isOwnerTrue, done);
     });
 
     // OFFERINGS
@@ -792,7 +805,7 @@ describe('Catalog API', function() {
             lifecycleStatus: 'active'
         };
 
-        testUpdateProductOffering({}, productRequestInfo, catalogRequestInfo, 400, INVALID_PRODUCT, done);
+        testUpdateProductOffering({}, productRequestInfo, catalogRequestInfo, 500, INVALID_PRODUCT, done);
     });
 
     it('should allow to change the status of an offering to launched when product and catalog are launched', function(done) {
@@ -1092,7 +1105,7 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testChangeProductStatus(productBody, offeringsInfo, 400, OFFERINGS_NOT_RETRIEVED, done);
+        testChangeProductStatus(productBody, offeringsInfo, 500, OFFERINGS_NOT_RETRIEVED, done);
 
     });
 
@@ -1191,7 +1204,7 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testChangeProductStatus(productBody, offeringsInfo, 400, OFFERINGS_NOT_RETRIEVED, done);
+        testChangeProductStatus(productBody, offeringsInfo, 500, OFFERINGS_NOT_RETRIEVED, done);
 
     });
 
@@ -1360,7 +1373,7 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testChangeCatalogStatus(productBody, offeringsInfo, 400, OFFERINGS_NOT_RETRIEVED, done);
+        testChangeCatalogStatus(productBody, offeringsInfo, 500, OFFERINGS_NOT_RETRIEVED, done);
 
     });
 
@@ -1459,7 +1472,7 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testChangeCatalogStatus(productBody, offeringsInfo, 400, OFFERINGS_NOT_RETRIEVED, done);
+        testChangeCatalogStatus(productBody, offeringsInfo, 500, OFFERINGS_NOT_RETRIEVED, done);
 
     });
 
@@ -1526,7 +1539,7 @@ describe('Catalog API', function() {
     });
 
     it('should not allow to delete category when category cannot be retrieved', function(done) {
-        testUpdateCategory('DELETE', false, true, null, {}, 400,
+        testUpdateCategory('DELETE', false, true, null, {}, 500,
             FAILED_TO_RETRIEVE, done);
     });
 
@@ -1546,7 +1559,7 @@ describe('Catalog API', function() {
     });
 
     it('should not allow to update category when category cannot be retrieved', function(done) {
-        testUpdateCategory('PATCH', true, true, { name: 'correct' }, null, 400,
+        testUpdateCategory('PATCH', true, true, { name: 'correct' }, null, 500,
             FAILED_TO_RETRIEVE, done);
     });
 
