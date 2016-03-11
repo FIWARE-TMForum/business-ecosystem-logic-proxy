@@ -5,6 +5,7 @@ var config = require('./../config'),
     inventory = require('./tmf-apis/inventory').inventory,
     ordering = require('./tmf-apis/ordering').ordering,
     charging = require('./tmf-apis/charging').charging,
+    party = require('./tmf-apis/party').party,
     
     // Other dependencies
     logger = require('./../lib/logger').logger.getLogger('TMF'),
@@ -19,6 +20,7 @@ var tmf = (function() {
     apiControllers[config.endpoints.ordering.path] = ordering;
     apiControllers[config.endpoints.inventory.path] = inventory;
     apiControllers[config.endpoints.charging.path] = charging;
+    apiControllers[config.endpoints.party.path] = party;
 
     var getAPIName = function(apiUrl) {
         return apiUrl.split('/')[1];
@@ -47,7 +49,7 @@ var tmf = (function() {
         var options = {
             url: url,
             method: req.method,
-            headers: utils.proxiedRequestHeaders(req),
+            headers: utils.proxiedRequestHeaders(req)
         };
 
         if (typeof(req.body) === 'string') {

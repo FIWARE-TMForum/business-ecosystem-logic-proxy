@@ -61,6 +61,10 @@ config.endpoints = {
         'path': '',
         'port': ''
     },
+    'party': {
+        'path': '',
+        'port': ''
+    },
     'charging': {
         'path': '',
         'port': ''
