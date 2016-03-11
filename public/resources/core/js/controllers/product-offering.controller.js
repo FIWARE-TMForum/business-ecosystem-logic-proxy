@@ -111,9 +111,36 @@
         vm.createPricePlan = createPricePlan;
         vm.removePricePlan = removePricePlan;
 
+        vm.place = "";
+        vm.places = [];
+
+        vm.createPlace = createPlace;
+        vm.removePlace = removePlace;
+
+        function formatPlaces() {
+            return vm.places.map(function (name) {
+                return {
+                    name: name
+                };
+            });
+        }
+
+        function createPlace() {
+            var index = vm.places.indexOf(vm.place);
+            if (index === -1) {
+                vm.places.push(vm.place);
+            }
+            vm.place = "";
+        }
+
+        function removePlace(index) {
+            vm.places.splice(index, 1);
+        }
+
         function create() {
             vm.data.category = formatCategory();
             vm.data.productOfferingPrice = vm.pricePlans;
+            vm.data.place = formatPlaces();
             Offering.create(vm.data, vm.product, vm.catalogue).then(function (offeringCreated) {
                 $state.go('stock.offering.update', {
                     offeringId: offeringCreated.id
