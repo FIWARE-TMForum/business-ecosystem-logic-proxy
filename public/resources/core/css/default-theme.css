@@ -135,6 +135,23 @@ dl > dd + dt {
     margin-bottom: 0;
 }
 
+.inline-block {
+    display: inline-block !important;
+}
+
+.inline-block > .item-text + .item-icon {
+    margin-left: .6em;
+}
+
+.item-icon[ng-click] {
+    cursor: pointer;
+}
+
+.label.inline-block {
+    padding: .3em .6em .3em;
+    margin-bottom: 5px;
+}
+
 /* ===================================================================================
  *   COMPONENT - FLEX-CONTAINER
  * =================================================================================== */
@@ -225,6 +242,11 @@ textarea {
     border-color: rgb(200, 200, 200);
     border-radius: 0;
     box-shadow: none;
+}
+
+select.form-control {
+    padding-top: 7px;
+    padding-bottom: 7px;
 }
 
 @media (min-width: 768px) {
