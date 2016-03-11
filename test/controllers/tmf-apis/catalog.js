@@ -24,12 +24,13 @@ describe('Catalog API', function() {
 
     var config = testUtils.getDefaultConfig();
 
-    var getCatalogApi = function(storeClient, tmfUtils) {
+    var getCatalogApi = function(storeClient, tmfUtils, utils) {
         return proxyquire('../../../controllers/tmf-apis/catalog', {
             './../../config': config,
             './../../lib/logger': testUtils.emptyLogger,
             './../../lib/store': storeClient,
-            './../../lib/tmfUtils': tmfUtils
+            './../../lib/tmfUtils': tmfUtils,
+            './../../lib/utils': utils
         }).catalog;
     };
 
@@ -44,7 +45,7 @@ describe('Catalog API', function() {
 
     it('should call OK callback on GET requests', function(done) {
 
-        var catalogApi = getCatalogApi({}, {});
+        var catalogApi = getCatalogApi({}, {}, {});
 
         var req = {
             method: 'GET',
@@ -71,11 +72,11 @@ describe('Catalog API', function() {
 
     var testNotLoggedIn = function(method, done) {
 
-        var tmfUtils = {
+        var utils = {
             validateLoggedIn: validateLoggedError
         };
 
-        var catalogApi = getCatalogApi({}, tmfUtils);
+        var catalogApi = getCatalogApi({}, {}, utils);
         var path = '/catalog/product/1';
 
         // Call the method
@@ -134,12 +135,15 @@ describe('Catalog API', function() {
         checkRoleMethod.and.returnValue(isSeller);
 
         var tmfUtils = {
-            validateLoggedIn: validateLoggedOk,
-            checkRole: checkRoleMethod,
             isOwner: owner ? isOwnerTrue : isOwnerFalse
         };
 
-        var catalogApi = getCatalogApi({}, tmfUtils);
+        var utils = {
+            validateLoggedIn: validateLoggedOk,
+            hasRole: checkRoleMethod
+        }
+
+        var catalogApi = getCatalogApi({}, tmfUtils, utils);
 
         var req = {
             apiUrl: '/catalog/a/b',
@@ -234,10 +238,13 @@ describe('Catalog API', function() {
         var defaultErrorMessage = 'Internal Server Error';
 
         var tmfUtils = {
-            validateLoggedIn: validateLoggedOk,
-            checkRole: checkRoleMethod,
             isOwner: productRequestInfo.role.toLowerCase() === 'owner' ? isOwnerTrue : isOwnerFalse
         };
+
+        var utils = {
+            validateLoggedIn: validateLoggedOk,
+            hasRole: checkRoleMethod
+        }
 
         var storeClient = {
             storeClient: {
@@ -251,7 +258,7 @@ describe('Catalog API', function() {
             }
         };
 
-        var catalogApi = getCatalogApi(storeClient, tmfUtils);
+        var catalogApi = getCatalogApi(storeClient, tmfUtils, utils);
 
         // The mock server that will handle the request when the product is requested
         var bodyGetProductOk = {
@@ -435,12 +442,15 @@ describe('Catalog API', function() {
         };
 
         var tmfUtils = {
-            validateLoggedIn: validateLoggedOk,
-            checkRole: checkRoleMethod,
             isOwner: owner ? isOwnerTrue : isOwnerFalse
         };
 
-        var catalogApi = getCatalogApi(storeClient, tmfUtils);
+        var utils = {
+            validateLoggedIn: validateLoggedOk,
+            hasRole: checkRoleMethod,
+        }
+
+        var catalogApi = getCatalogApi(storeClient, tmfUtils, utils);
 
         // Basic properties
         var userName = 'test';
@@ -504,12 +514,12 @@ describe('Catalog API', function() {
         var checkRoleMethod = jasmine.createSpy();
         checkRoleMethod.and.returnValues(admin);
 
-        var tmfUtils = {
+        var utils = {
             validateLoggedIn: validateLoggedOk,
-            checkRole: checkRoleMethod
+            hasRole: checkRoleMethod
         };
 
-        var catalogApi = getCatalogApi({}, tmfUtils);
+        var catalogApi = getCatalogApi({}, {}, utils);
 
         // Basic properties
         var userName = 'test';
@@ -569,12 +579,15 @@ describe('Catalog API', function() {
         checkRoleMethod.and.returnValue(true);
 
         var tmfUtils = {
-            validateLoggedIn: validateLoggedOk,
-            checkRole: checkRoleMethod,
             isOwner: isOwnerMethod
         };
 
-        var catalogApi = getCatalogApi({}, tmfUtils);
+        var utils = {
+            validateLoggedIn: validateLoggedOk,
+            hasRole: checkRoleMethod
+        }
+
+        var catalogApi = getCatalogApi({}, tmfUtils, utils);
 
         var userName = 'test';
         var path = '/catalog/product/1';
@@ -687,12 +700,15 @@ describe('Catalog API', function() {
         var defaultErrorMessage = 'Internal Server Error';
 
         var tmfUtils = {
-            validateLoggedIn: validateLoggedOk,
-            checkRole: checkRoleMethod,
             isOwner: productRequestInfo.owner ? isOwnerTrue : isOwnerFalse
         };
 
-        var catalogApi = getCatalogApi({}, tmfUtils);
+        var utils = {
+            validateLoggedIn: validateLoggedOk,
+            hasRole: checkRoleMethod
+        }
+
+        var catalogApi = getCatalogApi({}, tmfUtils, utils);
 
         // Basic properties
         var userName = 'test';
@@ -885,14 +901,17 @@ describe('Catalog API', function() {
         var defaultErrorMessage = 'Internal Server Error';
 
         var tmfUtils = {
-            validateLoggedIn: validateLoggedOk,
-            checkRole: checkRoleMethod,
             isOwner: function () {
                 return true;
             }
         };
 
-        var catalogApi = getCatalogApi({}, tmfUtils);
+        var utils = {
+            validateLoggedIn: validateLoggedOk,
+            hasRole: checkRoleMethod
+        }
+
+        var catalogApi = getCatalogApi({}, tmfUtils, utils);
 
         // Basic properties
         var userName = 'test';
@@ -1484,11 +1503,11 @@ describe('Catalog API', function() {
         var checkRoleMethod = jasmine.createSpy();
         checkRoleMethod.and.returnValue(admin);
 
-        var tmfUtils = {
-            checkRole: checkRoleMethod
+        var utils = {
+            hasRole: checkRoleMethod
         };
 
-        var catalogApi = getCatalogApi({}, tmfUtils);
+        var catalogApi = getCatalogApi({}, {}, utils);
 
         var userName = 'test';
         var path = '/catalog/category/1';

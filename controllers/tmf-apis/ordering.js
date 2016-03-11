@@ -174,7 +174,7 @@ var ordering = (function(){
         }
 
         // Check that the user has the customer role
-        if (config.customerRoleRequired && !tmfUtils.checkRole(req.user, config.oauth2.roles.customer)) {
+        if (config.customerRoleRequired && !utils.hasRole(req.user, config.oauth2.roles.customer)) {
 
             callback({
                 status: 403,
@@ -246,7 +246,7 @@ var ordering = (function(){
                     });
                 });
 
-                tmfUtils.updateBody(req, body);
+                utils.updateBody(req, body);
 
                 callback();
 
@@ -318,7 +318,7 @@ var ordering = (function(){
 
             } else {
 
-                var isSeller = tmfUtils.hasRole(previousOrderItem.product.relatedParty, SELLER, req.user);
+                var isSeller = tmfUtils.hasPartyRole(req.user, previousOrderItem.product.relatedParty, SELLER);
 
                 if (!isSeller) {
 
@@ -378,7 +378,7 @@ var ordering = (function(){
             finalBody['state'] = calculateOrderingState(previousOrdering['state'], previousOrdering['orderItem']);
             finalBody['orderItem'] = previousOrdering.orderItem;
 
-            tmfUtils.updateBody(req, finalBody);
+            utils.updateBody(req, finalBody);
 
             callback(null);
 
@@ -399,8 +399,8 @@ var ordering = (function(){
                     callback(err);
                 } else {
 
-                    var isCustomer = tmfUtils.hasRole(previousOrdering.relatedParty, CUSTOMER, req.user);
-                    var isSeller = tmfUtils.hasRole(previousOrdering.relatedParty, SELLER, req.user);
+                    var isCustomer = tmfUtils.hasPartyRole(req.user, previousOrdering.relatedParty, CUSTOMER);
+                    var isSeller = tmfUtils.hasPartyRole(req.user, previousOrdering.relatedParty, SELLER);
 
                     if (isCustomer) {
 
@@ -451,7 +451,7 @@ var ordering = (function(){
 
                                         // Included order items will be ignored
                                         ordering.orderItem = previousOrdering.orderItem;
-                                        tmfUtils.updateBody(req, ordering);
+                                        utils.updateBody(req, ordering);
 
                                         callback();
                                     }
@@ -498,11 +498,11 @@ var ordering = (function(){
     //////////////////////////////////////////////////////////////////////////////////////////////
 
     var validators = {
-        'GET': [ tmfUtils.validateLoggedIn, tmfUtils.ensureRelatedPartyIncluded, validateRetrieving ],
-        'POST': [ tmfUtils.validateLoggedIn, validateCreation ],
-        'PATCH': [ tmfUtils.validateLoggedIn, validateUpdate ],
-        'PUT': [ tmfUtils.methodNotAllowed ],
-        'DELETE': [ tmfUtils.methodNotAllowed ]
+        'GET': [ utils.validateLoggedIn, tmfUtils.ensureRelatedPartyIncluded, validateRetrieving ],
+        'POST': [ utils.validateLoggedIn, validateCreation ],
+        'PATCH': [ utils.validateLoggedIn, validateUpdate ],
+        'PUT': [ utils.methodNotAllowed ],
+        'DELETE': [ utils.methodNotAllowed ]
     };
 
     var checkPermissions = function (req, callback) {
@@ -539,8 +539,8 @@ var ordering = (function(){
         var orderingsToRemove = [];
         orderings.forEach(function(ordering) {
 
-            var customer = tmfUtils.hasRole(ordering.relatedParty, CUSTOMER, req.user);
-            var seller = tmfUtils.hasRole(ordering.relatedParty, SELLER, req.user);
+            var customer = tmfUtils.hasPartyRole(req.user, ordering.relatedParty, CUSTOMER);
+            var seller = tmfUtils.hasPartyRole(req.user, ordering.relatedParty, SELLER);
 
             if (!customer && !seller) {
                 // This can happen when a user ask for a specific ordering.
@@ -551,7 +551,7 @@ var ordering = (function(){
                 // where the user is a seller have to be returned
 
                 ordering.orderItem = ordering.orderItem.filter(function(item) {
-                    return tmfUtils.hasRole(item.product.relatedParty, SELLER, req.user);
+                    return tmfUtils.hasPartyRole(req.user, item.product.relatedParty, SELLER);
                 });
             }
             // ELSE: If the user is the customer, order items don't have to be filtered
@@ -570,12 +570,12 @@ var ordering = (function(){
                     message: 'You are not authorized to retrieve the specified ordering'
                 });
             } else {
-                tmfUtils.updateBody(req, orderings[0]);
+                utils.updateBody(req, orderings[0]);
                 callback(null);
             }
 
         } else {
-            tmfUtils.updateBody(req, orderings);
+            utils.updateBody(req, orderings);
             callback(null);
         }
     };

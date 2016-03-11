@@ -21,13 +21,14 @@
         .controller('UserProfileCtrl', UserProfileController)
         .controller('UserShoppingCartCtrl', UserShoppingCartController);
 
-    function UserController($scope, $rootScope, EVENTS, LIFECYCLE_STATUS, FILTER_STATUS, User) {
+    function UserController($state, $scope, $rootScope, EVENTS, LIFECYCLE_STATUS, FILTER_STATUS, User) {
         /* jshint validthis: true */
         var vm = this;
         vm.itemsContained = {};
 
         $scope.STATUS = LIFECYCLE_STATUS;
         $scope.FILTER_STATUS = FILTER_STATUS;
+        $scope.$state = $state;
 
         if (isAuthenticated()) {
             vm.id = User.loggedUser.id;
@@ -37,11 +38,16 @@
         vm.contains = contains;
         vm.signOut = signOut;
         vm.showProfile = showProfile;
+        vm.isAdmin = isAdmin;
         vm.isAuthenticated = isAuthenticated;
 
         $scope.$on('$stateChangeSuccess', function (event, toState) {
             $scope.title = toState.data.title;
         });
+
+        function isAdmin() {
+            return $state.get('admin') != null;
+        }
 
         function isAuthenticated() {
             return User.isAuthenticated();
