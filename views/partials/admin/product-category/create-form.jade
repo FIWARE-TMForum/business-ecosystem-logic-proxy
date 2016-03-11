@@ -22,38 +22,32 @@ form(name="step.form", novalidate)
       small.text-muted (optional)
     textarea.form-control(rows="3", name="description", ng-model="createVM.data.description")
   .item-toggle
-    label.toggle Choose a root category
+    label.toggle Choose a parent category
       .track
         input(
           type="checkbox"
           ng-model="createVM.data.isRoot"
           ng-true-value="false"
           ng-false-value="true"
-          ng-change="createVM.refreshCategories()"
+          ng-change="createVM.refresh()"
         )
         i.fa.fa-2x
-  .table-responsive(ng-if="!createVM.data.isRoot", ng-switch="createVM.status")
-    input(type="hidden", ng-model="createVM.data.parentId", required)
-    table.table.table-bordered.table-hover.table-selectable(ng-switch-when="LOADED")
-      thead
-        tr
-          th #
-          th Name
-          th Updated
-      tbody
-        tr(ng-repeat="category in createVM.roots", ng-class="{ active: createVM.data.parentId == category.id }", ng-click="createVM.setRootCategory(category)")
-          th {{ $index }}
-          td
-            strong {{ category.name }}
-          td
-            time(am-time-ago="category.lastUpdate")
-        tr(ng-repeat="category in createVM.subcategories", ng-class="{ active: createVM.data.parentId == category.id }", ng-click="createVM.setRootCategory(category)")
-          th {{ $index }}
-          td
-            span(ng-repeat="parentCategory in createVM.getBreadcrumbOf(category)") {{ parentCategory.name }} / 
-            strong {{ category.name }}
-          td
-            time(am-time-ago="category.lastUpdate")
+  .form-group(ng-if="!createVM.data.isRoot", ng-controller="CategorySearchCtrl as categorySearchVM")
+    .alert.alert-info(ng-if="!categorySearchVM.list.length") No categories found.
+    .table-responsive(ng-if="categorySearchVM.list.length")
+      input(type="hidden", ng-model="createVM.data.parentId", required)
+      table.table.table-bordered.table-hover.table-selectable
+        thead
+          tr
+            th Name
+            th Updated
+        tbody
+          tr(ng-repeat="category in categorySearchVM.list", ng-class="{ active: createVM.category.id == category.id }", ng-click="createVM.setCategory(category)")
+            td
+              span(ng-repeat="parentCategory in category.getBreadcrumb()") {{ parentCategory.name }} / 
+              strong {{ category.name }}
+            td
+              time(am-time-ago="category.lastUpdate")
   .form-group.text-right
     a.btn.btn-default.z-depth-1(ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])", ng-disabled="!step.form.$valid")
       span.item-text Next

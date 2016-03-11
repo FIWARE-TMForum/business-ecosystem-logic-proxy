@@ -82,15 +82,21 @@ form(name="step.form", novalidate)
             td {{ createVM.catalogue.getRoleOf(user.id) }}
             td
               time(am-time-ago="createVM.catalogue.lastUpdate")
-  .form-group(ng-show="createVM.categoryBreadcrumbs.length")
+  .form-group(ng-show="createVM.hasCategories()")
     label Categories
-    .btn-toolbar(ng-repeat="breadcrumb in createVM.categoryBreadcrumbs")
-      .btn-group.btn-group-responsive
-        a.btn.btn-default
-          span.item-icon.fa.fa-tags
-        a.btn.btn-default(ng-repeat="category in breadcrumb", ng-class="{ 'active': $last }")
-          span.item-icon.fa.fa-tag
-          span.item-text {{ category.name }}
+    .table-responsive
+      table.table.table-bordered
+        thead
+          tr
+            th Name
+            th Updated
+        tbody
+          tr(ng-repeat="(key, category) in createVM.categories")
+            td
+              span(ng-repeat="parentCategory in category.getBreadcrumb()") {{ parentCategory.name }} / 
+              strong {{ category.name }}
+            td
+              time(am-time-ago="category.lastUpdate")
   .row(ng-if="createVM.pricePlans.length")
     .col-sm-12
       .h5.text-dark-secondary
