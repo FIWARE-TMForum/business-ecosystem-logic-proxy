@@ -1,0 +1,46 @@
+form(name="step.form", novalidate)
+  .form-group
+    label Name
+    input.form-control(
+      type="text"
+      name="name"
+      ng-model="createVM.data.name"
+      required
+      readonly
+    )
+  .form-group
+    label Status
+    .status-group
+      .status-item(ng-repeat="status in FILTER_STATUS", class="status-{{ status.value | lowercase }}", ng-class="{ active: createVM.data.lifecycleStatus == status.value }")
+        span.item-icon
+        span.item-text {{ status.value }}
+  .form-group
+    label Description
+    textarea.form-control(
+      rows="3",
+      name="description",
+      ng-model="createVM.data.description"
+      readonly
+    )
+  .form-group(ng-if="!createVM.data.isRoot")
+    label Root category
+    .table-responsive
+      input(type="hidden", ng-model="createVM.data.parentId", required)
+      table.table.table-bordered
+        thead
+          tr
+            th Name
+            th Updated
+        tbody
+          tr
+            td
+              span(ng-repeat="parentCategory in createVM.getBreadcrumbOf(createVM.rootCategory)") {{ parentCategory.name }} / 
+              strong {{ createVM.rootCategory.name }}
+            td
+              time(am-time-ago="createVM.rootCategory.lastUpdate")
+  .form-group.text-right
+    a.btn.btn-success(
+      ng-click="createVM.create()"
+      ng-disabled="!step.form.$valid"
+    )
+      span.item-text Create

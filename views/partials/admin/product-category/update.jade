@@ -1,0 +1,23 @@
+.row(ng-switch="updateVM.item.status")
+  .col-xs-12
+    include ./breadcrumb.jade
+  .col-xs-12(ng-switch-when="LOADED")
+    .row
+      .col-xs-12
+        .panel.panel-default.z-depth-1
+          .panel-body
+            .h4.text-center.text-dark-secondary
+              strong {{ updateVM.item.name }}
+          ul.nav.nav-justified.nav-pills
+            li(ui-sref-active-eq="active")
+              a(ui-sref="stock.catalogue.update")
+                span.item-icon.fa.fa-newspaper-o
+                span.item-text.hidden-xs About
+      .col-xs-12
+        ui-view
+          include ./update-form.jade
+  .col-xs-12(ng-switch-when="ERROR")
+    .alert.alert-danger.text-center {{ updateVM.error }}
+  .col-xs-12(ng-switch-default)
+    .container-spinner
+      span.fa.fa-spinner.fa-spin.fa-2x
