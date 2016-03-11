@@ -22,11 +22,11 @@
                     loggingRequired: true
                 },
                 views: {
-                    sidebar: {
+                    'sidebar-content': {
                         templateUrl: 'stock/sidebar',
                         controller: StockController
                     },
-                    content: {
+                    'content': {
                         template: '<ui-view>'
                     }
                 }

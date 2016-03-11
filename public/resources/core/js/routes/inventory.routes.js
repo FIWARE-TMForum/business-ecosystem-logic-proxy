@@ -22,11 +22,11 @@
                     loggingRequired: true
                 },
                 views: {
-                    sidebar: {
+                    'sidebar-content': {
                         templateUrl: 'inventory/sidebar',
                         controller: InventoryController
                     },
-                    content: {
+                    'content': {
                         template: '<ui-view>'
                     }
                 }

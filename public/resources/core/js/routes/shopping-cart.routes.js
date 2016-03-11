@@ -22,10 +22,13 @@
                     loggingRequired: true
                 },
                 views: {
-                    sidebar: {
+                    'sidebar@': {
                         template: '<ui-view>'
                     },
-                    content: {
+                    'content@': {
+                        template: '<ui-view>'
+                    },
+                    'full-content@': {
                         templateUrl: 'shopping-cart/list',
                         controller: 'ProductOrderCreateCtrl as orderVM'
                     }

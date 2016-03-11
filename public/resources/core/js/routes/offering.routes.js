@@ -23,11 +23,11 @@
                     filters: ['type']
                 },
                 views: {
-                    sidebar: {
+                    'sidebar-content': {
                         templateUrl: 'offering/sidebar',
                         controller: 'CatalogueListCtrl as listVM'
                     },
-                    content: {
+                    'content': {
                         templateUrl: 'offering/search',
                         controller: 'OfferingSearchCtrl as searchVM'
                     }
@@ -40,6 +40,9 @@
                         template:  '<ui-view>'
                     },
                     'content@': {
+                        template:  '<ui-view>'
+                    },
+                    'full-content@': {
                         templateUrl: 'offering/detail',
                         controller: 'OfferingDetailCtrl as detailVM'
                     }
