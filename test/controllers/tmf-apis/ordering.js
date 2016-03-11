@@ -8,12 +8,13 @@ describe('Ordering API', function() {
     var SERVER = (config.appSsl ? 'https' : 'http') + '://' + config.appHost + ':' + config.endpoints.ordering.port;
     var CATALOGSERVER = (config.appSsl ? 'https' : 'http') + '://' + config.appHost + ':' + config.endpoints.catalog.port;
 
-    var getOrderingAPI = function(storeClient, tmfUtils) {
+    var getOrderingAPI = function(storeClient, tmfUtils, utils) {
         return proxyquire('../../../controllers/tmf-apis/ordering', {
             './../../config': config,
             './../../lib/logger': testUtils.emptyLogger,
             './../../lib/store': storeClient,
-            './../../lib/tmfUtils': tmfUtils
+            './../../lib/tmfUtils': tmfUtils,
+            './../../lib/utils': utils
         }).ordering;
     };
 
@@ -42,11 +43,11 @@ describe('Ordering API', function() {
 
             var testNotLoggedIn = function (method, done) {
 
-                var tmfUtils = {
+                var utils = {
                     validateLoggedIn: validateLoggedError
                 };
 
-                var orderingApi = getOrderingAPI({}, tmfUtils);
+                var orderingApi = getOrderingAPI({}, {}, utils);
                 var path = '/ordering';
 
                 // Call the method
@@ -98,11 +99,11 @@ describe('Ordering API', function() {
 
             var testMethodNotAllowed = function (method, done) {
 
-                var tmfUtils = {
+                var utils = {
                     methodNotAllowed: methodNotAllowed
                 };
 
-                var orderingApi = getOrderingAPI({}, tmfUtils);
+                var orderingApi = getOrderingAPI({}, {}, utils);
                 var path = '/ordering';
 
                 // Call the method
@@ -143,10 +144,6 @@ describe('Ordering API', function() {
 
                 var tmfUtils = {
 
-                    validateLoggedIn: function (req, callback) {
-                        callback(null);
-                    },
-
                     filterRelatedPartyFields: filterRelatedPartyFields,
 
                     ensureRelatedPartyIncluded: function(req, callback) {
@@ -155,11 +152,17 @@ describe('Ordering API', function() {
                     }
                 };
 
+                var utils = {
+                    validateLoggedIn: function (req, callback) {
+                        callback(null);
+                    }
+                };
+
                 var req = {
                     method: 'GET'
                 };
 
-                var orderingApi = getOrderingAPI({}, tmfUtils);
+                var orderingApi = getOrderingAPI({}, tmfUtils, utils);
 
                 orderingApi.checkPermissions(req, function (err) {
 
@@ -221,12 +224,12 @@ describe('Ordering API', function() {
 
                 config.customerRoleRequired = customerRoleRequired;
 
-                var tmfUtils = {
+                var utils = {
                     validateLoggedIn: validateLoggedOk,
-                    checkRole: checkRole
+                    hasRole: checkRole
                 };
 
-                var orderingApi = getOrderingAPI({}, tmfUtils);
+                var orderingApi = getOrderingAPI({}, {}, utils);
 
                 var req = {
                     user: userInfo,
@@ -628,11 +631,11 @@ describe('Ordering API', function() {
 
             it('should fail when the body is invalid', function (done) {
 
-                var tmfUtils = {
+                var utils = {
                     validateLoggedIn: validateLoggedOk
                 };
 
-                var orderingApi = getOrderingAPI({}, tmfUtils);
+                var orderingApi = getOrderingAPI({}, {}, utils);
 
                 var req = {
                     method: 'PATCH',
@@ -655,7 +658,7 @@ describe('Ordering API', function() {
                 var SERVER = 'http://example.com:189';
                 var productOfferingPath = '/productOrdering/ordering/7';
 
-                var orderingApi = getOrderingAPI({}, {});
+                var orderingApi = getOrderingAPI({}, {}, {});
 
                 var user = {
                     id: 'fiware',
@@ -695,9 +698,11 @@ describe('Ordering API', function() {
                 var SERVER = 'http://example.com:189';
                 var productOfferingPath = '/productOrdering/ordering/7';
 
-                var tmfUtils = jasmine.createSpyObj('tmfUtils', ['hasRole', 'updateBody']);
-                tmfUtils.hasRole.and.returnValues.apply(tmfUtils.hasRole, hasRoleResponses);
-                tmfUtils.validateLoggedIn = validateLoggedOk;
+                var tmfUtils = jasmine.createSpyObj('tmfUtils', ['hasPartyRole']);
+                tmfUtils.hasPartyRole.and.returnValues.apply(tmfUtils.hasPartyRole, hasRoleResponses);
+
+                var utils = jasmine.createSpyObj('utils', ['updateBody']);
+                utils.validateLoggedIn = validateLoggedOk;
 
                 var storeClient = {
                     storeClient: {
@@ -709,7 +714,7 @@ describe('Ordering API', function() {
                     }
                 };
 
-                var orderingApi = getOrderingAPI(storeClient, tmfUtils);
+                var orderingApi = getOrderingAPI(storeClient, tmfUtils, utils);
 
                 var req = {
                     user: user,
@@ -728,11 +733,11 @@ describe('Ordering API', function() {
 
                     expect(err).toEqual(expectedError);
 
-                    expect(tmfUtils.hasRole).toHaveBeenCalledWith(jasmine.arrayContaining(orderingRelatedParties), 'Customer', user);
-                    expect(tmfUtils.hasRole).toHaveBeenCalledWith(jasmine.arrayContaining(orderingRelatedParties), 'Seller', user);
+                    expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(user, jasmine.arrayContaining(orderingRelatedParties), 'Customer');
+                    expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(user, jasmine.arrayContaining(orderingRelatedParties), 'Seller');
 
                     if (expectedBody) {
-                        expect(tmfUtils.updateBody).toHaveBeenCalledWith(req, expectedBody);
+                        expect(utils.updateBody).toHaveBeenCalledWith(req, expectedBody);
                     }
 
                     done();
@@ -1185,7 +1190,7 @@ describe('Ordering API', function() {
                 }
             };
 
-            var orderingApi = getOrderingAPI(storeClient, {});
+            var orderingApi = getOrderingAPI(storeClient, {}, {});
 
             var req = {
                 method: 'POST',
@@ -1228,7 +1233,7 @@ describe('Ordering API', function() {
                 method: 'DELETE'
             };
 
-            var orderingApi = getOrderingAPI({}, {});
+            var orderingApi = getOrderingAPI({}, {}, {});
 
             orderingApi.executePostValidation(req, function (err) {
                 expect(err).toBe(null);
@@ -1243,7 +1248,7 @@ describe('Ordering API', function() {
         it('should fail if the ordering does not belong to the user', function(done) {
 
             var tmfUtils = {
-                hasRole: function() {
+                hasPartyRole: function() {
                     return false;
                 }
             };
@@ -1253,7 +1258,7 @@ describe('Ordering API', function() {
                 body: '{}'
             };
 
-            var orderingApi = getOrderingAPI({}, tmfUtils);
+            var orderingApi = getOrderingAPI({}, tmfUtils, {});
 
             orderingApi.executePostValidation(req, function(err) {
                 expect(err).toEqual({
@@ -1276,9 +1281,11 @@ describe('Ordering API', function() {
                 hasRolesReturnValues.push(order.isInvolved);
             });
 
-            var tmfUtils = jasmine.createSpyObj('tmfUtils', ['hasRole']);
-            tmfUtils.hasRole.and.returnValues.apply(tmfUtils.hasRole, hasRolesReturnValues);
-            tmfUtils.updateBody = function(req, newBody) {
+            var tmfUtils = jasmine.createSpyObj('tmfUtils', ['hasPartyRole']);
+            tmfUtils.hasPartyRole.and.returnValues.apply(tmfUtils.hasPartyRole, hasRolesReturnValues);
+
+            var utils = {};
+            utils.updateBody = function(req, newBody) {
 
                 var expectedOrderItem = [];
 
@@ -1301,18 +1308,18 @@ describe('Ordering API', function() {
                 user: user
             };
 
-            var orderingApi = getOrderingAPI({}, tmfUtils);
+            var orderingApi = getOrderingAPI({}, tmfUtils, utils);
 
             orderingApi.executePostValidation(req, function(err) {
 
                 expect(err).toBe(null);
 
                 orders.forEach(function(order) {
-                    expect(tmfUtils.hasRole).toHaveBeenCalledWith(order.item.relatedParty, 'Customer', user);
-                    expect(tmfUtils.hasRole).toHaveBeenCalledWith(order.item.relatedParty, 'Seller', user);
+                    expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(user, order.item.relatedParty, 'Customer');
+                    expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(user, order.item.relatedParty, 'Seller');
                 });
 
-                expect(tmfUtils.hasRole.calls.count()).toBe(orders.length * 2); // One for customer and one for seller
+                expect(tmfUtils.hasPartyRole.calls.count()).toBe(orders.length * 2); // One for customer and one for seller
 
                 done();
             });
@@ -1362,9 +1369,11 @@ describe('Ordering API', function() {
             };
             var expectedBody = JSON.parse(JSON.stringify(originalBody));
 
-            var tmfUtils = jasmine.createSpyObj('tmfUtils', ['hasRole']);
-            tmfUtils.hasRole.and.returnValues.apply(tmfUtils.hasRole, [true, false]);
-            tmfUtils.updateBody = function(req, newBody) {
+            var tmfUtils = jasmine.createSpyObj('tmfUtils', ['hasPartyRole']);
+            tmfUtils.hasPartyRole.and.returnValues.apply(tmfUtils.hasPartyRole, [true, false]);
+
+            var utils = {};
+            utils.updateBody = function(req, newBody) {
                 expect(newBody).toEqual(expectedBody);
             };
 
@@ -1374,13 +1383,13 @@ describe('Ordering API', function() {
                 user: user
             };
 
-            var orderingApi = getOrderingAPI({}, tmfUtils);
+            var orderingApi = getOrderingAPI({}, tmfUtils, utils);
 
             orderingApi.executePostValidation(req, function(err) {
                 expect(err).toEqual(null);
-                expect(tmfUtils.hasRole).toHaveBeenCalledWith(orderingRelatedParties, 'Customer', user);
-                expect(tmfUtils.hasRole).toHaveBeenCalledWith(orderingRelatedParties, 'Seller', user);
-                expect(tmfUtils.hasRole.calls.count()).toBe(2);
+                expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(user, orderingRelatedParties, 'Customer');
+                expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(user, orderingRelatedParties, 'Seller');
+                expect(tmfUtils.hasPartyRole.calls.count()).toBe(2);
 
                 done();
             });
@@ -1402,9 +1411,11 @@ describe('Ordering API', function() {
                hasRolesReturnValues.push(item.isSeller);
             });
 
-            var tmfUtils = jasmine.createSpyObj('tmfUtils', ['hasRole']);
-            tmfUtils.hasRole.and.returnValues.apply(tmfUtils.hasRole, hasRolesReturnValues);
-            tmfUtils.updateBody = function(req, newBody) {
+            var tmfUtils = jasmine.createSpyObj('tmfUtils', ['hasPartyRole']);
+            tmfUtils.hasPartyRole.and.returnValues.apply(tmfUtils.hasPartyRole, hasRolesReturnValues);
+
+            var utils = {};
+            utils.updateBody = function(req, newBody) {
 
                 var expectedOrderItem = [];
 
@@ -1423,17 +1434,17 @@ describe('Ordering API', function() {
                 user: user
             };
 
-            var orderingApi = getOrderingAPI({}, tmfUtils);
+            var orderingApi = getOrderingAPI({}, tmfUtils, utils);
 
             orderingApi.executePostValidation(req, function(err) {
 
                 expect(err).toEqual(null);
 
-                expect(tmfUtils.hasRole).toHaveBeenCalledWith(orderingRelatedParties, 'Customer', user);
-                expect(tmfUtils.hasRole).toHaveBeenCalledWith(orderingRelatedParties, 'Seller', user);
+                expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(user, orderingRelatedParties, 'Customer');
+                expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(user, orderingRelatedParties, 'Seller');
 
                 orderItems.forEach(function(item) {
-                    expect(tmfUtils.hasRole).toHaveBeenCalledWith(item.item.product.relatedParty, 'Seller', user);
+                    expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(user, item.item.product.relatedParty, 'Seller');
                 });
 
                 done();

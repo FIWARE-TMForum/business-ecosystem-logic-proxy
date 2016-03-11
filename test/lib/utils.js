@@ -37,6 +37,96 @@ describe('Utils', function() {
         });
     });
 
+    describe('Check Roles', function() {
+
+        it ('should return true when checking the given role', function() {
+            var userInfo = {
+                roles: [{
+                    name: 'norole'
+                }, {
+                    name: 'role'
+                }]
+            };
+
+            expect(utils.hasRole(userInfo, 'role')).toBeTruthy();
+        });
+
+        it ('should return false when checking the given role', function() {
+            var userInfo = {
+                roles: [{
+                    name: 'norole'
+                }]
+            };
+
+            expect(utils.hasRole(userInfo, 'role')).toBeFalsy();
+        });
+
+    });
+
+    describe('Validated Logged In', function() {
+
+        it ('should call the callback with OK when the user is logged', function(done) {
+            var req = {
+                user: 'test'
+            };
+
+            utils.validateLoggedIn(req, function(err) {
+                expect(err).toBe(undefined);
+                done();
+            });
+        });
+
+        it ('should call the callback with error 401 if the user is not logged', function(done) {
+            var req = {};
+
+            utils.validateLoggedIn(req, function(err) {
+                expect(err).not.toBe(null);
+                expect(err.status).toBe(401);
+                expect(err.message).toBe('You need to be authenticated to perform this request');
+                done();
+            });
+        });
+
+    });
+
+    describe('Update Body', function() {
+
+        it('should update the body with a stringified version of the object given', function() {
+
+            var newBody = { example: '1', id: 7, user: { name: 'fiware' } };
+
+            var req = {
+                body: null,
+                headers: {}
+            };
+
+            utils.updateBody(req, newBody);
+
+            var stringifiedBody = JSON.stringify(newBody);
+            var expectedLength = stringifiedBody.length;
+
+            expect(req.body).toBe(stringifiedBody);
+            expect(req.headers['content-length']).toBe(expectedLength);
+
+        });
+
+    });
+
+    describe('Method Not Allowed', function() {
+        it('should call the callback with a 405 error message', function(done) {
+            var req = {
+                method: 'DELETE'
+            };
+
+            utils.methodNotAllowed(req, function(err) {
+                expect(err).not.toBe(null);
+                expect(err.status).toBe(405);
+                expect(err.message).toBe('The HTTP method DELETE is not allowed in the accessed API');
+                done();
+            });
+        });
+    });
+
     describe('Proxied Request Headers', function() {
 
         var testProxiedRequestHeaders = function(previousForwardedFor, remoteAddress, expectedForwardedFor) {
