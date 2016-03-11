@@ -79,7 +79,6 @@
 
         vm.data = Offering.buildInitialData();
         vm.stepList = stepList;
-        vm.categoryBreadcrumbs = [];
 
         vm.create = create;
         vm.setProduct = setProduct;
@@ -89,8 +88,10 @@
         vm.hasOffering = hasOffering;
         vm.toggleOffering = toggleOffering;
 
-        vm.appendCategory = appendCategory;
-        vm.removeCategory = removeCategory;
+        vm.categories = {};
+        vm.setCategory = setCategory;
+        vm.categoryIsDisabled = categoryIsDisabled;
+        vm.hasCategories = hasCategories;
 
         /* PRICE PLANS MEMBERS */
 
@@ -111,7 +112,7 @@
         vm.removePricePlan = removePricePlan;
 
         function create() {
-            vm.data.category = getCategorySet();
+            vm.data.category = formatCategory();
             vm.data.productOfferingPrice = vm.pricePlans;
             Offering.create(vm.data, vm.product, vm.catalogue).then(function (offeringCreated) {
                 $state.go('stock.offering.update', {
@@ -204,54 +205,49 @@
             vm.catalogue = catalogue;
         }
 
-        function getCategorySet() {
-            var set = [];
+        function setCategory(category) {
 
-            vm.categoryBreadcrumbs.forEach(function (breadcrumb) {
-                breadcrumb.forEach(function (category) {
-                    if (set.indexOf(category) === -1) {
-                        set.push(category);
-                    }
-                });
+            if (category.id in vm.categories) {
+                delete vm.categories[category.id];
+            } else {
+                removeChildCategory(category);
+                vm.categories[category.id] = category;
+            }
+        }
+
+        function hasCategories() {
+            return Object.keys(vm.categories).length !== 0;
+        }
+
+        function categoryIsDisabled(category) {
+            return Object.keys(vm.categories).some(function (id) {
+                return isIncluded(vm.categories[id], category);
             });
-
-            return set;
         }
 
-        function appendCategory(categoryBreadcrumb) {
-            var i, j, flag = true;
-
-            for (i = 0; i < vm.categoryBreadcrumbs.length && flag; i++) {
-                if (vm.categoryBreadcrumbs[i].length < categoryBreadcrumb.length) {
-                    flag = false;
-                    for (j = 0; j < vm.categoryBreadcrumbs[i][j].length && !flag; j++) {
-                        if (categoryBreadcrumb[j].id != vm.categoryBreadcrumbs[i][j].id) {
-                            flag = true;
-                        }
-                    }
-
-                    if (!flag) {
-                        vm.categoryBreadcrumbs[i] = categoryBreadcrumb;
-                    }
-                } else {
-                    flag = false;
-                    for (j = 0; j < categoryBreadcrumb.length && !flag; j++) {
-                        if (categoryBreadcrumb[j].id != vm.categoryBreadcrumbs[i][j].id) {
-                            flag = true;
-                        }
-                    }
+        function removeChildCategory(parentCategory) {
+            return parentCategory.getBreadcrumb().some(function (category) {
+                if (category.id in vm.categories) {
+                    delete vm.categories[category.id];
+                    return true;
                 }
-            }
-
-            if (flag) {
-                vm.categoryBreadcrumbs.push(categoryBreadcrumb);
-            }
-
-            return true;
+            });
         }
 
-        function removeCategory(index) {
-            vm.categoryBreadcrumbs.splice(index, 1);
+        function isIncluded(parentCategory, targetCategory) {
+            return parentCategory.getBreadcrumb().some(function (category) {
+                return targetCategory.id === category.id;
+            });
+        }
+
+        function formatCategory() {
+            var name, category = [];
+
+            for (name in vm.categories) {
+                category = category.concat(vm.categories[name].getBreadcrumb(), vm.categories[name]);
+            }
+
+            return category;
         }
     }
 
@@ -266,6 +262,7 @@
         Offering.detail($state.params.offeringId).then(function (offeringRetrieved) {
             vm.item = offeringRetrieved;
             vm.item.status = LOADED;
+            vm.categories = vm.item.getCategories();
         }, function (response) {
             vm.error = Utils.parseError(response, 'The requested offering could not be retrieved');
             vm.item.status = ERROR;
@@ -300,20 +297,16 @@
 
         vm.update = update;
         vm.updateStatus = updateStatus;
+        vm.hasCategory = hasCategory;
 
         vm.item = {};
-        vm.categoryBreadcrumbs = [];
 
         Offering.detail($state.params.offeringId).then(function (offeringRetrieved) {
             initialData = angular.copy(offeringRetrieved);
             vm.data = angular.copy(offeringRetrieved);
             vm.item = offeringRetrieved;
             vm.item.status = LOADED;
-
-            offeringRetrieved.getCategoryBreadcrumbs().then(function (breadcrumbs) {
-                vm.categoryBreadcrumbs = breadcrumbs;
-                vm.categoryBreadcrumbs.status = LOADED;
-            });
+            vm.categories = vm.item.getCategories();
         }, function (reason) {
             vm.error = Utils.parseError(reason, 'The requested offering could not be retrieved');
             vm.item.status = ERROR;
@@ -322,6 +315,12 @@
         function updateStatus(status) {
             vm.data.lifecycleStatus = status;
             vm.statusUpdated = true;
+        }
+
+        function hasCategory(category) {
+            return vm.categories.some(function (c) {
+                return c.id === category.id;
+            });
         }
 
         function update() {

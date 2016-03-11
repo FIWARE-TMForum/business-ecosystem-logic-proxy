@@ -39,6 +39,7 @@
             YEARLY: 'Yearly'
         };
 
+        resource.prototype.getCategories = getCategories;
         resource.prototype.getPicture = getPicture;
         resource.prototype.getCheapestPriceplan = getCheapestPriceplan;
         resource.prototype.formatCheapestPriceplan = formatCheapestPriceplan;
@@ -240,7 +241,7 @@
 
                 if (offering.category.length) {
                     offering.category.forEach(function (data, index) {
-                        Category.detail(data.id).then(function (categoryRetrieved) {
+                        Category.detail(data.id, false).then(function (categoryRetrieved) {
                             offering.category[index] = categoryRetrieved;
                             categories++;
 
@@ -296,6 +297,23 @@
                 id: this.id,
                 href: this.href
             };
+        }
+
+        function getCategories() {
+            /* jshint validthis: true */
+            var ids = this.category.filter(hasParentId).map(getParentId);
+
+            return this.category.filter(function (category) {
+                return ids.indexOf(category.id) === -1;
+            });
+
+            function hasParentId(category) {
+                return !category.isRoot;
+            }
+
+            function getParentId(category) {
+                return category.parentId;
+            }
         }
 
         function getPicture() {
