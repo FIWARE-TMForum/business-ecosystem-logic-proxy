@@ -3,10 +3,11 @@ var proxyquire =  require('proxyquire'),
 
 describe('Inventory API', function() {
 
-    var getInventoryAPI = function(tmfUtils) {
+    var getInventoryAPI = function(tmfUtils, utils) {
         return proxyquire('../../../controllers/tmf-apis/inventory', {
             './../../lib/logger': testUtils.emptyLogger,
-            './../../lib/tmfUtils': tmfUtils
+            './../../lib/tmfUtils': tmfUtils,
+            './../../lib/utils': utils
         }).inventory;
     };
 
@@ -18,7 +19,7 @@ describe('Inventory API', function() {
         //////////////////////////////////////////////////////////////////////////////////////////////
 
         var testNotAllowedMethod = function (method, done) {
-            var inventory = getInventoryAPI({});
+            var inventory = getInventoryAPI({}, {});
 
             var req = {
                 method: method
@@ -54,7 +55,7 @@ describe('Inventory API', function() {
             var errorStatus = 401;
             var errorMessage = 'You need to be authenticated to create/update/delete resources';
 
-            var tmfUtils = {
+            var utils = {
                 validateLoggedIn: function (req, callback) {
                     callback({
                         status: errorStatus,
@@ -63,7 +64,7 @@ describe('Inventory API', function() {
                 }
             };
 
-            var inventoryApi = getInventoryAPI(tmfUtils);
+            var inventoryApi = getInventoryAPI({}, utils);
 
             // Call the method
             var req = {
@@ -86,10 +87,6 @@ describe('Inventory API', function() {
 
             var tmfUtils = {
 
-                validateLoggedIn: function (req, callback) {
-                    callback(null);
-                },
-
                 filterRelatedPartyFields: filterRelatedPartyFields,
 
                 ensureRelatedPartyIncluded: function(req, callback) {
@@ -98,12 +95,20 @@ describe('Inventory API', function() {
                 }
             };
 
+            var utils = {
+
+                validateLoggedIn: function (req, callback) {
+                    callback(null);
+                }
+
+            };
+
             var req = {
                 method: 'GET',
                 path: '/example/api/path/product'
             };
 
-            var inventoryApi = getInventoryAPI(tmfUtils);
+            var inventoryApi = getInventoryAPI(tmfUtils, utils);
 
             inventoryApi.checkPermissions(req, function (err) {
                 expect(ensureRelatedPartyIncludedCalled).toBe(true);
@@ -143,9 +148,6 @@ describe('Inventory API', function() {
             var ensureRelatedPartyIncludedCalled = false;
 
             var tmfUtils = {
-                validateLoggedIn: function (req, callback) {
-                    callback(null);
-                },
 
                 ensureRelatedPartyIncluded: function(req, callback) {
                     ensureRelatedPartyIncludedCalled = true;
@@ -153,12 +155,18 @@ describe('Inventory API', function() {
                 }
             };
 
+            var utils = {
+                validateLoggedIn: function (req, callback) {
+                    callback(null);
+                }
+            }
+
             var req = {
                 method: 'GET',
                 path: '/example/api/path/product/7'
             };
 
-            var inventoryApi = getInventoryAPI(tmfUtils);
+            var inventoryApi = getInventoryAPI(tmfUtils, utils);
 
             inventoryApi.checkPermissions(req, function (err) {
                 expect(ensureRelatedPartyIncludedCalled).toBe(true);
@@ -172,7 +180,7 @@ describe('Inventory API', function() {
     describe('Execute Post Validation', function() {
 
         var testCorrectPostValidation = function (req, done) {
-            var inventory = getInventoryAPI({});
+            var inventory = getInventoryAPI({}, {});
 
             inventory.executePostValidation(req, function (err, resp) {
                 expect(err).toBe(null);
@@ -199,7 +207,7 @@ describe('Inventory API', function() {
         });
 
         it('should give a 403 error when the user is not the customer who acquired the product', function (done) {
-            var inventory = getInventoryAPI({});
+            var inventory = getInventoryAPI({}, {});
 
             var req = {
                 method: 'GET',
@@ -226,8 +234,8 @@ describe('Inventory API', function() {
 
         it('should filter non-owned products when retrieving list of products', function(done) {
 
-            var tmfUtils = jasmine.createSpyObj('tmfUtils', ['updateBody']);
-            var inventory = getInventoryAPI(tmfUtils);
+            var utils = jasmine.createSpyObj('utils', ['updateBody']);
+            var inventory = getInventoryAPI({}, utils);
 
             var validProduct = {
                 relatedParty: [{
@@ -262,7 +270,7 @@ describe('Inventory API', function() {
 
             inventory.executePostValidation(req, function(err) {
                 expect(err).toBe(null);
-                expect(tmfUtils.updateBody).toHaveBeenCalledWith(req, [validProduct]);
+                expect(utils.updateBody).toHaveBeenCalledWith(req, [validProduct]);
                 done();
             });
         });

@@ -10,37 +10,6 @@ describe('TMF Utils', function() {
         });
     };
 
-    describe('Check Roles', function() {
-
-        var testCheckRoles = function (userInfo, expected) {
-            var tmfUtils = getTmfUtils();
-
-            var result = tmfUtils.checkRole(userInfo, 'role');
-            expect(result).toBe(expected);
-        };
-
-        it ('should return true when checking the given role', function() {
-            var userInfo = {
-                roles: [{
-                    name: 'norole'
-                }, {
-                    name: 'role'
-                }]
-            };
-            testCheckRoles(userInfo, true);
-        });
-
-        it ('should return false when checking the given role', function() {
-            var userInfo = {
-                roles: [{
-                    name: 'norole'
-                }]
-            };
-            testCheckRoles(userInfo, false);
-        });
-
-    });
-
     describe('Is Owner', function() {
 
         var testIsOwner = function(userInfo, info, expected) {
@@ -90,34 +59,6 @@ describe('TMF Utils', function() {
 
             var info = {};
             testIsOwner(userInfo, info, false);
-        });
-
-    });
-
-    describe('Validated Logged In', function() {
-
-        it ('should call the callback with OK when the user is logged', function(done) {
-            var tmfUtils = getTmfUtils();
-            var req = {
-                user: 'test'
-            };
-
-            tmfUtils.validateLoggedIn(req, function(err) {
-                expect(err).toBe(undefined);
-                done();
-            });
-        });
-
-        it ('should call the callback with error 401 if the user is not logged', function(done) {
-            var tmfUtils = getTmfUtils();
-            var req = {};
-
-            tmfUtils.validateLoggedIn(req, function(err) {
-                expect(err).not.toBe(null);
-                expect(err.status).toBe(401);
-                expect(err.message).toBe('You need to be authenticated to perform this request');
-                done();
-            });
         });
 
     });
@@ -351,11 +292,11 @@ describe('TMF Utils', function() {
 
     });
 
-    describe('Has Role', function() {
+    describe('Has Party Role', function() {
 
         it('should return false when related Party is empty', function() {
             var tmfUtils = getTmfUtils();
-            var result = tmfUtils.hasRole([], 'seller', { id: 'fiware' });
+            var result = tmfUtils.hasPartyRole({ id: 'fiware' }, [], 'seller');
             expect(result).toBe(false);
         });
 
@@ -367,7 +308,7 @@ describe('TMF Utils', function() {
             var relatedParties = [ { role: role, id: userName } ];
             var user = { id: userName };
 
-            var result = tmfUtils.hasRole(relatedParties, role, user);
+            var result = tmfUtils.hasPartyRole(user, relatedParties, role);
             expect(result).toBe(true);
 
         });
@@ -381,7 +322,7 @@ describe('TMF Utils', function() {
             var relatedParties = [ { role: role.toUpperCase(), id: userName } ];
             var user = { id: userName };
 
-            var result = tmfUtils.hasRole(relatedParties, role.toLowerCase(), user);
+            var result = tmfUtils.hasPartyRole(user, relatedParties, role.toLowerCase());
             expect(result).toBe(true);
 
         });
@@ -395,7 +336,7 @@ describe('TMF Utils', function() {
             var relatedParties = [ { role: role, id: userName } ];
             var user = { id: userName };
 
-            var result = tmfUtils.hasRole(relatedParties, role + 'a', user);
+            var result = tmfUtils.hasPartyRole(user, relatedParties, role + 'a');
             expect(result).toBe(false);
 
         });
@@ -410,7 +351,7 @@ describe('TMF Utils', function() {
             var relatedParties = [ { role: role, id: userName } ];
             var user = { id: userName + 'a' };
 
-            var result = tmfUtils.hasRole(relatedParties, role, user);
+            var result = tmfUtils.hasPartyRole(user, relatedParties, role);
             expect(result).toBe(false);
 
         });
@@ -423,7 +364,7 @@ describe('TMF Utils', function() {
             var relatedParties = [ { role: role, id: userName }, { role: role + 'a', id: userName + 'a' } ];
             var user = { id: userName };
 
-            var result = tmfUtils.hasRole(relatedParties, role, user);
+            var result = tmfUtils.hasPartyRole(user, relatedParties, role);
             expect(result).toBe(true);
 
         });
@@ -436,50 +377,9 @@ describe('TMF Utils', function() {
             var relatedParties = [ { role: role + 'b', id: userName + 'b' }, { role: role + 'a', id: userName + 'a' } ];
             var user = { id: userName };
 
-            var result = tmfUtils.hasRole(relatedParties, role, user);
+            var result = tmfUtils.hasPartyRole(user, relatedParties, role);
             expect(result).toBe(false);
 
-        });
-    });
-
-    describe('Update Body', function() {
-
-        it('should update the body with a stringified version of the object given', function() {
-
-            var tmfUtils = getTmfUtils();
-
-            var newBody = { example: '1', id: 7, user: { name: 'fiware' } };
-
-            var req = {
-                body: null,
-                headers: {}
-            };
-
-            tmfUtils.updateBody(req, newBody);
-
-            var stringifiedBody = JSON.stringify(newBody);
-            var expectedLength = stringifiedBody.length;
-
-            expect(req.body).toBe(stringifiedBody);
-            expect(req.headers['content-length']).toBe(expectedLength);
-
-        });
-
-    });
-
-    describe('Method Not Allowed', function() {
-        it('should call the callback with a 405 error message', function(done) {
-            var tmfutils = getTmfUtils();
-            var req = {
-                method: 'DELETE'
-            };
-
-            tmfutils.methodNotAllowed(req, function(err) {
-                expect(err).not.toBe(null);
-                expect(err.status).toBe(405);
-                expect(err.message).toBe('The HTTP method DELETE is not allowed in the accessed API');
-                done();
-            });
         });
     });
 

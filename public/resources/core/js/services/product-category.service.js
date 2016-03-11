@@ -12,9 +12,13 @@
         .module('app')
         .factory('Category', CategoryService);
 
-    function CategoryService($q, $resource, URLS) {
+    function CategoryService($q, $resource, URLS, LIFECYCLE_STATUS) {
         var resource = $resource(URLS.CATALOGUE_MANAGEMENT + '/category/:categoryId', {
             categoryId: '@id'
+        }, {
+            update: {
+                method: 'PUT'
+            }
         });
 
         var dataCached = {
@@ -25,9 +29,14 @@
         resource.prototype.serialize = serialize;
 
         return {
+            dataCached: dataCached,
             search: search,
+            exists: exists,
+            create: create,
             detail: detail,
-            getBreadcrumbOf: getBreadcrumbOf
+            update: update,
+            getBreadcrumbOf: getBreadcrumbOf,
+            initiate: initiate
         };
 
         function search(filters) {
@@ -38,10 +47,12 @@
                 filters = {};
             }
 
-            if (filters.categoryId) {
-                params['parentId'] = filters.categoryId;
-            } else {
-                params['isRoot'] = true;
+            if (!filters.admin) {
+                if (filters.categoryId) {
+                    params['parentId'] = filters.categoryId;
+                } else {
+                    params['isRoot'] = true;
+                }
             }
 
             resource.query(params, function (categoryList) {
@@ -49,6 +60,28 @@
                     saveCategory(category);
                 });
                 deferred.resolve(categoryList);
+            }, function (response) {
+                deferred.reject(response);
+            });
+
+            return deferred.promise;
+        }
+
+        function exists(params) {
+            var deferred = $q.defer();
+
+            resource.query(params, function (categoryList) {
+                deferred.resolve(!!categoryList.length);
+            });
+
+            return deferred.promise;
+        }
+
+        function create(data) {
+            var deferred = $q.defer();
+
+            resource.save(data, function (categoryCreated) {
+                deferred.resolve(categoryCreated);
             }, function (response) {
                 deferred.reject(response);
             });
@@ -65,6 +98,21 @@
             resource.get(params, function (category) {
                 saveCategory(category);
                 deferred.resolve(category);
+            }, function (response) {
+                deferred.reject(response);
+            });
+
+            return deferred.promise;
+        }
+
+        function update(category) {
+            var deferred = $q.defer();
+            var params = {
+                categoryId: category.id
+            };
+
+            resource.update(params, category, function (categoryUpdated) {
+                deferred.resolve(categoryUpdated);
             }, function (response) {
                 deferred.reject(response);
             });
@@ -111,6 +159,16 @@
                 href: this.href,
                 //version: this.version,
                 //name: this.name
+            };
+        }
+
+        function initiate() {
+            return {
+                version: '1.0',
+                lifecycleStatus: LIFECYCLE_STATUS.LAUNCHED,
+                name: "",
+                description: "",
+                isRoot: true
             };
         }
     }

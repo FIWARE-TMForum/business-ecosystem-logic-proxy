@@ -171,7 +171,7 @@ var catalog = (function() {
     var validateCategory = function(updatedCategory, oldCategory, user, action, callback) {
 
         // Categories can only be created by administrators
-        if (!tmfUtils.checkRole(user, config.oauth2.roles.admin)) {
+        if (!utils.hasRole(user, config.oauth2.roles.admin)) {
 
             callback({
                 status: 403,
@@ -251,7 +251,7 @@ var catalog = (function() {
         } else {
 
             // Check that the user has the seller role or is an admin
-            if (!tmfUtils.checkRole(req.user, config.oauth2.roles.seller)) {
+            if (!utils.hasRole(req.user, config.oauth2.roles.seller)) {
 
                 callback({
                     status: 403,
@@ -469,10 +469,10 @@ var catalog = (function() {
 
     var validators = {
         'GET': [ validateAllowed ],
-        'POST': [ tmfUtils.validateLoggedIn, validateCreation ],
-        'PATCH': [ tmfUtils.validateLoggedIn, validateUpdate ],
-        'PUT': [ tmfUtils.validateLoggedIn, validateUpdate ],
-        'DELETE': [ tmfUtils.validateLoggedIn, validateUpdate ]
+        'POST': [ utils.validateLoggedIn, validateCreation ],
+        'PATCH': [ utils.validateLoggedIn, validateUpdate ],
+        'PUT': [ utils.validateLoggedIn, validateUpdate ],
+        'DELETE': [ utils.validateLoggedIn, validateUpdate ]
     };
 
     var checkPermissions = function (req, callback) {

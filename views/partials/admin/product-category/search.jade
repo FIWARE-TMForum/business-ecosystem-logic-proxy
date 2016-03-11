@@ -1,0 +1,39 @@
+ui-view
+  .row
+    .col-xs-12
+      .row
+        .col-xs-12.col-sm-6
+          include ./breadcrumb.jade
+        .col-xs-12.col-sm-6
+          include ./search-toolbar.jade
+    .col-xs-12(ng-switch="searchVM.list.status")
+      div(ng-switch-when="LOADED", ng-switch="searchVM.list.length")
+        div(ng-switch-when="0")
+          .alert.alert-info.text-center No categories found.
+        div(ng-switch-default)
+          .table-responsive
+            table.table.table-bordered.table-hover
+              thead
+                tr
+                  th #
+                  th Name
+                  th Updated
+              tbody
+                tr(ng-repeat="category in searchVM.roots")
+                  th {{ $index }}
+                  th
+                    a(ui-sref="admin.productCategory.update({ categoryId: category.id })", ui-sref-opts="{ inherit: false }") {{ category.name }}
+                  td
+                    time(am-time-ago="category.lastUpdate")
+                tr(ng-repeat="category in searchVM.subcategories")
+                  th {{ $index }}
+                  th
+                    span(ng-repeat="parentCategory in searchVM.getBreadcrumbOf(category)") {{ parentCategory.name }} / 
+                    a(ui-sref="admin.productCategory.update({ categoryId: category.id })", ui-sref-opts="{ inherit: false }") {{ category.name }}
+                  td
+                    time(am-time-ago="category.lastUpdate")
+      div(ng-switch-when="ERROR")
+        .alert.alert-danger.text-center {{ searchVM.error }}
+      div(ng-switch-default)
+        .container-spinner
+          span.fa.fa-spinner.fa-spin.fa-2x

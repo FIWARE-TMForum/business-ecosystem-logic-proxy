@@ -408,6 +408,16 @@ var jsAppFilesToInject = [
     return 'resources/core/js/' + path + '.js';
 });
 
+// Admin dependencies
+var jsAdminFilesToInject = [
+    'controllers/admin.controller',
+    'controllers/admin.product-category.controller',
+    'routes/admin.routes',
+    'routes/admin.product-category.routes'
+].map(function (path) {
+    return 'resources/core/js/' + path + '.js';
+});
+
 var renderTemplate = function(req, res, viewName) {
 
     // TODO: Maybe an object with extra properties (if required)
@@ -423,7 +433,7 @@ var renderTemplate = function(req, res, viewName) {
         rssPath: config.endpoints.rss.path,
         cssFilesToInject: cssFilesToInject,
         jsDepFilesToInject: jsDepFilesToInject,
-        jsAppFilesToInject: jsAppFilesToInject,
+        jsAppFilesToInject: jsAppFilesToInject.concat(utils.isAdmin(req.user) ? jsAdminFilesToInject : []),
         accountHost: config.oauth2.server
     });
 

@@ -4,6 +4,7 @@
  *         Aitor Magán <amagan@conwet.com>
  */
 
+
 (function () {
 
     'use strict';
@@ -15,28 +16,28 @@
     function RouteConfig($stateProvider) {
 
         $stateProvider
-            .state('inventory', {
-                url: '/inventory',
+            .state('admin', {
+                url: '/admin',
                 data: {
-                    title: 'My Inventory',
+                    title: 'Administration',
                     loggingRequired: true
                 },
                 views: {
-                    'sidebar-content': {
-                        templateUrl: 'inventory/sidebar',
-                        controller: InventoryController
+                    sidebar: {
+                        templateUrl: 'admin/sidebar',
+                        controller: AdminController
                     },
-                    'content': {
-                        template: '<ui-view>'
+                    content: {
+                        template: '<ui-view name="admin-content">'
                     }
                 }
             });
     }
 
-    function InventoryController($state) {
+    function AdminController($state) {
 
-        if ($state.is('inventory')) {
-            $state.go('inventory.product');
+        if ($state.is('admin')) {
+            $state.go('admin.productCategory');
         }
     }
 

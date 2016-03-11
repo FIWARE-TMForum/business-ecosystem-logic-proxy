@@ -1,5 +1,6 @@
 var async = require('async'),
     config = require('./../../config'),
+    utils = require('./../../lib/utils'),
     tmfUtils = require('./../../lib/tmfUtils');
 
 var inventory = (function() {
@@ -17,11 +18,11 @@ var inventory = (function() {
     };
 
     var validators = {
-        'GET': [ tmfUtils.validateLoggedIn, tmfUtils.ensureRelatedPartyIncluded, validateRetrieving ],
-        'POST': [ tmfUtils.methodNotAllowed ],
-        'PATCH': [ tmfUtils.methodNotAllowed ],
-        'PUT': [ tmfUtils.methodNotAllowed ],
-        'DELETE': [ tmfUtils.methodNotAllowed ]
+        'GET': [ utils.validateLoggedIn, tmfUtils.ensureRelatedPartyIncluded, validateRetrieving ],
+        'POST': [ utils.methodNotAllowed ],
+        'PATCH': [ utils.methodNotAllowed ],
+        'PUT': [ utils.methodNotAllowed ],
+        'DELETE': [ utils.methodNotAllowed ]
     };
 
     var checkPermissions = function(req, callback) {
@@ -51,7 +52,7 @@ var inventory = (function() {
         }
 
         var filteredOrders = orderings.filter(function(order) {
-            return tmfUtils.hasRole(order.relatedParty, 'customer', req.user);
+            return tmfUtils.hasPartyRole(req.user, order.relatedParty, 'customer');
         });
 
         if (!isArray) {
@@ -62,12 +63,12 @@ var inventory = (function() {
                     message: 'You are not authorized to retrieve the specified offering from the inventory'
                 });
             } else {
-                tmfUtils.updateBody(req, filteredOrders[0]);
+                utils.updateBody(req, filteredOrders[0]);
                 callback(null);
             }
 
         } else {
-            tmfUtils.updateBody(req, filteredOrders);
+            utils.updateBody(req, filteredOrders);
             callback(null);
         }
 
