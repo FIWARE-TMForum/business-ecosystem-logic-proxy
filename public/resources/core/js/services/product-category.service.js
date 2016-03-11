@@ -95,9 +95,9 @@
                 categoryId: categoryId
             };
 
-            resource.get(params, function (category) {
-                saveCategory(category);
-                deferred.resolve(category);
+            resource.get(params, function (categoryRetrieved) {
+                saveCategory(categoryRetrieved);
+                deferred.resolve(categoryRetrieved);
             }, function (response) {
                 deferred.reject(response);
             });
@@ -145,8 +145,8 @@
                     breadcrumb.unshift(dataCached.subcategories[categoryId]);
                     findParent(dataCached.subcategories[categoryId].parentId);
                 } else {
-                    detail(categoryId).then(function (category) {
-                        findParent(category.id);
+                    detail(categoryId).then(function (categoryRetrieved) {
+                        findParent(categoryRetrieved.id);
                     });
                 }
             }
