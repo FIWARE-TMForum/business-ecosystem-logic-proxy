@@ -1,5 +1,6 @@
 var async = require('async'),
     config = require('./../../config'),
+    equal = require('deep-equal'),
     request = require('request'),
     storeClient = require('./../../lib/store').storeClient,
     url = require('url'),
@@ -95,8 +96,17 @@ var catalog = (function() {
 
         }
 
+        // When updating an offering, it must be checked that the productSpecification field is not modified
+        if (newBody && previousBody && newBody.productSpecification &&
+                !equal(newBody.productSpecification, previousBody.productSpecification)) {
+
+            return callback({
+                status: 403,
+                message: 'Field productSpecification cannot be modified'
+            });
+        }
+
         // Check that the product attached to the offering is owned by the same user
-        // FIXME: Maybe there is a bug here...
         retrieveProduct(previousBody || newBody, function(err, result) {
 
             if (err) {
