@@ -68,7 +68,7 @@
                         extendBreadcrumb(category).then(function () {
                             i++;
                             if (i === categoryList.length) {
-                                deferred.resolve(orderByParentId(categoryList));
+                                deferred.resolve(categoryList);
                             }
                         });
                     });
@@ -190,34 +190,6 @@
                     breadcrumb.unshift(dataCached.subcategories[categoryId]);
                     findParent(dataCached.subcategories[categoryId].parentId);
                 }
-            }
-        }
-
-        function orderByParentId(categoryList) {
-            /* jshint validthis: true */
-            var ids = categoryList.filter(hasParentId).map(getParentId);
-            var result = [];
-
-            categoryList.filter(function (category) {
-                return ids.indexOf(category.id) === -1;
-            }).forEach(function (category) {
-                result = result.concat(category.getBreadcrumb().filter(hasAlreadyTaken), category);
-            });
-
-            return result;
-
-            function hasAlreadyTaken(parentCategory) {
-                return !result.some(function (category) {
-                    return parentCategory.id === category.id;
-                });
-            }
-
-            function hasParentId(category) {
-                return !category.isRoot;
-            }
-
-            function getParentId(category) {
-                return category.parentId;
             }
         }
 

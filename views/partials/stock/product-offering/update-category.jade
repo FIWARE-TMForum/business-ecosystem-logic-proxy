@@ -9,7 +9,7 @@
             th Name
             th Updated
         tbody
-          tr(ng-repeat="category in categorySearchVM.list", ng-class="{ active: updateVM.hasCategory(category) }")
+          tr(ng-repeat="category in categorySearchVM.list | orderByParentId", ng-class="{ active: updateVM.hasCategory(category) }")
             td
               span(ng-repeat="parentCategory in category.getBreadcrumb()") {{ parentCategory.name }} / 
               strong {{ category.name }}

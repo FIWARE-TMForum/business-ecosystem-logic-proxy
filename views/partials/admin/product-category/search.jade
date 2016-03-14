@@ -19,7 +19,7 @@ ui-view
                   th Name
                   th Updated
               tbody
-                tr(ng-repeat="category in searchVM.list")
+                tr(ng-repeat="category in searchVM.list | orderByParentId")
                   td
                     .status-item(class="status-{{ category.lifecycleStatus | lowercase }}")
                       span.item-icon

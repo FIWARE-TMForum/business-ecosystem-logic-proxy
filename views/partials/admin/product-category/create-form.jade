@@ -42,7 +42,7 @@ form(name="step.form", novalidate)
             th Name
             th Updated
         tbody
-          tr(ng-repeat="category in categorySearchVM.list", ng-class="{ active: createVM.category.id == category.id }", ng-click="createVM.setCategory(category)")
+          tr(ng-repeat="category in categorySearchVM.list | orderByParentId", ng-class="{ active: createVM.category.id == category.id }", ng-click="createVM.setCategory(category)")
             td
               span(ng-repeat="parentCategory in category.getBreadcrumb()") {{ parentCategory.name }} / 
               strong {{ category.name }}
