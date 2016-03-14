@@ -1,28 +1,8 @@
-var async = require('async'),
-    config = require('./../../config'),
-    request = require('request'),
-    tmfUtils = require('./../../lib/tmfUtils'),
+var config = require('./../../config'),
+    url = require('url'),
     utils = require('./../../lib/utils');
 
 var party = (function() {
-
-    //////////////////////////////////////////////////////////////////////////////////////////////
-    /////////////////////////////////////// PRE-VALIDATION ///////////////////////////////////////
-    //////////////////////////////////////////////////////////////////////////////////////////////
-
-    var invalidJSON = function(callback) {
-        callback({
-            status: 400,
-            message: 'The provided body is not a valid JSON'
-        });
-    };
-
-    var invalidRelatedParty = function(callback) {
-        callback({
-            status: 403,
-            message: 'The user making the request and the specified owner are not the same user'
-        });
-    };
 
     var validateCreation = function(req, callback) {
 
@@ -30,127 +10,92 @@ var party = (function() {
 
             var party = JSON.parse(req.body);
 
-            if (tmfUtils.isOwner(req.user, party)) {
-                callback(null);
+            if (party.id && party.id === req.user.id) {
+                callback();
             } else {
-                invalidRelatedParty(callback);
-            }
-
-        } catch (e) {
-            invalidJSON(callback);
-        }
-    };
-
-    var validateUpdate = function(req, callback) {
-
-        try {
-
-            var updatedParty = JSON.parse(req.body);
-
-            // When relatedParty is updated, we have to ensure that the owner is still valid
-            if ('relatedParty' in updatedParty && !tmfUtils.isOwner(req.user, updatedParty)) {
-                invalidRelatedParty(callback);
-            } else {
-
-                var partyUrl = utils.getAPIURL(config.appSsl, config.appHost, config.endpoints.party.port, req.apiUrl);
-
-                request(partyUrl, function (err, response, body) {
-
-                    if (err || response.statusCode >= 400) {
-
-                        if (response.statusCode === 404) {
-
-                            callback({
-                                status: 404,
-                                message: 'The required resource does not exist'
-                            });
-
-                        } else {
-
-                            callback({
-                                status: 500,
-                                message: 'The required resource could not be retrieved'
-                            });
-                        }
-
-                    } else {
-
-                        var previousParty = JSON.parse(body);
-
-                        if (tmfUtils.isOwner(req.user, previousParty)) {
-                            callback({
-                                status: 403,
-                                message: 'You are not allowed to update this party'
-                            });
-                        } else {
-                            callback(null);
-                        }
-                    }
+                callback({
+                    status: 403,
+                    message: 'Provided user ID and request user ID mismatch'
                 });
             }
 
         } catch (e) {
-            invalidJSON(callback);
+            callback({
+                status: 400,
+                message: 'The provided body is not a valid JSON'
+            });
         }
     };
 
-    var validators = {
-        'GET': [ tmfUtils.validateLoggedIn ],
-        'POST': [ tmfUtils.validateLoggedIn, validateCreation ],
-        'PATCH': [ tmfUtils.validateLoggedIn, validateUpdate ],
-        'PUT': [ tmfUtils.validateLoggedIn, validateUpdate ],
-        'DELETE': [ tmfUtils.validateLoggedIn, validateUpdate ]
-    };
+    var validateCollectionAccess = function(req, callback) {
 
-    var checkPermissions = function (req, callback) {
-        var reqValidators = [];
+        switch(req.method.toUpperCase()) {
 
-        for (var i in validators[req.method]) {
-            reqValidators.push(validators[req.method][i].bind(this, req));
-        }
-
-        async.series(reqValidators, callback);
-    };
-
-
-    //////////////////////////////////////////////////////////////////////////////////////////////
-    /////////////////////////////////////// POST-VALIDATION //////////////////////////////////////
-    //////////////////////////////////////////////////////////////////////////////////////////////
-
-    var executePostValidation = function(req, callback) {
-
-        var party = JSON.parse(req.body);
-
-        if (req.method === 'GET') {
-
-            // Users are not allowed to list parties
-            if (Array.isArray(party)) {
+            case 'GET':
 
                 callback({
                     status: 403,
-                    message: 'You are not allowed to list parties'
+                    message: 'Parties cannot be listed'
                 });
 
-            } else {
+                break;
 
-                if (tmfUtils.isOwner(req.user, party)) {
-                    callback(null);
-                } else {
-                    callback({
-                        status: 403,
-                        message: 'You are not allowed to retrieve this element'
-                    })
-                }
-            }
+            case 'POST':
 
-        } else {
-            callback(null);
+                validateCreation(req, callback);
+                break;
+
+            default:
+                callback();
         }
     };
 
+    var validateResourceAccess = function(req, userId, callback) {
+        if (req.user.id === userId) {
+            callback();
+        } else {
+            callback({
+                status: 403,
+                message: 'You are not allowed to access this resource'
+            });
+        }
+    };
+
+    var checkPermissions = function (req, callback) {
+
+        utils.validateLoggedIn(req, function(err) {
+
+            if (err) {
+                callback(err);
+            } else {
+
+                var individualsPattern = new RegExp('^/' + config.endpoints.party.path +
+                        '/api/partyManagement/v2/individual(/([^/]*))?$');
+                var apiPath = url.parse(req.apiUrl).pathname;
+
+                var regexResult = individualsPattern.exec(apiPath);
+
+                if (regexResult) {
+
+                    var userId = regexResult[2];
+
+                    if (!userId) {
+                        validateCollectionAccess(req, callback);
+                    } else {
+                        validateResourceAccess(req, userId, callback);
+                    }
+                } else {
+                    callback({
+                        status: 404,
+                        message: 'API not implemented'
+                    });
+                }
+            }
+        });
+    };
+
     return {
-        checkPermissions: checkPermissions,
-        executePostValidation: executePostValidation
+        checkPermissions: checkPermissions
     };
 
 })();
