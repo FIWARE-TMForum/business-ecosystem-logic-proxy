@@ -429,6 +429,7 @@ var renderTemplate = function(req, res, viewName) {
         orderingPath: config.endpoints.ordering.path,
         inventoryPath: config.endpoints.inventory.path,
         chargingPath: config.endpoints.charging.path,
+        partyPath: config.endpoints.party.path,
         shoppingCartPath: config.shoppingCartPath,
         rssPath: config.endpoints.rss.path,
         cssFilesToInject: cssFilesToInject,

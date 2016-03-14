@@ -24,6 +24,7 @@ html(ng-app="app")
           CATALOGUE_MANAGEMENT: '#{ proxyPath }/#{ catalogPath }/api/catalogManagement/v2',
           PRODUCTORDER_MANAGEMENT: '#{ proxyPath }/#{ orderingPath }/api/productOrdering/v2',
           INVENTORY: '#{ proxyPath }/#{ inventoryPath }/api/productInventory/v2',
+          PARTY_MANAGEMENT: '#{ proxyPath }/#{ partyPath }/api/partyManagement/v2',
           PAYMENT: '#{ proxyPath }/#{ chargingPath }/api/orderManagement/orders/:action',
           SHOPPING_CART: '#{ shoppingCartPath }/:action/:id'
         })
@@ -47,7 +48,7 @@ html(ng-app="app")
         angular.module('app')
           .constant('LOGGED_USER', {
             id: '#{ user.id }',
-            href: '#{ contextPath }/#{ chargingPath }/api/userManagement/users/#{ user.id }',
+            href: '#{ contextPath }/#{ partyPath }/api/partyManagement/v2/individual/#{ user.id }',
             bearerToken: '#{ user.accessToken }'
           })
           .run(function ($http, LOGGED_USER) {
