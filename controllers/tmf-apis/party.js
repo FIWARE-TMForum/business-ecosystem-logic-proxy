@@ -11,11 +11,11 @@ var party = (function() {
             var party = JSON.parse(req.body);
 
             if (party.id && party.id === req.user.id) {
-                callback();
+                callback(null);
             } else {
                 callback({
                     status: 403,
-                    message: 'Provided user ID and request user ID mismatch'
+                    message: 'Provided party ID and request user ID mismatch'
                 });
             }
 
@@ -46,13 +46,13 @@ var party = (function() {
                 break;
 
             default:
-                callback();
+                callback(null);
         }
     };
 
     var validateResourceAccess = function(req, userId, callback) {
         if (req.user.id === userId) {
-            callback();
+            callback(null);
         } else {
             callback({
                 status: 403,

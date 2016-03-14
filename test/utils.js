@@ -30,6 +30,10 @@ var defaultConfig = {
         'rss': {
             'path': 'rss',
             'port': '753'
+        },
+        'party': {
+            'path': 'party',
+            'port': 74
         }
     }
 };
@@ -46,7 +50,7 @@ exports.emptyLogger = {
             return {
                 'info': emptyFunction,
                 'warn': emptyFunction,
-                'error': emptyFunction,
+                'error': emptyFunction
             }
         }
     }
