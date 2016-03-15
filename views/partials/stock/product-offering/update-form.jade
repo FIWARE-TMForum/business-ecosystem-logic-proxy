@@ -62,6 +62,11 @@ form(name="updateVM.form", novalidate)
       span Description
       small.text-muted (optional)
     textarea.form-control(rows="3", name="description", ng-model="updateVM.data.description")
+  .form-group(ng-if="updateVM.data.place.length")
+    label Places
+    .h4
+      .label.label-default.inline-block(ng-repeat="place in updateVM.data.place")
+        span.item-text {{ place.name }}
   .form-group(ng-show="updateVM.item.isBundle")
     label Bundled Offerings
     .table-responsive

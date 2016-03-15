@@ -36,6 +36,11 @@ form(name="step.form", novalidate)
       ng-model="createVM.data.description"
       readonly
     )
+  .form-group(ng-if="createVM.places.length")
+    label Places
+    .h4
+      .label.label-default.inline-block(ng-repeat="name in createVM.places")
+        span.item-text {{ name }}
   .h5.text-dark-secondary
     strong Product Spec.
   .form-group
