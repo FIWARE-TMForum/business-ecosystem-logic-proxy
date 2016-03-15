@@ -6,6 +6,13 @@
       .panel-body
         .h3.text-center.text-dark-secondary
           strong {{ detailVM.item.name }}
+        .h5(ng-repeat="category in detailVM.categories")
+          a.label.item-parentcategory(ng-repeat="parentCategory in category.getBreadcrumb()", ui-sref="offering({ categoryId: parentCategory.id })")
+            span.item-icon.fa.fa-tag
+            span.item-text {{ parentCategory.name }}
+          a.label.item-category(ui-sref="offering({ categoryId: category.id })")
+            span.item-icon.fa.fa-tag
+            span.item-text {{ category.name }}
         .h5.text-right
           strong {{ detailVM.item.formatCheapestPriceplan() }}
         .btn-toolbar(ng-if="user.isAuthenticated()")

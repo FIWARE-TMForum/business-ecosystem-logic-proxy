@@ -26,16 +26,15 @@
             subcategories: {}
         };
 
+        resource.prototype.getBreadcrumb = getBreadcrumb;
         resource.prototype.serialize = serialize;
 
         return {
-            dataCached: dataCached,
             search: search,
             exists: exists,
             create: create,
             detail: detail,
             update: update,
-            getBreadcrumbOf: getBreadcrumbOf,
             initiate: initiate
         };
 
@@ -47,7 +46,7 @@
                 filters = {};
             }
 
-            if (!filters.admin) {
+            if (!filters.all) {
                 if (filters.categoryId) {
                     params['parentId'] = filters.categoryId;
                 } else {
@@ -56,10 +55,24 @@
             }
 
             resource.query(params, function (categoryList) {
+                var i = 0;
+
                 categoryList.forEach(function (category) {
                     saveCategory(category);
                 });
-                deferred.resolve(categoryList);
+
+                if (!filters.all) {
+                    deferred.resolve(categoryList);
+                } else {
+                    categoryList.forEach(function (category) {
+                        extendBreadcrumb(category).then(function () {
+                            i++;
+                            if (i === categoryList.length) {
+                                deferred.resolve(categoryList);
+                            }
+                        });
+                    });
+                }
             }, function (response) {
                 deferred.reject(response);
             });
@@ -89,15 +102,25 @@
             return deferred.promise;
         }
 
-        function detail(categoryId) {
+        function detail(categoryId, callExtendBreadcrumb) {
             var deferred = $q.defer();
             var params = {
                 categoryId: categoryId
             };
 
-            resource.get(params, function (category) {
-                saveCategory(category);
-                deferred.resolve(category);
+            if (typeof callExtendBreadcrumb !== 'boolean') {
+                callExtendBreadcrumb = true;
+            }
+
+            resource.get(params, function (categoryRetrieved) {
+                saveCategory(categoryRetrieved);
+                if (callExtendBreadcrumb) {
+                    extendBreadcrumb(categoryRetrieved).then(function () {
+                        deferred.resolve(categoryRetrieved);
+                    });
+                } else {
+                    deferred.resolve(categoryRetrieved);
+                }
             }, function (response) {
                 deferred.reject(response);
             });
@@ -124,14 +147,13 @@
             dataCached[category.isRoot ? 'roots' : 'subcategories'][category.id] = category;
         }
 
-        function getBreadcrumbOf(categoryId) {
+        function extendBreadcrumb(category) {
             var deferred = $q.defer();
-            var breadcrumb = [];
 
-            if (categoryId) {
-                findParent(categoryId);
+            if (category.isRoot) {
+                deferred.resolve(category);
             } else {
-                deferred.resolve(breadcrumb);
+                findParent(category.parentId);
             }
 
             return deferred.promise;
@@ -139,15 +161,34 @@
             function findParent(categoryId) {
 
                 if (categoryId in dataCached.roots) {
+                    deferred.resolve(category);
+                } else if (categoryId in dataCached.subcategories) {
+                    findParent(dataCached.subcategories[categoryId].parentId);
+                } else {
+                    detail(categoryId, false).then(function (categoryRetrieved) {
+                        findParent(categoryRetrieved.id);
+                    });
+                }
+            }
+        }
+
+        function getBreadcrumb() {
+            /* jshint validthis: true */
+            var breadcrumb = [];
+
+            if (!this.isRoot) {
+                findParent(this.parentId);
+            }
+
+            return breadcrumb;
+
+            function findParent(categoryId) {
+
+                if (categoryId in dataCached.roots) {
                     breadcrumb.unshift(dataCached.roots[categoryId]);
-                    deferred.resolve(breadcrumb);
                 } else if (categoryId in dataCached.subcategories) {
                     breadcrumb.unshift(dataCached.subcategories[categoryId]);
                     findParent(dataCached.subcategories[categoryId].parentId);
-                } else {
-                    detail(categoryId).then(function (category) {
-                        findParent(category.id);
-                    });
                 }
             }
         }
