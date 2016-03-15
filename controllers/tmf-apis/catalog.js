@@ -168,18 +168,55 @@ var catalog = (function() {
         });
     };
 
-    var validateCategory = function(updatedCategory, oldCategory, user, action, callback) {
+    var checkExistingCategory = function(apiUrl, categoryName, isRoot, parentId, callback) {
+
+        var categoryCollectionPath = '/category';
+        var categoryPath = apiUrl.substring(0, apiUrl.indexOf(categoryCollectionPath) +
+            categoryCollectionPath.length);
+
+        var queryParams = '?name=' + categoryName;
+
+        if (isRoot) {
+            queryParams += '&isRoot=true';
+        } else {
+            queryParams += '&parentId=' + parentId;
+        }
+
+        retrieveAsset(categoryPath + queryParams, function (err, result) {
+
+            if (err) {
+                callback({
+                    status: 500,
+                    message: 'It was impossible to check if the provided category already exists'
+                });
+            } else {
+
+                var existingCategories = JSON.parse(result.body);
+
+                if (!existingCategories.length) {
+                    callback();
+                } else {
+                    callback({
+                        status: 409,
+                        message: 'This category already exists'
+                    });
+                }
+            }
+
+        });
+    };
+
+    var validateCategory = function(req, updatedCategory, oldCategory, action, callback) {
 
         // Categories can only be created by administrators
-        if (!utils.hasRole(user, config.oauth2.roles.admin)) {
-
+        if (!utils.hasRole(req.user, config.oauth2.roles.admin)) {
             callback({
                 status: 403,
                 message: 'Only administrators can ' + action + ' categories'
             });
         } else {
 
-            if (updatedCategory) {
+            if (updatedCategory && ['POST', 'PATCH', 'PUT'].indexOf(req.method.toUpperCase()) >= 0) {
 
                 // Categories are created as root when isRoot is not included
                 var isRoot = 'isRoot' in updatedCategory ? updatedCategory.isRoot :
@@ -198,9 +235,39 @@ var catalog = (function() {
                         message: 'Non-root categories must contain a parent category'
                     });
                 } else {
-                    callback();
-                }
 
+                    var categoryName = 'name' in updatedCategory ? updatedCategory.name :
+                        (oldCategory ? oldCategory.name : null);
+
+                    if (!categoryName) {
+                        callback({
+                            status: 400,
+                            message: 'Category name is mandatory'
+                        });
+
+                    } else {
+
+                        var fieldUpdated = function(oldCategory, updatedCategory, field) {
+                            return oldCategory && updatedCategory[field] && updatedCategory[field] != oldCategory[field];
+                        };
+
+                        var newCategory = updatedCategory && !oldCategory;
+                        var nameUpdated = fieldUpdated(oldCategory, updatedCategory, 'name');
+                        var isRootUpdated = fieldUpdated(oldCategory, updatedCategory, 'isRoot');
+                        var parentIdUpdated = fieldUpdated(oldCategory, updatedCategory, 'parentId');
+
+                        // We should check for other categories with the same properties (name, isRoot, parentId) when:
+                        //   1.- The category is new (updatedCategory is not null && oldCategory is null)
+                        //   2.- The name of the category is updated
+                        //   3.- The parent ID of the category is updated
+                        //   4.- The root status of the category is changed
+                        if (newCategory || nameUpdated || isRootUpdated || parentIdUpdated) {
+                            checkExistingCategory(req.apiUrl, categoryName, isRoot, parentId, callback);
+                        } else {
+                            callback();
+                        }
+                    }
+                }
             } else {
                 callback();
             }
@@ -246,7 +313,7 @@ var catalog = (function() {
 
         if (categoriesPattern.test(req.apiUrl)) {
 
-            validateCategory(body, null, req.user, 'create', callback);
+            validateCategory(req, body, null, 'create', callback);
 
         } else {
 
@@ -403,7 +470,7 @@ var catalog = (function() {
 
                     if (categoriesPattern.test(req.apiUrl)) {
 
-                        validateCategory(parsedBody, previousBody, req.user, 'modify', callback);
+                        validateCategory(req, parsedBody, previousBody, 'modify', callback);
 
                     } else if (offeringsPattern.test(req.apiUrl)) {
 
