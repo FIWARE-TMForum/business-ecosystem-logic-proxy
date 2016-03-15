@@ -20,6 +20,7 @@ var ONLY_ADMINS_MODIFY_CATEGORIES = 'Only administrators can modify categories';
 var OFFERINGS_NOT_RETRIEVED = 'Attached offerings cannot be retrieved';
 var CATEGORY_EXISTS = 'This category already exists';
 var CATEGORIES_CANNOT_BE_CHECKED = 'It was impossible to check if the provided category already exists';
+var CATEGORY_NAME_MISSING = 'Category name is mandatory';
 
 
 describe('Catalog API', function() {
@@ -617,6 +618,10 @@ describe('Catalog API', function() {
 
     it('should not allow non-admin users to create categories', function(callback) {
         testCreateCategory(false, {}, null, 403, 'Only administrators can create categories', callback);
+    });
+
+    it('should not allow to create categories when name is not included', function(callback) {
+        testCreateCategory(true, { isRoot: true }, null, 400, CATEGORY_NAME_MISSING, callback);
     });
 
     it('should not allow to create categories when parentId is included for root categories', function(callback) {
@@ -1626,6 +1631,12 @@ describe('Catalog API', function() {
             FAILED_TO_RETRIEVE, done);
     });
 
+    it('should allow to update description of a category when admin', function(done) {
+
+        testUpdateCategory('PATCH', true, { status: 200, body: { name: 'invalid', isRoot: true } }, null,
+            { description: 'another-description' }, null, null, done);
+    });
+
     it('should allow to update name of a root category when admin', function(done) {
 
         var categoryName = 'valid';
@@ -1638,6 +1649,13 @@ describe('Catalog API', function() {
 
         testUpdateCategory('PATCH', true, { status: 200, body: { name: 'invalid', isRoot: true } }, categoriesRequest,
             { name: categoryName }, null, null, done);
+    });
+
+    it('should allow to update a category when fields include but they do not change', function(done) {
+
+        var category = { name: 'valid', isRoot: false, parentId: 7 };
+
+        testUpdateCategory('PATCH', true, { status: 200, body: category }, null, category, null, null, done);
     });
 
     it('should not allow to update name of a root category when admin and there are another category with the ' +
