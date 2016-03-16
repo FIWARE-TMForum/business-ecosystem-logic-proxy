@@ -178,7 +178,7 @@ var getOAuth2State = function(path) {
 
 var ensureAuthenticated = function(req, res, next) {
     if (!req.isAuthenticated()) {
-        var encodedState = getOAuth2State(req.path);
+        var encodedState = getOAuth2State(req.url);
         // This action will redirect the user the FIWARE Account portal,
         // so the next callback is not required to be called
         passport.authenticate('fiware', { scope: ['all_info'], state: encodedState })(req, res);
