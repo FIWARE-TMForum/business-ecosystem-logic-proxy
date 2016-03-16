@@ -15,21 +15,20 @@ ui-view
             table.table.table-bordered.table-hover
               thead
                 tr
-                  th #
+                  th Status
                   th Name
                   th Updated
               tbody
-                tr(ng-repeat="category in searchVM.roots")
-                  th {{ $index }}
-                  th
-                    a(ui-sref="admin.productCategory.update({ categoryId: category.id })", ui-sref-opts="{ inherit: false }") {{ category.name }}
+                tr(ng-repeat="category in searchVM.list | orderByParentId")
                   td
-                    time(am-time-ago="category.lastUpdate")
-                tr(ng-repeat="category in searchVM.subcategories")
-                  th {{ $index }}
-                  th
-                    span(ng-repeat="parentCategory in searchVM.getBreadcrumbOf(category)") {{ parentCategory.name }} / 
-                    a(ui-sref="admin.productCategory.update({ categoryId: category.id })", ui-sref-opts="{ inherit: false }") {{ category.name }}
+                    .status-item(class="status-{{ category.lifecycleStatus | lowercase }}")
+                      span.item-icon
+                      span.item-text {{ category.lifecycleStatus }}
+                  td
+                    span(ng-repeat="parentCategory in category.getBreadcrumb()") {{ parentCategory.name }} / 
+                    a(ui-sref="admin.productCategory.update({ categoryId: category.id })", ui-sref-opts="{ inherit: false }")
+                      strong
+                        {{ category.name }}
                   td
                     time(am-time-ago="category.lastUpdate")
       div(ng-switch-when="ERROR")

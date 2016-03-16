@@ -9,7 +9,8 @@
 
     angular
         .module('app')
-        .filter('status', statusFilter);
+        .filter('status', statusFilter)
+        .filter('orderByParentId', orderByParentId);
 
     function statusFilter() {
         return function (list) {
@@ -19,6 +20,48 @@
                 return statusList.indexOf(element.lifecycleStatus) !== -1;
             });
         };
+    }
+
+    function orderByParentId() {
+        return function (list) {
+            var unorderedList = list.slice(),
+                orderedList = [];
+
+            // Start adding the real roots.
+            addNextLevel(null, isRoot);
+
+            return orderedList;
+
+            function addNextLevel(parentId, levelFilter) {
+                var roots = [];
+
+                // Find the new roots.
+                for (var i = unorderedList.length - 1; i >= 0; i--) {
+                    if (levelFilter(unorderedList[i], parentId)) {
+                        // Add the root at the beginning to keep the current
+                        // order.
+                        roots.unshift(unorderedList[i]);
+                        // Remove the root from the unordered list.
+                        unorderedList.splice(i, 1);
+                    }
+                }
+
+                roots.forEach(function (root) {
+                    // Add the root to ordered list.
+                    orderedList.push(root);
+                    // Next, add the root children.
+                    addNextLevel(root.id, hasParentId);
+                });
+            }
+
+            function isRoot(item) {
+                return item.isRoot;
+            }
+
+            function hasParentId(item, parentId) {
+                return item.parentId === parentId;
+            }
+        }
     }
 
 })();

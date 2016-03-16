@@ -410,8 +410,6 @@ var jsAppFilesToInject = [
 
 // Admin dependencies
 var jsAdminFilesToInject = [
-    'controllers/admin.controller',
-    'controllers/admin.product-category.controller',
     'routes/admin.routes',
     'routes/admin.product-category.routes'
 ].map(function (path) {

@@ -14,92 +14,51 @@
 
     angular
         .module('app')
+        .controller('CategoryBreadcrumbCtrl', CategoryBreadcrumbController)
         .controller('CategorySearchCtrl', CategorySearchController)
-        .controller('CategorySearch2Ctrl', CategorySearch2Controller)
         .controller('CategoryCreateCtrl', CategoryCreateController)
         .controller('CategoryUpdateCtrl', CategoryUpdateController);
 
-    function CategorySearchController($state, Category, $rootScope, EVENTS, Utils) {
+    function CategoryBreadcrumbController($state, $rootScope, EVENTS, Utils, Category) {
         /* jshint validthis: true */
         var vm = this;
 
-        vm.breadcrumb = [];
         vm.list = [];
         vm.list.status = LOADING;
 
-        vm.roots = Category.dataCached.roots;
-        vm.subcategories = Category.dataCached.subcategories;
-
-        vm.getBreadcrumbOf = getBreadcrumbOf;
+        if ($state.params.categoryId != null) {
+            Category.detail($state.params.categoryId).then(function (categoryRetrieved) {
+                vm.category = categoryRetrieved;
+            });
+        }
 
         Category.search($state.params).then(function (categoryList) {
             angular.copy(categoryList, vm.list);
             vm.list.status = LOADED;
         }, function (response) {
-
             vm.list.status = ERROR;
-
             $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
                 error: Utils.parseError(response, 'It was impossible to load the list of categories')
             });
         });
-
-        function getBreadcrumbOf(category) {
-            var breadcrumb = [];
-
-            if (category.id in vm.subcategories) {
-                findParent(category.parentId);
-            }
-
-            return breadcrumb;
-
-            function findParent(categoryId) {
-
-                if (categoryId in vm.roots) {
-                    breadcrumb.unshift(vm.roots[categoryId]);
-                } else {
-                    breadcrumb.unshift(vm.subcategories[categoryId]);
-                    findParent(vm.subcategories[categoryId].parentId);
-                }
-            }
-        }
-
-        Category.getBreadcrumbOf($state.params.categoryId).then(function (categoryList) {
-            angular.copy(categoryList, vm.breadcrumb);
-            vm.breadcrumb.loaded = true;
-        });
     }
 
-    function CategorySearch2Controller($state, $rootScope, EVENTS, Category) {
+    function CategorySearchController($state, Category, $rootScope, EVENTS, Utils) {
         /* jshint validthis: true */
         var vm = this;
 
-        vm.breadcrumb = [];
         vm.list = [];
+        vm.list.status = LOADING;
 
-        vm.show = show;
-
-        refresh();
-
-        function show(categoryId) {
-            vm.categoryId = categoryId;
-            refresh();
-        }
-
-        function refresh() {
-            vm.list.status = LOADING;
-
-            Category.search({categoryId: vm.categoryId}).then(function (categoryList) {
-                angular.copy(categoryList, vm.list);
-                vm.list.status = LOADED;
-            }, function (response) {
+        Category.search({ all: true }).then(function (categoryList) {
+            angular.copy(categoryList, vm.list);
+            vm.list.status = LOADED;
+        }, function (response) {
+            vm.list.status = ERROR;
+            $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                error: Utils.parseError(response, 'It was impossible to load the list of categories')
             });
-
-            Category.getBreadcrumbOf(vm.categoryId).then(function (categoryList) {
-                vm.breadcrumb = categoryList;
-                vm.breadcrumb.loaded = true;
-            });
-        }
+        });
     }
 
     function CategoryCreateController($scope, $state, $rootScope, EVENTS, Category, Utils) {
@@ -120,47 +79,17 @@
         vm.stepList = stepList;
 
         vm.create = create;
-        vm.getBreadcrumbOf = getBreadcrumbOf;
-        vm.refreshCategories = refreshCategories;
-        vm.setRootCategory = setRootCategory;
+        vm.refresh = refresh;
+        vm.setCategory = setCategory;
 
-        vm.roots = Category.dataCached.roots;
-        vm.subcategories = Category.dataCached.subcategories;
-
-        function refreshCategories() {
-            if (!vm.data.isRoot) {
-                vm.status = LOADING;
-                Category.search({ admin: true }).then(function (categoryList) {
-                    vm.status = LOADED;
-                });
-            }
+        function refresh() {
             vm.data.parentId = null;
-            vm.rootCategory = null;
+            vm.category = null;
         }
 
-        function setRootCategory(category) {
+        function setCategory(category) {
             vm.data.parentId = category.id;
-            vm.rootCategory = category;
-        }
-
-        function getBreadcrumbOf(category) {
-            var breadcrumb = [];
-
-            if (category != null && category.id in vm.subcategories) {
-                findParent(category.parentId);
-            }
-
-            return breadcrumb;
-
-            function findParent(categoryId) {
-
-                if (categoryId in vm.roots) {
-                    breadcrumb.unshift(vm.roots[categoryId]);
-                } else {
-                    breadcrumb.unshift(vm.subcategories[categoryId]);
-                    findParent(vm.subcategories[categoryId].parentId);
-                }
-            }
+            vm.category = category;
         }
 
         function create() {

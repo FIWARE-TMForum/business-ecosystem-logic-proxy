@@ -18,6 +18,9 @@ var OFFERS_NOT_OBSOLETE_PRODUCT = 'All the attached offerings must be obsolete t
 var OFFERS_NOT_OBSOLETE_CATALOG = 'All the attached offerings must be obsolete to make a catalog obsolete';
 var ONLY_ADMINS_MODIFY_CATEGORIES = 'Only administrators can modify categories';
 var OFFERINGS_NOT_RETRIEVED = 'Attached offerings cannot be retrieved';
+var CATEGORY_EXISTS = 'This category already exists';
+var CATEGORIES_CANNOT_BE_CHECKED = 'It was impossible to check if the provided category already exists';
+var CATEGORY_NAME_MISSING = 'Category name is mandatory';
 
 
 describe('Catalog API', function() {
@@ -141,7 +144,7 @@ describe('Catalog API', function() {
         var utils = {
             validateLoggedIn: validateLoggedOk,
             hasRole: checkRoleMethod
-        }
+        };
 
         var catalogApi = getCatalogApi({}, tmfUtils, utils);
 
@@ -244,7 +247,7 @@ describe('Catalog API', function() {
         var utils = {
             validateLoggedIn: validateLoggedOk,
             hasRole: checkRoleMethod
-        }
+        };
 
         var storeClient = {
             storeClient: {
@@ -447,8 +450,8 @@ describe('Catalog API', function() {
 
         var utils = {
             validateLoggedIn: validateLoggedOk,
-            hasRole: checkRoleMethod,
-        }
+            hasRole: checkRoleMethod
+        };
 
         var catalogApi = getCatalogApi(storeClient, tmfUtils, utils);
 
@@ -509,7 +512,7 @@ describe('Catalog API', function() {
         testCreateProduct(storeValidatorErr, storeErrorStatus, storeErrorMessage, true, done);
     });
 
-    var testCreateCategory = function(admin, category, errorStatus, errorMsg, done) {
+    var testCreateCategory = function(admin, category, categoriesRequest, errorStatus, errorMsg, done) {
 
         var checkRoleMethod = jasmine.createSpy();
         checkRoleMethod.and.returnValues(admin);
@@ -523,18 +526,27 @@ describe('Catalog API', function() {
 
         // Basic properties
         var userName = 'test';
-        var offeringPath = '/catalog/category/';
+        var protocol = config.appSsl ? 'https' : 'http';
+        var url = protocol + '://' + config.appHost + ':' + config.endpoints.catalog.port;
+        var catalogPath = '/catalog/category';
 
         // Call the method
         var req = {
             method: 'POST',
-            apiUrl: offeringPath,
+            apiUrl: catalogPath,
             user: {
                 id: userName,
                 roles: [{ name: config.oauth2.roles.seller }]
             },
             body: JSON.stringify(category)
         };
+
+        // Mock server used by the proxy to check if there are another category with the same properties
+        if (categoriesRequest) {
+            nock(url)
+                .get(catalogPath + categoriesRequest.query)
+                .reply(categoriesRequest.status, categoriesRequest.body);
+        }
 
         catalogApi.checkPermissions(req, function(err) {
 
@@ -551,19 +563,73 @@ describe('Catalog API', function() {
     };
 
     it('should allow to create category', function(callback) {
-        testCreateCategory(true, { name: 'example' }, null, null, callback);
+
+        var categoryName = 'example';
+
+        var categoriesRequest = {
+            query: '?name=' + categoryName + '&isRoot=true',
+            status: 200,
+            body: []
+        };
+
+        testCreateCategory(true, { name: categoryName }, categoriesRequest, null, null, callback);
+    });
+
+    it('should not allow to create category when existing categories cannot be checked', function(callback) {
+
+        var categoryName = 'example';
+
+        var categoriesRequest = {
+            query: '?name=' + categoryName + '&isRoot=true',
+            status: 500,
+            body: 'ERROR'
+        };
+
+        testCreateCategory(true, { name: categoryName }, categoriesRequest, 500, CATEGORIES_CANNOT_BE_CHECKED, callback);
+    });
+
+    it('should not allow to create root category if there is a root category with the same name', function(callback) {
+
+        var categoryName = 'example';
+
+        var categoriesRequest = {
+            query: '?name=' + categoryName + '&isRoot=true',
+            status: 200,
+            body: [{}]
+        };
+
+        testCreateCategory(true, { name: categoryName }, categoriesRequest, 409, CATEGORY_EXISTS, callback);
+    });
+
+    it('should not allow to create non-root category if there is another category at the same level with the same name', function(callback) {
+
+        var categoryName = 'example';
+        var parentId = 7;
+
+        var categoriesRequest = {
+            query: '?name=' + categoryName + '&parentId=' + parentId,
+            status: 200,
+            body: [{}]
+        };
+
+        testCreateCategory(true, { name: categoryName, isRoot: false, parentId: parentId }, categoriesRequest,
+            409, CATEGORY_EXISTS, callback);
     });
 
     it('should not allow non-admin users to create categories', function(callback) {
-        testCreateCategory(false, {}, 403, 'Only administrators can create categories', callback);
+        testCreateCategory(false, {}, null, 403, 'Only administrators can create categories', callback);
+    });
+
+    it('should not allow to create categories when name is not included', function(callback) {
+        testCreateCategory(true, { isRoot: true }, null, 400, CATEGORY_NAME_MISSING, callback);
     });
 
     it('should not allow to create categories when parentId is included for root categories', function(callback) {
-        testCreateCategory(true, { parentId: 7, isRoot: true }, 400, PARENT_ID_INCLUDED, callback);
+        testCreateCategory(true, { parentId: 7, isRoot: true }, null, 400, PARENT_ID_INCLUDED, callback);
     });
 
     it('should not allow to create categories non-root categories without parent', function(callback) {
-        testCreateCategory(true, { isRoot: false }, 400, MISSING_PARENT_ID, callback);
+        testCreateCategory(true, { isRoot: false }, null, 400, MISSING_PARENT_ID, callback);
     });
 
 
@@ -585,7 +651,7 @@ describe('Catalog API', function() {
         var utils = {
             validateLoggedIn: validateLoggedOk,
             hasRole: checkRoleMethod
-        }
+        };
 
         var catalogApi = getCatalogApi({}, tmfUtils, utils);
 
@@ -1538,7 +1604,7 @@ describe('Catalog API', function() {
 
     // CATEGORIES
 
-    var testUpdateCategory = function(method, admin, requestFails, updatedCategory, oldCategory,
+    var testUpdateCategory = function(method, admin, oldStateRequest, existingCategoriesRequest, updatedCategory,
                                       errorStatus, errorMessage, done) {
 
         var checkRoleMethod = jasmine.createSpy();
@@ -1551,24 +1617,27 @@ describe('Catalog API', function() {
         var catalogApi = getCatalogApi({}, {}, utils);
 
         var userName = 'test';
-        var path = '/catalog/category/1';
+        var basicPath = '/catalog/category';
+        var categoryResourcePath = basicPath + '/7';
         var protocol = config.appSsl ? 'https' : 'http';
         var url = protocol + '://' + config.appHost + ':' + config.endpoints.catalog.port;
 
-        // statusCode depends on whether the request fails or not
-        var statusOk = 200;
-        var statusErr = 500;
-        var statusCode = requestFails ? statusErr : statusOk;
-
-        // The mock server that will handle the request
+        // The mock server that will handle the request to retrieve the old state of the category
         nock(url)
-            .get(path)
-            .reply(statusCode, JSON.stringify(oldCategory));
+            .get(categoryResourcePath)
+            .reply(oldStateRequest.status, JSON.stringify(oldStateRequest.body));
+
+        if (existingCategoriesRequest) {
+            // The mock server that will handle the request to retrieve categories with the same properties
+            nock(url)
+                .get(basicPath + existingCategoriesRequest.query)
+                .reply(existingCategoriesRequest.status, JSON.stringify(existingCategoriesRequest.body));
+        }
 
         // Call the method
         var req = {
             method: method,
-            apiUrl: path,
+            apiUrl: categoryResourcePath,
             user: {
                 id: userName,
                 roles: []
@@ -1590,79 +1659,300 @@ describe('Catalog API', function() {
     };
 
     it('should allow to delete category when admin', function(done) {
-        testUpdateCategory('DELETE', true, false, null, {}, null, null, done);
+        testUpdateCategory('DELETE', true, { status: 200, body: { } }, null, null, null, null, done);
     });
 
     it('should not allow to delete category when no admin', function(done) {
-        testUpdateCategory('DELETE', false, false, null, {}, 403,
+        testUpdateCategory('DELETE', false, { status: 200, body: {} }, null, null, 403,
             ONLY_ADMINS_MODIFY_CATEGORIES, done);
     });
 
     it('should not allow to delete category when category cannot be retrieved', function(done) {
-        testUpdateCategory('DELETE', false, true, null, {}, 500,
+        testUpdateCategory('DELETE', false, { status: 500, body: {} }, null, null, 500,
             FAILED_TO_RETRIEVE, done);
     });
 
+    it('should allow to update description of a category when admin', function(done) {
+
+        testUpdateCategory('PATCH', true, { status: 200, body: { name: 'invalid', isRoot: true } }, null,
+            { description: 'another-description' }, null, null, done);
+    });
+
     it('should allow to update name of a root category when admin', function(done) {
-        testUpdateCategory('PATCH', true, false, { name: 'correct' }, { name: 'invalid', isRoot: true },
-            null, null, done);
+
+        var categoryName = 'valid';
+
+        var categoriesRequest = {
+            query: '?name=' + categoryName + '&isRoot=true',
+            status: 200,
+            body: []
+        };
+
+        testUpdateCategory('PATCH', true, { status: 200, body: { name: 'invalid', isRoot: true } }, categoriesRequest,
+            { name: categoryName }, null, null, done);
+    });
+
+    it('should allow to update a category when fields include but they do not change', function(done) {
+
+        var category = { name: 'valid', isRoot: false, parentId: 7 };
+
+        testUpdateCategory('PATCH', true, { status: 200, body: category }, null, category, null, null, done);
+    });
+
+    it('should not allow to update name of a root category when admin and there are another category with the ' +
+            'same name', function(done) {
+
+        var categoryName = 'valid';
+
+        var categoriesRequest = {
+            query: '?name=' + categoryName + '&isRoot=true',
+            status: 200,
+            body: [{}]
+        };
+
+        testUpdateCategory('PATCH', true, { status: 200, body: { name: 'invalid', isRoot: true } }, categoriesRequest,
+            { name: categoryName }, 409, CATEGORY_EXISTS, done);
+    });
+
+
+    it('should not allow to update name of a root category when admin and existing categories cannot be retrieved', function(done) {
+
+        var categoryName = 'valid';
+
+        var categoriesRequest = {
+            query: '?name=' + categoryName + '&isRoot=true',
+            status: 500,
+            body: []
+        };
+
+        testUpdateCategory('PATCH', true, { status: 200, body: { name: 'invalid', isRoot: true } }, categoriesRequest,
+            { name: categoryName }, 500, CATEGORIES_CANNOT_BE_CHECKED, done);
     });
 
     it('should allow to update name of a non-root category when admin', function(done) {
-        testUpdateCategory('PATCH', true, false, { name: 'correct' }, { name: 'invalid', isRoot: false, parentId: 7 },
-            null, null, done);
+
+        var categoryName = 'correct';
+        var parentId = 7;
+
+        var categoriesRequest = {
+            query: '?name=' + categoryName + '&parentId=' + parentId,
+            status: 200,
+            body: []
+        };
+
+        testUpdateCategory('PATCH', true, { status: 200, body: { name: 'invalid', isRoot: false, parentId: parentId } },
+            categoriesRequest, { name: categoryName }, null, null, done);
+    });
+
+    it('should not allow to update name of a non-root category when admin and there are another category with ' +
+            'the same name', function(done) {
+
+        var categoryName = 'correct';
+        var parentId = 7;
+
+        var categoriesRequest = {
+            query: '?name=' + categoryName + '&parentId=' + parentId,
+            status: 200,
+            body: [{}]
+        };
+
+        testUpdateCategory('PATCH', true, { status: 200, body: { name: 'invalid', isRoot: false, parentId: parentId } },
+            categoriesRequest, { name: categoryName }, 409, CATEGORY_EXISTS, done);
+    });
+
+    it('should not allow to update name of a non-root category when admin and existing categories cannot ' +
+            'be retrieved', function(done) {
+
+        var categoryName = 'correct';
+        var parentId = 7;
+
+        var categoriesRequest = {
+            query: '?name=' + categoryName + '&parentId=' + parentId,
+            status: 500,
+            body: []
+        };
+
+        testUpdateCategory('PATCH', true, { status: 200, body: { name: 'invalid', isRoot: false, parentId: parentId } },
+            categoriesRequest, { name: categoryName }, 500, CATEGORIES_CANNOT_BE_CHECKED, done);
     });
 
     it('should not allow to update category when no admin', function(done) {
-        testUpdateCategory('PATCH', false, false, { name: 'correct' }, { name: 'invalid', isRoot: true }, 403,
-            ONLY_ADMINS_MODIFY_CATEGORIES, done);
+
+        testUpdateCategory('PATCH', false, { status: 200, body: { name: 'invalid', isRoot: true } }, null,
+            { name: 'correct' }, 403, ONLY_ADMINS_MODIFY_CATEGORIES, done);
     });
 
     it('should not allow to update category when category cannot be retrieved', function(done) {
-        testUpdateCategory('PATCH', true, true, { name: 'correct' }, null, 500,
+
+        testUpdateCategory('PATCH', true, { status: 500, body: null }, null, { name: 'correct' }, 500,
             FAILED_TO_RETRIEVE, done);
     });
 
     it('should not allow to update category when trying to remove parent ID', function(done) {
-        testUpdateCategory('PATCH', true, false, { name: 'correct', parentId: null },
-            { name: 'invalid', isRoot: false, parentId: 9 }, 400, MISSING_PARENT_ID, done);
+
+        testUpdateCategory('PATCH', true, { status: 200, body: { name: 'invalid', isRoot: false, parentId: 9 } }, null,
+            { name: 'correct', parentId: null }, 400, MISSING_PARENT_ID, done);
     });
 
     it('should not allow to update category when setting it as non-root without parent', function(done) {
-        testUpdateCategory('PATCH', true, false, { name: 'correct', isRoot: false }, { name: 'invalid' },
-            400, MISSING_PARENT_ID, done);
+
+        testUpdateCategory('PATCH', true, { status: 200, body: { name: 'invalid' } }, null,
+            { name: 'correct', isRoot: false }, 400, MISSING_PARENT_ID, done);
     });
 
     it('should allow to update category when setting it as non-root and parent already set', function(done) {
-        testUpdateCategory('PATCH', true, false, { name: 'correct', isRoot: false }, { name: 'invalid', parentId: 7 },
-            null, null, done);
+
+        var categoryName = 'correct';
+        var parentId = 7;
+
+        var categoriesRequest = {
+            query: '?name=' + categoryName + '&parentId=' + parentId,
+            status: 200,
+            body: []
+        };
+
+        testUpdateCategory('PATCH', true, { status: 200, body: { name: 'invalid', parentId: parentId } },
+            categoriesRequest, { name: categoryName, isRoot: false }, null, null, done);
+    });
+
+    it('should not allow to update category when setting it as non-root and parent already set and another category ' +
+            'with the same properties exists', function(done) {
+
+        var categoryName = 'correct';
+        var parentId = 7;
+
+        var categoriesRequest = {
+            query: '?name=' + categoryName + '&parentId=' + parentId,
+            status: 200,
+            body: [{}]
+        };
+
+        testUpdateCategory('PATCH', true, { status: 200, body: { name: 'invalid', parentId: parentId } },
+            categoriesRequest, { name: categoryName, isRoot: false }, 409, CATEGORY_EXISTS, done);
+    });
+
+    it('should not allow to update category when setting it as non-root and parent already set and existing ' +
+            'categories cannot be retrieved', function(done) {
+
+        var categoryName = 'correct';
+        var parentId = 7;
+
+        var categoriesRequest = {
+            query: '?name=' + categoryName + '&parentId=' + parentId,
+            status: 500,
+            body: []
+        };
+
+        testUpdateCategory('PATCH', true, { status: 200, body: { name: 'invalid', parentId: parentId } },
+            categoriesRequest, { name: categoryName, isRoot: false }, 500, CATEGORIES_CANNOT_BE_CHECKED, done);
     });
 
     it('should not allow to update category when setting it as root category and parent specified', function(done) {
-        testUpdateCategory('PATCH', true, false, { name: 'correct', isRoot: true, parentId: 7 }, { name: 'invalid'},
-            400, PARENT_ID_INCLUDED, done);
+        testUpdateCategory('PATCH', true, { status: 200, body: { name: 'invalid'} }, null,
+            { name: 'correct', isRoot: true, parentId: 7 }, 400, PARENT_ID_INCLUDED, done);
     });
 
     it('should not allow to update category when setting it as root category and parent specified #2', function(done) {
-        testUpdateCategory('PATCH', true, false, { name: 'correct', isRoot: true },
-            { name: 'invalid', isRoot: false, parentId: 7 },
-            400, PARENT_ID_INCLUDED, done);
+
+        testUpdateCategory('PATCH', true, { status: 200, body: { name: 'invalid', isRoot: false, parentId: 7 } },
+            null, { name: 'correct', isRoot: true }, 400, PARENT_ID_INCLUDED, done);
     });
 
     it('should allow to update category when setting it as root category and parent removed', function(done) {
-        testUpdateCategory('PATCH', true, false, { name: 'correct', isRoot: true, parentId: null },
-            { name: 'invalid', isRoot: false, parentId: 7 },
-            null, null, done);
+
+        var categoryName = 'correct';
+
+        var categoriesRequest = {
+            query: '?name=' + categoryName + '&isRoot=true',
+            status: 200,
+            body: []
+        };
+
+        testUpdateCategory('PATCH', true, { status: 200, body: { name: 'invalid', isRoot: false, parentId: 7 } },
+            categoriesRequest, { name: categoryName, isRoot: true, parentId: null }, null, null, done);
+    });
+
+    it('should not allow to update category when setting it as root category and parent removed and another ' +
+            'root category with the same name exists', function(done) {
+
+        var categoryName = 'correct';
+
+        var categoriesRequest = {
+            query: '?name=' + categoryName + '&isRoot=true',
+            status: 200,
+            body: [{}]
+        };
+
+        testUpdateCategory('PATCH', true, { status: 200, body: { name: 'invalid', isRoot: false, parentId: 7 } },
+            categoriesRequest, { name: categoryName, isRoot: true, parentId: null }, 409, CATEGORY_EXISTS, done);
+    });
+
+    it('should not allow to update category when setting it as root category and parent removed and existing ' +
+            'categories cannot be retrieved', function(done) {
+
+        var categoryName = 'correct';
+
+        var categoriesRequest = {
+            query: '?name=' + categoryName + '&isRoot=true',
+            status: 500,
+            body: []
+        };
+
+        testUpdateCategory('PATCH', true, { status: 200, body: { name: 'invalid', isRoot: false, parentId: 7 } },
+            categoriesRequest, { name: categoryName, isRoot: true, parentId: null }, 500, CATEGORIES_CANNOT_BE_CHECKED,
+            done);
     });
 
     it('should not allow to update category when adding parent to a root category', function(done) {
-        testUpdateCategory('PATCH', true, false, { name: 'correct', parentId: 7 }, { name: 'invalid', isRoot: true },
-            400, PARENT_ID_INCLUDED, done);
+        testUpdateCategory('PATCH', true, { status: 200, body: { name: 'invalid', isRoot: true } }, null,
+            { name: 'correct', parentId: 7 }, 400, PARENT_ID_INCLUDED, done);
     });
 
     it('should allow to update category when adding parent to a root category and setting it as non-root', function(done) {
-        testUpdateCategory('PATCH', true, false, { name: 'correct', parentId: 7, isRoot: false },
-            { name: 'invalid', isRoot: true }, null, null, done);
+
+        var categoryName = 'correct';
+        var parentId = 7;
+
+        var categoriesRequest = {
+            query: '?name=' + categoryName + '&parentId=' + parentId,
+            status: 200,
+            body: []
+        };
+
+        testUpdateCategory('PATCH', true, { status: 200, body: { name: 'invalid', isRoot: true } }, categoriesRequest,
+            { name: categoryName, parentId: parentId, isRoot: false }, null, null, done);
+    });
+
+    it('should not allow to update category when adding parent to a root category and setting it as non-root and ' +
+            'there is already a category with the same properties', function(done) {
+
+        var categoryName = 'correct';
+        var parentId = 7;
+
+        var categoriesRequest = {
+            query: '?name=' + categoryName + '&parentId=' + parentId,
+            status: 200,
+            body: [{}]
+        };
+
+        testUpdateCategory('PATCH', true, { status: 200, body: { name: 'invalid', isRoot: true } }, categoriesRequest,
+            { name: categoryName, parentId: parentId, isRoot: false }, 409, CATEGORY_EXISTS, done);
+    });
+
+    it('should not allow to update category when adding parent to a root category and setting it as non-root and ' +
+            'existing categories cannot be retrieved', function(done) {
+
+        var categoryName = 'correct';
+        var parentId = 7;
+
+        var categoriesRequest = {
+            query: '?name=' + categoryName + '&parentId=' + parentId,
+            status: 500,
+            body: []
+        };
+
+        testUpdateCategory('PATCH', true, { status: 200, body: { name: 'invalid', isRoot: true } }, categoriesRequest,
+            { name: categoryName, parentId: parentId, isRoot: false }, 500, CATEGORIES_CANNOT_BE_CHECKED, done);
     });
 
 });

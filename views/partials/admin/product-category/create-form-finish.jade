@@ -23,7 +23,7 @@ form(name="step.form", novalidate)
       readonly
     )
   .form-group(ng-if="!createVM.data.isRoot")
-    label Root category
+    label Parent category
     .table-responsive
       input(type="hidden", ng-model="createVM.data.parentId", required)
       table.table.table-bordered
@@ -34,10 +34,10 @@ form(name="step.form", novalidate)
         tbody
           tr
             td
-              span(ng-repeat="parentCategory in createVM.getBreadcrumbOf(createVM.rootCategory)") {{ parentCategory.name }} / 
-              strong {{ createVM.rootCategory.name }}
+              span(ng-repeat="parentCategory in createVM.category.getBreadcrumb()") {{ parentCategory.name }} / 
+              strong {{ createVM.category.name }}
             td
-              time(am-time-ago="createVM.rootCategory.lastUpdate")
+              time(am-time-ago="createVM.category.lastUpdate")
   .form-group.text-right
     a.btn.btn-success(
       ng-click="createVM.create()"

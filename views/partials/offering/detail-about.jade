@@ -10,6 +10,11 @@
       dd.text-dark-secondary {{ detailVM.item.version }}
       dt Description
       dd.text-dark-secondary {{ detailVM.item.description ? detailVM.item.description : 'No description provided.' }}
+      dt(ng-if="detailVM.item.place.length") Places
+      dd(ng-if="detailVM.item.place.length")
+        .h4
+          .label.label-default.inline-block(ng-repeat="place in detailVM.item.place")
+            span.item-text {{ place.name }}
       dt Updated
       dd.text-dark-secondary
         time {{ detailVM.item.lastUpdate | amDateFormat: 'dddd, MMMM Do YYYY, h:mm a' }}

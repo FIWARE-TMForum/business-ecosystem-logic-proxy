@@ -41,6 +41,23 @@ form(name="step.form", novalidate)
       span Enter a description
       small.text-muted (optional)
     textarea.form-control(rows="3", name="description", ng-model="createVM.data.description")
+  .form-group
+    label
+      span Enter places
+      small.text-muted (optional)
+    .input-group
+      input.form-control(
+        type="text"
+        name="place"
+        ng-model="createVM.place"
+      )
+      .input-group-btn
+        a.btn.btn-default.z-depth-0(ng-disabled="!createVM.place.length", ng-click="createVM.createPlace()")
+          span.item-icon.fa.fa-plus
+  .h4(ng-if="createVM.places.length")
+    .label.label-default.inline-block(ng-repeat="name in createVM.places")
+      span.item-text {{ name }}
+      span.item-icon.fa.fa-remove(ng-click="createVM.removePlace($index)")
   .form-group.text-right
     a.btn.btn-default.z-depth-1(ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])", ng-disabled="!step.form.$valid")
       span.item-text Next
