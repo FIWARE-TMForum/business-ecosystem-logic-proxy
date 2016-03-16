@@ -51,7 +51,7 @@ var ordering = (function(){
     ////////////////////////////////////////// CREATION //////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
 
-    var completeRelatedPartyInfo = function(item, user, callback) {
+    var completeRelatedPartyInfo = function(individualCollectionUrl, item, user, callback) {
 
         if (!item.product) {
 
@@ -90,7 +90,7 @@ var ordering = (function(){
             item.product.relatedParty.push({
                 id: user.id,
                 role: CUSTOMER,
-                href: ''
+                href: individualCollectionUrl + user.id
             });
         }
 
@@ -133,7 +133,7 @@ var ordering = (function(){
                                 item.product.relatedParty.push({
                                     id: owner.id,
                                     role: SELLER,
-                                    href: ''
+                                    href: individualCollectionUrl + owner.id
                                 });
                             });
 
@@ -214,9 +214,11 @@ var ordering = (function(){
         }
 
         var asyncTasks = [];
+        var individualCollectionUrl = utils.getAPIURL(req.secure, req.hostname, config.port,
+            '/' + config.endpoints.party.path + '/api/partyManagement/v2/individual/');
 
         body.orderItem.forEach(function(item) {
-           asyncTasks.push(completeRelatedPartyInfo.bind(this, item, req.user));
+            asyncTasks.push(completeRelatedPartyInfo.bind(this, individualCollectionUrl, item, req.user));
         });
 
         async.series(asyncTasks, function(err/*, results*/) {
