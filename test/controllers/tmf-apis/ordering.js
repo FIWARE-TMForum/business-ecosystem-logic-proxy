@@ -5,6 +5,7 @@ var nock = require('nock'),
 describe('Ordering API', function() {
 
     var config = testUtils.getDefaultConfig();
+    var PROXY_HOSTNAME = 'belp.fiware.org';
     var SERVER = (config.appSsl ? 'https' : 'http') + '://' + config.appHost + ':' + config.endpoints.ordering.port;
     var CATALOGSERVER = (config.appSsl ? 'https' : 'http') + '://' + config.appHost + ':' + config.endpoints.catalog.port;
 
@@ -232,6 +233,7 @@ describe('Ordering API', function() {
                 var orderingApi = getOrderingAPI({}, {}, utils);
 
                 var req = {
+                    hostname: PROXY_HOSTNAME,
                     user: userInfo,
                     method: 'POST',
                     body: body,
@@ -271,7 +273,7 @@ describe('Ordering API', function() {
                         }
                     });
                 }
-
+                
                 var body = {
                     relatedParty: [{
                         id: userName,
@@ -291,18 +293,23 @@ describe('Ordering API', function() {
                     .reply(200, {relatedParty: [{id: ownerName, role: 'owner'}]});
 
                 testOrderCreation(user, JSON.stringify(body), customerRoleRequired, null, done, function (req) {
+
                     var newBody = JSON.parse(req.body);
                     //expect(req.headers['content-length']).toBe(newBody.length);
+
+                    var individualsUrl = (config.https.enabled ? 'https' : 'http') + '://' + PROXY_HOSTNAME + ':' +
+                        config.port + '/' + config.endpoints.party.path + '/api/partyManagement/v2/individual/';
+
                     expect(newBody.orderItem[0].product.relatedParty).toEqual([
                         {
                             id: userName,
                             role: 'Customer',
-                            href: ''
+                            href: individualsUrl + userName
                         },
                         {
                             id: ownerName,
                             role: 'Seller',
-                            href: ''
+                            href: individualsUrl + ownerName
                         }]);
                 });
             };
