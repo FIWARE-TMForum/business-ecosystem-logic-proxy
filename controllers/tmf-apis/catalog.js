@@ -29,7 +29,7 @@ var catalog = (function() {
 
             if (err || response.statusCode >= 400) {
                 callback({
-                    status: response.statusCode ? response.statusCode : 500
+                    status: response ? response.statusCode : 500
                 });
             } else {
                 callback(null, {
