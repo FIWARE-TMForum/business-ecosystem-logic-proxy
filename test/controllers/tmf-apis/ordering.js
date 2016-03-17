@@ -5,9 +5,8 @@ var nock = require('nock'),
 describe('Ordering API', function() {
 
     var config = testUtils.getDefaultConfig();
-    var PROXY_HOSTNAME = 'belp.fiware.org';
     var SERVER = (config.appSsl ? 'https' : 'http') + '://' + config.appHost + ':' + config.endpoints.ordering.port;
-    var CATALOGSERVER = (config.appSsl ? 'https' : 'http') + '://' + config.appHost + ':' + config.endpoints.catalog.port;
+    var CATALOG_SERVER = (config.appSsl ? 'https' : 'http') + '://' + config.appHost + ':' + config.endpoints.catalog.port;
 
     var getOrderingAPI = function(storeClient, tmfUtils, utils) {
         return proxyquire('../../../controllers/tmf-apis/ordering', {
@@ -21,6 +20,10 @@ describe('Ordering API', function() {
 
     var validateLoggedOk = function (req, callback) {
         callback();
+    };
+
+    var getIndividualsCollectionURL = function() {
+        return 'http://belp.fiware.org:7891/party/api/partyManagement/v2/individual/';
     };
 
     beforeEach(function() {
@@ -230,10 +233,17 @@ describe('Ordering API', function() {
                     hasRole: checkRole
                 };
 
-                var orderingApi = getOrderingAPI({}, {}, utils);
+                var tmfUtils = {
+                    getIndividualsCollectionURL: function (receivedReq) {
+                        // req: the request sent to the API
+                        expect(receivedReq).toBe(req);
+                        return getIndividualsCollectionURL();
+                    }
+                };
+
+                var orderingApi = getOrderingAPI({}, tmfUtils, utils);
 
                 var req = {
-                    hostname: PROXY_HOSTNAME,
                     user: userInfo,
                     method: 'POST',
                     body: body,
@@ -282,12 +292,12 @@ describe('Ordering API', function() {
                     orderItem: orderItems
                 };
 
-                nock(CATALOGSERVER)
+                nock(CATALOG_SERVER)
                     .get(productOfferingPath)
                     .times(nOrderItems)
                     .reply(200, {productSpecification: {href: SERVER + productSpecPath}});
 
-                nock(CATALOGSERVER)
+                nock(CATALOG_SERVER)
                     .get(productSpecPath)
                     .times(nOrderItems)
                     .reply(200, {relatedParty: [{id: ownerName, role: 'owner'}]});
@@ -297,19 +307,16 @@ describe('Ordering API', function() {
                     var newBody = JSON.parse(req.body);
                     //expect(req.headers['content-length']).toBe(newBody.length);
 
-                    var individualsUrl = (config.https.enabled ? 'https' : 'http') + '://' + PROXY_HOSTNAME + ':' +
-                        config.port + '/' + config.endpoints.party.path + '/api/partyManagement/v2/individual/';
-
                     expect(newBody.orderItem[0].product.relatedParty).toEqual([
                         {
                             id: userName,
                             role: 'Customer',
-                            href: individualsUrl + userName
+                            href: getIndividualsCollectionURL() + userName
                         },
                         {
                             id: ownerName,
                             role: 'Seller',
-                            href: individualsUrl + ownerName
+                            href: getIndividualsCollectionURL() + ownerName
                         }]);
                 });
             };
@@ -349,11 +356,11 @@ describe('Ordering API', function() {
                     }]
                 };
 
-                nock(CATALOGSERVER)
+                nock(CATALOG_SERVER)
                     .get(productOfferingPath)
                     .reply(200, {productSpecification: {href: SERVER + productSpecPath}});
 
-                nock(CATALOGSERVER)
+                nock(CATALOG_SERVER)
                     .get(productSpecPath)
                     .reply(200, {relatedParty: [{id: ownerName, role: 'other_role'}]});
 
@@ -391,7 +398,7 @@ describe('Ordering API', function() {
                     }]
                 };
 
-                nock(CATALOGSERVER)
+                nock(CATALOG_SERVER)
                     .get(productOfferingPath)
                     .reply(500);
 
@@ -429,11 +436,11 @@ describe('Ordering API', function() {
                     }]
                 };
 
-                nock(CATALOGSERVER)
+                nock(CATALOG_SERVER)
                     .get(productOfferingPath)
                     .reply(200, {productSpecification: {href: SERVER + productSpecPath}});
 
-                nock(CATALOGSERVER)
+                nock(CATALOG_SERVER)
                     .get(productSpecPath)
                     .reply(500);
 

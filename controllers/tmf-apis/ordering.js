@@ -214,8 +214,7 @@ var ordering = (function(){
         }
 
         var asyncTasks = [];
-        var individualCollectionUrl = utils.getAPIURL(req.secure, req.hostname, config.port,
-            '/' + config.endpoints.party.path + '/api/partyManagement/v2/individual/');
+        var individualCollectionUrl = tmfUtils.getIndividualsCollectionURL(req);
 
         body.orderItem.forEach(function(item) {
             asyncTasks.push(completeRelatedPartyInfo.bind(this, individualCollectionUrl, item, req.user));

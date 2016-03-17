@@ -2,11 +2,13 @@ var proxyquire =  require('proxyquire'),
     testUtils = require('../utils');
 
 describe('TMF Utils', function() {
+
     var config = testUtils.getDefaultConfig();
 
-    var getTmfUtils = function() {
+    var getTmfUtils = function(utils) {
         return proxyquire('../../lib/tmfUtils', {
-            './../config' : config
+            './../config' : config,
+            './utils': utils || {}
         });
     };
 
@@ -381,6 +383,44 @@ describe('TMF Utils', function() {
             expect(result).toBe(false);
 
         });
+    });
+
+    describe('Get Party Individuals Collection URL', function() {
+
+        var testGetIndividualsCollectionURL = function(req) {
+
+            var utils = jasmine.createSpyObj('utils', ['getAPIURL']);
+
+            var tmfUtils = getTmfUtils(utils);
+            tmfUtils.getIndividualsCollectionURL(req);
+
+            expect(utils.getAPIURL).toHaveBeenCalledWith(req.secure, req.hostname, config.port,
+                '/' + config.endpoints.party.path + '/api/partyManagement/v2/individual/');
+
+
+        };
+
+        it('should call utils with http', function() {
+
+            var req = {
+                secure: false,
+                hostname: 'test'
+            };
+
+            testGetIndividualsCollectionURL(req)
+        });
+
+        it('should call utils with https', function() {
+
+            var req = {
+                secure: true,
+                hostname: 'another_host.com'
+            };
+
+            testGetIndividualsCollectionURL(req)
+        });
+
+
     });
 
 });
