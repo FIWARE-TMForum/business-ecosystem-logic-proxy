@@ -73,7 +73,9 @@ var catalog = (function() {
         return url.parse(offeringUrl.substring(0, productOfferingPos)).pathname;
     };
 
-    var validateOffering = function(user, offeringPath, previousBody, newBody, callback) {
+    var validateOffering = function(req, offeringPath, previousBody, newBody, callback) {
+
+        var user = req.user;
 
         var validStates = null;
         var errorMessageStateProduct = null;
@@ -116,7 +118,7 @@ var catalog = (function() {
                 var product = JSON.parse(result.body);
 
                 // Check that the user is the owner of the product
-                if (tmfUtils.isOwner(user, product)) {
+                if (tmfUtils.isOwner(req, product)) {
 
                     // States are only checked when the offering is being created
                     // or when the offering is being launched
@@ -289,8 +291,8 @@ var catalog = (function() {
     ////////////////////////////////////////// CREATION //////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
 
-    var createHandler = function(userInfo, resp, callback) {
-        if (tmfUtils.isOwner(userInfo, resp)) {
+    var createHandler = function(req, resp, callback) {
+        if (tmfUtils.isOwner(req, resp)) {
             callback();
         } else {
             callback({
@@ -340,7 +342,7 @@ var catalog = (function() {
 
             if (offeringsPattern.test(req.apiUrl)) {
 
-                validateOffering(req.user, req.apiUrl, null, body, function (err) {
+                validateOffering(req, req.apiUrl, null, body, function (err) {
 
                     if (err) {
                         callback(err);
@@ -363,11 +365,11 @@ var catalog = (function() {
                     if (err) {
                         callback(err);
                     } else {
-                        createHandler(req.user, body, callback);
+                        createHandler(req, body, callback);
                     }
                 });
             } else {
-                createHandler(req.user, body, callback);
+                createHandler(req, body, callback);
             }
         }
     };
@@ -484,11 +486,11 @@ var catalog = (function() {
 
                     } else if (offeringsPattern.test(req.apiUrl)) {
 
-                        validateOffering(req.user, req.apiUrl, previousBody, parsedBody, callback);
+                        validateOffering(req, req.apiUrl, previousBody, parsedBody, callback);
 
                     } else {
 
-                        if (tmfUtils.isOwner(req.user, previousBody)) {
+                        if (tmfUtils.isOwner(req, previousBody)) {
 
                             if (catalogsPattern.test(req.apiUrl)) {
 

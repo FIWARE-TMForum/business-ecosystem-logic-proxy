@@ -214,7 +214,7 @@ var ordering = (function(){
         }
 
         var asyncTasks = [];
-        var individualCollectionUrl = tmfUtils.getIndividualsCollectionURL(req);
+        var individualCollectionUrl = tmfUtils.getIndividualURL(req);
 
         body.orderItem.forEach(function(item) {
             asyncTasks.push(completeRelatedPartyInfo.bind(this, individualCollectionUrl, item, req.user));
@@ -319,7 +319,7 @@ var ordering = (function(){
 
             } else {
 
-                var isSeller = tmfUtils.hasPartyRole(req.user, previousOrderItem.product.relatedParty, SELLER);
+                var isSeller = tmfUtils.hasPartyRole(req, previousOrderItem.product.relatedParty, SELLER);
 
                 if (!isSeller) {
 
@@ -400,8 +400,8 @@ var ordering = (function(){
                     callback(err);
                 } else {
 
-                    var isCustomer = tmfUtils.hasPartyRole(req.user, previousOrdering.relatedParty, CUSTOMER);
-                    var isSeller = tmfUtils.hasPartyRole(req.user, previousOrdering.relatedParty, SELLER);
+                    var isCustomer = tmfUtils.hasPartyRole(req, previousOrdering.relatedParty, CUSTOMER);
+                    var isSeller = tmfUtils.hasPartyRole(req, previousOrdering.relatedParty, SELLER);
 
                     if (isCustomer) {
 
@@ -540,8 +540,8 @@ var ordering = (function(){
         var orderingsToRemove = [];
         orderings.forEach(function(ordering) {
 
-            var customer = tmfUtils.hasPartyRole(req.user, ordering.relatedParty, CUSTOMER);
-            var seller = tmfUtils.hasPartyRole(req.user, ordering.relatedParty, SELLER);
+            var customer = tmfUtils.hasPartyRole(req, ordering.relatedParty, CUSTOMER);
+            var seller = tmfUtils.hasPartyRole(req, ordering.relatedParty, SELLER);
 
             if (!customer && !seller) {
                 // This can happen when a user ask for a specific ordering.
@@ -552,7 +552,7 @@ var ordering = (function(){
                 // where the user is a seller have to be returned
 
                 ordering.orderItem = ordering.orderItem.filter(function(item) {
-                    return tmfUtils.hasPartyRole(req.user, item.product.relatedParty, SELLER);
+                    return tmfUtils.hasPartyRole(req, item.product.relatedParty, SELLER);
                 });
             }
             // ELSE: If the user is the customer, order items don't have to be filtered
