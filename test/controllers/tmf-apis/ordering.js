@@ -22,8 +22,8 @@ describe('Ordering API', function() {
         callback();
     };
 
-    var getIndividualsCollectionURL = function() {
-        return 'http://belp.fiware.org:7891/party/api/partyManagement/v2/individual/';
+    var getIndividualURL = function(user) {
+        return 'http://belp.fiware.org:7891/party/api/partyManagement/v2/individual/' + (user ? user : '');
     };
 
     beforeEach(function() {
@@ -234,10 +234,10 @@ describe('Ordering API', function() {
                 };
 
                 var tmfUtils = {
-                    getIndividualsCollectionURL: function (receivedReq) {
+                    getIndividualURL: function (receivedReq) {
                         // req: the request sent to the API
                         expect(receivedReq).toBe(req);
-                        return getIndividualsCollectionURL();
+                        return getIndividualURL();
                     }
                 };
 
@@ -311,12 +311,12 @@ describe('Ordering API', function() {
                         {
                             id: userName,
                             role: 'Customer',
-                            href: getIndividualsCollectionURL() + userName
+                            href: getIndividualURL(userName)
                         },
                         {
                             id: ownerName,
                             role: 'Seller',
-                            href: getIndividualsCollectionURL() + ownerName
+                            href: getIndividualURL(ownerName)
                         }]);
                 });
             };
@@ -747,8 +747,8 @@ describe('Ordering API', function() {
 
                     expect(err).toEqual(expectedError);
 
-                    expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(user, jasmine.arrayContaining(orderingRelatedParties), 'Customer');
-                    expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(user, jasmine.arrayContaining(orderingRelatedParties), 'Seller');
+                    expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(req, jasmine.arrayContaining(orderingRelatedParties), 'Customer');
+                    expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(req, jasmine.arrayContaining(orderingRelatedParties), 'Seller');
 
                     if (expectedBody) {
                         expect(utils.updateBody).toHaveBeenCalledWith(req, expectedBody);
@@ -1329,8 +1329,8 @@ describe('Ordering API', function() {
                 expect(err).toBe(null);
 
                 orders.forEach(function(order) {
-                    expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(user, order.item.relatedParty, 'Customer');
-                    expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(user, order.item.relatedParty, 'Seller');
+                    expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(req, order.item.relatedParty, 'Customer');
+                    expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(req, order.item.relatedParty, 'Seller');
                 });
 
                 expect(tmfUtils.hasPartyRole.calls.count()).toBe(orders.length * 2); // One for customer and one for seller
@@ -1401,8 +1401,8 @@ describe('Ordering API', function() {
 
             orderingApi.executePostValidation(req, function(err) {
                 expect(err).toEqual(null);
-                expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(user, orderingRelatedParties, 'Customer');
-                expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(user, orderingRelatedParties, 'Seller');
+                expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(req, orderingRelatedParties, 'Customer');
+                expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(req, orderingRelatedParties, 'Seller');
                 expect(tmfUtils.hasPartyRole.calls.count()).toBe(2);
 
                 done();
@@ -1454,11 +1454,11 @@ describe('Ordering API', function() {
 
                 expect(err).toEqual(null);
 
-                expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(user, orderingRelatedParties, 'Customer');
-                expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(user, orderingRelatedParties, 'Seller');
+                expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(req, orderingRelatedParties, 'Customer');
+                expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(req, orderingRelatedParties, 'Seller');
 
                 orderItems.forEach(function(item) {
-                    expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(user, item.item.product.relatedParty, 'Seller');
+                    expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(req, item.item.product.relatedParty, 'Seller');
                 });
 
                 done();

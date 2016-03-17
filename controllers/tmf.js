@@ -78,6 +78,7 @@ var tmf = (function() {
                     status: response.statusCode,
                     headers: response.headers,
                     hostname: req.hostname,
+                    secure: req.secure,
                     body: body
                 };
 

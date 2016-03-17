@@ -1,4 +1,5 @@
 var defaultConfig = {
+    port: '7496',
     proxyPrefix: '',
     oauth2: {
         server: 'https://account.lab.fiware.org',

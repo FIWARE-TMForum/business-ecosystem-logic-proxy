@@ -328,6 +328,8 @@ describe('TMF Controller', function() {
             var postValidatorCalled = false;
 
             var reqMethod = 'POST';
+            var secure = true;
+            var hostname = 'belp.fiware.org';
             var reqBody = 'Example';
             var reqPath = '/ordering';
             var userId = 'user';
@@ -357,6 +359,8 @@ describe('TMF Controller', function() {
 
                     expect(req).toEqual(
                         {
+                            secure: secure,
+                            hostname: hostname,
                             status: returnedResponse.statusCode,
                             headers: returnedResponse.headers,
                             body: returnedBody,
@@ -392,6 +396,8 @@ describe('TMF Controller', function() {
                 apiUrl: reqPath,
                 //path: reqPath,
                 body: reqBody,
+                hostname: hostname,
+                secure: secure,
                 method: reqMethod,
                 user: {'id': userId },
                 headers: {},

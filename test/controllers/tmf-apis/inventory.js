@@ -159,7 +159,7 @@ describe('Inventory API', function() {
                 validateLoggedIn: function (req, callback) {
                     callback(null);
                 }
-            }
+            };
 
             var req = {
                 method: 'GET',
@@ -179,18 +179,9 @@ describe('Inventory API', function() {
 
     describe('Execute Post Validation', function() {
 
-        var testCorrectPostValidation = function (req, done) {
-            var inventory = getInventoryAPI({}, {});
+        var testPostValidation = function (hasPartyRole, expectedError, done) {
 
-            inventory.executePostValidation(req, function (err, resp) {
-                expect(err).toBe(null);
-                expect(resp).toEqual();
-                done();
-            });
-        };
-
-        it('should redirect the request after validating permissions of retrieving a single product', function (done) {
-            testCorrectPostValidation({
+            var req = {
                 method: 'GET',
                 path: 'DSProductCatalog/api/productManagement/product/10',
                 user: {
@@ -203,39 +194,42 @@ describe('Inventory API', function() {
                         role: 'Customer'
                     }]
                 })
-            }, done);
+            };
+
+            var inventory = getInventoryAPI({
+                hasPartyRole: function() {
+                    return hasPartyRole
+                }
+            }, {});
+
+            inventory.executePostValidation(req, function (err, resp) {
+                expect(err).toEqual(expectedError);
+                expect(resp).toEqual();
+                done();
+            });
+        };
+
+        it('should redirect the request after validating permissions of retrieving a single product', function (done) {
+            testPostValidation(true, null, done);
         });
 
         it('should give a 403 error when the user is not the customer who acquired the product', function (done) {
-            var inventory = getInventoryAPI({}, {});
 
-            var req = {
-                method: 'GET',
-                path: 'DSProductCatalog/api/productManagement/product/10',
-                user: {
-                    id: 'test'
-                },
-                body: JSON.stringify({
-                    relatedParty: [{
-                        id: 'owner',
-                        role: 'Customer'
-                    }]
-                })
+            var error = {
+                'status': 403,
+                'message': 'You are not authorized to retrieve the specified offering from the inventory'
             };
 
-            inventory.executePostValidation(req, function (err) {
-                expect(err).toEqual({
-                    'status': 403,
-                    'message': 'You are not authorized to retrieve the specified offering from the inventory'
-                });
-                done();
-            });
+            testPostValidation(false, error, done);
         });
 
         it('should filter non-owned products when retrieving list of products', function(done) {
 
             var utils = jasmine.createSpyObj('utils', ['updateBody']);
-            var inventory = getInventoryAPI({}, utils);
+            var tmfUtils = jasmine.createSpyObj('tmfUtils', ['hasPartyRole']);
+            tmfUtils.hasPartyRole.and.returnValues(false, true, false);
+
+            var inventory = getInventoryAPI(tmfUtils, utils);
 
             var validProduct = {
                 relatedParty: [{
@@ -244,33 +238,40 @@ describe('Inventory API', function() {
                 }]
             };
 
+            var body = [{
+                relatedParty: [{
+                    id: 'owner',
+                    role: 'Customer'
+                }]
+            },{
+                relatedParty: [{
+                    id: 'test',
+                    role: 'customEr'
+                }]
+            },{
+                relatedParty: [{
+                    id: 'test',
+                    role: 'Seller'
+                }]
+            }];
+
             var req = {
                 method: 'GET',
                 path: 'DSProductCatalog/api/productManagement/product',
                 user: {
                     id: 'test'
                 },
-                body: JSON.stringify([{
-                    relatedParty: [{
-                        id: 'owner',
-                        role: 'Customer'
-                    }]
-                },{
-                    relatedParty: [{
-                        id: 'test',
-                        role: 'customEr'
-                    }]
-                },{
-                    relatedParty: [{
-                        id: 'test',
-                        role: 'Seller'
-                    }]
-                }])
+                body: JSON.stringify(body)
             };
 
             inventory.executePostValidation(req, function(err) {
                 expect(err).toBe(null);
                 expect(utils.updateBody).toHaveBeenCalledWith(req, [validProduct]);
+
+                for (var i in body) {
+                    expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(req, body[i].relatedParty, 'customer');
+                }
+
                 done();
             });
         });
