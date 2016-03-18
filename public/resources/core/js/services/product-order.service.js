@@ -121,29 +121,29 @@
             };
 
             resource.get(params, function (productOrderRetrieved) {
-                    var productOfferingFilters = {
-                        id: getProductOfferingIds(productOrderRetrieved).join()
-                    };
-                    var billingAccountCompleted = false, offeringListCompleted = false;
+                var productOfferingFilters = {
+                    id: getProductOfferingIds(productOrderRetrieved).join()
+                };
+                var billingAccountCompleted = false, offeringListCompleted = false;
 
-                    User.detail(function (userRetrived) {
-                        replaceBillingAccount(productOrderRetrieved, userRetrived);
-                        billingAccountCompleted = true;
+                User.detail(function (userRetrived) {
+                    replaceBillingAccount(productOrderRetrieved, userRetrived);
+                    billingAccountCompleted = true;
 
-                        if (billingAccountCompleted && offeringListCompleted) {
-                            deferred.resolve(productOrderRetrieved);
-                        }
-                    });
+                    if (billingAccountCompleted && offeringListCompleted) {
+                        deferred.resolve(productOrderRetrieved);
+                    }
+                });
 
-                    Offering.search(productOfferingFilters).then(function (productOfferingList) {
-                        replaceProductOffering(productOrderRetrieved, productOfferingList);
-                        offeringListCompleted = true;
+                Offering.search(productOfferingFilters).then(function (productOfferingList) {
+                    replaceProductOffering(productOrderRetrieved, productOfferingList);
+                    offeringListCompleted = true;
 
-                        if (billingAccountCompleted && offeringListCompleted) {
-                            deferred.resolve(productOrderRetrieved);
-                        }
-                    });
-                deferred.resolve(productOrderRetrieved);
+                    if (billingAccountCompleted && offeringListCompleted) {
+                        deferred.resolve(productOrderRetrieved);
+                    }
+                });
+                //deferred.resolve(productOrderRetrieved);
             }, function (response) {
                 deferred.reject(response);
             });
