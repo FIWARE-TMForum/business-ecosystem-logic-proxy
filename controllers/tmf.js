@@ -5,6 +5,7 @@ var config = require('./../config'),
     inventory = require('./tmf-apis/inventory').inventory,
     ordering = require('./tmf-apis/ordering').ordering,
     charging = require('./tmf-apis/charging').charging,
+    rss = require('./tmf-apis/rss').rss,
     
     // Other dependencies
     logger = require('./../lib/logger').logger.getLogger('TMF'),
@@ -19,13 +20,13 @@ var tmf = (function() {
     apiControllers[config.endpoints.ordering.path] = ordering;
     apiControllers[config.endpoints.inventory.path] = inventory;
     apiControllers[config.endpoints.charging.path] = charging;
+    apiControllers[config.endpoints.rss.path] = rss;
 
     var getAPIName = function(apiUrl) {
         return apiUrl.split('/')[1];
     };
 
     var sendError = function(res, err) {
-
         var status = err.status;
         var errMsg = err.message;
 
@@ -47,7 +48,7 @@ var tmf = (function() {
         var options = {
             url: url,
             method: req.method,
-            headers: utils.proxiedRequestHeaders(req),
+            headers: utils.proxiedRequestHeaders(req)
         };
 
         if (typeof(req.body) === 'string') {
@@ -85,7 +86,7 @@ var tmf = (function() {
 
                     result.user = req.user;
                     result.method = req.method;
-                    //result.path = req.path;
+                    result.apiUrl = req.apiUrl;
 
                     apiControllers[api].executePostValidation(result, function(err) {
 
@@ -102,7 +103,6 @@ var tmf = (function() {
                 } else {
                     completeRequest(result);
                 }
-
             }
 
         });

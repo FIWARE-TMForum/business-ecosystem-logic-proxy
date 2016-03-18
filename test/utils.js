@@ -31,7 +31,8 @@ var defaultConfig = {
             'path': 'rss',
             'port': '753'
         }
-    }
+    },
+    revenueModel: 30
 };
 
 exports.getDefaultConfig = function() {
