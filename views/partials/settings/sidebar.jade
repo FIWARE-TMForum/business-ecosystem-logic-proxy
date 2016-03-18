@@ -1,0 +1,22 @@
+.row
+  .panel.panel-default.z-depth-1
+    ul.nav.nav-stacked.nav-router.nav-pills
+      li(ui-sref-active="active")
+        a.bg-view1(ui-sref="offering", ui-sref-opts="{ reload: true, inherit: false }")
+          span.item-icon-container
+            i.fa.fa-fw.fa-home
+          strong.item-text Home
+  .panel.panel-default.z-depth-1
+    .panel-body
+      .h4.text-dark-secondary
+        strong Personal settings
+      hr
+    ul.nav.nav-stacked.nav-pills
+      li(ui-sref-active="active")
+        a(ui-sref="settings.general", ui-sref-opts="{ reload: true, inherit: false }")
+          span.item-icon.fa.fa-user
+          span.item-text General
+      li(ui-sref-active="active")
+        a(ui-sref="settings.contact", ui-sref-opts="{ reload: true, inherit: false }")
+          span.item-icon.fa.fa-envelope
+          span.item-text Contact medium

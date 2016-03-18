@@ -19,6 +19,11 @@
 
     angular
         .module('app', ['ngResource', 'ngMessages', 'angularMoment', 'ui.router'])
+        .constant('DATA_STATUS', {
+            ERROR: 'ERROR',
+            LOADED: 'LOADED',
+            LOADING: 'LOADING'
+        })
         .constant('EVENTS', {
             FILTERS_OPENED: '$eventFiltersOpened',
             MESSAGE_ADDED: '$eventMessageAdded',
@@ -27,6 +32,8 @@
             OFFERING_CONFIGURED: '$eventOfferingConfigured',
             OFFERING_REMOVED: '$eventOfferingRemoved',
             ORDER_CREATED: '$eventOrderCreated',
+            CONTACT_MEDIUM_UPDATE: '$contactMediumUpdate',
+            CONTACT_MEDIUM_UPDATED: '$contactMediumUpdated',
             MESSAGE_CREATED: '$eventMessageCreated',
             MESSAGE_CLOSED: '$eventMessageClosed',
             ORDERING_COMPLETED: '$eventOrderingCompleted'

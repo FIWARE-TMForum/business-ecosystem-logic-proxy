@@ -1,0 +1,16 @@
+.row
+  .col-sm-6
+    .form-group(ng-class="{ 'has-error': updateForm.hasError(updateVM.contactForm.emailAddress) }")
+      label Email
+      input.form-control(
+        type="email"
+        name="emailAddress"
+        ng-model="updateVM.contactMedium.medium.emailAddress"
+        required
+      )
+      .help-block(
+        ng-messages="updateVM.contactForm.emailAddress.$error"
+        ng-show="updateForm.hasError(updateVM.contactForm.emailAddress)"
+      )
+        span(ng-message="required") This field is required.
+        span(ng-message="email") This field must be a valid email.

@@ -1,0 +1,32 @@
+.row
+  .col-sm-6
+    .form-group(ng-class="{ 'has-error': updateForm.hasError(updateVM.contactForm.telephoneType) }")
+      label Type
+      input.form-control(
+        type="text"
+        name="telephoneType"
+        ng-model="updateVM.contactMedium.medium.type"
+        required
+        ng-maxlength="30"
+      )
+      .help-block(
+        ng-messages="updateVM.contactForm.telephoneType.$error"
+        ng-show="updateForm.hasError(updateVM.contactForm.telephoneType)"
+      )
+        span(ng-message="required") This field is required.
+        span(ng-message="maxlength") This field must not exceed 30 chars.
+  .col-sm-6
+    .form-group(ng-class="{ 'has-error': updateForm.hasError(updateVM.contactForm.telephoneNumber) }")
+      label Number
+      input.form-control(
+        type="number"
+        name="telephoneNumber"
+        ng-model="updateVM.contactMedium.medium.number"
+        required
+      )
+      .help-block(
+        ng-messages="updateVM.contactForm.telephoneNumber.$error"
+        ng-show="updateForm.hasError(updateVM.contactForm.telephoneNumber)"
+      )
+        span(ng-message="required") This field is required.
+        span(ng-message="number") This field must be a valid number.

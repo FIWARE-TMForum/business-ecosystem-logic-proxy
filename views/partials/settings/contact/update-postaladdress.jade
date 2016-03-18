@@ -1,0 +1,81 @@
+.row
+  .col-sm-6
+    .form-group(ng-class="{ 'has-error': updateForm.hasError(updateVM.contactForm.street) }")
+      label Street
+      input.form-control(
+        type="text"
+        name="street"
+        ng-model="updateVM.contactMedium.medium.streetOne"
+        required
+        ng-maxlength="50"
+      )
+      .help-block(
+        ng-messages="updateVM.contactForm.street.$error"
+        ng-show="updateForm.hasError(updateVM.contactForm.street)"
+      )
+        span(ng-message="required") This field is required.
+        span(ng-message="maxlength") This field must not exceed 50 chars.
+  .col-sm-6
+    .form-group(ng-class="{ 'has-error': updateForm.hasError(updateVM.contactForm.stateOrProvince) }")
+      label State / Province
+      input.form-control(
+        type="text"
+        name="stateOrProvince"
+        ng-model="updateVM.contactMedium.medium.stateOrProvince"
+        required
+        ng-maxlength="50"
+      )
+      .help-block(
+        ng-messages="updateVM.contactForm.stateOrProvince.$error"
+        ng-show="updateForm.hasError(updateVM.contactForm.stateOrProvince)"
+      )
+        span(ng-message="required") This field is required.
+        span(ng-message="maxlength") This field must not exceed 50 chars.
+.row
+  .col-sm-6
+    .form-group(ng-class="{ 'has-error': updateForm.hasError(updateVM.contactForm.postcode) }")
+      label Postcode
+      input.form-control(
+        type="number"
+        name="postcode"
+        ng-model="updateVM.contactMedium.medium.postcode"
+        required
+      )
+      .help-block(
+        ng-messages="updateVM.contactForm.postcode.$error"
+        ng-show="updateForm.hasError(updateVM.contactForm.postcode)"
+      )
+        span(ng-message="required") This field is required.
+        span(ng-message="number") This field must be a valid number.
+.row
+  .col-sm-6
+    .form-group(ng-class="{ 'has-error': updateForm.hasError(updateVM.contactForm.country) }")
+      label Country
+      select.form-control(
+        name="country"
+        ng-model="updateVM.contactMedium.medium.country"
+        required
+      )
+        option(value="") Choose country
+        option(ng-repeat="country in COUNTRIES", value="{{ country.code }}") {{ country.name }}
+      .help-block(
+        ng-messages="updateVM.contactForm.country.$error"
+        ng-show="updateForm.hasError(updateVM.contactForm.country)"
+      )
+        span(ng-message="required") This field is required.
+  .col-sm-6
+    .form-group(ng-class="{ 'has-error': updateForm.hasError(updateVM.contactForm.city) }")
+      label City
+      input.form-control(
+        type="text"
+        name="city"
+        ng-model="updateVM.contactMedium.medium.city"
+        required
+        ng-maxlength="50"
+      )
+      .help-block(
+        ng-messages="updateVM.contactForm.city.$error"
+        ng-show="updateForm.hasError(updateVM.contactForm.city)"
+      )
+        span(ng-message="required") This field is required.
+        span(ng-message="maxlength") This field must not exceed 50 chars.

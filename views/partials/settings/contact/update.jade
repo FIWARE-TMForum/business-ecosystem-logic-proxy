@@ -1,0 +1,60 @@
+.row
+  .col-xs-12(ng-controller="FormWizardCtrl as updateForm")
+    .panel.panel-default.z-depth-1(ng-if="updateVM.data.contactMedium.length")
+      .panel-body
+        .h4.text-dark-secondary
+          strong Contact Medium
+        hr
+        .alert.alert-info This information may be viewed by anyone.
+        .table-responsive
+          table.table.table-bordered
+            thead
+              tr
+                th Type
+                th Contact
+            tbody
+              tr(ng-repeat="contact in updateVM.data.contactMedium")
+                th
+                  .item-checkbox
+                    label.checkbox
+                      .track
+                        input(type="checkbox", ng-checked="updateVM.contactMediumSelected.indexOf(contact) !== -1", ng-click="updateVM.toggleContact(contact)")
+                        i.fa.fa-lg
+                      strong {{ contact.type }}
+                td
+                  a.pull-right(ng-click="updateVM.updateContact(contact)")
+                    span.fa.fa-pencil
+                  span {{ updateVM.formatContact(contact) }}
+        form(name="updateVM.contactDeleteForm", novalidate)
+          .form-group.text-right
+            a.btn.btn-danger.z-depth-1(ng-click="updateVM.removeContact()", ng-disabled="!updateVM.contactMediumSelected.length")
+              span.item-text Delete
+    .panel.panel-default.z-depth-1
+      .panel-body
+        .h4.text-dark-secondary
+          strong New contact
+        hr
+        form(name="updateVM.contactForm", novalidate, ng-if="!updateVM.isNotCreated")
+          .row
+            .col-sm-6
+              .form-group(ng-class="{ 'has-error': updateForm.hasError(updateVM.contactForm.type) }")
+                label Contact
+                select.form-control(
+                  name="type"
+                  ng-model="updateVM.contactMedium.type"
+                  ng-change = "updateVM.refreshContact()"
+                )
+                  option(ng-repeat="(key, value) in updateVM.MEDIUM_TYPES", value="{{ value }}") {{ value }}
+          .row(ng-if="updateVM.contactMedium.type === updateVM.MEDIUM_TYPES.EMAIL_ADDRESS")
+            .col-xs-12
+              include ./update-emailaddress.jade
+          .row(ng-if="updateVM.contactMedium.type === updateVM.MEDIUM_TYPES.TELEPHONE_NUMBER")
+            .col-xs-12
+              include ./update-telephonenumber.jade
+          .row(ng-if="updateVM.contactMedium.type === updateVM.MEDIUM_TYPES.POSTAL_ADDRESS")
+            .col-xs-12
+              include ./update-postaladdress.jade
+          .form-group.text-right
+            a.btn.btn-success.z-depth-1(ng-click="updateVM.createContact()", ng-disabled="!updateVM.contactForm.$valid")
+              span.item-text Create
+        .alert.alert-warning(ng-if="updateVM.isNotCreated") Sorry! In order to create contact medium, you should first create a profile.
