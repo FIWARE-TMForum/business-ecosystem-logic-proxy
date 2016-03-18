@@ -29,7 +29,7 @@ describe('TMF Controller', function() {
     };
 
     // Function to get a custom tmf.js instance
-    var getTmfInstance = function(request, catalog, ordering, inventory) {
+    var getTmfInstance = function(request, catalog, ordering, inventory, party) {
 
         return proxyquire('../../controllers/tmf', {
             'request': request,
@@ -38,7 +38,8 @@ describe('TMF Controller', function() {
             './../lib/logger': testUtils.emptyLogger,
             './tmf-apis/catalog': { catalog: catalog },
             './tmf-apis/ordering': {ordering: ordering},
-            './tmf-apis/inventory': { inventory: inventory }
+            './tmf-apis/inventory': { inventory: inventory },
+            './tnf-apis/party': { party: party }
         }).tmf;
     };
 

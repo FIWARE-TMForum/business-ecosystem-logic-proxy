@@ -8,6 +8,11 @@ describe('Party API', function() {
         message: 'You are not logged in'
     };
 
+    var INVALID_PATH_ERROR = {
+        status: 404,
+        message: 'The given path is invalid'
+    };
+
     var loggedIn;
     var config = testUtils.getDefaultConfig();
     var utils = {
@@ -30,14 +35,11 @@ describe('Party API', function() {
 
     describe('Individuals', function() {
 
-        var individualsBaseUrl = '/' + config.endpoints.party.path + '/api/partyManagement/v2/individual';
-
-        var failIfNotLoggedIn = function(method, url, done) {
+        var failIfNotLoggedIn = function(method, done) {
 
             loggedIn = false;
 
             var req = {
-                apiUrl: url,
                 method: method
             };
 
@@ -47,40 +49,18 @@ describe('Party API', function() {
             });
         };
 
-        describe('List', function() {
+        describe('Retrieve', function() {
 
-            var listIndividualsNotAllowedLoggedIn = function(includeLastSlash, done) {
-
-                loggedIn = true;
-
-                var path = individualsBaseUrl + (includeLastSlash ? '/' : '');
+            it('should allow to list parties', function(done) {
 
                 var req = {
-                    apiUrl: path,
                     method: 'GET'
                 };
 
                 partyAPI.checkPermissions(req, function(err) {
-
-                    expect(err).toEqual({
-                        status: 403,
-                        message: 'Parties cannot be listed'
-                    });
-
+                    expect(err).toBe(null);
                     done();
                 });
-            };
-
-            it('should not allow to retrieve the list of individuals if not logged in', function(done) {
-                failIfNotLoggedIn('GET', individualsBaseUrl, done);
-            });
-
-            it('should not allow to retrieve the list of individuals even if logged in - With final slash', function(done) {
-                listIndividualsNotAllowedLoggedIn(true, done);
-            });
-
-            it('should not allow to retrieve the list of individuals even if logged in - Without final slash', function(done) {
-                listIndividualsNotAllowedLoggedIn(false, done);
             });
 
         });
@@ -88,7 +68,7 @@ describe('Party API', function() {
         describe('Creation', function() {
 
             it('should not allow to create individuals if not logged in', function(done) {
-                failIfNotLoggedIn('POST', individualsBaseUrl, done);
+                failIfNotLoggedIn('POST', done);
             });
 
             var createTest = function(party, user, expectedErr, done) {
@@ -96,7 +76,6 @@ describe('Party API', function() {
                 loggedIn = true;
 
                 var req = {
-                    apiUrl: individualsBaseUrl,
                     method: 'POST',
                     body: party,
                     user: user
@@ -136,30 +115,29 @@ describe('Party API', function() {
             });
         });
 
-        describe('Retrieval && Modification', function() {
+        describe('Modification', function() {
 
             var accessIndividualTest = function(individual, user, expectedErr, done) {
 
                 loggedIn = true;
 
                 var req = {
-                    apiUrl: individualsBaseUrl + '/' + individual,
-                    method: 'GET',
+                    apiUrl: '/' + config.endpoints.party.path + '/api/partyManagement/v2/individual/' + individual,
+                    method: 'PATCH',
                     user: user
                 };
 
                 partyAPI.checkPermissions(req, function(err) {
-
                     expect(err).toEqual(expectedErr);
                     done();
                 });
             };
 
-            it('should not allow to retrieve/modify individual if not logged in', function(done) {
-                failIfNotLoggedIn('GET', individualsBaseUrl + '/user', done);
+            it('should not allow to modify individual if not logged in', function(done) {
+                failIfNotLoggedIn('PATCH', done);
             });
 
-            it('should not allow to retrieve/modify individual if path and request user id mismatch', function(done) {
+            it('should not allow to modify individual if path and request user id mismatch', function(done) {
 
                 var expectedErr = {
                     status: 403,
@@ -170,32 +148,54 @@ describe('Party API', function() {
 
             });
 
-            it('should allow to retrieve/modify individual if path and request user id match', function(done) {
+            it('should allow to modify individual if path and request user id match', function(done) {
                 var user = 'user';
                 accessIndividualTest(user, { id: user }, null, done);
             });
 
-            it('should allow to retrieve/modify individual if path and request user id match even if query string included', function(done) {
+            it('should allow to modify individual if path and request user id match even if query string included', function(done) {
                 var user = 'user';
                 accessIndividualTest(user + '?fields=status', { id: user }, null, done);
             });
 
+            it('should not allow to modify individual if user ID is not included in the path', function(done) {
+                accessIndividualTest('', { id: 'test'}, INVALID_PATH_ERROR, done);
+            });
+
+            it('should not allow to modify individual if the path is not valid', function(done) {
+
+                loggedIn = true;
+
+                var user = 'test';
+
+                var req = {
+                    // Individual has been replaced by organization in this path
+                    apiUrl: '/' + config.endpoints.party.path + '/api/partyManagement/v2/organization/' + user,
+                    method: 'PATCH',
+                    user: user
+                };
+
+                partyAPI.checkPermissions(req, function(err) {
+                    expect(err).toEqual(INVALID_PATH_ERROR);
+                    done();
+                });
+            });
+
         });
 
-        it('should return 404 when accessing an API different from Individuals', function(done) {
+        it('should return 405 when the used method is not recognized', function(done) {
 
             loggedIn = true;
 
             var req = {
-                apiUrl: 'another_api/another_path/another_collection/another_resource?a=b',
-                method: 'GET'
+                method: 'OPTIONS'
             };
 
             partyAPI.checkPermissions(req, function(err) {
 
                 expect(err).toEqual({
-                    status: 404,
-                    message: 'API not implemented'
+                    status: 405,
+                    message: 'Method not allowed'
                 });
 
                 done();

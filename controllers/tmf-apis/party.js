@@ -1,8 +1,13 @@
-var config = require('./../../config'),
+var async = require('async'),
+    config = require('./../../config'),
     url = require('url'),
     utils = require('./../../lib/utils');
 
 var party = (function() {
+
+    var validateAllowed = function(req, callback) {
+        callback(null);
+    };
 
     var validateCreation = function(req, callback) {
 
@@ -27,71 +32,62 @@ var party = (function() {
         }
     };
 
-    var validateCollectionAccess = function(req, callback) {
+    var validateUpdate = function(req, callback) {
 
-        switch(req.method.toUpperCase()) {
+        var individualsPattern = new RegExp('^/' + config.endpoints.party.path +
+            '/api/partyManagement/v2/individual(/([^/]*))?$');
+        var apiPath = url.parse(req.apiUrl).pathname;
 
-            case 'GET':
+        var regexResult = individualsPattern.exec(apiPath);
 
+        if (!regexResult || !regexResult[2]) {
+            callback({
+                status: 404,
+                message: 'The given path is invalid'
+            });
+        } else {
+
+            // regexResult[2] contains the user name
+            if (req.user.id === regexResult[2]) {
+                callback(null);
+            } else {
                 callback({
                     status: 403,
-                    message: 'Parties cannot be listed'
+                    message: 'You are not allowed to access this resource'
                 });
-
-                break;
-
-            case 'POST':
-
-                validateCreation(req, callback);
-                break;
-
-            default:
-                callback(null);
+            }
         }
     };
 
-    var validateResourceAccess = function(req, userId, callback) {
-        if (req.user.id === userId) {
-            callback(null);
-        } else {
-            callback({
-                status: 403,
-                message: 'You are not allowed to access this resource'
-            });
-        }
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////// COMMON ///////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////////////
+
+    var validators = {
+        'GET': [ validateAllowed ],
+        'POST': [ utils.validateLoggedIn, validateCreation ],
+        'PATCH': [ utils.validateLoggedIn, validateUpdate ],
+        'PUT': [ utils.validateLoggedIn, validateUpdate ],
+        'DELETE': [ utils.validateLoggedIn, validateUpdate ]
     };
 
     var checkPermissions = function (req, callback) {
 
-        utils.validateLoggedIn(req, function(err) {
+        var reqValidators = [];
 
-            if (err) {
-                callback(err);
-            } else {
-
-                var individualsPattern = new RegExp('^/' + config.endpoints.party.path +
-                        '/api/partyManagement/v2/individual(/([^/]*))?$');
-                var apiPath = url.parse(req.apiUrl).pathname;
-
-                var regexResult = individualsPattern.exec(apiPath);
-
-                if (regexResult) {
-
-                    var userId = regexResult[2];
-
-                    if (!userId) {
-                        validateCollectionAccess(req, callback);
-                    } else {
-                        validateResourceAccess(req, userId, callback);
-                    }
-                } else {
-                    callback({
-                        status: 404,
-                        message: 'API not implemented'
-                    });
-                }
+        if (req.method in validators) {
+            for (var i in validators[req.method]) {
+                reqValidators.push(validators[req.method][i].bind(this, req));
             }
-        });
+
+            async.series(reqValidators, callback);
+
+        } else {
+            callback({
+                status: 405,
+                message: 'Method not allowed'
+            })
+        }
     };
 
     return {
