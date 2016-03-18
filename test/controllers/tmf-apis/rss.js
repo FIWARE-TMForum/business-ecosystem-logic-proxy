@@ -269,4 +269,114 @@ describe('RSS API', function() {
             testCheckPermissions(req, null, validator, done);
         });
     });
+
+    describe('Post validation', function() {
+        var testRSSPostValidationNotApply = function(req, done) {
+            var rssAPI = getRSSAPI({}, {}, {});
+
+            rssAPI.executePostValidation(req, function(err) {
+                expect(err).not.toBe(null);
+                done();
+            });
+        };
+
+        it('should call the callback if the request was not a model retrieving', function(done){
+            var req = {
+                method: 'POST'
+            };
+            testRSSPostValidationNotApply(req, done);
+        });
+
+        it('should call the callback if the response contained models', function(done) {
+            var req = {
+                method: 'GET',
+                apiUrl: '/rss/models',
+                body: JSON.stringify([{}])
+            };
+            testRSSPostValidationNotApply(req, done);
+        });
+
+
+        it('should call the callback if the server response body is not a valid JSON', function(done){
+            var req = {
+                method: 'GET',
+                apiUrl: '/rss/models',
+                body: [{}]
+            };
+            testRSSPostValidationNotApply(req, done);
+        });
+
+        it('should call the callback and create the default RS model if the response contains an empty model list', function(done) {
+            var req = {
+                method: 'GET',
+                apiUrl: '/rss/models',
+                body: JSON.stringify([]),
+                user: {
+                    id: 'username'
+                },
+                headers: {}
+            };
+
+            var newModel = {
+                ownerProviderId: 'provider'
+            };
+
+            var rssClient = {
+                rssClient: {
+                    createDefaultModel: function(userInfo, callback) {
+                        expect(userInfo.id).toBe('username');
+                        callback(null, {
+                            body: JSON.stringify(newModel)
+                        });
+                    }
+                }
+            };
+
+            var rssAPI = getRSSAPI(rssClient, {}, {});
+
+            rssAPI.executePostValidation(req, function(err) {
+                expect(err).toBe(undefined);
+
+                var body = JSON.parse(req.body);
+                expect(body).toEqual([newModel]);
+                done();
+            });
+
+        });
+
+        it('should call the callback with error if the server fails creating the default RS model', function(done) {
+            var errorStatus = 500;
+            var errorMessage = 'Error creating default RS model'
+            var req = {
+                method: 'GET',
+                apiUrl: '/rss/models',
+                body: JSON.stringify([]),
+                user: {
+                    id: 'username'
+                },
+                headers: {}
+            };
+
+            var rssClient = {
+                rssClient: {
+                    createDefaultModel: function(userInfo, callback) {
+                        expect(userInfo.id).toBe('username');
+                        callback({
+                            status: errorStatus,
+                            message: errorMessage
+                        });
+                    }
+                }
+            };
+
+            var rssAPI = getRSSAPI(rssClient, {}, {});
+
+            rssAPI.executePostValidation(req, function(err) {
+                expect(err).not.toBe(undefined);
+                expect(err.status).toBe(errorStatus);
+                expect(err.message).toBe(errorMessage);
+                done();
+            });
+        });
+    });
 });

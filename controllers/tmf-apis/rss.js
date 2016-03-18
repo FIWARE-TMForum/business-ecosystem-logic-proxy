@@ -118,6 +118,8 @@ var rss = (function () {
             } else {
                 callback();
             }
+        } else {
+            callback();
         }
     };
 
