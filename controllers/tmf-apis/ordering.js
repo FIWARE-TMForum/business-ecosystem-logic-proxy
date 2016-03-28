@@ -259,44 +259,6 @@ var ordering = (function(){
     /////////////////////////////////////////// UPDATE ///////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
 
-    var calculateOrderingState = function(previousState, orderItems) {
-
-        // STATES
-        // Acknowledged - All the order items are acknowledged
-        // In Progress - All the order items are Acknowledged or In Progress
-        // Completed - All the order items are completed
-        // Partial - There are order items completed or failed and also in progress
-        // Failed - All failed
-        // TODO: This will be implemented directly in the API. Once implemented, remove this part...
-
-        var orderingState = previousState;
-        var currentStates = { };
-        currentStates[ACKNOWLEDGED.toLowerCase()] = 0;
-        currentStates[IN_PROGRESS.toLowerCase()] = 0;
-        currentStates[COMPLETED.toLowerCase()] = 0;
-        currentStates[FAILED.toLowerCase()] = 0;
-
-        orderItems.forEach(function(item) {
-            currentStates[item['state'].toLowerCase()] += 1;
-        });
-
-        if (currentStates[ACKNOWLEDGED.toLowerCase()] === orderItems.length) {
-            orderingState = ACKNOWLEDGED;
-        } else if (currentStates[COMPLETED.toLowerCase()] === orderItems.length) {
-            orderingState = COMPLETED;
-        } else if (currentStates[FAILED.toLowerCase()] === orderItems.length) {
-            orderingState = FAILED;
-        } else {
-            if (currentStates[COMPLETED.toLowerCase()] === 0 && currentStates[FAILED.toLowerCase()] === 0) {
-                orderingState = IN_PROGRESS;
-            } else {
-                orderingState = PARTIAL;
-            }
-        }
-
-        return orderingState;
-    };
-
     var updateItemsState = function(req, updatedOrdering, previousOrdering, includeOtherFields, callback) {
 
         var error = null;
@@ -354,17 +316,8 @@ var ordering = (function(){
                     }
 
                     if (!error) {
-
-                        // Only the charging backend (Store) can change the state from acknowledged to in progress
-                        if (previousOrderItem['state'] === ACKNOWLEDGED) {
-                            error = {
-                                status: 403,
-                                message: 'Acknowledged order items cannot be updated manually'
-                            };
-                        } else {
-                            // If no errors, the state can be updated!
-                            previousOrderItem['state'] = updatedItem['state'];
-                        }
+                        // If no errors, the state can be updated!
+                        previousOrderItem['state'] = updatedItem['state'];
                     }
                 }
             }
@@ -375,7 +328,6 @@ var ordering = (function(){
             // Sellers can only modify the 'orderItem' field...
             // State is automatically calculated
             var finalBody = includeOtherFields ? updatedOrdering : {};
-            finalBody['state'] = calculateOrderingState(previousOrdering['state'], previousOrdering['orderItem']);
             finalBody['orderItem'] = previousOrdering.orderItem;
 
             utils.updateBody(req, finalBody);
@@ -398,6 +350,16 @@ var ordering = (function(){
                 if (err) {
                     callback(err);
                 } else {
+
+                    if (['pending', 'acknowledged'].indexOf(previousOrdering.state.toLowerCase()) >= 0) {
+
+                        callback({
+                            status: 403,
+                            message: 'Not processed orderings cannot be modified manually'
+                        });
+
+                        return;
+                    }
 
                     var isCustomer = tmfUtils.hasPartyRole(req.user, previousOrdering.relatedParty, CUSTOMER);
                     var isSeller = tmfUtils.hasPartyRole(req.user, previousOrdering.relatedParty, SELLER);
@@ -423,15 +385,15 @@ var ordering = (function(){
                             }
                         } else if ('state' in ordering && ordering['state'].toLowerCase() === 'cancelled') {
 
-                            // Orderings can only be cancelled when there are no completed products
-                            var productsInFinalState = previousOrdering.orderItem.filter(function(item) {
-                                return ['completed', 'failed', 'cancelled'].indexOf(item.state.toLowerCase()) >= 0;
+                            // Orderings can only be cancelled when all items are marked as Acknowledged
+                            var productsInAckState = previousOrdering.orderItem.filter(function(item) {
+                                return 'acknowledged' === item.state.toLowerCase();
                             });
 
-                            if (productsInFinalState.length > 0) {
+                            if (productsInAckState.length != previousOrdering.orderItem.length) {
                                 callback({
                                     status: 403,
-                                    message: 'You cannot cancel orders with completed, failed or cancelled items'
+                                    message: 'Orderings can only be cancelled when all Order items are in Acknowledged state'
                                 });
                             } else {
 

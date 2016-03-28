@@ -54,7 +54,7 @@
 
         function isTransitable(orderItem) {
 
-            return orderItem.state === PRODUCTORDER_STATUS.INPROGRESS;
+            return orderItem.state === PRODUCTORDER_STATUS.ACKNOWLEDGED || orderItem.state === PRODUCTORDER_STATUS.INPROGRESS;
         }
 
         function getNextStatus(orderItem) {
@@ -63,8 +63,8 @@
         }
 
         function canCancel(productOrder) {
-            return productOrder.orderItem.every(function (orderItem) {
-                return orderItem.state === PRODUCTORDER_STATUS.INPROGRESS;
+            return productOrder.state === PRODUCTORDER_STATUS.INPROGRESS && productOrder.orderItem.every(function (orderItem) {
+                return orderItem.state === PRODUCTORDER_STATUS.ACKNOWLEDGED;
             });
         }
 
