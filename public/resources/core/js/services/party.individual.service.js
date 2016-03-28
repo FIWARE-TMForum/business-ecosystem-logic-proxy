@@ -46,10 +46,10 @@
             return deferred.promise;
         }
 
-        function detail() {
+        function detail(partyId) {
             var deferred = $q.defer();
             var params = {
-                partyId: User.loggedUser.id
+                partyId: partyId
             };
 
             Individual.get(params, function (individualRetrieved) {
@@ -64,7 +64,7 @@
         function update(dataUpdated) {
             var deferred = $q.defer();
             var params = {
-                partyId: User.loggedUser.id
+                partyId: dataUpdated.id
             };
 
             Individual.update(params, dataUpdated, function (individualUpdated) {
@@ -79,16 +79,16 @@
         function launch() {
             return new Individual({
                 id: User.loggedUser.id,
-                birthDate: "",
+                birthDate: '',
                 contactMedium: [],
-                countryOfBirth: "",
-                familyName: "",
-                gender: "",
-                givenName: "",
-                maritalStatus: "",
-                nationality: "",
-                placeOfBirth: "",
-                title: ""
+                countryOfBirth: '',
+                familyName: '',
+                gender: '',
+                givenName: '',
+                maritalStatus: '',
+                nationality: '',
+                placeOfBirth: '',
+                title: ''
             });
         }
 
