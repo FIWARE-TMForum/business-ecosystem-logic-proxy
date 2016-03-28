@@ -30,31 +30,31 @@
             a.btn.btn-danger.z-depth-1(ng-click="updateVM.removeContact()", ng-disabled="!updateVM.contactMediumSelected.length")
               span.item-text Delete
     .panel.panel-default.z-depth-1
-      .panel-body
+      .panel-body(ng-controller="ContactMediumCreateCtrl as entryAttrVM")
         .h4.text-dark-secondary
-          strong New contact
+          strong New contact medium
         hr
-        form(name="updateVM.contactForm", novalidate, ng-if="!updateVM.isNotCreated")
+        form(name="entryAttrVM.form", novalidate, ng-if="!updateVM.isNotCreated", ng-submit="entryAttrVM.form.$valid && entryAttrVM.create()")
           .row
             .col-sm-6
-              .form-group(ng-class="{ 'has-error': updateForm.hasError(updateVM.contactForm.type) }")
+              .form-group(ng-class="{ 'has-error': updateForm.hasError(entryAttrVM.form.type) }")
                 label Contact
                 select.form-control(
                   name="type"
-                  ng-model="updateVM.contactMedium.type"
-                  ng-change = "updateVM.refreshContact()"
+                  ng-model="entryAttrVM.data.type"
+                  ng-change = "entryAttrVM.refresh()"
                 )
-                  option(ng-repeat="(key, value) in updateVM.MEDIUM_TYPES", value="{{ value }}") {{ value }}
-          .row(ng-if="updateVM.contactMedium.type === updateVM.MEDIUM_TYPES.EMAIL_ADDRESS")
+                  option(ng-repeat="(key, value) in MEDIUM_TYPES", value="{{ value }}") {{ value }}
+          .row(ng-if="entryAttrVM.data.type === MEDIUM_TYPES.EMAIL_ADDRESS")
             .col-xs-12
               include ./update-emailaddress.jade
-          .row(ng-if="updateVM.contactMedium.type === updateVM.MEDIUM_TYPES.TELEPHONE_NUMBER")
+          .row(ng-if="entryAttrVM.data.type === MEDIUM_TYPES.TELEPHONE_NUMBER")
             .col-xs-12
               include ./update-telephonenumber.jade
-          .row(ng-if="updateVM.contactMedium.type === updateVM.MEDIUM_TYPES.POSTAL_ADDRESS")
+          .row(ng-if="entryAttrVM.data.type === MEDIUM_TYPES.POSTAL_ADDRESS")
             .col-xs-12
               include ./update-postaladdress.jade
           .form-group.text-right
-            a.btn.btn-success.z-depth-1(ng-click="updateVM.createContact()", ng-disabled="!updateVM.contactForm.$valid")
+            button.btn.btn-success.z-depth-1(type="submit", ng-disabled="!entryAttrVM.form.$valid")
               span.item-text Create
-        .alert.alert-warning(ng-if="updateVM.isNotCreated") Sorry! In order to create contact medium, you should first create a profile.
+        .alert.alert-warning(ng-if="updateVM.isNotCreated") Sorry! In order to create contact mediums, you should first create a profile.

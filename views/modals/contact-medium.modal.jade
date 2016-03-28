@@ -1,22 +1,22 @@
-.modal.fade(ng-controller="ContactMediumUpdateCtrl as updateVM")
+.modal.fade(ng-controller="ContactMediumUpdateCtrl as entryAttrVM")
   .modal-dialog
     .modal-content
       .modal-header
         .h4
           strong Contact medium
       .modal-body(ng-controller="FormWizardCtrl as updateForm")
-        form(name="updateVM.contactForm", novalidate, ng-if="updateVM.contactMedium != null")
-          .row(ng-if="updateVM.contactMedium.type === updateVM.MEDIUM_TYPES.EMAIL_ADDRESS")
+        form(name="entryAttrVM.form", novalidate, ng-if="entryAttrVM.data != null")
+          .row(ng-if="entryAttrVM.data.type === MEDIUM_TYPES.EMAIL_ADDRESS")
             .col-xs-12
               include ../partials/settings/contact/update-emailaddress.jade
-          .row(ng-if="updateVM.contactMedium.type === updateVM.MEDIUM_TYPES.TELEPHONE_NUMBER")
+          .row(ng-if="entryAttrVM.data.type === MEDIUM_TYPES.TELEPHONE_NUMBER")
             .col-xs-12
               include ../partials/settings/contact/update-telephonenumber.jade
-          .row(ng-if="updateVM.contactMedium.type === updateVM.MEDIUM_TYPES.POSTAL_ADDRESS")
+          .row(ng-if="entryAttrVM.data.type === MEDIUM_TYPES.POSTAL_ADDRESS")
             .col-xs-12
               include ../partials/settings/contact/update-postaladdress.jade
       .modal-footer
-        a.btn.btn-success.z-depth-1(data-dismiss="modal", ng-click="updateVM.update()", ng-disabled="!updateVM.contactForm.$valid")
+        a.btn.btn-success.z-depth-1(data-dismiss="modal", ng-click="entryAttrVM.update()", ng-disabled="!entryAttrVM.form.$valid")
           span.item-text Update
         a.btn.btn-default.z-depth-1(data-dismiss="modal")
           span.item-text Close

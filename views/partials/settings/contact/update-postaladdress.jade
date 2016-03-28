@@ -1,81 +1,81 @@
 .row
   .col-sm-6
-    .form-group(ng-class="{ 'has-error': updateForm.hasError(updateVM.contactForm.street) }")
+    .form-group(ng-class="{ 'has-error': updateForm.hasError(entryAttrVM.form.street) }")
       label Street
       input.form-control(
         type="text"
         name="street"
-        ng-model="updateVM.contactMedium.medium.streetOne"
+        ng-model="entryAttrVM.data.medium.streetOne"
         required
         ng-maxlength="50"
       )
       .help-block(
-        ng-messages="updateVM.contactForm.street.$error"
-        ng-show="updateForm.hasError(updateVM.contactForm.street)"
+        ng-messages="entryAttrVM.form.street.$error"
+        ng-show="updateForm.hasError(entryAttrVM.form.street)"
       )
         span(ng-message="required") This field is required.
         span(ng-message="maxlength") This field must not exceed 50 chars.
   .col-sm-6
-    .form-group(ng-class="{ 'has-error': updateForm.hasError(updateVM.contactForm.stateOrProvince) }")
+    .form-group(ng-class="{ 'has-error': updateForm.hasError(entryAttrVM.form.stateOrProvince) }")
       label State / Province
       input.form-control(
         type="text"
         name="stateOrProvince"
-        ng-model="updateVM.contactMedium.medium.stateOrProvince"
+        ng-model="entryAttrVM.data.medium.stateOrProvince"
         required
         ng-maxlength="50"
       )
       .help-block(
-        ng-messages="updateVM.contactForm.stateOrProvince.$error"
-        ng-show="updateForm.hasError(updateVM.contactForm.stateOrProvince)"
+        ng-messages="entryAttrVM.form.stateOrProvince.$error"
+        ng-show="updateForm.hasError(entryAttrVM.form.stateOrProvince)"
       )
         span(ng-message="required") This field is required.
         span(ng-message="maxlength") This field must not exceed 50 chars.
 .row
   .col-sm-6
-    .form-group(ng-class="{ 'has-error': updateForm.hasError(updateVM.contactForm.postcode) }")
+    .form-group(ng-class="{ 'has-error': updateForm.hasError(entryAttrVM.form.postcode) }")
       label Postcode
       input.form-control(
         type="number"
         name="postcode"
-        ng-model="updateVM.contactMedium.medium.postcode"
+        ng-model="entryAttrVM.data.medium.postcode"
         required
       )
       .help-block(
-        ng-messages="updateVM.contactForm.postcode.$error"
-        ng-show="updateForm.hasError(updateVM.contactForm.postcode)"
+        ng-messages="entryAttrVM.form.postcode.$error"
+        ng-show="updateForm.hasError(entryAttrVM.form.postcode)"
       )
         span(ng-message="required") This field is required.
         span(ng-message="number") This field must be a valid number.
 .row
   .col-sm-6
-    .form-group(ng-class="{ 'has-error': updateForm.hasError(updateVM.contactForm.country) }")
+    .form-group(ng-class="{ 'has-error': updateForm.hasError(entryAttrVM.form.country) }")
       label Country
       select.form-control(
         name="country"
-        ng-model="updateVM.contactMedium.medium.country"
+        ng-model="entryAttrVM.data.medium.country"
         required
       )
         option(value="") Choose country
         option(ng-repeat="country in COUNTRIES", value="{{ country.code }}") {{ country.name }}
       .help-block(
-        ng-messages="updateVM.contactForm.country.$error"
-        ng-show="updateForm.hasError(updateVM.contactForm.country)"
+        ng-messages="entryAttrVM.form.country.$error"
+        ng-show="updateForm.hasError(entryAttrVM.form.country)"
       )
         span(ng-message="required") This field is required.
   .col-sm-6
-    .form-group(ng-class="{ 'has-error': updateForm.hasError(updateVM.contactForm.city) }")
+    .form-group(ng-class="{ 'has-error': updateForm.hasError(entryAttrVM.form.city) }")
       label City
       input.form-control(
         type="text"
         name="city"
-        ng-model="updateVM.contactMedium.medium.city"
+        ng-model="entryAttrVM.data.medium.city"
         required
         ng-maxlength="50"
       )
       .help-block(
-        ng-messages="updateVM.contactForm.city.$error"
-        ng-show="updateForm.hasError(updateVM.contactForm.city)"
+        ng-messages="entryAttrVM.form.city.$error"
+        ng-show="updateForm.hasError(entryAttrVM.form.city)"
       )
         span(ng-message="required") This field is required.
         span(ng-message="maxlength") This field must not exceed 50 chars.
