@@ -13,21 +13,22 @@
                 th Type
                 th Contact
             tbody
-              tr(ng-repeat="contact in updateVM.data.contactMedium")
+              tr(ng-repeat="contactMedium in updateVM.data.contactMedium")
                 th
                   .item-checkbox
                     label.checkbox
                       .track
-                        input(type="checkbox", ng-checked="updateVM.contactMediumSelected.indexOf(contact) !== -1", ng-click="updateVM.toggleContact(contact)")
+                        input(type="checkbox", ng-checked="updateVM.contactMediums.indexOf(contactMedium) !== -1", ng-click="updateVM.toggleContactMedium(contactMedium)")
                         i.fa.fa-lg
-                      strong {{ contact.type }}
+                      strong {{ contactMedium.type }}
                 td
-                  a.pull-right(ng-click="updateVM.updateContact(contact)")
-                    span.fa.fa-pencil
-                  span {{ updateVM.formatContact(contact) }}
+                  span.pull-right
+                    a(ng-click="updateVM.updateContactMedium(contactMedium)")
+                      span.fa.fa-pencil
+                  span {{ updateVM.formatContactMedium(contactMedium) }}
         form(name="updateVM.contactDeleteForm", novalidate)
           .form-group.text-right
-            a.btn.btn-danger.z-depth-1(ng-click="updateVM.removeContact()", ng-disabled="!updateVM.contactMediumSelected.length")
+            a.btn.btn-danger.z-depth-1(ng-click="updateVM.removeContactMedium()", ng-disabled="!updateVM.contactMediums.length")
               span.item-text Delete
     .panel.panel-default.z-depth-1
       .panel-body(ng-controller="ContactMediumCreateCtrl as entryAttrVM")
