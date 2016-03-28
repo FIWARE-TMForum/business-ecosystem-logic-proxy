@@ -280,44 +280,42 @@ var ordering = (function(){
 
             } else {
 
-                var isSeller = tmfUtils.hasPartyRole(req.user, previousOrderItem.product.relatedParty, SELLER);
-
-                if (!isSeller) {
-
+                // Check that fields are not added or removed
+                if (Object.keys(updatedItem).length !== Object.keys(previousOrderItem).length) {
                     error = {
                         status: 403,
-                        message: 'You cannot modify an order item if you are not seller'
+                        message: 'The fields of an order item cannot be modified'
                     };
 
                 } else {
 
-                    // Check that fields are not added or removed
-                    if (Object.keys(updatedItem).length !== Object.keys(previousOrderItem).length) {
-                        error = {
-                            status: 403,
-                            message: 'The fields of an order item cannot be modified'
-                        };
-                    }
+                    for (var field in previousOrderItem) {
 
-                    // Check that the value of the fields is not changed (only state can be changed)
-                    if (!error) {
-                        for (var field in updatedItem) {
+                        if (field.toLowerCase() !== 'state' && !equal(previousOrderItem[field], updatedItem[field])) {
 
-                            if (field.toLowerCase() !== 'state' && !equal(updatedItem[field], previousOrderItem[field])) {
+                            error = {
+                                status: 403,
+                                message: 'The value of the field ' + field + ' cannot be changed'
+                            };
 
-                                error = {
-                                    status: 403,
-                                    message: 'The value of the field ' + field + ' cannot be changed'
-                                };
-
-                                break;
-                            }
+                            break;
                         }
                     }
 
                     if (!error) {
-                        // If no errors, the state can be updated!
-                        previousOrderItem['state'] = updatedItem['state'];
+
+                        var isSeller = tmfUtils.hasPartyRole(req.user, previousOrderItem.product.relatedParty, SELLER);
+
+                        // If the user is not the seller and the state is changed
+                        if (!isSeller && previousOrderItem['state'] != updatedItem['state']) {
+                            error = {
+                                status: 403,
+                                message: 'You cannot modify an order item if you are not seller'
+                            };
+                        } else {
+                            // If no errors, the state can be updated!
+                            previousOrderItem['state'] = updatedItem['state'];
+                        }
                     }
                 }
             }
@@ -567,7 +565,7 @@ var ordering = (function(){
 
     var executePostValidation = function(req, callback) {
 
-        if (req.method === 'GET') {
+        if (['GET', 'PUT', 'PATCH'].indexOf(req.method.toUpperCase()) >= 0) {
 
             filterOrderItems(req, callback);
 
