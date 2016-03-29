@@ -66,6 +66,7 @@ config.mongoDb.password = config.mongoDb.password || '';
 config.mongoDb.server = config.mongoDb.server || 'localhost';
 config.mongoDb.port = config.mongoDb.port || 27017;
 config.mongoDb.db = config.mongoDb.db || 'belp';
+config.revenueModel = (config.revenueModel && config.revenueModel >= 0 && config.revenueModel <= 100 ) ? config.revenueModel : 30;
 
 var PORT = config.https.enabled ? 
     config.https.port || 443 :      // HTTPS

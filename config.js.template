@@ -71,6 +71,9 @@ config.endpoints = {
     }
 };
 
+// Percentage of the generated revenues that belongs to the system
+config.revenueModel = 30;
+
 // Use true if the app server listens in https
 config.appSsl = false;
 
