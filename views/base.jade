@@ -49,6 +49,7 @@ html(ng-app="app")
           .constant('LOGGED_USER', {
             id: '#{ user.id }',
             href: '#{ contextPath }/#{ partyPath }/api/partyManagement/v2/individual/#{ user.id }',
+            email: '#{ user.email }',
             bearerToken: '#{ user.accessToken }'
           })
           .run(function ($http, LOGGED_USER) {
@@ -95,13 +96,12 @@ html(ng-app="app")
                     i.fa.fa-user.fa-stack-1x
                   .title.h4 #{ user.displayName }
                   .subtitle #{ user.email }
-                .dropdown-header My account
-                a.dropdown-menu-item(ng-click="user.showProfile()")
-                  span.item-icon.fa.fa-cog
-                  span.item-text My profile
                 a.dropdown-menu-item(ng-if="user.isAdmin()", ui-sref="admin", ui-sref-opts="{ reload: true, inherit: false }")
                   span.item-icon.fa.fa-dashboard
                   span.item-text Administration
+                a.dropdown-menu-item(ui-sref="settings", ui-sref-opts="{ reload: true, inherit: false }")
+                  span.item-icon.fa.fa-cog
+                  span.item-text Settings
                 a.dropdown-menu-item(ng-click="user.signOut()")
                   span.item-icon.fa.fa-sign-out
                   span.item-text Sign out
@@ -137,6 +137,14 @@ html(ng-app="app")
       include ./modals/user-profile.modal.jade
       include ./modals/purchase-options.modal.jade
       include ./modals/redirection-msg.modal.jade
+      include ./modals/contact-medium.modal.jade
+
+    script(type="text/ng-template", id="settings/sidebar")
+      include ./partials/settings/sidebar.jade
+    script(type="text/ng-template", id="settings/general/update")
+      include ./partials/settings/general/update.jade
+    script(type="text/ng-template", id="settings/contact/update")
+      include ./partials/settings/contact/update.jade
 
     script(type="text/ng-template", id="offering/sidebar")
       include ./partials/offering/sidebar.jade
