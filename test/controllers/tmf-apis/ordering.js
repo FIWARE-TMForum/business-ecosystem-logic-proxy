@@ -687,7 +687,8 @@ describe('Ordering API', function() {
                 });
             });
 
-            var testUpdate = function (hasRoleResponses, body, previousState, previousOrderItems, refundError, expectedError, expectedBody, done) {
+            var testUpdate = function (hasRoleResponses, body, previousState, previousOrderItems, refundError,
+                                       expectedError, expectedBody, done) {
 
                 var user = {
                     id: 'fiware',
@@ -749,6 +750,44 @@ describe('Ordering API', function() {
                 });
 
             };
+
+            it('should not fail when a user who is customer and seller send items belonging to another seller ' +
+                'and the state of those items is not changed', function(done) {
+
+                var previousItems = [
+                    { state: 'Acknowledged', id: 7, product: { relatedParty: [] }}, // Seller
+                    { state: 'Acknowledged', id: 9, product: { relatedParty: [] }}  // Not seller
+                ];
+
+                // The user IS the seller of the first item
+                // The user is NOT the seller of the second item
+                testUpdate([true, true, true, false], {orderItem: previousItems}, 'InProgress', previousItems,
+                    null, null, { orderItem: previousItems }, done);
+
+            });
+
+            it('should fail when a user who is customer and seller send items belonging to another seller ' +
+                'and the state of those items is changed', function(done) {
+
+                var previousItems = [
+                    { state: 'Acknowledged', id: 7, product: { relatedParty: [] }}, // Seller
+                    { state: 'Acknowledged', id: 9, product: { relatedParty: [] }}  // Not seller
+                ];
+
+                var sentItems = JSON.parse(JSON.stringify(previousItems));
+                sentItems[1].state = 'InProgress';
+
+                var expectedError = {
+                    status: 403,
+                    message: 'You cannot modify an order item if you are not seller'
+                };
+
+                // The user IS the seller of the first item
+                // The user is NOT the seller of the second item
+                testUpdate([true, true, true, false], { orderItem: sentItems }, 'InProgress', previousItems,
+                    null, expectedError, null, done);
+
+            });
 
             it('should fail when seller tries to update a non in progress ordering', function(done) {
 
