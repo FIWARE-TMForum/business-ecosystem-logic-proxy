@@ -687,7 +687,7 @@ describe('Ordering API', function() {
                 });
             });
 
-            var testUpdate = function (hasRoleResponses, body, previousOrderItems, refundError, expectedError, expectedBody, done) {
+            var testUpdate = function (hasRoleResponses, body, previousState, previousOrderItems, refundError, expectedError, expectedBody, done) {
 
                 var user = {
                     id: 'fiware',
@@ -729,7 +729,7 @@ describe('Ordering API', function() {
                     .get(productOfferingPath)
                     .reply(200, {
                         id: orderId,
-                        state: 'InProgress',
+                        state: previousState,
                         relatedParty: orderingRelatedParties,
                         orderItem: previousOrderItems
                     });
@@ -750,6 +750,19 @@ describe('Ordering API', function() {
 
             };
 
+            it('should fail when seller tries to update a non in progress ordering', function(done) {
+
+                var previousState = 'Acknowledged';
+
+                var expectedError = {
+                    status: 403,
+                    message: previousState + ' orders cannot be manually modified'
+                };
+
+                testUpdate([false, true], {orderItem: []}, previousState, [], null, expectedError, null, done);
+
+            });
+
             it('should fail when the user is not consumer or seller in the ordering', function (done) {
 
                 var expectedError = {
@@ -757,7 +770,7 @@ describe('Ordering API', function() {
                     message: 'You are not authorized to modify this ordering'
                 };
 
-                testUpdate([false, false], {}, [], null, expectedError, null, done);
+                testUpdate([false, false], {}, 'InProgress', [], null, expectedError, null, done);
             });
 
             it('should fail when a customer tries to modify the orderItem field', function (done) {
@@ -767,7 +780,7 @@ describe('Ordering API', function() {
                     message: 'Order items can only be modified by sellers'
                 };
 
-                testUpdate([true, false], {orderItem: []}, [], null, expectedError, null, done);
+                testUpdate([true, false], {orderItem: []}, 'InProgress', [], null, expectedError, null, done);
             });
 
             it('should fail when a customer tries to modify the relatedParty field', function (done) {
@@ -777,11 +790,11 @@ describe('Ordering API', function() {
                     message: 'Related parties cannot be modified'
                 };
 
-                testUpdate([true, false], {relatedParty: []}, [], null, expectedError, null, done);
+                testUpdate([true, false], {relatedParty: []}, 'InProgress', [], null, expectedError, null, done);
             });
 
             it('should not fail when a customer tries to modify the description', function (done) {
-                testUpdate([true, false], {description: 'New description'}, [], null, null, null, done);
+                testUpdate([true, false], {description: 'New description'}, 'InProgress', [], null, null, null, done);
             });
 
             it('should fail when a customer tries to cancel an ordering with completed items', function (done) {
@@ -791,7 +804,8 @@ describe('Ordering API', function() {
                     message: 'Orderings can only be cancelled when all Order items are in Acknowledged state'
                 };
 
-                testUpdate([true, false], {state: 'Cancelled'}, [{state: 'Completed'}], null, expectedError, null, done);
+                testUpdate([true, false], {state: 'Cancelled'}, 'InProgress', [{state: 'Completed'}],
+                    null, expectedError, null, done);
             });
 
             it('should fail when a customer tries to cancel an ordering with failed items', function (done) {
@@ -801,7 +815,8 @@ describe('Ordering API', function() {
                     message: 'Orderings can only be cancelled when all Order items are in Acknowledged state'
                 };
 
-                testUpdate([true, false], {state: 'Cancelled'}, [{state: 'Failed'}], null, expectedError, null, done);
+                testUpdate([true, false], {state: 'Cancelled'}, 'InProgress', [{state: 'Failed'}],
+                    null, expectedError, null, done);
             });
 
             it('should fail when a customer tries to cancel an ordering with cancelled items', function (done) {
@@ -811,7 +826,8 @@ describe('Ordering API', function() {
                     message: 'Orderings can only be cancelled when all Order items are in Acknowledged state'
                 };
 
-                testUpdate([true, false], {state: 'Cancelled'}, [{state: 'Cancelled'}], null, expectedError, null, done);
+                testUpdate([true, false], {state: 'Cancelled'}, 'InProgress', [{state: 'Cancelled'}],
+                    null, expectedError, null, done);
             });
 
             it('should fail when refund cannot be completed', function (done) {
@@ -821,7 +837,8 @@ describe('Ordering API', function() {
                     message: 'You cannot cancel orders with completed items'
                 };
 
-                testUpdate([true, false], {state: 'Cancelled'}, [], expectedError, expectedError, null, done);
+                testUpdate([true, false], {state: 'Cancelled'}, 'InProgress', [], expectedError,
+                    expectedError, null, done);
             });
 
             it('should not fail when refund can be completed', function (done) {
@@ -844,7 +861,7 @@ describe('Ordering API', function() {
                 var expectedBody = JSON.parse(JSON.stringify(requestBody));
                 expectedBody.orderItem = expectedItems;
 
-                testUpdate([true, false], requestBody, previousItems, null, null, expectedBody, done);
+                testUpdate([true, false], requestBody, 'InProgress', previousItems, null, null, expectedBody, done);
             });
 
             it('should fail when a seller tries to modify the description', function (done) {
@@ -857,13 +874,13 @@ describe('Ordering API', function() {
                 testUpdate([false, true], {
                     description: 'New description',
                     orderItem: []
-                }, [], null, expectedError, null, done);
+                }, 'InProgress', [], null, expectedError, null, done);
             });
 
             it('should not fail when seller does not include any order item', function (done) {
 
                 var previousOrderItems = [{id: 1, state: 'InProgress'}];
-                testUpdate([false, true], {orderItem: []}, previousOrderItems, null, null,
+                testUpdate([false, true], {orderItem: []}, 'InProgress', previousOrderItems, null, null,
                     {orderItem: previousOrderItems}, done);
             });
 
@@ -878,7 +895,8 @@ describe('Ordering API', function() {
                 var expectedBody = JSON.parse(JSON.stringify(updatedOrderings));
                 expectedBody['orderItem'] = previousOrderItems;
 
-                testUpdate([true, true], updatedOrderings, previousOrderItems, null, null, expectedBody, done);
+                testUpdate([true, true], updatedOrderings, 'InProgress', previousOrderItems,
+                    null, null, expectedBody, done);
             });
 
             it('should fail when the seller tries to edit a non existing item', function (done) {
@@ -893,7 +911,8 @@ describe('Ordering API', function() {
                     message: 'You are trying to edit an non-existing item'
                 };
 
-                testUpdate([false, true], updatedOrderings, previousOrderItems, null, expectedError, null, done);
+                testUpdate([false, true], updatedOrderings, 'InProgress', previousOrderItems,
+                    null, expectedError, null, done);
             });
 
             it('should fail when the seller tries to edit a non owned item', function (done) {
@@ -908,7 +927,8 @@ describe('Ordering API', function() {
                     message: 'You cannot modify an order item if you are not seller'
                 };
 
-                testUpdate([false, true, false], updatedOrderings, previousOrderItems, null, expectedError, null, done);
+                testUpdate([false, true, false], updatedOrderings, 'InProgress', previousOrderItems,
+                    null, expectedError, null, done);
             });
 
             it('should fail when the seller tries to add a new field to the item', function (done) {
@@ -923,7 +943,8 @@ describe('Ordering API', function() {
                     message: 'The fields of an order item cannot be modified'
                 };
 
-                testUpdate([false, true, true], updatedOrderings, previousOrderItems, null, expectedError, null, done);
+                testUpdate([false, true, true], updatedOrderings, 'InProgress', previousOrderItems,
+                    null, expectedError, null, done);
             });
 
             it('should fail when the seller tries to remove a field from the item', function (done) {
@@ -943,7 +964,8 @@ describe('Ordering API', function() {
                     message: 'The fields of an order item cannot be modified'
                 };
 
-                testUpdate([false, true, true], updatedOrderings, previousOrderItems, null, expectedError, null, done);
+                testUpdate([false, true, true], updatedOrderings, 'InProgress', previousOrderItems,
+                    null, expectedError, null, done);
             });
 
             it('should fail when the seller tries to modify the value of a field in the item', function (done) {
@@ -963,7 +985,8 @@ describe('Ordering API', function() {
                     message: 'The value of the field name cannot be changed'
                 };
 
-                testUpdate([false, true, true], updatedOrderings, previousOrderItems, null, expectedError, null, done);
+                testUpdate([false, true, true], updatedOrderings, 'InProgress', previousOrderItems,
+                    null, expectedError, null, done);
             });
 
             it('should not fail when the user tries to modify the state of an item appropriately', function (done) {
@@ -977,7 +1000,8 @@ describe('Ordering API', function() {
                     orderItem: updatedOrderings.orderItem
                 };
 
-                testUpdate([false, true, true], updatedOrderings, previousOrderItems, null, null, expectedBody, done);
+                testUpdate([false, true, true], updatedOrderings, 'InProgress', previousOrderItems,
+                    null, null, expectedBody, done);
             });
 
             // FIXME: Maybe this test can be skipped
@@ -993,7 +1017,8 @@ describe('Ordering API', function() {
                     message: 'You are trying to edit an non-existing item'
                 };
 
-                testUpdate([false, true], updatedOrderings, previousOrderItems, null, expectedError, null, done);
+                testUpdate([false, true], updatedOrderings, 'InProgress', previousOrderItems,
+                    null, expectedError, null, done);
             });
 
             it('should include the items that belong to another sellers', function (done) {
@@ -1024,7 +1049,8 @@ describe('Ordering API', function() {
                     orderItem: expectedOrderItems
                 };
 
-                testUpdate([false, true, true], updatedOrderings, previousOrderItems, null, null, expectedBody, done);
+                testUpdate([false, true, true], updatedOrderings, 'InProgress', previousOrderItems,
+                    null, null, expectedBody, done);
 
             });
         });

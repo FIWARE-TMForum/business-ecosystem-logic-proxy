@@ -263,6 +263,13 @@ var ordering = (function(){
 
         var error = null;
 
+        if (previousOrdering.state.toLowerCase() !== 'inprogress') {
+            error = {
+                status: 403,
+                message: previousOrdering.state + ' orders cannot be manually modified'
+            };
+        }
+
         for (var i = 0; i < updatedOrdering.orderItem.length && !error; i++) {
 
             var updatedItem = updatedOrdering.orderItem[i];
@@ -348,16 +355,6 @@ var ordering = (function(){
                 if (err) {
                     callback(err);
                 } else {
-
-                    if (['pending', 'acknowledged'].indexOf(previousOrdering.state.toLowerCase()) >= 0) {
-
-                        callback({
-                            status: 403,
-                            message: 'Not processed orderings cannot be modified manually'
-                        });
-
-                        return;
-                    }
 
                     var isCustomer = tmfUtils.hasPartyRole(req.user, previousOrdering.relatedParty, CUSTOMER);
                     var isSeller = tmfUtils.hasPartyRole(req.user, previousOrdering.relatedParty, SELLER);
