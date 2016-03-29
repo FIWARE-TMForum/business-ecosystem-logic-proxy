@@ -763,6 +763,11 @@ describe('Ordering API', function() {
 
             });
 
+            it('should not fail when customer tries to update a non in progress ordering', function(done) {
+                var previousState = 'Acknowledged';
+                testUpdate([true, false], {description: 'New Description'}, previousState, [], null, null, null, done);
+            });
+
             it('should fail when the user is not consumer or seller in the ordering', function (done) {
 
                 var expectedError = {
@@ -1263,8 +1268,7 @@ describe('Ordering API', function() {
             testFilterOrders([ order1, order2 ], done);
         });
 
-        it('should not fail and not filter items when the user is customer', function(done) {
-
+        var notFilterItemsUserIsCustomer = function(method, done) {
             var user = { id: 'fiware' };
             var orderingRelatedParties =  [ {id: 'fiware'} ];
             var originalBody = {
@@ -1282,7 +1286,7 @@ describe('Ordering API', function() {
             };
 
             var req = {
-                method: 'GET',
+                method: method,
                 body: JSON.stringify(originalBody),
                 user: user
             };
@@ -1297,9 +1301,21 @@ describe('Ordering API', function() {
 
                 done();
             });
+        };
+
+        it('should not fail and not filter items when the user is customer (GET)', function(done) {
+            notFilterItemsUserIsCustomer('GET', done);
         });
 
-        var testSeller = function(orderItems, done) {
+        it('should not fail and not filter items when the user is customer (PUT)', function(done) {
+            notFilterItemsUserIsCustomer('PUT', done);
+        });
+
+        it('should not fail and not filter items when the user is customer (PATCH)', function(done) {
+            notFilterItemsUserIsCustomer('PATCH', done);
+        });
+
+        var testSeller = function(orderItems, method, done) {
 
             var user = { id: 'fiware' };
             var orderingRelatedParties = [];
@@ -1333,7 +1349,8 @@ describe('Ordering API', function() {
             };
 
             var req = {
-                method: 'GET',
+                method: method,
+                // The body returned by the server...
                 body: JSON.stringify(originalBody),
                 user: user
             };
@@ -1355,24 +1372,45 @@ describe('Ordering API', function() {
             });
         };
 
-        it('should not fail and not filter the only item', function(done) {
-
+        var notFilterSingleItem = function(method, done) {
             var orderItemRelatedParties = [{ id: 'fiware', role: 'seller' }];
             var orderItem =  { item: { product: { relatedParty: orderItemRelatedParties, id: 7 } }, isSeller: true };
 
-            testSeller([orderItem], done);
+            testSeller([orderItem], method, done);
+        };
+
+        it('should not fail and not filter the only item (GET)', function(done) {
+            notFilterSingleItem('GET', done);
         });
 
+        it('should not fail and not filter the only item (PUT)', function(done) {
+            notFilterSingleItem('PUT', done);
+        });
 
-        it('should not fail and filter the only item', function(done) {
+        it('should not fail and not filter the only item (PATCH)', function(done) {
+            notFilterSingleItem('PATCH', done);
+        });
 
+        var filterSingleElement = function(method, done) {
             var orderItemRelatedParties = [{ id: 'other-seller', role: 'seller' }];
             var orderItem =  { item: { product: { relatedParty: orderItemRelatedParties, id: 7 } }, isSeller: false };
 
-            testSeller([orderItem], done);
+            testSeller([orderItem], method, done);
+        };
+
+        it('should not fail and filter the only item (GET)', function(done) {
+            filterSingleElement('GET', done);
         });
 
-        it('should not fail and filter one order item', function(done) {
+        it('should not fail and filter the only item (PUT)', function(done) {
+            filterSingleElement('PUT', done);
+        });
+
+        it('should not fail and filter the only item (PATCH)', function(done) {
+            filterSingleElement('PATCH', done);
+        });
+
+        var filterOneItem = function(method, done) {
 
             var orderItem1RelatedParties = [{ id: 'other-seller', role: 'seller' }];
             var orderItem2RelatedParties = [{ id: 'fiware', role: 'seller' }];
@@ -1380,21 +1418,43 @@ describe('Ordering API', function() {
             var orderItem2 = { item: { product: { relatedParty: orderItem2RelatedParties, id: 8 } }, isSeller: true };
 
 
-            testSeller([orderItem1, orderItem2], done);
+            testSeller([orderItem1, orderItem2], method, done);
+        };
+
+        it('should not fail and filter one order item (GET)', function(done) {
+            filterOneItem('GET', done);
         });
 
-        it('should not fail and not filter items', function(done) {
+        it('should not fail and filter one order item (PUT)', function(done) {
+            filterOneItem('PUT', done);
+        });
 
+        it('should not fail and filter one order item (PATCH)', function(done) {
+            filterOneItem('PATCH', done);
+        });
+
+        var notFilterItems = function(method, done) {
             var orderItemRelatedParties = [{ id: 'fiware', role: 'seller' }];
             var orderItem1 = { item: { product: { relatedParty: orderItemRelatedParties, id: 7 } }, isSeller: true };
             var orderItem2 = { item: { product: { relatedParty: orderItemRelatedParties, id: 8 } }, isSeller: true };
 
 
-            testSeller([orderItem1, orderItem2], done);
+            testSeller([orderItem1, orderItem2], method, done);
+        };
+
+        it('should not fail and not filter items (GET)', function(done) {
+            notFilterItems('GET', done);
         });
 
-        it('should not fail and filter two order items', function(done) {
+        it('should not fail and not filter items (PUT)', function(done) {
+            notFilterItems('PUT', done);
+        });
 
+        it('should not fail and not filter items (PATCH)', function(done) {
+            notFilterItems('PATCH', done);
+        });
+
+        var filterTwoItems = function(method, done) {
             var nowOwnerRelatedParties = [{ id: 'other-seller', role: 'seller' }];
             var ownerRelatedParties = [{ id: 'fiware', role: 'seller' }];
             var orderItem1 = { item: { product: { relatedParty: nowOwnerRelatedParties, id: 7 } }, isSeller: false };
@@ -1402,7 +1462,19 @@ describe('Ordering API', function() {
             var orderItem3 = { item: { product: { relatedParty: ownerRelatedParties, id: 9 } }, isSeller: true };
 
 
-            testSeller([orderItem1, orderItem2, orderItem3], done);
+            testSeller([orderItem1, orderItem2, orderItem3], method, done);
+        };
+
+        it('should not fail and filter two order items (GET)', function(done) {
+            filterTwoItems('GET', done);
+        });
+
+        it('should not fail and filter two order items (PUT)', function(done) {
+            filterTwoItems('PUT', done);
+        });
+
+        it('should not fail and filter two order items (PATCH)', function(done) {
+            filterTwoItems('PATCH', done);
         });
     });
 });
