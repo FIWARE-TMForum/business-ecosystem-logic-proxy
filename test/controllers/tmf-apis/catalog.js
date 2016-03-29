@@ -757,6 +757,14 @@ describe('Catalog API', function() {
 
     // OFFERINGS
 
+    var getProductSpecification = function(path) {
+        return {
+            // the server will be avoided by the SW
+            // The catalog server will be used instead
+            href: config.appHost + ':' + config.endpoints.catalog.port + path
+        }
+    };
+
     var testUpdateProductOffering = function(offeringBody, productRequestInfo, catalogRequestInfo, expectedErrorStatus,
                                              expectedErrorMsg, done) {
 
@@ -780,17 +788,13 @@ describe('Catalog API', function() {
         var userName = 'test';
         var catalogPath = '/catalog/8';
         var offeringPath = catalogPath + '/productOffering/1';
-        var productPath = '/productSpecification/7';
+        var productPath = productRequestInfo.path || '/productSpecification/7';
         var protocol = config.appSsl ? 'https' : 'http';
         var serverUrl = protocol + '://' + config.appHost + ':' + config.endpoints.catalog.port;
         
         // HTTP MOCK - OFFERING
-        var bodyGetOffering = { 
-            productSpecification: {
-                // the server will be avoided by the SW
-                // The catalog server will be used instead
-                href: config.appHost + ':' + config.endpoints.catalog.port + productPath
-            }
+        var bodyGetOffering = {
+            productSpecification: getProductSpecification(productPath)
         };
 
         nock(serverUrl)
@@ -843,7 +847,6 @@ describe('Catalog API', function() {
 
     it('should allow to update an owned offering', function(done) {
 
-
         var productRequestInfo = {
             requestStatus: 200,
             owner: true,
@@ -856,6 +859,44 @@ describe('Catalog API', function() {
         };
 
         testUpdateProductOffering({}, productRequestInfo, catalogRequestInfo, null, null, done);
+    });
+
+
+    it('should allow to update an owned offering when productSpecification is included but the content does not vary', function(done) {
+
+        var productRequestInfo = {
+            requestStatus: 200,
+            owner: true,
+            lifecycleStatus: 'active',
+            path: '/productSpecification/8'
+        };
+
+        var catalogRequestInfo = {
+            requestStatus: 200,
+            lifecycleStatus: 'active'
+        };
+
+        var newOffering = JSON.stringify({
+            productSpecification: getProductSpecification(productRequestInfo.path)
+        });
+
+        testUpdateProductOffering(newOffering, productRequestInfo, catalogRequestInfo, null, null, done);
+    });
+
+    it('should not allow to update an owned offering when productSpecification changes', function(done) {
+        var productRequestInfo = {
+            requestStatus: 200,
+            owner: true,
+            lifecycleStatus: 'active'
+        };
+
+        var catalogRequestInfo = {
+            requestStatus: 200,
+            lifecycleStatus: 'active'
+        };
+
+        testUpdateProductOffering(JSON.stringify({ productSpecification: {} }), productRequestInfo,
+            catalogRequestInfo, 403, 'Field productSpecification cannot be modified', done);
     });
 
     it('should not allow to update a non-owned offering', function(done) {

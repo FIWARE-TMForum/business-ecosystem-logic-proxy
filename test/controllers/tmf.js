@@ -29,7 +29,7 @@ describe('TMF Controller', function() {
     };
 
     // Function to get a custom tmf.js instance
-    var getTmfInstance = function(request, catalog, ordering, inventory) {
+    var getTmfInstance = function(request, catalog, ordering, inventory, party) {
 
         return proxyquire('../../controllers/tmf', {
             'request': request,
@@ -38,7 +38,8 @@ describe('TMF Controller', function() {
             './../lib/logger': testUtils.emptyLogger,
             './tmf-apis/catalog': { catalog: catalog },
             './tmf-apis/ordering': {ordering: ordering},
-            './tmf-apis/inventory': { inventory: inventory }
+            './tmf-apis/inventory': { inventory: inventory },
+            './tnf-apis/party': { party: party }
         }).tmf;
     };
 
@@ -328,6 +329,8 @@ describe('TMF Controller', function() {
             var postValidatorCalled = false;
 
             var reqMethod = 'POST';
+            var secure = true;
+            var hostname = 'belp.fiware.org';
             var reqBody = 'Example';
             var reqPath = '/ordering';
             var userId = 'user';
@@ -357,6 +360,8 @@ describe('TMF Controller', function() {
 
                     expect(req).toEqual(
                         {
+                            secure: secure,
+                            hostname: hostname,
                             status: returnedResponse.statusCode,
                             headers: returnedResponse.headers,
                             body: returnedBody,
@@ -392,6 +397,8 @@ describe('TMF Controller', function() {
                 apiUrl: reqPath,
                 //path: reqPath,
                 body: reqBody,
+                hostname: hostname,
+                secure: secure,
                 method: reqMethod,
                 user: {'id': userId },
                 headers: {},

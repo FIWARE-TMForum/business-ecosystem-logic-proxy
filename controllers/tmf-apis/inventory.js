@@ -52,7 +52,7 @@ var inventory = (function() {
         }
 
         var filteredOrders = orderings.filter(function(order) {
-            return tmfUtils.hasPartyRole(req.user, order.relatedParty, 'customer');
+            return tmfUtils.hasPartyRole(req, order.relatedParty, 'customer');
         });
 
         if (!isArray) {

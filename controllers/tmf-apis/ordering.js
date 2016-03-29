@@ -51,7 +51,7 @@ var ordering = (function(){
     ////////////////////////////////////////// CREATION //////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
 
-    var completeRelatedPartyInfo = function(item, user, callback) {
+    var completeRelatedPartyInfo = function(individualCollectionUrl, item, user, callback) {
 
         if (!item.product) {
 
@@ -90,7 +90,7 @@ var ordering = (function(){
             item.product.relatedParty.push({
                 id: user.id,
                 role: CUSTOMER,
-                href: ''
+                href: individualCollectionUrl + user.id
             });
         }
 
@@ -133,7 +133,7 @@ var ordering = (function(){
                                 item.product.relatedParty.push({
                                     id: owner.id,
                                     role: SELLER,
-                                    href: ''
+                                    href: individualCollectionUrl + owner.id
                                 });
                             });
 
@@ -214,9 +214,10 @@ var ordering = (function(){
         }
 
         var asyncTasks = [];
+        var individualCollectionUrl = tmfUtils.getIndividualURL(req);
 
         body.orderItem.forEach(function(item) {
-           asyncTasks.push(completeRelatedPartyInfo.bind(this, item, req.user));
+            asyncTasks.push(completeRelatedPartyInfo.bind(this, individualCollectionUrl, item, req.user));
         });
 
         async.series(asyncTasks, function(err/*, results*/) {
@@ -289,6 +290,7 @@ var ordering = (function(){
 
                 // Check that fields are not added or removed
                 if (Object.keys(updatedItem).length !== Object.keys(previousOrderItem).length) {
+
                     error = {
                         status: 403,
                         message: 'The fields of an order item cannot be modified'
@@ -356,8 +358,8 @@ var ordering = (function(){
                     callback(err);
                 } else {
 
-                    var isCustomer = tmfUtils.hasPartyRole(req.user, previousOrdering.relatedParty, CUSTOMER);
-                    var isSeller = tmfUtils.hasPartyRole(req.user, previousOrdering.relatedParty, SELLER);
+                    var isCustomer = tmfUtils.hasPartyRole(req, previousOrdering.relatedParty, CUSTOMER);
+                    var isSeller = tmfUtils.hasPartyRole(req, previousOrdering.relatedParty, SELLER);
 
                     if (isCustomer) {
 
@@ -496,8 +498,8 @@ var ordering = (function(){
         var orderingsToRemove = [];
         orderings.forEach(function(ordering) {
 
-            var customer = tmfUtils.hasPartyRole(req.user, ordering.relatedParty, CUSTOMER);
-            var seller = tmfUtils.hasPartyRole(req.user, ordering.relatedParty, SELLER);
+            var customer = tmfUtils.hasPartyRole(req, ordering.relatedParty, CUSTOMER);
+            var seller = tmfUtils.hasPartyRole(req, ordering.relatedParty, SELLER);
 
             if (!customer && !seller) {
                 // This can happen when a user ask for a specific ordering.
@@ -508,7 +510,7 @@ var ordering = (function(){
                 // where the user is a seller have to be returned
 
                 ordering.orderItem = ordering.orderItem.filter(function(item) {
-                    return tmfUtils.hasPartyRole(req.user, item.product.relatedParty, SELLER);
+                    return tmfUtils.hasPartyRole(req, item.product.relatedParty, SELLER);
                 });
             }
             // ELSE: If the user is the customer, order items don't have to be filtered

@@ -6,7 +6,7 @@ describe('Ordering API', function() {
 
     var config = testUtils.getDefaultConfig();
     var SERVER = (config.appSsl ? 'https' : 'http') + '://' + config.appHost + ':' + config.endpoints.ordering.port;
-    var CATALOGSERVER = (config.appSsl ? 'https' : 'http') + '://' + config.appHost + ':' + config.endpoints.catalog.port;
+    var CATALOG_SERVER = (config.appSsl ? 'https' : 'http') + '://' + config.appHost + ':' + config.endpoints.catalog.port;
 
     var getOrderingAPI = function(storeClient, tmfUtils, utils) {
         return proxyquire('../../../controllers/tmf-apis/ordering', {
@@ -20,6 +20,10 @@ describe('Ordering API', function() {
 
     var validateLoggedOk = function (req, callback) {
         callback();
+    };
+
+    var getIndividualURL = function(user) {
+        return 'http://belp.fiware.org:7891/party/api/partyManagement/v2/individual/' + (user ? user : '');
     };
 
     beforeEach(function() {
@@ -229,7 +233,15 @@ describe('Ordering API', function() {
                     hasRole: checkRole
                 };
 
-                var orderingApi = getOrderingAPI({}, {}, utils);
+                var tmfUtils = {
+                    getIndividualURL: function (receivedReq) {
+                        // req: the request sent to the API
+                        expect(receivedReq).toBe(req);
+                        return getIndividualURL();
+                    }
+                };
+
+                var orderingApi = getOrderingAPI({}, tmfUtils, utils);
 
                 var req = {
                     user: userInfo,
@@ -271,7 +283,7 @@ describe('Ordering API', function() {
                         }
                     });
                 }
-
+                
                 var body = {
                     relatedParty: [{
                         id: userName,
@@ -280,29 +292,31 @@ describe('Ordering API', function() {
                     orderItem: orderItems
                 };
 
-                nock(CATALOGSERVER)
+                nock(CATALOG_SERVER)
                     .get(productOfferingPath)
                     .times(nOrderItems)
                     .reply(200, {productSpecification: {href: SERVER + productSpecPath}});
 
-                nock(CATALOGSERVER)
+                nock(CATALOG_SERVER)
                     .get(productSpecPath)
                     .times(nOrderItems)
                     .reply(200, {relatedParty: [{id: ownerName, role: 'owner'}]});
 
                 testOrderCreation(user, JSON.stringify(body), customerRoleRequired, null, done, function (req) {
+
                     var newBody = JSON.parse(req.body);
                     //expect(req.headers['content-length']).toBe(newBody.length);
+
                     expect(newBody.orderItem[0].product.relatedParty).toEqual([
                         {
                             id: userName,
                             role: 'Customer',
-                            href: ''
+                            href: getIndividualURL(userName)
                         },
                         {
                             id: ownerName,
                             role: 'Seller',
-                            href: ''
+                            href: getIndividualURL(ownerName)
                         }]);
                 });
             };
@@ -342,11 +356,11 @@ describe('Ordering API', function() {
                     }]
                 };
 
-                nock(CATALOGSERVER)
+                nock(CATALOG_SERVER)
                     .get(productOfferingPath)
                     .reply(200, {productSpecification: {href: SERVER + productSpecPath}});
 
-                nock(CATALOGSERVER)
+                nock(CATALOG_SERVER)
                     .get(productSpecPath)
                     .reply(200, {relatedParty: [{id: ownerName, role: 'other_role'}]});
 
@@ -384,7 +398,7 @@ describe('Ordering API', function() {
                     }]
                 };
 
-                nock(CATALOGSERVER)
+                nock(CATALOG_SERVER)
                     .get(productOfferingPath)
                     .reply(500);
 
@@ -422,11 +436,11 @@ describe('Ordering API', function() {
                     }]
                 };
 
-                nock(CATALOGSERVER)
+                nock(CATALOG_SERVER)
                     .get(productOfferingPath)
                     .reply(200, {productSpecification: {href: SERVER + productSpecPath}});
 
-                nock(CATALOGSERVER)
+                nock(CATALOG_SERVER)
                     .get(productSpecPath)
                     .reply(500);
 
@@ -739,8 +753,8 @@ describe('Ordering API', function() {
 
                     expect(err).toEqual(expectedError);
 
-                    expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(user, jasmine.arrayContaining(orderingRelatedParties), 'Customer');
-                    expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(user, jasmine.arrayContaining(orderingRelatedParties), 'Seller');
+                    expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(req, jasmine.arrayContaining(orderingRelatedParties), 'Customer');
+                    expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(req, jasmine.arrayContaining(orderingRelatedParties), 'Seller');
 
                     if (expectedBody) {
                         expect(utils.updateBody).toHaveBeenCalledWith(req, expectedBody);
@@ -1263,8 +1277,8 @@ describe('Ordering API', function() {
                 expect(err).toBe(null);
 
                 orders.forEach(function(order) {
-                    expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(user, order.item.relatedParty, 'Customer');
-                    expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(user, order.item.relatedParty, 'Seller');
+                    expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(req, order.item.relatedParty, 'Customer');
+                    expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(req, order.item.relatedParty, 'Seller');
                 });
 
                 expect(tmfUtils.hasPartyRole.calls.count()).toBe(orders.length * 2); // One for customer and one for seller
@@ -1334,8 +1348,8 @@ describe('Ordering API', function() {
 
             orderingApi.executePostValidation(req, function(err) {
                 expect(err).toEqual(null);
-                expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(user, orderingRelatedParties, 'Customer');
-                expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(user, orderingRelatedParties, 'Seller');
+                expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(req, orderingRelatedParties, 'Customer');
+                expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(req, orderingRelatedParties, 'Seller');
                 expect(tmfUtils.hasPartyRole.calls.count()).toBe(2);
 
                 done();
@@ -1400,11 +1414,11 @@ describe('Ordering API', function() {
 
                 expect(err).toEqual(null);
 
-                expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(user, orderingRelatedParties, 'Customer');
-                expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(user, orderingRelatedParties, 'Seller');
+                expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(req, orderingRelatedParties, 'Customer');
+                expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(req, orderingRelatedParties, 'Seller');
 
                 orderItems.forEach(function(item) {
-                    expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(user, item.item.product.relatedParty, 'Seller');
+                    expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(req, item.item.product.relatedParty, 'Seller');
                 });
 
                 done();

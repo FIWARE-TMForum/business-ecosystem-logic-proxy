@@ -1,5 +1,6 @@
 var async = require('async'),
     config = require('./../../config'),
+    equal = require('deep-equal'),
     request = require('request'),
     storeClient = require('./../../lib/store').storeClient,
     url = require('url'),
@@ -72,7 +73,9 @@ var catalog = (function() {
         return url.parse(offeringUrl.substring(0, productOfferingPos)).pathname;
     };
 
-    var validateOffering = function(user, offeringPath, previousBody, newBody, callback) {
+    var validateOffering = function(req, offeringPath, previousBody, newBody, callback) {
+
+        var user = req.user;
 
         var validStates = null;
         var errorMessageStateProduct = null;
@@ -95,8 +98,17 @@ var catalog = (function() {
 
         }
 
+        // When updating an offering, it must be checked that the productSpecification field is not modified
+        if (newBody && previousBody && newBody.productSpecification &&
+                !equal(newBody.productSpecification, previousBody.productSpecification)) {
+
+            return callback({
+                status: 403,
+                message: 'Field productSpecification cannot be modified'
+            });
+        }
+
         // Check that the product attached to the offering is owned by the same user
-        // FIXME: Maybe there is a bug here...
         retrieveProduct(previousBody || newBody, function(err, result) {
 
             if (err) {
@@ -106,7 +118,7 @@ var catalog = (function() {
                 var product = JSON.parse(result.body);
 
                 // Check that the user is the owner of the product
-                if (tmfUtils.isOwner(user, product)) {
+                if (tmfUtils.isOwner(req, product)) {
 
                     // States are only checked when the offering is being created
                     // or when the offering is being launched
@@ -279,8 +291,8 @@ var catalog = (function() {
     ////////////////////////////////////////// CREATION //////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
 
-    var createHandler = function(userInfo, resp, callback) {
-        if (tmfUtils.isOwner(userInfo, resp)) {
+    var createHandler = function(req, resp, callback) {
+        if (tmfUtils.isOwner(req, resp)) {
             callback();
         } else {
             callback({
@@ -330,7 +342,7 @@ var catalog = (function() {
 
             if (offeringsPattern.test(req.apiUrl)) {
 
-                validateOffering(req.user, req.apiUrl, null, body, function (err) {
+                validateOffering(req, req.apiUrl, null, body, function (err) {
 
                     if (err) {
                         callback(err);
@@ -353,11 +365,11 @@ var catalog = (function() {
                     if (err) {
                         callback(err);
                     } else {
-                        createHandler(req.user, body, callback);
+                        createHandler(req, body, callback);
                     }
                 });
             } else {
-                createHandler(req.user, body, callback);
+                createHandler(req, body, callback);
             }
         }
     };
@@ -474,11 +486,11 @@ var catalog = (function() {
 
                     } else if (offeringsPattern.test(req.apiUrl)) {
 
-                        validateOffering(req.user, req.apiUrl, previousBody, parsedBody, callback);
+                        validateOffering(req, req.apiUrl, previousBody, parsedBody, callback);
 
                     } else {
 
-                        if (tmfUtils.isOwner(req.user, previousBody)) {
+                        if (tmfUtils.isOwner(req, previousBody)) {
 
                             if (catalogsPattern.test(req.apiUrl)) {
 

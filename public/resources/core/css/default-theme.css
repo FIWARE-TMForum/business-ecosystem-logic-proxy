@@ -244,6 +244,11 @@ textarea {
     box-shadow: none;
 }
 
+input[type="date"].form-control {
+    line-height: 20px;
+    padding: 5px 12px;
+}
+
 select.form-control {
     padding-top: 7px;
     padding-bottom: 7px;
@@ -575,6 +580,10 @@ a.dropdown-menu-item:hover {
 
 .dropdown-avatar > .title {
     margin-bottom: 0;
+}
+
+.dropdown-avatar + .dropdown-menu-item {
+    margin-top: 10px;
 }
 
 /* ===================================================================================
@@ -1542,12 +1551,16 @@ a.list-group-item > .badge-status {
 
 .item-checkbox {
     padding: 0 0;
+    -webkit-user-select: none;  /* Chrome all / Safari all */
+       -moz-user-select: none;     /* Firefox all */
+        -ms-user-select: none;      /* IE 10+ */
+            user-select: none;          /* Likely future */
 }
 .item-checkbox .checkbox {
     position: relative;
     display: block;
     cursor: pointer;
-    padding: 5px 10px;
+    padding: 0 10px;
     padding-left: 40px;
     margin-top: 0;
     margin-bottom: 0;
@@ -1575,12 +1588,16 @@ a.list-group-item > .badge-status {
 
 .item-radio {
     padding: 0 0;
+    -webkit-user-select: none;  /* Chrome all / Safari all */
+       -moz-user-select: none;     /* Firefox all */
+        -ms-user-select: none;      /* IE 10+ */
+            user-select: none;          /* Likely future */
 }
 .item-radio .radio {
     position: relative;
     display: block;
     cursor: pointer;
-    padding: 5px 10px;
+    padding: 0 10px;
     padding-left: 40px;
     margin-top: 0;
     margin-bottom: 0;
