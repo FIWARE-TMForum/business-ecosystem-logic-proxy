@@ -134,64 +134,72 @@
 
                 vm.loadingStatus = LOADED;
 
-                // Initialize order
-                vm.orderInfo = {
-                    state: 'Acknowledged',
-                    orderItem: [],
-                    relatedParty: [User.serializeBasic()]
-                };
+                if (orderItems.length) {
 
-                vm.orderInfo.relatedParty[0].role = 'Customer';
-
-                // Build order items. This information is created using the shopping card and is not editable in this view
-                for (var i = 0; i < orderItems.length; i++) {
-                    var item = {
-                        id: i.toString(),
-                        action: 'add',
+                    // Initialize order
+                    vm.orderInfo = {
                         state: 'Acknowledged',
-                        productOffering: {
-                            id: orderItems[i].id,
-                            name: orderItems[i].name,
-                            href: orderItems[i].href
-                        },
-                        product: {
-                            productCharacteristic: []
-                        },
-                        billingAccount: [User.serializeBasic()]
+                        orderItem: [],
+                        relatedParty: [User.serializeBasic()]
                     };
 
-                    // Use pricing and characteristics to build the product property
-                    if (orderItems[i].options.characteristics) {
-                        for (var j = 0; j < orderItems[i].options.characteristics.length; j++) {
-                            var char = orderItems[i].options.characteristics[j].characteristic;
-                            var selectedValue = orderItems[i].options.characteristics[j].value;
-                            var value;
+                    vm.orderInfo.relatedParty[0].role = 'Customer';
 
-                            if (char.valueType.toLowerCase() === 'string' ||
-                                (char.valueType.toLowerCase() === 'number' && selectedValue.value)) {
-                                value = selectedValue.value;
-                            } else {
-                                value = selectedValue.valueFrom + '-' + selectedValue.valueTo;
-                            }
-
-                            item.product.productCharacteristic.push({
-                                name: char.name,
-                                value: value
-                            });
-                        }
-                    }
-
-                    if (orderItems[i].options.pricing) {
-                        var price = orderItems[i].options.pricing;
-                        price.price = {
-                            amount: orderItems[i].options.pricing.price.taxIncludedAmount,
-                            currency: orderItems[i].options.pricing.price.currencyCode
+                    // Build order items. This information is created using the shopping card and is not editable in this view
+                    for (var i = 0; i < orderItems.length; i++) {
+                        var item = {
+                            id: i.toString(),
+                            action: 'add',
+                            state: 'Acknowledged',
+                            productOffering: {
+                                id: orderItems[i].id,
+                                name: orderItems[i].name,
+                                href: orderItems[i].href
+                            },
+                            product: {
+                                productCharacteristic: []
+                            },
+                            billingAccount: [User.serializeBasic()]
                         };
-                        item.product.productPrice = [price];
-                    }
 
-                    // Include the item to the order
-                    vm.orderInfo.orderItem.push(item);
+                        // Use pricing and characteristics to build the product property
+                        if (orderItems[i].options.characteristics) {
+                            for (var j = 0; j < orderItems[i].options.characteristics.length; j++) {
+                                var char = orderItems[i].options.characteristics[j].characteristic;
+                                var selectedValue = orderItems[i].options.characteristics[j].value;
+                                var value;
+
+                                if (char.valueType.toLowerCase() === 'string' ||
+                                    (char.valueType.toLowerCase() === 'number' && selectedValue.value)) {
+                                    value = selectedValue.value;
+                                } else {
+                                    value = selectedValue.valueFrom + '-' + selectedValue.valueTo;
+                                }
+
+                                item.product.productCharacteristic.push({
+                                    name: char.name,
+                                    value: value
+                                });
+                            }
+                        }
+
+                        if (orderItems[i].options.pricing) {
+                            var price = orderItems[i].options.pricing;
+                            price.price = {
+                                amount: orderItems[i].options.pricing.price.taxIncludedAmount,
+                                currency: orderItems[i].options.pricing.price.currencyCode
+                            };
+                            item.product.productPrice = [price];
+                        }
+
+                        // Include the item to the order
+                        vm.orderInfo.orderItem.push(item);
+                    }
+                } else {
+                    $state.go('offering');
+                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'info', {
+                        message: 'No items found on your shopping cart!'
+                    });
                 }
 
             }, function (response) {
