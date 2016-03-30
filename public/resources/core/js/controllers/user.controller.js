@@ -163,6 +163,9 @@
                     message: 'The offering <strong>' + offering.name + '</strong> was removed to your cart.'
                 });
 
+                // Send notification so other views can update its status
+                $rootScope.$broadcast(EVENTS.OFFERING_REMOVED);
+
                 // The list of items in the cart can be updated now!
                 updateItemsList();
 

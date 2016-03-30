@@ -126,6 +126,10 @@
             $('#' + id).collapse('toggle');
         }
 
+        $rootScope.$on(EVENTS.OFFERING_REMOVED, function() {
+            initOrder();
+        });
+
         var initOrder = function initOrder() {
 
             vm.loadingStatus = LOADING;
