@@ -113,9 +113,16 @@
         }
     }
 
-    function ProductOrderCreateController($state, $rootScope, $window, $interval, User, ProductOrder, Offering, ShoppingCart, Utils, EVENTS) {
+    function ProductOrderCreateController($state, $rootScope, $scope, $window, $interval, User, ProductOrder, Offering, ShoppingCart, Utils, EVENTS) {
         /* jshint validthis: true */
         var vm = this;
+
+        // Initialize order
+        vm.orderInfo = {
+            state: 'Acknowledged',
+            orderItem: [],
+            relatedParty: [User.serializeBasic()]
+        };
 
         vm.makeOrder = makeOrder;
         vm.toggleCollapse = toggleCollapse;
@@ -126,7 +133,8 @@
             $('#' + id).collapse('toggle');
         }
 
-        $rootScope.$on(EVENTS.OFFERING_REMOVED, function() {
+        $scope.$on(EVENTS.OFFERING_REMOVED, function() {
+            console.log('item removed');
             initOrder();
         });
 
@@ -140,14 +148,10 @@
 
                 if (orderItems.length) {
 
-                    // Initialize order
-                    vm.orderInfo = {
-                        state: 'Acknowledged',
-                        orderItem: [],
-                        relatedParty: [User.serializeBasic()]
-                    };
-
                     vm.orderInfo.relatedParty[0].role = 'Customer';
+
+                    // Remove old order items
+                    vm.orderInfo.orderItem = [];
 
                     // Build order items. This information is created using the shopping card and is not editable in this view
                     for (var i = 0; i < orderItems.length; i++) {
@@ -245,6 +249,17 @@
 
             // Fix display fields to accommodate API restrictions
             var apiInfo = angular.copy(vm.orderInfo);
+            var note = apiInfo.initialNote;
+            delete apiInfo['initialNote'];
+
+            if (note) {
+                apiInfo['note'] = [{
+                    text: note,
+                    author: apiInfo.relatedParty[0].id,
+                    date: new Date().toISOString()
+                }];
+            }
+
             for (var i = 0; i < apiInfo.orderItem.length; i++) {
                 delete apiInfo.orderItem[i].productOffering.name;
                 if (!apiInfo.orderItem[i].product.productCharacteristic.length) {
