@@ -6,7 +6,7 @@ describe('Ordering API', function() {
 
     var config = testUtils.getDefaultConfig();
     var SERVER = (config.appSsl ? 'https' : 'http') + '://' + config.appHost + ':' + config.endpoints.ordering.port;
-    var CATALOGSERVER = (config.appSsl ? 'https' : 'http') + '://' + config.appHost + ':' + config.endpoints.catalog.port;
+    var CATALOG_SERVER = (config.appSsl ? 'https' : 'http') + '://' + config.appHost + ':' + config.endpoints.catalog.port;
 
     var getOrderingAPI = function(storeClient, tmfUtils, utils) {
         return proxyquire('../../../controllers/tmf-apis/ordering', {
@@ -20,6 +20,10 @@ describe('Ordering API', function() {
 
     var validateLoggedOk = function (req, callback) {
         callback();
+    };
+
+    var getIndividualURL = function(user) {
+        return 'http://belp.fiware.org:7891/party/api/partyManagement/v2/individual/' + (user ? user : '');
     };
 
     beforeEach(function() {
@@ -229,7 +233,15 @@ describe('Ordering API', function() {
                     hasRole: checkRole
                 };
 
-                var orderingApi = getOrderingAPI({}, {}, utils);
+                var tmfUtils = {
+                    getIndividualURL: function (receivedReq) {
+                        // req: the request sent to the API
+                        expect(receivedReq).toBe(req);
+                        return getIndividualURL();
+                    }
+                };
+
+                var orderingApi = getOrderingAPI({}, tmfUtils, utils);
 
                 var req = {
                     user: userInfo,
@@ -271,7 +283,7 @@ describe('Ordering API', function() {
                         }
                     });
                 }
-
+                
                 var body = {
                     relatedParty: [{
                         id: userName,
@@ -280,29 +292,31 @@ describe('Ordering API', function() {
                     orderItem: orderItems
                 };
 
-                nock(CATALOGSERVER)
+                nock(CATALOG_SERVER)
                     .get(productOfferingPath)
                     .times(nOrderItems)
                     .reply(200, {productSpecification: {href: SERVER + productSpecPath}});
 
-                nock(CATALOGSERVER)
+                nock(CATALOG_SERVER)
                     .get(productSpecPath)
                     .times(nOrderItems)
                     .reply(200, {relatedParty: [{id: ownerName, role: 'owner'}]});
 
                 testOrderCreation(user, JSON.stringify(body), customerRoleRequired, null, done, function (req) {
+
                     var newBody = JSON.parse(req.body);
                     //expect(req.headers['content-length']).toBe(newBody.length);
+
                     expect(newBody.orderItem[0].product.relatedParty).toEqual([
                         {
                             id: userName,
                             role: 'Customer',
-                            href: ''
+                            href: getIndividualURL(userName)
                         },
                         {
                             id: ownerName,
                             role: 'Seller',
-                            href: ''
+                            href: getIndividualURL(ownerName)
                         }]);
                 });
             };
@@ -342,11 +356,11 @@ describe('Ordering API', function() {
                     }]
                 };
 
-                nock(CATALOGSERVER)
+                nock(CATALOG_SERVER)
                     .get(productOfferingPath)
                     .reply(200, {productSpecification: {href: SERVER + productSpecPath}});
 
-                nock(CATALOGSERVER)
+                nock(CATALOG_SERVER)
                     .get(productSpecPath)
                     .reply(200, {relatedParty: [{id: ownerName, role: 'other_role'}]});
 
@@ -384,7 +398,7 @@ describe('Ordering API', function() {
                     }]
                 };
 
-                nock(CATALOGSERVER)
+                nock(CATALOG_SERVER)
                     .get(productOfferingPath)
                     .reply(500);
 
@@ -422,11 +436,11 @@ describe('Ordering API', function() {
                     }]
                 };
 
-                nock(CATALOGSERVER)
+                nock(CATALOG_SERVER)
                     .get(productOfferingPath)
                     .reply(200, {productSpecification: {href: SERVER + productSpecPath}});
 
-                nock(CATALOGSERVER)
+                nock(CATALOG_SERVER)
                     .get(productSpecPath)
                     .reply(500);
 
@@ -653,7 +667,7 @@ describe('Ordering API', function() {
 
             });
 
-            it('should fail when the ordering cannot be retrieved', function(done) {
+            it('should fail when the ordering cannot be retrieved', function (done) {
 
                 var SERVER = 'http://example.com:189';
                 var productOfferingPath = '/productOrdering/ordering/7';
@@ -674,7 +688,7 @@ describe('Ordering API', function() {
 
                 nock(SERVER)
                     .get(productOfferingPath)
-                    .reply(500, {  });
+                    .reply(500, {});
 
                 orderingApi.checkPermissions(req, function (err) {
 
@@ -687,7 +701,8 @@ describe('Ordering API', function() {
                 });
             });
 
-            var testUpdate = function(hasRoleResponses, body, previousOrderItems, refundError, expectedError, expectedBody, done) {
+            var testUpdate = function (hasRoleResponses, body, previousState, previousOrderItems, refundError,
+                                       expectedError, expectedBody, done) {
 
                 var user = {
                     id: 'fiware',
@@ -706,7 +721,7 @@ describe('Ordering API', function() {
 
                 var storeClient = {
                     storeClient: {
-                        refund: function(receivedOrderId, receivedUser, callback) {
+                        refund: function (receivedOrderId, receivedUser, callback) {
                             expect(receivedOrderId).toBe(orderId);
                             expect(receivedUser).toBe(user);
                             callback(refundError);
@@ -727,14 +742,19 @@ describe('Ordering API', function() {
 
                 nock(SERVER)
                     .get(productOfferingPath)
-                    .reply(200, { id: orderId, relatedParty: orderingRelatedParties, orderItem: previousOrderItems });
+                    .reply(200, {
+                        id: orderId,
+                        state: previousState,
+                        relatedParty: orderingRelatedParties,
+                        orderItem: previousOrderItems
+                    });
 
                 orderingApi.checkPermissions(req, function (err) {
 
                     expect(err).toEqual(expectedError);
 
-                    expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(user, jasmine.arrayContaining(orderingRelatedParties), 'Customer');
-                    expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(user, jasmine.arrayContaining(orderingRelatedParties), 'Seller');
+                    expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(req, jasmine.arrayContaining(orderingRelatedParties), 'Customer');
+                    expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(req, jasmine.arrayContaining(orderingRelatedParties), 'Seller');
 
                     if (expectedBody) {
                         expect(utils.updateBody).toHaveBeenCalledWith(req, expectedBody);
@@ -745,6 +765,62 @@ describe('Ordering API', function() {
 
             };
 
+            it('should not fail when a user who is customer and seller send items belonging to another seller ' +
+                'and the state of those items is not changed', function(done) {
+
+                var previousItems = [
+                    { state: 'Acknowledged', id: 7, product: { relatedParty: [] }}, // Seller
+                    { state: 'Acknowledged', id: 9, product: { relatedParty: [] }}  // Not seller
+                ];
+
+                // The user IS the seller of the first item
+                // The user is NOT the seller of the second item
+                testUpdate([true, true, true, false], {orderItem: previousItems}, 'InProgress', previousItems,
+                    null, null, { orderItem: previousItems }, done);
+
+            });
+
+            it('should fail when a user who is customer and seller send items belonging to another seller ' +
+                'and the state of those items is changed', function(done) {
+
+                var previousItems = [
+                    { state: 'Acknowledged', id: 7, product: { relatedParty: [] }}, // Seller
+                    { state: 'Acknowledged', id: 9, product: { relatedParty: [] }}  // Not seller
+                ];
+
+                var sentItems = JSON.parse(JSON.stringify(previousItems));
+                sentItems[1].state = 'InProgress';
+
+                var expectedError = {
+                    status: 403,
+                    message: 'You cannot modify an order item if you are not seller'
+                };
+
+                // The user IS the seller of the first item
+                // The user is NOT the seller of the second item
+                testUpdate([true, true, true, false], { orderItem: sentItems }, 'InProgress', previousItems,
+                    null, expectedError, null, done);
+
+            });
+
+            it('should fail when seller tries to update a non in progress ordering', function(done) {
+
+                var previousState = 'Acknowledged';
+
+                var expectedError = {
+                    status: 403,
+                    message: previousState + ' orders cannot be manually modified'
+                };
+
+                testUpdate([false, true], {orderItem: []}, previousState, [], null, expectedError, null, done);
+
+            });
+
+            it('should not fail when customer tries to update a non in progress ordering', function(done) {
+                var previousState = 'Acknowledged';
+                testUpdate([true, false], {description: 'New Description'}, previousState, [], null, null, null, done);
+            });
+
             it('should fail when the user is not consumer or seller in the ordering', function (done) {
 
                 var expectedError = {
@@ -752,7 +828,7 @@ describe('Ordering API', function() {
                     message: 'You are not authorized to modify this ordering'
                 };
 
-                testUpdate([false, false], {}, [], null, expectedError, null, done);
+                testUpdate([false, false], {}, 'InProgress', [], null, expectedError, null, done);
             });
 
             it('should fail when a customer tries to modify the orderItem field', function (done) {
@@ -762,7 +838,7 @@ describe('Ordering API', function() {
                     message: 'Order items can only be modified by sellers'
                 };
 
-                testUpdate([true, false], { orderItem: [] }, [], null, expectedError, null, done);
+                testUpdate([true, false], {orderItem: []}, 'InProgress', [], null, expectedError, null, done);
             });
 
             it('should fail when a customer tries to modify the relatedParty field', function (done) {
@@ -772,41 +848,44 @@ describe('Ordering API', function() {
                     message: 'Related parties cannot be modified'
                 };
 
-                testUpdate([true, false], { relatedParty: [] }, [], null, expectedError, null, done);
+                testUpdate([true, false], {relatedParty: []}, 'InProgress', [], null, expectedError, null, done);
             });
 
             it('should not fail when a customer tries to modify the description', function (done) {
-                testUpdate([true, false], { description: 'New description' }, [], null, null, null, done);
+                testUpdate([true, false], {description: 'New description'}, 'InProgress', [], null, null, null, done);
             });
 
             it('should fail when a customer tries to cancel an ordering with completed items', function (done) {
 
                 var expectedError = {
                     status: 403,
-                    message: 'You cannot cancel orders with completed, failed or cancelled items'
+                    message: 'Orderings can only be cancelled when all Order items are in Acknowledged state'
                 };
 
-                testUpdate([true, false], { state: 'Cancelled' }, [{state: 'Completed'}], null, expectedError, null, done);
+                testUpdate([true, false], {state: 'Cancelled'}, 'InProgress', [{state: 'Completed'}],
+                    null, expectedError, null, done);
             });
 
             it('should fail when a customer tries to cancel an ordering with failed items', function (done) {
 
                 var expectedError = {
                     status: 403,
-                    message: 'You cannot cancel orders with completed, failed or cancelled items'
+                    message: 'Orderings can only be cancelled when all Order items are in Acknowledged state'
                 };
 
-                testUpdate([true, false], { state: 'Cancelled' }, [{state: 'Failed'}], null, expectedError, null, done);
+                testUpdate([true, false], {state: 'Cancelled'}, 'InProgress', [{state: 'Failed'}],
+                    null, expectedError, null, done);
             });
 
             it('should fail when a customer tries to cancel an ordering with cancelled items', function (done) {
 
                 var expectedError = {
                     status: 403,
-                    message: 'You cannot cancel orders with completed, failed or cancelled items'
+                    message: 'Orderings can only be cancelled when all Order items are in Acknowledged state'
                 };
 
-                testUpdate([true, false], { state: 'Cancelled' }, [{state: 'Cancelled'}], null, expectedError, null, done);
+                testUpdate([true, false], {state: 'Cancelled'}, 'InProgress', [{state: 'Cancelled'}],
+                    null, expectedError, null, done);
             });
 
             it('should fail when refund cannot be completed', function (done) {
@@ -816,14 +895,15 @@ describe('Ordering API', function() {
                     message: 'You cannot cancel orders with completed items'
                 };
 
-                testUpdate([true, false], { state: 'Cancelled' }, [], expectedError, expectedError, null, done);
+                testUpdate([true, false], {state: 'Cancelled'}, 'InProgress', [], expectedError,
+                    expectedError, null, done);
             });
 
             it('should not fail when refund can be completed', function (done) {
 
                 var previousItems = [
-                    { state: 'Acknowledged', id: 7 },
-                    { state: 'InProgress', id: 9 }
+                    {state: 'Acknowledged', id: 7},
+                    {state: 'Acknowledged', id: 9}
                 ];
 
                 var requestBody = {
@@ -832,14 +912,14 @@ describe('Ordering API', function() {
                 };
 
                 var expectedItems = JSON.parse(JSON.stringify(previousItems));
-                expectedItems.forEach(function(item) {
+                expectedItems.forEach(function (item) {
                     item.state = 'Cancelled';
                 });
 
                 var expectedBody = JSON.parse(JSON.stringify(requestBody));
                 expectedBody.orderItem = expectedItems;
 
-                testUpdate([true, false], requestBody, previousItems, null, null, expectedBody, done);
+                testUpdate([true, false], requestBody, 'InProgress', previousItems, null, null, expectedBody, done);
             });
 
             it('should fail when a seller tries to modify the description', function (done) {
@@ -849,36 +929,39 @@ describe('Ordering API', function() {
                     message: 'Sellers can only modify order items'
                 };
 
-                testUpdate([false, true], { description: 'New description', orderItem: [] }, [], null, expectedError, null, done);
+                testUpdate([false, true], {
+                    description: 'New description',
+                    orderItem: []
+                }, 'InProgress', [], null, expectedError, null, done);
             });
 
             it('should not fail when seller does not include any order item', function (done) {
 
-                var previousOrderItems = [ { id: 1, state: 'InProgress' } ];
-                testUpdate([false, true], { orderItem: [] }, previousOrderItems, null, null,
-                    { state: 'InProgress', orderItem: previousOrderItems }, done);
+                var previousOrderItems = [{id: 1, state: 'InProgress'}];
+                testUpdate([false, true], {orderItem: []}, 'InProgress', previousOrderItems, null, null,
+                    {orderItem: previousOrderItems}, done);
             });
 
             it('should not fail when seller (that it is also the customer) does not include any order item', function (done) {
 
-                var previousOrderItems = [ { id: 1, state: 'InProgress' } ];
+                var previousOrderItems = [{id: 1, state: 'InProgress'}];
                 var updatedOrderings = {
                     description: 'Example description',
                     orderItem: []
                 };
 
                 var expectedBody = JSON.parse(JSON.stringify(updatedOrderings));
-                expectedBody['state'] = 'InProgress';
                 expectedBody['orderItem'] = previousOrderItems;
 
-                testUpdate([true, true], updatedOrderings, previousOrderItems, null, null, expectedBody, done);
+                testUpdate([true, true], updatedOrderings, 'InProgress', previousOrderItems,
+                    null, null, expectedBody, done);
             });
 
             it('should fail when the seller tries to edit a non existing item', function (done) {
 
-                var previousOrderItems = [ { id: 1, state: 'InProgress' } ];
+                var previousOrderItems = [{id: 1, state: 'InProgress'}];
                 var updatedOrderings = {
-                    orderItem: [ { id: 2 } ]
+                    orderItem: [{id: 2}]
                 };
 
                 var expectedError = {
@@ -886,14 +969,15 @@ describe('Ordering API', function() {
                     message: 'You are trying to edit an non-existing item'
                 };
 
-                testUpdate([false, true], updatedOrderings, previousOrderItems, null, expectedError, null, done);
+                testUpdate([false, true], updatedOrderings, 'InProgress', previousOrderItems,
+                    null, expectedError, null, done);
             });
 
             it('should fail when the seller tries to edit a non owned item', function (done) {
 
-                var previousOrderItems = [ { id: 1, state: 'InProgress', product: { relatedParty: [] } } ];
+                var previousOrderItems = [{id: 1, state: 'InProgress', product: {relatedParty: []}}];
                 var updatedOrderings = {
-                    orderItem: [ { id: 1 } ]
+                    orderItem: [{id: 1, state: 'Completed', product: {relatedParty: []}}]
                 };
 
                 var expectedError = {
@@ -901,14 +985,15 @@ describe('Ordering API', function() {
                     message: 'You cannot modify an order item if you are not seller'
                 };
 
-                testUpdate([false, true, false], updatedOrderings, previousOrderItems, null, expectedError, null, done);
+                testUpdate([false, true, false], updatedOrderings, 'InProgress', previousOrderItems,
+                    null, expectedError, null, done);
             });
 
             it('should fail when the seller tries to add a new field to the item', function (done) {
 
-                var previousOrderItems = [ { id: 1, state: 'InProgress', product: { relatedParty: [] } } ];
+                var previousOrderItems = [{id: 1, state: 'InProgress', product: {relatedParty: []}}];
                 var updatedOrderings = {
-                    orderItem: [ { id: 1, name: 'Order Item', state: 'InProgress', product: { relatedParty: [] } } ]
+                    orderItem: [{id: 1, name: 'Order Item', state: 'InProgress', product: {relatedParty: []}}]
                 };
 
                 var expectedError = {
@@ -916,14 +1001,20 @@ describe('Ordering API', function() {
                     message: 'The fields of an order item cannot be modified'
                 };
 
-                testUpdate([false, true, true], updatedOrderings, previousOrderItems, null, expectedError, null, done);
+                testUpdate([false, true, true], updatedOrderings, 'InProgress', previousOrderItems,
+                    null, expectedError, null, done);
             });
 
             it('should fail when the seller tries to remove a field from the item', function (done) {
 
-                var previousOrderItems = [ { id: 1, name: 'Order Item', state: 'InProgress', product: { relatedParty: [] } } ];
+                var previousOrderItems = [{
+                    id: 1,
+                    name: 'Order Item',
+                    state: 'InProgress',
+                    product: {relatedParty: []}
+                }];
                 var updatedOrderings = {
-                    orderItem: [ { id: 1, state: 'InProgress', product: { relatedParty: [] } } ]
+                    orderItem: [{id: 1, state: 'InProgress', product: {relatedParty: []}}]
                 };
 
                 var expectedError = {
@@ -931,14 +1022,20 @@ describe('Ordering API', function() {
                     message: 'The fields of an order item cannot be modified'
                 };
 
-                testUpdate([false, true, true], updatedOrderings, previousOrderItems, null, expectedError, null, done);
+                testUpdate([false, true, true], updatedOrderings, 'InProgress', previousOrderItems,
+                    null, expectedError, null, done);
             });
 
             it('should fail when the seller tries to modify the value of a field in the item', function (done) {
 
-                var previousOrderItems = [ { id: 1, name: 'Order Item', state: 'InProgress', product: { relatedParty: [] } } ];
+                var previousOrderItems = [{
+                    id: 1,
+                    name: 'Order Item',
+                    state: 'InProgress',
+                    product: {relatedParty: []}
+                }];
                 var updatedOrderings = {
-                    orderItem: [ { id: 1, name: 'Order Item #2', state: 'InProgress', product: { relatedParty: [] } } ]
+                    orderItem: [{id: 1, name: 'Order Item #2', state: 'InProgress', product: {relatedParty: []}}]
                 };
 
                 var expectedError = {
@@ -946,45 +1043,31 @@ describe('Ordering API', function() {
                     message: 'The value of the field name cannot be changed'
                 };
 
-                testUpdate([false, true, true], updatedOrderings, previousOrderItems, null, expectedError, null, done);
-            });
-
-            it('should fail when the seller tries to modify the value of a field in the item', function (done) {
-
-                var previousOrderItems = [ { id: 1, state: 'Acknowledged', product: { relatedParty: [] } } ];
-                var updatedOrderings = {
-                    orderItem: [ { id: 1, state: 'InProgress', product: { relatedParty: [] } } ]
-                };
-
-                var expectedError = {
-                    status: 403,
-                    message: 'Acknowledged order items cannot be updated manually'
-                };
-
-                testUpdate([false, true, true], updatedOrderings, previousOrderItems, null, expectedError, null, done);
+                testUpdate([false, true, true], updatedOrderings, 'InProgress', previousOrderItems,
+                    null, expectedError, null, done);
             });
 
             it('should not fail when the user tries to modify the state of an item appropriately', function (done) {
 
-                var previousOrderItems = [ { id: 1, state: 'InProgress', product: { relatedParty: [] } } ];
+                var previousOrderItems = [{id: 1, state: 'InProgress', product: {relatedParty: []}}];
                 var updatedOrderings = {
-                    orderItem: [ { id: 1, state: 'Completed', product: { relatedParty: [] } } ]
+                    orderItem: [{id: 1, state: 'Completed', product: {relatedParty: []}}]
                 };
 
                 var expectedBody = {
-                    state: 'Completed',
                     orderItem: updatedOrderings.orderItem
                 };
 
-                testUpdate([false, true, true], updatedOrderings, previousOrderItems, null, null, expectedBody, done);
+                testUpdate([false, true, true], updatedOrderings, 'InProgress', previousOrderItems,
+                    null, null, expectedBody, done);
             });
 
             // FIXME: Maybe this test can be skipped
             it('should fail when the seller tries to edit a non existing item when there are more than one item', function (done) {
 
-                var previousOrderItems = [ { id: 1, state: 'InProgress' }, {id: 3, state: 'InProgress'} ];
+                var previousOrderItems = [{id: 1, state: 'InProgress'}, {id: 3, state: 'InProgress'}];
                 var updatedOrderings = {
-                    orderItem: [ { id: 2 } ]
+                    orderItem: [{id: 2}]
                 };
 
                 var expectedError = {
@@ -992,25 +1075,26 @@ describe('Ordering API', function() {
                     message: 'You are trying to edit an non-existing item'
                 };
 
-                testUpdate([false, true], updatedOrderings, previousOrderItems, null, expectedError, null, done);
+                testUpdate([false, true], updatedOrderings, 'InProgress', previousOrderItems,
+                    null, expectedError, null, done);
             });
 
-            it('should include the items that belong to another sellers', function(done) {
+            it('should include the items that belong to another sellers', function (done) {
 
                 var previousOrderItems = [
-                    { id: 1, state: 'InProgress', name: 'Product1', product: { relatedParty: [] } },
-                    { id: 2, state: 'InProgress', name: 'Product2', product: { relatedParty: [] } }
+                    {id: 1, state: 'InProgress', name: 'Product1', product: {relatedParty: []}},
+                    {id: 2, state: 'InProgress', name: 'Product2', product: {relatedParty: []}}
                 ];
                 var updatedOrderings = {
                     orderItem: [
-                        { id: 1, state: 'Completed', name: 'Product1', product: { relatedParty: [] } }
+                        {id: 1, state: 'Completed', name: 'Product1', product: {relatedParty: []}}
                     ]
                 };
 
                 var expectedOrderItems = JSON.parse(JSON.stringify(previousOrderItems));
-                expectedOrderItems.forEach(function(item) {
+                expectedOrderItems.forEach(function (item) {
 
-                    var updateOrderItem = updatedOrderings.orderItem.filter(function(updatedItem) {
+                    var updateOrderItem = updatedOrderings.orderItem.filter(function (updatedItem) {
                         return item.id == updatedItem.id;
                     })[0];
 
@@ -1020,136 +1104,14 @@ describe('Ordering API', function() {
                 });
 
                 var expectedBody = {
-                    state: 'Partial',
                     orderItem: expectedOrderItems
                 };
 
-                testUpdate([false, true, true], updatedOrderings, previousOrderItems, null, null, expectedBody, done);
+                testUpdate([false, true, true], updatedOrderings, 'InProgress', previousOrderItems,
+                    null, null, expectedBody, done);
 
-            });
-
-            // STATES
-            it('should set state as partial when one item is completed and the other in progress', function (done) {
-
-                var previousOrderItems = [
-                    { id: 1, state: 'InProgress', product: { relatedParty: [] } },
-                    { id: 2, state: 'InProgress', product: { relatedParty: [] } }
-                ];
-                var updatedOrderings = {
-                    orderItem: [
-                        { id: 1, state: 'Completed', product: { relatedParty: [] } },
-                        { id: 2, state: 'InProgress', product: { relatedParty: [] } }
-                    ]
-                };
-
-                var expectedBody = {
-                    state: 'Partial',
-                    orderItem: updatedOrderings.orderItem
-                };
-
-                testUpdate([false, true, true, true], updatedOrderings, previousOrderItems, null, null, expectedBody, done);
-            });
-
-            it('should set state as partial when one item is failed and the other in progress', function (done) {
-
-                var previousOrderItems = [
-                    { id: 1, state: 'InProgress', product: { relatedParty: [] } },
-                    { id: 2, state: 'InProgress', product: { relatedParty: [] } }
-                ];
-                var updatedOrderings = {
-                    orderItem: [
-                        { id: 1, state: 'Failed', product: { relatedParty: [] } },
-                        { id: 2, state: 'InProgress', product: { relatedParty: [] } }
-                    ]
-                };
-
-                var expectedBody = {
-                    state: 'Partial',
-                    orderItem: updatedOrderings.orderItem
-                };
-
-                testUpdate([false, true, true, true], updatedOrderings, previousOrderItems, null, null, expectedBody, done);
-            });
-
-            it('should set state as failed when all the order items are failed', function (done) {
-
-                var previousOrderItems = [
-                    { id: 1, state: 'InProgress', product: { relatedParty: [] } },
-                    { id: 2, state: 'Failed', product: { relatedParty: [] } }
-                ];
-                var updatedOrderings = {
-                    orderItem: [
-                        { id: 1, state: 'Failed', product: { relatedParty: [] } },
-                        { id: 2, state: 'Failed', product: { relatedParty: [] } }
-                    ]
-                };
-
-                var expectedBody = {
-                    state: 'Failed',
-                    orderItem: updatedOrderings.orderItem
-                };
-
-                testUpdate([false, true, true, true], updatedOrderings, previousOrderItems, null, null, expectedBody, done);
-            });
-
-            it('should set state as completed when all the order items are completed', function (done) {
-
-                var previousOrderItems = [
-                    { id: 1, state: 'InProgress', product: { relatedParty: [] } },
-                    { id: 2, state: 'Completed', product: { relatedParty: [] } }
-                ];
-                var updatedOrderings = {
-                    orderItem: [
-                        { id: 1, state: 'Completed', product: { relatedParty: [] } },
-                        { id: 2, state: 'Completed', product: { relatedParty: [] } }
-                    ]
-                };
-
-                var expectedBody = {
-                    state: 'Completed',
-                    orderItem: updatedOrderings.orderItem
-                };
-
-                testUpdate([false, true, true, true], updatedOrderings, previousOrderItems, null, null, expectedBody, done);
-            });
-
-            it('should set state as acknowledged when all the order items are acknowledged', function (done) {
-
-                var previousOrderItems = [
-                    { id: 1, state: 'Acknowledged', product: { relatedParty: [] } },
-                    { id: 2, state: 'Acknowledged', product: { relatedParty: [] } }
-                ];
-                var updatedOrderings = {
-                    orderItem: [ ]
-                };
-
-                var expectedBody = {
-                    state: 'Acknowledged',
-                    orderItem: previousOrderItems
-                };
-
-                testUpdate([false, true, true, true], updatedOrderings, previousOrderItems, null, null, expectedBody, done);
-            });
-
-            it('should set state as in progress when all the order items are in progress', function (done) {
-
-                var previousOrderItems = [
-                    { id: 1, state: 'InProgress', product: { relatedParty: [] } },
-                    { id: 2, state: 'InProgress', product: { relatedParty: [] } }
-                ];
-                var updatedOrderings = {
-                    orderItem: previousOrderItems
-                };
-
-                var expectedBody = {
-                    state: 'InProgress',
-                    orderItem: updatedOrderings.orderItem
-                };
-
-                testUpdate([false, true, true, true], updatedOrderings, previousOrderItems, null, null, expectedBody, done);
             });
         });
-
     });
 
 
@@ -1315,8 +1277,8 @@ describe('Ordering API', function() {
                 expect(err).toBe(null);
 
                 orders.forEach(function(order) {
-                    expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(user, order.item.relatedParty, 'Customer');
-                    expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(user, order.item.relatedParty, 'Seller');
+                    expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(req, order.item.relatedParty, 'Customer');
+                    expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(req, order.item.relatedParty, 'Seller');
                 });
 
                 expect(tmfUtils.hasPartyRole.calls.count()).toBe(orders.length * 2); // One for customer and one for seller
@@ -1359,8 +1321,7 @@ describe('Ordering API', function() {
             testFilterOrders([ order1, order2 ], done);
         });
 
-        it('should not fail and not filter items when the user is customer', function(done) {
-
+        var notFilterItemsUserIsCustomer = function(method, done) {
             var user = { id: 'fiware' };
             var orderingRelatedParties =  [ {id: 'fiware'} ];
             var originalBody = {
@@ -1378,7 +1339,7 @@ describe('Ordering API', function() {
             };
 
             var req = {
-                method: 'GET',
+                method: method,
                 body: JSON.stringify(originalBody),
                 user: user
             };
@@ -1387,15 +1348,27 @@ describe('Ordering API', function() {
 
             orderingApi.executePostValidation(req, function(err) {
                 expect(err).toEqual(null);
-                expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(user, orderingRelatedParties, 'Customer');
-                expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(user, orderingRelatedParties, 'Seller');
+                expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(req, orderingRelatedParties, 'Customer');
+                expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(req, orderingRelatedParties, 'Seller');
                 expect(tmfUtils.hasPartyRole.calls.count()).toBe(2);
 
                 done();
             });
+        };
+
+        it('should not fail and not filter items when the user is customer (GET)', function(done) {
+            notFilterItemsUserIsCustomer('GET', done);
         });
 
-        var testSeller = function(orderItems, done) {
+        it('should not fail and not filter items when the user is customer (PUT)', function(done) {
+            notFilterItemsUserIsCustomer('PUT', done);
+        });
+
+        it('should not fail and not filter items when the user is customer (PATCH)', function(done) {
+            notFilterItemsUserIsCustomer('PATCH', done);
+        });
+
+        var testSeller = function(orderItems, method, done) {
 
             var user = { id: 'fiware' };
             var orderingRelatedParties = [];
@@ -1429,7 +1402,8 @@ describe('Ordering API', function() {
             };
 
             var req = {
-                method: 'GET',
+                method: method,
+                // The body returned by the server...
                 body: JSON.stringify(originalBody),
                 user: user
             };
@@ -1440,35 +1414,56 @@ describe('Ordering API', function() {
 
                 expect(err).toEqual(null);
 
-                expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(user, orderingRelatedParties, 'Customer');
-                expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(user, orderingRelatedParties, 'Seller');
+                expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(req, orderingRelatedParties, 'Customer');
+                expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(req, orderingRelatedParties, 'Seller');
 
                 orderItems.forEach(function(item) {
-                    expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(user, item.item.product.relatedParty, 'Seller');
+                    expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(req, item.item.product.relatedParty, 'Seller');
                 });
 
                 done();
             });
         };
 
-        it('should not fail and not filter the only item', function(done) {
-
+        var notFilterSingleItem = function(method, done) {
             var orderItemRelatedParties = [{ id: 'fiware', role: 'seller' }];
             var orderItem =  { item: { product: { relatedParty: orderItemRelatedParties, id: 7 } }, isSeller: true };
 
-            testSeller([orderItem], done);
+            testSeller([orderItem], method, done);
+        };
+
+        it('should not fail and not filter the only item (GET)', function(done) {
+            notFilterSingleItem('GET', done);
         });
 
+        it('should not fail and not filter the only item (PUT)', function(done) {
+            notFilterSingleItem('PUT', done);
+        });
 
-        it('should not fail and filter the only item', function(done) {
+        it('should not fail and not filter the only item (PATCH)', function(done) {
+            notFilterSingleItem('PATCH', done);
+        });
 
+        var filterSingleElement = function(method, done) {
             var orderItemRelatedParties = [{ id: 'other-seller', role: 'seller' }];
             var orderItem =  { item: { product: { relatedParty: orderItemRelatedParties, id: 7 } }, isSeller: false };
 
-            testSeller([orderItem], done);
+            testSeller([orderItem], method, done);
+        };
+
+        it('should not fail and filter the only item (GET)', function(done) {
+            filterSingleElement('GET', done);
         });
 
-        it('should not fail and filter one order item', function(done) {
+        it('should not fail and filter the only item (PUT)', function(done) {
+            filterSingleElement('PUT', done);
+        });
+
+        it('should not fail and filter the only item (PATCH)', function(done) {
+            filterSingleElement('PATCH', done);
+        });
+
+        var filterOneItem = function(method, done) {
 
             var orderItem1RelatedParties = [{ id: 'other-seller', role: 'seller' }];
             var orderItem2RelatedParties = [{ id: 'fiware', role: 'seller' }];
@@ -1476,21 +1471,43 @@ describe('Ordering API', function() {
             var orderItem2 = { item: { product: { relatedParty: orderItem2RelatedParties, id: 8 } }, isSeller: true };
 
 
-            testSeller([orderItem1, orderItem2], done);
+            testSeller([orderItem1, orderItem2], method, done);
+        };
+
+        it('should not fail and filter one order item (GET)', function(done) {
+            filterOneItem('GET', done);
         });
 
-        it('should not fail and not filter items', function(done) {
+        it('should not fail and filter one order item (PUT)', function(done) {
+            filterOneItem('PUT', done);
+        });
 
+        it('should not fail and filter one order item (PATCH)', function(done) {
+            filterOneItem('PATCH', done);
+        });
+
+        var notFilterItems = function(method, done) {
             var orderItemRelatedParties = [{ id: 'fiware', role: 'seller' }];
             var orderItem1 = { item: { product: { relatedParty: orderItemRelatedParties, id: 7 } }, isSeller: true };
             var orderItem2 = { item: { product: { relatedParty: orderItemRelatedParties, id: 8 } }, isSeller: true };
 
 
-            testSeller([orderItem1, orderItem2], done);
+            testSeller([orderItem1, orderItem2], method, done);
+        };
+
+        it('should not fail and not filter items (GET)', function(done) {
+            notFilterItems('GET', done);
         });
 
-        it('should not fail and filter two order items', function(done) {
+        it('should not fail and not filter items (PUT)', function(done) {
+            notFilterItems('PUT', done);
+        });
 
+        it('should not fail and not filter items (PATCH)', function(done) {
+            notFilterItems('PATCH', done);
+        });
+
+        var filterTwoItems = function(method, done) {
             var nowOwnerRelatedParties = [{ id: 'other-seller', role: 'seller' }];
             var ownerRelatedParties = [{ id: 'fiware', role: 'seller' }];
             var orderItem1 = { item: { product: { relatedParty: nowOwnerRelatedParties, id: 7 } }, isSeller: false };
@@ -1498,7 +1515,19 @@ describe('Ordering API', function() {
             var orderItem3 = { item: { product: { relatedParty: ownerRelatedParties, id: 9 } }, isSeller: true };
 
 
-            testSeller([orderItem1, orderItem2, orderItem3], done);
+            testSeller([orderItem1, orderItem2, orderItem3], method, done);
+        };
+
+        it('should not fail and filter two order items (GET)', function(done) {
+            filterTwoItems('GET', done);
+        });
+
+        it('should not fail and filter two order items (PUT)', function(done) {
+            filterTwoItems('PUT', done);
+        });
+
+        it('should not fail and filter two order items (PATCH)', function(done) {
+            filterTwoItems('PATCH', done);
         });
     });
 });

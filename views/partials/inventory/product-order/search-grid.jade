@@ -22,11 +22,12 @@
           .col-xs-12.col-sm-4
             .thumbnail.thumbnail-lg
               img(no-image, ng-src="{{ orderItem.productOffering.getPicture() }}")
-            .btn-toolbar(ng-if="searchVM.role === 'Seller' && searchVM.isTransitable(orderItem)")
+            .btn-toolbar(ng-if="searchVM.role === 'Seller' && productOrder.state == 'InProgress' && searchVM.isTransitable(orderItem)")
               .btn-group.btn-group-justified.z-depth-1
                 a.btn.btn-default(ng-click="searchVM.updateStatus(productOrder, $index, searchVM.getNextStatus(orderItem))")
-                  span.item-text Complete
-                a.btn.btn-danger(ng-if="orderItem.state == 'InProgress'", ng-click="searchVM.updateStatus(productOrder, $index, 'Failed')")
+                  span(ng-if="orderItem.state == 'Acknowledged'").item-text Sent
+                  span(ng-if="orderItem.state == 'InProgress'").item-text Delivered
+                a.btn.btn-danger(ng-click="searchVM.updateStatus(productOrder, $index, 'Failed')")
                   span.item-text Reject
           .col-xs-12.col-sm-6
             .h4.text-ellipsis

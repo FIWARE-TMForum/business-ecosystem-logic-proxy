@@ -1,4 +1,5 @@
 var defaultConfig = {
+    port: '7496',
     proxyPrefix: '',
     oauth2: {
         server: 'https://account.lab.fiware.org',
@@ -30,6 +31,10 @@ var defaultConfig = {
         'rss': {
             'path': 'rss',
             'port': '753'
+        },
+        'party': {
+            'path': 'party',
+            'port': 74
         }
     },
     revenueModel: 30
@@ -47,7 +52,7 @@ exports.emptyLogger = {
             return {
                 'info': emptyFunction,
                 'warn': emptyFunction,
-                'error': emptyFunction,
+                'error': emptyFunction
             }
         }
     }

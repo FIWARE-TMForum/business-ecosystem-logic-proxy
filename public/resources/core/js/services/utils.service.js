@@ -42,9 +42,13 @@
                     finalErrorMessage = data;
                 }
 
-            } else if (typeof(data) === 'object' && data !== null && 'error' in data) {
+            } else if (data !== null && typeof(data) === 'object' && 'error' in data) {
                 // JSON
-                finalErrorMessage = data['error'];
+                if (typeof(data['error']) === 'object' && 'title' in data['error']) {
+                    finalErrorMessage = data['error']['title'];
+                } else {
+                    finalErrorMessage = data['error'];
+                }
             }
 
             return finalErrorMessage;

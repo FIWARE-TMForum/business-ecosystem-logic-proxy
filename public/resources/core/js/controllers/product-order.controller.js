@@ -54,7 +54,7 @@
 
         function isTransitable(orderItem) {
 
-            return orderItem.state === PRODUCTORDER_STATUS.INPROGRESS;
+            return orderItem.state === PRODUCTORDER_STATUS.ACKNOWLEDGED || orderItem.state === PRODUCTORDER_STATUS.INPROGRESS;
         }
 
         function getNextStatus(orderItem) {
@@ -63,8 +63,8 @@
         }
 
         function canCancel(productOrder) {
-            return productOrder.orderItem.every(function (orderItem) {
-                return orderItem.state === PRODUCTORDER_STATUS.INPROGRESS;
+            return productOrder.state === PRODUCTORDER_STATUS.INPROGRESS && productOrder.orderItem.every(function (orderItem) {
+                return orderItem.state === PRODUCTORDER_STATUS.ACKNOWLEDGED;
             });
         }
 
@@ -113,9 +113,16 @@
         }
     }
 
-    function ProductOrderCreateController($state, $rootScope, $window, $interval, User, ProductOrder, Offering, ShoppingCart, Utils, EVENTS) {
+    function ProductOrderCreateController($state, $rootScope, $scope, $window, $interval, User, ProductOrder, Offering, ShoppingCart, Utils, EVENTS) {
         /* jshint validthis: true */
         var vm = this;
+
+        // Initialize order
+        vm.orderInfo = {
+            state: 'Acknowledged',
+            orderItem: [],
+            relatedParty: [User.serializeBasic()]
+        };
 
         vm.makeOrder = makeOrder;
         vm.toggleCollapse = toggleCollapse;
@@ -126,6 +133,11 @@
             $('#' + id).collapse('toggle');
         }
 
+        $scope.$on(EVENTS.OFFERING_REMOVED, function() {
+            console.log('item removed');
+            initOrder();
+        });
+
         var initOrder = function initOrder() {
 
             vm.loadingStatus = LOADING;
@@ -134,64 +146,68 @@
 
                 vm.loadingStatus = LOADED;
 
-                // Initialize order
-                vm.orderInfo = {
-                    state: 'Acknowledged',
-                    orderItem: [],
-                    relatedParty: [User.serializeBasic()]
-                };
+                if (orderItems.length) {
 
-                vm.orderInfo.relatedParty[0].role = 'Customer';
+                    vm.orderInfo.relatedParty[0].role = 'Customer';
 
-                // Build order items. This information is created using the shopping card and is not editable in this view
-                for (var i = 0; i < orderItems.length; i++) {
-                    var item = {
-                        id: i.toString(),
-                        action: 'add',
-                        state: 'Acknowledged',
-                        productOffering: {
-                            id: orderItems[i].id,
-                            name: orderItems[i].name,
-                            href: orderItems[i].href
-                        },
-                        product: {
-                            productCharacteristic: []
-                        },
-                        billingAccount: [User.serializeBasic()]
-                    };
+                    // Remove old order items
+                    vm.orderInfo.orderItem = [];
 
-                    // Use pricing and characteristics to build the product property
-                    if (orderItems[i].options.characteristics) {
-                        for (var j = 0; j < orderItems[i].options.characteristics.length; j++) {
-                            var char = orderItems[i].options.characteristics[j].characteristic;
-                            var selectedValue = orderItems[i].options.characteristics[j].value;
-                            var value;
-
-                            if (char.valueType.toLowerCase() === 'string' ||
-                                (char.valueType.toLowerCase() === 'number' && selectedValue.value)) {
-                                value = selectedValue.value;
-                            } else {
-                                value = selectedValue.valueFrom + '-' + selectedValue.valueTo;
-                            }
-
-                            item.product.productCharacteristic.push({
-                                name: char.name,
-                                value: value
-                            });
-                        }
-                    }
-
-                    if (orderItems[i].options.pricing) {
-                        var price = orderItems[i].options.pricing;
-                        price.price = {
-                            amount: orderItems[i].options.pricing.price.taxIncludedAmount,
-                            currency: orderItems[i].options.pricing.price.currencyCode
+                    // Build order items. This information is created using the shopping card and is not editable in this view
+                    for (var i = 0; i < orderItems.length; i++) {
+                        var item = {
+                            id: i.toString(),
+                            action: 'add',
+                            state: 'Acknowledged',
+                            productOffering: {
+                                id: orderItems[i].id,
+                                name: orderItems[i].name,
+                                href: orderItems[i].href
+                            },
+                            product: {
+                                productCharacteristic: []
+                            },
+                            billingAccount: [User.serializeBasic()]
                         };
-                        item.product.productPrice = [price];
-                    }
 
-                    // Include the item to the order
-                    vm.orderInfo.orderItem.push(item);
+                        // Use pricing and characteristics to build the product property
+                        if (orderItems[i].options.characteristics) {
+                            for (var j = 0; j < orderItems[i].options.characteristics.length; j++) {
+                                var char = orderItems[i].options.characteristics[j].characteristic;
+                                var selectedValue = orderItems[i].options.characteristics[j].value;
+                                var value;
+
+                                if (char.valueType.toLowerCase() === 'string' ||
+                                    (char.valueType.toLowerCase() === 'number' && selectedValue.value)) {
+                                    value = selectedValue.value;
+                                } else {
+                                    value = selectedValue.valueFrom + '-' + selectedValue.valueTo;
+                                }
+
+                                item.product.productCharacteristic.push({
+                                    name: char.name,
+                                    value: value
+                                });
+                            }
+                        }
+
+                        if (orderItems[i].options.pricing) {
+                            var price = orderItems[i].options.pricing;
+                            price.price = {
+                                amount: orderItems[i].options.pricing.price.taxIncludedAmount,
+                                currency: orderItems[i].options.pricing.price.currencyCode
+                            };
+                            item.product.productPrice = [price];
+                        }
+
+                        // Include the item to the order
+                        vm.orderInfo.orderItem.push(item);
+                    }
+                } else {
+                    $state.go('offering');
+                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'info', {
+                        message: 'No items found on your shopping cart!'
+                    });
                 }
 
             }, function (response) {
@@ -233,6 +249,17 @@
 
             // Fix display fields to accommodate API restrictions
             var apiInfo = angular.copy(vm.orderInfo);
+            var note = apiInfo.initialNote;
+            delete apiInfo['initialNote'];
+
+            if (note) {
+                apiInfo['note'] = [{
+                    text: note,
+                    author: apiInfo.relatedParty[0].id,
+                    date: new Date().toISOString()
+                }];
+            }
+
             for (var i = 0; i < apiInfo.orderItem.length; i++) {
                 delete apiInfo.orderItem[i].productOffering.name;
                 if (!apiInfo.orderItem[i].product.productCharacteristic.length) {

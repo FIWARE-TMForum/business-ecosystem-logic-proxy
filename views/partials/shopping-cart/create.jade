@@ -34,7 +34,9 @@ ui-view
                     ng-model="orderVM.orderInfo.externalId"
                   )
               .col-sm-6
-                .form-group
+                .form-group(
+                  ng-class="{ 'has-error': order.form.contact.$invalid }"
+                )
                   label
                     span Enter a notification contact
                     small.text-muted (optional)
@@ -43,13 +45,17 @@ ui-view
                     name="contact"
                     ng-model="orderVM.orderInfo.notificationContact"
                   )
+                  .help-block(
+                    ng-show="order.form.contact.$invalid"
+                  )
+                    span Provide a valid e-mail address
             .row
               .col-xs-12
                 .form-group
                   label
                     span Enter a note
                     small.text-muted (optional)
-                  textarea.form-control(rows="3", name="note")
+                  textarea.form-control(rows="3", name="note", ng-model="orderVM.orderInfo.initialNote")
             .row
               .col-xs-12
                 .h4.text-dark-secondary

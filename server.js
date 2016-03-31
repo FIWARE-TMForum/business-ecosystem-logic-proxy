@@ -179,7 +179,7 @@ var getOAuth2State = function(path) {
 
 var ensureAuthenticated = function(req, res, next) {
     if (!req.isAuthenticated()) {
-        var encodedState = getOAuth2State(req.path);
+        var encodedState = getOAuth2State(req.url);
         // This action will redirect the user the FIWARE Account portal,
         // so the next callback is not required to be called
         passport.authenticate('fiware', { scope: ['all_info'], state: encodedState })(req, res);
@@ -381,6 +381,7 @@ var jsAppFilesToInject = [
     'services/shopping-cart.service',
     'services/inventory-product.service',
     'services/utils.service',
+    'services/party.individual.service',
     'controllers/form-wizard.controller',
     'controllers/flash-message.controller',
     'controllers/user.controller',
@@ -395,7 +396,10 @@ var jsAppFilesToInject = [
     'controllers/message.controller',
     'controllers/inventory-product.controller',
     'controllers/unauthorized.controller',
+    'controllers/party.individual.controller',
+    'controllers/party.contact-medium.controller',
     'routes/offering.routes',
+    'routes/settings.routes',
     'routes/stock.routes',
     'routes/stock.product.routes',
     'routes/stock.product-offering.routes',
@@ -428,6 +432,7 @@ var renderTemplate = function(req, res, viewName) {
         orderingPath: config.endpoints.ordering.path,
         inventoryPath: config.endpoints.inventory.path,
         chargingPath: config.endpoints.charging.path,
+        partyPath: config.endpoints.party.path,
         shoppingCartPath: config.shoppingCartPath,
         rssPath: config.endpoints.rss.path,
         cssFilesToInject: cssFilesToInject,

@@ -19,6 +19,7 @@
             created: 'The {{ resource }} <strong>{{ name }}</strong> was created.',
             updated: 'The {{ resource }} <strong>{{ name }}</strong> was updated.',
             success: '{{ message }}',
+            info: '{{ message }}',
             error: '{{ error }}'
         };
 
@@ -49,14 +50,17 @@
             var state = 'info';
 
             switch (action) {
-            case 'created':
-            case 'updated':
-            case 'success':
-                state = 'success';
-                break;
-            case 'error':
-                state = 'danger';
-                break;
+                case 'info':
+                    state = 'info';
+                    break;
+                case 'created':
+                case 'updated':
+                case 'success':
+                    state = 'success';
+                    break;
+                case 'error':
+                    state = 'danger';
+                    break;
             }
 
             return state;

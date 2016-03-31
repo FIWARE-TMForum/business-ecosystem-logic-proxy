@@ -27,8 +27,7 @@ ui-view
                   td
                     span(ng-repeat="parentCategory in category.getBreadcrumb()") {{ parentCategory.name }} / 
                     a(ui-sref="admin.productCategory.update({ categoryId: category.id })", ui-sref-opts="{ inherit: false }")
-                      strong
-                        {{ category.name }}
+                      strong {{ category.name }}
                   td
                     time(am-time-ago="category.lastUpdate")
       div(ng-switch-when="ERROR")

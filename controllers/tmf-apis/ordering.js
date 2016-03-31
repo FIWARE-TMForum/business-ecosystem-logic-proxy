@@ -51,7 +51,7 @@ var ordering = (function(){
     ////////////////////////////////////////// CREATION //////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
 
-    var completeRelatedPartyInfo = function(item, user, callback) {
+    var completeRelatedPartyInfo = function(individualCollectionUrl, item, user, callback) {
 
         if (!item.product) {
 
@@ -90,7 +90,7 @@ var ordering = (function(){
             item.product.relatedParty.push({
                 id: user.id,
                 role: CUSTOMER,
-                href: ''
+                href: individualCollectionUrl + user.id
             });
         }
 
@@ -133,7 +133,7 @@ var ordering = (function(){
                                 item.product.relatedParty.push({
                                     id: owner.id,
                                     role: SELLER,
-                                    href: ''
+                                    href: individualCollectionUrl + owner.id
                                 });
                             });
 
@@ -214,9 +214,10 @@ var ordering = (function(){
         }
 
         var asyncTasks = [];
+        var individualCollectionUrl = tmfUtils.getIndividualURL(req);
 
         body.orderItem.forEach(function(item) {
-           asyncTasks.push(completeRelatedPartyInfo.bind(this, item, req.user));
+            asyncTasks.push(completeRelatedPartyInfo.bind(this, individualCollectionUrl, item, req.user));
         });
 
         async.series(asyncTasks, function(err/*, results*/) {
@@ -259,47 +260,16 @@ var ordering = (function(){
     /////////////////////////////////////////// UPDATE ///////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
 
-    var calculateOrderingState = function(previousState, orderItems) {
-
-        // STATES
-        // Acknowledged - All the order items are acknowledged
-        // In Progress - All the order items are Acknowledged or In Progress
-        // Completed - All the order items are completed
-        // Partial - There are order items completed or failed and also in progress
-        // Failed - All failed
-        // TODO: This will be implemented directly in the API. Once implemented, remove this part...
-
-        var orderingState = previousState;
-        var currentStates = { };
-        currentStates[ACKNOWLEDGED.toLowerCase()] = 0;
-        currentStates[IN_PROGRESS.toLowerCase()] = 0;
-        currentStates[COMPLETED.toLowerCase()] = 0;
-        currentStates[FAILED.toLowerCase()] = 0;
-
-        orderItems.forEach(function(item) {
-            currentStates[item['state'].toLowerCase()] += 1;
-        });
-
-        if (currentStates[ACKNOWLEDGED.toLowerCase()] === orderItems.length) {
-            orderingState = ACKNOWLEDGED;
-        } else if (currentStates[COMPLETED.toLowerCase()] === orderItems.length) {
-            orderingState = COMPLETED;
-        } else if (currentStates[FAILED.toLowerCase()] === orderItems.length) {
-            orderingState = FAILED;
-        } else {
-            if (currentStates[COMPLETED.toLowerCase()] === 0 && currentStates[FAILED.toLowerCase()] === 0) {
-                orderingState = IN_PROGRESS;
-            } else {
-                orderingState = PARTIAL;
-            }
-        }
-
-        return orderingState;
-    };
-
     var updateItemsState = function(req, updatedOrdering, previousOrdering, includeOtherFields, callback) {
 
         var error = null;
+
+        if (previousOrdering.state.toLowerCase() !== 'inprogress') {
+            error = {
+                status: 403,
+                message: previousOrdering.state + ' orders cannot be manually modified'
+            };
+        }
 
         for (var i = 0; i < updatedOrdering.orderItem.length && !error; i++) {
 
@@ -318,48 +288,38 @@ var ordering = (function(){
 
             } else {
 
-                var isSeller = tmfUtils.hasPartyRole(req.user, previousOrderItem.product.relatedParty, SELLER);
-
-                if (!isSeller) {
+                // Check that fields are not added or removed
+                if (Object.keys(updatedItem).length !== Object.keys(previousOrderItem).length) {
 
                     error = {
                         status: 403,
-                        message: 'You cannot modify an order item if you are not seller'
+                        message: 'The fields of an order item cannot be modified'
                     };
 
                 } else {
 
-                    // Check that fields are not added or removed
-                    if (Object.keys(updatedItem).length !== Object.keys(previousOrderItem).length) {
-                        error = {
-                            status: 403,
-                            message: 'The fields of an order item cannot be modified'
-                        };
-                    }
+                    for (var field in previousOrderItem) {
 
-                    // Check that the value of the fields is not changed (only state can be changed)
-                    if (!error) {
-                        for (var field in updatedItem) {
+                        if (field.toLowerCase() !== 'state' && !equal(previousOrderItem[field], updatedItem[field])) {
 
-                            if (field.toLowerCase() !== 'state' && !equal(updatedItem[field], previousOrderItem[field])) {
+                            error = {
+                                status: 403,
+                                message: 'The value of the field ' + field + ' cannot be changed'
+                            };
 
-                                error = {
-                                    status: 403,
-                                    message: 'The value of the field ' + field + ' cannot be changed'
-                                };
-
-                                break;
-                            }
+                            break;
                         }
                     }
 
                     if (!error) {
 
-                        // Only the charging backend (Store) can change the state from acknowledged to in progress
-                        if (previousOrderItem['state'] === ACKNOWLEDGED) {
+                        var isSeller = tmfUtils.hasPartyRole(req.user, previousOrderItem.product.relatedParty, SELLER);
+
+                        // If the user is not the seller and the state is changed
+                        if (!isSeller && previousOrderItem['state'] != updatedItem['state']) {
                             error = {
                                 status: 403,
-                                message: 'Acknowledged order items cannot be updated manually'
+                                message: 'You cannot modify an order item if you are not seller'
                             };
                         } else {
                             // If no errors, the state can be updated!
@@ -375,7 +335,6 @@ var ordering = (function(){
             // Sellers can only modify the 'orderItem' field...
             // State is automatically calculated
             var finalBody = includeOtherFields ? updatedOrdering : {};
-            finalBody['state'] = calculateOrderingState(previousOrdering['state'], previousOrdering['orderItem']);
             finalBody['orderItem'] = previousOrdering.orderItem;
 
             utils.updateBody(req, finalBody);
@@ -399,8 +358,8 @@ var ordering = (function(){
                     callback(err);
                 } else {
 
-                    var isCustomer = tmfUtils.hasPartyRole(req.user, previousOrdering.relatedParty, CUSTOMER);
-                    var isSeller = tmfUtils.hasPartyRole(req.user, previousOrdering.relatedParty, SELLER);
+                    var isCustomer = tmfUtils.hasPartyRole(req, previousOrdering.relatedParty, CUSTOMER);
+                    var isSeller = tmfUtils.hasPartyRole(req, previousOrdering.relatedParty, SELLER);
 
                     if (isCustomer) {
 
@@ -423,15 +382,15 @@ var ordering = (function(){
                             }
                         } else if ('state' in ordering && ordering['state'].toLowerCase() === 'cancelled') {
 
-                            // Orderings can only be cancelled when there are no completed products
-                            var productsInFinalState = previousOrdering.orderItem.filter(function(item) {
-                                return ['completed', 'failed', 'cancelled'].indexOf(item.state.toLowerCase()) >= 0;
+                            // Orderings can only be cancelled when all items are marked as Acknowledged
+                            var productsInAckState = previousOrdering.orderItem.filter(function(item) {
+                                return 'acknowledged' === item.state.toLowerCase();
                             });
 
-                            if (productsInFinalState.length > 0) {
+                            if (productsInAckState.length != previousOrdering.orderItem.length) {
                                 callback({
                                     status: 403,
-                                    message: 'You cannot cancel orders with completed, failed or cancelled items'
+                                    message: 'Orderings can only be cancelled when all Order items are in Acknowledged state'
                                 });
                             } else {
 
@@ -539,8 +498,8 @@ var ordering = (function(){
         var orderingsToRemove = [];
         orderings.forEach(function(ordering) {
 
-            var customer = tmfUtils.hasPartyRole(req.user, ordering.relatedParty, CUSTOMER);
-            var seller = tmfUtils.hasPartyRole(req.user, ordering.relatedParty, SELLER);
+            var customer = tmfUtils.hasPartyRole(req, ordering.relatedParty, CUSTOMER);
+            var seller = tmfUtils.hasPartyRole(req, ordering.relatedParty, SELLER);
 
             if (!customer && !seller) {
                 // This can happen when a user ask for a specific ordering.
@@ -551,7 +510,7 @@ var ordering = (function(){
                 // where the user is a seller have to be returned
 
                 ordering.orderItem = ordering.orderItem.filter(function(item) {
-                    return tmfUtils.hasPartyRole(req.user, item.product.relatedParty, SELLER);
+                    return tmfUtils.hasPartyRole(req, item.product.relatedParty, SELLER);
                 });
             }
             // ELSE: If the user is the customer, order items don't have to be filtered
@@ -605,7 +564,7 @@ var ordering = (function(){
 
     var executePostValidation = function(req, callback) {
 
-        if (req.method === 'GET') {
+        if (['GET', 'PUT', 'PATCH'].indexOf(req.method.toUpperCase()) >= 0) {
 
             filterOrderItems(req, callback);
 
