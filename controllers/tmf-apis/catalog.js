@@ -75,8 +75,6 @@ var catalog = (function() {
 
     var validateOffering = function(req, offeringPath, previousBody, newBody, callback) {
 
-        var user = req.user;
-
         var validStates = null;
         var errorMessageStateProduct = null;
         var errorMessageStateCatalog = null;
@@ -171,9 +169,11 @@ var catalog = (function() {
 
                 } else {
 
+                    var operation = previousBody != null ? 'update' : 'create';
+
                     callback({
                         status: 403,
-                        message: 'You are not allowed to create offerings for products you do not own'
+                        message: 'You are not allowed to ' + operation + ' offerings for products you do not own'
                     });
                 }
             }

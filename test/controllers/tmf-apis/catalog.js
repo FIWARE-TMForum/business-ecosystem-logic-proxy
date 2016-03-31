@@ -8,7 +8,8 @@ var MISSING_PARENT_ID = 'Non-root categories must contain a parent category';
 var FAILED_TO_RETRIEVE = 'The TMForum APIs fails to retrieve the object you are trying to update/delete';
 var NEED_AUTHENTICATION = 'You need to be authenticated to create/update/delete resources';
 var INVALID_JSON = 'The provided body is not a valid JSON';
-var OFFERINGS_FOR_NON_OWNED_PRODUCTS = 'You are not allowed to create offerings for products you do not own';
+var CREATE_OFFERING_FOR_NON_OWNED_PRODUCT = 'You are not allowed to create offerings for products you do not own';
+var UPDATE_OFFERING_WITH_NON_OWNED_PRODUCT = 'You are not allowed to update offerings for products you do not own';
 var INVALID_PRODUCT = 'The product attached to the offering cannot be read';
 var INVALID_USER_CREATE = 'The user making the request and the specified owner are not the same user';
 var INVALID_USER_UPDATE = 'The user making the request is not the owner of the accessed resource';
@@ -361,7 +362,7 @@ describe('Catalog API', function() {
             lifecycleStatus: 'active'
         };
 
-        testCreateOffering(productRequestInfo, catalogRequestInfo, null, 403, OFFERINGS_FOR_NON_OWNED_PRODUCTS, done);
+        testCreateOffering(productRequestInfo, catalogRequestInfo, null, 403, CREATE_OFFERING_FOR_NON_OWNED_PRODUCT, done);
     });
 
     it('should not allow to create an offering in a retired catalogue', function(done) {
@@ -912,7 +913,7 @@ describe('Catalog API', function() {
             lifecycleStatus: 'active'
         };
 
-        testUpdateProductOffering({}, productRequestInfo, catalogRequestInfo, 403, OFFERINGS_FOR_NON_OWNED_PRODUCTS, done);
+        testUpdateProductOffering({}, productRequestInfo, catalogRequestInfo, 403, UPDATE_OFFERING_WITH_NON_OWNED_PRODUCT, done);
     });
 
     it('should not allow to update an offering when the attached product cannot be retrieved', function(done) {
