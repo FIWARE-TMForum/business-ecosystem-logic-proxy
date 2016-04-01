@@ -9,7 +9,19 @@
 
     angular
         .module('app')
+        .controller('FormMixinCtrl', FormMixinController)
         .controller('FormWizardCtrl', FormWizardController);
+
+    function FormMixinController() {
+        /* jshint validthis: true */
+        var vm = this;
+
+        vm.hasFieldError = hasFieldError;
+
+        function hasFieldError(field) {
+            return field && (field.$invalid && (field.$dirty || field.$touched));
+        }
+    }
 
     function FormWizardController() {
         /* jshint validthis: true */
