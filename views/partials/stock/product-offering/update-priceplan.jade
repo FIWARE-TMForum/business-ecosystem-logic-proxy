@@ -1,0 +1,13 @@
+.row
+  .col-xs-12
+    .panel.panel-default.z-depth-1
+      .panel-body
+        .h4.text-dark-primary
+          strong New price plan
+        hr
+        priceplan-form(form="updateVM.forms.priceplanCreate" controller="updateVM" data="updateVM.priceplan")
+        .form-group.text-right
+          a.btn.btn-warning.z-depth-1(ng-disabled="!updateVM.forms.priceplanCreate.$valid" ng-click="updateVM.createPriceplan()")
+            span.item-text Create
+  .col-xs-12
+    priceplan-table(controller="updateVM" data="updateVM.item.productOfferingPrice")

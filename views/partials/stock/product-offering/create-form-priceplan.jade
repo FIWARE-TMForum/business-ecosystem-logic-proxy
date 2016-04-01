@@ -1,25 +1,23 @@
-table.table.table-bordered(ng-if="createVM.pricePlans.length")
-  thead
-    tr
-      th #
-      th Name
-      th Price
-      th Unit / Charge period
-      th Delete
-  tbody
-    tr(ng-repeat="pricePlan in createVM.pricePlans")
-      th {{ $index + 1 }}
-      td {{ pricePlan.name }}
-      td {{ pricePlan.price.taxIncludedAmount }} {{ pricePlan.price.currencyCode | uppercase }}
-      td {{ pricePlan.unitOfMeasure }}{{ pricePlan.recurringChargePeriod }}
-      td
-        a.alert-link-danger(ng-click="createVM.removePricePlan($index)")
-          span.fa.fa-trash
-.alert.alert-info.text-center(ng-if="!createVM.pricePlans.length")
-  | No price plans included.
-include ./create-form-priceplan-form.jade
-form(name="step.form", novalidate)
-   input(type="hidden", name="pricePlans", ng-model="createVM.pricePlans", field-array, limit-from="0", required)
-  .form-group.text-right
-    a.btn.btn-default.z-depth-1(ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])", ng-disabled="!step.form.$valid")
-      span.item-text Next
+.row
+  .col-xs-12
+    priceplan-table(controller="createVM" data="createVM.data.productOfferingPrice")
+  .col-xs-12(ng-if="!createVM.data.productOfferingPrice.length")
+    .alert.alert-info.text-center
+      | No price plans included.
+  .col-xs-12(ng-if="createVM.priceplanEnabled")
+    .h4.text-dark-primary
+      strong New price plan
+    hr
+    priceplan-form(form="createVM.forms.priceplanCreate" controller="createVM" data="createVM.priceplan")
+    .form-group.text-left
+      a.btn.btn-warning.z-depth-1(ng-disabled="!createVM.forms.priceplanCreate.$valid", ng-click="createVM.createPriceplan()")
+        span.item-icon.fa.fa-save
+        span.item-text.hidden-xs.hidden-sm Create
+  .col-xs-12(ng-if="!createVM.priceplanEnabled")
+    .form-group.text-left
+      a.btn.btn-default.z-depth-1(ng-click="createVM.priceplanEnabled = true")
+        span.item-text New price plan
+  .col-xs-12
+    .form-group.text-right
+      a.btn.btn-default.z-depth-1(ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])")
+        span.item-text Next
