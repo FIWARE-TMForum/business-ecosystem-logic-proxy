@@ -1,0 +1,62 @@
+form(name="step.form", novalidate)
+  .h5.text-dark-secondary
+    strong General
+  .row
+    .col-sm-8
+      .form-group(
+      ng-class="{ 'has-error': createForm.hasError(step.form.productClass) }"
+      )
+        label Product class
+        input.form-control(
+          type="text"
+          name="productClass"
+          ng-model="createVM.data.productClass"
+          required
+          disabled
+        )
+    .col-sm-4
+      .form-group(
+      ng-class="{ 'has-error' : createForm.hasError(step.form.providerValue) }"
+      )
+        label Provider percentage
+        .input-group
+          input.form-control(
+          type="number"
+          name="providerValue"
+          ng-model="createVM.data.ownerValue"
+          required
+          disabled
+          )
+          span.input-group-addon %
+  .row
+    .col-sm-4
+      .form-group
+        label Platform percentage
+        .input-group
+          input.form-control(
+          type="text"
+          ng-model="createVM.platformRevenue"
+          disabled
+          )
+          span.input-group-addon %
+  .h5.text-dark-secondary
+    strong Stakeholders
+  .row
+    .col-sm-12
+      table.table.table-bordered(ng-if="createVM.data.stakeholders.length")
+        thead
+          tr
+            th #
+            th User
+            th Percentage
+        tbody
+          tr(ng-repeat="stakeholder in createVM.data.stakeholders")
+            th {{ $index + 1 }}
+            td {{ stakeholder.stakeholderId }}
+            td {{ stakeholder.modelValue }}
+      .alert.alert-info.text-center(ng-if="!createVM.data.stakeholders.length")
+        | No stakeholders included.
+
+  .form-group.text-right
+    a.btn.btn-success(ng-click="createVM.create()", ng-disabled="!step.form.$valid")
+      span.item-text Create

@@ -438,6 +438,7 @@ var renderTemplate = function(req, res, viewName) {
         partyPath: config.endpoints.party.path,
         shoppingCartPath: config.shoppingCartPath,
         rssPath: config.endpoints.rss.path,
+        platformRevenue: config.revenueModel,
         cssFilesToInject: cssFilesToInject,
         jsDepFilesToInject: jsDepFilesToInject,
         jsAppFilesToInject: jsAppFilesToInject.concat(utils.isAdmin(req.user) ? jsAdminFilesToInject : []),
