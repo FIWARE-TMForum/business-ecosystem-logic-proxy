@@ -1,0 +1,80 @@
+form(name="form" novalidate)
+  .row
+    .col-md-8
+      .form-group(ng-class="{ 'has-error': vm.hasFieldError(form.name) }")
+        label Enter a name
+        input.form-control(
+          type="text"
+          name="name"
+          ng-model="priceplan.name"
+          required
+          ng-maxlength="30"
+        )
+        .help-block(ng-messages="form.name.$error" ng-show="vm.hasFieldError(form.name)")
+          span(ng-message="required") This field is required.
+          span(ng-message="maxlength") This field must not exceed 30 chars.
+    .col-md-4
+      .form-group
+        label Choose a type
+        .dropdown
+          a.btn.btn-block.btn-default.dropdown-toggle.z-depth-0(data-toggle="dropdown")
+            span.item-text {{ priceplan.priceType | uppercase }}
+            span.item-icon.fa.fa-caret-down
+          .dropdown-menu.dropdown-menu-right.z-depth-2
+            a.dropdown-menu-item(ng-repeat="(key, value) in $parent.PRICES" ng-click="priceplan.setType(key)")
+              span.item-text {{ value | uppercase }}
+  .row
+    .col-md-8
+      .form-group(ng-class="{ 'has-error': vm.hasFieldError(form.taxIncludedAmount) }")
+        label Enter a price
+        .input-group
+          input.form-control(
+            type="number"
+            name="taxIncludedAmount"
+            ng-model="priceplan.price.taxIncludedAmount"
+            required
+            min="0"
+          )
+          .input-group-btn
+            a.btn.btn-default.dropdown-toggle.z-depth-0(data-toggle="dropdown")
+              span.item-text {{ priceplan.price.currencyCode | uppercase }}
+              span.item-icon.fa.fa-caret-down
+            .dropdown-menu.dropdown-menu-right.z-depth-2
+              a.dropdown-menu-item(ng-repeat="(key, value) in $parent.CURRENCY_CODES" ng-click="priceplan.price.setCurrencyCode(key)")
+                span.item-text ({{ key }}) {{ value | uppercase }}
+        .help-block(ng-messages="form.taxIncludedAmount.$error" ng-show="vm.hasFieldError(form.taxIncludedAmount)")
+          span(ng-message="required") This field is required.
+          span(ng-message="min") This field must not be a negative number.
+          span(ng-message="number") This field must be a valid number.
+    .col-md-4(ng-if="priceplan.priceType === $parent.PRICES.USAGE")
+      .form-group(ng-class="{ 'has-error': vm.hasFieldError(form.unitOfMeasure) }")
+        label Enter a unit
+        .input-group
+          span.input-group-addon /
+          input.form-control(
+            type="text"
+            name="unitOfMeasure"
+            ng-model="priceplan.unitOfMeasure"
+            required
+            ng-maxlength="20"
+          )
+        .help-block(ng-messages="form.unitOfMeasure.$error" ng-show="vm.hasFieldError(form.unitOfMeasure)")
+         span(ng-message="required") This field is required.
+         span(ng-message="maxlength") This field must not exceed 20 chars.
+    .col-md-4(ng-if="priceplan.priceType === $parent.PRICES.RECURRING")
+      .form-group
+        label Choose a charge period
+        .input-group
+          span.input-group-addon /
+          select.form-control(
+            name="recurringChargePeriod"
+            ng-model="priceplan.recurringChargePeriod"
+          )
+            option(ng-repeat="(key, value) in $parent.CHARGE_PERIODS" value="{{ value | lowercase }}") {{ value | uppercase }}
+  .row
+    .col-md-12
+      .form-group
+        label
+          span Enter a description
+          small.text-muted (optional)
+        textarea.form-control(name="description" rows="2" ng-model="priceplan.description")

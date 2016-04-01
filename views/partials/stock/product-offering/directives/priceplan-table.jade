@@ -1,0 +1,20 @@
+.table-responsive(ng-if="priceplans.length")
+  table.table.table-bordered
+    thead
+      tr
+        th #
+        th Name
+        th Description
+        th Price
+        th Actions
+    tbody
+      tr(ng-repeat="priceplan in priceplans")
+        th {{ $index + 1 }}
+        th {{ priceplan.name }}
+        td {{ priceplan.description }}
+        td {{ priceplan.toString() }}
+        td
+          a.btn.btn-sm.btn-icon.btn-info(ng-click="vm.updatePriceplan($index)")
+            span.item-icon.fa.fa-pencil
+          a.btn.btn-sm.btn-icon.btn-danger(ng-click="vm.removePriceplan($index)")
+            span.item-icon.fa.fa-trash

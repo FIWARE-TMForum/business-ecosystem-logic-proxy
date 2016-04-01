@@ -13,6 +13,8 @@
         .directive('fileModel', fileModelDirective)
         .directive('noImage', noImageDirective)
         .directive('fieldUnique', fieldUniqueDirective)
+        .directive('priceplanForm', priceplanFormDirective)
+        .directive('priceplanTable', priceplanTableDirective)
         .directive('fieldArray', fieldArrayDirective);
 
     function bsTooltipDirective() {
@@ -89,6 +91,29 @@
                     }
                 });
             }
+        };
+    }
+
+    function priceplanFormDirective() {
+        return {
+            restrict: 'E',
+            scope: {
+                form: '=',
+                priceplan: '=data',
+                vm: '=controller'
+            },
+            templateUrl: 'directives/forms/priceplan'
+        };
+    }
+
+    function priceplanTableDirective() {
+        return {
+            restrict: 'E',
+            scope: {
+                priceplans: '=data',
+                vm: '=controller'
+            },
+            templateUrl: 'directives/tables/priceplan'
         };
     }
 
