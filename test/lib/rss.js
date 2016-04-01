@@ -33,16 +33,16 @@ describe('RSS Client', function() {
     var protocol = config.appSsl ? 'https' : 'http';
     var serverUrl = protocol + '://' + config.appHost + ':' + config.endpoints.rss.port;
 
-    var mockRSSServer = function(exp_options, err, resp, body) {
-        return function(called_options, callback) {
-            expect(called_options).toEqual(exp_options);
+    var mockRSSServer = function(expOptions, err, resp, body) {
+        return function(calledOptions, callback) {
+            expect(calledOptions).toEqual(expOptions);
             callback(err, resp, body);
         };
     };
 
     it('should call the callback with the RSS server response when creating a provider', function(done) {
 
-        var exp_options = {
+        var expOptions = {
             url: serverUrl + PROVIDER_URL,
             method: 'POST',
             headers: {
@@ -57,7 +57,7 @@ describe('RSS Client', function() {
             })
         };
 
-        var request = mockRSSServer(exp_options, null, {
+        var request = mockRSSServer(expOptions, null, {
             statusCode: 201
         }, null);
 
@@ -69,8 +69,8 @@ describe('RSS Client', function() {
         });
     });
 
-    var testDefaultModelCreation = function(err, resp, resp_body, exp_err, exp_resp, done) {
-        var exp_options = {
+    var testDefaultModelCreation = function(err, resp, body, expErr, expResp, done) {
+        var expOptions = {
             url: serverUrl + MODELS_URL,
             method: 'POST',
             headers: {
@@ -89,13 +89,13 @@ describe('RSS Client', function() {
             })
         };
 
-        var request = mockRSSServer(exp_options, err, resp, resp_body);
+        var request = mockRSSServer(expOptions, err, resp, body);
 
         var rssClient = getRssClient(request);
 
         rssClient.createDefaultModel(userInfo, function(err, resp){
-            expect(err).toEqual(exp_err);
-            expect(resp).toEqual(exp_resp);
+            expect(err).toEqual(expErr);
+            expect(resp).toEqual(expResp);
             done();
         })
     };
@@ -126,16 +126,31 @@ describe('RSS Client', function() {
         }, undefined, done);
     });
 
-    it('should call the callback with the error given by the server when it returns a 400 code', function (done) {
+    var testRSSErrorCode = function(status, done) {
         var errMsg =  'Unexpected error';
-
         testDefaultModelCreation(null, {
-            statusCode: 400
+            statusCode: status
         }, JSON.stringify({
             exceptionText: errMsg
         }), {
-            status: 400,
+            status: status,
             message: errMsg
         }, undefined, done);
+    };
+
+    it('should call the callback with the error given by the server when it returns a 400 code', function (done) {
+        testRSSErrorCode(400, done);
+    });
+
+    it('should call the callback with the error given by the server when it returns a 401 code', function (done) {
+        testRSSErrorCode(401, done);
+    });
+
+    it('should call the callback with the error given by the server when it returns a 403 code', function (done) {
+        testRSSErrorCode(403, done);
+    });
+
+    it('should call the callback with the error given by the server when it returns a 404 code', function (done) {
+        testRSSErrorCode(404, done);
     });
 });
