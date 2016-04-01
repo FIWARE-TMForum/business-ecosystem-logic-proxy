@@ -12,30 +12,27 @@ var rss = (function () {
 
         // Hide private APIs
         if (req.apiUrl.indexOf('rss/aggregators') >= 0 || req.apiUrl.indexOf('rss/providers') >= 0) {
-            callback({
+            return callback({
                 status: 403,
                 message: 'This API is private'
             });
-            return;
         }
 
         // Only sellers are allowed to access the RSS API
         if (!utils.hasRole(req.user, config.oauth2.roles.seller)) {
-            callback({
+            return callback({
                 status: 403,
                 message: 'You are not authorized to access the RSS API'
             });
-            return;
         }
 
         // Check if the provider object has been already created
         rssClient.createProvider(req.user, function(err) {
             if (err) {
-                callback({
+                return callback({
                     status: 500,
                     message: 'An unexpected error in the RSS API prevented your request to be processed'
                 });
-                return;
             }
             callback();
         });
@@ -46,21 +43,19 @@ var rss = (function () {
 
         // Hide CDRs API
         if (req.apiUrl.indexOf('rss/cdrs') >= 0) {
-            callback({
+            return callback({
                 status: 403,
                 message: 'This API can only be accessed with GET requests'
             });
-            return;
         }
 
         try {
             body = JSON.parse(req.body);
         } catch (e) {
-            callback({
+            return callback({
                 status: 400,
                 message: 'The provided body is not a valid JSON'
             });
-            return;
         }
 
         // Include the revenue model as aggregator value when creating RS models
@@ -99,16 +94,14 @@ var rss = (function () {
             } catch (e) {
                 // If an error parsing the body occurs this is a failure in the
                 // request so the error is retransmitted
-                callback();
-                return;
+                return callback();
             }
 
             // If the models list is empty create the default revenue model
             if (!body.length) {
                 rssClient.createDefaultModel(req.user, function(err, response) {
                     if (err) {
-                        callback(err);
-                        return;
+                        return callback(err);
                     }
 
                     body.push(JSON.parse(response.body));
