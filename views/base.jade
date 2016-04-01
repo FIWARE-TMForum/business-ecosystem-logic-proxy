@@ -26,6 +26,7 @@ html(ng-app="app")
           INVENTORY: '#{ proxyPath }/#{ inventoryPath }/api/productInventory/v2',
           PARTY_MANAGEMENT: '#{ proxyPath }/#{ partyPath }/api/partyManagement/v2',
           PAYMENT: '#{ proxyPath }/#{ chargingPath }/api/orderManagement/orders/:action',
+          SHARING_MODELS: '#{ proxyPath }/#{ rssPath }/rss/models',
           SHOPPING_CART: '#{ shoppingCartPath }/:action/:id'
         })
         .run(function($rootScope, $state, $injector) {
@@ -229,6 +230,13 @@ html(ng-app="app")
       include ./partials/stock/product-catalogue/update-party.jade
     script(type="text/ng-template", id="stock/product-catalogue/update/offering")
       include ./partials/stock/product-catalogue/update-offering.jade
+
+    script(type="text/ng-template", id="stock/sharing-models/search")
+      include ./partials/stock/sharing-models/search.jade
+    script(type="text/ng-template", id="stock/sharing-models/create")
+      include ./partials/stock/sharing-models/create.jade
+    script(type="text/ng-template", id="stock/sharing-models/update")
+      include ./partials/stock/sharing-models/update.jade
 
     script(type="text/ng-template", id="inventory/sidebar")
       include ./partials/inventory/sidebar.jade
