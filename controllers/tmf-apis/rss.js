@@ -11,7 +11,7 @@ var rss = (function () {
         utils.log(logger, 'info', req, "Validating RSS provider");
 
         // Hide private APIs
-        if (req.apiUrl.indexOf('rss/aggregators') >= 0 || req.apiUrl.indexOf('rss/providers') >= 0) {
+        if (req.apiUrl.indexOf('rss/aggregators') >= 0) {
             return callback({
                 status: 403,
                 message: 'This API is private'
