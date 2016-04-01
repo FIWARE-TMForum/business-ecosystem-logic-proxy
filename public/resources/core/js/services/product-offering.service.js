@@ -10,52 +10,151 @@
 
     angular
         .module('app')
-        .factory('Offering', OfferingService);
+        .factory('Offering', ProductOfferingService);
 
-    function OfferingService($q, $resource, URLS, LIFECYCLE_STATUS, User, ProductSpec, Category) {
+    function ProductOfferingService($q, $resource, URLS, LIFECYCLE_STATUS, User, ProductSpec, Category) {
         var resource = $resource(URLS.CATALOGUE_MANAGEMENT + '/:catalogue/:catalogueId/productOffering/:offeringId', {
             offeringId: '@id'
         }, {
-            update: {
-                method: 'PATCH'
-            }
+            update: {method: 'PATCH'}
         });
-
-        var PRICE_TYPES = {
-            ONE_TIME: 'one time',
-            RECURRING: 'recurring',
-            USAGE: 'usage'
-        };
-
-        var PRICE_CURRENCIES = {
-            EUR: 'Euro',
-            USD: 'US Dollar',
-            CAD: 'Canadian Dollar'
-        };
-
-        var PRICE_PERIODS = {
-            WEEKLY: 'Weekly',
-            MONTHLY: 'Monthly',
-            YEARLY: 'Yearly'
-        };
 
         resource.prototype.getCategories = getCategories;
         resource.prototype.getPicture = getPicture;
         resource.prototype.getCheapestPriceplan = getCheapestPriceplan;
         resource.prototype.formatCheapestPriceplan = formatCheapestPriceplan;
         resource.prototype.serialize = serialize;
+        resource.prototype.appendPriceplan = appendPriceplan;
+        resource.prototype.removePriceplan = removePriceplan;
+
+        var PATCHABLE_ATTRS = ['description', 'lifecycleStatus', 'name', 'version'];
+
+        var EVENTS = {
+            PRICEPLAN_UPDATE: '$priceplanUpdate',
+            PRICEPLAN_UPDATED: '$priceplanUpdated'
+        };
+
+        var TYPES = {
+            CHARGE_PERIOD: {
+                MONTHLY: 'monthly',
+                WEEKLY: 'weekly',
+                YEARLY: 'yearly'
+            },
+            CURRENCY_CODE: {
+                CAD: 'canadian dollar',
+                EUR: 'euro',
+                USD: 'us dollar'
+            },
+            PRICE: {
+                ONE_TIME: 'one time',
+                RECURRING: 'recurring',
+                USAGE: 'usage'
+            }
+        };
+
+        var TEMPLATES = {
+            PRICE: {
+                currencyCode: 'EUR',
+                dutyFreeAmount: 0,
+                percentage: 0,
+                taxIncludedAmount: 0,
+                taxRate: 20
+            },
+            PRICEPLAN: {
+                description: '',
+                name: '',
+                price: {},
+                priceType: TYPES.PRICE.ONE_TIME,
+                recurringChargePeriod: '',
+                unitOfMeasure: ''
+            },
+            RESOURCE: {
+                bundledProductOffering: [],
+                category: [],
+                description: '',
+                isBundle: false,
+                lifecycleStatus: LIFECYCLE_STATUS.ACTIVE,
+                name: '',
+                place: [],
+                productOfferingPrice: [],
+                validFor: {},
+                version: '0.1'
+            }
+        };
+
+        var Price = function Price(data) {
+            angular.extend(this, TEMPLATES.PRICE, data);
+            parseNumber(this, ['dutyFreeAmount', 'percentage', 'taxIncludedAmount', 'taxRate']);
+        };
+        Price.prototype.setCurrencyCode = function setCurrencyCode(codeName) {
+
+            if (codeName in TYPES.CURRENCY_CODE) {
+                this.currencyCode = codeName;
+            }
+
+            return this;
+        };
+        Price.prototype.toJSON = function toJSON() {
+            return {
+                currencyCode: this.currencyCode,
+                dutyFreeAmount: this.taxIncludedAmount / ((100 + this.taxRate) / 100),
+                percentage: this.percentage,
+                taxIncludedAmount: this.taxIncludedAmount,
+                taxRate: this.taxRate
+            };
+        };
+        Price.prototype.toString = function toString() {
+            return '' + this.taxIncludedAmount + ' (' + this.currencyCode.toUpperCase() + ')';
+        };
+
+        var Priceplan = function Priceplan(data) {
+            angular.extend(this, TEMPLATES.PRICEPLAN, data);
+            this.price = new Price(this.price);
+        };
+        Priceplan.prototype.setType = function setType(typeName) {
+
+            if (typeName in TYPES.PRICE && !angular.equals(this.priceType, typeName)) {
+                this.priceType = TYPES.PRICE[typeName];
+                this.unitOfMeasure = '';
+                this.recurringChargePeriod = '';
+
+                switch (angular.lowercase(this.priceType)) {
+                case TYPES.PRICE.RECURRING:
+                    this.recurringChargePeriod = TYPES.CHARGE_PERIOD.WEEKLY;
+                    break;
+                }
+            }
+
+            return this;
+        };
+        Priceplan.prototype.toString = function toString() {
+            var result = '' + this.price.toString();
+
+            switch (angular.lowercase(this.priceType)) {
+            case TYPES.PRICE.ONE_TIME:
+                break;
+            case TYPES.PRICE.RECURRING:
+                result += ' / ' + angular.uppercase(this.recurringChargePeriod);
+                break;
+            case TYPES.PRICE.USAGE:
+                result += ' / ' + angular.uppercase(this.unitOfMeasure);
+                break;
+            }
+
+            return result;
+        };
 
         return {
-            PRICE_TYPES: PRICE_TYPES,
-            PRICE_CURRENCIES: PRICE_CURRENCIES,
-            PRICE_PERIODS: PRICE_PERIODS,
+            EVENTS: EVENTS,
+            TEMPLATES: TEMPLATES,
+            TYPES: TYPES,
+            PATCHABLE_ATTRS: PATCHABLE_ATTRS,
+            Priceplan: Priceplan,
             search: search,
             exists: exists,
             create: create,
             detail: detail,
-            update: update,
-            buildInitialData: buildInitialData,
-            createPricePlan: createPricePlan
+            update: update
         };
 
         function search(filters) {
@@ -184,20 +283,36 @@
             return deferred.promise;
         }
 
-        function detail(offeringId) {
+        function parseNumber(context, names) {
+            names.forEach(function (name) {
+                if (angular.isString(context[name])) {
+                    context[name] = parseInt(context[name]);
+                }
+            });
+        }
+
+        function detail(id) {
             var deferred = $q.defer();
             var params = {
-                id: offeringId
+                id: id
             };
 
-            resource.query(params, function (offeringList) {
+            resource.query(params, function (collection) {
 
-                if (offeringList.length) {
-                    var offeringRetrieved = offeringList[0];
+                if (collection.length) {
+                    var productOffering = collection[0];
 
-                    ProductSpec.detail(offeringRetrieved.productSpecification.id).then(function (productRetrieved) {
-                        offeringRetrieved.productSpecification = productRetrieved;
-                        extendBundledProductOffering(offeringRetrieved);
+                    if (!angular.isArray(productOffering.productOfferingPrice)) {
+                        productOffering.productOfferingPrice = [];
+                    } else {
+                        productOffering.productOfferingPrice = productOffering.productOfferingPrice.map(function (priceplan) {
+                            return new Priceplan(priceplan);
+                        });
+                    }
+
+                    ProductSpec.detail(productOffering.productSpecification.id).then(function (productRetrieved) {
+                        productOffering.productSpecification = productRetrieved;
+                        extendBundledProductOffering(productOffering);
                     });
                 } else {
                     deferred.reject(404);
@@ -278,19 +393,6 @@
             return keys[keys.indexOf('catalog') + 1];
         }
 
-        function buildInitialData() {
-            return {
-                version: '0.1',
-                lifecycleStatus: LIFECYCLE_STATUS.ACTIVE,
-                isBundle: false,
-                bundledProductOffering: [],
-                productOfferingPrice: [],
-                category: [],
-                validFor: {},
-                description: ''
-            };
-        }
-
         function serialize() {
             /* jshint validthis: true */
             return {
@@ -339,9 +441,21 @@
             return priceplan;
         }
 
+        function appendPriceplan(priceplan) {
+            /* jshint validthis: true */
+            this.productOfferingPrice.push(priceplan);
+            return this;
+        }
+
+        function removePriceplan(index) {
+            // body...
+            this.productOfferingPrice.splice(index, 1);
+            return this;
+        }
+
         function formatCheapestPriceplan() {
             /* jshint validthis: true */
-            var i, priceplan = "";
+            var i, priceplan = '';
 
             if (angular.isArray(this.productOfferingPrice) && this.productOfferingPrice.length) {
 
@@ -359,23 +473,6 @@
             }
 
             return priceplan;
-        }
-
-        function createPricePlan() {
-            return {
-                name: "",
-                description: "",
-                priceType: PRICE_TYPES.ONE_TIME,
-                recurringChargePeriod: "",
-                unitOfMeasure: "",
-                price: {
-                    taxRate: 20,
-                    taxIncludedAmount: 0,
-                    dutyFreeAmount: 0,
-                    percentage: 0,
-                    currencyCode: 'EUR'
-                }
-            };
         }
     }
 
