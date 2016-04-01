@@ -36,7 +36,8 @@ var defaultConfig = {
             'path': 'party',
             'port': 74
         }
-    }
+    },
+    revenueModel: 30
 };
 
 exports.getDefaultConfig = function() {

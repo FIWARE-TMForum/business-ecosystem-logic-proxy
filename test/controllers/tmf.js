@@ -366,8 +366,8 @@ describe('TMF Controller', function() {
                             headers: returnedResponse.headers,
                             body: returnedBody,
                             user: { id: userId },
-                            method: reqMethod
-                            //path: reqPath
+                            method: reqMethod,
+                            apiUrl: reqPath
                         }
                     );
 
