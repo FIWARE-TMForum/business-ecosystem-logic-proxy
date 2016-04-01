@@ -217,6 +217,11 @@ a.alert-link-danger:focus {
     color: #843534;
 }
 
+.table > tbody > tr > th,
+.table > tbody > tr > td {
+    vertical-align: middle;
+}
+
 /* ===================================================================================
  *   COMPONENT - FORM-CONTROL
  * =================================================================================== */
@@ -466,6 +471,22 @@ select.form-control {
 }
 
 .pull-right > .btn + .btn-group {
+    margin-left: 5px;
+}
+
+.btn-icon {
+    border-radius: 50%;
+    padding: 0;
+    border-width: 0;
+    text-align: center;
+}
+.btn-icon.btn-sm {
+    width: 30px;
+    height: 30px;
+    line-height: 30px;
+}
+
+.btn-icon + .btn-icon {
     margin-left: 5px;
 }
 
