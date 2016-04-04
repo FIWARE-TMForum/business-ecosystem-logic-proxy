@@ -300,6 +300,7 @@
         vm.hasCategory = hasCategory;
 
         vm.pricePlan = new Offering.PricePlan();
+        vm.pricePlanEnabled = false;
 
         vm.createPricePlan = createPricePlan;
         vm.updatePricePlan = updatePricePlan;
@@ -323,6 +324,7 @@
 
         function createPricePlan() {
             updatePricePlans(vm.item.appendPricePlan(vm.pricePlan).productOfferingPrice, 'The offering price plan was created.', 'Unexpected error trying to create the offering price plan.');
+            vm.pricePlanEnabled = false;
         }
 
         function updatePricePlan(index) {
