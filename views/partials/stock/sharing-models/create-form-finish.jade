@@ -1,10 +1,14 @@
 form(name="step.form", novalidate)
+  .row(ng-if="createVM.getTotalPercentage() != 100")
+    .col-sm-12
+      .alert.alert-danger.text-center The total percentage must be equal to 100% please review you provider and stakeholders values
+
   .h5.text-dark-secondary
     strong General
   .row
-    .col-sm-8
+    .col-sm-12
       .form-group(
-      ng-class="{ 'has-error': createForm.hasError(step.form.productClass) }"
+        ng-class="{ 'has-error': createForm.hasError(step.form.productClass) }"
       )
         label Product class
         input.form-control(
@@ -14,7 +18,18 @@ form(name="step.form", novalidate)
           required
           disabled
         )
-    .col-sm-4
+  .row
+    .col-sm-6
+      .form-group
+        label Platform percentage
+        .input-group
+          input.form-control(
+          type="text"
+          ng-model="createVM.platformRevenue"
+          disabled
+          )
+          span.input-group-addon %
+    .col-sm-6
       .form-group(
       ng-class="{ 'has-error' : createForm.hasError(step.form.providerValue) }"
       )
@@ -28,17 +43,7 @@ form(name="step.form", novalidate)
           disabled
           )
           span.input-group-addon %
-  .row
-    .col-sm-4
-      .form-group
-        label Platform percentage
-        .input-group
-          input.form-control(
-          type="text"
-          ng-model="createVM.platformRevenue"
-          disabled
-          )
-          span.input-group-addon %
+
   .h5.text-dark-secondary
     strong Stakeholders
   .row
@@ -46,17 +51,20 @@ form(name="step.form", novalidate)
       table.table.table-bordered(ng-if="createVM.data.stakeholders.length")
         thead
           tr
-            th #
             th User
             th Percentage
         tbody
           tr(ng-repeat="stakeholder in createVM.data.stakeholders")
-            th {{ $index + 1 }}
             td {{ stakeholder.stakeholderId }}
-            td {{ stakeholder.modelValue }}
+            td {{ stakeholder.modelValue }} %
       .alert.alert-info.text-center(ng-if="!createVM.data.stakeholders.length")
         | No stakeholders included.
 
+  .row
+    .col-sm-12
+      h5(ng-class="{'text-danger': createVM.getTotalPercentage() != 100}")
+        strong Total: {{ createVM.getTotalPercentage() }} %
+
   .form-group.text-right
-    a.btn.btn-success(ng-click="createVM.create()", ng-disabled="!step.form.$valid")
+    a.btn.btn-success(ng-click="createVM.create()", ng-disabled="!step.form.$valid || createVM.getTotalPercentage() != 100")
       span.item-text Create

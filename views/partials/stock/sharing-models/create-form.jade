@@ -1,6 +1,6 @@
 form(name="step.form", novalidate)
   .row
-    .col-sm-8
+    .col-sm-12
       .form-group(
         ng-class="{ 'has-error': createForm.hasError(step.form.productClass) }"
       )
@@ -18,32 +18,9 @@ form(name="step.form", novalidate)
         )
           span(ng-message="required") This field is required.
           span(ng-message="maxlength") This field must not exceed 200 chars.
-    .col-sm-4
-      .form-group(
-        ng-class="{ 'has-error' : createForm.hasError(step.form.providerValue) }"
-      )
-        label Provider percentage
-        .input-group
-          input.form-control(
-            type="number"
-            name="providerValue"
-            ng-model="createVM.data.ownerValue"
-            min="0"
-            max="100"
-            required
-          )
-          span.input-group-addon %
 
-        .help-block(
-          ng-messages="step.form.providerValue.$error"
-          ng-show="createForm.hasError(step.form.providerValue)"
-        )
-          span(ng-message="required") This field is required.
-          span(ng-message="min") This field must not be a negative number.
-          span(ng-message="max") This field must not be higher than 100.
-          span(ng-message="number") This field must be a valid number.
   .row
-    .col-sm-4
+    .col-sm-6
       .form-group
         label Platform percentage
         .input-group
@@ -53,6 +30,30 @@ form(name="step.form", novalidate)
             disabled
           )
           span.input-group-addon %
+    .col-sm-6
+      .form-group(
+      ng-class="{ 'has-error' : createForm.hasError(step.form.providerValue) }"
+      )
+        label Provider percentage
+        .input-group
+          input.form-control(
+          type="number"
+          name="providerValue"
+          ng-model="createVM.data.ownerValue"
+          min="0"
+          max="100"
+          required
+          )
+          span.input-group-addon %
+
+        .help-block(
+        ng-messages="step.form.providerValue.$error"
+        ng-show="createForm.hasError(step.form.providerValue)"
+        )
+          span(ng-message="required") This field is required.
+          span(ng-message="min") This field must not be a negative number.
+          span(ng-message="max") This field must not be higher than 100.
+          span(ng-message="number") This field must be a valid number.
 
   .form-group.text-right
     a.btn.btn-default.z-depth-1(ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])", ng-disabled="!step.form.$valid")

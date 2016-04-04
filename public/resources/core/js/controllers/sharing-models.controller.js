@@ -51,7 +51,8 @@
         vm.platformRevenue = PLATFORM_REVENUE;
         vm.data = {
             stakeholders: [],
-            algorithmType: 'FIXED_PERCENTAGE'
+            algorithmType: 'FIXED_PERCENTAGE',
+            ownerValue: 0
         };
         vm.stakeholderEnabled = false;
         vm.currentStakeholder = {};
@@ -62,6 +63,8 @@
         vm.removeStakeholder = removeStakeholder;
 
         vm.providers = [];
+
+        vm.getTotalPercentage = getTotalPercentage;
 
         function removeProvider(providerId) {
             var index = -1;
