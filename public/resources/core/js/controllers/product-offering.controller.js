@@ -114,6 +114,10 @@
         vm.createPlace = createPlace;
         vm.removePlace = removePlace;
 
+        $scope.$on(Offering.EVENTS.PRICEPLAN_UPDATED, function (event, index, pricePlan) {
+            angular.merge(vm.data.productOfferingPrice[index], pricePlan);
+        });
+
         function formatPlaces() {
             return vm.places.map(function (name) {
                 return {
@@ -186,7 +190,7 @@
         }
 
         function updatePricePlan(index) {
-            $rootScope.$broadcast(Offering.EVENTS.PRICEPLAN_UPDATE, vm.data.productOfferingPrice[index]);
+            $rootScope.$broadcast(Offering.EVENTS.PRICEPLAN_UPDATE, index, vm.data.productOfferingPrice[index]);
         }
 
         function removePricePlan(index) {
@@ -291,6 +295,7 @@
 
         angular.extend(vm, $controller('FormMixinCtrl', {$scope: $scope}));
 
+        vm.DATA_STATUS = DATA_STATUS;
         vm.CHARGE_PERIODS = Offering.TYPES.CHARGE_PERIOD;
         vm.CURRENCY_CODES = Offering.TYPES.CURRENCY_CODE;
         vm.PRICES = Offering.TYPES.PRICE;
@@ -303,13 +308,20 @@
         vm.pricePlanEnabled = false;
 
         vm.createPricePlan = createPricePlan;
+        vm.createPricePlanStatus = DATA_STATUS.LOADED;
         vm.updatePricePlan = updatePricePlan;
         vm.removePricePlan = removePricePlan;
 
         vm.status = DATA_STATUS.LOADING;
 
-        $scope.$on(Offering.EVENTS.PRICEPLAN_UPDATED, function (event, pricePlan) {
-            updatePricePlans(vm.item.productOfferingPrice, 'The offering price plan was updated.', 'Unexpected error trying to update the offering price plan.');
+        $scope.$on(Offering.EVENTS.PRICEPLAN_UPDATED, function (event, index, pricePlan) {
+            vm.item.updatePricePlan(index, pricePlan).then(function (productOffering) {
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {message: 'The offering price plan was updated.'});
+            }, function (response) {
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                    error: Utils.parseError(response, 'Unexpected error trying to update the offering price plan.')
+                });
+            });
         });
 
         Offering.detail($state.params.offeringId).then(function (productOffering) {
@@ -323,33 +335,30 @@
         });
 
         function createPricePlan() {
-            updatePricePlans(vm.item.appendPricePlan(vm.pricePlan).productOfferingPrice, 'The offering price plan was created.', 'Unexpected error trying to create the offering price plan.');
-            vm.pricePlanEnabled = false;
+            vm.createPricePlanStatus = DATA_STATUS.LOADING;
+            vm.item.appendPricePlan(vm.pricePlan).then(function (productOffering) {
+                vm.createPricePlanStatus = DATA_STATUS.LOADED;
+                vm.pricePlan = new Offering.PricePlan();
+                vm.pricePlanEnabled = false;
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {message: 'The offering price plan was created.'});
+            }, function (response) {
+                vm.createPricePlanStatus = DATA_STATUS.LOADED;
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                    error: Utils.parseError(response, 'Unexpected error trying to create the offering price plan.')
+                });
+            });
         }
 
         function updatePricePlan(index) {
-            $rootScope.$broadcast(Offering.EVENTS.PRICEPLAN_UPDATE, vm.item.productOfferingPrice[index]);
+            $rootScope.$broadcast(Offering.EVENTS.PRICEPLAN_UPDATE, index, vm.item.productOfferingPrice[index]);
         }
 
         function removePricePlan(index) {
-            updatePricePlans(vm.item.removePricePlan(index).productOfferingPrice, 'The offering price plan was removed.', 'Unexpected error trying to remove the offering price plan.');
-        }
-
-        function updatePricePlans(pricePlans, successMessage, errorMessage) {
-            var dataUpdated = {
-                productOfferingPrice: pricePlans
-            };
-
-            Offering.update(vm.item, dataUpdated).then(function (productOffering) {
-                $state.go('stock.offering.update.pricePlan', {
-                    offeringId: productOffering.id
-                }, {
-                    reload: true
-                });
-                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {message: successMessage});
+            vm.item.removePricePlan(index).then(function (productOffering) {
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {message: 'The offering price plan was removed.'});
             }, function (response) {
                 $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
-                    error: Utils.parseError(response, errorMessage)
+                    error: Utils.parseError(response, 'Unexpected error trying to remove the offering price plan.')
                 });
             });
         }

@@ -15,6 +15,7 @@
     function PricePlanUpdateController($element, $scope, $rootScope, $controller, Offering) {
         /* jshint validthis: true */
         var vm = this;
+        var _index, _pricePlan;
 
         angular.extend(vm, $controller('FormMixinCtrl', {$scope: $scope}));
 
@@ -24,14 +25,15 @@
 
         vm.update = update;
 
-        $scope.$on(Offering.EVENTS.PRICEPLAN_UPDATE, function (event, pricePlan) {
-            vm.item = pricePlan;
+        $scope.$on(Offering.EVENTS.PRICEPLAN_UPDATE, function (event, index, pricePlan) {
+            _index = index;
+            _pricePlan = pricePlan;
             vm.data = angular.copy(pricePlan);
             $element.modal('show');
         });
 
         function update() {
-            $rootScope.$broadcast(Offering.EVENTS.PRICEPLAN_UPDATED, angular.merge(vm.item, vm.data));
+            $rootScope.$broadcast(Offering.EVENTS.PRICEPLAN_UPDATED, _index, vm.data);
         }
     }
 
