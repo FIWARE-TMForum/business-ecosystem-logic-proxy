@@ -14,12 +14,12 @@
 
     angular
         .module('app')
-        .controller('OfferingSearchCtrl', OfferingSearchController)
-        .controller('OfferingCreateCtrl', OfferingCreateController)
+        .controller('OfferingSearchCtrl', ProductOfferingSearchController)
+        .controller('OfferingCreateCtrl', ProductOfferingCreateController)
         .controller('OfferingDetailCtrl', ProductOfferingDetailController)
         .controller('OfferingUpdateCtrl', ProductOfferingUpdateController);
 
-    function OfferingSearchController($state, $rootScope, EVENTS, Offering, LIFECYCLE_STATUS, Utils) {
+    function ProductOfferingSearchController($state, $rootScope, EVENTS, Offering, LIFECYCLE_STATUS, Utils) {
         /* jshint validthis: true */
         var vm = this;
 
@@ -43,7 +43,7 @@
         }
     }
 
-    function OfferingCreateController($scope, $state, $rootScope, $controller, EVENTS, Offering, Utils) {
+    function ProductOfferingCreateController($scope, $state, $rootScope, $controller, EVENTS, Offering, Utils) {
         /* jshint validthis: true */
         var vm = this;
         var stepList = [
