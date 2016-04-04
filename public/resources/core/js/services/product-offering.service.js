@@ -199,6 +199,7 @@
 
                         resource.query(params, function (offeringList) {
                             offeringList.forEach(function (offering) {
+                                extendPricePlans(offering);
                                 offering.productSpecification = products[offering.productSpecification.id];
                             });
                             deferred.resolve(offeringList);
@@ -218,6 +219,7 @@
 
                     if (offeringList.length) {
                         productFilters.id = offeringList.map(function (offering) {
+                            extendPricePlans(offering);
                             return offering.productSpecification.id;
                         }).join();
 
@@ -301,14 +303,7 @@
                 if (collection.length) {
                     var productOffering = collection[0];
 
-                    if (!angular.isArray(productOffering.productOfferingPrice)) {
-                        productOffering.productOfferingPrice = [];
-                    } else {
-                        productOffering.productOfferingPrice = productOffering.productOfferingPrice.map(function (pricePlan) {
-                            return new PricePlan(pricePlan);
-                        });
-                    }
-
+                    extendPricePlans(productOffering);
                     ProductSpec.detail(productOffering.productSpecification.id).then(function (productRetrieved) {
                         productOffering.productSpecification = productRetrieved;
                         extendBundledProductOffering(productOffering);
@@ -367,6 +362,16 @@
                 } else {
                     deferred.resolve(offering);
                 }
+            }
+        }
+
+        function extendPricePlans(productOffering) {
+            if (!angular.isArray(productOffering.productOfferingPrice)) {
+                productOffering.productOfferingPrice = [];
+            } else {
+                productOffering.productOfferingPrice = productOffering.productOfferingPrice.map(function (pricePlan) {
+                    return new PricePlan(pricePlan);
+                });
             }
         }
 
