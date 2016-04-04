@@ -79,9 +79,9 @@
 
         angular.extend(vm, $controller('FormMixinCtrl', {$scope: $scope}));
 
-        $scope.CHARGE_PERIODS = Offering.TYPES.CHARGE_PERIOD;
-        $scope.CURRENCY_CODES = Offering.TYPES.CURRENCY_CODE;
-        $scope.PRICES = Offering.TYPES.PRICE;
+        vm.CHARGE_PERIODS = Offering.TYPES.CHARGE_PERIOD;
+        vm.CURRENCY_CODES = Offering.TYPES.CURRENCY_CODE;
+        vm.PRICES = Offering.TYPES.PRICE;
 
         vm.data = angular.copy(Offering.TEMPLATES.RESOURCE);
         vm.stepList = stepList;
@@ -291,9 +291,9 @@
 
         angular.extend(vm, $controller('FormMixinCtrl', {$scope: $scope}));
 
-        $scope.CHARGE_PERIODS = Offering.TYPES.CHARGE_PERIOD;
-        $scope.CURRENCY_CODES = Offering.TYPES.CURRENCY_CODE;
-        $scope.PRICES = Offering.TYPES.PRICE;
+        vm.CHARGE_PERIODS = Offering.TYPES.CHARGE_PERIOD;
+        vm.CURRENCY_CODES = Offering.TYPES.CURRENCY_CODE;
+        vm.PRICES = Offering.TYPES.PRICE;
 
         vm.update = update;
         vm.updateStatus = updateStatus;

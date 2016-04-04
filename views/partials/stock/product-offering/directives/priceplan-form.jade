@@ -21,7 +21,7 @@ form(name="form" novalidate)
             span.item-text {{ pricePlan.priceType | uppercase }}
             span.item-icon.fa.fa-caret-down
           .dropdown-menu.dropdown-menu-right.z-depth-2
-            a.dropdown-menu-item(ng-repeat="(key, value) in $parent.PRICES" ng-click="pricePlan.setType(key)")
+            a.dropdown-menu-item(ng-repeat="(key, value) in vm.PRICES" ng-click="pricePlan.setType(key)")
               span.item-text {{ value | uppercase }}
   .row
     .col-md-8
@@ -40,13 +40,13 @@ form(name="form" novalidate)
               span.item-text {{ pricePlan.price.currencyCode | uppercase }}
               span.item-icon.fa.fa-caret-down
             .dropdown-menu.dropdown-menu-right.z-depth-2
-              a.dropdown-menu-item(ng-repeat="(key, value) in $parent.CURRENCY_CODES" ng-click="pricePlan.price.setCurrencyCode(key)")
+              a.dropdown-menu-item(ng-repeat="(key, value) in vm.CURRENCY_CODES" ng-click="pricePlan.price.setCurrencyCode(key)")
                 span.item-text ({{ key }}) {{ value | uppercase }}
         .help-block(ng-messages="form.taxIncludedAmount.$error" ng-show="vm.hasFieldError(form.taxIncludedAmount)")
           span(ng-message="required") This field is required.
           span(ng-message="min") This field must not be a negative number.
           span(ng-message="number") This field must be a valid number.
-    .col-md-4(ng-if="pricePlan.priceType === $parent.PRICES.USAGE")
+    .col-md-4(ng-if="pricePlan.priceType === vm.PRICES.USAGE")
       .form-group(ng-class="{ 'has-error': vm.hasFieldError(form.unitOfMeasure) }")
         label Enter a unit
         .input-group
@@ -61,7 +61,7 @@ form(name="form" novalidate)
         .help-block(ng-messages="form.unitOfMeasure.$error" ng-show="vm.hasFieldError(form.unitOfMeasure)")
          span(ng-message="required") This field is required.
          span(ng-message="maxlength") This field must not exceed 20 chars.
-    .col-md-4(ng-if="pricePlan.priceType === $parent.PRICES.RECURRING")
+    .col-md-4(ng-if="pricePlan.priceType === vm.PRICES.RECURRING")
       .form-group
         label Choose a charge period
         .input-group
@@ -70,7 +70,7 @@ form(name="form" novalidate)
             name="recurringChargePeriod"
             ng-model="pricePlan.recurringChargePeriod"
           )
-            option(ng-repeat="(key, value) in $parent.CHARGE_PERIODS" value="{{ value | lowercase }}") {{ value | uppercase }}
+            option(ng-repeat="(key, value) in vm.CHARGE_PERIODS" value="{{ value | lowercase }}") {{ value | uppercase }}
   .row
     .col-md-12
       .form-group
