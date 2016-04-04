@@ -104,7 +104,7 @@
             };
         };
         Price.prototype.toString = function toString() {
-            return '' + this.taxIncludedAmount + ' (' + this.currencyCode.toUpperCase() + ')';
+            return this.taxIncludedAmount + ' ' + this.currencyCode.toUpperCase();
         };
 
         var Priceplan = function Priceplan(data) {
