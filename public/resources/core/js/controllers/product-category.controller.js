@@ -55,9 +55,7 @@
             vm.list.status = LOADED;
         }, function (response) {
             vm.list.status = ERROR;
-            $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
-                error: Utils.parseError(response, 'It was impossible to load the list of categories')
-            });
+            vm.error = Utils.parseError(response, 'It was impossible to load the list of categories')
         });
     }
 

@@ -78,6 +78,11 @@
             ProductOrder.update(productOrder, dataUpdated).then(function (productOrderUpdated) {
                 angular.copy(productOrderUpdated, productOrder);
                 vm.cancellingOrder = false;
+
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {
+                    message: 'Your order has been cancelled'
+                });
+
             }, function (response) {
                 var defaultMessage = 'There was an unexpected error that prevented the ' +
                     'system from updating the status of the given product order';

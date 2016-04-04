@@ -313,7 +313,7 @@ var ordering = (function(){
 
                     if (!error) {
 
-                        var isSeller = tmfUtils.hasPartyRole(req.user, previousOrderItem.product.relatedParty, SELLER);
+                        var isSeller = tmfUtils.hasPartyRole(req, previousOrderItem.product.relatedParty, SELLER);
 
                         // If the user is not the seller and the state is changed
                         if (!isSeller && previousOrderItem['state'] != updatedItem['state']) {

@@ -2,6 +2,25 @@
 angular.module('app')
     .controller('PaymentController', ['$scope', '$location', 'Payment', function($scope, $location, Payment) {
 
+        var urlParams = function urlParams() {
+
+            var search = window.location.search,
+                params = {};
+
+            if (search) {
+
+                search = search.substring(1);
+                var rawParameters = search.split('&');
+
+                rawParameters.forEach(function (queryParam) {
+                    queryParam = queryParam.split('=');
+                    params[queryParam[0]] = queryParam[1];
+                });
+            }
+
+            return params;
+        };
+
         var LOADING = 'LOADING';
         var ACCEPTED = 'ACCEPTED';
         var ERROR = 'ERROR';
@@ -10,7 +29,7 @@ angular.module('app')
         $scope.state = LOADING;
 
         // Get related information from the location URL
-        var params = $location.search();
+        var params = urlParams();
 
         // Read reference
         var ref = params.ref;

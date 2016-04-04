@@ -61,7 +61,7 @@
                     saveCategory(category);
                 });
 
-                if (!filters.all) {
+                if (!filters.all || !categoryList.length) {
                     deferred.resolve(categoryList);
                 } else {
                     categoryList.forEach(function (category) {
