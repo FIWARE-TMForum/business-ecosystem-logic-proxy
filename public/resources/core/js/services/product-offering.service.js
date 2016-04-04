@@ -19,8 +19,8 @@
             update: {method: 'PATCH'}
         });
 
+        resource.prototype.formatCheapestPricePlan = formatCheapestPricePlan;
         resource.prototype.getCategories = getCategories;
-        resource.prototype.getCheapestPricePlan = getCheapestPricePlan;
         resource.prototype.getPicture = getPicture;
         resource.prototype.serialize = serialize;
         resource.prototype.appendPricePlan = appendPricePlan;
@@ -427,19 +427,33 @@
             return this.productSpecification.getPicture();
         }
 
-        function getCheapestPricePlan() {
+        function formatCheapestPricePlan() {
             /* jshint validthis: true */
-            var pricePlan = null;
+            var result = "", pricePlan = null, pricePlans = [];
 
-            for (var i = 0; i < this.productOfferingPrice.length; i++) {
-                if (angular.lowercase(this.productOfferingPrice[i].priceType) === TYPES.PRICE.ONE_TIME) {
-                    if (pricePlan == null || Number(pricePlan.price.taxIncludedAmount) > Number(this.productOfferingPrice[i].price.taxIncludedAmount)) {
-                        pricePlan = this.productOfferingPrice[i];
+            if (this.productOfferingPrice.length) {
+                pricePlans = this.productOfferingPrice.filter(function (pricePlan) {
+                    return angular.lowercase(pricePlan.priceType) === TYPES.PRICE.ONE_TIME;
+                });
+
+                if (pricePlans.length) {
+                    for (var i = 0; i < pricePlans.length; i++) {
+                        if (pricePlan == null || Number(pricePlan.price.taxIncludedAmount) > Number(pricePlans[i].price.taxIncludedAmount)) {
+                            pricePlan = this.productOfferingPrice[i];
+                        }
                     }
+                    result = 'From ' + pricePlan.toString();
+                } else {
+                    pricePlans = this.productOfferingPrice.filter(function (pricePlan) {
+                        return [TYPES.PRICE.RECURRING, TYPES.PRICE.USAGE].indexOf(angular.lowercase(pricePlan.priceType)) !== -1;
+                    });
+                    result = 'From ' + pricePlans[0].toString();
                 }
+            } else {
+                result = 'Free';
             }
 
-            return pricePlan;
+            return result;
         }
 
         function appendPricePlan(pricePlan) {
