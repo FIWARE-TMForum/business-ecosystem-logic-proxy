@@ -13,8 +13,8 @@
         .directive('fileModel', fileModelDirective)
         .directive('noImage', noImageDirective)
         .directive('fieldUnique', fieldUniqueDirective)
-        .directive('priceplanForm', priceplanFormDirective)
-        .directive('priceplanTable', priceplanTableDirective)
+        .directive('pricePlanForm', pricePlanFormDirective)
+        .directive('pricePlanTable', pricePlanTableDirective)
         .directive('fieldArray', fieldArrayDirective);
 
     function bsTooltipDirective() {
@@ -94,23 +94,23 @@
         };
     }
 
-    function priceplanFormDirective() {
+    function pricePlanFormDirective() {
         return {
             restrict: 'E',
             scope: {
                 form: '=',
-                priceplan: '=data',
+                pricePlan: '=data',
                 vm: '=controller'
             },
             templateUrl: 'directives/forms/priceplan'
         };
     }
 
-    function priceplanTableDirective() {
+    function pricePlanTableDirective() {
         return {
             restrict: 'E',
             scope: {
-                priceplans: '=data',
+                pricePlans: '=data',
                 vm: '=controller'
             },
             templateUrl: 'directives/tables/priceplan'

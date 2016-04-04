@@ -5,9 +5,9 @@
         .h4.text-dark-primary
           strong New price plan
         hr
-        priceplan-form(form="updateVM.forms.priceplanCreate" controller="updateVM" data="updateVM.priceplan")
+        price-plan-form(form="updateVM.pricePlanCreateForm" controller="updateVM" data="updateVM.pricePlan")
         .form-group.text-right
-          a.btn.btn-warning.z-depth-1(ng-disabled="!updateVM.forms.priceplanCreate.$valid" ng-click="updateVM.createPriceplan()")
+          a.btn.btn-warning.z-depth-1(ng-disabled="!updateVM.pricePlanCreateForm.$valid" ng-click="updateVM.createPricePlan()")
             span.item-text Create
   .col-xs-12
-    priceplan-table(controller="updateVM" data="updateVM.item.productOfferingPrice")
+    price-plan-table(controller="updateVM" data="updateVM.item.productOfferingPrice")

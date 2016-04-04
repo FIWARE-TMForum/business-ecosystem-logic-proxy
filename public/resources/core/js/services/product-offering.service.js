@@ -20,18 +20,17 @@
         });
 
         resource.prototype.getCategories = getCategories;
+        resource.prototype.getCheapestPricePlan = getCheapestPricePlan;
         resource.prototype.getPicture = getPicture;
-        resource.prototype.getCheapestPriceplan = getCheapestPriceplan;
-        resource.prototype.formatCheapestPriceplan = formatCheapestPriceplan;
         resource.prototype.serialize = serialize;
-        resource.prototype.appendPriceplan = appendPriceplan;
-        resource.prototype.removePriceplan = removePriceplan;
+        resource.prototype.appendPricePlan = appendPricePlan;
+        resource.prototype.removePricePlan = removePricePlan;
 
         var PATCHABLE_ATTRS = ['description', 'lifecycleStatus', 'name', 'version'];
 
         var EVENTS = {
-            PRICEPLAN_UPDATE: '$priceplanUpdate',
-            PRICEPLAN_UPDATED: '$priceplanUpdated'
+            PRICEPLAN_UPDATE: '$pricePlanUpdate',
+            PRICEPLAN_UPDATED: '$pricePlanUpdated'
         };
 
         var TYPES = {
@@ -104,14 +103,14 @@
             };
         };
         Price.prototype.toString = function toString() {
-            return this.taxIncludedAmount + ' ' + this.currencyCode.toUpperCase();
+            return this.taxIncludedAmount + ' ' + angular.uppercase(this.currencyCode);
         };
 
-        var Priceplan = function Priceplan(data) {
+        var PricePlan = function PricePlan(data) {
             angular.extend(this, TEMPLATES.PRICEPLAN, data);
             this.price = new Price(this.price);
         };
-        Priceplan.prototype.setType = function setType(typeName) {
+        PricePlan.prototype.setType = function setType(typeName) {
 
             if (typeName in TYPES.PRICE && !angular.equals(this.priceType, typeName)) {
                 this.priceType = TYPES.PRICE[typeName];
@@ -127,7 +126,7 @@
 
             return this;
         };
-        Priceplan.prototype.toString = function toString() {
+        PricePlan.prototype.toString = function toString() {
             var result = '' + this.price.toString();
 
             switch (angular.lowercase(this.priceType)) {
@@ -149,7 +148,7 @@
             TEMPLATES: TEMPLATES,
             TYPES: TYPES,
             PATCHABLE_ATTRS: PATCHABLE_ATTRS,
-            Priceplan: Priceplan,
+            PricePlan: PricePlan,
             search: search,
             exists: exists,
             create: create,
@@ -305,8 +304,8 @@
                     if (!angular.isArray(productOffering.productOfferingPrice)) {
                         productOffering.productOfferingPrice = [];
                     } else {
-                        productOffering.productOfferingPrice = productOffering.productOfferingPrice.map(function (priceplan) {
-                            return new Priceplan(priceplan);
+                        productOffering.productOfferingPrice = productOffering.productOfferingPrice.map(function (pricePlan) {
+                            return new PricePlan(pricePlan);
                         });
                     }
 
@@ -423,56 +422,31 @@
             return this.productSpecification.getPicture();
         }
 
-        function getCheapestPriceplan() {
+        function getCheapestPricePlan() {
             /* jshint validthis: true */
-            var i, priceplan = null;
+            var pricePlan = null;
 
-            // There can be offerings without price plan
-            if (this.productOfferingPrice) {
-                for (i = 0; i < this.productOfferingPrice.length; i++) {
-                    if (this.productOfferingPrice[i].priceType === 'one time') {
-                        if (priceplan == null || Number(priceplan.price.taxIncludedAmount) > Number(this.productOfferingPrice[i].price.taxIncludedAmount)) {
-                            priceplan = this.productOfferingPrice[i];
-                        }
+            for (var i = 0; i < this.productOfferingPrice.length; i++) {
+                if (angular.lowercase(this.productOfferingPrice[i].priceType) === TYPES.PRICE.ONE_TIME) {
+                    if (pricePlan == null || Number(pricePlan.price.taxIncludedAmount) > Number(this.productOfferingPrice[i].price.taxIncludedAmount)) {
+                        pricePlan = this.productOfferingPrice[i];
                     }
                 }
             }
 
-            return priceplan;
+            return pricePlan;
         }
 
-        function appendPriceplan(priceplan) {
+        function appendPricePlan(pricePlan) {
             /* jshint validthis: true */
-            this.productOfferingPrice.push(priceplan);
+            this.productOfferingPrice.push(pricePlan);
             return this;
         }
 
-        function removePriceplan(index) {
-            // body...
+        function removePricePlan(index) {
+            /* jshint validthis: true */
             this.productOfferingPrice.splice(index, 1);
             return this;
-        }
-
-        function formatCheapestPriceplan() {
-            /* jshint validthis: true */
-            var i, priceplan = '';
-
-            if (angular.isArray(this.productOfferingPrice) && this.productOfferingPrice.length) {
-
-                for (i = 0; i < this.productOfferingPrice.length; i++) {
-                    if (this.productOfferingPrice[i].priceType === 'one time') {
-                        if (!priceplan || Number(priceplan.price.taxIncludedAmount) > Number(this.productOfferingPrice[i].price.taxIncludedAmount)) {
-                            priceplan = this.productOfferingPrice[i];
-                        }
-                    }
-                }
-
-                priceplan = "From " + priceplan.price.taxIncludedAmount + " " + angular.uppercase(priceplan.price.currencyCode);
-            } else {
-                priceplan = "Free";
-            }
-
-            return priceplan;
         }
     }
 

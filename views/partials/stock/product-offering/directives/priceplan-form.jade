@@ -6,7 +6,7 @@ form(name="form" novalidate)
         input.form-control(
           type="text"
           name="name"
-          ng-model="priceplan.name"
+          ng-model="pricePlan.name"
           required
           ng-maxlength="30"
         )
@@ -18,10 +18,10 @@ form(name="form" novalidate)
         label Choose a type
         .dropdown
           a.btn.btn-block.btn-default.dropdown-toggle.z-depth-0(data-toggle="dropdown")
-            span.item-text {{ priceplan.priceType | uppercase }}
+            span.item-text {{ pricePlan.priceType | uppercase }}
             span.item-icon.fa.fa-caret-down
           .dropdown-menu.dropdown-menu-right.z-depth-2
-            a.dropdown-menu-item(ng-repeat="(key, value) in $parent.PRICES" ng-click="priceplan.setType(key)")
+            a.dropdown-menu-item(ng-repeat="(key, value) in $parent.PRICES" ng-click="pricePlan.setType(key)")
               span.item-text {{ value | uppercase }}
   .row
     .col-md-8
@@ -31,22 +31,22 @@ form(name="form" novalidate)
           input.form-control(
             type="number"
             name="taxIncludedAmount"
-            ng-model="priceplan.price.taxIncludedAmount"
+            ng-model="pricePlan.price.taxIncludedAmount"
             required
             min="0"
           )
           .input-group-btn
             a.btn.btn-default.dropdown-toggle.z-depth-0(data-toggle="dropdown")
-              span.item-text {{ priceplan.price.currencyCode | uppercase }}
+              span.item-text {{ pricePlan.price.currencyCode | uppercase }}
               span.item-icon.fa.fa-caret-down
             .dropdown-menu.dropdown-menu-right.z-depth-2
-              a.dropdown-menu-item(ng-repeat="(key, value) in $parent.CURRENCY_CODES" ng-click="priceplan.price.setCurrencyCode(key)")
+              a.dropdown-menu-item(ng-repeat="(key, value) in $parent.CURRENCY_CODES" ng-click="pricePlan.price.setCurrencyCode(key)")
                 span.item-text ({{ key }}) {{ value | uppercase }}
         .help-block(ng-messages="form.taxIncludedAmount.$error" ng-show="vm.hasFieldError(form.taxIncludedAmount)")
           span(ng-message="required") This field is required.
           span(ng-message="min") This field must not be a negative number.
           span(ng-message="number") This field must be a valid number.
-    .col-md-4(ng-if="priceplan.priceType === $parent.PRICES.USAGE")
+    .col-md-4(ng-if="pricePlan.priceType === $parent.PRICES.USAGE")
       .form-group(ng-class="{ 'has-error': vm.hasFieldError(form.unitOfMeasure) }")
         label Enter a unit
         .input-group
@@ -54,21 +54,21 @@ form(name="form" novalidate)
           input.form-control(
             type="text"
             name="unitOfMeasure"
-            ng-model="priceplan.unitOfMeasure"
+            ng-model="pricePlan.unitOfMeasure"
             required
             ng-maxlength="20"
           )
         .help-block(ng-messages="form.unitOfMeasure.$error" ng-show="vm.hasFieldError(form.unitOfMeasure)")
          span(ng-message="required") This field is required.
          span(ng-message="maxlength") This field must not exceed 20 chars.
-    .col-md-4(ng-if="priceplan.priceType === $parent.PRICES.RECURRING")
+    .col-md-4(ng-if="pricePlan.priceType === $parent.PRICES.RECURRING")
       .form-group
         label Choose a charge period
         .input-group
           span.input-group-addon /
           select.form-control(
             name="recurringChargePeriod"
-            ng-model="priceplan.recurringChargePeriod"
+            ng-model="pricePlan.recurringChargePeriod"
           )
             option(ng-repeat="(key, value) in $parent.CHARGE_PERIODS" value="{{ value | lowercase }}") {{ value | uppercase }}
   .row
@@ -77,4 +77,4 @@ form(name="form" novalidate)
         label
           span Enter a description
           small.text-muted (optional)
-        textarea.form-control(name="description" rows="2" ng-model="priceplan.description")
+        textarea.form-control(name="description" rows="2" ng-model="pricePlan.description")

@@ -10,9 +10,9 @@
 
     angular
         .module('app')
-        .controller('PriceplanUpdateCtrl', PriceplanUpdateController);
+        .controller('PricePlanUpdateCtrl', PricePlanUpdateController);
 
-    function PriceplanUpdateController($element, $scope, $rootScope, $controller, Offering) {
+    function PricePlanUpdateController($element, $scope, $rootScope, $controller, Offering) {
         /* jshint validthis: true */
         var vm = this;
 
@@ -24,9 +24,9 @@
 
         vm.update = update;
 
-        $scope.$on(Offering.EVENTS.PRICEPLAN_UPDATE, function (event, priceplan) {
-            vm.item = priceplan;
-            vm.data = angular.copy(priceplan);
+        $scope.$on(Offering.EVENTS.PRICEPLAN_UPDATE, function (event, pricePlan) {
+            vm.item = pricePlan;
+            vm.data = angular.copy(pricePlan);
             $element.modal('show');
         });
 

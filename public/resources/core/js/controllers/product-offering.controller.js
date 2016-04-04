@@ -101,12 +101,12 @@
 
         /* PRICE PLANS MEMBERS */
 
-        vm.priceplan = new Offering.Priceplan();
-        vm.priceplanEnabled = false;
+        vm.pricePlan = new Offering.PricePlan();
+        vm.pricePlanEnabled = false;
 
-        vm.createPriceplan = createPriceplan;
-        vm.updatePriceplan = updatePriceplan;
-        vm.removePriceplan = removePriceplan;
+        vm.createPricePlan = createPricePlan;
+        vm.updatePricePlan = updatePricePlan;
+        vm.removePricePlan = removePricePlan;
 
         vm.place = "";
         vm.places = [];
@@ -179,17 +179,17 @@
 
         /* PRICE PLANS METHODS */
 
-        function createPriceplan() {
-            vm.data.productOfferingPrice.push(vm.priceplan);
-            vm.priceplan = new Offering.Priceplan();
-            vm.priceplanEnabled = false;
+        function createPricePlan() {
+            vm.data.productOfferingPrice.push(vm.pricePlan);
+            vm.pricePlan = new Offering.PricePlan();
+            vm.pricePlanEnabled = false;
         }
 
-        function updatePriceplan(index) {
+        function updatePricePlan(index) {
             $rootScope.$broadcast(Offering.EVENTS.PRICEPLAN_UPDATE, vm.data.productOfferingPrice[index]);
         }
 
-        function removePriceplan(index) {
+        function removePricePlan(index) {
             vm.data.productOfferingPrice.splice(index, 1);
         }
 
@@ -299,16 +299,16 @@
         vm.updateStatus = updateStatus;
         vm.hasCategory = hasCategory;
 
-        vm.priceplan = new Offering.Priceplan();
+        vm.pricePlan = new Offering.PricePlan();
 
-        vm.createPriceplan = createPriceplan;
-        vm.updatePriceplan = updatePriceplan;
-        vm.removePriceplan = removePriceplan;
+        vm.createPricePlan = createPricePlan;
+        vm.updatePricePlan = updatePricePlan;
+        vm.removePricePlan = removePricePlan;
 
         vm.status = DATA_STATUS.LOADING;
 
-        $scope.$on(Offering.EVENTS.PRICEPLAN_UPDATED, function (event, priceplan) {
-            updatePriceplans(vm.item.productOfferingPrice, 'The offering priceplan was updated.', 'Unexpected error trying to update the offering priceplan.');
+        $scope.$on(Offering.EVENTS.PRICEPLAN_UPDATED, function (event, pricePlan) {
+            updatePricePlans(vm.item.productOfferingPrice, 'The offering price plan was updated.', 'Unexpected error trying to update the offering price plan.');
         });
 
         Offering.detail($state.params.offeringId).then(function (productOffering) {
@@ -321,25 +321,25 @@
             vm.error = Utils.parseError(response, 'Unexpected error trying to retrieve the offering.');
         });
 
-        function createPriceplan() {
-            updatePriceplans(vm.item.appendPriceplan(vm.priceplan).productOfferingPrice, 'The offering priceplan was created.', 'Unexpected error trying to create the offering priceplan.');
+        function createPricePlan() {
+            updatePricePlans(vm.item.appendPricePlan(vm.pricePlan).productOfferingPrice, 'The offering price plan was created.', 'Unexpected error trying to create the offering price plan.');
         }
 
-        function updatePriceplan(index) {
+        function updatePricePlan(index) {
             $rootScope.$broadcast(Offering.EVENTS.PRICEPLAN_UPDATE, vm.item.productOfferingPrice[index]);
         }
 
-        function removePriceplan(index) {
-            updatePriceplans(vm.item.removePriceplan(index).productOfferingPrice, 'The offering priceplan was removed.', 'Unexpected error trying to remove the offering priceplan.');
+        function removePricePlan(index) {
+            updatePricePlans(vm.item.removePricePlan(index).productOfferingPrice, 'The offering price plan was removed.', 'Unexpected error trying to remove the offering price plan.');
         }
 
-        function updatePriceplans(priceplans, successMessage, errorMessage) {
+        function updatePricePlans(pricePlans, successMessage, errorMessage) {
             var dataUpdated = {
-                productOfferingPrice: priceplans
+                productOfferingPrice: pricePlans
             };
 
             Offering.update(vm.item, dataUpdated).then(function (productOffering) {
-                $state.go('stock.offering.update.priceplan', {
+                $state.go('stock.offering.update.pricePlan', {
                     offeringId: productOffering.id
                 }, {
                     reload: true
