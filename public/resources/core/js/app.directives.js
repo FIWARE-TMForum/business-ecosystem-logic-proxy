@@ -15,6 +15,8 @@
         .directive('fieldUnique', fieldUniqueDirective)
         .directive('pricePlanForm', pricePlanFormDirective)
         .directive('pricePlanTable', pricePlanTableDirective)
+        .directive('convertToDate', convertToDateDirective)
+        .directive('convertToNumber', convertToNumberDirective)
         .directive('fieldArray', fieldArrayDirective);
 
     function bsTooltipDirective() {
@@ -132,5 +134,40 @@
             }
         };
     }
+
+    function convertToDateDirective() {
+        return {
+            restrict: 'A',
+            require: 'ngModel',
+            link: function link(scope, element, attrs, ngModel) {
+                ngModel.$parsers.push(function (value) {
+                    //View -> Model
+                    return value;
+                });
+                ngModel.$formatters.push(function (value) {
+                    //Model -> View
+                    return new Date(value);
+                });
+            }
+        };
+    }
+
+    function convertToNumberDirective() {
+        return {
+            restrict: 'A',
+            require: 'ngModel',
+            link: function link(scope, element, attrs, ngModel) {
+                ngModel.$parsers.push(function (value) {
+                    //View -> Model
+                    return '' + value;
+                });
+                ngModel.$formatters.push(function (value) {
+                    //Model -> View
+                    return parseInt(value, 10);
+                });
+            }
+        };
+    }
+
 
 })();
