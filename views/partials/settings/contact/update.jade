@@ -20,7 +20,7 @@
                 th Actions
             tbody
               tr(ng-repeat="contactMedium in updateVM.item.contactMedium")
-                th {{ contactMedium.type }}
+                th {{ contactMedium.type | capitalize }}
                 td {{ contactMedium.toString() }}
                 td
                   a.btn.btn-sm.btn-icon.btn-info(ng-click="updateVM.updateContactMedium($index)")

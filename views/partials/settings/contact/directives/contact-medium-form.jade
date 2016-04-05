@@ -8,7 +8,7 @@ form(name="form" novalidate)
           ng-model="contactMedium.type"
           ng-change = "contactMedium.resetMedium()"
         )
-          option(ng-repeat="(key, value) in vm.CONTACT_MEDIUM" value="{{ value }}") {{ value | uppercase }}
+          option(ng-repeat="(key, value) in vm.CONTACT_MEDIUM" value="{{ value }}") {{ value | capitalize }}
   .row(ng-if="contactMedium.type === vm.CONTACT_MEDIUM.EMAIL_ADDRESS")
     .col-sm-6
       .form-group(ng-class="{ 'has-error': vm.hasFieldError(form.emailAddress) }")
