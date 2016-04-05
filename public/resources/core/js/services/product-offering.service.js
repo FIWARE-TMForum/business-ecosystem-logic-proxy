@@ -10,52 +10,151 @@
 
     angular
         .module('app')
-        .factory('Offering', OfferingService);
+        .factory('Offering', ProductOfferingService);
 
-    function OfferingService($q, $resource, URLS, LIFECYCLE_STATUS, User, ProductSpec, Category) {
+    function ProductOfferingService($q, $resource, URLS, LIFECYCLE_STATUS, User, ProductSpec, Category) {
         var resource = $resource(URLS.CATALOGUE_MANAGEMENT + '/:catalogue/:catalogueId/productOffering/:offeringId', {
             offeringId: '@id'
         }, {
-            update: {
-                method: 'PATCH'
-            }
+            update: {method: 'PATCH'}
         });
 
-        var PRICE_TYPES = {
-            ONE_TIME: 'one time',
-            RECURRING: 'recurring',
-            USAGE: 'usage'
-        };
-
-        var PRICE_CURRENCIES = {
-            EUR: 'Euro',
-            USD: 'US Dollar',
-            CAD: 'Canadian Dollar'
-        };
-
-        var PRICE_PERIODS = {
-            WEEKLY: 'Weekly',
-            MONTHLY: 'Monthly',
-            YEARLY: 'Yearly'
-        };
-
+        resource.prototype.formatCheapestPricePlan = formatCheapestPricePlan;
         resource.prototype.getCategories = getCategories;
         resource.prototype.getPicture = getPicture;
-        resource.prototype.getCheapestPriceplan = getCheapestPriceplan;
-        resource.prototype.formatCheapestPriceplan = formatCheapestPriceplan;
         resource.prototype.serialize = serialize;
+        resource.prototype.appendPricePlan = appendPricePlan;
+        resource.prototype.updatePricePlan = updatePricePlan;
+        resource.prototype.removePricePlan = removePricePlan;
+
+        var PATCHABLE_ATTRS = ['description', 'lifecycleStatus', 'name', 'version'];
+
+        var EVENTS = {
+            PRICEPLAN_UPDATE: '$pricePlanUpdate',
+            PRICEPLAN_UPDATED: '$pricePlanUpdated'
+        };
+
+        var TYPES = {
+            CHARGE_PERIOD: {
+                MONTHLY: 'monthly',
+                WEEKLY: 'weekly',
+                YEARLY: 'yearly'
+            },
+            CURRENCY_CODE: {
+                CAD: 'canadian dollar',
+                EUR: 'euro',
+                USD: 'us dollar'
+            },
+            PRICE: {
+                ONE_TIME: 'one time',
+                RECURRING: 'recurring',
+                USAGE: 'usage'
+            }
+        };
+
+        var TEMPLATES = {
+            PRICE: {
+                currencyCode: 'EUR',
+                dutyFreeAmount: 0,
+                percentage: 0,
+                taxIncludedAmount: 0,
+                taxRate: 20
+            },
+            PRICEPLAN: {
+                description: '',
+                name: '',
+                price: {},
+                priceType: TYPES.PRICE.ONE_TIME,
+                recurringChargePeriod: '',
+                unitOfMeasure: ''
+            },
+            RESOURCE: {
+                bundledProductOffering: [],
+                category: [],
+                description: '',
+                isBundle: false,
+                lifecycleStatus: LIFECYCLE_STATUS.ACTIVE,
+                name: '',
+                place: [],
+                productOfferingPrice: [],
+                validFor: {},
+                version: '0.1'
+            }
+        };
+
+        var Price = function Price(data) {
+            angular.extend(this, TEMPLATES.PRICE, data);
+            parseNumber(this, ['dutyFreeAmount', 'percentage', 'taxIncludedAmount', 'taxRate']);
+        };
+        Price.prototype.setCurrencyCode = function setCurrencyCode(codeName) {
+
+            if (codeName in TYPES.CURRENCY_CODE) {
+                this.currencyCode = codeName;
+            }
+
+            return this;
+        };
+        Price.prototype.toJSON = function toJSON() {
+            return {
+                currencyCode: this.currencyCode,
+                dutyFreeAmount: this.taxIncludedAmount / ((100 + this.taxRate) / 100),
+                percentage: this.percentage,
+                taxIncludedAmount: this.taxIncludedAmount,
+                taxRate: this.taxRate
+            };
+        };
+        Price.prototype.toString = function toString() {
+            return this.taxIncludedAmount + ' ' + angular.uppercase(this.currencyCode);
+        };
+
+        var PricePlan = function PricePlan(data) {
+            angular.extend(this, TEMPLATES.PRICEPLAN, data);
+            this.price = new Price(this.price);
+        };
+        PricePlan.prototype.setType = function setType(typeName) {
+
+            if (typeName in TYPES.PRICE && !angular.equals(this.priceType, typeName)) {
+                this.priceType = TYPES.PRICE[typeName];
+                this.unitOfMeasure = '';
+                this.recurringChargePeriod = '';
+
+                switch (angular.lowercase(this.priceType)) {
+                case TYPES.PRICE.RECURRING:
+                    this.recurringChargePeriod = TYPES.CHARGE_PERIOD.WEEKLY;
+                    break;
+                }
+            }
+
+            return this;
+        };
+        PricePlan.prototype.toString = function toString() {
+            var result = '' + this.price.toString();
+
+            switch (angular.lowercase(this.priceType)) {
+            case TYPES.PRICE.ONE_TIME:
+                break;
+            case TYPES.PRICE.RECURRING:
+                result += ' / ' + angular.uppercase(this.recurringChargePeriod);
+                break;
+            case TYPES.PRICE.USAGE:
+                result += ' / ' + angular.uppercase(this.unitOfMeasure);
+                break;
+            }
+
+            return result;
+        };
 
         return {
-            PRICE_TYPES: PRICE_TYPES,
-            PRICE_CURRENCIES: PRICE_CURRENCIES,
-            PRICE_PERIODS: PRICE_PERIODS,
+            EVENTS: EVENTS,
+            TEMPLATES: TEMPLATES,
+            TYPES: TYPES,
+            PATCHABLE_ATTRS: PATCHABLE_ATTRS,
+            PricePlan: PricePlan,
             search: search,
             exists: exists,
             create: create,
             detail: detail,
-            update: update,
-            buildInitialData: buildInitialData,
-            createPricePlan: createPricePlan
+            update: update
         };
 
         function search(filters) {
@@ -101,6 +200,7 @@
 
                         resource.query(params, function (offeringList) {
                             offeringList.forEach(function (offering) {
+                                extendPricePlans(offering);
                                 offering.productSpecification = products[offering.productSpecification.id];
                             });
                             deferred.resolve(offeringList);
@@ -120,6 +220,7 @@
 
                     if (offeringList.length) {
                         productFilters.id = offeringList.map(function (offering) {
+                            extendPricePlans(offering);
                             return offering.productSpecification.id;
                         }).join();
 
@@ -184,20 +285,29 @@
             return deferred.promise;
         }
 
-        function detail(offeringId) {
+        function parseNumber(context, names) {
+            names.forEach(function (name) {
+                if (angular.isString(context[name])) {
+                    context[name] = parseInt(context[name]);
+                }
+            });
+        }
+
+        function detail(id) {
             var deferred = $q.defer();
             var params = {
-                id: offeringId
+                id: id
             };
 
-            resource.query(params, function (offeringList) {
+            resource.query(params, function (collection) {
 
-                if (offeringList.length) {
-                    var offeringRetrieved = offeringList[0];
+                if (collection.length) {
+                    var productOffering = collection[0];
 
-                    ProductSpec.detail(offeringRetrieved.productSpecification.id).then(function (productRetrieved) {
-                        offeringRetrieved.productSpecification = productRetrieved;
-                        extendBundledProductOffering(offeringRetrieved);
+                    extendPricePlans(productOffering);
+                    ProductSpec.detail(productOffering.productSpecification.id).then(function (productRetrieved) {
+                        productOffering.productSpecification = productRetrieved;
+                        extendBundledProductOffering(productOffering);
                     });
                 } else {
                     deferred.reject(404);
@@ -256,6 +366,16 @@
             }
         }
 
+        function extendPricePlans(productOffering) {
+            if (!angular.isArray(productOffering.productOfferingPrice)) {
+                productOffering.productOfferingPrice = [];
+            } else {
+                productOffering.productOfferingPrice = productOffering.productOfferingPrice.map(function (pricePlan) {
+                    return new PricePlan(pricePlan);
+                });
+            }
+        }
+
         function update(offering, data) {
             var deferred = $q.defer();
             var params = {
@@ -276,19 +396,6 @@
         function getCatalogueId(offering) {
             var keys = offering.href.split('/');
             return keys[keys.indexOf('catalog') + 1];
-        }
-
-        function buildInitialData() {
-            return {
-                version: '0.1',
-                lifecycleStatus: LIFECYCLE_STATUS.ACTIVE,
-                isBundle: false,
-                bundledProductOffering: [],
-                productOfferingPrice: [],
-                category: [],
-                validFor: {},
-                description: ''
-            };
         }
 
         function serialize() {
@@ -321,61 +428,88 @@
             return this.productSpecification.getPicture();
         }
 
-        function getCheapestPriceplan() {
+        function formatCheapestPricePlan() {
             /* jshint validthis: true */
-            var i, priceplan = null;
+            var result = "", pricePlan = null, pricePlans = [];
 
-            // There can be offerings without price plan
-            if (this.productOfferingPrice) {
-                for (i = 0; i < this.productOfferingPrice.length; i++) {
-                    if (this.productOfferingPrice[i].priceType === 'one time') {
-                        if (priceplan == null || Number(priceplan.price.taxIncludedAmount) > Number(this.productOfferingPrice[i].price.taxIncludedAmount)) {
-                            priceplan = this.productOfferingPrice[i];
+            if (this.productOfferingPrice.length) {
+                pricePlans = this.productOfferingPrice.filter(function (pricePlan) {
+                    return angular.lowercase(pricePlan.priceType) === TYPES.PRICE.ONE_TIME;
+                });
+
+                if (pricePlans.length) {
+                    for (var i = 0; i < pricePlans.length; i++) {
+                        if (pricePlan == null || Number(pricePlan.price.taxIncludedAmount) > Number(pricePlans[i].price.taxIncludedAmount)) {
+                            pricePlan = this.productOfferingPrice[i];
                         }
                     }
+                    result = 'From ' + pricePlan.toString();
+                } else {
+                    pricePlans = this.productOfferingPrice.filter(function (pricePlan) {
+                        return [TYPES.PRICE.RECURRING, TYPES.PRICE.USAGE].indexOf(angular.lowercase(pricePlan.priceType)) !== -1;
+                    });
+                    result = 'From ' + pricePlans[0].toString();
                 }
-            }
-
-            return priceplan;
-        }
-
-        function formatCheapestPriceplan() {
-            /* jshint validthis: true */
-            var i, priceplan = "";
-
-            if (angular.isArray(this.productOfferingPrice) && this.productOfferingPrice.length) {
-
-                for (i = 0; i < this.productOfferingPrice.length; i++) {
-                    if (this.productOfferingPrice[i].priceType === 'one time') {
-                        if (!priceplan || Number(priceplan.price.taxIncludedAmount) > Number(this.productOfferingPrice[i].price.taxIncludedAmount)) {
-                            priceplan = this.productOfferingPrice[i];
-                        }
-                    }
-                }
-
-                priceplan = "From " + priceplan.price.taxIncludedAmount + " " + angular.uppercase(priceplan.price.currencyCode);
             } else {
-                priceplan = "Free";
+                result = 'Free';
             }
 
-            return priceplan;
+            return result;
         }
 
-        function createPricePlan() {
-            return {
-                name: "",
-                description: "",
-                priceType: PRICE_TYPES.ONE_TIME,
-                recurringChargePeriod: "",
-                unitOfMeasure: "",
-                price: {
-                    taxRate: 20,
-                    taxIncludedAmount: 0,
-                    dutyFreeAmount: 0,
-                    percentage: 0,
-                    currencyCode: 'EUR'
-                }
+        function appendPricePlan(pricePlan) {
+            /* jshint validthis: true */
+            var deferred = $q.defer();
+            var dataUpdated = {
+                productOfferingPrice: this.productOfferingPrice.concat(pricePlan)
             };
+
+            update(this, dataUpdated).then(function () {
+                this.productOfferingPrice.push(pricePlan);
+                deferred.resolve(this);
+            }.bind(this), function (response) {
+                deferred.reject(response);
+            });
+
+            return deferred.promise;
+        }
+
+        function updatePricePlan(index, pricePlan) {
+            /* jshint validthis: true */
+            var deferred = $q.defer();
+            var dataUpdated = {
+                productOfferingPrice: this.productOfferingPrice.slice(0)
+            };
+
+            dataUpdated.productOfferingPrice[index] = pricePlan;
+
+            update(this, dataUpdated).then(function () {
+                angular.merge(this.productOfferingPrice[index], pricePlan);
+                deferred.resolve(this);
+            }.bind(this), function (response) {
+                deferred.reject(response);
+            });
+
+            return deferred.promise;
+        }
+
+        function removePricePlan(index) {
+            /* jshint validthis: true */
+            var deferred = $q.defer();
+            var dataUpdated = {
+                productOfferingPrice: this.productOfferingPrice.slice(0)
+            };
+
+            dataUpdated.productOfferingPrice.splice(index, 1);
+
+            update(this, dataUpdated).then(function () {
+                this.productOfferingPrice.splice(index, 1);
+                deferred.resolve(this);
+            }.bind(this), function (response) {
+                deferred.reject(response);
+            });
+
+            return deferred.promise;
         }
     }
 
