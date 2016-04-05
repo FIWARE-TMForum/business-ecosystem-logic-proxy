@@ -13,6 +13,7 @@
         .directive('fileModel', fileModelDirective)
         .directive('noImage', noImageDirective)
         .directive('fieldUnique', fieldUniqueDirective)
+        .directive('contactMediumForm', contactMediumFormDirective)
         .directive('pricePlanForm', pricePlanFormDirective)
         .directive('pricePlanTable', pricePlanTableDirective)
         .directive('convertToDate', convertToDateDirective)
@@ -105,6 +106,18 @@
                 vm: '=controller'
             },
             templateUrl: 'directives/forms/priceplan'
+        };
+    }
+
+    function contactMediumFormDirective() {
+        return {
+            restrict: 'E',
+            scope: {
+                form: '=',
+                contactMedium: '=data',
+                vm: '=controller'
+            },
+            templateUrl: 'directives/forms/contact-medium'
         };
     }
 
