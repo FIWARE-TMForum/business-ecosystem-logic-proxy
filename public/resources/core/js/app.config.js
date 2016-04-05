@@ -32,9 +32,6 @@
             OFFERING_CONFIGURED: '$eventOfferingConfigured',
             OFFERING_REMOVED: '$eventOfferingRemoved',
             ORDER_CREATED: '$eventOrderCreated',
-            CONTACT_MEDIUM_CREATED: '$contactMediumCreated',
-            CONTACT_MEDIUM_UPDATE: '$contactMediumUpdate',
-            CONTACT_MEDIUM_UPDATED: '$contactMediumUpdated',
             MESSAGE_CREATED: '$eventMessageCreated',
             MESSAGE_CLOSED: '$eventMessageClosed',
             ORDERING_COMPLETED: '$eventOrderingCompleted'

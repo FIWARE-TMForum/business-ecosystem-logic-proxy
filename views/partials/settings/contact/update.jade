@@ -1,5 +1,10 @@
-.row
-  .col-xs-12(ng-controller="FormWizardCtrl as updateForm")
+.row(ng-switch="updateVM.status")
+  .col-xs-12(ng-switch-when="ERROR")
+    .alert.alert-danger {{ updateVM.errorMessage }}
+  .col-xs-12(ng-switch-when="LOADING")
+    .container-spinner
+      span.fa.fa-spinner.fa-spin.fa-2x
+  .col-xs-12(ng-switch-when="LOADED")
     .panel.panel-default.z-depth-1(ng-if="updateVM.data.contactMedium.length")
       .panel-body
         .h4.text-dark-secondary
@@ -11,51 +16,24 @@
             thead
               tr
                 th Type
-                th Contact
+                th Contact medium
+                th Actions
             tbody
-              tr(ng-repeat="contactMedium in updateVM.data.contactMedium")
-                th
-                  .item-checkbox
-                    label.checkbox
-                      .track
-                        input(type="checkbox", ng-checked="updateVM.contactMediums.indexOf(contactMedium) !== -1", ng-click="updateVM.toggleContactMedium(contactMedium)")
-                        i.fa.fa-lg
-                      strong {{ contactMedium.type }}
+              tr(ng-repeat="contactMedium in updateVM.item.contactMedium")
+                th {{ contactMedium.type }}
+                td {{ contactMedium.toString() }}
                 td
-                  span.pull-right
-                    a(ng-click="updateVM.updateContactMedium(contactMedium)")
-                      span.fa.fa-pencil
-                  span {{ updateVM.formatContactMedium(contactMedium) }}
-        form(name="updateVM.contactDeleteForm", novalidate)
-          .form-group.text-right
-            a.btn.btn-danger.z-depth-1(ng-click="updateVM.removeContactMedium()", ng-disabled="!updateVM.contactMediums.length")
-              span.item-text Delete
+                  a.btn.btn-sm.btn-icon.btn-info(ng-click="updateVM.updateContactMedium($index)")
+                    span.item-icon.fa.fa-pencil
+                  a.btn.btn-sm.btn-icon.btn-danger(ng-click="updateVM.removeContactMedium($index)")
+                    span.item-icon.fa.fa-trash
     .panel.panel-default.z-depth-1
       .panel-body(ng-controller="ContactMediumCreateCtrl as entryAttrVM")
         .h4.text-dark-secondary
           strong New contact medium
         hr
-        form(name="entryAttrVM.form", novalidate, ng-if="!updateVM.isNotCreated", ng-submit="entryAttrVM.form.$valid && entryAttrVM.create()")
-          .row
-            .col-sm-6
-              .form-group(ng-class="{ 'has-error': updateForm.hasError(entryAttrVM.form.type) }")
-                label Contact
-                select.form-control(
-                  name="type"
-                  ng-model="entryAttrVM.data.type"
-                  ng-change = "entryAttrVM.refresh()"
-                )
-                  option(ng-repeat="(key, value) in MEDIUM_TYPES", value="{{ value }}") {{ value }}
-          .row(ng-if="entryAttrVM.data.type === MEDIUM_TYPES.EMAIL_ADDRESS")
-            .col-xs-12
-              include ./update-emailaddress.jade
-          .row(ng-if="entryAttrVM.data.type === MEDIUM_TYPES.TELEPHONE_NUMBER")
-            .col-xs-12
-              include ./update-telephonenumber.jade
-          .row(ng-if="entryAttrVM.data.type === MEDIUM_TYPES.POSTAL_ADDRESS")
-            .col-xs-12
-              include ./update-postaladdress.jade
-          .form-group.text-right
-            button.btn.btn-success.z-depth-1(type="submit", ng-disabled="!entryAttrVM.form.$valid")
-              span.item-text Create
+        contact-medium-form(form="entryAttrVM.form" controller="entryAttrVM" data="entryAttrVM.data", ng-if="!updateVM.isNotCreated")
+        .form-group.text-right
+          button.btn.btn-warning.z-depth-1(ng-disabled="!entryAttrVM.form.$valid" ng-click="entryAttrVM.create(entryAttrVM.form)")
+            span.item-text Create
         .alert.alert-warning(ng-if="updateVM.isNotCreated") Sorry! In order to create contact mediums, you should first create a profile.
