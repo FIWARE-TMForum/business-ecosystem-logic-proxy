@@ -104,7 +104,7 @@
               ng-model="updateVM.data.countryOfBirth"
             )
               option(value="") Prefer not to say
-              option(ng-repeat="country in COUNTRIES", value="{{ country.code }}") {{ country.name }}
+              option(ng-repeat="country in vm.COUNTRIES", value="{{ country.code }}") {{ country.name }}
         .col-sm-6
           .form-group(ng-class="{ 'has-error': updateVM.hasFieldError(updateVM.form.placeOfBirth) }")
             label Place

@@ -87,7 +87,7 @@ form(name="form" novalidate)
               required
             )
               option(value="") Choose country
-              option(ng-repeat="country in COUNTRIES", value="{{ country.code }}") {{ country.name }}
+              option(ng-repeat="country in vm.COUNTRIES", value="{{ country.code }}") {{ country.name }}
             .help-block(
               ng-messages="form.country.$error"
               ng-show="vm.hasFieldError(form.country)"
