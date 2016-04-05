@@ -17,9 +17,15 @@
         var vm = this;
 
         vm.hasFieldError = hasFieldError;
+        vm.resetForm = resetForm;
 
         function hasFieldError(field) {
             return field && (field.$invalid && (field.$dirty || field.$touched));
+        }
+
+        function resetForm(form) {
+            form.$setPristine();
+            form.$setUntouched();
         }
     }
 
