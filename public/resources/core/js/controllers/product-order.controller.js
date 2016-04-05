@@ -139,7 +139,6 @@
         }
 
         $scope.$on(EVENTS.OFFERING_REMOVED, function() {
-            console.log('item removed');
             initOrder();
         });
 
