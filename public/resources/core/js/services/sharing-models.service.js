@@ -24,6 +24,8 @@
         return {
             searchModels: searchModels,
             createModel: createModel,
+            detailModel: detailModel,
+            updateModel: updateModel,
             searchProviders: searchProviders
         };
 
@@ -50,6 +52,34 @@
                 deferred.reject(response);
             });
 
+            return deferred.promise;
+        }
+
+        function updateModel (model) {
+            var deferred = $q.defer();
+            modelsResource.update({}, model, function(modelUpdated){
+                deferred.resolve(modelUpdated);
+            }, function (response) {
+                deferred.reject(response);
+            });
+
+            return deferred.promise;
+        }
+
+        function detailModel (productClass) {
+            var deferred = $q.defer();
+
+            modelsResource.query({
+                productClass: productClass
+            }, function(models) {
+                if (models.length) {
+                    deferred.resolve(models[0]);
+                } else {
+                    deferred.reject(404);
+                }
+            }, function (response) {
+                deferred.reject(response);
+            });
             return deferred.promise;
         }
 

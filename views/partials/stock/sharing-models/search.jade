@@ -16,7 +16,10 @@ ui-view
                   th Provider Percentage
                   th Nº Stakeholders
               tbody
-                tr(ng-repeat="rsModel in searchVM.list")
+                tr(ng-repeat="rsModel in searchVM.list",
+                  ui-sref="stock.models.update({ productClass: rsModel.productClass })",
+                  ui-sref-opts="{ inherit: false }"
+                )
                   td
                     span {{ rsModel.productClass }}
                   td
