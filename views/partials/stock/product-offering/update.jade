@@ -3,7 +3,7 @@
     .btn-toolbar
       .btn-group
         include ./breadcrumb.jade
-  .col-xs-12(ng-switch="updateVM.item.status")
+  .col-xs-12(ng-switch="updateVM.status")
     .row(ng-switch-when="LOADED")
       .col-xs-12
         .panel.panel-default.z-depth-1
@@ -18,16 +18,16 @@
                 span.item-icon.fa.fa-newspaper-o
                 span.item-text.hidden-xs About
             li(ui-sref-active-eq="active")
-              a(ui-sref="stock.offering.update.pricing")
+              a(ui-sref="stock.offering.update.priceplan")
                 span.item-icon.fa.fa-credit-card
-                span.item-text.hidden-xs Price Plans
+                span.item-text.hidden-xs Price plans
             li(ui-sref-active-eq="active")
               a(ui-sref="stock.offering.update.category")
                 span.item-icon.fa.fa-tag
                 span.item-text.hidden-xs Categories
       .col-xs-12
         ui-view
-          .panel.panel-default.z-depth-1(ng-controller="FormWizardCtrl as updateForm")
+          .panel.panel-default.z-depth-1
             .panel-body
               include ./update-form.jade
     div(ng-switch-when="ERROR")

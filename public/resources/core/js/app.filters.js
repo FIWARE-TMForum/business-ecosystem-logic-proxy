@@ -10,7 +10,14 @@
     angular
         .module('app')
         .filter('status', statusFilter)
+        .filter('capitalize', capitalizeFilter)
         .filter('orderByParentId', orderByParentId);
+
+    function capitalizeFilter() {
+        return function (input) {
+            return (!!input) ? input.charAt(0).toUpperCase() + input.substr(1).toLowerCase() : '';
+        }
+    }
 
     function statusFilter() {
         return function (list) {

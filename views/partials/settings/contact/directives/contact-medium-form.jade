@@ -1,0 +1,144 @@
+form(name="form" novalidate)
+  .row
+    .col-sm-6
+      .form-group(ng-class="{ 'has-error': vm.hasFieldError(form.mediumType) }")
+        label Medium
+        select.form-control(
+          name="mediumType"
+          ng-model="contactMedium.type"
+          ng-change = "contactMedium.resetMedium()"
+        )
+          option(ng-repeat="(key, value) in vm.CONTACT_MEDIUM" value="{{ value }}") {{ value | capitalize }}
+  .row(ng-if="contactMedium.type === vm.CONTACT_MEDIUM.EMAIL_ADDRESS")
+    .col-sm-6
+      .form-group(ng-class="{ 'has-error': vm.hasFieldError(form.emailAddress) }")
+        label Email
+        input.form-control(
+          type="email"
+          name="emailAddress"
+          ng-model="contactMedium.medium.emailAddress"
+          required
+        )
+        .help-block(
+          ng-messages="form.emailAddress.$error"
+          ng-show="vm.hasFieldError(form.emailAddress)"
+        )
+          span(ng-message="required") This field is required.
+          span(ng-message="email") This field must be a valid email.
+  .row(ng-if="contactMedium.type === vm.CONTACT_MEDIUM.POSTAL_ADDRESS")
+    .col-xs-12
+      .row
+        .col-sm-6
+          .form-group(ng-class="{ 'has-error': vm.hasFieldError(form.street) }")
+            label Street
+            input.form-control(
+              type="text"
+              name="street"
+              ng-model="contactMedium.medium.streetOne"
+              required
+              ng-maxlength="50"
+            )
+            .help-block(
+              ng-messages="form.street.$error"
+              ng-show="vm.hasFieldError(form.street)"
+            )
+              span(ng-message="required") This field is required.
+              span(ng-message="maxlength") This field must not exceed 50 chars.
+        .col-sm-6
+          .form-group(ng-class="{ 'has-error': vm.hasFieldError(form.stateOrProvince) }")
+            label State / Province
+            input.form-control(
+              type="text"
+              name="stateOrProvince"
+              ng-model="contactMedium.medium.stateOrProvince"
+              required
+              ng-maxlength="50"
+            )
+            .help-block(
+              ng-messages="form.stateOrProvince.$error"
+              ng-show="vm.hasFieldError(form.stateOrProvince)"
+            )
+              span(ng-message="required") This field is required.
+              span(ng-message="maxlength") This field must not exceed 50 chars.
+      .row
+        .col-sm-6
+          .form-group(ng-class="{ 'has-error': vm.hasFieldError(form.postcode) }")
+            label Postcode
+            input.form-control(
+              type="number"
+              name="postcode"
+              ng-model="contactMedium.medium.postcode"
+              required
+              convert-to-number
+            )
+            .help-block(
+              ng-messages="form.postcode.$error"
+              ng-show="vm.hasFieldError(form.postcode)"
+            )
+              span(ng-message="required") This field is required.
+              span(ng-message="number") This field must be a valid number.
+      .row
+        .col-sm-6
+          .form-group(ng-class="{ 'has-error': vm.hasFieldError(form.country) }")
+            label Country
+            select.form-control(
+              name="country"
+              ng-model="contactMedium.medium.country"
+              required
+            )
+              option(value="") Choose country
+              option(ng-repeat="country in vm.COUNTRIES", value="{{ country.code }}") {{ country.name }}
+            .help-block(
+              ng-messages="form.country.$error"
+              ng-show="vm.hasFieldError(form.country)"
+            )
+              span(ng-message="required") This field is required.
+        .col-sm-6
+          .form-group(ng-class="{ 'has-error': vm.hasFieldError(form.city) }")
+            label City
+            input.form-control(
+              type="text"
+              name="city"
+              ng-model="contactMedium.medium.city"
+              required
+              ng-maxlength="50"
+            )
+            .help-block(
+              ng-messages="form.city.$error"
+              ng-show="vm.hasFieldError(form.city)"
+            )
+              span(ng-message="required") This field is required.
+              span(ng-message="maxlength") This field must not exceed 50 chars.
+  .row(ng-if="contactMedium.type === vm.CONTACT_MEDIUM.TELEPHONE_NUMBER")
+    .col-sm-6
+      .form-group(ng-class="{ 'has-error': vm.hasFieldError(form.type) }")
+        label Type
+        input.form-control(
+          type="text"
+          name="type"
+          ng-model="contactMedium.medium.type"
+          required
+          ng-maxlength="30"
+        )
+        .help-block(
+          ng-messages="form.type.$error"
+          ng-show="vm.hasFieldError(form.type)"
+        )
+          span(ng-message="required") This field is required.
+          span(ng-message="maxlength") This field must not exceed 30 chars.
+    .col-sm-6
+      .form-group(ng-class="{ 'has-error': vm.hasFieldError(form.number) }")
+        label Number
+        input.form-control(
+          type="number"
+          name="number"
+          ng-model="contactMedium.medium.number"
+          required
+          convert-to-number
+        )
+        .help-block(
+          ng-messages="form.number.$error"
+          ng-show="vm.hasFieldError(form.number)"
+        )
+          span(ng-message="required") This field is required.
+          span(ng-message="number") This field must be a valid number.

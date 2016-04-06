@@ -102,23 +102,24 @@ form(name="step.form", novalidate)
               strong {{ category.name }}
             td
               time(am-time-ago="category.lastUpdate")
-  .row(ng-if="createVM.pricePlans.length")
+  .row(ng-if="createVM.data.productOfferingPrice.length")
     .col-sm-12
       .h5.text-dark-secondary
         strong Price plans
+      .table-responsive
       table.table.table-bordered
         thead
           tr
             th #
             th Name
+            th Description
             th Price
-            th Unit / Charge period
         tbody
-          tr(ng-repeat="pricePlan in createVM.pricePlans")
+          tr(ng-repeat="priceplan in createVM.data.productOfferingPrice")
             th {{ $index + 1 }}
-            td {{ pricePlan.name }}
-            td {{ pricePlan.price.taxIncludedAmount }} {{ pricePlan.price.currencyCode | uppercase }}
-            td {{ pricePlan.unitOfMeasure }}{{ pricePlan.recurringChargePeriod }}
+            th {{ priceplan.name }}
+            th {{ priceplan.description }}
+            td {{ priceplan.toString() }}
   .form-group(ng-show="createVM.data.isBundle")
     label Bundled Offering
     .table-responsive

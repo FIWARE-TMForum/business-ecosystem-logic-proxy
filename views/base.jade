@@ -141,6 +141,7 @@ html(ng-app="app")
       include ./modals/purchase-options.modal.jade
       include ./modals/redirection-msg.modal.jade
       include ./modals/contact-medium.modal.jade
+      include ./modals/priceplan.modal.jade
 
     script(type="text/ng-template", id="settings/sidebar")
       include ./partials/settings/sidebar.jade
@@ -208,15 +209,21 @@ html(ng-app="app")
       include ./partials/stock/product-offering/create-form-finish.jade
     script(type="text/ng-template", id="stock/product-offering/update")
       include ./partials/stock/product-offering/update.jade
-    script(type="text/ng-template", id="stock/product-offering/update/product")
-      include ./partials/stock/product-offering/update-product.jade
-    script(type="text/ng-template", id="stock/product-offering/update/pricing")
-      include ./partials/stock/product-offering/update-pricing.jade
+    script(type="text/ng-template", id="stock/product-offering/update/priceplan")
+      include ./partials/stock/product-offering/update-priceplan.jade
     script(type="text/ng-template", id="stock/product-offering/update/category")
       include ./partials/stock/product-offering/update-category.jade
 
     script(type="text/ng-template", id="directives/offering-priceplan")
       include ./partials/stock/product-offering/directives/priceplan.jade
+
+    script(type="text/ng-template", id="directives/forms/priceplan")
+      include ./partials/stock/product-offering/directives/priceplan-form.jade
+    script(type="text/ng-template", id="directives/forms/contact-medium")
+      include ./partials/settings/contact/directives/contact-medium-form.jade
+
+    script(type="text/ng-template", id="directives/tables/priceplan")
+      include ./partials/stock/product-offering/directives/priceplan-table.jade
 
     script(type="text/ng-template", id="stock/product-catalogue/search")
       include ./partials/stock/product-catalogue/search.jade

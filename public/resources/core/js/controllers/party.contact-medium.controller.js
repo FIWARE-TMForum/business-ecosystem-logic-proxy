@@ -14,87 +14,49 @@
         .controller('ContactMediumCreateCtrl', ContactMediumCreateController)
         .controller('ContactMediumUpdateCtrl', ContactMediumUpdateController);
 
-    function ContactMediumCreateController($state, $scope, $rootScope, EVENTS, COUNTRIES, Individual) {
+    function ContactMediumCreateController($scope, $rootScope, $controller, COUNTRIES, Individual) {
         /* jshint validthis: true */
         var vm = this;
 
-        var emailAddress = {
-            emailAddress: ''
-        };
+        angular.extend(vm, $controller('FormMixinCtrl', {$scope: $scope}));
 
-        var telephoneNumber = {
-            type: '',
-            number: ''
-        };
+        vm.CONTACT_MEDIUM = Individual.TYPES.CONTACT_MEDIUM;
+        vm.COUNTRIES = COUNTRIES;
 
-        var postalAddress = {
-            streetOne: '',
-            postcode: '',
-            city: '',
-            country: '',
-            stateOrProvince: ''
-        };
+        vm.data = new Individual.ContactMedium();
+        vm.data.resetMedium();
 
-        $scope.MEDIUM_TYPES = Individual.MEDIUM_TYPES;
-        $scope.COUNTRIES = COUNTRIES;
-
-        vm.data = {
-            preferred: false,
-            type: Individual.MEDIUM_TYPES.EMAIL_ADDRESS,
-            medium: angular.copy(emailAddress)
-        };
         vm.create = create;
-        vm.refresh = refresh;
 
-        function create() {
-            $rootScope.$broadcast(EVENTS.CONTACT_MEDIUM_CREATED, angular.copy(vm.data));
-            refresh();
-        }
-
-        function refresh() {
-
-            switch (vm.data.type) {
-            case Individual.MEDIUM_TYPES.EMAIL_ADDRESS:
-                vm.data.medium = angular.copy(emailAddress);
-                break;
-            case Individual.MEDIUM_TYPES.TELEPHONE_NUMBER:
-                vm.data.medium = angular.copy(telephoneNumber);
-                break;
-            case Individual.MEDIUM_TYPES.POSTAL_ADDRESS:
-                vm.data.medium = angular.copy(postalAddress);
-                break;
-            }
+        function create(form) {
+            $rootScope.$broadcast(Individual.EVENTS.CONTACT_MEDIUM_CREATED, vm.data);
+            vm.data = new Individual.ContactMedium();
+            vm.data.resetMedium();
+            vm.resetForm(form);
         }
     }
 
-    function ContactMediumUpdateController($element, $scope, $rootScope, EVENTS, COUNTRIES, Individual) {
+    function ContactMediumUpdateController($element, $scope, $rootScope, $controller, COUNTRIES, Individual) {
         /* jshint validthis: true */
         var vm = this;
+        var _index;
 
-        $scope.MEDIUM_TYPES = Individual.MEDIUM_TYPES;
-        $scope.COUNTRIES = COUNTRIES;
+        angular.extend(vm, $controller('FormMixinCtrl', {$scope: $scope}));
 
-        vm.data = null;
+        vm.CONTACT_MEDIUM = Individual.TYPES.CONTACT_MEDIUM;
+        vm.COUNTRIES = COUNTRIES;
+
         vm.update = update;
 
-        $scope.$on(EVENTS.CONTACT_MEDIUM_UPDATE, function (event, contactMedium) {
-            vm.item = contactMedium;
+        $scope.$on(Individual.EVENTS.CONTACT_MEDIUM_UPDATE, function (event, index, contactMedium) {
             vm.data = angular.copy(contactMedium);
-
-            if (contactMedium.medium.number != null && typeof contactMedium.medium.number !== 'number') {
-                vm.data.medium.number = parseInt(contactMedium.medium.number);
-            }
-
-            if (contactMedium.medium.postcode != null && typeof contactMedium.medium.postcode !== 'number') {
-                vm.data.medium.postcode = parseInt(contactMedium.medium.postcode);
-            }
-
+            _index = index;
             $element.modal('show');
         });
 
-        function update() {
-            $rootScope.$broadcast(EVENTS.CONTACT_MEDIUM_UPDATED, angular.merge(vm.item, vm.data));
-            vm.data = null;
+        function update(form) {
+            $rootScope.$broadcast(Individual.EVENTS.CONTACT_MEDIUM_UPDATED, _index, vm.data);
+            vm.resetForm(form);
         }
     }
 

@@ -4,7 +4,7 @@ form(name="updateVM.form", novalidate)
   .row
     .col-sm-8
       .form-group(
-        ng-class="{ 'has-error': updateForm.hasError(updateVM.form.name) }"
+        ng-class="{ 'has-error': updateVM.hasFieldError(updateVM.form.name) }"
       )
         label Name
         input.form-control(
@@ -18,7 +18,7 @@ form(name="updateVM.form", novalidate)
         )
         .help-block(
           ng-messages="updateVM.form.name.$error"
-          ng-show="updateForm.hasError(updateVM.form.name)"
+          ng-show="updateVM.hasFieldError(updateVM.form.name)"
         )
           span(ng-message="required") This field is required.
           span(ng-message="minlength") This field must contain at least 5 chars.
@@ -26,7 +26,7 @@ form(name="updateVM.form", novalidate)
           span(ng-message="unique") This name is already taken.
     .col-sm-4
       .form-group(
-        ng-class="{ 'has-error': updateForm.hasError(updateVM.form.version) }"
+        ng-class="{ 'has-error': updateVM.hasFieldError(updateVM.form.version) }"
       )
         label Version
         input.form-control(
@@ -37,7 +37,7 @@ form(name="updateVM.form", novalidate)
         )
         .help-block(
           ng-messages="updateVM.form.version.$error"
-          ng-show="updateForm.hasError(updateVM.form.version)"
+          ng-show="updateVM.hasFieldError(updateVM.form.version)"
         )
           span(ng-message="required") This field is required.
   .row
