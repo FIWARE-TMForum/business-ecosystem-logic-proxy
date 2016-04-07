@@ -112,8 +112,12 @@ form(name="updateVM.form", novalidate)
               span(ng-message="max") This field must not be higher than 100.
               span(ng-message="number") This field must be a valid number.
 
-      a.btn.btn-success.z-depth-1(ng-disabled="!updateVM.stakeholdersForm.$valid", ng-click="updateVM.addStakeholder() && updateForm.resetForm(updateVM.stakeholdersForm)", ng-if="updateVM.stakeholderEnabled")
-        span.item-text Add stakeholder
+      .row
+        .col-sm-6
+          a.btn.btn-success.z-depth-1(ng-disabled="!updateVM.stakeholdersForm.$valid", ng-click="updateVM.addStakeholder() && updateForm.resetForm(updateVM.stakeholdersForm)", ng-if="updateVM.stakeholderEnabled")
+            span.item-text Add stakeholder
+          a.btn.btn-danger.z-depth-1(style="margin-left: 10px;" ng-click="updateVM.cancelStakeholder() && updateForm.resetForm(updateVM.stakeholdersForm)", ng-if="updateVM.stakeholderEnabled")
+            span.item-text Cancel
 
   div(ng-switch-when="ERROR")
     .alert.alert-danger.text-center {{ updateVM.providers.error }}
