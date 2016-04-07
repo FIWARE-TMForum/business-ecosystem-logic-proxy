@@ -99,11 +99,11 @@ var billing = (function() {
 
         if (apiPathRegExp.test(req.apiUrl)) {
 
-            var reqValidators = [];
-
             if (req.method in validators) {
 
                 try {
+
+                    var reqValidators = [];
 
                     if (req.body && typeof(req.body) === 'string') {
                         req.json = JSON.parse(req.body);

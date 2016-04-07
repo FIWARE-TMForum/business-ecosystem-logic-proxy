@@ -8,6 +8,7 @@ var config = require('./../config'),
     rss = require('./tmf-apis/rss').rss,
     party = require('./tmf-apis/party').party,
     billing = require('./tmf-apis/billing').billing,
+    customer = require('./tmf-apis/customer').customer,
     
     // Other dependencies
     logger = require('./../lib/logger').logger.getLogger('TMF'),
@@ -25,6 +26,7 @@ var tmf = (function() {
     apiControllers[config.endpoints.rss.path] = rss;
     apiControllers[config.endpoints.party.path] = party;
     apiControllers[config.endpoints.billing.path] = billing;
+    apiControllers[config.endpoints.customer.path] = customer;
 
     var getAPIName = function(apiUrl) {
         return apiUrl.split('/')[1];
