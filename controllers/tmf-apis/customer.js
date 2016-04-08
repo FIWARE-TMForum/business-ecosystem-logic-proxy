@@ -7,9 +7,21 @@ var async = require('async'),
 
 var customer = (function() {
 
+    var isCustomerAccount = function(req) {
+        return req.apiUrl.indexOf('/customerAccount') >= 0;
+    };
+
+    var getCustomerPath = function(asset) {
+        return url.parse(asset.customer.href).pathname;
+    };
+
+    var getCustomerAPIUrl = function(path) {
+        return utils.getAPIURL(config.appSsl, config.appHost, config.endpoints.customer.port, path);
+    };
+
     var retrieveAsset = function(path, callback) {
 
-        var uri = utils.getAPIURL(config.appSsl, config.appHost, config.endpoints.customer.port, path);
+        var uri = getCustomerAPIUrl(path);
 
         request(uri, function(err, response, body) {
 
@@ -31,7 +43,7 @@ var customer = (function() {
         if ('customer' in asset) {
 
             // Customer Account - The attached customer need to be checked
-            var customerPath = url.parse(asset.customer.href).pathname;
+            var customerPath = getCustomerPath(asset);
 
             retrieveAsset(customerPath, function(err, result) {
 
@@ -92,25 +104,54 @@ var customer = (function() {
         });
     };
 
+    var validateAccount = function(account) {
+
+        var message = null;
+
+        if (!('customer' in account)) {
+            message = 'Customer Accounts must be associated to a Customer'
+        } else {
+
+            // HREF will be validated later at the time of checking the ownership
+            if (!account.customer.href.endsWith('/' + account.customer.id)) {
+                message = 'Customer ID and Customer HREF mismatch'
+            }
+        }
+
+        return {
+            valid: message ? false : true,
+            message: message
+        }
+    };
+
     var validateCreation = function(req, callback) {
 
-        var isAccount = req.apiUrl.indexOf('customerAccount') >= 0;
+        var isAccount = isCustomerAccount(req);
 
-        if (isAccount && !('customer' in req.json)) {
-            callback({
-                status: 400,
-                message: 'Unable to create customer account without specifying the associated customer'
-            });
-        } else if (!isAccount && !('relatedParty' in req.json)) {
-            callback({
-                status: 400,
-                message: 'Unable to create customer without specifying the related party'
-            });
+        if (isAccount) {
+
+            var accountValidation = validateAccount(req.json);
+
+            if (accountValidation.valid) {
+                isOwner(req, req.json, 'The given Customer does not belong to the user making the request', callback);
+            } else {
+                callback({
+                    status: 400,
+                    message: accountValidation.message
+                });
+            }
+
         } else {
-            var errorMessage = isAccount ? 'The given Customer does not belong to the user making the request' :
-                'Related Party does not match with the user making the request';
 
-            isOwner(req, req.json, errorMessage, callback);
+            if (('relatedParty' in req.json)) {
+                isOwner(req, req.json, 'Related Party does not match with the user making the request', callback);
+            } else {
+                callback({
+                    status: 400,
+                    message: 'Unable to create customer without specifying the related party'
+                });
+            }
+
         }
     };
 
@@ -176,6 +217,51 @@ var customer = (function() {
         }
     };
 
+    var attachCustomerAccount = function(req, callback) {
+
+        // This is just to update the customer resource by including the created account in the
+        // list of customer accounts. If an error arises, it is ignored as this step is not
+        // mandatory so callback is always called with "null".
+
+        var createdAccount = JSON.parse(req.body);
+        var customerPath = getCustomerPath(createdAccount);
+
+        retrieveAsset(customerPath, function(err, result) {
+
+            if (err) {
+                // FIXME: Log error!
+                return callback(null);
+            } else {
+
+                var currentCustomerAccounts = JSON.parse(result.body).customerAccount;
+
+                currentCustomerAccounts.push({
+                    id: createdAccount.id,
+                    href: createdAccount.href,
+                    name: createdAccount.name,
+                    status: 'Active'
+                });
+
+                var options = {
+                    url: getCustomerAPIUrl(customerPath),
+                    method: 'PATCH',
+                    json: { customerAccount: currentCustomerAccounts }
+                };
+
+                request(options, function(err, response) {
+
+                    if (err || response.statusCode >= 400) {
+                        // FIXME: Log error
+                    }
+
+                    return callback(null);
+
+                });
+
+            }
+        });
+    };
+
     var executePostValidation = function(req, callback) {
 
         if (req.method === 'GET') {
@@ -191,6 +277,8 @@ var customer = (function() {
                 });
             }
 
+        } else if (req.method === 'POST' && isCustomerAccount(req) ) {
+            attachCustomerAccount(req, callback);
         } else {
             callback(null);
         }
