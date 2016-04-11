@@ -1,0 +1,10 @@
+.breadcrumb-triangle.z-depth-1
+  a(ui-sref="stock.models", ui-sref-opts="{ reload: true, inherit: false }", ui-sref-active-eq="active")
+    span.item-icon.fa.fa-list
+    span.item-text List
+  a.active(ng-if="searchVM.state.includes('stock.models.update')", ui-sref="stock.models.update", ui-sref-opts="{ reload: true }")
+    span.item-icon.fa.fa-binoculars
+    span.item-text Detail
+  a.active(ng-if="searchVM.state.includes('stock.models.create')", ui-sref="stock.models.create", ui-sref-opts="{ reload: true }")
+    span.item-icon.fa.fa-plus-circle
+    span.item-text New

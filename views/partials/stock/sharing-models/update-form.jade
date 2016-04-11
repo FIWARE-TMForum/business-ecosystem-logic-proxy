@@ -1,0 +1,131 @@
+form(name="updateVM.form", novalidate)
+  .row
+    .col-sm-12
+      .form-group(
+        ng-class="{ 'has-error': updateForm.hasError(updateVM.form.productClass) }"
+      )
+        label Product class
+        input.form-control(
+          type="text"
+          name="productClass"
+          ng-model="updateVM.data.productClass"
+          required
+          ng-maxlength="200"
+        )
+        .help-block(
+          ng-messages="updateVM.form.productClass.$error"
+          ng-show="updateForm.hasError(updateVM.form.productClass)"
+        )
+          span(ng-message="required") This field is required.
+          span(ng-message="maxlength") This field must not exceed 200 chars.
+
+  .row
+    .col-sm-6
+      .form-group
+        label Platform percentage
+          .input-group
+            input.form-control(
+              type="text"
+              ng-model="updateVM.data.aggregatorValue"
+              disabled
+            )
+            span.input-group-addon %
+    .col-sm-6
+      .form-group(
+        ng-class="{ 'has-error' : updateForm.hasError(updateVM.form.providerValue) }"
+      )
+        label Provider percentage
+        .input-group
+          input.form-control(
+            type="number"
+            name="providerValue"
+            ng-model="updateVM.data.ownerValue"
+            min="0"
+            max="100"
+            required
+          )
+          span.input-group-addon %
+
+          .help-block(
+            ng-messages="updateVM.form.providerValue.$error"
+            ng-show="updateForm.hasError(updateVM.form.providerValue)"
+          )
+            span(ng-message="required") This field is required.
+            span(ng-message="min") This field must not be a negative number.
+            span(ng-message="max") This field must not be higher than 100.
+            span(ng-message="number") This field must be a valid number.
+
+  table.table.table-bordered(ng-if="updateVM.data.stakeholders.length")
+    thead
+      tr
+        th User
+        th Percentage
+        th Delete
+    tbody
+      tr(ng-repeat="stakeholder in updateVM.data.stakeholders")
+        td {{ stakeholder.stakeholderId }}
+        td {{ stakeholder.modelValue }} %
+        td
+          a.alert-link-danger(ng-click="updateVM.removeStakeholder($index)")
+            span.fa.fa-trash
+  .alert.alert-info.text-center(ng-if="!updateVM.data.stakeholders.length")
+    | No stakeholders included.
+
+.col-xs-12(ng-switch="updateVM.providers.status")
+  div(ng-switch-when="LOADED")
+    .form-group.text-left
+      a.btn.btn-default.z-depth-1(ng-click="updateVM.stakeholderEnabled = true", ng-if="!updateVM.stakeholderEnabled && updateVM.providers.length")
+        span.item-icon.fa.fa-plus
+        span.item-text Add stakeholder
+
+    form(name="updateVM.stakeholdersForm", novalidate, ng-if="updateVM.stakeholderEnabled")
+      .row
+        .col-md-8
+          .form-group
+            label Select stakeholder
+            select.form-control(
+              ng-options="provider as provider.providerName for provider in updateVM.providers"
+              ng-model="updateVM.currentStakeholder"
+            )
+        .col-sm-4
+          .form-group(
+            ng-class="{ 'has-error' : updateForm.hasError(updateVM.stakeholdersForm.stValue) }"
+          )
+            label Stakeholder percentage
+            .input-group
+              input.form-control(
+                type="number"
+                name="stValue"
+                ng-model="updateVM.currentStValue"
+                min="0"
+                max="100"
+                required
+              )
+              span.input-group-addon %
+
+            .help-block(
+              ng-messages="updateVM.stakeholdersForm.stValue.$error"
+              ng-show="updateForm.hasError(updateVM.stakeholdersForm.stValue)"
+            )
+              span(ng-message="required") This field is required.
+              span(ng-message="min") This field must not be a negative number.
+              span(ng-message="max") This field must not be higher than 100.
+              span(ng-message="number") This field must be a valid number.
+
+      a.btn.btn-success.z-depth-1(ng-disabled="!updateVM.stakeholdersForm.$valid", ng-click="updateVM.addStakeholder() && updateForm.resetForm(updateVM.stakeholdersForm)", ng-if="updateVM.stakeholderEnabled")
+        span.item-text Add stakeholder
+
+  div(ng-switch-when="ERROR")
+    .alert.alert-danger.text-center {{ updateVM.providers.error }}
+  div(ng-switch-default)
+    .container-spinner
+      span.fa.fa-spinner.fa-spin.fa-2x
+.row
+  .col-sm-12
+    h5(ng-class="{'text-danger': updateVM.getSavedPercentage() != 100}")
+      strong Total: {{ updateVM.getSavedPercentage() }} %
+
+.form-group.text-right
+  a.btn.btn-success.z-depth-1(ng-click="updateVM.update()", ng-disabled="!updateVM.form.$valid || updateVM.getSavedPercentage() != 100")
+    span.item-text Save changes
+

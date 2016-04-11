@@ -1,0 +1,72 @@
+table.table.table-bordered(ng-if="createVM.data.stakeholders.length")
+  thead
+    tr
+      th User
+      th Percentage
+      th Delete
+  tbody
+    tr(ng-repeat="stakeholder in createVM.data.stakeholders")
+      td {{ stakeholder.stakeholderId }}
+      td {{ stakeholder.modelValue }} %
+      td
+        a.alert-link-danger(ng-click="createVM.removeStakeholder($index)")
+          span.fa.fa-trash
+.alert.alert-info.text-center(ng-if="!createVM.data.stakeholders.length")
+  | No stakeholders included.
+
+.col-xs-12(ng-switch="createVM.providers.status")
+  div(ng-switch-when="LOADED")
+    .form-group.text-left
+      a.btn.btn-default.z-depth-1(ng-click="createVM.stakeholderEnabled = true", ng-if="!createVM.stakeholderEnabled && createVM.providers.length")
+        span.item-icon.fa.fa-plus
+        span.item-text Add stakeholder
+
+    form(name="step.stakeholdersForm", novalidate, ng-if="createVM.stakeholderEnabled")
+      .row
+        .col-md-8
+          .form-group
+            label Select stakeholder
+            select.form-control(
+              ng-options="provider as provider.providerName for provider in createVM.providers"
+              ng-model="createVM.currentStakeholder"
+            )
+        .col-sm-4
+          .form-group(
+          ng-class="{ 'has-error' : createForm.hasError(step.stakeholdersForm.stValue) }"
+          )
+            label Stakeholder percentage
+            .input-group
+              input.form-control(
+                type="number"
+                name="stValue"
+                ng-model="createVM.currentStValue"
+                min="0"
+                max="100"
+                required
+              )
+              span.input-group-addon %
+
+            .help-block(
+              ng-messages="step.stakeholdersForm.stValue.$error"
+              ng-show="createForm.hasError(step.stakeholdersForm.stValue)"
+            )
+              span(ng-message="required") This field is required.
+              span(ng-message="min") This field must not be a negative number.
+              span(ng-message="max") This field must not be higher than 100.
+              span(ng-message="number") This field must be a valid number.
+
+    a.btn.btn-success.z-depth-1(ng-disabled="!step.stakeholdersForm.$valid", ng-click="createVM.addStakeholder() && createForm.resetForm(step.stakeholdersForm)", ng-if="createVM.stakeholderEnabled")
+      span.item-text Add stakeholder
+
+  div(ng-switch-when="ERROR")
+    .alert.alert-danger.text-center {{ createVM.providers.error }}
+  div(ng-switch-default)
+    .container-spinner
+      span.fa.fa-spinner.fa-spin.fa-2x
+
+form(name="step.form", novalidate)
+  input(type="hidden", name="stakeholders", ng-model="createVM.data.stakeholders", field-array, limit-from="0", required)
+
+.form-group.text-right
+  a.btn.btn-default.z-depth-1(ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])", ng-disabled="!step.form.$valid")
+    span.item-text Next

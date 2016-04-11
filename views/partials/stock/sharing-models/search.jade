@@ -1,0 +1,36 @@
+ui-view
+  .row
+    .col-xs-12
+      include ./search-toolbar.jade
+    .col-xs-12(ng-switch="searchVM.list.status")
+      div(ng-switch-when="LOADED", ng-switch="searchVM.list.length")
+        div(ng-switch-when="0")
+          .alert.alert-info.text-center No revenue sharing models found.
+        div(ng-switch-default)
+          .table-responsive
+            table.table.table-bordered.table-hover
+              thead
+                tr
+                  th Product Class
+                  th Platform Percentage
+                  th Provider Percentage
+                  th Nº Stakeholders
+              tbody
+                tr(ng-repeat="rsModel in searchVM.list",
+                  ui-sref="stock.models.update({ productClass: rsModel.productClass })",
+                  ui-sref-opts="{ inherit: false }"
+                )
+                  td
+                    span {{ rsModel.productClass }}
+                  td
+                    span {{ rsModel.aggregatorValue }}
+                  td
+                    span {{ rsModel.ownerValue }}
+                  td
+                    span {{ rsModel.stakeholders.length }}
+
+      div(ng-switch-when="ERROR")
+        .alert.alert-danger.text-center {{ searchVM.error }}
+      div(ng-switch-default)
+        .container-spinner
+          span.fa.fa-spinner.fa-spin.fa-2x
