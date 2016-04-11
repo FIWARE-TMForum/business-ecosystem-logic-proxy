@@ -13,6 +13,11 @@
         .directive('fileModel', fileModelDirective)
         .directive('noImage', noImageDirective)
         .directive('fieldUnique', fieldUniqueDirective)
+        .directive('contactMediumForm', contactMediumFormDirective)
+        .directive('pricePlanForm', pricePlanFormDirective)
+        .directive('pricePlanTable', pricePlanTableDirective)
+        .directive('convertToDate', convertToDateDirective)
+        .directive('convertToNumber', convertToNumberDirective)
         .directive('fieldArray', fieldArrayDirective);
 
     function bsTooltipDirective() {
@@ -92,6 +97,41 @@
         };
     }
 
+    function pricePlanFormDirective() {
+        return {
+            restrict: 'E',
+            scope: {
+                form: '=',
+                pricePlan: '=data',
+                vm: '=controller'
+            },
+            templateUrl: 'directives/forms/priceplan'
+        };
+    }
+
+    function contactMediumFormDirective() {
+        return {
+            restrict: 'E',
+            scope: {
+                form: '=',
+                contactMedium: '=data',
+                vm: '=controller'
+            },
+            templateUrl: 'directives/forms/contact-medium'
+        };
+    }
+
+    function pricePlanTableDirective() {
+        return {
+            restrict: 'E',
+            scope: {
+                pricePlans: '=data',
+                vm: '=controller'
+            },
+            templateUrl: 'directives/tables/priceplan'
+        };
+    }
+
     function fieldArrayDirective($http, $injector) {
         return {
             require: 'ngModel',
@@ -107,5 +147,40 @@
             }
         };
     }
+
+    function convertToDateDirective() {
+        return {
+            restrict: 'A',
+            require: 'ngModel',
+            link: function link(scope, element, attrs, ngModel) {
+                ngModel.$parsers.push(function (value) {
+                    //View -> Model
+                    return value;
+                });
+                ngModel.$formatters.push(function (value) {
+                    //Model -> View
+                    return new Date(value);
+                });
+            }
+        };
+    }
+
+    function convertToNumberDirective() {
+        return {
+            restrict: 'A',
+            require: 'ngModel',
+            link: function link(scope, element, attrs, ngModel) {
+                ngModel.$parsers.push(function (value) {
+                    //View -> Model
+                    return '' + value;
+                });
+                ngModel.$formatters.push(function (value) {
+                    //Model -> View
+                    return parseInt(value, 10);
+                });
+            }
+        };
+    }
+
 
 })();

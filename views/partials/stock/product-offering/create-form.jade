@@ -2,7 +2,7 @@ form(name="step.form", novalidate)
   .row
     .col-sm-8
       .form-group(
-        ng-class="{ 'has-error': createForm.hasError(step.form.name) }"
+        ng-class="{ 'has-error': createVM.hasFieldError(step.form.name) }"
       )
         label Enter a name
         input.form-control(
@@ -15,14 +15,14 @@ form(name="step.form", novalidate)
         )
         .help-block(
           ng-messages="step.form.name.$error"
-          ng-show="createForm.hasError(step.form.name)"
+          ng-show="createVM.hasFieldError(step.form.name)"
         )
           span(ng-message="required") This field is required.
           span(ng-message="maxlength") This field must not exceed 30 chars.
           span(ng-message="unique") This name is already taken.
     .col-sm-4
       .form-group(
-        ng-class="{ 'has-error' : createForm.hasError(step.form.version) }"
+        ng-class="{ 'has-error' : createVM.hasFieldError(step.form.version) }"
       )
         label Enter a version
         input.form-control(
@@ -33,7 +33,7 @@ form(name="step.form", novalidate)
         )
         .help-block(
           ng-messages="step.form.version.$error"
-          ng-show="createForm.hasError(step.form.version)"
+          ng-show="createVM.hasFieldError(step.form.version)"
         )
           span(ng-message="required") This field is required.
   .form-group

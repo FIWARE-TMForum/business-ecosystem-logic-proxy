@@ -240,10 +240,10 @@
                 priceplan = priceplans[0];
                 result = priceplan.price.amount + " " + priceplan.price.currency;
                 switch (priceplan.priceType) {
-                case Offering.PRICE_TYPES.RECURRING:
+                case Offering.TYPES.PRICE.RECURRING:
                     result += " / " + priceplan.recurringChargePeriod;
                     break;
-                case Offering.PRICE_TYPES.USAGE:
+                case Offering.TYPES.PRICE.USAGE:
                     result += " / " + priceplan.unitOfMeasure;
                     break;
                 }
