@@ -39,7 +39,7 @@ var billing = (function() {
         if ('customerAccount' in req.json && 'href' in req.json.customerAccount) {
 
             var customerAccountPath = url.parse(req.json.customerAccount.href).pathname;
-            var customerAccountUrl = utils.getAPIURL(config.appSsl, config.appHost, config.endpoints.billing.port, customerAccountPath);
+            var customerAccountUrl = utils.getAPIURL(config.appSsl, config.appHost, config.endpoints.customer.port, customerAccountPath);
 
             makeRequest(customerAccountUrl, function(err, body) {
 

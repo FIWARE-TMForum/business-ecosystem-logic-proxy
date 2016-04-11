@@ -144,7 +144,7 @@ var customer = (function() {
 
         } else {
 
-            if (('relatedParty' in req.json)) {
+            if ('relatedParty' in req.json) {
                 isOwner(req, req.json, 'Related Party does not match with the user making the request', callback);
             } else {
                 callback({
@@ -267,6 +267,53 @@ var customer = (function() {
         });
     };
 
+    var checkIsRelatedSeller = function(req, entity, previousError, callback) {
+
+        if ('customerAccount' in entity) {
+
+            // Ask Billing API for those Billing Accounts with included customer accounts
+
+            var customerAccountsIds = entity.customerAccount.map(function(item) {
+                return item.id;
+            });
+
+            var billingPath = config.endpoints.billing.path + '/api/billingManagement/v2/billingAccount?customerAccount.id=' +
+                customerAccountsIds.join(',');
+            var billingUrl = utils.getAPIURL(config.appSsl, config.appHost, config.endpoints.billing.port, billingPath);
+
+            request(billingUrl, function(err, response, body) {
+
+                if (!err && response.statusCode === 200) {
+
+                    var billingAccounts = JSON.parse(body);
+
+                    var allowed = billingAccounts.some(function(item) {
+                        return tmfUtils.isRelatedParty(req, item.relatedParty);
+                    });
+
+                    if (allowed) {
+                        callback(null);
+                    } else {
+                        callback({
+                            status: 403,
+                            message: 'Unauthorized to retrieve the information of the given customer'
+                        });
+                    }
+
+                } else {
+                    callback({
+                        status: 500,
+                        message: 'An error arises at the time of retrieving associated billing accounts'
+                    })
+                }
+
+            });
+
+        } else {
+            callback(previousError);
+        }
+    };
+
     var executePostValidation = function(req, callback) {
 
         if (req.method === 'GET') {
@@ -274,7 +321,14 @@ var customer = (function() {
             var parsedBody = JSON.parse(req.body);
 
             if (!Array.isArray(parsedBody)) {
-                isOwner(req, parsedBody, 'Unauthorized to retrieve non-owned products', callback);
+                isOwner(req, parsedBody, 'Unauthorized to retrieve the given customer profile', function(err) {
+
+                    if (err) {
+                        checkIsRelatedSeller(req, parsedBody, err, callback);
+                    } else {
+                        callback(null);
+                    }
+                });
             } else {
                 callback({
                     status: 403,
@@ -282,7 +336,7 @@ var customer = (function() {
                 });
             }
 
-        } else if (req.method === 'POST' && isCustomerAccount(req) ) {
+        } else if (req.method === 'POST' && isCustomerAccount(req)) {
             attachCustomerAccount(req, callback);
         } else {
             callback(null);
