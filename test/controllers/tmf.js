@@ -333,7 +333,10 @@ describe('TMF Controller', function() {
             var hostname = 'belp.fiware.org';
             var reqBody = 'Example';
             var reqPath = '/ordering';
+            var url = '/proxy' + reqPath;
             var userId = 'user';
+            var reqId = 'EXAMPLE-REQUEST-ID';
+            var connection = { remoteAddress: '127.0.0.1' };
 
             var returnedResponse = {
                 statusCode: responseCode,
@@ -367,7 +370,10 @@ describe('TMF Controller', function() {
                             body: returnedBody,
                             user: { id: userId },
                             method: reqMethod,
-                            apiUrl: reqPath
+                            apiUrl: reqPath,
+                            url: url,
+                            connection: connection,
+                            id: reqId
                         }
                     );
 
@@ -394,6 +400,8 @@ describe('TMF Controller', function() {
 
             // Actual call
             var req = {
+                id: reqId,
+                url: url,
                 apiUrl: reqPath,
                 //path: reqPath,
                 body: reqBody,
@@ -402,7 +410,7 @@ describe('TMF Controller', function() {
                 method: reqMethod,
                 user: {'id': userId },
                 headers: {},
-                connection: { remoteAddress: '127.0.0.1' }
+                connection: connection
             };
 
             var res = jasmine.createSpyObj('res', ['status', 'setHeader', 'json', 'write', 'end']);

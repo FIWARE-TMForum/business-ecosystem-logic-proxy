@@ -1,5 +1,5 @@
 var defaultConfig = {
-    port: '7496',
+    port: 7496,
     proxyPrefix: '',
     oauth2: {
         server: 'https://account.lab.fiware.org',
@@ -12,29 +12,37 @@ var defaultConfig = {
     appHost: 'example.com',
     appSsl: false,
     endpoints: {
-        'catalog': {
-            'path': 'catalog',
-            'port': '99'
+        catalog: {
+            path: 'catalog',
+            port: 99
         },
-        'ordering': {
-            'path': 'ordering',
-            'port': '189'
+        ordering: {
+            path: 'ordering',
+            port: 189
         },
-        'inventory': {
-            'path': 'inventory',
-            'port': '475'
+        inventory: {
+            path: 'inventory',
+            port: 475
         },
-        'charging': {
-            'path': 'charging',
-            'port': '35'
+        charging: {
+            path: 'charging',
+            port: 35
         },
-        'rss': {
-            'path': 'rss',
-            'port': '753'
+        rss: {
+            path: 'rss',
+            port: 753
         },
-        'party': {
-            'path': 'party',
-            'port': 74
+        party: {
+            path: 'party',
+            port: 74
+        },
+        billing: {
+            path: 'billing',
+            port: 78
+        },
+        customer: {
+            path: 'customer',
+            port: 79
         }
     },
     revenueModel: 30
