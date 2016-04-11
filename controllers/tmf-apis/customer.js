@@ -1,7 +1,8 @@
 var async = require('async'),
     config = require('./../../config'),
-    tmfUtils = require('./../../lib/tmfUtils'),
+    logger = require('./../../lib/logger').logger.getLogger('TMF'),
     request = require('request'),
+    tmfUtils = require('./../../lib/tmfUtils'),
     url = require('url'),
     utils = require('./../../lib/utils');
 
@@ -229,7 +230,7 @@ var customer = (function() {
         retrieveAsset(customerPath, function(err, result) {
 
             if (err) {
-                // FIXME: Log error!
+                utils.log(logger, 'warn', req, 'Impossible to load the Customer');
                 return callback(null);
             } else {
 
@@ -251,7 +252,11 @@ var customer = (function() {
                 request(options, function(err, response) {
 
                     if (err || response.statusCode >= 400) {
-                        // FIXME: Log error
+
+                        var message = 'Impossible to update the list of customer accounts: ';
+                        message += err ? err : response.statusCode;
+
+                        utils.log(logger, 'warn', req, message);
                     }
 
                     return callback(null);

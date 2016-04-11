@@ -1,6 +1,6 @@
 var config = require('./../config'),
 
-    // TMF APIs
+// TMF APIs
     catalog = require('./tmf-apis/catalog').catalog,
     inventory = require('./tmf-apis/inventory').inventory,
     ordering = require('./tmf-apis/ordering').ordering,
@@ -9,8 +9,8 @@ var config = require('./../config'),
     party = require('./tmf-apis/party').party,
     billing = require('./tmf-apis/billing').billing,
     customer = require('./tmf-apis/customer').customer,
-    
-    // Other dependencies
+
+// Other dependencies
     logger = require('./../lib/logger').logger.getLogger('TMF'),
     request = require('request'),
     url = require('url'),
@@ -84,17 +84,19 @@ var tmf = (function() {
                     headers: response.headers,
                     hostname: req.hostname,
                     secure: req.secure,
-                    body: body
+                    body: body,
+                    user: req.user,
+                    method: req.method,
+                    url: req.url,
+                    id: req.id,
+                    apiUrl: req.apiUrl,
+                    connection: req.connection
                 };
 
                 // Execute postValidation if status code is lower than 400 and the
                 // function is defined
                 if (response.statusCode < 400 && apiControllers[api] !== undefined
-                        && apiControllers[api].executePostValidation) {
-
-                    result.user = req.user;
-                    result.method = req.method;
-                    result.apiUrl = req.apiUrl;
+                    && apiControllers[api].executePostValidation) {
 
                     apiControllers[api].executePostValidation(result, function(err) {
 
