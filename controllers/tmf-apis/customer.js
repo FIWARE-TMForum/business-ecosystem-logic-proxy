@@ -175,10 +175,22 @@ var customer = (function() {
         callback(error);
     };
 
+    var validateCustomerAccountNotIncluded = function(req, callback) {
+
+        if (!isCustomerAccount(req) && 'customerAccount' in req.json) {
+            callback({
+                status: 403,
+                message: 'Customer Account cannot be manually modified'
+            });
+        } else {
+            callback(null);
+        }
+    };
+
     var validators = {
         'GET': [ utils.validateLoggedIn ],
-        'POST': [ utils.validateLoggedIn, validateCreation ],
-        'PATCH': [ utils.validateLoggedIn, validateUpdateOwner, validateIDNotModified ],
+        'POST': [ utils.validateLoggedIn, validateCreation, validateCustomerAccountNotIncluded ],
+        'PATCH': [ utils.validateLoggedIn, validateUpdateOwner, validateIDNotModified, validateCustomerAccountNotIncluded ],
         // This method is not implemented by this API
         //'PUT': [ utils.validateLoggedIn, validateOwner, validateCreation ],
         'DELETE': [ utils.validateLoggedIn, validateUpdateOwner ]
@@ -267,51 +279,45 @@ var customer = (function() {
         });
     };
 
-    var checkIsRelatedSeller = function(req, entity, previousError, callback) {
+    var checkIsRelatedSeller = function(req, entity, callback) {
 
-        if ('customerAccount' in entity) {
+        // Ask Billing API for those Billing Accounts related to the customer so we can determine
+        // whether a seller is able (or not) to retrieve the billing address of this customer.
 
-            // Ask Billing API for those Billing Accounts with included customer accounts
+        var customerAccountsIds = entity.customerAccount.map(function(item) {
+            return item.id;
+        });
 
-            var customerAccountsIds = entity.customerAccount.map(function(item) {
-                return item.id;
-            });
+        var billingPath = config.endpoints.billing.path + '/api/billingManagement/v2/billingAccount?customerAccount.id=' +
+            customerAccountsIds.join(',');
+        var billingUrl = utils.getAPIURL(config.appSsl, config.appHost, config.endpoints.billing.port, billingPath);
 
-            var billingPath = config.endpoints.billing.path + '/api/billingManagement/v2/billingAccount?customerAccount.id=' +
-                customerAccountsIds.join(',');
-            var billingUrl = utils.getAPIURL(config.appSsl, config.appHost, config.endpoints.billing.port, billingPath);
+        request(billingUrl, function(err, response, body) {
 
-            request(billingUrl, function(err, response, body) {
+            if (!err && response.statusCode === 200) {
 
-                if (!err && response.statusCode === 200) {
+                var billingAccounts = JSON.parse(body);
 
-                    var billingAccounts = JSON.parse(body);
+                var allowed = billingAccounts.some(function(item) {
+                    return tmfUtils.isRelatedParty(req, item.relatedParty);
+                });
 
-                    var allowed = billingAccounts.some(function(item) {
-                        return tmfUtils.isRelatedParty(req, item.relatedParty);
-                    });
-
-                    if (allowed) {
-                        callback(null);
-                    } else {
-                        callback({
-                            status: 403,
-                            message: 'Unauthorized to retrieve the information of the given customer'
-                        });
-                    }
-
+                if (allowed) {
+                    callback(null);
                 } else {
                     callback({
-                        status: 500,
-                        message: 'An error arises at the time of retrieving associated billing accounts'
-                    })
+                        status: 403,
+                        message: 'Unauthorized to retrieve the information of the given customer'
+                    });
                 }
 
-            });
-
-        } else {
-            callback(previousError);
-        }
+            } else {
+                callback({
+                    status: 500,
+                    message: 'An error arises at the time of retrieving associated billing accounts'
+                });
+            }
+        });
     };
 
     var executePostValidation = function(req, callback) {
@@ -324,7 +330,13 @@ var customer = (function() {
                 isOwner(req, parsedBody, 'Unauthorized to retrieve the given customer profile', function(err) {
 
                     if (err) {
-                        checkIsRelatedSeller(req, parsedBody, err, callback);
+
+                        if ('customerAccount' in parsedBody) {
+                            // Billing Addresses can be retrieved by involved sellers
+                            checkIsRelatedSeller(req, parsedBody, callback);
+                        } else {
+                            callback(err);
+                        }
                     } else {
                         callback(null);
                     }
