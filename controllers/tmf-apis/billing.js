@@ -7,7 +7,7 @@ var async = require('async'),
 
 var billing = (function() {
 
-    var OWNER_ROLE = 'bill receiver';
+    var OWNER_ROLE = config.billingAccountOwnerRole;
 
     var makeRequest = function(url, callback) {
 
