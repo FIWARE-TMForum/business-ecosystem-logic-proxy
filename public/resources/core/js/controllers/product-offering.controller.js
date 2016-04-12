@@ -46,6 +46,9 @@
     function ProductOfferingCreateController($scope, $state, $rootScope, $controller, EVENTS, Offering, Utils) {
         /* jshint validthis: true */
         var vm = this;
+
+        var sharingModel;
+
         var stepList = [
             {
                 title: 'General',
@@ -72,6 +75,10 @@
                 templateUrl: 'stock/product-offering/create/priceplan'
             },
             {
+                title: 'RS Model',
+                templateUrl: 'stock/product-offering/create/sharing'
+            },
+            {
                 title: 'Finish',
                 templateUrl: 'stock/product-offering/create/finish'
             }
@@ -89,6 +96,9 @@
         vm.create = create;
         vm.setProduct = setProduct;
         vm.setCatalogue = setCatalogue;
+
+        vm.setSharingModel = setSharingModel;
+        vm.getSharingModel = getSharingModel;
 
         vm.toggleBundle = toggleBundle;
         vm.hasOffering = hasOffering;
@@ -203,6 +213,18 @@
 
         function setCatalogue(catalogue) {
             vm.catalogue = catalogue;
+        }
+
+        function setSharingModel(rsModel) {
+            sharingModel = rsModel;
+            vm.data.serviceCandidate = {
+                id: rsModel.productClass,
+                name: 'Revenue Sharing Service'
+            }
+        }
+
+        function getSharingModel() {
+            return sharingModel;
         }
 
         function setCategory(category) {
