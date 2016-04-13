@@ -109,7 +109,7 @@ var billing = (function() {
 
     var validateAppropriateRelatedParty = function(req, callback) {
 
-        if (tmfUtils.hasPartyRole(req, req.json.relatedParty, OWNER_ROLE)) {
+        if ('relatedParty' in req.json && tmfUtils.hasPartyRole(req, req.json.relatedParty, OWNER_ROLE)) {
             callback(null);
         } else {
             callback({
