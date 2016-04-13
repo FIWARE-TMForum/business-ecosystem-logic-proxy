@@ -8,10 +8,6 @@ var async = require('async'),
 
 var customer = (function() {
 
-    var isCustomerAccount = function(req) {
-        return req.apiUrl.indexOf('/customerAccount') >= 0;
-    };
-
     var getCustomerPath = function(asset) {
         return url.parse(asset.customer.href).pathname;
     };
@@ -82,6 +78,23 @@ var customer = (function() {
         }
     };
 
+    var validateRetrieval = function(req, callback) {
+
+        if (req.isCollection && req.isAccount) {
+            // At this point, it is not worth implementing the functionality to list customer accounts
+            callback({
+                status: 403,
+                message: 'Unauthorized to retrieve the list of customer accounts'
+            });
+        } else if (req.isCollection && !req.isAccount) {
+            tmfUtils.filterRelatedPartyFields(req, callback);
+        } else {
+            // When retrieving single resource, the executePostvalidation function will check
+            // that the user can actually retrieve that resource.
+            callback(null);
+        }
+    };
+
     var validateUpdateOwner = function(req, callback) {
 
         retrieveAsset(req.apiUrl, function(err, response) {
@@ -127,9 +140,7 @@ var customer = (function() {
 
     var validateCreation = function(req, callback) {
 
-        var isAccount = isCustomerAccount(req);
-
-        if (isAccount) {
+        if (req.isAccount) {
 
             var accountValidation = validateAccount(req.json);
 
@@ -177,7 +188,7 @@ var customer = (function() {
 
     var validateCustomerAccountNotIncluded = function(req, callback) {
 
-        if (!isCustomerAccount(req) && 'customerAccount' in req.json) {
+        if (!req.isAccount && 'customerAccount' in req.json) {
             callback({
                 status: 403,
                 message: 'Customer Account cannot be manually modified'
@@ -188,7 +199,7 @@ var customer = (function() {
     };
 
     var validators = {
-        'GET': [ utils.validateLoggedIn ],
+        'GET': [ utils.validateLoggedIn, validateRetrieval ],
         'POST': [ utils.validateLoggedIn, validateCreation, validateCustomerAccountNotIncluded ],
         'PATCH': [ utils.validateLoggedIn, validateUpdateOwner, validateIDNotModified, validateCustomerAccountNotIncluded ],
         // This method is not implemented by this API
@@ -198,9 +209,14 @@ var customer = (function() {
 
     var checkPermissions = function(req, callback) {
 
-        var pathRegExp = new RegExp('^/' + config.endpoints.customer.path + '/api/customerManagement/v2/customer(Account)?');
+        var pathRegExp = new RegExp('^/' + config.endpoints.customer.path + '/api/customerManagement/v2/customer(Account)?(/(.*))?$');
+        var apiPath = url.parse(req.apiUrl).pathname;
+        var regExpResult = pathRegExp.exec(apiPath);
 
-        if (pathRegExp.test(req.apiUrl)) {
+        if (regExpResult) {
+
+            req.isCollection = regExpResult[3] ? false : true;
+            req.isAccount = regExpResult[1] ? true : false;
 
             try {
 
@@ -230,19 +246,19 @@ var customer = (function() {
         }
     };
 
-    var attachCustomerAccount = function(req, callback) {
+    var attachCustomerAccount = function(proxyRes, callback) {
 
         // This is just to update the customer resource by including the created account in the
         // list of customer accounts. If an error arises, it is ignored as this step is not
         // mandatory so callback is always called with "null".
 
-        var createdAccount = JSON.parse(req.body);
+        var createdAccount = proxyRes.json;
         var customerPath = getCustomerPath(createdAccount);
 
         retrieveAsset(customerPath, function(err, result) {
 
             if (err) {
-                utils.log(logger, 'warn', req, 'Impossible to load the Customer');
+                utils.log(logger, 'warn', proxyRes, 'Impossible to load the Customer');
                 return callback(null);
             } else {
 
@@ -268,7 +284,7 @@ var customer = (function() {
                         var message = 'Impossible to update the list of customer accounts: ';
                         message += err ? err : response.statusCode;
 
-                        utils.log(logger, 'warn', req, message);
+                        utils.log(logger, 'warn', proxyRes, message);
                     }
 
                     return callback(null);
@@ -279,7 +295,7 @@ var customer = (function() {
         });
     };
 
-    var checkIsRelatedSeller = function(req, entity, callback) {
+    var checkIsRelatedSeller = function(proxyRes, entity, callback) {
 
         // Ask Billing API for those Billing Accounts related to the customer so we can determine
         // whether a seller is able (or not) to retrieve the billing address of this customer.
@@ -299,7 +315,7 @@ var customer = (function() {
                 var billingAccounts = JSON.parse(body);
 
                 var allowed = billingAccounts.some(function(item) {
-                    return tmfUtils.isRelatedParty(req, item.relatedParty);
+                    return tmfUtils.isRelatedParty(proxyRes, item.relatedParty);
                 });
 
                 if (allowed) {
@@ -320,20 +336,22 @@ var customer = (function() {
         });
     };
 
-    var executePostValidation = function(req, callback) {
+    var executePostValidation = function(proxyRes, callback) {
 
-        if (req.method === 'GET') {
+        // This is not supposed to fail since this method is only called when the request to the
+        // actual server is OK!
+        proxyRes.json = JSON.parse(proxyRes.body);
 
-            var parsedBody = JSON.parse(req.body);
+        if (proxyRes.method === 'GET') {
 
-            if (!Array.isArray(parsedBody)) {
-                isOwner(req, parsedBody, 'Unauthorized to retrieve the given customer profile', function(err) {
+            if (!Array.isArray(proxyRes.json)) {
+                isOwner(proxyRes, proxyRes.json, 'Unauthorized to retrieve the given customer profile', function(err) {
 
                     if (err) {
 
-                        if ('customerAccount' in parsedBody) {
+                        if ('customerAccount' in proxyRes.json) {
                             // Billing Addresses can be retrieved by involved sellers
-                            checkIsRelatedSeller(req, parsedBody, callback);
+                            checkIsRelatedSeller(proxyRes, proxyRes.json, callback);
                         } else {
                             callback(err);
                         }
@@ -342,14 +360,14 @@ var customer = (function() {
                     }
                 });
             } else {
-                callback({
-                    status: 403,
-                    message: 'Unauthorized to list customers or customer accounts'
-                });
+                // checkPermissions filters the requests to list customer accounts.
+                // checkPermissions ensures that users can only retrieve the list
+                // of customer they own.
+                callback(null);
             }
 
-        } else if (req.method === 'POST' && isCustomerAccount(req)) {
-            attachCustomerAccount(req, callback);
+        } else if (proxyRes.method === 'POST' && 'customer' in proxyRes.json) {
+            attachCustomerAccount(proxyRes, callback);
         } else {
             callback(null);
         }
