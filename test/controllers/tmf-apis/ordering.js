@@ -7,6 +7,7 @@ describe('Ordering API', function() {
     var config = testUtils.getDefaultConfig();
     var SERVER = (config.appSsl ? 'https' : 'http') + '://' + config.appHost + ':' + config.endpoints.ordering.port;
     var CATALOG_SERVER = (config.appSsl ? 'https' : 'http') + '://' + config.appHost + ':' + config.endpoints.catalog.port;
+    var BILLING_SERVER = (config.appSsl ? 'https' : 'http') + '://' + config.appHost + ':' + config.endpoints.billing.port;
 
     var getOrderingAPI = function(storeClient, tmfUtils, utils) {
         return proxyquire('../../../controllers/tmf-apis/ordering', {
@@ -211,35 +212,20 @@ describe('Ordering API', function() {
 
         describe('Creation', function() {
 
-            var checkRole = function (userInfo, role) {
-                var valid = false;
-
-                if (userInfo.id == 'cust' && role == 'customer') {
-                    valid = true;
-                }
-
-                if (userInfo.id == 'admin' && role == 'provider') {
-                    valid = true;
-                }
-                return valid;
-            };
-
-            var testOrderCreation = function (userInfo, body, customerRoleRequired, expectedRes, done, checkReq) {
+            var testOrderCreation = function (userInfo, body, customerRoleRequired, isCustomer, hasPartyRole, expectedRes, done, checkReq) {
 
                 config.customerRoleRequired = customerRoleRequired;
 
                 var utils = {
                     validateLoggedIn: validateLoggedOk,
-                    hasRole: checkRole
-                };
-
-                var tmfUtils = {
-                    getIndividualURL: function (receivedReq) {
-                        // req: the request sent to the API
-                        expect(receivedReq).toBe(req);
-                        return getIndividualURL();
+                    hasRole: function() {
+                        return isCustomer
                     }
                 };
+
+                var tmfUtils = jasmine.createSpyObj('tmfUtils', ['getIndividualURL', 'hasPartyRole']);
+                tmfUtils.getIndividualURL.and.returnValue(getIndividualURL());
+                tmfUtils.hasPartyRole.and.returnValue(hasPartyRole);
 
                 var orderingApi = getOrderingAPI({}, tmfUtils, utils);
 
@@ -262,9 +248,10 @@ describe('Ordering API', function() {
 
             };
 
-            var testValidOrdering = function (nOrderItems, userName, customerRoleRequired, done) {
+            var testValidOrdering = function (nOrderItems, isCustomer, customerRoleRequired, done) {
 
-                var extServer = 'http://extexample.com';
+                var userName = 'example';
+                var billingAccountPath = '/billingAccount/7';
                 var productOfferingPath = '/productOffering/1';
                 var productSpecPath = '/product/2';
                 var ownerName = 'example';
@@ -279,8 +266,14 @@ describe('Ordering API', function() {
                     orderItems.push({
                         product: {},
                         productOffering: {
-                            href: extServer + productOfferingPath
-                        }
+                            href: 'http://extexample.com' + productOfferingPath
+                        },
+                        billingAccount: [
+                            {
+                                id: 7,
+                                href: BILLING_SERVER + billingAccountPath
+                            }
+                        ]
                     });
                 }
                 
@@ -302,7 +295,11 @@ describe('Ordering API', function() {
                     .times(nOrderItems)
                     .reply(200, {relatedParty: [{id: ownerName, role: 'owner'}]});
 
-                testOrderCreation(user, JSON.stringify(body), customerRoleRequired, null, done, function (req) {
+                nock(BILLING_SERVER)
+                    .get(billingAccountPath)
+                    .reply(200, {relatedParty: [{id: ownerName, role: config.billingAccountOwnerRole}]});
+
+                testOrderCreation(user, JSON.stringify(body), customerRoleRequired, isCustomer, true, null, done, function (req) {
 
                     var newBody = JSON.parse(req.body);
                     //expect(req.headers['content-length']).toBe(newBody.length);
@@ -322,15 +319,264 @@ describe('Ordering API', function() {
             };
 
             it('should call the callback after validating the request when the user is not customer but customer role not required', function (done) {
-                testValidOrdering(1, 'no_cust', false, done);
+                testValidOrdering(1, false, false, done);
             });
 
             it('should call the callback after validating the request when the user is customer (1 order item)', function (done) {
-                testValidOrdering(1, 'cust', true, done);
+                testValidOrdering(1, true, true, done);
             });
 
             it('should call the callback after validating the request when the user is customer (2 order items)', function (done) {
-                testValidOrdering(2, 'cust', true, done);
+                testValidOrdering(2, true, true, done);
+            });
+
+            var billingAccountError = function(itemsGenerator, expectedError, hasPartyRole, done) {
+                var userName = 'cust';
+                var productOfferingPath = '/productOffering/1';
+                var productSpecPath = '/product/2';
+                var ownerName = 'example';
+
+                var user = {
+                    id: userName
+                };
+
+                var orderItems = itemsGenerator(productOfferingPath);
+
+                var body = {
+                    relatedParty: [{
+                        id: userName,
+                        role: 'customer'
+                    }],
+                    orderItem: orderItems
+                };
+
+                nock(CATALOG_SERVER)
+                    .get(productOfferingPath)
+                    .times(orderItems.length)
+                    .reply(200, {productSpecification: {href: SERVER + productSpecPath}});
+
+                nock(CATALOG_SERVER)
+                    .get(productSpecPath)
+                    .times(orderItems.length)
+                    .reply(200, {relatedParty: [{id: ownerName, role: 'owner'}]});
+
+                testOrderCreation(user, JSON.stringify(body), true, true, hasPartyRole, expectedError, done);
+            };
+
+            it('should fail when items does not contain billing account key', function(done) {
+
+                var itemsGenerator = function(productOfferingPath) {
+                    return [{
+                        product: {},
+                        productOffering: {
+                            href: 'http://extexample.com' + productOfferingPath
+                        }
+                    }];
+                };
+
+                var expectedError = {
+                    status: 422,
+                    message: 'Billing Account is required'
+                };
+
+                billingAccountError(itemsGenerator, expectedError, true, done);
+            });
+
+            it('should fail when items contains billing account key but it is empty', function(done) {
+
+                var itemsGenerator = function(productOfferingPath) {
+                    return [{
+                        product: {},
+                        productOffering: {
+                            href: 'http://extexample.com' + productOfferingPath
+                        },
+                        billingAccount: []
+                    }];
+                };
+
+                var expectedError = {
+                    status: 422,
+                    message: 'Billing Account is required'
+                };
+
+                billingAccountError(itemsGenerator, expectedError, true, done);
+            });
+
+            it('should fail when items contains billing account but href is not included', function(done) {
+
+                var itemsGenerator = function(productOfferingPath) {
+                    return [{
+                        product: {},
+                        productOffering: {
+                            href: 'http://extexample.com' + productOfferingPath
+                        },
+                        billingAccount: [{
+                            id: 7
+                        }]
+                    }];
+                };
+
+                var expectedError = {
+                    status: 422,
+                    message: 'Billing Account is required'
+                };
+
+                billingAccountError(itemsGenerator, expectedError, true, done);
+            });
+
+            it('should fail when the second item does not contain a billing account', function(done) {
+
+                var itemsGenerator = function(productOfferingPath) {
+                    return [
+                        {
+                            product: {},
+                            productOffering: {
+                                href: 'http://extexample.com' + productOfferingPath
+                            },
+                            billingAccount: [{
+                                id: 7,
+                                href: 'http://example.com/billingAccount/7'
+                            }]
+                        },
+                        {
+                            product: {},
+                            productOffering: {
+                                href: 'http://extexample.com' + productOfferingPath
+                            }
+                        }];
+                };
+
+                var expectedError = {
+                    status: 422,
+                    message: 'Billing Accounts must be the same for all the order items contained in the ordering'
+                };
+
+                billingAccountError(itemsGenerator, expectedError, true, done);
+
+            });
+
+            it('should fail when the second item contains a different billing account', function(done) {
+
+                var itemsGenerator = function(productOfferingPath) {
+                    return [
+                        {
+                            product: {},
+                            productOffering: {
+                                href: 'http://extexample.com' + productOfferingPath
+                            },
+                            billingAccount: [{
+                                id: 7,
+                                href: 'http://example.com/billingAccount/7'
+                            }]
+                        },
+                        {
+                            product: {},
+                            productOffering: {
+                                href: 'http://extexample.com' + productOfferingPath
+                            },
+                            billingAccount: [{
+                                id: 8,
+                                href: 'http://example.com/billingAccount/8'
+                            }]
+                        }];
+                };
+
+                var expectedError = {
+                    status: 422,
+                    message: 'Billing Accounts must be the same for all the order items contained in the ordering'
+                };
+
+                billingAccountError(itemsGenerator, expectedError, true, done);
+            });
+
+            it('should fail when the billing account does not exist', function(done) {
+
+                var billingAccountPath = '/billingAccount/7';
+
+                var itemsGenerator = function(productOfferingPath) {
+                    return [
+                        {
+                            product: {},
+                            productOffering: {
+                                href: 'http://extexample.com' + productOfferingPath
+                            },
+                            billingAccount: [{
+                                id: 7,
+                                href: 'http://example.com' + billingAccountPath
+                            }]
+                        }];
+                };
+
+                nock(BILLING_SERVER)
+                    .get(billingAccountPath)
+                    .reply(404);
+
+                var expectedError = {
+                    status: 422,
+                    message: 'The given billing account does not exist'
+                };
+
+                billingAccountError(itemsGenerator, expectedError, true, done);
+            });
+
+            it('should fail when the billing API fails to return the billing account', function(done) {
+
+                var billingAccountPath = '/billingAccount/7';
+
+                var itemsGenerator = function(productOfferingPath) {
+                    return [
+                        {
+                            product: {},
+                            productOffering: {
+                                href: 'http://extexample.com' + productOfferingPath
+                            },
+                            billingAccount: [{
+                                id: 7,
+                                href: 'http://example.com' + billingAccountPath
+                            }]
+                        }];
+                };
+
+                nock(BILLING_SERVER)
+                    .get(billingAccountPath)
+                    .reply(400);
+
+                var expectedError = {
+                    status: 500,
+                    message: 'There was an unexpected error at the time of retrieving the provided billing account'
+                };
+
+                billingAccountError(itemsGenerator, expectedError, true, done);
+            });
+
+            it('should fail when the billing account is not owned by the user', function(done) {
+
+                var billingAccountPath = '/billingAccount/7';
+
+                var itemsGenerator = function(productOfferingPath) {
+                    return [
+                        {
+                            product: {},
+                            productOffering: {
+                                href: 'http://extexample.com' + productOfferingPath
+                            },
+                            billingAccount: [{
+                                id: 7,
+                                href: 'http://example.com' + billingAccountPath
+                            }]
+                        }];
+                };
+
+                nock(BILLING_SERVER)
+                    .get(billingAccountPath)
+                    .reply(200, { relatedParty: [] });
+
+                var expectedError = {
+                    status: 403,
+                    message: 'Unauthorized to use non-owned billing accounts'
+                };
+
+                billingAccountError(itemsGenerator, expectedError, false, done);
             });
 
             it('should fail if the product has not owners', function (done) {
@@ -369,7 +615,7 @@ describe('Ordering API', function() {
                     message: 'You cannot order a product without owners'
                 };
 
-                testOrderCreation(user, JSON.stringify(body), true, expected, done);
+                testOrderCreation(user, JSON.stringify(body), true, true, true, expected, done);
 
             });
 
@@ -407,7 +653,7 @@ describe('Ordering API', function() {
                     message: 'The system fails to retrieve the offering attached to the ordering item ' + orderItemId
                 };
 
-                testOrderCreation(user, JSON.stringify(body), true, expected, done);
+                testOrderCreation(user, JSON.stringify(body), true, true, true, expected, done);
             });
 
             it('should fail if the product attached to the order cannot be retrieved', function (done) {
@@ -449,7 +695,7 @@ describe('Ordering API', function() {
                     message: 'The system fails to retrieve the product attached to the ordering item ' + orderItemId
                 };
 
-                testOrderCreation(user, JSON.stringify(body), true, expected, done);
+                testOrderCreation(user, JSON.stringify(body), true, true, true, expected, done);
 
             });
 
@@ -463,7 +709,7 @@ describe('Ordering API', function() {
                     message: 'The resource is not a valid JSON document'
                 };
 
-                testOrderCreation(user, 'invalid', true, expected, done);
+                testOrderCreation(user, 'invalid', true, true, true, expected, done);
             });
 
             it('should fail when the user does not have the customer role', function (done) {
@@ -482,7 +728,7 @@ describe('Ordering API', function() {
                         role: 'customer'
                     }]
                 };
-                testOrderCreation(user, JSON.stringify(body), true, expected, done);
+                testOrderCreation(user, JSON.stringify(body), true, false, true, expected, done);
             });
 
             it('should fail when the relatedParty field has not been included', function (done) {
@@ -495,7 +741,7 @@ describe('Ordering API', function() {
                     message: 'A product order must contain a relatedParty field'
                 };
 
-                testOrderCreation(user, JSON.stringify({}), true, expected, done);
+                testOrderCreation(user, JSON.stringify({}), true, true, true, expected, done);
             });
 
             it('should fail when a customer has not been specified', function (done) {
@@ -514,7 +760,7 @@ describe('Ordering API', function() {
                         role: 'seller'
                     }]
                 };
-                testOrderCreation(user, JSON.stringify(body), true, expected, done);
+                testOrderCreation(user, JSON.stringify(body), true, true, true, expected, done);
             });
 
             it('should fail when the specified customer is not the user making the request', function (done) {
@@ -533,7 +779,7 @@ describe('Ordering API', function() {
                         role: 'customer'
                     }]
                 };
-                testOrderCreation(user, JSON.stringify(body), true, expected, done);
+                testOrderCreation(user, JSON.stringify(body), true, true, true, expected, done);
             });
 
             it('should fail when the request does not include an orderItem field', function (done) {
@@ -553,7 +799,7 @@ describe('Ordering API', function() {
                     }]
                 };
 
-                testOrderCreation(user, JSON.stringify(body), true, expected, done);
+                testOrderCreation(user, JSON.stringify(body), true, true, true, expected, done);
             });
 
             it('should fail when the request does not include a product in an orderItem', function (done) {
@@ -576,7 +822,7 @@ describe('Ordering API', function() {
                     }]
                 };
 
-                testOrderCreation(user, JSON.stringify(body), true, expected, done);
+                testOrderCreation(user, JSON.stringify(body), true, true, true, expected, done);
             });
 
             it('should fail when the request does not include a productOffering in an orderItem', function (done) {
@@ -600,7 +846,7 @@ describe('Ordering API', function() {
                     }]
                 };
 
-                testOrderCreation(user, JSON.stringify(body), true, expected, done);
+                testOrderCreation(user, JSON.stringify(body), true, true, true, expected, done);
             });
 
             it('should fail when an invalid customer has been specified in a product of an orderItem', function (done) {
@@ -632,7 +878,7 @@ describe('Ordering API', function() {
                     }]
                 };
 
-                testOrderCreation(user, JSON.stringify(body), true, expected, done);
+                testOrderCreation(user, JSON.stringify(body), true, true, true, expected, done);
             });
         });
 
@@ -1121,69 +1367,153 @@ describe('Ordering API', function() {
         //////////////////////////////////////// NOTIFY STORE ////////////////////////////////////////
         //////////////////////////////////////////////////////////////////////////////////////////////
 
-        var orderInf = {a: 'a'};
-        var userInf = {
-            id: 'test'
+        var getBaseUser = function() {
+            return { id: 'test' }
         };
 
-        var redirectUrl = 'http://redirecturl.com';
-
-        var notifyStoreOk = function (orderInfo, userInfo, callback) {
-            expect(orderInfo).toEqual(orderInf);
-            expect(userInfo).toEqual(userInf);
-
-            var res = {
-                body: '{"redirectUrl": "' + redirectUrl + '"}'
+        var getBaseOrdering = function(billingAccountPath) {
+            return {
+                a: 'a',
+                orderItem: [
+                    {
+                        billingAccount: [{
+                            id: 7,
+                            href: BILLING_SERVER + billingAccountPath
+                        }]
+                    }
+                ]
             };
-            callback(null, res);
         };
 
-        var notifyStoreErr = function (orderInfo, userInfo, callback) {
-            expect(orderInfo).toEqual(orderInf);
-            expect(userInfo).toEqual(userInf);
+        var testPostValidation = function (ordering, userInfo, storeClient, headers, getBillingReq, updateBillingReq, checker) {
 
-            callback({status: 500});
-        };
-
-        var testPostValidation = function (notifier, headers, checker) {
-            var storeClient = {
-                storeClient: {
-                    notifyOrder: notifier
-                }
-            };
-
-            var orderingApi = getOrderingAPI(storeClient, {}, {});
+            var orderingApi = getOrderingAPI({ storeClient: storeClient }, {}, {});
 
             var req = {
                 method: 'POST',
-                user: userInf,
-                body: JSON.stringify(orderInf),
+                user: userInfo,
+                body: JSON.stringify(ordering),
                 headers: headers
             };
+
+            if (getBillingReq) {
+                nock(BILLING_SERVER)
+                    .get(getBillingReq.path)
+                    .reply(getBillingReq.status, getBillingReq.body);
+            }
+
+            if (updateBillingReq) {
+                nock(BILLING_SERVER)
+                    .patch(updateBillingReq.path, updateBillingReq.expectedBody)
+                    .reply(updateBillingReq.status);
+            }
 
             orderingApi.executePostValidation(req, checker);
         };
 
-        it('should inject extra headers after calling notify store', function (done) {
+        var testPostValidationStoreNotifyOk = function(repeatedUser, getBillingFails, updateBillingFails, err, done) {
+
+            var buildUser = function(userName) {
+                return {
+                    id: userName,
+                    href: 'http://example.com/user/' + userName
+                }
+            };
 
             var headers = {};
+            var billingAccountPath = '/billingAccount/7';
+            var ordering = getBaseOrdering(billingAccountPath);
+            var user = getBaseUser();
 
-            testPostValidation(notifyStoreOk, headers, function (err) {
+            var user1 = buildUser('user1');
+            var user2 = buildUser('user2');
+            ordering.relatedParty = [ user1, user2 ];
 
-                expect(err).toBe(null);
+            var getBillingReq = {
+                status: getBillingFails ? 500 : 200,
+                path: billingAccountPath,
+                body: {
+                    relatedParty: []
+                }
+            };
+
+            var billingUser1 = buildUser(user1.id);
+            var billingUser2 = buildUser(user2.id);
+            billingUser1.role = 'bill responsible';
+            billingUser2.role = 'bill responsible';
+
+            if (repeatedUser) {
+                // If the user is repeated, we have to push it in the list
+                // of users returned by the billing API
+                getBillingReq.body.relatedParty.push(user1);
+
+                // When the user is repeated, its role is not changed
+                delete billingUser1.role;
+            }
+
+            var updateBillingReq = {
+                status: updateBillingFails ? 500 : 200,
+                path: billingAccountPath,
+                expectedBody: {
+                    relatedParty: [billingUser1, billingUser2]
+                }
+            };
+
+            var redirectUrl = 'http://fakepaypal.com';
+            var storeClient = jasmine.createSpyObj('storeClient', ['notifyOrder']);
+            storeClient.notifyOrder.and.callFake(function(orderInfo, userInfo, callback) {
+                callback(null, {
+                    body: JSON.stringify({redirectUrl: redirectUrl })
+                })
+            });
+
+            testPostValidation(ordering, user, storeClient, headers, getBillingReq, updateBillingReq, function (err) {
+                expect(err).toEqual(err);
                 expect(headers).toEqual({'X-Redirect-URL': redirectUrl});
+                expect(storeClient.notifyOrder).toHaveBeenCalledWith(ordering, user, jasmine.any(Function));
                 done();
             });
+        };
+
+        it('should return extra headers and push all users into the billing account', function (done) {
+            testPostValidationStoreNotifyOk(false, false, false, null, done);
         });
 
-        it('should call the callback function after an error in store notification', function (done) {
+        it('should not insert repeated users in the billing account', function(done) {
+            testPostValidationStoreNotifyOk(true, false, false, null, done);
+        });
+
+        it('should fail when the billing account cannot be retrieved', function(done) {
+            testPostValidationStoreNotifyOk(false, true, false, {
+                status: 500,
+                message: 'Unexpected error when checking the given billing account'
+            }, done);
+        });
+
+        it('should fail when the billing account cannot be updated', function(done) {
+
+            testPostValidationStoreNotifyOk(false, false, true, {
+                status: 500,
+                message: 'Unexpected error when updating the given billing account'
+            }, done);
+        });
+
+        it('should fail when store fails at the time of registering the ordering', function (done) {
 
             var headers = {};
+            var ordering = getBaseOrdering('/billing/9');
+            var user = getBaseUser();
 
-            testPostValidation(notifyStoreErr, {}, function (err) {
+            var storeClient = jasmine.createSpyObj('storeClient', ['notifyOrder']);
+            storeClient.notifyOrder.and.callFake(function(orderInfo, userInfo, callback) {
+                callback({status: 500});
+            });
+
+            testPostValidation(ordering, user, storeClient, {}, null, null, function (err) {
 
                 expect(err).toEqual({status: 500});
                 expect(headers).toEqual({});
+                expect(storeClient.notifyOrder).toHaveBeenCalledWith(ordering, user, jasmine.any(Function));
 
                 done();
             });

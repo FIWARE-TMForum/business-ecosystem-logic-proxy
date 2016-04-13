@@ -209,7 +209,7 @@ var ordering = (function(){
             return; // EXIT
         }
 
-        if (!body.orderItem) {
+        if (!body.orderItem || !body.orderItem.length) {
             callback({
                 status: 400,
                 message: 'A product order must contain an orderItem field'
@@ -282,7 +282,7 @@ var ordering = (function(){
 
         for (var i = 1; i < ordering.orderItem.length && !error; i++) {
             error = !ordering.orderItem[i].billingAccount || !ordering.orderItem[i].billingAccount.length ||
-                !equal(initialBillingAccount, ordering.orderItem[i].billingAccount);
+                !equal(initialBillingAccount, ordering.orderItem[i].billingAccount[0]);
         }
 
         if (error) {

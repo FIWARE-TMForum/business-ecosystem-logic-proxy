@@ -42,9 +42,10 @@ var defaultConfig = {
         },
         customer: {
             path: 'customer',
-            port: 79
+            port: 82
         }
     },
+    billingAccountOwnerRole: 'bill receiver',
     revenueModel: 30
 };
 
