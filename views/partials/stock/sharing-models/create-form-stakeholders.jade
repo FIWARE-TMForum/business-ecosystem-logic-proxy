@@ -55,8 +55,12 @@ table.table.table-bordered(ng-if="createVM.data.stakeholders.length")
               span(ng-message="max") This field must not be higher than 100.
               span(ng-message="number") This field must be a valid number.
 
-    a.btn.btn-success.z-depth-1(ng-disabled="!step.stakeholdersForm.$valid", ng-click="createVM.addStakeholder() && createForm.resetForm(step.stakeholdersForm)", ng-if="createVM.stakeholderEnabled")
-      span.item-text Add stakeholder
+    .row
+      .col-sm-6
+        a.btn.btn-success.z-depth-1(ng-disabled="!step.stakeholdersForm.$valid", ng-click="createVM.addStakeholder() && createForm.resetForm(step.stakeholdersForm)", ng-if="createVM.stakeholderEnabled")
+          span.item-text Add stakeholder
+        a.btn.btn-danger.z-depth-1(style="margin-left: 10px;" ng-click="createVM.cancelStakeholder() && createForm.resetForm(step.stakeholdersForm)", ng-if="createVM.stakeholderEnabled")
+          span.item-text Cancel
 
   div(ng-switch-when="ERROR")
     .alert.alert-danger.text-center {{ createVM.providers.error }}

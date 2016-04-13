@@ -50,6 +50,7 @@
         vm.currentStValue = 0;
 
         vm.addStakeholder = addStakeholder;
+        vm.cancelStakeholder = cancelStakeholder;
         vm.removeStakeholder = removeStakeholder;
 
         vm.getTotalPercentage = getTotalPercentage;
@@ -106,6 +107,11 @@
             if (vm.providers.length) {
                 vm.currentStakeholder = vm.providers[0];
             }
+            vm.currentStValue = 0;
+            vm.stakeholderEnabled = false;
+        }
+
+        function cancelStakeholder() {
             vm.currentStValue = 0;
             vm.stakeholderEnabled = false;
         }

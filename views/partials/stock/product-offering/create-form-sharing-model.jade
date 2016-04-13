@@ -1,0 +1,24 @@
+form(name="step.form", novalidate)
+  .form-group(ng-controller="RSModelSearchCtrl as searchVM")
+    input(type="hidden", ng-model="createVM.data.serviceCandidate.id", required)
+    .table-responsive
+      table.table.table-bordered.table-hover.table-selectable
+        thead
+          tr
+            th Product Class
+            th Platform Percentage
+            th Provider Percentage
+            th Nº Stakeholders
+        tbody
+          tr(ng-repeat="rsModel in searchVM.list", ng-class="{ active: createVM.data.serviceCandidate.id == rsModel.productClass }", ng-click="createVM.setSharingModel(rsModel)")
+            td
+              span {{ rsModel.productClass }}
+            td
+              span {{ rsModel.aggregatorValue }}
+            td
+              span {{ rsModel.ownerValue }}
+            td
+              span {{ rsModel.stakeholders.length }}
+  .form-group.text-right
+    a.btn.btn-default.z-depth-1(ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])", ng-disabled="!step.form.$valid")
+      span.item-text Next
