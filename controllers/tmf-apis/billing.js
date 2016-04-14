@@ -219,7 +219,7 @@ var billing = (function() {
                 callback({
                     status: 405,
                     message: 'Method not allowed'
-                })
+                });
             }
         } else {
             callback({

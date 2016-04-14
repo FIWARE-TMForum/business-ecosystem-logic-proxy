@@ -70,6 +70,11 @@ describe('Billing API', function() {
     };
 
 
+    beforeEach(function() {
+        nock.cleanAll();
+    });
+
+
     describe('Check Permissions', function() {
 
         var failIfNotLoggedIn = function(method, done) {
@@ -163,7 +168,7 @@ describe('Billing API', function() {
                 failIfNotLoggedIn('GET', done);
             });
 
-            var listBillingAccount = function(err, query, done) {
+            var testListBillingAccount = function(expectedErr, query, done) {
 
                 var utils = jasmine.createSpyObj('utils', ['validateLoggedIn']);
                 utils.validateLoggedIn.and.callFake(function(req, callback) {
@@ -172,7 +177,7 @@ describe('Billing API', function() {
 
                 var tmfUtils = jasmine.createSpyObj('tmfUtils', ['filterRelatedPartyFields']);
                 tmfUtils.filterRelatedPartyFields.and.callFake(function(req, callback) {
-                    callback(err);
+                    callback(expectedErr);
                 });
 
                 var billingApi = getBillingAPI(utils, tmfUtils);
@@ -183,7 +188,7 @@ describe('Billing API', function() {
                 };
 
                 billingApi.checkPermissions(req, function(err) {
-                    expect(err).toBe(err);
+                    expect(err).toBe(expectedErr);
                     done();
                 });
 
@@ -196,7 +201,7 @@ describe('Billing API', function() {
                     message: 'Invalid Related Party'
                 };
 
-                listBillingAccount(returnedError, '', done);
+                testListBillingAccount(returnedError, '', done);
             });
 
             it('should fail if user is trying to list but invalid relatedParty filter even if query included', function(done) {
@@ -206,11 +211,11 @@ describe('Billing API', function() {
                     message: 'Invalid Related Party'
                 };
 
-                listBillingAccount(returnedError, '?a=b', done);
+                testListBillingAccount(returnedError, '?a=b', done);
             });
 
             it('should not fail if user is trying to list and related party filter is valid', function(done) {
-                listBillingAccount(null, '', done);
+                testListBillingAccount(null, '', done);
             });
 
             it('should not fail if requesting a single billing account', function(done) {
@@ -243,7 +248,7 @@ describe('Billing API', function() {
                 failIfNotLoggedIn('POST', done);
             });
 
-            var createTest = function(body, hasPartyRoleValues, expectedErr, done) {
+            var testCreate = function(body, hasPartyRoleValues, expectedErr, done) {
 
                 var utils = jasmine.createSpyObj('utils', ['validateLoggedIn']);
                 utils.validateLoggedIn.and.callFake(function(req, callback) {
@@ -273,7 +278,7 @@ describe('Billing API', function() {
             };
 
             it('should fail if an unsupported field is included', function(done) {
-                createTest({ 'currency': 'EUR' }, [], UNSUPPORTED_FIELDS_ERROR, done);
+                testCreate({ 'currency': 'EUR' }, [], UNSUPPORTED_FIELDS_ERROR, done);
             });
 
             it('should fail if relatedParty field not included', function(done) {
@@ -283,16 +288,16 @@ describe('Billing API', function() {
                     message: 'Billing Accounts cannot be created without related parties'
                 };
 
-                createTest({ }, [false], expectedErr, done);
+                testCreate({ }, [false], expectedErr, done);
 
             });
 
             it('should fail if relatedParty field is invalid', function(done) {
-                createTest({ 'relatedParty': [] }, [false], INVALID_RELATED_PARTY_ERROR, done);
+                testCreate({ 'relatedParty': [] }, [false], INVALID_RELATED_PARTY_ERROR, done);
             });
 
             it('should fail if customerAccount field not included', function(done) {
-                createTest({ 'relatedParty': [] }, [true], CUSTOMER_ACCOUNT_MISSING_ERROR, done);
+                testCreate({ 'relatedParty': [] }, [true], CUSTOMER_ACCOUNT_MISSING_ERROR, done);
             });
 
             it('should fail if customerAccount included but href missing', function(done) {
@@ -302,7 +307,7 @@ describe('Billing API', function() {
                     'customerAccount': {}
                 };
 
-                createTest(body, [true], CUSTOMER_ACCOUNT_MISSING_ERROR, done);
+                testCreate(body, [true], CUSTOMER_ACCOUNT_MISSING_ERROR, done);
             });
 
             it('should fail if customerAccount cannot be retrieved', function(done) {
@@ -320,7 +325,7 @@ describe('Billing API', function() {
                     .get(customerAccountPath)
                     .reply(500);
 
-                createTest(body, [true], CUSTOMER_ACCOUNT_INACCESSIBLE_ERROR, done);
+                testCreate(body, [true], CUSTOMER_ACCOUNT_INACCESSIBLE_ERROR, done);
             });
 
             it('should fail if customer cannot be retrieved', function(done) {
@@ -343,7 +348,7 @@ describe('Billing API', function() {
                     .get(customerPath)
                     .reply(500);
 
-                createTest(body, [true], CUSTOMER_INACCESSIBLE_ERROR, done);
+                testCreate(body, [true], CUSTOMER_INACCESSIBLE_ERROR, done);
 
             });
 
@@ -367,7 +372,7 @@ describe('Billing API', function() {
                     .get(customerPath)
                     .reply(200, { relatedParty: {} });
 
-                createTest(body, hasPartyRoleValues, expectedErr, done);
+                testCreate(body, hasPartyRoleValues, expectedErr, done);
 
             };
 
@@ -386,7 +391,7 @@ describe('Billing API', function() {
                 failIfNotLoggedIn('PATCH', done);
             });
 
-            var updateTest = function(itemPath, body, hasPartyRoleValues, expectedErr, done) {
+            var testUpdate = function(itemPath, body, hasPartyRoleValues, expectedErr, done) {
 
                 var utils = jasmine.createSpyObj('utils', ['validateLoggedIn']);
                 utils.validateLoggedIn.and.callFake(function(req, callback) {
@@ -423,7 +428,7 @@ describe('Billing API', function() {
                     .get(billingAccountPath)
                     .reply(500);
 
-                updateTest(billingAccountPath, {}, [], BILLING_INACCESSIBLE_ERROR, done)
+                testUpdate(billingAccountPath, {}, [], BILLING_INACCESSIBLE_ERROR, done)
 
             });
 
@@ -435,7 +440,7 @@ describe('Billing API', function() {
                     .get(billingAccountPath)
                     .reply(404);
 
-                updateTest(billingAccountPath, {}, [], BILLING_DOES_NOT_EXIST_ERROR, done)
+                testUpdate(billingAccountPath, {}, [], BILLING_DOES_NOT_EXIST_ERROR, done)
 
             });
 
@@ -447,7 +452,7 @@ describe('Billing API', function() {
                     .get(billingAccountPath)
                     .reply(200, { relatedParty: [] });
 
-                updateTest(billingAccountPath, body, hasPartyRoleValues, expectedError, done)
+                testUpdate(billingAccountPath, body, hasPartyRoleValues, expectedError, done)
 
             };
 
@@ -530,6 +535,6 @@ describe('Billing API', function() {
         it('should not fail if the user is the owner of the asset', function(done) {
             testExecutePostValidation('GET', {relatedParty: []}, true, null, done);
         });
-        
+
     });
 });
