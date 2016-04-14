@@ -13,7 +13,7 @@
         .module('app')
         .factory('Individual', IndividualService);
 
-    function IndividualService($q, $resource, URLS, User) {
+    function IndividualService($q, $resource, URLS, COUNTRIES, User) {
         var Individual = $resource(URLS.PARTY_MANAGEMENT + '/individual/:id', {}, {
             update: {method: 'PUT'},
             updatePartial: {method: 'PATCH'}
@@ -103,7 +103,7 @@
                     this.medium.stateOrProvince,
                     this.medium.postcode,
                     this.medium.city,
-                    this.medium.country
+                    parseCountry(this.medium.country)
                 ].join(', ');
                 break;
             case TYPES.CONTACT_MEDIUM.TELEPHONE_NUMBER.code:
@@ -211,6 +211,18 @@
             } else {
                 individual.contactMedium = [];
             }
+        }
+
+        function parseCountry(code) {
+            var i;
+
+            for (i = 0; i < COUNTRIES.length; i++) {
+                if (COUNTRIES[i].code === angular.uppercase(code)) {
+                    return COUNTRIES[i].name;
+                }
+            }
+
+            return code;
         }
 
         function getUser() {
