@@ -9,6 +9,18 @@ describe('Ordering API', function() {
     var CATALOG_SERVER = (config.appSsl ? 'https' : 'http') + '://' + config.appHost + ':' + config.endpoints.catalog.port;
     var BILLING_SERVER = (config.appSsl ? 'https' : 'http') + '://' + config.appHost + ':' + config.endpoints.billing.port;
 
+    // Errors
+    var BILLING_ACCOUNT_REQUIRED = {
+        status: 422,
+        message: 'Billing Account is required'
+    };
+
+    var BILLING_ACCOUNTS_MISMATCH = {
+        status: 422,
+        message: 'Billing Accounts must be the same for all the order items contained in the ordering'
+    };
+
+
     var getOrderingAPI = function(storeClient, tmfUtils, utils) {
         return proxyquire('../../../controllers/tmf-apis/ordering', {
             './../../config': config,
@@ -374,12 +386,7 @@ describe('Ordering API', function() {
                     }];
                 };
 
-                var expectedError = {
-                    status: 422,
-                    message: 'Billing Account is required'
-                };
-
-                billingAccountError(itemsGenerator, expectedError, true, done);
+                billingAccountError(itemsGenerator, BILLING_ACCOUNT_REQUIRED, true, done);
             });
 
             it('should fail when items contains billing account key but it is empty', function(done) {
@@ -394,12 +401,7 @@ describe('Ordering API', function() {
                     }];
                 };
 
-                var expectedError = {
-                    status: 422,
-                    message: 'Billing Account is required'
-                };
-
-                billingAccountError(itemsGenerator, expectedError, true, done);
+                billingAccountError(itemsGenerator, BILLING_ACCOUNT_REQUIRED, true, done);
             });
 
             it('should fail when items contains billing account but href is not included', function(done) {
@@ -416,12 +418,7 @@ describe('Ordering API', function() {
                     }];
                 };
 
-                var expectedError = {
-                    status: 422,
-                    message: 'Billing Account is required'
-                };
-
-                billingAccountError(itemsGenerator, expectedError, true, done);
+                billingAccountError(itemsGenerator, BILLING_ACCOUNT_REQUIRED, true, done);
             });
 
             it('should fail when the second item does not contain a billing account', function(done) {
@@ -446,12 +443,7 @@ describe('Ordering API', function() {
                         }];
                 };
 
-                var expectedError = {
-                    status: 422,
-                    message: 'Billing Accounts must be the same for all the order items contained in the ordering'
-                };
-
-                billingAccountError(itemsGenerator, expectedError, true, done);
+                billingAccountError(itemsGenerator, BILLING_ACCOUNTS_MISMATCH, true, done);
 
             });
 
@@ -481,12 +473,7 @@ describe('Ordering API', function() {
                         }];
                 };
 
-                var expectedError = {
-                    status: 422,
-                    message: 'Billing Accounts must be the same for all the order items contained in the ordering'
-                };
-
-                billingAccountError(itemsGenerator, expectedError, true, done);
+                billingAccountError(itemsGenerator, BILLING_ACCOUNTS_MISMATCH, true, done);
             });
 
             it('should fail when the billing account does not exist', function(done) {
