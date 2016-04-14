@@ -51,7 +51,7 @@ var billing = (function() {
                 } else {
 
                     var customerPath = url.parse(body.customer.href).pathname;
-                    var customerUrl = utils.getAPIURL(config.appSsl, config.appHost, config.endpoints.billing.port, customerPath);
+                    var customerUrl = utils.getAPIURL(config.appSsl, config.appHost, config.endpoints.customer.port, customerPath);
 
                     makeRequest(customerUrl, function(err, body) {
 
@@ -107,23 +107,31 @@ var billing = (function() {
         }
     };
 
-    var validateAppropriateRelatedParty = function(req, callback) {
+    var validateRelatedParty = function(req, callback) {
 
-        if ('relatedParty' in req.json && tmfUtils.hasPartyRole(req, req.json.relatedParty, OWNER_ROLE)) {
-            callback(null);
-        } else {
+        var relatedPartyField = 'relatedParty';
+
+        // Creation request must include relatedParty field. Otherwise, an error must be arisen
+
+        if (req.method === 'POST' && !(relatedPartyField in req.json)) {
             callback({
-                status: 403,
-                message: 'The user making the request and the specified owner are not the same user'
-            });
-        }
-    };
-
-    var validateUpdateRelatedParty = function(req, callback) {
-        if ('relatedParty' in req.json) {
-            validateAppropriateRelatedParty(req, callback);
+                status: 422,
+                message: 'Billing Accounts cannot be created without related parties'
+            })
         } else {
-            callback(null);
+
+            // This part only be executed for update requests or for creation requests that include
+            // the relatedParty field.
+
+            if (!(relatedPartyField in req.json) || tmfUtils.hasPartyRole(req, req.json.relatedParty, OWNER_ROLE)) {
+                callback(null);
+            } else {
+                callback({
+                    status: 403,
+                    message: 'The user making the request and the specified owner are not the same user'
+                });
+            }
+
         }
     };
 
@@ -165,8 +173,8 @@ var billing = (function() {
 
     var validators = {
         'GET': [ utils.validateLoggedIn, validateRetrieval ],
-        'POST': [ utils.validateLoggedIn, validateNotInvalidFields, validateAppropriateRelatedParty, validateCustomerAccount ],
-        'PATCH': [ utils.validateLoggedIn, validateOwner, validateNotInvalidFields, validateUpdateRelatedParty, validateCustomerAccount ]
+        'POST': [ utils.validateLoggedIn, validateNotInvalidFields, validateRelatedParty, validateCustomerAccount ],
+        'PATCH': [ utils.validateLoggedIn, validateOwner, validateNotInvalidFields, validateRelatedParty, validateCustomerAccount ]
         // These methods are not implemented by this API
         //'PUT': [ utils.validateLoggedIn, validateOwner, validateNotInvalidFields, validateAppropriateRelatedParty ],
         //'DELETE': [ utils.validateLoggedIn, validateOwner ]
