@@ -45,6 +45,20 @@
             .state('settings.contact', {
                 url: '/contact',
                 templateUrl: 'settings/contact/update',
+                controller: function RedirectController($state) {
+                    if ($state.is('settings.contact')) {
+                        $state.go('settings.contact.shipping');
+                    }
+                }
+            })
+            .state('settings.contact.shipping', {
+                url: '/shipping',
+                templateUrl: 'settings/contact/shipping/update',
+                controller: 'CustomerSearchCtrl as searchVM'
+            })
+            .state('settings.contact.business', {
+                url: '/business',
+                templateUrl: 'settings/contact/business/update',
                 controller: 'IndividualUpdateCtrl as updateVM'
             });
     }
