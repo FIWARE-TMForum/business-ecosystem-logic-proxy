@@ -66,7 +66,6 @@ var customer = (function() {
         } else {
 
             // Customer - Related party is directly included
-
             if (tmfUtils.hasPartyRole(req, [ asset.relatedParty ], 'owner')) {
                 callback(null);
             } else {
@@ -148,7 +147,7 @@ var customer = (function() {
                 isOwner(req, req.json, 'The given Customer does not belong to the user making the request', callback);
             } else {
                 callback({
-                    status: 400,
+                    status: 422,
                     message: accountValidation.message
                 });
             }
@@ -159,7 +158,7 @@ var customer = (function() {
                 isOwner(req, req.json, 'Related Party does not match with the user making the request', callback);
             } else {
                 callback({
-                    status: 400,
+                    status: 422,
                     message: 'Unable to create customer without specifying the related party'
                 });
             }
@@ -218,24 +217,32 @@ var customer = (function() {
             req.isCollection = regExpResult[3] ? false : true;
             req.isAccount = regExpResult[1] ? true : false;
 
-            try {
+            if (req.method in validators) {
 
-                var reqValidators = [];
+                try {
 
-                if (req.body && typeof(req.body) === 'string') {
-                    req.json = JSON.parse(req.body);
+                    var reqValidators = [];
+
+                    if (req.body && typeof(req.body) === 'string') {
+                        req.json = JSON.parse(req.body);
+                    }
+
+                    for (var i in validators[req.method]) {
+                        reqValidators.push(validators[req.method][i].bind(this, req));
+                    }
+
+                    async.series(reqValidators, callback);
+
+                } catch (e) {
+                    callback({
+                        status: 400,
+                        message: 'Invalid body'
+                    });
                 }
-
-                for (var i in validators[req.method]) {
-                    reqValidators.push(validators[req.method][i].bind(this, req));
-                }
-
-                async.series(reqValidators, callback);
-
-            } catch (e) {
+            } else {
                 callback({
-                    status: 400,
-                    message: 'Invalid body'
+                    status: 405,
+                    message: 'Method not allowed'
                 });
             }
         } else {
