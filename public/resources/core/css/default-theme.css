@@ -1631,10 +1631,6 @@ a.list-group-item > .badge-status {
     transform: translate(0%, -50%);
 }
 
-.radio .track + span {
-    margin-left: 30px;
-}
-
 .radio .track input {
     display: none;
 }

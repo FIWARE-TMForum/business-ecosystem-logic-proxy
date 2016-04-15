@@ -133,9 +133,14 @@
         vm.toggleCollapse = toggleCollapse;
         vm.createOrderStatus = INITIAL;
         vm.formatPriceplan = formatPriceplan;
+        vm.setBillingAccount = setBillingAccount;
 
         function toggleCollapse(id) {
             $('#' + id).collapse('toggle');
+        }
+
+        function setBillingAccount(billingAccount) {
+            vm.billingAccount = billingAccount;
         }
 
         $scope.$on(EVENTS.OFFERING_REMOVED, function() {
@@ -145,6 +150,7 @@
         var initOrder = function initOrder() {
 
             vm.loadingStatus = LOADING;
+            vm.billingAccount = null;
 
             ShoppingCart.getItems().then(function(orderItems) {
 
@@ -269,6 +275,7 @@
                 if (!apiInfo.orderItem[i].product.productCharacteristic.length) {
                     apiInfo.orderItem[i].product.productCharacteristic.push({});
                 }
+                apiInfo.orderItem[i].billingAccount = [vm.billingAccount.serialize()];
             }
 
             ProductOrder.create(apiInfo).then(function(orderCreated) {

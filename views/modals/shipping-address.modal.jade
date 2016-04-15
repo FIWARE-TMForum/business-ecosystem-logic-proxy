@@ -1,0 +1,19 @@
+.modal.fade(ng-controller="CustomerUpdateCtrl as updateVM")
+  .modal-dialog
+    .modal-content
+      .modal-header
+        .h4
+          strong Shipping address
+      .modal-body
+        shipping-address-form(
+          form="updateVM.form"
+          controller="updateVM"
+          email-address="updateVM.emailAddress"
+          postal-address="updateVM.postalAddress"
+          telephone-number="updateVM.telephoneNumber"
+        )
+      .modal-footer
+        a.btn.btn-success.z-depth-1(data-dismiss="modal" ng-click="updateVM.update(updateVM.form)" ng-disabled="!updateVM.form.$valid")
+          span.item-text Update
+        a.btn.btn-default.z-depth-1(data-dismiss="modal")
+          span.item-text Cancel

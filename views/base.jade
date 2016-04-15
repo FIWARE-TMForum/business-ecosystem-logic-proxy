@@ -25,6 +25,8 @@ html(ng-app="app")
           PRODUCTORDER_MANAGEMENT: '#{ proxyPath }/#{ orderingPath }/api/productOrdering/v2',
           INVENTORY: '#{ proxyPath }/#{ inventoryPath }/api/productInventory/v2',
           PARTY_MANAGEMENT: '#{ proxyPath }/#{ partyPath }/api/partyManagement/v2',
+          BILLING_MANAGEMENT: '#{ proxyPath }/#{ billingPath }/api/billingManagement/v2',
+          CUSTOMER_MANAGEMENT: '#{ proxyPath }/#{ customerPath }/api/customerManagement/v2',
           PAYMENT: '#{ proxyPath }/#{ chargingPath }/api/orderManagement/orders/:action',
           SHOPPING_CART: '#{ shoppingCartPath }/:action/:id'
         })
@@ -137,7 +139,8 @@ html(ng-app="app")
       include ./modals/user-profile.modal.jade
       include ./modals/purchase-options.modal.jade
       include ./modals/redirection-msg.modal.jade
-      include ./modals/contact-medium.modal.jade
+      include ./modals/business-address.modal.jade
+      include ./modals/shipping-address.modal.jade
       include ./modals/priceplan.modal.jade
 
     script(type="text/ng-template", id="settings/sidebar")
@@ -146,6 +149,10 @@ html(ng-app="app")
       include ./partials/settings/general/update.jade
     script(type="text/ng-template", id="settings/contact/update")
       include ./partials/settings/contact/update.jade
+    script(type="text/ng-template", id="settings/contact/shipping/update")
+      include ./partials/settings/contact/update-shipping-address.jade
+    script(type="text/ng-template", id="settings/contact/business/update")
+      include ./partials/settings/contact/update-business-address.jade
 
     script(type="text/ng-template", id="offering/sidebar")
       include ./partials/offering/sidebar.jade
@@ -216,8 +223,10 @@ html(ng-app="app")
 
     script(type="text/ng-template", id="directives/forms/priceplan")
       include ./partials/stock/product-offering/directives/priceplan-form.jade
-    script(type="text/ng-template", id="directives/forms/contact-medium")
-      include ./partials/settings/contact/directives/contact-medium-form.jade
+    script(type="text/ng-template", id="directives/forms/business-address")
+      include ./partials/settings/contact/directives/business-address-form.jade
+    script(type="text/ng-template", id="directives/forms/shipping-address")
+      include ./partials/settings/contact/directives/shipping-address-form.jade
 
     script(type="text/ng-template", id="directives/tables/priceplan")
       include ./partials/stock/product-offering/directives/priceplan-table.jade

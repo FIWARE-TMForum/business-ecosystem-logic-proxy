@@ -13,7 +13,7 @@
         .module('app')
         .factory('Individual', IndividualService);
 
-    function IndividualService($q, $resource, URLS, User) {
+    function IndividualService($q, $resource, URLS, COUNTRIES, User) {
         var Individual = $resource(URLS.PARTY_MANAGEMENT + '/individual/:id', {}, {
             update: {method: 'PUT'},
             updatePartial: {method: 'PATCH'}
@@ -32,9 +32,9 @@
 
         var TYPES = {
             CONTACT_MEDIUM: {
-                EMAIL_ADDRESS: 'email address',
-                TELEPHONE_NUMBER: 'telephone number',
-                POSTAL_ADDRESS: 'postal address'
+                EMAIL_ADDRESS: {code: 'Email', name: 'Email address'},
+                TELEPHONE_NUMBER: {code: 'TelephoneNumber', name: 'Telephone number'},
+                POSTAL_ADDRESS: {code: 'PostalAddress', name: 'Postal address'}
             }
         };
 
@@ -55,7 +55,7 @@
             },
             CONTACT_MEDIUM: {
                 preferred: false,
-                type: TYPES.CONTACT_MEDIUM.EMAIL_ADDRESS,
+                type: TYPES.CONTACT_MEDIUM.EMAIL_ADDRESS.code,
                 medium: {}
             }
         };
@@ -63,16 +63,27 @@
         var ContactMedium = function ContactMedium(data) {
             angular.merge(this, TEMPLATES.CONTACT_MEDIUM, data);
         };
+        ContactMedium.prototype.getType = function getType() {
+            var key;
+
+            for (key in TYPES.CONTACT_MEDIUM) {
+                if (TYPES.CONTACT_MEDIUM[key].code === this.type) {
+                    return TYPES.CONTACT_MEDIUM[key];
+                }
+            }
+
+            return null;
+        };
         ContactMedium.prototype.resetMedium = function resetMedium() {
 
             switch (this.type) {
-            case TYPES.CONTACT_MEDIUM.EMAIL_ADDRESS:
+            case TYPES.CONTACT_MEDIUM.EMAIL_ADDRESS.code:
                 this.medium = angular.copy(TEMPLATES.EMAIL_ADDRESS);
                 break;
-            case TYPES.CONTACT_MEDIUM.POSTAL_ADDRESS:
+            case TYPES.CONTACT_MEDIUM.POSTAL_ADDRESS.code:
                 this.medium = angular.copy(TEMPLATES.POSTAL_ADDRESS);
                 break;
-            case TYPES.CONTACT_MEDIUM.TELEPHONE_NUMBER:
+            case TYPES.CONTACT_MEDIUM.TELEPHONE_NUMBER.code:
                 this.medium = angular.copy(TEMPLATES.TELEPHONE_NUMBER);
                 break;
             }
@@ -83,19 +94,19 @@
             var result = '';
 
             switch (this.type) {
-            case TYPES.CONTACT_MEDIUM.EMAIL_ADDRESS:
+            case TYPES.CONTACT_MEDIUM.EMAIL_ADDRESS.code:
                 result = this.medium.emailAddress;
                 break;
-            case TYPES.CONTACT_MEDIUM.POSTAL_ADDRESS:
+            case TYPES.CONTACT_MEDIUM.POSTAL_ADDRESS.code:
                 result = [
                     this.medium.streetOne,
                     this.medium.stateOrProvince,
                     this.medium.postcode,
                     this.medium.city,
-                    this.medium.country
+                    parseCountry(this.medium.country)
                 ].join(', ');
                 break;
-            case TYPES.CONTACT_MEDIUM.TELEPHONE_NUMBER:
+            case TYPES.CONTACT_MEDIUM.TELEPHONE_NUMBER.code:
                 result = [
                     this.medium.type,
                     this.medium.number
@@ -200,6 +211,18 @@
             } else {
                 individual.contactMedium = [];
             }
+        }
+
+        function parseCountry(code) {
+            var i;
+
+            for (i = 0; i < COUNTRIES.length; i++) {
+                if (COUNTRIES[i].code === angular.uppercase(code)) {
+                    return COUNTRIES[i].name;
+                }
+            }
+
+            return code;
         }
 
         function getUser() {
