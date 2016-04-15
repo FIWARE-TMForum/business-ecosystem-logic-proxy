@@ -634,165 +634,286 @@ describe('Customer API', function() {
 
     describe('Post Validation', function() {
 
-        it('should allow to retrieve collections', function(done) {
+        describe('GET', function() {
 
-            var req = {
-                method: 'GET',
-                body: JSON.stringify([])
-            };
+            it('should allow to retrieve collections', function(done) {
 
-            var customerApi = getCustomerAPI({}, {});
+                var req = {
+                    method: 'GET',
+                    body: JSON.stringify([])
+                };
 
-            customerApi.executePostValidation(req, function(err) {
-                expect(err).toBe(null);
-                done();
-            });
-        });
+                var customerApi = getCustomerAPI({}, {});
 
-        var allowToRetrieveOwnerResource = function(body, hasPartyRole, isRelatedPartyValues, hasPartyRoleArgument,
-                                                    isRelatedPartyArguments, expectedErr, done) {
-
-            var req = {
-                method: 'GET',
-                body: JSON.stringify(body)
-            };
-
-            var tmfUtils = jasmine.createSpyObj('tmfUtils', ['hasPartyRole', 'isRelatedParty']);
-            tmfUtils.hasPartyRole.and.returnValue(hasPartyRole);
-            tmfUtils.isRelatedParty.and.returnValues.apply(tmfUtils.isRelatedParty, isRelatedPartyValues)
-
-            var customerApi = getCustomerAPI({}, tmfUtils);
-
-            customerApi.executePostValidation(req, function(err) {
-                expect(err).toEqual(expectedErr);
-
-                expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(req, hasPartyRoleArgument, 'owner');
-
-                isRelatedPartyArguments.forEach(function(item) {
-                    expect(tmfUtils.isRelatedParty).toHaveBeenCalledWith(req, item);
+                customerApi.executePostValidation(req, function(err) {
+                    expect(err).toBe(null);
+                    done();
                 });
-
-                done();
             });
-        };
 
-        it('should allow to retrieve an owned customer', function(done) {
+            var allowToRetrieveOwnerResource = function(body, hasPartyRole, isRelatedPartyValues, hasPartyRoleArgument,
+                                                        isRelatedPartyArguments, expectedErr, done) {
 
-            var body = {
-                relatedParty: {
-                    id: 9
-                }
+                var req = {
+                    method: 'GET',
+                    body: JSON.stringify(body)
+                };
+
+                var tmfUtils = jasmine.createSpyObj('tmfUtils', ['hasPartyRole', 'isRelatedParty']);
+                tmfUtils.hasPartyRole.and.returnValue(hasPartyRole);
+                tmfUtils.isRelatedParty.and.returnValues.apply(tmfUtils.isRelatedParty, isRelatedPartyValues)
+
+                var customerApi = getCustomerAPI({}, tmfUtils);
+
+                customerApi.executePostValidation(req, function(err) {
+                    expect(err).toEqual(expectedErr);
+
+                    expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(req, hasPartyRoleArgument, 'owner');
+
+                    isRelatedPartyArguments.forEach(function(item) {
+                        expect(tmfUtils.isRelatedParty).toHaveBeenCalledWith(req, item);
+                    });
+
+                    done();
+                });
             };
 
-            allowToRetrieveOwnerResource(body, true, null, [body.relatedParty], [], null, done);
-        });
+            it('should allow to retrieve an owned customer', function(done) {
 
-        it('should allow to retrieve an owner customer account', function(done) {
-
-            // isOwner function has been tested previously
-
-            var customerPath = '/customer/1';
-
-            var customerAccount = {
-                customer: {
-                    href: CUSTOMER_SERVER + customerPath
-                }
-            };
-
-            var customer = {
-                relatedParty: {
-                    id: 3
-                }
-            };
-
-            nock(CUSTOMER_SERVER)
-                .get(customerPath)
-                .reply(200, customer);
-
-            allowToRetrieveOwnerResource(customerAccount, true, null, [customer.relatedParty], [], null, done);
-        });
-
-        var testBillingAccountRetrieved = function(response, isRelatedPartyValues, isRelatedPartyArguments, expectedErr, done) {
-            var customer = {
-                relatedParty: {
-                    id: 9
-                },
-                customerAccount: [
-                    {
-                        id: 1
-                    },
-                    {
-                        id: 2
-                    }
-                ]
-            };
-
-            nock(BILLING_SERVER)
-                .get(BASE_BILLING_PATH + '?customerAccount.id=1,2')
-                .reply(response.status, response.body);
-
-            allowToRetrieveOwnerResource(customer, false, isRelatedPartyValues,
-                [customer.relatedParty], isRelatedPartyArguments, expectedErr, done);
-        };
-
-        it('should fail if customer account does not belong to the user and billing account cannot be retrieved', function(done) {
-
-            nock(BILLING_SERVER)
-                .get(BASE_BILLING_PATH + '?customerAccount.id=1,2')
-                .reply(500);
-
-            var expectedErr = {
-                status: 500,
-                message: 'An error arises at the time of retrieving associated billing accounts'
-            };
-
-            testBillingAccountRetrieved({status: 500, body: null}, null, [], expectedErr, done);
-
-        });
-
-        it('should fail if customer account does not belong to the user and user is not included in billing account', function(done) {
-
-            var billingAccount = {
-                relatedParty: [
-                    {
-                        id: 5
-                    }
-                ]
-            };
-
-            var expectedErr = {
-                status: 403,
-                message: 'Unauthorized to retrieve the information of the given customer'
-            };
-
-            testBillingAccountRetrieved({status: 200, body: [billingAccount]}, [false],
-                [billingAccount.relatedParty], expectedErr, done);
-
-        });
-
-        it('should allow to retrieve customer if user is included in billing account', function(done) {
-
-            var billingAccount1 = {
-                relatedParty: [
-                    {
-                        id: 5
-                    }
-                ]
-            };
-
-            var billingAccount2 = {
-                relatedParty: [
-                    {
+                var body = {
+                    relatedParty: {
                         id: 9
                     }
-                ]
+                };
+
+                allowToRetrieveOwnerResource(body, true, null, [body.relatedParty], [], null, done);
+            });
+
+            it('should allow to retrieve an owner customer account', function(done) {
+
+                // isOwner function has been tested previously
+
+                var customerPath = '/customer/1';
+
+                var customerAccount = {
+                    customer: {
+                        href: CUSTOMER_SERVER + customerPath
+                    }
+                };
+
+                var customer = {
+                    relatedParty: {
+                        id: 3
+                    }
+                };
+
+                nock(CUSTOMER_SERVER)
+                    .get(customerPath)
+                    .reply(200, customer);
+
+                allowToRetrieveOwnerResource(customerAccount, true, null, [customer.relatedParty], [], null, done);
+            });
+
+            var testBillingAccountRetrieved = function(response, isRelatedPartyValues, isRelatedPartyArguments, expectedErr, done) {
+                var customer = {
+                    relatedParty: {
+                        id: 9
+                    },
+                    customerAccount: [
+                        {
+                            id: 1
+                        },
+                        {
+                            id: 2
+                        }
+                    ]
+                };
+
+                nock(BILLING_SERVER)
+                    .get(BASE_BILLING_PATH + '?customerAccount.id=1,2')
+                    .reply(response.status, response.body);
+
+                allowToRetrieveOwnerResource(customer, false, isRelatedPartyValues,
+                    [customer.relatedParty], isRelatedPartyArguments, expectedErr, done);
             };
 
-            testBillingAccountRetrieved({status: 200, body: [billingAccount1, billingAccount2]}, [false, true],
-                [billingAccount1.relatedParty, billingAccount2.relatedParty], null, done);
+            it('should fail if customer account does not belong to the user and billing account cannot be retrieved', function(done) {
+
+                nock(BILLING_SERVER)
+                    .get(BASE_BILLING_PATH + '?customerAccount.id=1,2')
+                    .reply(500);
+
+                var expectedErr = {
+                    status: 500,
+                    message: 'An error arises at the time of retrieving associated billing accounts'
+                };
+
+                testBillingAccountRetrieved({status: 500, body: null}, null, [], expectedErr, done);
+
+            });
+
+            it('should fail if customer account does not belong to the user and user is not included in billing account', function(done) {
+
+                var billingAccount = {
+                    relatedParty: [
+                        {
+                            id: 5
+                        }
+                    ]
+                };
+
+                var expectedErr = {
+                    status: 403,
+                    message: 'Unauthorized to retrieve the information of the given customer'
+                };
+
+                testBillingAccountRetrieved({status: 200, body: [billingAccount]}, [false],
+                    [billingAccount.relatedParty], expectedErr, done);
+
+            });
+
+            it('should allow to retrieve customer if user is included in billing account', function(done) {
+
+                var billingAccount1 = {
+                    relatedParty: [
+                        {
+                            id: 5
+                        }
+                    ]
+                };
+
+                var billingAccount2 = {
+                    relatedParty: [
+                        {
+                            id: 9
+                        }
+                    ]
+                };
+
+                testBillingAccountRetrieved({status: 200, body: [billingAccount1, billingAccount2]}, [false, true],
+                    [billingAccount1.relatedParty, billingAccount2.relatedParty], null, done);
+
+            });
 
         });
 
+        describe('POST', function() {
+
+            it('should not fail if the request does not contain a customer field', function(done) {
+
+                var req = {
+                    method: 'POST',
+                    body: JSON.stringify({})
+                };
+
+                var customerApi = getCustomerAPI({}, {});
+
+                customerApi.executePostValidation(req, function(err) {
+                    expect(err).toBe(null);
+                    done();
+                });
+            });
+
+            it('should log a message if creating a customer account and the associated customer cannot be retrieved', function(done) {
+
+                var customerPath = '/customer/3';
+
+                var body = {
+                    customer: {
+                        href: CUSTOMER_SERVER + customerPath
+                    }
+                };
+
+                nock(CUSTOMER_SERVER)
+                    .get(customerPath)
+                    .reply(500);
+
+                var req = {
+                    method: 'POST',
+                    body: JSON.stringify(body)
+                };
+
+                var utils = jasmine.createSpyObj('utils', ['log']);
+
+                var customerApi = getCustomerAPI(utils, {});
+
+                customerApi.executePostValidation(req, function(err) {
+                    expect(err).toBe(null);
+                    expect(utils.log).toHaveBeenCalledWith(jasmine.any(Object), 'warn', req,
+                        'Impossible to load attached Customer');
+                    done();
+                });
+
+            });
+
+            var testUpdateCustomerAccount = function(responseStatus, done) {
+
+                var customerPath = '/customer/3';
+
+                var customerAccount = {
+                    id: 7,
+                    href: CUSTOMER_SERVER + '/customerAccount/7',
+                    name: 'customer',
+                    customer: {
+                        href: CUSTOMER_SERVER + customerPath
+                    }
+                };
+
+                var customer = {
+                    customerAccount: [
+                        {
+                            id: 9
+                        }
+                    ]
+                };
+
+                var expectedCustomerAccountField = JSON.parse(JSON.stringify(customer.customerAccount));
+                expectedCustomerAccountField.push({
+                    id: customerAccount.id,
+                    href: customerAccount.href,
+                    name: customerAccount.name,
+                    status: 'Active'
+                });
+
+                nock(CUSTOMER_SERVER)
+                    .get(customerPath)
+                    .reply(200, customer);
+
+                nock(CUSTOMER_SERVER)
+                    .patch(customerPath, {customerAccount: expectedCustomerAccountField})
+                    .reply(responseStatus);
+
+                var req = {
+                    method: 'POST',
+                    body: JSON.stringify(customerAccount)
+                };
+
+                var utils = jasmine.createSpyObj('utils', ['log']);
+
+                var customerApi = getCustomerAPI(utils, {});
+
+                customerApi.executePostValidation(req, function(err) {
+                    expect(err).toBe(null);
+
+                    if (responseStatus != 200) {
+                        expect(utils.log).toHaveBeenCalledWith(jasmine.any(Object), 'warn', req,
+                            'Impossible to update the list of customer accounts: ' + responseStatus);
+                    } else {
+                        expect(utils.log).not.toHaveBeenCalled();
+                    }
+
+                    done();
+                });
+            };
+
+            it('should log a message if creating a customer account and the customer cannot be updated', function(done) {
+                testUpdateCustomerAccount(425, done);
+            });
+
+            it('should not log a message if creating a customer account and it can be updated', function(done) {
+                testUpdateCustomerAccount(200, done);
+            });
+        });
     });
 
 });

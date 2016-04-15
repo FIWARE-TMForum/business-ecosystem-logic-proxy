@@ -265,7 +265,7 @@ var customer = (function() {
         retrieveAsset(customerPath, function(err, result) {
 
             if (err) {
-                utils.log(logger, 'warn', proxyRes, 'Impossible to load the Customer');
+                utils.log(logger, 'warn', proxyRes, 'Impossible to load attached Customer');
                 return callback(null);
             } else {
 
