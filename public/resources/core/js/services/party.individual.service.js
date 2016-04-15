@@ -100,9 +100,9 @@
             case TYPES.CONTACT_MEDIUM.POSTAL_ADDRESS.code:
                 result = [
                     this.medium.streetOne,
-                    this.medium.stateOrProvince,
-                    this.medium.postcode,
                     this.medium.city,
+                    this.medium.postcode,
+                    this.medium.stateOrProvince,
                     parseCountry(this.medium.country)
                 ].join(', ');
                 break;

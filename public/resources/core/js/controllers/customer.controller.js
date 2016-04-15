@@ -43,7 +43,7 @@
         }
     }
 
-    function CustomerUpdateController($element, $scope, $rootScope, $controller, EVENTS, COUNTRIES, Customer) {
+    function CustomerUpdateController($element, $scope, $rootScope, $controller, EVENTS, COUNTRIES, Utils, Customer) {
         /* jshint validthis: true */
         var vm = this;
         var _customer;
