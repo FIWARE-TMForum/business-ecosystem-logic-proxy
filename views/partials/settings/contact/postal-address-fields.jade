@@ -18,18 +18,18 @@
             span(ng-message="required") This field is required.
             span(ng-message="maxlength") This field must not exceed 50 chars.
       .col-sm-6
-        .form-group(ng-class="{ 'has-error': vm.hasFieldError(form.stateOrProvince) }")
-          label State / Province
+        .form-group(ng-class="{ 'has-error': vm.hasFieldError(form.city) }")
+          label City
           input.form-control(
             type="text"
-            name="stateOrProvince"
-            ng-model="postalAddress.medium.stateOrProvince"
+            name="city"
+            ng-model="postalAddress.medium.city"
             required
             ng-maxlength="50"
           )
           .help-block(
-            ng-messages="form.stateOrProvince.$error"
-            ng-show="vm.hasFieldError(form.stateOrProvince)"
+            ng-messages="form.city.$error"
+            ng-show="vm.hasFieldError(form.city)"
           )
             span(ng-message="required") This field is required.
             span(ng-message="maxlength") This field must not exceed 50 chars.
@@ -50,6 +50,22 @@
           )
             span(ng-message="required") This field is required.
             span(ng-message="number") This field must be a valid number.
+      .col-sm-6
+        .form-group(ng-class="{ 'has-error': vm.hasFieldError(form.stateOrProvince) }")
+          label State / Province
+          input.form-control(
+            type="text"
+            name="stateOrProvince"
+            ng-model="postalAddress.medium.stateOrProvince"
+            required
+            ng-maxlength="50"
+          )
+          .help-block(
+            ng-messages="form.stateOrProvince.$error"
+            ng-show="vm.hasFieldError(form.stateOrProvince)"
+          )
+            span(ng-message="required") This field is required.
+            span(ng-message="maxlength") This field must not exceed 50 chars.
     .row
       .col-sm-6
         .form-group(ng-class="{ 'has-error': vm.hasFieldError(form.country) }")
@@ -66,19 +82,3 @@
             ng-show="vm.hasFieldError(form.country)"
           )
             span(ng-message="required") This field is required.
-      .col-sm-6
-        .form-group(ng-class="{ 'has-error': vm.hasFieldError(form.city) }")
-          label City
-          input.form-control(
-            type="text"
-            name="city"
-            ng-model="postalAddress.medium.city"
-            required
-            ng-maxlength="50"
-          )
-          .help-block(
-            ng-messages="form.city.$error"
-            ng-show="vm.hasFieldError(form.city)"
-          )
-            span(ng-message="required") This field is required.
-            span(ng-message="maxlength") This field must not exceed 50 chars.
