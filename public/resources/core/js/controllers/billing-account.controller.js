@@ -30,7 +30,7 @@
         });
     }
 
-    function BillingAccountCreateController($scope, $rootScope, $controller, COUNTRIES, Utils, BillingAccount, Customer) {
+    function BillingAccountCreateController($scope, $rootScope, $controller, COUNTRIES, EVENTS, Utils, BillingAccount, Customer) {
         /* jshint validthis: true */
         var vm = this;
         var billingAccount;
