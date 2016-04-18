@@ -43,5 +43,6 @@
           telephone-number="createVM.telephoneNumber"
         )
         .form-group.text-right
-          button.btn.btn-warning.z-depth-1(ng-disabled="!createVM.form.$valid" ng-click="createVM.create(createVM.form)")
+          button.btn.btn-warning.z-depth-1(ng-disabled="!createVM.form.$valid || createVM.status === createVM.DATA_STATUS.LOADING" ng-click="createVM.create(createVM.form)")
+            span.item-icon.fa.fa-spin.fa-spinner(ng-if="createVM.status === createVM.DATA_STATUS.LOADING")
             span.item-text Create

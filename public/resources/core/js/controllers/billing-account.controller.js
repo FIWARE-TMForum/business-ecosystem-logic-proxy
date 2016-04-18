@@ -30,7 +30,7 @@
         });
     }
 
-    function BillingAccountCreateController($scope, $rootScope, $controller, COUNTRIES, EVENTS, Utils, BillingAccount, Customer) {
+    function BillingAccountCreateController($scope, $rootScope, $controller, COUNTRIES, EVENTS, DATA_STATUS, Utils, BillingAccount, Customer) {
         /* jshint validthis: true */
         var vm = this;
         var billingAccount;
@@ -39,7 +39,9 @@
 
         vm.CONTACT_MEDIUM = Customer.TYPES.CONTACT_MEDIUM;
         vm.COUNTRIES = COUNTRIES;
+        vm.DATA_STATUS = DATA_STATUS;
         vm.create = create;
+        vm.status = DATA_STATUS.LOADED;
 
         resetData();
 
@@ -50,14 +52,17 @@
                 vm.telephoneNumber
             ];
 
+            vm.status = DATA_STATUS.LOADING;
             BillingAccount.create(billingAccount).then(function (billingAccount) {
                 $rootScope.$broadcast(Customer.EVENTS.CUSTOMER_CREATED, billingAccount.customerAccount.customer);
                 resetData();
                 vm.resetForm(form);
+                vm.status = DATA_STATUS.LOADED;
             }, function (response) {
                 $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
                     error: Utils.parseError(response, 'Unexpected error trying to create a new shipping address.')
                 });
+                vm.status = DATA_STATUS.ERROR;
             });
         }
 
