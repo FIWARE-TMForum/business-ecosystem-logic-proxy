@@ -28,7 +28,8 @@
                 dt Price
                 dd.text-dark-secondary {{ detailVM.item.formatPriceplanOf($index) }}
                 dt Billing address
-                dd.text-dark-secondary {{ orderItem.billingAccount.getPostalAddress().toString() }}
+                dd.text-dark-secondary
+                  span(style="white-space: pre-line;") {{ orderItem.billingAccount.getPostalAddress().toString() }}
                 dt(ng-if="orderItem.product.productCharacteristic.length") Characteristics
                 dd(ng-if="orderItem.product.productCharacteristic.length" style="padding-left: 15px;")
                   p(ng-repeat="characteristic in orderItem.product.productCharacteristic")

@@ -24,7 +24,8 @@
             tbody
               tr(ng-repeat="customer in searchVM.list")
                 td {{ customer.getEmailAddress().toString() }}
-                td {{ customer.getPostalAddress().toString() }}
+                td
+                  span(style="white-space: pre-line;") {{ customer.getPostalAddress().toString() }}
                 td {{ customer.getTelephoneNumber().toString() }}
                 td
                   a.btn.btn-sm.btn-icon.btn-info(ng-click="searchVM.updateCustomer($index)")

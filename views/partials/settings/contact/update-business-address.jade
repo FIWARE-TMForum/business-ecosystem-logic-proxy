@@ -23,7 +23,8 @@
             tbody
               tr(ng-repeat="contactMedium in updateVM.item.contactMedium")
                 th {{ contactMedium.getType().name }}
-                td {{ contactMedium.toString() }}
+                td
+                  span(style="white-space: pre-line;") {{ contactMedium.toString() }}
                 td
                   a.btn.btn-sm.btn-icon.btn-info(ng-click="updateVM.updateContactMedium($index)")
                     span.item-icon.fa.fa-pencil

@@ -77,7 +77,8 @@ ui-view
                       tbody
                         tr(ng-repeat="billingAccount in searchVM.list" ng-click="orderVM.setBillingAccount(billingAccount)" ng-class="{ 'active': orderVM.billingAccount.id == billingAccount.id }")
                           td {{ billingAccount.getEmailAddress().toString() }}
-                          td {{ billingAccount.getPostalAddress().toString() }}
+                          td
+                            span(style="white-space: pre-line;") {{ billingAccount.getPostalAddress().toString() }}
                           td {{ billingAccount.getTelephoneNumber().toString() }}
             .row
               .col-xs-12

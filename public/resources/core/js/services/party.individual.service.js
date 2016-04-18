@@ -98,13 +98,7 @@
                 result = this.medium.emailAddress;
                 break;
             case TYPES.CONTACT_MEDIUM.POSTAL_ADDRESS.code:
-                result = [
-                    this.medium.streetOne,
-                    this.medium.city,
-                    this.medium.postcode,
-                    this.medium.stateOrProvince,
-                    parseCountry(this.medium.country)
-                ].join(', ');
+                result = this.medium.streetOne + ', ' + this.medium.city + '\n' + this.medium.postcode + ', ' + this.medium.stateOrProvince + '\n' + parseCountry(this.medium.country);
                 break;
             case TYPES.CONTACT_MEDIUM.TELEPHONE_NUMBER.code:
                 result = [
