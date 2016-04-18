@@ -28,8 +28,11 @@ html(ng-app="app")
           BILLING_MANAGEMENT: '#{ proxyPath }/#{ billingPath }/api/billingManagement/v2',
           CUSTOMER_MANAGEMENT: '#{ proxyPath }/#{ customerPath }/api/customerManagement/v2',
           PAYMENT: '#{ proxyPath }/#{ chargingPath }/api/orderManagement/orders/:action',
+          SHARING_MODELS: '#{ proxyPath }/#{ rssPath }/rss/models',
+          SHARING_PROVIDERS: '#{ proxyPath }/#{ rssPath }/rss/providers',
           SHOPPING_CART: '#{ shoppingCartPath }/:action/:id'
         })
+        .constant('PLATFORM_REVENUE', #{ platformRevenue })
         .run(function($rootScope, $state, $injector) {
 
           $rootScope.$on('$stateChangeStart', function (e, toState, toParams) {
@@ -211,6 +214,8 @@ html(ng-app="app")
       include ./partials/stock/product-offering/create-form-categories.jade
     script(type="text/ng-template", id="stock/product-offering/create/finish")
       include ./partials/stock/product-offering/create-form-finish.jade
+    script(type="text/ng-template", id="stock/product-offering/create/sharing")
+      include ./partials/stock/product-offering/create-form-sharing-model.jade
     script(type="text/ng-template", id="stock/product-offering/update")
       include ./partials/stock/product-offering/update.jade
     script(type="text/ng-template", id="stock/product-offering/update/priceplan")
@@ -245,6 +250,19 @@ html(ng-app="app")
       include ./partials/stock/product-catalogue/update-party.jade
     script(type="text/ng-template", id="stock/product-catalogue/update/offering")
       include ./partials/stock/product-catalogue/update-offering.jade
+
+    script(type="text/ng-template", id="stock/sharing-models/search")
+      include ./partials/stock/sharing-models/search.jade
+    script(type="text/ng-template", id="stock/sharing-models/create")
+      include ./partials/stock/sharing-models/create.jade
+    script(type="text/ng-template", id="stock/sharing-models/create/general")
+      include ./partials/stock/sharing-models/create-form.jade
+    script(type="text/ng-template", id="stock/sharing-models/create/stakeholders")
+      include ./partials/stock/sharing-models/create-form-stakeholders.jade
+    script(type="text/ng-template", id="stock/sharing-models/create/finish")
+      include ./partials/stock/sharing-models/create-form-finish.jade
+    script(type="text/ng-template", id="stock/sharing-models/update")
+      include ./partials/stock/sharing-models/update.jade
 
     script(type="text/ng-template", id="inventory/sidebar")
       include ./partials/inventory/sidebar.jade

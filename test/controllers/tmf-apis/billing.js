@@ -164,7 +164,7 @@ describe('Billing API', function() {
 
         describe('GET', function() {
 
-            it('should fail if the user is not logged in', function(done) {
+            it('should not allow to retrieve resources if the user is not logged in', function(done) {
                 failIfNotLoggedIn('GET', done);
             });
 
@@ -194,7 +194,8 @@ describe('Billing API', function() {
 
             };
 
-            it('should fail if user is trying to list but invalid relatedParty filter', function(done) {
+            it('should not allow to retrieve a resource when user is trying to list but invalid relatedParty filter',
+                    function(done) {
 
                 var returnedError = {
                     status: 403,
@@ -204,7 +205,8 @@ describe('Billing API', function() {
                 testListBillingAccount(returnedError, '', done);
             });
 
-            it('should fail if user is trying to list but invalid relatedParty filter even if query included', function(done) {
+            it('should not allow to retrieve a resource when user is trying to list but invalid relatedParty filter ' +
+                    'even if query included', function(done) {
 
                 var returnedError = {
                     status: 403,
@@ -214,11 +216,11 @@ describe('Billing API', function() {
                 testListBillingAccount(returnedError, '?a=b', done);
             });
 
-            it('should not fail if user is trying to list and related party filter is valid', function(done) {
+            it('should allow to retrieve resource if user is trying to list and related party filter is valid', function(done) {
                 testListBillingAccount(null, '', done);
             });
 
-            it('should not fail if requesting a single billing account', function(done) {
+            it('should allow to request a single billing account', function(done) {
 
                 //Please note, this is done in the post validation...
                 var utils = jasmine.createSpyObj('utils', ['validateLoggedIn']);
@@ -244,7 +246,7 @@ describe('Billing API', function() {
 
         describe('POST', function() {
 
-            it('should fail if the user is not logged in', function(done) {
+            it('should not allow to create resources if the user is not logged in', function(done) {
                 failIfNotLoggedIn('POST', done);
             });
 
@@ -277,11 +279,11 @@ describe('Billing API', function() {
                 });
             };
 
-            it('should fail if an unsupported field is included', function(done) {
+            it('should not allow to create billing account if an unsupported field is included', function(done) {
                 testCreate({ 'currency': 'EUR' }, [], UNSUPPORTED_FIELDS_ERROR, done);
             });
 
-            it('should fail if relatedParty field not included', function(done) {
+            it('should not allow to create billing account if relatedParty field not included', function(done) {
 
                 var expectedErr = {
                     status: 422,
@@ -292,7 +294,7 @@ describe('Billing API', function() {
 
             });
 
-            it('should fail if relatedParty field is invalid', function(done) {
+            it('should not allow to create billing account if relatedParty field is invalid', function(done) {
                 testCreate({ 'relatedParty': [] }, [false], INVALID_RELATED_PARTY_ERROR, done);
             });
 
@@ -300,7 +302,7 @@ describe('Billing API', function() {
                 testCreate({ 'relatedParty': [] }, [true], CUSTOMER_ACCOUNT_MISSING_ERROR, done);
             });
 
-            it('should fail if customerAccount included but href missing', function(done) {
+            it('should not allow to create billing account if customerAccount included but href missing', function(done) {
 
                 var body = {
                     'relatedParty': [],
@@ -310,7 +312,7 @@ describe('Billing API', function() {
                 testCreate(body, [true], CUSTOMER_ACCOUNT_MISSING_ERROR, done);
             });
 
-            it('should fail if customerAccount cannot be retrieved', function(done) {
+            it('should not allow to create billing account if customerAccount cannot be retrieved', function(done) {
 
                 var customerAccountPath = '/customerAccount/1';
 
@@ -328,7 +330,7 @@ describe('Billing API', function() {
                 testCreate(body, [true], CUSTOMER_ACCOUNT_INACCESSIBLE_ERROR, done);
             });
 
-            it('should fail if customer cannot be retrieved', function(done) {
+            it('should not allow to create billing account if customer cannot be retrieved', function(done) {
 
                 var customerAccountPath = '/customerAccount/1';
                 var customerPath = '/customer/1';
@@ -376,18 +378,18 @@ describe('Billing API', function() {
 
             };
 
-            it('should fail if customer does not belong to the user', function(done) {
+            it('should not allow to create billing account if customer does not belong to the user', function(done) {
                 customerAPICorrectResponsesTest([true, false], INVALID_CUSTOMER_ERROR, done);
             });
 
-            it('should not fail if all the fields are valid', function(done) {
+            it('should allow to create billing account if all the fields are valid', function(done) {
                 customerAPICorrectResponsesTest([true, true], null, done);
             });
         });
 
         describe('PATCH', function() {
 
-            it('should fail if the user is not logged in', function(done) {
+            it('should not allow to update resources if the user is not logged in', function(done) {
                 failIfNotLoggedIn('PATCH', done);
             });
 
@@ -420,7 +422,7 @@ describe('Billing API', function() {
                 });
             };
 
-            it('should fail if the billing account cannot be retrieved', function(done) {
+            it('should not allow to update billing account if it cannot be retrieved', function(done) {
 
                 var billingAccountPath = VALID_BILLING_PATH + '/1';
 
@@ -432,7 +434,7 @@ describe('Billing API', function() {
 
             });
 
-            it('should fail if the billing account does not exist', function(done) {
+            it('should not allow to update billing account if it does not exist', function(done) {
 
                 var billingAccountPath = VALID_BILLING_PATH + '/1';
 
@@ -456,22 +458,22 @@ describe('Billing API', function() {
 
             };
 
-            it('should fail if user is not the owner of the account', function(done) {
+            it('should not allow to update billing account if user is not the owner', function(done) {
                 updateExistingAccount({}, [false], NON_OWNED_BILLING_ERROR, done);
             });
 
-            it('should not fail if user owns the account', function(done) {
+            it('should allow to update billing account if user is the owner', function(done) {
                 updateExistingAccount({}, [true], null, done);
             });
 
             // This method checks that the relatedParty field is checked when updating a billing account
-            it('should fail if relatedParty field is invalid', function(done) {
+            it('should not allow to update billing account if related party is invalid', function(done) {
                 updateExistingAccount({ 'relatedParty': [] }, [true, false], INVALID_RELATED_PARTY_ERROR, done);
             });
 
             // This method checks that the customerAccount field is checked when updating a billing account
             // The rest of the functionality is tested at the time of creating a new billing account
-            it('should fail if customer account cannot be checked', function(done) {
+            it('should not allow to update billing account if customer account cannot be checked', function(done) {
 
                 var customerAccountPath = '/customerAccount/1';
 
@@ -524,15 +526,15 @@ describe('Billing API', function() {
             testExecutePostValidation('POST', {}, null, null, done);
         });
 
-        it('should not fail if body contains an array', function(done) {
+        it('should allow to retrieve collections', function(done) {
             testExecutePostValidation('GET', [], null, null, done);
         });
 
-        it('should fail if the user is not the owner of the asset', function(done) {
+        it('should not allow to retrieve asset if the user is not the owner', function(done) {
             testExecutePostValidation('GET', {relatedParty: []}, false, RETRIEVAL_UNAUTHORIZED_ERROR, done);
         });
 
-        it('should not fail if the user is the owner of the asset', function(done) {
+        it('should allow to retrieve resource if the user is the owner', function(done) {
             testExecutePostValidation('GET', {relatedParty: []}, true, null, done);
         });
 

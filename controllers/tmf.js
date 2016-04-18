@@ -54,6 +54,7 @@ var tmf = (function() {
         var options = {
             url: url,
             method: req.method,
+            encoding: null,
             headers: utils.proxiedRequestHeaders(req)
         };
 

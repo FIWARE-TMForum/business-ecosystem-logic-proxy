@@ -8,6 +8,7 @@ describe('Customer API', function() {
     var BILLING_SERVER = (config.appSsl ? 'https' : 'http') + '://' + config.appHost + ':' + config.endpoints.billing.port;
     var CUSTOMER_SERVER = (config.appSsl ? 'https' : 'http') + '://' + config.appHost + ':' + config.endpoints.customer.port;
 
+    var BASE_BILLING_PATH = '/' + config.endpoints.billing.path + '/api/billingManagement/v2/billingAccount';
     var VALID_CUSTOMER_PATH = '/' + config.endpoints.customer.path + '/api/customerManagement/v2/customer';
     var VALID_CUSTOMER_ACCOUNT_PATH = '/' + config.endpoints.customer.path + '/api/customerManagement/v2/customerAccount';
 
@@ -35,7 +36,9 @@ describe('Customer API', function() {
 
     describe('Check Permissions', function() {
 
-        var failIfNotLoggedIn = function(method, done) {
+        // Generic test for GET, POST, PATCH, DELETE
+
+        var failIfNotLoggedIn = function (method, done) {
 
             var returnedError = {
                 status: 401,
@@ -43,7 +46,7 @@ describe('Customer API', function() {
             };
 
             var utils = jasmine.createSpyObj('utils', ['validateLoggedIn']);
-            utils.validateLoggedIn.and.callFake(function(req, callback) {
+            utils.validateLoggedIn.and.callFake(function (req, callback) {
                 callback(returnedError);
             });
 
@@ -54,13 +57,13 @@ describe('Customer API', function() {
                 body: {}
             };
 
-            customerApi.checkPermissions(req, function(err) {
+            customerApi.checkPermissions(req, function (err) {
                 expect(err).toBe(returnedError);
                 done();
             });
         };
 
-        describe('General', function() {
+        describe('General', function () {
 
             it('should reject requests to not supported paths', function (done) {
 
@@ -81,14 +84,14 @@ describe('Customer API', function() {
                 });
             });
 
-            it('should reject requests with unrecognized methods', function(done) {
+            it('should reject requests with unrecognized methods', function (done) {
                 var customerApi = getCustomerAPI({}, {});
                 var req = {
                     method: 'PUT',
                     apiUrl: VALID_CUSTOMER_PATH
                 };
 
-                customerApi.checkPermissions(req, function(err) {
+                customerApi.checkPermissions(req, function (err) {
 
                     expect(err).toEqual({
                         status: 405,
@@ -99,7 +102,7 @@ describe('Customer API', function() {
                 });
             });
 
-            it('should reject requests with invalid body', function(done) {
+            it('should reject requests with invalid body', function (done) {
                 var customerApi = getCustomerAPI({}, {});
                 var req = {
                     method: 'POST',
@@ -107,7 +110,7 @@ describe('Customer API', function() {
                     body: 'invalid'
                 };
 
-                customerApi.checkPermissions(req, function(err) {
+                customerApi.checkPermissions(req, function (err) {
 
                     expect(err).toEqual({
                         status: 400,
@@ -119,16 +122,16 @@ describe('Customer API', function() {
             });
         });
 
-        describe('GET', function() {
+        describe('GET', function () {
 
-            it('should fail if user is not logged in', function(done) {
+            it('should not allow to retrieve resources if user is not logged in', function (done) {
                 failIfNotLoggedIn('GET', done);
             });
 
-            var testListCustomerAccount = function(path, done) {
+            var testListCustomerAccount = function (path, done) {
 
                 var utils = jasmine.createSpyObj('utils', ['validateLoggedIn']);
-                utils.validateLoggedIn.and.callFake(function(req, callback) {
+                utils.validateLoggedIn.and.callFake(function (req, callback) {
                     callback(null);
                 });
 
@@ -139,7 +142,7 @@ describe('Customer API', function() {
                     body: {}
                 };
 
-                customerApi.checkPermissions(req, function(err) {
+                customerApi.checkPermissions(req, function (err) {
                     expect(err).toEqual({
                         status: 403,
                         message: 'Unauthorized to retrieve the list of customer accounts'
@@ -148,23 +151,23 @@ describe('Customer API', function() {
                 });
             };
 
-            it('should fail if listing customer accounts', function(done) {
+            it('should not allow to list customer accounts', function (done) {
                 testListCustomerAccount(VALID_CUSTOMER_ACCOUNT_PATH, done);
             });
 
-            it('should fail if listing customer accounts even if query included', function(done) {
+            it('should not allow to list customer accounts even if query included', function (done) {
                 testListCustomerAccount(VALID_CUSTOMER_ACCOUNT_PATH + '/?a=b', done);
             });
 
-            var testListCustomer = function(expectedErr, done) {
+            var testListCustomer = function (expectedErr, done) {
 
                 var utils = jasmine.createSpyObj('utils', ['validateLoggedIn']);
-                utils.validateLoggedIn.and.callFake(function(req, callback) {
+                utils.validateLoggedIn.and.callFake(function (req, callback) {
                     callback(null);
                 });
 
                 var tmfUtils = jasmine.createSpyObj('tmfUtils', ['filterRelatedPartyFields']);
-                tmfUtils.filterRelatedPartyFields.and.callFake(function(req, callback) {
+                tmfUtils.filterRelatedPartyFields.and.callFake(function (req, callback) {
                     callback(expectedErr);
                 });
 
@@ -175,24 +178,24 @@ describe('Customer API', function() {
                     body: {}
                 };
 
-                customerApi.checkPermissions(req, function(err) {
+                customerApi.checkPermissions(req, function (err) {
                     expect(err).toBe(expectedErr);
                     done();
                 });
             };
 
-            it('should fail if listing customer with invalid filter', function(done) {
+            it('should not allow to list customers when invalid filters applied', function (done) {
                 testListCustomer({status: 403, message: 'Invalid filter'}, done);
             });
 
-            it('should not fail if listing customer with valid filter', function(done) {
+            it('should allow to list customers when valid filters applied', function (done) {
                 testListCustomer(null, done);
             });
 
-            var testGetResource = function(path, done) {
+            var testGetResource = function (path, done) {
 
                 var utils = jasmine.createSpyObj('utils', ['validateLoggedIn']);
-                utils.validateLoggedIn.and.callFake(function(req, callback) {
+                utils.validateLoggedIn.and.callFake(function (req, callback) {
                     callback(null);
                 });
 
@@ -203,32 +206,32 @@ describe('Customer API', function() {
                     body: {}
                 };
 
-                customerApi.checkPermissions(req, function(err) {
+                customerApi.checkPermissions(req, function (err) {
                     expect(err).toBe(null);
                     done();
                 });
             };
 
-            it('should allow to retrieve one customer', function(done) {
+            it('should allow to retrieve one customer', function (done) {
                 testGetResource(VALID_CUSTOMER_PATH + '/1', done);
             });
 
-            it('should allow to retrieve one customer account', function(done) {
+            it('should allow to retrieve one customer account', function (done) {
                 testGetResource(VALID_CUSTOMER_ACCOUNT_PATH + '/1', done);
             });
 
         });
 
-        describe('POST', function() {
+        describe('POST', function () {
 
-            it('should fail if the user is not logged in', function(done) {
+            it('should not allow to create resource if the user is not logged in', function (done) {
                 failIfNotLoggedIn('POST', done);
             });
 
-            var testCreate = function(path, body, hasPartyRole, expectedPartyCall, expectedErr, done) {
+            var testCreate = function (path, body, hasPartyRole, expectedPartyCall, expectedErr, done) {
 
                 var utils = jasmine.createSpyObj('utils', ['validateLoggedIn']);
-                utils.validateLoggedIn.and.callFake(function(req, callback) {
+                utils.validateLoggedIn.and.callFake(function (req, callback) {
                     callback(null);
                 });
 
@@ -242,7 +245,7 @@ describe('Customer API', function() {
                     body: JSON.stringify(body)
                 };
 
-                customerApi.checkPermissions(req, function(err) {
+                customerApi.checkPermissions(req, function (err) {
 
                     expect(err).toEqual(expectedErr);
 
@@ -255,7 +258,7 @@ describe('Customer API', function() {
 
             };
 
-            it('should fail when creating customer without related party', function(done) {
+            it('should not allow to create customer without related party', function (done) {
 
                 var expectedErr = {
                     status: 422,
@@ -266,7 +269,7 @@ describe('Customer API', function() {
 
             });
 
-            it('should fail when creating a customer with invalid related party', function(done) {
+            it('should not allow to create a customer with invalid related party', function (done) {
 
                 var expectedErr = {
                     status: 403,
@@ -282,7 +285,7 @@ describe('Customer API', function() {
                 testCreate(VALID_CUSTOMER_PATH, body, false, [body.relatedParty], expectedErr, done);
             });
 
-            it('should allow to create customer with valid related party', function(done) {
+            it('should allow to create customer with valid related party', function (done) {
 
                 var body = {
                     relatedParty: {
@@ -293,7 +296,7 @@ describe('Customer API', function() {
                 testCreate(VALID_CUSTOMER_PATH, body, true, [body.relatedParty], null, done);
             });
 
-            it('should fail when creating customer with customerAccount', function(done) {
+            it('should not allow to create a customer with the customerAccount field', function (done) {
 
                 var expectedErr = {
                     status: 403,
@@ -310,7 +313,7 @@ describe('Customer API', function() {
                 testCreate(VALID_CUSTOMER_PATH, body, true, [body.relatedParty], expectedErr, done);
             });
 
-            it('should fail when creating customer account without customer', function(done) {
+            it('should not allow to create a customer account without customer field', function (done) {
 
                 var expectedErr = {
                     status: 422,
@@ -320,7 +323,7 @@ describe('Customer API', function() {
                 testCreate(VALID_CUSTOMER_ACCOUNT_PATH, {}, false, null, expectedErr, done);
             });
 
-            it('should fail when creating a customer account with invalid customer', function(done) {
+            it('should not allow to create a customer account with invalid customer', function (done) {
 
                 var body = {
                     customer: {
@@ -337,7 +340,7 @@ describe('Customer API', function() {
                 testCreate(VALID_CUSTOMER_ACCOUNT_PATH, body, false, null, expectedErr, done);
             });
 
-            it('should fail when creating a customer account and customer cannot be retrieved', function(done) {
+            it('should not allow to create a customer account when customer cannot be retrieved', function (done) {
 
                 var customerPath = VALID_CUSTOMER_PATH + '/8';
 
@@ -356,7 +359,7 @@ describe('Customer API', function() {
 
             });
 
-            var testCreateAccountExistingCustomer = function(hasPartyRole, expectedErr, done) {
+            var testCreateAccountExistingCustomer = function (hasPartyRole, expectedErr, done) {
 
                 var customerPath = VALID_CUSTOMER_PATH + '/8';
 
@@ -380,7 +383,7 @@ describe('Customer API', function() {
                 testCreate(VALID_CUSTOMER_ACCOUNT_PATH, body, hasPartyRole, [customer.relatedParty], expectedErr, done);
             };
 
-            it('should fail when creating a customer account and customer does not belong to the user', function(done) {
+            it('should not allow to create a customer account when given customer does not belong to the user', function (done) {
 
                 var expectedErr = {
                     status: 403,
@@ -391,190 +394,549 @@ describe('Customer API', function() {
 
             });
 
-            it('should allow to create customer account', function(done) {
+            it('should allow to create customer account', function (done) {
                 testCreateAccountExistingCustomer(true, null, done);
             });
 
         });
 
-        describe('PATCH', function() {
+        // GENERIC TESTS FOR PATCH & DELETE
 
-            it('should fail if the user is not logged in', function(done) {
+        var testUpdateDelete = function (path, method, body, hasPartyRole, expectedPartyCall, expectedErr, done) {
+
+            var utils = jasmine.createSpyObj('utils', ['validateLoggedIn']);
+            utils.validateLoggedIn.and.callFake(function (req, callback) {
+                callback(null);
+            });
+
+            var tmfUtils = jasmine.createSpyObj('tmfUtils', ['hasPartyRole']);
+            tmfUtils.hasPartyRole.and.returnValue(hasPartyRole);
+
+            var customerApi = getCustomerAPI(utils, tmfUtils);
+            var req = {
+                method: method,
+                apiUrl: path,
+                body: JSON.stringify(body)
+            };
+
+            customerApi.checkPermissions(req, function (err) {
+                expect(err).toEqual(expectedErr);
+
+                if (expectedPartyCall) {
+                    expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(req, expectedPartyCall, 'owner');
+                }
+
+                done();
+            });
+        };
+
+        var failUpdateResourceCannotBeRetrieved = function(method, done) {
+
+            // This test is valid for customer and customer accounts
+            var customerPath = VALID_CUSTOMER_PATH + '/8';
+
+            nock(CUSTOMER_SERVER)
+                .get(customerPath)
+                .reply(500);
+
+            var expectedErr = {
+                status: 500,
+                message: 'The required resource cannot be retrieved'
+            };
+
+            testUpdateDelete(customerPath, method, {}, false, null, expectedErr, done);
+        };
+
+        var failUpdateResourceDoesNotExist = function(method, done) {
+            // This test is valid for customer and customer accounts
+            var customerPath = VALID_CUSTOMER_PATH + '/8';
+
+            nock(CUSTOMER_SERVER)
+                .get(customerPath)
+                .reply(404);
+
+            var expectedErr = {
+                status: 404,
+                message: 'The required resource does not exist'
+            };
+
+            testUpdateDelete(customerPath, method, {}, false, null, expectedErr, done);
+        };
+
+        var failUpdateNonOwnedResource = function(method, done) {
+            testUpdateDeleteCustomer('PATCH', {}, false, UNAUTHORIZED_UPDATE_RESOURCE_ERROR, done);
+        };
+
+        var testUpdateDeleteCustomer = function (method, body, hasPartyRole, expectedErr, done) {
+
+            var customerPath = VALID_CUSTOMER_PATH + '/8';
+
+            var customer = {
+                relatedParty: {
+                    id: 9
+                }
+            };
+
+            nock(CUSTOMER_SERVER)
+                .get(customerPath)
+                .reply(200, customer);
+
+            testUpdateDelete(customerPath, method, body, hasPartyRole, [customer.relatedParty], expectedErr, done);
+        };
+
+        var failUpdateCustomerAccountCustomerInaccessible = function(method, done) {
+
+            var customerAccountPath = VALID_CUSTOMER_ACCOUNT_PATH + '/9';
+            var customerPath = VALID_CUSTOMER_PATH + '/8';
+
+            var customerAccount = {
+                customer: {
+                    id: 8,
+                    href: CUSTOMER_SERVER + customerPath
+                }
+            };
+
+            nock(CUSTOMER_SERVER)
+                .get(customerAccountPath)
+                .reply(200, customerAccount);
+
+            nock(CUSTOMER_SERVER)
+                .get(customerPath)
+                .reply(500);
+
+            testUpdateDelete(customerAccountPath, method, {}, false, null, CUSTOMER_CANNOT_BE_RETRIEVED_ERROR, done);
+        };
+
+        var testUpdateCustomerAccountExistingCustomer = function (method, body, hasPartyRole, expectedErr, done) {
+
+            var customerAccountPath = VALID_CUSTOMER_ACCOUNT_PATH + '/9';
+            var customerPath = VALID_CUSTOMER_PATH + '/8';
+
+            var customerAccount = {
+                customer: {
+                    id: 8,
+                    href: CUSTOMER_SERVER + customerPath
+                }
+            };
+
+            var customer = {
+                relatedParty: {
+                    id: 9
+                }
+            };
+
+            nock(CUSTOMER_SERVER)
+                .get(customerAccountPath)
+                .reply(200, customerAccount);
+
+            nock(CUSTOMER_SERVER)
+                .get(customerPath)
+                .reply(200, customer);
+
+            testUpdateDelete(customerAccountPath, method, body, hasPartyRole, [customer.relatedParty], expectedErr, done);
+        };
+
+        var failUpdateCustomerAccountNonOwnedByUser = function(method, done) {
+            testUpdateCustomerAccountExistingCustomer(method, {}, false, UNAUTHORIZED_UPDATE_RESOURCE_ERROR, done);
+        };
+
+        describe('PATCH', function () {
+
+            it('should not allow to update a resource if the user is not logged in', function (done) {
                 failIfNotLoggedIn('PATCH', done);
             });
 
-            var testUpdate = function(path, body, hasPartyRole, expectedPartyCall, expectedErr, done) {
-
-                var utils = jasmine.createSpyObj('utils', ['validateLoggedIn']);
-                utils.validateLoggedIn.and.callFake(function(req, callback) {
-                    callback(null);
-                });
-
-                var tmfUtils = jasmine.createSpyObj('tmfUtils', ['hasPartyRole']);
-                tmfUtils.hasPartyRole.and.returnValue(hasPartyRole);
-
-                var customerApi = getCustomerAPI(utils, tmfUtils);
-                var req = {
-                    method: 'PATCH',
-                    apiUrl: path,
-                    body: JSON.stringify(body)
-                };
-
-                customerApi.checkPermissions(req, function(err) {
-                    expect(err).toEqual(expectedErr);
-
-                    if (expectedPartyCall) {
-                        expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(req, expectedPartyCall, 'owner');
-                    }
-
-                    done();
-                });
-
-            };
-
-            it('should fail when updating a customer (account)? and it cannot be retrieved', function(done) {
-
-                // This test is valid for customer and customer accounts
-                var customerPath = VALID_CUSTOMER_PATH + '/8';
-
-                nock(CUSTOMER_SERVER)
-                    .get(customerPath)
-                    .reply(500);
-
-                var expectedErr = {
-                    status: 500,
-                    message: 'The required resource cannot be retrieved'
-                };
-
-                testUpdate(customerPath, {}, false, null, expectedErr, done);
+            it('should not allow to update a customer (account)? when it cannot be retrieved', function (done) {
+                failUpdateResourceCannotBeRetrieved('PATCH', done)
             });
 
-            it('should fail when updating a customer (account)? that does not exist', function(done) {
-
-                // This test is valid for customer and customer accounts
-                var customerPath = VALID_CUSTOMER_PATH + '/8';
-
-                nock(CUSTOMER_SERVER)
-                    .get(customerPath)
-                    .reply(404);
-
-                var expectedErr = {
-                    status: 404,
-                    message: 'The required resource does not exist'
-                };
-
-                testUpdate(customerPath, {}, false, null, expectedErr, done);
+            it('should not allow to update a customer (account)? that does not exist', function (done) {
+                failUpdateResourceDoesNotExist('PATCH', done);
             });
 
-            var testUpdateCustomer = function(body, hasPartyRole, expectedErr, done) {
-
-                var customerPath = VALID_CUSTOMER_PATH + '/8';
-
-                var customer = {
-                    relatedParty: {
-                        id: 9
-                    }
-                };
-
-                nock(CUSTOMER_SERVER)
-                    .get(customerPath)
-                    .reply(200, customer);
-
-                testUpdate(customerPath, body, hasPartyRole, [customer.relatedParty], expectedErr, done);
-            };
-
-            it('should fail when updating a non-owned customer', function(done) {
-                testUpdateCustomer({}, false, UNAUTHORIZED_UPDATE_RESOURCE_ERROR, done);
+            it('should not allow to update a non-owned customer', function (done) {
+                failUpdateNonOwnedResource('PATCH', done);
             });
 
-            it('should fail to update a customer when related party included', function(done) {
-
+            it('should not allow to update the relatedParty field of a customer', function (done) {
                 var expectedErr = {
                     status: 403,
                     message: 'Related Party cannot be modified'
                 };
 
-                testUpdateCustomer({ relatedParty: {} }, true, expectedErr, done);
+                testUpdateDeleteCustomer('PATCH', {relatedParty: {}}, true, expectedErr, done);
             });
 
-            it('should allow to update a customer', function(done) {
-                testUpdateCustomer({}, true, null, done);
+            it('should allow to update a customer', function (done) {
+                testUpdateDeleteCustomer('PATCH', {}, true, null, done);
             });
 
-
-            it('should fail when updating a customer account and the attached customer cannot be retrieved', function(done) {
-
-                var customerAccountPath = VALID_CUSTOMER_ACCOUNT_PATH + '/9';
-                var customerPath = VALID_CUSTOMER_PATH + '/8';
-
-                var customerAccount = {
-                    customer: {
-                        id: 8,
-                        href: CUSTOMER_SERVER + customerPath
-                    }
-                };
-
-                nock(CUSTOMER_SERVER)
-                    .get(customerAccountPath)
-                    .reply(200, customerAccount);
-
-                nock(CUSTOMER_SERVER)
-                    .get(customerPath)
-                    .reply(500);
-
-                testUpdate(customerAccountPath, {}, false, null, CUSTOMER_CANNOT_BE_RETRIEVED_ERROR, done);
-
+            it('should not allow to update a customer account when the attached customer cannot be retrieved', function (done) {
+                failUpdateCustomerAccountCustomerInaccessible('PATCH', done);
             });
 
-            var testUpdateCustomerAccountExistingCustomer = function(body, hasPartyRole, expectedErr, done) {
-
-                var customerAccountPath = VALID_CUSTOMER_ACCOUNT_PATH + '/9';
-                var customerPath = VALID_CUSTOMER_PATH + '/8';
-
-                var customerAccount = {
-                    customer: {
-                        id: 8,
-                        href: CUSTOMER_SERVER + customerPath
-                    }
-                };
-
-                var customer = {
-                    relatedParty: {
-                        id: 9
-                    }
-                };
-
-                nock(CUSTOMER_SERVER)
-                    .get(customerAccountPath)
-                    .reply(200, customerAccount);
-
-                nock(CUSTOMER_SERVER)
-                    .get(customerPath)
-                    .reply(200, customer);
-
-                testUpdate(customerAccountPath, body, hasPartyRole, [customer.relatedParty], expectedErr, done);
-            };
-
-            it('should fail when updating a customer account and the attached customer does not belong to the user', function(done) {
-                testUpdateCustomerAccountExistingCustomer({}, false, UNAUTHORIZED_UPDATE_RESOURCE_ERROR, done);
+            it('should not allow to update a customer account when the attached customer does not belong to the user', function (done) {
+                failUpdateCustomerAccountNonOwnedByUser('PATCH', done);
             });
 
-            it('should allow to update a customer account', function(done) {
-                testUpdateCustomerAccountExistingCustomer({}, true, null, done);
+            it('should allow to update a customer account', function (done) {
+                testUpdateCustomerAccountExistingCustomer('PATCH', {}, true, null, done);
             });
 
-            it('should fail when updating a customer account and customer included', function(done) {
+            it('should not allow to update the customer field of a customer account', function (done) {
 
                 var expectedErr = {
                     status: 403,
                     message: 'Customer cannot be modified'
                 };
 
-                testUpdateCustomerAccountExistingCustomer({customer: {}}, true, expectedErr, done);
+                testUpdateCustomerAccountExistingCustomer('PATCH', {customer: {}}, true, expectedErr, done);
             });
 
         });
 
+        describe('DELETE', function () {
+
+            it('should not allow to delete a resource if the user is not logged in', function (done) {
+                failIfNotLoggedIn('DELETE', done);
+            });
+
+            it('should not allow to delete a customer (account)? and it cannot be retrieved', function (done) {
+                failUpdateResourceCannotBeRetrieved('DELETE', done)
+            });
+
+            it('should not allow to delete a customer (account)? that does not exist', function (done) {
+                failUpdateResourceDoesNotExist('DELETE', done);
+            });
+
+            it('should not allow to delete a non-owned customer', function (done) {
+                failUpdateNonOwnedResource('DELETE', done);
+            });
+
+            it('should allow to delete a customer', function (done) {
+                testUpdateDeleteCustomer('DELETE', {}, true, null, done);
+            });
+
+            it('should not allow to delete a customer account when the attached customer cannot be retrieved', function (done) {
+                failUpdateCustomerAccountCustomerInaccessible('DELETE', done);
+            });
+
+            it('should not allow to delete a customer account when the attached customer does not belong to the user', function (done) {
+                failUpdateCustomerAccountNonOwnedByUser('PATCH', done);
+            });
+
+            it('should allow to delete a customer account', function (done) {
+                testUpdateCustomerAccountExistingCustomer('DELETE', {}, true, null, done);
+            });
+
+        });
+    });
+
+    describe('Post Validation', function() {
+
+        describe('GET', function() {
+
+            it('should allow to retrieve collections', function(done) {
+
+                var req = {
+                    method: 'GET',
+                    body: JSON.stringify([])
+                };
+
+                var customerApi = getCustomerAPI({}, {});
+
+                customerApi.executePostValidation(req, function(err) {
+                    expect(err).toBe(null);
+                    done();
+                });
+            });
+
+            var testRetrieveResource = function(body, hasPartyRole, isRelatedPartyValues, hasPartyRoleArgument,
+                                                isRelatedPartyArguments, expectedErr, done) {
+
+                var req = {
+                    method: 'GET',
+                    body: JSON.stringify(body)
+                };
+
+                var tmfUtils = jasmine.createSpyObj('tmfUtils', ['hasPartyRole', 'isRelatedParty']);
+                tmfUtils.hasPartyRole.and.returnValue(hasPartyRole);
+                tmfUtils.isRelatedParty.and.returnValues.apply(tmfUtils.isRelatedParty, isRelatedPartyValues);
+
+                var customerApi = getCustomerAPI({}, tmfUtils);
+
+                customerApi.executePostValidation(req, function(err) {
+                    expect(err).toEqual(expectedErr);
+
+                    if (hasPartyRoleArgument) {
+                        expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(req, hasPartyRoleArgument, 'owner');
+                    }
+
+                    isRelatedPartyArguments.forEach(function(item) {
+                        expect(tmfUtils.isRelatedParty).toHaveBeenCalledWith(req, item);
+                    });
+
+                    done();
+                });
+            };
+
+            it('should allow to retrieve an owned customer', function(done) {
+
+                var body = {
+                    relatedParty: {
+                        id: 9
+                    }
+                };
+
+                testRetrieveResource(body, true, null, [body.relatedParty], [], null, done);
+            });
+
+            var testRetrieveCustomerAccount = function(customerResponse, hasPartyRoleArgument, expectedErr, done) {
+
+                var customerPath = '/customer/1';
+
+                var customerAccount = {
+                    customer: {
+                        href: CUSTOMER_SERVER + customerPath
+                    }
+                };
+
+                var customer = {
+                    relatedParty: {
+                        id: 3
+                    }
+                };
+
+                nock(CUSTOMER_SERVER)
+                    .get(customerPath)
+                    .reply(customerResponse.status, customerResponse.body);
+
+                testRetrieveResource(customerAccount, true, null, hasPartyRoleArgument, [], expectedErr, done);
+
+            };
+
+            it('should allow to retrieve an owner customer account', function(done) {
+
+                var customer = {
+                    relatedParty: {
+                        id: 3
+                    }
+                };
+
+                testRetrieveCustomerAccount({status: 200, body: customer}, [customer.relatedParty], null, done);
+
+            });
+
+            it('should not allow to retrieve a customer account when customer cannot be retrieved', function(done) {
+
+                var expectedErr = {
+                    status: 500,
+                    message: 'The attached customer cannot be retrieved'
+                };
+
+                testRetrieveCustomerAccount({status: 500, body: null}, null, expectedErr, done);
+            });
+
+            var testBillingAccountRetrieved = function(response, isRelatedPartyValues,
+                                                       isRelatedPartyArguments, expectedErr, done) {
+
+                var customer = {
+                    relatedParty: {
+                        id: 9
+                    },
+                    customerAccount: [
+                        {
+                            id: 1
+                        },
+                        {
+                            id: 2
+                        }
+                    ]
+                };
+
+                nock(BILLING_SERVER)
+                    .get(BASE_BILLING_PATH + '?customerAccount.id=1,2')
+                    .reply(response.status, response.body);
+
+                testRetrieveResource(customer, false, isRelatedPartyValues,
+                    [customer.relatedParty], isRelatedPartyArguments, expectedErr, done);
+            };
+
+            it('should not allow to retrieve customer it it does not belong to the user and ' +
+                    'billing account cannot be retrieved', function(done) {
+
+                var expectedErr = {
+                    status: 500,
+                    message: 'An error arises at the time of retrieving associated billing accounts'
+                };
+
+                testBillingAccountRetrieved({status: 500, body: null}, null, [], expectedErr, done);
+
+            });
+
+            it('should not allow to retrieve customer if it does not belong to the user and ' +
+                    '(s)he is not included in the billing account', function(done) {
+
+                var billingAccount = {
+                    relatedParty: [
+                        {
+                            id: 5
+                        }
+                    ]
+                };
+
+                var expectedErr = {
+                    status: 403,
+                    message: 'Unauthorized to retrieve the information of the given customer'
+                };
+
+                testBillingAccountRetrieved({status: 200, body: [billingAccount]}, [false],
+                    [billingAccount.relatedParty], expectedErr, done);
+
+            });
+
+            it('should allow to retrieve customer if user is included in billing account', function(done) {
+
+                var billingAccount1 = {
+                    relatedParty: [
+                        {
+                            id: 5
+                        }
+                    ]
+                };
+
+                var billingAccount2 = {
+                    relatedParty: [
+                        {
+                            id: 9
+                        }
+                    ]
+                };
+
+                testBillingAccountRetrieved({status: 200, body: [billingAccount1, billingAccount2]}, [false, true],
+                    [billingAccount1.relatedParty, billingAccount2.relatedParty], null, done);
+
+            });
+
+        });
+
+        describe('POST', function() {
+
+            it('should not fail if the request does not contain a customer field', function(done) {
+
+                var req = {
+                    method: 'POST',
+                    body: JSON.stringify({})
+                };
+
+                var customerApi = getCustomerAPI({}, {});
+
+                customerApi.executePostValidation(req, function(err) {
+                    expect(err).toBe(null);
+                    done();
+                });
+            });
+
+            it('should log a message if creating a customer account and the associated customer cannot be retrieved', function(done) {
+
+                var customerPath = '/customer/3';
+
+                var body = {
+                    customer: {
+                        href: CUSTOMER_SERVER + customerPath
+                    }
+                };
+
+                nock(CUSTOMER_SERVER)
+                    .get(customerPath)
+                    .reply(500);
+
+                var req = {
+                    method: 'POST',
+                    body: JSON.stringify(body)
+                };
+
+                var utils = jasmine.createSpyObj('utils', ['log']);
+
+                var customerApi = getCustomerAPI(utils, {});
+
+                customerApi.executePostValidation(req, function(err) {
+                    expect(err).toBe(null);
+                    expect(utils.log).toHaveBeenCalledWith(jasmine.any(Object), 'warn', req,
+                        'Impossible to load attached Customer');
+                    done();
+                });
+
+            });
+
+            var testUpdateCustomerAccount = function(responseStatus, done) {
+
+                var customerPath = '/customer/3';
+
+                var customerAccount = {
+                    id: 7,
+                    href: CUSTOMER_SERVER + '/customerAccount/7',
+                    name: 'customer',
+                    customer: {
+                        href: CUSTOMER_SERVER + customerPath
+                    }
+                };
+
+                var customer = {
+                    customerAccount: [
+                        {
+                            id: 9
+                        }
+                    ]
+                };
+
+                var expectedCustomerAccountField = JSON.parse(JSON.stringify(customer.customerAccount));
+                expectedCustomerAccountField.push({
+                    id: customerAccount.id,
+                    href: customerAccount.href,
+                    name: customerAccount.name,
+                    status: 'Active'
+                });
+
+                nock(CUSTOMER_SERVER)
+                    .get(customerPath)
+                    .reply(200, customer);
+
+                nock(CUSTOMER_SERVER)
+                    .patch(customerPath, {customerAccount: expectedCustomerAccountField})
+                    .reply(responseStatus);
+
+                var req = {
+                    method: 'POST',
+                    body: JSON.stringify(customerAccount)
+                };
+
+                var utils = jasmine.createSpyObj('utils', ['log']);
+
+                var customerApi = getCustomerAPI(utils, {});
+
+                customerApi.executePostValidation(req, function(err) {
+                    expect(err).toBe(null);
+
+                    if (responseStatus != 200) {
+                        expect(utils.log).toHaveBeenCalledWith(jasmine.any(Object), 'warn', req,
+                            'Impossible to update the list of customer accounts: ' + responseStatus);
+                    } else {
+                        expect(utils.log).not.toHaveBeenCalled();
+                    }
+
+                    done();
+                });
+            };
+
+            it('should log a message if creating a customer account and the customer cannot be updated', function(done) {
+                testUpdateCustomerAccount(425, done);
+            });
+
+            it('should not log a message if creating a customer account and it can be updated', function(done) {
+                testUpdateCustomerAccount(200, done);
+            });
+        });
     });
 
 });

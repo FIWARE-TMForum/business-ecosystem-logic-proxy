@@ -74,6 +74,7 @@ describe('TMF Controller', function() {
             var expectedOptions = {
                 url: protocol + '://' + config.appHost + ':' + utils.getAPIPort() + path,
                 method: method,
+                encoding: null,
                 headers: utils.proxiedRequestHeaders(),
                 body: req.body
             };
@@ -232,6 +233,7 @@ describe('TMF Controller', function() {
                     url: protocol + '://' + config.appHost + ':' + utils.getAPIPort() + req.apiUrl,
                     method: method,
                     body: req.body,
+                    encoding: null,
                     headers: utils.proxiedRequestHeaders()
                 };
 
@@ -388,6 +390,7 @@ describe('TMF Controller', function() {
                     {
                         url: 'http://' + config.appHost + ':' + utils.getAPIPort() + reqPath,
                         method: 'POST',
+                        encoding: null,
                         headers: utils.proxiedRequestHeaders(),
                         body: reqBody
                     }
