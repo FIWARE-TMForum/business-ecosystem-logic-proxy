@@ -19,7 +19,8 @@
         .directive('pricePlanTable', pricePlanTableDirective)
         .directive('convertToDate', convertToDateDirective)
         .directive('convertToNumber', convertToNumberDirective)
-        .directive('fieldArray', fieldArrayDirective);
+        .directive('fieldArray', fieldArrayDirective)
+        .directive('convertToPhoneNumber', convertToPhoneNumberDirective);
 
     function bsTooltipDirective() {
         return {
@@ -194,6 +195,19 @@
                 ngModel.$formatters.push(function (value) {
                     //Model -> View
                     return parseInt(value, 10);
+                });
+            }
+        };
+    }
+
+    function convertToPhoneNumberDirective() {
+        return {
+            restrict: 'A',
+            require: 'ngModel',
+            link: function link(scope, element, attrs, ngModel) {
+                ngModel.$parsers.push(function (value) {
+                    //View -> Model
+                    return element.intlTelInput('getNumber');
                 });
             }
         };

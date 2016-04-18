@@ -18,7 +18,23 @@
     };
 
     angular
-        .module('app', ['ngResource', 'ngMessages', 'angularMoment', 'ui.router'])
+        .module('app', ['ngResource', 'ngMessages', 'angularMoment', 'ui.router', 'ngIntlTelInput'])
+        .config(function(ngIntlTelInputProvider) {
+            ngIntlTelInputProvider.set({
+                //separateDialCode: false,
+                //allowDropdown: true,
+                nationalMode: true,
+                // Use geoUpLookup service so we can determine an automatic country automatically
+                geoIpLookup: function(callback) {
+                    $.get("http://ipinfo.io", function() {}, "jsonp").always(function(resp) {
+                        var countryCode = (resp && resp.country) ? resp.country : "";
+                        callback(countryCode);
+                    });
+                },
+                initialCountry: 'auto',
+                utilsScript: '/resources/intl-tel-input/js/utils.js'
+            });
+        })
         .constant('DATA_STATUS', {
             ERROR: 'ERROR',
             LOADED: 'LOADED',

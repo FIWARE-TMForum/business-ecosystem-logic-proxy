@@ -19,15 +19,16 @@
     .form-group(ng-class="{ 'has-error': vm.hasFieldError(form.number) }")
       label Number
       input.form-control(
-        type="number"
+        ng-intl-tel-input
+        type="text"
         name="number"
-        ng-model="telephoneNumber.medium.number"
+        ng-model="telephoneNumber.medium.number",
+        convert-to-phone-number,
         required
-        convert-to-number
       )
       .help-block(
         ng-messages="form.number.$error"
         ng-show="vm.hasFieldError(form.number)"
       )
         span(ng-message="required") This field is required.
-        span(ng-message="number") This field must be a valid number.
+        span(ng-message="ngIntlTelInput") This field must be a valid number.

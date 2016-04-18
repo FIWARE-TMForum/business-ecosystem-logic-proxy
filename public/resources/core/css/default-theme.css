@@ -1984,3 +1984,13 @@ a.thumbnail:focus {
     right: 2px;
     top: 2px;
 }
+
+/* ===================================================================================
+ *   INTERNATIONAL PHONE NUMBER
+ * =================================================================================== */
+
+.iti-flag {background-image: url("/resources/intl-tel-input/img/flags.png");}
+
+.intl-tel-input {
+    display: block;
+}
