@@ -161,7 +161,7 @@ describe('RSS API', function() {
         it('should call the callback with error if the user is trying to access a private API', function(done) {
             var req = {
                 method: 'GET',
-                apiUrl: '/rss/providers',
+                apiUrl: '/rss/aggregators',
                 user: {}
             };
 

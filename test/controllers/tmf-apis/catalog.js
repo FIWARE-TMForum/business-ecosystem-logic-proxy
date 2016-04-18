@@ -22,17 +22,24 @@ var OFFERINGS_NOT_RETRIEVED = 'Attached offerings cannot be retrieved';
 var CATEGORY_EXISTS = 'This category already exists';
 var CATEGORIES_CANNOT_BE_CHECKED = 'It was impossible to check if the provided category already exists';
 var CATEGORY_NAME_MISSING = 'Category name is mandatory';
+var RSS_CANNOT_BE_ACCESSED = 'An unexpected error in the RSS API prevented your request to be processed';
+var INVALID_PRODUCT_CLASS = 'The provided productClass does not specify a valid revenue sharing model';
 
 
 describe('Catalog API', function() {
 
     var config = testUtils.getDefaultConfig();
 
-    var getCatalogApi = function(storeClient, tmfUtils, utils) {
+    var getCatalogApi = function(storeClient, tmfUtils, utils, rssClient) {
+        if (!rssClient) {
+            rssClient = {};
+        }
+
         return proxyquire('../../../controllers/tmf-apis/catalog', {
             './../../config': config,
             './../../lib/logger': testUtils.emptyLogger,
             './../../lib/store': storeClient,
+            './../../lib/rss': rssClient,
             './../../lib/tmfUtils': tmfUtils,
             './../../lib/utils': utils
         }).catalog;
@@ -212,7 +219,7 @@ describe('Catalog API', function() {
             true, true, true, done);
     });
 
-    var testCreateOffering = function(productRequestInfo, catalogRequestInfo, storeError, errorStatus, errorMsg, done) {
+    var testCreateOffering = function(productRequestInfo, catalogRequestInfo, storeError, errorStatus, errorMsg, rssResp, done) {
 
         // Basic properties
         var userName = 'test';
@@ -232,6 +239,9 @@ describe('Catalog API', function() {
                 // the server will be avoided by the SW
                 // The catalog server will be used instead
                 href: config.appHost + ':' + config.endpoints.catalog.port + productPath
+            },
+            serviceCandidate: {
+                id: 'productClass'
             }
         };
 
@@ -262,7 +272,30 @@ describe('Catalog API', function() {
             }
         };
 
-        var catalogApi = getCatalogApi(storeClient, tmfUtils, utils);
+        if (!rssResp) {
+            rssResp = {
+                provider: null,
+                modelErr: null,
+                modelBody: {
+                    body: JSON.stringify([{}])
+                }
+            };
+        }
+
+        var rssClient = {
+            rssClient: {
+                createProvider: function(userInfo, callback) {
+                    expect(userInfo).toEqual(user);
+                    callback(rssResp.provider);
+                },
+                retrieveRSModel: function(userInfo, productClass, callback) {
+                    expect(userInfo).toEqual(user);
+                    callback(rssResp.modelErr, rssResp.modelBody);
+                }
+            }
+        };
+
+        var catalogApi = getCatalogApi(storeClient, tmfUtils, utils, rssClient);
 
         // The mock server that will handle the request when the product is requested
         var bodyGetProductOk = {
@@ -288,13 +321,7 @@ describe('Catalog API', function() {
             method: 'POST',
             apiUrl: offeringPath,
             user: user,
-            body: JSON.stringify({
-                productSpecification: {
-                    // the server will be avoided by the SW
-                    // The catalog server will be used instead
-                    href: config.appHost + ':' + config.endpoints.catalog.port + productPath
-                }
-            })
+            body: JSON.stringify(body)
         };
 
         catalogApi.checkPermissions(req, function(err) {
@@ -324,7 +351,7 @@ describe('Catalog API', function() {
             lifecycleStatus: 'launched'
         };
 
-        testCreateOffering(productRequestInfo, catalogRequestInfo, null, null, null, done);
+        testCreateOffering(productRequestInfo, catalogRequestInfo, null, null, null, null, done);
     });
 
     it('should not allow to create an offering when store validation fails', function(done) {
@@ -346,7 +373,7 @@ describe('Catalog API', function() {
         };
 
         testCreateOffering(productRequestInfo, catalogRequestInfo, storeResponse, storeResponse.status,
-            storeResponse.message, done);
+            storeResponse.message, null, done);
     });
 
     it('should not allow to create an offering with a non owned product', function(done) {
@@ -362,7 +389,7 @@ describe('Catalog API', function() {
             lifecycleStatus: 'active'
         };
 
-        testCreateOffering(productRequestInfo, catalogRequestInfo, null, 403, CREATE_OFFERING_FOR_NON_OWNED_PRODUCT, done);
+        testCreateOffering(productRequestInfo, catalogRequestInfo, null, 403, CREATE_OFFERING_FOR_NON_OWNED_PRODUCT, null, done);
     });
 
     it('should not allow to create an offering in a retired catalogue', function(done) {
@@ -379,7 +406,7 @@ describe('Catalog API', function() {
         };
 
         testCreateOffering(productRequestInfo, catalogRequestInfo, null, 400, 'Offerings can only be created in a ' +
-            'catalog that is active or launched', done);
+            'catalog that is active or launched', null, done);
     });
 
     it('should not allow to create an offering for a retired product', function(done) {
@@ -396,7 +423,7 @@ describe('Catalog API', function() {
         };
 
         testCreateOffering(productRequestInfo, catalogRequestInfo, null, 400, 'Offerings can only be attached to ' +
-            'active or launched products', done);
+            'active or launched products', null, done);
     });
 
     it('should not allow to create an offering when product cannot be retrieved', function(done) {
@@ -412,7 +439,7 @@ describe('Catalog API', function() {
             lifecycleStatus: 'active'
         };
 
-        testCreateOffering(productRequestInfo, catalogRequestInfo, null, 500, INVALID_PRODUCT, done);
+        testCreateOffering(productRequestInfo, catalogRequestInfo, null, 500, INVALID_PRODUCT, null, done);
     });
 
     it('should not allow to create an offering when the attached catalog cannot be retrieved', function(done) {
@@ -430,7 +457,69 @@ describe('Catalog API', function() {
 
         // isOwner does not matter when productRequestFails is set to true
         testCreateOffering(productRequestInfo, catalogRequestInfo, null, 500, 'The catalog attached to the offering ' +
-            'cannot be read', done);
+            'cannot be read', null, done);
+    });
+
+    it('should not allow to create an offering when the RSS provider cannot be verified', function(done) {
+        var productRequestInfo = {
+            requestStatus: 200,
+            role: 'Owner',
+            lifecycleStatus: 'active'
+        };
+
+        var catalogRequestInfo = {
+            requestStatus: 200,
+            lifecycleStatus: 'launched'
+        };
+
+        testCreateOffering(productRequestInfo, catalogRequestInfo, null, 500, RSS_CANNOT_BE_ACCESSED, {
+            provider: {}
+        }, done);
+    });
+
+    it ('should not allow to create an offering when the RSS fails retrieving models', function(done) {
+        var errMsg = 'RSS failure';
+        var status = 500;
+
+        var productRequestInfo = {
+            requestStatus: 200,
+            role: 'Owner',
+            lifecycleStatus: 'active'
+        };
+
+        var catalogRequestInfo = {
+            requestStatus: 200,
+            lifecycleStatus: 'launched'
+        };
+
+        testCreateOffering(productRequestInfo, catalogRequestInfo, null, status, errMsg, {
+            provider: null,
+            modelErr: {
+                status: status,
+                message: errMsg,
+            }
+        }, done);
+    });
+
+    it ('should not allow to create an offering when there are not RS Models', function(done) {
+        var productRequestInfo = {
+            requestStatus: 200,
+            role: 'Owner',
+            lifecycleStatus: 'active'
+        };
+
+        var catalogRequestInfo = {
+            requestStatus: 200,
+            lifecycleStatus: 'launched'
+        };
+
+        testCreateOffering(productRequestInfo, catalogRequestInfo, null, 422, INVALID_PRODUCT_CLASS, {
+            provider: null,
+            modelErr: null,
+            modelBody: {
+                body: JSON.stringify([])
+            }
+        }, done);
     });
 
     var testCreateProduct = function(storeValidator, errorStatus, errorMsg, owner, done) {
@@ -783,7 +872,15 @@ describe('Catalog API', function() {
             hasRole: checkRoleMethod
         };
 
-        var catalogApi = getCatalogApi({}, tmfUtils, utils);
+        var rssClient = {
+            rssClient: {
+                createProvider: function(userInfo, callback) {
+                    callback(null);
+                }
+            }
+        };
+
+        var catalogApi = getCatalogApi({}, tmfUtils, utils, rssClient);
 
         // Basic properties
         var userName = 'test';

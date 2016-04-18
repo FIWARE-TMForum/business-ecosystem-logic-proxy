@@ -88,7 +88,8 @@ form(name="step.form", novalidate)
             td
               time(am-time-ago="createVM.catalogue.lastUpdate")
   .form-group(ng-show="createVM.hasCategories()")
-    label Categories
+    .h5.text-dark-secondary
+      strong Categories
     .table-responsive
       table.table.table-bordered
         thead
@@ -121,7 +122,8 @@ form(name="step.form", novalidate)
             th {{ priceplan.description }}
             td {{ priceplan.toString() }}
   .form-group(ng-show="createVM.data.isBundle")
-    label Bundled Offering
+    .h5.text-dark-secondary
+      strong Bundled Offering
     .table-responsive
       table.table.table-bordered
         thead
@@ -142,6 +144,29 @@ form(name="step.form", novalidate)
                 | {{ offering.isBundle ? 'Bundle' : 'Single' }}
             td
               time(am-time-ago="offering.lastUpdate")
+
+  .form-group
+    input(type="hidden", ng-model="createVM.data.serviceCandidate.id", required)
+    .h5.text-dark-secondary
+      strong  Revenue Sharing Model
+    .table-responsive
+      table.table.table-bordered
+        thead
+          tr
+            th Product Class
+            th Platform Percentage
+            th Provider Percentage
+            th Nº Stakeholders
+        tbody
+          tr
+            td
+              span {{ createVM.getSharingModel().productClass }}
+            td
+              span {{ createVM.getSharingModel().aggregatorValue }}
+            td
+              span {{ createVM.getSharingModel().ownerValue }}
+            td
+              span {{ createVM.getSharingModel().stakeholders.length }}
   .form-group.text-right
     a.btn.btn-success(ng-click="createVM.create()", ng-disabled="!step.form.$valid")
       span.item-text Create

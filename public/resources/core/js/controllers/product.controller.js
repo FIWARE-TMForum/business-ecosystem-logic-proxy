@@ -42,7 +42,7 @@
         }
     }
 
-    function ProductCreateController($state, $rootScope, EVENTS, ProductSpec, Asset, AssetType, Utils) {
+    function ProductCreateController($scope, $state, $rootScope, EVENTS, ProductSpec, Asset, AssetType, Utils) {
         /* jshint validthis: true */
         var vm = this;
         var stepList = [
@@ -80,6 +80,7 @@
         vm.digitalChars = [];
 
         vm.characteristicEnabled = false;
+        vm.pictureFormat = "url";
 
         vm.create = create;
         vm.setCurrentType = setCurrentType;
@@ -112,6 +113,7 @@
 
         vm.resetCharacteristicValue = resetCharacteristicValue;
         vm.getFormattedValueOf = getFormattedValueOf;
+        vm.clearFileInput = clearFileInput;
 
         /* CHARACTERISTICS METHODS */
 
@@ -243,26 +245,34 @@
             return vm.data.bundledProductSpecification.indexOf(product) !== -1;
         }
 
+        function uploadAsset(file, contentType, publicFile, callback, errCallback) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var data = {
+                    content: {
+                        name: file.name,
+                        data: btoa(e.target.result)
+                    },
+                    contentType: contentType
+                };
+
+                if (publicFile) {
+                    data.isPublic = true;
+                }
+
+                Asset.create(data).then(callback, errCallback);
+            };
+            reader.readAsBinaryString(file);
+        }
+
         function create() {
             // If the format is file upload it to the asset manager
             if (vm.isDigital && vm.currFormat === 'FILE') {
-                var reader = new FileReader();
-
-                reader.onload = function(e) {
-                    var data = {
-                        content: {
-                            name: vm.assetFile.name,
-                            data: btoa(e.target.result)
-                        },
-                        contentType: vm.digitalChars[1].productSpecCharacteristicValue[0].value
-                    };
-                    Asset.create(data).then(function (result) {
-                        // Set file location
-                        vm.digitalChars[2].productSpecCharacteristicValue[0].value = result.content;
-                        saveProduct();
-                    });
-                };
-                reader.readAsBinaryString(vm.assetFile);
+                uploadAsset(vm.assetFile, vm.digitalChars[1].productSpecCharacteristicValue[0].value, false, function (result) {
+                    // Set file location
+                    vm.digitalChars[2].productSpecCharacteristicValue[0].value = result.content;
+                    saveProduct();
+                });
             } else {
                 saveProduct();
             }
@@ -309,6 +319,48 @@
                 });
             });
         }
+
+        function clearFileInput() {
+            if (!vm.stepList[4].form.pictureFile) {
+                vm.stepList[4].form.pictureFile = {};
+            } else {
+                // Reset possible previous errors
+                vm.stepList[4].form.pictureFile.$invalid = false;
+                vm.stepList[4].form.pictureFile.$error = {};
+            }
+        }
+
+        $scope.$watch(function watchFile(scope) {
+            return vm.pictureFile;
+        }, function() {
+            // Check that the new file is a valid image
+            if (vm.pictureFile) {
+                vm.clearFileInput();
+                vm.stepList[4].form.pictureFile.$dirty = true;
+
+                if (vm.pictureFile.type != 'image/gif' && vm.pictureFile.type != 'image/jpeg' &&
+                vm.pictureFile.type != 'image/png' && vm.pictureFile.type != 'image/bmp') {
+
+                    // Set input error
+                    vm.stepList[4].form.pictureFile.$invalid = true;
+                    vm.stepList[4].form.pictureFile.$error = {
+                        format: true
+                    };
+                    return;
+                }
+
+                // Upload the file to the server when it is included in the input
+                uploadAsset(vm.pictureFile, vm.pictureFile.type, true, function(result) {
+                    vm.data.attachment[0].url = result.content
+                }, function() {
+                    // The picture cannot be uploaded set error in input
+                    vm.stepList[4].form.pictureFile.$invalid = true;
+                    vm.stepList[4].form.pictureFile.$error = {
+                        upload: true
+                    };
+                });
+            }
+        });
     }
 
     function ProductUpdateController($state, $rootScope, EVENTS, ProductSpec, Utils) {
