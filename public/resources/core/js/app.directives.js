@@ -13,7 +13,8 @@
         .directive('fileModel', fileModelDirective)
         .directive('noImage', noImageDirective)
         .directive('fieldUnique', fieldUniqueDirective)
-        .directive('contactMediumForm', contactMediumFormDirective)
+        .directive('businessAddressForm', businessAddressFormDirective)
+        .directive('shippingAddressForm', shippingAddressFormDirective)
         .directive('pricePlanForm', pricePlanFormDirective)
         .directive('pricePlanTable', pricePlanTableDirective)
         .directive('convertToDate', convertToDateDirective)
@@ -109,15 +110,31 @@
         };
     }
 
-    function contactMediumFormDirective() {
+    function businessAddressFormDirective() {
         return {
             restrict: 'E',
             scope: {
                 form: '=',
-                contactMedium: '=data',
+                emailAddress: '=emailAddress',
+                postalAddress: '=postalAddress',
+                telephoneNumber: '=telephoneNumber',
                 vm: '=controller'
             },
-            templateUrl: 'directives/forms/contact-medium'
+            templateUrl: 'directives/forms/business-address'
+        };
+    }
+
+    function shippingAddressFormDirective() {
+        return {
+            restrict: 'E',
+            scope: {
+                form: '=',
+                emailAddress: '=emailAddress',
+                postalAddress: '=postalAddress',
+                telephoneNumber: '=telephoneNumber',
+                vm: '=controller'
+            },
+            templateUrl: 'directives/forms/shipping-address'
         };
     }
 
