@@ -124,7 +124,7 @@ describe('Customer API', function() {
 
         describe('GET', function () {
 
-            it('should fail if user is not logged in', function (done) {
+            it('should not allow to retrieve resources if user is not logged in', function (done) {
                 failIfNotLoggedIn('GET', done);
             });
 
@@ -151,11 +151,11 @@ describe('Customer API', function() {
                 });
             };
 
-            it('should fail if listing customer accounts', function (done) {
+            it('should not allow to list customer accounts', function (done) {
                 testListCustomerAccount(VALID_CUSTOMER_ACCOUNT_PATH, done);
             });
 
-            it('should fail if listing customer accounts even if query included', function (done) {
+            it('should not allow to list customer accounts even if query included', function (done) {
                 testListCustomerAccount(VALID_CUSTOMER_ACCOUNT_PATH + '/?a=b', done);
             });
 
@@ -184,11 +184,11 @@ describe('Customer API', function() {
                 });
             };
 
-            it('should fail if listing customer with invalid filter', function (done) {
+            it('should not allow to list customers when invalid filters applied', function (done) {
                 testListCustomer({status: 403, message: 'Invalid filter'}, done);
             });
 
-            it('should not fail if listing customer with valid filter', function (done) {
+            it('should allow to list customers when valid filters applied', function (done) {
                 testListCustomer(null, done);
             });
 
@@ -224,7 +224,7 @@ describe('Customer API', function() {
 
         describe('POST', function () {
 
-            it('should fail if the user is not logged in', function (done) {
+            it('should not allow to create resource if the user is not logged in', function (done) {
                 failIfNotLoggedIn('POST', done);
             });
 
@@ -258,7 +258,7 @@ describe('Customer API', function() {
 
             };
 
-            it('should fail when creating customer without related party', function (done) {
+            it('should not allow to create customer without related party', function (done) {
 
                 var expectedErr = {
                     status: 422,
@@ -269,7 +269,7 @@ describe('Customer API', function() {
 
             });
 
-            it('should fail when creating a customer with invalid related party', function (done) {
+            it('should not allow to create a customer with invalid related party', function (done) {
 
                 var expectedErr = {
                     status: 403,
@@ -296,7 +296,7 @@ describe('Customer API', function() {
                 testCreate(VALID_CUSTOMER_PATH, body, true, [body.relatedParty], null, done);
             });
 
-            it('should fail when creating customer with customerAccount', function (done) {
+            it('should not allow to create a customer with the customerAccount field', function (done) {
 
                 var expectedErr = {
                     status: 403,
@@ -313,7 +313,7 @@ describe('Customer API', function() {
                 testCreate(VALID_CUSTOMER_PATH, body, true, [body.relatedParty], expectedErr, done);
             });
 
-            it('should fail when creating customer account without customer', function (done) {
+            it('should not allow to create a customer account without customer field', function (done) {
 
                 var expectedErr = {
                     status: 422,
@@ -323,7 +323,7 @@ describe('Customer API', function() {
                 testCreate(VALID_CUSTOMER_ACCOUNT_PATH, {}, false, null, expectedErr, done);
             });
 
-            it('should fail when creating a customer account with invalid customer', function (done) {
+            it('should not allow to create a customer account with invalid customer', function (done) {
 
                 var body = {
                     customer: {
@@ -340,7 +340,7 @@ describe('Customer API', function() {
                 testCreate(VALID_CUSTOMER_ACCOUNT_PATH, body, false, null, expectedErr, done);
             });
 
-            it('should fail when creating a customer account and customer cannot be retrieved', function (done) {
+            it('should not allow to create a customer account when customer cannot be retrieved', function (done) {
 
                 var customerPath = VALID_CUSTOMER_PATH + '/8';
 
@@ -383,7 +383,7 @@ describe('Customer API', function() {
                 testCreate(VALID_CUSTOMER_ACCOUNT_PATH, body, hasPartyRole, [customer.relatedParty], expectedErr, done);
             };
 
-            it('should fail when creating a customer account and customer does not belong to the user', function (done) {
+            it('should not allow to create a customer account when given customer does not belong to the user', function (done) {
 
                 var expectedErr = {
                     status: 403,
@@ -399,6 +399,8 @@ describe('Customer API', function() {
             });
 
         });
+
+        // GENERIC TESTS FOR PATCH & DELETE
 
         var testUpdateDelete = function (path, method, body, hasPartyRole, expectedPartyCall, expectedErr, done) {
 
@@ -427,8 +429,6 @@ describe('Customer API', function() {
                 done();
             });
         };
-
-        // GENERIC TESTS FOR PATCH & DELETE
 
         var failUpdateResourceCannotBeRetrieved = function(method, done) {
 
@@ -536,29 +536,29 @@ describe('Customer API', function() {
             testUpdateDelete(customerAccountPath, method, body, hasPartyRole, [customer.relatedParty], expectedErr, done);
         };
 
-        var failUpdateCustomerAccountNotBelonginToUser = function(method, done) {
+        var failUpdateCustomerAccountNonOwnedByUser = function(method, done) {
             testUpdateCustomerAccountExistingCustomer(method, {}, false, UNAUTHORIZED_UPDATE_RESOURCE_ERROR, done);
         };
 
         describe('PATCH', function () {
 
-            it('should fail if the user is not logged in', function (done) {
+            it('should not allow to update a resource if the user is not logged in', function (done) {
                 failIfNotLoggedIn('PATCH', done);
             });
 
-            it('should fail when updating a customer (account)? and it cannot be retrieved', function (done) {
+            it('should not allow to update a customer (account)? when it cannot be retrieved', function (done) {
                 failUpdateResourceCannotBeRetrieved('PATCH', done)
             });
 
-            it('should fail when updating a customer (account)? that does not exist', function (done) {
+            it('should not allow to update a customer (account)? that does not exist', function (done) {
                 failUpdateResourceDoesNotExist('PATCH', done);
             });
 
-            it('should fail when updating a non-owned customer', function (done) {
+            it('should not allow to update a non-owned customer', function (done) {
                 failUpdateNonOwnedResource('PATCH', done);
             });
 
-            it('should fail to update a customer when related party included', function (done) {
+            it('should not allow to update the relatedParty field of a customer', function (done) {
                 var expectedErr = {
                     status: 403,
                     message: 'Related Party cannot be modified'
@@ -571,19 +571,19 @@ describe('Customer API', function() {
                 testUpdateDeleteCustomer('PATCH', {}, true, null, done);
             });
 
-            it('should fail when updating a customer account and the attached customer cannot be retrieved', function (done) {
+            it('should not allow to update a customer account when the attached customer cannot be retrieved', function (done) {
                 failUpdateCustomerAccountCustomerInaccessible('PATCH', done);
             });
 
-            it('should fail when updating a customer account and the attached customer does not belong to the user', function (done) {
-                failUpdateCustomerAccountNotBelonginToUser('PATCH', done);
+            it('should not allow to update a customer account when the attached customer does not belong to the user', function (done) {
+                failUpdateCustomerAccountNonOwnedByUser('PATCH', done);
             });
 
             it('should allow to update a customer account', function (done) {
                 testUpdateCustomerAccountExistingCustomer('PATCH', {}, true, null, done);
             });
 
-            it('should fail when updating a customer account and customer included', function (done) {
+            it('should not allow to update the customer field of a customer account', function (done) {
 
                 var expectedErr = {
                     status: 403,
@@ -597,35 +597,35 @@ describe('Customer API', function() {
 
         describe('DELETE', function () {
 
-            it('should fail if the user is not logged in', function (done) {
+            it('should not allow to delete a resource if the user is not logged in', function (done) {
                 failIfNotLoggedIn('DELETE', done);
             });
 
-            it('should fail when updating a customer (account)? and it cannot be retrieved', function (done) {
+            it('should not allow to delete a customer (account)? and it cannot be retrieved', function (done) {
                 failUpdateResourceCannotBeRetrieved('DELETE', done)
             });
 
-            it('should fail when updating a customer (account)? that does not exist', function (done) {
+            it('should not allow to delete a customer (account)? that does not exist', function (done) {
                 failUpdateResourceDoesNotExist('DELETE', done);
             });
 
-            it('should fail when updating a non-owned customer', function (done) {
+            it('should not allow to delete a non-owned customer', function (done) {
                 failUpdateNonOwnedResource('DELETE', done);
             });
 
-            it('should allow to update a customer', function (done) {
+            it('should allow to delete a customer', function (done) {
                 testUpdateDeleteCustomer('DELETE', {}, true, null, done);
             });
 
-            it('should fail when updating a customer account and the attached customer cannot be retrieved', function (done) {
+            it('should not allow to delete a customer account when the attached customer cannot be retrieved', function (done) {
                 failUpdateCustomerAccountCustomerInaccessible('DELETE', done);
             });
 
-            it('should fail when updating a customer account and the attached customer does not belong to the user', function (done) {
-                failUpdateCustomerAccountNotBelonginToUser('PATCH', done);
+            it('should not allow to delete a customer account when the attached customer does not belong to the user', function (done) {
+                failUpdateCustomerAccountNonOwnedByUser('PATCH', done);
             });
 
-            it('should allow to update a customer account', function (done) {
+            it('should allow to delete a customer account', function (done) {
                 testUpdateCustomerAccountExistingCustomer('DELETE', {}, true, null, done);
             });
 
@@ -651,8 +651,8 @@ describe('Customer API', function() {
                 });
             });
 
-            var allowToRetrieveOwnerResource = function(body, hasPartyRole, isRelatedPartyValues, hasPartyRoleArgument,
-                                                        isRelatedPartyArguments, expectedErr, done) {
+            var testRetrieveResource = function(body, hasPartyRole, isRelatedPartyValues, hasPartyRoleArgument,
+                                                isRelatedPartyArguments, expectedErr, done) {
 
                 var req = {
                     method: 'GET',
@@ -661,14 +661,16 @@ describe('Customer API', function() {
 
                 var tmfUtils = jasmine.createSpyObj('tmfUtils', ['hasPartyRole', 'isRelatedParty']);
                 tmfUtils.hasPartyRole.and.returnValue(hasPartyRole);
-                tmfUtils.isRelatedParty.and.returnValues.apply(tmfUtils.isRelatedParty, isRelatedPartyValues)
+                tmfUtils.isRelatedParty.and.returnValues.apply(tmfUtils.isRelatedParty, isRelatedPartyValues);
 
                 var customerApi = getCustomerAPI({}, tmfUtils);
 
                 customerApi.executePostValidation(req, function(err) {
                     expect(err).toEqual(expectedErr);
 
-                    expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(req, hasPartyRoleArgument, 'owner');
+                    if (hasPartyRoleArgument) {
+                        expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(req, hasPartyRoleArgument, 'owner');
+                    }
 
                     isRelatedPartyArguments.forEach(function(item) {
                         expect(tmfUtils.isRelatedParty).toHaveBeenCalledWith(req, item);
@@ -686,12 +688,10 @@ describe('Customer API', function() {
                     }
                 };
 
-                allowToRetrieveOwnerResource(body, true, null, [body.relatedParty], [], null, done);
+                testRetrieveResource(body, true, null, [body.relatedParty], [], null, done);
             });
 
-            it('should allow to retrieve an owner customer account', function(done) {
-
-                // isOwner function has been tested previously
+            var testRetrieveCustomerAccount = function(customerResponse, hasPartyRoleArgument, expectedErr, done) {
 
                 var customerPath = '/customer/1';
 
@@ -709,12 +709,37 @@ describe('Customer API', function() {
 
                 nock(CUSTOMER_SERVER)
                     .get(customerPath)
-                    .reply(200, customer);
+                    .reply(customerResponse.status, customerResponse.body);
 
-                allowToRetrieveOwnerResource(customerAccount, true, null, [customer.relatedParty], [], null, done);
+                testRetrieveResource(customerAccount, true, null, hasPartyRoleArgument, [], expectedErr, done);
+
+            };
+
+            it('should allow to retrieve an owner customer account', function(done) {
+
+                var customer = {
+                    relatedParty: {
+                        id: 3
+                    }
+                };
+
+                testRetrieveCustomerAccount({status: 200, body: customer}, [customer.relatedParty], null, done);
+
             });
 
-            var testBillingAccountRetrieved = function(response, isRelatedPartyValues, isRelatedPartyArguments, expectedErr, done) {
+            it('should not allow to retrieve a customer account when customer cannot be retrieved', function(done) {
+
+                var expectedErr = {
+                    status: 500,
+                    message: 'The attached customer cannot be retrieved'
+                };
+
+                testRetrieveCustomerAccount({status: 500, body: null}, null, expectedErr, done);
+            });
+
+            var testBillingAccountRetrieved = function(response, isRelatedPartyValues,
+                                                       isRelatedPartyArguments, expectedErr, done) {
+
                 var customer = {
                     relatedParty: {
                         id: 9
@@ -733,15 +758,12 @@ describe('Customer API', function() {
                     .get(BASE_BILLING_PATH + '?customerAccount.id=1,2')
                     .reply(response.status, response.body);
 
-                allowToRetrieveOwnerResource(customer, false, isRelatedPartyValues,
+                testRetrieveResource(customer, false, isRelatedPartyValues,
                     [customer.relatedParty], isRelatedPartyArguments, expectedErr, done);
             };
 
-            it('should fail if customer account does not belong to the user and billing account cannot be retrieved', function(done) {
-
-                nock(BILLING_SERVER)
-                    .get(BASE_BILLING_PATH + '?customerAccount.id=1,2')
-                    .reply(500);
+            it('should not allow to retrieve customer it it does not belong to the user and ' +
+                    'billing account cannot be retrieved', function(done) {
 
                 var expectedErr = {
                     status: 500,
@@ -752,7 +774,8 @@ describe('Customer API', function() {
 
             });
 
-            it('should fail if customer account does not belong to the user and user is not included in billing account', function(done) {
+            it('should not allow to retrieve customer if it does not belong to the user and ' +
+                    '(s)he is not included in the billing account', function(done) {
 
                 var billingAccount = {
                     relatedParty: [
