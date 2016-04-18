@@ -1,6 +1,6 @@
 var async = require('async'),
     utils = require('./../../lib/utils'),
-    config = require('./../../config.js'),
+    config = require('./../../config'),
     logger = require('./../../lib/logger').logger.getLogger('TMF'),
 
     rssClient = require('./../../lib/rss').rssClient;

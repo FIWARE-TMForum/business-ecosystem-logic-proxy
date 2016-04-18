@@ -1,14 +1,16 @@
 var config = require('./../config'),
 
-    // TMF APIs
+// TMF APIs
     catalog = require('./tmf-apis/catalog').catalog,
     inventory = require('./tmf-apis/inventory').inventory,
     ordering = require('./tmf-apis/ordering').ordering,
     charging = require('./tmf-apis/charging').charging,
     rss = require('./tmf-apis/rss').rss,
     party = require('./tmf-apis/party').party,
-    
-    // Other dependencies
+    billing = require('./tmf-apis/billing').billing,
+    customer = require('./tmf-apis/customer').customer,
+
+// Other dependencies
     logger = require('./../lib/logger').logger.getLogger('TMF'),
     request = require('request'),
     url = require('url'),
@@ -23,6 +25,8 @@ var tmf = (function() {
     apiControllers[config.endpoints.charging.path] = charging;
     apiControllers[config.endpoints.rss.path] = rss;
     apiControllers[config.endpoints.party.path] = party;
+    apiControllers[config.endpoints.billing.path] = billing;
+    apiControllers[config.endpoints.customer.path] = customer;
 
     var getAPIName = function(apiUrl) {
         return apiUrl.split('/')[1];
@@ -81,17 +85,19 @@ var tmf = (function() {
                     headers: response.headers,
                     hostname: req.hostname,
                     secure: req.secure,
-                    body: body
+                    body: body,
+                    user: req.user,
+                    method: req.method,
+                    url: req.url,
+                    id: req.id,
+                    apiUrl: req.apiUrl,
+                    connection: req.connection
                 };
 
                 // Execute postValidation if status code is lower than 400 and the
                 // function is defined
                 if (response.statusCode < 400 && apiControllers[api] !== undefined
-                        && apiControllers[api].executePostValidation) {
-
-                    result.user = req.user;
-                    result.method = req.method;
-                    result.apiUrl = req.apiUrl;
+                    && apiControllers[api].executePostValidation) {
 
                     apiControllers[api].executePostValidation(result, function(err) {
 
