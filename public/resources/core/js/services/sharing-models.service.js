@@ -32,7 +32,7 @@
         function searchModels () {
             var deferred = $q.defer();
             var params = {
-                providerId: User.loggedUser.id
+                appProviderId: User.loggedUser.id
             };
 
             modelsResource.query(params, function(modelsList) {
@@ -70,6 +70,7 @@
             var deferred = $q.defer();
 
             modelsResource.query({
+                appProviderId: User.loggedUser.id,
                 productClass: productClass
             }, function(models) {
                 if (models.length) {
