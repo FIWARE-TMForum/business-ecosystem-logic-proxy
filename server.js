@@ -344,7 +344,7 @@ app.post(config.shoppingCartPath + '/empty', shoppingCart.empty);
 var cssFilesToInject = [
     'bootstrap-3.3.5/css/bootstrap',
     'font-awesome-4.5.0/css/font-awesome',
-    'intl-tel-input/css/intlTelInput',
+    'intl-tel-input-8.4.7/css/intlTelInput',
     'core/css/default-theme'
 ].map(function (path) {
     return 'resources/' + path + '.css';
@@ -355,14 +355,14 @@ var jsDepFilesToInject = [
     'jquery-1.11.3/js/jquery',
     'bootstrap-3.3.5/js/bootstrap',
     'moment-2.10.6/js/moment',
-    'intl-tel-input/js/intlTelInput',
+    'intl-tel-input-8.4.7/js/intlTelInput',
     'angular-1.4.7/js/angular',
     // Angular Dependencies:
     'angular-1.4.7/js/angular-messages',
     'angular-1.4.7/js/angular-moment',
     'angular-1.4.7/js/angular-resource',
     'angular-1.4.7/js/angular-ui-router',
-    'angular-1.4.7/js/ng-intl-tel-input'
+    'angular-1.4.7/js/international-phone-number'
 ].map(function (path) {
     return 'resources/' + path + '.js';
 });

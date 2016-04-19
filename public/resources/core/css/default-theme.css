@@ -1989,7 +1989,7 @@ a.thumbnail:focus {
  *   INTERNATIONAL PHONE NUMBER
  * =================================================================================== */
 
-.iti-flag {background-image: url("/resources/intl-tel-input/img/flags.png");}
+.iti-flag {background-image: url("/resources/intl-tel-input-8.4.7/img/flags.png");}
 
 .intl-tel-input {
     display: block;

@@ -19,7 +19,7 @@
     .form-group(ng-class="{ 'has-error': vm.hasFieldError(form.number) }")
       label Number
       input.form-control(
-        ng-intl-tel-input
+        international-phone-number,
         type="text"
         name="number"
         ng-model="telephoneNumber.medium.number",
