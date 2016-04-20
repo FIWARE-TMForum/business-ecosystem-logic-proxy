@@ -124,6 +124,16 @@
             };
 
             resource.get(params, function (productOrder) {
+
+                // Remove empty characteristics
+                productOrder.orderItem.forEach(function(item) {
+                    if (item.product.productCharacteristic.length === 1 &&
+                            Object.keys(item.product.productCharacteristic[0]).length === 0) {
+
+                        item.product.productCharacteristic = [];
+                    }
+                });
+
                 detailBillingAccount(productOrder);
             }, function (response) {
                 deferred.reject(response);
