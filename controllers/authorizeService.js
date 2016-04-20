@@ -7,25 +7,20 @@ var authorizeService = (function () {
     /**
      * Generates am aìKey.
      */
-    var generateApiKey = function (callback) {
+    var generateApiKey = function () {
         var apiKey = uuid.v4();
 
-        return callback(apiKey);
+        return apiKey;
     };
 
     /**
      * Check if the remote cliente is the WStore; otherwise return an error.
      */
-    var checkRemoteClient = function (req, callback) {
-        var storeHostname = config.appHost + ':' + config.endpoints.charging.port;
-        var reqIp = req.ip.replace(/^.*:/, ''); // Parse IPv4 embedded in IPv6
-        var remoteHostname = reqIp + ':' + req.connection.remotePort;
+    var checkRemoteClient = function (ip) {
+        var storeHostname = config.appHost;
+        var remoteHostname = ip.replace(/^.*:/, ''); // Parse IPv4 embedded in IPv6
 
-        if (remoteHostname === storeHostname) {
-            return callback(null);
-        } else {
-            return callback('Invalid remote client');
-        }
+        return remoteHostname === storeHostname;
     }
 
     /**
@@ -36,42 +31,39 @@ var authorizeService = (function () {
      */
     var getApiKey = function (req, res) {
         // Check if request is from WStore
-        checkRemoteClient(req, function (err) {
+        var fromWStore = checkRemoteClient(req.ip);
 
-            if (err) {
-                res.status(401).json({error: err});
+        if (!fromWStore) {
+            res.status(401).json({error: 'Invalid remote client'});
+
+        } else {
+            // Check the request and extract the url
+            var url = JSON.parse(req.body).url;
+
+            if (url) {
+
+                // Generate and save apiKey
+                var apiKey = generateApiKey();
+                var service = new AccountingService();
+                service.url = url;
+                service.apiKey = apiKey;
+                service.state = 'UNCOMMITTED';
+
+                service.save(function (err) {
+
+                    if (err) {
+                        res.status(500).send();
+
+                    } else {
+
+                        res.status(202).json({apiKey: apiKey});
+                    }
+                });
 
             } else {
-                // Check the request and extract the url
-                var url = JSON.parse(req.body).url;
-
-                if (url) {
-
-                    // Generate and save apiKey
-                    generateApiKey(function (apiKey) {
-
-                        var service = new AccountingService();
-                        service.url = url;
-                        service.apiKey = apiKey;
-                        service.state = 'UNCOMMITTED';
-
-                        service.save(function (err) {
-
-                            if (err) {
-                                res.status(500).send();
-
-                            } else {
-
-                                res.status(202).json({apiKey: apiKey});
-                            }
-                        });
-                    });
-
-                } else {
-                    res.status(400).json({error: 'Url missing'});
-                }
+                res.status(400).json({error: 'Url missing'});
             }
-        });
+        }
     };
 
     /**
@@ -82,32 +74,24 @@ var authorizeService = (function () {
      */
     var commitApiKey = function (req, res) {
         // Check if request is from WStore
-        checkRemoteClient(req, function (err) {
+        var fromWStore = checkRemoteClient(req.ip);
 
-            if (err) {
-                res.status(401).json({error: err});
+        if (!fromWStore) {
+            res.status(401).json({error: 'Invalid remote client'});
 
-            } else {
+        } else {
 
-                // Update the apiKey state
-                var apiKey = JSON.parse(req.body).apiKey;
+            // Update the apiKey state
+            var apiKey = req.params.apiKey;
 
-                if (apiKey) {
-
-                    var service = new AccountingService();
-                    service.update({apiKey: apiKey}, { $set: {state: 'COMMITTED'}}, function (err, rawResp) {
-                        if (err) {
-                            res.status(500).send();
-                        } else {
-                            res.status(201).send();
-                        }
-                    });
-
+            AccountingService.update({apiKey: apiKey}, { $set: {state: 'COMMITTED'}}, function (err, rawResp) {
+                if (err) {
+                    res.status(500).send();
                 } else {
-                    res.status(400).json({error: 'ApiKey missing'});
+                    res.status(201).send();
                 }
-            }
-        });
+            });
+        }
     };
 
     return {

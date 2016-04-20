@@ -18,7 +18,8 @@ var bodyParser = require('body-parser'),
     trycatch = require('trycatch'),
     url = require('url'),
     utils = require('./lib/utils'),
-    uuid = require('node-uuid');
+    uuid = require('node-uuid'),
+    authorizeService = require('./controllers/authorizeService').authorizeService;
 
 
 /////////////////////////////////////////////////////////////////////
@@ -57,6 +58,7 @@ config.https = config.https || {};
 config.proxyPrefix = checkPrefix(config.proxyPrefix, '');
 config.portalPrefix = checkPrefix(config.portalPrefix, '');
 config.shoppingCartPath = checkPrefix(config.shoppingCartPath, '/shoppingCart');
+config.authorizeServicePath = checkPrefix(config.authorizeServicePath, '/authorizeService');
 config.logInPath = config.logInPath || '/login';
 config.logOutPath = config.logOutPath || '/logout';
 config.appHost = config.appHost || 'localhost';
@@ -338,6 +340,15 @@ app.post(config.shoppingCartPath + '/empty', shoppingCart.empty);
 
 
 /////////////////////////////////////////////////////////////////////
+///////////////////////// AUTHORIZE SERVICE /////////////////////////
+/////////////////////////////////////////////////////////////////////
+
+app.use(config.authorizeServicePath + '/*', checkMongoUp);
+app.post(config.authorizeServicePath + '/apiKeys', authorizeService.getApiKey);
+app.post(config.authorizeServicePath + '/apiKeys/:apiKey', authorizeService.commitApiKey);
+
+
+/////////////////////////////////////////////////////////////////////
 /////////////////////////////// PORTAL //////////////////////////////
 /////////////////////////////////////////////////////////////////////
 
@@ -438,6 +449,7 @@ var renderTemplate = function(req, res, viewName) {
         chargingPath: config.endpoints.charging.path,
         partyPath: config.endpoints.party.path,
         shoppingCartPath: config.shoppingCartPath,
+        authorizeServicePath: config.authorizeServicePath,
         rssPath: config.endpoints.rss.path,
         platformRevenue: config.revenueModel,
         cssFilesToInject: cssFilesToInject,
