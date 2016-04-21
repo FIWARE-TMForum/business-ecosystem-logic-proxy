@@ -13,7 +13,7 @@
         .factory('ProductSpec', ProductSpecificationService);
 
     function ProductSpecificationService($q, $resource, URLS, LIFECYCLE_STATUS, User) {
-        var resource = $resource(URLS.CATALOGUE_MANAGEMENT + '/productSpecification/:productSpecId', {
+        var ProductSpec = $resource(URLS.CATALOGUE_MANAGEMENT + '/productSpecification/:productSpecId', {
             productId: '@id'
         }, {
             update: {
@@ -27,12 +27,49 @@
             NUMBER_RANGE: 'Number range'
         };
 
-        resource.prototype.getPicture = getPicture;
-        resource.prototype.getCharacteristicDefaultValue = getCharacteristicDefaultValue;
-        resource.prototype.serialize = serialize;
+        var EVENTS = {
+            UPDATED: '$productSpecUpdated'
+        };
+
+        var TYPES = {
+            RELATIONSHIP: {
+                DEPENDENCY: {code: 'dependency', name: 'Dependency'},
+                EXCLUSIVITY: {code: 'exclusivity', name: 'Exclusivity'},
+                MIGRATION: {code: 'migration', name: 'Migration'},
+                SUBSTITUTION: {code: 'substitution', name: 'Substitution'}
+            }
+        };
+
+        var Relationship = function Relationship(productSpec, relationshipType) {
+            this.productSpec = productSpec;
+            this.type = relationshipType;
+        };
+        Relationship.prototype.parseType = function parseType() {
+            for (var key in TYPES.RELATIONSHIP) {
+                if (TYPES.RELATIONSHIP[key].code === this.type) {
+                    return TYPES.RELATIONSHIP[key].name;
+                }
+            }
+            return "";
+        };
+        Relationship.prototype.toJSON = function toJSON() {
+            return {
+                id: this.productSpec.id,
+                href: this.productSpec.href,
+                type: this.type
+            };
+        };
+
+        ProductSpec.prototype.getPicture = getPicture;
+        ProductSpec.prototype.getCharacteristicDefaultValue = getCharacteristicDefaultValue;
+        ProductSpec.prototype.serialize = serialize;
+        ProductSpec.prototype.appendRelationship = appendRelationship;
+        ProductSpec.prototype.removeRelationship = removeRelationship;
 
         return {
             VALUE_TYPES: VALUE_TYPES,
+            TYPES: TYPES,
+            Relationship: Relationship,
             search: search,
             exists: exists,
             create: create,
@@ -63,7 +100,7 @@
                 params['relatedParty.id'] = User.loggedUser.id;
             }
 
-            resource.query(params, function (productSpecList) {
+            ProductSpec.query(params, function (productSpecList) {
                 deferred.resolve(productSpecList);
             }, function (response) {
                 deferred.reject(response);
@@ -75,7 +112,7 @@
         function exists(params) {
             var deferred = $q.defer();
 
-            resource.query(params, function (productSpecList) {
+            ProductSpec.query(params, function (productSpecList) {
                 deferred.resolve(!!productSpecList.length);
             });
 
@@ -102,7 +139,7 @@
                 })
             });
 
-            resource.save(data, function (productSpecCreated) {
+            ProductSpec.save(data, function (productSpecCreated) {
                 productSpecCreated.bundledProductSpecification = bundledProductSpecification;
                 deferred.resolve(productSpecCreated);
             }, function (response) {
@@ -112,72 +149,106 @@
             return deferred.promise;
         }
 
-        function detail(productSpecId) {
-            var deferred = $q.defer();
+        function detail(id) {
             var params = {
-                productSpecId: productSpecId
+                productSpecId: id
             };
 
-            resource.get(params, function (productSpecRetrieved) {
-                extendBundledProductSpec(productSpecRetrieved).then(function (productSpecExtended) {
-                    deferred.resolve(productSpecExtended);
-                },function (response) {
-                    deferred.reject(response);
-                });
-            }, function (response) {
-                deferred.reject(response);
-            });
-
-            return deferred.promise;
+            return ProductSpec.get(params)
+                .$promise
+                .then(detailBundled)
+                .then(detailRelationship);
         }
 
-        function extendBundledProductSpec(productSpec) {
-            var deferred = $q.defer();
+        function update(resource, dataUpdated) {
+            var params = {
+                productSpecId: resource.id
+            };
 
-            if (!angular.isArray(productSpec.bundledProductSpecification)) {
-                productSpec.bundledProductSpecification = [];
+            return ProductSpec.update(params, angular.extend(resource.toJSON(), {
+                    bundledProductSpecification: resource.bundledProductSpecification.map(function (productSpec) {
+                        return productSpec.serialize();
+                    })
+                }, dataUpdated))
+                .$promise
+                .then(detailBundled)
+                .then(detailRelationship);
+        }
+
+        function detailBundled(resource) {
+
+            if (!angular.isArray(resource.bundledProductSpecification)) {
+                resource.bundledProductSpecification = [];
             }
 
-            if (productSpec.isBundle) {
-                search({
-                    owner: true,
-                    id: productSpec.bundledProductSpecification.map(function (data) {
+            return resource.bundledProductSpecification.length ? extendBundled() : resource;
+
+            function extendBundled() {
+                var params = {
+                    id: resource.bundledProductSpecification.map(function (data) {
                         return data.id;
                     }).join()
-                }).then(function (productSpecList) {
-                    productSpec.bundledProductSpecification = productSpecList;
-                    deferred.resolve(productSpec);
-                }, function (response) {
-                    deferred.reject(response);
-                });
-            } else {
-                deferred.resolve(productSpec);
-            }
+                };
 
-            return deferred.promise;
+                return ProductSpec.query(params)
+                    .$promise
+                    .then(function (collection) {
+                        resource.bundledProductSpecification = collection;
+                        return resource;
+                    });
+            }
         }
 
-        function update(productSpec) {
-            var deferred = $q.defer();
-            var params = {
-                productSpecId: productSpec.id
+        function detailRelationship(resource) {
+
+            if (!angular.isArray(resource.productSpecificationRelationship)) {
+                resource.productSpecificationRelationship = [];
+            }
+
+            return resource.productSpecificationRelationship.length ? extendRelationship() : resource;
+
+            function extendRelationship() {
+                var params = {
+                    id: resource.productSpecificationRelationship.map(function (data) {
+                        return data.id;
+                    }).join()
+                };
+
+                return ProductSpec.query(params)
+                    .$promise
+                    .then(function (collection) {
+                        var collectionById = {};
+
+                        collection.forEach(function (data) {
+                            collectionById[data.id] = data;
+                        });
+
+                        resource.productSpecificationRelationship.forEach(function (data, index) {
+                            resource.productSpecificationRelationship[index] = new Relationship(collectionById[data.id], data.type);
+                        });
+                        return resource;
+                    });
+            }
+        }
+
+        function appendRelationship(relationship) {
+            /* jshint validthis: true */
+            var dataUpdated = {
+                productSpecificationRelationship: this.productSpecificationRelationship.concat(relationship)
             };
-            var bundledProductSpecification = productSpec.bundledProductSpecification;
 
-            angular.extend(productSpec, {
-                bundledProductSpecification: productSpec.bundledProductSpecification.map(function (bundledProductSpec) {
-                    return bundledProductSpec.serialize();
-                })
-            });
+            return update(this, dataUpdated);
+        }
 
-            resource.update(params, productSpec, function (productSpecUpdated) {
-                productSpecUpdated.bundledProductSpecification = bundledProductSpecification;
-                deferred.resolve(productSpecUpdated);
-            }, function (response) {
-                deferred.reject(response);
-            });
+        function removeRelationship(index) {
+            /* jshint validthis: true */
+            var dataUpdated = {
+                productSpecificationRelationship: this.productSpecificationRelationship.slice(0)
+            };
 
-            return deferred.promise;
+            dataUpdated.productSpecificationRelationship.splice(index, 1);
+
+            return update(this, dataUpdated);
         }
 
         function buildInitialData() {
@@ -187,6 +258,7 @@
                 isBundle: false,
                 bundledProductSpecification: [],
                 productSpecCharacteristic: [],
+                productSpecificationRelationship: [],
                 attachment: [
                     {
                         type: 'Picture'
