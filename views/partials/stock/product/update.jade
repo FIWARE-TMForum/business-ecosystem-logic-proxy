@@ -1,7 +1,7 @@
 .row
   .col-xs-12
     include ./breadcrumb.jade
-  .col-xs-12(ng-switch="updateVM.item.status")
+  .col-xs-12(ng-switch="updateVM.status")
     .row(ng-switch-when="LOADED")
       .col-xs-12
         .panel.panel-default.z-depth-1
@@ -27,6 +27,10 @@
               a(ui-sref="stock.product.update.attachment")
                 span.item-icon.fa.fa-paperclip
                 span.item-text.hidden-xs Attachments
+            li(ui-sref-active-eq="active")
+              a(ui-sref="stock.product.update.relationship")
+                span.item-icon.fa.fa-gears
+                span.item-text.hidden-xs Relationships
       .col-xs-12
         ui-view
           .panel.panel-default.z-depth-1(ng-controller="FormWizardCtrl as updateForm")

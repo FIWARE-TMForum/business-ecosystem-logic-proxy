@@ -111,6 +111,27 @@ form(name="step.form", novalidate)
                 | {{ product.isBundle ? 'Bundle' : 'Single' }}
             td
               time(am-time-ago="product.lastUpdate")
+  .row(ng-if="createVM.data.productSpecificationRelationship.length")
+    .col-sm-12
+      .h4.text-dark-secondary
+        strong Relationships
+      .table-responsive
+        table.table.table-bordered
+          thead
+            tr
+              th Relationship
+              th Name
+              th Type
+              th Updated
+          tbody
+            tr(ng-repeat="relationship in createVM.data.productSpecificationRelationship")
+              td {{ relationship.parseType() }}
+              th {{ relationship.productSpec.name }}
+              td
+                span.label(ng-class="relationship.productSpec.isBundle ? 'label-bundle' : 'label-single'")
+                  | {{ relationship.productSpec.isBundle ? 'Bundle' : 'Single' }}
+              td
+                time(am-time-ago="relationship.productSpec.lastUpdate")
   .form-group.text-right
     a.btn.btn-success.z-depth-1(ng-click="createVM.create()", ng-disabled="!step.form.$valid")
       span.item-text Create
