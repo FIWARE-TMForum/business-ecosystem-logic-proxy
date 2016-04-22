@@ -154,6 +154,45 @@ describe('Usage Management API', function () {
 					done();
 				});
 			});
+
+			it('should reject resuqests with invalid relatedParty', function (done) {
+
+				var utils = {
+					validateLoggedIn: function (req, callback) {
+					 return callback(); 
+					}
+				};
+
+				var tmfUtils = {
+					ensureRelatedPartyIncluded: function (req, callback) {
+						return callback();
+					}
+				};
+
+				var req = {
+					method: 'GET',
+					url: '/apiKeys',
+					query: {
+						relatedParty: {
+							id: 'wrong_user'
+						},
+					},
+					user: {
+						id: 'userId'
+					}
+				};
+
+				var usageManagementAPI = getUsageManagementAPI({}, tmfUtils, utils);
+
+				usageManagementAPI.checkPermissions(req, function (err) {
+					expect(err).not.toBe(null);
+					expect(err.status).toBe(401);
+					expect(err.message).toBe('Invalid relatedParty');
+
+					done();
+				});
+			});
+
 		});
 
 		//////////////////////////////////////////////////////////////////////////////////////////////

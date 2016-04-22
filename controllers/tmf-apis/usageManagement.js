@@ -60,11 +60,18 @@ var usageManagement = ( function () {
 	 */
 	var validateRetrieving = function (req, callback) {
 
+		var userId = req.user.id;
+
 		if (!req.query.relatedParty.id) {
 
-			var userId = req.user.id;
-
 			req.query.relatedParty.id = userId;
+
+		} else if (req.query.relatedParty.id !== userId) {
+
+			return callback({
+				status: 401,
+				message: 'Invalid relatedParty'
+			});
 		}
 
 		return callback();
