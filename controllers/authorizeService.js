@@ -56,7 +56,7 @@ var authorizeService = (function () {
 
                     } else {
 
-                        res.status(202).json({apiKey: apiKey});
+                        res.status(201).json({apiKey: apiKey});
                     }
                 });
 
@@ -88,7 +88,7 @@ var authorizeService = (function () {
                 if (err) {
                     res.status(500).send();
                 } else {
-                    res.status(201).send();
+                    res.status(200).send();
                 }
             });
         }

@@ -100,7 +100,7 @@ describe('Accounting Service', function () {
 		});
 
 		it('Should generate and save a new apiKey with "UNCOMMITTED" state', function (done) {
-			saveAccountingService(null, 'json', 202, done);
+			saveAccountingService(null, 'json', 201, done);
 		});
 	});
 
@@ -159,7 +159,7 @@ describe('Accounting Service', function () {
 		});
 
 		it('Should update to "COMMITTED" the state of apiKey received', function (done) {
-			updateApikeyState(null, 201, done);
+			updateApikeyState(null, 200, done);
 		});
 	});
 });

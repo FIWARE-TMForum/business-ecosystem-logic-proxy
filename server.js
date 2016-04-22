@@ -1,4 +1,5 @@
-var bodyParser = require('body-parser'),
+var authorizeService = require('./controllers/authorizeService').authorizeService,
+    bodyParser = require('body-parser'),
     base64url = require('base64url'),
     config = require('./config'),
     constants = require('constants'),
@@ -18,8 +19,7 @@ var bodyParser = require('body-parser'),
     trycatch = require('trycatch'),
     url = require('url'),
     utils = require('./lib/utils'),
-    uuid = require('node-uuid'),
-    authorizeService = require('./controllers/authorizeService').authorizeService;
+    uuid = require('node-uuid');
 
 
 /////////////////////////////////////////////////////////////////////
@@ -345,7 +345,7 @@ app.post(config.shoppingCartPath + '/empty', shoppingCart.empty);
 
 app.use(config.authorizeServicePath + '/*', checkMongoUp);
 app.post(config.authorizeServicePath + '/apiKeys', authorizeService.getApiKey);
-app.post(config.authorizeServicePath + '/apiKeys/:apiKey', authorizeService.commitApiKey);
+app.post(config.authorizeServicePath + '/apiKeys/:apiKey/commit', authorizeService.commitApiKey);
 
 
 /////////////////////////////////////////////////////////////////////
