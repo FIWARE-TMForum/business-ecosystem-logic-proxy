@@ -1,83 +1,83 @@
-var	AccountingService = require('./../../db/schemas/accountingService'),
-	async = require('async'),
-	tmfUtils = require('./../../lib/tmfUtils'),
-	utils = require('./../../lib/utils');
+var    AccountingService = require('./../../db/schemas/accountingService'),
+    async = require('async'),
+    tmfUtils = require('./../../lib/tmfUtils'),
+    utils = require('./../../lib/utils');
 
 var usageManagement = ( function () {
 
-	/**
-	 * Check if the API Key passed is a valid API Key
-	 *
-	 * @param  {Object}   req      Incoming request.
-	 */
-	var validateApiKey = function (req, callback) {
+    /**
+     * Check if the API Key passed is a valid API Key
+     *
+     * @param  {Object}   req      Incoming request.
+     */
+    var validateApiKey = function (req, callback) {
 
-		var apiKey = req.get('X-API-KEY');
+        var apiKey = req.get('X-API-KEY');
 
-		if (!apiKey) {
+        if (!apiKey) {
 
-			return callback({
-	            status: 401,
-	            message: 'Missing header "X-API-KEY"'
-	        });
+            return callback({
+                status: 401,
+                message: 'Missing header "X-API-KEY"'
+            });
 
-		} else {
+        } else {
 
-			AccountingService.findOne( {apiKey: apiKey}, function (err, result) {
+            AccountingService.findOne( {apiKey: apiKey}, function (err, result) {
 
-				if (err) {
+                if (err) {
 
-					return callback({
-			            status: 500,
-			            message: 'Error validating apiKey'
-			        });
+                    return callback({
+                        status: 500,
+                        message: 'Error validating apiKey'
+                    });
 
-				} else if (!result) {
+                } else if (!result) {
 
-					return callback({
-			            status: 401,
-			            message: 'Invalid apikey'
-			        });
+                    return callback({
+                        status: 401,
+                        message: 'Invalid apikey'
+                    });
 
-				} else if (result.state !== 'COMMITTED') {
+                } else if (result.state !== 'COMMITTED') {
 
-					return callback({
-			            status: 401,
-			            message: 'Apikey uncommitted'
-			        });
+                    return callback({
+                        status: 401,
+                        message: 'Apikey uncommitted'
+                    });
 
-				} else {
-					return callback();
-				}
-			});
-		}
-	};
+                } else {
+                    return callback();
+                }
+            });
+        }
+    };
 
-	/**
-	 * Assigns the user id to the relatedPaty query string if it is not defined.
-	 *
-	 * @param  {Object}   req      Incoming request
-	 */
-	var validateRetrieving = function (req, callback) {
+    /**
+     * Assigns the user id to the relatedPaty query string if it is not defined.
+     *
+     * @param  {Object}   req      Incoming request
+     */
+    var validateRetrieving = function (req, callback) {
 
-		var userId = req.user.id;
+        var userId = req.user.id;
 
-		if (!req.query.relatedParty.id) {
+        if (!req.query.relatedParty.id) {
 
-			req.query.relatedParty.id = userId;
+            req.query.relatedParty.id = userId;
 
-		} else if (req.query.relatedParty.id !== userId) {
+        } else if (req.query.relatedParty.id !== userId) {
 
-			return callback({
-				status: 401,
-				message: 'Invalid relatedParty'
-			});
-		}
+            return callback({
+                status: 401,
+                message: 'Invalid relatedParty'
+            });
+        }
 
-		return callback();
-	};
+        return callback();
+    };
 
-	//////////////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////////// COMMON ///////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -89,7 +89,7 @@ var usageManagement = ( function () {
         'DELETE': [ utils.methodNotAllowed ]
     };
 
-	var checkPermissions = function (req, callback) {
+    var checkPermissions = function (req, callback) {
 
         var reqValidators = [];
 
@@ -100,7 +100,7 @@ var usageManagement = ( function () {
         async.series(reqValidators, callback);
     };
 
-	return {
+    return {
         checkPermissions: checkPermissions
     };
 
