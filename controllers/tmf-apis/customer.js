@@ -364,7 +364,7 @@ var customer = (function() {
                             customerAccountsIds = [proxyRes.json.id];
                         }
 
-                        if (customerAccountsIds) {
+                        if (customerAccountsIds && err.status === 403) {
                             // Billing Addresses can be retrieved by involved sellers
                             checkIsRelatedSeller(proxyRes, customerAccountsIds, callback);
                         } else {
