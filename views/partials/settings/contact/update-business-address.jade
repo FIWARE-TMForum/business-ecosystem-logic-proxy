@@ -1,0 +1,48 @@
+.row(ng-switch="updateVM.status")
+  .col-xs-12(ng-switch-when="ERROR")
+    .alert.alert-danger {{ updateVM.errorMessage }}
+  .col-xs-12(ng-switch-when="LOADING")
+    .container-spinner
+      span.fa.fa-spinner.fa-spin.fa-2x
+  .col-xs-12(ng-switch-when="LOADED")
+    .alert.alert-info.text-center
+        span.fa.fa-info-circle
+        span  This information is public so it may be viewed by anyone.
+    .panel.panel-default.z-depth-1(ng-if="updateVM.data.contactMedium.length")
+      .panel-body
+        .h4.text-dark-secondary
+          strong My business addresses
+        hr
+        .table-responsive
+          table.table.table-bordered
+            thead
+              tr
+                th Medium
+                th Details
+                th Actions
+            tbody
+              tr(ng-repeat="contactMedium in updateVM.item.contactMedium")
+                th {{ contactMedium.getType().name }}
+                td
+                  span(style="white-space: pre-line;") {{ contactMedium.toString() }}
+                td
+                  a.btn.btn-sm.btn-icon.btn-info(ng-click="updateVM.updateContactMedium($index)")
+                    span.item-icon.fa.fa-pencil
+                  a.btn.btn-sm.btn-icon.btn-danger(ng-click="updateVM.removeContactMedium($index)")
+                    span.item-icon.fa.fa-trash
+    .panel.panel-default.z-depth-1
+      .panel-body(ng-controller="ContactMediumCreateCtrl as entryAttrVM")
+        .h4.text-dark-secondary
+          strong New business address
+        hr
+        business-address-form(
+          form="entryAttrVM.form"
+          controller="entryAttrVM"
+          email-address="entryAttrVM.data"
+          postal-address="entryAttrVM.data"
+          telephone-number="entryAttrVM.data"
+          ng-if="!updateVM.isNotCreated")
+        .form-group.text-right(ng-if="!updateVM.isNotCreated")
+          button.btn.btn-warning.z-depth-1(ng-disabled="!entryAttrVM.form.$valid" ng-click="entryAttrVM.create(entryAttrVM.form)")
+            span.item-text Create
+        .alert.alert-warning(ng-if="updateVM.isNotCreated") Sorry! In order to create contact mediums, you should first create a profile.

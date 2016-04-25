@@ -13,12 +13,14 @@
         .directive('fileModel', fileModelDirective)
         .directive('noImage', noImageDirective)
         .directive('fieldUnique', fieldUniqueDirective)
-        .directive('contactMediumForm', contactMediumFormDirective)
+        .directive('businessAddressForm', businessAddressFormDirective)
+        .directive('shippingAddressForm', shippingAddressFormDirective)
         .directive('pricePlanForm', pricePlanFormDirective)
         .directive('pricePlanTable', pricePlanTableDirective)
         .directive('convertToDate', convertToDateDirective)
         .directive('convertToNumber', convertToNumberDirective)
-        .directive('fieldArray', fieldArrayDirective);
+        .directive('fieldArray', fieldArrayDirective)
+        .directive('convertToPhoneNumber', convertToPhoneNumberDirective);
 
     function bsTooltipDirective() {
         return {
@@ -109,15 +111,31 @@
         };
     }
 
-    function contactMediumFormDirective() {
+    function businessAddressFormDirective() {
         return {
             restrict: 'E',
             scope: {
                 form: '=',
-                contactMedium: '=data',
+                emailAddress: '=emailAddress',
+                postalAddress: '=postalAddress',
+                telephoneNumber: '=telephoneNumber',
                 vm: '=controller'
             },
-            templateUrl: 'directives/forms/contact-medium'
+            templateUrl: 'directives/forms/business-address'
+        };
+    }
+
+    function shippingAddressFormDirective() {
+        return {
+            restrict: 'E',
+            scope: {
+                form: '=',
+                emailAddress: '=emailAddress',
+                postalAddress: '=postalAddress',
+                telephoneNumber: '=telephoneNumber',
+                vm: '=controller'
+            },
+            templateUrl: 'directives/forms/shipping-address'
         };
     }
 
@@ -177,6 +195,19 @@
                 ngModel.$formatters.push(function (value) {
                     //Model -> View
                     return parseInt(value, 10);
+                });
+            }
+        };
+    }
+
+    function convertToPhoneNumberDirective() {
+        return {
+            restrict: 'A',
+            require: 'ngModel',
+            link: function link(scope, element, attrs, ngModel) {
+                ngModel.$parsers.push(function (value) {
+                    //View -> Model
+                    return element.intlTelInput('getNumber');
                 });
             }
         };

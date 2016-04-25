@@ -65,6 +65,14 @@ config.endpoints = {
         'path': '',
         'port': ''
     },
+    'billing': {
+        'path': '',
+        'port': ''
+    },
+    'customer': {
+        'path': '',
+        'port': ''
+    },
     'charging': {
         'path': '',
         'port': ''
@@ -81,6 +89,9 @@ config.endpoints = {
 
 // Percentage of the generated revenues that belongs to the system
 config.revenueModel = 30;
+
+// Billing Account owner role
+config.billingAccountOwnerRole = 'bill receiver';
 
 // Use true if the app server listens in https
 config.appSsl = false;

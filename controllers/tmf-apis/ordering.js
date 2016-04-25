@@ -37,6 +37,11 @@ var ordering = (function(){
         });
     };
 
+    var getBillingAccountUrl = function(billingAccount) {
+        var billingAccountPath = url.parse(billingAccount.href).pathname;
+        return utils.getAPIURL(config.appSsl, config.appHost, config.endpoints.billing.port, billingAccountPath);
+    };
+
 
     //////////////////////////////////////////////////////////////////////////////////////////////
     ///////////////////////////////////////// RETRIEVAL //////////////////////////////////////////
@@ -204,7 +209,7 @@ var ordering = (function(){
             return; // EXIT
         }
 
-        if (!body.orderItem) {
+        if (!body.orderItem || !body.orderItem.length) {
             callback({
                 status: 400,
                 message: 'A product order must contain an orderItem field'
@@ -249,8 +254,75 @@ var ordering = (function(){
 
                 utils.updateBody(req, body);
 
-                callback();
+                checkBillingAccounts(req, body, callback);
 
+            }
+        });
+    };
+
+    var checkBillingAccounts = function(req, ordering, callback) {
+
+        // PLEASE NOTE: Billing account cannot be updated till the ordering has been created
+
+        // Check that all the billing accounts for all the items are the same
+        var initialBillingAccount;
+
+        if (ordering.orderItem[0].billingAccount && ordering.orderItem[0].billingAccount.length) {
+            initialBillingAccount = ordering.orderItem[0].billingAccount[0]
+        }
+
+        if (!initialBillingAccount || !initialBillingAccount.href) {
+            return callback({
+                status: 422,
+                message: 'Billing Account is required'
+            });
+        }
+
+        var error = false;
+
+        for (var i = 1; i < ordering.orderItem.length && !error; i++) {
+            error = !ordering.orderItem[i].billingAccount || !ordering.orderItem[i].billingAccount.length ||
+                !equal(initialBillingAccount, ordering.orderItem[i].billingAccount[0]);
+        }
+
+        if (error) {
+            return callback({
+                status: 422,
+                message: 'Billing Accounts must be the same for all the order items contained in the ordering'
+            });
+        }
+
+        // Verify that the billing account exists and that the user is the owner of that billing account
+        var billingAccountUrl = getBillingAccountUrl(initialBillingAccount);
+
+        request(billingAccountUrl, function(err, response, body) {
+
+            if (!err && response.statusCode === 200) {
+
+                var billingAccount = JSON.parse(body);
+
+                if (tmfUtils.hasPartyRole(req, billingAccount.relatedParty, config.billingAccountOwnerRole)) {
+                    callback(null);
+                } else {
+                    callback({
+                        status: 403,
+                        message: 'Unauthorized to use non-owned billing accounts'
+                    });
+                }
+
+            } else {
+
+                if (response && response.statusCode === 404) {
+                    callback({
+                        status: 422,
+                        message: 'The given billing account does not exist'
+                    });
+                } else {
+                    callback({
+                        status: 500,
+                        message: 'There was an unexpected error at the time of retrieving the provided billing account'
+                    });
+                }
             }
         });
     };
@@ -539,6 +611,75 @@ var ordering = (function(){
         }
     };
 
+    var includeSellersInBillingAccount = function(req, callback) {
+
+        // PLEASE NOTE: Billing Accounts have been checked in the checkPermissions step.
+
+        var ordering = JSON.parse(req.body);
+
+        var billingAccountUrl = getBillingAccountUrl(ordering.orderItem[0].billingAccount[0]);
+
+        request(billingAccountUrl, function(err, response, rawBillingAccount) {
+
+            if (!err && response.statusCode === 200) {
+
+                var billingAccount = JSON.parse(rawBillingAccount);
+                var billingAccountRelatedParties = billingAccount.relatedParty;
+                var currentUsers = [];
+
+                billingAccountRelatedParties.forEach(function(party) {
+                   currentUsers.push(party.id);
+                });
+
+                //var modified = false;
+
+                ordering.relatedParty.forEach(function(party) {
+
+                    if (currentUsers.indexOf(party.id) < 0) {
+
+                        billingAccountRelatedParties.push({
+                            id: party.id,
+                            href: party.href,
+                            role: 'bill responsible'
+                        });
+
+                        //modified = true;
+                    }
+                });
+
+                // if (modified) {
+
+                request(billingAccountUrl, {
+                    method: 'PATCH',
+                    json: { relatedParty: billingAccountRelatedParties }
+                }, function(err, response) {
+
+                    if (err || response.statusCode >= 400) {
+                        callback({
+                            status: 500,
+                            message: 'Unexpected error when updating the given billing account'
+                        })
+                    } else {
+                        callback(null);
+                    }
+
+                });
+
+                // } else {
+                //     callback(null);
+                // }
+
+            } else {
+                callback({
+                    status: 500,
+                    message: 'Unexpected error when checking the given billing account'
+                });
+            }
+
+        });
+
+    };
+
     var notifyOrder = function(req, callback) {
 
         var body = JSON.parse(req.body);
@@ -570,7 +711,11 @@ var ordering = (function(){
 
         } else if (req.method === 'POST') {
 
-            notifyOrder(req, callback);
+            var tasks = [];
+            tasks.push(notifyOrder.bind(this, req));
+            tasks.push(includeSellersInBillingAccount.bind(this, req));
+
+            async.series(tasks, callback);
 
         } else {
             callback(null);

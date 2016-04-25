@@ -1,0 +1,18 @@
+form(name="form" novalidate)
+  .row
+    .col-sm-6
+      .form-group(ng-class="{ 'has-error': vm.hasFieldError(form.mediumType) }")
+        label Medium
+        select.form-control(
+          name="mediumType"
+          ng-model="emailAddress.type"
+          ng-change = "emailAddress.resetMedium()"
+        )
+          option(ng-repeat="(key, value) in vm.CONTACT_MEDIUM" value="{{ value.code }}") {{ value.name }}
+  .row
+    .col-xs-12(ng-if="emailAddress.type === vm.CONTACT_MEDIUM.EMAIL_ADDRESS.code")
+      include ../email-address-fields.jade
+    .col-xs-12(ng-if="emailAddress.type === vm.CONTACT_MEDIUM.POSTAL_ADDRESS.code")
+      include ../postal-address-fields.jade
+    .col-xs-12(ng-if="emailAddress.type === vm.CONTACT_MEDIUM.TELEPHONE_NUMBER.code")
+      include ../telephone-number-fields.jade

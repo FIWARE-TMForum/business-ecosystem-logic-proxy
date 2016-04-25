@@ -355,6 +355,7 @@ app.post(config.authorizeServicePath + '/apiKeys/:apiKey/commit', authorizeServi
 var cssFilesToInject = [
     'bootstrap-3.3.5/css/bootstrap',
     'font-awesome-4.5.0/css/font-awesome',
+    'intl-tel-input-8.4.7/css/intlTelInput',
     'core/css/default-theme'
 ].map(function (path) {
     return 'resources/' + path + '.css';
@@ -365,12 +366,14 @@ var jsDepFilesToInject = [
     'jquery-1.11.3/js/jquery',
     'bootstrap-3.3.5/js/bootstrap',
     'moment-2.10.6/js/moment',
+    'intl-tel-input-8.4.7/js/intlTelInput',
     'angular-1.4.7/js/angular',
     // Angular Dependencies:
     'angular-1.4.7/js/angular-messages',
     'angular-1.4.7/js/angular-moment',
     'angular-1.4.7/js/angular-resource',
-    'angular-1.4.7/js/angular-ui-router'
+    'angular-1.4.7/js/angular-ui-router',
+    'angular-1.4.7/js/international-phone-number'
 ].map(function (path) {
     return 'resources/' + path + '.js';
 });
@@ -394,6 +397,9 @@ var jsAppFilesToInject = [
     'services/inventory-product.service',
     'services/utils.service',
     'services/party.individual.service',
+    'services/billing-account.service',
+    'services/customer.service',
+    'services/customer-account.service',
     'controllers/form-wizard.controller',
     'controllers/flash-message.controller',
     'controllers/user.controller',
@@ -412,6 +418,8 @@ var jsAppFilesToInject = [
     'controllers/unauthorized.controller',
     'controllers/party.individual.controller',
     'controllers/party.contact-medium.controller',
+    'controllers/billing-account.controller',
+    'controllers/customer.controller',
     'routes/offering.routes',
     'routes/settings.routes',
     'routes/stock.routes',
@@ -448,6 +456,8 @@ var renderTemplate = function(req, res, viewName) {
         inventoryPath: config.endpoints.inventory.path,
         chargingPath: config.endpoints.charging.path,
         partyPath: config.endpoints.party.path,
+        billingPath: config.endpoints.billing.path,
+        customerPath: config.endpoints.customer.path,
         shoppingCartPath: config.shoppingCartPath,
         authorizeServicePath: config.authorizeServicePath,
         rssPath: config.endpoints.rss.path,

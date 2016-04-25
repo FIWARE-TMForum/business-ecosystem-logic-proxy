@@ -12,7 +12,7 @@
         .module('app')
         .factory('ProductOrder', ProductOrderService);
 
-    function ProductOrderService($q, $resource, URLS, User, Offering) {
+    function ProductOrderService($q, $resource, URLS, User, Offering, BillingAccount) {
         var resource = $resource(URLS.PRODUCTORDER_MANAGEMENT + '/productOrder/:productOrderId', {
             productOrderId: '@id'
         }, {
@@ -25,6 +25,9 @@
         resource.prototype.getRoleOf = getRoleOf;
         resource.prototype.getPriceplanOf = getPriceplanOf;
         resource.prototype.formatPriceplanOf = formatPriceplanOf;
+        resource.prototype.getBillingAccount = function getBillingAccount() {
+            return this.orderItem[0].billingAccount[0];
+        };
 
         return {
             search: search,
@@ -114,47 +117,55 @@
             return deferred.promise;
         }
 
-        function detail(productOrderId) {
+        function detail(id) {
             var deferred = $q.defer();
             var params = {
-                productOrderId: productOrderId
+                productOrderId: id
             };
 
-            resource.get(params, function (productOrderRetrieved) {
-                var productOfferingFilters = {
-                    id: getProductOfferingIds(productOrderRetrieved).join()
-                };
-                var billingAccountCompleted = false, offeringListCompleted = false;
+            resource.get(params, function (productOrder) {
 
-                User.detail(function (userRetrived) {
-                    replaceBillingAccount(productOrderRetrieved, userRetrived);
-                    billingAccountCompleted = true;
+                // Remove empty characteristics
+                productOrder.orderItem.forEach(function(item) {
+                    if (item.product.productCharacteristic.length === 1 &&
+                            Object.keys(item.product.productCharacteristic[0]).length === 0) {
 
-                    if (billingAccountCompleted && offeringListCompleted) {
-                        deferred.resolve(productOrderRetrieved);
+                        item.product.productCharacteristic = [];
                     }
                 });
 
-                Offering.search(productOfferingFilters).then(function (productOfferingList) {
-                    replaceProductOffering(productOrderRetrieved, productOfferingList);
-                    offeringListCompleted = true;
-
-                    if (billingAccountCompleted && offeringListCompleted) {
-                        deferred.resolve(productOrderRetrieved);
-                    }
-                });
-                //deferred.resolve(productOrderRetrieved);
+                detailBillingAccount(productOrder);
             }, function (response) {
                 deferred.reject(response);
             });
 
             return deferred.promise;
 
-            function replaceBillingAccount(productOrderRetrieved, user) {
-                productOrderRetrieved.orderItem.forEach(function (orderItem) {
-                    orderItem.billingAccount = user;
+            function detailBillingAccount(productOrder) {
+                BillingAccount.detail(productOrder.getBillingAccount().id).then(function (billingAccount) {
+                    extendBillingAccount(productOrder, billingAccount);
+                    detailProductOffering(productOrder);
+                }, function (response) {
+                    deferred.reject(response);
                 });
             }
+
+            function detailProductOffering(productOrder) {
+                var filters = {
+                    id: getProductOfferingIds(productOrder)
+                };
+
+                Offering.search(filters).then(function (productOfferings) {
+                    replaceProductOffering(productOrder, productOfferings);
+                    deferred.resolve(productOrder);
+                });
+            }
+        }
+
+        function extendBillingAccount(productOrder, billingAccount) {
+            productOrder.orderItem.forEach(function (orderItem) {
+                orderItem.billingAccount = billingAccount;
+            });
         }
 
         function update(productOrder, dataUpdated) {
