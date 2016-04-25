@@ -66,7 +66,7 @@
             BillingAccount.query(params, function (billingAccounts) {
                 detailCustomerAccount(billingAccounts).then(function () {
                     deferred.resolve(billingAccounts);
-                }, function (argument) {
+                }, function (response) {
                     deferred.reject(response);
                 });
             }, function (response) {
@@ -116,7 +116,7 @@
                 CustomerAccount.detail(billingAccount.customerAccount.id).then(function (customerAccount) {
                     billingAccount.customerAccount = customerAccount;
                     deferred.resolve(billingAccount);
-                }, function (argument) {
+                }, function (response) {
                     deferred.reject(response);
                 });
             }, function (response) {
