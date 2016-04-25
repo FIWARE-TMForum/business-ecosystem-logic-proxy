@@ -411,16 +411,22 @@ var jsAppFilesToInject = [
     'controllers/customer.controller',
     'routes/offering.routes',
     'routes/settings.routes',
-    'routes/stock.routes',
-    'routes/stock.product.routes',
-    'routes/stock.product-offering.routes',
-    'routes/stock.product-catalogue.routes',
     'routes/stock.sharing-models.routes',
     'routes/inventory.routes',
     'routes/inventory.product-order.routes',
     'routes/inventory.product.routes',
     'routes/shopping-cart.routes',
     'routes/unauthorized.routes'
+].map(function (path) {
+    return 'resources/core/js/' + path + '.js';
+});
+
+// Stock dependencies
+var jsStockFilesToInject = [
+    'routes/stock.routes',
+    'routes/stock.product.routes',
+    'routes/stock.product-offering.routes',
+    'routes/stock.product-catalogue.routes'
 ].map(function (path) {
     return 'resources/core/js/' + path + '.js';
 });
@@ -436,7 +442,7 @@ var jsAdminFilesToInject = [
 var renderTemplate = function(req, res, viewName) {
 
     // TODO: Maybe an object with extra properties (if required)
-    res.render(viewName, {
+    var options = {
         user: req.user,
         contextPath: config.portalPrefix,
         proxyPath: config.proxyPrefix,
@@ -452,9 +458,19 @@ var renderTemplate = function(req, res, viewName) {
         platformRevenue: config.revenueModel,
         cssFilesToInject: cssFilesToInject,
         jsDepFilesToInject: jsDepFilesToInject,
-        jsAppFilesToInject: jsAppFilesToInject.concat(utils.isAdmin(req.user) ? jsAdminFilesToInject : []),
+        jsAppFilesToInject: jsAppFilesToInject,
         accountHost: config.oauth2.server
-    });
+    };
+
+    if (utils.isAdmin(req.user)) {
+        options.jsAppFilesToInject = options.jsAppFilesToInject.concat(jsAdminFilesToInject);
+    }
+
+    if (utils.hasRole(req.user, config.oauth2.roles.seller)) {
+        options.jsAppFilesToInject = options.jsAppFilesToInject.concat(jsStockFilesToInject);
+    }
+
+    res.render(viewName, options);
 
     res.end();
 };

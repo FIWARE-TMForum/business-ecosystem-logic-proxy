@@ -39,6 +39,7 @@
         vm.signOut = signOut;
         vm.showProfile = showProfile;
         vm.isAdmin = isAdmin;
+        vm.isSeller = isSeller;
         vm.isAuthenticated = isAuthenticated;
 
         $scope.$on('$stateChangeSuccess', function (event, toState) {
@@ -46,7 +47,13 @@
         });
 
         function isAdmin() {
+            // If admin route is loaded, the user is an admin
             return $state.get('admin') != null;
+        }
+
+        function isSeller() {
+            // If stock.catalogue route is loaded, the user is a seller
+            return $state.get('stock.catalogue') != null;
         }
 
         function isAuthenticated() {
