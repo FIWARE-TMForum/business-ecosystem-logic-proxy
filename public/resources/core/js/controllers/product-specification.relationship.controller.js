@@ -54,7 +54,7 @@
         }
 
         function hasRelationship(productSpec, relationshipProductSpec) {
-            return productSpec.productSpecificationRelationship.some(function (relationship) {
+            return productSpec.id === relationshipProductSpec.id || productSpec.productSpecificationRelationship.some(function (relationship) {
                 return relationship.productSpec.id === relationshipProductSpec.id;
             });
         }

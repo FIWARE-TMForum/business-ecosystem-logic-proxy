@@ -33,6 +33,10 @@
           a(ui-sref="offering.detail.pricePlan")
             span.item-icon.fa.fa-credit-card
             span.item-text.hidden-xs Price plans
+        li(ui-sref-active-eq="active")
+          a(ui-sref="offering.detail.relationship")
+            span.item-icon.fa.fa-chain
+            span.item-text.hidden-xs Relationships
   .col-xs-12
     ui-view(name="offering-content")
       include ./detail-about.jade
