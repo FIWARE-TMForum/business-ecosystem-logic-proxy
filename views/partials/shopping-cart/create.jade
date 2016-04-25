@@ -62,6 +62,8 @@ ui-view
                   label
                     span Choose a shipping address
                   input(type="hidden" ng-model="orderVM.billingAccount.id" required)
+                  .alert.alert-danger.text-center(ng-if="searchVM.status === 'ERROR'")
+                    span {{ searchVM.errorMessage }}
                   .alert.alert-warning.text-center(ng-if="searchVM.status === 'LOADED' && !searchVM.list.length")
                     span You should first create at least a shipping address in order to checkout an order. 
                     a(ui-sref="settings.contact.shipping") Click here.
