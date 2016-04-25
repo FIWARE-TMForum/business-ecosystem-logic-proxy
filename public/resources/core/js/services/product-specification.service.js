@@ -243,14 +243,14 @@
             }, initialInfo || {});
         }
 
-        function createCharacteristicValue() {
-            return {
+        function createCharacteristicValue(data) {
+            return angular.extend({
                 default: false,
                 unitOfMeasure: "",
                 value: "",
                 valueFrom: "",
                 valueTo: ""
-            };
+            }, data);
         }
     }
 

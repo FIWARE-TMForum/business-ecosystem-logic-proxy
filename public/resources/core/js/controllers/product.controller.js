@@ -207,17 +207,26 @@
                     name: "Asset type",
                     description: "Type of the digital asset described in this product specification"
                 }));
+                vm.digitalChars[0].productSpecCharacteristicValue.push(ProductSpec.createCharacteristicValue({
+                    default: true,
+                    value: typeList[0].name
+                }));
                 vm.digitalChars.push(ProductSpec.createCharacteristic({
                     name: "Media type",
                     description: "Media type of the digital asset described in this product specification"
+                }));
+                vm.digitalChars[1].productSpecCharacteristicValue.push(ProductSpec.createCharacteristicValue({
+                    default: true
                 }));
                 vm.digitalChars.push(ProductSpec.createCharacteristic({
                     name: "Location",
                     description: "URL pointing to the digital asset described in this product specification"
                 }));
+                vm.digitalChars[2].productSpecCharacteristicValue.push(ProductSpec.createCharacteristicValue({
+                    default: true
+                }));
                 vm.currentType = typeList[0];
                 vm.currFormat = vm.currentType.formats[0];
-                vm.digitalChars[0].productSpecCharacteristicValue[0].value = typeList[0].name;
             }
         });
 
