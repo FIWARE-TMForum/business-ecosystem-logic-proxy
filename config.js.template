@@ -72,6 +72,10 @@ config.endpoints = {
     'rss': {
         'path': '',
         'port': ''
+    },
+    'usageManagement': {
+        'path': '',
+        'port': ''
     }
 };
 
