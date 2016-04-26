@@ -4,43 +4,46 @@ var AccountingService = require('../db/schemas/accountingService'),
 
 var authorizeService = (function () {
 
-     /**
-      * Generates am aìKey.
-      */
-     var generateApiKey = function () {
-          var apiKey = uuid.v4();
+    /**
+     * Generates am aìKey.
+     */
+    var generateApiKey = function () {
+        var apiKey = uuid.v4();
 
-          return apiKey;
-     };
+        return apiKey;
+    };
 
-     /**
-      * Check if the remote cliente is the WStore; otherwise return an error.
-      */
-     var checkRemoteClient = function (ip) {
-          var storeHostname = config.appHost;
-          var remoteHostname = ip.replace(/^.*:/, ''); // Parse IPv4 embedded in IPv6
+    /**
+     * Check if the remote cliente is the WStore; otherwise return an error.
+     */
+    var checkRemoteClient = function (ip) {
+        var storeHostname = config.appHost;
+        var remoteHostname = ip.replace(/^.*:/, ''); // Parse IPv4 embedded in IPv6
 
-          return remoteHostname === storeHostname;
-     }
+        return remoteHostname === storeHostname;
+    }
 
-     /**
-      * Generates and send an apiKey for the url service specifed in the request body. The apiKey is saved in "uncommitted" state.
-      *
-      * @param  {Object} req     Incoming request.
-      * @param  {Object} res     Outgoing object.
-      */
-     var getApiKey = function (req, res) {
-          // Check if request is from WStore
-          var fromWStore = checkRemoteClient(req.ip);
+    /**
+     * Generates and send an apiKey for the url service specifed in the request body. The apiKey is saved in "uncommitted" state.
+     *
+     * @param  {Object} req     Incoming request.
+     * @param  {Object} res     Outgoing object.
+     */    
+    var getApiKey = function (req, res) {
+        // Check if request is from WStore
+        var fromWStore = checkRemoteClient(req.ip);
 
-          if (!fromWStore) {
-               res.status(401).json({error: 'Invalid remote client'});
+        if (!fromWStore) {
+            res.status(401).json({error: 'Invalid remote client'});
 
-          } else {
-               // Check the request and extract the url
-               var url = JSON.parse(req.body).url;
+        } else {
 
-               if (url) {
+            try{
+
+                // Check the request and extract the url
+                var url = JSON.parse(req.body).url;
+                
+                if (url) {
 
                     // Generate and save apiKey
                     var apiKey = generateApiKey();
@@ -51,53 +54,59 @@ var authorizeService = (function () {
 
                     service.save(function (err) {
 
-                         if (err) {
-                              res.status(500).send();
+                        if (err) {
+                            res.status(500).send();
 
-                         } else {
+                        } else {
 
-                              res.status(201).json({apiKey: apiKey});
-                         }
+                            res.status(201).json({apiKey: apiKey});
+                        }
                     });
 
-               } else {
+                } else {
                     res.status(400).json({error: 'Url missing'});
-               }
-          }
-     };
+                }
 
-     /**
-      * Change the apiKey state to "commited".
-      *
-      * @param  {Object} req      Incoming request.
-      * @param  {Object} res      Outgoing response.
-      */
-     var commitApiKey = function (req, res) {
-          // Check if request is from WStore
-          var fromWStore = checkRemoteClient(req.ip);
+            } catch (e) {
+                res.status(400).json({ error: 'Invalid body' });
+            }
+        }
+    };
 
-          if (!fromWStore) {
-               res.status(401).json({error: 'Invalid remote client'});
+    /**
+     * Change the apiKey state to "commited".
+     *
+     * @param  {Object} req      Incoming request.
+     * @param  {Object} res      Outgoing response.
+     */
+    var commitApiKey = function (req, res) {
+        // Check if request is from WStore
+        var fromWStore = checkRemoteClient(req.ip);
 
-          } else {
+        if (!fromWStore) {
+            res.status(401).json({error: 'Invalid remote client'});
 
-               // Update the apiKey state
-               var apiKey = req.params.apiKey;
+        } else {
 
-               AccountingService.update({apiKey: apiKey}, { $set: {state: 'COMMITTED'}}, function (err, rawResp) {
-                    if (err) {
-                         res.status(500).send();
-                    } else {
-                         res.status(200).send();
-                    }
-               });
-          }
-     };
+            // Update the apiKey state
+            var apiKey = req.params.apiKey;
 
-     return {
-          getApiKey: getApiKey,
-          commitApiKey: commitApiKey
-     };
+            AccountingService.update({apiKey: apiKey}, { $set: {state: 'COMMITTED'}}, function (err, rawResp) {
+                if (err) {
+                    res.status(500).send();
+                } else if (rawResp.nModified !== 1) {
+                    res.status(400).json({error: 'Invalid API Key'});
+                } else {
+                    res.status(200).send();
+                }
+            });
+        }
+    };
+
+    return {
+        getApiKey: getApiKey,
+        commitApiKey: commitApiKey
+    };
 
 })();
 

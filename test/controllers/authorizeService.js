@@ -48,6 +48,16 @@ describe('Accounting Service', function () {
             invalidRequest('getApiKey', req, 401, {error: 'Invalid remote client'}, done);
         });
 
+        it('should return 400 when the body is empty', function (done) {
+            var req = {
+                ip: {
+                    replace: function (expr) { return DEFAULT_WSTOREHOST}
+                }
+            }
+
+            invalidRequest('getApiKey', req, 400, {error: 'Invalid body'}, done);
+        });
+
         it('should return 400 when the "url" is not defined', function (done) {
             var req = {
                 ip: {
@@ -116,7 +126,7 @@ describe('Accounting Service', function () {
             invalidRequest('commitApiKey', req, 401, {error: 'Invalid remote client'}, done);
         });
 
-        var updateApikeyState = function(updateReturn, statusExpected, done) {
+        var updateApikeyState = function(updateErr, updateRes, statusExpected, errExpected, done) {
             var config = {
                 appHost: DEFAULT_WSTOREHOST,
             };
@@ -131,12 +141,12 @@ describe('Accounting Service', function () {
 
             var  accServiceSchema = jasmine.createSpyObj('accServiceSchema', ['update']);
             accServiceSchema.update.and.callFake( function (conditions, update, callback) {
-                return callback(updateReturn, {});
+                return callback(updateErr, updateRes, {});
             });
 
             var accSerivceController = getAuthorizeServiceController(accServiceSchema, config);
 
-            var res = jasmine.createSpyObj('res', ['status', 'send']);
+            var res = jasmine.createSpyObj('res', ['status', 'send', 'json']);
             res.status.and.callFake(function () {
                 return res;
             });
@@ -148,18 +158,27 @@ describe('Accounting Service', function () {
                 expect(accServiceSchema.update.calls.argsFor(0)[1]).toEqual({ $set: {state: 'COMMITTED'}});
 
                 expect(res.status).toHaveBeenCalledWith(statusExpected);
-                expect(res.send).toHaveBeenCalled();
+
+                if (errExpected) {
+                    expect(res.json).toHaveBeenCalledWith(errExpected);
+                } else {
+                    expect(res.send).toHaveBeenCalled();
+                }
 
                 done();
             }, 100);
         };
 
         it('should return 500 when db fails', function (done) {
-            updateApikeyState('Error', 500, done);
+            updateApikeyState('Error', {}, 500, null, done);
+        });
+
+        it('should return 400 when the API Key is invalid', function (done) {
+           updateApikeyState(null, {nModified: 0}, 400, {error: 'Invalid API Key'}, done); 
         });
 
         it('Should update to "COMMITTED" the state of apiKey received', function (done) {
-            updateApikeyState(null, 200, done);
+            updateApikeyState(null, {nModified: 1}, 200, null, done);
         });
     });
 });
