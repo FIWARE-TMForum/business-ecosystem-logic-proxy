@@ -18,6 +18,7 @@
       a.btn.btn-default.z-depth-1(ng-click="createVM.pricePlanEnabled = true")
         span.item-text New price plan
   .col-xs-12
-    .form-group.text-right
-      a.btn.btn-default.z-depth-1(ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])")
-        span.item-text Next
+    form(name="step.form" novalidate)
+      .form-group.text-right
+        a.btn.btn-default.z-depth-1(ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])")
+          span.item-text Next
