@@ -2,10 +2,9 @@ var proxyquire = require('proxyquire').noCallThru();
 
 describe('Usage Management API', function () {
 
-    var getUsageManagementAPI = function (accountingService, tmfUtils, utils) {
+    var getUsageManagementAPI = function (accountingService, utils) {
         return proxyquire('../../../controllers/tmf-apis/usageManagement', {
             './../../db/schemas/accountingService': accountingService,
-            './../../lib/tmfUtils': tmfUtils,
             './../../lib/utils': utils
         }).usageManagement;
     }
@@ -34,7 +33,7 @@ describe('Usage Management API', function () {
                     methodNotAllowed: methodNotAllowed
                 };
 
-                var usageManagementAPI = getUsageManagementAPI({}, {}, utils);
+                var usageManagementAPI = getUsageManagementAPI({}, utils);
 
                 var path = '/apiKeys';
 
@@ -89,13 +88,7 @@ describe('Usage Management API', function () {
                     validateLoggedIn: validateLoggedError
                 };
 
-                var tmfUtils = {
-                    ensureRelatedPartyIncluded: {
-                        bind: function(context, obj) {}
-                    }
-                }
-
-                var usageManagementAPI = getUsageManagementAPI({}, tmfUtils, utils);
+                var usageManagementAPI = getUsageManagementAPI({}, utils);
                 var path = '/apiKeys';
 
                 var req = {
@@ -134,24 +127,16 @@ describe('Usage Management API', function () {
                     }
                 };
 
-                var tmfUtils = {
-                    ensureRelatedPartyIncluded: function (req, callback) {
-                        return callback();
-                    }
-                };
-
                 var req = {
                     method: 'GET',
                     url: '/apiKeys',
-                    query: {
-                        relatedParty: {},
-                    },
+                    query: {},
                     user: {
                         id: userId
                     }
                 };
 
-                var usageManagementAPI = getUsageManagementAPI({}, tmfUtils, utils);
+                var usageManagementAPI = getUsageManagementAPI({}, utils);
 
                 usageManagementAPI.checkPermissions(req, function (err) {
                     expect(req.query.relatedParty.id).toBe(userId);
@@ -164,12 +149,6 @@ describe('Usage Management API', function () {
                 var utils = {
                     validateLoggedIn: function (req, callback) {
                         return callback(); 
-                    }
-                };
-
-                var tmfUtils = {
-                    ensureRelatedPartyIncluded: function (req, callback) {
-                        return callback();
                     }
                 };
 
@@ -186,7 +165,7 @@ describe('Usage Management API', function () {
                     }
                 };
 
-                var usageManagementAPI = getUsageManagementAPI({}, tmfUtils, utils);
+                var usageManagementAPI = getUsageManagementAPI({}, utils);
 
                 usageManagementAPI.checkPermissions(req, function (err) {
                     expect(err).not.toBe(null);
@@ -207,7 +186,7 @@ describe('Usage Management API', function () {
 
             var testValidateApiKey = function (accountingService, headers, statusExpected, messageExpected, done) {
 
-                var usageManagementAPI = getUsageManagementAPI(accountingService, {}, {});
+                var usageManagementAPI = getUsageManagementAPI(accountingService, {});
                 var path = '/apiKey';
 
                 var req = {
@@ -270,7 +249,7 @@ describe('Usage Management API', function () {
                     }
                 };
 
-                var usageManagementAPI = getUsageManagementAPI(accountingService, {}, {});
+                var usageManagementAPI = getUsageManagementAPI(accountingService, {});
                 var path = '/apiKey';
 
                 var req = {

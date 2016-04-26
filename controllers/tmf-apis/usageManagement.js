@@ -1,6 +1,5 @@
-var    AccountingService = require('./../../db/schemas/accountingService'),
+var AccountingService = require('./../../db/schemas/accountingService'),
     async = require('async'),
-    tmfUtils = require('./../../lib/tmfUtils'),
     utils = require('./../../lib/utils');
 
 var usageManagement = ( function () {
@@ -62,16 +61,21 @@ var usageManagement = ( function () {
 
         var userId = req.user.id;
 
-        if (!req.query.relatedParty.id) {
+        if (!req.query.relatedParty) {
 
-            req.query.relatedParty.id = userId;
+            req.query.relatedParty = {
+                id: userId
+            };
 
-        } else if (req.query.relatedParty.id !== userId) {
+        } else {
 
-            return callback({
-                status: 401,
-                message: 'Invalid relatedParty'
-            });
+            if (req.query.relatedParty.id !== userId) {
+
+                return callback({
+                    status: 401,
+                    message: 'Invalid relatedParty'
+                });
+            }
         }
 
         return callback();
@@ -82,7 +86,7 @@ var usageManagement = ( function () {
     //////////////////////////////////////////////////////////////////////////////////////////////
 
     var validators = {
-        'GET': [ utils.validateLoggedIn, tmfUtils.ensureRelatedPartyIncluded, validateRetrieving ],
+        'GET': [ utils.validateLoggedIn, validateRetrieving ],
         'POST': [ validateApiKey ],
         'PATCH': [ utils.methodNotAllowed ],
         'PUT': [ utils.methodNotAllowed ],
