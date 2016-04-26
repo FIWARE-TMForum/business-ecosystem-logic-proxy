@@ -1,5 +1,8 @@
 .row
-  .col-xs-12
+  .col-xs-12(ng-if="!detailVM.item.relationships().length")
+    .alert.alert-info.text-center
+      span No relationships found.
+  .col-xs-12(ng-if="detailVM.item.relationships().length")
     .container-flex
       .panel.panel-default.item-offering.z-depth-1(ng-repeat="productOffering in detailVM.item.relationships()")
         a.thumbnail.thumbnail-lg(ui-sref="offering.detail({ offeringId: productOffering.id })", ui-sref-opts="{ inherit: false }")
