@@ -2,9 +2,10 @@ var proxyquire = require('proxyquire').noCallThru();
 
 describe('Usage Management API', function () {
 
-    var getUsageManagementAPI = function (accountingService, utils) {
+    var getUsageManagementAPI = function (accountingService, storeClient, utils) {
         return proxyquire('../../../controllers/tmf-apis/usageManagement', {
             './../../db/schemas/accountingService': accountingService,
+            './../../lib/store': storeClient,
             './../../lib/utils': utils
         }).usageManagement;
     }
@@ -33,7 +34,7 @@ describe('Usage Management API', function () {
                     methodNotAllowed: methodNotAllowed
                 };
 
-                var usageManagementAPI = getUsageManagementAPI({}, utils);
+                var usageManagementAPI = getUsageManagementAPI({}, {}, utils);
 
                 var path = '/apiKeys';
 
@@ -88,7 +89,7 @@ describe('Usage Management API', function () {
                     validateLoggedIn: validateLoggedError
                 };
 
-                var usageManagementAPI = getUsageManagementAPI({}, utils);
+                var usageManagementAPI = getUsageManagementAPI({}, {}, utils);
                 var path = '/apiKeys';
 
                 var req = {
@@ -117,16 +118,24 @@ describe('Usage Management API', function () {
         
         describe('GET', function () {
 
-            it('should add the user id to the "relatedParty" query string', function (done) {
+            var testRelatedParty = function (req, done) {
 
-                var userId = 'userId';
-
-                var utils = {
+                 var utils = {
                     validateLoggedIn: function (req, callback) {
                         return callback(); 
                     }
                 };
 
+                var usageManagementAPI = getUsageManagementAPI({}, {}, utils);
+
+                usageManagementAPI.checkPermissions(req, function (err) {
+                    expect(req.query.relatedParty.id).toBe(req.user.id);
+                    done();
+                });
+            };
+
+            it('should add the user id to the "relatedParty" query string', function (done) {
+                var userId = 'userId';
                 var req = {
                     method: 'GET',
                     url: '/apiKeys',
@@ -136,15 +145,28 @@ describe('Usage Management API', function () {
                     }
                 };
 
-                var usageManagementAPI = getUsageManagementAPI({}, utils);
-
-                usageManagementAPI.checkPermissions(req, function (err) {
-                    expect(req.query.relatedParty.id).toBe(userId);
-                    done();
-                });
+                testRelatedParty(req, done);
             });
 
-            it('should reject resuqests with invalid relatedParty', function (done) {
+            it('should permit request with the correct related party', function (done) {
+                var userId = 'userId';
+                var req = {
+                    method: 'GET',
+                    url: '/apiKeys',
+                    query: {
+                        relatedParty: {
+                            id: userId
+                        } 
+                    },
+                    user: {
+                        id: userId
+                    }
+                };
+
+                testRelatedParty(req, done);
+            });
+
+            it('should reject requests with invalid relatedParty', function (done) {
 
                 var utils = {
                     validateLoggedIn: function (req, callback) {
@@ -165,7 +187,7 @@ describe('Usage Management API', function () {
                     }
                 };
 
-                var usageManagementAPI = getUsageManagementAPI({}, utils);
+                var usageManagementAPI = getUsageManagementAPI({}, {}, utils);
 
                 usageManagementAPI.checkPermissions(req, function (err) {
                     expect(err).not.toBe(null);
@@ -175,7 +197,6 @@ describe('Usage Management API', function () {
                     done();
                 });
             });
-
         });
 
         //////////////////////////////////////////////////////////////////////////////////////////////
@@ -186,7 +207,7 @@ describe('Usage Management API', function () {
 
             var testValidateApiKey = function (accountingService, headers, statusExpected, messageExpected, done) {
 
-                var usageManagementAPI = getUsageManagementAPI(accountingService, {});
+                var usageManagementAPI = getUsageManagementAPI(accountingService, {}, {});
                 var path = '/apiKey';
 
                 var req = {
@@ -249,7 +270,7 @@ describe('Usage Management API', function () {
                     }
                 };
 
-                var usageManagementAPI = getUsageManagementAPI(accountingService, {});
+                var usageManagementAPI = getUsageManagementAPI(accountingService, {}, {});
                 var path = '/apiKey';
 
                 var req = {
@@ -268,6 +289,84 @@ describe('Usage Management API', function () {
                 });
             });
 
+        });
+
+        describe('Post Validation', function () {
+
+            var testPostValidation = function (req, done) {
+
+                var storeClient = jasmine.createSpyObj('storeClient', ['validateUsage']);
+                storeClient.validateUsage.and.callFake( function (usageInfo, userInfo, callback) {
+                    return callback(null);
+                });
+
+                var store = {
+                    storeClient: storeClient
+                };
+
+                var usageManagementAPI = getUsageManagementAPI({}, store, {});
+
+                usageManagementAPI.executePostValidation(req, function (err) {
+
+                    expect(err).toBe(undefined);
+                    expect(storeClient.validateUsage).not.toHaveBeenCalled();
+
+                    done();
+                });
+            };
+
+            it('should fail when the body is not a JSON', function (done) {
+
+                var req = {
+                    method: 'POST',
+                    status: 201,
+                    apiUrl: '/DSUsageManagement/api/usageManagement/v2/usage'
+                };
+
+                testPostValidation(req, done);
+            });
+
+            it('should not notify when the request is not a POST to ../usage', function (done) {
+
+                var req = {
+                    method: 'POST',
+                    status: 201,
+                    body: '{}',
+                    apiUrl: '/DSUsageManagement/api/usageManagement/v2/usageSpecification'
+                };
+
+                testPostValidation(req, done);
+            });
+
+            it('should notify the Store if the usage management API notification is successful', function (done) {
+                
+                var storeClient = jasmine.createSpyObj('storeClient', ['validateUsage']);
+                storeClient.validateUsage.and.callFake( function (usageInfo, userInfo, callback) {
+                    return callback(null);
+                });
+                
+                var store = {
+                    storeClient: storeClient
+                };
+
+                var req = {
+                    method: 'POST',
+                    status: 201,
+                    apiUrl: '/DSUsageManagement/api/usageManagement/v2/usage',
+                    body: '{}'
+                };
+
+                var usageManagementAPI = getUsageManagementAPI({}, store, {});
+
+                usageManagementAPI.executePostValidation(req, function (err) {
+
+                    expect(err).toBe(null);
+                    expect(storeClient.validateUsage.calls.argsFor(0)[0]).toEqual({});
+                    expect(storeClient.validateUsage.calls.argsFor(0)[1]).toEqual(null);
+
+                    done();
+                });
+            });
         });
     });
 });

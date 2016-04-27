@@ -1,5 +1,6 @@
 var AccountingService = require('./../../db/schemas/accountingService'),
     async = require('async'),
+    storeClient = require('./../../lib/store').storeClient,
     utils = require('./../../lib/utils');
 
 var usageManagement = ( function () {
@@ -81,6 +82,29 @@ var usageManagement = ( function () {
         return callback();
     };
 
+    // If the usage notification to the usage management API is successful, 
+    //  it will notify the the Store with the API response
+    var executePostValidation = function (req, callback) {
+
+        try {
+            var body = JSON.parse(req.body)
+        } catch (e) {
+            // If an error parsing the body occurs this is a failure in the
+            // request so the error is retransmitted
+            return callback();
+        }
+
+        var url = req.apiUrl.split('/');
+
+        if (req.method === 'POST' && req.status === 201 && url[url.length-1] === 'usage') {
+            
+            storeClient.validateUsage(body, null, callback);
+                
+        } else {
+            return callback();
+        }
+    };
+
     //////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////////// COMMON ///////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
@@ -105,7 +129,8 @@ var usageManagement = ( function () {
     };
 
     return {
-        checkPermissions: checkPermissions
+        checkPermissions: checkPermissions,
+        executePostValidation: executePostValidation
     };
 
 })();

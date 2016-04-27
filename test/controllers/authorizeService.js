@@ -178,7 +178,7 @@ describe('Accounting Service', function () {
         });
 
         it('Should update to "COMMITTED" the state of apiKey received', function (done) {
-            updateApikeyState(null, {nModified: 1}, 200, null, done);
+           updateApikeyState(null, {nModified: 1}, 200, null, done);
         });
     });
 });
