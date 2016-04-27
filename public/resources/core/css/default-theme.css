@@ -799,6 +799,16 @@ a.dropdown-menu-item:hover {
     background-color: rgb(255, 125, 45);
 }
 
+.nav-pills.nav-router > li > a.bg-view4 > .item-icon-container,
+.nav-pills.nav-router > li > a.bg-view4:hover,
+.nav-pills.nav-router > li > a.bg-view4:focus,
+.nav-pills.nav-router > li.active > a.bg-view4,
+.nav-pills.nav-router > li.active > a.bg-view4:hover,
+.nav-pills.nav-router > li.active > a.bg-view4:focus {
+    color: rgb(025, 060, 110);
+    background-color: rgb(255, 230, 22);
+}
+
 /* ===================================================================================
  *   COMPONENT - NAV-STEPS
  * =================================================================================== */

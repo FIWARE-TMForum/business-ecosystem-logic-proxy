@@ -1,7 +1,7 @@
 ui-view
   .row
     .col-xs-12
-      include ./search-toolbar.jade
+      include search-toolbar
     .col-xs-12(ng-switch="searchVM.list.status")
       div(ng-switch-when="LOADED", ng-switch="searchVM.list.length")
         div(ng-switch-when="0")
@@ -17,7 +17,7 @@ ui-view
                   th Nº Stakeholders
               tbody
                 tr(ng-repeat="rsModel in searchVM.list",
-                  ui-sref="stock.models.update({ productClass: rsModel.productClass })",
+                  ui-sref="rss.models.update({ productClass: rsModel.productClass })",
                   ui-sref-opts="{ inherit: false }"
                 )
                   td
