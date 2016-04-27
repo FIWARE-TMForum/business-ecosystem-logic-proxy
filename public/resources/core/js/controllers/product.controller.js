@@ -42,7 +42,7 @@
         }
     }
 
-    function ProductCreateController($scope, $state, $rootScope, EVENTS, ProductSpec, Asset, AssetType, Utils) {
+    function ProductCreateController($q, $scope, $state, $rootScope, EVENTS, ProductSpec, Asset, AssetType, Utils) {
         /* jshint validthis: true */
         var vm = this;
         var stepList = [
@@ -65,6 +65,10 @@
             {
                 title: 'Attachments',
                 templateUrl: 'stock/product/create/attachments'
+            },
+            {
+                title: 'Relationships',
+                templateUrl: 'stock/product/create/relationships'
             },
             {
                 title: 'Finish',
@@ -92,6 +96,9 @@
 
         vm.isSelected = isSelected;
 
+        vm.createRelationship = createRelationship;
+        vm.removeRelationship = removeRelationship;
+
         /* CHARACTERISTICS MEMBERS */
 
         var characteristic = ProductSpec.createCharacteristic();
@@ -114,6 +121,24 @@
         vm.resetCharacteristicValue = resetCharacteristicValue;
         vm.getFormattedValueOf = getFormattedValueOf;
         vm.clearFileInput = clearFileInput;
+
+        function createRelationship(data) {
+            var deferred = $q.defer();
+
+            vm.data.productSpecificationRelationship.push(data);
+            deferred.resolve(vm.data);
+
+            return deferred.promise;
+        }
+
+        function removeRelationship(index) {
+            var deferred = $q.defer();
+
+            vm.data.productSpecificationRelationship.splice(index, 1);
+            deferred.resolve(vm.data);
+
+            return deferred.promise;
+        }
 
         /* CHARACTERISTICS METHODS */
 
@@ -207,17 +232,26 @@
                     name: "Asset type",
                     description: "Type of the digital asset described in this product specification"
                 }));
+                vm.digitalChars[0].productSpecCharacteristicValue.push(ProductSpec.createCharacteristicValue({
+                    default: true,
+                    value: typeList[0].name
+                }));
                 vm.digitalChars.push(ProductSpec.createCharacteristic({
                     name: "Media type",
                     description: "Media type of the digital asset described in this product specification"
+                }));
+                vm.digitalChars[1].productSpecCharacteristicValue.push(ProductSpec.createCharacteristicValue({
+                    default: true
                 }));
                 vm.digitalChars.push(ProductSpec.createCharacteristic({
                     name: "Location",
                     description: "URL pointing to the digital asset described in this product specification"
                 }));
+                vm.digitalChars[2].productSpecCharacteristicValue.push(ProductSpec.createCharacteristicValue({
+                    default: true
+                }));
                 vm.currentType = typeList[0];
                 vm.currFormat = vm.currentType.formats[0];
-                vm.digitalChars[0].productSpecCharacteristicValue[0].value = typeList[0].name;
             }
         });
 
@@ -363,9 +397,11 @@
         });
     }
 
-    function ProductUpdateController($state, $rootScope, EVENTS, ProductSpec, Utils) {
+    function ProductUpdateController($state, $rootScope, EVENTS, DATA_STATUS, ProductSpec, Utils) {
         /* jshint validthis: true */
         var vm = this;
+
+        vm.DATA_STATUS = DATA_STATUS;
 
         vm.$state = $state;
         vm.item = {};
@@ -374,13 +410,18 @@
         vm.updateStatus = updateStatus;
         vm.formatCharacteristicValue = formatCharacteristicValue;
 
+        vm.createRelationship = createRelationship;
+        vm.removeRelationship = removeRelationship;
+
+        vm.status = LOADING;
+
         ProductSpec.detail($state.params.productId).then(function (productRetrieved) {
             vm.data = angular.copy(productRetrieved);
             vm.item = productRetrieved;
-            vm.item.status = LOADED;
+            vm.status = LOADED;
         }, function (response) {
             vm.error = Utils.parseError(response, 'The requested product could not be retrieved');
-            vm.item.status = ERROR;
+            vm.status = ERROR;
         });
 
         function updateStatus(status) {
@@ -389,7 +430,7 @@
         }
 
         function update() {
-            ProductSpec.update(vm.data).then(function (productUpdated) {
+            ProductSpec.update(vm.item, vm.data.toJSON()).then(function (productUpdated) {
                 $state.go('stock.product.update', {
                     productId: productUpdated.id
                 }, {
@@ -400,14 +441,31 @@
                     name: productUpdated.name
                 });
             }, function (response) {
-
-                var defaultMessage = 'There was an unexpected error that prevented the ' +
-                    'system from updating the given product';
-                var error = Utils.parseError(response, defaultMessage);
-
                 $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
-                    error: error
+                    error: Utils.parseError(response, 'Unexpected error trying to update the product spec.')
                 });
+            });
+        }
+
+        function createRelationship(relationship) {
+            return vm.item.appendRelationship(relationship).then(function (productSpec) {
+                vm.item = productSpec;
+                vm.data = angular.copy(productSpec);
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {
+                    message: 'The relationship was created.'
+                });
+                return productSpec;
+            });
+        }
+
+        function removeRelationship(index) {
+            return vm.item.removeRelationship(index).then(function (productSpec) {
+                vm.item = productSpec;
+                vm.data = angular.copy(productSpec);
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {
+                    message: 'The relationship was removed.'
+                });
+                return productSpec;
             });
         }
 

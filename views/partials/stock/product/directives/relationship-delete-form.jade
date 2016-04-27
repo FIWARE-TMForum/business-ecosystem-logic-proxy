@@ -1,0 +1,27 @@
+.row(ng-controller="RelationshipDeleteCtrl as deleteVM")
+  .col-xs-12(ng-if="!resource.productSpecificationRelationship.length")
+    .alert.alert-info.text-center
+      span No relationships included.
+  .col-xs-12(ng-if="resource.productSpecificationRelationship.length")
+    .table-responsive
+      table.table.table-bordered
+        thead
+          tr
+            th Relationship
+            th Name
+            th Type
+            th Updated
+            th Actions
+        tbody
+          tr(ng-repeat="relationship in resource.productSpecificationRelationship")
+            td {{ relationship.parseType() }}
+            th {{ relationship.productSpec.name }}
+            td
+              span.label(ng-class="relationship.productSpec.isBundle ? 'label-bundle' : 'label-single'")
+                | {{ relationship.productSpec.isBundle ? 'Bundle' : 'Single' }}
+            td
+              time(am-time-ago="relationship.productSpec.lastUpdate")
+            td
+              a.btn.btn-sm.btn-icon.btn-danger(ng-click="deleteVM.remove(parentVM, $index)")
+                span.item-icon.fa.fa-spin.fa-spinner(ng-if="deleteVM.statusRelationship === deleteVM.DATA_STATUS.LOADING")
+                span.item-icon.fa.fa-trash(ng-if="deleteVM.statusRelationship !== deleteVM.DATA_STATUS.LOADING")

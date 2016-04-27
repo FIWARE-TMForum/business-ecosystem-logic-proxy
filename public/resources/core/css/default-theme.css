@@ -1274,6 +1274,10 @@ a.dropdown-menu-item:hover {
     background-color: rgb(040, 150, 120);
 }
 
+.label-relationship {
+    background-color: #FF5722;
+}
+
 .label + .label {
     margin-left: 5px;
 }
@@ -1888,6 +1892,11 @@ a.thumbnail:focus {
     right: 0;
     bottom: 0;
     padding: 0.5em .8em .5em;
+}
+
+.thumbnail > .label-to-left {
+    left: 0;
+    right: initial;
 }
 
 .item-offering-name {

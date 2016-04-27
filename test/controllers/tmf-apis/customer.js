@@ -22,6 +22,16 @@ describe('Customer API', function() {
             message: 'Unauthorized to update/delete non-owned resources'
     };
 
+    var UNAUTHORIZED_RETRIEVE_CUSTOMER_ERROR = {
+        status: 403,
+        message: 'Unauthorized to retrieve the information of the given customer'
+    };
+
+    var BILLING_ACCOUNT_CANNOT_BE_RETRIEVED_ERROR = {
+        status: 500,
+        message: 'An error arises at the time of retrieving associated billing accounts'
+    };
+
     var getCustomerAPI = function(utils, tmfUtils) {
         return proxyquire('../../../controllers/tmf-apis/customer', {
             './../../config': config,
@@ -672,9 +682,11 @@ describe('Customer API', function() {
                         expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(req, hasPartyRoleArgument, 'owner');
                     }
 
-                    isRelatedPartyArguments.forEach(function(item) {
-                        expect(tmfUtils.isRelatedParty).toHaveBeenCalledWith(req, item);
-                    });
+                    if (isRelatedPartyArguments) {
+                        isRelatedPartyArguments.forEach(function (item) {
+                            expect(tmfUtils.isRelatedParty).toHaveBeenCalledWith(req, item);
+                        });
+                    }
 
                     done();
                 });
@@ -688,14 +700,17 @@ describe('Customer API', function() {
                     }
                 };
 
-                testRetrieveResource(body, true, null, [body.relatedParty], [], null, done);
+                testRetrieveResource(body, true, null, [body.relatedParty], null, null, done);
             });
 
-            var testRetrieveCustomerAccount = function(customerResponse, hasPartyRoleArgument, expectedErr, done) {
+            var testRetrieveCustomerAccount = function(customerResponse, billingResponse, hasPartyRole,
+                                                       isRelatedPartyValues, hasPartyRoleArgument,
+                                                       isRelatedPartyArguments, expectedErr, done) {
 
                 var customerPath = '/customer/1';
 
                 var customerAccount = {
+                    id: 7,
                     customer: {
                         href: CUSTOMER_SERVER + customerPath
                     }
@@ -711,11 +726,18 @@ describe('Customer API', function() {
                     .get(customerPath)
                     .reply(customerResponse.status, customerResponse.body);
 
-                testRetrieveResource(customerAccount, true, null, hasPartyRoleArgument, [], expectedErr, done);
+                if (billingResponse) {
+                    nock(BILLING_SERVER)
+                        .get(BASE_BILLING_PATH + '?customerAccount.id=' + customerAccount.id)
+                        .reply(billingResponse.status, billingResponse.body);
+                }
+
+                testRetrieveResource(customerAccount, hasPartyRole, isRelatedPartyValues, hasPartyRoleArgument,
+                    isRelatedPartyArguments, expectedErr, done);
 
             };
 
-            it('should allow to retrieve an owner customer account', function(done) {
+            it('should allow to retrieve an owned customer account', function(done) {
 
                 var customer = {
                     relatedParty: {
@@ -723,7 +745,8 @@ describe('Customer API', function() {
                     }
                 };
 
-                testRetrieveCustomerAccount({status: 200, body: customer}, [customer.relatedParty], null, done);
+                testRetrieveCustomerAccount({status: 200, body: customer}, null, true, null,
+                    [customer.relatedParty], null, null, done);
 
             });
 
@@ -734,7 +757,65 @@ describe('Customer API', function() {
                     message: 'The attached customer cannot be retrieved'
                 };
 
-                testRetrieveCustomerAccount({status: 500, body: null}, null, expectedErr, done);
+                testRetrieveCustomerAccount({status: 500, body: null}, null, true, null, null, null, expectedErr, done);
+            });
+
+            it('should not allow to retrieve a non-owned customer account when user not included in billing account', function(done) {
+
+                var customer = {
+                    relatedParty: {
+                        id: 3
+                    }
+                };
+
+                var billingAccount = {
+                    relatedParty: [
+                        {
+                            id: 5
+                        }
+                    ]
+                };
+
+                testRetrieveCustomerAccount({status: 200, body: customer}, {status: 200, body: [billingAccount]},
+                    false, [false], [customer.relatedParty], [billingAccount.relatedParty],
+                    UNAUTHORIZED_RETRIEVE_CUSTOMER_ERROR, done);
+
+            });
+
+            it('should not allow to retrieve a non-owned customer account when billing account cannot be retrieved', function(done) {
+
+                var customer = {
+                    relatedParty: {
+                        id: 3
+                    }
+                };
+
+                testRetrieveCustomerAccount({status: 200, body: customer}, {status: 500, body: null},
+                    false, null, [customer.relatedParty], null,
+                    BILLING_ACCOUNT_CANNOT_BE_RETRIEVED_ERROR, done);
+
+            });
+
+            it('should allow to retrieve a non-owned customer account if included in billing account', function(done) {
+
+                var customer = {
+                    relatedParty: {
+                        id: 3
+                    }
+                };
+
+                var billingAccount = {
+                    relatedParty: [
+                        {
+                            id: 5
+                        }
+                    ]
+                };
+
+                testRetrieveCustomerAccount({status: 200, body: customer}, {status: 200, body: [billingAccount]},
+                    false, [true], [customer.relatedParty], [billingAccount.relatedParty],
+                    null, done);
+
             });
 
             var testBillingAccountRetrieved = function(response, isRelatedPartyValues,
@@ -765,12 +846,8 @@ describe('Customer API', function() {
             it('should not allow to retrieve customer it it does not belong to the user and ' +
                     'billing account cannot be retrieved', function(done) {
 
-                var expectedErr = {
-                    status: 500,
-                    message: 'An error arises at the time of retrieving associated billing accounts'
-                };
-
-                testBillingAccountRetrieved({status: 500, body: null}, null, [], expectedErr, done);
+                testBillingAccountRetrieved({status: 500, body: null}, null, null,
+                    BILLING_ACCOUNT_CANNOT_BE_RETRIEVED_ERROR, done);
 
             });
 
@@ -785,13 +862,16 @@ describe('Customer API', function() {
                     ]
                 };
 
-                var expectedErr = {
-                    status: 403,
-                    message: 'Unauthorized to retrieve the information of the given customer'
-                };
-
                 testBillingAccountRetrieved({status: 200, body: [billingAccount]}, [false],
-                    [billingAccount.relatedParty], expectedErr, done);
+                    [billingAccount.relatedParty], UNAUTHORIZED_RETRIEVE_CUSTOMER_ERROR, done);
+
+            });
+
+            it('should not allow to retrieve customer if it does not belong to the user and ' +
+                'no billing accounts received', function(done) {
+
+                testBillingAccountRetrieved({status: 200, body: []}, [false],
+                    null, UNAUTHORIZED_RETRIEVE_CUSTOMER_ERROR, done);
 
             });
 

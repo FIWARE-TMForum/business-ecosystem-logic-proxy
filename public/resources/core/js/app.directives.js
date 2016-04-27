@@ -17,6 +17,8 @@
         .directive('shippingAddressForm', shippingAddressFormDirective)
         .directive('pricePlanForm', pricePlanFormDirective)
         .directive('pricePlanTable', pricePlanTableDirective)
+        .directive('relationshipCreateForm', relationshipCreateFormDirective)
+        .directive('relationshipDeleteForm', relationshipDeleteFormDirective)
         .directive('convertToDate', convertToDateDirective)
         .directive('convertToNumber', convertToNumberDirective)
         .directive('fieldArray', fieldArrayDirective)
@@ -147,6 +149,28 @@
                 vm: '=controller'
             },
             templateUrl: 'directives/tables/priceplan'
+        };
+    }
+
+    function relationshipCreateFormDirective() {
+        return {
+            restrict: 'E',
+            scope: {
+                resource: '=resource',
+                parentVM: '=controller'
+            },
+            templateUrl: 'directives/forms/relationship-create'
+        };
+    }
+
+    function relationshipDeleteFormDirective() {
+        return {
+            restrict: 'E',
+            scope: {
+                resource: '=resource',
+                parentVM: '=controller'
+            },
+            templateUrl: 'directives/forms/relationship-delete'
         };
     }
 

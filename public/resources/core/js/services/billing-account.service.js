@@ -64,9 +64,21 @@
             var params = {};
 
             BillingAccount.query(params, function (billingAccounts) {
+
+                billingAccounts = billingAccounts.filter(function(account) {
+
+                    // TODO: Billing Accounts are filtered and only those where the logged user
+                    // has the 'bill received' role are returned. Modify this function in case
+                    // another filter is required. At this point, other filters are not expected.
+                    return account.relatedParty.some(function(party) {
+                        return party.role === 'bill receiver' && party.id === User.loggedUser.id;
+                    });
+
+                });
+
                 detailCustomerAccount(billingAccounts).then(function () {
                     deferred.resolve(billingAccounts);
-                }, function (argument) {
+                }, function (response) {
                     deferred.reject(response);
                 });
             }, function (response) {
@@ -116,7 +128,7 @@
                 CustomerAccount.detail(billingAccount.customerAccount.id).then(function (customerAccount) {
                     billingAccount.customerAccount = customerAccount;
                     deferred.resolve(billingAccount);
-                }, function (argument) {
+                }, function (response) {
                     deferred.reject(response);
                 });
             }, function (response) {
