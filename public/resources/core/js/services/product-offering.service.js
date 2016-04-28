@@ -68,8 +68,21 @@
         });
 
         var TYPES = {
+<<<<<<< HEAD
             CHARGE_PERIOD: CHARGE_PERIOD,
             CURRENCY_CODE: CURRENCY_CODE,
+=======
+            CHARGE_PERIOD: {
+                MONTHLY: 'monthly',
+                WEEKLY: 'weekly',
+                YEARLY: 'yearly'
+            },
+            CURRENCY_CODE: {
+                CAD: {code: 'CAD', name: 'Canadian Dollar'},
+                EUR: {code: 'EUR', name: 'Euro'},
+                USD: {code: 'USD', name: 'US Dollar'}
+            },
+>>>>>>> bd5569b... Refactor the currency codes
             PRICE: {
                 ONE_TIME: 'one time',
                 RECURRING: 'recurring',
@@ -79,7 +92,11 @@
 
         var TEMPLATES = {
             PRICE: {
+<<<<<<< HEAD
                 currencyCode: CURRENCY_CODES[0].value,
+=======
+                currencyCode: TYPES.CURRENCY_CODE.EUR.code,
+>>>>>>> bd5569b... Refactor the currency codes
                 dutyFreeAmount: 0,
                 percentage: 0,
                 taxIncludedAmount: 0,
@@ -111,14 +128,6 @@
             angular.extend(this, TEMPLATES.PRICE, data);
             parseNumber(this, ['dutyFreeAmount', 'percentage', 'taxIncludedAmount', 'taxRate']);
         };
-        Price.prototype.setCurrencyCode = function setCurrencyCode(codeName) {
-
-            if (codeName in TYPES.CURRENCY_CODE) {
-                this.currencyCode = codeName;
-            }
-
-            return this;
-        };
         Price.prototype.toJSON = function toJSON() {
             return {
                 currencyCode: this.currencyCode,
@@ -129,7 +138,7 @@
             };
         };
         Price.prototype.toString = function toString() {
-            return this.taxIncludedAmount + ' ' + angular.uppercase(this.currencyCode);
+            return this.taxIncludedAmount + ' ' + this.currencyCode;
         };
 
         var PricePlan = function PricePlan(data) {
