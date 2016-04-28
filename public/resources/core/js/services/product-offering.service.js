@@ -102,7 +102,7 @@
                 taxIncludedAmount: 0,
                 taxRate: TAX_RATE,
             },
-            PRICEPLAN: {
+            PRICE_PLAN: {
                 description: '',
                 name: '',
                 price: {},
@@ -125,7 +125,7 @@
         };
 
         var Price = function Price(data) {
-            angular.extend(this, TEMPLATES.PRICE, data);
+            angular.extend(this, angular.copy(TEMPLATES.PRICE), angular.copy(data));
             parseNumber(this, ['dutyFreeAmount', 'percentage', 'taxIncludedAmount', 'taxRate']);
         };
         Price.prototype.toJSON = function toJSON() {
@@ -142,7 +142,7 @@
         };
 
         var PricePlan = function PricePlan(data) {
-            angular.extend(this, TEMPLATES.PRICEPLAN, data);
+            angular.extend(this, angular.copy(TEMPLATES.PRICE_PLAN), angular.copy(data));
             this.price = new Price(this.price);
         };
         PricePlan.prototype.setType = function setType(typeName) {
