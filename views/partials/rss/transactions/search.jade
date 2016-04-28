@@ -1,0 +1,38 @@
+ui-view
+  .row
+    .col-xs-12(ng-switch="searchVM.list.status")
+      div(ng-switch-when="LOADED", ng-switch="searchVM.list.length")
+        div(ng-switch-when="0")
+          .alert.alert-info.text-center No transactions found.
+        div(ng-switch-default)
+          .row
+            .col-xs-12
+              .panel.panel-default.z-depth-1(ng-repeat="tx in searchVM.list")
+                .panel-heading
+                  .h4
+                    strong {{ tx.productClass }}
+                    .pull-right
+                      span
+                        time(title="{{ tx.timestamp | amDateFormat: 'dddd, MMMM Do YYYY, h:mm a' }}") {{ tx.timestamp | amCalendar }}
+                    .small
+                      | by {{ tx.customerId }}
+                .panel-body
+                  .row
+                    .col-md-6
+                      dl
+                        dt Transaction Type
+                        dd.text-dark-secondary {{ searchVM.getTxType(tx.transactionType) }}
+                        dt Product Offering
+                        dd.text-dark-secondary {{ tx.application }}
+                    .col-md-6
+                      dl
+                        dt Charged Amount
+                        dd.text-dark-secondary {{ tx.chargedAmount }} {{ tx.currency }}
+                        dt Description
+                        dd.text-dark-secondary {{ tx.description ? tx.description : 'No description provided.' }}
+
+      div(ng-switch-when="ERROR")
+        .alert.alert-danger.text-center {{ searchVM.error }}
+      div(ng-switch-default)
+        .container-spinner
+          span.fa.fa-spinner.fa-spin.fa-2x

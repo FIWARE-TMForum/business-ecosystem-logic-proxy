@@ -20,29 +20,16 @@
         });
 
         var providersResource = $resource(URLS.SHARING_PROVIDERS, {}, {});
+        var transactionResource = $resource(URLS.SHARING_TRANSACTIONS, {}, {});
 
         return {
             searchModels: searchModels,
             createModel: createModel,
             detailModel: detailModel,
             updateModel: updateModel,
-            searchProviders: searchProviders
+            searchProviders: searchProviders,
+            searchTransactions: searchTransactions
         };
-
-        function searchModels () {
-            var deferred = $q.defer();
-            var params = {
-                appProviderId: User.loggedUser.id
-            };
-
-            modelsResource.query(params, function(modelsList) {
-                deferred.resolve(modelsList);
-            }, function (response) {
-                deferred.reject(response);
-            });
-
-            return deferred.promise;
-        }
 
         function createModel (model) {
             var deferred = $q.defer();
@@ -84,16 +71,34 @@
             return deferred.promise;
         }
 
-        function searchProviders () {
+        function search(resource, params) {
             var deferred = $q.defer();
 
-            providersResource.query({}, function(providersList) {
-                deferred.resolve(providersList);
+            resource.query(params, function(list) {
+                deferred.resolve(list);
             }, function (response) {
                 deferred.reject(response);
             });
 
             return deferred.promise;
+        }
+
+        function searchModels () {
+            var params = {
+                appProviderId: User.loggedUser.id
+            };
+            return search(modelsResource, params);
+        }
+
+        function searchProviders () {
+            return search(providersResource, {});
+        }
+
+        function searchTransactions() {
+            var params = {
+                appProviderId: User.loggedUser.id
+            };
+            return search(transactionResource, params);
         }
     }
 })();

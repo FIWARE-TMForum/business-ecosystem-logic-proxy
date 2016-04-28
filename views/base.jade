@@ -30,6 +30,7 @@ html(ng-app="app")
           PAYMENT: '#{ proxyPath }/#{ chargingPath }/api/orderManagement/orders/:action',
           SHARING_MODELS: '#{ proxyPath }/#{ rssPath }/rss/models',
           SHARING_PROVIDERS: '#{ proxyPath }/#{ rssPath }/rss/providers',
+          SHARING_TRANSACTIONS: '#{ proxyPath }/#{ rssPath }/rss/cdrs',
           SHOPPING_CART: '#{ shoppingCartPath }/:action/:id'
         })
         .constant('PLATFORM_REVENUE', #{ platformRevenue })
@@ -276,6 +277,9 @@ html(ng-app="app")
       include partials/rss/sharing-models/create-form-finish.jade
     script(type="text/ng-template", id="rss/sharing-models/update")
       include partials/rss/sharing-models/update.jade
+
+    script(type="text/ng-template", id="rss/transactions/search")
+      include partials/rss/transactions/search.jade
 
     script(type="text/ng-template", id="inventory/sidebar")
       include ./partials/inventory/sidebar.jade
