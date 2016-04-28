@@ -46,10 +46,13 @@
             var finalErrorMessage = defaultMessage;
             var data = response['data'];
 
+<<<<<<< HEAD
             if (errField) {
                 errorField = errField;
             }
 
+=======
+>>>>>>> e352457... Set pre-conditions to create product offerings
             if (angular.isString(response) && response.length) {
                 return response;
             }

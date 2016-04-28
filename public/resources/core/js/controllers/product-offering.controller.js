@@ -192,10 +192,9 @@
         vm.PRICES = Offering.TYPES.PRICE;
         vm.STATUS = PROMISE_STATUS;
 
-        vm.STATUS = PROMISE_STATUS;
-
         vm.data = angular.copy(Offering.TEMPLATES.RESOURCE);
         vm.stepList = stepList;
+        vm.status = DATA_STATUS.LOADING;
 
         vm.create = create;
         vm.setProduct = setProduct;
