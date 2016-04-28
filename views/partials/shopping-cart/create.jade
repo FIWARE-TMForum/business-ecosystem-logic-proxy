@@ -83,7 +83,7 @@ ui-view
                   .panel.panel-default.z-depth-1(ng-repeat="item in orderVM.orderInfo.orderItem")
                     .panel-heading
                       .pull-right
-                        strong {{ orderVM.formatPriceplan(item) }}
+                        strong {{ orderVM.orderItems[$index].pricePlan.toString() }}
                       .h4
                         a.btn-block(data-toggle="collapse", data-parent="#order-item-list", data-target="#order-item-{{ $index }}")
                           span.item-text {{ item.productOffering.name }}
@@ -115,11 +115,13 @@ ui-view
                             thead
                               tr
                                 th Name
+                                th Description
                                 th Price
                             tbody
                               tr
-                                td.text-dark-secondary {{ item.product.productPrice[0].name }}
-                                td.text-dark-secondary {{ orderVM.formatPriceplan(item) }}
+                                th.text-dark-secondary {{ orderVM.orderItems[$index].pricePlan.name }}
+                                td.text-dark-secondary {{ orderVM.orderItems[$index].pricePlan.description }}
+                                td.text-dark-secondary {{ orderVM.orderItems[$index].pricePlan.toString() }}
                         .h4.text-dark-secondary(ng-if="item.product.productCharacteristic.length")
                           strong Characteristics
                         .table-responsive(ng-if="item.product.productCharacteristic.length")

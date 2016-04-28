@@ -210,6 +210,7 @@
             ShoppingCart.getItems().then(function(orderItems) {
 
                 vm.loadingStatus = LOADED;
+                vm.orderItems = orderItems;
 
                 if (orderItems.length) {
 
