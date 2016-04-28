@@ -145,14 +145,14 @@
             angular.extend(this, angular.copy(TEMPLATES.PRICE_PLAN), angular.copy(data));
             this.price = new Price(this.price);
         };
-        PricePlan.prototype.setType = function setType(typeName) {
+        PricePlan.prototype.setType = function setType(priceType) {
 
-            if (typeName in TYPES.PRICE && !angular.equals(this.priceType, typeName)) {
-                this.priceType = TYPES.PRICE[typeName];
+            if (!angular.equals(this.priceType, priceType)) {
+                this.priceType = TYPES.PRICE[priceType];
                 this.unitOfMeasure = '';
                 this.recurringChargePeriod = '';
 
-                switch (angular.lowercase(this.priceType)) {
+                switch (this.priceType) {
                 case TYPES.PRICE.RECURRING:
                     this.recurringChargePeriod = TYPES.CHARGE_PERIOD.WEEKLY;
                     break;
@@ -162,20 +162,18 @@
             return this;
         };
         PricePlan.prototype.toString = function toString() {
-            var result = '' + this.price.toString();
+            var result = '';
 
-            switch (angular.lowercase(this.priceType)) {
-            case TYPES.PRICE.ONE_TIME:
-                break;
+            switch (this.priceType) {
             case TYPES.PRICE.RECURRING:
-                result += ' / ' + angular.uppercase(this.recurringChargePeriod);
+                result = ' / ' + this.recurringChargePeriod;
                 break;
             case TYPES.PRICE.USAGE:
-                result += ' / ' + angular.uppercase(this.unitOfMeasure);
+                result = ' / ' + this.unitOfMeasure;
                 break;
             }
 
-            return result;
+            return this.price + result;
         };
 
         return {
