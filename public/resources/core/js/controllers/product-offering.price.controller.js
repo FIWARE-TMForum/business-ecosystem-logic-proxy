@@ -40,6 +40,11 @@
         vm.CHARGE_PERIODS = Offering.TYPES.CHARGE_PERIOD;
         vm.CURRENCY_CODES = Offering.TYPES.CURRENCY_CODE;
         vm.PRICES = Offering.TYPES.PRICE;
+        vm.PRICE_ALTERATIONS = Offering.TYPES.PRICE_ALTERATION;
+        vm.PRICE_ALTERATIONS_SUPPORTED = Offering.TYPES.PRICE_ALTERATION_SUPPORTED;
+        vm.PRICE_CONDITIONS = Offering.TYPES.PRICE_CONDITION;
+
+        vm.priceAlterationType = vm.PRICE_ALTERATIONS_SUPPORTED.NOTHING;
 
         vm.update = update;
 
@@ -47,6 +52,13 @@
             _index = index;
             _pricePlan = pricePlan;
             vm.data = angular.copy(pricePlan);
+
+            if (angular.isObject(pricePlan.productOfferPriceAlteration)) {
+                vm.priceAlterationType = pricePlan.productOfferPriceAlteration.priceAlterationType;
+            } else {
+                vm.priceAlterationType = vm.PRICE_ALTERATIONS_SUPPORTED.NOTHING;
+            }
+
             $element.modal('show');
         });
 

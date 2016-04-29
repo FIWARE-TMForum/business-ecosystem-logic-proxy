@@ -191,6 +191,10 @@
         vm.CURRENCY_CODES = Offering.TYPES.CURRENCY_CODE;
         vm.PRICES = Offering.TYPES.PRICE;
         vm.STATUS = PROMISE_STATUS;
+        vm.PRICE_ALTERATIONS = Offering.TYPES.PRICE_ALTERATION;
+        vm.PRICE_ALTERATIONS_SUPPORTED = Offering.TYPES.PRICE_ALTERATION_SUPPORTED;
+        vm.PRICE_CONDITIONS = Offering.TYPES.PRICE_CONDITION;
+        vm.DATA_STATUS = DATA_STATUS;
 
         vm.data = angular.copy(Offering.TEMPLATES.RESOURCE);
         vm.stepList = stepList;
@@ -216,6 +220,7 @@
 
         vm.pricePlan = new Offering.PricePlan();
         vm.pricePlanEnabled = false;
+        vm.priceAlterationType = vm.PRICE_ALTERATIONS_SUPPORTED.NOTHING;
 
         vm.createPricePlan = createPricePlan;
         vm.updatePricePlan = updatePricePlan;
@@ -360,6 +365,7 @@
             vm.data.productOfferingPrice.push(vm.pricePlan);
             vm.pricePlan = new Offering.PricePlan();
             vm.pricePlanEnabled = false;
+            vm.priceAlterationType = vm.PRICE_ALTERATIONS_SUPPORTED.NOTHING;
         }
 
         function updatePricePlan(index) {
@@ -520,6 +526,9 @@
         vm.CURRENCY_CODES = Offering.TYPES.CURRENCY_CODE;
         vm.PRICES = Offering.TYPES.PRICE;
         vm.$state = $state;
+        vm.PRICE_ALTERATIONS = Offering.TYPES.PRICE_ALTERATION;
+        vm.PRICE_ALTERATIONS_SUPPORTED = Offering.TYPES.PRICE_ALTERATION_SUPPORTED;
+        vm.PRICE_CONDITIONS = Offering.TYPES.PRICE_CONDITION;
 
         vm.update = update;
         vm.updateStatus = updateStatus;
@@ -527,6 +536,7 @@
 
         vm.pricePlan = new Offering.PricePlan();
         vm.pricePlanEnabled = false;
+        vm.priceAlterationType = vm.PRICE_ALTERATIONS_SUPPORTED.NOTHING;
 
         vm.createPricePlan = createPricePlan;
         vm.updatePricePlan = updatePricePlan;
@@ -565,6 +575,7 @@
             createPricePlanPromise.then(function (productOffering) {
                 vm.pricePlan = new Offering.PricePlan();
                 vm.pricePlanEnabled = false;
+                vm.priceAlterationType = vm.PRICE_ALTERATIONS_SUPPORTED.NOTHING;
                 $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {message: 'The offering price plan was created.'});
             }, function (response) {
                 $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {

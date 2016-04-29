@@ -232,7 +232,7 @@
 
             if (angular.isArray(productOfferingPrice) && productOfferingPrice.length) {
                 if (productOfferingPrice.length === 1) {
-                    priceplan = productOfferingPrice[0];
+                    setPriceplan(productOfferingPrice[0]);
                 }
                 vm.priceplans = productOfferingPrice;
             }
