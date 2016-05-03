@@ -292,7 +292,7 @@ describe('Store Client', function() {
             return true;
         }).reply(200);
 
-        storeClient.validateUsage({}, null, function (err) {
+        storeClient.validateUsage({}, function (err) {
 
             expect(err).toBe(null);
 
@@ -316,7 +316,7 @@ describe('Store Client', function() {
             return true;
         }).reply(errorStatus);
 
-        storeClient.validateUsage({}, null, function (err) {
+        storeClient.validateUsage({}, function (err) {
 
             expect(err).toEqual({
                 status: errorStatus,

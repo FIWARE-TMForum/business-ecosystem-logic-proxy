@@ -30,10 +30,9 @@ var authorizeService = (function () {
      * @param  {Object} res     Outgoing object.
      */    
     var getApiKey = function (req, res) {
-        // Check if request is from WStore
-        var fromWStore = checkRemoteClient(req.ip);
 
-        if (!fromWStore) {
+        // Check if request is from WStore
+        if (!checkRemoteClient(req.ip)) {
             res.status(401).json({error: 'Invalid remote client'});
 
         } else {
@@ -80,10 +79,9 @@ var authorizeService = (function () {
      * @param  {Object} res      Outgoing response.
      */
     var commitApiKey = function (req, res) {
-        // Check if request is from WStore
-        var fromWStore = checkRemoteClient(req.ip);
 
-        if (!fromWStore) {
+        // Check if request is from WStore
+        if (!checkRemoteClient(req.ip)) {
             res.status(401).json({error: 'Invalid remote client'});
 
         } else {
@@ -95,7 +93,7 @@ var authorizeService = (function () {
                 if (err) {
                     res.status(500).send();
                 } else if (rawResp.nModified !== 1) {
-                    res.status(400).json({error: 'Invalid API Key'});
+                    res.status(404).json({error: 'Invalid API Key'});
                 } else {
                     res.status(200).send();
                 }

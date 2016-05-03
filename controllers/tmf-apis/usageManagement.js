@@ -1,7 +1,8 @@
 var AccountingService = require('./../../db/schemas/accountingService'),
     async = require('async'),
     storeClient = require('./../../lib/store').storeClient,
-    utils = require('./../../lib/utils');
+    utils = require('./../../lib/utils'),
+    tmfUtils = require('./../../lib/tmfUtils');
 
 var usageManagement = ( function () {
 
@@ -53,55 +54,20 @@ var usageManagement = ( function () {
         }
     };
 
-    /**
-     * Assigns the user id to the relatedPaty query string if it is not defined.
-     *
-     * @param  {Object}   req      Incoming request
-     */
-    var validateRetrieving = function (req, callback) {
-
-        var userId = req.user.id;
-
-        if (!req.query.relatedParty) {
-
-            req.query.relatedParty = {
-                id: userId
-            };
-
-        } else {
-
-            if (req.query.relatedParty.id !== userId) {
-
-                return callback({
-                    status: 401,
-                    message: 'Invalid relatedParty'
-                });
-            }
-        }
-
-        return callback();
-    };
-
     // If the usage notification to the usage management API is successful, 
     //  it will notify the the Store with the API response
     var executePostValidation = function (req, callback) {
 
-        try {
-            var body = JSON.parse(req.body)
-        } catch (e) {
-            // If an error parsing the body occurs this is a failure in the
-            // request so the error is retransmitted
-            return callback();
-        }
+        var body = JSON.parse(req.body);
 
         var url = req.apiUrl.split('/');
 
         if (req.method === 'POST' && req.status === 201 && url[url.length-1] === 'usage') {
             
-            storeClient.validateUsage(body, null, callback);
+            storeClient.validateUsage(body, callback);
                 
         } else {
-            return callback();
+            return callback(null);
         }
     };
 
@@ -110,7 +76,7 @@ var usageManagement = ( function () {
     //////////////////////////////////////////////////////////////////////////////////////////////
 
     var validators = {
-        'GET': [ utils.validateLoggedIn, validateRetrieving ],
+        'GET': [ utils.validateLoggedIn, tmfUtils.filterRelatedPartyFields ],
         'POST': [ validateApiKey ],
         'PATCH': [ utils.methodNotAllowed ],
         'PUT': [ utils.methodNotAllowed ],
