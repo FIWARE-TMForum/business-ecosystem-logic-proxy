@@ -11,7 +11,7 @@ describe('Usage Management API', function () {
             './../../lib/utils': utils,
             './../../lib/tmfUtils': tmfUtils
         }).usageManagement;
-    }
+    };
 
     describe('Check Permissions', function () {
 
@@ -26,16 +26,13 @@ describe('Usage Management API', function () {
 
             var testMethodNotAllowed = function (method, done) {
 
-                var methodNotAllowed = function (req, callback) {
-                    return callback ({
+                var utils = jasmine.createSpyObj('utils', ['methodNotAllowed']);
+                utils.methodNotAllowed.and.callFake(function (req, callback) {
+                    return callback({
                         status: methodNotAllowedStatus,
                         message: methodNotAllowedMessage
                     });
-                };
-
-                var utils = {
-                    methodNotAllowed: methodNotAllowed
-                };
+                });
 
                 var usageManagementAPI = getUsageManagementAPI({}, {}, utils, {});
 
@@ -49,6 +46,7 @@ describe('Usage Management API', function () {
                 usageManagementAPI.checkPermissions(req, function (err) {
 
                     expect(err).not.toBe(null);
+                    expect(utils.methodNotAllowed).toHaveBeenCalled();
                     expect(err.status).toBe(methodNotAllowedStatus);
                     expect(err.message).toBe(methodNotAllowedMessage);
 
@@ -76,48 +74,39 @@ describe('Usage Management API', function () {
         
         describe('Not Authenticated Requests', function () {
 
-            var requestNotAuthenticatedStatus = 401;
-            var requestNotAuthenticatedMessage = 'You need to be authenticated to create/update/delete resources';
+            it('should reject not authenticated GET requests', function (done) {
 
-            var testNotLoggedIn = function (method, done) {
+                var requestNotAuthenticatedStatus = 401;
+                var requestNotAuthenticatedMessage = 'You need to be authenticated to create/update/delete resources';
 
-                var validateLoggedError = function (req, callback) {
+                var utils = jasmine.createSpyObj('utils', ['validateLoggedIn'])
+                utils.validateLoggedIn.and.callFake(function (req, callback) {
                     return callback({
                         status: requestNotAuthenticatedStatus,
                         message: requestNotAuthenticatedMessage
                     });
-                };
+                });
 
-                var utils = {
-                    validateLoggedIn: validateLoggedError
-                };
-
-                var tmfUtils = {
-                    filterRelatedPartyFields: function (req, callback) {
-                        return callback();
-                    }
-                }
+                var tmfUtils = jasmine.createSpyObj('tmfUtils', ['filterRelatedPartyFields']);
 
                 var usageManagementAPI = getUsageManagementAPI({}, {}, utils, tmfUtils);
                 var path = '/apiKeys';
 
                 var req = {
-                    method: method,
+                    method: 'GET',
                     url: path
                 };
 
                 usageManagementAPI.checkPermissions(req, function (err) {
 
                     expect(err).not.toBe(null);
+                    expect(utils.validateLoggedIn).toHaveBeenCalled();
+                    expect(tmfUtils.filterRelatedPartyFields).not.toHaveBeenCalled();
                     expect(err.status).toBe(requestNotAuthenticatedStatus);
                     expect(err.message).toBe(requestNotAuthenticatedMessage);
 
                     done();
                 });
-            };
-
-            it('should reject not authenticated GET requests', function (done) {
-                testNotLoggedIn('GET', done);
             });
         });
 
@@ -129,11 +118,10 @@ describe('Usage Management API', function () {
 
             var testRelatedParty = function (filterRelatedPartyFields, expectedErr, done) {
 
-                var utils = {
-                    validateLoggedIn: function (req, callback) {
-                        return callback(); 
-                    }
-                };
+                var utils = jasmine.createSpyObj('utils', ['validateLoggedIn']);
+                utils.validateLoggedIn.and.callFake(function (req, callback) {
+                    return callback();
+                });
 
                 var tmfUtils = jasmine.createSpyObj('tmfUtils', ['filterRelatedPartyFields']);
                 tmfUtils.filterRelatedPartyFields.and.callFake(filterRelatedPartyFields);
@@ -146,6 +134,7 @@ describe('Usage Management API', function () {
 
                 usageManagementAPI.checkPermissions(req, function (err) {
                     expect(err).toBe(expectedErr);
+                    expect(utils.validateLoggedIn).toHaveBeenCalled();
                     expect(tmfUtils.filterRelatedPartyFields).toHaveBeenCalled();
                     
                     done();
@@ -182,7 +171,10 @@ describe('Usage Management API', function () {
         
         describe('Creation', function () {
 
-            var testValidateApiKey = function (accountingService, headers, expectedErr, done) {
+            var testValidateApiKey = function (findOne, headers, expectedErr, done) {
+
+                var accountingService = jasmine.createSpyObj('accountingService', ['findOne']);
+                accountingService.findOne.and.callFake(findOne);
 
                 var usageManagementAPI = getUsageManagementAPI(accountingService, {}, {}, {});
                 var path = '/apiKey';
@@ -197,55 +189,55 @@ describe('Usage Management API', function () {
 
                 usageManagementAPI.checkPermissions(req, function (err) {
 
-                    expect(err).toEqual(expectedErr)
+                    expect(err).toEqual(expectedErr);
+
+                    if (typeof findOne === Function) {
+                        expect(accountingService.findOne).toHaveBeenCalled();
+                    }
 
                     done();
                 });
             };
 
             it('should reject requests without "X-API-KEY" header', function (done) {
-                testValidateApiKey({}, {}, {status: 401, message: 'Missing header "X-API-KEY"'}, done);
+
+                testValidateApiKey(null, {}, {status: 401, message: 'Missing header "X-API-KEY"'}, done);
             });
 
             it('should return 500 when db fails', function (done) {
 
-                var accountingService = {
-                    findOne: function (slect, callback) {
-                        return callback('Error', {});
-                    }
+                var findOne = function (select, callback) {
+                    return callback('Error', {});
                 };
 
-                testValidateApiKey(accountingService, {'X-API-KEY': 'apiKey'}, {status: 500, message: 'Error validating apiKey'}, done);
+                testValidateApiKey(findOne, {'X-API-KEY': 'apiKey'}, {status: 500, message: 'Error validating apiKey'}, done);
             });
 
             it('should reject request with not valid API Key', function (done) {
-                var accountingService = {
-                    findOne: function (slect, callback) {
-                        return callback(null, null);
-                    }
+
+                var findOne = function (select, callback) {
+                    return callback(null, null);
                 };
 
-                testValidateApiKey(accountingService, {'X-API-KEY': 'apiKey'}, {status: 401, message: 'Invalid apikey'}, done);
+                testValidateApiKey(findOne, {'X-API-KEY': 'apiKey'}, {status: 401, message: 'Invalid apikey'}, done);
             });
 
             it('should reject request with an uncommitted API Key', function (done) {
-                var accountingService = {
-                    findOne: function (slect, callback) {
-                        return callback(null, {state: 'UNCOMMITTED'});
-                    }
+
+                var findOne = function (select, callback) {
+                    return callback(null, {state: 'UNCOMMITTED'});
                 };
 
-                testValidateApiKey(accountingService, {'X-API-KEY': 'apiKey'}, {status: 401, message: 'Apikey uncommitted'}, done);
+                testValidateApiKey(findOne, {'X-API-KEY': 'apiKey'}, {status: 401, message: 'Apikey uncommitted'}, done);
             });
 
             it('should admit the request when the API Key is valid', function (done) {
-                var accountingService = {
-                    findOne: function (slect, callback) {
-                        return callback(null, {state: 'COMMITTED'});
-                    }
+
+                var findOne = function (select, callback) {
+                    return callback(null, {state: 'COMMITTED'});
                 };
 
-                testValidateApiKey(accountingService, {'X-API-KEY': 'apiKey'}, null, done);
+                testValidateApiKey(findOne, {'X-API-KEY': 'apiKey'}, null, done);
             });
 
         });
@@ -294,6 +286,11 @@ describe('Usage Management API', function () {
             it('should notify the Store if the usage management API notification is successful', function (done) {
                 
                 testPostValidation('/DSUsageManagement/api/usageManagement/v2/usage', true, done);
+            });
+
+            it('should notify the Store if the usage management API notification is successful (path end with "/")', function (done) {
+                
+                testPostValidation('/DSUsageManagement/api/usageManagement/v2/usage/', true, done);
             });
         });
     });

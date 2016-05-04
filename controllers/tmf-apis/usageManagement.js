@@ -48,7 +48,7 @@ var usageManagement = ( function () {
                     });
 
                 } else {
-                    return callback();
+                    return callback(null);
                 }
             });
         }
@@ -60,12 +60,12 @@ var usageManagement = ( function () {
 
         var body = JSON.parse(req.body);
 
-        var url = req.apiUrl.split('/');
+        var expr = /usage($|\/)/;
 
-        if (req.method === 'POST' && req.status === 201 && url[url.length-1] === 'usage') {
-            
+        if (req.method === 'POST' && req.status === 201 && expr.test(req.apiUrl)) {
+
             storeClient.validateUsage(body, callback);
-                
+
         } else {
             return callback(null);
         }

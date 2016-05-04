@@ -54,7 +54,7 @@ var authorizeService = (function () {
                     service.save(function (err) {
 
                         if (err) {
-                            res.status(500).send();
+                            res.status(500).json({error: err.message});
 
                         } else {
 
@@ -63,7 +63,7 @@ var authorizeService = (function () {
                     });
 
                 } else {
-                    res.status(400).json({error: 'Url missing'});
+                    res.status(422).json({error: 'Url missing'});
                 }
 
             } catch (e) {
@@ -91,7 +91,7 @@ var authorizeService = (function () {
 
             AccountingService.update({apiKey: apiKey}, { $set: {state: 'COMMITTED'}}, function (err, rawResp) {
                 if (err) {
-                    res.status(500).send();
+                    res.status(500).json({error: err.message});
                 } else if (rawResp.nModified !== 1) {
                     res.status(404).json({error: 'Invalid API Key'});
                 } else {
