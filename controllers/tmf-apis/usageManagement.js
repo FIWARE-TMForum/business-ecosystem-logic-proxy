@@ -26,30 +26,34 @@ var usageManagement = ( function () {
 
             AccountingService.findOne( {apiKey: apiKey}, function (err, result) {
 
+                var res;
+
                 if (err) {
 
-                    return callback({
+                    res = {
                         status: 500,
                         message: 'Error validating apiKey'
-                    });
+                    };
 
                 } else if (!result) {
 
-                    return callback({
+                    res = {
                         status: 401,
                         message: 'Invalid apikey'
-                    });
+                    };
 
                 } else if (result.state !== 'COMMITTED') {
 
-                    return callback({
+                    res = {
                         status: 401,
                         message: 'Apikey uncommitted'
-                    });
+                    };
 
                 } else {
-                    return callback(null);
+                    res = null;
                 }
+
+                return callback(res);
             });
         }
     };
