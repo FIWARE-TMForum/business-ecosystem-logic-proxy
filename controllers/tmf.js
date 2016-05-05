@@ -7,10 +7,10 @@ var config = require('./../config'),
     charging = require('./tmf-apis/charging').charging,
     rss = require('./tmf-apis/rss').rss,
     party = require('./tmf-apis/party').party,
+    usageManagement = require('./tmf-apis/usageManagement').usageManagement,
     billing = require('./tmf-apis/billing').billing,
     customer = require('./tmf-apis/customer').customer,
-
-// Other dependencies
+    // Other dependencies
     logger = require('./../lib/logger').logger.getLogger('TMF'),
     request = require('request'),
     url = require('url'),
@@ -25,6 +25,7 @@ var tmf = (function() {
     apiControllers[config.endpoints.charging.path] = charging;
     apiControllers[config.endpoints.rss.path] = rss;
     apiControllers[config.endpoints.party.path] = party;
+    apiControllers[config.endpoints.usageManagement.path] = usageManagement;
     apiControllers[config.endpoints.billing.path] = billing;
     apiControllers[config.endpoints.customer.path] = customer;
 
