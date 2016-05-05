@@ -14,7 +14,7 @@ var authorizeService = (function () {
     };
 
     /**
-     * Check if the remote cliente is the WStore; otherwise return an error.
+     * Check if the remote client is the WStore; otherwise return an error.
      */
     var checkRemoteClient = function (ip) {
         var storeHostname = config.appHost;
