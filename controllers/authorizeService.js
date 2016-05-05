@@ -14,16 +14,6 @@ var authorizeService = (function () {
     };
 
     /**
-     * Check if the remote client is the WStore; otherwise return an error.
-     */
-    var checkRemoteClient = function (ip) {
-        var storeHostname = config.appHost;
-        var remoteHostname = ip.replace(/^.*:/, ''); // Parse IPv4 embedded in IPv6
-
-        return remoteHostname === storeHostname;
-    }
-
-    /**
      * Generates and send an apiKey for the url service specifed in the request body. The apiKey is saved in "uncommitted" state.
      *
      * @param  {Object} req     Incoming request.
@@ -31,44 +21,37 @@ var authorizeService = (function () {
      */    
     var getApiKey = function (req, res) {
 
-        // Check if request is from WStore
-        if (!checkRemoteClient(req.ip)) {
-            res.status(401).json({error: 'Invalid remote client'});
+        try{
 
-        } else {
+            // Check the request and extract the url
+            var url = JSON.parse(req.body).url;
 
-            try{
+            if (url) {
 
-                // Check the request and extract the url
-                var url = JSON.parse(req.body).url;
-                
-                if (url) {
+                // Generate and save apiKey
+                var apiKey = generateApiKey();
+                var service = new AccountingService();
+                service.url = url;
+                service.apiKey = apiKey;
+                service.state = 'UNCOMMITTED';
 
-                    // Generate and save apiKey
-                    var apiKey = generateApiKey();
-                    var service = new AccountingService();
-                    service.url = url;
-                    service.apiKey = apiKey;
-                    service.state = 'UNCOMMITTED';
+                service.save(function (err) {
 
-                    service.save(function (err) {
+                    if (err) {
+                        res.status(500).json({error: err.message});
 
-                        if (err) {
-                            res.status(500).json({error: err.message});
+                    } else {
 
-                        } else {
+                        res.status(201).json({apiKey: apiKey});
+                    }
+                });
 
-                            res.status(201).json({apiKey: apiKey});
-                        }
-                    });
-
-                } else {
-                    res.status(422).json({error: 'Url missing'});
-                }
-
-            } catch (e) {
-                res.status(400).json({ error: 'Invalid body' });
+            } else {
+                res.status(422).json({error: 'Url missing'});
             }
+
+        } catch (e) {
+            res.status(400).json({ error: 'Invalid body' });
         }
     };
 
@@ -80,25 +63,18 @@ var authorizeService = (function () {
      */
     var commitApiKey = function (req, res) {
 
-        // Check if request is from WStore
-        if (!checkRemoteClient(req.ip)) {
-            res.status(401).json({error: 'Invalid remote client'});
+        // Update the apiKey state
+        var apiKey = req.params.apiKey;
 
-        } else {
-
-            // Update the apiKey state
-            var apiKey = req.params.apiKey;
-
-            AccountingService.update({apiKey: apiKey}, { $set: {state: 'COMMITTED'}}, function (err, rawResp) {
-                if (err) {
-                    res.status(500).json({error: err.message});
-                } else if (rawResp.nModified !== 1) {
-                    res.status(404).json({error: 'Invalid API Key'});
-                } else {
-                    res.status(200).send();
-                }
-            });
-        }
+        AccountingService.update({apiKey: apiKey}, { $set: {state: 'COMMITTED'}}, function (err, rawResp) {
+            if (err) {
+                res.status(500).json({error: err.message});
+            } else if (rawResp.nModified !== 1) {
+                res.status(404).json({error: 'Invalid API Key'});
+            } else {
+                res.status(200).send();
+            }
+        });
     };
 
     return {

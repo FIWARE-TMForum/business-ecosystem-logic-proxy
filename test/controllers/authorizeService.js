@@ -6,27 +6,20 @@ describe('Accounting Service', function () {
     var DEFAULT_WSTOREHOST = 'localhost';
     var DEFAULT_APIKEY = 'apiKey';
 
-    var getAuthorizeServiceController = function (accServiceSchema, config, uuidMock) {
+    var getAuthorizeServiceController = function (accServiceSchema, uuidMock) {
         return proxyquire('../../controllers/authorizeService', {
             '../db/schemas/accountingService': accServiceSchema,
-            '../config': config,
             'node-uuid': uuidMock
         }).authorizeService;
     };
 
-    var invalidRequest = function (handler, ip, body, statusExpected, bodyExpected, done) {
-        var config = {
-            appHost: DEFAULT_WSTOREHOST
-        };
+    var invalidRequest = function (handler, body, statusExpected, bodyExpected, done) {
 
         var req = {
-            ip: {
-                replace: function (expr) { return ip }
-            },
             body: body
         };
 
-        var accSerivceController = getAuthorizeServiceController({}, config, {});
+        var accSerivceController = getAuthorizeServiceController({}, {});
 
         var res = jasmine.createSpyObj('res', ['status', 'json']);
 
@@ -46,26 +39,17 @@ describe('Accounting Service', function () {
 
     describe('Get api-key', function () {
 
-        it('should return 401 when the requester is not the WStore', function (done) {
-
-            invalidRequest('getApiKey', '130.25.13.12', undefined, 401, {error: 'Invalid remote client'}, done);
-        });
-
         it('should return 400 when the body is empty', function (done) {
 
-            invalidRequest('getApiKey', DEFAULT_WSTOREHOST, undefined, 400, {error: 'Invalid body'}, done);
+            invalidRequest('getApiKey', undefined, 400, {error: 'Invalid body'}, done);
         });
 
         it('should return 422 when the "url" is not defined', function (done) {
 
-            invalidRequest('getApiKey', DEFAULT_WSTOREHOST, '{}', 422, {error: 'Url missing'}, done);
+            invalidRequest('getApiKey', '{}', 422, {error: 'Url missing'}, done);
         });
 
         var saveAccountingService = function (saveReturn, sendMessage, statusExpected, done) {
-
-            var config = {
-                appHost: DEFAULT_WSTOREHOST,
-            };
 
             var uuidMock = {
                 v4: function () {
@@ -74,9 +58,6 @@ describe('Accounting Service', function () {
             };
 
             var req = {
-                ip: {
-                    replace: function (expr) { return DEFAULT_WSTOREHOST}
-                },
                 body: '{ "url": "' + DEFAULT_URL + '"}'
             };
 
@@ -100,7 +81,7 @@ describe('Accounting Service', function () {
             var accServiceSchema = jasmine.createSpy();
             accServiceSchema.and.returnValue(serviceInstance);
 
-            var accSerivceController = getAuthorizeServiceController(accServiceSchema, config, uuidMock);
+            var accSerivceController = getAuthorizeServiceController(accServiceSchema, uuidMock);
 
             accSerivceController.getApiKey(req, res);
         };
@@ -116,19 +97,9 @@ describe('Accounting Service', function () {
 
     describe('Commit api-key', function () {
 
-        it('should return 401 when the requester is not the WStore', function (done) {
-
-            invalidRequest('commitApiKey', '130.25.13.12', undefined, 401, {error: 'Invalid remote client'}, done);
-        });
-
         var updateApikeyState = function(updateErr, updateRes, statusExpected, errExpected, done) {
-            var config = {
-                appHost: DEFAULT_WSTOREHOST,
-            };
+
             var req = {
-                ip: {
-                    replace: function (expr) { return DEFAULT_WSTOREHOST}
-                },
                 params: {
                     apiKey: DEFAULT_APIKEY
                 }
@@ -139,7 +110,7 @@ describe('Accounting Service', function () {
                 return callback(updateErr, updateRes, {});
             });
 
-            var accSerivceController = getAuthorizeServiceController(accServiceSchema, config, {});
+            var accSerivceController = getAuthorizeServiceController(accServiceSchema, {});
 
             var res = jasmine.createSpyObj('res', ['status', 'send', 'json']);
 
