@@ -1,5 +1,6 @@
 var AccountingService = require('./../../db/schemas/accountingService'),
     async = require('async'),
+    url = require('url'),
     storeClient = require('./../../lib/store').storeClient,
     utils = require('./../../lib/utils'),
     tmfUtils = require('./../../lib/tmfUtils');
@@ -70,7 +71,28 @@ var usageManagement = ( function () {
 
             storeClient.validateUsage(body, callback);
 
-        } else {
+        } else if (req.method === 'GET' && expr.test(req.apiUrl)){
+            // Check if is needed to filter the list
+            var query = url.parse(request.url, true).query;
+            if (query['usageCharacteristic.value']) {
+                var productValue = query['usageCharacteristic.value'];
+                var filteredBody = body.filter(function(usage) {
+                    var valid = false;
+                    var characteristics = usage.usageCharacteristic;
+
+                    for (var i = 0; i < characteristics.length && !valid; i++) {
+                        if (characteristics[i].name.toLowerCase() == 'productid' &&
+                                characteristics[i].value == productValue) {
+                            valid = true;
+                        }
+                    }
+
+                    return valid;
+                });
+
+                // Attach new body
+                utils.updateBody(req, JSON.stringify(filteredBody));
+            }
             return callback(null);
         }
     };
