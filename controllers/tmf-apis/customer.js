@@ -302,17 +302,13 @@ var customer = (function() {
         });
     };
 
-    var checkIsRelatedSeller = function(proxyRes, entity, callback) {
+    var checkIsRelatedSeller = function(proxyRes, ids, callback) {
 
         // Ask Billing API for those Billing Accounts related to the customer so we can determine
         // whether a seller is able (or not) to retrieve the billing address of this customer.
 
-        var customerAccountsIds = entity.customerAccount.map(function(item) {
-            return item.id;
-        });
-
         var billingPath = config.endpoints.billing.path + '/api/billingManagement/v2/billingAccount?customerAccount.id=' +
-            customerAccountsIds.join(',');
+            ids.join(',');
         var billingUrl = utils.getAPIURL(config.appSsl, config.appHost, config.endpoints.billing.port, billingPath);
 
         request(billingUrl, function(err, response, body) {
@@ -356,12 +352,25 @@ var customer = (function() {
 
                     if (err) {
 
+                        var customerAccountsIds = null;
+
                         if ('customerAccount' in proxyRes.json) {
+                            // Resource: Customer
+                            customerAccountsIds = proxyRes.json.customerAccount.map(function (item) {
+                                return item.id;
+                            });
+                        } else if ('customer' in proxyRes.json) {
+                            // Resource: CustomerAccount
+                            customerAccountsIds = [proxyRes.json.id];
+                        }
+
+                        if (customerAccountsIds && err.status === 403) {
                             // Billing Addresses can be retrieved by involved sellers
-                            checkIsRelatedSeller(proxyRes, proxyRes.json, callback);
+                            checkIsRelatedSeller(proxyRes, customerAccountsIds, callback);
                         } else {
                             callback(err);
                         }
+
                     } else {
                         callback(null);
                     }

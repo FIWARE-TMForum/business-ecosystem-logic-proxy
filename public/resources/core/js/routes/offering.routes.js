@@ -63,6 +63,14 @@
                         templateUrl: 'offering/detail/pricing'
                     }
                 }
+            })
+            .state('offering.detail.relationship', {
+                url: '/relationship',
+                views: {
+                    'offering-content': {
+                        templateUrl: 'offering/detail/relationship'
+                    }
+                }
             });
     }
 

@@ -26,6 +26,8 @@
         resource.prototype.appendPricePlan = appendPricePlan;
         resource.prototype.updatePricePlan = updatePricePlan;
         resource.prototype.removePricePlan = removePricePlan;
+        resource.prototype.relationshipOf = relationshipOf;
+        resource.prototype.relationships = relationships;
 
         var PATCHABLE_ATTRS = ['description', 'lifecycleStatus', 'name', 'version'];
 
@@ -307,7 +309,7 @@
                     extendPricePlans(productOffering);
                     ProductSpec.detail(productOffering.productSpecification.id).then(function (productRetrieved) {
                         productOffering.productSpecification = productRetrieved;
-                        extendBundledProductOffering(productOffering);
+                        detailRelationship(productOffering);
                     });
                 } else {
                     deferred.reject(404);
@@ -317,6 +319,36 @@
             });
 
             return deferred.promise;
+
+            function detailRelationship(productOffering) {
+                if (productOffering.productSpecification.productSpecificationRelationship.length) {
+                    var params = {
+                        'productSpecification.id': productOffering.productSpecification.productSpecificationRelationship.map(function (relationship) {
+                            relationship.productOffering = [];
+                            return relationship.productSpec.id;
+                        }).join()
+                    };
+
+                    resource.query(params, function (collection) {
+                        if (collection.length) {
+                            collection.forEach(function (productOfferingRelated) {
+                                extendPricePlans(productOfferingRelated);
+                                productOffering.productSpecification.productSpecificationRelationship.forEach(function (relationship) {
+                                    if (productOfferingRelated.productSpecification.id === relationship.productSpec.id) {
+                                        productOfferingRelated.productSpecification = relationship.productSpec;
+                                        relationship.productOffering.push(productOfferingRelated);
+                                    }
+                                });
+                            });
+                        }
+                        extendBundledProductOffering(productOffering);
+                    }, function (response) {
+                        deferred.reject(response);
+                    });
+                } else {
+                    extendBundledProductOffering(productOffering);
+                }
+            }
 
             function extendBundledProductOffering(offering) {
 
@@ -510,6 +542,31 @@
             });
 
             return deferred.promise;
+        }
+
+        function relationshipOf(productOffering) {
+            /* jshint validthis: true */
+            var i, relationship;
+
+            for (var i = 0; i < this.productSpecification.productSpecificationRelationship.length; i++) {
+                relationship = this.productSpecification.productSpecificationRelationship[i];
+                if (relationship.productOffering.indexOf(productOffering) !== -1) {
+                    return relationship;
+                }
+            }
+
+            return null;
+        }
+
+        function relationships() {
+            /* jshint validthis: true */
+            var results = [];
+
+            this.productSpecification.productSpecificationRelationship.forEach(function (relationship) {
+                results = results.concat(relationship.productOffering);
+            });
+
+            return results;
         }
     }
 

@@ -48,6 +48,10 @@
                 url: '/attachment',
                 templateUrl: 'stock/product/update/attachment'
             })
+            .state('stock.product.update.relationship', {
+                url: '/relationship',
+                templateUrl: 'stock/product/update/relationship'
+            })
             .state('stock.product.update.characteristic', {
                 url: '/characteristic',
                 templateUrl: 'stock/product/update/characteristic'
