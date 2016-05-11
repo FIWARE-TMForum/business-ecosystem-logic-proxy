@@ -1,16 +1,17 @@
-table.table.table-bordered(ng-if="createVM.data.stakeholders.length")
-  thead
-    tr
-      th User
-      th Percentage
-      th Delete
-  tbody
-    tr(ng-repeat="stakeholder in createVM.data.stakeholders")
-      td {{ stakeholder.stakeholderId }}
-      td {{ stakeholder.modelValue }} %
-      td
-        a.alert-link-danger(ng-click="createVM.removeStakeholder($index)")
-          span.fa.fa-trash
+.table-responsive
+  table.table.table-bordered(ng-if="createVM.data.stakeholders.length")
+    thead
+      tr
+        th User
+        th Percentage
+        th Delete
+    tbody
+      tr(ng-repeat="stakeholder in createVM.data.stakeholders")
+        td {{ stakeholder.stakeholderId }}
+        td {{ stakeholder.modelValue }} %
+        td
+          a.alert-link-danger(ng-click="createVM.removeStakeholder($index)")
+            span.fa.fa-trash
 .alert.alert-info.text-center(ng-if="!createVM.data.stakeholders.length")
   | No stakeholders included.
 

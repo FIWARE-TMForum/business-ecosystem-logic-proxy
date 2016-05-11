@@ -1,13 +1,14 @@
-table.table.table-bordered
-  thead
-    tr
-      th Username
-      th Owner
-      th Seller
-  tbody
-    tr(ng-repeat="party in updateVM.item.relatedParty")
-      td {{ party.id }}
-      td.text-success
-        i.fa.fa-check-circle-o(ng-if="party.role == 'Owner'")
-      td.text-success
-        i.fa.fa-check-circle-o(ng-if="party.role == 'Seller'")
+.table-responsive
+  table.table.table-bordered
+    thead
+      tr
+        th Username
+        th Owner
+        th Seller
+    tbody
+      tr(ng-repeat="party in updateVM.item.relatedParty")
+        td {{ party.id }}
+        td.text-success
+          i.fa.fa-check-circle-o(ng-if="party.role == 'Owner'")
+        td.text-success
+          i.fa.fa-check-circle-o(ng-if="party.role == 'Seller'")

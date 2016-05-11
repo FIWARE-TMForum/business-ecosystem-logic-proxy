@@ -55,19 +55,20 @@ form(name="updateVM.form", novalidate)
             span(ng-message="max") This field must not be higher than 100.
             span(ng-message="number") This field must be a valid number.
 
-  table.table.table-bordered(ng-if="updateVM.data.stakeholders.length")
-    thead
-      tr
-        th User
-        th Percentage
-        th Delete
-    tbody
-      tr(ng-repeat="stakeholder in updateVM.data.stakeholders")
-        td {{ stakeholder.stakeholderId }}
-        td {{ stakeholder.modelValue }} %
-        td
-          a.alert-link-danger(ng-click="updateVM.removeStakeholder($index)")
-            span.fa.fa-trash
+  .table-responsive
+    table.table.table-bordered(ng-if="updateVM.data.stakeholders.length")
+      thead
+        tr
+          th User
+          th Percentage
+          th Delete
+      tbody
+        tr(ng-repeat="stakeholder in updateVM.data.stakeholders")
+          td {{ stakeholder.stakeholderId }}
+          td {{ stakeholder.modelValue }} %
+          td
+            a.alert-link-danger(ng-click="updateVM.removeStakeholder($index)")
+              span.fa.fa-trash
   .alert.alert-info.text-center(ng-if="!updateVM.data.stakeholders.length")
     | No stakeholders included.
 
