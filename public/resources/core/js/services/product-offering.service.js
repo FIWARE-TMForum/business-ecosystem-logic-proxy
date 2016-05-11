@@ -290,7 +290,7 @@
         function parseNumber(context, names) {
             names.forEach(function (name) {
                 if (angular.isString(context[name])) {
-                    context[name] = parseInt(context[name]);
+                    context[name] = Number(context[name]);
                 }
             });
         }
