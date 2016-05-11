@@ -23,5 +23,5 @@
               time(am-time-ago="relationship.productSpec.lastUpdate")
             td
               a.btn.btn-sm.btn-icon.btn-danger(ng-click="deleteVM.remove(parentVM, $index)")
-                span.item-icon.fa.fa-spin.fa-spinner(ng-if="deleteVM.statusRelationship === deleteVM.DATA_STATUS.LOADING")
-                span.item-icon.fa.fa-trash(ng-if="deleteVM.statusRelationship !== deleteVM.DATA_STATUS.LOADING")
+                span.item-icon.fa.fa-spin.fa-spinner(ng-if="deleteVM.remove.status === deleteVM.STATUS.PENDING")
+                span.item-icon.fa.fa-trash(ng-if="deleteVM.remove.status !== deleteVM.STATUS.PENDING")

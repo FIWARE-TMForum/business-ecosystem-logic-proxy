@@ -13,45 +13,49 @@
         .controller('RelationshipCreateCtrl', RelationshipCreateController)
         .controller('RelationshipDeleteCtrl', RelationshipDeleteController);
 
-    function RelationshipCreateController($controller, $rootScope, $scope, EVENTS, DATA_STATUS, LIFECYCLE_STATUS, Utils, ProductSpec) {
+    function RelationshipCreateController($controller, $rootScope, $scope, EVENTS, PROMISE_STATUS, LIFECYCLE_STATUS, Utils, ProductSpec) {
         /* jshint validthis: true */
         var vm = this;
 
         angular.extend(vm, $controller('FormMixinCtrl', {$scope: $scope}));
 
         vm.RELATIONSHIPS = ProductSpec.TYPES.RELATIONSHIP;
-        vm.DATA_STATUS = DATA_STATUS;
+        vm.STATUS = PROMISE_STATUS;
 
-        vm.status = DATA_STATUS.LOADING;
         vm.data = new ProductSpec.Relationship({}, vm.RELATIONSHIPS.MIGRATION.code);
 
         vm.create = create;
         vm.setProductSpec = setProductSpec;
         vm.hasRelationship = hasRelationship;
 
-        ProductSpec.search({
+        var searchPromise = ProductSpec.search({
             owner: true,
             status: LIFECYCLE_STATUS.LAUNCHED
         }).then(function (collection) {
-            vm.status = DATA_STATUS.LOADED;
             vm.list = collection;
         }, function (response) {
-            vm.status = DATA_STATUS.ERROR;
             vm.errorMessage = Utils.parseError(response, 'Unexpected error trying to retrieve product specifications.');
         });
 
+        Object.defineProperty(vm, 'status', {
+            get: function () { return searchPromise != null ? searchPromise.$$state.status : -1; }
+        });
+
+        var createPromise = null;
+
         function create($parentController) {
-            vm.status = DATA_STATUS.LOADING;
-            $parentController.createRelationship(vm.data).then(function (productSpec) {
-                vm.status = DATA_STATUS.LOADED;
+            createPromise = $parentController.createRelationship(vm.data).then(function (productSpec) {
                 vm.data = new ProductSpec.Relationship({}, vm.RELATIONSHIPS.MIGRATION.code);
             }, function (response) {
-                vm.status = DATA_STATUS.ERROR;
                 $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
                     error: Utils.parseError(response, 'Unexpected error trying to create the relationship.')
                 });
             });
         }
+
+        Object.defineProperty(create, 'status', {
+            get: function () { return createPromise != null ? createPromise.$$state.status : -1; }
+        });
 
         function hasRelationship(productSpec, relationshipProductSpec) {
             return productSpec.id === relationshipProductSpec.id || productSpec.productSpecificationRelationship.some(function (relationship) {
@@ -64,27 +68,27 @@
         }
     }
 
-    function RelationshipDeleteController($rootScope, EVENTS, DATA_STATUS, Utils) {
+    function RelationshipDeleteController($rootScope, EVENTS, PROMISE_STATUS, Utils) {
         /* jshint validthis: true */
         var vm = this;
+        var removePromise = null;
 
-        vm.DATA_STATUS = DATA_STATUS;
-
-        vm.status = DATA_STATUS.LOADED;
+        vm.STATUS = PROMISE_STATUS;
 
         vm.remove = remove;
 
         function remove($parentController, index) {
-            vm.status = DATA_STATUS.LOADING;
-            $parentController.removeRelationship(index).then(function (productSpec) {
-                vm.status = DATA_STATUS.LOADED;
+            removePromise = $parentController.removeRelationship(index).then(function (productSpec) {
             }, function (response) {
-                vm.status = DATA_STATUS.ERROR;
                 $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
                     error: Utils.parseError(response, 'Unexpected error trying to remove the relationship.')
                 });
             });
         }
+
+        Object.defineProperty(remove, 'status', {
+            get: function () { return removePromise != null ? removePromise.$$state.status : -1; }
+        });
     }
 
 })();

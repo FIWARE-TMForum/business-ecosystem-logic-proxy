@@ -3,8 +3,8 @@
     .btn-toolbar
       .btn-group
         include ./breadcrumb.jade
-  .col-xs-12(ng-switch="updateVM.status")
-    .row(ng-switch-when="LOADED")
+  .col-xs-12(ng-if="updateVM.status === updateVM.STATUS.RESOLVED")
+    .row
       .col-xs-12
         .panel.panel-default.z-depth-1
           .thumbnail.thumbnail-lg
@@ -30,7 +30,8 @@
           .panel.panel-default.z-depth-1
             .panel-body
               include ./update-form.jade
-    div(ng-switch-when="ERROR")
-      .alert.alert-danger.text-center {{ updateVM.error }}
-    .container-spinner(ng-switch-default)
+  .col-xs-12(ng-if="updateVM.status === updateVM.STATUS.REJECTED")
+    .alert.alert-danger.text-center {{ updateVM.error }}
+  .col-xs-12(ng-if="updateVM.status === updateVM.STATUS.PENDING")
+    .container-spinner
       span.fa.fa-spinner.fa-spin.fa-2x

@@ -1,7 +1,7 @@
-.row(ng-switch="updateVM.item.status")
+.row
   .col-xs-12
     include ./breadcrumb.jade
-  .col-xs-12(ng-switch-when="LOADED")
+  .col-xs-12(ng-if="updateVM.status === updateVM.STATUS.RESOLVED")
     .row
       .col-xs-12
         .panel.panel-default.z-depth-1
@@ -26,8 +26,8 @@
           .panel.panel-default.z-depth-1(ng-controller="FormWizardCtrl as updateForm")
             .panel-body
               include ./update-form.jade
-  .col-xs-12(ng-switch-when="ERROR")
-    .alert.alert-danger.text-center {{ updateVM.error }}
-  .col-xs-12(ng-switch-default)
+  .col-xs-12(ng-if="updateVM.status === updateVM.STATUS.REJECTED")
+    .alert.alert-danger.text-center {{ updateVM.errorMessage }}
+  .col-xs-12(ng-if="updateVM.status === updateVM.STATUS.PENDING")
     .container-spinner
       span.fa.fa-spinner.fa-spin.fa-2x

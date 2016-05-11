@@ -168,5 +168,9 @@ form(name="step.form", novalidate)
             td
               span {{ createVM.getSharingModel().stakeholders.length }}
   .form-group.text-right
-    a.btn.btn-success(ng-click="createVM.create()", ng-disabled="!step.form.$valid")
+    a.btn.btn-warning(
+      ng-click="createVM.create()"
+      ng-disabled="!step.form.$valid || createVM.create.status === createVM.STATUS.PENDING"
+    )
+      span.item-icon.fa.fa-spin.fa-spinner(ng-if="createVM.create.status === createVM.STATUS.PENDING")
       span.item-text Create

@@ -42,9 +42,10 @@
         }
     }
 
-    function ProductCreateController($q, $scope, $state, $rootScope, EVENTS, ProductSpec, Asset, AssetType, Utils) {
+    function ProductCreateController($q, $scope, $state, $rootScope, EVENTS, PROMISE_STATUS, ProductSpec, Asset, AssetType, Utils) {
         /* jshint validthis: true */
         var vm = this;
+        var createPromise = null;
         var stepList = [
             {
                 title: 'General',
@@ -75,6 +76,8 @@
                 templateUrl: 'stock/product/create/finish'
             }
         ];
+
+        vm.STATUS = PROMISE_STATUS;
 
         vm.data = ProductSpec.buildInitialData();
         vm.stepList = stepList;
@@ -312,6 +315,10 @@
             }
         }
 
+        Object.defineProperty(create, 'status', {
+            get: function () { return createPromise != null ? createPromise.$$state.status : -1; }
+        });
+
         function setCurrentType() {
             var i, found = false;
             var assetType = vm.digitalChars[0].productSpecCharacteristicValue[0].value;
@@ -334,7 +341,7 @@
                 vm.data.productSpecCharacteristic = vm.data.productSpecCharacteristic.concat(vm.digitalChars);
             }
 
-            ProductSpec.create(vm.data).then(function (productCreated) {
+            createPromise = ProductSpec.create(vm.data).then(function (productCreated) {
                 $state.go('stock.product.update', {
                     productId: productCreated.id
                 });
@@ -397,11 +404,11 @@
         });
     }
 
-    function ProductUpdateController($state, $rootScope, EVENTS, DATA_STATUS, ProductSpec, Utils) {
+    function ProductUpdateController($state, $rootScope, EVENTS, PROMISE_STATUS, ProductSpec, Utils) {
         /* jshint validthis: true */
         var vm = this;
 
-        vm.DATA_STATUS = DATA_STATUS;
+        vm.STATUS = PROMISE_STATUS;
 
         vm.$state = $state;
         vm.item = {};
@@ -413,15 +420,15 @@
         vm.createRelationship = createRelationship;
         vm.removeRelationship = removeRelationship;
 
-        vm.status = LOADING;
-
-        ProductSpec.detail($state.params.productId).then(function (productRetrieved) {
+        var detailPromise = ProductSpec.detail($state.params.productId).then(function (productRetrieved) {
             vm.data = angular.copy(productRetrieved);
             vm.item = productRetrieved;
-            vm.status = LOADED;
         }, function (response) {
             vm.error = Utils.parseError(response, 'The requested product could not be retrieved');
-            vm.status = ERROR;
+        });
+
+        Object.defineProperty(vm, 'status', {
+            get: function () { return detailPromise != null ? detailPromise.$$state.status : -1; }
         });
 
         function updateStatus(status) {
@@ -429,8 +436,10 @@
             vm.statusUpdated = true;
         }
 
+        var updatePromise = null;
+
         function update() {
-            ProductSpec.update(vm.item, vm.data.toJSON()).then(function (productUpdated) {
+            updatePromise = ProductSpec.update(vm.item, vm.data.toJSON()).then(function (productUpdated) {
                 $state.go('stock.product.update', {
                     productId: productUpdated.id
                 }, {
@@ -446,6 +455,10 @@
                 });
             });
         }
+
+        Object.defineProperty(update, 'status', {
+            get: function () { return updatePromise != null ? updatePromise.$$state.status : -1; }
+        });
 
         function createRelationship(relationship) {
             return vm.item.appendRelationship(relationship).then(function (productSpec) {
