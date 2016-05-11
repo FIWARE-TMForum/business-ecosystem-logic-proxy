@@ -8,11 +8,8 @@
             span.item-text.hidden-xs Cancel
         .h4
           strong
-            a(ng-if="searchVM.role === 'Customer'", ui-sref="inventory.productOrder.detail({ productOrderId: productOrder.id })", ui-sref-opts="{ inherit: false }")
+            a(ui-sref="inventory.productOrder.detail({ productOrderId: productOrder.id, role: searchVM.role })", ui-sref-opts="{ inherit: false }")
               time(title="{{ productOrder.requestedStartDate | amDateFormat: 'dddd, MMMM Do YYYY, h:mm a' }}") {{ productOrder.requestedStartDate | amCalendar }}
-            span(ng-if="searchVM.role === 'Seller'")
-              time(title="{{ productOrder.requestedStartDate | amDateFormat: 'dddd, MMMM Do YYYY, h:mm a' }}") {{ productOrder.requestedStartDate | amCalendar }}
-
           .small
             | by {{ productOrder.getCustomer().id }},
             strong  {{ productOrder.state }}
