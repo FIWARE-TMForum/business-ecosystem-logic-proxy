@@ -61,19 +61,21 @@
         });
     }
 
-    function CategorySearchController($state, Category, $rootScope, EVENTS, Utils) {
+    function CategorySearchController($state, Category, $rootScope, EVENTS, PROMISE_STATUS, Utils) {
         /* jshint validthis: true */
         var vm = this;
 
+        vm.STATUS = PROMISE_STATUS;
         vm.list = [];
-        vm.list.status = LOADING;
 
-        Category.search({ all: true }).then(function (categoryList) {
+        var searchPromise = Category.search({ all: true }).then(function (categoryList) {
             angular.copy(categoryList, vm.list);
-            vm.list.status = LOADED;
         }, function (response) {
-            vm.list.status = ERROR;
-            vm.error = Utils.parseError(response, 'It was impossible to load the list of categories')
+            vm.errorMessage = Utils.parseError(response, 'Unexpected error trying to collect the categories.')
+        });
+
+        Object.defineProperty(vm, 'status', {
+            get: function () { return searchPromise != null ? searchPromise.$$state.status : -1; }
         });
     }
 

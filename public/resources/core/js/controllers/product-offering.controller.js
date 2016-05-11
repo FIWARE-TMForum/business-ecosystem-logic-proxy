@@ -61,7 +61,7 @@
         }
     }
 
-    function ProductOfferingCreateController($scope, $state, $rootScope, $controller, PROMISE_STATUS, EVENTS, Offering, Utils) {
+    function ProductOfferingCreateController($q, $scope, $state, $rootScope, $controller, EVENTS, LIFECYCLE_STATUS, PROMISE_STATUS, Offering, Catalogue, ProductSpec, Utils) {
         /* jshint validthis: true */
         var vm = this;
 
@@ -107,6 +107,7 @@
         vm.CHARGE_PERIODS = Offering.TYPES.CHARGE_PERIOD;
         vm.CURRENCY_CODES = Offering.TYPES.CURRENCY_CODE;
         vm.PRICES = Offering.TYPES.PRICE;
+        vm.STATUS = PROMISE_STATUS;
 
         vm.STATUS = PROMISE_STATUS;
 
@@ -146,6 +147,30 @@
 
         $scope.$on(Offering.EVENTS.PRICEPLAN_UPDATED, function (event, index, pricePlan) {
             angular.merge(vm.data.productOfferingPrice[index], pricePlan);
+        });
+
+        var searchPromise = Catalogue.search({
+            owner: true,
+            status: LIFECYCLE_STATUS.LAUNCHED
+        }).then(function (collection) {
+            if (collection.length) {
+                return ProductSpec.search({
+                    owner: true,
+                    status: LIFECYCLE_STATUS.LAUNCHED
+                });
+            } else {
+                return $q.reject('Sorry! In order to create a product offering, you must first launch at least one product catalogue.');
+            }
+        }).then(function (collection) {
+            if (!collection.length) {
+                return $q.reject('Sorry! In order to create a product offering, you must first launch at least one product specification.');
+            }
+        }).catch(function (response) {
+            vm.errorMessage = Utils.parseError(response, 'Unexpected error trying to retrieve product specs and catalogues.');
+        });
+
+        Object.defineProperty(vm, 'status', {
+            get: function () { return searchPromise != null ? searchPromise.$$state.status : -1; }
         });
 
         function formatPlaces() {
