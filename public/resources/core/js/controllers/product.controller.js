@@ -341,7 +341,8 @@
                 vm.data.productSpecCharacteristic = vm.data.productSpecCharacteristic.concat(vm.digitalChars);
             }
 
-            createPromise = ProductSpec.create(vm.data).then(function (productCreated) {
+            createPromise = ProductSpec.create(vm.data);
+            createPromise.then(function (productCreated) {
                 $state.go('stock.product.update', {
                     productId: productCreated.id
                 });
@@ -420,7 +421,8 @@
         vm.createRelationship = createRelationship;
         vm.removeRelationship = removeRelationship;
 
-        var detailPromise = ProductSpec.detail($state.params.productId).then(function (productRetrieved) {
+        var detailPromise = ProductSpec.detail($state.params.productId);
+        detailPromise.then(function (productRetrieved) {
             vm.data = angular.copy(productRetrieved);
             vm.item = productRetrieved;
         }, function (response) {
@@ -439,7 +441,8 @@
         var updatePromise = null;
 
         function update() {
-            updatePromise = ProductSpec.update(vm.item, vm.data.toJSON()).then(function (productUpdated) {
+            updatePromise = ProductSpec.update(vm.item, vm.data.toJSON());
+            updatePromise.then(function (productUpdated) {
                 $state.go('stock.product.update', {
                     productId: productUpdated.id
                 }, {

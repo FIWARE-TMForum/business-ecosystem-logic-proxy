@@ -155,7 +155,9 @@
         function create() {
             vm.data.category = formatCategory();
             vm.data.place = formatPlaces();
-            createPromise = Offering.create(vm.data, vm.product, vm.catalogue).then(function (offeringCreated) {
+            createPromise = Offering.create(vm.data, vm.product, vm.catalogue);
+
+            createPromise.then(function (offeringCreated) {
                 $state.go('stock.offering.update', {
                     offeringId: offeringCreated.id
                 });
@@ -344,7 +346,8 @@
         var updatePricePlanPromise = null;
 
         $scope.$on(Offering.EVENTS.PRICEPLAN_UPDATED, function (event, index, pricePlan) {
-            updatePricePlanPromise = vm.item.updatePricePlan(index, pricePlan).then(function (productOffering) {
+            updatePricePlanPromise = vm.item.updatePricePlan(index, pricePlan);
+            updatePricePlanPromise.then(function (productOffering) {
                 $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {message: 'The offering price plan was updated.'});
             }, function (response) {
                 $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
@@ -353,7 +356,8 @@
             });
         });
 
-        var detailPromise = Offering.detail($state.params.offeringId).then(function (productOffering) {
+        var detailPromise = Offering.detail($state.params.offeringId);
+        detailPromise.then(function (productOffering) {
             vm.item = productOffering;
             vm.data = angular.copy(productOffering);
             vm.categories = productOffering.getCategories();
@@ -368,7 +372,8 @@
         var createPricePlanPromise = null;
 
         function createPricePlan() {
-            createPricePlanPromise = vm.item.appendPricePlan(vm.pricePlan).then(function (productOffering) {
+            createPricePlanPromise = vm.item.appendPricePlan(vm.pricePlan);
+            createPricePlanPromise.then(function (productOffering) {
                 vm.pricePlan = new Offering.PricePlan();
                 vm.pricePlanEnabled = false;
                 $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {message: 'The offering price plan was created.'});
@@ -394,7 +399,8 @@
         var removePricePlanPromise = null;
 
         function removePricePlan(index) {
-            removePricePlanPromise = vm.item.removePricePlan(index).then(function (productOffering) {
+            removePricePlanPromise = vm.item.removePricePlan(index);
+            removePricePlanPromise.then(function (productOffering) {
                 $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {message: 'The offering price plan was removed.'});
             }, function (response) {
                 $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
@@ -430,7 +436,8 @@
             });
 
             // Check what info has been modified
-            updatePromise = Offering.update(vm.item, dataUpdated).then(function (offeringUpdated) {
+            updatePromise = Offering.update(vm.item, dataUpdated);
+            updatePromise.then(function (offeringUpdated) {
                 $state.go('stock.offering.update', {
                     offeringId: offeringUpdated.id
                 }, {

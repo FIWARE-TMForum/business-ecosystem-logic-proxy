@@ -31,7 +31,8 @@
         var searchPromise = ProductSpec.search({
             owner: true,
             status: LIFECYCLE_STATUS.LAUNCHED
-        }).then(function (collection) {
+        });
+        searchPromise.then(function (collection) {
             vm.list = collection;
         }, function (response) {
             vm.errorMessage = Utils.parseError(response, 'Unexpected error trying to retrieve product specifications.');
@@ -44,7 +45,8 @@
         var createPromise = null;
 
         function create($parentController) {
-            createPromise = $parentController.createRelationship(vm.data).then(function (productSpec) {
+            createPromise = $parentController.createRelationship(vm.data);
+            createPromise.then(function (productSpec) {
                 vm.data = new ProductSpec.Relationship({}, vm.RELATIONSHIPS.MIGRATION.code);
             }, function (response) {
                 $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
@@ -78,7 +80,8 @@
         vm.remove = remove;
 
         function remove($parentController, index) {
-            removePromise = $parentController.removeRelationship(index).then(function (productSpec) {
+            removePromise = $parentController.removeRelationship(index);
+            removePromise.then(function (productSpec) {
             }, function (response) {
                 $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
                     error: Utils.parseError(response, 'Unexpected error trying to remove the relationship.')

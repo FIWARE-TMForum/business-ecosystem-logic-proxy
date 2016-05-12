@@ -82,7 +82,8 @@
         vm.create = create;
 
         function create() {
-            createPromise = Catalogue.create(vm.data).then(function (catalogueCreated) {
+            createPromise = Catalogue.create(vm.data);
+            createPromise.then(function (catalogueCreated) {
                 $state.go('stock.catalogue.update', {
                     catalogueId: catalogueCreated.id
                 });
@@ -132,13 +133,15 @@
 
         vm.item = {};
 
-        var detailPromise = Catalogue.detail($state.params.catalogueId).then(function (catalogueRetrieved) {
+        var detailPromise = Catalogue.detail($state.params.catalogueId);
+        var updatePromise = null;
+
+        detailPromise.then(function (catalogueRetrieved) {
             vm.data = angular.copy(catalogueRetrieved);
             vm.item = catalogueRetrieved;
         }, function (response) {
             vm.errorMessage = Utils.parseError(response, 'The requested catalog could not be retrieved');
         });
-        var updatePromise = null;
 
         Object.defineProperty(vm, 'status', {
             get: function () { return detailPromise != null ? detailPromise.$$state.status : -1; }
@@ -150,7 +153,8 @@
         }
 
         function update() {
-            updatePromise = Catalogue.update(vm.data).then(function (catalogueUpdated) {
+            updatePromise = Catalogue.update(vm.data);
+            updatePromise.then(function (catalogueUpdated) {
                 $state.go('stock.catalogue.update', {
                     catalogueId: catalogueUpdated.id
                 }, {
