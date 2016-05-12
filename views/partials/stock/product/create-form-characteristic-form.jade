@@ -64,14 +64,12 @@
                   name="value"
                   ng-model="createVM.characteristicValue.value"
                   required
-                  ng-maxlength="30"
                 )
                 .help-block(
                   ng-messages="step.characteristicValueForm.value.$error"
                   ng-show="createForm.hasError(step.characteristicValueForm.value)"
                 )
                   span(ng-message="required") This field is required.
-                  span(ng-message="maxlength") This field must not exceed 30 chars.
             .col-sm-12(ng-if="createVM.characteristic.valueType === createVM.VALUE_TYPES.NUMBER")
               .row
                 .col-sm-8
