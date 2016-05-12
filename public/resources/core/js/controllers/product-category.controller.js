@@ -59,7 +59,7 @@
         });
     }
 
-    function CategoryCreateController($scope, $state, $rootScope, EVENTS, Category, Utils) {
+    function CategoryCreateController($scope, $state, $rootScope, EVENTS, PROMISE_STATUS, Category, Utils) {
         /* jshint validthis: true */
         var vm = this;
         var stepList = [
@@ -72,6 +72,9 @@
                 templateUrl: 'admin/product-category/create/finish'
             }
         ];
+        var createPromise;
+
+        vm.STATUS = PROMISE_STATUS;
 
         vm.data = Category.initiate();
         vm.stepList = stepList;
@@ -91,7 +94,8 @@
         }
 
         function create() {
-            Category.create(vm.data).then(function (categoryCreated) {
+            createPromise = Category.create(vm.data);
+            createPromise.then(function (categoryCreated) {
                 $state.go('admin.productCategory.update', {
                     categoryId: categoryCreated.id
                 });
@@ -110,26 +114,38 @@
                 });
             });
         }
+
+        Object.defineProperty(create, 'status', {
+            get: function () { return createPromise != null ? createPromise.$$state.status : -1; }
+        });
     }
 
-    function CategoryUpdateController($state, $rootScope, EVENTS, Category, Utils) {
+    function CategoryUpdateController($state, $rootScope, EVENTS, PROMISE_STATUS, Category, Utils) {
         /* jshint validthis: true */
         var vm = this;
+
+        vm.STATUS = PROMISE_STATUS;
 
         vm.item = {};
         vm.update = update;
 
-        Category.detail($state.params.categoryId).then(function (categoryRetrieved) {
+        var detailPromise = Category.detail($state.params.categoryId);
+        var updatePromise = null;
+
+        detailPromise.then(function (categoryRetrieved) {
             vm.data = angular.copy(categoryRetrieved);
             vm.item = categoryRetrieved;
-            vm.item.status = LOADED;
         }, function (response) {
-            vm.error = Utils.parseError(response, 'The requested category could not be retrieved');
-            vm.item.status = ERROR;
+            vm.errorMessage = Utils.parseError(response, 'The requested category could not be retrieved');
+        });
+
+        Object.defineProperty(vm, 'status', {
+            get: function () { return detailPromise != null ? detailPromise.$$state.status : -1; }
         });
 
         function update() {
-            Category.update(vm.data).then(function (categoryUpdated) {
+            updatePromise = Category.update(vm.data);
+            updatePromise.then(function (categoryUpdated) {
                 $state.go('admin.productCategory.update', {
                     categoryId: categoryUpdated.id
                 }, {
@@ -150,6 +166,10 @@
                 });
             });
         }
+
+        Object.defineProperty(update, 'status', {
+            get: function () { return updatePromise != null ? updatePromise.$$state.status : -1; }
+        });
     }
 
 })();
