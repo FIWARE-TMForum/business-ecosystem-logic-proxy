@@ -165,8 +165,10 @@
             if (!collection.length) {
                 return $q.reject('Sorry! In order to create a product offering, you must first launch at least one product specification.');
             }
-        }).catch(function (response) {
-            vm.errorMessage = Utils.parseError(response, 'Unexpected error trying to retrieve product specs and catalogues.');
+        });
+
+        searchPromise.catch(function (response) {
+            vm.errorMessage = Utils.parseError(response, 'Unexpected error trying to retrieve product specifications and catalogues.');
         });
 
         Object.defineProperty(vm, 'status', {

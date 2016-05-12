@@ -1,30 +1,40 @@
 form(name="step.form", novalidate)
-  .form-group
+  .form-group(ng-controller="ProductSearchCtrl as searchVM")
     input(type="hidden", ng-model="createVM.product.id", required)
-    .table-responsive(ng-controller="ProductSearchCtrl as searchVM")
-      table.table.table-bordered.table-hover.table-selectable
-        thead
-          tr
-            th Status
-            th Name
-            th ID
-            th Brand
-            th Type
-            th Updated
-        tbody
-          tr(ng-repeat="product in searchVM.list | status:STATUS.LAUNCHED as results", ng-class="{ active: createVM.product.id == product.id }", ng-click="createVM.setProduct(product)")
-            td
-              .status-item.text-nowrap(class="status-{{ product.lifecycleStatus | lowercase }}")
-                span.item-icon
-                span.item-text {{ product.lifecycleStatus }}
-            th {{ product.name }}
-            td {{ product.productNumber }}
-            td {{ product.brand }}
-            td
-              span.label(ng-class="product.isBundle ? 'label-bundle' : 'label-single'")
-                | {{ product.isBundle ? 'Bundle' : 'Single' }}
-            td
-              time(am-time-ago="product.lastUpdate")
+    .row
+      .col-xs-12(ng-if="searchVM.status === searchVM.STATUS.PENDING")
+        .container-spinner
+          span.fa.fa-spinner.fa-spin.fa-2x
+      .col-xs-12(ng-if="searchVM.status === searchVM.STATUS.REJECTED")
+        .alert.alert-danger.text-center
+          span {{ searchVM.errorMessage }}
+      .col-xs-12(ng-if="searchVM.status === searchVM.STATUS.RESOLVED" ng-switch="searchVM.list.length")
+        .alert.alert-info.text-center(ng-switch-when="0")
+          span No product specifications found.
+        .table-responsive(ng-switch-default)
+          table.table.table-bordered.table-hover.table-selectable
+            thead
+              tr
+                th Status
+                th Name
+                th ID
+                th Brand
+                th Type
+                th Updated
+            tbody
+              tr(ng-repeat="product in searchVM.list | status:STATUS.LAUNCHED as results", ng-class="{ active: createVM.product.id == product.id }", ng-click="createVM.setProduct(product)")
+                td
+                  .status-item.text-nowrap(class="status-{{ product.lifecycleStatus | lowercase }}")
+                    span.item-icon
+                    span.item-text {{ product.lifecycleStatus }}
+                th {{ product.name }}
+                td {{ product.productNumber }}
+                td {{ product.brand }}
+                td
+                  span.label(ng-class="product.isBundle ? 'label-bundle' : 'label-single'")
+                    | {{ product.isBundle ? 'Bundle' : 'Single' }}
+                td
+                  time(am-time-ago="product.lastUpdate")
   .form-group.text-right
     a.btn.btn-default.z-depth-1(ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])", ng-disabled="!step.form.$valid")
       span.item-text Next

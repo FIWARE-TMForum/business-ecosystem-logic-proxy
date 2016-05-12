@@ -36,23 +36,28 @@
         .controller('ProductCreateCtrl', ProductCreateController)
         .controller('ProductUpdateCtrl', ProductUpdateController);
 
-    function ProductSearchController($state, $rootScope, EVENTS, ProductSpec, LIFECYCLE_STATUS, Utils) {
+    function ProductSearchController($state, $rootScope, EVENTS, ProductSpec, LIFECYCLE_STATUS, PROMISE_STATUS, Utils) {
         /* jshint validthis: true */
         var vm = this;
 
         vm.state = $state;
+        vm.STATUS = PROMISE_STATUS;
 
         vm.list = [];
         vm.list.flow = $state.params.flow;
 
         vm.showFilters = showFilters;
 
-        ProductSpec.search($state.params).then(function (productList) {
+        var searchPromise = ProductSpec.search($state.params);
+
+        searchPromise.then(function (productList) {
             angular.copy(productList, vm.list);
-            vm.list.status = LOADED;
         }, function (response) {
-            vm.error = Utils.parseError(response, 'It was impossible to load the list of products');
-            vm.list.status = ERROR;
+            vm.errorMessage = Utils.parseError(response, 'It was impossible to load the list of products');
+        });
+
+        Object.defineProperty(vm, 'status', {
+            get: function () { return searchPromise != null ? searchPromise.$$state.status : -1; }
         });
 
         function showFilters() {

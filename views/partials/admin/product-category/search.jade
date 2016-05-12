@@ -28,7 +28,7 @@ ui-view
               td
                 time(am-time-ago="category.lastUpdate")
     .col-xs-12(ng-if="searchVM.status === searchVM.STATUS.REJECTED")
-      .alert.alert-danger.text-center {{ searchVM.error }}
+      .alert.alert-danger.text-center {{ searchVM.errorMessage }}
     .col-xs-12(ng-if="searchVM.status === searchVM.STATUS.PENDING")
       .container-spinner
         span.fa.fa-spinner.fa-spin.fa-2x

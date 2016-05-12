@@ -68,7 +68,9 @@
         vm.STATUS = PROMISE_STATUS;
         vm.list = [];
 
-        var searchPromise = Category.search({ all: true }).then(function (categoryList) {
+        var searchPromise = Category.search({ all: true });
+
+        searchPromise.then(function (categoryList) {
             angular.copy(categoryList, vm.list);
         }, function (response) {
             vm.errorMessage = Utils.parseError(response, 'Unexpected error trying to collect the categories.')

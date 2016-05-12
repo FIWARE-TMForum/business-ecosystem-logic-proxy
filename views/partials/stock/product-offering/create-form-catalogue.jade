@@ -1,24 +1,34 @@
 form(name="step.form", novalidate)
   .form-group(ng-controller="CatalogueSearchCtrl as searchVM")
     input(type="hidden", ng-model="createVM.catalogue.id", required)
-    .table-responsive
-      table.table.table-bordered.table-hover.table-selectable
-        thead
-          tr
-            th Status
-            th Name
-            th Rol
-            th Updated
-        tbody
-          tr(ng-repeat="catalogue in searchVM.list | status:STATUS.LAUNCHED as results", ng-class="{ active: createVM.catalogue.id == catalogue.id }", ng-click="createVM.setCatalogue(catalogue)")
-            td
-              .status-item(class="status-{{ catalogue.lifecycleStatus | lowercase }}")
-                span.item-icon
-                span.item-text {{ catalogue.lifecycleStatus }}
-            th {{ catalogue.name }}
-            td {{ catalogue.getRoleOf(user.id) }}
-            td
-              time(am-time-ago="catalogue.lastUpdate")
+    .row
+      .col-xs-12(ng-if="searchVM.status === searchVM.STATUS.PENDING")
+        .container-spinner
+          span.fa.fa-spinner.fa-spin.fa-2x
+      .col-xs-12(ng-if="searchVM.status === searchVM.STATUS.REJECTED")
+        .alert.alert-danger.text-center
+          span {{ searchVM.errorMessage }}
+      .col-xs-12(ng-if="searchVM.status === searchVM.STATUS.RESOLVED" ng-switch="searchVM.list.length")
+        .alert.alert-info.text-center(ng-switch-when="0")
+          span No catalogs found.
+        .table-responsive(ng-switch-default)
+          table.table.table-bordered.table-hover.table-selectable
+            thead
+              tr
+                th Status
+                th Name
+                th Rol
+                th Updated
+            tbody
+              tr(ng-repeat="catalogue in searchVM.list | status:STATUS.LAUNCHED as results", ng-class="{ active: createVM.catalogue.id == catalogue.id }", ng-click="createVM.setCatalogue(catalogue)")
+                td
+                  .status-item(class="status-{{ catalogue.lifecycleStatus | lowercase }}")
+                    span.item-icon
+                    span.item-text {{ catalogue.lifecycleStatus }}
+                th {{ catalogue.name }}
+                td {{ catalogue.getRoleOf(user.id) }}
+                td
+                  time(am-time-ago="catalogue.lastUpdate")
   .form-group.text-right
     a.btn.btn-default.z-depth-1(ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])", ng-disabled="!step.form.$valid")
       span.item-text Next
