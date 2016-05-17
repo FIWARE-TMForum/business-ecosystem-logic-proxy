@@ -81,7 +81,7 @@ config.endpoints = {
         'path': '',
         'port': ''
     },
-    'usageManagement': {
+    'usage': {
         'path': '',
         'port': ''
     }

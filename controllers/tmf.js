@@ -25,7 +25,7 @@ var tmf = (function() {
     apiControllers[config.endpoints.charging.path] = charging;
     apiControllers[config.endpoints.rss.path] = rss;
     apiControllers[config.endpoints.party.path] = party;
-    apiControllers[config.endpoints.usageManagement.path] = usageManagement;
+    apiControllers[config.endpoints.usage.path] = usageManagement;
     apiControllers[config.endpoints.billing.path] = billing;
     apiControllers[config.endpoints.customer.path] = customer;
 
