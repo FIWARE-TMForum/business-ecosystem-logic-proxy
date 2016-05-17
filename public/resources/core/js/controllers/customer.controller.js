@@ -14,9 +14,12 @@
         .controller('CustomerSearchCtrl', CustomerSearchController)
         .controller('CustomerUpdateCtrl', CustomerUpdateController);
 
-    function CustomerSearchController($scope, $rootScope, DATA_STATUS, EVENTS, Utils, Customer) {
+    function CustomerSearchController($scope, $rootScope, DATA_STATUS, PROMISE_STATUS, EVENTS, Utils, Customer) {
         /* jshint validthis: true */
         var vm = this;
+        var updateCustomerPromise = null;
+
+        vm.STATUS = PROMISE_STATUS;
 
         vm.list = [];
         vm.status = DATA_STATUS.LOADING;
@@ -27,6 +30,19 @@
             vm.list.push(customer);
             $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {
                 message: 'The shipping address was created.'
+            });
+        });
+
+        $scope.$on(Customer.EVENTS.CUSTOMER_UPDATED, function (event, customer, dataUpdated) {
+            updateCustomerPromise = Customer.update(customer, dataUpdated).then(function (customerUpdated) {
+                angular.extend(customer, customerUpdated);
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {
+                    message: 'The shipping address was updated.'
+                });
+            }, function (response) {
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                    error: Utils.parseError(response, 'Unexpected error trying to update the shipping address.')
+                });
             });
         });
 
@@ -41,6 +57,10 @@
         function updateCustomer(index) {
             $rootScope.$broadcast(Customer.EVENTS.CUSTOMER_UPDATE, vm.list[index]);
         }
+
+        Object.defineProperty(updateCustomer, 'status', {
+            get: function () { return updateCustomerPromise != null ? updateCustomerPromise.$$state.status : -1; }
+        });
     }
 
     function CustomerUpdateController($element, $scope, $rootScope, $controller, EVENTS, COUNTRIES, Utils, Customer) {
@@ -63,19 +83,8 @@
         });
 
         function update() {
-            var dataUpdated = {
+            $rootScope.$broadcast(Customer.EVENTS.CUSTOMER_UPDATED, _customer, {
                 contactMedium: [vm.emailAddress, vm.postalAddress, vm.telephoneNumber]
-            };
-
-            Customer.update(_customer, dataUpdated).then(function (customer) {
-                angular.extend(_customer, customer);
-                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {
-                    message: 'The shipping address was updated.'
-                });
-            }, function (response) {
-                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
-                    error: Utils.parseError(response, 'Unexpected error trying to update the shipping address.')
-                });
             });
         }
     }

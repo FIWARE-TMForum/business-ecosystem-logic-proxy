@@ -29,7 +29,8 @@
                 td {{ customer.getTelephoneNumber().toString() }}
                 td
                   a.btn.btn-sm.btn-icon.btn-info(ng-click="searchVM.updateCustomer($index)")
-                    span.item-icon.fa.fa-pencil
+                    span.item-icon.fa.fa-spin.fa-spinner(ng-if="searchVM.updateCustomer.status === searchVM.STATUS.PENDING")
+                    span.item-icon.fa.fa-pencil(ng-if="searchVM.updateCustomer.status !== searchVM.STATUS.PENDING")
     .panel.panel-default.z-depth-1
       .panel-body(ng-controller="BillingAccountCreateCtrl as createVM")
         .h4.text-dark-secondary
@@ -43,6 +44,9 @@
           telephone-number="createVM.telephoneNumber"
         )
         .form-group.text-right
-          button.btn.btn-warning.z-depth-1(ng-disabled="!createVM.form.$valid || createVM.status === createVM.DATA_STATUS.LOADING" ng-click="createVM.create(createVM.form)")
-            span.item-icon.fa.fa-spin.fa-spinner(ng-if="createVM.status === createVM.DATA_STATUS.LOADING")
+          a.btn.btn-warning(
+            ng-click="createVM.create(createVM.form)"
+            ng-disabled="!createVM.form.$valid || createVM.create.status === createVM.STATUS.PENDING"
+          )
+            span.item-icon.fa.fa-spin.fa-spinner(ng-if="createVM.create.status === createVM.STATUS.PENDING")
             span.item-text Create

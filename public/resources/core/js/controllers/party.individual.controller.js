@@ -13,34 +13,23 @@
         .module('app')
         .controller('IndividualUpdateCtrl', IndividualUpdateController);
 
-    function IndividualUpdateController($state, $scope, $rootScope, $controller, EVENTS, DATA_STATUS, COUNTRIES, Utils, Individual, User) {
+    function IndividualUpdateController($state, $scope, $rootScope, $controller, EVENTS, DATA_STATUS, COUNTRIES, PROMISE_STATUS, Utils, Individual, User) {
         /* jshint validthis: true */
         var vm = this;
 
         angular.extend(vm, $controller('FormMixinCtrl', {$scope: $scope}));
 
         vm.COUNTRIES = COUNTRIES;
+        vm.STATUS = PROMISE_STATUS;
 
         vm.status = DATA_STATUS.LOADING;
         vm.update = update;
+        vm.createContactMedium = createContactMedium;
         vm.updateContactMedium = updateContactMedium;
         vm.removeContactMedium = removeContactMedium;
 
-        $scope.$on(Individual.EVENTS.CONTACT_MEDIUM_CREATED, function (event, contactMedium) {
-            vm.item.appendContactMedium(contactMedium).then(function () {
-                vm.data.contactMedium.push(contactMedium);
-                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {
-                    message: 'The contact medium was created.'
-                });
-            }, function (response) {
-                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
-                    error: Utils.parseError(response, 'Unexpected error trying to create the contact medium.')
-                });
-            });
-        });
-
         $scope.$on(Individual.EVENTS.CONTACT_MEDIUM_UPDATED, function (event, index, contactMedium) {
-            vm.item.updateContactMedium(index, contactMedium).then(function () {
+            updateContactMediumPromise = vm.item.updateContactMedium(index, contactMedium).then(function () {
                 angular.merge(vm.data.contactMedium[index], contactMedium);
                 $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {
                     message: 'The contact medium was updated.'
@@ -77,10 +66,13 @@
             //vm.data.birthDate = new Date(vm.data.birthDate);
         }
 
+        var updatePromise = null;
+
         function update() {
 
             if (vm.isNotCreated) {
-                Individual.create(vm.data).then(function () {
+                updatePromise = Individual.create(vm.data);
+                updatePromise.then(function () {
                     $state.go('settings.general', {}, {
                         reload: true
                     });
@@ -93,7 +85,8 @@
                     });
                 });
             } else {
-                Individual.update(vm.item, vm.data).then(function () {
+                updatePromise = Individual.update(vm.item, vm.data);
+                updatePromise.then(function () {
                     $state.go('settings.general', {}, {
                         reload: true
                     });
@@ -108,12 +101,47 @@
             }
         }
 
+        Object.defineProperty(update, 'status', {
+            get: function () { return updatePromise != null ? updatePromise.$$state.status : -1; }
+        });
+
+        var createContactMediumPromise = null;
+
+        function createContactMedium(data) {
+            createContactMediumPromise = vm.item.appendContactMedium(data);
+            createContactMediumPromise.then(function () {
+                vm.data.contactMedium.push(data);
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {
+                    message: 'The contact medium was created.'
+                });
+            }, function (response) {
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                    error: Utils.parseError(response, 'Unexpected error trying to create the contact medium.')
+                });
+            });
+
+            return createContactMediumPromise;
+        }
+
+        Object.defineProperty(createContactMedium, 'status', {
+            get: function () { return createContactMediumPromise != null ? createContactMediumPromise.$$state.status : -1; }
+        });
+
+        var updateContactMediumPromise = null;
+
         function updateContactMedium(index) {
             $rootScope.$broadcast(Individual.EVENTS.CONTACT_MEDIUM_UPDATE, index, vm.item.contactMedium[index]);
         }
 
+        Object.defineProperty(updateContactMedium, 'status', {
+            get: function () { return updateContactMediumPromise != null ? updateContactMediumPromise.$$state.status : -1; }
+        });
+
+        var removeContactMediumPromise = null;
+
         function removeContactMedium(index) {
-            vm.item.removeContactMedium(index).then(function () {
+            removeContactMediumPromise = vm.item.removeContactMedium(index);
+            removeContactMediumPromise.then(function () {
                 vm.data.contactMedium.splice(index, 1);
                 $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {
                     message: 'The contact medium was removed.'
@@ -124,6 +152,11 @@
                 });
             });
         }
+
+        Object.defineProperty(removeContactMedium, 'status', {
+            get: function () { return removeContactMediumPromise != null ? removeContactMediumPromise.$$state.status : -1; }
+        });
+
     }
 
 })();
