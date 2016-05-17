@@ -143,8 +143,11 @@
         vm.orderInfo = {
             state: 'Acknowledged',
             orderItem: [],
-            relatedParty: [User.serializeBasic()]
+            relatedParty: [User.serializeBasic()],
+            priority: '4'
         };
+
+        vm.PRIORITIES = ProductOrder.TYPES.PRIORITY;
 
         vm.makeOrder = makeOrder;
         vm.toggleCollapse = toggleCollapse;

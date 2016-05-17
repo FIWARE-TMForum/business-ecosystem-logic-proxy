@@ -11,8 +11,12 @@
             a(ui-sref="inventory.productOrder.detail({ productOrderId: productOrder.id })", ui-sref-opts="{ inherit: false }")
               time(title="{{ productOrder.requestedStartDate | amDateFormat: 'dddd, MMMM Do YYYY, h:mm a' }}") {{ productOrder.requestedStartDate | amCalendar }}
           .small
-            | by {{ productOrder.getCustomer().id }},
-            strong  {{ productOrder.state }}
+            | by {{ productOrder.getCustomer().id }}
+            span ,
+            strong  Status:
+            span  {{ productOrder.state }},
+            strong  Priority:
+            span  {{ productOrder.priority }}
       .panel-body
         .row(ng-repeat="orderItem in productOrder.orderItem")
           hr(ng-if="!$first")

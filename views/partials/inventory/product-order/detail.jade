@@ -8,7 +8,11 @@
           .h4
             strong
               time(title="{{ detailVM.item.requestedStartDate | amDateFormat: 'dddd, MMMM Do YYYY, h:mm a' }}") {{ detailVM.item.requestedStartDate | amCalendar }}
-            .small by {{ detailVM.item.getCustomer().id }}
+            .small
+              | by {{ detailVM.item.getCustomer().id }}
+              span ,
+              strong  Priority:
+              span  {{ detailVM.item.priority }}
         .panel-body
           .row(ng-repeat="orderItem in detailVM.item.orderItem")
             hr(ng-if="!$first")

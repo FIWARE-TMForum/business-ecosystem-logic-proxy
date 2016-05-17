@@ -18,6 +18,15 @@ ui-view
             .row
               .col-xs-12
                 .form-group
+                  label Choose a priority
+                  select.form-control(
+                    name="priority"
+                    ng-model="orderVM.orderInfo.priority"
+                  )
+                    option(ng-repeat="priority in orderVM.PRIORITIES" value="{{ $index }}") {{ priority.title }}
+            .row
+              .col-xs-12
+                .form-group
                   label
                     span Enter a description
                     small.text-muted (optional)
