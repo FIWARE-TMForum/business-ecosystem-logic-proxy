@@ -20,7 +20,7 @@ form(name="step.form", novalidate)
                 th Rol
                 th Updated
             tbody
-              tr(ng-repeat="catalogue in searchVM.list | status:STATUS.LAUNCHED as results", ng-class="{ active: createVM.catalogue.id == catalogue.id }", ng-click="createVM.setCatalogue(catalogue)")
+              tr(ng-repeat="catalogue in searchVM.list | status:STATUS.ACTIVE:STATUS.LAUNCHED as results", ng-class="{ active: createVM.catalogue.id == catalogue.id }", ng-click="createVM.setCatalogue(catalogue)")
                 td
                   .status-item(class="status-{{ catalogue.lifecycleStatus | lowercase }}")
                     span.item-icon

@@ -149,21 +149,23 @@
             angular.merge(vm.data.productOfferingPrice[index], pricePlan);
         });
 
-        var searchPromise = Catalogue.search({
+        var searchParams = {
             owner: true,
-            status: LIFECYCLE_STATUS.LAUNCHED
-        }).then(function (collection) {
+            status: [
+                LIFECYCLE_STATUS.ACTIVE,
+                LIFECYCLE_STATUS.LAUNCHED
+            ].join(',')
+        };
+
+        var searchPromise = Catalogue.search(searchParams).then(function (collection) {
             if (collection.length) {
-                return ProductSpec.search({
-                    owner: true,
-                    status: LIFECYCLE_STATUS.LAUNCHED
-                });
+                return ProductSpec.search(searchParams);
             } else {
-                return $q.reject('Sorry! In order to create a product offering, you must first launch at least one product catalogue.');
+                return $q.reject('Sorry! In order to create a product offering, you must first create at least one product catalogue.');
             }
         }).then(function (collection) {
             if (!collection.length) {
-                return $q.reject('Sorry! In order to create a product offering, you must first launch at least one product specification.');
+                return $q.reject('Sorry! In order to create a product offering, you must first create at least one product specification.');
             }
         });
 
