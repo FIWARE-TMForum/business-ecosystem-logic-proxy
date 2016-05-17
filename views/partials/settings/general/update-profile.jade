@@ -112,13 +112,13 @@
               type="text"
               name="placeOfBirth"
               ng-model="updateVM.data.placeOfBirth"
-              ng-maxlength="30"
+              ng-maxlength="100"
             )
             .help-block(
               ng-messages="updateVM.form.placeOfBirth.$error"
               ng-show="updateVM.hasFieldError(updateVM.form.placeOfBirth)"
             )
-              span(ng-message="maxlength") This field must not exceed 30 chars.
+              span(ng-message="maxlength") This field must not exceed 100 chars.
       .form-group.text-right
         a.btn.btn-success.z-depth-1(ng-click="updateVM.update()", ng-disabled="!updateVM.form.$valid")
           span.item-text Update

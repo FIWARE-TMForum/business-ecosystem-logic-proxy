@@ -183,7 +183,7 @@
                     var params = {};
 
                     if (arrayLength != null) {
-                        controller.$setValidity('limitFrom', arrayLength >= parseInt(attrs.limitFrom));
+                        controller.$setValidity('limitFrom', arrayLength >= Number(attrs.limitFrom));
                     }
                 });
             }
@@ -218,7 +218,7 @@
                 });
                 ngModel.$formatters.push(function (value) {
                     //Model -> View
-                    return parseInt(value, 10);
+                    return Number(value);
                 });
             }
         };
