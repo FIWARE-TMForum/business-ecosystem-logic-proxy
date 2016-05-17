@@ -42,7 +42,7 @@
     }
 
     function ProductDetailController(
-        $rootScope, $scope, $state, InventoryProduct, Utils, ProductSpec, EVENTS, $interval, $window) {
+        $rootScope, $scope, $state, InventoryProduct, Utils, ProductSpec, EVENTS, $interval, $window, LOGGED_USER, USAGE_CHART_URL) {
         /* jshint validthis: true */
         var vm = this;
         var load = false;
@@ -52,8 +52,10 @@
         vm.formatCharacteristicValue = formatCharacteristicValue;
         vm.characteristicValueSelected = characteristicValueSelected;
         vm.isRenewable = isRenewable;
+        vm.isUsage = isUsage;
         vm.renewProduct = renewProduct;
         vm.loading = loading;
+        vm.getUsageURL = getUsageURL;
 
         InventoryProduct.detail($state.params.productId).then(function (productRetrieved) {
             vm.item = productRetrieved;
@@ -68,10 +70,17 @@
             return load;
         }
 
+        function hasProductPrice() {
+            return 'productPrice' in vm.item && vm.item.productPrice.length && 'priceType' in vm.item.productPrice[0];
+        }
+
+        function isUsage() {
+            return vm.item.productPrice[0].priceType.toLowerCase() == 'usage';
+        }
+
         function isRenewable() {
-            return 'productPrice' in vm.item && vm.item.productPrice.length && 'priceType' in vm.item.productPrice[0] &&
-                (vm.item.productPrice[0].priceType.toLowerCase() == 'recurring'
-                || vm.item.productPrice[0].priceType.toLowerCase() == 'usage')
+            return hasProductPrice() && (vm.item.productPrice[0].priceType.toLowerCase() == 'recurring'
+                || isUsage());
         }
 
         function renewProduct() {
@@ -120,6 +129,13 @@
                     error: error
                 });
             });
+        }
+
+        function getUsageURL() {
+            var startingChar = USAGE_CHART_URL.indexOf('?') > -1 ? '&' : '?';
+
+            // Get the endpoint of the usage mashup including the access token and the product id
+            return USAGE_CHART_URL + startingChar + 'productId=' + vm.item.id + '&token=' + LOGGED_USER.bearerToken;
         }
 
         function characteristicValueSelected(characteristic, characteristicValue) {

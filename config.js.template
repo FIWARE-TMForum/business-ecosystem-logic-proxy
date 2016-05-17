@@ -102,4 +102,6 @@ config.publicPaths = [];
 
 config.magicKey = undefined;
 
+config.usageChartURL = '';
+
 module.exports = config;

@@ -472,7 +472,8 @@ var renderTemplate = function(req, res, viewName) {
         cssFilesToInject: cssFilesToInject,
         jsDepFilesToInject: jsDepFilesToInject,
         jsAppFilesToInject: jsAppFilesToInject,
-        accountHost: config.oauth2.server
+        accountHost: config.oauth2.server,
+        usageChartURL: config.usageChartURL
     };
 
     if (utils.isAdmin(req.user)) {
