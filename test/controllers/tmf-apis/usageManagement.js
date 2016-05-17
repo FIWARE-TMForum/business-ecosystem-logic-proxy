@@ -79,7 +79,7 @@ describe('Usage Management API', function () {
                 var requestNotAuthenticatedStatus = 401;
                 var requestNotAuthenticatedMessage = 'You need to be authenticated to create/update/delete resources';
 
-                var utils = jasmine.createSpyObj('utils', ['validateLoggedIn'])
+                var utils = jasmine.createSpyObj('utils', ['validateLoggedIn']);
                 utils.validateLoggedIn.and.callFake(function (req, callback) {
                     return callback({
                         status: requestNotAuthenticatedStatus,
@@ -243,54 +243,154 @@ describe('Usage Management API', function () {
         });
 
         describe('Post Validation', function () {
+            var USAGE_URL = '/DSUsageManagement/api/usageManagement/v2/usage';
 
-            var testPostValidation = function (apiUrl, shouldNotify, done) {
-
+            var mockStoreClient = function() {
                 var storeClient = jasmine.createSpyObj('storeClient', ['validateUsage']);
                 storeClient.validateUsage.and.callFake(function (usageInfo, callback) {
                     return callback(null);
                 });
 
-                var store = {
-                    storeClient: storeClient
-                };
-
-                var req = {
-                    method: 'POST',
-                    status: 201,
-                    body: '{}',
-                    apiUrl: apiUrl
-                };
-
-                var usageManagementAPI = getUsageManagementAPI({}, store, {}, {});
-
-                usageManagementAPI.executePostValidation(req, function (err) {
-
-                    expect(err).toBe(null);
-
-                    if (shouldNotify) {
-                        expect(storeClient.validateUsage).toHaveBeenCalled();
-                    } else {
-                        expect(storeClient.validateUsage).not.toHaveBeenCalled();
-                    }
-
-                    done();
-                });
+                return storeClient;
             };
 
-            it('should not notify when the request is not a POST to ../usage', function (done) {
+            describe('POST request', function() {
 
-                testPostValidation('/DSUsageManagement/api/usageManagement/v2/usageSpecification', false, done);
+                var testPostValidation = function (apiUrl, shouldNotify, done) {
+
+                    var storeClient = mockStoreClient();
+                    var store = {
+                        storeClient: storeClient
+                    };
+
+                    var req = {
+                        method: 'POST',
+                        status: 201,
+                        body: '{}',
+                        apiUrl: apiUrl
+                    };
+
+                    var usageManagementAPI = getUsageManagementAPI({}, store, {}, {});
+
+                    usageManagementAPI.executePostValidation(req, function (err) {
+
+                        expect(err).toBe(null);
+
+                        if (shouldNotify) {
+                            expect(storeClient.validateUsage).toHaveBeenCalled();
+                        } else {
+                            expect(storeClient.validateUsage).not.toHaveBeenCalled();
+                        }
+
+                        done();
+                    });
+                };
+
+                it('should not notify when the request is not a POST to ../usage', function (done) {
+
+                    testPostValidation('/DSUsageManagement/api/usageManagement/v2/usageSpecification', false, done);
+                });
+
+                it('should notify the Store if the usage management API notification is successful', function (done) {
+
+                    testPostValidation(USAGE_URL, true, done);
+                });
+
+                it('should notify the Store if the usage management API notification is successful (path end with "/")', function (done) {
+
+                    testPostValidation(USAGE_URL, true, done);
+                });
             });
 
-            it('should notify the Store if the usage management API notification is successful', function (done) {
-                
-                testPostValidation('/DSUsageManagement/api/usageManagement/v2/usage', true, done);
-            });
+            describe('GET request', function() {
+                var rawBody = [{
+                    'usageCharacteristic': [{
+                        name: 'correlationNumber',
+                        value: '2'
+                    }, {
+                        name: 'productId',
+                        value: '1'
+                    }]
+                }, {
+                    'usageCharacteristic': [{
+                        name: 'correlationNumber',
+                        value: '2'
+                    }, {
+                        name: 'productId',
+                        value: '1'
+                    }]
+                }, {
+                    'usageCharacteristic': [{
+                        name: 'correlationNumber',
+                        value: '2'
+                    }, {
+                        name: 'productId',
+                        value: '2'
+                    }]
+                }];
 
-            it('should notify the Store if the usage management API notification is successful (path end with "/")', function (done) {
-                
-                testPostValidation('/DSUsageManagement/api/usageManagement/v2/usage/', true, done);
+                var testUsageFilter = function(query, expBody, done) {
+                    var utils = jasmine.createSpyObj('utils', ['updateBody']);
+                    utils.updateBody.and.callFake(function (req, body) {
+                    });
+
+                    var storeClient = mockStoreClient();
+                    var store = {
+                        storeClient: storeClient
+                    };
+
+                    var req = {
+                        method: 'GET',
+                        status: 200,
+                        body: JSON.stringify(rawBody),
+                        apiUrl: USAGE_URL + query
+                    };
+
+                    var usageManagementAPI = getUsageManagementAPI({}, store, utils, {});
+
+                    usageManagementAPI.executePostValidation(req, function (err) {
+
+                        expect(err).toBe(null);
+                        expect(storeClient.validateUsage).not.toHaveBeenCalled();
+
+                        if (expBody) {
+                            expect(utils.updateBody).toHaveBeenCalledWith(req, JSON.stringify(expBody));
+                        } else {
+                            expect(utils.updateBody).not.toHaveBeenCalled();
+                        }
+
+                        done();
+                    });
+                };
+
+                it ('should return the complete usage list when a product id has not been included', function(done) {
+                    testUsageFilter('', null, done);
+                });
+
+                it ('should filter the returned usage list when a product id has been included', function(done) {
+                    var expBody = [{
+                        'usageCharacteristic': [{
+                            name: 'correlationNumber',
+                            value: '2'
+                        }, {
+                            name: 'productId',
+                            value: '1'
+                        }]
+                    }, {
+                        'usageCharacteristic': [{
+                            name: 'correlationNumber',
+                            value: '2'
+                        }, {
+                            name: 'productId',
+                            value: '1'
+                        }]
+                    }];
+                    testUsageFilter('?usageCharacteristic.value=1', expBody, done);
+                });
+
+                it ('should return an empty list when none of the usages includes the specified product id', function(done) {
+                    testUsageFilter('?usageCharacteristic.value=3', [], done);
+                });
             });
         });
     });

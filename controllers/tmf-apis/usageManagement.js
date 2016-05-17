@@ -66,14 +66,16 @@ var usageManagement = ( function () {
         var body = JSON.parse(req.body);
 
         var expr = /usage($|\/)/;
+        var parsedUrl = url.parse(req.apiUrl, true);
 
         if (req.method === 'POST' && req.status === 201 && expr.test(req.apiUrl)) {
 
             storeClient.validateUsage(body, callback);
 
-        } else if (req.method === 'GET' && expr.test(req.apiUrl)){
+        } else if (req.method === 'GET' && expr.test(parsedUrl.pathname)){
             // Check if is needed to filter the list
-            var query = url.parse(request.url, true).query;
+            var query = parsedUrl.query;
+
             if (query['usageCharacteristic.value']) {
                 var productValue = query['usageCharacteristic.value'];
                 var filteredBody = body.filter(function(usage) {
@@ -93,6 +95,8 @@ var usageManagement = ( function () {
                 // Attach new body
                 utils.updateBody(req, JSON.stringify(filteredBody));
             }
+            return callback(null);
+        } else {
             return callback(null);
         }
     };
