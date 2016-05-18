@@ -146,7 +146,7 @@ describe('Accounting Service', function () {
         });
 
         it('should return 404 when the API Key is invalid', function (done) {
-           updateApikeyState(null, {nModified: 0}, 404, {error: 'Invalid API Key'}, done);
+           updateApikeyState(null, {n: 0}, 404, {error: 'Invalid API Key'}, done);
         });
 
         it('should update to "COMMITTED" the state of apiKey received', function (done) {

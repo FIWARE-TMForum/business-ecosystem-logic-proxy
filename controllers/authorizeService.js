@@ -35,7 +35,7 @@ var authorizeService = (function () {
                 service.apiKey = apiKey;
                 service.state = 'UNCOMMITTED';
 
-                service.save(function (err) {
+                service.save(function(err) {
 
                     if (err) {
                         res.status(500).json({error: err.message});
@@ -56,7 +56,7 @@ var authorizeService = (function () {
     };
 
     /**
-     * Change the apiKey state to "commited".
+     * Change the apiKey state to "committed".
      *
      * @param  {Object} req      Incoming request.
      * @param  {Object} res      Outgoing response.
@@ -69,7 +69,7 @@ var authorizeService = (function () {
         AccountingService.update({apiKey: apiKey}, { $set: {state: 'COMMITTED'}}, function (err, rawResp) {
             if (err) {
                 res.status(500).json({error: err.message});
-            } else if (rawResp.nModified !== 1) {
+            } else if (rawResp.n < 1) {
                 res.status(404).json({error: 'Invalid API Key'});
             } else {
                 res.status(200).send();
