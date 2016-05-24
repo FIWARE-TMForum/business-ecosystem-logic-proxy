@@ -58,8 +58,20 @@
             ]
         };
 
+        var Comment = function Comment(author) {
+            this.author = author;
+            this.notes = [];
+        };
+        Comment.prototype.appendNote = function appendNote(date, text) {
+            this.notes.push({
+                date: date,
+                text: text
+            });
+        };
+
         return {
             TYPES: TYPES,
+            Comment: Comment,
             search: search,
             create: create,
             detail: detail,

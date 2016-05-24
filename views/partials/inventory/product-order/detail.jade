@@ -3,42 +3,43 @@
     include ./breadcrumb.jade
   .col-xs-12(ng-switch="detailVM.item.status")
     div(ng-switch-when="LOADED")
-      .panel.panel-default.z-depth-1
+      .panel.panel-default
         .panel-heading
-          .h4
-            strong
-              time(title="{{ detailVM.item.requestedStartDate | amDateFormat: 'dddd, MMMM Do YYYY, h:mm a' }}") {{ detailVM.item.requestedStartDate | amCalendar }}
-            .small
-              | by {{ detailVM.item.getCustomer().id }}
-              span ,
-              strong  Priority:
-              span  {{ detailVM.item.priority }}
+          .panel-heading-wrapper
+            h3.panel-title Order details
+            .panel-actions
+              a.btn.btn-sm.btn-danger(ng-if="detailVM.can('cancel')" bs-tooltip title="Cancel" ng-click="detailVM.cancel()" ng-disabled="detailVM.cancel.status === detailVM.STATUS.PENDING")
+                span.fa(ng-class="detailVM.cancel.status === detailVM.STATUS.PENDING ? ['fa-circle-o-notch', 'fa-spin'] : 'fa-close'")
         .panel-body
-          .row(ng-repeat="orderItem in detailVM.item.orderItem")
-            hr(ng-if="!$first")
-            .col-xs-12.col-sm-4
-              .thumbnail.thumbnail-lg
-                img(no-image, ng-src="{{ orderItem.productOffering.getPicture() }}")
-            .col-xs-12.col-sm-6
-              .h4
-                strong
-                  a(ui-sref="offering.detail({ offeringId: orderItem.productOffering.id })", ui-sref-opts="{ inherit: false }")
-                    span.item-text {{ orderItem.productOffering.name }}
-              dl
-                dt Description
-                dd.text-dark-secondary {{ orderItem.productOffering.description ? orderItem.productOffering.description : 'No description provided.' }}
-                dt State
-                dd.text-dark-secondary {{ orderItem.state }}
-                dt Price
-                dd.text-dark-secondary {{ detailVM.item.formatPriceplanOf($index) }}
-                dt Billing address
-                dd.text-dark-secondary
-                  span(style="white-space: pre-line;") {{ orderItem.billingAccount.getPostalAddress().toString() }}
-                dt(ng-if="orderItem.product.productCharacteristic.length") Characteristics
-                dd(ng-if="orderItem.product.productCharacteristic.length" style="padding-left: 15px;")
-                  p(ng-repeat="characteristic in orderItem.product.productCharacteristic")
-                    strong {{ characteristic.name }}:
-                    span.text-dark-secondary  {{ characteristic.value }}
+          .dl-list
+            dl
+              dt Name
+              dd {{ detailVM.item.externalId ? detailVM.item.externalId : 'No data provided.' }}
+              dt Customer name
+              dd {{ detailVM.getCustomerName() }}
+              dt Notification email
+              dd {{ detailVM.item.notificationContact }}
+              dt Shipping address
+              dd
+                span.text-preline {{ detailVM.getShippingAddress() }}
+            dl
+              dt Order date
+              dd {{ detailVM.item.orderDate ? (detailVM.item.orderDate | amDateFormat: 'dddd, MMMM Do YYYY, h:mm a') : 'No data provided' }}
+              dt Priority
+              dd {{ detailVM.item.priority }}
+              dt Status
+              dd {{ detailVM.item.state }}
+              dt Desired delivery date
+              dd {{ detailVM.item.requestedCompletionDate ? (detailVM.item.requestedCompletionDate | amDateFormat: 'dddd, MMMM Do YYYY, h:mm a') : 'No data provided' }}
+              dt Expected delivery date
+              dd {{ detailVM.item.expectedCompletionDate ? (detailVM.item.expectedCompletionDate | amDateFormat: 'dddd, MMMM Do YYYY, h:mm a') : 'No data provided' }}
+        ul.nav.nav-pills.nav-justified
+          li(ui-sref-active-eq="active")
+            a(ui-sref="inventory.productOrder.detail") Products
+          li(ui-sref-active-eq="active")
+            a(ui-sref="inventory.productOrder.detail.note") Notes
+      ui-view
+        include ./detail-product.jade
     .alert.alert-danger.text-center(ng-switch-when="ERROR") {{ detailVM.error }}
     .container-spinner(ng-switch-default)
       span.fa.fa-spinner.fa-spin.fa-2x
