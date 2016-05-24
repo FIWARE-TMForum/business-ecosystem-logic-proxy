@@ -121,6 +121,10 @@ dl > dd + dt {
     margin-top: 5px;
 }
 
+.small > dl {
+    margin-bottom: 0;
+}
+
 dd > dl {
     margin-bottom: 0;
     padding-left: 10px;
