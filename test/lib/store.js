@@ -278,4 +278,53 @@ describe('Store Client', function() {
 
     });
 
+    it('should call callback without errors when usage notification works', function (done) {
+
+        // Mock the server
+        config.appSsl = false;
+        var serverUrl = 'http://' + config.appHost + ':' + config.endpoints.charging.port;
+
+        nock(serverUrl, {
+            reqheaders: {
+                'content-type': 'application/json'
+            }
+        }).post('/charging/api/orderManagement/accounting/', function (body) {
+            return true;
+        }).reply(200);
+
+        storeClient.validateUsage({}, function (err) {
+
+            expect(err).toBe(null);
+
+            done();
+        });
+    });
+
+    it('should call callback with errors when usage notification fails', function (done) {
+
+        var errorStatus = 500;
+
+        // Mock the server
+        config.appSsl = false;
+        var serverUrl = 'http://' + config.appHost + ':' + config.endpoints.charging.port;
+
+        nock(serverUrl, {
+            reqheaders: {
+                'content-type': 'application/json'
+            }
+        }).post('/charging/api/orderManagement/accounting/', function (body) {
+            return true;
+        }).reply(errorStatus);
+
+        storeClient.validateUsage({}, function (err) {
+
+            expect(err).toEqual({
+                status: errorStatus,
+                message: 'The server has failed validating the usage'
+            });
+
+            done();
+        });
+    });
+
 });

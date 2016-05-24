@@ -19,7 +19,8 @@
 
         return {
             search: search,
-            detail: detail
+            detail: detail,
+            renew: renew
         };
 
         function search(filters) {
@@ -103,6 +104,21 @@
                     deferred.reject(response);
                 });
             }
+        }
+
+        function renew(data) {
+            var renewResource = $resource(URLS.RENEW_JOB);
+            var deferred = $q.defer();
+
+            renewResource.save(data, function (renewJob, getResponseHeaders) {
+                deferred.resolve({
+                    headers: getResponseHeaders()
+                });
+            }, function (response) {
+                deferred.reject(response);
+            });
+
+            return deferred.promise;
         }
     }
 })();

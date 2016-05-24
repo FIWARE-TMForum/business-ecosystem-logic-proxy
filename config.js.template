@@ -80,6 +80,10 @@ config.endpoints = {
     'rss': {
         'path': '',
         'port': ''
+    },
+    'usage': {
+        'path': '',
+        'port': ''
     }
 };
 
@@ -97,5 +101,7 @@ config.appSsl = false;
 config.publicPaths = [];
 
 config.magicKey = undefined;
+
+config.usageChartURL = '';
 
 module.exports = config;

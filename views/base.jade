@@ -21,6 +21,7 @@ html(ng-app="app")
           IMAGE: '#{ contextPath }/resources/core/images',
           USER: '#{ proxyPath }/#{ chargingPath }/api/userManagement/users/:username',
           ASSET_MANAGEMENT: '#{ proxyPath }/#{ chargingPath }/api/assetManagement',
+          RENEW_JOB: '#{ proxyPath }/#{ chargingPath }/api/orderManagement/products/renewJob',
           CATALOGUE_MANAGEMENT: '#{ proxyPath }/#{ catalogPath }/api/catalogManagement/v2',
           PRODUCTORDER_MANAGEMENT: '#{ proxyPath }/#{ orderingPath }/api/productOrdering/v2',
           INVENTORY: '#{ proxyPath }/#{ inventoryPath }/api/productInventory/v2',
@@ -33,6 +34,7 @@ html(ng-app="app")
           SHOPPING_CART: '#{ shoppingCartPath }/:action/:id'
         })
         .constant('PLATFORM_REVENUE', #{ platformRevenue })
+        .constant('USAGE_CHART_URL', '#{ usageChartURL }')
         .run(function($rootScope, $state, $injector) {
 
           $rootScope.$on('$stateChangeStart', function (e, toState, toParams) {
@@ -55,7 +57,7 @@ html(ng-app="app")
             id: '#{ user.id }',
             href: '#{ contextPath }/#{ partyPath }/api/partyManagement/v2/individual/#{ user.id }',
             email: '#{ user.email }',
-            bearerToken: '#{ user.accessToken }',
+            bearerToken: '#{ user.accessToken }'
           })
           .run(function ($http, LOGGED_USER) {
             $http.defaults.headers.common.Authorization = 'Bearer ' + LOGGED_USER.bearerToken;
@@ -288,6 +290,8 @@ html(ng-app="app")
       include ./partials/inventory/product/detail-content-characteristic.jade
     script(type="text/ng-template", id="inventory/product/detail/priceplan")
       include ./partials/inventory/product/detail-content-priceplan.jade
+    script(type="text/ng-template", id="inventory/product/detail/usage")
+      include ./partials/inventory/product/detail-content-usage.jade
 
     script(type="text/ng-template", id="shopping-cart/list")
       include partials/shopping-cart/create

@@ -11,7 +11,8 @@
         .module('app')
         .filter('status', statusFilter)
         .filter('capitalize', capitalizeFilter)
-        .filter('orderByParentId', orderByParentId);
+        .filter('orderByParentId', orderByParentId)
+        .filter('trusted', ['$sce', trustedURL]);
 
     function capitalizeFilter() {
         return function (input) {
@@ -69,6 +70,12 @@
                 return item.parentId === parentId;
             }
         }
+    }
+
+    function trustedURL($sce) {
+        return function(url) {
+            return $sce.trustAsResourceUrl(url);
+        };
     }
 
 })();

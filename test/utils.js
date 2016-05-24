@@ -43,6 +43,10 @@ var defaultConfig = {
         customer: {
             path: 'customer',
             port: 82
+        },
+        usage: {
+            path: 'usage',
+            port: 78
         }
     },
     billingAccountOwnerRole: 'bill receiver',

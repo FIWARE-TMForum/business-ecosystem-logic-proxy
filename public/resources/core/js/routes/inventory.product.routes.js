@@ -22,7 +22,7 @@
                     flow: 1
                 },
                 data: {
-                    filters: ['status'],
+                    filters: ['status']
                 },
                 templateUrl: 'inventory/product/search',
                 controller: 'InventorySearchCtrl as searchVM'
@@ -40,6 +40,10 @@
             .state('inventory.product.detail.productPrice', {
                 url: '/priceplan',
                 templateUrl: 'inventory/product/detail/priceplan'
+            })
+            .state('inventory.product.detail.usage', {
+                url: '/usage',
+                templateUrl: 'inventory/product/detail/usage'
             });
     }
 

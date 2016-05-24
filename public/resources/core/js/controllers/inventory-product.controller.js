@@ -41,14 +41,21 @@
         }
     }
 
-    function ProductDetailController($scope, $state, InventoryProduct, Utils, ProductSpec) {
+    function ProductDetailController(
+        $rootScope, $scope, $state, InventoryProduct, Utils, ProductSpec, EVENTS, $interval, $window, LOGGED_USER, USAGE_CHART_URL) {
         /* jshint validthis: true */
         var vm = this;
+        var load = false;
 
         vm.item = {};
         vm.$state = $state;
         vm.formatCharacteristicValue = formatCharacteristicValue;
         vm.characteristicValueSelected = characteristicValueSelected;
+        vm.isRenewable = isRenewable;
+        vm.isUsage = isUsage;
+        vm.renewProduct = renewProduct;
+        vm.loading = loading;
+        vm.getUsageURL = getUsageURL;
 
         InventoryProduct.detail($state.params.productId).then(function (productRetrieved) {
             vm.item = productRetrieved;
@@ -58,6 +65,78 @@
             vm.error = Utils.parseError(response, 'It was impossible to load product details');
             vm.item.status = ERROR;
         });
+
+        function loading() {
+            return load;
+        }
+
+        function hasProductPrice() {
+            return 'productPrice' in vm.item && vm.item.productPrice.length && 'priceType' in vm.item.productPrice[0];
+        }
+
+        function isUsage() {
+            return vm.item.productPrice[0].priceType.toLowerCase() == 'usage';
+        }
+
+        function isRenewable() {
+            return hasProductPrice() && (vm.item.productPrice[0].priceType.toLowerCase() == 'recurring'
+                || isUsage());
+        }
+
+        function renewProduct() {
+            load = true;
+            InventoryProduct.renew({
+                name: vm.item.name,
+                id: vm.item.id,
+                priceType: vm.item.productPrice[0].priceType.toLowerCase()
+            }).then(function(reviewJob) {
+                load = false;
+                if ('x-redirect-url' in reviewJob.headers) {
+                    var ppalWindow = $window.open(reviewJob.headers['x-redirect-url'], '_blank');
+                    var interval;
+
+                    // The function to be called when the payment process has ended
+                    var paymentFinished = function(closeModal) {
+
+                        if (interval) {
+                            $interval.cancel(interval);
+                        }
+
+                        if (closeModal) {
+                            $rootScope.$emit(EVENTS.MESSAGE_CLOSED);
+                        }
+
+                    };
+
+                    // Display a message and wait until the new tab has been closed to redirect the page
+                    $rootScope.$emit(EVENTS.MESSAGE_CREATED, reviewJob.headers['x-redirect-url'], paymentFinished.bind(this, false));
+
+                    if (ppalWindow) {
+                        interval = $interval(function () {
+                            if (ppalWindow.closed) {
+                                paymentFinished(true);
+                            }
+                        }, 500);
+                    }
+                }
+            }, function (response) {
+                load = false;
+                var defaultMessage = 'There was an unexpected error that prevented the ' +
+                    'system from renewing your product';
+                var error = Utils.parseError(response, defaultMessage);
+
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                    error: error
+                });
+            });
+        }
+
+        function getUsageURL() {
+            var startingChar = USAGE_CHART_URL.indexOf('?') > -1 ? '&' : '?';
+
+            // Get the endpoint of the usage mashup including the access token and the product id
+            return USAGE_CHART_URL + startingChar + 'productId=' + vm.item.id + '&token=' + LOGGED_USER.bearerToken;
+        }
 
         function characteristicValueSelected(characteristic, characteristicValue) {
             var result, productCharacteristic, i;
