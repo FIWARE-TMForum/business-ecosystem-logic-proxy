@@ -354,7 +354,7 @@ describe('Usage Management API', function () {
                         expect(storeClient.validateUsage).not.toHaveBeenCalled();
 
                         if (expBody) {
-                            expect(utils.updateBody).toHaveBeenCalledWith(req, JSON.stringify(expBody));
+                            expect(utils.updateBody).toHaveBeenCalledWith(req, expBody);
                         } else {
                             expect(utils.updateBody).not.toHaveBeenCalled();
                         }

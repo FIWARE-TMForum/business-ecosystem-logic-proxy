@@ -93,7 +93,7 @@ var usageManagement = ( function () {
                 });
 
                 // Attach new body
-                utils.updateBody(req, JSON.stringify(filteredBody));
+                utils.updateBody(req, filteredBody);
             }
             return callback(null);
         } else {
