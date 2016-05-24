@@ -117,6 +117,13 @@ ui-view
                               tr
                                 td.text-dark-secondary x 1
                                 td.text-dark-secondary {{ item.productOffering.href }}
+                        .h4.text-dark-secondary
+                          strong Appointment
+                        .form-group
+                          input.form-control(
+                            type="url"
+                            ng-model="item.appointment"
+                          )
                         .h4.text-dark-secondary(ng-if="item.product.productPrice.length")
                           strong Price plan
                         .table-responsive(ng-if="item.product.productPrice.length")
