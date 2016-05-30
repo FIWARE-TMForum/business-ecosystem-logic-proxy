@@ -1,0 +1,26 @@
+ui-view
+  .row
+    .col-xs-12(ng-switch="searchVM.list.status")
+      div(ng-switch-when="LOADED", ng-switch="searchVM.list.length")
+        div(ng-switch-when="0")
+          .alert.alert-info.text-center No reports found.
+        div(ng-switch-default)
+          .table-responsive
+            table.table.table-bordered
+              thead
+                tr
+                  th Timestamp
+                  th Product class
+                  th Provider
+                  th Amount
+              tbody
+                tr(ng-repeat="report in searchVM.list")
+                  th {{ report.timestamp | amDateFormat: 'ddd, MMM Do YYYY, HH:mm' }}
+                  td {{ report.productClass }}
+                  td {{ report.ownerProviderId }}
+                  td {{ report.ownerValue }} {{ report.currency }}
+      div(ng-switch-when="ERROR")
+        .alert.alert-danger.text-center {{ searchVM.error }}
+      div(ng-switch-default)
+        .container-spinner
+          span.fa.fa-spinner.fa-spin.fa-2x

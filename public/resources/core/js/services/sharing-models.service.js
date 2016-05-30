@@ -21,6 +21,7 @@
 
         var providersResource = $resource(URLS.SHARING_PROVIDERS, {}, {});
         var transactionResource = $resource(URLS.SHARING_TRANSACTIONS, {}, {});
+        var reportResource = $resource(URLS.SHARING_REPORTS, {}, {});
 
         return {
             searchModels: searchModels,
@@ -28,7 +29,8 @@
             detailModel: detailModel,
             updateModel: updateModel,
             searchProviders: searchProviders,
-            searchTransactions: searchTransactions
+            searchTransactions: searchTransactions,
+            searchReports: searchReports
         };
 
         function createModel (model) {
@@ -99,6 +101,13 @@
                 appProviderId: User.loggedUser.id
             };
             return search(transactionResource, params);
+        }
+
+        function searchReports() {
+            var params = {
+                ownerProviderId: User.loggedUser.id
+            };
+            return search(reportResource, params);
         }
     }
 })();
