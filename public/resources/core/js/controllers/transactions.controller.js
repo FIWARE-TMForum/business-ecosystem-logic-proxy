@@ -15,8 +15,11 @@
     function RSTransSearchController($state, DATA_STATUS, RSS, Utils) {
         var vm = this;
 
+        vm.$params = $state.params;
         vm.state = $state;
         vm.getTxType = getTxType;
+        vm.list = [];
+        vm.list.status = DATA_STATUS.LOADING;
 
         function getTxType(txType) {
             var types = {
