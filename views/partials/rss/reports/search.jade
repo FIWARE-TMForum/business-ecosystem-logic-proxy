@@ -5,20 +5,30 @@ ui-view
         div(ng-switch-when="0")
           .alert.alert-info.text-center No reports found.
         div(ng-switch-default)
-          .table-responsive
-            table.table.table-bordered
-              thead
-                tr
-                  th Timestamp
-                  th Product class
-                  th Provider
-                  th Amount
-              tbody
-                tr(ng-repeat="report in searchVM.list")
-                  th {{ report.timestamp | amDateFormat: 'ddd, MMM Do YYYY, HH:mm' }}
-                  td {{ report.productClass }}
-                  td {{ report.ownerProviderId }}
-                  td {{ report.ownerValue }} {{ report.currency }}
+          .panel-group.panel-group-report
+            .panel.panel-default.z-depth-1(ng-repeat="report in searchVM.list")
+              .panel-heading
+                .h4
+                  a.btn-block(data-toggle="collapse" data-parent=".panel-group-report" data-target="#report-{{ $index }}")
+                    span.item-text {{ report.timestamp | amDateFormat: 'ddd, MMM Do YYYY, HH:mm' }}
+                  small
+                    a(ui-sref="rss.models.update({ productClass: report.productClass })" ui-sref-opts="{ inherit: false }") {{ report.productClass }}
+              .panel-collapse.collapse(id="report-{{ $index }}")
+                .panel-body
+                  dl
+                    dt Provider id
+                    dd.text-dark-secondary {{ report.ownerProviderId }}
+                    dt Provider amount
+                    dd.text-dark-secondary {{ report.ownerValue }} {{ report.currency }}
+                    dt Store id
+                    dd.text-dark-secondary {{ report.aggregatorId }}
+                    dt Store amount
+                    dd.text-dark-secondary {{ report.aggregatorValue }} {{ report.currency }}
+                  dl(ng-repeat="stakeholder in report.stakeholders")
+                    dt Stakeholder-{{ $index + 1 }} id
+                    dd.text-dark-secondary {{ stakeholder.stakeholderId }}
+                    dt Stakeholder-{{ $index + 1 }} amount
+                    dd.text-dark-secondary {{ stakeholder.modelValue }} {{ report.currency }}
       div(ng-switch-when="ERROR")
         .alert.alert-danger.text-center {{ searchVM.error }}
       div(ng-switch-default)

@@ -13,10 +13,9 @@
         .module('app')
         .controller('RSReportSearchCtrl', RSReportSearchController);
 
-    function RSReportSearchController($state, DATA_STATUS, RSS, Utils) {
+    function RSReportSearchController(DATA_STATUS, RSS, Utils) {
         var vm = this;
 
-        vm.$params = $state.params;
         vm.list = [];
         vm.list.status = DATA_STATUS.LOADING;
 
@@ -24,7 +23,7 @@
             vm.list = angular.copy(reports);
             vm.list.status = DATA_STATUS.LOADED;
         }, function (response) {
-            vm.error = Utils.parseError(response, 'Unexpected error trying to retrieve the transactions.');
+            vm.error = Utils.parseError(response, 'Unexpected error trying to retrieve the reports.');
             vm.list.status = DATA_STATUS.ERROR;
         });
     }
