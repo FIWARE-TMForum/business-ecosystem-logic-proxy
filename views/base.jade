@@ -31,6 +31,7 @@ html(ng-app="app")
           SHARING_MODELS: '#{ proxyPath }/#{ rssPath }/rss/models',
           SHARING_PROVIDERS: '#{ proxyPath }/#{ rssPath }/rss/providers',
           SHARING_TRANSACTIONS: '#{ proxyPath }/#{ rssPath }/rss/cdrs',
+          SHARING_SETTLEMENT: '#{ proxyPath }/#{ rssPath }/rss/settlement',
           SHARING_REPORTS: '#{ proxyPath }/#{ rssPath }/rss/settlement/reports',
           SHOPPING_CART: '#{ shoppingCartPath }/:action/:id'
         })
@@ -147,6 +148,7 @@ html(ng-app="app")
       include ./modals/business-address.modal.jade
       include ./modals/shipping-address.modal.jade
       include ./modals/priceplan.modal.jade
+      include ./modals/sharing-report.modal.jade
 
     script(type="text/ng-template", id="settings/sidebar")
       include ./partials/settings/sidebar.jade

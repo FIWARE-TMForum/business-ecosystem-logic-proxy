@@ -12,7 +12,7 @@
         .module('app')
         .factory('RSS', RSSService);
 
-    function RSSService($q, $resource, URLS, User) {
+    function RSSService($q, $resource, $location, URLS, User) {
         var modelsResource = $resource(URLS.SHARING_MODELS, {}, {
             update: {
                 method: 'PUT'
@@ -22,15 +22,23 @@
         var providersResource = $resource(URLS.SHARING_PROVIDERS, {}, {});
         var transactionResource = $resource(URLS.SHARING_TRANSACTIONS, {}, {});
         var reportResource = $resource(URLS.SHARING_REPORTS, {}, {});
+        var settlementResource = $resource(URLS.SHARING_SETTLEMENT, {}, {});
+
+        var EVENTS = {
+            REPORT_CREATE: '$reportCreate',
+            REPORT_CREATED: '$reportCreated'
+        };
 
         return {
+            EVENTS: EVENTS,
             searchModels: searchModels,
             createModel: createModel,
             detailModel: detailModel,
             updateModel: updateModel,
             searchProviders: searchProviders,
             searchTransactions: searchTransactions,
-            searchReports: searchReports
+            searchReports: searchReports,
+            createReport: createReport
         };
 
         function createModel (model) {
@@ -105,9 +113,16 @@
 
         function searchReports() {
             var params = {
-                ownerProviderId: User.loggedUser.id
+                providerId: User.loggedUser.id
             };
             return search(reportResource, params);
+        }
+
+        function createReport(report) {
+            report.providerId = User.loggedUser.id;
+            report.callbackUrl = $location.protocol() + '://' + $location.host() + ':' + $location.port() + '/#/rss/reports';
+
+            return settlementResource.save(report).$promise;
         }
     }
 })();
