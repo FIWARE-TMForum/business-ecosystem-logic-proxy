@@ -114,6 +114,9 @@ blockquote p {
 dl {
     margin-bottom: 10px;
 }
+dl + dl {
+    margin-top: -10px;
+}
 dl > dd + dt {
     margin-top: 5px;
 }
