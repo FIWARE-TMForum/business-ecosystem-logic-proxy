@@ -56,7 +56,7 @@
                 });
             }, function (response) {
                 $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
-                    error: Utils.parseError(response, 'Unexpected error trying to create the relationship.')
+                    error: Utils.parseError(response, 'Unexpected error trying to create the report.')
                 });
             });
             $rootScope.$broadcast(RSS.EVENTS.REPORT_CREATED, vm.data);
