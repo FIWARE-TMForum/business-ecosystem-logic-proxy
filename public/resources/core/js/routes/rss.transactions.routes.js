@@ -17,6 +17,9 @@
         $stateProvider
             .state('rss.transactions', {
                 url: '/transactions',
+                params: {
+                    flow: 1
+                },
                 templateUrl: 'rss/transactions/search',
                 controller: 'RSTransSearchCtrl as searchVM'
             })
