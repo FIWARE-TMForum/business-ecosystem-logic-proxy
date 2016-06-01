@@ -14,12 +14,13 @@ ui-view
                   small
                     a(ui-sref="rss.models.update({ productClass: report.productClass })" ui-sref-opts="{ inherit: false }") {{ report.productClass }}
               .panel-collapse.collapse(id="report-{{ $index }}")
-                .panel-body
+                .panel-body.dl-responsive
                   dl
                     dt Provider id
                     dd.text-dark-secondary {{ report.ownerProviderId }}
                     dt Provider amount
                     dd.text-dark-secondary {{ report.ownerValue }} {{ report.currency }}
+                  dl
                     dt Store id
                     dd.text-dark-secondary {{ report.aggregatorId }}
                     dt Store amount
