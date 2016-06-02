@@ -1,6 +1,6 @@
 .row(ng-switch="updateVM.status")
    .col-xs-12
-      include ./breadcrumb.jade
+      include breadcrumb
    .col-xs-12(ng-switch-when="LOADED")
       .row
          .col-xs-12
@@ -10,14 +10,14 @@
                      strong {{ updateVM.data.productClass }}
                ul.nav.nav-justified.nav-pills
                   li(ui-sref-active-eq="active")
-                     a(ui-sref="stock.models.update")
+                     a(ui-sref="rss.models.update")
                         span.item-icon.fa.fa-newspaper-o
                         span.item-text.hidden-xs About
          .col-xs-12
             ui-view
                .panel.panel-default.z-depth-1(ng-controller="FormWizardCtrl as updateForm")
                   .panel-body
-                     include ./update-form.jade
+                     include update-form
    .col-xs-12(ng-switch-when="ERROR")
       .alert.alert-danger.text-center {{ updateVM.error }}
    .col-xs-12(ng-switch-default)

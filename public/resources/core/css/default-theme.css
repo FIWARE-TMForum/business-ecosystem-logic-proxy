@@ -114,8 +114,29 @@ blockquote p {
 dl {
     margin-bottom: 10px;
 }
+dl + dl {
+    margin-top: -10px;
+}
 dl > dd + dt {
     margin-top: 5px;
+}
+
+dd > dl {
+    margin-bottom: 0;
+    padding-left: 10px;
+}
+
+.dl-responsive dl {
+    display: inline-block;
+    width: 100%;
+}
+
+/* Small devices (tablets, 768px and up) */
+@media (min-width: 768px) {
+
+    .dl-responsive dl {
+        width: 50%;
+    }
 }
 
 .list-inline {
@@ -797,6 +818,16 @@ a.dropdown-menu-item:hover {
 .nav-pills.nav-router > li.active > a.bg-view3:focus {
     color: rgb(255, 255, 255);
     background-color: rgb(255, 125, 45);
+}
+
+.nav-pills.nav-router > li > a.bg-view4 > .item-icon-container,
+.nav-pills.nav-router > li > a.bg-view4:hover,
+.nav-pills.nav-router > li > a.bg-view4:focus,
+.nav-pills.nav-router > li.active > a.bg-view4,
+.nav-pills.nav-router > li.active > a.bg-view4:hover,
+.nav-pills.nav-router > li.active > a.bg-view4:focus {
+    color: rgb(025, 060, 110);
+    background-color: rgb(255, 230, 22);
 }
 
 /* ===================================================================================

@@ -31,6 +31,9 @@ html(ng-app="app")
           PAYMENT: '#{ proxyPath }/#{ chargingPath }/api/orderManagement/orders/:action',
           SHARING_MODELS: '#{ proxyPath }/#{ rssPath }/rss/models',
           SHARING_PROVIDERS: '#{ proxyPath }/#{ rssPath }/rss/providers',
+          SHARING_TRANSACTIONS: '#{ proxyPath }/#{ rssPath }/rss/cdrs',
+          SHARING_SETTLEMENT: '#{ proxyPath }/#{ rssPath }/rss/settlement',
+          SHARING_REPORTS: '#{ proxyPath }/#{ rssPath }/rss/settlement/reports',
           SHOPPING_CART: '#{ shoppingCartPath }/:action/:id'
         })
         .constant('PLATFORM_REVENUE', #{ platformRevenue })
@@ -147,6 +150,7 @@ html(ng-app="app")
       include ./modals/business-address.modal.jade
       include ./modals/shipping-address.modal.jade
       include ./modals/priceplan.modal.jade
+      include ./modals/sharing-report.modal.jade
 
     script(type="text/ng-template", id="settings/sidebar")
       include ./partials/settings/sidebar.jade
@@ -263,18 +267,26 @@ html(ng-app="app")
     script(type="text/ng-template", id="stock/product-catalogue/update/offering")
       include ./partials/stock/product-catalogue/update-offering.jade
 
-    script(type="text/ng-template", id="stock/sharing-models/search")
-      include ./partials/stock/sharing-models/search.jade
-    script(type="text/ng-template", id="stock/sharing-models/create")
-      include ./partials/stock/sharing-models/create.jade
-    script(type="text/ng-template", id="stock/sharing-models/create/general")
-      include ./partials/stock/sharing-models/create-form.jade
-    script(type="text/ng-template", id="stock/sharing-models/create/stakeholders")
-      include ./partials/stock/sharing-models/create-form-stakeholders.jade
-    script(type="text/ng-template", id="stock/sharing-models/create/finish")
-      include ./partials/stock/sharing-models/create-form-finish.jade
-    script(type="text/ng-template", id="stock/sharing-models/update")
-      include ./partials/stock/sharing-models/update.jade
+    script(type="text/ng-template", id="rss/sidebar")
+      include ./partials/rss/sidebar.jade
+
+    script(type="text/ng-template", id="rss/sharing-models/search")
+      include partials/rss/sharing-models/search.jade
+    script(type="text/ng-template", id="rss/sharing-models/create")
+      include partials/rss/sharing-models/create.jade
+    script(type="text/ng-template", id="rss/sharing-models/create/general")
+      include partials/rss/sharing-models/create-form.jade
+    script(type="text/ng-template", id="rss/sharing-models/create/stakeholders")
+      include partials/rss/sharing-models/create-form-stakeholders.jade
+    script(type="text/ng-template", id="rss/sharing-models/create/finish")
+      include partials/rss/sharing-models/create-form-finish.jade
+    script(type="text/ng-template", id="rss/sharing-models/update")
+      include partials/rss/sharing-models/update.jade
+
+    script(type="text/ng-template", id="rss/transactions/search")
+      include partials/rss/transactions/search.jade
+    script(type="text/ng-template", id="rss/reports/search")
+      include partials/rss/reports/search.jade
 
     script(type="text/ng-template", id="inventory/sidebar")
       include ./partials/inventory/sidebar.jade

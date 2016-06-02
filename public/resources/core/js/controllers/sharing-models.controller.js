@@ -151,15 +151,15 @@
         vm.stepList = [
             {
                 title: 'General',
-                templateUrl: 'stock/sharing-models/create/general'
+                templateUrl: 'rss/sharing-models/create/general'
             },
             {
                 title: 'Stakeholders',
-                templateUrl: 'stock/sharing-models/create/stakeholders'
+                templateUrl: 'rss/sharing-models/create/stakeholders'
             },
             {
                 title: 'Finish',
-                templateUrl: 'stock/sharing-models/create/finish'
+                templateUrl: 'rss/sharing-models/create/finish'
             }
         ];
 
@@ -179,7 +179,7 @@
 
             if (total == 100) {
                 RSS.createModel(vm.data).then(function (modelCreated) {
-                    $state.go('stock.models.update', {
+                    $state.go('rss.models.update', {
                         productClass: modelCreated.productClass
                     });
                     $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'created', {
@@ -243,7 +243,7 @@
 
             if (total == 100) {
                 RSS.updateModel(vm.data).then(function(updatedModel) {
-                    $state.go('stock.models.update', {
+                    $state.go('rss.models.update', {
                         productClass: updatedModel.productClass
                     }, {
                         reload: true

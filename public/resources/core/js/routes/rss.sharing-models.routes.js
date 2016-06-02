@@ -15,19 +15,19 @@
     function RSModelsRouteConfig($stateProvider) {
 
         $stateProvider
-            .state('stock.models', {
+            .state('rss.models', {
                 url: '/models',
-                templateUrl: 'stock/sharing-models/search',
+                templateUrl: 'rss/sharing-models/search',
                 controller: 'RSModelSearchCtrl as searchVM'
             })
-            .state('stock.models.create', {
+            .state('rss.models.create', {
                 url: '/create',
-                templateUrl: 'stock/sharing-models/create',
+                templateUrl: 'rss/sharing-models/create',
                 controller: 'RSModelCreateCtrl as createVM'
             })
-            .state('stock.models.update', {
+            .state('rss.models.update', {
                 url: '/:productClass',
-                templateUrl: 'stock/sharing-models/update',
+                templateUrl: 'rss/sharing-models/update',
                 controller: 'RSModelUpdateCtrl as updateVM'
             })
     }
