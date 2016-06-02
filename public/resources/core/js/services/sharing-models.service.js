@@ -67,7 +67,7 @@
             var deferred = $q.defer();
 
             modelsResource.query({
-                appProviderId: User.loggedUser.id,
+                providerId: User.loggedUser.id,
                 productClass: productClass
             }, function(models) {
                 if (models.length) {
@@ -95,7 +95,7 @@
 
         function searchModels () {
             var params = {
-                appProviderId: User.loggedUser.id
+                providerId: User.loggedUser.id
             };
             return search(modelsResource, params);
         }
@@ -106,7 +106,7 @@
 
         function searchTransactions() {
             var params = {
-                appProviderId: User.loggedUser.id
+                providerId: User.loggedUser.id
             };
             return search(transactionResource, params);
         }
