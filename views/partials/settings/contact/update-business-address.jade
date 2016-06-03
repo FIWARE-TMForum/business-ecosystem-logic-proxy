@@ -27,9 +27,11 @@
                   span(style="white-space: pre-line;") {{ contactMedium.toString() }}
                 td
                   a.btn.btn-sm.btn-icon.btn-info(ng-click="updateVM.updateContactMedium($index)")
-                    span.item-icon.fa.fa-pencil
+                    span.item-icon.fa.fa-spin.fa-spinner(ng-if="updateVM.updateContactMedium.status === updateVM.STATUS.PENDING")
+                    span.item-icon.fa.fa-pencil(ng-if="updateVM.updateContactMedium.status !== updateVM.STATUS.PENDING")
                   a.btn.btn-sm.btn-icon.btn-danger(ng-click="updateVM.removeContactMedium($index)")
-                    span.item-icon.fa.fa-trash
+                    span.item-icon.fa.fa-spin.fa-spinner(ng-if="updateVM.removeContactMedium.status === updateVM.STATUS.PENDING")
+                    span.item-icon.fa.fa-trash(ng-if="updateVM.removeContactMedium.status !== updateVM.STATUS.PENDING")
     .panel.panel-default.z-depth-1
       .panel-body(ng-controller="ContactMediumCreateCtrl as entryAttrVM")
         .h4.text-dark-secondary
@@ -43,6 +45,10 @@
           telephone-number="entryAttrVM.data"
           ng-if="!updateVM.isNotCreated")
         .form-group.text-right(ng-if="!updateVM.isNotCreated")
-          button.btn.btn-warning.z-depth-1(ng-disabled="!entryAttrVM.form.$valid" ng-click="entryAttrVM.create(entryAttrVM.form)")
+          a.btn.btn-warning(
+            ng-click="entryAttrVM.create(entryAttrVM.form, updateVM)"
+            ng-disabled="!entryAttrVM.form.$valid || updateVM.createContactMedium.status === updateVM.STATUS.PENDING"
+          )
+            span.item-icon.fa.fa-spin.fa-spinner(ng-if="updateVM.createContactMedium.status === updateVM.STATUS.PENDING")
             span.item-text Create
         .alert.alert-warning(ng-if="updateVM.isNotCreated") Sorry! In order to create contact mediums, you should first create a profile.

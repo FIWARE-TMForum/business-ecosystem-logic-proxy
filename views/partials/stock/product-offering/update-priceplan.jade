@@ -14,6 +14,9 @@
         hr
         price-plan-form(form="updateVM.pricePlanCreateForm" controller="updateVM" data="updateVM.pricePlan")
         .form-group.text-right
-          a.btn.btn-warning.z-depth-1(ng-disabled="!updateVM.pricePlanCreateForm.$valid || updateVM.createPricePlanStatus === updateVM.DATA_STATUS.LOADING" ng-click="updateVM.createPricePlan()")
-            span.item-icon.fa(ng-class="updateVM.createPricePlanStatus === updateVM.DATA_STATUS.LOADING ? ['fa-spinner', 'fa-spin'] : 'fa-plus'")
+          a.btn.btn-warning(
+            ng-click="updateVM.createPricePlan()"
+            ng-disabled="!updateVM.pricePlanCreateForm.$valid || updateVM.createPricePlan.status === updateVM.STATUS.PENDING"
+          )
+            span.item-icon.fa.fa-spin.fa-spinner(ng-if="updateVM.createPricePlan.status === updateVM.STATUS.PENDING")
             span.item-text Create

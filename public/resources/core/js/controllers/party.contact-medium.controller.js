@@ -45,11 +45,12 @@
 
         vm.create = create;
 
-        function create(form) {
-            $rootScope.$broadcast(Individual.EVENTS.CONTACT_MEDIUM_CREATED, vm.data);
-            vm.data = new Individual.ContactMedium();
-            vm.data.resetMedium();
-            vm.resetForm(form);
+        function create(form, $parentController) {
+            $parentController.createContactMedium(vm.data).then(function () {
+                vm.data = new Individual.ContactMedium();
+                vm.data.resetMedium();
+                vm.resetForm(form);
+            });
         }
     }
 

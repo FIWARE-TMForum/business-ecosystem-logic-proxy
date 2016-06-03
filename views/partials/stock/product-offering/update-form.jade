@@ -89,5 +89,9 @@ form(name="updateVM.form", novalidate)
             td
               time(am-time-ago="offering.lastUpdate")
   .form-group.text-right
-    a.btn.btn-success.z-depth-1(ng-click="updateVM.update()", ng-disabled="!updateVM.form.$valid")
-      span.item-text Save changes
+    a.btn.btn-success(
+      ng-click="updateVM.update()"
+      ng-disabled="!updateVM.form.$valid || updateVM.update.status === updateVM.STATUS.PENDING"
+    )
+      span.item-icon.fa.fa-spin.fa-spinner(ng-if="updateVM.update.status === updateVM.STATUS.PENDING")
+      span.item-text Update

@@ -56,7 +56,8 @@
 
         var EVENTS = {
             CUSTOMER_CREATED: '$customerCreated',
-            CUSTOMER_UPDATE: '$customerUpdate'
+            CUSTOMER_UPDATE: '$customerUpdate',
+            CUSTOMER_UPDATED: '$customerUpdated'
         };
 
         var TYPES = {

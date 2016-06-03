@@ -54,6 +54,11 @@
             LOADED: 'LOADED',
             LOADING: 'LOADING'
         })
+        .constant('PROMISE_STATUS', {
+            PENDING: 0,
+            RESOLVED: 1,
+            REJECTED: 2,
+        })
         .constant('EVENTS', {
             FILTERS_OPENED: '$eventFiltersOpened',
             MESSAGE_ADDED: '$eventMessageAdded',

@@ -47,18 +47,17 @@
         });
     }
 
-    function BillingAccountCreateController($scope, $rootScope, $controller, COUNTRIES, EVENTS, DATA_STATUS, Utils, BillingAccount, Customer) {
+    function BillingAccountCreateController($scope, $rootScope, $controller, COUNTRIES, EVENTS, PROMISE_STATUS, Utils, BillingAccount, Customer) {
         /* jshint validthis: true */
         var vm = this;
-        var billingAccount;
+        var billingAccount, createPromise = null;
 
         angular.extend(vm, $controller('FormMixinCtrl', {$scope: $scope}));
 
         vm.CONTACT_MEDIUM = Customer.TYPES.CONTACT_MEDIUM;
         vm.COUNTRIES = COUNTRIES;
-        vm.DATA_STATUS = DATA_STATUS;
+        vm.STATUS = PROMISE_STATUS;
         vm.create = create;
-        vm.status = DATA_STATUS.LOADED;
 
         resetData();
 
@@ -69,19 +68,20 @@
                 vm.telephoneNumber
             ];
 
-            vm.status = DATA_STATUS.LOADING;
-            BillingAccount.create(billingAccount).then(function (billingAccount) {
+            createPromise = BillingAccount.create(billingAccount).then(function (billingAccount) {
                 $rootScope.$broadcast(Customer.EVENTS.CUSTOMER_CREATED, billingAccount.customerAccount.customer);
                 resetData();
                 vm.resetForm(form);
-                vm.status = DATA_STATUS.LOADED;
             }, function (response) {
                 $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
                     error: Utils.parseError(response, 'Unexpected error trying to create a new shipping address.')
                 });
-                vm.status = DATA_STATUS.ERROR;
             });
         }
+
+        Object.defineProperty(create, 'status', {
+            get: function () { return createPromise != null ? createPromise.$$state.status : -1; }
+        });
 
         function resetData() {
             billingAccount = BillingAccount.launch();

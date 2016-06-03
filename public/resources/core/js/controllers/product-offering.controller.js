@@ -61,7 +61,7 @@
         }
     }
 
-    function ProductOfferingCreateController($scope, $state, $rootScope, $controller, EVENTS, Offering, Utils) {
+    function ProductOfferingCreateController($scope, $state, $rootScope, $controller, PROMISE_STATUS, EVENTS, Offering, Utils) {
         /* jshint validthis: true */
         var vm = this;
 
@@ -107,6 +107,8 @@
         vm.CHARGE_PERIODS = Offering.TYPES.CHARGE_PERIOD;
         vm.CURRENCY_CODES = Offering.TYPES.CURRENCY_CODE;
         vm.PRICES = Offering.TYPES.PRICE;
+
+        vm.STATUS = PROMISE_STATUS;
 
         vm.data = angular.copy(Offering.TEMPLATES.RESOURCE);
         vm.stepList = stepList;
@@ -166,10 +168,14 @@
             vm.places.splice(index, 1);
         }
 
+        var createPromise = null;
+
         function create() {
             vm.data.category = formatCategory();
             vm.data.place = formatPlaces();
-            Offering.create(vm.data, vm.product, vm.catalogue).then(function (offeringCreated) {
+            createPromise = Offering.create(vm.data, vm.product, vm.catalogue);
+
+            createPromise.then(function (offeringCreated) {
                 $state.go('stock.offering.update', {
                     offeringId: offeringCreated.id
                 });
@@ -188,6 +194,10 @@
                 });
             });
         }
+
+        Object.defineProperty(create, 'status', {
+            get: function () { return createPromise != null ? createPromise.$$state.status : -1; }
+        });
 
         function toggleOffering(offering) {
             var index = vm.data.bundledProductOffering.indexOf(offering);
@@ -329,13 +339,13 @@
         }
     }
 
-    function ProductOfferingUpdateController($state, $scope, $rootScope, $controller, EVENTS, DATA_STATUS, Offering, Utils) {
+    function ProductOfferingUpdateController($state, $scope, $rootScope, $controller, EVENTS, PROMISE_STATUS, Offering, Utils) {
         /* jshint validthis: true */
         var vm = this;
 
         angular.extend(vm, $controller('FormMixinCtrl', {$scope: $scope}));
 
-        vm.DATA_STATUS = DATA_STATUS;
+        vm.STATUS = PROMISE_STATUS;
         vm.CHARGE_PERIODS = Offering.TYPES.CHARGE_PERIOD;
         vm.CURRENCY_CODES = Offering.TYPES.CURRENCY_CODE;
         vm.PRICES = Offering.TYPES.PRICE;
@@ -348,14 +358,14 @@
         vm.pricePlanEnabled = false;
 
         vm.createPricePlan = createPricePlan;
-        vm.createPricePlanStatus = DATA_STATUS.LOADED;
         vm.updatePricePlan = updatePricePlan;
         vm.removePricePlan = removePricePlan;
 
-        vm.status = DATA_STATUS.LOADING;
+        var updatePricePlanPromise = null;
 
         $scope.$on(Offering.EVENTS.PRICEPLAN_UPDATED, function (event, index, pricePlan) {
-            vm.item.updatePricePlan(index, pricePlan).then(function (productOffering) {
+            updatePricePlanPromise = vm.item.updatePricePlan(index, pricePlan);
+            updatePricePlanPromise.then(function (productOffering) {
                 $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {message: 'The offering price plan was updated.'});
             }, function (response) {
                 $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
@@ -364,37 +374,51 @@
             });
         });
 
-        Offering.detail($state.params.offeringId).then(function (productOffering) {
-            vm.status = DATA_STATUS.LOADED;
+        var detailPromise = Offering.detail($state.params.offeringId);
+        detailPromise.then(function (productOffering) {
             vm.item = productOffering;
             vm.data = angular.copy(productOffering);
             vm.categories = productOffering.getCategories();
         }, function (response) {
-            vm.status = DATA_STATUS.ERROR;
             vm.error = Utils.parseError(response, 'Unexpected error trying to retrieve the offering.');
         });
 
+        Object.defineProperty(vm, 'status', {
+            get: function () { return detailPromise != null ? detailPromise.$$state.status : -1; }
+        });
+
+        var createPricePlanPromise = null;
+
         function createPricePlan() {
-            vm.createPricePlanStatus = DATA_STATUS.LOADING;
-            vm.item.appendPricePlan(vm.pricePlan).then(function (productOffering) {
-                vm.createPricePlanStatus = DATA_STATUS.LOADED;
+            createPricePlanPromise = vm.item.appendPricePlan(vm.pricePlan);
+            createPricePlanPromise.then(function (productOffering) {
                 vm.pricePlan = new Offering.PricePlan();
                 vm.pricePlanEnabled = false;
                 $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {message: 'The offering price plan was created.'});
             }, function (response) {
-                vm.createPricePlanStatus = DATA_STATUS.LOADED;
                 $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
                     error: Utils.parseError(response, 'Unexpected error trying to create the offering price plan.')
                 });
             });
         }
 
+        Object.defineProperty(createPricePlan, 'status', {
+            get: function () { return createPricePlanPromise != null ? createPricePlanPromise.$$state.status : -1; }
+        });
+
         function updatePricePlan(index) {
             $rootScope.$broadcast(Offering.EVENTS.PRICEPLAN_UPDATE, index, vm.item.productOfferingPrice[index]);
         }
 
+        Object.defineProperty(updatePricePlan, 'status', {
+            get: function () { return updatePricePlanPromise != null ? updatePricePlanPromise.$$state.status : -1; }
+        });
+
+        var removePricePlanPromise = null;
+
         function removePricePlan(index) {
-            vm.item.removePricePlan(index).then(function (productOffering) {
+            removePricePlanPromise = vm.item.removePricePlan(index);
+            removePricePlanPromise.then(function (productOffering) {
                 $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {message: 'The offering price plan was removed.'});
             }, function (response) {
                 $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
@@ -402,6 +426,10 @@
                 });
             });
         }
+
+        Object.defineProperty(removePricePlan, 'status', {
+            get: function () { return removePricePlanPromise != null ? removePricePlanPromise.$$state.status : -1; }
+        });
 
         function updateStatus(status) {
             vm.data.lifecycleStatus = status;
@@ -414,6 +442,8 @@
             });
         }
 
+        var updatePromise = null;
+
         function update() {
             var dataUpdated = {};
 
@@ -424,7 +454,8 @@
             });
 
             // Check what info has been modified
-            Offering.update(vm.item, dataUpdated).then(function (offeringUpdated) {
+            updatePromise = Offering.update(vm.item, dataUpdated);
+            updatePromise.then(function (offeringUpdated) {
                 $state.go('stock.offering.update', {
                     offeringId: offeringUpdated.id
                 }, {
@@ -440,6 +471,10 @@
                 });
             });
         }
+
+        Object.defineProperty(update, 'status', {
+            get: function () { return updatePromise != null ? updatePromise.$$state.status : -1; }
+        });
     }
 
 })();

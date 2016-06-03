@@ -39,8 +39,9 @@ form(name="step.form", novalidate)
             td
               time(am-time-ago="createVM.category.lastUpdate")
   .form-group.text-right
-    a.btn.btn-success(
+    a.btn.btn-warning(
       ng-click="createVM.create()"
-      ng-disabled="!step.form.$valid"
+      ng-disabled="!step.form.$valid || createVM.create.status === createVM.STATUS.PENDING"
     )
+      span.item-icon.fa.fa-spin.fa-spinner(ng-if="createVM.create.status === createVM.STATUS.PENDING")
       span.item-text Create

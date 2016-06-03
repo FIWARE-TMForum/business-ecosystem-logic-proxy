@@ -13,6 +13,8 @@
         td {{ pricePlan.toString() }}
         td
           a.btn.btn-sm.btn-icon.btn-info(ng-click="vm.updatePricePlan($index)")
-            span.item-icon.fa.fa-pencil
+            span.item-icon.fa.fa-spin.fa-spinner(ng-if="vm.updatePricePlan.status === vm.STATUS.PENDING")
+            span.item-icon.fa.fa-pencil(ng-if="vm.updatePricePlan.status !== vm.STATUS.PENDING")
           a.btn.btn-sm.btn-icon.btn-danger(ng-click="vm.removePricePlan($index)")
-            span.item-icon.fa.fa-trash
+            span.item-icon.fa.fa-spin.fa-spinner(ng-if="vm.removePricePlan.status === vm.STATUS.PENDING")
+            span.item-icon.fa.fa-trash(ng-if="vm.removePricePlan.status !== vm.STATUS.PENDING")
