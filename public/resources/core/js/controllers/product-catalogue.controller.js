@@ -53,23 +53,27 @@
         });
     }
 
-    function CatalogueSearchController($state, $rootScope, EVENTS, Catalogue, LIFECYCLE_STATUS, Utils) {
+    function CatalogueSearchController($state, $rootScope, EVENTS, Catalogue, LIFECYCLE_STATUS, PROMISE_STATUS, Utils) {
         /* jshint validthis: true */
         var vm = this;
 
+        vm.STATUS = PROMISE_STATUS;
         vm.state = $state;
 
         vm.list = [];
-        vm.list.status = LOADING;
 
         vm.showFilters = showFilters;
 
-        Catalogue.search($state.params).then(function (catalogueList) {
+        var searchPromise = Catalogue.search($state.params);
+
+        searchPromise.then(function (catalogueList) {
             angular.copy(catalogueList, vm.list);
-            vm.list.status = LOADED;
         }, function (response) {
-            vm.error = Utils.parseError(response, 'It was impossible to load the list of catalogs');
-            vm.list.status = ERROR;
+            vm.errorMessage = Utils.parseError(response, 'It was impossible to load the list of catalogs');
+        });
+
+        Object.defineProperty(vm, 'status', {
+            get: function () { return searchPromise != null ? searchPromise.$$state.status : -1; }
         });
 
         function showFilters() {

@@ -7,16 +7,24 @@
         .h4
           strong New offering
         hr
-        .row(ng-controller="FormWizardCtrl as createForm")
-          .col-xs-12.col-md-3
-            ul.nav.nav-steps
-              li(ng-repeat="step in createVM.stepList", ng-class="{ active: createForm.stepIndex == $index, disabled: createForm.isDisabled($index, step) }")
-                a(ng-click="createForm.nextStep($index, step)")
-                  span.item-icon {{ $index + 1 }}
-                  span.item-text.hidden-xs {{ step.title }}
-          .col-xs-12.col-md-9
-            .row(ng-repeat="step in createVM.stepList", ng-show="createForm.stepIndex == $index")
-              .col-xs-12
-                .h4.text-dark-secondary
-                  strong Step {{ $index + 1}}: {{ step.title }}
-                ng-include(src="step.templateUrl")
+        .row
+          .col-xs-12(ng-if="createVM.status === createVM.STATUS.PENDING")
+            .container-spinner
+              span.fa.fa-spinner.fa-spin.fa-2x
+          .col-xs-12(ng-if="createVM.status === createVM.STATUS.REJECTED")
+            .alert.alert-danger.text-center
+              span {{ createVM.errorMessage }}
+          .col-xs-12(ng-if="createVM.status === createVM.STATUS.RESOLVED")
+            .row(ng-controller="FormWizardCtrl as createForm")
+              .col-xs-12.col-md-3
+                ul.nav.nav-steps
+                  li(ng-repeat="step in createVM.stepList", ng-class="{ active: createForm.stepIndex == $index, disabled: createForm.isDisabled($index, step) }")
+                    a(ng-click="createForm.nextStep($index, step)")
+                      span.item-icon {{ $index + 1 }}
+                      span.item-text.hidden-xs {{ step.title }}
+              .col-xs-12.col-md-9
+                .row(ng-repeat="step in createVM.stepList", ng-show="createForm.stepIndex == $index")
+                  .col-xs-12
+                    .h4.text-dark-secondary
+                      strong Step {{ $index + 1}}: {{ step.title }}
+                    ng-include(src="step.templateUrl")

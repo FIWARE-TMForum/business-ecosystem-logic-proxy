@@ -2,17 +2,18 @@ ui-view
   .row
     .col-xs-12
       include ./search-toolbar.jade
-    .col-xs-12(ng-switch="searchVM.list.status")
-      div(ng-switch-when="LOADED", ng-switch="searchVM.list.length")
-        div(ng-switch-when="0")
-          .alert.alert-info.text-center No product specifications found.
-        div(ng-switch-default, ng-switch="searchVM.list.flow")
-          div(ng-switch-when="1")
-            include ./search-grid.jade
-          div(ng-switch-when="2")
-            include ./search-list.jade
-      div(ng-switch-when="ERROR")
-        .alert.alert-danger.text-center {{ searchVM.error }}
-      div(ng-switch-default)
-        .container-spinner
-          span.fa.fa-spinner.fa-spin.fa-2x
+    .col-xs-12(ng-if="searchVM.status === searchVM.STATUS.PENDING")
+      .container-spinner
+        span.fa.fa-spinner.fa-spin.fa-2x
+    .col-xs-12(ng-if="searchVM.status === searchVM.STATUS.REJECTED")
+      .alert.alert-danger.text-center
+        span {{ searchVM.errorMessage }}
+    .col-xs-12(ng-if="searchVM.status === searchVM.STATUS.RESOLVED" ng-switch="searchVM.list.length")
+      div(ng-switch-when="0")
+        .alert.alert-info.text-center
+          span No product specifications found.
+      div(ng-switch-default, ng-switch="searchVM.list.flow")
+        div(ng-switch-when="1")
+          include ./search-grid.jade
+        div(ng-switch-when="2")
+          include ./search-list.jade

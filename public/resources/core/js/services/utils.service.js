@@ -47,6 +47,10 @@
 
             var data = response['data'];
 
+            if (angular.isString(response) && response.length) {
+                return response;
+            }
+
             if (typeof(data) === 'string') {
                 // HTML
 
