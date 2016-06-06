@@ -146,17 +146,17 @@ describe('Store Client', function() {
 
     it('should not validate product when store returns 400', function(done) {
         var message = 'Invalid field X';
-        testValidateProductError(PRODUCT_ASSET, 400, { message: message}, message, done);
+        testValidateProductError(PRODUCT_ASSET, 400, { error: message}, message, done);
     });
 
     it('should not validate product when store returns 403', function(done) {
         var message = 'Forbidden';
-        testValidateProductError(PRODUCT_ASSET, 403, { message: message}, message, done);
+        testValidateProductError(PRODUCT_ASSET, 403, { error: message}, message, done);
     });
 
     it('should not validate product when store returns 409', function(done) {
         var message = 'Confict';
-        testValidateProductError(PRODUCT_ASSET, 409, { message: message}, message, done);
+        testValidateProductError(PRODUCT_ASSET, 409, { error: message}, message, done);
     });
 
     it('should not validate product when store cannot validate the product', function(done) {
@@ -171,12 +171,12 @@ describe('Store Client', function() {
 
     it('should not validate offering when store returns 400', function(done) {
         var message = 'Invalid field X';
-        testValidateProductError(OFFERING_ASSET, 400, { message: message}, message, done);
+        testValidateProductError(OFFERING_ASSET, 400, { error: message}, message, done);
     });
 
     it('should not validate offering when store returns 403', function(done) {
         var message = 'Forbidden';
-        testValidateProductError(OFFERING_ASSET, 403, { message: message}, message, done);
+        testValidateProductError(OFFERING_ASSET, 403, { error: message}, message, done);
     });
 
     it('should not validate offering when store cannot validate the product', function(done) {
