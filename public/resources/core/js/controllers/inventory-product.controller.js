@@ -64,6 +64,8 @@
         /* jshint validthis: true */
         var vm = this;
         var load = false;
+        var digital = false;
+        var location;
 
         vm.item = {};
         vm.$state = $state;
@@ -73,12 +75,38 @@
         vm.isUsage = isUsage;
         vm.renewProduct = renewProduct;
         vm.loading = loading;
+        vm.isDigital = isDigital;
+        vm.downloadAsset = downloadAsset;
         vm.getUsageURL = getUsageURL;
 
         InventoryProduct.detail($state.params.productId).then(function (productRetrieved) {
+            var characteristics = productRetrieved.productOffering.productSpecification.productSpecCharacteristic;
+            var hasMedia = false;
+            var hasLocation = false;
+            var hasAssetType = false;
+
             vm.item = productRetrieved;
             vm.item.status = LOADED;
             $scope.priceplanSelected = productRetrieved.productPrice[0];
+
+            // Check if the product is digital
+            for (var i = 0; i < characteristics.length && (!hasMedia || !hasLocation || !hasAssetType); i++) {
+                var charact = characteristics[i];
+                if (charact.name.toLowerCase() == 'asset type') {
+                    hasAssetType = true;
+                }
+
+                if (charact.name.toLowerCase() == 'media type') {
+                    hasMedia = true;
+                }
+
+                if (charact.name.toLowerCase() == 'location') {
+                    hasLocation = true;
+                    location = charact.productSpecCharacteristicValue[0].value;
+                }
+            }
+
+            digital = hasAssetType && hasLocation && hasMedia;
         }, function (response) {
             vm.error = Utils.parseError(response, 'It was impossible to load product details');
             vm.item.status = ERROR;
@@ -86,6 +114,14 @@
 
         function loading() {
             return load;
+        }
+
+        function isDigital() {
+            return digital;
+        }
+
+        function downloadAsset() {
+            $window.open(location, '_blank');
         }
 
         function hasProductPrice() {
