@@ -303,6 +303,9 @@
                 apiInfo.orderItem[i].billingAccount = [vm.billingAccount.serialize()];
             }
 
+            apiInfo.orderDate = new Date();
+            apiInfo.notificationContact = vm.billingAccount.getEmailAddress().emailAddress.toString();
+
             ProductOrder.create(apiInfo).then(function(orderCreated) {
                 if ('x-redirect-url' in orderCreated.headers) {
 

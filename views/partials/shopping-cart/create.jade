@@ -18,6 +18,17 @@ ui-view
             .row
               .col-xs-12
                 .form-group
+                  label
+                    span Enter a name
+                    small.text-muted (optional)
+                  input.form-control(
+                    type="text"
+                    name="ext-id"
+                    ng-model="orderVM.orderInfo.externalId"
+                  )
+            .row
+              .col-xs-12
+                .form-group
                   label Choose a priority
                   select.form-control(
                     name="priority"
@@ -31,33 +42,6 @@ ui-view
                     span Enter a description
                     small.text-muted (optional)
                   textarea.form-control(rows="3", name="description", ng-model="orderVM.orderInfo.description")
-            .row
-              .col-sm-6
-                .form-group
-                  label
-                    span Enter an external ID
-                    small.text-muted (optional)
-                  input.form-control(
-                    type="text"
-                    name="ext-id"
-                    ng-model="orderVM.orderInfo.externalId"
-                  )
-              .col-sm-6
-                .form-group(
-                  ng-class="{ 'has-error': order.form.contact.$invalid }"
-                )
-                  label
-                    span Enter a notification contact
-                    small.text-muted (optional)
-                  input.form-control(
-                    type="email"
-                    name="contact"
-                    ng-model="orderVM.orderInfo.notificationContact"
-                  )
-                  .help-block(
-                    ng-show="order.form.contact.$invalid"
-                  )
-                    span Provide a valid e-mail address
             .row
               .col-xs-12
                 .form-group
