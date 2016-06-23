@@ -20,6 +20,7 @@
 var async = require('async'),
     config = require('./../../config'),
     equal = require('deep-equal'),
+    moment = require('moment'),
     request = require('request'),
     storeClient = require('./../../lib/store').storeClient,
     tmfUtils = require('./../../lib/tmfUtils'),
@@ -571,6 +572,21 @@ var ordering = (function(){
     /////////////////////////////////////// POST-VALIDATION //////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
 
+    var sortByDate = function sortByDate(list) {
+
+        if (!Array.isArray(list)) {
+            return [];
+        }
+
+        if (list.length < 2) {
+            return list;
+        }
+
+        return list.sort(function (a, b) {
+            return moment(a.date).isBefore(b.date) ? 1 : -1;
+        });
+    };
+
     var filterOrderItems = function(req, callback) {
 
         var body = JSON.parse(req.body);
@@ -606,6 +622,9 @@ var ordering = (function(){
             }
             // ELSE: If the user is the customer, order items don't have to be filtered
 
+            if (req.method.toUpperCase() === 'GET') {
+                ordering.note = sortByDate(ordering.note);
+            }
         });
 
         orderings = orderings.filter(function(ordering) {
