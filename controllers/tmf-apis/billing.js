@@ -31,7 +31,6 @@ var billing = (function() {
     var makeRequest = function(url, callback) {
 
         request(url, function (err, response, body) {
-
             if (err || response.statusCode >= 400) {
                 callback({
                     status: response.statusCode ? response.statusCode : 500
@@ -43,11 +42,47 @@ var billing = (function() {
         });
     };
 
+    var validateProductCharge = function(req, productId, callback) {
+        // Check that the specified product id belongs to the user
+        var productUrl = utils.getAPIURL(
+            config.appSsl, config.appHost, config.endpoints.inventory.port,
+            config.endpoints.inventory.path + '/api/productInventory/v2/product/' + productId);
+
+        makeRequest(productUrl, function(err, product) {
+            if (err) {
+                return callback({
+                    status: 422,
+                    message: 'It has not been possible to validate The specified product id'
+                });
+            }
+
+            if (!tmfUtils.isOrderingCustomer(req.user, product)[1]) {
+                return callback({
+                    status: 403,
+                    message: 'You are not authorized to retrieve charges related to the specified product id'
+                });
+            }
+            return callback(null);
+        });
+    };
+
     var validateRetrieval = function(req, callback) {
 
         // req.isCollection has been previously sent (checkPermissions)
         if (req.isCollection) {
-            return tmfUtils.filterRelatedPartyFields(req, callback);
+            if (req.apiUrl.indexOf('billingAccount') > -1) {
+                // Validate billing accounts retrieval
+                return tmfUtils.filterRelatedPartyFields(req, callback);
+            } else {
+                // Validate charges retrieval
+                if (!req.query['serviceId.id']) {
+                    return callback({
+                        status: 422,
+                        message: 'Please specify a concrete product id using the query string serviceId.id'
+                    })
+                }
+                validateProductCharge(req, req.query['serviceId.id'], callback);
+            }
         } else {
             return callback(null);
         }
@@ -203,13 +238,17 @@ var billing = (function() {
 
         // TODO: To be removed when the rest of features are supported
         var apiPathRegExp = new RegExp('^/' + config.endpoints.billing.path + '/api/billingManagement/v2/billingAccount(/(.*))?$');
+        var apiChargeRegExp = new RegExp('^/' + config.endpoints.billing.path + '/api/billingManagement/v2/appliedCustomerBillingCharge/?$');
+
         var apiPath = url.parse(req.apiUrl).pathname;
 
         var regExpResult = apiPathRegExp.exec(apiPath);
+        var chargeRegExpResult = apiChargeRegExp.exec(apiPath);
 
-        if (regExpResult) {
+        if (regExpResult || chargeRegExpResult) {
 
-            req.isCollection = regExpResult[2] ? false : true;
+            var appliedRegExp = regExpResult ? regExpResult : chargeRegExpResult;
+            req.isCollection = appliedRegExp[2] ? false : true;
 
             if (req.method in validators) {
 
@@ -248,7 +287,6 @@ var billing = (function() {
         }
     };
 
-
     var executePostValidation = function(req, callback) {
 
         if (req.method === 'GET') {
@@ -258,7 +296,8 @@ var billing = (function() {
             if (Array.isArray(account)) {
                 // checkPermissions ensures that only owned billing accounts are retrieved
                 return callback(null);
-            } else {
+
+            } else if (req.apiUrl.indexOf('billingAccount') > -1) {
                 // This checks that the user is included in the list of related parties...
                 if (tmfUtils.isRelatedParty(req, account.relatedParty)) {
                     return callback(null);
@@ -268,6 +307,10 @@ var billing = (function() {
                         message: 'Unauthorized to retrieve the specified billing account'
                     });
                 }
+
+            } else {
+                // Check that the user can retrieve the specified charge
+                validateProductCharge(req, account.serviceId[0].id, callback);
             }
         } else {
             return callback(null);
