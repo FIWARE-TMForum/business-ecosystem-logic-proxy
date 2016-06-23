@@ -1,0 +1,43 @@
+form(name="step.form", novalidate)
+  .item-toggle
+    label.toggle A new bundled offering?
+      .track
+        input(
+          type="checkbox"
+          ng-model="createVM.data.isBundle"
+          ng-change="createVM.toggleBundle()"
+        )
+        i.fa.fa-2x
+  div(ng-if="createVM.data.isBundle", ng-controller="OfferingSearchCtrl as searchVM")
+    div(ng-switch="searchVM.list.status")
+      div(ng-switch-when="LOADED", ng-init="results = (searchVM.list | status:STATUS.ACTIVE)" ng-switch="results.length")
+        div(ng-switch-when="0")
+          .alert.alert-info.text-center No offerings found.
+        .table-responsive(ng-switch-default)
+          table.table.table-bordered.table-hover.table-selectable
+            thead
+              tr
+                th Status
+                th Name
+                th Type
+                th Updated
+            tbody
+              tr(ng-repeat="offering in results", ng-class="{ active: createVM.hasOffering(offering) }", ng-click="createVM.toggleOffering(offering)")
+                td
+                  .status-item(class="status-{{ offering.lifecycleStatus | lowercase }}")
+                    span.item-icon
+                    span.item-text {{ offering.lifecycleStatus }}
+                th {{ offering.name }}
+                td
+                  span.label(ng-class="offering.isBundle ? 'label-bundle' : 'label-single'")
+                    | {{ offering.isBundle ? 'Bundle' : 'Single' }}
+                td
+                  time(am-time-ago="offering.lastUpdate")
+      div(ng-switch-when="ERROR")
+        .alert.alert-danger.text-center {{ searchVM.error }}
+      .container-spinner(ng-switch-default)
+        span.fa.fa-spinner.fa-spin.fa-2x
+
+  .form-group.text-right
+    a.btn.btn-default.z-depth-1(ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])", ng-disabled="!step.form.$valid")
+      span.item-text Next

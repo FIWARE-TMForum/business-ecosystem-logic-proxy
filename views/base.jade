@@ -1,0 +1,327 @@
+doctype html
+html(ng-app="app")
+  head
+    title TM Forum Portal
+
+    meta(charset="utf-8")
+    meta(name="viewport", content="width=device-width, initial-scale=1")
+
+    each cssFilePath in cssFilesToInject
+      link(rel="stylesheet", href="#{ contextPath }/#{ cssFilePath }")
+
+    each jsFilePath in jsDepFilesToInject
+      script(src="#{ contextPath }/#{ jsFilePath }")
+
+    each jsFilePath in jsAppFilesToInject
+      script(src="#{ contextPath }/#{ jsFilePath }")
+
+    script.
+      angular.module('app')
+        .constant('URLS', {
+          IMAGE: '#{ contextPath }/resources/core/images',
+          USER: '#{ proxyPath }/#{ chargingPath }/api/userManagement/users/:username',
+          ASSET_MANAGEMENT: '#{ proxyPath }/#{ chargingPath }/api/assetManagement',
+          RENEW_JOB: '#{ proxyPath }/#{ chargingPath }/api/orderManagement/products/renewJob',
+          CATALOGUE_MANAGEMENT: '#{ proxyPath }/#{ catalogPath }/api/catalogManagement/v2',
+          PRODUCTORDER_MANAGEMENT: '#{ proxyPath }/#{ orderingPath }/api/productOrdering/v2',
+          INVENTORY: '#{ proxyPath }/#{ inventoryPath }/api/productInventory/v2',
+          PARTY_MANAGEMENT: '#{ proxyPath }/#{ partyPath }/api/partyManagement/v2',
+          BILLING_MANAGEMENT: '#{ proxyPath }/#{ billingPath }/api/billingManagement/v2',
+          CUSTOMER_MANAGEMENT: '#{ proxyPath }/#{ customerPath }/api/customerManagement/v2',
+          PAYMENT: '#{ proxyPath }/#{ chargingPath }/api/orderManagement/orders/:action',
+          SHARING_MODELS: '#{ proxyPath }/#{ rssPath }/rss/models',
+          SHARING_PROVIDERS: '#{ proxyPath }/#{ rssPath }/rss/providers',
+          SHARING_TRANSACTIONS: '#{ proxyPath }/#{ rssPath }/rss/cdrs',
+          SHARING_SETTLEMENT: '#{ proxyPath }/#{ rssPath }/rss/settlement',
+          SHARING_REPORTS: '#{ proxyPath }/#{ rssPath }/rss/settlement/reports',
+          SHOPPING_CART: '#{ shoppingCartPath }/:action/:id'
+        })
+        .constant('PLATFORM_REVENUE', #{ platformRevenue })
+        .constant('USAGE_CHART_URL', '#{ usageChartURL }')
+        .run(function($rootScope, $state, $injector) {
+
+          $rootScope.$on('$stateChangeStart', function (e, toState, toParams) {
+
+            var loggingRequired = toState.data.loggingRequired;
+
+            if (loggingRequired && !$injector.has('LOGGED_USER')) {
+              e.preventDefault();
+              var cameFrom = encodeURIComponent('/' + $state.href(toState.name, toParams));
+              $state.go('unauthorized', {'came_from': cameFrom });
+            }
+          });
+
+        });
+
+    if user
+      script.
+        angular.module('app')
+          .constant('LOGGED_USER', {
+            id: '#{ user.id }',
+            href: '#{ contextPath }/#{ partyPath }/api/partyManagement/v2/individual/#{ user.id }',
+            email: '#{ user.email }',
+            bearerToken: '#{ user.accessToken }'
+          })
+          .run(function ($http, LOGGED_USER) {
+            $http.defaults.headers.common.Authorization = 'Bearer ' + LOGGED_USER.bearerToken;
+          });
+
+    block scripts
+  body(ng-controller="UserCtrl as user")
+    .navbar.navbar-default.navbar-fixed-top.z-depth-2
+      .container
+        .navbar-header
+          a.navbar-toggle(data-toggle="dropdown")
+            span.icon-bar
+            span.icon-bar
+            span.icon-bar
+          .dropdown-menu.z-depth-3
+            a.dropdown-menu-item(ui-sref="offering", ui-sref-opts="{ reload: true, inherit: false }")
+              span.item-icon.fa.fa-home
+              span.item-text Home
+            if user
+              a.dropdown-menu-item(ui-sref="stock", ui-sref-opts="{ reload: true, inherit: false }", ng-show="user.isSeller()")
+                span.item-icon.fa.fa-database
+                span.item-text My stock
+              a.dropdown-menu-item(ui-sref="inventory", ui-sref-opts="{ reload: true, inherit: false }")
+                span.item-icon.fa.fa-archive
+                span.item-text My inventory
+          a.navbar-brand.hidden-xs(href="#{ contextPath }")
+            img(src="#{ contextPath }/resources/core/images/fiware-tmforum-logo.png")
+        .navbar-text {{ title }}
+
+        if user
+          ul.nav.navbar-nav.navbar-right
+            block navbars
+            li.dropdown
+              a.dropdown-toggle.has-stack(data-toggle="dropdown")
+                span.fa-stack
+                  i.fa.fa-circle-thin.fa-stack-2x
+                  i.fa.fa-user.fa-stack-1x
+                span.hidden-xs #{ user.displayName }
+              .dropdown-menu.z-depth-3
+                .dropdown-avatar.z-depth-1
+                  span.fa-stack.fa-3x
+                    i.fa.fa-circle.fa-stack-2x
+                    i.fa.fa-user.fa-stack-1x
+                  .title.h4 #{ user.displayName }
+                  .subtitle #{ user.email }
+                a.dropdown-menu-item(ng-if="user.isAdmin()", ui-sref="admin", ui-sref-opts="{ reload: true, inherit: false }")
+                  span.item-icon.fa.fa-dashboard
+                  span.item-text Administration
+                a.dropdown-menu-item(ui-sref="settings", ui-sref-opts="{ reload: true, inherit: false }")
+                  span.item-icon.fa.fa-cog
+                  span.item-text Settings
+                a.dropdown-menu-item(ng-click="user.signOut()")
+                  span.item-icon.fa.fa-sign-out
+                  span.item-text Sign out
+          form(name="signOutForm", method="post", action="#{ contextPath }/logout")
+        else
+          a.btn.btn-warning.navbar-btn.navbar-right.z-depth-1(href="#{ contextPath }/login")
+            span.item-text Sign in
+
+    .container(ng-controller="FlashMessageListCtrl as listVM")
+      .alert-group(ng-show="listVM.list.length")
+        .alert-item(ng-repeat="alert in listVM.list")
+          .alert.z-depth-2(class="alert-{{ alert.state }}")
+            a.close(ng-click="listVM.hideAlert($index)")
+              i.fa.fa-fw.fa-remove
+            span.alert-message(ng-bind-html="alert.message")
+
+    block content
+
+    footer.clearfix
+      hr.fiware-line
+      .col-sm-6
+        ul.list-inline
+          li.small © 2015-2016 CoNWeT Lab., Universidad Politécnica de Madrid
+      .col-sm-6
+        ul.list-inline.pull-right
+          li.small
+            a(href="https://www.fiware.org") FIWARE
+          li.small ·
+          li.small
+            a(href="https://www.tmforum.org") TM FORUM
+
+    if user
+      include ./modals/user-profile.modal.jade
+      include ./modals/purchase-options.modal.jade
+      include ./modals/redirection-msg.modal.jade
+      include ./modals/business-address.modal.jade
+      include ./modals/shipping-address.modal.jade
+      include ./modals/priceplan.modal.jade
+      include ./modals/sharing-report.modal.jade
+
+    script(type="text/ng-template", id="settings/sidebar")
+      include ./partials/settings/sidebar.jade
+    script(type="text/ng-template", id="settings/general/update")
+      include ./partials/settings/general/update.jade
+    script(type="text/ng-template", id="settings/contact/update")
+      include ./partials/settings/contact/update.jade
+    script(type="text/ng-template", id="settings/contact/shipping/update")
+      include ./partials/settings/contact/update-shipping-address.jade
+    script(type="text/ng-template", id="settings/contact/business/update")
+      include ./partials/settings/contact/update-business-address.jade
+
+    script(type="text/ng-template", id="offering/sidebar")
+      include ./partials/offering/sidebar.jade
+    script(type="text/ng-template", id="offering/search")
+      include ./partials/offering/search.jade
+    script(type="text/ng-template", id="offering/detail")
+      include ./partials/offering/detail.jade
+    script(type="text/ng-template", id="offering/detail/product")
+      include ./partials/offering/detail-product.jade
+    script(type="text/ng-template", id="offering/detail/pricing")
+      include ./partials/offering/detail-pricing.jade
+    script(type="text/ng-template", id="offering/detail/relationship")
+      include ./partials/offering/detail-relationship.jade
+
+    script(type="text/ng-template", id="stock/sidebar")
+      include ./partials/stock/sidebar.jade
+
+    script(type="text/ng-template", id="stock/product/search")
+      include ./partials/stock/product/search.jade
+    script(type="text/ng-template", id="stock/product/create")
+      include ./partials/stock/product/create.jade
+    script(type="text/ng-template", id="stock/product/create/general")
+      include ./partials/stock/product/create-form.jade
+    script(type="text/ng-template", id="stock/product/create/bundle")
+      include ./partials/stock/product/create-form-bundle.jade
+    script(type="text/ng-template", id="stock/product/create/characteristics")
+      include ./partials/stock/product/create-form-characteristics.jade
+    script(type="text/ng-template", id="stock/product/create/attachments")
+      include ./partials/stock/product/create-form-attachments.jade
+    script(type="text/ng-template", id="stock/product/create/assets")
+      include ./partials/stock/product/create-form-assets.jade
+    script(type="text/ng-template", id="stock/product/create/relationships")
+      include ./partials/stock/product/create-relationship.jade
+    script(type="text/ng-template", id="stock/product/create/finish")
+      include ./partials/stock/product/create-form-finish.jade
+    script(type="text/ng-template", id="stock/product/update")
+      include ./partials/stock/product/update.jade
+    script(type="text/ng-template", id="stock/product/update/bundled")
+      include ./partials/stock/product/update-bundledproduct.jade
+    script(type="text/ng-template", id="stock/product/update/characteristic")
+      include ./partials/stock/product/update-form-characteristic.jade
+    script(type="text/ng-template", id="stock/product/update/attachment")
+      include ./partials/stock/product/update-form-attachment.jade
+    script(type="text/ng-template", id="stock/product/update/relationship")
+      include ./partials/stock/product/update-relationship.jade
+
+    script(type="text/ng-template", id="stock/product-offering/search")
+      include ./partials/stock/product-offering/search.jade
+    script(type="text/ng-template", id="stock/product-offering/create")
+      include ./partials/stock/product-offering/create.jade
+    script(type="text/ng-template", id="stock/product-offering/create/general")
+      include ./partials/stock/product-offering/create-form.jade
+    script(type="text/ng-template", id="stock/product-offering/create/bundle")
+      include ./partials/stock/product-offering/create-form-bundle.jade
+    script(type="text/ng-template", id="stock/product-offering/create/priceplan")
+      include ./partials/stock/product-offering/create-form-priceplan.jade
+    script(type="text/ng-template", id="stock/product-offering/create/product")
+      include ./partials/stock/product-offering/create-form-product.jade
+    script(type="text/ng-template", id="stock/product-offering/create/catalogue")
+      include ./partials/stock/product-offering/create-form-catalogue.jade
+    script(type="text/ng-template", id="stock/product-offering/create/categories")
+      include ./partials/stock/product-offering/create-form-categories.jade
+    script(type="text/ng-template", id="stock/product-offering/create/finish")
+      include ./partials/stock/product-offering/create-form-finish.jade
+    script(type="text/ng-template", id="stock/product-offering/create/sharing")
+      include ./partials/stock/product-offering/create-form-sharing-model.jade
+    script(type="text/ng-template", id="stock/product-offering/update")
+      include ./partials/stock/product-offering/update.jade
+    script(type="text/ng-template", id="stock/product-offering/update/priceplan")
+      include ./partials/stock/product-offering/update-priceplan.jade
+    script(type="text/ng-template", id="stock/product-offering/update/category")
+      include ./partials/stock/product-offering/update-category.jade
+
+    script(type="text/ng-template", id="directives/offering-priceplan")
+      include ./partials/stock/product-offering/directives/priceplan.jade
+
+    script(type="text/ng-template", id="directives/forms/priceplan")
+      include ./partials/stock/product-offering/directives/priceplan-form.jade
+    script(type="text/ng-template", id="directives/forms/business-address")
+      include ./partials/settings/contact/directives/business-address-form.jade
+    script(type="text/ng-template", id="directives/forms/shipping-address")
+      include ./partials/settings/contact/directives/shipping-address-form.jade
+    script(type="text/ng-template", id="directives/forms/relationship-create")
+      include ./partials/stock/product/directives/relationship-create-form.jade
+    script(type="text/ng-template", id="directives/forms/relationship-delete")
+      include ./partials/stock/product/directives/relationship-delete-form.jade
+
+    script(type="text/ng-template", id="directives/tables/priceplan")
+      include ./partials/stock/product-offering/directives/priceplan-table.jade
+
+    script(type="text/ng-template", id="stock/product-catalogue/search")
+      include ./partials/stock/product-catalogue/search.jade
+    script(type="text/ng-template", id="stock/product-catalogue/create")
+      include ./partials/stock/product-catalogue/create.jade
+    script(type="text/ng-template", id="stock/product-catalogue/create/general")
+      include ./partials/stock/product-catalogue/create-form.jade
+    script(type="text/ng-template", id="stock/product-catalogue/create/finish")
+      include ./partials/stock/product-catalogue/create-form-finish.jade
+    script(type="text/ng-template", id="stock/product-catalogue/update")
+      include ./partials/stock/product-catalogue/update.jade
+    script(type="text/ng-template", id="stock/product-catalogue/update/party")
+      include ./partials/stock/product-catalogue/update-party.jade
+    script(type="text/ng-template", id="stock/product-catalogue/update/offering")
+      include ./partials/stock/product-catalogue/update-offering.jade
+
+    script(type="text/ng-template", id="rss/sidebar")
+      include ./partials/rss/sidebar.jade
+
+    script(type="text/ng-template", id="rss/sharing-models/search")
+      include partials/rss/sharing-models/search.jade
+    script(type="text/ng-template", id="rss/sharing-models/create")
+      include partials/rss/sharing-models/create.jade
+    script(type="text/ng-template", id="rss/sharing-models/create/general")
+      include partials/rss/sharing-models/create-form.jade
+    script(type="text/ng-template", id="rss/sharing-models/create/stakeholders")
+      include partials/rss/sharing-models/create-form-stakeholders.jade
+    script(type="text/ng-template", id="rss/sharing-models/create/finish")
+      include partials/rss/sharing-models/create-form-finish.jade
+    script(type="text/ng-template", id="rss/sharing-models/update")
+      include partials/rss/sharing-models/update.jade
+
+    script(type="text/ng-template", id="rss/transactions/search")
+      include partials/rss/transactions/search.jade
+    script(type="text/ng-template", id="rss/reports/search")
+      include partials/rss/reports/search.jade
+
+    script(type="text/ng-template", id="inventory/sidebar")
+      include ./partials/inventory/sidebar.jade
+    script(type="text/ng-template", id="inventory/product-order/search")
+      include ./partials/inventory/product-order/search.jade
+    script(type="text/ng-template", id="inventory/product-order/detail")
+      include ./partials/inventory/product-order/detail.jade
+    script(type="text/ng-template", id="inventory/product-order/detail-note")
+      include ./partials/inventory/product-order/detail-note.jade
+    script(type="text/ng-template", id="inventory/product/search")
+      include partials/inventory/product/search
+    script(type="text/ng-template", id="inventory/product/detail")
+      include partials/inventory/product/detail
+    script(type="text/ng-template", id="inventory/product/detail/characteristic")
+      include ./partials/inventory/product/detail-content-characteristic.jade
+    script(type="text/ng-template", id="inventory/product/detail/priceplan")
+      include ./partials/inventory/product/detail-content-priceplan.jade
+    script(type="text/ng-template", id="inventory/product/detail/usage")
+      include ./partials/inventory/product/detail-content-usage.jade
+
+    script(type="text/ng-template", id="shopping-cart/list")
+      include partials/shopping-cart/create
+
+    script(type="text/ng-template", id="admin/sidebar")
+      include ./partials/admin/sidebar.jade
+    script(type="text/ng-template", id="admin/product-category/search")
+      include ./partials/admin/product-category/search.jade
+    script(type="text/ng-template", id="admin/product-category/create")
+      include ./partials/admin/product-category/create.jade
+    script(type="text/ng-template", id="admin/product-category/create/general")
+      include ./partials/admin/product-category/create-form.jade
+    script(type="text/ng-template", id="admin/product-category/create/finish")
+      include ./partials/admin/product-category/create-form-finish.jade
+    script(type="text/ng-template", id="admin/product-category/update")
+      include ./partials/admin/product-category/update.jade
+
+    script(type="text/ng-template", id="unauthorized")
+      include partials/unauthorized

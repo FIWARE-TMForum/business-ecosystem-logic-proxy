@@ -1,0 +1,22 @@
+.row
+  .col-xs-12
+    .alert.alert-info(ng-if="!updateVM.item.productOfferingPrice.length")
+      span No price plans found.
+    price-plan-table(controller="updateVM" data="updateVM.item.productOfferingPrice")
+  .col-xs-12
+    .form-group.text-left(ng-if="!updateVM.pricePlanEnabled")
+      a.btn.btn-default.z-depth-1(ng-click="updateVM.pricePlanEnabled = true")
+        span.item-text New price plan
+    .panel.panel-default.z-depth-1(ng-if="updateVM.pricePlanEnabled")
+      .panel-body
+        .h4.text-dark-primary
+          strong New price plan
+        hr
+        price-plan-form(form="updateVM.pricePlanCreateForm" controller="updateVM" data="updateVM.pricePlan")
+        .form-group.text-right
+          a.btn.btn-warning(
+            ng-click="updateVM.createPricePlan()"
+            ng-disabled="!updateVM.pricePlanCreateForm.$valid || updateVM.createPricePlan.status === updateVM.STATUS.PENDING"
+          )
+            span.item-icon.fa.fa-spin.fa-spinner(ng-if="updateVM.createPricePlan.status === updateVM.STATUS.PENDING")
+            span.item-text Create

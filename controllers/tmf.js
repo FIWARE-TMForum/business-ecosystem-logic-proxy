@@ -1,15 +1,39 @@
-var config = require('./../config.js'),
+/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+ *
+ * This file belongs to the business-ecosystem-logic-proxy of the
+ * Business API Ecosystem
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
-    // TMF APIs
-    catalog = require('./tmf-apis/catalog.js').catalog,
-    inventory = require('./tmf-apis/inventory.js').inventory,
-    ordering = require('./tmf-apis/ordering.js').ordering,
-    
+var config = require('./../config'),
+
+// TMF APIs
+    catalog = require('./tmf-apis/catalog').catalog,
+    inventory = require('./tmf-apis/inventory').inventory,
+    ordering = require('./tmf-apis/ordering').ordering,
+    charging = require('./tmf-apis/charging').charging,
+    rss = require('./tmf-apis/rss').rss,
+    party = require('./tmf-apis/party').party,
+    usageManagement = require('./tmf-apis/usageManagement').usageManagement,
+    billing = require('./tmf-apis/billing').billing,
+    customer = require('./tmf-apis/customer').customer,
     // Other dependencies
-    httpClient = require('./../lib/httpClient.js'),
-    utils = require('./../lib/utils.js'),
-    log = require('./../lib/logger').logger.getLogger("TMF"),
-    url = require('url');
+    logger = require('./../lib/logger').logger.getLogger('TMF'),
+    request = require('request'),
+    url = require('url'),
+    utils = require('./../lib/utils');
 
 var tmf = (function() {
 
@@ -17,59 +41,141 @@ var tmf = (function() {
     apiControllers[config.endpoints.catalog.path] = catalog;
     apiControllers[config.endpoints.ordering.path] = ordering;
     apiControllers[config.endpoints.inventory.path] = inventory;
+    apiControllers[config.endpoints.charging.path] = charging;
+    apiControllers[config.endpoints.rss.path] = rss;
+    apiControllers[config.endpoints.party.path] = party;
+    apiControllers[config.endpoints.usage.path] = usageManagement;
+    apiControllers[config.endpoints.billing.path] = billing;
+    apiControllers[config.endpoints.customer.path] = customer;
 
-    var sendError = function(res, status, errMsg) {
-        log.warn(errMsg);
+    var getAPIName = function(apiUrl) {
+        return apiUrl.split('/')[1];
+    };
+
+    var sendError = function(res, err) {
+        var status = err.status;
+        var errMsg = err.message;
+
         res.status(status);
-        res.send({error: errMsg});
+        res.json({ error: errMsg });
         res.end();
-    }
+    };
 
-    var redirRequest = function (req, res) {
+    var redirectRequest = function (req, res) {
 
         if (req.user) {
-            log.info('Access-token OK. Redirecting to app...');
             utils.attachUserHeaders(req.headers, req.user);
-        } else {
-            log.info('Public path. Redirecting to app...');
         }
 
-        var protocol = config.appSsl ? 'https' : 'http';
+        var api = getAPIName(req.apiUrl);
+
+        var url = (config.appSsl ? 'https' : 'http') + '://' + config.appHost + ':' + utils.getAPIPort(api) + req.apiUrl;
 
         var options = {
-            host: config.appHost,
-            port: utils.getAppPort(req),
-            path: req.url,
+            url: url,
             method: req.method,
+            encoding: null,
             headers: utils.proxiedRequestHeaders(req)
         };
 
-        httpClient.proxyRequest(protocol, options, req.body, res);
+        if (typeof(req.body) === 'string') {
+            options.body = req.body;
+        }
+
+        // PROXY THE REQUEST
+        request(options, function(err, response, body) {
+
+            var completeRequest = function(result) {
+                res.status(result.status);
+
+                for (var header in result.headers) {
+                    res.setHeader(header, result.headers[header]);
+                }
+
+                res.write(result.body);
+                res.end();
+            };
+
+            if (err) {
+                res.status(504).json({ error: 'Service unreachable' });
+            } else {
+
+                var result = {
+                    status: response.statusCode,
+                    headers: response.headers,
+                    hostname: req.hostname,
+                    secure: req.secure,
+                    body: body,
+                    user: req.user,
+                    method: req.method,
+                    url: req.url,
+                    id: req.id,
+                    apiUrl: req.apiUrl,
+                    connection: req.connection
+                };
+
+                // Execute postValidation if status code is lower than 400 and the
+                // function is defined
+                if (response.statusCode < 400 && apiControllers[api] !== undefined
+                    && apiControllers[api].executePostValidation) {
+
+                    apiControllers[api].executePostValidation(result, function(err) {
+
+                        var basicLogMessage = 'Post-Validation (' + api + '): ';
+
+                        if (err) {
+                            utils.log(logger, 'warn', req, basicLogMessage + err.message);
+                            res.status(err.status).json({ error: err.message });
+                        } else {
+                            utils.log(logger, 'info', req, basicLogMessage + 'OK');
+                            completeRequest(result);
+                        }
+                    });
+                } else {
+                    completeRequest(result);
+                }
+            }
+
+        });
     };
 
     var checkPermissions = function(req, res) {
 
-        var api = url.parse(req.url).path.split('/')[1];
+        var api = getAPIName(req.apiUrl);
 
         if (apiControllers[api] === undefined) {
-            sendError(res, 404, 'Path not found')
+
+            utils.log(logger, 'warn', req, 'API ' + api + ' not defined');
+
+            sendError(res, {
+                status: 404,
+                message: 'Path not found'
+            });
+
         } else {
-            apiControllers[api].checkPermissions(req, function() {
-                redirRequest(req, res);
-            }, function(status, errMsg) {
-                sendError(res, status, errMsg);
+            apiControllers[api].checkPermissions(req, function(err) {
+
+                var basicLogMessage = 'Pre-Validation (' + api + '): ';
+
+                if (err) {
+                    utils.log(logger, 'warn', req, basicLogMessage + err.message);
+                    sendError(res, err);
+                } else {
+                    utils.log(logger, 'info', req, basicLogMessage + 'OK');
+                    redirectRequest(req, res);
+                }
             });
         }
     };
 
     var public = function(req, res) {
-        redirRequest(req, res);
+        redirectRequest(req, res);
     };
 
     return {
         checkPermissions: checkPermissions,
         public: public
-    }
+    };
 })();
 
 exports.tmf = tmf;

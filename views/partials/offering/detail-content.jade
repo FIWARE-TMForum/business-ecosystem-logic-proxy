@@ -1,0 +1,42 @@
+.row
+  .col-xs-12
+    .panel.panel-default.z-depth-1
+      .thumbnail.thumbnail-lg
+        img(no-image, ng-src="{{ detailVM.item.getPicture() }}")
+      .panel-body
+        .h3.text-center.text-dark-secondary
+          strong {{ detailVM.item.name }}
+        .h5(ng-repeat="category in detailVM.categories")
+          a.label.item-parentcategory(ng-repeat="parentCategory in category.getBreadcrumb()", ui-sref="offering({ categoryId: parentCategory.id })")
+            span.item-icon.fa.fa-tag
+            span.item-text {{ parentCategory.name }}
+          a.label.item-category(ui-sref="offering({ categoryId: category.id })")
+            span.item-icon.fa.fa-tag
+            span.item-text {{ category.name }}
+        .h5.text-right
+          strong {{ detailVM.item.formatCheapestPricePlan() }}
+        .btn-toolbar(ng-if="user.isAuthenticated()")
+          .btn-group.z-depth-1.pull-right
+            a.btn.btn-success.z-depth-1(ng-click="user.order(detailVM.item)", ng-disabled="user.contains(detailVM.item)")
+              span.item-icon.fa(class="fa-{{ user.contains(detailVM.item) ? 'check-circle' : 'shopping-cart' }}")
+              span.item-text {{ user.contains(detailVM.item) ? 'Added' : 'Add to cart' }}
+      ul.nav.nav-justified.nav-pills
+        li(ui-sref-active-eq="active")
+          a(ui-sref="offering.detail")
+            span.item-icon.fa.fa-newspaper-o
+            span.item-text.hidden-xs About
+        li(ui-sref-active-eq="active")
+          a(ui-sref="offering.detail.productCharacteristic")
+            span.item-icon.fa.fa-gears
+            span.item-text.hidden-xs Characteristics
+        li(ui-sref-active-eq="active")
+          a(ui-sref="offering.detail.pricePlan")
+            span.item-icon.fa.fa-credit-card
+            span.item-text.hidden-xs Price plans
+        li(ui-sref-active-eq="active")
+          a(ui-sref="offering.detail.relationship")
+            span.item-icon.fa.fa-chain
+            span.item-text.hidden-xs Relationships
+  .col-xs-12
+    ui-view(name="offering-content")
+      include ./detail-about.jade

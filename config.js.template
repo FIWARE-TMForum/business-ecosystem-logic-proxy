@@ -8,12 +8,15 @@ config.https = {
     enabled: false,
     certFile: 'cert/cert.crt',
     keyFile: 'cert/key.key',
+    caFile: 'cert/ca.crt',
     port: 443
 };
 
 // Express configuration
 config.proxyPrefix = '/proxy';
 config.portalPrefix = '';
+config.logInPath = '/login';
+config.logOutPath = '/logOut';
 config.sessionSecret = 'keyboard cat';
 
 // OAuth2 configuration
@@ -23,11 +26,23 @@ config.oauth2 = {
     'clientSecret': '--client-secret--',
     'callbackURL': '--callback-url--',
     'roles': {
-        'admin': '106',
-        'customer': '',
-        'seller': ''
+        'admin': 'provider',
+        'customer': 'customer',
+        'seller': 'seller'
     }
 }
+
+// Customer Role Required to buy items
+config.customerRoleRequired = false;
+
+// MongoDB
+config.mongoDb = {
+    server: 'localhost',
+    port: 27017,
+    user: '',
+    password: '',
+    db: 'belp'
+};
 
 // TMForum APIs final paths
 config.appHost = '';
@@ -46,6 +61,18 @@ config.endpoints = {
         'path': '',
         'port': ''
     },
+    'party': {
+        'path': '',
+        'port': ''
+    },
+    'billing': {
+        'path': '',
+        'port': ''
+    },
+    'customer': {
+        'path': '',
+        'port': ''
+    },
     'charging': {
         'path': '',
         'port': ''
@@ -53,8 +80,18 @@ config.endpoints = {
     'rss': {
         'path': '',
         'port': ''
+    },
+    'usage': {
+        'path': '',
+        'port': ''
     }
 };
+
+// Percentage of the generated revenues that belongs to the system
+config.revenueModel = 30;
+
+// Billing Account owner role
+config.billingAccountOwnerRole = 'bill receiver';
 
 // Use true if the app server listens in https
 config.appSsl = false;
@@ -64,5 +101,7 @@ config.appSsl = false;
 config.publicPaths = [];
 
 config.magicKey = undefined;
+
+config.usageChartURL = '';
 
 module.exports = config;

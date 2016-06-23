@@ -1,0 +1,63 @@
+form(name="step.form", novalidate)
+  .row
+    .col-sm-8
+      .form-group(
+        ng-class="{ 'has-error': createVM.hasFieldError(step.form.name) }"
+      )
+        label Enter a name
+        input.form-control(
+          type="text"
+          name="name"
+          ng-model="createVM.data.name"
+          required
+          ng-maxlength="30"
+          field-unique="Offering"
+        )
+        .help-block(
+          ng-messages="step.form.name.$error"
+          ng-show="createVM.hasFieldError(step.form.name)"
+        )
+          span(ng-message="required") This field is required.
+          span(ng-message="maxlength") This field must not exceed 30 chars.
+          span(ng-message="unique") This name is already taken.
+    .col-sm-4
+      .form-group(
+        ng-class="{ 'has-error' : createVM.hasFieldError(step.form.version) }"
+      )
+        label Enter a version
+        input.form-control(
+          type="text"
+          name="version"
+          ng-model="createVM.data.version"
+          required
+        )
+        .help-block(
+          ng-messages="step.form.version.$error"
+          ng-show="createVM.hasFieldError(step.form.version)"
+        )
+          span(ng-message="required") This field is required.
+  .form-group
+    label
+      span Enter a description
+      small.text-muted (optional)
+    textarea.form-control(rows="3", name="description", ng-model="createVM.data.description")
+  .form-group
+    label
+      span Enter places
+      small.text-muted (optional)
+    .input-group
+      input.form-control(
+        type="text"
+        name="place"
+        ng-model="createVM.place"
+      )
+      .input-group-btn
+        a.btn.btn-default.z-depth-0(ng-disabled="!createVM.place.length", ng-click="createVM.createPlace()")
+          span.item-icon.fa.fa-plus
+  .h4(ng-if="createVM.places.length")
+    .label.label-default.inline-block(ng-repeat="name in createVM.places")
+      span.item-text {{ name }}
+      span.item-icon.fa.fa-remove(ng-click="createVM.removePlace($index)")
+  .form-group.text-right
+    a.btn.btn-default.z-depth-1(ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])", ng-disabled="!step.form.$valid")
+      span.item-text Next

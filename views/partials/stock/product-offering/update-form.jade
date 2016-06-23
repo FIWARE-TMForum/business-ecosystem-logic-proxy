@@ -1,0 +1,97 @@
+form(name="updateVM.form", novalidate)
+  .h4.text-dark-secondary
+    strong General
+  .row
+    .col-sm-8
+      .form-group(
+        ng-class="{ 'has-error': updateVM.hasFieldError(updateVM.form.name) }"
+      )
+        label Name
+        input.form-control(
+          type="text"
+          name="name"
+          ng-model="updateVM.data.name"
+          required
+          ng-maxlength="30"
+          field-unique="Offering"
+          field-original-value="{{ updateVM.item.name }}"
+        )
+        .help-block(
+          ng-messages="updateVM.form.name.$error"
+          ng-show="updateVM.hasFieldError(updateVM.form.name)"
+        )
+          span(ng-message="required") This field is required.
+          span(ng-message="maxlength") This field must not exceed 30 chars.
+          span(ng-message="unique") This name is already taken.
+    .col-sm-4
+      .form-group(
+        ng-class="{ 'has-error': updateVM.hasFieldError(updateVM.form.version) }"
+      )
+        label Version
+        input.form-control(
+          type="text"
+          name="version"
+          ng-model="updateVM.data.version"
+          required
+        )
+        .help-block(
+          ng-messages="updateVM.form.version.$error"
+          ng-show="updateVM.hasFieldError(updateVM.form.version)"
+        )
+          span(ng-message="required") This field is required.
+  .row
+    .col-sm-8
+      .form-group
+        label Product Spec.
+        a.btn.btn-link(ui-sref="stock.product.update({ productId: updateVM.item.productSpecification.id })")
+          span.item-text {{ updateVM.item.productSpecification.name }}
+    .col-sm-4
+      .form-group
+        label Updated
+        input.form-control(type="text", readonly, value="{{ updateVM.item.lastUpdate | amCalendar }}")
+  .form-group
+    label Status
+    .status-group
+      .status-item(ng-repeat="status in FILTER_STATUS", class="status-{{ status.value | lowercase }}", ng-click="updateVM.updateStatus(status.value)", ng-class="{ active: updateVM.data.lifecycleStatus == status.value, enabled: updateVM.data.lifecycleStatus == status.value && !updateVM.statusUpdated }")
+        span.item-icon
+        span.item-text {{ status.value }}
+  .form-group
+    label
+      span Description
+      small.text-muted (optional)
+    textarea.form-control(rows="3", name="description", ng-model="updateVM.data.description")
+  .form-group(ng-if="updateVM.data.place.length")
+    label Places
+    .h4
+      .label.label-default.inline-block(ng-repeat="place in updateVM.data.place")
+        span.item-text {{ place.name }}
+  .form-group(ng-show="updateVM.item.isBundle")
+    label Bundled Offerings
+    .table-responsive
+      table.table.table-bordered
+        thead
+          tr
+            th Status
+            th Name
+            th Type
+            th Updated
+        tbody
+          tr(ng-repeat="offering in updateVM.item.bundledProductOffering")
+            td
+              .status-item(class="status-{{ offering.lifecycleStatus | lowercase }}")
+                span.item-icon
+                span.item-text {{ offering.lifecycleStatus }}
+            th
+              a(ui-sref="stock.offering.update({ offeringId: offering.id })", ui-sref-opts="{ inherit: false }") {{ offering.name }}
+            td
+              span.label(ng-class="offering.isBundle ? 'label-bundle' : 'label-single'")
+                | {{ offering.isBundle ? 'Bundle' : 'Single' }}
+            td
+              time(am-time-ago="offering.lastUpdate")
+  .form-group.text-right
+    a.btn.btn-success(
+      ng-click="updateVM.update()"
+      ng-disabled="!updateVM.form.$valid || updateVM.update.status === updateVM.STATUS.PENDING"
+    )
+      span.item-icon.fa.fa-spin.fa-spinner(ng-if="updateVM.update.status === updateVM.STATUS.PENDING")
+      span.item-text Update

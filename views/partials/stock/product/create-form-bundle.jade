@@ -1,0 +1,46 @@
+form(name="step.form", novalidate)
+  .item-toggle
+    label.toggle Is a new bundled product?
+      .track
+        input(
+          type="checkbox"
+          ng-model="createVM.data.isBundle"
+          ng-change="createVM.toggleBundle()"
+        )
+        i.fa.fa-2x
+  .row(ng-if="createVM.data.isBundle", ng-controller="ProductSearchCtrl as searchVM")
+    .col-xs-12(ng-if="searchVM.status === searchVM.STATUS.RESOLVED" ng-init="results = (searchVM.list | status:STATUS.ACTIVE)" ng-switch="results.length")
+      .alert.alert-info.text-center(ng-switch-when="0") No products found.
+      .table-responsive(ng-switch-default)
+        table.table.table-bordered.table-hover.table-selectable
+          thead
+            tr
+              th Status
+              th Name
+              th ID
+              th Brand
+              th Type
+              th Updated
+          tbody
+            tr(ng-repeat="product in results", ng-class="{ active: createVM.hasProduct(product) }", ng-click="createVM.toggleProduct(product)")
+              td
+                .status-item(class="status-{{ product.lifecycleStatus | lowercase }}")
+                  span.item-icon
+                  span.item-text {{ product.lifecycleStatus }}
+              th {{ product.name }}
+              td {{ product.productNumber }}
+              td {{ product.brand }}
+              td
+                span.label(ng-class="product.isBundle ? 'label-bundle' : 'label-single'")
+                  | {{ product.isBundle ? 'Bundle' : 'Single' }}
+              td
+                time(am-time-ago="product.lastUpdate")
+    .col-xs-12(ng-switch="searchVM.status === searchVM.STATUS.REJECTED")
+      .alert.alert-danger.text-center {{ searchVM.errorMessage }}
+    .col-xs-12(ng-switch="searchVM.status === searchVM.STATUS.PENDING")
+      .container-spinner(ng-switch-default)
+        span.fa.fa-spinner.fa-spin.fa-2x
+
+  .form-group.text-right
+    a.btn.btn-default.z-depth-1(ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])", ng-disabled="!step.form.$valid")
+      span.item-text Next

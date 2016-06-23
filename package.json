@@ -1,19 +1,40 @@
 {
-  "name": "fiware-pep-proxy",
+  "name": "business-ecosystem-logic-proxy",
   "version": "0.1.0",
   "description": "Logic Layer for the Business API Ecosystem",
   "author": "UPM",
   "dependencies": {
+    "async": "^1.5.0",
     "base64url": "1.0.x",
-    "express": "4.x",
-    "errorhandler": "1.4.x",
-    "log4js": "0.6.x",
     "body-parser": "1.14.1",
     "cookie-parser": "1.4.0",
+    "deep-equal": "^1.0.1",
+    "errorhandler": "1.4.x",
+    "express": "4.x",
     "express-session": "1.12.1",
-    "ejs": "2.3.4",
+    "jade": "^1.11.0",
+    "log4js": "0.6.x",
+    "moment": "^2.13.0",
+    "mongoose": "^4.3.6",
+    "node-uuid": "^1.4.7",
+    "on-finished": "^2.3.0",
     "passport": "0.3.0",
-    "passport-fiware-oauth": "0.1.4"
+    "passport-fiware-oauth": "0.1.5",
+    "request": "^2.69.0",
+    "trycatch": "^1.5.21"
+  },
+  "devDependencies": {
+    "freeport": "1.0.5",
+    "grunt": "~0.4.5",
+    "grunt-jasmine-nodejs": "1.4.3",
+    "istanbul": "0.4.0",
+    "jasmine": "2.3.2",
+    "jasmine-reporters": "2.0.7",
+    "nock": "3.1.0",
+    "proxyquire": "1.7.3"
+  },
+  "scripts": {
+    "test": "JASMINE_CONFIG_PATH=test/config/jasmine.json node_modules/.bin/istanbul cover --include-all-sources -x public/**/*.js -x server.js -x Gruntfile.js --report cobertura node_modules/.bin/jasmine"
   },
   "repository": {
     "type": "git",

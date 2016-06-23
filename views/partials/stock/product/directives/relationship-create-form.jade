@@ -1,0 +1,37 @@
+.row(ng-controller="RelationshipCreateCtrl as createVM")
+  .col-xs-12(ng-if="createVM.status === createVM.STATUS.REJECTED")
+    .alert.alert-danger {{ createVM.errorMessage }}
+  .col-xs-12(ng-if="createVM.status === createVM.STATUS.PENDING")
+    .container-spinner
+      span.fa.fa-spinner.fa-spin.fa-2x
+  .col-xs-12(ng-if="createVM.status === createVM.STATUS.RESOLVED")
+    form(name="createVM.form" novalidate)
+      .form-group
+        label Choose a relationship
+        select.form-control(name="type" ng-model="createVM.data.type")
+          option(ng-repeat="(key, value) in createVM.RELATIONSHIPS" value="{{ value.code }}") {{ value.name }}
+      .form-group
+        label Choose a product specification
+        input(type="hidden" ng-model="createVM.data.productSpec.id" required)
+        .table-responsive
+          table.table.table-bordered.table-hover.table-selectable
+            thead
+              tr
+                th Name
+                th Type
+                th Updated
+            tbody
+              tr(ng-repeat="productSpec in createVM.list" ng-class="{ active: productSpec.id === createVM.data.productSpec.id, disabled: createVM.hasRelationship(resource, productSpec) }" ng-click="createVM.setProductSpec(productSpec)")
+                th {{ productSpec.name }}
+                td
+                  span.label(ng-class="productSpec.isBundle ? 'label-bundle' : 'label-single'")
+                    | {{ productSpec.isBundle ? 'Bundle' : 'Single' }}
+                td
+                  time(am-time-ago="productSpec.lastUpdate")
+      .form-group.text-right
+        a.btn.btn-warning(
+          ng-click="createVM.create(parentVM)"
+          ng-disabled="!createVM.form.$valid || createVM.create.status === createVM.STATUS.PENDING"
+        )
+          span.item-icon.fa.fa-spin.fa-spinner(ng-if="createVM.create.status === createVM.STATUS.PENDING")
+          span.item-text Create
