@@ -123,6 +123,7 @@
                 // Extract invoice url
                 vm.charges.items = charges.map(function(charge) {
                     var invoiceUrl = charge.description.split(' ').pop();
+                    charge.description = charge.description.substring(0, charge.description.indexOf(invoiceUrl) - 1);
                     charge.invoice = invoiceUrl;
                     return charge;
                 });
