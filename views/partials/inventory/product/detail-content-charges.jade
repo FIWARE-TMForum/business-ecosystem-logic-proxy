@@ -29,5 +29,5 @@
               span.item-icon.fa.fa-download
               span.item-text Download invoice
 
-    .alert.alert-info.text-center(ng-if="detailVM.charges.status == 'LOADED' && !detailVM.charges.items.length") No characteristics included.
+    .alert.alert-info.text-center(ng-if="detailVM.charges.status == 'LOADED' && !detailVM.charges.items.length") No charges included.
     .alert.alert-danger.text-center(ng-if="detailVM.charges.status == 'ERROR'") {{ detailVM.charges.error }}
