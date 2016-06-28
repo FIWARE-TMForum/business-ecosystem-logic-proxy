@@ -98,19 +98,21 @@
             $scope.priceplanSelected = productRetrieved.productPrice[0];
 
             // Check if the product is digital
-            for (var i = 0; i < characteristics.length && (!hasMedia || !hasLocation || !hasAssetType); i++) {
-                var charact = characteristics[i];
-                if (charact.name.toLowerCase() == 'asset type') {
-                    hasAssetType = true;
-                }
+            if (characteristics) {
+                for (var i = 0; i < characteristics.length && (!hasMedia || !hasLocation || !hasAssetType); i++) {
+                    var charact = characteristics[i];
+                    if (charact.name.toLowerCase() == 'asset type') {
+                        hasAssetType = true;
+                    }
 
-                if (charact.name.toLowerCase() == 'media type') {
-                    hasMedia = true;
-                }
+                    if (charact.name.toLowerCase() == 'media type') {
+                        hasMedia = true;
+                    }
 
-                if (charact.name.toLowerCase() == 'location') {
-                    hasLocation = true;
-                    location = charact.productSpecCharacteristicValue[0].value;
+                    if (charact.name.toLowerCase() == 'location') {
+                        hasLocation = true;
+                        location = charact.productSpecCharacteristicValue[0].value;
+                    }
                 }
             }
 
