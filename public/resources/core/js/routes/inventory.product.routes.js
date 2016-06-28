@@ -59,6 +59,10 @@
                 url: '/priceplan',
                 templateUrl: 'inventory/product/detail/priceplan'
             })
+            .state('inventory.product.detail.charges', {
+                url: '/charges',
+                templateUrl: 'inventory/product/detail/charges'
+            })
             .state('inventory.product.detail.usage', {
                 url: '/usage',
                 templateUrl: 'inventory/product/detail/usage'
