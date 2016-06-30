@@ -623,8 +623,16 @@ var catalog = (function() {
         async.series(reqValidators, callback);
     };
 
+    var executePostValidation = function(req, callback) {
+        // Attach product spec info for product creation requests
+        if (req.method == 'POST' && req.apiUrl.indexOf('productSpecification') > -1) {
+            store.attachProduct(JSON.parse(req.body), req.user, callback);
+        }
+    };
+
     return {
-        checkPermissions: checkPermissions
+        checkPermissions: checkPermissions,
+        executePostValidation: executePostValidation
     };
 
 })();
