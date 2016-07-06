@@ -293,11 +293,16 @@
             } else {
                 vm.data.bundledProductSpecification.push(product);
             }
+
+            stepList[1].form.$valid = vm.data.bundledProductSpecification.length >= 2;
         }
 
         function toggleBundle() {
             if (!vm.data.isBundle) {
                 vm.data.bundledProductSpecification.length = 0;
+                stepList[1].form.$valid = true;
+            } else {
+                stepList[1].form.$valid = false;
             }
         }
 
