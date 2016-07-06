@@ -29,7 +29,7 @@ var NEED_AUTHENTICATION = 'You need to be authenticated to create/update/delete 
 var INVALID_JSON = 'The provided body is not a valid JSON';
 var CREATE_OFFERING_FOR_NON_OWNED_PRODUCT = 'You are not allowed to create offerings for products you do not own';
 var UPDATE_OFFERING_WITH_NON_OWNED_PRODUCT = 'You are not allowed to update offerings for products you do not own';
-var INVALID_PRODUCT = 'The product attached to the offering cannot be read';
+var INVALID_PRODUCT = 'The attached product cannot be read or does not exist';
 var INVALID_USER_CREATE = 'The user making the request and the specified owner are not the same user';
 var INVALID_USER_UPDATE = 'The user making the request is not the owner of the accessed resource';
 var OFFERS_NOT_RETIRED_PRODUCT = 'All the attached offerings must be retired or obsolete to retire a product';
@@ -43,6 +43,10 @@ var CATEGORIES_CANNOT_BE_CHECKED = 'It was impossible to check if the provided c
 var CATEGORY_NAME_MISSING = 'Category name is mandatory';
 var RSS_CANNOT_BE_ACCESSED = 'An unexpected error in the RSS API prevented your request to be processed';
 var INVALID_PRODUCT_CLASS = 'The provided productClass does not specify a valid revenue sharing model';
+var MISSING_BUNDLE_PRODUCTS = 'Product spec bundles must contain at least two bundled product specs';
+var MISSING_HREF_BUNDLE_INFO = 'Missing required field href in bundleProductSpecification';
+var UNAUTHORIZED_BUNDLE = 'You are not authorized to include the product spec 3 in a product spec bundle';
+var BUNDLE_INSIDE_BUNDLE = 'It is not possible to include a product spec bundle in another product spec bundle';
 
 
 describe('Catalog API', function() {
@@ -78,7 +82,7 @@ describe('Catalog API', function() {
         var catalogApi = getCatalogApi({}, {}, {});
 
         var req = {
-            method: 'GET',
+            method: 'GET'
             // user: { roles: [] }
         };
 
@@ -458,7 +462,7 @@ describe('Catalog API', function() {
             lifecycleStatus: 'active'
         };
 
-        testCreateOffering(productRequestInfo, catalogRequestInfo, null, 500, INVALID_PRODUCT, null, done);
+        testCreateOffering(productRequestInfo, catalogRequestInfo, null, 422, INVALID_PRODUCT, null, done);
     });
 
     it('should not allow to create an offering when the attached catalog cannot be retrieved', function(done) {
@@ -515,7 +519,7 @@ describe('Catalog API', function() {
             provider: null,
             modelErr: {
                 status: status,
-                message: errMsg,
+                message: errMsg
             }
         }, done);
     });
@@ -541,8 +545,7 @@ describe('Catalog API', function() {
         }, done);
     });
 
-    var testCreateProduct = function(storeValidator, errorStatus, errorMsg, owner, done) {
-
+    var mockCatalogAPI = function(isOwner, storeValidator) {
         var checkRoleMethod = jasmine.createSpy();
         checkRoleMethod.and.returnValue(true);
 
@@ -554,7 +557,7 @@ describe('Catalog API', function() {
         };
 
         var tmfUtils = {
-            isOwner: owner ? isOwnerTrue : isOwnerFalse
+            isOwner: isOwner
         };
 
         var utils = {
@@ -562,25 +565,25 @@ describe('Catalog API', function() {
             hasRole: checkRoleMethod
         };
 
-        var catalogApi = getCatalogApi(storeClient, tmfUtils, utils);
+        return getCatalogApi(storeClient, tmfUtils, utils);
+    };
 
+    var buildProductRequest = function(body) {
         // Basic properties
-        var userName = 'test';
         var offeringPath = '/catalog/productSpecification/';
-        var role = owner ? 'Owner': 'Seller';
-        var body = { relatedParty: [{id: userName, role: role}]};
 
-        // Call the method
-        var req = {
+        return {
             method: 'POST',
             apiUrl: offeringPath,
             user: {
-                id: userName,
+                id: 'test',
                 roles: [{ name: config.oauth2.roles.seller }]
             },
             body: JSON.stringify(body)
         };
+    };
 
+    var checkProductCreationResult = function(catalogApi, req, errorStatus, errorMsg, done) {
         catalogApi.checkPermissions(req, function(err) {
 
             if (!errorStatus && !errorMsg ) {
@@ -593,6 +596,17 @@ describe('Catalog API', function() {
 
             done();
         });
+    };
+
+    var testCreateProduct = function(storeValidator, errorStatus, errorMsg, owner, done) {
+
+        var catalogApi = mockCatalogAPI(owner ? isOwnerTrue : isOwnerFalse, storeValidator);
+
+        var role = owner ? 'Owner': 'Seller';
+        var body = { relatedParty: [{id: 'test', role: role}]};
+        var req = buildProductRequest(body);
+
+        checkProductCreationResult(catalogApi, req, errorStatus, errorMsg, done);
     };
 
     var storeValidatorOk = function(body, user, callback) {
@@ -619,6 +633,135 @@ describe('Catalog API', function() {
         // Actual call
         // isOwner does not matter when productRequestFails is set to true
         testCreateProduct(storeValidatorErr, storeErrorStatus, storeErrorMessage, true, done);
+    });
+
+    var SERVER = (config.appSsl ? 'https' : 'http') + '://' + config.appHost + ':' + config.endpoints.catalog.port;
+
+    var testCreateBundle = function(bundles, errorStatus, errorMsg, done) {
+
+        var productPath = '/catalog/productSpecification/';
+
+        var catalogApi = mockCatalogAPI(function(req, resource) {
+            return !(resource.id == '3');
+        }, storeValidatorOk);
+
+        // Mock bundles
+        var body = {
+            isBundle: true,
+            bundledProductSpecification: []
+        };
+
+        for (var i = 0; i < bundles.length; i++) {
+            if (bundles[i].id) {
+                body.bundledProductSpecification.push({
+                    href: SERVER + productPath + bundles[i].id
+                });
+
+                nock(SERVER)
+                    .get(productPath + bundles[i].id)
+                    .reply(bundles[i].status, bundles[i].body);
+            } else {
+                body.bundledProductSpecification.push({});
+            }
+        }
+
+        var req = buildProductRequest(body);
+        checkProductCreationResult(catalogApi, req, errorStatus, errorMsg, done);
+    };
+
+    it('should allow to create bundles when all products specs are single and owned by the user', function(done) {
+
+        var bundles = [{
+            id: '1',
+            status: 200,
+            body: JSON.stringify({
+                id: '1',
+                isBundle: false
+            })
+        }, {
+            id: '2',
+            status: 200,
+            body: JSON.stringify({
+                id: '2',
+                isBundle: false
+            })
+        }];
+
+        testCreateBundle(bundles, null, null, done);
+    });
+
+    it('should not allow to create bundles when less than two bundle products have been included', function(done) {
+        testCreateBundle([], 422, MISSING_BUNDLE_PRODUCTS, done);
+    });
+
+    it('should not allow to create bundles when the bundle info does not contain an href field', function(done) {
+            var bundles = [{
+                id: '1',
+                status: 200,
+                body: JSON.stringify({
+                    id: '1',
+                    isBundle: false
+                })
+            }, {}];
+
+            testCreateBundle(bundles, 422, MISSING_HREF_BUNDLE_INFO, done);
+    });
+
+    it('should not allow to create bundles when one of the included bundled products does not exists', function(done) {
+        var bundles = [{
+            id: '1',
+            status: 200,
+            body: JSON.stringify({
+                id: '1',
+                isBundle: false
+            })
+        }, {
+            id: '2',
+            status: 404,
+            body: null
+        }];
+
+        testCreateBundle(bundles, 422, INVALID_PRODUCT, done);
+    });
+
+    it('should not allow to create bundles when the user is not owning one of the bundled products', function(done) {
+        var bundles = [{
+            id: '1',
+            status: 200,
+            body: JSON.stringify({
+                id: '1',
+                isBundle: false
+            })
+        }, {
+            id: '3',
+            status: 200,
+            body: JSON.stringify({
+                id: '3',
+                isBundle: false
+            })
+        }];
+
+        testCreateBundle(bundles, 403, UNAUTHORIZED_BUNDLE, done);
+    });
+
+    it('should not allow to create bundles when one of the bundled products is also a bundle', function(done) {
+        var bundles = [{
+            id: '1',
+            status: 200,
+            body: JSON.stringify({
+                id: '1',
+                isBundle: true
+            })
+        }, {
+            id: '2',
+            status: 200,
+            body: JSON.stringify({
+                id: '2',
+                isBundle: false
+            })
+        }];
+
+        testCreateBundle(bundles, 422, BUNDLE_INSIDE_BUNDLE, done);
     });
 
     var testCreateCategory = function(admin, category, categoriesRequest, errorStatus, errorMsg, done) {
@@ -1045,7 +1188,7 @@ describe('Catalog API', function() {
             lifecycleStatus: 'active'
         };
 
-        testUpdateProductOffering({}, productRequestInfo, catalogRequestInfo, 500, INVALID_PRODUCT, done);
+        testUpdateProductOffering({}, productRequestInfo, catalogRequestInfo, 422, INVALID_PRODUCT, done);
     });
 
     it('should allow to change the status of an offering to launched when product and catalog are launched', function(done) {
@@ -2072,4 +2215,49 @@ describe('Catalog API', function() {
             { name: categoryName, parentId: parentId, isRoot: false }, 500, CATEGORIES_CANNOT_BE_CHECKED, done);
     });
 
+    describe('Post validation', function() {
+
+        var testProductPostvalidation = function(method, callExp, done) {
+            var body = {
+                id: '1'
+            };
+
+            var user = {
+                username: 'test'
+            };
+
+            var called = false;
+            var storeClient = {
+                storeClient: {
+                    attachProduct: function(product, userInfo, callback) {
+                        called = true;
+                        expect(product).toEqual(body);
+                        expect(userInfo).toEqual(user);
+                        callback(null);
+                    }
+                }
+            };
+            var catalogApi = getCatalogApi(storeClient, {}, {}, {});
+
+            var req = {
+                method: method,
+                apiUrl: '/catalog/productSpecification',
+                body: JSON.stringify(body),
+                user: user
+            };
+
+            catalogApi.executePostValidation(req, function() {
+                expect(called).toBe(callExp);
+                done();
+            });
+        };
+
+        it('should call the store product attachment when a valid product creation request has been redirected', function(done) {
+            testProductPostvalidation('POST', true, done);
+        });
+
+        it('should not call the store attachment when the request is not a product creation', function(done) {
+            testProductPostvalidation('GET', false, done);
+        });
+    });
 });

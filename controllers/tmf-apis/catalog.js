@@ -62,16 +62,15 @@ var catalog = (function() {
     };
 
     // Retrieves the product belonging to a given offering
-    var retrieveProduct = function(offeringInfo, callback) {
+    var retrieveProduct = function(productUrl, callback) {
 
-        var productUrl = offeringInfo.productSpecification.href;
         var productPath = url.parse(productUrl).pathname;
 
         retrieveAsset(productPath, function(err, response) {
             if (err) {
                 callback({
-                    status: 500,
-                    message: 'The product attached to the offering cannot be read'
+                    status: 422,
+                    message: 'The attached product cannot be read or does not exist'
                 })
             } else {
                 callback(err, response);
@@ -165,7 +164,8 @@ var catalog = (function() {
         }
 
         // Check that the product attached to the offering is owned by the same user
-        retrieveProduct(previousBody || newBody, function(err, result) {
+        var offeringBody = previousBody || newBody;
+        retrieveProduct(offeringBody.productSpecification.href, function(err, result) {
 
             if (err) {
                 callback(err);
@@ -344,6 +344,63 @@ var catalog = (function() {
         }
     };
 
+    var validateProduct = function(req, productSpec, callback) {
+        // Check if the product is a bundle
+        if (!productSpec.isBundle) {
+            return callback(null);
+        }
+
+        // Check that al least two products have been included
+        if (!productSpec.bundledProductSpecification || productSpec.bundledProductSpecification.length < 2) {
+            return callback({
+                status: 422,
+                message: 'Product spec bundles must contain at least two bundled product specs'
+            });
+        }
+
+        async.each(productSpec.bundledProductSpecification, function(spec, taskCallback) {
+            // Validate that the bundled products exists
+            if (!spec.href) {
+                return taskCallback({
+                    status: 422,
+                    message: 'Missing required field href in bundleProductSpecification'
+                });
+            }
+
+            retrieveProduct(spec.href, function(err, result) {
+                if (err) {
+                    taskCallback(err);
+                } else {
+                    var product = JSON.parse(result.body);
+
+                    // Validate that the bundle products belong to the same owner
+                    if (!tmfUtils.isOwner(req, product)) {
+                        return taskCallback({
+                            status: 403,
+                            message: 'You are not authorized to include the product spec ' + product.id + ' in a product spec bundle'
+                        });
+                    }
+
+                    // Validate that the bundle products are not also bundles
+                    if (product.isBundle) {
+                        return taskCallback({
+                            status: 422,
+                            message: 'It is not possible to include a product spec bundle in another product spec bundle'
+                        });
+                    }
+
+                    taskCallback(null);
+                }
+            });
+
+        }, function(err) {
+            if(err) {
+                callback(err);
+            } else {
+                callback(null);
+            }
+        });
+    };
 
     //////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////// CREATION //////////////////////////////////////////
@@ -417,14 +474,20 @@ var catalog = (function() {
                 });
             } else if (productsPattern.test(req.apiUrl)) {
 
-                // Check that the product specification contains a valid product
-                // according to the charging backed
-                storeClient.validateProduct(body, req.user, function (err) {
+                createHandler(req, body, function(err) {
                     if (err) {
-                        callback(err);
-                    } else {
-                        createHandler(req, body, callback);
+                        return callback(err);
                     }
+
+                    validateProduct(req, body, function(err) {
+                        if (err) {
+                            callback(err);
+                        } else {
+                            // Check that the product specification contains a valid product
+                            // according to the charging backed
+                            storeClient.validateProduct(body, req.user, callback);
+                        }
+                    });
                 });
             } else {
                 createHandler(req, body, callback);
@@ -626,7 +689,9 @@ var catalog = (function() {
     var executePostValidation = function(req, callback) {
         // Attach product spec info for product creation requests
         if (req.method == 'POST' && req.apiUrl.indexOf('productSpecification') > -1) {
-            store.attachProduct(JSON.parse(req.body), req.user, callback);
+            storeClient.attachProduct(JSON.parse(req.body), req.user, callback);
+        } else {
+            callback(null);
         }
     };
 
