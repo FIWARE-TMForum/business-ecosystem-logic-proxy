@@ -389,6 +389,14 @@ var catalog = (function() {
                         });
                     }
 
+                    // Validate that the bundled products are in a valid life cycle state (Active or launched)
+                    if([ACTIVE_STATE, LAUNCHED_STATE].indexOf(product.lifecycleStatus.toLowerCase()) < 0) {
+                        return taskCallback({
+                            status: 422,
+                            message: 'Only Active or Launched product specs can be included in a bundle'
+                        })
+                    }
+
                     taskCallback(null);
                 }
             });

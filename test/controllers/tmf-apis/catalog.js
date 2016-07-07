@@ -47,6 +47,7 @@ var MISSING_BUNDLE_PRODUCTS = 'Product spec bundles must contain at least two bu
 var MISSING_HREF_BUNDLE_INFO = 'Missing required field href in bundleProductSpecification';
 var UNAUTHORIZED_BUNDLE = 'You are not authorized to include the product spec 3 in a product spec bundle';
 var BUNDLE_INSIDE_BUNDLE = 'It is not possible to include a product spec bundle in another product spec bundle';
+var INVALID_BUNDLED_PRODUCT_STATUS = 'Only Active or Launched product specs can be included in a bundle';
 
 
 describe('Catalog API', function() {
@@ -676,14 +677,16 @@ describe('Catalog API', function() {
             status: 200,
             body: JSON.stringify({
                 id: '1',
-                isBundle: false
+                isBundle: false,
+                lifecycleStatus: 'Active'
             })
         }, {
             id: '2',
             status: 200,
             body: JSON.stringify({
                 id: '2',
-                isBundle: false
+                isBundle: false,
+                lifecycleStatus: 'Active'
             })
         }];
 
@@ -713,7 +716,8 @@ describe('Catalog API', function() {
             status: 200,
             body: JSON.stringify({
                 id: '1',
-                isBundle: false
+                isBundle: false,
+                lifecycleStatus: 'Active'
             })
         }, {
             id: '2',
@@ -730,14 +734,16 @@ describe('Catalog API', function() {
             status: 200,
             body: JSON.stringify({
                 id: '1',
-                isBundle: false
+                isBundle: false,
+                lifecycleStatus: 'Active'
             })
         }, {
             id: '3',
             status: 200,
             body: JSON.stringify({
                 id: '3',
-                isBundle: false
+                isBundle: false,
+                lifecycleStatus: 'Active'
             })
         }];
 
@@ -757,11 +763,34 @@ describe('Catalog API', function() {
             status: 200,
             body: JSON.stringify({
                 id: '2',
-                isBundle: false
+                isBundle: false,
+                lifecycleStatus: 'Active'
             })
         }];
 
         testCreateBundle(bundles, 422, BUNDLE_INSIDE_BUNDLE, done);
+    });
+
+    it('should not allow two create bundles with product specs that are not active or launched', function(done) {
+        var bundles = [{
+            id: '1',
+            status: 200,
+            body: JSON.stringify({
+                id: '1',
+                isBundle: false,
+                lifecycleStatus: 'Active'
+            })
+        }, {
+            id: '2',
+            status: 200,
+            body: JSON.stringify({
+                id: '2',
+                isBundle: false,
+                lifecycleStatus: 'Retired'
+            })
+        }];
+
+        testCreateBundle(bundles, 422, INVALID_BUNDLED_PRODUCT_STATUS, done);
     });
 
     var testCreateCategory = function(admin, category, categoriesRequest, errorStatus, errorMsg, done) {
