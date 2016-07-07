@@ -670,6 +670,17 @@ var catalog = (function() {
         }
     };
 
+    var isCategory = function(req, callback) {
+        var categoriesPattern = new RegExp('/category/[^/]+/?$');
+
+        if (!categoriesPattern.test(req.apiUrl)) {
+            return callback({
+                status: 405,
+                message: 'The HTTP method DELETE is not allowed in the accessed API'
+            });
+        }
+        callback(null);
+    };
 
     //////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////////// COMMON ///////////////////////////////////////////
@@ -680,7 +691,7 @@ var catalog = (function() {
         'POST': [ utils.validateLoggedIn, validateCreation ],
         'PATCH': [ utils.validateLoggedIn, validateUpdate ],
         'PUT': [ utils.validateLoggedIn, validateUpdate ],
-        'DELETE': [ utils.validateLoggedIn, validateUpdate ]
+        'DELETE': [ utils.validateLoggedIn, isCategory, validateUpdate]
     };
 
     var checkPermissions = function (req, callback) {

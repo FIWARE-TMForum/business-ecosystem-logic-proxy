@@ -22,6 +22,7 @@ var nock = require('nock'),
     testUtils = require('../../utils');
 
 // ERRORS
+var INVALID_METHOD = 'The HTTP method DELETE is not allowed in the accessed API';
 var PARENT_ID_INCLUDED = 'Parent ID cannot be included when the category is root';
 var MISSING_PARENT_ID = 'Non-root categories must contain a parent category';
 var FAILED_TO_RETRIEVE = 'The TMForum APIs fails to retrieve the object you are trying to update/delete';
@@ -145,7 +146,6 @@ describe('Catalog API', function() {
     it('should reject not authenticated DELETE requests', function(done) {
         testNotLoggedIn('DELETE', done);
     });
-
 
     //////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////////// CREATE ///////////////////////////////////////////
@@ -920,7 +920,7 @@ describe('Catalog API', function() {
 
     // ANY ASSET
 
-    var testUpdate = function(method, requestStatus, isOwnerMethod, done) {
+    var testUpdate = function(method, requestStatus, isOwnerMethod, expStatus, expMsg, done) {
 
         var checkRoleMethod = jasmine.createSpy();
         checkRoleMethod.and.returnValue(true);
@@ -967,15 +967,9 @@ describe('Catalog API', function() {
 
             if (isOwnerMethod() && requestStatus === 200) {
                 expect(err).toBe(null);
-            } else if (requestStatus === 404) {
-                expect(err.status).toBe(404);
-                expect(err.message).toBe('The required resource does not exist');
-            } else if ([200, 404].indexOf(requestStatus) < 0) {
-                expect(err.status).toBe(500);
-                expect(err.message).toBe(FAILED_TO_RETRIEVE);
             } else {
-                expect(err.status).toBe(403);
-                expect(err.message).toBe(INVALID_USER_UPDATE);
+                expect(err.status).toBe(expStatus);
+                expect(err.message).toBe(expMsg);
             }
 
             done();
@@ -983,57 +977,43 @@ describe('Catalog API', function() {
     };
 
     it('should allow to to update (PUT) an owned resource', function(done) {
-        testUpdate('PUT', 200, isOwnerTrue, done);
+        testUpdate('PUT', 200, isOwnerTrue, null, null, done);
     });
 
     it('should not allow to update (PUT) a non-owned resource', function(done) {
-        testUpdate('PUT', 200, isOwnerFalse, done);
+        testUpdate('PUT', 200, isOwnerFalse, 403, INVALID_USER_UPDATE, done);
     });
 
     it('should not allow to update (PUT) a resource that cannot be checked', function(done) {
         // The value of isOwner does not matter when requestFails is set to true
-        testUpdate('PUT', 500, isOwnerTrue, done);
+        testUpdate('PUT', 500, isOwnerTrue, 500, FAILED_TO_RETRIEVE, done);
     });
 
     it('should not allow to update (PUT) a resource that does not exist', function(done) {
         // The value of isOwner does not matter when requestFails is set to true
-        testUpdate('PUT', 404, isOwnerTrue, done);
+        testUpdate('PUT', 404, isOwnerTrue, 404, 'The required resource does not exist', done);
     });
 
     it('should allow to to update (PATCH) an owned resource', function(done) {
-        testUpdate('PATCH', 200, isOwnerTrue, done);
+        testUpdate('PATCH', 200, isOwnerTrue, null, null, done);
     });
 
     it('should not allow to update (PATCH) a non-owned resource', function(done) {
-        testUpdate('PATCH', 200, isOwnerFalse, done);
+        testUpdate('PATCH', 200, isOwnerFalse, 403, INVALID_USER_UPDATE, done);
     });
 
     it('should not allow to update (PATCH) a resource that cannot be checked', function(done) {
         // The value of isOwner does not matter when requestFails is set to true
-        testUpdate('PATCH', 500, isOwnerTrue, done);
+        testUpdate('PATCH', 500, isOwnerTrue, 500, FAILED_TO_RETRIEVE, done);
     });
 
     it('should not allow to update (PATCH) a resource that does not exist', function(done) {
         // The value of isOwner does not matter when requestFails is set to true
-        testUpdate('PATCH', 404, isOwnerTrue, done);
+        testUpdate('PATCH', 404, isOwnerTrue, 404, 'The required resource does not exist', done);
     });
 
-    it('should allow to to delete owned resource', function(done) {
-        testUpdate('DELETE', 200, isOwnerTrue, done);
-    });
-
-    it('should not allow to delete a non-owned resource', function(done) {
-        testUpdate('DELETE', 200, isOwnerFalse, done);
-    });
-
-    it('should not allow to delete a resource that cannot be checked', function(done) {
-        // The value of isOwner does not matter when requestFails is set to true
-        testUpdate('DELETE', 500, isOwnerTrue, done);
-    });
-
-    it('should not allow to delete a resource that does not exist', function(done) {
-        // The value of isOwner does not matter when requestFails is set to true
-        testUpdate('DELETE', 404, isOwnerTrue, done);
+    it('should not allow to make delete requests to the catalog API when no accessing category API', function(done) {
+        testUpdate('DELETE', null, isOwnerTrue, 405, INVALID_METHOD, done);
     });
 
     // OFFERINGS
