@@ -42,6 +42,11 @@ var catalog = (function() {
     /////////////////////////////////////////// COMMON ///////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
 
+    var offeringsPattern = new RegExp('/catalog/[^/]+/productOffering/[^/]+/?$');
+    var productsPattern = new RegExp('/productSpecification/?$');
+    var categoriesPattern = new RegExp('/category/?$');
+    var catalogsPattern = new RegExp('/catalog/[^/]+/?$');
+
     var retrieveAsset = function(assetPath, callback) {
 
         var uri = utils.getAPIURL(config.appSsl, config.appHost, config.endpoints.catalog.port, assetPath);
@@ -84,7 +89,7 @@ var catalog = (function() {
 
     // The request is directly allowed without extra validation required
     var validateAllowed = function(req, callback) {
-        callback();
+        callback(null);
     };
 
     var catalogPathFromOfferingUrl = function(offeringUrl) {
@@ -130,6 +135,47 @@ var catalog = (function() {
         });
     };
 
+    var validateOfferingFields = function(previousBody, newBody) {
+        var fixedFields = ['isBundle', 'productSpecification', 'bundledProductOffering'];
+        var modified = null;
+
+        for (var i = 0; i < fixedFields.length && modified == null; i++) {
+            var field = fixedFields[i];
+            if(!equal(newBody[field], previousBody[field])) {
+                modified = field;
+            }
+        }
+        return modified;
+    };
+
+    var validateOfferingCatalog = function(offeringPath, newBody, validStates, errorMessageStateCatalog, callback) {
+        // Retrieve the catalog
+        var catalogPath = catalogPathFromOfferingUrl(offeringPath);
+
+        retrieveAsset(catalogPath, function (err, result) {
+
+            if (err) {
+                callback({
+                    status: 500,
+                    message: 'The catalog attached to the offering cannot be read'
+                });
+            } else {
+
+                var catalog = JSON.parse(result.body);
+
+                // Check that tht catalog is in an appropriate state
+                if (checkAssetStatus(catalog, validStates)) {
+                    validateRSModel(req, newBody, callback);
+                } else {
+                    callback({
+                        status: 400,
+                        message: errorMessageStateCatalog
+                    });
+                }
+            }
+        });
+    };
+
     var validateOffering = function(req, offeringPath, previousBody, newBody, callback) {
 
         var validStates = null;
@@ -153,89 +199,133 @@ var catalog = (function() {
 
         }
 
-        // When updating an offering, it must be checked that the productSpecification field is not modified
-        if (newBody && previousBody && newBody.productSpecification &&
-                !equal(newBody.productSpecification, previousBody.productSpecification)) {
+        if (newBody && previousBody){
+            var modifiedField = validateOfferingFields(previousBody, newBody);
 
-            return callback({
-                status: 403,
-                message: 'Field productSpecification cannot be modified'
-            });
+            if (modifiedField !== null) {
+                return callback({
+                    status: 403,
+                    message: 'Field ' + modifiedField +' cannot be modified'
+                });
+            }
         }
 
-        // Check that the product attached to the offering is owned by the same user
-        var offeringBody = previousBody || newBody;
-        retrieveProduct(offeringBody.productSpecification.href, function(err, result) {
+        // Check if the offering is a bundle.
+        if (newBody.isBundle) {
+            // Bundle offerings cannot contain a productSpecification
+            if(newBody.productSpecification && newBody.productSpecification.length > 0) {
+                return callback({
+                    status: 422,
+                    message: 'Product offering bundles cannot contain a product specification'
+                });
+            }
 
-            if (err) {
+            // Validate that at least two offerings have been included
+            if (!newBody.bundledProductOffering || newBody.bundledProductOffering.length < 2) {
+                return callback({
+                    status: 422,
+                    message: 'Product offering bundles must contain at least two bundled offerings'
+                });
+            }
+
+            // Validate that the bundled offerings exists
+            async.each(newBody.bundledProductOffering, function(offering, taskCallback) {
+                if (!offering.href) {
+                    return taskCallback({
+                        status: 422,
+                        message: 'Missing required field href in bundled offering'
+                    });
+                }
+
+                var offeringPath = url.parse(offering.href).pathname;
+                retrieveAsset(offeringPath, function(err, result) {
+                    if (err) {
+                        var id = offering.id ? offering.id : '';
+                        return taskCallback({
+                            status: 422,
+                            message: 'The bundled offering ' + id + ' cannot be accessed or does not exists'
+                        });
+                    }
+
+                    // Check that the included offering is not also a bundle
+                    var bundledOffering = JSON.parse(result.body);
+                    if (bundledOffering.isBundle) {
+                        return taskCallback({
+                            status: 422,
+                            message: 'Product offering bundles cannot include another bundle'
+                        });
+                    }
+
+                    if (validStates != null) {
+                        validateOfferingCatalog(offeringPath, newBody, validStates, errorMessageStateCatalog, taskCallback);
+                    } else {
+                        taskCallback(null);
+                    }
+
+                });
+
+            }, function(err) {
                 callback(err);
-            } else {
+            })
 
-                var product = JSON.parse(result.body);
 
-                // Check that the user is the owner of the product
-                if (tmfUtils.isOwner(req, product)) {
+        } else {
+            // Non bundles cannot contain a bundleProductOffering
+            if (newBody.bundledProductOffering && newBody.bundledProductOffering.length > 0) {
+                return callback({
+                    status: 422,
+                    message: 'Product offerings which are not a bundle cannot contain a bundled product offering'
+                });
+            }
 
-                    // States are only checked when the offering is being created
-                    // or when the offering is being launched
+            // Check that the product attached to the offering is owned by the same user
+            var offeringBody = previousBody || newBody;
+            retrieveProduct(offeringBody.productSpecification.href, function(err, result) {
 
-                    if (validStates !== null) {
+                if (err) {
+                    callback(err);
+                } else {
 
-                        // Check that the product is in an appropriate state
-                        if (checkAssetStatus(product, validStates)) {
+                    var product = JSON.parse(result.body);
 
-                            // Retrieve the catalog
-                            var catalogPath = catalogPathFromOfferingUrl(offeringPath);
+                    // Check that the user is the owner of the product
+                    if (tmfUtils.isOwner(req, product)) {
 
-                            retrieveAsset(catalogPath, function (err, result) {
+                        // States are only checked when the offering is being created
+                        // or when the offering is being launched
 
-                                if (err) {
-                                    callback({
-                                        status: 500,
-                                        message: 'The catalog attached to the offering cannot be read'
-                                    });
-                                } else {
+                        if (validStates !== null) {
 
-                                    var catalog = JSON.parse(result.body);
+                            // Check that the product is in an appropriate state
+                            if (checkAssetStatus(product, validStates)) {
+                                validateOfferingCatalog(offeringPath, newBody, validStates, errorMessageStateCatalog, callback);
 
-                                    // Check that tht catalog is in an appropriate state
-                                    if (checkAssetStatus(catalog, validStates)) {
-                                        validateRSModel(req, newBody, callback);
-                                    } else {
-                                        callback({
-                                            status: 400,
-                                            message: errorMessageStateCatalog
-                                        });
-                                    }
-                                }
-                            });
+                            } else {
+                                callback({
+                                    status: 400,
+                                    message: errorMessageStateProduct
+                                });
+                            }
 
                         } else {
-
-                            callback({
-                                status: 400,
-                                message: errorMessageStateProduct
-                            });
+                            // When the offering is not being created or launched, the states must not be checked
+                            // and we can call the callback after checking that the user is the owner of the attached
+                            // product
+                            callback(null);
                         }
 
                     } else {
-                        // When the offering is not being created or launched, the states must not be checked
-                        // and we can call the callback after checking that the user is the owner of the attached
-                        // product
-                        callback();
+
+                        var operation = previousBody != null ? 'update' : 'create';
+
+                        callback({
+                            status: 403,
+                            message: 'You are not allowed to ' + operation + ' offerings for products you do not own'
+                        });
                     }
-
-                } else {
-
-                    var operation = previousBody != null ? 'update' : 'create';
-
-                    callback({
-                        status: 403,
-                        message: 'You are not allowed to ' + operation + ' offerings for products you do not own'
-                    });
                 }
-            }
-        });
+            });
+        }
     };
 
     var checkExistingCategory = function(apiUrl, categoryName, isRoot, parentId, callback) {
@@ -264,7 +354,7 @@ var catalog = (function() {
                 var existingCategories = JSON.parse(result.body);
 
                 if (!existingCategories.length) {
-                    callback();
+                    callback(null);
                 } else {
                     callback({
                         status: 409,
@@ -334,12 +424,12 @@ var catalog = (function() {
                         if (newCategory || nameUpdated || isRootUpdated || parentIdUpdated) {
                             checkExistingCategory(req.apiUrl, categoryName, isRoot, parentId, callback);
                         } else {
-                            callback();
+                            callback(null);
                         }
                     }
                 }
             } else {
-                callback();
+                callback(null);
             }
         }
     };
@@ -402,11 +492,7 @@ var catalog = (function() {
             });
 
         }, function(err) {
-            if(err) {
-                callback(err);
-            } else {
-                callback(null);
-            }
+            callback(err);
         });
     };
 
@@ -416,7 +502,7 @@ var catalog = (function() {
 
     var createHandler = function(req, resp, callback) {
         if (tmfUtils.isOwner(req, resp)) {
-            callback();
+            callback(null);
         } else {
             callback({
                 status: 403,
@@ -427,10 +513,6 @@ var catalog = (function() {
 
     // Validate the creation of a resource
     var validateCreation = function(req, callback) {
-
-        var offeringsPattern = new RegExp('/productOffering/?$');
-        var productsPattern = new RegExp('/productSpecification/?$');
-        var categoriesPattern = new RegExp('/category/?$');
 
         var body;
 
@@ -474,7 +556,7 @@ var catalog = (function() {
                             if (err) {
                                 callback(err);
                             } else {
-                                callback();
+                                callback(null);
                             }
                         });
                     }
@@ -551,7 +633,7 @@ var catalog = (function() {
                     }
 
                     if (offeringsValid) {
-                        callback();
+                        callback(null);
                     } else {
                         callback({
                             status: 400,
@@ -562,7 +644,7 @@ var catalog = (function() {
             });
 
         } else {
-            callback();
+            callback(null);
         }
 
     };
@@ -578,11 +660,6 @@ var catalog = (function() {
 
             return !Object.keys(object).length;
         }
-
-        var catalogsPattern = new RegExp('/catalog/[^/]+/?$');
-        var offeringsPattern = new RegExp('/catalog/[^/]+/productOffering/[^/]+/?$');
-        var productsPattern = new RegExp('/productSpecification/[^/]+/?$');
-        var categoriesPattern = new RegExp('/category/[^/]+/?$');
 
         try {
 
@@ -648,7 +725,7 @@ var catalog = (function() {
                                 validateInvolvedOfferingsState('product', parsedBody, offeringsContainProductPath, callback);
 
                             } else {
-                                callback();
+                                callback(null);
                             }
 
                         } else {
@@ -671,7 +748,6 @@ var catalog = (function() {
     };
 
     var isCategory = function(req, callback) {
-        var categoriesPattern = new RegExp('/category/[^/]+/?$');
 
         if (!categoriesPattern.test(req.apiUrl)) {
             return callback({
@@ -706,9 +782,12 @@ var catalog = (function() {
     };
 
     var executePostValidation = function(req, callback) {
-        // Attach product spec info for product creation requests
-        if (req.method == 'POST' && req.apiUrl.indexOf('productSpecification') > -1) {
+        // Attach product spec info for product creation request
+
+        if (req.method == 'POST' && productsPattern.test(req.apiUrl)) {
             storeClient.attachProduct(JSON.parse(req.body), req.user, callback);
+        } else if (req.method == 'POST' && offeringsPattern.test(req.apiUrl)) {
+            storeClient.attachOffering(JSON.parse(req.body), req.user, callback);
         } else {
             callback(null);
         }
