@@ -1115,7 +1115,6 @@ describe('Catalog API', function() {
     };
 
     it('should allow to update an owned offering', function(done) {
-
         var productRequestInfo = {
             requestStatus: 200,
             owner: true,
@@ -1180,7 +1179,6 @@ describe('Catalog API', function() {
             requestStatus: 200,
             lifecycleStatus: 'active'
         };
-
         testUpdateProductOffering({}, productRequestInfo, catalogRequestInfo, 403, UPDATE_OFFERING_WITH_NON_OWNED_PRODUCT, done);
     });
 

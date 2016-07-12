@@ -42,10 +42,10 @@ var catalog = (function() {
     /////////////////////////////////////////// COMMON ///////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
 
-    var offeringsPattern = new RegExp('/catalog/[^/]+/productOffering/[^/]+/?$');
+    var offeringsPattern = new RegExp('/productOffering/?$');
     var productsPattern = new RegExp('/productSpecification/?$');
+    var categoryPattern = new RegExp('/category/[^/]+/?$');
     var categoriesPattern = new RegExp('/category/?$');
-    var catalogsPattern = new RegExp('/catalog/[^/]+/?$');
 
     var retrieveAsset = function(assetPath, callback) {
 
@@ -98,6 +98,11 @@ var catalog = (function() {
     };
 
     var validateRSModel = function(req, body, callback) {
+        // Someone may have made a PATCH request without body
+        if (body == null) {
+            return callback(null);
+        }
+
         // Check if the provider has been included in the RSS
         rssClient.createProvider(req.user, function(err) {
             if (err) {
@@ -141,14 +146,14 @@ var catalog = (function() {
 
         for (var i = 0; i < fixedFields.length && modified == null; i++) {
             var field = fixedFields[i];
-            if(!equal(newBody[field], previousBody[field])) {
+            if(newBody[field] && !equal(newBody[field], previousBody[field])) {
                 modified = field;
             }
         }
         return modified;
     };
 
-    var validateOfferingCatalog = function(offeringPath, newBody, validStates, errorMessageStateCatalog, callback) {
+    var validateOfferingCatalog = function(req, offeringPath, newBody, validStates, errorMessageStateCatalog, callback) {
         // Retrieve the catalog
         var catalogPath = catalogPathFromOfferingUrl(offeringPath);
 
@@ -211,9 +216,10 @@ var catalog = (function() {
         }
 
         // Check if the offering is a bundle.
-        if (newBody.isBundle) {
+        var offeringBody = previousBody || newBody;
+        if (offeringBody.isBundle) {
             // Bundle offerings cannot contain a productSpecification
-            if(newBody.productSpecification && newBody.productSpecification.length > 0) {
+            if(offeringBody.productSpecification && offeringBody.productSpecification.length > 0) {
                 return callback({
                     status: 422,
                     message: 'Product offering bundles cannot contain a product specification'
@@ -221,7 +227,7 @@ var catalog = (function() {
             }
 
             // Validate that at least two offerings have been included
-            if (!newBody.bundledProductOffering || newBody.bundledProductOffering.length < 2) {
+            if (!offeringBody.bundledProductOffering || offeringBody.bundledProductOffering.length < 2) {
                 return callback({
                     status: 422,
                     message: 'Product offering bundles must contain at least two bundled offerings'
@@ -229,7 +235,7 @@ var catalog = (function() {
             }
 
             // Validate that the bundled offerings exists
-            async.each(newBody.bundledProductOffering, function(offering, taskCallback) {
+            async.each(offeringBody.bundledProductOffering, function(offering, taskCallback) {
                 if (!offering.href) {
                     return taskCallback({
                         status: 422,
@@ -257,7 +263,7 @@ var catalog = (function() {
                     }
 
                     if (validStates != null) {
-                        validateOfferingCatalog(offeringPath, newBody, validStates, errorMessageStateCatalog, taskCallback);
+                        validateOfferingCatalog(req, offeringPath, newBody, validStates, errorMessageStateCatalog, taskCallback);
                     } else {
                         taskCallback(null);
                     }
@@ -268,10 +274,9 @@ var catalog = (function() {
                 callback(err);
             })
 
-
         } else {
             // Non bundles cannot contain a bundleProductOffering
-            if (newBody.bundledProductOffering && newBody.bundledProductOffering.length > 0) {
+            if (offeringBody.bundledProductOffering && offeringBody.bundledProductOffering.length > 0) {
                 return callback({
                     status: 422,
                     message: 'Product offerings which are not a bundle cannot contain a bundled product offering'
@@ -279,7 +284,6 @@ var catalog = (function() {
             }
 
             // Check that the product attached to the offering is owned by the same user
-            var offeringBody = previousBody || newBody;
             retrieveProduct(offeringBody.productSpecification.href, function(err, result) {
 
                 if (err) {
@@ -298,7 +302,7 @@ var catalog = (function() {
 
                             // Check that the product is in an appropriate state
                             if (checkAssetStatus(product, validStates)) {
-                                validateOfferingCatalog(offeringPath, newBody, validStates, errorMessageStateCatalog, callback);
+                                validateOfferingCatalog(req, offeringPath, newBody, validStates, errorMessageStateCatalog, callback);
 
                             } else {
                                 callback({
@@ -546,9 +550,7 @@ var catalog = (function() {
             }
 
             if (offeringsPattern.test(req.apiUrl)) {
-
                 validateOffering(req, req.apiUrl, null, body, function (err) {
-
                     if (err) {
                         callback(err);
                     } else {
@@ -646,7 +648,6 @@ var catalog = (function() {
         } else {
             callback(null);
         }
-
     };
 
     // Validate the modification of a resource
@@ -660,6 +661,10 @@ var catalog = (function() {
 
             return !Object.keys(object).length;
         }
+
+        var catalogsPattern = new RegExp('/catalog/[^/]+/?$');
+        var offeringsPattern = new RegExp('/catalog/[^/]+/productOffering/[^/]+/?$');
+        var productsPattern = new RegExp('/productSpecification/[^/]+/?$');
 
         try {
 
@@ -686,12 +691,10 @@ var catalog = (function() {
 
                     var previousBody = JSON.parse(result.body);
 
-                    if (categoriesPattern.test(req.apiUrl)) {
-
+                    if (categoryPattern.test(req.apiUrl)) {
                         validateCategory(req, parsedBody, previousBody, 'modify', callback);
 
                     } else if (offeringsPattern.test(req.apiUrl)) {
-
                         validateOffering(req, req.apiUrl, previousBody, parsedBody, callback);
 
                     } else {
@@ -749,7 +752,7 @@ var catalog = (function() {
 
     var isCategory = function(req, callback) {
 
-        if (!categoriesPattern.test(req.apiUrl)) {
+        if (!categoryPattern.test(req.apiUrl)) {
             return callback({
                 status: 405,
                 message: 'The HTTP method DELETE is not allowed in the accessed API'
