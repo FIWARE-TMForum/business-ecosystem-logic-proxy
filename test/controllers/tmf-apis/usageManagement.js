@@ -77,11 +77,11 @@ describe('Usage Management API', function () {
                 testMethodNotAllowed('PUT', done);
             });
 
-            it('should reject PUT requests', function (done) {
+            it('should reject PATCH requests', function (done) {
                 testMethodNotAllowed('PATCH', done);
             });
 
-            it('should reject PUT requests', function (done) {
+            it('should reject DELETE requests', function (done) {
                 testMethodNotAllowed('DELETE', done);
             });
 
