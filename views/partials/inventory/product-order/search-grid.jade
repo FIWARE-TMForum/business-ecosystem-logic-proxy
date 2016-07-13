@@ -9,16 +9,15 @@
         .h4
           strong
             a(ui-sref="inventory.productOrder.detail({ productOrderId: productOrder.id })", ui-sref-opts="{ inherit: false }")
-              time(title="{{ productOrder.requestedStartDate | amDateFormat: 'dddd, MMMM Do YYYY, h:mm a' }}") {{ productOrder.requestedStartDate | amCalendar }}
+              time(title="{{ productOrder.orderDate | amDateFormat: 'dddd, MMMM Do YYYY, h:mm a' }}") {{ productOrder.orderDate | amCalendar }}
           .small
             dl.dl-horizontal
               dt Customer
-              dd.text-dark-secondary {{ productOrder.getCustomer().id }}
+              dd {{ productOrder.getCustomer().id }}
               dt Status
-              dd.text-dark-secondary
-                span {{ productOrder.state }}
+              dd {{ productOrder.state }}
               dt Priority
-              dd.text-dark-secondary {{ productOrder.priority }}
+              dd {{ productOrder.priority }}
       .panel-body
         .row(ng-repeat="orderItem in productOrder.orderItem")
           hr(ng-if="!$first")
