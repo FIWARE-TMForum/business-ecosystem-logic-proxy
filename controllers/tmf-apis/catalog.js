@@ -153,32 +153,65 @@ var catalog = (function() {
         return modified;
     };
 
-    var validateOfferingCatalog = function(req, offeringPath, newBody, validStates, errorMessageStateCatalog, callback) {
-        // Retrieve the catalog
-        var catalogPath = catalogPathFromOfferingUrl(offeringPath);
+    var validateAssetPermissions = function(req, asset, offeringPath, newBody, validStates,
+                                            errorMessageStateCatalog, errorMessageStateProduct, userNotAllowedMsg, callback) {
 
-        retrieveAsset(catalogPath, function (err, result) {
+        // Check that the user is the owner of the product
+        if (tmfUtils.isOwner(req, asset)) {
 
-            if (err) {
-                callback({
-                    status: 500,
-                    message: 'The catalog attached to the offering cannot be read'
-                });
-            } else {
+            // States are only checked when the offering is being created
+            // or when the offering is being launched
 
-                var catalog = JSON.parse(result.body);
+            if (validStates !== null) {
 
-                // Check that tht catalog is in an appropriate state
-                if (checkAssetStatus(catalog, validStates)) {
-                    validateRSModel(req, newBody, callback);
+                // Check that the product is in an appropriate state
+                if (checkAssetStatus(asset, validStates)) {
+                    // Retrieve the catalog
+                    var catalogPath = catalogPathFromOfferingUrl(offeringPath);
+
+                    retrieveAsset(catalogPath, function (err, result) {
+
+                        if (err) {
+                            callback({
+                                status: 500,
+                                message: 'The catalog attached to the offering cannot be read'
+                            });
+                        } else {
+
+                            var catalog = JSON.parse(result.body);
+
+                            // Check that tht catalog is in an appropriate state
+                            if (checkAssetStatus(catalog, validStates)) {
+                                validateRSModel(req, newBody, callback);
+                            } else {
+                                callback({
+                                    status: 400,
+                                    message: errorMessageStateCatalog
+                                });
+                            }
+                        }
+                    });
                 } else {
                     callback({
                         status: 400,
-                        message: errorMessageStateCatalog
+                        message: errorMessageStateProduct
                     });
                 }
+
+            } else {
+                // When the offering is not being created or launched, the states must not be checked
+                // and we can call the callback after checking that the user is the owner of the attached
+                // product
+                callback(null);
             }
-        });
+
+        } else {
+            callback({
+                status: 403,
+                message: userNotAllowedMsg
+            });
+        }
+
     };
 
     var validateOffering = function(req, offeringPath, previousBody, newBody, callback) {
@@ -262,11 +295,9 @@ var catalog = (function() {
                         });
                     }
 
-                    if (validStates != null) {
-                        validateOfferingCatalog(req, offeringPath, newBody, validStates, errorMessageStateCatalog, taskCallback);
-                    } else {
-                        taskCallback(null);
-                    }
+                    var userNotAllowedMsg = 'You are not allowed to bundle offerings you do not own';
+                    validateAssetPermissions(req, product, offeringPath, newBody, validStates,
+                        errorMessageStateCatalog, errorMessageStateProduct, userNotAllowedMsg, taskCallback);
 
                 });
 
@@ -300,48 +331,15 @@ var catalog = (function() {
 
             // Check that the product attached to the offering is owned by the same user
             retrieveProduct(offeringBody.productSpecification.href, function(err, result) {
-
                 if (err) {
                     callback(err);
                 } else {
-
+                    var operation = previousBody != null ? 'update' : 'create';
+                    var userNotAllowedMsg = 'You are not allowed to ' + operation + ' offerings for products you do not own';
                     var product = JSON.parse(result.body);
 
-                    // Check that the user is the owner of the product
-                    if (tmfUtils.isOwner(req, product)) {
-
-                        // States are only checked when the offering is being created
-                        // or when the offering is being launched
-
-                        if (validStates !== null) {
-
-                            // Check that the product is in an appropriate state
-                            if (checkAssetStatus(product, validStates)) {
-                                validateOfferingCatalog(req, offeringPath, newBody, validStates, errorMessageStateCatalog, callback);
-
-                            } else {
-                                callback({
-                                    status: 400,
-                                    message: errorMessageStateProduct
-                                });
-                            }
-
-                        } else {
-                            // When the offering is not being created or launched, the states must not be checked
-                            // and we can call the callback after checking that the user is the owner of the attached
-                            // product
-                            callback(null);
-                        }
-
-                    } else {
-
-                        var operation = previousBody != null ? 'update' : 'create';
-
-                        callback({
-                            status: 403,
-                            message: 'You are not allowed to ' + operation + ' offerings for products you do not own'
-                        });
-                    }
+                    validateAssetPermissions(req, product, offeringPath, newBody, validStates,
+                        errorMessageStateCatalog, errorMessageStateProduct, userNotAllowedMsg, callback);
                 }
             });
         }
