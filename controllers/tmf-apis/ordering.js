@@ -517,7 +517,10 @@ var ordering = (function(){
 
                         if (Object.keys(ordering).length == 1 && 'orderItem' in ordering) {
                             updateItemsState(req, ordering, previousOrdering, false, callback);
+                        } else if ('note' in ordering) {
+                            callback();
                         } else {
+
                             callback({
                                 status: 403,
                                 message: 'Sellers can only modify order items'
