@@ -283,6 +283,21 @@ var catalog = (function() {
                 });
             }
 
+            // Check that a productSpecification has been included
+            if (!offeringBody.productSpecification || utils.emptyObject(offeringBody.productSpecification)) {
+                return callback({
+                    status: 422,
+                    message: 'Product offerings must contain a productSpecification'
+                });
+            }
+
+            if (!offeringBody.productSpecification.href) {
+                return callback({
+                    status: 422,
+                    message: 'Missing required field href in product specification'
+                });
+            }
+
             // Check that the product attached to the offering is owned by the same user
             retrieveProduct(offeringBody.productSpecification.href, function(err, result) {
 
@@ -653,22 +668,13 @@ var catalog = (function() {
     // Validate the modification of a resource
     var validateUpdate = function(req, callback) {
 
-        function emptyObject(object) {
-
-            if (!object) {
-                return true;
-            }
-
-            return !Object.keys(object).length;
-        }
-
         var catalogsPattern = new RegExp('/catalog/[^/]+/?$');
         var offeringsPattern = new RegExp('/catalog/[^/]+/productOffering/[^/]+/?$');
         var productsPattern = new RegExp('/productSpecification/[^/]+/?$');
 
         try {
 
-            var parsedBody = emptyObject(req.body) ? null : JSON.parse(req.body);
+            var parsedBody = utils.emptyObject(req.body) ? null : JSON.parse(req.body);
 
             // Retrieve the resource to be updated or removed
             retrieveAsset(req.apiUrl, function (err, result) {
