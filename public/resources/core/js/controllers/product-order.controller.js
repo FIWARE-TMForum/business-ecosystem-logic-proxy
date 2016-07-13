@@ -304,7 +304,7 @@
             }
 
             apiInfo.orderDate = new Date();
-            apiInfo.notificationContact = vm.billingAccount.getEmailAddress().emailAddress.toString();
+            apiInfo.notificationContact = vm.billingAccount.getEmailAddress().toString();
 
             ProductOrder.create(apiInfo).then(function(orderCreated) {
                 if ('x-redirect-url' in orderCreated.headers) {
