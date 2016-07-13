@@ -153,8 +153,34 @@ var catalog = (function() {
         return modified;
     };
 
-    var validateAssetPermissions = function(req, asset, offeringPath, newBody, validStates,
-                                            errorMessageStateCatalog, errorMessageStateProduct, userNotAllowedMsg, callback) {
+    var validateCatalog = function(req, offeringPath, validStates, newBody, errorMessageStateCatalog, callback) {
+        // Retrieve the catalog
+        var catalogPath = catalogPathFromOfferingUrl(offeringPath);
+        retrieveAsset(catalogPath, function (err, result) {
+
+            if (err) {
+                callback({
+                    status: 500,
+                    message: 'The catalog attached to the offering cannot be read'
+                });
+            } else {
+
+                var catalog = JSON.parse(result.body);
+
+                // Check that tht catalog is in an appropriate state
+                if (checkAssetStatus(catalog, validStates)) {
+                    validateRSModel(req, newBody, callback);
+                } else {
+                    callback({
+                        status: 400,
+                        message: errorMessageStateCatalog
+                    });
+                }
+            }
+        });
+    };
+
+    var validateAssetPermissions = function(req, asset, validStates, errorMessageStateProduct, userNotAllowedMsg, callback) {
 
         // Check that the user is the owner of the product
         if (tmfUtils.isOwner(req, asset)) {
@@ -166,31 +192,7 @@ var catalog = (function() {
 
                 // Check that the product is in an appropriate state
                 if (checkAssetStatus(asset, validStates)) {
-                    // Retrieve the catalog
-                    var catalogPath = catalogPathFromOfferingUrl(offeringPath);
-
-                    retrieveAsset(catalogPath, function (err, result) {
-
-                        if (err) {
-                            callback({
-                                status: 500,
-                                message: 'The catalog attached to the offering cannot be read'
-                            });
-                        } else {
-
-                            var catalog = JSON.parse(result.body);
-
-                            // Check that tht catalog is in an appropriate state
-                            if (checkAssetStatus(catalog, validStates)) {
-                                validateRSModel(req, newBody, callback);
-                            } else {
-                                callback({
-                                    status: 400,
-                                    message: errorMessageStateCatalog
-                                });
-                            }
-                        }
-                    });
+                    callback(null);
                 } else {
                     callback({
                         status: 400,
@@ -252,7 +254,7 @@ var catalog = (function() {
         var offeringBody = previousBody || newBody;
         if (offeringBody.isBundle) {
             // Bundle offerings cannot contain a productSpecification
-            if(offeringBody.productSpecification && offeringBody.productSpecification.length > 0) {
+            if(offeringBody.productSpecification) {
                 return callback({
                     status: 422,
                     message: 'Product offering bundles cannot contain a product specification'
@@ -296,13 +298,19 @@ var catalog = (function() {
                     }
 
                     var userNotAllowedMsg = 'You are not allowed to bundle offerings you do not own';
-                    validateAssetPermissions(req, product, offeringPath, newBody, validStates,
-                        errorMessageStateCatalog, errorMessageStateProduct, userNotAllowedMsg, taskCallback);
+                    validateAssetPermissions(req, bundledOffering, validStates, errorMessageStateProduct, userNotAllowedMsg, taskCallback);
 
                 });
 
             }, function(err) {
-                callback(err);
+                if (err) {
+                    callback(err);
+                } else if (validStates != null) {
+                    // This validation only need to be executed once
+                    validateCatalog(req, offeringPath, validStates, newBody, errorMessageStateCatalog, callback);
+                } else {
+                    callback(null);
+                }
             })
 
         } else {
@@ -338,8 +346,15 @@ var catalog = (function() {
                     var userNotAllowedMsg = 'You are not allowed to ' + operation + ' offerings for products you do not own';
                     var product = JSON.parse(result.body);
 
-                    validateAssetPermissions(req, product, offeringPath, newBody, validStates,
-                        errorMessageStateCatalog, errorMessageStateProduct, userNotAllowedMsg, callback);
+                    validateAssetPermissions(req, product, validStates, errorMessageStateProduct, userNotAllowedMsg, function(err) {
+                        if (err) {
+                            callback(err);
+                        } else if (validStates != null) {
+                            validateCatalog(req, offeringPath, validStates, newBody, errorMessageStateCatalog, callback);
+                        } else {
+                            callback(null);
+                        }
+                    });
                 }
             });
         }
@@ -503,7 +518,6 @@ var catalog = (function() {
                             message: 'Only Active or Launched product specs can be included in a bundle'
                         })
                     }
-
                     taskCallback(null);
                 }
             });
