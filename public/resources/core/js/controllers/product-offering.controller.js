@@ -73,7 +73,7 @@
                 templateUrl: 'stock/product-offering/create/general'
             },
             {
-                title: 'Bundled Offering',
+                title: 'Bundle',
                 templateUrl: 'stock/product-offering/create/bundle'
             },
             {
@@ -236,11 +236,17 @@
             } else {
                 vm.data.bundledProductOffering.push(offering);
             }
+
+            stepList[1].form.$valid = vm.data.bundledProductOffering.length >= 2;
         }
 
         function toggleBundle() {
             if (!vm.data.isBundle) {
                 vm.data.bundledProductOffering.length = 0;
+                stepList[1].form.$valid = true;
+            } else {
+                stepList[1].form.$valid = false;
+                vm.product = undefined;
             }
         }
 

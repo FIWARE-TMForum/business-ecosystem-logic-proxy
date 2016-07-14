@@ -289,11 +289,16 @@
                 category: data.category.map(function (category) {
                     return category.serialize();
                 }),
-                productSpecification: product.serialize(),
                 bundledProductOffering: data.bundledProductOffering.map(function (offering) {
                     return offering.serialize();
                 })
             });
+
+            if(!data.isBundle) {
+                angular.extend(data, {
+                    productSpecification: product.serialize()
+                });
+            }
 
             resource.save(params, data, function (offeringCreated) {
                 offeringCreated.productSpecification = product;
