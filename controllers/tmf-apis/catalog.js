@@ -25,6 +25,7 @@ var async = require('async'),
     rssClient = require('./../../lib/rss').rssClient,
     url = require('url'),
     utils = require('./../../lib/utils'),
+    logger = require('./../../lib/logger').logger.getLogger('TMF'),
     tmfUtils = require('./../../lib/tmfUtils');
 
 var LIFE_CYCLE = 'lifecycleStatus';
@@ -182,37 +183,54 @@ var catalog = (function() {
 
     var validateAssetPermissions = function(req, asset, validStates, errorMessageStateProduct, userNotAllowedMsg, callback) {
 
-        // Check that the user is the owner of the product
-        if (tmfUtils.isOwner(req, asset)) {
+        // Check that the user is the owner of the asset
+        // Offerings don't include a relatedParty field, so for bundles it is needed to retrieve the product
+        var ownerHandler = function(req, asset, hdlrCallback) {
+            if (!asset.relatedParty) {
+                retrieveProduct(asset.productSpecification.href, function(err, result) {
+                    var isOwner = false;
+                    if (!err) {
+                        var product = JSON.parse(result.body);
+                        isOwner = tmfUtils.isOwner(req, product);
+                    }
+                    hdlrCallback(isOwner);
+                });
+            } else {
+                hdlrCallback(tmfUtils.isOwner(req, asset));
+            }
+        };
 
-            // States are only checked when the offering is being created
-            // or when the offering is being launched
+        ownerHandler(req, asset, function(isOwner) {
+            if (isOwner) {
+                // States are only checked when the offering is being created
+                // or when the offering is being launched
 
-            if (validStates !== null) {
+                if (validStates !== null) {
 
-                // Check that the product is in an appropriate state
-                if (checkAssetStatus(asset, validStates)) {
-                    callback(null);
+                    // Check that the product is in an appropriate state
+                    if (checkAssetStatus(asset, validStates)) {
+                        callback(null);
+                    } else {
+                        callback({
+                            status: 400,
+                            message: errorMessageStateProduct
+                        });
+                    }
+
                 } else {
-                    callback({
-                        status: 400,
-                        message: errorMessageStateProduct
-                    });
+                    // When the offering is not being created or launched, the states must not be checked
+                    // and we can call the callback after checking that the user is the owner of the attached
+                    // product
+                    callback(null);
                 }
 
             } else {
-                // When the offering is not being created or launched, the states must not be checked
-                // and we can call the callback after checking that the user is the owner of the attached
-                // product
-                callback(null);
+                callback({
+                    status: 403,
+                    message: userNotAllowedMsg
+                });
             }
-
-        } else {
-            callback({
-                status: 403,
-                message: userNotAllowedMsg
-            });
-        }
+        });
 
     };
 
