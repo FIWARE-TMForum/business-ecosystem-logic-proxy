@@ -219,12 +219,32 @@
                             return product.id;
                         }).join();
 
+                        // Get provider single offerings using product ids
                         resource.query(params, function (offeringList) {
                             offeringList.forEach(function (offering) {
                                 extendPricePlans(offering);
                                 offering.productSpecification = products[offering.productSpecification.id];
                             });
-                            deferred.resolve(offeringList);
+
+                            // Get provider bundle offerings using the single offering ids
+                            if (offeringList.length) {
+                                delete params['productSpecification.id'];
+                                params['bundledProductOffering.id'] = offeringList.map(function(offering) {
+                                    return offering.id;
+                                }).join();
+
+                                resource.query(params, function(bundleOffList) {
+                                    bundleOffList.forEach(function(offering) {
+                                        extendPricePlans(offering);
+                                        offeringList.push(offering);
+                                    });
+
+                                    deferred.resolve(offeringList);
+                                });
+                            } else {
+                                deferred.resolve([]);
+                            }
+
                         }, function(response) {
                             deferred.reject(response);
                         });
