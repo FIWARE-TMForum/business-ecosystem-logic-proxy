@@ -228,14 +228,20 @@
 
                             // Get provider bundle offerings using the single offering ids
                             if (offeringList.length) {
+                                var singleOfferings = {};
+
                                 delete params['productSpecification.id'];
                                 params['bundledProductOffering.id'] = offeringList.map(function(offering) {
+                                    singleOfferings[offering.id] = offering;
                                     return offering.id;
                                 }).join();
 
                                 resource.query(params, function(bundleOffList) {
                                     bundleOffList.forEach(function(offering) {
                                         extendPricePlans(offering);
+                                        offering.bundledProductOffering.forEach(function(bundled) {
+                                            bundled.productSpecification = singleOfferings[bundled.id].productSpecification;
+                                        });
                                         offeringList.push(offering);
                                     });
 
@@ -501,7 +507,15 @@
 
         function getPicture() {
             /* jshint validthis: true */
-            return this.productSpecification.getPicture();
+            var picture = null;
+            if (this.productSpecification) {
+                picture = this.productSpecification.getPicture();
+            } else {
+                // The offering is a bundle, get a random image from its bundled offerings
+                var imageIndex = Math.floor(Math.random() * (this.bundledProductOffering.length));
+                picture = this.bundledProductOffering[imageIndex].productSpecification.getPicture();
+            }
+            return picture;
         }
 
         function formatCheapestPricePlan() {
