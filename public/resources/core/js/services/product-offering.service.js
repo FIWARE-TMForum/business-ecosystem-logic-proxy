@@ -357,10 +357,14 @@
                     var productOffering = collection[0];
 
                     extendPricePlans(productOffering);
-                    ProductSpec.detail(productOffering.productSpecification.id).then(function (productRetrieved) {
-                        productOffering.productSpecification = productRetrieved;
-                        detailRelationship(productOffering);
-                    });
+                    if (productOffering.productSpecification) {
+                        ProductSpec.detail(productOffering.productSpecification.id).then(function (productRetrieved) {
+                            productOffering.productSpecification = productRetrieved;
+                            detailRelationship(productOffering);
+                        });
+                    } else {
+                        extendBundledProductOffering(productOffering);
+                    }
                 } else {
                     deferred.reject(404);
                 }
@@ -391,12 +395,12 @@
                                 });
                             });
                         }
-                        extendBundledProductOffering(productOffering);
+                        extendCategory(productOffering);
                     }, function (response) {
                         deferred.reject(response);
                     });
                 } else {
-                    extendBundledProductOffering(productOffering);
+                    extendCategory(productOffering);
                 }
             }
 
