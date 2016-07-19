@@ -1625,7 +1625,7 @@ describe('Ordering API', function() {
 
         it('should not filter the ordering as the user is involved in', function(done) {
 
-            var order = { item: { orderItems: [ {}, {}, {} ] }, isInvolved: true };
+            var order = { item: { orderItems: [ {}, {}, {} ], note: [] }, isInvolved: true };
             testFilterOrders([order], done);
         });
 
@@ -1638,14 +1638,14 @@ describe('Ordering API', function() {
         it('should filter just one ordering as the user is involved in the other one', function(done) {
 
             var order1 = { item: { orderItems: [ {}, {}, {} ] }, isInvolved: false };
-            var order2 = { item: { orderItems: [ {}, {}, {} ] }, isInvolved: true };
+            var order2 = { item: { orderItems: [ {}, {}, {} ], note: [] }, isInvolved: true };
             testFilterOrders([ order1, order2 ], done);
         });
 
         it('should not filter orderings as the user is involved in both', function(done) {
 
-            var order1 = { item: { orderItems: [ {}, {}, {} ] }, isInvolved: true };
-            var order2 = { item: { orderItems: [ {}, {}, {} ] }, isInvolved: true };
+            var order1 = { item: { orderItems: [ {}, {}, {} ], note: [] }, isInvolved: true };
+            var order2 = { item: { orderItems: [ {}, {}, {} ], note: [] }, isInvolved: true };
             testFilterOrders([ order1, order2 ], done);
         });
 
@@ -1662,6 +1662,7 @@ describe('Ordering API', function() {
             var orderingRelatedParties =  [ {id: 'fiware'} ];
             var originalBody = {
                 relatedParty: orderingRelatedParties,
+                note: [],
                 orderItem: [ { product: { relatedParty: [{ id: 'fiware', role: 'customer' }], id: 7 } } ]
             };
             var expectedBody = JSON.parse(JSON.stringify(originalBody));
@@ -1708,7 +1709,7 @@ describe('Ordering API', function() {
 
             var user = { id: 'fiware' };
             var orderingRelatedParties = [];
-            var originalBody = { relatedParty: orderingRelatedParties, orderItem: []  };
+            var originalBody = { relatedParty: orderingRelatedParties, orderItem: [], note: [] };
 
             orderItems.forEach(function(item) {
                 originalBody.orderItem.push(item.item);
@@ -1734,7 +1735,7 @@ describe('Ordering API', function() {
                     }
                 });
 
-                expect(newBody).toEqual({ relatedParty: orderingRelatedParties, orderItem: expectedOrderItem });
+                expect(newBody).toEqual({ relatedParty: orderingRelatedParties, orderItem: expectedOrderItem, note: [] });
             };
 
             var req = {

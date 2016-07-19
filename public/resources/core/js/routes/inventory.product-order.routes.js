@@ -49,6 +49,10 @@
                 url: '/:productOrderId',
                 templateUrl: 'inventory/product-order/detail',
                 controller: 'ProductOrderDetailCtrl as detailVM'
+            })
+            .state('inventory.productOrder.detail.note', {
+                url: '/note',
+                templateUrl: 'inventory/product-order/detail-note'
             });
     }
 
