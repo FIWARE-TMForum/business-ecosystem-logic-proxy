@@ -432,6 +432,34 @@ var ordering = (function(){
         }
     };
 
+    var validateNotes = function(newNotes, prevNotes, callback) {
+        // The patch operation to include a note must be an append
+        if (!prevNotes || !prevNotes.length) {
+            return callback(null);
+        }
+
+        for (var i = 0; i < prevNotes.length; i++) {
+            var matches = 0;
+            var prev = prevNotes[i];
+
+            for (var j = 0; j < newNotes.length; j++) {
+                var n = newNotes[j];
+                if (prev.text === n.text && prev.date === n.date && prev.author === n.author) {
+                    matches++;
+                }
+            }
+
+            if (matches !== 1) {
+                return callback({
+                    status: 403,
+                    message: 'You are not allowed to modify the existing notes of an ordering'
+                })
+            }
+        }
+
+        callback(null);
+    };
+
     var validateUpdate = function(req, callback) {
 
         try {
@@ -455,21 +483,14 @@ var ordering = (function(){
                                 message: 'Related parties cannot be modified'
                             });
                         } else if ('orderItem' in ordering) {
-
-                            if (isSeller) {
-                                // Customers can be sellers at the same time
-                                updateItemsState(req, ordering, previousOrdering, true, callback);
-                            } else {
-                                // Customers cannot modify the status of the order items
-                                callback({
-                                    status: 403,
-                                    message: 'Order items can only be modified by sellers'
-                                });
-                            }
+                            callback({
+                                status: 403,
+                                message: 'Order items can only be modified by sellers'
+                            });
                         } else if ('state' in ordering && ordering['state'].toLowerCase() === 'cancelled') {
 
                             // Orderings can only be cancelled when all items are marked as Acknowledged
-                            var productsInAckState = previousOrdering.orderItem.filter(function(item) {
+                            var productsInAckState = previousOrdering.orderItem.filter(function (item) {
                                 return 'acknowledged' === item.state.toLowerCase();
                             });
 
@@ -484,13 +505,13 @@ var ordering = (function(){
                                 // If the sales cannot be refunded, the callback will be called with
                                 // the error parameter so the pre validation will fail and the state
                                 // won't be changed.
-                                storeClient.refund(previousOrdering.id, req.user, function(err) {
+                                storeClient.refund(previousOrdering.id, req.user, function (err) {
 
                                     if (err) {
                                         callback(err);
                                     } else {
                                         // Cancel all order items
-                                        previousOrdering.orderItem.forEach(function(item) {
+                                        previousOrdering.orderItem.forEach(function (item) {
                                             item.state = 'Cancelled';
                                         });
 
@@ -498,10 +519,13 @@ var ordering = (function(){
                                         ordering.orderItem = previousOrdering.orderItem;
                                         utils.updateBody(req, ordering);
 
-                                        callback();
+                                        callback(null);
                                     }
                                 });
                             }
+
+                        } else if ('note' in ordering) {
+                            validateNotes(ordering.note, previousOrdering.note, callback);
 
                         } else {
                             callback(null);
@@ -511,13 +535,14 @@ var ordering = (function(){
 
                         if (Object.keys(ordering).length == 1 && 'orderItem' in ordering) {
                             updateItemsState(req, ordering, previousOrdering, false, callback);
-                        } else if ('note' in ordering) {
-                            callback();
-                        } else {
 
+                        } else if (Object.keys(ordering).length == 1 && 'note' in ordering) {
+                            validateNotes(ordering.note, previousOrdering.note, callback);
+
+                        } else {
                             callback({
                                 status: 403,
-                                message: 'Sellers can only modify order items'
+                                message: 'Sellers can only modify order items or include notes'
                             });
                         }
 
