@@ -179,63 +179,51 @@ var ordering = (function(){
             body = JSON.parse(req.body);
         } catch (e) {
 
-            callback({
+            return callback({
                 status: 400,
                 message: 'The resource is not a valid JSON document'
             });
-
-            return; // EXIT
         }
 
         // Check that the related party field has been included
         if (!body.relatedParty) {
 
-            callback({
+            return callback({
                 status: 400,
                 message: 'A product order must contain a relatedParty field'
             });
-
-            return;
         }
 
         // Check that the user has the customer role
         if (config.customerRoleRequired && !utils.hasRole(req.user, config.oauth2.roles.customer)) {
 
-            callback({
+            return callback({
                 status: 403,
                 message: 'You are not authorized to order products'
             });
-
-            return; // EXIT
         }
 
         // Check that the user is the specified customer
         var customerCheck = tmfUtils.isOrderingCustomer(req.user, body);
         if (!customerCheck[0]) {
-            callback({
+            return callback({
                 status: 403,
                 message: 'It is required to specify a customer in the relatedParty field'
             });
-
-            return; // EXIT
         }
 
         if (!customerCheck[1]) {
-            callback({
+            return callback({
                 status: 403,
                 message: 'The customer specified in the product order is not the user making the request'
             });
-
-            return; // EXIT
         }
 
         if (!body.orderItem || !body.orderItem.length) {
-            callback({
+            return callback({
                 status: 400,
                 message: 'A product order must contain an orderItem field'
             });
-
-            return;
         }
 
         var asyncTasks = [];
@@ -251,10 +239,9 @@ var ordering = (function(){
                 callback(err);
 
             } else {
-
                 // Include sellers as related party in the ordering
-
                 var pushedSellers = [];
+                var customerItem = false;
 
                 body.orderItem.forEach(function(item) {
 
@@ -263,8 +250,9 @@ var ordering = (function(){
                     });
 
                     sellers.forEach(function(seller) {
-
-                        if (pushedSellers.indexOf(seller.id) < 0) {
+                        if (seller.id === req.user.id) {
+                            customerItem = true;
+                        } else if (pushedSellers.indexOf(seller.id) < 0) {
                             body.relatedParty.push(seller);
                             pushedSellers.push(seller.id);
                         }
@@ -272,9 +260,15 @@ var ordering = (function(){
                     });
                 });
 
-                utils.updateBody(req, body);
-
-                checkBillingAccounts(req, body, callback);
+                if (!customerItem) {
+                    utils.updateBody(req, body);
+                    checkBillingAccounts(req, body, callback);
+                } else {
+                    callback({
+                        status: 403,
+                        message: 'You cannot acquire your own offering'
+                    });
+                }
 
             }
         });

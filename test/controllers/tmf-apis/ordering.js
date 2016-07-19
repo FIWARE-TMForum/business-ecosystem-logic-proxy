@@ -285,7 +285,7 @@ describe('Ordering API', function() {
                 var billingAccountPath = '/billingAccount/7';
                 var productOfferingPath = '/productOffering/1';
                 var productSpecPath = '/product/2';
-                var ownerName = 'example';
+                var ownerName = 'ownerUser';
 
                 var user = {
                     id: userName
@@ -883,6 +883,50 @@ describe('Ordering API', function() {
                         }
                     }]
                 };
+
+                testOrderCreation(user, JSON.stringify(body), true, true, true, expected, done);
+            });
+
+            it('should fail when the customer is trying to acquire one of his offerings', function (done) {
+                var SERVER = 'http://example.com';
+                var productOfferingPath = '/productOffering/1';
+                var productSpecPath = '/product/2';
+
+                var user = {
+                    id: 'example'
+                };
+
+                var expected = {
+                    status: 403,
+                    message: 'You cannot acquire your own offering'
+                };
+
+                var body = {
+                    relatedParty: [{
+                        id: 'example',
+                        role: 'customer'
+                    }],
+                    orderItem: [{
+                        id: '1',
+                        product: {
+                            relatedParty: [{
+                                id: 'example',
+                                role: 'Customer'
+                            }]
+                        },
+                        productOffering: {
+                            href: SERVER + productOfferingPath
+                        }
+                    }]
+                };
+
+                nock(CATALOG_SERVER)
+                    .get(productOfferingPath)
+                    .reply(200, {productSpecification: {href: SERVER + productSpecPath}});
+
+                nock(CATALOG_SERVER)
+                    .get(productSpecPath)
+                    .reply(200, {relatedParty: [{role: 'owner', id: 'example'}]});
 
                 testOrderCreation(user, JSON.stringify(body), true, true, true, expected, done);
             });
