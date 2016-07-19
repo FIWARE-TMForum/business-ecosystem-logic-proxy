@@ -419,7 +419,23 @@
 
                     resource.query(params, function (offeringList) {
                         offering.bundledProductOffering = offeringList;
-                        extendCategory(offering);
+                        var bundleIndexes = {};
+                        var productParams = {
+                            id: offeringList.map(function(data, index) {
+                                bundleIndexes[data.productSpecification.id] = index;
+                                return data.productSpecification.id
+                            }).join()
+                        };
+
+                        ProductSpec.search(productParams).then(function(productList) {
+                            // Include product spec info in bundled offering
+                            productList.forEach(function(product) {
+                                offering.bundledProductOffering[bundleIndexes[product.id]].productSpecification = product;
+                            });
+                            extendCategory(offering);
+                        }, function(response) {
+                            deferred.reject(response);
+                        });
                     }, function (response) {
                         deferred.reject(response);
                     });
