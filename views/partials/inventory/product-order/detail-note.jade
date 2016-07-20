@@ -3,9 +3,19 @@
     h3.panel-title Notes
   .panel-body
     form(novalidate name="detailVM.NoteCreateForm")
-      .form-group
+      .form-group(
+        ng-class="{'has-error': detailVM.NoteCreateForm.note.$invalid && detailVM.NoteCreateForm.note.$dirty}"
+      )
         label Enter a note
-        textarea.form-control(rows="4" name="note" ng-model="detailVM.note.text" required)
+        textarea.form-control(rows="4" name="note" ng-model="detailVM.note.text" ng-maxlength="255" required)
+
+        .help-block(
+          ng-messages="detailVM.NoteCreateForm.note.$error"
+          ng-show="detailVM.NoteCreateForm.note.$invalid && detailVM.NoteCreateForm.note.$dirty"
+        )
+          span(ng-message="required") This field is required.
+          span(ng-message="maxlength") This field must not exceed 255 chars.
+
       .form-group.text-right
         button.btn.btn-warning(type="submit" ng-disabled="!detailVM.NoteCreateForm.$valid || detailVM.createNote.status === detailVM.STATUS.PENDING" ng-click="detailVM.createNote()")
           span.item-icon.fa(ng-class="detailVM.createNote.status === detailVM.STATUS.PENDING ? ['fa-circle-o-notch', 'fa-spin'] : 'fa-paper-plane'")
