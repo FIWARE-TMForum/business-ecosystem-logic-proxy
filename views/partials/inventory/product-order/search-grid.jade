@@ -11,13 +11,13 @@
             a(ui-sref="inventory.productOrder.detail({ productOrderId: productOrder.id })", ui-sref-opts="{ inherit: false }")
               time(title="{{ productOrder.orderDate | amDateFormat: 'dddd, MMMM Do YYYY, h:mm a' }}") {{ productOrder.orderDate | amCalendar }}
           .small
-            dl.dl-horizontal
-              dt Customer
-              dd {{ productOrder.getCustomer().id }}
-              dt Status
-              dd {{ productOrder.state }}
-              dt Priority
-              dd {{ productOrder.priority }}
+            dl.dl-horizontal.order-title-group
+              dt.order-title Customer
+              dd.order-title-info {{ productOrder.getCustomer().id }}
+              dt.order-title Status
+              dd.order-title-info {{ productOrder.state }}
+              dt.order-title Priority
+              dd.order-title-info {{ productOrder.priority }}
       .panel-body
         .row(ng-repeat="orderItem in productOrder.orderItem")
           hr(ng-if="!$first")

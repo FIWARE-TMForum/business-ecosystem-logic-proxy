@@ -2104,3 +2104,18 @@ a.thumbnail:focus {
         padding-left: 0;
     }
 }
+
+.order-title-group {
+    margin-bottom: 5px;
+    margin-top: 10px;
+}
+
+.order-title {
+    width: 70px !important;
+}
+
+@media (min-width: 768px) {
+    .order-title-info {
+        margin-left: 85px !important;
+    }
+}
