@@ -1384,7 +1384,7 @@ describe('Ordering API', function() {
                 testUpdate([true, false], notesBody, 'InProgress', [], prevNotes, null, null, null, done);
             });
 
-            it('should fail when the customer tryies to modify already existing notes', function(done) {
+            it('should fail when the customer tries to modify already existing notes', function(done) {
                 var notesBody = {
                     note: [{
                         text: 'New note',
