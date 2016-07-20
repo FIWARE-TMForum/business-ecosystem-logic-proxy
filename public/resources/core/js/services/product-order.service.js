@@ -48,7 +48,30 @@
             return this.orderItem[0].billingAccount[0];
         };
 
+        var TYPES = {
+            PRIORITY: [
+                /* 0 */{title: '0 (the highest)'},
+                /* 1 */{title: '1'},
+                /* 2 */{title: '2'},
+                /* 3 */{title: '3'},
+                /* 4 */{title: '4 (the lowest)'}
+            ]
+        };
+
+        var Comment = function Comment(author) {
+            this.author = author;
+            this.notes = [];
+        };
+        Comment.prototype.appendNote = function appendNote(date, text) {
+            this.notes.push({
+                date: date,
+                text: text
+            });
+        };
+
         return {
+            TYPES: TYPES,
+            Comment: Comment,
             search: search,
             create: create,
             detail: detail,

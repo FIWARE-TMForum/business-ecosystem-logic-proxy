@@ -9,10 +9,15 @@
         .h4
           strong
             a(ui-sref="inventory.productOrder.detail({ productOrderId: productOrder.id })", ui-sref-opts="{ inherit: false }")
-              time(title="{{ productOrder.requestedStartDate | amDateFormat: 'dddd, MMMM Do YYYY, h:mm a' }}") {{ productOrder.requestedStartDate | amCalendar }}
+              time(title="{{ productOrder.orderDate | amDateFormat: 'dddd, MMMM Do YYYY, h:mm a' }}") {{ productOrder.orderDate | amCalendar }}
           .small
-            | by {{ productOrder.getCustomer().id }},
-            strong  {{ productOrder.state }}
+            dl.dl-horizontal.order-title-group
+              dt.order-title Customer
+              dd.order-title-info {{ productOrder.getCustomer().id }}
+              dt.order-title Status
+              dd.order-title-info {{ productOrder.state }}
+              dt.order-title Priority
+              dd.order-title-info {{ productOrder.priority }}
       .panel-body
         .row(ng-repeat="orderItem in productOrder.orderItem")
           hr(ng-if="!$first")
@@ -38,3 +43,5 @@
               dd.text-dark-secondary {{ orderItem.state }}
               dt Price
               dd.text-dark-secondary {{ productOrder.formatPriceplanOf($index) }}
+              dt Appointment
+              dd.text-dark-secondary {{ orderItem.appointment ? orderItem.appointment : 'No appointment included.' }}

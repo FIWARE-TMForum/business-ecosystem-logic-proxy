@@ -60,7 +60,9 @@
     }
 
     function ProductDetailController(
-        $rootScope, $scope, $state, InventoryProduct, Utils, ProductSpec, EVENTS, $interval, $window, LOGGED_USER, USAGE_CHART_URL) {
+        $rootScope, $scope, $state, InventoryProduct, Utils, ProductSpec, EVENTS, $interval,
+        $window, LOGGED_USER, USAGE_CHART_URL, BillingAccount) {
+
         /* jshint validthis: true */
         var vm = this;
         var load = false;
@@ -68,9 +70,15 @@
         var location;
 
         vm.item = {};
+        vm.charges = {
+            status: LOADING,
+            items: []
+        };
+
         vm.$state = $state;
         vm.formatCharacteristicValue = formatCharacteristicValue;
         vm.characteristicValueSelected = characteristicValueSelected;
+        vm.hasProductPrice = hasProductPrice;
         vm.isRenewable = isRenewable;
         vm.isUsage = isUsage;
         vm.renewProduct = renewProduct;
@@ -78,6 +86,7 @@
         vm.isDigital = isDigital;
         vm.downloadAsset = downloadAsset;
         vm.getUsageURL = getUsageURL;
+        vm.downloadInvoice = downloadInvoice;
 
         InventoryProduct.detail($state.params.productId).then(function (productRetrieved) {
             var characteristics = productRetrieved.productOffering.productSpecification.productSpecCharacteristic;
@@ -90,23 +99,42 @@
             $scope.priceplanSelected = productRetrieved.productPrice[0];
 
             // Check if the product is digital
-            for (var i = 0; i < characteristics.length && (!hasMedia || !hasLocation || !hasAssetType); i++) {
-                var charact = characteristics[i];
-                if (charact.name.toLowerCase() == 'asset type') {
-                    hasAssetType = true;
-                }
+            if (characteristics) {
+                for (var i = 0; i < characteristics.length && (!hasMedia || !hasLocation || !hasAssetType); i++) {
+                    var charact = characteristics[i];
+                    if (charact.name.toLowerCase() == 'asset type') {
+                        hasAssetType = true;
+                    }
 
-                if (charact.name.toLowerCase() == 'media type') {
-                    hasMedia = true;
-                }
+                    if (charact.name.toLowerCase() == 'media type') {
+                        hasMedia = true;
+                    }
 
-                if (charact.name.toLowerCase() == 'location') {
-                    hasLocation = true;
-                    location = charact.productSpecCharacteristicValue[0].value;
+                    if (charact.name.toLowerCase() == 'location') {
+                        hasLocation = true;
+                        location = charact.productSpecCharacteristicValue[0].value;
+                    }
                 }
             }
 
             digital = hasAssetType && hasLocation && hasMedia;
+
+            // Retrieve existing charges
+            BillingAccount.searchCharges(vm.item.id).then(function(charges) {
+                // Extract invoice url
+                vm.charges.items = charges.map(function(charge) {
+                    var invoiceUrl = charge.description.split(' ').pop();
+                    charge.description = charge.description.substring(0, charge.description.indexOf(invoiceUrl) - 1);
+                    charge.invoice = invoiceUrl;
+                    return charge;
+                });
+                vm.charges.status = LOADED;
+
+            }, function(response) {
+                vm.charges.error = Utils.parseError(response, 'It was impossible to load the list of charges');
+                vm.charges.status = ERROR;
+            });
+
         }, function (response) {
             vm.error = Utils.parseError(response, 'It was impossible to load product details');
             vm.item.status = ERROR;
@@ -129,7 +157,7 @@
         }
 
         function isUsage() {
-            return vm.item.productPrice[0].priceType.toLowerCase() == 'usage';
+            return hasProductPrice() && vm.item.productPrice[0].priceType.toLowerCase() == 'usage';
         }
 
         function isRenewable() {
@@ -215,6 +243,10 @@
             }
 
             return result === productCharacteristic.value;
+        }
+
+        function downloadInvoice(invoice) {
+            $window.open(invoice, '_blank');
         }
 
         function formatCharacteristicValue(characteristic, characteristicValue) {

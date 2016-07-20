@@ -285,7 +285,7 @@ describe('Ordering API', function() {
                 var billingAccountPath = '/billingAccount/7';
                 var productOfferingPath = '/productOffering/1';
                 var productSpecPath = '/product/2';
-                var ownerName = 'example';
+                var ownerName = 'ownerUser';
 
                 var user = {
                     id: userName
@@ -886,6 +886,50 @@ describe('Ordering API', function() {
 
                 testOrderCreation(user, JSON.stringify(body), true, true, true, expected, done);
             });
+
+            it('should fail when the customer is trying to acquire one of his offerings', function (done) {
+                var SERVER = 'http://example.com';
+                var productOfferingPath = '/productOffering/1';
+                var productSpecPath = '/product/2';
+
+                var user = {
+                    id: 'example'
+                };
+
+                var expected = {
+                    status: 403,
+                    message: 'You cannot acquire your own offering'
+                };
+
+                var body = {
+                    relatedParty: [{
+                        id: 'example',
+                        role: 'customer'
+                    }],
+                    orderItem: [{
+                        id: '1',
+                        product: {
+                            relatedParty: [{
+                                id: 'example',
+                                role: 'Customer'
+                            }]
+                        },
+                        productOffering: {
+                            href: SERVER + productOfferingPath
+                        }
+                    }]
+                };
+
+                nock(CATALOG_SERVER)
+                    .get(productOfferingPath)
+                    .reply(200, {productSpecification: {href: SERVER + productSpecPath}});
+
+                nock(CATALOG_SERVER)
+                    .get(productSpecPath)
+                    .reply(200, {relatedParty: [{role: 'owner', id: 'example'}]});
+
+                testOrderCreation(user, JSON.stringify(body), true, true, true, expected, done);
+            });
         });
 
 
@@ -953,8 +997,8 @@ describe('Ordering API', function() {
                 });
             });
 
-            var testUpdate = function (hasRoleResponses, body, previousState, previousOrderItems, refundError,
-                                       expectedError, expectedBody, done) {
+            var testUpdate = function (hasRoleResponses, body, previousState, previousOrderItems, previousNotes,
+                                       refundError, expectedError, expectedBody, done) {
 
                 var user = {
                     id: 'fiware',
@@ -998,7 +1042,8 @@ describe('Ordering API', function() {
                         id: orderId,
                         state: previousState,
                         relatedParty: orderingRelatedParties,
-                        orderItem: previousOrderItems
+                        orderItem: previousOrderItems,
+                        note: previousNotes
                     });
 
                 orderingApi.checkPermissions(req, function (err) {
@@ -1017,44 +1062,6 @@ describe('Ordering API', function() {
 
             };
 
-            it('should not fail when a user who is customer and seller send items belonging to another seller ' +
-                'and the state of those items is not changed', function(done) {
-
-                var previousItems = [
-                    { state: 'Acknowledged', id: 7, product: { relatedParty: [] }}, // Seller
-                    { state: 'Acknowledged', id: 9, product: { relatedParty: [] }}  // Not seller
-                ];
-
-                // The user IS the seller of the first item
-                // The user is NOT the seller of the second item
-                testUpdate([true, true, true, false], {orderItem: previousItems}, 'InProgress', previousItems,
-                    null, null, { orderItem: previousItems }, done);
-
-            });
-
-            it('should fail when a user who is customer and seller send items belonging to another seller ' +
-                'and the state of those items is changed', function(done) {
-
-                var previousItems = [
-                    { state: 'Acknowledged', id: 7, product: { relatedParty: [] }}, // Seller
-                    { state: 'Acknowledged', id: 9, product: { relatedParty: [] }}  // Not seller
-                ];
-
-                var sentItems = JSON.parse(JSON.stringify(previousItems));
-                sentItems[1].state = 'InProgress';
-
-                var expectedError = {
-                    status: 403,
-                    message: 'You cannot modify an order item if you are not seller'
-                };
-
-                // The user IS the seller of the first item
-                // The user is NOT the seller of the second item
-                testUpdate([true, true, true, false], { orderItem: sentItems }, 'InProgress', previousItems,
-                    null, expectedError, null, done);
-
-            });
-
             it('should fail when seller tries to update a non in progress ordering', function(done) {
 
                 var previousState = 'Acknowledged';
@@ -1064,13 +1071,13 @@ describe('Ordering API', function() {
                     message: previousState + ' orders cannot be manually modified'
                 };
 
-                testUpdate([false, true], {orderItem: []}, previousState, [], null, expectedError, null, done);
+                testUpdate([false, true], {orderItem: []}, previousState, [], [], null, expectedError, null, done);
 
             });
 
             it('should not fail when customer tries to update a non in progress ordering', function(done) {
                 var previousState = 'Acknowledged';
-                testUpdate([true, false], {description: 'New Description'}, previousState, [], null, null, null, done);
+                testUpdate([true, false], {description: 'New Description'}, previousState, [], [], null, null, null, done);
             });
 
             it('should fail when the user is not consumer or seller in the ordering', function (done) {
@@ -1080,7 +1087,7 @@ describe('Ordering API', function() {
                     message: 'You are not authorized to modify this ordering'
                 };
 
-                testUpdate([false, false], {}, 'InProgress', [], null, expectedError, null, done);
+                testUpdate([false, false], {}, 'InProgress', [], [], null, expectedError, null, done);
             });
 
             it('should fail when a customer tries to modify the orderItem field', function (done) {
@@ -1090,7 +1097,7 @@ describe('Ordering API', function() {
                     message: 'Order items can only be modified by sellers'
                 };
 
-                testUpdate([true, false], {orderItem: []}, 'InProgress', [], null, expectedError, null, done);
+                testUpdate([true, false], {orderItem: []}, 'InProgress', [], [], null, expectedError, null, done);
             });
 
             it('should fail when a customer tries to modify the relatedParty field', function (done) {
@@ -1100,11 +1107,11 @@ describe('Ordering API', function() {
                     message: 'Related parties cannot be modified'
                 };
 
-                testUpdate([true, false], {relatedParty: []}, 'InProgress', [], null, expectedError, null, done);
+                testUpdate([true, false], {relatedParty: []}, 'InProgress', [], [], null, expectedError, null, done);
             });
 
             it('should not fail when a customer tries to modify the description', function (done) {
-                testUpdate([true, false], {description: 'New description'}, 'InProgress', [], null, null, null, done);
+                testUpdate([true, false], {description: 'New description'}, 'InProgress', [], [], null, null, null, done);
             });
 
             it('should fail when a customer tries to cancel an ordering with completed items', function (done) {
@@ -1114,7 +1121,7 @@ describe('Ordering API', function() {
                     message: 'Orderings can only be cancelled when all Order items are in Acknowledged state'
                 };
 
-                testUpdate([true, false], {state: 'Cancelled'}, 'InProgress', [{state: 'Completed'}],
+                testUpdate([true, false], {state: 'Cancelled'}, 'InProgress', [{state: 'Completed'}], [],
                     null, expectedError, null, done);
             });
 
@@ -1125,7 +1132,7 @@ describe('Ordering API', function() {
                     message: 'Orderings can only be cancelled when all Order items are in Acknowledged state'
                 };
 
-                testUpdate([true, false], {state: 'Cancelled'}, 'InProgress', [{state: 'Failed'}],
+                testUpdate([true, false], {state: 'Cancelled'}, 'InProgress', [{state: 'Failed'}], [],
                     null, expectedError, null, done);
             });
 
@@ -1136,7 +1143,7 @@ describe('Ordering API', function() {
                     message: 'Orderings can only be cancelled when all Order items are in Acknowledged state'
                 };
 
-                testUpdate([true, false], {state: 'Cancelled'}, 'InProgress', [{state: 'Cancelled'}],
+                testUpdate([true, false], {state: 'Cancelled'}, 'InProgress', [{state: 'Cancelled'}], [],
                     null, expectedError, null, done);
             });
 
@@ -1147,7 +1154,7 @@ describe('Ordering API', function() {
                     message: 'You cannot cancel orders with completed items'
                 };
 
-                testUpdate([true, false], {state: 'Cancelled'}, 'InProgress', [], expectedError,
+                testUpdate([true, false], {state: 'Cancelled'}, 'InProgress', [], [], expectedError,
                     expectedError, null, done);
             });
 
@@ -1171,42 +1178,27 @@ describe('Ordering API', function() {
                 var expectedBody = JSON.parse(JSON.stringify(requestBody));
                 expectedBody.orderItem = expectedItems;
 
-                testUpdate([true, false], requestBody, 'InProgress', previousItems, null, null, expectedBody, done);
+                testUpdate([true, false], requestBody, 'InProgress', previousItems, [], null, null, expectedBody, done);
             });
 
             it('should fail when a seller tries to modify the description', function (done) {
 
                 var expectedError = {
                     status: 403,
-                    message: 'Sellers can only modify order items'
+                    message: 'Sellers can only modify order items or include notes'
                 };
 
                 testUpdate([false, true], {
                     description: 'New description',
                     orderItem: []
-                }, 'InProgress', [], null, expectedError, null, done);
+                }, 'InProgress', [], [], null, expectedError, null, done);
             });
 
             it('should not fail when seller does not include any order item', function (done) {
 
                 var previousOrderItems = [{id: 1, state: 'InProgress'}];
-                testUpdate([false, true], {orderItem: []}, 'InProgress', previousOrderItems, null, null,
+                testUpdate([false, true], {orderItem: []}, 'InProgress', previousOrderItems, [], null, null,
                     {orderItem: previousOrderItems}, done);
-            });
-
-            it('should not fail when seller (that it is also the customer) does not include any order item', function (done) {
-
-                var previousOrderItems = [{id: 1, state: 'InProgress'}];
-                var updatedOrderings = {
-                    description: 'Example description',
-                    orderItem: []
-                };
-
-                var expectedBody = JSON.parse(JSON.stringify(updatedOrderings));
-                expectedBody['orderItem'] = previousOrderItems;
-
-                testUpdate([true, true], updatedOrderings, 'InProgress', previousOrderItems,
-                    null, null, expectedBody, done);
             });
 
             it('should fail when the seller tries to edit a non existing item', function (done) {
@@ -1221,7 +1213,7 @@ describe('Ordering API', function() {
                     message: 'You are trying to edit an non-existing item'
                 };
 
-                testUpdate([false, true], updatedOrderings, 'InProgress', previousOrderItems,
+                testUpdate([false, true], updatedOrderings, 'InProgress', previousOrderItems, [],
                     null, expectedError, null, done);
             });
 
@@ -1237,7 +1229,7 @@ describe('Ordering API', function() {
                     message: 'You cannot modify an order item if you are not seller'
                 };
 
-                testUpdate([false, true, false], updatedOrderings, 'InProgress', previousOrderItems,
+                testUpdate([false, true, false], updatedOrderings, 'InProgress', previousOrderItems, [],
                     null, expectedError, null, done);
             });
 
@@ -1253,7 +1245,7 @@ describe('Ordering API', function() {
                     message: 'The fields of an order item cannot be modified'
                 };
 
-                testUpdate([false, true, true], updatedOrderings, 'InProgress', previousOrderItems,
+                testUpdate([false, true, true], updatedOrderings, 'InProgress', previousOrderItems, [],
                     null, expectedError, null, done);
             });
 
@@ -1274,7 +1266,7 @@ describe('Ordering API', function() {
                     message: 'The fields of an order item cannot be modified'
                 };
 
-                testUpdate([false, true, true], updatedOrderings, 'InProgress', previousOrderItems,
+                testUpdate([false, true, true], updatedOrderings, 'InProgress', previousOrderItems, [],
                     null, expectedError, null, done);
             });
 
@@ -1295,7 +1287,7 @@ describe('Ordering API', function() {
                     message: 'The value of the field name cannot be changed'
                 };
 
-                testUpdate([false, true, true], updatedOrderings, 'InProgress', previousOrderItems,
+                testUpdate([false, true, true], updatedOrderings, 'InProgress', previousOrderItems, [],
                     null, expectedError, null, done);
             });
 
@@ -1310,7 +1302,7 @@ describe('Ordering API', function() {
                     orderItem: updatedOrderings.orderItem
                 };
 
-                testUpdate([false, true, true], updatedOrderings, 'InProgress', previousOrderItems,
+                testUpdate([false, true, true], updatedOrderings, 'InProgress', previousOrderItems, [],
                     null, null, expectedBody, done);
             });
 
@@ -1327,7 +1319,7 @@ describe('Ordering API', function() {
                     message: 'You are trying to edit an non-existing item'
                 };
 
-                testUpdate([false, true], updatedOrderings, 'InProgress', previousOrderItems,
+                testUpdate([false, true], updatedOrderings, 'InProgress', previousOrderItems, [],
                     null, expectedError, null, done);
             });
 
@@ -1359,9 +1351,65 @@ describe('Ordering API', function() {
                     orderItem: expectedOrderItems
                 };
 
-                testUpdate([false, true, true], updatedOrderings, 'InProgress', previousOrderItems,
+                testUpdate([false, true, true], updatedOrderings, 'InProgress', previousOrderItems, [],
                     null, null, expectedBody, done);
 
+            });
+
+            it('should allow a customer to include a new note when none previously included', function (done) {
+                var notesBody = {
+                    note: [{
+                        text: 'Some text'
+                    }]
+                };
+                testUpdate([true, false], notesBody, 'InProgress', [], [], null, null, null, done);
+            });
+
+            it('should allow a customer to include a new note to the existing ones', function(done) {
+                var notesBody = {
+                    note: [{
+                        text: 'Some text',
+                        author: 'testuser'
+                    }, {
+                        text: 'New note',
+                        author: 'testuser'
+                    }]
+                };
+
+                var prevNotes = [{
+                    text: 'Some text',
+                    author: 'testuser'
+                }];
+
+                testUpdate([true, false], notesBody, 'InProgress', [], prevNotes, null, null, null, done);
+            });
+
+            it('should fail when the customer tries to modify already existing notes', function(done) {
+                var notesBody = {
+                    note: [{
+                        text: 'New note',
+                        author: 'testuser'
+                    }]
+                };
+
+                var prevNotes = [{
+                    text: 'Some text',
+                    author: 'testuser'
+                }];
+
+                testUpdate([true, false], notesBody, 'InProgress', [], prevNotes, null, {
+                    status: 403,
+                    message: 'You are not allowed to modify the existing notes of an ordering'
+                }, null, done);
+            });
+
+            it('should allow a seller to include a new note', function(done) {
+                var notesBody = {
+                    note: [{
+                        text: 'Some text'
+                    }]
+                };
+                testUpdate([false, true], notesBody, 'InProgress', [], [], null, null, null, done);
             });
         });
     });
@@ -1625,7 +1673,7 @@ describe('Ordering API', function() {
 
         it('should not filter the ordering as the user is involved in', function(done) {
 
-            var order = { item: { orderItems: [ {}, {}, {} ] }, isInvolved: true };
+            var order = { item: { orderItems: [ {}, {}, {} ], note: [] }, isInvolved: true };
             testFilterOrders([order], done);
         });
 
@@ -1638,14 +1686,14 @@ describe('Ordering API', function() {
         it('should filter just one ordering as the user is involved in the other one', function(done) {
 
             var order1 = { item: { orderItems: [ {}, {}, {} ] }, isInvolved: false };
-            var order2 = { item: { orderItems: [ {}, {}, {} ] }, isInvolved: true };
+            var order2 = { item: { orderItems: [ {}, {}, {} ], note: [] }, isInvolved: true };
             testFilterOrders([ order1, order2 ], done);
         });
 
         it('should not filter orderings as the user is involved in both', function(done) {
 
-            var order1 = { item: { orderItems: [ {}, {}, {} ] }, isInvolved: true };
-            var order2 = { item: { orderItems: [ {}, {}, {} ] }, isInvolved: true };
+            var order1 = { item: { orderItems: [ {}, {}, {} ], note: [] }, isInvolved: true };
+            var order2 = { item: { orderItems: [ {}, {}, {} ], note: [] }, isInvolved: true };
             testFilterOrders([ order1, order2 ], done);
         });
 
@@ -1662,6 +1710,7 @@ describe('Ordering API', function() {
             var orderingRelatedParties =  [ {id: 'fiware'} ];
             var originalBody = {
                 relatedParty: orderingRelatedParties,
+                note: [],
                 orderItem: [ { product: { relatedParty: [{ id: 'fiware', role: 'customer' }], id: 7 } } ]
             };
             var expectedBody = JSON.parse(JSON.stringify(originalBody));
@@ -1708,7 +1757,7 @@ describe('Ordering API', function() {
 
             var user = { id: 'fiware' };
             var orderingRelatedParties = [];
-            var originalBody = { relatedParty: orderingRelatedParties, orderItem: []  };
+            var originalBody = { relatedParty: orderingRelatedParties, orderItem: [], note: [] };
 
             orderItems.forEach(function(item) {
                 originalBody.orderItem.push(item.item);
@@ -1734,7 +1783,7 @@ describe('Ordering API', function() {
                     }
                 });
 
-                expect(newBody).toEqual({ relatedParty: orderingRelatedParties, orderItem: expectedOrderItem });
+                expect(newBody).toEqual({ relatedParty: orderingRelatedParties, orderItem: expectedOrderItem, note: [] });
             };
 
             var req = {

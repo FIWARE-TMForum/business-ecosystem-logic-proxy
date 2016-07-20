@@ -37,7 +37,6 @@ a.active:focus {
 a.disabled {
     cursor: pointer;
     pointer-events: none;
-    color: rgb(140, 140, 140);
 }
 
 hr {
@@ -80,6 +79,10 @@ p {
     white-space: nowrap;
 }
 
+.text-preline {
+    white-space: pre-line;
+}
+
 blockquote {
     padding: 10px 15px;
     margin-bottom: 15px;
@@ -111,31 +114,36 @@ blockquote p {
     margin-bottom: 10px;
 }
 
+/* ===================================================================================
+ * LIST - DESCRIPTION
+ * =================================================================================== */
+
 dl {
     margin-bottom: 10px;
 }
-dl + dl {
-    margin-top: -10px;
-}
-dl > dd + dt {
-    margin-top: 5px;
+
+dd {
+    color: #5E5E5E;
 }
 
-dd > dl {
-    margin-bottom: 0;
-    padding-left: 10px;
+.dl-list {
+    position: relative;
+    display: flex;
 }
 
-.dl-responsive dl {
-    display: inline-block;
-    width: 100%;
+.dl-list dl {
+    flex-grow: 1;
 }
 
 /* Small devices (tablets, 768px and up) */
-@media (min-width: 768px) {
+@media (max-width: 768px) {
 
-    .dl-responsive dl {
-        width: 50%;
+    .dl-list {
+        flex-direction: column;
+    }
+
+    .dl-list dl:not(:last-child) {
+        margin-bottom: 0;
     }
 }
 
@@ -901,6 +909,10 @@ a.dropdown-menu-item:hover {
 
 .z-depth-5 {
     box-shadow: 0 15px 24px rgba(0, 0, 0, 0.22), 0 19px 76px rgba(0, 0, 0, 0.3) !important;
+}
+
+.z-depth-1-bottom {
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.16);
 }
 
 /* ===================================================================================
@@ -1743,11 +1755,11 @@ a.thumbnail:focus {
     margin-bottom: 10px;
     border-width: 0;
     border-radius: 2px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.16);
 }
 
 .panel-heading {
     position: relative;
-    padding: 10px 15px;
     border-radius: 0;
 }
 
@@ -1769,17 +1781,6 @@ a.thumbnail:focus {
 .panel-body {
     padding-bottom: 0;
     border-radius: 0;
-}
-
-.panel-title {
-    margin: 5px 0;
-    font-size: 16px;
-    font-weight: 700;
-    line-height: 20px;
-    text-transform: uppercase;
-}
-.panel-title > small {
-    font-size: 70%;
 }
 
 .panel-subtitle {
@@ -1805,9 +1806,6 @@ a.thumbnail:focus {
 .panel-default {
     background-color: #FFFFFF;
 }
-.panel-default > .panel-heading {
-    border-color: rgb(220, 220, 220);
-}
 
 .panel-default > .panel-heading > .panel-subtitle {
     color: rgb(120, 120, 120);
@@ -1831,6 +1829,34 @@ a.thumbnail:focus {
 .panel-default.second-level > .panel-heading:hover {
     cursor: pointer;
     color: rgb(070, 180, 200);
+}
+
+.panel-heading-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.panel-heading-wrapper .panel-title {
+    flex-grow: 1;
+}
+
+.panel-heading-wrapper .panel-actions {
+    flex-shrink: 0;
+}
+
+.panel-actions .btn {
+    padding: 0;
+    width: 28px;
+    height: 28px;
+    line-height: 28px;
+    border-width: 0;
+    border-radius: 50%;
+    margin-left: 5px;
+}
+.panel-actions .btn:not(:hover):not(:focus):not(.disabled):not([disabled]) {
+    background-color: transparent;
+    color: inherit;
 }
 
 /* ===================================================================================
@@ -2042,4 +2068,54 @@ a.thumbnail:focus {
 .usage-chart {
     width: 100%;
     height: 500px;
+}
+
+/* ===================================================================================
+ * TMFORUM - PRODUCT
+ * =================================================================================== */
+
+.product {
+    position: relative;
+    display: flex;
+}
+
+.product-heading {
+    flex-shrink: 0;
+}
+
+.product-body {
+    flex-grow: 1;
+    padding-left: 15px;
+}
+
+/* Small devices (tablets, 768px and up) */
+@media (max-width: 768px) {
+
+    .product {
+        flex-direction: column;
+    }
+
+    .product-heading {
+        flex-grow: 1;
+        flex-shrink: 1;
+    }
+
+    .product-body {
+        padding-left: 0;
+    }
+}
+
+.order-title-group {
+    margin-bottom: 5px;
+    margin-top: 10px;
+}
+
+.order-title {
+    width: 70px !important;
+}
+
+@media (min-width: 768px) {
+    .order-title-info {
+        margin-left: 85px !important;
+    }
 }

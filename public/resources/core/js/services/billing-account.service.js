@@ -37,6 +37,9 @@
             update: {method: 'PUT'},
             updatePartial: {method: 'PATCH'}
         });
+
+        var CustomerCharges = $resource(URLS.BILLING_MANAGEMENT + '/appliedCustomerBillingCharge', {}, {});
+
         BillingAccount.prototype.getEmailAddress = function getEmailAddress() {
             return this.customerAccount.customer.getEmailAddress();
         };
@@ -75,7 +78,8 @@
             search: search,
             create: create,
             detail: detail,
-            launch: launch
+            launch: launch,
+            searchCharges: searchCharges
         };
 
         function search(filters) {
@@ -187,6 +191,21 @@
             billingAccount.customerAccount = CustomerAccount.launch();
 
             return billingAccount;
+        }
+
+        function searchCharges(productId) {
+            var deferred = $q.defer();
+            var params = {
+                'serviceId.id': productId
+            };
+
+            CustomerCharges.query(params, function (charges) {
+                deferred.resolve(charges);
+            }, function (response) {
+                deferred.reject(response);
+            });
+
+            return deferred.promise;
         }
     }
 

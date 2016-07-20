@@ -20,6 +20,7 @@
 var async = require('async'),
     config = require('./../../config'),
     equal = require('deep-equal'),
+    moment = require('moment'),
     request = require('request'),
     storeClient = require('./../../lib/store').storeClient,
     tmfUtils = require('./../../lib/tmfUtils'),
@@ -178,63 +179,51 @@ var ordering = (function(){
             body = JSON.parse(req.body);
         } catch (e) {
 
-            callback({
+            return callback({
                 status: 400,
                 message: 'The resource is not a valid JSON document'
             });
-
-            return; // EXIT
         }
 
         // Check that the related party field has been included
         if (!body.relatedParty) {
 
-            callback({
+            return callback({
                 status: 400,
                 message: 'A product order must contain a relatedParty field'
             });
-
-            return;
         }
 
         // Check that the user has the customer role
         if (config.customerRoleRequired && !utils.hasRole(req.user, config.oauth2.roles.customer)) {
 
-            callback({
+            return callback({
                 status: 403,
                 message: 'You are not authorized to order products'
             });
-
-            return; // EXIT
         }
 
         // Check that the user is the specified customer
         var customerCheck = tmfUtils.isOrderingCustomer(req.user, body);
         if (!customerCheck[0]) {
-            callback({
+            return callback({
                 status: 403,
                 message: 'It is required to specify a customer in the relatedParty field'
             });
-
-            return; // EXIT
         }
 
         if (!customerCheck[1]) {
-            callback({
+            return callback({
                 status: 403,
                 message: 'The customer specified in the product order is not the user making the request'
             });
-
-            return; // EXIT
         }
 
         if (!body.orderItem || !body.orderItem.length) {
-            callback({
+            return callback({
                 status: 400,
                 message: 'A product order must contain an orderItem field'
             });
-
-            return;
         }
 
         var asyncTasks = [];
@@ -250,10 +239,9 @@ var ordering = (function(){
                 callback(err);
 
             } else {
-
                 // Include sellers as related party in the ordering
-
                 var pushedSellers = [];
+                var customerItem = false;
 
                 body.orderItem.forEach(function(item) {
 
@@ -262,8 +250,9 @@ var ordering = (function(){
                     });
 
                     sellers.forEach(function(seller) {
-
-                        if (pushedSellers.indexOf(seller.id) < 0) {
+                        if (seller.id === req.user.id) {
+                            customerItem = true;
+                        } else if (pushedSellers.indexOf(seller.id) < 0) {
                             body.relatedParty.push(seller);
                             pushedSellers.push(seller.id);
                         }
@@ -271,9 +260,15 @@ var ordering = (function(){
                     });
                 });
 
-                utils.updateBody(req, body);
-
-                checkBillingAccounts(req, body, callback);
+                if (!customerItem) {
+                    utils.updateBody(req, body);
+                    checkBillingAccounts(req, body, callback);
+                } else {
+                    callback({
+                        status: 403,
+                        message: 'You cannot acquire your own offering'
+                    });
+                }
 
             }
         });
@@ -437,6 +432,34 @@ var ordering = (function(){
         }
     };
 
+    var validateNotes = function(newNotes, prevNotes, callback) {
+        // The patch operation to include a note must be an append
+        if (!prevNotes || !prevNotes.length) {
+            return callback(null);
+        }
+
+        for (var i = 0; i < prevNotes.length; i++) {
+            var matches = 0;
+            var prev = prevNotes[i];
+
+            for (var j = 0; j < newNotes.length; j++) {
+                var n = newNotes[j];
+                if (prev.text === n.text && prev.date === n.date && prev.author === n.author) {
+                    matches++;
+                }
+            }
+
+            if (matches !== 1) {
+                return callback({
+                    status: 403,
+                    message: 'You are not allowed to modify the existing notes of an ordering'
+                })
+            }
+        }
+
+        callback(null);
+    };
+
     var validateUpdate = function(req, callback) {
 
         try {
@@ -460,21 +483,14 @@ var ordering = (function(){
                                 message: 'Related parties cannot be modified'
                             });
                         } else if ('orderItem' in ordering) {
-
-                            if (isSeller) {
-                                // Customers can be sellers at the same time
-                                updateItemsState(req, ordering, previousOrdering, true, callback);
-                            } else {
-                                // Customers cannot modify the status of the order items
-                                callback({
-                                    status: 403,
-                                    message: 'Order items can only be modified by sellers'
-                                });
-                            }
+                            callback({
+                                status: 403,
+                                message: 'Order items can only be modified by sellers'
+                            });
                         } else if ('state' in ordering && ordering['state'].toLowerCase() === 'cancelled') {
 
                             // Orderings can only be cancelled when all items are marked as Acknowledged
-                            var productsInAckState = previousOrdering.orderItem.filter(function(item) {
+                            var productsInAckState = previousOrdering.orderItem.filter(function (item) {
                                 return 'acknowledged' === item.state.toLowerCase();
                             });
 
@@ -489,13 +505,13 @@ var ordering = (function(){
                                 // If the sales cannot be refunded, the callback will be called with
                                 // the error parameter so the pre validation will fail and the state
                                 // won't be changed.
-                                storeClient.refund(previousOrdering.id, req.user, function(err) {
+                                storeClient.refund(previousOrdering.id, req.user, function (err) {
 
                                     if (err) {
                                         callback(err);
                                     } else {
                                         // Cancel all order items
-                                        previousOrdering.orderItem.forEach(function(item) {
+                                        previousOrdering.orderItem.forEach(function (item) {
                                             item.state = 'Cancelled';
                                         });
 
@@ -503,10 +519,13 @@ var ordering = (function(){
                                         ordering.orderItem = previousOrdering.orderItem;
                                         utils.updateBody(req, ordering);
 
-                                        callback();
+                                        callback(null);
                                     }
                                 });
                             }
+
+                        } else if ('note' in ordering) {
+                            validateNotes(ordering.note, previousOrdering.note, callback);
 
                         } else {
                             callback(null);
@@ -516,10 +535,14 @@ var ordering = (function(){
 
                         if (Object.keys(ordering).length == 1 && 'orderItem' in ordering) {
                             updateItemsState(req, ordering, previousOrdering, false, callback);
+
+                        } else if (Object.keys(ordering).length == 1 && 'note' in ordering) {
+                            validateNotes(ordering.note, previousOrdering.note, callback);
+
                         } else {
                             callback({
                                 status: 403,
-                                message: 'Sellers can only modify order items'
+                                message: 'Sellers can only modify order items or include notes'
                             });
                         }
 
@@ -571,6 +594,21 @@ var ordering = (function(){
     /////////////////////////////////////// POST-VALIDATION //////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
 
+    var sortByDate = function sortByDate(list) {
+
+        if (!Array.isArray(list)) {
+            return [];
+        }
+
+        if (list.length < 2) {
+            return list;
+        }
+
+        return list.sort(function (a, b) {
+            return moment(a.date).isBefore(b.date) ? 1 : -1;
+        });
+    };
+
     var filterOrderItems = function(req, callback) {
 
         var body = JSON.parse(req.body);
@@ -606,6 +644,9 @@ var ordering = (function(){
             }
             // ELSE: If the user is the customer, order items don't have to be filtered
 
+            if (req.method.toUpperCase() === 'GET') {
+                ordering.note = sortByDate(ordering.note);
+            }
         });
 
         orderings = orderings.filter(function(ordering) {
