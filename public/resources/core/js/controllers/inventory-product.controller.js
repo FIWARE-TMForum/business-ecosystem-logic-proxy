@@ -78,6 +78,7 @@
         vm.$state = $state;
         vm.formatCharacteristicValue = formatCharacteristicValue;
         vm.characteristicValueSelected = characteristicValueSelected;
+        vm.hasProductPrice = hasProductPrice;
         vm.isRenewable = isRenewable;
         vm.isUsage = isUsage;
         vm.renewProduct = renewProduct;
@@ -156,7 +157,7 @@
         }
 
         function isUsage() {
-            return vm.item.productPrice[0].priceType.toLowerCase() == 'usage';
+            return hasProductPrice() && vm.item.productPrice[0].priceType.toLowerCase() == 'usage';
         }
 
         function isRenewable() {
