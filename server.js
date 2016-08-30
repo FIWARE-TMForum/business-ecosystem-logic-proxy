@@ -77,7 +77,8 @@ var PORT = config.https.enabled ?
 var FIWARE_STRATEGY = new FIWAREStrategy({
         clientID: config.oauth2.clientID,
         clientSecret: config.oauth2.clientSecret,
-        callbackURL: config.oauth2.callbackURL
+        callbackURL: config.oauth2.callbackURL,
+        serverURL: config.oauth2.server
     },
 
     function(accessToken, refreshToken, profile, done) {
