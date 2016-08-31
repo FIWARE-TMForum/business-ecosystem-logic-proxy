@@ -384,6 +384,7 @@
         vm.CHARGE_PERIODS = Offering.TYPES.CHARGE_PERIOD;
         vm.CURRENCY_CODES = Offering.TYPES.CURRENCY_CODE;
         vm.PRICES = Offering.TYPES.PRICE;
+        vm.$state = $state;
 
         vm.update = update;
         vm.updateStatus = updateStatus;

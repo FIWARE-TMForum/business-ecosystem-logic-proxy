@@ -55,6 +55,13 @@
                 templateUrl: 'stock/product-offering/update',
                 controller: 'OfferingUpdateCtrl as updateVM'
             })
+            .state('stock.offering.update.bundled', {
+                url: '/bundled',
+                params: {
+                    flow: 1
+                },
+                templateUrl: 'stock/product-offering/update/bundled'
+            })
             .state('stock.offering.update.priceplan', {
                 url: '/priceplan',
                 templateUrl: 'stock/product-offering/update/priceplan'
