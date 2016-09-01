@@ -25,15 +25,19 @@
           a(ui-sref="offering.detail")
             span.item-icon.fa.fa-newspaper-o
             span.item-text.hidden-xs About
-        li(ui-sref-active-eq="active")
+        li(ui-sref-active-eq="active", ng-if="!detailVM.item.isBundle")
           a(ui-sref="offering.detail.productCharacteristic")
             span.item-icon.fa.fa-gears
             span.item-text.hidden-xs Characteristics
+        li(ui-sref-active-eq="active", ng-if="detailVM.item.isBundle")
+          a(ui-sref="offering.detail.bundled")
+            span.item-icon.fa.fa-cube
+            span.item-text.hidden-xs Bundled Offerings
         li(ui-sref-active-eq="active")
           a(ui-sref="offering.detail.pricePlan")
             span.item-icon.fa.fa-credit-card
             span.item-text.hidden-xs Price plans
-        li(ui-sref-active-eq="active")
+        li(ui-sref-active-eq="active", ng-if="!detailVM.item.isBundle")
           a(ui-sref="offering.detail.relationship")
             span.item-icon.fa.fa-chain
             span.item-text.hidden-xs Relationships

@@ -74,6 +74,17 @@
                     }
                 }
             })
+            .state('offering.detail.bundled', {
+                url: '/bundled',
+                params: {
+                    flow: 1
+                },
+                views: {
+                    'offering-content': {
+                        templateUrl: 'offering/detail/bundled'
+                    }
+                }
+            })
             .state('offering.detail.pricePlan', {
                 url: '/priceplan',
                 views: {

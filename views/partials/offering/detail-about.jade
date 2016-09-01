@@ -1,7 +1,9 @@
 .panel.panel-default.z-depth-1
   .panel-body
-    .h4.text-dark-secondary
+    .h4.text-dark-secondary(ng-if="!detailVM.item.isBundle")
       strong Offering information
+    .h4.text-dark-secondary(ng-if="detailVM.item.isBundle")
+      strong Bundle information
     hr
     dl
       dt Name
@@ -18,20 +20,22 @@
       dt Updated
       dd.text-dark-secondary
         time {{ detailVM.item.lastUpdate | amDateFormat: 'dddd, MMMM Do YYYY, h:mm a' }}
-    .h4.text-dark-secondary
-      strong Product information
-    hr
-    dl
-      dt Name
-      dd.text-dark-secondary {{ detailVM.item.productSpecification.name }}
-      dt Version
-      dd.text-dark-secondary {{ detailVM.item.productSpecification.version }}
-      dt Description
-      dd.text-dark-secondary {{ detailVM.item.productSpecification.description  ? detailVM.item.productSpecification.description : 'No description provided.' }}
-      dt Updated
-      dd.text-dark-secondary
-        time {{ detailVM.item.productSpecification.lastUpdate | amDateFormat: 'dddd, MMMM Do YYYY, h:mm a' }}
-      dt Brand
-      dd.text-dark-secondary {{ detailVM.item.productSpecification.brand }}
-      dt ID Number
-      dd.text-dark-secondary {{ detailVM.item.productSpecification.productNumber }}
+
+    div(ng-if="!detailVM.item.isBundle")
+      .h4.text-dark-secondary
+        strong Product information
+      hr
+      dl
+        dt Name
+        dd.text-dark-secondary {{ detailVM.item.productSpecification.name }}
+        dt Version
+        dd.text-dark-secondary {{ detailVM.item.productSpecification.version }}
+        dt Description
+        dd.text-dark-secondary {{ detailVM.item.productSpecification.description  ? detailVM.item.productSpecification.description : 'No description provided.' }}
+        dt Updated
+        dd.text-dark-secondary
+          time {{ detailVM.item.productSpecification.lastUpdate | amDateFormat: 'dddd, MMMM Do YYYY, h:mm a' }}
+        dt Brand
+        dd.text-dark-secondary {{ detailVM.item.productSpecification.brand }}
+        dt ID Number
+        dd.text-dark-secondary {{ detailVM.item.productSpecification.productNumber }}

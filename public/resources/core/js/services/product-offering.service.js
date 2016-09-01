@@ -389,6 +389,7 @@
                 var bundleIndexes = {};
                 var productParams = {
                     id: offeringList.map(function (data, index) {
+                        extendPricePlans(data);
                         bundleIndexes[data.productSpecification.id] = index;
                         return data.productSpecification.id
                     }).join()
