@@ -41,10 +41,36 @@ form(name="step.form", novalidate)
     .h4
       .label.label-default.inline-block(ng-repeat="name in createVM.places")
         span.item-text {{ name }}
-  .h5.text-dark-secondary
-    strong Product Spec.
-  .form-group
-    input(type="hidden", ng-model="createVM.product.id", required)
+
+  div(ng-if="!createVM.data.isBundle")
+    .h5.text-dark-secondary
+      strong Product Spec.
+    .form-group
+      input(type="hidden", ng-model="createVM.product.id", required)
+      .table-responsive
+        table.table.table-bordered
+          thead
+            tr
+              th Status
+              th Name
+              th Type
+              th Updated
+          tbody
+            tr
+              td
+                .status-item(class="status-{{ createVM.product.lifecycleStatus | lowercase }}")
+                  span.item-icon
+                  span.item-text {{ createVM.product.lifecycleStatus }}
+              th {{ createVM.product.name }}
+              td
+                span.label(ng-class="createVM.product.isBundle ? 'label-bundle' : 'label-single'")
+                  | {{ createVM.product.isBundle ? 'Bundle' : 'Single' }}
+              td
+                time(am-time-ago="createVM.product.lastUpdate")
+
+  .form-group(ng-show="createVM.data.isBundle")
+    .h5.text-dark-secondary
+      strong Bundled Offerings
     .table-responsive
       table.table.table-bordered
         thead
@@ -54,17 +80,18 @@ form(name="step.form", novalidate)
             th Type
             th Updated
         tbody
-          tr
+          tr(ng-repeat="offering in createVM.data.bundledProductOffering")
             td
-              .status-item(class="status-{{ createVM.product.lifecycleStatus | lowercase }}")
+              .status-item(class="status-{{ offering.lifecycleStatus | lowercase }}")
                 span.item-icon
-                span.item-text {{ createVM.product.lifecycleStatus }}
-            th {{ createVM.product.name }}
+                span.item-text {{ offering.lifecycleStatus }}
+            th {{ offering.name }}
             td
-              span.label(ng-class="createVM.product.isBundle ? 'label-bundle' : 'label-single'")
-                | {{ createVM.product.isBundle ? 'Bundle' : 'Single' }}
+              span.label(ng-class="offering.isBundle ? 'label-bundle' : 'label-single'")
+                | {{ offering.isBundle ? 'Bundle' : 'Single' }}
             td
-              time(am-time-ago="createVM.product.lastUpdate")
+              time(am-time-ago="offering.lastUpdate")
+
   .h5.text-dark-secondary
     strong Catalogue
   .form-group
@@ -121,29 +148,6 @@ form(name="step.form", novalidate)
             th {{ priceplan.name }}
             th {{ priceplan.description }}
             td {{ priceplan.toString() }}
-  .form-group(ng-show="createVM.data.isBundle")
-    .h5.text-dark-secondary
-      strong Bundled Offering
-    .table-responsive
-      table.table.table-bordered
-        thead
-          tr
-            th Status
-            th Name
-            th Type
-            th Updated
-        tbody
-          tr(ng-repeat="offering in createVM.data.bundledProductOffering")
-            td
-              .status-item(class="status-{{ offering.lifecycleStatus | lowercase }}")
-                span.item-icon
-                span.item-text {{ offering.lifecycleStatus }}
-            th {{ offering.name }}
-            td
-              span.label(ng-class="offering.isBundle ? 'label-bundle' : 'label-single'")
-                | {{ offering.isBundle ? 'Bundle' : 'Single' }}
-            td
-              time(am-time-ago="offering.lastUpdate")
 
   .form-group
     input(type="hidden", ng-model="createVM.data.serviceCandidate.id", required)

@@ -184,11 +184,11 @@
                 productSpecId: resource.id
             };
 
-            return ProductSpec.update(params, angular.extend(resource.toJSON(), {
+            return ProductSpec.update(params, angular.extend(resource.toJSON(), dataUpdated, {
                     bundledProductSpecification: resource.bundledProductSpecification.map(function (productSpec) {
                         return productSpec.serialize();
                     })
-                }, dataUpdated))
+                }))
                 .$promise
                 .then(detailBundled)
                 .then(detailRelationship);

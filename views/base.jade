@@ -200,7 +200,7 @@ html(ng-app="app")
     script(type="text/ng-template", id="stock/product/update")
       include ./partials/stock/product/update.jade
     script(type="text/ng-template", id="stock/product/update/bundled")
-      include ./partials/stock/product/update-bundledproduct.jade
+      include partials/stock/product/update-bundled-product
     script(type="text/ng-template", id="stock/product/update/characteristic")
       include ./partials/stock/product/update-form-characteristic.jade
     script(type="text/ng-template", id="stock/product/update/attachment")
@@ -230,6 +230,8 @@ html(ng-app="app")
       include ./partials/stock/product-offering/create-form-sharing-model.jade
     script(type="text/ng-template", id="stock/product-offering/update")
       include ./partials/stock/product-offering/update.jade
+    script(type="text/ng-template", id="stock/product-offering/update/bundled")
+      include partials/stock/product-offering/update-bundled-offerings
     script(type="text/ng-template", id="stock/product-offering/update/priceplan")
       include ./partials/stock/product-offering/update-priceplan.jade
     script(type="text/ng-template", id="stock/product-offering/update/category")

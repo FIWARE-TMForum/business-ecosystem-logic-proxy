@@ -22,6 +22,7 @@ var nock = require('nock'),
     testUtils = require('../../utils');
 
 // ERRORS
+var INVALID_METHOD = 'The HTTP method DELETE is not allowed in the accessed API';
 var PARENT_ID_INCLUDED = 'Parent ID cannot be included when the category is root';
 var MISSING_PARENT_ID = 'Non-root categories must contain a parent category';
 var FAILED_TO_RETRIEVE = 'The TMForum APIs fails to retrieve the object you are trying to update/delete';
@@ -29,7 +30,7 @@ var NEED_AUTHENTICATION = 'You need to be authenticated to create/update/delete 
 var INVALID_JSON = 'The provided body is not a valid JSON';
 var CREATE_OFFERING_FOR_NON_OWNED_PRODUCT = 'You are not allowed to create offerings for products you do not own';
 var UPDATE_OFFERING_WITH_NON_OWNED_PRODUCT = 'You are not allowed to update offerings for products you do not own';
-var INVALID_PRODUCT = 'The product attached to the offering cannot be read';
+var INVALID_PRODUCT = 'The attached product cannot be read or does not exist';
 var INVALID_USER_CREATE = 'The user making the request and the specified owner are not the same user';
 var INVALID_USER_UPDATE = 'The user making the request is not the owner of the accessed resource';
 var OFFERS_NOT_RETIRED_PRODUCT = 'All the attached offerings must be retired or obsolete to retire a product';
@@ -45,6 +46,20 @@ var CATALOG_CANNOT_BE_CHECKED = 'It was impossible to check if there is another 
 var CATALOG_EXISTS = 'This catalog name is already taken';
 var RSS_CANNOT_BE_ACCESSED = 'An unexpected error in the RSS API prevented your request to be processed';
 var INVALID_PRODUCT_CLASS = 'The provided productClass does not specify a valid revenue sharing model';
+var MISSING_PRODUCT_SPEC = 'Product offerings must contain a productSpecification';
+var MISSING_HREF_PRODUCT_SPEC = 'Missing required field href in product specification';
+var BUNDLED_OFFERING_NOT_BUNDLE = 'Product offerings which are not a bundle cannot contain a bundled product offering';
+var INVALID_BUNDLE_WITH_PRODUCT = 'Product offering bundles cannot contain a product specification';
+var INVALID_BUNDLE_MISSING_OFF = 'Product offering bundles must contain at least two bundled offerings';
+var INVALID_BUNDLE_MISSING_OFF_HREF = 'Missing required field href in bundled offering';
+var OFF_BUNDLE_FAILED_TO_RETRIEVE = 'The bundled offering 2 cannot be accessed or does not exists';
+var OFF_BUNDLE_IN_BUNDLE = 'Product offering bundles cannot include another bundle';
+var UNAUTHORIZED_OFF_BUNDLE = 'You are not allowed to bundle offerings you do not own';
+var MISSING_BUNDLE_PRODUCTS = 'Product spec bundles must contain at least two bundled product specs';
+var MISSING_HREF_BUNDLE_INFO = 'Missing required field href in bundleProductSpecification';
+var UNAUTHORIZED_BUNDLE = 'You are not authorized to include the product spec 3 in a product spec bundle';
+var BUNDLE_INSIDE_BUNDLE = 'It is not possible to include a product spec bundle in another product spec bundle';
+var INVALID_BUNDLED_PRODUCT_STATUS = 'Only Active or Launched product specs can be included in a bundle';
 
 
 describe('Catalog API', function() {
@@ -80,7 +95,7 @@ describe('Catalog API', function() {
         var catalogApi = getCatalogApi({}, {}, {});
 
         var req = {
-            method: 'GET',
+            method: 'GET'
             // user: { roles: [] }
         };
 
@@ -142,7 +157,6 @@ describe('Catalog API', function() {
     it('should reject not authenticated DELETE requests', function(done) {
         testNotLoggedIn('DELETE', done);
     });
-
 
     //////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////////// CREATE ///////////////////////////////////////////
@@ -240,22 +254,22 @@ describe('Catalog API', function() {
             true, true, true, done);
     });
 
-    var testCreateOffering = function(productRequestInfo, catalogRequestInfo, storeError, errorStatus, errorMsg, rssResp, done) {
+    describe('Offering creation', function() {
 
         // Basic properties
         var userName = 'test';
         var catalogPath = '/catalog/7';
         var offeringPath = catalogPath + '/productOffering';
-        var productPath = '/product/7';
         var protocol = config.appSsl ? 'https' : 'http';
         var serverUrl = protocol + '://' + config.appHost + ':' + config.endpoints.catalog.port;
+        var productPath = '/product/7';
 
         var user = {
             id: userName,
             roles: [{ name: config.oauth2.roles.seller }]
         };
 
-        var body = {
+        var basicBody = {
             productSpecification: {
                 // the server will be avoided by the SW
                 // The catalog server will be used instead
@@ -266,361 +280,689 @@ describe('Catalog API', function() {
             }
         };
 
-        // Mocks
-        var checkRoleMethod = jasmine.createSpy();
-        checkRoleMethod.and.returnValue(true);
-
-        var defaultErrorMessage = 'Internal Server Error';
-
-        var tmfUtils = {
-            isOwner: productRequestInfo.role.toLowerCase() === 'owner' ? isOwnerTrue : isOwnerFalse
+        var productRequestInfoActive = {
+            requestStatus: 200,
+            role: 'Owner',
+            lifecycleStatus: 'active'
         };
 
-        var utils = {
-            validateLoggedIn: validateLoggedOk,
-            hasRole: checkRoleMethod
+        var catalogRequestInfoLaunched = {
+            requestStatus: 200,
+            lifecycleStatus: 'launched'
         };
 
-        var storeClient = {
-            storeClient: {
-                validateOffering: function (offeringInfo, userInfo, callback) {
+        var mockCatalogAPI = function(body, requestInfo, storeError, rssResp) {
+            // Mocks
+            var checkRoleMethod = jasmine.createSpy();
+            checkRoleMethod.and.returnValue(true);
 
-                    expect(offeringInfo).toEqual(body);
-                    expect(userInfo).toEqual(user);
+            var tmfUtils = {
+                isOwner: requestInfo.role.toLowerCase() === 'owner' ? isOwnerTrue : isOwnerFalse
+            };
 
-                    callback(storeError);
+            var utils = {
+                validateLoggedIn: validateLoggedOk,
+                hasRole: checkRoleMethod
+            };
+
+            var storeClient = {
+                storeClient: {
+                    validateOffering: function (offeringInfo, userInfo, callback) {
+
+                        expect(offeringInfo).toEqual(body);
+                        expect(userInfo).toEqual(user);
+
+                        callback(storeError);
+                    }
                 }
+            };
+
+            if (!rssResp) {
+                rssResp = {
+                    provider: null,
+                    modelErr: null,
+                    modelBody: {
+                        body: JSON.stringify([{}])
+                    }
+                };
             }
+
+            var rssClient = {
+                rssClient: {
+                    createProvider: function(userInfo, callback) {
+                        expect(userInfo).toEqual(user);
+                        callback(rssResp.provider);
+                    },
+                    retrieveRSModel: function(userInfo, productClass, callback) {
+                        expect(userInfo).toEqual(user);
+                        callback(rssResp.modelErr, rssResp.modelBody);
+                    }
+                }
+            };
+
+            return getCatalogApi(storeClient, tmfUtils, utils, rssClient);
         };
 
-        if (!rssResp) {
-            rssResp = {
+        var mockCatalogService = function(catalogRequestInfo, defaultErrorMessage) {
+            // The mock server that will handle the request when the catalog is requested
+            var bodyGetCatalogOk = {lifecycleStatus: catalogRequestInfo.lifecycleStatus};
+            var bodyGetCatalog = catalogRequestInfo.requestStatus === 200 ? bodyGetCatalogOk : defaultErrorMessage;
+
+            nock(serverUrl)
+                .get(catalogPath)
+                .reply(catalogRequestInfo.requestStatus, bodyGetCatalog);
+        };
+
+        var executeCheckPermissionsTest = function(body, catalogApi, errorStatus, errorMsg, done) {
+            var req = {
+                method: 'POST',
+                apiUrl: offeringPath,
+                user: user,
+                body: JSON.stringify(body)
+            };
+
+            catalogApi.checkPermissions(req, function(err) {
+
+                if (errorStatus && errorMsg) {
+                    expect(err).not.toBe(null);
+                    expect(err.status).toBe(errorStatus);
+                    expect(err.message).toBe(errorMsg);
+                } else {
+                    expect(err).toBe(null);
+                }
+
+                done();
+            });
+        };
+
+        var testCreateOffering = function(productRequestInfo, catalogRequestInfo, storeError, errorStatus, errorMsg, rssResp, body, done) {
+
+            var defaultErrorMessage = 'Internal Server Error';
+            var catalogApi = mockCatalogAPI(body, productRequestInfo, storeError, rssResp);
+
+            // The mock server that will handle the request when the product is requested
+            var bodyGetProductOk = {
+                relatedParty: [{id: userName, role: productRequestInfo.role}],
+                lifecycleStatus: productRequestInfo.lifecycleStatus
+            };
+            var bodyGetProduct = productRequestInfo.requestStatus === 200 ? bodyGetProductOk : defaultErrorMessage;
+
+            nock(serverUrl)
+                .get(productPath)
+                .reply(productRequestInfo.requestStatus, bodyGetProduct);
+
+            mockCatalogService(catalogRequestInfo, defaultErrorMessage);
+
+            // Call the method
+            executeCheckPermissionsTest(body, catalogApi, errorStatus, errorMsg, done);
+        };
+
+        it('should allow to create an offering with an owned product', function(done) {
+            testCreateOffering(productRequestInfoActive, catalogRequestInfoLaunched, null, null, null, null, basicBody, done);
+        });
+
+        it('should not allow to create an offering when store validation fails', function(done) {
+
+            var storeResponse = {
+                status: 400,
+                message: 'Invalid pricing'
+            };
+
+            testCreateOffering(productRequestInfoActive, catalogRequestInfoLaunched, storeResponse, storeResponse.status,
+                storeResponse.message, null, basicBody, done);
+        });
+
+        it('should not allow to create an offering with a non owned product', function(done) {
+
+            var productRequestInfo = {
+                requestStatus: 200,
+                role: 'Seller',
+                lifecycleStatus: 'active'
+            };
+
+            var catalogRequestInfo = {
+                requestStatus: 200,
+                lifecycleStatus: 'active'
+            };
+
+            testCreateOffering(productRequestInfo, catalogRequestInfo, null, 403, CREATE_OFFERING_FOR_NON_OWNED_PRODUCT,
+                null, basicBody, done);
+        });
+
+        it('should not allow to create an offering in a retired catalogue', function(done) {
+
+            var catalogRequestInfo = {
+                requestStatus: 200,
+                lifecycleStatus: 'retired'
+            };
+
+            testCreateOffering(productRequestInfoActive, catalogRequestInfo, null, 400, 'Offerings can only be created in a ' +
+                'catalog that is active or launched', null, basicBody, done);
+        });
+
+        it('should not allow to create an offering for a retired product', function(done) {
+
+            var productRequestInfo = {
+                requestStatus: 200,
+                role: 'Owner',
+                lifecycleStatus: 'retired'
+            };
+
+            var catalogRequestInfo = {
+                requestStatus: 200,
+                lifecycleStatus: 'active'
+            };
+
+            testCreateOffering(productRequestInfo, catalogRequestInfo, null, 400, 'Offerings can only be attached to ' +
+                'active or launched products', null, basicBody, done);
+        });
+
+        it('should not allow to create an offering when product cannot be retrieved', function(done) {
+
+            var productRequestInfo = {
+                requestStatus: 500,
+                role: 'Owner',
+                lifeCycleStatus: 'active'
+            };
+
+            var catalogRequestInfo = {
+                requestStatus: 200,
+                lifecycleStatus: 'active'
+            };
+
+            testCreateOffering(productRequestInfo, catalogRequestInfo, null, 422, INVALID_PRODUCT, null, basicBody, done);
+        });
+
+        it('should not allow to create an offering when the attached catalog cannot be retrieved', function(done) {
+
+            var catalogRequestInfo = {
+                requestStatus: 500,
+                lifecycleStatus: 'active'
+            };
+
+            // isOwner does not matter when productRequestFails is set to true
+            testCreateOffering(productRequestInfoActive, catalogRequestInfo, null, 500, 'The catalog attached to the offering ' +
+                'cannot be read', null, basicBody, done);
+        });
+
+        it('should not allow to create an offering when the RSS provider cannot be verified', function(done) {
+            testCreateOffering(productRequestInfoActive, catalogRequestInfoLaunched, null, 500, RSS_CANNOT_BE_ACCESSED, {
+                provider: {}
+            }, basicBody, done);
+        });
+
+        it ('should not allow to create an offering when the RSS fails retrieving models', function(done) {
+            var errMsg = 'RSS failure';
+            var status = 500;
+
+            testCreateOffering(productRequestInfoActive, catalogRequestInfoLaunched, null, status, errMsg, {
+                provider: null,
+                modelErr: {
+                    status: status,
+                    message: errMsg
+                }
+            }, basicBody, done);
+        });
+
+        it ('should not allow to create an offering when there are not RS Models', function(done) {
+
+            testCreateOffering(productRequestInfoActive, catalogRequestInfoLaunched, null, 422, INVALID_PRODUCT_CLASS, {
                 provider: null,
                 modelErr: null,
                 modelBody: {
-                    body: JSON.stringify([{}])
+                    body: JSON.stringify([])
+                }
+            }, basicBody, done);
+        });
+
+        it('should not allow to create an offering when the productSpecification field has not been provided', function(done) {
+            testCreateOffering(productRequestInfoActive, catalogRequestInfoLaunched, null, 422, MISSING_PRODUCT_SPEC, null, {}, done);
+        });
+
+        it('should not allow to create an offering when the product specification does not contain a href', function(done) {
+            testCreateOffering(productRequestInfoActive, catalogRequestInfoLaunched, null, 422, MISSING_HREF_PRODUCT_SPEC, null, {
+                productSpecification: {
+                    id: '1'
+                }
+            }, done);
+        });
+
+        it('should not allow to create an offering when a bundled offering is provided and not a bundle', function(done) {
+            var offeringBody = {
+                productSpecification: {
+                    href: 'http://product.com'
+                },
+                bundledProductOffering: [{}]
+            };
+            testCreateOffering(productRequestInfoActive, catalogRequestInfoLaunched, null, 422,
+                BUNDLED_OFFERING_NOT_BUNDLE, null, offeringBody, done);
+        });
+
+        var testCreateOfferingBundle = function(offeringRequestInfo, catalogRequestInfo, storeError, body, errorStatus, errorMsg, done) {
+
+            var defaultErrorMessage = 'Internal Server Error';
+            var catalogApi = mockCatalogAPI(body, offeringRequestInfo, storeError, null);
+
+            // The mock server that will handle the request when the product is requested
+            var bodyGetOfferingOk = {
+                isBundle: offeringRequestInfo.isBundle,
+                relatedParty: [{id: userName, role: offeringRequestInfo.role}],
+                lifecycleStatus: offeringRequestInfo.lifecycleStatus
+            };
+            var bodyGetOffering = offeringRequestInfo.requestStatus === 200 ? bodyGetOfferingOk : defaultErrorMessage;
+
+            for (var i = 0; i < offeringRequestInfo.hrefs.length; i++) {
+                nock(serverUrl)
+                    .get(offeringRequestInfo.hrefs[i])
+                    .reply(offeringRequestInfo.requestStatus, bodyGetOffering);
+            }
+
+            mockCatalogService(catalogRequestInfo, defaultErrorMessage);
+
+            // Call the method
+            executeCheckPermissionsTest(body, catalogApi, errorStatus, errorMsg, done);
+        };
+
+        var offering1 = catalogPath + '/productOffering/1';
+        var offering2 = catalogPath + '/productOffering/2';
+
+        it('should allow to create an offering bundle', function(done) {
+
+            var body = {
+                isBundle: true,
+                bundledProductOffering: [{
+                    href: serverUrl + offering1
+                }, {
+                    href: serverUrl + offering2
+                }],
+                serviceCandidate: { id: 'defaultRevenue', name: 'Revenue Sharing Service' }
+            };
+
+            var offeringRequestInfo = {
+                role: 'Owner',
+                isBundle: false,
+                lifecycleStatus: 'active',
+                hrefs: [offering1, offering2],
+                requestStatus: 200
+            };
+            testCreateOfferingBundle(offeringRequestInfo, catalogRequestInfoLaunched, null,
+                body, null, null, done)
+        });
+
+        it('should not allow to create an offering bundle with a productSpecification', function(done) {
+            var body = {
+                isBundle: true,
+                productSpecification: {
+                    id: '1'
                 }
             };
-        }
 
-        var rssClient = {
-            rssClient: {
-                createProvider: function(userInfo, callback) {
-                    expect(userInfo).toEqual(user);
-                    callback(rssResp.provider);
+            var offeringRequestInfo = {
+                role: 'Owner',
+                isBundle: false,
+                lifecycleStatus: 'active',
+                hrefs: [],
+                requestStatus: 200
+            };
+
+            testCreateOfferingBundle(offeringRequestInfo, catalogRequestInfoLaunched, null,
+                body, 422, INVALID_BUNDLE_WITH_PRODUCT, done)
+        });
+
+        it('should not allow to create an offering bundle when less than 2 bundled offerings has been provided', function(done) {
+            var body = {
+                isBundle: true
+            };
+
+            var offeringRequestInfo = {
+                role: 'Owner',
+                isBundle: false,
+                lifecycleStatus: 'active',
+                hrefs: [],
+                requestStatus: 200
+            };
+
+            testCreateOfferingBundle(offeringRequestInfo, catalogRequestInfoLaunched, null,
+                body, 422, INVALID_BUNDLE_MISSING_OFF, done)
+        });
+
+        it('should not allow to create an offering bundle when there is missing an href in the bundled offering info', function(done) {
+            var body = {
+                isBundle: true,
+                bundledProductOffering: [{
+                    href: 'http://catalog'
+                }, {}]
+            };
+
+            var offeringRequestInfo = {
+                role: 'Owner',
+                isBundle: false,
+                lifecycleStatus: 'active',
+                hrefs: [],
+                requestStatus: 200
+            };
+
+            testCreateOfferingBundle(offeringRequestInfo, catalogRequestInfoLaunched, null,
+                body, 422, INVALID_BUNDLE_MISSING_OFF_HREF, done)
+        });
+
+        it('should not allow to create an offering bundle when a bundled offering cannot be accessed', function(done) {
+
+            var body = {
+                isBundle: true,
+                bundledProductOffering: [{
+                    id: '2',
+                    href: serverUrl + offering1
+                }, {
+                    id: '2',
+                    href: serverUrl + offering2
+                }]
+            };
+
+            var offeringRequestInfo = {
+                role: 'Owner',
+                isBundle: false,
+                lifecycleStatus: 'active',
+                hrefs: [offering1, offering2],
+                requestStatus: 500
+            };
+            testCreateOfferingBundle(offeringRequestInfo, catalogRequestInfoLaunched, null,
+                body, 422, OFF_BUNDLE_FAILED_TO_RETRIEVE, done)
+        });
+
+        it('should not allow to create an offering bundle when a bundled offering is also a bundle', function(done) {
+
+            var body = {
+                isBundle: true,
+                bundledProductOffering: [{
+                    href: serverUrl + offering1
+                }, {
+                    href: serverUrl + offering2
+                }]
+            };
+
+            var offeringRequestInfo = {
+                role: 'Owner',
+                isBundle: true,
+                lifecycleStatus: 'active',
+                hrefs: [offering1, offering2],
+                requestStatus: 200
+            };
+            testCreateOfferingBundle(offeringRequestInfo, catalogRequestInfoLaunched, null,
+                body, 422, OFF_BUNDLE_IN_BUNDLE, done)
+        });
+
+        it('should not allow to create a bundle with a non owned offering', function(done) {
+
+            var body = {
+                isBundle: true,
+                bundledProductOffering: [{
+                    href: serverUrl + offering1
+                }, {
+                    href: serverUrl + offering2
+                }]
+            };
+
+            var offeringRequestInfo = {
+                role: 'seller',
+                isBundle: false,
+                lifecycleStatus: 'active',
+                hrefs: [offering1, offering2],
+                requestStatus: 200
+            };
+            testCreateOfferingBundle(offeringRequestInfo, catalogRequestInfoLaunched, null,
+                body, 403, UNAUTHORIZED_OFF_BUNDLE, done)
+        });
+    });
+
+    describe('Create product', function() {
+
+        var mockCatalogAPI = function(isOwner, storeValidator) {
+            var checkRoleMethod = jasmine.createSpy();
+            checkRoleMethod.and.returnValue(true);
+
+            // Store Client
+            var storeClient = {
+                storeClient: {
+                    validateProduct: storeValidator
+                }
+            };
+
+            var tmfUtils = {
+                isOwner: isOwner
+            };
+
+            var utils = {
+                validateLoggedIn: validateLoggedOk,
+                hasRole: checkRoleMethod
+            };
+
+            return getCatalogApi(storeClient, tmfUtils, utils);
+        };
+
+        var buildProductRequest = function(body) {
+            // Basic properties
+            var offeringPath = '/catalog/productSpecification/';
+
+            return {
+                method: 'POST',
+                apiUrl: offeringPath,
+                user: {
+                    id: 'test',
+                    roles: [{ name: config.oauth2.roles.seller }]
                 },
-                retrieveRSModel: function(userInfo, productClass, callback) {
-                    expect(userInfo).toEqual(user);
-                    callback(rssResp.modelErr, rssResp.modelBody);
+                body: JSON.stringify(body)
+            };
+        };
+
+        var checkProductCreationResult = function(catalogApi, req, errorStatus, errorMsg, done) {
+            catalogApi.checkPermissions(req, function(err) {
+
+                if (!errorStatus && !errorMsg ) {
+                    expect(err).toBe(null);
+                } else {
+                    expect(err.status).toBe(errorStatus);
+                    expect(err.message).toBe(errorMsg);
+
+                }
+
+                done();
+            });
+        };
+
+        var testCreateProduct = function(storeValidator, errorStatus, errorMsg, owner, done) {
+
+            var catalogApi = mockCatalogAPI(owner ? isOwnerTrue : isOwnerFalse, storeValidator);
+
+            var role = owner ? 'Owner': 'Seller';
+            var body = { relatedParty: [{id: 'test', role: role}]};
+            var req = buildProductRequest(body);
+
+            checkProductCreationResult(catalogApi, req, errorStatus, errorMsg, done);
+        };
+
+        var storeValidatorOk = function(body, user, callback) {
+            callback();
+        };
+
+        it('should allow to create owned products', function(done) {
+            testCreateProduct(storeValidatorOk, null, null, true, done);
+        });
+
+        it('should not allow to create non-owned products', function(done) {
+            testCreateProduct(storeValidatorOk, 403, INVALID_USER_CREATE, false,  done);
+        });
+
+        it('should not allow to create products that cannot be retrieved from the Store', function(done) {
+
+            var storeErrorStatus = 400;
+            var storeErrorMessage = 'Invalid product';
+
+            var storeValidatorErr = function(body, user, callback) {
+                callback({ status: storeErrorStatus, message: storeErrorMessage });
+            };
+
+            // Actual call
+            // isOwner does not matter when productRequestFails is set to true
+            testCreateProduct(storeValidatorErr, storeErrorStatus, storeErrorMessage, true, done);
+        });
+
+        var SERVER = (config.appSsl ? 'https' : 'http') + '://' + config.appHost + ':' + config.endpoints.catalog.port;
+
+        var testCreateBundle = function(bundles, errorStatus, errorMsg, done) {
+
+            var productPath = '/catalog/productSpecification/';
+
+            var catalogApi = mockCatalogAPI(function(req, resource) {
+                return !(resource.id == '3');
+            }, storeValidatorOk);
+
+            // Mock bundles
+            var body = {
+                isBundle: true,
+                bundledProductSpecification: []
+            };
+
+            for (var i = 0; i < bundles.length; i++) {
+                if (bundles[i].id) {
+
+                    body.bundledProductSpecification.push({
+                        href: SERVER + productPath + bundles[i].id
+                    });
+
+                    if (bundles[i].body) {
+                        nock(SERVER)
+                            .get(productPath + bundles[i].id)
+                            .reply(bundles[i].status, bundles[i].body);
+                    }
+                } else {
+                    body.bundledProductSpecification.push({});
                 }
             }
+
+            var req = buildProductRequest(body);
+            checkProductCreationResult(catalogApi, req, errorStatus, errorMsg, done);
         };
 
-        var catalogApi = getCatalogApi(storeClient, tmfUtils, utils, rssClient);
+        it('should allow to create bundles when all products specs are single and owned by the user', function(done) {
 
-        // The mock server that will handle the request when the product is requested
-        var bodyGetProductOk = {
-            relatedParty: [{id: userName, role: productRequestInfo.role}],
-            lifecycleStatus: productRequestInfo.lifecycleStatus
-        };
-        var bodyGetProduct = productRequestInfo.requestStatus === 200 ? bodyGetProductOk : defaultErrorMessage;
+            var bundles = [{
+                id: '1',
+                status: 200,
+                body: {
+                    id: '1',
+                    isBundle: false,
+                    lifecycleStatus: 'Active'
+                }
+            }, {
+                id: '2',
+                status: 200,
+                body: {
+                    id: '2',
+                    isBundle: false,
+                    lifecycleStatus: 'Active'
+                }
+            }];
 
-        nock(serverUrl)
-            .get(productPath)
-            .reply(productRequestInfo.requestStatus, bodyGetProduct);
-
-        // The mock server that will handle the request when the catalog is requested
-        var bodyGetCatalogOk = {lifecycleStatus: catalogRequestInfo.lifecycleStatus};
-        var bodyGetCatalog = catalogRequestInfo.requestStatus === 200 ? bodyGetCatalogOk : defaultErrorMessage;
-
-        nock(serverUrl)
-            .get(catalogPath)
-            .reply(catalogRequestInfo.requestStatus, bodyGetCatalog);
-
-        // Call the method
-        var req = {
-            method: 'POST',
-            apiUrl: offeringPath,
-            user: user,
-            body: JSON.stringify(body)
-        };
-
-        catalogApi.checkPermissions(req, function(err) {
-
-            if (errorStatus && errorMsg) {
-                expect(err).not.toBe(null);
-                expect(err.status).toBe(errorStatus);
-                expect(err.message).toBe(errorMsg);
-            } else {
-                expect(err).toBe(null);
-            }
-
-            done();
+            testCreateBundle(bundles, null, null, done);
         });
-    };
 
-    it('should allow to create an offering with an owned product', function(done) {
-
-        var productRequestInfo = {
-            requestStatus: 200,
-            role: 'Owner',
-            lifecycleStatus: 'active'
-        };
-
-        var catalogRequestInfo = {
-            requestStatus: 200,
-            lifecycleStatus: 'launched'
-        };
-
-        testCreateOffering(productRequestInfo, catalogRequestInfo, null, null, null, null, done);
-    });
-
-    it('should not allow to create an offering when store validation fails', function(done) {
-
-        var productRequestInfo = {
-            requestStatus: 200,
-            role: 'Owner',
-            lifecycleStatus: 'active'
-        };
-
-        var catalogRequestInfo = {
-            requestStatus: 200,
-            lifecycleStatus: 'launched'
-        };
-
-        var storeResponse = {
-            status: 400,
-            message: 'Invalid pricing'
-        };
-
-        testCreateOffering(productRequestInfo, catalogRequestInfo, storeResponse, storeResponse.status,
-            storeResponse.message, null, done);
-    });
-
-    it('should not allow to create an offering with a non owned product', function(done) {
-
-        var productRequestInfo = {
-            requestStatus: 200,
-            role: 'Seller',
-            lifecycleStatus: 'active'
-        };
-
-        var catalogRequestInfo = {
-            requestStatus: 200,
-            lifecycleStatus: 'active'
-        };
-
-        testCreateOffering(productRequestInfo, catalogRequestInfo, null, 403, CREATE_OFFERING_FOR_NON_OWNED_PRODUCT, null, done);
-    });
-
-    it('should not allow to create an offering in a retired catalogue', function(done) {
-
-        var productRequestInfo = {
-            requestStatus: 200,
-            role: 'Owner',
-            lifecycleStatus: 'active'
-        };
-
-        var catalogRequestInfo = {
-            requestStatus: 200,
-            lifecycleStatus: 'retired'
-        };
-
-        testCreateOffering(productRequestInfo, catalogRequestInfo, null, 400, 'Offerings can only be created in a ' +
-            'catalog that is active or launched', null, done);
-    });
-
-    it('should not allow to create an offering for a retired product', function(done) {
-
-        var productRequestInfo = {
-            requestStatus: 200,
-            role: 'Owner',
-            lifecycleStatus: 'retired'
-        };
-
-        var catalogRequestInfo = {
-            requestStatus: 200,
-            lifecycleStatus: 'active'
-        };
-
-        testCreateOffering(productRequestInfo, catalogRequestInfo, null, 400, 'Offerings can only be attached to ' +
-            'active or launched products', null, done);
-    });
-
-    it('should not allow to create an offering when product cannot be retrieved', function(done) {
-
-        var productRequestInfo = {
-            requestStatus: 500,
-            role: 'Owner',
-            lifeCycleStatus: 'active'
-        };
-
-        var catalogRequestInfo = {
-            requestStatus: 200,
-            lifecycleStatus: 'active'
-        };
-
-        testCreateOffering(productRequestInfo, catalogRequestInfo, null, 500, INVALID_PRODUCT, null, done);
-    });
-
-    it('should not allow to create an offering when the attached catalog cannot be retrieved', function(done) {
-
-        var productRequestInfo = {
-            requestStatus: 200,
-            role: 'Owner',
-            lifecycleStatus: 'active'
-        };
-
-        var catalogRequestInfo = {
-            requestStatus: 500,
-            lifecycleStatus: 'active'
-        };
-
-        // isOwner does not matter when productRequestFails is set to true
-        testCreateOffering(productRequestInfo, catalogRequestInfo, null, 500, 'The catalog attached to the offering ' +
-            'cannot be read', null, done);
-    });
-
-    it('should not allow to create an offering when the RSS provider cannot be verified', function(done) {
-        var productRequestInfo = {
-            requestStatus: 200,
-            role: 'Owner',
-            lifecycleStatus: 'active'
-        };
-
-        var catalogRequestInfo = {
-            requestStatus: 200,
-            lifecycleStatus: 'launched'
-        };
-
-        testCreateOffering(productRequestInfo, catalogRequestInfo, null, 500, RSS_CANNOT_BE_ACCESSED, {
-            provider: {}
-        }, done);
-    });
-
-    it ('should not allow to create an offering when the RSS fails retrieving models', function(done) {
-        var errMsg = 'RSS failure';
-        var status = 500;
-
-        var productRequestInfo = {
-            requestStatus: 200,
-            role: 'Owner',
-            lifecycleStatus: 'active'
-        };
-
-        var catalogRequestInfo = {
-            requestStatus: 200,
-            lifecycleStatus: 'launched'
-        };
-
-        testCreateOffering(productRequestInfo, catalogRequestInfo, null, status, errMsg, {
-            provider: null,
-            modelErr: {
-                status: status,
-                message: errMsg,
-            }
-        }, done);
-    });
-
-    it ('should not allow to create an offering when there are not RS Models', function(done) {
-        var productRequestInfo = {
-            requestStatus: 200,
-            role: 'Owner',
-            lifecycleStatus: 'active'
-        };
-
-        var catalogRequestInfo = {
-            requestStatus: 200,
-            lifecycleStatus: 'launched'
-        };
-
-        testCreateOffering(productRequestInfo, catalogRequestInfo, null, 422, INVALID_PRODUCT_CLASS, {
-            provider: null,
-            modelErr: null,
-            modelBody: {
-                body: JSON.stringify([])
-            }
-        }, done);
-    });
-
-    var testCreateProduct = function(storeValidator, errorStatus, errorMsg, owner, done) {
-
-        var checkRoleMethod = jasmine.createSpy();
-        checkRoleMethod.and.returnValue(true);
-
-        // Store Client
-        var storeClient = {
-            storeClient: {
-                validateProduct: storeValidator
-            }
-        };
-
-        var tmfUtils = {
-            isOwner: owner ? isOwnerTrue : isOwnerFalse
-        };
-
-        var utils = {
-            validateLoggedIn: validateLoggedOk,
-            hasRole: checkRoleMethod
-        };
-
-        var catalogApi = getCatalogApi(storeClient, tmfUtils, utils);
-
-        // Basic properties
-        var userName = 'test';
-        var offeringPath = '/catalog/productSpecification/';
-        var role = owner ? 'Owner': 'Seller';
-        var body = { relatedParty: [{id: userName, role: role}]};
-
-        // Call the method
-        var req = {
-            method: 'POST',
-            apiUrl: offeringPath,
-            user: {
-                id: userName,
-                roles: [{ name: config.oauth2.roles.seller }]
-            },
-            body: JSON.stringify(body)
-        };
-
-        catalogApi.checkPermissions(req, function(err) {
-
-            if (!errorStatus && !errorMsg ) {
-                expect(err).toBe(null);
-            } else {
-                expect(err.status).toBe(errorStatus);
-                expect(err.message).toBe(errorMsg);
-
-            }
-
-            done();
+        it('should not allow to create bundles when less than two bundle products have been included', function(done) {
+            testCreateBundle([], 422, MISSING_BUNDLE_PRODUCTS, done);
         });
-    };
 
-    var storeValidatorOk = function(body, user, callback) {
-        callback();
-    };
+        it('should not allow to create bundles when the bundle info does not contain an href field', function(done) {
+            var bundles = [{
+                id: '15',
+                status: 200,
+                body: null
+            }, {}];
 
-    it('should allow to create owned products', function(done) {
-        testCreateProduct(storeValidatorOk, null, null, true, done);
-    });
+            testCreateBundle(bundles, 422, MISSING_HREF_BUNDLE_INFO, done);
+        });
 
-    it('should not allow to create non-owned products', function(done) {
-        testCreateProduct(storeValidatorOk, 403, INVALID_USER_CREATE, false,  done);
-    });
+        it('should not allow to create bundles when one of the included bundled products does not exists', function(done) {
+            var bundles = [{
+                id: '1',
+                status: 200,
+                body: {
+                    id: '1',
+                    isBundle: false,
+                    lifecycleStatus: 'Active'
+                }
+            }, {
+                id: '2',
+                status: 404,
+                body: null
+            }];
 
-    it('should not allow to create products that cannot be retrieved from the Store', function(done) {
+            testCreateBundle(bundles, 422, INVALID_PRODUCT, done);
+        });
 
-        var storeErrorStatus = 400;
-        var storeErrorMessage = 'Invalid product';
+        it('should not allow to create bundles when the user is not owning one of the bundled products', function(done) {
+            var bundles = [{
+                id: '1',
+                status: 200,
+                body: {
+                    id: '1',
+                    isBundle: false,
+                    lifecycleStatus: 'Active'
+                }
+            }, {
+                id: '3',
+                status: 200,
+                body: {
+                    id: '3',
+                    isBundle: false,
+                    lifecycleStatus: 'Active'
+                }
+            }];
 
-        var storeValidatorErr = function(body, user, callback) {
-            callback({ status: storeErrorStatus, message: storeErrorMessage });
-        };
+            testCreateBundle(bundles, 403, UNAUTHORIZED_BUNDLE, done);
+        });
 
-        // Actual call
-        // isOwner does not matter when productRequestFails is set to true
-        testCreateProduct(storeValidatorErr, storeErrorStatus, storeErrorMessage, true, done);
+        it('should not allow to create bundles when one of the bundled products is also a bundle', function(done) {
+            var bundles = [{
+                id: '1',
+                status: 200,
+                body: {
+                    id: '1',
+                    isBundle: true
+                }
+            }, {
+                id: '2',
+                status: 200,
+                body: {
+                    id: '2',
+                    isBundle: false,
+                    lifecycleStatus: 'Active'
+                }
+            }];
+
+            testCreateBundle(bundles, 422, BUNDLE_INSIDE_BUNDLE, done);
+        });
+
+        it('should not allow two create bundles with product specs that are not active or launched', function(done) {
+            var bundles = [{
+                id: '1',
+                status: 200,
+                body: {
+                    id: '1',
+                    isBundle: false,
+                    lifecycleStatus: 'Active'
+                }
+            }, {
+                id: '2',
+                status: 200,
+                body: {
+                    id: '2',
+                    isBundle: false,
+                    lifecycleStatus: 'Retired'
+                }
+            }];
+
+            testCreateBundle(bundles, 422, INVALID_BUNDLED_PRODUCT_STATUS, done);
+        });
     });
 
     var testCreateCategory = function(admin, category, categoriesRequest, errorStatus, errorMsg, done) {
@@ -856,7 +1198,7 @@ describe('Catalog API', function() {
 
     // ANY ASSET
 
-    var testUpdate = function(method, requestStatus, isOwnerMethod, done) {
+    var testUpdate = function(method, requestStatus, isOwnerMethod, expStatus, expMsg, done) {
 
         var checkRoleMethod = jasmine.createSpy();
         checkRoleMethod.and.returnValue(true);
@@ -903,15 +1245,9 @@ describe('Catalog API', function() {
 
             if (isOwnerMethod() && requestStatus === 200) {
                 expect(err).toBe(null);
-            } else if (requestStatus === 404) {
-                expect(err.status).toBe(404);
-                expect(err.message).toBe('The required resource does not exist');
-            } else if ([200, 404].indexOf(requestStatus) < 0) {
-                expect(err.status).toBe(500);
-                expect(err.message).toBe(FAILED_TO_RETRIEVE);
             } else {
-                expect(err.status).toBe(403);
-                expect(err.message).toBe(INVALID_USER_UPDATE);
+                expect(err.status).toBe(expStatus);
+                expect(err.message).toBe(expMsg);
             }
 
             done();
@@ -919,57 +1255,43 @@ describe('Catalog API', function() {
     };
 
     it('should allow to to update (PUT) an owned resource', function(done) {
-        testUpdate('PUT', 200, isOwnerTrue, done);
+        testUpdate('PUT', 200, isOwnerTrue, null, null, done);
     });
 
     it('should not allow to update (PUT) a non-owned resource', function(done) {
-        testUpdate('PUT', 200, isOwnerFalse, done);
+        testUpdate('PUT', 200, isOwnerFalse, 403, INVALID_USER_UPDATE, done);
     });
 
     it('should not allow to update (PUT) a resource that cannot be checked', function(done) {
         // The value of isOwner does not matter when requestFails is set to true
-        testUpdate('PUT', 500, isOwnerTrue, done);
+        testUpdate('PUT', 500, isOwnerTrue, 500, FAILED_TO_RETRIEVE, done);
     });
 
     it('should not allow to update (PUT) a resource that does not exist', function(done) {
         // The value of isOwner does not matter when requestFails is set to true
-        testUpdate('PUT', 404, isOwnerTrue, done);
+        testUpdate('PUT', 404, isOwnerTrue, 404, 'The required resource does not exist', done);
     });
 
     it('should allow to to update (PATCH) an owned resource', function(done) {
-        testUpdate('PATCH', 200, isOwnerTrue, done);
+        testUpdate('PATCH', 200, isOwnerTrue, null, null, done);
     });
 
     it('should not allow to update (PATCH) a non-owned resource', function(done) {
-        testUpdate('PATCH', 200, isOwnerFalse, done);
+        testUpdate('PATCH', 200, isOwnerFalse, 403, INVALID_USER_UPDATE, done);
     });
 
     it('should not allow to update (PATCH) a resource that cannot be checked', function(done) {
         // The value of isOwner does not matter when requestFails is set to true
-        testUpdate('PATCH', 500, isOwnerTrue, done);
+        testUpdate('PATCH', 500, isOwnerTrue, 500, FAILED_TO_RETRIEVE, done);
     });
 
     it('should not allow to update (PATCH) a resource that does not exist', function(done) {
         // The value of isOwner does not matter when requestFails is set to true
-        testUpdate('PATCH', 404, isOwnerTrue, done);
+        testUpdate('PATCH', 404, isOwnerTrue, 404, 'The required resource does not exist', done);
     });
 
-    it('should allow to to delete owned resource', function(done) {
-        testUpdate('DELETE', 200, isOwnerTrue, done);
-    });
-
-    it('should not allow to delete a non-owned resource', function(done) {
-        testUpdate('DELETE', 200, isOwnerFalse, done);
-    });
-
-    it('should not allow to delete a resource that cannot be checked', function(done) {
-        // The value of isOwner does not matter when requestFails is set to true
-        testUpdate('DELETE', 500, isOwnerTrue, done);
-    });
-
-    it('should not allow to delete a resource that does not exist', function(done) {
-        // The value of isOwner does not matter when requestFails is set to true
-        testUpdate('DELETE', 404, isOwnerTrue, done);
+    it('should not allow to make delete requests to the catalog API when no accessing category API', function(done) {
+        testUpdate('DELETE', null, isOwnerTrue, 405, INVALID_METHOD, done);
     });
 
     // OFFERINGS
@@ -1071,7 +1393,6 @@ describe('Catalog API', function() {
     };
 
     it('should allow to update an owned offering', function(done) {
-
         var productRequestInfo = {
             requestStatus: 200,
             owner: true,
@@ -1136,7 +1457,6 @@ describe('Catalog API', function() {
             requestStatus: 200,
             lifecycleStatus: 'active'
         };
-
         testUpdateProductOffering({}, productRequestInfo, catalogRequestInfo, 403, UPDATE_OFFERING_WITH_NON_OWNED_PRODUCT, done);
     });
 
@@ -1153,7 +1473,7 @@ describe('Catalog API', function() {
             lifecycleStatus: 'active'
         };
 
-        testUpdateProductOffering({}, productRequestInfo, catalogRequestInfo, 500, INVALID_PRODUCT, done);
+        testUpdateProductOffering({}, productRequestInfo, catalogRequestInfo, 422, INVALID_PRODUCT, done);
     });
 
     it('should allow to change the status of an offering to launched when product and catalog are launched', function(done) {
@@ -2180,4 +2500,49 @@ describe('Catalog API', function() {
             { name: categoryName, parentId: parentId, isRoot: false }, 500, CATEGORIES_CANNOT_BE_CHECKED, done);
     });
 
+    describe('Post validation', function() {
+
+        var testProductPostvalidation = function(method, callExp, done) {
+            var body = {
+                id: '1'
+            };
+
+            var user = {
+                username: 'test'
+            };
+
+            var called = false;
+            var storeClient = {
+                storeClient: {
+                    attachProduct: function(product, userInfo, callback) {
+                        called = true;
+                        expect(product).toEqual(body);
+                        expect(userInfo).toEqual(user);
+                        callback(null);
+                    }
+                }
+            };
+            var catalogApi = getCatalogApi(storeClient, {}, {}, {});
+
+            var req = {
+                method: method,
+                apiUrl: '/catalog/productSpecification',
+                body: JSON.stringify(body),
+                user: user
+            };
+
+            catalogApi.executePostValidation(req, function() {
+                expect(called).toBe(callExp);
+                done();
+            });
+        };
+
+        it('should call the store product attachment when a valid product creation request has been redirected', function(done) {
+            testProductPostvalidation('POST', true, done);
+        });
+
+        it('should not call the store attachment when the request is not a product creation', function(done) {
+            testProductPostvalidation('GET', false, done);
+        });
+    });
 });

@@ -219,12 +219,38 @@
                             return product.id;
                         }).join();
 
+                        // Get provider single offerings using product ids
                         resource.query(params, function (offeringList) {
                             offeringList.forEach(function (offering) {
                                 extendPricePlans(offering);
                                 offering.productSpecification = products[offering.productSpecification.id];
                             });
-                            deferred.resolve(offeringList);
+
+                            // Get provider bundle offerings using the single offering ids
+                            if (offeringList.length) {
+                                var singleOfferings = {};
+
+                                delete params['productSpecification.id'];
+                                params['bundledProductOffering.id'] = offeringList.map(function(offering) {
+                                    singleOfferings[offering.id] = offering;
+                                    return offering.id;
+                                }).join();
+
+                                resource.query(params, function(bundleOffList) {
+                                    bundleOffList.forEach(function(offering) {
+                                        extendPricePlans(offering);
+                                        offering.bundledProductOffering.forEach(function(bundled) {
+                                            bundled.productSpecification = singleOfferings[bundled.id].productSpecification;
+                                        });
+                                        offeringList.push(offering);
+                                    });
+
+                                    deferred.resolve(offeringList);
+                                });
+                            } else {
+                                deferred.resolve([]);
+                            }
+
                         }, function(response) {
                             deferred.reject(response);
                         });
@@ -289,11 +315,16 @@
                 category: data.category.map(function (category) {
                     return category.serialize();
                 }),
-                productSpecification: product.serialize(),
                 bundledProductOffering: data.bundledProductOffering.map(function (offering) {
                     return offering.serialize();
                 })
             });
+
+            if(!data.isBundle) {
+                angular.extend(data, {
+                    productSpecification: product.serialize()
+                });
+            }
 
             resource.save(params, data, function (offeringCreated) {
                 offeringCreated.productSpecification = product;
@@ -326,10 +357,14 @@
                     var productOffering = collection[0];
 
                     extendPricePlans(productOffering);
-                    ProductSpec.detail(productOffering.productSpecification.id).then(function (productRetrieved) {
-                        productOffering.productSpecification = productRetrieved;
-                        detailRelationship(productOffering);
-                    });
+                    if (productOffering.productSpecification) {
+                        ProductSpec.detail(productOffering.productSpecification.id).then(function (productRetrieved) {
+                            productOffering.productSpecification = productRetrieved;
+                            detailRelationship(productOffering);
+                        });
+                    } else {
+                        extendBundledProductOffering(productOffering);
+                    }
                 } else {
                     deferred.reject(404);
                 }
@@ -360,12 +395,12 @@
                                 });
                             });
                         }
-                        extendBundledProductOffering(productOffering);
+                        extendCategory(productOffering);
                     }, function (response) {
                         deferred.reject(response);
                     });
                 } else {
-                    extendBundledProductOffering(productOffering);
+                    extendCategory(productOffering);
                 }
             }
 
@@ -384,7 +419,23 @@
 
                     resource.query(params, function (offeringList) {
                         offering.bundledProductOffering = offeringList;
-                        extendCategory(offering);
+                        var bundleIndexes = {};
+                        var productParams = {
+                            id: offeringList.map(function(data, index) {
+                                bundleIndexes[data.productSpecification.id] = index;
+                                return data.productSpecification.id
+                            }).join()
+                        };
+
+                        ProductSpec.search(productParams).then(function(productList) {
+                            // Include product spec info in bundled offering
+                            productList.forEach(function(product) {
+                                offering.bundledProductOffering[bundleIndexes[product.id]].productSpecification = product;
+                            });
+                            extendCategory(offering);
+                        }, function(response) {
+                            deferred.reject(response);
+                        });
                     }, function (response) {
                         deferred.reject(response);
                     });
@@ -476,7 +527,15 @@
 
         function getPicture() {
             /* jshint validthis: true */
-            return this.productSpecification.getPicture();
+            var picture = null;
+            if (this.productSpecification) {
+                picture = this.productSpecification.getPicture();
+            } else {
+                // The offering is a bundle, get a random image from its bundled offerings
+                var imageIndex = Math.floor(Math.random() * (this.bundledProductOffering.length));
+                picture = this.bundledProductOffering[imageIndex].productSpecification.getPicture();
+            }
+            return picture;
         }
 
         function formatCheapestPricePlan() {

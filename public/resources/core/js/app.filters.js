@@ -29,6 +29,7 @@
     angular
         .module('app')
         .filter('status', statusFilter)
+        .filter('isBundle', isBundleFilter)
         .filter('capitalize', capitalizeFilter)
         .filter('orderByParentId', orderByParentId)
         .filter('trusted', ['$sce', trustedURL]);
@@ -47,6 +48,16 @@
                 return statusList.indexOf(element.lifecycleStatus) !== -1;
             });
         };
+    }
+
+    function isBundleFilter() {
+        return function(list) {
+            var state = Array.prototype.slice.call(arguments, 1)[0];
+
+            return list.filter(function(element) {
+                return element.isBundle === state;
+            })
+        }
     }
 
     function orderByParentId() {

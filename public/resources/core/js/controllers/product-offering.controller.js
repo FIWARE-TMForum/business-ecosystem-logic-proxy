@@ -73,7 +73,7 @@
                 templateUrl: 'stock/product-offering/create/general'
             },
             {
-                title: 'Bundled Offering',
+                title: 'Bundle',
                 templateUrl: 'stock/product-offering/create/bundle'
             },
             {
@@ -236,11 +236,17 @@
             } else {
                 vm.data.bundledProductOffering.push(offering);
             }
+
+            stepList[1].form.$valid = vm.data.bundledProductOffering.length >= 2;
         }
 
         function toggleBundle() {
             if (!vm.data.isBundle) {
                 vm.data.bundledProductOffering.length = 0;
+                stepList[1].form.$valid = true;
+            } else {
+                stepList[1].form.$valid = false;
+                vm.product = undefined;
             }
         }
 
@@ -378,6 +384,7 @@
         vm.CHARGE_PERIODS = Offering.TYPES.CHARGE_PERIOD;
         vm.CURRENCY_CODES = Offering.TYPES.CURRENCY_CODE;
         vm.PRICES = Offering.TYPES.PRICE;
+        vm.$state = $state;
 
         vm.update = update;
         vm.updateStatus = updateStatus;
