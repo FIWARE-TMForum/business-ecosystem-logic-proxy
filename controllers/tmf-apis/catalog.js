@@ -344,6 +344,37 @@ var catalog = (function() {
         }
     };
 
+    var checkExistingCatalog = function (apiUrl, catalogName, callback) {
+
+        var catalogCollectionPath = '/catalog';
+        var catalogPath = apiUrl.substring(0, apiUrl.lastIndexOf(catalogCollectionPath) +
+            catalogCollectionPath.length);
+
+        var queryParams = '?name=' + catalogName;
+
+        retrieveAsset(catalogPath + queryParams, function (err, result) {
+
+            if (err) {
+                callback({
+                    status: 500,
+                    message: 'It was impossible to check if there is another catalog with the same name'
+                });
+            } else {
+
+                var existingCatalog = JSON.parse(result.body);
+
+                if (!existingCatalog.length) {
+                    callback();
+                } else {
+                    callback({
+                        status: 409,
+                        message: 'This catalog name is already taken'
+                    });
+                }
+            }
+        });
+    };
+
 
     //////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////// CREATION //////////////////////////////////////////
@@ -366,6 +397,7 @@ var catalog = (function() {
         var offeringsPattern = new RegExp('/productOffering/?$');
         var productsPattern = new RegExp('/productSpecification/?$');
         var categoriesPattern = new RegExp('/category/?$');
+        var catalogsPattern = new RegExp('/catalog/?$');
 
         var body;
 
@@ -426,6 +458,20 @@ var catalog = (function() {
                         createHandler(req, body, callback);
                     }
                 });
+
+            } else if (catalogsPattern.test(req.apiUrl)) {
+
+                var catalogName = body.name;
+
+                // Check that the catalog name is not already taken
+                checkExistingCatalog(req.apiUrl, catalogName, function (result) {
+                    if (result) {
+                        callback(result);
+                    } else {
+                        createHandler(req, body, callback);
+                    }
+                })
+
             } else {
                 createHandler(req, body, callback);
             }
