@@ -266,27 +266,55 @@
                 resource.query(params, function (offeringList) {
 
                     if (offeringList.length) {
+                        var bundleOfferings = [];
                         productFilters.id = offeringList.map(function (offering) {
+                            var offId = '';
                             extendPricePlans(offering);
-                            return offering.productSpecification.id;
+
+                            if (!offering.isBundle) {
+                                offId = offering.productSpecification.id;
+                            } else {
+                                bundleOfferings.push(offering);
+                            }
+                            return offId;
                         }).join();
 
-                        ProductSpec.search(productFilters).then(function (productList) {
-                            offeringList.forEach(function(offering) {
-                                productList.some(function(product) {
-                                    if (offering.productSpecification.id == product.id) {
-                                        offering.productSpecification = product;
-                                        return true;
+                        if (!bundleOfferings.length) {
+                            searchOfferingProducts(productFilters, offeringList);
+                        } else {
+                            var processed = 0;
+                            bundleOfferings.forEach(function(offering) {
+                                attachOfferingBundleProducts(offering, function(res) {
+                                    processed += 1;
+
+                                    if (res) {
+                                        deferred.reject(res);
+                                    } else if (processed == bundleOfferings.length) {
+                                        searchOfferingProducts(productFilters, offeringList);
                                     }
                                 });
                             });
-                            deferred.resolve(offeringList);
-                        });
+                        }
+
                     } else {
                         deferred.resolve(offeringList);
                     }
                 }, function (response) {
                     deferred.reject(response);
+                });
+            }
+
+            function searchOfferingProducts(productFilters, offeringList) {
+                ProductSpec.search(productFilters).then(function (productList) {
+                    offeringList.forEach(function(offering) {
+                        productList.some(function(product) {
+                            if (offering.productSpecification && offering.productSpecification.id == product.id) {
+                                offering.productSpecification = product;
+                                return true;
+                            }
+                        });
+                    });
+                    deferred.resolve(offeringList);
                 });
             }
 
@@ -342,6 +370,41 @@
                 if (angular.isString(context[name])) {
                     context[name] = Number(context[name]);
                 }
+            });
+        }
+
+        function attachOfferingBundleProducts(offering, callback) {
+            if (!angular.isArray(offering.bundledProductOffering)) {
+                offering.bundledProductOffering = [];
+            }
+
+            var params = {
+                id: offering.bundledProductOffering.map(function (data) {
+                    return data.id;
+                }).join()
+            };
+
+            resource.query(params, function (offeringList) {
+                offering.bundledProductOffering = offeringList;
+                var bundleIndexes = {};
+                var productParams = {
+                    id: offeringList.map(function (data, index) {
+                        bundleIndexes[data.productSpecification.id] = index;
+                        return data.productSpecification.id
+                    }).join()
+                };
+
+                ProductSpec.search(productParams).then(function (productList) {
+                    // Include product spec info in bundled offering
+                    productList.forEach(function (product) {
+                        offering.bundledProductOffering[bundleIndexes[product.id]].productSpecification = product;
+                    });
+                    callback();
+                }, function (response) {
+                    callback(response);
+                });
+            }, function (response) {
+                callback(response);
             });
         }
 
@@ -406,38 +469,13 @@
 
             function extendBundledProductOffering(offering) {
 
-                if (!angular.isArray(offering.bundledProductOffering)) {
-                    offering.bundledProductOffering = [];
-                }
-
                 if (offering.isBundle) {
-                    var params = {
-                        id: offering.bundledProductOffering.map(function (data) {
-                            return data.id;
-                        }).join()
-                    };
-
-                    resource.query(params, function (offeringList) {
-                        offering.bundledProductOffering = offeringList;
-                        var bundleIndexes = {};
-                        var productParams = {
-                            id: offeringList.map(function(data, index) {
-                                bundleIndexes[data.productSpecification.id] = index;
-                                return data.productSpecification.id
-                            }).join()
-                        };
-
-                        ProductSpec.search(productParams).then(function(productList) {
-                            // Include product spec info in bundled offering
-                            productList.forEach(function(product) {
-                                offering.bundledProductOffering[bundleIndexes[product.id]].productSpecification = product;
-                            });
+                    attachOfferingBundleProducts(offering, function(res) {
+                        if (res) {
+                            deferred.reject(res);
+                        } else {
                             extendCategory(offering);
-                        }, function(response) {
-                            deferred.reject(response);
-                        });
-                    }, function (response) {
-                        deferred.reject(response);
+                        }
                     });
                 } else {
                     extendCategory(offering);
