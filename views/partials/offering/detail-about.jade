@@ -39,3 +39,32 @@
         dd.text-dark-secondary {{ detailVM.item.productSpecification.brand }}
         dt ID Number
         dd.text-dark-secondary {{ detailVM.item.productSpecification.productNumber }}
+
+        div(ng-if="detailVM.item.productSpecification.isBundle")
+          .h5.text-dark-primary(style="margin-top: 20px;")
+            strong Bundled Products
+
+          .panel-group(id="bundled-products")
+            .panel.panel-default.z-depth-1(ng-repeat="product in detailVM.item.productSpecification.bundledProductSpecification")
+              .panel-heading
+                .pull-right
+                  strong v{{ product.version }}
+                .h4
+                  a.btn-block(data-toggle="collapse", data-parent="#bundled-products", data-target="#bundled-product-{{ $index }}")
+                    span.item-text {{ product.name }}
+              .panel-collapse.collapse(id="bundled-product-{{ $index }}")
+                .panel-body
+                  dl
+                    dt Name
+                    dd.text-dark-secondary {{ product.name }}
+                    dt Version
+                    dd.text-dark-secondary {{ product.version }}
+                    dt Description
+                    dd.text-dark-secondary {{ product.description  ? product.description : 'No description provided.' }}
+                    dt Updated
+                    dd.text-dark-secondary
+                      time {{ product.lastUpdate | amDateFormat: 'dddd, MMMM Do YYYY, h:mm a' }}
+                    dt Brand
+                    dd.text-dark-secondary {{ product.brand }}
+                    dt ID Number
+                    dd.text-dark-secondary {{ product.productNumber }}

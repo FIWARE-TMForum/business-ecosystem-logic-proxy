@@ -342,6 +342,7 @@
 
         vm.item = {};
         vm.$state = $state;
+        vm.hasCharacteristics = hasCharacteristics;
         vm.formatCharacteristicValue = formatCharacteristicValue;
 
         Offering.detail($state.params.offeringId).then(function (offeringRetrieved) {
@@ -371,6 +372,18 @@
             }
 
             return result;
+        }
+
+        function hasCharacteristics() {
+            var hasChars = vm.item.productSpecification.productSpecCharacteristic &&
+                vm.item.productSpecification.productSpecCharacteristic.length;
+
+            for (var i = 0; i < vm.item.productSpecification.bundledProductSpecification.length && !hasChars; i++) {
+                var bundledProduct = vm.item.productSpecification.bundledProductSpecification[i];
+
+                hasChars = bundledProduct.productSpecCharacteristic && bundledProduct.productSpecCharacteristic.length;
+            }
+            return hasChars;
         }
     }
 

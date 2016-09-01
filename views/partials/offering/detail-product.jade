@@ -13,5 +13,25 @@
                 input(type="radio", name="{{ 'detailVM_char' + characteristicIndex }}", ng-checked="{{ characteristicValue.default }}")
                 i.fa.fa-lg
               | {{ detailVM.formatCharacteristicValue(characteristic, characteristicValue) }}
-  .col-xs-12(ng-if="!detailVM.item.productSpecification.productSpecCharacteristic.length")
+
+    div(ng-repeat="product in detailVM.item.productSpecification.bundledProductSpecification" ng-init="bundleIndex = $index")
+      hr
+      .h4.text-dark-secondary
+        strong {{ product.name }}
+
+      .panel.panel-default.z-depth-1(ng-repeat="characteristic in product.productSpecCharacteristic", ng-init="characteristicIndex = $index")
+        .panel-heading
+          .h4
+            strong {{ characteristic.name }}
+        .panel-body
+          p.text-dark-secondary {{ characteristic.description ? characteristic.description : 'No description provided.' }}
+          .form-group
+            .item-radio.readonly(ng-repeat="characteristicValue in characteristic.productSpecCharacteristicValue")
+              label.radio
+                .track
+                  input(type="radio", name="{{ 'detailVM_bundle_' +  bundleIndex + '_char' + characteristicIndex }}", ng-checked="{{ characteristicValue.default }}")
+                  i.fa.fa-lg
+                | {{ detailVM.formatCharacteristicValue(characteristic, characteristicValue) }}
+
+  .col-xs-12(ng-if="!detailVM.hasCharacteristics()")
     .alert.alert-info.text-center No characteristics included.
