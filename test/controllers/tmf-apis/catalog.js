@@ -42,6 +42,8 @@ var OFFERINGS_NOT_RETRIEVED = 'Attached offerings cannot be retrieved';
 var CATEGORY_EXISTS = 'This category already exists';
 var CATEGORIES_CANNOT_BE_CHECKED = 'It was impossible to check if the provided category already exists';
 var CATEGORY_NAME_MISSING = 'Category name is mandatory';
+var CATALOG_CANNOT_BE_CHECKED = 'It was impossible to check if there is another catalog with the same name';
+var CATALOG_EXISTS = 'This catalog name is already taken';
 var RSS_CANNOT_BE_ACCESSED = 'An unexpected error in the RSS API prevented your request to be processed';
 var INVALID_PRODUCT_CLASS = 'The provided productClass does not specify a valid revenue sharing model';
 var MISSING_PRODUCT_SPEC = 'Product offerings must contain a productSpecification';
@@ -1081,6 +1083,112 @@ describe('Catalog API', function() {
 
     it('should not allow to create categories non-root categories without parent', function(callback) {
         testCreateCategory(true, { isRoot: false }, null, 400, MISSING_PARENT_ID, callback);
+    });
+
+    var testCreateCatalog = function (admin, owner, catalog, catalogRequest, errorStatus, errorMsg, done) {
+
+        var checkRoleMethod = jasmine.createSpy();
+        checkRoleMethod.and.returnValues(admin);
+
+        var utils = {
+            validateLoggedIn: validateLoggedOk,
+            hasRole: checkRoleMethod
+        };
+
+        var tmfUtils = {
+            isOwner: owner ? isOwnerTrue : isOwnerFalse
+        };
+
+        var catalogApi = getCatalogApi({}, tmfUtils, utils);
+
+        // Basic properties
+        var userName = 'test';
+        var protocol = config.appSsl ? 'https' : 'http';
+        var url = protocol + '://' + config.appHost + ':' + config.endpoints.catalog.port;
+        var catalogPath = '/DSProductCatalog/api/catalogManagement/v2/catalog';
+
+        // Call the method
+        var req = {
+            method: 'POST',
+            apiUrl: catalogPath,
+            user: {
+                id: userName,
+                roles: [{ name: config.oauth2.roles.seller }]
+            },
+            body: JSON.stringify(catalog)
+        };
+
+        // Mock server used by the proxy to check if there is another catalog with the same name
+        if (catalogRequest) {
+            nock(url)
+                .get(catalogPath + catalogRequest.query)
+                .reply(catalogRequest.status, catalogRequest.body);
+        }
+
+        catalogApi.checkPermissions(req, function (err) {
+
+            if (!errorStatus && !errorMsg ) {
+                expect(err).toBe(null);
+            } else {
+                expect(err.status).toBe(errorStatus);
+                expect(err.message).toBe(errorMsg);
+
+            }
+
+            done();
+        });
+    };
+
+    it('should allow to create owned catalog', function (callback) {
+
+        var catalogName = 'example';
+
+        var catalogRequest = {
+            query: '?name=' + catalogName,
+            status: 200,
+            body: []
+        };
+
+        testCreateCatalog(true, isOwnerTrue, { name: catalogName }, catalogRequest, null, null, callback);
+    });
+
+    it('should not allow to create not owned catalog', function (callback) {
+
+        var catalogName = 'example';
+
+        var catalogRequest = {
+            query: '?name=' + catalogName,
+            status: 200,
+            body: []
+        };
+
+        testCreateCatalog(true, isOwnerFalse, { name: catalogName }, catalogRequest, null, null, callback);
+    });
+
+    it('should not allow to create catalog when existing catalogs cannot be checked', function (callback) {
+
+        var catalogName = 'example';
+
+        var catalogRequest = {
+            query: '?name=' + catalogName,
+            status: 500,
+            body: 'ERROR'
+        };
+
+        testCreateCatalog(true, isOwnerFalse, { name: catalogName }, catalogRequest, 500, CATALOG_CANNOT_BE_CHECKED, callback);
+    });
+
+    it('should not allow to create catalog if there is a catalog with the same name', function (callback) {
+
+        var catalogName = 'example';
+
+        var catalogRequest = {
+            query: '?name=' + catalogName,
+            status: 200,
+            body: [{}]
+        };
+
+        testCreateCatalog(true, isOwnerFalse, { name: catalogName }, catalogRequest, 409, CATALOG_EXISTS, callback);
     });
 
 
