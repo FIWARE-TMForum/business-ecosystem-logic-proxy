@@ -742,6 +742,26 @@ var catalog = (function() {
         }
     };
 
+    var isEqualRelatedParty = function (relatedParty1, relatedParty2) {
+
+        var equal = true;
+
+        if (relatedParty1.length != relatedParty2.length) {
+            equal = false;
+        } else {
+
+            for (var i = 0; i < relatedParty1.length && equal; i++) {
+                if (relatedParty1[i].id !== relatedParty2[i].id ||
+                    relatedParty1[i].href !== relatedParty2[i].href ||
+                    relatedParty1[i].role !== relatedParty2[i].role) {
+                    equal = false;
+                }
+            }
+
+            return equal;
+        }
+    };
+
     // Validate the modification of a resource
     var validateUpdate = function(req, callback) {
 
@@ -786,11 +806,20 @@ var catalog = (function() {
 
                             if (catalogsPattern.test(req.apiUrl)) {
 
-                                // Retrieve all the offerings contained in the catalog
-                                var slash = req.apiUrl.endsWith('/') ? '' : '/';
-                                var offeringsInCatalogPath = req.apiUrl + slash + 'productOffering';
+                                if (parsedBody != null && parsedBody.relatedParty &&
+                                    !isEqualRelatedParty(previousBody.relatedParty, parsedBody.relatedParty)) {
+                                        callback({
+                                            status: 409,
+                                            message: 'The field "relatedParty" can not be modified'
+                                        });
+                                } else {
 
-                                validateInvolvedOfferingsState('catalog', parsedBody, offeringsInCatalogPath, callback);
+                                    // Retrieve all the offerings contained in the catalog
+                                    var slash = req.apiUrl.endsWith('/') ? '' : '/';
+                                    var offeringsInCatalogPath = req.apiUrl + slash + 'productOffering';
+
+                                    validateInvolvedOfferingsState('catalog', parsedBody, offeringsInCatalogPath, callback);
+                                }
 
                             } else if (productsPattern.test(req.apiUrl)) {
 
