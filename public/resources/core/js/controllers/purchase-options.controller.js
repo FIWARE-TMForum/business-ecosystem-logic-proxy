@@ -157,7 +157,9 @@
                 };
             });
 
-            vm.characteristics.push(productInfo);
+            if (productInfo.characteristics.length) {
+                vm.characteristics.push(productInfo);
+            }
 
             if (vm.characteristics.length && vm.tabs.indexOf(vm.characteristicsTab) === -1) {
                 vm.tabs.push(vm.characteristicsTab);
