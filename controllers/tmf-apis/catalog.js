@@ -744,21 +744,31 @@ var catalog = (function() {
 
     var isEqualRelatedParty = function (relatedParty1, relatedParty2) {
 
-        var equal = true;
-
         if (relatedParty1.length != relatedParty2.length) {
-            equal = false;
+            return false;
         } else {
 
-            for (var i = 0; i < relatedParty1.length && equal; i++) {
-                if (relatedParty1[i].id !== relatedParty2[i].id ||
-                    relatedParty1[i].href !== relatedParty2[i].href ||
-                    relatedParty1[i].role !== relatedParty2[i].role) {
-                    equal = false;
+            // Copy relatedParties
+            var copyRelatedParty1 = relatedParty1.slice();
+            var copyRelatedParty2 = relatedParty2.slice();
+
+            var matched = 0;
+
+            for (var i = 0; i < copyRelatedParty1.length; i++) {
+
+                for (var j = 0; j < copyRelatedParty2.length; j++) {
+
+                    if (copyRelatedParty1[i].id === copyRelatedParty2[j].id &&
+                        copyRelatedParty1[i].href === copyRelatedParty2[j].href &&
+                        copyRelatedParty1[i].role === copyRelatedParty2[j].role) {
+
+                        copyRelatedParty2[j] = {};
+                        matched += 1;
+                    }
                 }
             }
 
-            return equal;
+            return matched === relatedParty1.length;
         }
     };
 

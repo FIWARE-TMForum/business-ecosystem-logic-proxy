@@ -1884,9 +1884,13 @@ describe('Catalog API', function() {
     
     var previousCatalogBody = {
         relatedParty: [{
-            id: 'exmaple',
-            href: 'http://localhost:8000/example',
+            id: 'exmaple1',
+            href: 'http://localhost:8000/example1',
             role: 'owner'
+        }, {
+            id: 'exmaple2',
+            href: 'http://localhost:8000/example2',
+            role: 'seller'
         }]
     };
 
@@ -1932,7 +1936,7 @@ describe('Catalog API', function() {
                 id: 'wrong',
                 href: previousCatalogBody.relatedParty[0].href,
                 owner: previousCatalogBody.relatedParty[0].role
-            }]
+            }, previousCatalogBody.relatedParty[1]]
         });
 
         var offeringsInfo = {
@@ -1941,6 +1945,22 @@ describe('Catalog API', function() {
         };
 
         testChangeCatalogStatus(productBody, offeringsInfo, 409, INVALID_RELATED_PARTY, done);
+    });
+
+    it('should allow to update a catalog if the body does not modifie the original relatedParty', function(done) {
+
+        var productBody = JSON.stringify({
+            relatedParty: [
+            previousCatalogBody.relatedParty[1],
+            previousCatalogBody.relatedParty[0]]
+        });
+
+        var offeringsInfo = {
+            requestStatus: 200,
+            offerings: []
+        };
+
+        testChangeCatalogStatus(productBody, offeringsInfo, null, null, done);
     });
 
     it('should allow launch a catalog', function(done) {
