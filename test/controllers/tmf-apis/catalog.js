@@ -60,6 +60,7 @@ var MISSING_HREF_BUNDLE_INFO = 'Missing required field href in bundleProductSpec
 var UNAUTHORIZED_BUNDLE = 'You are not authorized to include the product spec 3 in a product spec bundle';
 var BUNDLE_INSIDE_BUNDLE = 'It is not possible to include a product spec bundle in another product spec bundle';
 var INVALID_BUNDLED_PRODUCT_STATUS = 'Only Active or Launched product specs can be included in a bundle';
+var INVALID_RELATED_PARTY = 'The field "relatedParty" can not be modified';
 
 
 describe('Catalog API', function() {
@@ -1544,7 +1545,7 @@ describe('Catalog API', function() {
 
     // PRODUCTS & CATALOGS
 
-    var testChangeProductCatalogStatus = function(assetPath, offeringsPath, assetBody,
+    var testChangeProductCatalogStatus = function(assetPath, offeringsPath, previousAssetBody, assetBody,
                                                   offeringsInfo, errorStatus, errorMsg, done) {
 
         var checkRoleMethod = jasmine.createSpy();
@@ -1575,7 +1576,7 @@ describe('Catalog API', function() {
         // to return always true.
         nock(serverUrl)
             .get(assetPath)
-            .reply(200, { });
+            .reply(200, previousAssetBody);
 
         // The service that all the offerings are in a valid state to complete the status change
         var bodyGetOfferings = offeringsInfo.requestStatus === 200 ? offeringsInfo.offerings : defaultErrorMessage;
@@ -1620,7 +1621,7 @@ describe('Catalog API', function() {
         var productPath = '/productSpecification/' + productId;
         var offeringsPath = '/productOffering?productSpecification.id=' + productId;
 
-        testChangeProductCatalogStatus(productPath, offeringsPath, productBody, offeringsInfo,
+        testChangeProductCatalogStatus(productPath, offeringsPath, { }, productBody, offeringsInfo,
                 errorStatus, errorMsg, done);
     };
 
@@ -1880,13 +1881,25 @@ describe('Catalog API', function() {
     });
 
     // CATALOGS
+    
+    var previousCatalogBody = {
+        relatedParty: [{
+            id: 'exmaple1',
+            href: 'http://localhost:8000/example1',
+            role: 'owner'
+        }, {
+            id: 'exmaple2',
+            href: 'http://localhost:8000/example2',
+            role: 'seller'
+        }]
+    };
 
     var testChangeCatalogStatus = function(productBody, offeringsInfo, errorStatus, errorMsg, done) {
 
         var catalogPath = '/catalog/7';
         var offeringsPath = catalogPath + '/productOffering';
 
-        testChangeProductCatalogStatus(catalogPath, offeringsPath, productBody, offeringsInfo,
+        testChangeProductCatalogStatus(catalogPath, offeringsPath, previousCatalogBody, productBody, offeringsInfo,
                 errorStatus, errorMsg, done);
     };
 
@@ -1914,6 +1927,40 @@ describe('Catalog API', function() {
 
         testChangeCatalogStatus(productBody, offeringsInfo, null, null, done);
 
+    });
+
+    it('should not allow to update a catalog if the body modifies the original relatedParty', function(done) {
+
+        var productBody = JSON.stringify({
+            relatedParty: [{
+                id: 'wrong',
+                href: previousCatalogBody.relatedParty[0].href,
+                owner: previousCatalogBody.relatedParty[0].role
+            }, previousCatalogBody.relatedParty[1]]
+        });
+
+        var offeringsInfo = {
+            requestStatus: 200,
+            offerings: []
+        };
+
+        testChangeCatalogStatus(productBody, offeringsInfo, 409, INVALID_RELATED_PARTY, done);
+    });
+
+    it('should allow to update a catalog if the body does not modifie the original relatedParty', function(done) {
+
+        var productBody = JSON.stringify({
+            relatedParty: [
+            previousCatalogBody.relatedParty[1],
+            previousCatalogBody.relatedParty[0]]
+        });
+
+        var offeringsInfo = {
+            requestStatus: 200,
+            offerings: []
+        };
+
+        testChangeCatalogStatus(productBody, offeringsInfo, null, null, done);
     });
 
     it('should allow launch a catalog', function(done) {
