@@ -220,27 +220,32 @@
             return USAGE_CHART_URL + startingChar + 'productId=' + vm.item.id + '&token=' + LOGGED_USER.bearerToken;
         }
 
-        function characteristicValueSelected(characteristic, characteristicValue) {
+        function characteristicMatches(productChar, specChar, bundled) {
+            var name;
+
+            if (bundled) {
+                var parsedName = productChar.name.split(' ');
+
+                if (parsedName.length > 2 && parsedName[0] === bundled) {
+                    name = parsedName.slice(2).join(' ');
+                }
+            } else {
+                name = productChar.name;
+            }
+
+            return name === specChar.name;
+        }
+
+        function characteristicValueSelected(characteristic, characteristicValue, bundled) {
             var result, productCharacteristic, i;
 
             for (i = 0; i < vm.item.productCharacteristic.length; i++) {
-                if (vm.item.productCharacteristic[i].name === characteristic.name) {
+                if (characteristicMatches(vm.item.productCharacteristic[i], characteristic, bundled)) {
                     productCharacteristic = vm.item.productCharacteristic[i];
                 }
             }
 
-            switch (characteristic.valueType) {
-            case ProductSpec.VALUE_TYPES.STRING.toLowerCase():
-                result = characteristicValue.value;
-                break;
-            case ProductSpec.VALUE_TYPES.NUMBER.toLowerCase():
-                if (characteristicValue.value && characteristicValue.value.length) {
-                    result = characteristicValue.value;
-                } else {
-                    result = characteristicValue.valueFrom + "-" + characteristicValue.valueTo;
-                }
-                break;
-            }
+            result = formatCharacteristicValue(characteristic, characteristicValue);
 
             return result === productCharacteristic.value;
         }

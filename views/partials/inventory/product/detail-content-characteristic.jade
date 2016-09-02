@@ -10,5 +10,22 @@
           p(ng-repeat="characteristicValue in characteristic.productSpecCharacteristicValue")
             span.fa.fa-fw(ng-class="detailVM.characteristicValueSelected(characteristic, characteristicValue) ? 'fa-check-circle': 'fa-circle-o'")
             span  {{ detailVM.formatCharacteristicValue(characteristic, characteristicValue) }}
+
+    div(ng-repeat="bundle in detailVM.item.productOffering.productSpecification.bundledProductSpecification")
+      hr
+      .h4.text-dark-secondary
+        strong {{ bundle.name }}
+
+      .panel.panel-default.z-depth-1(ng-repeat="characteristic in bundle.productSpecCharacteristic")
+        .panel-heading
+          .h4
+            strong {{ characteristic.name }}
+        .panel-body
+          p.text-dark-secondary {{ characteristic.description ? characteristic.description : 'No description provided.' }}
+          .form-group
+            p(ng-repeat="characteristicValue in characteristic.productSpecCharacteristicValue")
+              span.fa.fa-fw(ng-class="detailVM.characteristicValueSelected(characteristic, characteristicValue, bundle.id) ? 'fa-check-circle': 'fa-circle-o'")
+              span  {{ detailVM.formatCharacteristicValue(characteristic, characteristicValue) }}
+
   .col-xs-12(ng-if="!detailVM.item.productCharacteristic.length")
     .alert.alert-info.text-center No characteristics included.
