@@ -67,7 +67,7 @@
         var vm = this;
         var load = false;
         var digital = false;
-        var location;
+        var locations = [];
 
         vm.item = {};
         vm.charges = {
@@ -90,34 +90,20 @@
 
         InventoryProduct.detail($state.params.productId).then(function (productRetrieved) {
             var characteristics = productRetrieved.productOffering.productSpecification.productSpecCharacteristic;
-            var hasMedia = false;
-            var hasLocation = false;
-            var hasAssetType = false;
 
             vm.item = productRetrieved;
             vm.item.status = LOADED;
             $scope.priceplanSelected = productRetrieved.productPrice[0];
 
-            // Check if the product is digital
-            if (characteristics) {
-                for (var i = 0; i < characteristics.length && (!hasMedia || !hasLocation || !hasAssetType); i++) {
-                    var charact = characteristics[i];
-                    if (charact.name.toLowerCase() == 'asset type') {
-                        hasAssetType = true;
-                    }
-
-                    if (charact.name.toLowerCase() == 'media type') {
-                        hasMedia = true;
-                    }
-
-                    if (charact.name.toLowerCase() == 'location') {
-                        hasLocation = true;
-                        location = charact.productSpecCharacteristicValue[0].value;
-                    }
-                }
+            // Check if the product is a bundle of products
+            if (!productRetrieved.productOffering.productSpecification.isBundle) {
+                digital = checkDigital(characteristics);
+            } else {
+                digital = false;
+                productRetrieved.productOffering.productSpecification.bundledProductSpecification.forEach(function(product) {
+                    digital = checkDigital(product.productSpecCharacteristic) || digital;
+                });
             }
-
-            digital = hasAssetType && hasLocation && hasMedia;
 
             // Retrieve existing charges
             BillingAccount.searchCharges(vm.item.id).then(function(charges) {
@@ -140,6 +126,33 @@
             vm.item.status = ERROR;
         });
 
+        function checkDigital(characteristics) {
+            var hasMedia = false;
+            var hasLocation = false;
+            var hasAssetType = false;
+
+            // Check if the product is digital
+            if (characteristics) {
+                for (var i = 0; i < characteristics.length && (!hasMedia || !hasLocation || !hasAssetType); i++) {
+                    var charact = characteristics[i];
+                    if (charact.name.toLowerCase() == 'asset type') {
+                        hasAssetType = true;
+                    }
+
+                    if (charact.name.toLowerCase() == 'media type') {
+                        hasMedia = true;
+                    }
+
+                    if (charact.name.toLowerCase() == 'location') {
+                        hasLocation = true;
+                        locations.push(charact.productSpecCharacteristicValue[0].value);
+                    }
+                }
+            }
+
+            return hasAssetType && hasLocation && hasMedia;
+        }
+
         function loading() {
             return load;
         }
@@ -149,7 +162,9 @@
         }
 
         function downloadAsset() {
-            $window.open(location, '_blank');
+            locations.forEach(function(location) {
+                $window.open(location, '_blank');
+            });
         }
 
         function hasProductPrice() {
