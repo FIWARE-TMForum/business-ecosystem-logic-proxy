@@ -96,7 +96,8 @@
             update: update,
             buildInitialData: buildInitialData,
             createCharacteristic: createCharacteristic,
-            createCharacteristicValue: createCharacteristicValue
+            createCharacteristicValue: createCharacteristicValue,
+            extendBundledProducts: extendBundledProducts
         };
 
         function search(filters) {
@@ -194,28 +195,28 @@
                 .then(detailRelationship);
         }
 
+        function extendBundledProducts(product) {
+            var params = {
+                id: product.bundledProductSpecification.map(function (data) {
+                    return data.id;
+                }).join()
+            };
+
+            return ProductSpec.query(params)
+                .$promise
+                .then(function (collection) {
+                    product.bundledProductSpecification = collection;
+                    return product;
+                });
+        }
+
         function detailBundled(resource) {
 
             if (!angular.isArray(resource.bundledProductSpecification)) {
                 resource.bundledProductSpecification = [];
             }
 
-            return resource.bundledProductSpecification.length ? extendBundled() : resource;
-
-            function extendBundled() {
-                var params = {
-                    id: resource.bundledProductSpecification.map(function (data) {
-                        return data.id;
-                    }).join()
-                };
-
-                return ProductSpec.query(params)
-                    .$promise
-                    .then(function (collection) {
-                        resource.bundledProductSpecification = collection;
-                        return resource;
-                    });
-            }
+            return resource.bundledProductSpecification.length ? extendBundledProducts(resource) : resource;
         }
 
         function detailRelationship(resource) {

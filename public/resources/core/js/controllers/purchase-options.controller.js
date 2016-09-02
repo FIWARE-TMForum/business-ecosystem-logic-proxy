@@ -73,15 +73,35 @@
 
             $scope.priceplanSelected = null;
 
-            loadCharacteristics(productOffering.productSpecification.productSpecCharacteristic);
-            loadPriceplans(productOffering.productOfferingPrice);
+            loadCharacteristics(productOffering.productSpecification.productSpecCharacteristic, {});
 
+            if (productOffering.productSpecification.isBundle) {
+                // Extend bundled product spec to obtain its characteristics
+                ProductSpec.extendBundledProducts(productOffering.productSpecification).then(function() {
+
+                    productOffering.productSpecification.bundledProductSpecification.forEach(function(productSpec) {
+                        loadCharacteristics(productSpec.productSpecCharacteristic, {
+                            id: productSpec.id,
+                            name: productSpec.name
+                        });
+                    });
+
+                    loadPriceplans(productOffering.productOfferingPrice);
+                    showModal();
+                });
+            } else {
+                loadPriceplans(productOffering.productOfferingPrice);
+                showModal();
+            }
+        });
+
+        function showModal() {
             if (vm.characteristics.length || vm.priceplans.length) {
                 $element.modal('show');
             } else {
                 order();
             }
-        });
+        }
 
         function order() {
             data.options = {
@@ -124,20 +144,22 @@
             $scope.priceplanSelected = productOfferingPrice;
         }
 
-        function loadCharacteristics(productSpecCharacteristic) {
+        function loadCharacteristics(productSpecCharacteristic, productInfo) {
 
             if (!angular.isArray(productSpecCharacteristic)) {
                 productSpecCharacteristic = [];
             }
 
-            vm.characteristics = productSpecCharacteristic.map(function (characteristic) {
+            productInfo.characteristics = productSpecCharacteristic.map(function (characteristic) {
                 return {
                     characteristic: characteristic,
                     value: getDefaultCharacteristicValue(characteristic)
                 };
             });
 
-            if (vm.characteristics.length) {
+            vm.characteristics.push(productInfo);
+
+            if (vm.characteristics.length && vm.tabs.indexOf(vm.characteristicsTab) === -1) {
                 vm.tabs.push(vm.characteristicsTab);
                 vm.tabActive = vm.characteristicsTab;
             }
@@ -158,18 +180,6 @@
                     vm.tabActive = vm.priceplansTab;
                 }
             }
-        }
-
-        function indexOfCharacteristic(characteristic) {
-            var i, index = -1;
-
-            for (i = 0; i < characteristics.length && index === -1; i++) {
-                if (characteristics[i].characteristic === characteristic) {
-                    index = i;
-                }
-            }
-
-            return index;
         }
 
         function getDefaultCharacteristicValue(characteristic) {

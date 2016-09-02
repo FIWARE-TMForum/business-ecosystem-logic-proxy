@@ -17,17 +17,21 @@
             .container-flex
               div(offering-priceplan, ng-repeat="priceplan in createVM.priceplans", ng-click="createVM.setPriceplan(priceplan)", selectable="True")
           .col-xs-12(ng-if="createVM.tabActive === createVM.characteristicsTab")
-            .form-group(ng-repeat="charObject in createVM.characteristics")
-              .h4
-                strong {{ charObject.characteristic.name }}
-              hr
-              p.text-dark-secondary {{ charObject.characteristic.description ? charObject.characteristic.description : 'No description provided.' }}
-              .item-radio(ng-repeat="characteristicValue in charObject.characteristic.productSpecCharacteristicValue")
-                label.radio
-                  .track
-                    input(type="radio", ng-model="charObject.value" ng-value="characteristicValue")
-                    i.fa.fa-lg
-                  | {{ createVM.formatCharacteristicValue(charObject.characteristic, characteristicValue) }}
+            div(ng-repeat="product in createVM.characteristics")
+              .h3(style="margin-top: 20px;")
+                strong {{ product.name }}
+
+              .form-group(ng-repeat="charObject in product.characteristics")
+                .h4.text-dark-secondary
+                  strong {{ charObject.characteristic.name }}
+                hr
+                p.text-dark-secondary {{ charObject.characteristic.description ? charObject.characteristic.description : 'No description provided.' }}
+                .item-radio(ng-repeat="characteristicValue in charObject.characteristic.productSpecCharacteristicValue")
+                  label.radio
+                    .track
+                      input(type="radio", ng-model="charObject.value" ng-value="characteristicValue")
+                      i.fa.fa-lg
+                    | {{ createVM.formatCharacteristicValue(charObject.characteristic, characteristicValue) }}
       .modal-footer
         a.btn.btn-success.z-depth-1(data-dismiss="modal", ng-click="createVM.order()", ng-disabled="!createVM.isValid()")
           span.item-icon.fa.fa-shopping-cart

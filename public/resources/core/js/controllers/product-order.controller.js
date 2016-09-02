@@ -207,21 +207,30 @@
                         // Use pricing and characteristics to build the product property
                         if (orderItems[i].options.characteristics) {
                             for (var j = 0; j < orderItems[i].options.characteristics.length; j++) {
-                                var char = orderItems[i].options.characteristics[j].characteristic;
-                                var selectedValue = orderItems[i].options.characteristics[j].value;
-                                var value;
+                                var productChars = orderItems[i].options.characteristics[j];
 
-                                if (char.valueType.toLowerCase() === 'string' ||
-                                    (char.valueType.toLowerCase() === 'number' && selectedValue.value)) {
-                                    value = selectedValue.value;
-                                } else {
-                                    value = selectedValue.valueFrom + '-' + selectedValue.valueTo;
+                                for (var k = 0; k < productChars.characteristics.length; k++) {
+                                    var char = productChars.characteristics[k].characteristic;
+                                    var selectedValue = productChars.characteristics[k].value;
+                                    var value;
+
+                                    if (char.valueType.toLowerCase() === 'string' ||
+                                        (char.valueType.toLowerCase() === 'number' && selectedValue.value)) {
+                                        value = selectedValue.value;
+                                    } else {
+                                        value = selectedValue.valueFrom + '-' + selectedValue.valueTo;
+                                    }
+
+                                    var charIdName = '';
+                                    if (productChars.id && productChars.name) {
+                                        charIdName = productChars.id + ' ' + productChars.name + ' ';
+                                    }
+
+                                    item.product.productCharacteristic.push({
+                                        name: charIdName + char.name,
+                                        value: value
+                                    });
                                 }
-
-                                item.product.productCharacteristic.push({
-                                    name: char.name,
-                                    value: value
-                                });
                             }
                         }
 
