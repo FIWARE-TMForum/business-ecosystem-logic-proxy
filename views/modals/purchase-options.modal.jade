@@ -17,7 +17,12 @@
             .container-flex
               div(offering-priceplan, ng-repeat="priceplan in createVM.priceplans", ng-click="createVM.setPriceplan(priceplan)", selectable="True")
           .col-xs-12(ng-if="createVM.tabActive === createVM.characteristicsTab")
-            div(ng-repeat="product in createVM.characteristics")
+            div(ng-if="createVM.isBundle")
+              select.form-control(
+                ng-options="offering as offering.name for offering in createVM.bundledOfferings track by offering.id"
+                ng-model="createVM.selectedOffering")
+
+            div(ng-repeat="product in createVM.characteristics" ng-show="product.offId == createVM.selectedOffering.id")
               .h3(style="margin-top: 20px;")
                 strong {{ product.name }}
 

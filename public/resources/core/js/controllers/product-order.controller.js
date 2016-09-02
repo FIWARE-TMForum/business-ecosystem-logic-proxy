@@ -222,8 +222,11 @@
                                     }
 
                                     var charIdName = '';
+                                    if (productChars.offName) {
+                                        charIdName = productChars.offId + ' ' + productChars.offName + ' - ';
+                                    }
                                     if (productChars.id && productChars.name) {
-                                        charIdName = productChars.id + ' ' + productChars.name + ' ';
+                                        charIdName += productChars.id + ' ' + productChars.name + ' ';
                                     }
 
                                     item.product.productCharacteristic.push({

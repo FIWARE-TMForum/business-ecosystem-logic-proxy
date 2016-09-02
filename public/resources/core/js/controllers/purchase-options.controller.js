@@ -49,6 +49,7 @@
 
         vm.characteristics = [];
         vm.priceplans = [];
+        vm.selectedOffering = null;
 
         vm.order = order;
         vm.isValid = isValid;
@@ -70,30 +71,66 @@
             vm.tabActive = null;
             vm.priceplans = [];
             vm.characteristics = [];
+            vm.isBundle = productOffering.isBundle;
+            vm.bundledOfferings = [];
+            vm.selectedOffering = {
+                id: productOffering.id
+            };
 
             $scope.priceplanSelected = null;
 
-            loadCharacteristics(productOffering.productSpecification.productSpecCharacteristic, {});
-
-            if (productOffering.productSpecification.isBundle) {
-                // Extend bundled product spec to obtain its characteristics
-                ProductSpec.extendBundledProducts(productOffering.productSpecification).then(function() {
-
-                    productOffering.productSpecification.bundledProductSpecification.forEach(function(productSpec) {
-                        loadCharacteristics(productSpec.productSpecCharacteristic, {
-                            id: productSpec.id,
-                            name: productSpec.name
-                        });
-                    });
-
+            if (!productOffering.isBundle) {
+                processProductCharacteristics(productOffering.productSpecification, {offId: productOffering.id}, function() {
                     loadPriceplans(productOffering.productOfferingPrice);
                     showModal();
                 });
             } else {
-                loadPriceplans(productOffering.productOfferingPrice);
-                showModal();
+                // When the offering is a bundle products are included in its bundled offerings
+                var processed = 0;
+                vm.bundledOfferings = [];
+                vm.selectedOffering = productOffering.bundledProductOffering[0];
+
+                productOffering.bundledProductOffering.forEach(function(offering) {
+                    processProductCharacteristics(offering.productSpecification, {
+                        offId: offering.id,
+                        offName: offering.name
+                    }, function() {
+                        processed += 1;
+
+                        vm.bundledOfferings.push({
+                            name: offering.name,
+                            id: offering.id
+                        });
+
+                        if (processed === productOffering.bundledProductOffering.length) {
+                            loadPriceplans(productOffering.productOfferingPrice);
+                            showModal();
+                        }
+                    });
+                });
             }
         });
+
+        function processProductCharacteristics(product, offInfo, callback) {
+            loadCharacteristics(product.productSpecCharacteristic, offInfo);
+
+            if (product.isBundle) {
+                // Extend bundled product spec to obtain its characteristics
+                ProductSpec.extendBundledProducts(product).then(function () {
+
+                    product.bundledProductSpecification.forEach(function (productSpec) {
+                        loadCharacteristics(productSpec.productSpecCharacteristic, angular.extend({
+                            id: productSpec.id,
+                            name: productSpec.name
+                        }, offInfo));
+                    });
+
+                    callback();
+                });
+            } else {
+                callback();
+            }
+        }
 
         function showModal() {
             if (vm.characteristics.length || vm.priceplans.length) {
