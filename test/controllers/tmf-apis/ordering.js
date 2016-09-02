@@ -279,10 +279,11 @@ describe('Ordering API', function() {
 
             };
 
-            var testValidOrdering = function (nOrderItems, isCustomer, customerRoleRequired, done) {
+            var testValidOrdering = function (nOrderItems, isCustomer, customerRoleRequired, isBundle, done) {
 
                 var userName = 'example';
                 var billingAccountPath = '/billingAccount/7';
+                var productOfferingBundlePath ='/productOffering/2';
                 var productOfferingPath = '/productOffering/1';
                 var productSpecPath = '/product/2';
                 var ownerName = 'ownerUser';
@@ -294,10 +295,11 @@ describe('Ordering API', function() {
                 var orderItems = [];
 
                 for (var i = 0; i < nOrderItems; i++) {
+                    var offeringPath = !isBundle  ? productOfferingPath : productOfferingBundlePath;
                     orderItems.push({
                         product: {},
                         productOffering: {
-                            href: 'http://extexample.com' + productOfferingPath
+                            href: 'http://extexample.com' + offeringPath
                         },
                         billingAccount: [
                             {
@@ -315,6 +317,11 @@ describe('Ordering API', function() {
                     }],
                     orderItem: orderItems
                 };
+
+                nock(CATALOG_SERVER)
+                    .get(productOfferingBundlePath)
+                    .times(nOrderItems)
+                    .reply(200, {isBundle: true, bundledProductOffering: [{href: SERVER + productOfferingPath}]});
 
                 nock(CATALOG_SERVER)
                     .get(productOfferingPath)
@@ -350,15 +357,19 @@ describe('Ordering API', function() {
             };
 
             it('should call the callback after validating the request when the user is not customer but customer role not required', function (done) {
-                testValidOrdering(1, false, false, done);
+                testValidOrdering(1, false, false, false, done);
             });
 
             it('should call the callback after validating the request when the user is customer (1 order item)', function (done) {
-                testValidOrdering(1, true, true, done);
+                testValidOrdering(1, true, true, false, done);
             });
 
             it('should call the callback after validating the request when the user is customer (2 order items)', function (done) {
-                testValidOrdering(2, true, true, done);
+                testValidOrdering(2, true, true, false, done);
+            });
+
+            it('should call the callback after validating the request when the offering is a bundle', function(done) {
+                testValidOrdering(1, true, true, true, done);
             });
 
             var billingAccountError = function(itemsGenerator, expectedError, hasPartyRole, done) {

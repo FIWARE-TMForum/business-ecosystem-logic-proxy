@@ -76,6 +76,64 @@ var ordering = (function(){
     ////////////////////////////////////////// CREATION //////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
 
+    var includeProductParty = function(offering, item, individualCollectionUrl, callback) {
+
+        var errorMessageProduct = 'The system fails to retrieve the product attached to the ordering item ' + item.id;
+
+        var productUrl = utils.getAPIURL(config.appSsl, config.appHost, config.endpoints.catalog.port,
+            url.parse(offering.productSpecification.href).path);
+
+        makeRequest(productUrl, errorMessageProduct, function (err, product) {
+
+            if (err) {
+                callback(err);
+            } else {
+
+                var owners = product.relatedParty.filter(function (relatedParty) {
+                    return relatedParty['role'].toLowerCase() === 'owner';
+                });
+
+                if (!owners.length) {
+                    callback({
+                        status: 400,
+                        message: 'You cannot order a product without owners'
+                    });
+
+                } else {
+                    owners.forEach(function (owner) {
+                        item.product.relatedParty.push({
+                            id: owner.id,
+                            role: SELLER,
+                            href: individualCollectionUrl + owner.id
+                        });
+                    });
+
+                    callback(null, item);
+                }
+            }
+        });
+    };
+
+    var includeOfferingParty = function(offeringUrl, item, individualCollectionUrl, callback) {
+
+        var errorMessageOffer = 'The system fails to retrieve the offering attached to the ordering item ' + item.id;
+
+        makeRequest(offeringUrl, errorMessageOffer, function(err, offering) {
+
+            if (err) {
+                callback(err);
+            } else {
+                if (!offering.isBundle) {
+                    includeProductParty(offering, item, individualCollectionUrl, callback);
+                } else {
+                    var offeringUrl = utils.getAPIURL(config.appSsl, config.appHost, config.endpoints.catalog.port,
+                        url.parse(offering.bundledProductOffering[0].href).path);
+                    includeOfferingParty(offeringUrl, item, individualCollectionUrl, callback);
+                }
+            }
+        });
+    };
+
     var completeRelatedPartyInfo = function(individualCollectionUrl, item, user, callback) {
 
         if (!item.product) {
@@ -122,53 +180,10 @@ var ordering = (function(){
         // Inject customer and seller related parties in the order items in order to make this info
         // available thought the inventory API
 
-        var errorMessageOffer = 'The system fails to retrieve the offering attached to the ordering item ' + item.id;
-        var errorMessageProduct = 'The system fails to retrieve the product attached to the ordering item ' + item.id;
-
         var offeringUrl = utils.getAPIURL(config.appSsl, config.appHost, config.endpoints.catalog.port,
-                url.parse(item.productOffering.href).path);
+            url.parse(item.productOffering.href).path);
 
-        makeRequest(offeringUrl, errorMessageOffer, function(err, offering) {
-
-            if (err) {
-                callback(err);
-            } else {
-
-                var productUrl = utils.getAPIURL(config.appSsl, config.appHost, config.endpoints.catalog.port,
-                        url.parse(offering.productSpecification.href).path);
-
-                makeRequest(productUrl, errorMessageProduct, function(err, product) {
-
-                    if (err) {
-                        callback(err);
-                    } else {
-
-                        var owners = product.relatedParty.filter(function (relatedParty) {
-                            return relatedParty['role'].toLowerCase() === 'owner';
-                        });
-
-                        if (!owners.length) {
-                            callback({
-                                status: 400,
-                                message: 'You cannot order a product without owners'
-                            });
-
-                        } else {
-                            owners.forEach(function (owner) {
-                                item.product.relatedParty.push({
-                                    id: owner.id,
-                                    role: SELLER,
-                                    href: individualCollectionUrl + owner.id
-                                });
-                            });
-
-                            callback(null, item);
-                        }
-                    }
-                });
-
-            }
-        });
+        includeOfferingParty(offeringUrl, item, individualCollectionUrl, callback);
     };
 
     var validateCreation = function(req, callback) {
