@@ -223,10 +223,10 @@
 
                                     var charIdName = '';
                                     if (productChars.offName) {
-                                        charIdName = productChars.offId + ' ' + productChars.offName + ' - ';
+                                        charIdName = productChars.offId + ' ';
                                     }
-                                    if (productChars.id && productChars.name) {
-                                        charIdName += productChars.id + ' ' + productChars.name + ' ';
+                                    if (productChars.id) {
+                                        charIdName += productChars.id + ' ';
                                     }
 
                                     item.product.productCharacteristic.push({

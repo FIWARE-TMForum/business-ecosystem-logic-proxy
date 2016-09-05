@@ -70,6 +70,7 @@
         var locations = [];
 
         vm.item = {};
+        vm.offerings = [];
         vm.charges = {
             status: LOADING,
             items: []
@@ -89,20 +90,24 @@
         vm.downloadInvoice = downloadInvoice;
 
         InventoryProduct.detail($state.params.productId).then(function (productRetrieved) {
-            var characteristics = productRetrieved.productOffering.productSpecification.productSpecCharacteristic;
+            locations = [];
+            load = false;
 
             vm.item = productRetrieved;
             vm.item.status = LOADED;
+            vm.offerings = [];
+
             $scope.priceplanSelected = productRetrieved.productPrice[0];
 
-            // Check if the product is a bundle of products
-            if (!productRetrieved.productOffering.productSpecification.isBundle) {
-                digital = checkDigital(characteristics);
+            digital = false;
+            if (!productRetrieved.productOffering.isBundle) {
+                vm.offerings.push(productRetrieved.productOffering);
+                checkOfferingProduct(productRetrieved.productOffering);
             } else {
-                digital = false;
-                productRetrieved.productOffering.productSpecification.bundledProductSpecification.forEach(function(product) {
-                    digital = checkDigital(product.productSpecCharacteristic) || digital;
-                });
+                productRetrieved.productOffering.bundledProductOffering.forEach(function(offering) {
+                    vm.offerings.push(offering);
+                    checkOfferingProduct(offering);
+                })
             }
 
             // Retrieve existing charges
@@ -125,6 +130,30 @@
             vm.error = Utils.parseError(response, 'It was impossible to load product details');
             vm.item.status = ERROR;
         });
+
+        function checkOfferingProduct(offering) {
+            var characteristics = offering.productSpecification.productSpecCharacteristic;
+
+            // Check if the product is a bundle of products
+            if (!offering.productSpecification.isBundle) {
+                digital = checkDigital(characteristics) || digital;
+            } else {
+
+                if (!offering.productSpecification.bundledProductSpecification[0].productSpecCharacteristic) {
+
+                    ProductSpec.extendBundledProducts(offering.productSpecification).then(function() {
+                        offering.productSpecification.bundledProductSpecification.forEach(function(product) {
+                            digital = checkDigital(product.productSpecCharacteristic) || digital;
+                        });
+                    });
+
+                } else {
+                    offering.productSpecification.bundledProductSpecification.forEach(function(product) {
+                        digital = checkDigital(product.productSpecCharacteristic) || digital;
+                    });
+                }
+            }
+        }
 
         function checkDigital(characteristics) {
             var hasMedia = false;
@@ -235,14 +264,27 @@
             return USAGE_CHART_URL + startingChar + 'productId=' + vm.item.id + '&token=' + LOGGED_USER.bearerToken;
         }
 
-        function characteristicMatches(productChar, specChar, bundled) {
+        function characteristicMatches(productChar, specChar, offId, productId) {
             var name;
 
-            if (bundled) {
+            if (vm.offerings.length > 1 && productId) {
                 var parsedName = productChar.name.split(' ');
 
-                if (parsedName.length > 2 && parsedName[0] === bundled) {
+                if (parsedName.length > 2 && parsedName[0] === offId && parsedName[1] === productId) {
                     name = parsedName.slice(2).join(' ');
+                }
+
+            } else if (vm.offerings.length <= 1 && productId){
+                var parsedName = productChar.name.split(' ');
+
+                if (parsedName.length > 1 && parsedName[0] === productId) {
+                    name = parsedName.slice(1).join(' ');
+                }
+            } else if (vm.offerings.length > 1 && !productId) {
+                var parsedName = productChar.name.split(' ');
+
+                if (parsedName.length > 1 && parsedName[0] === offId) {
+                    name = parsedName.slice(1).join(' ');
                 }
             } else {
                 name = productChar.name;
@@ -251,11 +293,11 @@
             return name === specChar.name;
         }
 
-        function characteristicValueSelected(characteristic, characteristicValue, bundled) {
+        function characteristicValueSelected(characteristic, characteristicValue, offId, productId) {
             var result, productCharacteristic, i;
 
             for (i = 0; i < vm.item.productCharacteristic.length; i++) {
-                if (characteristicMatches(vm.item.productCharacteristic[i], characteristic, bundled)) {
+                if (characteristicMatches(vm.item.productCharacteristic[i], characteristic, offId, productId)) {
                     productCharacteristic = vm.item.productCharacteristic[i];
                 }
             }
