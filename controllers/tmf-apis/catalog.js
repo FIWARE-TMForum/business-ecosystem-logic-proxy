@@ -379,6 +379,35 @@ var catalog = (function() {
         }
     };
 
+    var checkExistingCategoryById = function (apiUrl, parentId, callback) {
+
+        var categoryCollectionPath = '/category';
+        var categoryPath = apiUrl.substring(0, apiUrl.indexOf(categoryCollectionPath) +
+            categoryCollectionPath.length);
+
+        retrieveAsset(categoryPath + '/' + parentId, function (err, result) {
+
+            if (err) {
+
+                if (err.status == 404) {
+                    callback({
+                        status: 400,
+                        message: 'Invalid parent category ID'
+                    });
+
+                } else  {
+                    callback({
+                        status: 500,
+                        message: 'It was impossible to check if the provided parent category already exists'
+                    });
+                }
+
+            } else {
+                callback(null);
+            }
+        });
+    }
+
     var checkExistingCategory = function(apiUrl, categoryName, isRoot, parentId, callback) {
 
         var categoryCollectionPath = '/category';
@@ -473,7 +502,18 @@ var catalog = (function() {
                         //   3.- The parent ID of the category is updated
                         //   4.- The root status of the category is changed
                         if (newCategory || nameUpdated || isRootUpdated || parentIdUpdated) {
-                            checkExistingCategory(req.apiUrl, categoryName, isRoot, parentId, callback);
+                            async.series([
+                                function (callback) {
+                                    if (!isRoot) {
+                                        // Check parent category
+                                        checkExistingCategoryById(req.apiUrl, parentId, callback);
+                                    } else {
+                                        callback(null);
+                                    }
+                                },
+                                function (callback) {
+                                    checkExistingCategory(req.apiUrl, categoryName, isRoot, parentId, callback);
+                                }], callback);
                         } else {
                             callback(null);
                         }
