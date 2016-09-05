@@ -1587,6 +1587,18 @@ describe('Catalog API', function() {
     });
 
     // PRODUCTS & CATALOGS
+    
+    var previousProductBody = {
+        relatedParty: [{
+            id: 'exmaple1',
+            href: 'http://localhost:8000/example1',
+            role: 'owner'
+        }, {
+            id: 'exmaple2',
+            href: 'http://localhost:8000/example2',
+            role: 'seller'
+        }]
+    };
 
     var testChangeProductCatalogStatus = function(assetPath, offeringsPath, previousAssetBody, assetBody,
                                                   offeringsInfo, errorStatus, errorMsg, done) {
@@ -1692,6 +1704,40 @@ describe('Catalog API', function() {
 
         testChangeProductStatus(productBody, offeringsInfo, null, null, done);
 
+    });
+
+    it('should not allow to update a product if the body modifies the original relatedParty', function(done) {
+
+        var productBody = JSON.stringify({
+            relatedParty: [{
+                id: 'wrong',
+                href: previousProductBody.relatedParty[0].href,
+                owner: previousProductBody.relatedParty[0].role
+            }, previousProductBody.relatedParty[1]]
+        });
+
+        var offeringsInfo = {
+            requestStatus: 200,
+            offerings: []
+        };
+
+        testChangeCatalogStatus(productBody, offeringsInfo, 409, INVALID_RELATED_PARTY, done);
+    });
+
+    it('should allow to update a product if the body does not modifie the original relatedParty', function(done) {
+
+        var productBody = JSON.stringify({
+            relatedParty: [
+            previousProductBody.relatedParty[1],
+            previousProductBody.relatedParty[0]]
+        });
+
+        var offeringsInfo = {
+            requestStatus: 200,
+            offerings: []
+        };
+
+        testChangeCatalogStatus(productBody, offeringsInfo, null, null, done);
     });
 
     it('should allow launch a product', function(done) {
@@ -1924,25 +1970,13 @@ describe('Catalog API', function() {
     });
 
     // CATALOGS
-    
-    var previousCatalogBody = {
-        relatedParty: [{
-            id: 'exmaple1',
-            href: 'http://localhost:8000/example1',
-            role: 'owner'
-        }, {
-            id: 'exmaple2',
-            href: 'http://localhost:8000/example2',
-            role: 'seller'
-        }]
-    };
 
     var testChangeCatalogStatus = function(productBody, offeringsInfo, errorStatus, errorMsg, done) {
 
         var catalogPath = '/catalog/7';
         var offeringsPath = catalogPath + '/productOffering';
 
-        testChangeProductCatalogStatus(catalogPath, offeringsPath, previousCatalogBody, productBody, offeringsInfo,
+        testChangeProductCatalogStatus(catalogPath, offeringsPath, previousProductBody, productBody, offeringsInfo,
                 errorStatus, errorMsg, done);
     };
 
@@ -1977,9 +2011,9 @@ describe('Catalog API', function() {
         var productBody = JSON.stringify({
             relatedParty: [{
                 id: 'wrong',
-                href: previousCatalogBody.relatedParty[0].href,
-                owner: previousCatalogBody.relatedParty[0].role
-            }, previousCatalogBody.relatedParty[1]]
+                href: previousProductBody.relatedParty[0].href,
+                owner: previousProductBody.relatedParty[0].role
+            }, previousProductBody.relatedParty[1]]
         });
 
         var offeringsInfo = {
@@ -1994,8 +2028,8 @@ describe('Catalog API', function() {
 
         var productBody = JSON.stringify({
             relatedParty: [
-            previousCatalogBody.relatedParty[1],
-            previousCatalogBody.relatedParty[0]]
+            previousProductBody.relatedParty[1],
+            previousProductBody.relatedParty[0]]
         });
 
         var offeringsInfo = {

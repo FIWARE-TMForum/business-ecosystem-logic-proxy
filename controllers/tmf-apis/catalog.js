@@ -854,43 +854,44 @@ var catalog = (function() {
 
                         if (tmfUtils.isOwner(req, previousBody)) {
 
-                            if (catalogsPattern.test(req.apiUrl)) {
+                            if (parsedBody != null && parsedBody.relatedParty &&
+                                !isEqualRelatedParty(previousBody.relatedParty, parsedBody.relatedParty)) {
+                                    callback({
+                                        status: 409,
+                                        message: 'The field "relatedParty" can not be modified'
+                                    });
 
-                                if (parsedBody != null && parsedBody.relatedParty &&
-                                    !isEqualRelatedParty(previousBody.relatedParty, parsedBody.relatedParty)) {
-                                        callback({
-                                            status: 409,
-                                            message: 'The field "relatedParty" can not be modified'
-                                        });
-                                } else {
+                            } else { 
+
+                                if (catalogsPattern.test(req.apiUrl)) {
 
                                     // Retrieve all the offerings contained in the catalog
                                     var slash = req.apiUrl.endsWith('/') ? '' : '/';
                                     var offeringsInCatalogPath = req.apiUrl + slash + 'productOffering';
 
                                     validateInvolvedOfferingsState('catalog', parsedBody, offeringsInCatalogPath, callback);
+
+                                } else if (productsPattern.test(req.apiUrl)) {
+
+                                    var url = req.apiUrl;
+
+                                    if (url.endsWith('/')) {
+                                        url = url.slice(0, -1);
+                                    }
+
+                                    var urlParts = url.split('/');
+                                    var productId = urlParts[urlParts.length - 1];
+
+                                    var productSpecificationPos = req.apiUrl.indexOf('/productSpecification');
+                                    var baseUrl = req.apiUrl.substring(0, productSpecificationPos);
+
+                                    var offeringsContainProductPath = baseUrl + '/productOffering?productSpecification.id=' + productId;
+
+                                    validateInvolvedOfferingsState('product', parsedBody, offeringsContainProductPath, callback);
+
+                                } else {
+                                    callback(null);
                                 }
-
-                            } else if (productsPattern.test(req.apiUrl)) {
-
-                                var url = req.apiUrl;
-
-                                if (url.endsWith('/')) {
-                                    url = url.slice(0, -1);
-                                }
-
-                                var urlParts = url.split('/');
-                                var productId = urlParts[urlParts.length - 1];
-
-                                var productSpecificationPos = req.apiUrl.indexOf('/productSpecification');
-                                var baseUrl = req.apiUrl.substring(0, productSpecificationPos);
-
-                                var offeringsContainProductPath = baseUrl + '/productOffering?productSpecification.id=' + productId;
-
-                                validateInvolvedOfferingsState('product', parsedBody, offeringsContainProductPath, callback);
-
-                            } else {
-                                callback(null);
                             }
 
                         } else {
