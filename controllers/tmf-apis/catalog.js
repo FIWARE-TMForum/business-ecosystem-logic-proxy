@@ -577,6 +577,7 @@ var catalog = (function() {
                             message: 'Only Active or Launched product specs can be included in a bundle'
                         })
                     }
+
                     taskCallback(null);
                 }
             });
@@ -694,7 +695,7 @@ var catalog = (function() {
                             callback(err);
                         } else {
                             // Check that the product specification contains a valid product
-                            // according to the charging backed
+                            // according to the charging backend
                             storeClient.validateProduct(body, req.user, callback);
                         }
                     });
@@ -873,21 +874,34 @@ var catalog = (function() {
 
                                 } else if (productsPattern.test(req.apiUrl)) {
 
-                                    var url = req.apiUrl;
+                                    async.series([
+                                        function (callback) {
 
-                                    if (url.endsWith('/')) {
-                                        url = url.slice(0, -1);
-                                    }
+                                            if (parsedBody) {
+                                                validateProduct(req, parsedBody, callback);
+                                            } else {
+                                                callback(null);
+                                            }
+                                        },
+                                        function (callback) {
 
-                                    var urlParts = url.split('/');
-                                    var productId = urlParts[urlParts.length - 1];
+                                            var url = req.apiUrl;
 
-                                    var productSpecificationPos = req.apiUrl.indexOf('/productSpecification');
-                                    var baseUrl = req.apiUrl.substring(0, productSpecificationPos);
+                                            if (url.endsWith('/')) {
+                                                url = url.slice(0, -1);
+                                            }
 
-                                    var offeringsContainProductPath = baseUrl + '/productOffering?productSpecification.id=' + productId;
+                                            var urlParts = url.split('/');
+                                            var productId = urlParts[urlParts.length - 1];
 
-                                    validateInvolvedOfferingsState('product', parsedBody, offeringsContainProductPath, callback);
+                                            var productSpecificationPos = req.apiUrl.indexOf('/productSpecification');
+                                            var baseUrl = req.apiUrl.substring(0, productSpecificationPos);
+
+                                            var offeringsContainProductPath = baseUrl + '/productOffering?productSpecification.id=' + productId;
+
+                                            validateInvolvedOfferingsState('product', parsedBody, offeringsContainProductPath, callback);
+
+                                        }], callback);
 
                                 } else {
                                     callback(null);
