@@ -177,6 +177,38 @@ describe('Catalog API', function() {
         return true;
     };
 
+    var SERVER = (config.appSsl ? 'https' : 'http') + '://' + config.appHost + ':' + config.endpoints.catalog.port;
+
+    var mockBundles = function(bundles) {
+
+        var productPath = '/catalog/productSpecification/';
+
+        // Mock bundles
+        var body = {
+            isBundle: true,
+            bundledProductSpecification: []
+        };
+
+        for (var i = 0; i < bundles.length; i++) {
+            if (bundles[i].id) {
+
+                body.bundledProductSpecification.push({
+                    href: SERVER + productPath + bundles[i].id
+                });
+
+                if (bundles[i].body) {
+                    nock(SERVER)
+                    .get(productPath + bundles[i].id)
+                    .reply(bundles[i].status, bundles[i].body);
+                }
+            } else {
+                body.bundledProductSpecification.push({});
+            }
+        }
+
+        return body;
+    };
+
     var testCreateBasic = function(user, body, roles, error, expectedStatus, expectedErr,
                                    isSeller, sellerChecked, owner, done) {
 
@@ -810,40 +842,16 @@ describe('Catalog API', function() {
             testCreateProduct(storeValidatorErr, storeErrorStatus, storeErrorMessage, true, done);
         });
 
-        var SERVER = (config.appSsl ? 'https' : 'http') + '://' + config.appHost + ':' + config.endpoints.catalog.port;
-
         var testCreateBundle = function(bundles, errorStatus, errorMsg, done) {
-
-            var productPath = '/catalog/productSpecification/';
 
             var catalogApi = mockCatalogAPI(function(req, resource) {
                 return !(resource.id == '3');
             }, storeValidatorOk);
 
-            // Mock bundles
-            var body = {
-                isBundle: true,
-                bundledProductSpecification: []
-            };
 
-            for (var i = 0; i < bundles.length; i++) {
-                if (bundles[i].id) {
-
-                    body.bundledProductSpecification.push({
-                        href: SERVER + productPath + bundles[i].id
-                    });
-
-                    if (bundles[i].body) {
-                        nock(SERVER)
-                            .get(productPath + bundles[i].id)
-                            .reply(bundles[i].status, bundles[i].body);
-                    }
-                } else {
-                    body.bundledProductSpecification.push({});
-                }
-            }
-
+            var body = mockBundles(bundles);
             var req = buildProductRequest(body);
+
             checkProductCreationResult(catalogApi, req, errorStatus, errorMsg, done);
         };
 
@@ -945,7 +953,7 @@ describe('Catalog API', function() {
             testCreateBundle(bundles, 422, BUNDLE_INSIDE_BUNDLE, done);
         });
 
-        it('should not allow two create bundles with product specs that are not active or launched', function(done) {
+        it('should not allow to create bundles with product specs that are not active or launched', function(done) {
             var bundles = [{
                 id: '1',
                 status: 200,
@@ -1633,6 +1641,11 @@ describe('Catalog API', function() {
             .get(assetPath)
             .reply(200, previousAssetBody);
 
+        if (!offeringsInfo) {
+            offeringsInfo = {
+                requestStatus: null
+            };
+        }
         // The service that all the offerings are in a valid state to complete the status change
         var bodyGetOfferings = offeringsInfo.requestStatus === 200 ? offeringsInfo.offerings : defaultErrorMessage;
 
@@ -1695,7 +1708,7 @@ describe('Catalog API', function() {
 
     it('should allow to update a product if the body does not contains cycle information', function(done) {
 
-        var productBody = {};
+        var productBody = { };
 
         var offeringsInfo = {
             requestStatus: 200,
@@ -1967,6 +1980,115 @@ describe('Catalog API', function() {
 
         testChangeProductStatus(productBody, offeringsInfo, 500, OFFERINGS_NOT_RETRIEVED, done);
 
+    });
+
+    var testUpdateBundle = function(bundles, offeringsInfo, errorStatus, errorMsg, done) {
+
+        var body = mockBundles(bundles);
+
+        testChangeProductStatus(JSON.stringify(body), offeringsInfo, errorStatus, errorMsg, done);
+    };
+
+    it('should allow to update bundles when all products specs are single and owned by the user', function(done) {
+
+        var bundles = [{
+            id: '1',
+            status: 200,
+            body: {
+                id: '1',
+                isBundle: false,
+                lifecycleStatus: 'Active'
+            }
+        }, {
+            id: '2',
+            status: 200,
+            body: {
+                id: '2',
+                isBundle: false,
+                lifecycleStatus: 'Active'
+            }
+        }];
+
+        testUpdateBundle(bundles, null, null, null, done);
+    });
+
+    it('should not allow to update bundles when less than two bundle products have been included', function(done) {
+
+        testUpdateBundle([], null, 422, MISSING_BUNDLE_PRODUCTS, done);
+    });
+
+    it('should not allow to create bundles when the bundle info does not contain an href field', function(done) {
+
+        var bundles = [{
+            id: '15',
+            status: 200,
+            body: null
+        }, {}];
+
+        testUpdateBundle(bundles, null, 422, MISSING_HREF_BUNDLE_INFO, done);
+    });
+
+    it('should not allow to create bundles when one of the included bundled products does not exists', function(done) {
+        var bundles = [{
+            id: '1',
+            status: 200,
+            body: {
+                id: '1',
+                isBundle: false,
+                lifecycleStatus: 'Active'
+            }
+        }, {
+            id: '2',
+            status: 404,
+            body: null
+        }];
+
+        testUpdateBundle(bundles, null, 422, INVALID_PRODUCT, done);
+    });
+
+    it('should not allow to update bundles when one of the bundled products is also a bundle', function(done) {
+
+        var bundles = [{
+            id: '1',
+            status: 200,
+            body: {
+                id: '1',
+                isBundle: true
+            }
+        }, {
+            id: '2',
+            status: 200,
+            body: {
+                id: '2',
+                isBundle: false,
+                lifecycleStatus: 'Active'
+            }
+        }];
+
+        testUpdateBundle(bundles, null, 422, BUNDLE_INSIDE_BUNDLE, done);
+    });
+
+    it('should not allow to update bundles with product specs that are not active or launched', function(done) {
+
+        var bundles = [{
+            id: '1',
+            status: 200,
+            body: {
+                id: '1',
+                isBundle: false,
+                lifecycleStatus: 'Active'
+            }
+        }, {
+            id: '2',
+            status: 200,
+            body: {
+                id: '2',
+                isBundle: false,
+                lifecycleStatus: 'Retired'
+            }
+        }];
+
+        testUpdateBundle(bundles, null, 422, INVALID_BUNDLED_PRODUCT_STATUS, done);
     });
 
     // CATALOGS
