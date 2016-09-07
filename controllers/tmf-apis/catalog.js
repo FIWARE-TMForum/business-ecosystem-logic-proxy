@@ -269,136 +269,153 @@ var catalog = (function() {
             }
         }
 
-        // Check if the offering is a bundle.
-        var offeringBody = previousBody || newBody;
-        if (offeringBody.isBundle) {
-            // Bundle offerings cannot contain a productSpecification
-            if(offeringBody.productSpecification) {
-                return callback({
-                    status: 422,
-                    message: 'Product offering bundles cannot contain a product specification'
-                });
-            }
+        // Check the offering categories
+        var categories = newBody ? newBody.category : [];
 
-            // Validate that at least two offerings have been included
-            if (!offeringBody.bundledProductOffering || offeringBody.bundledProductOffering.length < 2) {
-                return callback({
-                    status: 422,
-                    message: 'Product offering bundles must contain at least two bundled offerings'
-                });
-            }
+        async.eachSeries(categories, function (category, taskCallback) {
 
-            // Validate that the bundled offerings exists
-            async.each(offeringBody.bundledProductOffering, function(offering, taskCallback) {
-                if (!offering.href) {
-                    return taskCallback({
-                        status: 422,
-                        message: 'Missing required field href in bundled offering'
-                    });
-                }
+            var categoryApiUrl = url.parse(category.href).pathname;
 
-                var offeringPath = url.parse(offering.href).pathname;
-                retrieveAsset(offeringPath, function(err, result) {
-                    if (err) {
-                        var id = offering.id ? offering.id : '';
-                        return taskCallback({
+            checkExistingCategoryById(categoryApiUrl, category.id, taskCallback);
+
+        }, function (err) {
+
+            if (err) {
+                callback(err);
+            } else {
+
+                // Check if the offering is a bundle.
+                var offeringBody = previousBody || newBody;
+                if (offeringBody.isBundle) {
+                    // Bundle offerings cannot contain a productSpecification
+                    if(offeringBody.productSpecification) {
+                        return callback({
                             status: 422,
-                            message: 'The bundled offering ' + id + ' cannot be accessed or does not exists'
+                            message: 'Product offering bundles cannot contain a product specification'
                         });
                     }
 
-                    // Check that the included offering is not also a bundle
-                    var bundledOffering = JSON.parse(result.body);
-                    if (bundledOffering.isBundle) {
-                        return taskCallback({
+                    // Validate that at least two offerings have been included
+                    if (!offeringBody.bundledProductOffering || offeringBody.bundledProductOffering.length < 2) {
+                        return callback({
                             status: 422,
-                            message: 'Product offering bundles cannot include another bundle'
+                            message: 'Product offering bundles must contain at least two bundled offerings'
                         });
                     }
 
-                    var userNotAllowedMsg = 'You are not allowed to bundle offerings you do not own';
-                    validateAssetPermissions(req, bundledOffering, validStates, errorMessageStateProduct, userNotAllowedMsg, taskCallback);
+                    // Validate that the bundled offerings exists
+                    async.each(offeringBody.bundledProductOffering, function(offering, taskCallback) {
+                        if (!offering.href) {
+                            return taskCallback({
+                                status: 422,
+                                message: 'Missing required field href in bundled offering'
+                            });
+                        }
 
-                });
+                        var offeringPath = url.parse(offering.href).pathname;
+                        retrieveAsset(offeringPath, function(err, result) {
+                            if (err) {
+                                var id = offering.id ? offering.id : '';
+                                return taskCallback({
+                                    status: 422,
+                                    message: 'The bundled offering ' + id + ' cannot be accessed or does not exists'
+                                });
+                            }
 
-            }, function(err) {
-                if (err) {
-                    callback(err);
-                } else if (validStates != null) {
-                    // This validation only need to be executed once
-                    validateCatalog(req, offeringPath, validStates, newBody, errorMessageStateCatalog, callback);
-                } else {
-                    callback(null);
-                }
-            })
+                            // Check that the included offering is not also a bundle
+                            var bundledOffering = JSON.parse(result.body);
+                            if (bundledOffering.isBundle) {
+                                return taskCallback({
+                                    status: 422,
+                                    message: 'Product offering bundles cannot include another bundle'
+                                });
+                            }
 
-        } else {
-            // Non bundles cannot contain a bundleProductOffering
-            if (offeringBody.bundledProductOffering && offeringBody.bundledProductOffering.length > 0) {
-                return callback({
-                    status: 422,
-                    message: 'Product offerings which are not a bundle cannot contain a bundled product offering'
-                });
-            }
+                            var userNotAllowedMsg = 'You are not allowed to bundle offerings you do not own';
+                            validateAssetPermissions(req, bundledOffering, validStates, errorMessageStateProduct, userNotAllowedMsg, taskCallback);
 
-            // Check that a productSpecification has been included
-            if (!offeringBody.productSpecification || utils.emptyObject(offeringBody.productSpecification)) {
-                return callback({
-                    status: 422,
-                    message: 'Product offerings must contain a productSpecification'
-                });
-            }
+                        });
 
-            if (!offeringBody.productSpecification.href) {
-                return callback({
-                    status: 422,
-                    message: 'Missing required field href in product specification'
-                });
-            }
-
-            // Check that the product attached to the offering is owned by the same user
-            retrieveProduct(offeringBody.productSpecification.href, function(err, result) {
-                if (err) {
-                    callback(err);
-                } else {
-                    var operation = previousBody != null ? 'update' : 'create';
-                    var userNotAllowedMsg = 'You are not allowed to ' + operation + ' offerings for products you do not own';
-                    var product = JSON.parse(result.body);
-
-                    validateAssetPermissions(req, product, validStates, errorMessageStateProduct, userNotAllowedMsg, function(err) {
+                    }, function(err) {
                         if (err) {
                             callback(err);
                         } else if (validStates != null) {
+                            // This validation only need to be executed once
                             validateCatalog(req, offeringPath, validStates, newBody, errorMessageStateCatalog, callback);
                         } else {
                             callback(null);
                         }
+                    })
+
+                } else {
+                    // Non bundles cannot contain a bundleProductOffering
+                    if (offeringBody.bundledProductOffering && offeringBody.bundledProductOffering.length > 0) {
+                        return callback({
+                            status: 422,
+                            message: 'Product offerings which are not a bundle cannot contain a bundled product offering'
+                        });
+                    }
+
+                    // Check that a productSpecification has been included
+                    if (!offeringBody.productSpecification || utils.emptyObject(offeringBody.productSpecification)) {
+                        return callback({
+                            status: 422,
+                            message: 'Product offerings must contain a productSpecification'
+                        });
+                    }
+
+                    if (!offeringBody.productSpecification.href) {
+                        return callback({
+                            status: 422,
+                            message: 'Missing required field href in product specification'
+                        });
+                    }
+
+                    // Check that the product attached to the offering is owned by the same user
+                    retrieveProduct(offeringBody.productSpecification.href, function(err, result) {
+                        if (err) {
+                            callback(err);
+                        } else {
+                            var operation = previousBody != null ? 'update' : 'create';
+                            var userNotAllowedMsg = 'You are not allowed to ' + operation + ' offerings for products you do not own';
+                            var product = JSON.parse(result.body);
+
+                            validateAssetPermissions(req, product, validStates, errorMessageStateProduct, userNotAllowedMsg, function(err) {
+                                if (err) {
+                                    callback(err);
+                                } else if (validStates != null) {
+                                    validateCatalog(req, offeringPath, validStates, newBody, errorMessageStateCatalog, callback);
+                                } else {
+                                    callback(null);
+                                }
+                            });
+                        }
                     });
                 }
-            });
-        }
+            }
+        });
     };
 
-    var checkExistingCategoryById = function (apiUrl, parentId, callback) {
+    var checkExistingCategoryById = function (apiUrl, categoryId, callback) {
 
         var categoryCollectionPath = '/category';
         var categoryPath = apiUrl.substring(0, apiUrl.indexOf(categoryCollectionPath) +
             categoryCollectionPath.length);
 
-        retrieveAsset(categoryPath + '/' + parentId, function (err, result) {
+        retrieveAsset(categoryPath + '/' + categoryId, function (err, result) {
 
             if (err) {
 
                 if (err.status == 404) {
                     callback({
                         status: 400,
-                        message: 'Invalid parent category ID'
+                        message: 'Invalid category with id: ' + categoryId
                     });
 
                 } else  {
                     callback({
                         status: 500,
-                        message: 'It was impossible to check if the provided parent category already exists'
+                        message: 'It was impossible to check if the category with id: ' + categoryId + ' already exists'
                     });
                 }
 

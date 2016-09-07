@@ -61,8 +61,8 @@ var UNAUTHORIZED_BUNDLE = 'You are not authorized to include the product spec 3 
 var BUNDLE_INSIDE_BUNDLE = 'It is not possible to include a product spec bundle in another product spec bundle';
 var INVALID_BUNDLED_PRODUCT_STATUS = 'Only Active or Launched product specs can be included in a bundle';
 var INVALID_RELATED_PARTY = 'The field "relatedParty" can not be modified';
-var INVALID_PARENT_ID = 'Invalid parent category ID';
-var PARENT_CATEGORY_CANNOT_BE_CHECKED = 'It was impossible to check if the provided parent category already exists';
+var INVALID_CATEGORY_ID = 'Invalid category with id: ';
+var CATEGORY_CANNOT_BE_CHECKED = ['It was impossible to check if the category with id: ', ' already exists'];
 
 
 describe('Catalog API', function() {
@@ -298,6 +298,7 @@ describe('Catalog API', function() {
         var protocol = config.appSsl ? 'https' : 'http';
         var serverUrl = protocol + '://' + config.appHost + ':' + config.endpoints.catalog.port;
         var productPath = '/product/7';
+        var categoryPath = '/category'
 
         var user = {
             id: userName,
@@ -410,7 +411,7 @@ describe('Catalog API', function() {
             });
         };
 
-        var testCreateOffering = function(productRequestInfo, catalogRequestInfo, storeError, errorStatus, errorMsg, rssResp, body, done) {
+        var testCreateOffering = function(productRequestInfo, catalogRequestInfo, categoriesRequestInfo, storeError, errorStatus, errorMsg, rssResp, body, done) {
 
             var defaultErrorMessage = 'Internal Server Error';
             var catalogApi = mockCatalogAPI(body, productRequestInfo, storeError, rssResp);
@@ -421,6 +422,17 @@ describe('Catalog API', function() {
                 lifecycleStatus: productRequestInfo.lifecycleStatus
             };
             var bodyGetProduct = productRequestInfo.requestStatus === 200 ? bodyGetProductOk : defaultErrorMessage;
+
+            if (body.category) {
+
+                var categories = body.category;
+
+                for (var i = 0; i < categories.length; i++) {
+                    nock(serverUrl)
+                        .get(categoryPath + '/' + categories[i].id)
+                        .reply(categoriesRequestInfo[categories[i].id].requestStatus, {})
+                }
+            }
 
             nock(serverUrl)
                 .get(productPath)
@@ -433,7 +445,7 @@ describe('Catalog API', function() {
         };
 
         it('should allow to create an offering with an owned product', function(done) {
-            testCreateOffering(productRequestInfoActive, catalogRequestInfoLaunched, null, null, null, null, basicBody, done);
+            testCreateOffering(productRequestInfoActive, catalogRequestInfoLaunched, null, null, null, null, null, basicBody, done);
         });
 
         it('should not allow to create an offering when store validation fails', function(done) {
@@ -443,7 +455,7 @@ describe('Catalog API', function() {
                 message: 'Invalid pricing'
             };
 
-            testCreateOffering(productRequestInfoActive, catalogRequestInfoLaunched, storeResponse, storeResponse.status,
+            testCreateOffering(productRequestInfoActive, catalogRequestInfoLaunched, null, storeResponse, storeResponse.status,
                 storeResponse.message, null, basicBody, done);
         });
 
@@ -460,7 +472,7 @@ describe('Catalog API', function() {
                 lifecycleStatus: 'active'
             };
 
-            testCreateOffering(productRequestInfo, catalogRequestInfo, null, 403, CREATE_OFFERING_FOR_NON_OWNED_PRODUCT,
+            testCreateOffering(productRequestInfo, catalogRequestInfo, null, null, 403, CREATE_OFFERING_FOR_NON_OWNED_PRODUCT,
                 null, basicBody, done);
         });
 
@@ -471,7 +483,7 @@ describe('Catalog API', function() {
                 lifecycleStatus: 'retired'
             };
 
-            testCreateOffering(productRequestInfoActive, catalogRequestInfo, null, 400, 'Offerings can only be created in a ' +
+            testCreateOffering(productRequestInfoActive, catalogRequestInfo, null, null, 400, 'Offerings can only be created in a ' +
                 'catalog that is active or launched', null, basicBody, done);
         });
 
@@ -488,7 +500,7 @@ describe('Catalog API', function() {
                 lifecycleStatus: 'active'
             };
 
-            testCreateOffering(productRequestInfo, catalogRequestInfo, null, 400, 'Offerings can only be attached to ' +
+            testCreateOffering(productRequestInfo, catalogRequestInfo, null, null, 400, 'Offerings can only be attached to ' +
                 'active or launched products', null, basicBody, done);
         });
 
@@ -505,7 +517,7 @@ describe('Catalog API', function() {
                 lifecycleStatus: 'active'
             };
 
-            testCreateOffering(productRequestInfo, catalogRequestInfo, null, 422, INVALID_PRODUCT, null, basicBody, done);
+            testCreateOffering(productRequestInfo, catalogRequestInfo, null, null, 422, INVALID_PRODUCT, null, basicBody, done);
         });
 
         it('should not allow to create an offering when the attached catalog cannot be retrieved', function(done) {
@@ -516,12 +528,12 @@ describe('Catalog API', function() {
             };
 
             // isOwner does not matter when productRequestFails is set to true
-            testCreateOffering(productRequestInfoActive, catalogRequestInfo, null, 500, 'The catalog attached to the offering ' +
+            testCreateOffering(productRequestInfoActive, catalogRequestInfo, null, null, 500, 'The catalog attached to the offering ' +
                 'cannot be read', null, basicBody, done);
         });
 
         it('should not allow to create an offering when the RSS provider cannot be verified', function(done) {
-            testCreateOffering(productRequestInfoActive, catalogRequestInfoLaunched, null, 500, RSS_CANNOT_BE_ACCESSED, {
+            testCreateOffering(productRequestInfoActive, catalogRequestInfoLaunched, null, null, 500, RSS_CANNOT_BE_ACCESSED, {
                 provider: {}
             }, basicBody, done);
         });
@@ -530,7 +542,7 @@ describe('Catalog API', function() {
             var errMsg = 'RSS failure';
             var status = 500;
 
-            testCreateOffering(productRequestInfoActive, catalogRequestInfoLaunched, null, status, errMsg, {
+            testCreateOffering(productRequestInfoActive, catalogRequestInfoLaunched, null, null, status, errMsg, {
                 provider: null,
                 modelErr: {
                     status: status,
@@ -541,7 +553,7 @@ describe('Catalog API', function() {
 
         it ('should not allow to create an offering when there are not RS Models', function(done) {
 
-            testCreateOffering(productRequestInfoActive, catalogRequestInfoLaunched, null, 422, INVALID_PRODUCT_CLASS, {
+            testCreateOffering(productRequestInfoActive, catalogRequestInfoLaunched, null, null, 422, INVALID_PRODUCT_CLASS, {
                 provider: null,
                 modelErr: null,
                 modelBody: {
@@ -551,11 +563,11 @@ describe('Catalog API', function() {
         });
 
         it('should not allow to create an offering when the productSpecification field has not been provided', function(done) {
-            testCreateOffering(productRequestInfoActive, catalogRequestInfoLaunched, null, 422, MISSING_PRODUCT_SPEC, null, {}, done);
+            testCreateOffering(productRequestInfoActive, catalogRequestInfoLaunched, null, null, 422, MISSING_PRODUCT_SPEC, null, {}, done);
         });
 
         it('should not allow to create an offering when the product specification does not contain a href', function(done) {
-            testCreateOffering(productRequestInfoActive, catalogRequestInfoLaunched, null, 422, MISSING_HREF_PRODUCT_SPEC, null, {
+            testCreateOffering(productRequestInfoActive, catalogRequestInfoLaunched, null, null, 422, MISSING_HREF_PRODUCT_SPEC, null, {
                 productSpecification: {
                     id: '1'
                 }
@@ -569,8 +581,60 @@ describe('Catalog API', function() {
                 },
                 bundledProductOffering: [{}]
             };
-            testCreateOffering(productRequestInfoActive, catalogRequestInfoLaunched, null, 422,
+            testCreateOffering(productRequestInfoActive, catalogRequestInfoLaunched, null, null, 422,
                 BUNDLED_OFFERING_NOT_BUNDLE, null, offeringBody, done);
+        });
+
+        it('should not allow to create an offering when it is no possible to check the offering categories', function(done) {
+
+            var categoryId1 = '7';
+            var categoryId2 = '8';
+            var baseHref = 'http://example' + categoryPath + '/';
+
+            var offeringBody = {
+                category: [{
+                    id: categoryId1,
+                    href: baseHref + categoryId1
+                }, {
+                    id: categoryId2,
+                    href: baseHref + categoryId2
+                }]
+            };
+
+            var categoriesRequestInfo = {};
+            categoriesRequestInfo[categoryId1] = {requestStatus: 200};
+            categoriesRequestInfo[categoryId2] = {requestStatus: 500};
+
+            var errorMsg = CATEGORY_CANNOT_BE_CHECKED[0] + categoryId2 + CATEGORY_CANNOT_BE_CHECKED[1];
+
+            testCreateOffering(productRequestInfoActive, catalogRequestInfoLaunched, categoriesRequestInfo, null, 500, 
+                errorMsg, null, offeringBody, done);
+        });
+
+        it('should not allow to create an offering when at least one offering category is not a valid category', function(done) {
+
+            var categoryId1 = '7';
+            var categoryId2 = '8';
+            var baseHref = 'http://example' + categoryPath + '/';
+
+            var offeringBody = {
+                category: [{
+                    id: categoryId1,
+                    href: baseHref + categoryId1
+                }, {
+                    id: categoryId2,
+                    href: baseHref + categoryId2
+                }]
+            };
+
+            var categoriesRequestInfo = {};
+            categoriesRequestInfo[categoryId1] = {requestStatus: 200};
+            categoriesRequestInfo[categoryId2] = {requestStatus: 404};
+
+            var errorMsg = INVALID_CATEGORY_ID + categoryId2;
+
+            testCreateOffering(productRequestInfoActive, catalogRequestInfoLaunched, categoriesRequestInfo, null, 400, 
+                errorMsg, null, offeringBody, done);
         });
 
         var testCreateOfferingBundle = function(offeringRequestInfo, catalogRequestInfo, storeError, body, errorStatus, errorMsg, done) {
@@ -1119,22 +1183,26 @@ describe('Catalog API', function() {
             status: 404
         }
 
-        testCreateCategory(true, category, null, parentCategoryRequest, 400, INVALID_PARENT_ID, callback);
+        testCreateCategory(true, category, null, parentCategoryRequest, 400, INVALID_CATEGORY_ID + category.parentId, callback);
     });
 
     it('should not allow to create non-root category when parent category cannot be checked', function(callback) {
 
+        var parentId = 'wrong'; 
+
         var category = {
             name: 'example',
             isRoot: false,
-            parentId: 'wrong'
+            parentId: parentId
         };
 
         var parentCategoryRequest = {
             status: 500
         }
 
-        testCreateCategory(true, category, null, parentCategoryRequest, 500, PARENT_CATEGORY_CANNOT_BE_CHECKED, callback);
+        var errorMsg = CATEGORY_CANNOT_BE_CHECKED[0] + category.parentId + CATEGORY_CANNOT_BE_CHECKED[1];
+
+        testCreateCategory(true, category, null, parentCategoryRequest, 500, errorMsg, callback);
     });
 
     var testCreateCatalog = function (admin, owner, catalog, catalogRequest, errorStatus, errorMsg, done) {
@@ -2777,7 +2845,7 @@ describe('Catalog API', function() {
         var parentCategoryRequest = {status: 404};
 
         testUpdateCategory('PATCH', true, { status: 200, body: { name: 'invalid', isRoot: true } }, categoriesRequest,
-            parentCategoryRequest, { name: categoryName, parentId: parentId, isRoot: false }, 400, INVALID_PARENT_ID, done);
+            parentCategoryRequest, { name: categoryName, parentId: parentId, isRoot: false }, 400, INVALID_CATEGORY_ID + parentId, done);
     });
 
     it('should not allow to update non-root category when parent category cannot be retrieved', function(done) {
@@ -2792,8 +2860,10 @@ describe('Catalog API', function() {
         };
         var parentCategoryRequest = {status: 500};
 
+        var errorMsg = CATEGORY_CANNOT_BE_CHECKED[0] + parentId + CATEGORY_CANNOT_BE_CHECKED[1];
+
         testUpdateCategory('PATCH', true, { status: 200, body: { name: 'invalid', isRoot: true } }, categoriesRequest,
-            parentCategoryRequest, { name: categoryName, parentId: parentId, isRoot: false }, 500, PARENT_CATEGORY_CANNOT_BE_CHECKED, done);
+            parentCategoryRequest, { name: categoryName, parentId: parentId, isRoot: false }, 500, errorMsg, done);
     });
 
     describe('Post validation', function() {
