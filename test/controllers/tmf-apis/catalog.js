@@ -394,7 +394,8 @@ describe('Catalog API', function() {
                 method: 'POST',
                 apiUrl: offeringPath,
                 user: user,
-                body: JSON.stringify(body)
+                body: JSON.stringify(body),
+                headers: { }
             };
 
             catalogApi.checkPermissions(req, function(err) {
@@ -1424,7 +1425,7 @@ describe('Catalog API', function() {
         }
     };
 
-    var testUpdateProductOffering = function(offeringBody, productRequestInfo, catalogRequestInfo, expectedErrorStatus,
+    var testUpdateProductOffering = function(offeringBody, productRequestInfo, rsModelRequestInfo, catalogRequestInfo, expectedErrorStatus,
                                              expectedErrorMsg, done) {
 
         var checkRoleMethod = jasmine.createSpy();
@@ -1445,6 +1446,9 @@ describe('Catalog API', function() {
             rssClient: {
                 createProvider: function(userInfo, callback) {
                     callback(null);
+                },
+                retrieveRSModel: function(user, serviceCandidateId, callback) {
+                    callback(rsModelRequestInfo.err, rsModelRequestInfo.res);
                 }
             }
         };
@@ -1524,7 +1528,7 @@ describe('Catalog API', function() {
             lifecycleStatus: 'active'
         };
 
-        testUpdateProductOffering({}, productRequestInfo, catalogRequestInfo, null, null, done);
+        testUpdateProductOffering({}, productRequestInfo, null, catalogRequestInfo, null, null, done);
     });
 
 
@@ -1546,7 +1550,7 @@ describe('Catalog API', function() {
             productSpecification: getProductSpecification(productRequestInfo.path)
         });
 
-        testUpdateProductOffering(newOffering, productRequestInfo, catalogRequestInfo, null, null, done);
+        testUpdateProductOffering(newOffering, productRequestInfo, null, catalogRequestInfo, null, null, done);
     });
 
     it('should not allow to update an owned offering when productSpecification changes', function(done) {
@@ -1562,7 +1566,7 @@ describe('Catalog API', function() {
         };
 
         testUpdateProductOffering(JSON.stringify({ productSpecification: {} }), productRequestInfo,
-            catalogRequestInfo, 403, 'Field productSpecification cannot be modified', done);
+            null, catalogRequestInfo, 403, 'Field productSpecification cannot be modified', done);
     });
 
     it('should not allow to update a non-owned offering', function(done) {
@@ -1577,7 +1581,7 @@ describe('Catalog API', function() {
             requestStatus: 200,
             lifecycleStatus: 'active'
         };
-        testUpdateProductOffering({}, productRequestInfo, catalogRequestInfo, 403, UPDATE_OFFERING_WITH_NON_OWNED_PRODUCT, done);
+        testUpdateProductOffering({}, productRequestInfo, null, catalogRequestInfo, 403, UPDATE_OFFERING_WITH_NON_OWNED_PRODUCT, done);
     });
 
     it('should not allow to update an offering when the attached product cannot be retrieved', function(done) {
@@ -1593,7 +1597,7 @@ describe('Catalog API', function() {
             lifecycleStatus: 'active'
         };
 
-        testUpdateProductOffering({}, productRequestInfo, catalogRequestInfo, 422, INVALID_PRODUCT, done);
+        testUpdateProductOffering({}, productRequestInfo, null, catalogRequestInfo, 422, INVALID_PRODUCT, done);
     });
 
     it('should allow to change the status of an offering to launched when product and catalog are launched', function(done) {
@@ -1612,12 +1616,12 @@ describe('Catalog API', function() {
             requestStatus: 200,
             lifecycleStatus: 'launched'
         };
-        testUpdateProductOffering(offeringBody, productRequestInfo, catalogRequestInfo, null, null, done);
+        testUpdateProductOffering(offeringBody, productRequestInfo, null, catalogRequestInfo, null, null, done);
 
     });
 
     it('should not allow to update offerings when the body is not a valid JSON', function(done) {
-        testUpdateProductOffering('{ TEST', {}, {}, 400, INVALID_JSON, done);
+        testUpdateProductOffering('{ TEST', {}, null, {}, 400, INVALID_JSON, done);
     });
 
     it('should not allow to launch an offering when the catalog is active', function(done) {
@@ -1637,7 +1641,7 @@ describe('Catalog API', function() {
             lifecycleStatus: 'active'
         };
 
-        testUpdateProductOffering(offeringBody, productRequestInfo, catalogRequestInfo, 400, 'Offerings can only be ' +
+        testUpdateProductOffering(offeringBody, productRequestInfo, null, catalogRequestInfo, 400, 'Offerings can only be ' +
             'launched when the attached catalog is also launched', done);
     });
 
@@ -1658,8 +1662,47 @@ describe('Catalog API', function() {
             lifecycleStatus: 'launched'
         };
 
-        testUpdateProductOffering(offeringBody, productRequestInfo, catalogRequestInfo, 400, 'Offerings can only be ' +
+        testUpdateProductOffering(offeringBody, productRequestInfo, null, catalogRequestInfo, 400, 'Offerings can only be ' +
             'launched when the attached product is also launched', done);
+    });
+
+    it('should not allow to update offerings when the RS model cannot be checked', function(done) {
+
+        var errorMsg = 'RSS failure';
+        var statusCode = 500;
+        
+        var offeringBody = JSON.stringify({
+            serviceCandidate: {
+                id: 'example'
+            }
+        });
+
+        var rsModelRequestInfo = {
+            err: {
+                status: statusCode,
+                message: errorMsg
+            }
+        };
+
+        testUpdateProductOffering(offeringBody, {}, rsModelRequestInfo, {}, statusCode, errorMsg, done);
+    });
+
+    it('should not allow to update offerings when the RS model is not valid', function(done) {
+
+        var offeringBody = JSON.stringify({
+            serviceCandidate: {
+                id: 'wrong'
+            }
+        });
+
+        var rsModelRequestInfo = {
+            err: null,
+            res: {
+                body: '{}'
+            }
+        };
+
+        testUpdateProductOffering(offeringBody, {}, rsModelRequestInfo, {}, 422, INVALID_PRODUCT_CLASS, done);
     });
 
     // PRODUCTS & CATALOGS
