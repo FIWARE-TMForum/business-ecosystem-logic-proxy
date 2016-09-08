@@ -394,7 +394,8 @@ describe('Catalog API', function() {
                 method: 'POST',
                 apiUrl: offeringPath,
                 user: user,
-                body: JSON.stringify(body)
+                body: JSON.stringify(body),
+                headers: { }
             };
 
             catalogApi.checkPermissions(req, function(err) {

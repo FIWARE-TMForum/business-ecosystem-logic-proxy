@@ -137,6 +137,7 @@ var catalog = (function() {
                     id: 'defaultRevenue',
                     name: 'Revenue Sharing Service'
                 };
+                utils.updateBody(req, body);
                 callback(null);
             }
         });
@@ -272,7 +273,7 @@ var catalog = (function() {
         async.series([
             function (callback) {
                 // Check the RS model
-                if (newBody && newBody.serviceCandidate) {
+                if ((newBody && !previousBody) || (previousBody && newBody && newBody.serviceCandidate)) {
                     validateRSModel(req, newBody, callback);
                 } else {
                     callback(null);
