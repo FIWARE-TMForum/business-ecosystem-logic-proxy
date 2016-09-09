@@ -502,41 +502,50 @@ var ordering = (function(){
                                 status: 403,
                                 message: 'Order items can only be modified by sellers'
                             });
-                        } else if ('state' in ordering && ordering['state'].toLowerCase() === 'cancelled') {
+                        } else if ('state' in ordering) {
 
-                            // Orderings can only be cancelled when all items are marked as Acknowledged
-                            var productsInAckState = previousOrdering.orderItem.filter(function (item) {
-                                return 'acknowledged' === item.state.toLowerCase();
-                            });
-
-                            if (productsInAckState.length != previousOrdering.orderItem.length) {
+                            if(ordering['state'].toLowerCase() !== 'cancelled') {
                                 callback({
                                     status: 403,
-                                    message: 'Orderings can only be cancelled when all Order items are in Acknowledged state'
+                                    message: 'Invalid order state. Valid states for customers are: "Cancelled"'
                                 });
+
                             } else {
 
-                                // Otherwise, the charges has to be refunded to the user.
-                                // If the sales cannot be refunded, the callback will be called with
-                                // the error parameter so the pre validation will fail and the state
-                                // won't be changed.
-                                storeClient.refund(previousOrdering.id, req.user, function (err) {
-
-                                    if (err) {
-                                        callback(err);
-                                    } else {
-                                        // Cancel all order items
-                                        previousOrdering.orderItem.forEach(function (item) {
-                                            item.state = 'Cancelled';
-                                        });
-
-                                        // Included order items will be ignored
-                                        ordering.orderItem = previousOrdering.orderItem;
-                                        utils.updateBody(req, ordering);
-
-                                        callback(null);
-                                    }
+                                // Orderings can only be cancelled when all items are marked as Acknowledged
+                                var productsInAckState = previousOrdering.orderItem.filter(function (item) {
+                                    return 'acknowledged' === item.state.toLowerCase();
                                 });
+
+                                if (productsInAckState.length != previousOrdering.orderItem.length) {
+                                    callback({
+                                        status: 403,
+                                        message: 'Orderings can only be cancelled when all Order items are in Acknowledged state'
+                                    });
+                                } else {
+
+                                    // Otherwise, the charges has to be refunded to the user.
+                                    // If the sales cannot be refunded, the callback will be called with
+                                    // the error parameter so the pre validation will fail and the state
+                                    // won't be changed.
+                                    storeClient.refund(previousOrdering.id, req.user, function (err) {
+
+                                        if (err) {
+                                            callback(err);
+                                        } else {
+                                            // Cancel all order items
+                                            previousOrdering.orderItem.forEach(function (item) {
+                                                item.state = 'Cancelled';
+                                            });
+
+                                            // Included order items will be ignored
+                                            ordering.orderItem = previousOrdering.orderItem;
+                                            utils.updateBody(req, ordering);
+
+                                            callback(null);
+                                        }
+                                    });
+                                }
                             }
 
                         } else if ('note' in ordering) {

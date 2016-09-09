@@ -1125,6 +1125,17 @@ describe('Ordering API', function() {
                 testUpdate([true, false], {description: 'New description'}, 'InProgress', [], [], null, null, null, done);
             });
 
+            it('should fail when a customer tries to modify the order state to an invalid state', function (done) {
+
+                var expectedError = {
+                    status: 403,
+                    message: 'Invalid order state. Valid states for customers are: "Cancelled"'
+                };
+
+                testUpdate([true, false], {state: 'Completed'}, 'InProgress', [{state: 'Completed'}], [],
+                    null, expectedError, null, done);
+            });
+
             it('should fail when a customer tries to cancel an ordering with completed items', function (done) {
 
                 var expectedError = {
