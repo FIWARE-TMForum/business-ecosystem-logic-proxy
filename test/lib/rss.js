@@ -189,7 +189,7 @@ describe('RSS Client', function() {
                 aggregatorValue: 30
             }];
             var expOptions = {
-                url: serverUrl + MODELS_URL + '?productClass=' + productClass,
+                url: serverUrl + MODELS_URL + '?productClass=' + productClass + '&providerId=' + userInfo.id,
                 method: 'GET',
                 headers: {
                     'content-type': 'application/json',
