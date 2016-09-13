@@ -13,7 +13,7 @@ config.https = {
 };
 
 // Express configuration
-config.proxyPrefix = '/proxy';
+config.proxyPrefix = '';
 config.portalPrefix = '';
 config.logInPath = '/login';
 config.logOutPath = '/logOut';
@@ -50,40 +50,40 @@ config.appHost = '';
 // Configure endpoints
 config.endpoints = {
     'catalog': {
-        'path': '',
-        'port': ''
+        'path': 'DSProductCatalog',
+        'port': '8080'
     },
     'ordering': {
-         'path': '',
-         'port': ''
+         'path': 'DSProductOrdering',
+         'port': '8080'
     },
     'inventory': {
-        'path': '',
-        'port': ''
-    },
-    'party': {
-        'path': '',
-        'port': ''
-    },
-    'billing': {
-        'path': '',
-        'port': ''
-    },
-    'customer': {
-        'path': '',
-        'port': ''
+        'path': 'DSProductInventory',
+        'port': '8080'
     },
     'charging': {
-        'path': '',
-        'port': ''
+        'path': 'charging',
+        'port': '8006'
     },
     'rss': {
-        'path': '',
-        'port': ''
+        'path': 'DSRevenueSharing',
+        'port': '8080'
     },
-    'usage': {
-        'path': '',
-        'port': ''
+    'party': {
+        'path': 'DSPartyManagement',
+        'port': '8080'
+    },
+    'billing':{
+        'path': 'DSBillingManagement',
+        'port': '8080'
+    },
+    'customer': {
+        'path': 'DSCustomerManagement',
+        'port': '8080'
+    },
+    'usage':  {
+        'path': 'DSUsageManagement',
+        'port': '8080'
     }
 };
 
@@ -102,6 +102,6 @@ config.publicPaths = [];
 
 config.magicKey = undefined;
 
-config.usageChartURL = '';
+config.usageChartURL = 'https://mashup.lab.fiware.org/fdelavega/UsageChart?mode=embedded&theme=wirecloud.fiwarelabtheme';
 
 module.exports = config;
