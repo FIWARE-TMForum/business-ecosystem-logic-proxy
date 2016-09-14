@@ -26,7 +26,7 @@ In this context, the Business Ecosystem Logic Proxy acts as the endpoint for acc
 The Business Ecosystem Logic Proxy is installed as part of the Business API Ecosystem, so the instructions to install it can be found at [the Business API Ecosystem Installation Guide](http://business-api-ecosystem.readthedocs.io/en/latest/installation-administration-guide.html). You can install the software in three different ways:
 
 * Using the provided script
-* Using a [Docker Container]()
+* Using a [Docker Container](https://hub.docker.com/r/conwetlab/biz-ecosystem-logic-proxy/)
 * Manually
 
 # API Reference
