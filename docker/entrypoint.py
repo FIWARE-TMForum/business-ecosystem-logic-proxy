@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 from os import getenv
 import sys
+import time
+import socket
 
 if getenv("OAUTH2_CLIENT_ID") is None:
     print("environment variable OAUTH2_CLIENT_ID not set")
@@ -61,8 +63,17 @@ text = text.replace("'clientID': '--client-id--',",
 text = text.replace("'callbackURL': '--callback-url--',",
                     "'callbackURL': 'http://{}:{}/auth/fiware/callback',".format(getenv("BIZ_ECOSYS_HOST"), getenv("BIZ_ECOSYS_PORT")))
 
-print(text)
 with open("./config.js", "w+") as f:
     f.write(text)
 
-# system("/business-ecosystem-logic-proxy/node-v4.5.0-linux-x64/bin/node server.js")
+for i in range(20):
+    try:
+        time.sleep(1)
+        print("Trying to connect to the database:.... ")
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.connect(('127.0.0.1', 27017))
+        sock.close()
+        print("Successfully connected")
+        break
+    except:
+        continue
