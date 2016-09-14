@@ -1,0 +1,47 @@
+.row
+  .col-xs-12
+    .panel.panel-default.z-depth-1(ng-repeat="productOrder in searchVM.list")
+      .panel-heading
+        .pull-right(ng-if="searchVM.role === 'Customer' && searchVM.canCancel(productOrder)")
+          a.btn.btn-xs.btn-danger.z-depth-1(ng-click="searchVM.cancelOrder(productOrder)", ng-disabled="searchVM.cancellingOrder === true")
+            span.item-icon.fa(ng-class="searchVM.cancellingOrder ? ['fa-spinner', 'fa-spin'] : 'fa-close'")
+            span.item-text.hidden-xs Cancel
+        .h4
+          strong
+            a(ui-sref="inventory.productOrder.detail({ productOrderId: productOrder.id })", ui-sref-opts="{ inherit: false }")
+              time(title="{{ productOrder.orderDate | amDateFormat: 'dddd, MMMM Do YYYY, h:mm a' }}") {{ productOrder.orderDate | amCalendar }}
+          .small
+            dl.dl-horizontal.order-title-group
+              dt.order-title Customer
+              dd.order-title-info {{ productOrder.getCustomer().id }}
+              dt.order-title Status
+              dd.order-title-info {{ productOrder.state }}
+              dt.order-title Priority
+              dd.order-title-info {{ productOrder.priority }}
+      .panel-body
+        .row(ng-repeat="orderItem in productOrder.orderItem")
+          hr(ng-if="!$first")
+          .col-xs-12.col-sm-4
+            .thumbnail.thumbnail-lg
+              img(no-image, ng-src="{{ orderItem.productOffering.getPicture() }}")
+            .btn-toolbar(ng-if="searchVM.role === 'Seller' && productOrder.state == 'InProgress' && searchVM.isTransitable(orderItem)")
+              .btn-group.btn-group-justified.z-depth-1
+                a.btn.btn-default(ng-click="searchVM.updateStatus(productOrder, $index, searchVM.getNextStatus(orderItem))")
+                  span(ng-if="orderItem.state == 'Acknowledged'").item-text Sent
+                  span(ng-if="orderItem.state == 'InProgress'").item-text Delivered
+                a.btn.btn-danger(ng-click="searchVM.updateStatus(productOrder, $index, 'Failed')")
+                  span.item-text Reject
+          .col-xs-12.col-sm-6
+            .h4.text-ellipsis
+              strong
+                a(ui-sref="offering.detail({ offeringId: orderItem.productOffering.id })", ui-sref-opts="{ inherit: false }")
+                  span.item-text {{ orderItem.productOffering.name }}
+            dl
+              dt Description
+              dd.text-dark-secondary {{ orderItem.productOffering.description ? orderItem.productOffering.description : 'No description provided.' }}
+              dt State
+              dd.text-dark-secondary {{ orderItem.state }}
+              dt Price
+              dd.text-dark-secondary {{ productOrder.formatPriceplanOf($index) }}
+              dt Appointment
+              dd.text-dark-secondary {{ orderItem.appointment ? orderItem.appointment : 'No appointment included.' }}

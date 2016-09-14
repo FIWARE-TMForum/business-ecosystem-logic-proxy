@@ -1,0 +1,34 @@
+.row
+  .col-xs-12
+    div(ng-repeat="offering in detailVM.offerings")
+      .h3(ng-if="detailVM.offerings.length > 1") {{ offering.name }}
+
+      .panel.panel-default.z-depth-1(ng-repeat="characteristic in offering.productSpecification.productSpecCharacteristic")
+        .panel-heading
+          .h4
+            strong {{ characteristic.name }}
+        .panel-body
+          p.text-dark-secondary {{ characteristic.description ? characteristic.description : 'No description provided.' }}
+          .form-group
+            p(ng-repeat="characteristicValue in characteristic.productSpecCharacteristicValue")
+              span.fa.fa-fw(ng-class="detailVM.characteristicValueSelected(characteristic, characteristicValue, offering.id) ? 'fa-check-circle': 'fa-circle-o'")
+              span  {{ detailVM.formatCharacteristicValue(characteristic, characteristicValue) }}
+
+      div(ng-repeat="bundle in offering.productSpecification.bundledProductSpecification")
+        hr
+        .h4.text-dark-secondary
+          strong {{ bundle.name }}
+
+        .panel.panel-default.z-depth-1(ng-repeat="characteristic in bundle.productSpecCharacteristic")
+          .panel-heading
+            .h4
+              strong {{ characteristic.name }}
+          .panel-body
+            p.text-dark-secondary {{ characteristic.description ? characteristic.description : 'No description provided.' }}
+            .form-group
+              p(ng-repeat="characteristicValue in characteristic.productSpecCharacteristicValue")
+                span.fa.fa-fw(ng-class="detailVM.characteristicValueSelected(characteristic, characteristicValue, offering.id, bundle.id) ? 'fa-check-circle': 'fa-circle-o'")
+                span  {{ detailVM.formatCharacteristicValue(characteristic, characteristicValue) }}
+
+  .col-xs-12(ng-if="!detailVM.item.productCharacteristic.length")
+    .alert.alert-info.text-center No characteristics included.

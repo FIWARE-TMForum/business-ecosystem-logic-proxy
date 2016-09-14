@@ -1,0 +1,34 @@
+.row
+  .col-sm-6
+    .form-group(ng-class="{ 'has-error': vm.hasFieldError(form.type) }")
+      label Type
+      input.form-control(
+        type="text"
+        name="type"
+        ng-model="telephoneNumber.medium.type"
+        required
+        ng-maxlength="30"
+      )
+      .help-block(
+        ng-messages="form.type.$error"
+        ng-show="vm.hasFieldError(form.type)"
+      )
+        span(ng-message="required") This field is required.
+        span(ng-message="maxlength") This field must not exceed 30 chars.
+  .col-sm-6
+    .form-group(ng-class="{ 'has-error': vm.hasFieldError(form.number) }")
+      label Number
+      input.form-control(
+        international-phone-number,
+        type="text"
+        name="number"
+        ng-model="telephoneNumber.medium.number",
+        convert-to-phone-number,
+        required
+      )
+      .help-block(
+        ng-messages="form.number.$error"
+        ng-show="vm.hasFieldError(form.number)"
+      )
+        span(ng-message="required") This field is required.
+        span(ng-message="internationalPhoneNumber") This field must be a valid number.

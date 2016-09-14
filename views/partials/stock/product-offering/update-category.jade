@@ -1,0 +1,17 @@
+.row(ng-controller="CategorySearchCtrl as categorySearchVM")
+  .col-xs-12(ng-if="!categorySearchVM.list.length")
+    .alert.alert-info No categories found.
+  .col-xs-12(ng-if="categorySearchVM.list.length")
+    .table-responsive
+      table.table.table-bordered
+        thead
+          tr
+            th Name
+            th Updated
+        tbody
+          tr(ng-repeat="category in categorySearchVM.list | orderByParentId", ng-class="{ active: updateVM.hasCategory(category) }")
+            td
+              span(ng-repeat="parentCategory in category.getBreadcrumb()") {{ parentCategory.name }} / 
+              strong {{ category.name }}
+            td
+              time(am-time-ago="category.lastUpdate")

@@ -8,12 +8,15 @@ config.https = {
     enabled: false,
     certFile: 'cert/cert.crt',
     keyFile: 'cert/key.key',
+    caFile: 'cert/ca.crt',
     port: 443
 };
 
 // Express configuration
-config.proxyPrefix = '/proxy';
+config.proxyPrefix = '';
 config.portalPrefix = '';
+config.logInPath = '/login';
+config.logOutPath = '/logOut';
 config.sessionSecret = 'keyboard cat';
 
 // OAuth2 configuration
@@ -23,11 +26,23 @@ config.oauth2 = {
     'clientSecret': '--client-secret--',
     'callbackURL': '--callback-url--',
     'roles': {
-        'admin': '106',
-        'customer': '',
-        'seller': ''
+        'admin': 'provider',
+        'customer': 'customer',
+        'seller': 'seller'
     }
 }
+
+// Customer Role Required to buy items
+config.customerRoleRequired = false;
+
+// MongoDB
+config.mongoDb = {
+    server: 'localhost',
+    port: 27017,
+    user: '',
+    password: '',
+    db: 'belp'
+};
 
 // TMForum APIs final paths
 config.appHost = '';
@@ -35,26 +50,48 @@ config.appHost = '';
 // Configure endpoints
 config.endpoints = {
     'catalog': {
-        'path': '',
-        'port': ''
+        'path': 'DSProductCatalog',
+        'port': '8080'
     },
     'ordering': {
-         'path': '',
-         'port': ''
+         'path': 'DSProductOrdering',
+         'port': '8080'
     },
     'inventory': {
-        'path': '',
-        'port': ''
+        'path': 'DSProductInventory',
+        'port': '8080'
     },
     'charging': {
-        'path': '',
-        'port': ''
+        'path': 'charging',
+        'port': '8006'
     },
     'rss': {
-        'path': '',
-        'port': ''
+        'path': 'DSRevenueSharing',
+        'port': '8080'
+    },
+    'party': {
+        'path': 'DSPartyManagement',
+        'port': '8080'
+    },
+    'billing':{
+        'path': 'DSBillingManagement',
+        'port': '8080'
+    },
+    'customer': {
+        'path': 'DSCustomerManagement',
+        'port': '8080'
+    },
+    'usage':  {
+        'path': 'DSUsageManagement',
+        'port': '8080'
     }
 };
+
+// Percentage of the generated revenues that belongs to the system
+config.revenueModel = 30;
+
+// Billing Account owner role
+config.billingAccountOwnerRole = 'bill receiver';
 
 // Use true if the app server listens in https
 config.appSsl = false;
@@ -64,5 +101,7 @@ config.appSsl = false;
 config.publicPaths = [];
 
 config.magicKey = undefined;
+
+config.usageChartURL = 'https://mashup.lab.fiware.org/fdelavega/UsageChart?mode=embedded&theme=wirecloud.fiwarelabtheme';
 
 module.exports = config;

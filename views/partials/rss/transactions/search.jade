@@ -1,0 +1,66 @@
+ui-view
+  .row
+    .col-xs-12
+      .btn-toolbar.pull-right
+        .btn-group.z-depth-1
+          a.btn.btn-success(ng-click="searchVM.createReport()" ng-disabled="!searchVM.list.length")
+            span.item-icon.fa.fa-plus
+            span.item-text New report
+        .btn-group.z-depth-1
+          a.btn.btn-default(ui-sref="rss.transactions({ flow: 1 })" ui-sref-active="active")
+            span.item-icon.fa.fa-th
+          a.btn.btn-default(ui-sref="rss.transactions({ flow: 2 })" ui-sref-active="active")
+            span.item-icon.fa.fa-th-list
+    .col-xs-12(ng-switch="searchVM.list.status")
+      div(ng-switch-when="LOADED", ng-switch="searchVM.list.length")
+        div(ng-switch-when="0")
+          .alert.alert-info.text-center No transactions found.
+        div(ng-switch-default ng-switch="searchVM.$params.flow")
+          div(ng-switch-when="1")
+            .panel.panel-default.z-depth-1(ng-repeat="tx in searchVM.list")
+              .panel-heading
+                .h4
+                  strong {{ tx.productClass }}
+                  .pull-right
+                    span {{ tx.timestamp | amDateFormat: 'ddd, MMM Do YYYY, HH:mm' }}
+                  .small
+                    | by {{ tx.customerId }}
+              .panel-body
+                .row
+                  .col-md-6
+                    dl
+                      dt Transaction Type
+                      dd.text-dark-secondary {{ searchVM.getTxType(tx.transactionType) }}
+                      dt Product Offering
+                      dd.text-dark-secondary {{ tx.application }}
+                  .col-md-6
+                    dl
+                      dt Charged Amount
+                      dd.text-dark-secondary {{ tx.chargedAmount }} {{ tx.currency }}
+                      dt Description
+                      dd.text-dark-secondary {{ tx.description ? tx.description : 'No description provided.' }}
+          .table-responsive(ng-switch-when="2")
+            table.table.table-bordered
+              thead
+                tr
+                  th Timestamp
+                  th Type
+                  th Product class
+                  th Customer
+                  th Product offering
+                  th Amount
+                  th Description
+              tbody
+                tr(ng-repeat="tx in searchVM.list")
+                  th {{ tx.timestamp | amDateFormat: 'ddd, MMM Do YYYY, HH:mm' }}
+                  td {{ searchVM.getTxType(tx.transactionType) }}
+                  td {{ tx.productClass }}
+                  td {{ tx.customerId }}
+                  td {{ tx.application }}
+                  td {{ tx.chargedAmount }} {{ tx.currency }}
+                  td {{ tx.description ? tx.description : 'No description provided.' }}
+      div(ng-switch-when="ERROR")
+        .alert.alert-danger.text-center {{ searchVM.error }}
+      div(ng-switch-default)
+        .container-spinner
+          span.fa.fa-spinner.fa-spin.fa-2x

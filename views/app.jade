@@ -1,0 +1,75 @@
+extends ./base.jade
+
+block scripts
+  script.
+    angular
+      .module('app')
+      .config(function ($urlRouterProvider) {
+        $urlRouterProvider.otherwise('/offering');
+      });
+
+block navbars
+  li.dropdown(ng-controller="UserShoppingCartCtrl as listVM")
+    a.dropdown-toggle(data-toggle="dropdown")
+      span.item-icon.fa.fa-shopping-cart.fa-lg(ng-switch="listVM.list.status")
+        span.badge.badge-success(ng-switch-when="LOADED") {{ listVM.list.length }}
+        span.badge(ng-switch-when="LOADING") ...
+        span.badge.badge-error(ng-switch-when="ERROR") !!!
+      span.item-text.hidden-xs Shopping Cart
+    .dropdown-menu.z-depth-3(ng-switch="listVM.list.status")
+      .dropdown-header My Shopping Cart
+      .alert.alert-info.text-center(ng-switch-when="LOADED", ng-if="!listVM.list.length")
+        span Your shopping cart is empty!
+      .alert.alert-danger.text-center(ng-switch-when="ERROR")
+        span Your shopping cart cannot be loaded.
+      .dropdown-menu-item(ng-switch-when="LOADED", ng-repeat="offering in listVM.list")
+        .media.item-offering-ordered
+          .media-left
+            .thumbnail.thumbnail-45px
+              img(no-image, ng-src="{{ offering.productOffering.getPicture() }}")
+          .media-body
+            a.pull-right.alert-link-danger
+              span.fa.fa-remove(ng-click="listVM.remove(offering)")
+            .h4.media-heading
+              a(ui-sref="offering.detail({ offeringId: offering.id })") {{ offering.name }}
+            p.text-muted x 1
+      .btn-group.btn-group-justified(ng-switch-when="LOADED", ng-if="listVM.list.length")
+        a.btn.btn-success.z-depth-1(ui-sref="shopping-cart")
+          span.item-icon.fa.fa-share
+          span.item-text Checkout
+
+block content
+  .container
+    .row
+      .col-xs-12
+        ui-view(name="full-content")
+      .col-xs-12.col-md-3
+        ui-view(name="sidebar")
+          .row
+            if user
+              .panel.panel-default.z-depth-2.hidden-xs
+                ul.nav.nav-stacked.nav-router.nav-pills
+                  li(ui-sref-active="active")
+                    a.bg-view1(ui-sref="offering", ui-sref-opts="{ reload: true, inherit: false }")
+                      span.item-icon-container
+                        i.fa.fa-fw.fa-home
+                      strong.item-text Home
+                  li(ui-sref-active="active")
+                    a.bg-view2(ui-sref="inventory", ui-sref-opts="{ reload: true, inherit: false }")
+                      span.item-icon-container
+                        i.fa.fa-fw.fa-archive
+                      strong.item-text My inventory
+                  li(ui-sref-active="active", ng-show="user.isSeller()")
+                    a.bg-view3(ui-sref="stock", ui-sref-opts="{ reload: true, inherit: false }")
+                      span.item-icon-container
+                        i.fa.fa-fw.fa-database
+                      strong.item-text My stock
+                  li(ui-sref-active="active" ng-show="user.isSeller()")
+                    a.bg-view4(ui-sref="rss", ui-sref-opts="{ reload: true, inherit: false }")
+                      span.item-icon-container
+                        i.fa.fa-fw.fa-share-alt
+                      strong.item-text Revenue Sharing
+            ui-view(name="sidebar-content")
+      .col-xs-12.col-md-9
+        ui-view(name="content")
+  include ./modals/search-filters.modal.jade

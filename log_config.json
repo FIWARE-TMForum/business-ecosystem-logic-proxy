@@ -10,7 +10,7 @@
     }
   ],
   "levels": {
-  	"Server": "DEBUG",
+  	"Server": "INFO",
     "TMF": "INFO",
     "HTTP-Client": "INFO",
     "AZF-Client": "INFO",

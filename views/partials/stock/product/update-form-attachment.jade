@@ -1,0 +1,15 @@
+.row
+  .col-sm-12
+    .panel.panel-default.z-depth-1
+      .panel-body
+        .h4.text-dark-secondary
+          strong Attachments
+        .form-group
+          label Picture
+          .thumbnail.thumbnail-lg
+            img(no-image, ng-src="{{ updateVM.data.getPicture() }}")
+          .input-group
+            input.form-control(type="url", ng-model="updateVM.data.attachment[0].url", placeholder="Picture URL")
+            span.input-group-btn
+              a.btn.btn-success.z-depth-1(ng-click="updateVM.update()")
+                span.item-text Save changes

@@ -1,0 +1,45 @@
+.modal.fade(ng-controller="AcquireOptionsCtrl as createVM")
+  .modal-dialog
+    .modal-content
+      .modal-header
+        .h4
+          strong Available Options
+      .modal-body
+        .row
+          .col-xs-12
+            ul.nav.nav-justified.nav-pills
+              li(ng-repeat="tab in createVM.tabs", ng-class="{ 'active': createVM.tabActive === tab }")
+                a(ng-click="createVM.tabActive = tab")
+                  span.item-text.text-nowrap {{ ($index + 1) + ". " + tab.title }}
+          .col-xs-12(ng-if="createVM.tabActive === createVM.priceplansTab")
+            .h4
+              strong Choose one
+            .container-flex
+              div(offering-priceplan, ng-repeat="priceplan in createVM.priceplans", ng-click="createVM.setPriceplan(priceplan)", selectable="True")
+          .col-xs-12(ng-if="createVM.tabActive === createVM.characteristicsTab")
+            div(ng-if="createVM.isBundle")
+              select.form-control(
+                ng-options="offering as offering.name for offering in createVM.bundledOfferings track by offering.id"
+                ng-model="createVM.selectedOffering")
+
+            div(ng-repeat="product in createVM.characteristics" ng-show="product.offId == createVM.selectedOffering.id")
+              .h3(style="margin-top: 20px;")
+                strong {{ product.name }}
+
+              .form-group(ng-repeat="charObject in product.characteristics")
+                .h4.text-dark-secondary
+                  strong {{ charObject.characteristic.name }}
+                hr
+                p.text-dark-secondary {{ charObject.characteristic.description ? charObject.characteristic.description : 'No description provided.' }}
+                .item-radio(ng-repeat="characteristicValue in charObject.characteristic.productSpecCharacteristicValue")
+                  label.radio
+                    .track
+                      input(type="radio", ng-model="charObject.value" ng-value="characteristicValue")
+                      i.fa.fa-lg
+                    | {{ createVM.formatCharacteristicValue(charObject.characteristic, characteristicValue) }}
+      .modal-footer
+        a.btn.btn-success.z-depth-1(data-dismiss="modal", ng-click="createVM.order()", ng-disabled="!createVM.isValid()")
+          span.item-icon.fa.fa-shopping-cart
+          span.item-text Add to cart
+        a.btn.btn-default.z-depth-1(data-dismiss="modal")
+          span.item-text Close

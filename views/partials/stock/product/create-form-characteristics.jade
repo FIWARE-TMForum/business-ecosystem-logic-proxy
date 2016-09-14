@@ -1,0 +1,30 @@
+table.table.table-bordered(ng-if="createVM.characteristics.length")
+  thead
+    tr
+      th #
+      th Name
+      th Type
+      th Values
+      th Default
+      th Delete
+  tbody
+    tr(ng-repeat="characteristic in createVM.characteristics")
+      th {{ $index + 1 }}
+      td {{ characteristic.name }}
+      td {{ characteristic.valueType }}
+      td
+        span(ng-repeat="value in characteristic.productSpecCharacteristicValue")
+          span(ng-if="!$first") , 
+          span {{ createVM.getFormattedValueOf(characteristic, value) }}
+      td {{ createVM.getFormattedValueOf(characteristic, createVM.getDefaultValueOf(characteristic)) }}
+      td
+        a.alert-link-danger(ng-click="createVM.removeCharacteristic($index)")
+          span.fa.fa-trash
+.alert.alert-info.text-center(ng-if="!createVM.characteristics.length")
+  | No characteristic included.
+include ./create-form-characteristic-form.jade
+form(name="step.form", novalidate)
+   input(type="hidden", name="characteristics", ng-model="createVM.characteristics", field-array, limit-from="0", required)
+  .form-group.text-right
+    a.btn.btn-default.z-depth-1(ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])", ng-disabled="!step.form.$valid")
+      span.item-text Next

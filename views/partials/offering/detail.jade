@@ -1,0 +1,17 @@
+.row
+  .col-xs-12
+    .breadcrumb-triangle.z-depth-1
+      a(ui-sref="offering", ui-sref-opts="{ reload: true, inherit: false }", ui-sref-active-eq="active")
+        span.item-icon.fa.fa-chevron-left
+        span.item-text Back
+      a.active(ng-if="detailVM.$state.includes('offering.detail')", ui-sref="offering.detail", ui-sref-opts="{ reload: true }")
+        span.item-icon.fa.fa-binoculars
+        span.item-text Details
+.row(ng-switch="detailVM.item.status")
+  .col-xs-12(ng-switch-when="LOADED")
+    include ./detail-content.jade
+  .col-xs-12(ng-switch-when="ERROR")
+    .alert.alert-danger.text-center {{ detailVM.error }}
+  .col-xs-12(ng-switch-default)
+    .container-spinner
+      span.fa.fa-spinner.fa-spin.fa-2x

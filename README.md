@@ -1,105 +1,54 @@
-#Business Ecosystem
+# Business Ecosystem Logic Proxy
 
-+ [Introduction](#def-introduction)
-+ [How to Build & Install](#def-build)
-    - [Docker](#def-docker)
-+ [API Overview](#def-api)
-+ [Advanced documentation](#def-advanced)
-+ [License](#def-license)
+[![License](https://img.shields.io/badge/license-AGPL%203.0-blue.svg?style=flat)](https://opensource.org/licenses/AGPL-3.0) [![Docs](https://img.shields.io/badge/docs-latest-brightgreen.svg?style=flat)](http://business-api-ecosystem.readthedocs.io/en/latest/) [![Docker](https://img.shields.io/docker/pulls/conwetlab/biz-ecosystem-logic-proxy.svg)](https://hub.docker.com/r/conwetlab/biz-ecosystem-logic-proxy) [![Support](https://img.shields.io/badge/support-askbot-yellowgreen.svg)](https://ask.fiware.org) [![Build Status](https://build.conwet.fi.upm.es/jenkins/buildStatus/icon?job=Business%20Ecosystem%20Logic%20Proxy)](https://build.conwet.fi.upm.es/jenkins/job/Business%20Ecosystem%20Logic%20Proxy/)
 
----
+ * [Introduction](#introduction)
+ * [GEi Overall Description](#gei-overall-description)
+ * [Installation](#build-and-install)
+ * [API Reference](#api-reference)
+ * [Testing](#testing)
+ * [Advanced Topics](#advanced-topics)
 
-<br>
+# Introduction
 
-<a name="def-introduction"></a>
-## Introduction
+This is the code repository for the Business Ecosystem Logic Proxy, one of the components that made up the [Business API Ecosystem GE](https://github.com/FIWARE-TMForum/Business-API-Ecosystem). The Business API Ecosystem is part of [FIWARE](https://www.fiware.org), and has been developed in collaboration with the [TM Forum](https://www.tmforum.org/).
 
-This project is part of [FIWARE](http://fiware.org). You will find more information about this FIWARE GE [here](http://catalogue.fiware.org/enablers/pep-proxy-wilma).
+Any feedback is highly welcome, including bugs, typos or things you think should be included but aren't. You can use [GitHub Issues](https://github.com/FIWARE-TMForum/business-ecosystem-logic-proxy/issues/new) to provide feedback.
 
-- You will find the source code of this project in GitHub [here](https://github.com/FIWARE-TMForum/business-ecosystem-logic-proxy)
-- You will find the documentation of this project in Read the Docs [here](http://fiware-pep-proxy.readthedocs.org/)
+# GEi Overal Description
 
-This component handles the request to the TMForum APIs and applies a business logic layer so only certain users are allowed to perform certain operations. Additionally, this component offers a graphical user interface that can be used by end-users to access this set of APIs in a simpler way (without having REST knowledge).
+The Business API Ecosystem is a joint component made up of the FIWARE Business Framework and a set of APIs (and its reference implementations) provided by the TMForum. This component allows the monetization of different kind of assets (both digital and physical) during the whole service life cycle, from offering creation to its charging, accounting and revenue settlement and sharing. The Business API Ecosystem exposes its complete functionality through TMForum standard APIs; concretely, it includes the catalog management, ordering management, inventory management, usage management, billing, customer, and party APIs.
 
-<a name="def-build"></a>
-## How to Build & Install
+In this context, the Business Ecosystem Logic Proxy acts as the endpoint for accessing the Business API Ecosystem. On the one hand, it orchestrates the APIs validating user requests, including authentication, authorization, and the content of the request from a business logic point of view. On the other hand, it serves a web portal that can be used to interact with the system.
 
-- Software requirements:
+# Installation
 
-	+ nodejs 
-	+ npm
-	Note: Both can be installed from (http://nodejs.org/download/)
+The Business Ecosystem Logic Proxy is installed as part of the Business API Ecosystem, so the instructions to install it can be found at [the Business API Ecosystem Installation Guide](http://business-api-ecosystem.readthedocs.io/en/latest/installation-administration-guide.html). You can install the software in three different ways:
 
-- Clone Proxy repository:
+* Using the provided script
+* Using a [Docker Container](https://hub.docker.com/r/conwetlab/biz-ecosystem-logic-proxy/)
+* Manually
 
-```
-git clone https://github.com/FIWARE-TMForum/business-ecosystem-logic-proxy
-```
+# API Reference
 
-- Install the dependencies:
+For further documentation, you can check the API Reference available at:
 
-```
-cd business-ecosystem-logic-proxy/
-npm install
-```
+* [Apiary](http://docs.fiwaretmfbizecosystem.apiary.io)
+* [GitHub Pages](https://fiware-tmforum.github.io/Business-API-Ecosystem/)
 
-- Duplicate config.template in config.js and configure the service by setting the empty fields. 
+# Testing
 
-- Start proxy server
+To execute the unit tests, just run:
 
 ```
-sudo node server
+npm test
 ```
 
-<a name="def-docker"></a>
-### Docker
+## Advanced Topics
 
-TO BE DONE
+* [User & Programmers Guide](https://github.com/FIWARE-TMForum/Business-API-Ecosystem/blob/master/doc/user-programmer-guide.rst)
+* [Installation & Administration Guide](https://github.com/FIWARE-TMForum/Business-API-Ecosystem/blob/master/doc/installation-administration-guide.rst)
 
-<a name="def-api"></a>
-## API Overview
+You can also find this documentation on [ReadTheDocs](http://business-api-ecosystem.readthedocs.io)
 
-Requests to proxy should be made with a special HTTP Header: Authorization.
-This header contains the OAuth access token obtained from FIWARE IDM GE.
-
-Example of request:
-
-```
-GET / HTTP/1.1
-Host: proxy_host
-Authorization: Bearer z2zXk...ANOXvZrmvxvSg
-```
-
-To test the proxy you can generate this request running the following command:
-
-```
-curl --header "Authorization: Bearer z2zXk...ANOXvZrmvxvSg" http://proxy_host
-```
-
-Once authenticated, the forwarded request will include additional HTTP headers with user info:
-
-```
-X-Nick-Name: nickname of the user in IdM
-X-Display-Name: display name of user in IdM
-X-Roles: roles of the user in IdM
-X-Organizations: organizations in IdM
-```
-
-<a name="def-advanced"></a>
-## Advanced Documentation
-
-TO BE DONE
-
-<a name="def-license"></a>
-## License
-
-The MIT License
-
-Copyright (C) 2012 Universidad Politécnica de Madrid.
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 

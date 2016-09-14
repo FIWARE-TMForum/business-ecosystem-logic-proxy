@@ -1,0 +1,14 @@
+.row
+  .col-xs-12
+    .panel.panel-default.z-depth-1
+      ul.nav.nav-justified.nav-pills(ng-show="user.isSeller()")
+        li(ui-sref-active-eq="active")
+          a(ui-sref="settings.contact.shipping")
+            span.item-icon.fa.fa-truck
+            span.item-text.hidden-xs Shipping addresses
+        li(ui-sref-active-eq="active")
+          a(ui-sref="settings.contact.business")
+            span.item-icon.fa.fa-fax
+            span.item-text.hidden-xs Business addresses
+  .col-xs-12
+    ui-view
