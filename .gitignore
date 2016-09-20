@@ -4,3 +4,4 @@ cert
 .grunt
 coverage
 xunit.xml
+/indexes

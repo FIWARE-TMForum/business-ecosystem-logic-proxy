@@ -19,6 +19,8 @@
 
 var nock = require('nock'),
     proxyquire =  require('proxyquire'),
+    Promise = require('promiz'),
+    md5 = require("blueimp-md5"),
     testUtils = require('../../utils');
 
 // ERRORS
@@ -69,9 +71,17 @@ describe('Catalog API', function() {
 
     var config = testUtils.getDefaultConfig();
 
-    var getCatalogApi = function(storeClient, tmfUtils, utils, rssClient) {
+    var getCatalogApi = function(storeClient, tmfUtils, utils, rssClient, indexes, async) {
         if (!rssClient) {
             rssClient = {};
+        }
+
+        if (!indexes) {
+            indexes = {};
+        }
+
+        if (!async) {
+            async = {};
         }
 
         return proxyquire('../../../controllers/tmf-apis/catalog', {
@@ -79,8 +89,11 @@ describe('Catalog API', function() {
             './../../lib/logger': testUtils.emptyLogger,
             './../../lib/store': storeClient,
             './../../lib/rss': rssClient,
+            './../../lib/indexes': indexes,
+            './../../lib/indexes.js': indexes,
             './../../lib/tmfUtils': tmfUtils,
-            './../../lib/utils': utils
+            './../../lib/utils': utils,
+            'async': async
         }).catalog;
     };
 
@@ -231,8 +244,8 @@ describe('Catalog API', function() {
             method: 'POST',
             body: body,
             user: {
-                id: user, 
-                roles: roles 
+                id: user,
+                roles: roles
             }
         };
 
@@ -608,7 +621,7 @@ describe('Catalog API', function() {
 
             var errorMsg = CATEGORY_CANNOT_BE_CHECKED[0] + categoryId2 + CATEGORY_CANNOT_BE_CHECKED[1];
 
-            testCreateOffering(productRequestInfoActive, catalogRequestInfoLaunched, categoriesRequestInfo, null, 500, 
+            testCreateOffering(productRequestInfoActive, catalogRequestInfoLaunched, categoriesRequestInfo, null, 500,
                 errorMsg, null, offeringBody, done);
         });
 
@@ -634,7 +647,7 @@ describe('Catalog API', function() {
 
             var errorMsg = INVALID_CATEGORY_ID + categoryId2;
 
-            testCreateOffering(productRequestInfoActive, catalogRequestInfoLaunched, categoriesRequestInfo, null, 400, 
+            testCreateOffering(productRequestInfoActive, catalogRequestInfoLaunched, categoriesRequestInfo, null, 400,
                 errorMsg, null, offeringBody, done);
         });
 
@@ -1189,7 +1202,7 @@ describe('Catalog API', function() {
 
     it('should not allow to create non-root category when parent category cannot be checked', function(callback) {
 
-        var parentId = 'wrong'; 
+        var parentId = 'wrong';
 
         var category = {
             name: 'example',
@@ -1462,7 +1475,7 @@ describe('Catalog API', function() {
         var productPath = productRequestInfo.path || '/productSpecification/7';
         var protocol = config.appSsl ? 'https' : 'http';
         var serverUrl = protocol + '://' + config.appHost + ':' + config.endpoints.catalog.port;
-        
+
         // HTTP MOCK - OFFERING
         var bodyGetOffering = {
             productSpecification: getProductSpecification(productPath)
@@ -1670,7 +1683,7 @@ describe('Catalog API', function() {
 
         var errorMsg = 'RSS failure';
         var statusCode = 500;
-        
+
         var offeringBody = JSON.stringify({
             serviceCandidate: {
                 id: 'example'
@@ -1706,7 +1719,7 @@ describe('Catalog API', function() {
     });
 
     // PRODUCTS & CATALOGS
-    
+
     var previousProductBody = {
         relatedParty: [{
             id: 'exmaple1',
@@ -2261,7 +2274,7 @@ describe('Catalog API', function() {
 
         var productBody = JSON.stringify({
             relatedParty: [
-            previousProductBody.relatedParty[1],
+                previousProductBody.relatedParty[1],
             previousProductBody.relatedParty[0]]
         });
 
@@ -2909,9 +2922,100 @@ describe('Catalog API', function() {
             parentCategoryRequest, { name: categoryName, parentId: parentId, isRoot: false }, 500, errorMsg, done);
     });
 
+    fdescribe('Index in pre validation', function() {
+        var myHelper = function myHelper(done, sName, results, url, pathname, query, expectedUrl, expectedQuery) {
+            var indexes = {};
+            indexes[sName] = q => {
+                if (expectedQuery) {
+                    expect(q).toEqual(expectedQuery);
+                }
+
+
+                return Promise.resolve({
+                    hits: results.map(x => ({document: {originalId: x}}))
+                });
+            };
+
+            var catalogApi = getCatalogApi({}, {}, {}, {}, indexes);
+            var req = {
+                method: "GET",
+                apiUrl: url,
+                _parsedUrl: {
+                    pathname: pathname
+                },
+                query: query
+            };
+
+            catalogApi.checkPermissions(req, function() {
+                expect(req.apiUrl).toEqual(expectedUrl);
+                done();
+            });
+        };
+
+        it('should change catalogs', function(done) {
+            myHelper(done,
+                     "searchCatalogs",
+                     [2, 12],
+                     "/catalog?relatedParty.id=rock-8&extraparam=hola",
+                     "/catalog",
+                     {
+                         "relatedParty.id": "rock-8",
+                         extraparam: "hola"
+                     },
+                     "/catalog?id=2,12&extraparam=hola",
+                     {
+                         offset: 0,
+                         pageSize: 25,
+                         sort: ["sortedId", "asc"],
+                         query: {AND: [{relatedPartyHash: [md5("rock-8")]}]}
+                     });
+        });
+
+        it('should change products', function(done) {
+            myHelper(done,
+                     'searchProducts',
+                     [3,4,13],
+                     "/productSpecification?relatedParty=rock&size=3",
+                     "/productSpecification",
+                     {
+                         relatedParty: "rock",
+                         size: 3
+                     },
+                     "/productSpecification?id=3,4,13",
+                     {
+                         offset: 0,
+                         pageSize: 3,
+                         sort: ["sortedId", "asc"],
+                         query: {AND: [{relatedPartyHash: [md5("rock")]}]}
+                     });
+        });
+
+        it('should change offers', function(done) {
+            myHelper(done,
+                     'searchOfferings',
+                     [9, 11],
+                     "/productOffering?relatedParty=rock&offset=3&other=test",
+                     "/productOffering",
+                     {
+                         relatedParty: "rock",
+                         offset: 3,
+                         other: "test"
+                     },
+                     "/productOffering?id=9,11&other=test",
+                     {
+                         offset: 3,
+                         pageSize: 25,
+                         sort: ["sortedId", "asc"],
+                         query: {AND: [{userId: [md5("rock")]}]}
+                     });
+
+        });
+
+    });
+
     describe('Post validation', function() {
 
-        var testProductPostvalidation = function(method, callExp, done) {
+        var testProductPostvalidation = function(method, callExp, saveIndexExp, done) {
             var body = {
                 id: '1'
             };
@@ -2931,7 +3035,18 @@ describe('Catalog API', function() {
                     }
                 }
             };
-            var catalogApi = getCatalogApi(storeClient, {}, {}, {});
+
+            var saveIndexCalled = false;
+            var indexes = {
+                saveIndexProduct: function(data, userInfo) {
+                    saveIndexCalled = true;
+                    expect(data).toEqual([{id: '1'}]);
+                    expect(userInfo).toEqual(user);
+                    return Promise.resolve();
+                }
+            };
+
+            var catalogApi = getCatalogApi(storeClient, {}, {}, {}, indexes);
 
             var req = {
                 method: method,
@@ -2942,16 +3057,17 @@ describe('Catalog API', function() {
 
             catalogApi.executePostValidation(req, function() {
                 expect(called).toBe(callExp);
+                expect(saveIndexCalled).toBe(saveIndexExp);
                 done();
             });
         };
 
         it('should call the store product attachment when a valid product creation request has been redirected', function(done) {
-            testProductPostvalidation('POST', true, done);
+            testProductPostvalidation('POST', true, true, done);
         });
 
         it('should not call the store attachment when the request is not a product creation', function(done) {
-            testProductPostvalidation('GET', false, done);
+            testProductPostvalidation('GET', false, false, done);
         });
     });
 });
