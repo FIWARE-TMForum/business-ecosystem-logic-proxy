@@ -22,7 +22,7 @@
 var proxyrequire = require("proxyquire"),
     md5 = require("blueimp-md5");
 
-describe("Indexes library", function () {
+describe("Test index helper library", function () {
     var createSearchMock = function createSearchMock(path, err, extra) {
         var si = {
             add: function (data, ops, cb) {
@@ -82,7 +82,7 @@ describe("Indexes library", function () {
         });
     };
 
-    it("Correct tables path", function () {
+    it("should have correct tables", function () {
         var indexes = getIndexLib();
         expect(indexes.siTables.offerings).toEqual("indexes/offerings");
         expect(indexes.siTables.products).toEqual("indexes/products");
@@ -123,15 +123,15 @@ describe("Indexes library", function () {
         }, ...Array.prototype.slice.call(arguments, 3));
     };
 
-    it("Error in open database saving", function (done) {
+    it("should reject promise and call close with an error when open database while saving", function (done) {
         helperErrorOpenDB(done, "saveIndex", "add", "testp", [], {});
     });
 
-    it("Error in add", function (done) {
+    it("should reject promise and call close with an error when adding an index while saving", function (done) {
         helperErrorInMethod(done, "saveIndex", "add", "testp", [], {});
     });
 
-    it("Correct save call", function (done) {
+    it("should resolve the promise, close index and call save with the correct data", function (done) {
         var testdata = [1, 2, 3];
         var testops = { t: 1 };
         var extra = {
@@ -152,15 +152,15 @@ describe("Indexes library", function () {
         }, "testp", testdata, testops);
     });
 
-    it("Error create database remove", function (done) {
+    it("should reject promise and call close with an error when open database while removing", function (done) {
         helperErrorOpenDB(done, "removeIndex", "del", "testp", "key");
     });
 
-    it("Error in del", function (done) {
+    it("should reject promise and call close with an error when removing the index", function (done) {
         helperErrorInMethod(done, "removeIndex", "del", "testp", "key");
     });
 
-    it("Correct del call", function (done) {
+    it("should resolve the promise, close index and call del with the correct key", function (done) {
         var testkey = "KEY";
         var extra = {
             checkdel: key => {
@@ -179,7 +179,7 @@ describe("Indexes library", function () {
         }, "testp", testkey);
     });
 
-    it("Create query", function () {
+    it("should create queries correctly", function () {
         var indexes = getIndexLib();
         expect(indexes.createQuery()).toEqual({});
         expect(indexes.createQuery("q")).toEqual({query: "q"});
@@ -201,11 +201,11 @@ describe("Indexes library", function () {
         });
     });
 
-    it("Error open database remove", function (done) {
+    it("should reject promise and call close with an error when open database while searching", function (done) {
         helperErrorOpenDB(done, "search", "search", "testp", {"*": ["*"]});
     });
 
-    it("Error in search", function (done) {
+    it("should reject promise and call close with an error when searching", function (done) {
         helperErrorInMethod(done, "search", "search", "testp", {"*": ["*"]});
     });
 
@@ -236,30 +236,30 @@ describe("Indexes library", function () {
         }, sendp, q);
     };
 
-    it("Correct search", function (done) {
+    it("should resolve the promise, close index and call search with the correct data", function (done) {
         var q = {"*": ["*"]};
         var d = {hits: [1, 2, 3, 4]};
         searchHelper(done, "testp", q, d);
     });
 
-    it("Correct search offering", function (done) {
+    it("should use offering index and search correctly", function (done) {
         searchHelper(done, "indexes/offerings", {}, [1], "searchOfferings");
     });
 
-    it("Correct search products", function (done) {
+    it("should use products index and search correctly", function (done) {
         searchHelper(done, "indexes/products", {}, [1], "searchProducts");
     });
 
-    it("Correct search catalogs", function (done) {
+    it("should use catalogs index and search correctly", function (done) {
         searchHelper(done, "indexes/catalogs", {}, [1], "searchCatalogs");
     });
 
-    it("Correct fix user id", function () {
+    it("should fix the user id doing an MD5 hash", function () {
         var indexes = getIndexLib();
         expect(indexes.fixUserId("some-id_")).toEqual(md5("some-id_"));
     });
 
-    it("Correct search user id", function () {
+    it("should search the ID fixing it before", function () {
         var indexes = getIndexLib();
         var f = {
             f: () => {}
@@ -292,12 +292,12 @@ describe("Indexes library", function () {
         name: "Name"
     };
 
-    it("should convert catalog data", function () {
+    it("should convert catalog data correctly", function () {
         var indexes = getIndexLib();
         expect(indexes.convertCatalogData(catalogData)).toEqual(catalogExpected);
     });
 
-    it("should save catalog", function (done) {
+    it("should save converted catalog data correctly", function (done) {
         var extra = {
             checkadd: (data, ops) => {
                 expect(data).toEqual([catalogExpected]);
@@ -341,12 +341,12 @@ describe("Indexes library", function () {
         relatedParty: "rock-8:rock-9"
     };
 
-    it("should convert product data", function () {
+    it("should convert product data correctly", function () {
         var indexes = getIndexLib();
         expect(indexes.convertProductData(productData)).toEqual(productExpected);
     });
 
-    it("should save product", function (done) {
+    it("should save converted product data correctly", function (done) {
         var extra = {
             checkadd: (data, ops) => {
                 expect(data).toEqual([productExpected]);
@@ -410,7 +410,7 @@ describe("Indexes library", function () {
         isBundle: false
     };
 
-    it('should convert offer not bundle with user', function(done) {
+    it('should convert offer without bundle with an explicit user', function (done) {
         var user = {id: "rock-8"};
 
         helper("indexes/products", null, {}, "convertOfferingData", (si, extra) => {
@@ -423,7 +423,7 @@ describe("Indexes library", function () {
         }, notBundleOffer, user);
     });
 
-    it('should convert offer searching user', function(done) {
+    it('should convert offer without bundle searching user the user in products index', function(done) {
         var extra = {
             checksearch: query => {
                 expect(query).toEqual({query: {AND: {id: ["product:1"]}}});
@@ -448,7 +448,7 @@ describe("Indexes library", function () {
         }, notBundleOffer);
     });
 
-    it('should convert offer bundle with user', function(done) {
+    it('should convert offer with bundle with an explicit user', function(done) {
         var user = {id: "rock-8"};
 
         helper("indexes/products", null, {}, "convertOfferingData", (si, extra) => {
@@ -461,7 +461,7 @@ describe("Indexes library", function () {
         }, bundleOffer, user);
     });
 
-    it('should convert offer searching user', function(done) {
+    it('should convert offer with bundle searching user in products and offerings index', function(done) {
         var offer = {
             hits: [{
                 document: {
@@ -497,7 +497,7 @@ describe("Indexes library", function () {
         }, bundleOffer);
     });
 
-    it("should save offer", function (done) {
+    it("should save converted offer data correctly", function (done) {
         var user = {id: "rock-8"};
 
         var extra = {
