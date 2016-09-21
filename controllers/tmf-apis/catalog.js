@@ -1046,9 +1046,7 @@ var catalog = (function() {
 	function (req, query) {
 	    if (req.query["relatedParty.id"]) {
                 query.AND.push( { relatedPartyHash: [indexes.fixUserId(req.query["relatedParty.id"])]});
-    	    } else if (req.query.relatedParty) {
-                query.AND.push( { relatedPartyHash: [indexes.fixUserId(req.query.relatedParty)] });
-            }
+    	    }
 	});
 
     var createOfferQuery = genericCreateQuery.bind(
@@ -1066,8 +1064,6 @@ var catalog = (function() {
         function (req, query) {
             if (req.query["relatedParty.id"]) {
                 query.AND.push( { relatedPartyHash: [indexes.fixUserId(req.query["relatedParty.id"])]});
-            } else if (req.query.relatedParty) {
-                query.AND.push( { relatedPartyHash: [indexes.fixUserId(req.query.relatedParty)] });
             }
         }
     );
@@ -1100,11 +1096,12 @@ var catalog = (function() {
     var productGetParams = new RegExp('/productSpecification(\\?|$)');
     var catalogGetParams = new RegExp('/catalog(\\?|$)');
 
-    var getOfferRequest = getMiddleware.bind(null, offeringGetParams, createOfferQuery, indexes.searchOfferings, ["relatedParty", "offset", "size", "lifecycleStatus", "isBundle"]);
+    var getCatalogRequest = getMiddleware.bind(null, catalogGetParams, createCatalogQuery, indexes.searchCatalogs, ["relatedParty.id", "relatedParty", "offset", "size", "lifecycleStatus", "name"]);
 
     var getProductRequest = getMiddleware.bind(null, productGetParams, createProductQuery, indexes.searchProducts, ["relatedParty.id", "relatedParty", "offset", "size", "lifecycleStatus", "isBundle", "productNumber"]);
 
-    var getCatalogRequest = getMiddleware.bind(null, catalogGetParams, createCatalogQuery, indexes.searchCatalogs, ["relatedParty.id", "relatedParty", "offset", "size", "lifecycleStatus", "name"]);
+    var getOfferRequest = getMiddleware.bind(null, offeringGetParams, createOfferQuery, indexes.searchOfferings, ["relatedParty", "offset", "size", "lifecycleStatus", "isBundle"]);
+
 
     var methodIndexed = function methodIndexed(req) {
         // I'm gonna feel so bad with this... but I have to use mutability on an input parameter :(
