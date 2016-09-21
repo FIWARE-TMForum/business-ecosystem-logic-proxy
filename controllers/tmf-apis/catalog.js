@@ -26,7 +26,10 @@ var async = require('async'),
     url = require('url'),
     utils = require('./../../lib/utils'),
     logger = require('./../../lib/logger').logger.getLogger('TMF'),
-    tmfUtils = require('./../../lib/tmfUtils');
+    tmfUtils = require('./../../lib/tmfUtils'),
+    indexes = require('./../../lib/indexes.js'),
+    Promise = require('promiz');
+
 
 var LIFE_CYCLE = 'lifecycleStatus';
 
@@ -892,7 +895,7 @@ var catalog = (function() {
                                         message: 'The field "relatedParty" can not be modified'
                                     });
 
-                            } else { 
+                            } else {
 
                                 if (catalogsPattern.test(req.apiUrl)) {
 
@@ -969,6 +972,146 @@ var catalog = (function() {
     };
 
     //////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////// INDEXES ///////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////////////
+
+    var middlewareSave = function middlewareSave(f, body, user, cb) {
+        return function (err, data) {
+            f(body, user)
+                .then(() => cb(err, data))
+                .catch(() => cb(err, data));
+        };
+    };
+
+    var handleIndexes = function handleIndexes(req, callback) {
+        // Handle PUT and PATCH data
+        var offeringsPattern = new RegExp('/productOffering/?');
+        var productsPattern = new RegExp('/productSpecification/?');
+        var catalogPattern = new RegExp('/catalog/?');
+
+        var genericSave = function genericSave(f) {
+            f([JSON.parse(req.body)], req.user)
+                .then(() => callback(null))
+                .catch(() => callback(null));
+        };
+
+        var patternsF = [
+            [offeringsPattern, indexes.saveIndexOffering],
+            [productsPattern, indexes.saveIndexProduct],
+            [catalogPattern, indexes.saveIndexCatalog]];
+
+        for(var ind in patternsF) {
+            var pattern = patternsF[ind][0];
+            var f = patternsF[ind][1];
+            if (pattern.test(req.apiUrl) && (req.method == 'PATCH' || req.method == 'PUT')) {
+                genericSave(f);
+                return;
+            }
+        };
+
+        callback(null);
+    };
+
+    var createInitialQuery = function createInitialQuery(req) {
+	var offset = req.query.offset || 0;
+        var size = req.query.size || 25;
+        var sort = ["sortedId", "asc"];
+	return { offset: offset, pageSize: size, sort: sort };
+    };
+
+    var genericCreateQuery = function genericCreateQuery(extras, f, req) {
+        var q = createInitialQuery(req);
+        var query = { AND: []};
+	f = f || function () {};
+	f(req, query);
+
+        extras.forEach(key => {
+	    if (typeof req.query[key] !== "undefined") {
+                var newq = {};
+                newq[key] = [req.query[key]];
+                if (typeof newq[key][0] === "string") {
+                    newq[key][0] = newq[key][0].toLowerCase();
+                }
+                query.AND.push(newq);
+	    }
+        });
+
+        q.query = query;
+        return q;
+    };
+
+    var createProductQuery = genericCreateQuery.bind(
+	null,
+	["lifecycleStatus", "isBundle", "productNumber"],
+	function (req, query) {
+	    if (req.query["relatedParty.id"]) {
+                query.AND.push( { relatedPartyHash: [indexes.fixUserId(req.query["relatedParty.id"])]});
+    	    }
+	});
+
+    var createOfferQuery = genericCreateQuery.bind(
+	null,
+	["lifecycleStatus", "isBundle"],
+	function (req, query) {
+            if (req.query.relatedParty) {
+                query.AND.push( { userId: [indexes.fixUserId(req.query.relatedParty)] });
+	    }
+	});
+
+    var createCatalogQuery = genericCreateQuery.bind(
+        null,
+        ["lifecycleStatus", "name"],
+        function (req, query) {
+            if (req.query["relatedParty.id"]) {
+                query.AND.push( { relatedPartyHash: [indexes.fixUserId(req.query["relatedParty.id"])]});
+            }
+        }
+    );
+
+    var getMiddleware = function getMiddleware(reg, createOfferF, searchF, keysUsed, req) {
+        if (req.method == "GET" && reg.test(req.apiUrl)) {
+            var q = createOfferF(req);
+
+            // If query.AND is empty, means that there wasn't any filtering parameter, so query for all
+            if (q.query.AND.length <= 0) {
+                q.query.AND.push( { '*': ['*']});
+            }
+
+            return searchF(q)
+                .then(results => {
+                    var newUrl = req._parsedUrl.pathname + "?id=" + results.hits.map(r => r.document.originalId).join(",");
+                    for (var key in req.query) {
+                        if (keysUsed.indexOf(key) < 0) {
+                            newUrl = newUrl + "&" + key + "=" + req.query[key];
+                        }
+                    };
+                    req.apiUrl = newUrl;
+                });
+        } else {
+            return Promise.resolve();
+        }
+    };
+
+    var offeringGetParams = new RegExp('/productOffering(\\?|$)');
+    var productGetParams = new RegExp('/productSpecification(\\?|$)');
+    var catalogGetParams = new RegExp('/catalog(\\?|$)');
+
+    var getCatalogRequest = getMiddleware.bind(null, catalogGetParams, createCatalogQuery, indexes.searchCatalogs, ["relatedParty.id", "relatedParty", "offset", "size", "lifecycleStatus", "name"]);
+
+    var getProductRequest = getMiddleware.bind(null, productGetParams, createProductQuery, indexes.searchProducts, ["relatedParty.id", "relatedParty", "offset", "size", "lifecycleStatus", "isBundle", "productNumber"]);
+
+    var getOfferRequest = getMiddleware.bind(null, offeringGetParams, createOfferQuery, indexes.searchOfferings, ["relatedParty", "offset", "size", "lifecycleStatus", "isBundle"]);
+
+
+    var methodIndexed = function methodIndexed(req) {
+        // I'm gonna feel so bad with this... but I have to use mutability on an input parameter :(
+        // The methods change req.apiUrl as needed... Sorry
+        return getOfferRequest(req)
+	    .then(() => getProductRequest(req))
+            .then(() => getCatalogRequest(req));
+    };
+
+    //////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////////// COMMON ///////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -981,25 +1124,34 @@ var catalog = (function() {
     };
 
     var checkPermissions = function (req, callback) {
-
         var reqValidators = [];
 
         for (var i in validators[req.method]) {
             reqValidators.push(validators[req.method][i].bind(this, req));
         }
 
-        async.series(reqValidators, callback);
+        methodIndexed(req)
+            .catch(() => Promise.resolve(req))
+            .then(() => { async.series(reqValidators, callback);});
     };
 
     var executePostValidation = function(req, callback) {
         // Attach product spec info for product creation request
-
+        var body;
         if (req.method == 'POST' && productsPattern.test(req.apiUrl)) {
-            storeClient.attachProduct(JSON.parse(req.body), req.user, callback);
+            body = JSON.parse(req.body);
+            storeClient.attachProduct(body, req.user, middlewareSave(indexes.saveIndexProduct, [body], req.user, callback));
         } else if (req.method == 'POST' && offeringsPattern.test(req.apiUrl)) {
-            storeClient.attachOffering(JSON.parse(req.body), req.user, callback);
+            body = JSON.parse(req.body);
+            storeClient.attachOffering(body, req.user, middlewareSave(indexes.saveIndexOffering, [body], req.user, callback));
+        } else if (req.method == 'POST' && catalogsPattern.test(req.apiUrl)) {
+            body = JSON.parse(req.body);
+            indexes.saveIndexCatalog([body])
+                .then(() => callback(null))
+                .catch(() => callback(null));
         } else {
-            callback(null);
+            // TODO PATCHes
+            handleIndexes(req, callback);
         }
     };
 
