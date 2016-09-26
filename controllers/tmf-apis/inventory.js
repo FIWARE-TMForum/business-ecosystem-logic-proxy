@@ -20,6 +20,7 @@
 var async = require('async'),
     config = require('./../../config'),
     utils = require('./../../lib/utils'),
+    indexes = require('./../../lib/indexes'),
     tmfUtils = require('./../../lib/tmfUtils');
 
 var inventory = (function() {
@@ -34,6 +35,27 @@ var inventory = (function() {
 
         // For validating the retrieving of a single product it is necessary to read the product first
         // so it is done is postvalidation method
+    };
+
+    var inventoryRegex = new RegExp('/product(\\?|$)');
+
+    var keysUsed = ["relatedParty.id", "offset", "size", "status", "name"];
+
+    var createQuery = indexes.genericCreateQuery.bind(
+        null,
+        ["status", "name"],
+        "inventory",
+        function (req, query) {
+            if (req.query["relatedParty.id"]) {
+                query.AND.push({ relatedPartyHash: [indexes.fixUserId(req.query["relatedParty.id"])] });
+            }
+        }
+    );
+
+    var getInventoryRequest = indexes.getMiddleware.bind(null, inventoryRegex, createQuery, indexes.searchInventory, keysUsed);
+
+    var methodIndexed = function methodIndexed(req) {
+        return getInventoryRequest(req);
     };
 
     var validators = {
@@ -52,12 +74,15 @@ var inventory = (function() {
             reqValidators.push(validators[req.method][i].bind(this, req));
         }
 
-        async.series(reqValidators, callback);
+        methodIndexed(req)
+            .catch(() => Promise.resolve(req))
+            .then(() => { async.series(reqValidators, callback); });
+
+        // async.series(reqValidators, callback);
 
     };
 
     var executePostValidation = function(req, callback) {
-
         var body = JSON.parse(req.body);
 
         var orderings = [];
