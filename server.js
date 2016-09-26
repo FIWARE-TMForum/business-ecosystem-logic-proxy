@@ -9,6 +9,7 @@ var authorizeService = require('./controllers/authorizeService').authorizeServic
     FIWAREStrategy = require('passport-fiware-oauth').OAuth2Strategy,
     fs = require('fs'),
     https = require('https'),
+    inventorySubscription = require('./lib/inventory_subscription'),
     logger = require('./lib/logger').logger.getLogger("Server"),
     mongoose = require('mongoose'),
     onFinished = require('on-finished'),
@@ -70,7 +71,7 @@ config.mongoDb.port = config.mongoDb.port || 27017;
 config.mongoDb.db = config.mongoDb.db || 'belp';
 config.revenueModel = (config.revenueModel && config.revenueModel >= 0 && config.revenueModel <= 100 ) ? config.revenueModel : 30;
 
-var PORT = config.https.enabled ? 
+var PORT = config.https.enabled ?
     config.https.port || 443 :      // HTTPS
     config.port || 80;              // HTTP
 
@@ -503,6 +504,17 @@ app.get(config.portalPrefix + '/payment', ensureAuthenticated, function(req, res
     renderTemplate(req, res, 'app-payment');
 });
 
+/////////////////////////////////////////////////////////////////////
+//////////////////////////////// APIs ///////////////////////////////
+/////////////////////////////////////////////////////////////////////
+
+var inventorySubscriptionPath = config.proxyPrefix + "/create/inventory";
+app.post(config.proxyPrefix + inventorySubscriptionPath, inventorySubscription.postNotification);
+inventorySubscription.createSubscription(inventorySubscriptionPath).then(() => {
+    console.log("Subscribed to inventory hub!");
+}).catch(e => {
+    console.log(e);
+});
 
 /////////////////////////////////////////////////////////////////////
 //////////////////////////////// APIs ///////////////////////////////

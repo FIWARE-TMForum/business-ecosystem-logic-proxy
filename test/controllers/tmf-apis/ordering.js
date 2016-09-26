@@ -19,6 +19,8 @@
 
 var nock = require('nock'),
     proxyquire =  require('proxyquire'),
+    Promise = require('promiz'),
+    md5 = require("blueimp-md5"),
     testUtils = require('../../utils');
 
 describe('Ordering API', function() {
@@ -40,12 +42,22 @@ describe('Ordering API', function() {
     };
 
 
-    var getOrderingAPI = function(storeClient, tmfUtils, utils) {
+    var getOrderingAPI = function(storeClient, tmfUtils, utils, indexes) {
+        if (!indexes) {
+            indexes = {
+                safeIndexExecute: function () {
+                    return Promise.resolve();
+                }
+            };
+        }
+
         return proxyquire('../../../controllers/tmf-apis/ordering', {
             './../../config': config,
             './../../lib/logger': testUtils.emptyLogger,
             './../../lib/store': storeClient,
             './../../lib/tmfUtils': tmfUtils,
+            './../../lib/indexes': indexes,
+            './../../lib/indexes.js': indexes,
             './../../lib/utils': utils
         }).ordering;
     };
@@ -234,6 +246,142 @@ describe('Ordering API', function() {
                 testRetrieval(filterRelatedPartyFields, null, done);
 
             });
+
+            //////////////////////////////////////////////////////////////////////////////////////////////
+            ///////////////////////////////////////// INDEXES / //////////////////////////////////////////
+            //////////////////////////////////////////////////////////////////////////////////////////////
+
+            describe('Test index in checkPermissions middleware', function() {
+
+                var requestHelper = function requestHelper(done, results, url, query, expectedUrl, expectedQuery) {
+                    var pathname = "/productOrder";
+                    url = pathname + "?" + url;
+                    expectedUrl = pathname + "?" + expectedUrl;
+
+                    var indexes = {
+                        searchOrders: q => {
+                            if (expectedQuery) {
+                                expect(q).toEqual(expectedQuery);
+                            }
+
+
+                            return Promise.resolve({
+                                hits: results.map(x => ({document: {originalId: x}}))
+                            });
+                        }
+                    };
+
+                    var orderApi = getOrderingAPI({}, {}, {}, indexes);
+                    var req = {
+                        method: "GET",
+                        apiUrl: url,
+                        _parsedUrl: {
+                            pathname: pathname
+                        },
+                        query: query
+                    };
+
+                    orderApi.checkPermissions(req, function() {
+                        expect(req.apiUrl).toEqual(expectedUrl);
+                        done();
+                    });
+                };
+
+                it('should not change request URL when order index fails', function(done) {
+                    var indexes = {
+                        searchOrders: () => Promise.reject("Error")
+                    };
+                    var orderApi = getOrderingAPI({}, {}, {}, indexes);
+                    var url = "/productOrder?relatedParty.id=rock";
+                    var req = {
+                        method: "GET",
+                        apiUrl: url,
+                        _parsedUrl: {
+                            pathname: "/productOrder"
+                        },
+                        query: {
+                            "relatedParty.id": "rock"
+                        }
+                    };
+
+                    orderApi.checkPermissions(req, function() {
+                        expect(req.apiUrl).toEqual(url);
+                        done();
+                    });
+                });
+
+                it('should change request URL to include order IDs when relatedParty.id is provided', function(done) {
+                    requestHelper(done,
+                                  [3, 4],
+                                  "relatedParty.id=rock",
+                                  {
+                                      "relatedParty.id": "rock"
+                                  },
+                                  "id=3,4",
+                                  {
+                                      offset: 0,
+                                      pageSize: 25,
+                                      sort: ["sortedId", "asc"],
+                                      query: {AND: [{relatedPartyHash: [md5("rock")]}]}
+                                  }
+                                 );
+                });
+
+                var testQueryParameters = function testQueryParameters(done, params) {
+                    // Transform object to param=value&param2=value2
+                    var paramUrl = Object.keys(params).map(key => key + "=" + params[key]).join("&");
+                    // Transform object to index AND query (String keys must be lower case to perform index search correctly)
+                    var ANDs = Object.keys(params)
+                            .map(key => (
+                                {[key]: [ (typeof params[key] === "string") ? params[key].toLowerCase() : params[key]]}));
+
+                    requestHelper(done,
+                                  [7, 9, 11],
+                                  paramUrl,
+                                  params,
+                                  "id=7,9,11",
+                                  {
+                                      offset: 0,
+                                      pageSize: 25,
+                                      sort: ["sortedId", "asc"],
+                                      query: {AND: ANDs}
+                                  });
+                };
+
+                it('should should change URL to include order IDs when no parameter are provided', function(done) {
+                    requestHelper(done,
+                                  [1, 2],
+                                  "",
+                                  {},
+                                  "id=1,2",
+                                  {
+                                      offset: 0,
+                                      pageSize: 25,
+                                      sort: ["sortedId", "asc"],
+                                      query: {AND: [{"*": ["*"]}]}
+                                  });
+                });
+
+                it('should change request URL to include order IDs when priority is provided', function(done) {
+                    testQueryParameters(done, { priority: "prior"});
+                });
+
+                it('should change request URL to include order IDs when category is provided', function(done) {
+                    testQueryParameters(done, { category: "category1" });
+                });
+
+                it('should change request URL to include order IDs when state is provided', function(done) {
+                    testQueryParameters(done, { state: "OK" });
+                });
+
+                it('should change request URL to include order IDs when notification contact is provided', function(done) {
+                    testQueryParameters(done, { notificationContact: "a@b.c" });
+                });
+
+                it('should change request URL to include order IDs when note is provided', function(done) {
+                    testQueryParameters(done, { note: "some note" });
+                });
+            });
         });
 
 
@@ -309,7 +457,7 @@ describe('Ordering API', function() {
                         ]
                     });
                 }
-                
+
                 var body = {
                     relatedParty: [{
                         id: userName,

@@ -20,6 +20,7 @@
 var async = require('async'),
     config = require('./../../config'),
     equal = require('deep-equal'),
+    indexes = require('./../../lib/indexes'),
     moment = require('moment'),
     request = require('request'),
     storeClient = require('./../../lib/store').storeClient,
@@ -580,6 +581,26 @@ var ordering = (function(){
         }
     };
 
+    var orderRegex = new RegExp('/productOrder(\\?|$)');
+
+    var keysUsed = ["relatedParty.id", "offset", "size", "priority", "category", "state", "notificationContact", "note"];
+
+    var createQuery = indexes.genericCreateQuery.bind(
+        null,
+        ["priority", "category", "state", "notificationContact", "note"],
+        "order",
+        function (req, query) {
+            if (req.query["relatedParty.id"]) {
+                query.AND.push({ relatedPartyHash: [indexes.fixUserId(req.query["relatedParty.id"])] });
+            }
+        }
+    );
+
+    var getOrderRequest = indexes.getMiddleware.bind(null, orderRegex, createQuery, indexes.searchOrders, keysUsed);
+
+    var methodIndexed = function methodIndexed(req) {
+        return getOrderRequest(req);
+    };
 
     //////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////// PRE-VALIDATION ///////////////////////////////////////
@@ -601,7 +622,9 @@ var ordering = (function(){
             reqValidators.push(validators[req.method][i].bind(this, req));
         }
 
-        async.series(reqValidators, callback);
+        methodIndexed(req)
+            .catch(() => Promise.resolve(req))
+            .then(() => { async.series(reqValidators, callback); });
     };
 
 
@@ -778,6 +801,15 @@ var ordering = (function(){
         });
     };
 
+    var saveOrderIndex = function saveOrderIndex(req, callback) {
+        var body = JSON.parse(req.body);
+
+        indexes.saveIndexOrder([body])
+            .then(() => callback(null))
+            .catch(() => callback(null));
+    };
+
+
     var executePostValidation = function(req, callback) {
 
         if (['GET', 'PUT', 'PATCH'].indexOf(req.method.toUpperCase()) >= 0) {
@@ -789,6 +821,7 @@ var ordering = (function(){
             var tasks = [];
             tasks.push(notifyOrder.bind(this, req));
             tasks.push(includeSellersInBillingAccount.bind(this, req));
+            tasks.push(saveOrderIndex.bind(this, req));
 
             async.series(tasks, callback);
 

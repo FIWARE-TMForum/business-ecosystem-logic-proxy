@@ -1012,55 +1012,30 @@ var catalog = (function() {
         callback(null);
     };
 
-    var createInitialQuery = function createInitialQuery(req) {
-	var offset = req.query.offset || 0;
-        var size = req.query.size || 25;
-        var sort = ["sortedId", "asc"];
-	return { offset: offset, pageSize: size, sort: sort };
-    };
-
-    var genericCreateQuery = function genericCreateQuery(extras, f, req) {
-        var q = createInitialQuery(req);
-        var query = { AND: []};
-	f = f || function () {};
-	f(req, query);
-
-        extras.forEach(key => {
-	    if (typeof req.query[key] !== "undefined") {
-                var newq = {};
-                newq[key] = [req.query[key]];
-                if (typeof newq[key][0] === "string") {
-                    newq[key][0] = newq[key][0].toLowerCase();
-                }
-                query.AND.push(newq);
-	    }
-        });
-
-        q.query = query;
-        return q;
-    };
-
-    var createProductQuery = genericCreateQuery.bind(
+    var createProductQuery = indexes.genericCreateQuery.bind(
 	null,
 	["lifecycleStatus", "isBundle", "productNumber"],
+        "product",
 	function (req, query) {
 	    if (req.query["relatedParty.id"]) {
                 query.AND.push( { relatedPartyHash: [indexes.fixUserId(req.query["relatedParty.id"])]});
     	    }
 	});
 
-    var createOfferQuery = genericCreateQuery.bind(
+    var createOfferQuery = indexes.genericCreateQuery.bind(
 	null,
 	["lifecycleStatus", "isBundle"],
+        "offering",
 	function (req, query) {
             if (req.query.relatedParty) {
                 query.AND.push( { userId: [indexes.fixUserId(req.query.relatedParty)] });
 	    }
 	});
 
-    var createCatalogQuery = genericCreateQuery.bind(
+    var createCatalogQuery = indexes.genericCreateQuery.bind(
         null,
         ["lifecycleStatus", "name"],
+        "catalog",
         function (req, query) {
             if (req.query["relatedParty.id"]) {
                 query.AND.push( { relatedPartyHash: [indexes.fixUserId(req.query["relatedParty.id"])]});
@@ -1068,39 +1043,15 @@ var catalog = (function() {
         }
     );
 
-    var getMiddleware = function getMiddleware(reg, createOfferF, searchF, keysUsed, req) {
-        if (req.method == "GET" && reg.test(req.apiUrl)) {
-            var q = createOfferF(req);
-
-            // If query.AND is empty, means that there wasn't any filtering parameter, so query for all
-            if (q.query.AND.length <= 0) {
-                q.query.AND.push( { '*': ['*']});
-            }
-
-            return searchF(q)
-                .then(results => {
-                    var newUrl = req._parsedUrl.pathname + "?id=" + results.hits.map(r => r.document.originalId).join(",");
-                    for (var key in req.query) {
-                        if (keysUsed.indexOf(key) < 0) {
-                            newUrl = newUrl + "&" + key + "=" + req.query[key];
-                        }
-                    };
-                    req.apiUrl = newUrl;
-                });
-        } else {
-            return Promise.resolve();
-        }
-    };
-
     var offeringGetParams = new RegExp('/productOffering(\\?|$)');
     var productGetParams = new RegExp('/productSpecification(\\?|$)');
     var catalogGetParams = new RegExp('/catalog(\\?|$)');
 
-    var getCatalogRequest = getMiddleware.bind(null, catalogGetParams, createCatalogQuery, indexes.searchCatalogs, ["relatedParty.id", "relatedParty", "offset", "size", "lifecycleStatus", "name"]);
+    var getCatalogRequest = indexes.getMiddleware.bind(null, catalogGetParams, createCatalogQuery, indexes.searchCatalogs, ["relatedParty.id", "relatedParty", "offset", "size", "lifecycleStatus", "name"]);
 
-    var getProductRequest = getMiddleware.bind(null, productGetParams, createProductQuery, indexes.searchProducts, ["relatedParty.id", "relatedParty", "offset", "size", "lifecycleStatus", "isBundle", "productNumber"]);
+    var getProductRequest = indexes.getMiddleware.bind(null, productGetParams, createProductQuery, indexes.searchProducts, ["relatedParty.id", "relatedParty", "offset", "size", "lifecycleStatus", "isBundle", "productNumber"]);
 
-    var getOfferRequest = getMiddleware.bind(null, offeringGetParams, createOfferQuery, indexes.searchOfferings, ["relatedParty", "offset", "size", "lifecycleStatus", "isBundle"]);
+    var getOfferRequest = indexes.getMiddleware.bind(null, offeringGetParams, createOfferQuery, indexes.searchOfferings, ["relatedParty", "offset", "size", "lifecycleStatus", "isBundle"]);
 
 
     var methodIndexed = function methodIndexed(req) {

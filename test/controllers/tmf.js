@@ -48,17 +48,27 @@ describe('TMF Controller', function() {
     };
 
     // Function to get a custom tmf.js instance
-    var getTmfInstance = function(request, catalog, ordering, inventory, party) {
+    var getTmfInstance = function(request, catalog, ordering, inventory, party, searchIndex) {
+
+        if (!searchIndex) {
+            searchIndex = {
+                add: (a, cb) => {cb();},
+                close: cb => {cb();},
+                del: (key, cb) => {cb();},
+                search: (q, cb) => {cb();}
+            };
+        }
 
         return proxyquire('../../controllers/tmf', {
             'request': request,
-            './../config': config, 
+            './../config': config,
             './../lib/utils': utils,
             './../lib/logger': testUtils.emptyLogger,
             './tmf-apis/catalog': { catalog: catalog },
             './tmf-apis/ordering': {ordering: ordering},
             './tmf-apis/inventory': { inventory: inventory },
-            './tnf-apis/party': { party: party }
+            './tnf-apis/party': { party: party },
+            'search-index': searchIndex
         }).tmf;
     };
 

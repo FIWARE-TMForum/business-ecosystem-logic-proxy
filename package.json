@@ -5,6 +5,7 @@
   "author": "UPM",
   "dependencies": {
     "async": "^1.5.0",
+    "async-lock": "^0.3.8",
     "base64url": "1.0.x",
     "blueimp-md5": "^2.3.1",
     "body-parser": "1.14.1",
@@ -38,7 +39,7 @@
     "proxyquire": "1.7.3"
   },
   "scripts": {
-    "test": "JASMINE_CONFIG_PATH=test/config/jasmine.json node_modules/.bin/istanbul cover --include-all-sources -x public/**/*.js -x server.js -x Gruntfile.js --report cobertura node_modules/.bin/jasmine"
+    "test": "JASMINE_CONFIG_PATH=test/config/jasmine.json node_modules/.bin/istanbul cover --include-all-sources -x public/**/*.js -x server.js -x Gruntfile.js -x fill_indexes.js --report cobertura node_modules/.bin/jasmine"
   },
   "repository": {
     "type": "git",
@@ -56,6 +57,10 @@
     {
       "name": "Jaime Pajuelo",
       "email": "jpajuelo@conwet.com"
+    },
+    {
+      "name": "Miguel Garcia",
+      "email": "mgarcia@conwet.com"
     }
   ]
 }

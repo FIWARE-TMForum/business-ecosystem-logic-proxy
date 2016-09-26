@@ -28,7 +28,8 @@ var createUrl = function createUrl(api, extra) {
     return (config.appSsl ? "https" : "http") + "://" + config.appHost + ":" + utils.getAPIPort(api) + extra;
 };
 
-var genericRequest = function genericRequest(options, p) {
+var genericRequest = function genericRequest(options) {
+    var p = new Promise();
     request(options, function (err, response, body) {
         if (err) {
             console.log(err);
@@ -40,37 +41,34 @@ var genericRequest = function genericRequest(options, p) {
             p.resolve(JSON.parse(body));
         }
     });
+
+    return p;
 };
 
 var getProducts = function getProducts() {
-    var p = new Promise();
-
     var url = createUrl("DSProductCatalog", "/DSProductCatalog/api/catalogManagement/v2/productSpecification");
-
-    genericRequest(url, p);
-
-    return p;
+    return genericRequest(url);
 };
 
 var getOfferings = function getOfferings() {
-    var p = new Promise();
-
-    // For every catalog!
+     // For every catalog!
     var url = createUrl("DSProductCatalog", "/DSProductCatalog/api/catalogManagement/v2/productOffering");
-
-    genericRequest(url, p);
-
-    return p;
+    return genericRequest(url);
 };
 
 var getCatalogs = function getCatalogs() {
-    var p = new Promise();
-
     var url = createUrl("DSProductCatalog", "/DSProductCatalog/api/catalogManagement/v2/catalog");
+    return genericRequest(url);
+};
 
-    genericRequest(url, p);
+var getInventory = function getInventory() {
+    var url = createUrl("DSProductInventory", "/DSProductInventory/api/productInventory/v2/product");
+    return genericRequest(url);
+};
 
-    return p;
+var getOrders = function getOrders() {
+    var url = createUrl("DSProductOrdering", "/DSProductOrdering/api/productOrdering/v2/productOrder");
+    return genericRequest(url);
 };
 
 var logAllIndexes = function logAllIndexes(path) {
@@ -84,15 +82,12 @@ var logAllIndexes = function logAllIndexes(path) {
 
 var downloadProducts = function downloadProducts() {
     return getProducts()
-        .then(data =>
-              indexes.saveIndexProduct(data)
-        );
+        .then(indexes.saveIndexProduct);
 };
 
 var downloadOfferings = function downloadOfferings() {
     return getOfferings()
-        .then(data =>
-              indexes.saveIndexOffering(data));
+        .then(indexes.saveIndexOffering);
 };
 
 var downloadCatalogs = function downloadCatalogs() {
@@ -100,12 +95,26 @@ var downloadCatalogs = function downloadCatalogs() {
         .then(indexes.saveIndexCatalog);
 };
 
+var downloadInventory = function downloadInventory() {
+    return getInventory()
+        .then(indexes.saveIndexInventory);
+};
+
+var downloadOrdering = function downloadOrdering() {
+    return getOrders()
+        .then(indexes.saveIndexOrder);
+};
+
 downloadCatalogs()
     .then(downloadProducts)
     .then(downloadOfferings)
+    .then(downloadInventory)
+    .then(downloadOrdering)
     .then(() => console.log("All saved!"))
     .catch(e => console.log("Error: ", e));
 
-// logAllIndexes(indexes.siTables.offerings);
-// logAllIndexes(indexes.siTables.products);
 // logAllIndexes(indexes.siTables.catalogs);
+// logAllIndexes(indexes.siTables.products);
+// logAllIndexes(indexes.siTables.offerings);
+// logAllIndexes(indexes.siTables.inventory);
+// logAllIndexes(indexes.siTables.orders);

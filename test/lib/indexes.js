@@ -1,4 +1,4 @@
-/*global expect, it, jasmine */
+/*global expect, it, jasmine, describe */
 
 /* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
  *
@@ -242,6 +242,12 @@ describe("Test index helper library", function () {
         searchHelper(done, "testp", q, d);
     });
 
+    it("should resolve the promise, close index and call search with the correct data, using full query", function (done) {
+        var q = {query: {"*": ["*"]}};
+        var d = {hits: [1, 2, 3, 4]};
+        searchHelper(done, "testp", q, d);
+    });
+
     it("should use offering index and search correctly", function (done) {
         searchHelper(done, "indexes/offerings", {}, [1], "searchOfferings");
     });
@@ -285,8 +291,8 @@ describe("Test index helper library", function () {
         id: "catalog:3",
         originalId: 3,
         sortedId: "000000000003",
-        relatedPartyHash: md5("rock"),
-        relatedParty: "rock",
+        relatedPartyHash: [md5("rock")],
+        relatedParty: ["rock"],
         href: "http://3",
         lifecycleStatus: "Obsolete",
         name: "Name"
@@ -336,9 +342,9 @@ describe("Test index helper library", function () {
         productNumber: 12,
         originalId: 1,
         sortedId: "000000000001",
-        body: "name brand",
-        relatedPartyHash: md5("rock-8") + ":" + md5("rock-9"),
-        relatedParty: "rock-8:rock-9"
+        body: ["name", "brand"],
+        relatedPartyHash: [md5("rock-8"),  md5("rock-9")],
+        relatedParty: ["rock-8", "rock-9"]
     };
 
     it("should convert product data correctly", function () {
@@ -390,7 +396,7 @@ describe("Test index helper library", function () {
         id: "offering:3",
         originalId: 3,
         sortedId: "000000000003",
-        body: "name description",
+        body: ["name", "description"],
         userId: md5("rock-8"),
         productSpecification: undefined,
         href: "http://3",
@@ -402,7 +408,7 @@ describe("Test index helper library", function () {
         id: "offering:2",
         originalId: 2,
         sortedId: "000000000002",
-        body: "name description",
+        body: ["name", "description"],
         userId: md5("rock-8"),
         productSpecification: 1,
         href: "http://2",
@@ -515,5 +521,343 @@ describe("Test index helper library", function () {
             expect("Error, promise rejected instead of resolved: " + err).toBe(true);
             done();
         }, [notBundleOffer], user);
+    });
+
+    it("should save converted bundled offer data correctly", function (done) {
+        var user = {id: "rock-8"};
+
+        var extra = {
+            checkadd: (data, ops) => {
+                expect(data).toEqual([bundleExpected]);
+                expect(ops).toEqual({fieldOptions: [{fieldName: 'body', filter: true}]});
+            }
+        };
+        helper("indexes/offerings", null, extra, "saveIndexOffering", (si, extra) => {
+            expect(extra).toBeUndefined();
+            expect(si.add).toHaveBeenCalled();
+            expect(si.close).toHaveBeenCalled();
+            done();
+        }, (si, err) => {
+            expect("Error, promise rejected instead of resolved: " + err).toBe(true);
+            done();
+        }, [bundleOffer], user);
+    });
+
+
+    // TODO: Inventory && Orders
+
+    var inventoryData = {
+        id: 12,
+        productOffering: {
+            id: 5
+        },
+        relatedParty: [{id: "rock"}],
+        href: "http://12",
+        name: "inventoryName",
+        status: "status",
+        startDate: 232323232,
+        orderDate: 232323231,
+        terminationDate: 232323233
+    };
+
+    var inventoryExpected = {
+        id: "inventory:12",
+        originalId: 12,
+        sortedId: "000000000012",
+        productOffering: 5,
+        relatedPartyHash: [md5("rock")],
+        relatedParty: ["rock"],
+        href: "http://12",
+        name: "inventoryName",
+        status: "status",
+        startDate: 232323232,
+        orderDate: 232323231,
+        terminationDate: 232323233
+    };
+
+    it("should convert inventory data correctly", function () {
+        var indexes = getIndexLib();
+        expect(indexes.convertInventoryData(inventoryData)).toEqual(inventoryExpected);
+    });
+
+    it("should save converted inventory data correctly", function (done) {
+        var extra = {
+            extraadd: (data, ops) => {
+                expect(data).toEqual([inventoryExpected]);
+                expect(ops).toEqual({});
+            }
+        };
+        helper("indexes/inventory", null, extra, "saveIndexInventory", (si, extra) => {
+            expect(extra).toBeUndefined();
+            expect(si.add).toHaveBeenCalled();
+            expect(si.close).toHaveBeenCalled();
+            done();
+        }, (si, err) => {
+            expect("Error, promise rejected instead of resolved: " + err).toBe(true);
+            done();
+        }, [inventoryData]);
+    });
+
+    var orderData = {
+        id: 23,
+        relatedParty: [{id: "rock"}],
+        href: "http://23",
+        priority: "prior",
+        category: "endofunctor",
+        state: "active",
+        notificationContact: "m@c.es",
+        note: ""
+    };
+
+    var orderExpected = {
+        id: "order:23",
+        originalId: 23,
+        sortedId: "000000000023",
+        relatedPartyHash: [md5("rock")],
+        relatedParty: ["rock"],
+        href: "http://23",
+        priority: "prior",
+        category: "endofunctor",
+        state: "active",
+        notificationContact: "m@c.es",
+        note: ""
+    };
+
+    it("should convert order data correctly", function () {
+        var indexes = getIndexLib();
+        expect(indexes.convertOrderData(orderData)).toEqual(orderExpected);
+    });
+
+    it("should save converted order data correctly", function (done) {
+        var extra = {
+            extraadd: (data, ops) => {
+                expect(data).toEqual([orderExpected]);
+                expect(ops).toEqual({});
+            }
+        };
+        helper("indexes/orders", null, extra, "saveIndexOrder", (si, extra) => {
+            expect(extra).toBeUndefined();
+            expect(si.add).toHaveBeenCalled();
+            expect(si.close).toHaveBeenCalled();
+            done();
+        }, (si, err) => {
+            expect("Error, promise rejected instead of resolved: " + err).toBe(true);
+            done();
+        }, [orderData]);
+    });
+
+    describe("Request helpers", function () {
+
+        it('should create query correctly', function() {
+            var indexes = getIndexLib();
+
+            var fs = {f: () => {}};
+            spyOn(fs, "f");
+            var req = {query: {}};
+
+            var query = indexes.genericCreateQuery([], "", fs.f, req);
+
+            expect(fs.f).toHaveBeenCalledWith(req, { AND: [] });
+
+            expect(query).toEqual({
+                offset: 0,
+                pageSize: 25,
+                sort: ["sortedId", "asc"],
+                query: {
+                    AND: []
+                }
+            });
+        });
+
+        it('should create query with extra parameters', function() {
+            var indexes = getIndexLib();
+
+            var req = {query: {
+                key1: "VALUE1",
+                key2: 23,
+                notadded: "not"
+            }};
+
+            var query = indexes.genericCreateQuery(["key1", "key2", "notextra"], "", null, req);
+
+            expect(query).toEqual({
+                offset: 0,
+                pageSize: 25,
+                sort: ["sortedId", "asc"],
+                query: {
+                    AND: [
+                        { key1: ["value1"] },
+                        { key2: [23] }
+                    ]
+                }
+            });
+        });
+
+        it('should not execute if GET request', function () {
+            var indexes = getIndexLib();
+
+            var req = {
+                method: "POST"
+            };
+
+            var fs = {
+                reg: {test: () => {}},
+                createOffer: () => {},
+                search: () => {}
+            };
+
+            spyOn(fs.reg, "test");
+            spyOn(fs, "createOffer");
+            spyOn(fs, "search");
+
+            indexes.getMiddleware(fs.reg, fs.createOffer, fs.search, [], req);
+            expect(fs.reg.test).not.toHaveBeenCalled();
+            expect(fs.createOffer).not.toHaveBeenCalled();
+            expect(fs.search).not.toHaveBeenCalled();
+        });
+
+        it("should not execute if regex don't test", function() {
+            var indexes = getIndexLib();
+
+            var req = {
+                method: "GET",
+                apiUrl: "url"
+            };
+
+            var fs = {
+                reg: {test: () => {}},
+                createOffer: () => {},
+                search: () => {}
+            };
+
+            spyOn(fs.reg, "test").and.callFake(s => new RegExp('noturl').test(s));
+            spyOn(fs, "createOffer");
+            spyOn(fs, "search");
+
+            indexes.getMiddleware(fs.reg, fs.createOffer, fs.search, [], req);
+            expect(fs.reg.test).toHaveBeenCalledWith("url");
+            expect(fs.createOffer).not.toHaveBeenCalled();
+            expect(fs.search).not.toHaveBeenCalled();
+        });
+
+        it('should not execute if query have explicit id', function() {
+            var indexes = getIndexLib();
+
+            var req = {
+                method: "GET",
+                apiUrl: "url",
+                query: {
+                    id: "1,2,3"
+                }
+            };
+
+            var fs = {
+                reg: {test: () => {}},
+                createOffer: () => {},
+                search: () => {}
+            };
+
+            spyOn(fs.reg, "test").and.returnValue(true);
+            spyOn(fs, "createOffer");
+            spyOn(fs, "search");
+
+            indexes.getMiddleware(fs.reg, fs.createOffer, fs.search, [], req);
+            expect(fs.reg.test).toHaveBeenCalledWith("url");
+            expect(fs.createOffer).not.toHaveBeenCalled();
+            expect(fs.search).not.toHaveBeenCalled();
+        });
+
+        it('should execute middleware with default search correctly', function(done) {
+            var indexes = getIndexLib();
+
+            var req = {
+                method: "GET",
+                apiUrl: "url",
+                query: {
+                    other: "value",
+                    notadd: "not"
+                },
+                _parsedUrl: {
+                    pathname: "path"
+                }
+            };
+
+            var fs = {
+                reg: {test: () => {}},
+                createOffer: () => {},
+                search: () => {}
+            };
+
+            var results = {
+                hits: [{document: {originalId: 1}}, {document: {originalId: 2}}]
+            };
+
+            var search = {
+                offset: 0,
+                pageSize: 25,
+                sort: ["sortedId", "asc"],
+                query: {
+                    AND: [{ "*": ["*"]}]
+                }
+            };
+
+            spyOn(fs.reg, "test").and.returnValue(true);
+            spyOn(fs, "createOffer").and.callFake(indexes.genericCreateQuery.bind(this, [], "", null));
+            spyOn(fs, "search").and.returnValue(Promise.resolve(results));
+
+            indexes.getMiddleware(fs.reg, fs.createOffer, fs.search, ["notadd"], req)
+                .then(() => {
+                    expect(fs.reg.test).toHaveBeenCalledWith("url");
+                    expect(fs.createOffer).toHaveBeenCalled();
+                    expect(fs.search).toHaveBeenCalledWith(search);
+
+                    expect(req.apiUrl).toEqual("path?id=1,2&other=value");
+                    done();
+                });
+        });
+
+        it('should execute middleware search correctly', function(done) {
+            var indexes = getIndexLib();
+
+            var req = {
+                method: "GET",
+                apiUrl: "url",
+                query: {
+                    other: "value",
+                    notadd: "not"
+                },
+                _parsedUrl: {
+                    pathname: "path"
+                }
+            };
+
+            var results = {
+                hits: []
+            };
+            var search = {
+                query: {
+                    AND: [{'search': ['value']}]
+                }};
+
+            var fs = {
+                reg: {test: () => {}},
+                createOffer: () => search,
+                search: () => {}
+            };
+
+            spyOn(fs.reg, "test").and.returnValue(true);
+            spyOn(fs, "createOffer").and.callThrough();
+            spyOn(fs, "search").and.returnValue(Promise.resolve(results));
+
+            indexes.getMiddleware(fs.reg, fs.createOffer, fs.search, ["notadd"], req)
+                .then(() => {
+                    expect(fs.reg.test).toHaveBeenCalledWith("url");
+                    expect(fs.createOffer).toHaveBeenCalled();
+                    expect(fs.search).toHaveBeenCalledWith(search);
+
+                    expect(req.apiUrl).toEqual("path?other=value");
+                    done();
+                });
+        });
     });
 });
