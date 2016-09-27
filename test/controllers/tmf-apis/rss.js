@@ -294,6 +294,51 @@ describe('RSS API', function() {
             };
             testCheckPermissions(req, null, validator, done);
         });
+
+  		it('should add callbackUrl to charging backend if not provided', function (done) {
+			var chargbackUrl = (config.appSsl ? 'https' : 'http') + '://' + config.appHost + ':' + config.endpoints.charging.port + "/charging/api/reportManagement/created";
+			var req = {
+				method: 'POST',
+				apiUrl: '/rss/settlement',
+				user: {
+                    id: 'username',
+                    roles: [{
+                        name: 'seller'
+                    }]
+                },
+				body: JSON.stringify({ aggregatorValue: 0 }),
+                headers: {}
+			};
+			var validator = function(err) {
+                expect(err).toBe(null);
+                var body = JSON.parse(req.body);
+                expect(body.callbackUrl).toEqual(chargbackUrl);
+            };
+            testCheckPermissions(req, null, validator, done);
+		});
+
+		it('should not change callbackUrl if provided', function (done) {
+			var url = (config.appSsl ? 'https' : 'http') + '://' + config.appHost + ':' + config.endpoints.charging.port + "/charging/api/reportManagement/maybeCreated";
+            var req = {
+                method: 'POST',
+                apiUrl: '/rss/settlement',
+                user: {
+                    id: 'username',
+                    roles: [{
+                        name: 'seller'
+                    }]
+                },
+                body: JSON.stringify({ aggregatorValue: 0, callbackUrl: url }),
+                headers: {}
+            };
+            var validator = function(err) {
+                expect(err).toBe(null);
+                var body = JSON.parse(req.body);
+                expect(body.callbackUrl).toEqual(url);
+            };
+            testCheckPermissions(req, null, validator, done);
+        });
+
     });
 
     describe('Post validation', function() {
