@@ -85,9 +85,22 @@ var rss = (function () {
         callback();
     };
 
+    var changeCallbackUrl = function changeCallbackUrl(req, callback) {
+        if (/rss\/settlement$/.test(req.apiUrl)) {
+            var body = JSON.parse(req.body);
+            if (!body.callbackUrl) {
+				var url = utils.getAPIURL(config.appSsl, config.appHost, config.endpoints.charging.port, "/charging/api/reportManagement/created");
+                body.callbackUrl = url;
+                utils.updateBody(req, body);
+            }
+        }
+
+        callback();
+    };
+
     var validators = {
         'GET': [utils.validateLoggedIn, validateProvider],
-        'POST': [utils.validateLoggedIn, validateProvider, validateContentRequest],
+        'POST': [utils.validateLoggedIn, validateProvider, validateContentRequest, changeCallbackUrl],
         'PUT': [utils.validateLoggedIn, validateProvider, validateContentRequest],
         'DELETE': [utils.validateLoggedIn, validateProvider],
         'PATCH': [utils.methodNotAllowed]
