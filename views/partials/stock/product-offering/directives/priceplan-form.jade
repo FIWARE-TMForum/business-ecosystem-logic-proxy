@@ -33,7 +33,7 @@ form(name="form" novalidate)
             name="taxIncludedAmount"
             ng-model="pricePlan.price.taxIncludedAmount"
             required
-            min="0"
+            min="0.01"
           )
           .input-group-btn
             a.btn.btn-default.dropdown-toggle.z-depth-0(data-toggle="dropdown")
@@ -44,7 +44,7 @@ form(name="form" novalidate)
                 span.item-text ({{ key }}) {{ value | uppercase }}
         .help-block(ng-messages="form.taxIncludedAmount.$error" ng-show="vm.hasFieldError(form.taxIncludedAmount)")
           span(ng-message="required") This field is required.
-          span(ng-message="min") This field must not be a negative number.
+          span(ng-message="min") This field must be a greater than 0.
           span(ng-message="number") This field must be a valid number.
     .col-md-4(ng-if="pricePlan.priceType === vm.PRICES.USAGE")
       .form-group(ng-class="{ 'has-error': vm.hasFieldError(form.unitOfMeasure) }")
