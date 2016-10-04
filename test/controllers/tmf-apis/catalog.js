@@ -3151,59 +3151,114 @@ describe('Catalog API', function() {
 
     describe('Post validation', function() {
 
-        var testProductPostvalidation = function(method, callExp, saveIndexExp, done) {
-            var body = {
-                id: '1'
+        var body = {
+            id: '1'
+        };
+
+        var user = {
+            username: 'test'
+        };
+
+        var testPostValidation = function(req, productAttExp, offeringAttExp, offeringUpdExp, saveIndexExp, offIndexExp, done) {
+
+            var productAttached = false;
+            var offeringAttached = false;
+            var offeringUpdated = false;
+
+            var checkStoreClientCalls = function (asset, userInfo, callback) {
+                expect(asset).toEqual(body);
+                expect(userInfo).toEqual(user);
+                callback(null);
             };
 
-            var user = {
-                username: 'test'
-            };
-
-            var called = false;
             var storeClient = {
                 storeClient: {
                     attachProduct: function(product, userInfo, callback) {
-                        called = true;
-                        expect(product).toEqual(body);
-                        expect(userInfo).toEqual(user);
-                        callback(null);
+                        productAttached = true;
+                        checkStoreClientCalls(product, userInfo, callback)
+                    },
+                    attachOffering: function (offering, userInfo, callback) {
+                        offeringAttached = true;
+                        checkStoreClientCalls(offering, userInfo, callback)
+                    },
+                    updateOffering: function (offering, userInfo, callback) {
+                        offeringUpdated = true;
+                        checkStoreClientCalls(offering, userInfo, callback)
                     }
                 }
             };
 
             var saveIndexCalled = false;
+            var offIndexCalled = false;
+
+            var checkIndexCalls = function (data, userInfo) {
+                expect(data).toEqual([{id: '1'}]);
+                expect(userInfo).toEqual(user);
+                return Promise.resolve();
+            };
+
             var indexes = {
                 saveIndexProduct: function(data, userInfo) {
                     saveIndexCalled = true;
-                    expect(data).toEqual([{id: '1'}]);
-                    expect(userInfo).toEqual(user);
-                    return Promise.resolve();
+                    return checkIndexCalls(data, userInfo);
+                },
+                saveIndexOffering: function (data, userInfo) {
+                    offIndexCalled = true;
+                    return checkIndexCalls(data, userInfo);
                 }
             };
 
             var catalogApi = getCatalogApi(storeClient, {}, {}, {}, indexes);
 
-            var req = {
-                method: method,
-                apiUrl: '/catalog/productSpecification',
-                body: JSON.stringify(body),
-                user: user
-            };
-
             catalogApi.executePostValidation(req, function() {
-                expect(called).toBe(callExp);
+                expect(productAttached).toBe(productAttExp);
+                expect(offeringAttached).toBe(offeringAttExp);
+                expect(offeringUpdated).toBe(offeringUpdExp);
+
                 expect(saveIndexCalled).toBe(saveIndexExp);
+                expect(offIndexCalled).toBe(offIndexExp);
                 done();
             });
         };
 
         it('should call the store product attachment when a valid product creation request has been redirected', function(done) {
-            testProductPostvalidation('POST', true, true, done);
+            var req = {
+                method: 'POST',
+                apiUrl: '/catalog/productSpecification',
+                body: JSON.stringify(body),
+                user: user
+            };
+            testPostValidation(req, true, false, false, true, false, done);
         });
 
         it('should not call the store attachment when the request is not a product creation', function(done) {
-            testProductPostvalidation('GET', false, false, done);
+            var req = {
+                method: 'GET',
+                apiUrl: '/catalog/productSpecification',
+                body: JSON.stringify(body),
+                user: user
+            };
+            testPostValidation(req, false, false, false, false, false, done);
+        });
+
+        it('should call the offering attachment when the request is a product offering creation', function (done) {
+            var req = {
+                method: 'POST',
+                apiUrl: '/catalog/catalog/1/productOffering',
+                body: JSON.stringify(body),
+                user: user
+            };
+            testPostValidation(req, false, true, false, false, true, done);
+        });
+
+        it('should call the offering update validation when the request is a product offering update', function (done) {
+            var req = {
+                method: 'PATCH',
+                apiUrl: '/catalog/catalog/1/productOffering/1',
+                body: JSON.stringify(body),
+                user: user
+            };
+            testPostValidation(req, false, false, true, false, true, done);
         });
     });
 });

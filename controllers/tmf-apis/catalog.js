@@ -47,6 +47,7 @@ var catalog = (function() {
     //////////////////////////////////////////////////////////////////////////////////////////////
 
     var offeringsPattern = new RegExp('/productOffering/?$');
+    var offeringPattern = new RegExp('/catalog/[^/]+/productOffering/[^/]+/?$');
     var productsPattern = new RegExp('/productSpecification/?$');
     var categoryPattern = new RegExp('/category/[^/]+/?$');
     var categoriesPattern = new RegExp('/category/?$');
@@ -439,7 +440,7 @@ var catalog = (function() {
                 callback(null);
             }
         });
-    }
+    };
 
     var checkExistingCategory = function(apiUrl, categoryName, isRoot, parentId, callback) {
 
@@ -1007,7 +1008,7 @@ var catalog = (function() {
                 genericSave(f);
                 return;
             }
-        };
+        }
 
         callback(null);
     };
@@ -1089,17 +1090,25 @@ var catalog = (function() {
     var executePostValidation = function(req, callback) {
         // Attach product spec info for product creation request
         var body;
+
         if (req.method == 'POST' && productsPattern.test(req.apiUrl)) {
             body = JSON.parse(req.body);
             storeClient.attachProduct(body, req.user, middlewareSave(indexes.saveIndexProduct, [body], req.user, callback));
+
         } else if (req.method == 'POST' && offeringsPattern.test(req.apiUrl)) {
             body = JSON.parse(req.body);
             storeClient.attachOffering(body, req.user, middlewareSave(indexes.saveIndexOffering, [body], req.user, callback));
+
+        } else if ((req.method == 'PATCH' || req.method == 'PUT') && offeringPattern.test(req.apiUrl)) {
+            body = JSON.parse(req.body);
+            storeClient.updateOffering(body, req.user, middlewareSave(indexes.saveIndexOffering, [body], req.user, callback));
+
         } else if (req.method == 'POST' && catalogsPattern.test(req.apiUrl)) {
             body = JSON.parse(req.body);
             indexes.saveIndexCatalog([body])
                 .then(() => callback(null))
                 .catch(() => callback(null));
+
         } else {
             // TODO PATCHes
             handleIndexes(req, callback);
