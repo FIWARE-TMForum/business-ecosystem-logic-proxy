@@ -1047,18 +1047,18 @@ var catalog = (function() {
     var productGetParams = new RegExp('/productSpecification(\\?|$)');
     var catalogGetParams = new RegExp('/catalog(\\?|$)');
 
-    var getCatalogRequest = indexes.getMiddleware.bind(null, catalogGetParams, createCatalogQuery, indexes.searchCatalogs, ["relatedParty.id", "relatedParty", "offset", "size", "lifecycleStatus", "name"]);
+    var getCatalogRequest = indexes.getMiddleware.bind(null, catalogGetParams, createCatalogQuery, indexes.searchCatalogs);
 
-    var getProductRequest = indexes.getMiddleware.bind(null, productGetParams, createProductQuery, indexes.searchProducts, ["relatedParty.id", "relatedParty", "offset", "size", "lifecycleStatus", "isBundle", "productNumber"]);
+    var getProductRequest = indexes.getMiddleware.bind(null, productGetParams, createProductQuery, indexes.searchProducts);
 
-    var getOfferRequest = indexes.getMiddleware.bind(null, offeringGetParams, createOfferQuery, indexes.searchOfferings, ["relatedParty", "offset", "size", "lifecycleStatus", "isBundle"]);
+    var getOfferRequest = indexes.getMiddleware.bind(null, offeringGetParams, createOfferQuery, indexes.searchOfferings);
 
 
     var methodIndexed = function methodIndexed(req) {
         // I'm gonna feel so bad with this... but I have to use mutability on an input parameter :(
         // The methods change req.apiUrl as needed... Sorry
         return getOfferRequest(req)
-	    .then(() => getProductRequest(req))
+			.then(() => getProductRequest(req))
             .then(() => getCatalogRequest(req));
     };
 

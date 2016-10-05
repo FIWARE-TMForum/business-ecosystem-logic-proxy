@@ -592,8 +592,6 @@ var ordering = (function(){
 
     var orderRegex = new RegExp('/productOrder(\\?|$)');
 
-    var keysUsed = ["relatedParty.id", "offset", "size", "priority", "category", "state", "notificationContact", "note"];
-
     var createQuery = indexes.genericCreateQuery.bind(
         null,
         ["priority", "category", "state", "notificationContact", "note"],
@@ -605,7 +603,7 @@ var ordering = (function(){
         }
     );
 
-    var getOrderRequest = indexes.getMiddleware.bind(null, orderRegex, createQuery, indexes.searchOrders, keysUsed);
+    var getOrderRequest = indexes.getMiddleware.bind(null, orderRegex, createQuery, indexes.searchOrders);
 
     var methodIndexed = function methodIndexed(req) {
         return getOrderRequest(req);
@@ -818,7 +816,6 @@ var ordering = (function(){
             .catch(() => callback(null));
     };
 
-
     var executePostValidation = function(req, callback) {
 
         if (['GET', 'PUT', 'PATCH'].indexOf(req.method.toUpperCase()) >= 0) {
@@ -831,7 +828,6 @@ var ordering = (function(){
             tasks.push(notifyOrder.bind(this, req));
             tasks.push(includeSellersInBillingAccount.bind(this, req));
             tasks.push(saveOrderIndex.bind(this, req));
-
             async.series(tasks, callback);
 
         } else {

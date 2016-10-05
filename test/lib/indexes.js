@@ -710,7 +710,7 @@ describe("Test index helper library", function () {
             spyOn(fs, "createOffer");
             spyOn(fs, "search");
 
-            indexes.getMiddleware(fs.reg, fs.createOffer, fs.search, [], req);
+            indexes.getMiddleware(fs.reg, fs.createOffer, fs.search, req);
             expect(fs.reg.test).not.toHaveBeenCalled();
             expect(fs.createOffer).not.toHaveBeenCalled();
             expect(fs.search).not.toHaveBeenCalled();
@@ -734,7 +734,7 @@ describe("Test index helper library", function () {
             spyOn(fs, "createOffer");
             spyOn(fs, "search");
 
-            indexes.getMiddleware(fs.reg, fs.createOffer, fs.search, [], req);
+            indexes.getMiddleware(fs.reg, fs.createOffer, fs.search, req);
             expect(fs.reg.test).toHaveBeenCalledWith("url");
             expect(fs.createOffer).not.toHaveBeenCalled();
             expect(fs.search).not.toHaveBeenCalled();
@@ -761,7 +761,7 @@ describe("Test index helper library", function () {
             spyOn(fs, "createOffer");
             spyOn(fs, "search");
 
-            indexes.getMiddleware(fs.reg, fs.createOffer, fs.search, [], req);
+            indexes.getMiddleware(fs.reg, fs.createOffer, fs.search, req);
             expect(fs.reg.test).toHaveBeenCalledWith("url");
             expect(fs.createOffer).not.toHaveBeenCalled();
             expect(fs.search).not.toHaveBeenCalled();
@@ -774,7 +774,7 @@ describe("Test index helper library", function () {
                 method: "GET",
                 apiUrl: "url",
                 query: {
-                    other: "value",
+                    depth: "2",
                     notadd: "not"
                 },
                 _parsedUrl: {
@@ -805,25 +805,25 @@ describe("Test index helper library", function () {
             spyOn(fs, "createOffer").and.callFake(indexes.genericCreateQuery.bind(this, [], "", null));
             spyOn(fs, "search").and.returnValue(Promise.resolve(results));
 
-            indexes.getMiddleware(fs.reg, fs.createOffer, fs.search, ["notadd"], req)
+            indexes.getMiddleware(fs.reg, fs.createOffer, fs.search, req)
                 .then(() => {
                     expect(fs.reg.test).toHaveBeenCalledWith("url");
                     expect(fs.createOffer).toHaveBeenCalled();
                     expect(fs.search).toHaveBeenCalledWith(search);
 
-                    expect(req.apiUrl).toEqual("path?id=1,2&other=value");
+                    expect(req.apiUrl).toEqual("path?id=1,2&depth=2");
                     done();
                 });
         });
 
-        it('should execute middleware search correctly', function(done) {
+        it('should execute middleware search correctly without results', function(done) {
             var indexes = getIndexLib();
 
             var req = {
                 method: "GET",
                 apiUrl: "url",
                 query: {
-                    other: "value",
+                    fields: "value",
                     notadd: "not"
                 },
                 _parsedUrl: {
@@ -849,13 +849,13 @@ describe("Test index helper library", function () {
             spyOn(fs, "createOffer").and.callThrough();
             spyOn(fs, "search").and.returnValue(Promise.resolve(results));
 
-            indexes.getMiddleware(fs.reg, fs.createOffer, fs.search, ["notadd"], req)
+            indexes.getMiddleware(fs.reg, fs.createOffer, fs.search, req)
                 .then(() => {
                     expect(fs.reg.test).toHaveBeenCalledWith("url");
                     expect(fs.createOffer).toHaveBeenCalled();
                     expect(fs.search).toHaveBeenCalledWith(search);
 
-                    expect(req.apiUrl).toEqual("path?other=value");
+                    expect(req.apiUrl).toEqual("path?id=&fields=value");
                     done();
                 });
         });

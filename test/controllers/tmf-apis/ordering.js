@@ -362,6 +362,40 @@ describe('Ordering API', function() {
                                   });
                 });
 
+                it('should change request URL to not add any id if no order results', function(done) {
+                    requestHelper(done,
+                                  [],
+                                  "relatedParty.id=someother",
+                                  {
+                                      "relatedParty.id": "someother"
+                                  },
+                                  "id=",
+                                  {
+                                      offset: 0,
+                                      pageSize: 25,
+                                      sort: ["sortedId", "asc"],
+                                      query: {AND: [{relatedPartyHash: [md5("someother")]}]}
+                                  });
+                });
+
+                it('should change request URL adding extra params and ids', function(done) {
+                    requestHelper(done,
+                                  [1, 2],
+                                  "depth=2&fields=name",
+                                  {
+                                      depth: "2",
+                                      fields: "name"
+                                  },
+                                  "id=1,2&depth=2&fields=name",
+                                  {
+                                      offset: 0,
+                                      pageSize: 25,
+                                      sort: ["sortedId", "asc"],
+                                      query: {AND: [{"*": ["*"]}]}
+                                  });
+
+                });
+
                 it('should change request URL to include order IDs when priority is provided', function(done) {
                     testQueryParameters(done, { priority: "prior"});
                 });

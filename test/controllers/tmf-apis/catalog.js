@@ -2989,16 +2989,35 @@ describe('Catalog API', function() {
             errorRequestHelper(done, "catalog", "relatedParty.id=rock", { "relatedParty.id": "rock"});
         });
 
+        it('should change request URL to not add any id if no catalog results', function(done) {
+            requestHelper(done,
+                          "catalog",
+                          [],
+                          "relatedParty.id=someother",
+                          {
+                              "relatedParty.id": "someother"
+                          },
+                          "id=",
+                          {
+                              offset: 0,
+                              pageSize: 25,
+                              sort: ["sortedId", "asc"],
+                              query: {AND: [{relatedPartyHash: [md5("someother")]}]}
+                          });
+        });
+
         it('should change request URL to include catalog IDs when relatedParty.id is provided', function(done) {
             requestHelper(done,
                           "catalog",
                           [2, 12],
-                          "relatedParty.id=rock-8&extraparam=hola",
+                          "relatedParty.id=rock-8&extraparam=hola&depth=2&fields=name",
                           {
                               "relatedParty.id": "rock-8",
-                              extraparam: "hola"
+                              extraparam: "hola",
+                              depth: "2",
+                              fields: "name"
                           },
-                          "id=2,12&extraparam=hola",
+                          "id=2,12&depth=2&fields=name",
                           {
                               offset: 0,
                               pageSize: 25,
@@ -3009,6 +3028,23 @@ describe('Catalog API', function() {
 
         it('should not change request URL when product index fails', function (done) {
             errorRequestHelper(done, "product", "relatedParty.id=rock", { "relatedParty.id": "rock"});
+        });
+
+        it('should change request URL to not add any id if no product results', function(done) {
+            requestHelper(done,
+                          "product",
+                          [],
+                          "relatedParty.id=someother",
+                          {
+                              "relatedParty.id": "someother"
+                          },
+                          "id=",
+                          {
+                              offset: 0,
+                              pageSize: 25,
+                              sort: ["sortedId", "asc"],
+                              query: {AND: [{relatedPartyHash: [md5("someother")]}]}
+                          });
         });
 
         it('should change request URL to include product IDs when relatedParty.id is provided', function(done) {
@@ -3033,6 +3069,23 @@ describe('Catalog API', function() {
             errorRequestHelper(done, "offer", "relatedParty=rock", { "relatedParty": "rock" });
         });
 
+        it('should change request URL to not add any id if no offer results', function(done) {
+            requestHelper(done,
+                          "offer",
+                          [],
+                          "relatedParty=someother",
+                          {
+                              relatedParty: "someother"
+                          },
+                          "id=",
+                          {
+                              offset: 0,
+                              pageSize: 25,
+                              sort: ["sortedId", "asc"],
+                              query: {AND: [{userId: [md5("someother")]}]}
+                          });
+        });
+
         it('should change request URL to include offering IDs when the related party is provided', function(done) {
             requestHelper(done,
                           "offer",
@@ -3043,7 +3096,7 @@ describe('Catalog API', function() {
                               offset: 3,
                               other: "test"
                           },
-                          "id=9,11&other=test",
+                          "id=9,11",
                           {
                               offset: 3,
                               pageSize: 25,

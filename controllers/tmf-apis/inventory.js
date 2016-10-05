@@ -39,8 +39,6 @@ var inventory = (function() {
 
     var inventoryRegex = new RegExp('/product(\\?|$)');
 
-    var keysUsed = ["relatedParty.id", "offset", "size", "status", "name"];
-
     var createQuery = indexes.genericCreateQuery.bind(
         null,
         ["status", "name"],
@@ -52,7 +50,7 @@ var inventory = (function() {
         }
     );
 
-    var getInventoryRequest = indexes.getMiddleware.bind(null, inventoryRegex, createQuery, indexes.searchInventory, keysUsed);
+    var getInventoryRequest = indexes.getMiddleware.bind(null, inventoryRegex, createQuery, indexes.searchInventory);
 
     var methodIndexed = function methodIndexed(req) {
         return getInventoryRequest(req);
