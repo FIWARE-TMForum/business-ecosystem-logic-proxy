@@ -17,6 +17,7 @@ var authorizeService = require('./controllers/authorizeService').authorizeServic
     session = require('express-session'),
     shoppingCart = require('./controllers/shoppingCart').shoppingCart,
     tmf = require('./controllers/tmf').tmf,
+    TokenService = require('./db/schemas/tokenService'),
     trycatch = require('trycatch'),
     url = require('url'),
     utils = require('./lib/utils'),
@@ -72,21 +73,30 @@ config.mongoDb.db = config.mongoDb.db || 'belp';
 config.revenueModel = (config.revenueModel && config.revenueModel >= 0 && config.revenueModel <= 100 ) ? config.revenueModel : 30;
 
 var PORT = config.https.enabled ?
-    config.https.port || 443 :      // HTTPS
-    config.port || 80;              // HTTP
+	config.https.port || 443 :      // HTTPS
+        config.port || 80;              // HTTP
 
 var FIWARE_STRATEGY = new FIWAREStrategy({
-        clientID: config.oauth2.clientID,
-        clientSecret: config.oauth2.clientSecret,
-        callbackURL: config.oauth2.callbackURL,
-        serverURL: config.oauth2.server
-    },
-
-    function(accessToken, refreshToken, profile, done) {
-        profile['accessToken'] = accessToken;
-        done(null, profile);
-    }
-);
+    clientID: config.oauth2.clientID,
+    clientSecret: config.oauth2.clientSecret,
+    callbackURL: config.oauth2.callbackURL,
+    serverURL: config.oauth2.server
+}, function (accessToken, refreshToken, profile, done) {
+    profile['accessToken'] = accessToken;
+    profile['refreshToken'] = refreshToken;
+    // Save
+    TokenService.update(
+        { userId: profile.id},
+        { authToken: accessToken, refreshToken: refreshToken },
+        { upsert: true, setDefaultsOnInsert: true },
+        function (err) {
+            if (err) {
+                done(err);
+            } else {
+                done(null, profile);
+            }
+        });
+});
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
@@ -205,28 +215,37 @@ var failIfNotAuthenticated = function(req, res, next) {
 };
 
 var headerAuthentication = function(req, res, next) {
+    var askUserToken = function (token, end) {
+        FIWARE_STRATEGY.userProfile(token, (err, userProfile) => {
+            if (err) {
+                utils.log(logger, 'warn', req, 'Token ' + token + ' invalid');
+                utils.sendUnauthorized(res, 'invalid auth-token');
+            } else {
+                if (userProfile.appId !== config.oauth2.clientID) {
+                    utils.log(logger, 'warn', req, 'Token ' + token + ' is from a different app');
+                    if (end) {
+                        utils.sendUnauthorized(res, 'You need to login in the platform first');
+                    } else {
+                        FIWARE_STRATEGY.sameToken(token, userProfile.id, () => {
+                            askUserToken(token, true);
+                        });
+                    }
+                } else {
+                    req.user = userProfile;
+                    req.user.accessToken = userProfile.accessToken;
+                    next();
+                }
+
+            }
+        });
+    };
 
     // If the user is already logged, this is not required...
     if (!req.user) {
 
         try {
             var authToken = utils.getAuthToken(req.headers);
-            FIWARE_STRATEGY.userProfile(authToken, function (err, userProfile) {
-                if (err) {
-                    utils.log(logger, 'warn', req, 'Token ' + authToken + ' invalid');
-                    utils.sendUnauthorized(res, 'invalid auth-token');
-                } else {
-                    // Check that the provided access token is valid for the given application
-                    if (userProfile.appId !== config.oauth2.clientID) {
-                        utils.log(logger, 'warn', req, 'Token ' + authToken + ' is from a different app');
-                        utils.sendUnauthorized(res, 'The auth-token scope is not valid for the current application');
-                    } else {
-                        req.user = userProfile;
-                        req.user.accessToken = authToken;
-                        next();
-                    }
-                }
-            });
+            askUserToken(authToken, false);
 
         } catch (err) {
 
@@ -252,19 +271,16 @@ FIWARE_STRATEGY._userProfile = FIWARE_STRATEGY.userProfile;
 
 FIWARE_STRATEGY.userProfile = function(authToken, callback) {
 
-    // TODO: Remove tokens from the cache every hour...
-
-    if (tokensCache[authToken]) {
+    if (tokensCache[authToken] && (tokensCache[authToken].expires - Date.now() >= 5000)) {
         logger.debug('Using cached token for user ' +  tokensCache[authToken].id);
         callback(null, tokensCache[authToken]);
     } else {
-
         FIWARE_STRATEGY._userProfile(authToken, function(err, userProfile) {
-
             if (err) {
                 callback(err);
             } else {
                 logger.debug('Token for user ' + userProfile.id + ' stored');
+                userProfile.expires = Date.now() + 3600000;
                 tokensCache[authToken] = userProfile;
                 callback(err, userProfile);
             }
@@ -272,6 +288,69 @@ FIWARE_STRATEGY.userProfile = function(authToken, callback) {
     }
 };
 
+// Refresh token & update data in db
+var refreshToken = function refreshToken(id, refreshToken, cb) {
+    FIWARE_STRATEGY._oauth2.getOAuthAccessToken(refreshToken, { grant_type: "refresh_token" }, (err, authToken, newRefresh) => {
+        if (err) {
+            cb(err);
+        } else {
+            TokenService.update(
+                { userId: id },
+                { authToken: authToken, refreshToken: newRefresh, expire: Date.now() + 3600000 },
+                () => {
+                    cb(err, authToken, newRefresh);
+                }
+            );
+        }
+
+    });
+};
+
+var askProfileOrRefresh = function askProfileOrRefresh(data, cb) {
+    var refresh = function refresh() {
+        refreshToken(data.userId, data.refreshToken, (err, authToken) => {
+            if (err) {
+                cb(err);
+            } else {
+                FIWARE_STRATEGY.userProfile(authToken, (err) => cb(err, authToken));
+            }
+        });
+    };
+
+    if (data.expire - Date.now() <= 5000) {
+        refresh();
+    } else {
+        FIWARE_STRATEGY.userProfile(data.authToken, (err) => {
+            // If err, refresh && ask again
+            if (err) {
+                refresh();
+            } else {
+                cb(err, data.authToken);
+            }
+        });
+    }
+};
+
+FIWARE_STRATEGY.sameToken = function (authToken, id, cb) {
+    TokenService.findOne({ userId: id }, (err, data) => {
+        if (!err) {
+            if (!tokensCache[data.authToken]) {
+                askProfileOrRefresh(data, (err, token) => {
+                    if (!err) {
+                        tokensCache[authToken] = tokensCache[token];
+                    }
+
+                    cb();
+                });
+                return;
+            }
+
+            tokensCache[authToken] = tokensCache[data.authToken];
+        }
+
+        cb();
+    });
+};
 
 // Configure Passport to use FIWARE as authentication strategy
 
