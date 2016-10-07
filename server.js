@@ -16,6 +16,7 @@ var authorizeService = require('./controllers/authorizeService').authorizeServic
     passport = require('passport'),
     session = require('express-session'),
     shoppingCart = require('./controllers/shoppingCart').shoppingCart,
+    management = require('./controllers/management').management,
     tmf = require('./controllers/tmf').tmf,
     TokenService = require('./db/schemas/tokenService'),
     trycatch = require('trycatch'),
@@ -418,6 +419,11 @@ app.get(config.shoppingCartPath + '/item/:id', shoppingCart.getItem);
 app.delete(config.shoppingCartPath + '/item/:id', shoppingCart.remove);
 app.post(config.shoppingCartPath + '/empty', shoppingCart.empty);
 
+/////////////////////////////////////////////////////////////////////
+////////////////////////// MANAGEMENT API ///////////////////////////
+/////////////////////////////////////////////////////////////////////
+
+app.get('/' + config.endpoints.management.path + '/count/:size', management.getCount);
 
 /////////////////////////////////////////////////////////////////////
 ///////////////////////// AUTHORIZE SERVICE /////////////////////////
