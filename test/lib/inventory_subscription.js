@@ -60,7 +60,7 @@ describe('Test inventory subscription helper and endpoint', function () {
     };
 
     var hubsUrl = function hubsUrl() {
-        return (config.appSsl ? "https" : "http") + "://" + config.appHost + ":" + utils.getAPIPort("DSProductInventory") + "/DSProductInventory/api/productInventory/v2/hub";
+        return (config.appSsl ? "https" : "http") + "://" + utils.getAPIHost("DSProductInventory") + ":" + utils.getAPIPort("DSProductInventory") + "/DSProductInventory/api/productInventory/v2/hub";
     };
 
     it('should not recreate subscription if already subscribed', function (done) {

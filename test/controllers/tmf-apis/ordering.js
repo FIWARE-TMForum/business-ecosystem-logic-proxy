@@ -26,9 +26,9 @@ var nock = require('nock'),
 describe('Ordering API', function() {
 
     var config = testUtils.getDefaultConfig();
-    var SERVER = (config.appSsl ? 'https' : 'http') + '://' + config.appHost + ':' + config.endpoints.ordering.port;
-    var CATALOG_SERVER = (config.appSsl ? 'https' : 'http') + '://' + config.appHost + ':' + config.endpoints.catalog.port;
-    var BILLING_SERVER = (config.appSsl ? 'https' : 'http') + '://' + config.appHost + ':' + config.endpoints.billing.port;
+    var SERVER = (config.appSsl ? 'https' : 'http') + '://' + config.endpoints.ordering.host + ':' + config.endpoints.ordering.port;
+    var CATALOG_SERVER = (config.appSsl ? 'https' : 'http') + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
+    var BILLING_SERVER = (config.appSsl ? 'https' : 'http') + '://' + config.endpoints.billing.host + ':' + config.endpoints.billing.port;
 
     // Errors
     var BILLING_ACCOUNT_REQUIRED = {
@@ -1131,6 +1131,7 @@ describe('Ordering API', function() {
         //////////////////////////////////////////////////////////////////////////////////////////////
 
         describe('Update (PATCH)', function() {
+            var SERVER = 'http://ordering.com:189';
 
             it('should fail when the body is invalid', function (done) {
 
@@ -1158,7 +1159,6 @@ describe('Ordering API', function() {
 
             it('should fail when the ordering cannot be retrieved', function (done) {
 
-                var SERVER = 'http://example.com:189';
                 var productOfferingPath = '/productOrdering/ordering/7';
 
                 var orderingApi = getOrderingAPI({}, {}, {});
@@ -1199,7 +1199,6 @@ describe('Ordering API', function() {
                 };
 
                 var orderId = 7;
-                var SERVER = 'http://example.com:189';
                 var productOfferingPath = '/productOrdering/ordering/7';
 
                 var tmfUtils = jasmine.createSpyObj('tmfUtils', ['hasPartyRole']);

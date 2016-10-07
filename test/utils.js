@@ -28,43 +28,56 @@ var defaultConfig = {
             customer: 'customer'
         }
     },
-    appHost: 'example.com',
     appSsl: false,
     endpoints: {
+        management: {
+            path: 'management',
+            host: 'localhost',
+            port: 7496
+        },
         catalog: {
             path: 'catalog',
+            host: 'catalog.com',
             port: 99
         },
         ordering: {
             path: 'ordering',
+            host: 'ordering.com',
             port: 189
         },
         inventory: {
             path: 'inventory',
+            host: 'inventory.com',
             port: 475
         },
         charging: {
             path: 'charging',
+            host: 'charging.com',
             port: 35
         },
         rss: {
             path: 'rss',
+            host: 'rss.com',
             port: 753
         },
         party: {
             path: 'party',
+            host: 'party.com',
             port: 74
         },
         billing: {
             path: 'billing',
+            host: 'billing.com',
             port: 78
         },
         customer: {
             path: 'customer',
+            host: 'customer.com',
             port: 82
         },
         usage: {
             path: 'usage',
+            host: 'usage.com',
             port: 78
         }
     },

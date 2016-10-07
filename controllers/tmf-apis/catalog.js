@@ -55,7 +55,7 @@ var catalog = (function() {
 
     var retrieveAsset = function(assetPath, callback) {
 
-        var uri = utils.getAPIURL(config.appSsl, config.appHost, config.endpoints.catalog.port, assetPath);
+        var uri = utils.getAPIURL(config.appSsl, config.endpoints.catalog.host, config.endpoints.catalog.port, assetPath);
 
         request(uri, function(err, response, body) {
 

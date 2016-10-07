@@ -25,7 +25,7 @@ var config = require("./config"),
     Promise = require("promiz");
 
 var createUrl = function createUrl(api, extra) {
-    return (config.appSsl ? "https" : "http") + "://" + config.appHost + ":" + utils.getAPIPort(api) + extra;
+    return (config.appSsl ? "https" : "http") + "://" + utils.getAPIHost(api) + ":" + utils.getAPIPort(api) + extra;
 };
 
 var genericRequest = function genericRequest(options) {
