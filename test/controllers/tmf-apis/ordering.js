@@ -319,8 +319,6 @@ describe('Ordering API', function() {
                                   },
                                   "id=3,4",
                                   {
-                                      offset: 0,
-                                      pageSize: 25,
                                       sort: ["sortedId", "asc"],
                                       query: {AND: [{relatedPartyHash: [md5("rock")]}]}
                                   }
@@ -341,8 +339,6 @@ describe('Ordering API', function() {
                                   params,
                                   "id=7,9,11",
                                   {
-                                      offset: 0,
-                                      pageSize: 25,
                                       sort: ["sortedId", "asc"],
                                       query: {AND: ANDs}
                                   });
@@ -355,8 +351,6 @@ describe('Ordering API', function() {
                                   {},
                                   "id=1,2",
                                   {
-                                      offset: 0,
-                                      pageSize: 25,
                                       sort: ["sortedId", "asc"],
                                       query: {AND: [{"*": ["*"]}]}
                                   });
@@ -371,8 +365,6 @@ describe('Ordering API', function() {
                                   },
                                   "id=",
                                   {
-                                      offset: 0,
-                                      pageSize: 25,
                                       sort: ["sortedId", "asc"],
                                       query: {AND: [{relatedPartyHash: [md5("someother")]}]}
                                   });
@@ -388,8 +380,6 @@ describe('Ordering API', function() {
                                   },
                                   "id=1,2&depth=2&fields=name",
                                   {
-                                      offset: 0,
-                                      pageSize: 25,
                                       sort: ["sortedId", "asc"],
                                       query: {AND: [{"*": ["*"]}]}
                                   });

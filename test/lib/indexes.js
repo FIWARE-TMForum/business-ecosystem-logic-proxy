@@ -660,14 +660,39 @@ describe("Test index helper library", function () {
             expect(fs.f).toHaveBeenCalledWith(req, { AND: [] });
 
             expect(query).toEqual({
-                offset: 0,
-                pageSize: 25,
                 sort: ["sortedId", "asc"],
                 query: {
                     AND: []
                 }
             });
         });
+
+
+        it('should create query correctly with offset and size', function() {
+            var indexes = getIndexLib();
+
+            var fs = {f: () => {}};
+            spyOn(fs, "f");
+            var req = {query: {
+                offset: 2,
+                size: 23
+            }};
+
+            var query = indexes.genericCreateQuery([], "", fs.f, req);
+
+            expect(fs.f).toHaveBeenCalledWith(req, { AND: [] });
+
+            expect(query).toEqual({
+                offset: 2,
+                pageSize: 23,
+                sort: ["sortedId", "asc"],
+                query: {
+                    AND: []
+                }
+            });
+        });
+
+
 
         it('should create query with extra parameters', function() {
             var indexes = getIndexLib();
@@ -681,8 +706,6 @@ describe("Test index helper library", function () {
             var query = indexes.genericCreateQuery(["key1", "key2", "notextra"], "", null, req);
 
             expect(query).toEqual({
-                offset: 0,
-                pageSize: 25,
                 sort: ["sortedId", "asc"],
                 query: {
                     AND: [
@@ -793,8 +816,6 @@ describe("Test index helper library", function () {
             };
 
             var search = {
-                offset: 0,
-                pageSize: 25,
                 sort: ["sortedId", "asc"],
                 query: {
                     AND: [{ "*": ["*"]}]
