@@ -86,8 +86,8 @@ var FIWARE_STRATEGY = new FIWAREStrategy({
     profile['refreshToken'] = refreshToken;
     // Save
     TokenService.update(
-        { userId: profile.id},
-        { authToken: accessToken, refreshToken: refreshToken },
+        { userId: profile.id },
+        { authToken: accessToken, refreshToken: refreshToken, expire: Date.now() + 3600000 },
         { upsert: true, setDefaultsOnInsert: true },
         function (err) {
             if (err) {
