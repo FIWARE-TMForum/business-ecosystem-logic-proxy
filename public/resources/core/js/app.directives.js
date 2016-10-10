@@ -36,6 +36,7 @@
         .directive('shippingAddressForm', shippingAddressFormDirective)
         .directive('pricePlanForm', pricePlanFormDirective)
         .directive('pricePlanTable', pricePlanTableDirective)
+        .directive('pager', pagerDirective)
         .directive('relationshipCreateForm', relationshipCreateFormDirective)
         .directive('relationshipDeleteForm', relationshipDeleteFormDirective)
         .directive('convertToDate', convertToDateDirective)
@@ -130,6 +131,46 @@
             },
             templateUrl: 'directives/forms/priceplan'
         };
+    }
+
+    function pagerDirective($window, $interval) {
+        return {
+            restrict: 'E',
+            scope: {
+                vm: '=controller',
+                pageSize: '=size',
+                max: '=max'
+            },
+            templateUrl: 'directives/pager',
+            link: link
+        };
+
+        function link($scope, element, attrs) {
+            function repositionPager(retry) {
+                var nav = element.find('nav');
+                var ul = element.find('ul');
+
+                var prevMargin = ul.attr('style');
+                var margin =  Math.floor((nav.width()/2) - (ul.width()/2));
+                var marginStr = 'margin-left: ' + margin +'px;';
+
+                if (prevMargin == marginStr && retry) {
+                    $interval(function() {
+                        repositionPager(false);
+                    }, 100);
+                } else {
+                    ul.attr('style', marginStr);
+                }
+            }
+
+            angular.element($window).bind('resize', function() {
+                repositionPager(true);
+            });
+
+            $interval(function() {
+                repositionPager(false);
+            }, 100);
+        }
     }
 
     function businessAddressFormDirective() {

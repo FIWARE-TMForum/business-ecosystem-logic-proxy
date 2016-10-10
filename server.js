@@ -507,6 +507,7 @@ var jsAppFilesToInject = [
     'controllers/unauthorized.controller',
     'controllers/party.individual.controller',
     'controllers/party.contact-medium.controller',
+    'controllers/pager.controller',
     'controllers/billing-account.controller',
     'controllers/customer.controller',
     'routes/offering.routes',

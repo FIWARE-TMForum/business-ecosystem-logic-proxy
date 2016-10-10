@@ -38,18 +38,38 @@
         .controller('CatalogueDetailCtrl', CatalogueDetailController)
         .controller('CatalogueUpdateCtrl', CatalogueUpdateController);
 
-    function CatalogueListController(Catalogue, Utils) {
+    function CatalogueListController($scope, Catalogue, Utils) {
         /* jshint validthis: true */
         var vm = this;
 
         vm.list = [];
+        vm.offset = -1;
+        vm.size = -1;
+        vm.getElementsLength = getElementsLength;
 
-        Catalogue.search().then(function (catalogueList) {
-            angular.copy(catalogueList, vm.list);
-            vm.list.status = LOADED;
-        }, function (response) {
-            vm.error = Utils.parseError(response, 'It was impossible to load the list of catalogs');
-            vm.list.status = ERROR;
+        function getElementsLength() {
+            return Catalogue.count();
+        }
+
+        $scope.$watch(function () {
+            return vm.offset;
+        }, function () {
+            vm.list.status = LOADING;
+
+            if (vm.offset >= 0) {
+                var page = {
+                    offset: vm.offset,
+                    size: vm.size
+                };
+
+                Catalogue.search(page).then(function (catalogueList) {
+                    angular.copy(catalogueList, vm.list);
+                    vm.list.status = LOADED;
+                }, function (response) {
+                    vm.error = Utils.parseError(response, 'It was impossible to load the list of catalogs');
+                    vm.list.status = ERROR;
+                });
+            }
         });
     }
 
