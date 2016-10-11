@@ -20,7 +20,9 @@
  */
 
 var proxyrequire = require("proxyquire"),
-    md5 = require("blueimp-md5");
+    md5 = require("blueimp-md5"),
+    config = require("../../config"),
+    utils = require("../../lib/utils");
 
 describe("Test index helper library", function () {
     var createSearchMock = function createSearchMock(path, err, extra) {
@@ -72,13 +74,18 @@ describe("Test index helper library", function () {
         };
     };
 
-    var getIndexLib = function getIndexLib(method) {
+    var getIndexLib = function getIndexLib(method, request) {
         if (!method) {
             method = function () {};
         }
 
+        if (!request) {
+            request = function () {};
+        }
+
         return proxyrequire("../../lib/indexes.js", {
-            "search-index": method
+            "search-index": method,
+            request: request
         });
     };
 
@@ -91,7 +98,8 @@ describe("Test index helper library", function () {
 
     var helper = function helper(db, err, extra, f1, success, error) {
         var si = createSearchMock(db, err, extra);
-        var indexes = getIndexLib(si.method);
+        var indexes = getIndexLib(si.method, extra.request);
+
         indexes[f1].apply(this, Array.prototype.slice.call(arguments, 6))
             .then(extra => success(si.si, extra))
             .catch(err => error(si.si, err));
@@ -382,15 +390,23 @@ describe("Test index helper library", function () {
         isBundle: false
     };
 
-    var bundleOffer = {
+    var notBundleCategoriesOffer = Object.assign({}, notBundleOffer, {
+        id: 12,
+        lifecycleStatus: "Disabled",
+        category: [{ id: 13, href: "http://cat/13" }]
+    });
+
+    var notBundleMultipleCategoriesOffer = Object.assign({}, notBundleCategoriesOffer, {
+        category: [{ id: 13, href: "http:13" }, { id: 14, href: "http:14" }]
+    });
+
+    var bundleOffer = Object.assign({}, notBundleOffer, {
         id: 3,
-        bundledProductOffering: [{id: 2}],
-        name: "name",
-        description: "description",
+        bundledProductOffering: [{ id: 2 }],
         href: "http://3",
-        lifecycleStatus: "Active",
+        productSpecification: null,
         isBundle: true
-    };
+    });
 
     var bundleExpected = {
         id: "offering:3",
@@ -404,17 +420,28 @@ describe("Test index helper library", function () {
         isBundle: true
     };
 
-    var notBundleExpected = {
+    var notBundleExpected = Object.assign({}, bundleExpected, {
         id: "offering:2",
         originalId: 2,
         sortedId: "000000000002",
-        body: ["name", "description"],
-        userId: md5("rock-8"),
         productSpecification: 1,
         href: "http://2",
-        lifecycleStatus: "Active",
         isBundle: false
-    };
+    });
+
+    var notBundleCategoriesOfferExpect = Object.assign({}, notBundleExpected, {
+        id: "offering:12",
+        originalId: 12,
+        sortedId: "000000000012",
+        lifecycleStatus: "Disabled",
+        categoriesId: [13],
+        categoriesName: ["TestCat"]
+    });
+
+    var notBundleMultipleCategoriesOfferExpected = Object.assign({}, notBundleCategoriesOfferExpect, {
+        categoriesId: [13, 14],
+        categoriesName: ["TestCat13", "TestCat14"]
+    });
 
     it('should convert offer without bundle with an explicit user', function (done) {
         var user = {id: "rock-8"};
@@ -452,6 +479,54 @@ describe("Test index helper library", function () {
             expect("Error, promise rejected instead of resolved: " + err).toBe(true);
             done();
         }, notBundleOffer);
+    });
+
+    it('should convert offer with categories', function (done) {
+        var user = {id: "rock-8"};
+
+        var extra = { request: (url, f) => {
+            var curl = (config.appSsl ? "https" : "http") + "://" + config.appHost + ":" + utils.getAPIPort("DSProductCatalog") + "/DSProductCatalog/api/catalogManagement/v2/category/13";
+            expect(url).toEqual(curl);
+
+            f(null, {}, JSON.stringify({
+                id: 13,
+                name: "TestCat"
+            }));
+        }};
+
+        helper("indexes/products", null, extra, "convertOfferingData", (si, extra) => {
+            expect(extra).toEqual(notBundleCategoriesOfferExpect);
+            expect(si.search).not.toHaveBeenCalled();
+            done();
+        }, (si, err) => {
+            expect("Error promise rejected instead of resolved: " + err).toBe(true);
+            done();
+        }, notBundleCategoriesOffer, user);
+    });
+
+    it('should convert offer with multiple categories', function (done) {
+        var user = {id: "rock-8"};
+        var ids = [13, 14];
+
+        var extra = { request: (url, f) => {
+            var id = ids.shift();
+            var curl = (config.appSsl ? "https" : "http") + "://" + config.appHost + ":" + utils.getAPIPort("DSProductCatalog") + "/DSProductCatalog/api/catalogManagement/v2/category/" + id;
+            expect(url).toEqual(curl);
+
+            f(null, {}, JSON.stringify({
+                id: id,
+                name: "TestCat" + id
+            }));
+        }};
+
+        helper("indexes/products", null, extra, "convertOfferingData", (si, extra) => {
+            expect(extra).toEqual(notBundleMultipleCategoriesOfferExpected);
+            expect(si.search).not.toHaveBeenCalled();
+            done();
+        }, (si, err) => {
+            expect("Error promise rejected instead of resolved: " + err).toBe(true);
+            done();
+        }, notBundleMultipleCategoriesOffer, user);
     });
 
     it('should convert offer with bundle with an explicit user', function(done) {
