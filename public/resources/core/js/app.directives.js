@@ -133,7 +133,7 @@
         };
     }
 
-    function pagerDirective($window, $interval) {
+    function pagerDirective($window, $timeout) {
         return {
             restrict: 'E',
             scope: {
@@ -150,16 +150,18 @@
                 var nav = element.find('nav');
                 var ul = element.find('ul');
 
-                var prevMargin = ul.attr('style');
                 var margin =  Math.floor((nav.width()/2) - (ul.width()/2));
+
+                var prevMargin = ul.attr('style');
                 var marginStr = 'margin-left: ' + margin +'px;';
 
                 if (prevMargin == marginStr && retry) {
-                    $interval(function() {
+                    $timeout(function() {
                         repositionPager(false);
                     }, 100);
                 } else {
                     ul.attr('style', marginStr);
+                    nav.removeClass('invisible');
                 }
             }
 
@@ -167,9 +169,9 @@
                 repositionPager(true);
             });
 
-            $interval(function() {
+            $timeout(function() {
                 repositionPager(false);
-            }, 100);
+            }, 500);
         }
     }
 
