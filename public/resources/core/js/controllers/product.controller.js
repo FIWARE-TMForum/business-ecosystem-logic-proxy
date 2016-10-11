@@ -36,33 +36,56 @@
         .controller('ProductCreateCtrl', ProductCreateController)
         .controller('ProductUpdateCtrl', ProductUpdateController);
 
-    function ProductSearchController($state, $rootScope, EVENTS, ProductSpec, LIFECYCLE_STATUS, PROMISE_STATUS, Utils) {
+    function ProductSearchController($scope, $state, $rootScope, EVENTS, ProductSpec, LIFECYCLE_STATUS, DATA_STATUS, Utils) {
         /* jshint validthis: true */
         var vm = this;
 
         vm.state = $state;
-        vm.STATUS = PROMISE_STATUS;
+        vm.STATUS = DATA_STATUS;
+
+        vm.offset = -1;
+        vm.size = -1;
+        vm.list = [];
 
         vm.list = [];
         vm.list.flow = $state.params.flow;
 
         vm.showFilters = showFilters;
-
-        var searchPromise = ProductSpec.search($state.params);
-
-        searchPromise.then(function (productList) {
-            angular.copy(productList, vm.list);
-        }, function (response) {
-            vm.errorMessage = Utils.parseError(response, 'It was impossible to load the list of products');
-        });
-
-        Object.defineProperty(vm, 'status', {
-            get: function () { return searchPromise != null ? searchPromise.$$state.status : -1; }
-        });
+        vm.getElementsLength = getElementsLength;
 
         function showFilters() {
             $rootScope.$broadcast(EVENTS.FILTERS_OPENED, LIFECYCLE_STATUS);
         }
+
+        function getElementsLength() {
+            var params = {};
+            angular.copy($state.params, params);
+            return ProductSpec.count(params);
+        }
+
+        vm.list.status = vm.STATUS.LOADING;
+        $scope.$watch(function () {
+            return vm.offset;
+
+        }, function () {
+            vm.list.status = vm.STATUS.LOADING;
+
+            if (vm.offset >= 0) {
+                var params = {};
+                angular.copy($state.params, params);
+
+                params.offset = vm.offset;
+                params.size = vm.size;
+
+                ProductSpec.search(params).then(function (productList) {
+                    angular.copy(productList, vm.list);
+                    vm.list.status = vm.STATUS.LOADED;
+                }, function (response) {
+                    vm.errorMessage = Utils.parseError(response, 'It was impossible to load the list of products');
+                    vm.list.status = vm.STATUS.ERROR;
+                });
+            }
+        });
     }
 
     function ProductCreateController($q, $scope, $state, $rootScope, EVENTS, PROMISE_STATUS, ProductSpec, Asset, AssetType, Utils) {

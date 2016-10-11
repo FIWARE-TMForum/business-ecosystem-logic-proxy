@@ -110,9 +110,7 @@
                 params.offset = vm.offset;
                 params.size = vm.size;
 
-                var searchPromise = Catalogue.search(params);
-
-                searchPromise.then(function (catalogueList) {
+                Catalogue.search(params).then(function (catalogueList) {
                     angular.copy(catalogueList, vm.list);
                     vm.list.status = vm.STATUS.LOADED;
                 }, function (response) {
