@@ -1031,6 +1031,12 @@ var catalog = (function() {
             if (req.query.relatedParty) {
                 query.AND.push( { userId: [indexes.fixUserId(req.query.relatedParty)] });
 	    }
+            if (req.query["category.id"]) {
+                query.AND.push( { categoriesId: [req.query["category.id"]]});
+            }
+            if (req.query["category.name"]) {
+                query.AND.push( { categoriesName: [req.query["category.name"].toLowerCase()]});
+            }
 	});
 
     var createCatalogQuery = indexes.genericCreateQuery.bind(

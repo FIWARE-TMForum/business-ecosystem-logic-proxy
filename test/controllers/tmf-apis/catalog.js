@@ -2999,8 +2999,6 @@ describe('Catalog API', function() {
                           },
                           "id=",
                           {
-                              offset: 0,
-                              pageSize: 25,
                               sort: ["sortedId", "asc"],
                               query: {AND: [{relatedPartyHash: [md5("someother")]}]}
                           });
@@ -3019,8 +3017,6 @@ describe('Catalog API', function() {
                           },
                           "id=2,12&depth=2&fields=name",
                           {
-                              offset: 0,
-                              pageSize: 25,
                               sort: ["sortedId", "asc"],
                               query: {AND: [{relatedPartyHash: [md5("rock-8")]}]}
                           });
@@ -3040,8 +3036,6 @@ describe('Catalog API', function() {
                           },
                           "id=",
                           {
-                              offset: 0,
-                              pageSize: 25,
                               sort: ["sortedId", "asc"],
                               query: {AND: [{relatedPartyHash: [md5("someother")]}]}
                           });
@@ -3058,8 +3052,6 @@ describe('Catalog API', function() {
                           },
                           "id=3,4,13",
                           {
-                              offset: 0,
-                              pageSize: 3,
                               sort: ["sortedId", "asc"],
                               query: {AND: [{relatedPartyHash: [md5("rock")]}]}
                           });
@@ -3067,6 +3059,36 @@ describe('Catalog API', function() {
 
         it('should not change request URL when offer index fails', function (done) {
             errorRequestHelper(done, "offer", "relatedParty=rock", { "relatedParty": "rock" });
+        });
+
+        it('should request for category', function(done) {
+            requestHelper(done,
+                          "offer",
+                          [],
+                          "category.id=201",
+                          {
+                              "category.id": 201
+                          },
+                          "id=",
+                          {
+                              sort: ["sortedId", "asc"],
+                              query: {AND: [{categoriesId: [201]}]}
+                          });
+        });
+
+        it('should request for category name', function(done) {
+            requestHelper(done,
+                          "offer",
+                          [],
+                          "category.name=TesTCat",
+                          {
+                              "category.name": "TesTCat"
+                          },
+                          "id=",
+                          {
+                              sort: ["sortedId", "asc"],
+                              query: {AND: [{categoriesName: ["testcat"]}]}
+                          });
         });
 
         it('should change request URL to not add any id if no offer results', function(done) {
@@ -3079,8 +3101,6 @@ describe('Catalog API', function() {
                           },
                           "id=",
                           {
-                              offset: 0,
-                              pageSize: 25,
                               sort: ["sortedId", "asc"],
                               query: {AND: [{userId: [md5("someother")]}]}
                           });
@@ -3090,10 +3110,11 @@ describe('Catalog API', function() {
             requestHelper(done,
                           "offer",
                           [9, 11],
-                          "relatedParty=rock&offset=3&other=test",
+                          "relatedParty=rock&offset=3&other=test&size=25",
                           {
                               relatedParty: "rock",
                               offset: 3,
+                              size: 25,
                               other: "test"
                           },
                           "id=9,11",
@@ -3113,8 +3134,6 @@ describe('Catalog API', function() {
                           {},
                           "id=1,2",
                           {
-                              offset: 0,
-                              pageSize: 25,
                               sort: ["sortedId", "asc"],
                               query: {AND: [{"*": ["*"]}]}
                           });
@@ -3136,8 +3155,6 @@ describe('Catalog API', function() {
                           params,
                           "id=7,9,11",
                           {
-                              offset: 0,
-                              pageSize: 25,
                               sort: ["sortedId", "asc"],
                               query: {AND: ANDs}
                           });
