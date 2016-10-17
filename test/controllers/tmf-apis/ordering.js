@@ -320,7 +320,7 @@ describe('Ordering API', function() {
                                   "id=3,4",
                                   {
                                       sort: ["sortedId", "asc"],
-                                      query: {AND: [{relatedPartyHash: [md5("rock")]}]}
+                                      query: [{AND: [{relatedPartyHash: [md5("rock")]}]}]
                                   }
                                  );
                 });
@@ -340,7 +340,7 @@ describe('Ordering API', function() {
                                   "id=7,9,11",
                                   {
                                       sort: ["sortedId", "asc"],
-                                      query: {AND: ANDs}
+                                      query: [{AND: ANDs}]
                                   });
                 };
 
@@ -366,7 +366,7 @@ describe('Ordering API', function() {
                                   "id=",
                                   {
                                       sort: ["sortedId", "asc"],
-                                      query: {AND: [{relatedPartyHash: [md5("someother")]}]}
+                                      query: [{AND: [{relatedPartyHash: [md5("someother")]}]}]
                                   });
                 });
 

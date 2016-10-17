@@ -424,7 +424,7 @@ describe("Test index helper library", function () {
         id: "offering:2",
         originalId: 2,
         sortedId: "000000000002",
-        productSpecification: 1,
+        productSpecification: "000000000001",
         href: "http://2",
         isBundle: false
     });
@@ -546,7 +546,7 @@ describe("Test index helper library", function () {
         var offer = {
             hits: [{
                 document: {
-                    productSpecification: 1
+                    productSpecification: "00000000001"
                 }
             }]
         };
@@ -722,6 +722,48 @@ describe("Test index helper library", function () {
     });
 
     describe("Request helpers", function () {
+        it('should add or condition correctly', function() {
+            var indexes = getIndexLib();
+            var q = { OR: []};
+            indexes.addOrCondition(q, "name", ["test", "test2"]);
+
+            expect(q).toEqual({ OR: [[{name: ["test"]}, {name: ["test2"]}]]});
+        });
+
+        it("should add or when query don't have or", function() {
+            var indexes = getIndexLib();
+            var q = {};
+
+            indexes.addOrCondition(q, "name", ["test"]);
+            expect(q).toEqual({ OR: [[{name: ["test"]}]]});
+        });
+
+        it('should add and condition correctly', function() {
+            var indexes = getIndexLib();
+            var q = { AND: []};
+            indexes.addAndCondition(q, {id: ["rock"]});
+
+            expect(q).toEqual({ AND: [{id: ["rock"]}]});
+        });
+
+        it("should add or when query don't have or", function() {
+            var indexes = getIndexLib();
+            var q = {};
+
+            indexes.addAndCondition(q, "COND");
+            expect(q).toEqual({ AND: ["COND"]});
+        });
+
+        it('should transform query correctly', function() {
+            var indexes = getIndexLib();
+            var q = {};
+            indexes.addAndCondition(q, {id: "rock"});
+            indexes.addAndCondition(q, {name: "rock2"});
+            indexes.addOrCondition(q, "lifecycleStatus", ["Active", "Disabled"]);
+
+            expect(indexes.transformQuery(q));
+        });
+
 
         it('should create query correctly', function() {
             var indexes = getIndexLib();
@@ -732,13 +774,13 @@ describe("Test index helper library", function () {
 
             var query = indexes.genericCreateQuery([], "", fs.f, req);
 
-            expect(fs.f).toHaveBeenCalledWith(req, { AND: [] });
+            expect(fs.f).toHaveBeenCalledWith(req, { AND: [], OR: [] });
 
             expect(query).toEqual({
                 sort: ["sortedId", "asc"],
-                query: {
+                query: [{
                     AND: []
-                }
+                }]
             });
         });
 
@@ -755,19 +797,17 @@ describe("Test index helper library", function () {
 
             var query = indexes.genericCreateQuery([], "", fs.f, req);
 
-            expect(fs.f).toHaveBeenCalledWith(req, { AND: [] });
+            expect(fs.f).toHaveBeenCalledWith(req, { AND: [], OR: [] });
 
             expect(query).toEqual({
                 offset: 2,
                 pageSize: 23,
                 sort: ["sortedId", "asc"],
-                query: {
+                query: [{
                     AND: []
-                }
+                }]
             });
         });
-
-
 
         it('should create query with extra parameters', function() {
             var indexes = getIndexLib();
@@ -782,12 +822,12 @@ describe("Test index helper library", function () {
 
             expect(query).toEqual({
                 sort: ["sortedId", "asc"],
-                query: {
+                query: [{
                     AND: [
                         { key1: ["value1"] },
                         { key2: [23] }
                     ]
-                }
+                }]
             });
         });
 
@@ -931,9 +971,10 @@ describe("Test index helper library", function () {
                 hits: []
             };
             var search = {
-                query: {
+                query: [{
                     AND: [{'search': ['value']}]
-                }};
+                }]
+            };
 
             var fs = {
                 reg: {test: () => {}},
