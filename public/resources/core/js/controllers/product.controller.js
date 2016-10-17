@@ -39,6 +39,7 @@
     function ProductSearchController($scope, $state, $rootScope, EVENTS, ProductSpec, LIFECYCLE_STATUS, DATA_STATUS, Utils) {
         /* jshint validthis: true */
         var vm = this;
+        var filters = {};
 
         vm.state = $state;
         vm.STATUS = DATA_STATUS;
@@ -52,6 +53,7 @@
 
         vm.showFilters = showFilters;
         vm.getElementsLength = getElementsLength;
+        vm.setFilters = setFilters;
 
         function showFilters() {
             $rootScope.$broadcast(EVENTS.FILTERS_OPENED, LIFECYCLE_STATUS);
@@ -61,6 +63,10 @@
             var params = {};
             angular.copy($state.params, params);
             return ProductSpec.count(params);
+        }
+
+        function setFilters(newFilters) {
+            filters = newFilters
         }
 
         vm.list.status = vm.STATUS.LOADING;
@@ -76,6 +82,14 @@
 
                 params.offset = vm.offset;
                 params.size = vm.size;
+
+                if (filters.status) {
+                    params.status = filters.status;
+                }
+
+                if (filters.bundle !== undefined) {
+                    params.bundle = filters.bundle;
+                }
 
                 ProductSpec.search(params).then(function (productList) {
                     angular.copy(productList, vm.list);
@@ -330,7 +344,10 @@
         }
 
         function hasProduct(product) {
-            return vm.data.bundledProductSpecification.indexOf(product) !== -1;
+            var filtered = vm.data.bundledProductSpecification.filter(function (bundledProduct) {
+                return bundledProduct.id == product.id;
+            });
+            return filtered.length > 0;
         }
 
         function uploadAsset(file, contentType, publicFile, callback, errCallback) {

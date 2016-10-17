@@ -130,6 +130,10 @@
                 params['action'] = filters.action;
             }
 
+            if (filters.bundle !== undefined) {
+                params['isBundle'] = filters.bundle;
+            }
+
             method(params, function (productSpecList) {
                 deferred.resolve(productSpecList);
             }, function (response) {
