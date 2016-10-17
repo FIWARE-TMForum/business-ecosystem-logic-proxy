@@ -411,6 +411,7 @@ describe("Test index helper library", function () {
     var bundleExpected = {
         id: "offering:3",
         originalId: 3,
+        name: "name",
         sortedId: "000000000003",
         body: ["name", "description"],
         userId: md5("rock-8"),
@@ -423,6 +424,7 @@ describe("Test index helper library", function () {
     var notBundleExpected = Object.assign({}, bundleExpected, {
         id: "offering:2",
         originalId: 2,
+        name: "name",
         sortedId: "000000000002",
         productSpecification: "000000000001",
         href: "http://2",
@@ -432,6 +434,7 @@ describe("Test index helper library", function () {
     var notBundleCategoriesOfferExpect = Object.assign({}, notBundleExpected, {
         id: "offering:12",
         originalId: 12,
+        name: "name",
         sortedId: "000000000012",
         lifecycleStatus: "Disabled",
         categoriesId: [13],

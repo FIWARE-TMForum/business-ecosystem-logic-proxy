@@ -1047,7 +1047,7 @@ var catalog = (function() {
 
     var createOfferQuery = indexes.genericCreateQuery.bind(
 	null,
-	["isBundle"],
+	["isBundle", "name"],
         "offering",
 	function (req, query) {
             if (req.query.relatedParty) {
