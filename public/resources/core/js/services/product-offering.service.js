@@ -172,15 +172,15 @@
             PATCHABLE_ATTRS: PATCHABLE_ATTRS,
             PricePlan: PricePlan,
             search: search,
+            count: count,
             exists: exists,
             create: create,
             detail: detail,
             update: update
         };
 
-        function search(filters) {
-            var deferred = $q.defer();
-            var params = {}, productFilters = {};
+        function query(deferred, filters, method, callback) {
+            var params = {};
 
             if (!angular.isObject(filters)) {
                 filters = {};
@@ -207,102 +207,32 @@
                 params['category.id'] = filters.categoryId;
             }
 
+            if (filters.action) {
+                params['action'] = filters.action;
+            }
+
             if (filters.owner) {
-                productFilters['owner'] = true;
-
-                ProductSpec.search(productFilters).then(function (productList) {
-                    var products = {};
-
-                    if (productList.length) {
-                        params['productSpecification.id'] = productList.map(function (product) {
-                            products[product.id] = product;
-                            return product.id;
-                        }).join();
-
-                        // Get provider single offerings using product ids
-                        resource.query(params, function (offeringList) {
-                            offeringList.forEach(function (offering) {
-                                extendPricePlans(offering);
-                                offering.productSpecification = products[offering.productSpecification.id];
-                            });
-
-                            // Get provider bundle offerings using the single offering ids
-                            if (offeringList.length) {
-                                var singleOfferings = {};
-
-                                delete params['productSpecification.id'];
-                                params['bundledProductOffering.id'] = offeringList.map(function(offering) {
-                                    singleOfferings[offering.id] = offering;
-                                    return offering.id;
-                                }).join();
-
-                                resource.query(params, function(bundleOffList) {
-                                    bundleOffList.forEach(function(offering) {
-                                        extendPricePlans(offering);
-                                        offering.bundledProductOffering.forEach(function(bundled) {
-                                            bundled.productSpecification = singleOfferings[bundled.id].productSpecification;
-                                        });
-                                        offeringList.push(offering);
-                                    });
-
-                                    deferred.resolve(offeringList);
-                                });
-                            } else {
-                                deferred.resolve([]);
-                            }
-
-                        }, function(response) {
-                            deferred.reject(response);
-                        });
-                    } else {
-                        deferred.resolve([]);
-                    }
-                }, function(response) {
-                    deferred.reject(response);
-                });
+                params['relatedParty'] = User.loggedUser.id;
             } else {
                 params['lifecycleStatus'] = LIFECYCLE_STATUS.LAUNCHED;
-
-                resource.query(params, function (offeringList) {
-
-                    if (offeringList.length) {
-                        var bundleOfferings = [];
-                        productFilters.id = offeringList.map(function (offering) {
-                            var offId = '';
-                            extendPricePlans(offering);
-
-                            if (!offering.isBundle) {
-                                offId = offering.productSpecification.id;
-                            } else {
-                                bundleOfferings.push(offering);
-                            }
-                            return offId;
-                        }).join();
-
-                        if (!bundleOfferings.length) {
-                            searchOfferingProducts(productFilters, offeringList);
-                        } else {
-                            var processed = 0;
-                            bundleOfferings.forEach(function(offering) {
-                                attachOfferingBundleProducts(offering, function(res) {
-                                    processed += 1;
-
-                                    if (res) {
-                                        deferred.reject(res);
-                                    } else if (processed == bundleOfferings.length) {
-                                        searchOfferingProducts(productFilters, offeringList);
-                                    }
-                                });
-                            });
-                        }
-
-                    } else {
-                        deferred.resolve(offeringList);
-                    }
-                }, function (response) {
-                    deferred.reject(response);
-                });
             }
+
+            if (filters.offset !== undefined) {
+                params['offset'] = filters.offset;
+                params['size'] = filters.size;
+            }
+
+            method(params, function (offeringList) {
+                callback(offeringList);
+            }, function (response) {
+                deferred.reject(response);
+            });
+
+            return deferred.promise;
+        }
+
+        function search(filters) {
+            var deferred = $q.defer();
 
             function searchOfferingProducts(productFilters, offeringList) {
                 ProductSpec.search(productFilters).then(function (productList) {
@@ -318,7 +248,53 @@
                 });
             }
 
-            return deferred.promise;
+            return query(deferred, filters, resource.query, function(offeringList) {
+                if (offeringList.length) {
+                    var bundleOfferings = [];
+                    var productFilters = {
+                        id: offeringList.map(function (offering) {
+                            var offId = '';
+                            extendPricePlans(offering);
+
+                            if (!offering.isBundle) {
+                                offId = offering.productSpecification.id;
+                            } else {
+                                bundleOfferings.push(offering);
+                            }
+                            return offId;
+                        }).join()
+                    };
+
+                    if (!bundleOfferings.length) {
+                        searchOfferingProducts(productFilters, offeringList);
+                    } else {
+                        var processed = 0;
+                        bundleOfferings.forEach(function(offering) {
+                            attachOfferingBundleProducts(offering, function(res) {
+                                processed += 1;
+
+                                if (res) {
+                                    deferred.reject(res);
+                                } else if (processed == bundleOfferings.length) {
+                                    searchOfferingProducts(productFilters, offeringList);
+                                }
+                            });
+                        });
+                    }
+
+                } else {
+                    deferred.resolve(offeringList);
+                }
+            });
+        }
+
+        function count(filters) {
+            var deferred = $q.defer();
+            filters.action = 'count';
+
+            return query(deferred, filters, resource.get, function (countRes) {
+                deferred.resolve(countRes);
+            });
         }
 
         function exists(params) {

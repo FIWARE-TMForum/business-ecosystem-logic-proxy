@@ -37,7 +37,7 @@
         .controller('OfferingDetailCtrl', ProductOfferingDetailController)
         .controller('OfferingUpdateCtrl', ProductOfferingUpdateController);
 
-    function ProductOfferingSearchController($state, $rootScope, EVENTS, Offering, LIFECYCLE_STATUS, Utils) {
+    function ProductOfferingSearchController($scope, $state, $rootScope, EVENTS, Offering, LIFECYCLE_STATUS, Utils) {
         /* jshint validthis: true */
         var vm = this;
 
@@ -45,20 +45,42 @@
 
         vm.list = [];
         vm.list.flow = $state.params.flow;
-
+        vm.offset = -1;
+        vm.size = -1;
         vm.showFilters = showFilters;
-
-        Offering.search($state.params).then(function (offeringList) {
-            angular.copy(offeringList, vm.list);
-            vm.list.status = LOADED;
-        }, function (response) {
-            vm.error = Utils.parseError(response, 'It was impossible to load the list of offerings');
-            vm.list.status = ERROR;
-        });
+        vm.getElementsLength = getElementsLength;
 
         function showFilters() {
             $rootScope.$broadcast(EVENTS.FILTERS_OPENED, LIFECYCLE_STATUS);
         }
+
+        function getElementsLength() {
+            var params = {};
+            angular.copy($state.params, params);
+            return Offering.count(params);
+        }
+
+        $scope.$watch(function () {
+            return vm.offset;
+        }, function () {
+            vm.list.status = LOADING;
+
+            if (vm.offset >= 0) {
+                var params = {};
+                angular.copy($state.params, params);
+
+                params.offset = vm.offset;
+                params.size = vm.size;
+
+                Offering.search(params).then(function (offeringList) {
+                    angular.copy(offeringList, vm.list);
+                    vm.list.status = LOADED;
+                }, function (response) {
+                    vm.error = Utils.parseError(response, 'It was impossible to load the list of offerings');
+                    vm.list.status = ERROR;
+                });
+            }
+        });
     }
 
     function ProductOfferingCreateController($q, $scope, $state, $rootScope, $controller, EVENTS, LIFECYCLE_STATUS, PROMISE_STATUS, Offering, Catalogue, ProductSpec, Utils) {
