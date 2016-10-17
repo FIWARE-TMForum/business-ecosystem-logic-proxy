@@ -330,6 +330,10 @@
                 });
             }
 
+            data.validFor = {
+                startDateTime: moment().format()
+            };
+
             resource.save(params, data, function (offeringCreated) {
                 offeringCreated.productSpecification = product;
                 offeringCreated.bundledProductOffering = bundledProductOffering;
