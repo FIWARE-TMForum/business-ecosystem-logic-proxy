@@ -483,9 +483,10 @@ describe("Test index helper library", function () {
 
     it('should convert offer with categories', function (done) {
         var user = {id: "rock-8"};
+        var api = "DSProductCatalog";
 
         var extra = { request: (url, f) => {
-            var curl = (config.appSsl ? "https" : "http") + "://" + config.appHost + ":" + utils.getAPIPort("DSProductCatalog") + "/DSProductCatalog/api/catalogManagement/v2/category/13";
+            var curl = (config.appSsl ? "https" : "http") + "://" + utils.getAPIHost(api) + ":" + utils.getAPIPort(api) + "/DSProductCatalog/api/catalogManagement/v2/category/13";
             expect(url).toEqual(curl);
 
             f(null, {}, JSON.stringify({
@@ -507,10 +508,11 @@ describe("Test index helper library", function () {
     it('should convert offer with multiple categories', function (done) {
         var user = {id: "rock-8"};
         var ids = [13, 14];
+        var api = "DSProductCatalog";
 
         var extra = { request: (url, f) => {
             var id = ids.shift();
-            var curl = (config.appSsl ? "https" : "http") + "://" + config.appHost + ":" + utils.getAPIPort("DSProductCatalog") + "/DSProductCatalog/api/catalogManagement/v2/category/" + id;
+            var curl = (config.appSsl ? "https" : "http") + "://" + utils.getAPIHost(api) + ":" + utils.getAPIPort(api) + "/DSProductCatalog/api/catalogManagement/v2/category/" + id;
             expect(url).toEqual(curl);
 
             f(null, {}, JSON.stringify({
