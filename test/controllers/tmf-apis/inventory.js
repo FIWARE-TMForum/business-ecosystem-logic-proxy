@@ -184,7 +184,7 @@ describe('Inventory API', function() {
                               "id=3,4",
                               {
                                   sort: ["sortedId", "asc"],
-                                  query: {AND: [{relatedPartyHash: [md5("rock")]}]}
+                                  query: [{AND: [{relatedPartyHash: [md5("rock")]}]}]
                               });
             });
 
@@ -203,7 +203,7 @@ describe('Inventory API', function() {
                               "id=7,9,11",
                               {
                                   sort: ["sortedId", "asc"],
-                                  query: {AND: ANDs}
+                                  query: [{AND: ANDs}]
                               });
             };
 
@@ -229,7 +229,7 @@ describe('Inventory API', function() {
                               "id=",
                               {
                                   sort: ["sortedId", "asc"],
-                                  query: {AND: [{relatedPartyHash: [md5("someother")]}]}
+                                  query: [{AND: [{relatedPartyHash: [md5("someother")]}]}]
                               });
             });
 

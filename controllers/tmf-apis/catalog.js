@@ -19,6 +19,7 @@
 
 var async = require('async'),
     config = require('./../../config'),
+    leftPad = require("left-pad"),
     equal = require('deep-equal'),
     request = require('request'),
     storeClient = require('./../../lib/store').storeClient,
@@ -1013,40 +1014,69 @@ var catalog = (function() {
         callback(null);
     };
 
+    var queryAndOrCommas = function queryAndOrCommas(q, name, query, f) {
+        if (!f) {
+            f = x => x.toLowerCase();
+        }
+        if (!q) {
+            return;
+        }
+
+        if (q.split(",").length <= 1) {
+            indexes.addAndCondition(query, { [name]: [f(q)] });
+        } else {
+            indexes.addOrCondition(query, name, q.split(",").map(f));
+        }
+    };
+
+    var lifecycleQuery = function lifecycleQuery(req, query) {
+        queryAndOrCommas(req.query.lifecycleStatus, "lifecycleStatus", query);
+    };
+
     var createProductQuery = indexes.genericCreateQuery.bind(
 	null,
-	["lifecycleStatus", "isBundle", "productNumber"],
+	["isBundle", "productNumber"],
         "product",
 	function (req, query) {
 	    if (req.query["relatedParty.id"]) {
-                query.AND.push( { relatedPartyHash: [indexes.fixUserId(req.query["relatedParty.id"])]});
+                indexes.addAndCondition(query, { relatedPartyHash: [indexes.fixUserId(req.query["relatedParty.id"])]});
     	    }
+
+            lifecycleQuery(req, query);
 	});
 
     var createOfferQuery = indexes.genericCreateQuery.bind(
 	null,
-	["lifecycleStatus", "isBundle"],
+	["isBundle"],
         "offering",
 	function (req, query) {
             if (req.query.relatedParty) {
-                query.AND.push( { userId: [indexes.fixUserId(req.query.relatedParty)] });
+                indexes.addAndCondition(query, { userId: [indexes.fixUserId(req.query.relatedParty)] });
 	    }
             if (req.query["category.id"]) {
-                query.AND.push( { categoriesId: [req.query["category.id"]]});
+                indexes.addAndCondition(query, { categoriesId: [req.query["category.id"]]});
             }
             if (req.query["category.name"]) {
-                query.AND.push( { categoriesName: [req.query["category.name"].toLowerCase()]});
+                indexes.addAndCondition(query, { categoriesName: [req.query["category.name"].toLowerCase()]});
             }
+
+            queryAndOrCommas(req.query["productSpecification.id"], "productSpecification", query, x => leftPad(x, 12, 0));
+            queryAndOrCommas(req.query["bundledProductOffering.id"], "bundledProductOffering", query, x => leftPad(x, 12, 0));
+
+            lifecycleQuery(req, query);
 	});
 
     var createCatalogQuery = indexes.genericCreateQuery.bind(
         null,
-        ["lifecycleStatus", "name"],
+        ["name"],
         "catalog",
         function (req, query) {
             if (req.query["relatedParty.id"]) {
-                query.AND.push( { relatedPartyHash: [indexes.fixUserId(req.query["relatedParty.id"])]});
+                indexes.addAndCondition(query, { relatedPartyHash: [indexes.fixUserId(req.query["relatedParty.id"])] });
+                // query.AND.push( { relatedPartyHash: [indexes.fixUserId(req.query["relatedParty.id"])]});
             }
+
+            lifecycleQuery(req, query);
         }
     );
 

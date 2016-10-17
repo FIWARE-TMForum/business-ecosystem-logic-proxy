@@ -3000,7 +3000,7 @@ describe('Catalog API', function() {
                           "id=",
                           {
                               sort: ["sortedId", "asc"],
-                              query: {AND: [{relatedPartyHash: [md5("someother")]}]}
+                              query: [{AND: [{relatedPartyHash: [md5("someother")]}]}]
                           });
         });
 
@@ -3018,7 +3018,7 @@ describe('Catalog API', function() {
                           "id=2,12&depth=2&fields=name",
                           {
                               sort: ["sortedId", "asc"],
-                              query: {AND: [{relatedPartyHash: [md5("rock-8")]}]}
+                              query: [{AND: [{relatedPartyHash: [md5("rock-8")]}]}]
                           });
         });
 
@@ -3037,7 +3037,7 @@ describe('Catalog API', function() {
                           "id=",
                           {
                               sort: ["sortedId", "asc"],
-                              query: {AND: [{relatedPartyHash: [md5("someother")]}]}
+                              query: [{AND: [{relatedPartyHash: [md5("someother")]}]}]
                           });
         });
 
@@ -3053,7 +3053,7 @@ describe('Catalog API', function() {
                           "id=3,4,13",
                           {
                               sort: ["sortedId", "asc"],
-                              query: {AND: [{relatedPartyHash: [md5("rock")]}]}
+                              query: [{AND: [{relatedPartyHash: [md5("rock")]}]}]
                           });
         });
 
@@ -3072,7 +3072,7 @@ describe('Catalog API', function() {
                           "id=",
                           {
                               sort: ["sortedId", "asc"],
-                              query: {AND: [{categoriesId: [201]}]}
+                              query: [{AND: [{categoriesId: [201]}]}]
                           });
         });
 
@@ -3087,7 +3087,7 @@ describe('Catalog API', function() {
                           "id=",
                           {
                               sort: ["sortedId", "asc"],
-                              query: {AND: [{categoriesName: ["testcat"]}]}
+                              query: [{AND: [{categoriesName: ["testcat"]}]}]
                           });
         });
 
@@ -3102,7 +3102,7 @@ describe('Catalog API', function() {
                           "id=",
                           {
                               sort: ["sortedId", "asc"],
-                              query: {AND: [{userId: [md5("someother")]}]}
+                              query: [{AND: [{userId: [md5("someother")]}]}]
                           });
         });
 
@@ -3122,7 +3122,7 @@ describe('Catalog API', function() {
                               offset: 3,
                               pageSize: 25,
                               sort: ["sortedId", "asc"],
-                              query: {AND: [{userId: [md5("rock")]}]}
+                              query: [{AND: [{userId: [md5("rock")]}]}]
                           });
         });
 
@@ -3156,7 +3156,7 @@ describe('Catalog API', function() {
                           "id=7,9,11",
                           {
                               sort: ["sortedId", "asc"],
-                              query: {AND: ANDs}
+                              query: [{AND: ANDs}]
                           });
         };
 
@@ -3166,8 +3166,22 @@ describe('Catalog API', function() {
             testQueryAllIndex(done, "catalog");
         });
 
-        it('should change request URL to include catalog IDs when lifecycleStatus is provided', function (done) {
+        it('should change request URL to include catalog IDs when simple lifecycleStatus is provided', function (done) {
             testQueryParameters(done, "catalog", { lifecycleStatus: "Active" });
+        });
+
+        it('should change request URL to include catalog IDs when multiple lifecycleStatus are provided', function(done) {
+            requestHelper(done,
+                          "catalog",
+                          [7, 9, 11],
+                          "lifecycleStatus=Active,Disabled",
+                          {lifecycleStatus: "Active,Disabled"},
+                          "id=7,9,11",
+                          {
+                              sort: ["sortedId", "asc"],
+                              query: [{AND: [{lifecycleStatus: ["active"]}]}, {AND: [{lifecycleStatus: ["disabled"]}]}]
+                          });
+
         });
 
         it('should change request URL to include catalog IDs when name is provided', function (done) {
