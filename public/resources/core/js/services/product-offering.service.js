@@ -199,7 +199,7 @@
                 params['lifecycleStatus'] = filters.status;
             }
 
-            if (filters.type) {
+            if (filters.type  !== undefined) {
                 params['isBundle'] = filters.type == 'Bundle';
             }
 

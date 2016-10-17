@@ -40,6 +40,7 @@
     function ProductOfferingSearchController($scope, $state, $rootScope, EVENTS, Offering, LIFECYCLE_STATUS, Utils) {
         /* jshint validthis: true */
         var vm = this;
+        var filters = {};
 
         vm.state = $state;
 
@@ -49,6 +50,7 @@
         vm.size = -1;
         vm.showFilters = showFilters;
         vm.getElementsLength = getElementsLength;
+        vm.setFilters = setFilters;
 
         function showFilters() {
             $rootScope.$broadcast(EVENTS.FILTERS_OPENED, LIFECYCLE_STATUS);
@@ -58,6 +60,10 @@
             var params = {};
             angular.copy($state.params, params);
             return Offering.count(params);
+        }
+
+        function setFilters(newFilters) {
+            filters = newFilters;
         }
 
         $scope.$watch(function () {
@@ -71,6 +77,14 @@
 
                 params.offset = vm.offset;
                 params.size = vm.size;
+
+                if (filters.status) {
+                    params.status = filters.status;
+                }
+
+                if (filters.bundle !== undefined) {
+                    params.type = filters.bundle;
+                }
 
                 Offering.search(params).then(function (offeringList) {
                     angular.copy(offeringList, vm.list);
@@ -273,7 +287,9 @@
         }
 
         function hasOffering(offering) {
-            return vm.data.bundledProductOffering.indexOf(offering) !== -1;
+            return vm.data.bundledProductOffering.filter(function (off) {
+                return off.id == offering.id
+            }).length > 0;
         }
 
         /* PRICE PLANS METHODS */
