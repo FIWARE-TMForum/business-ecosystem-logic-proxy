@@ -66,7 +66,7 @@
         }
 
         function setFilters(newFilters) {
-            filters = newFilters
+            filters = newFilters;
         }
 
         vm.list.status = vm.STATUS.LOADING;

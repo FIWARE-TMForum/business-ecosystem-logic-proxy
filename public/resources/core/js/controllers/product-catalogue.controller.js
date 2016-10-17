@@ -76,6 +76,7 @@
     function CatalogueSearchController($scope, $state, $rootScope, EVENTS, Catalogue, LIFECYCLE_STATUS, DATA_STATUS, Utils) {
         /* jshint validthis: true */
         var vm = this;
+        var filters = {};
 
         vm.STATUS = DATA_STATUS;
         vm.state = $state;
@@ -86,6 +87,7 @@
 
         vm.showFilters = showFilters;
         vm.getElementsLength = getElementsLength;
+        vm.setFilters = setFilters;
 
         function showFilters() {
             $rootScope.$broadcast(EVENTS.FILTERS_OPENED, LIFECYCLE_STATUS);
@@ -95,6 +97,10 @@
             var params = {};
             angular.copy($state.params, params);
             return Catalogue.count(params);
+        }
+
+        function setFilters(newFilters) {
+            filters = newFilters;
         }
 
         vm.list.status = vm.STATUS.LOADING;
@@ -109,6 +115,10 @@
 
                 params.offset = vm.offset;
                 params.size = vm.size;
+
+                if (filters.status) {
+                    params.status = filters.status;
+                }
 
                 Catalogue.search(params).then(function (catalogueList) {
                     angular.copy(catalogueList, vm.list);
