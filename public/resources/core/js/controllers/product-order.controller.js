@@ -39,7 +39,7 @@
         .controller('ProductOrderCreateCtrl', ProductOrderCreateController)
         .controller('ProductOrderDetailCtrl', ProductOrderDetailController);
 
-    function ProductOrderSearchController($state, $rootScope, EVENTS, PRODUCTORDER_STATUS, PRODUCTORDER_LIFECYCLE, ProductOrder, Utils) {
+    function ProductOrderSearchController($scope, $state, $rootScope, EVENTS, PRODUCTORDER_STATUS, PRODUCTORDER_LIFECYCLE, ProductOrder, Utils) {
         /* jshint validthis: true */
         var vm = this;
 
@@ -48,6 +48,8 @@
 
         vm.list = [];
         vm.list.status = LOADING;
+        vm.offset = -1;
+        vm.size = -1;
 
         vm.isTransitable = isTransitable;
         vm.getNextStatus = getNextStatus;
@@ -55,15 +57,37 @@
         vm.updateStatus = updateStatus;
         vm.canCancel = canCancel;
         vm.cancelOrder = cancelOrder;
+        vm.getElementsLength = getElementsLength;
+
         vm.cancellingOrder = false;
 
-        ProductOrder.search($state.params).then(function (productOrderList) {
-            angular.copy(productOrderList, vm.list);
-            vm.list.status = LOADED;
-        }, function (response) {
-            vm.error = Utils.parseError(response, 'It was impossible to load the list of catalogs');
-            vm.list.status = ERROR;
+        $scope.$watch(function () {
+            return vm.offset;
+        }, function () {
+            vm.list.status = LOADING;
+
+            if (vm.offset >= 0) {
+                var params = {};
+                angular.copy($state.params, params);
+
+                params.offset = vm.offset;
+                params.size = vm.size;
+
+                ProductOrder.search(params).then(function (productOrderList) {
+                    angular.copy(productOrderList, vm.list);
+                    vm.list.status = LOADED;
+                }, function (response) {
+                    vm.error = Utils.parseError(response, 'It was impossible to load the list of orders');
+                    vm.list.status = ERROR;
+                });
+            }
         });
+
+        function getElementsLength() {
+            var params = {};
+            angular.copy($state.params, params);
+            return ProductOrder.count(params);
+        }
 
         function showFilters() {
             $rootScope.$broadcast(EVENTS.FILTERS_OPENED, PRODUCTORDER_STATUS);
