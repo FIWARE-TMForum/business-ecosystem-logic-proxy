@@ -3275,8 +3275,8 @@ describe('Catalog API', function() {
             var saveIndexCalled = false;
             var offIndexCalled = false;
 
-            var checkIndexCalls = function (data, userInfo) {
-                expect(data).toEqual([{id: '1'}]);
+            var checkIndexCalls = function (data, userInfo, expected) {
+                expect(data).toEqual(expected);
                 expect(userInfo).toEqual(user);
                 return Promise.resolve();
             };
@@ -3284,11 +3284,11 @@ describe('Catalog API', function() {
             var indexes = {
                 saveIndexProduct: function(data, userInfo) {
                     saveIndexCalled = true;
-                    return checkIndexCalls(data, userInfo);
+                    return checkIndexCalls(data, userInfo, [{id: '1'}]);
                 },
                 saveIndexOffering: function (data, userInfo) {
                     offIndexCalled = true;
-                    return checkIndexCalls(data, userInfo);
+                    return checkIndexCalls(data, userInfo, [{id: '1', catalog: '1'}]);
                 }
             };
 
@@ -3308,7 +3308,7 @@ describe('Catalog API', function() {
         it('should call the store product attachment when a valid product creation request has been redirected', function(done) {
             var req = {
                 method: 'POST',
-                apiUrl: '/catalog/productSpecification',
+                apiUrl: '/DSProductCatalog/productSpecification',
                 body: JSON.stringify(body),
                 user: user
             };
@@ -3318,7 +3318,7 @@ describe('Catalog API', function() {
         it('should not call the store attachment when the request is not a product creation', function(done) {
             var req = {
                 method: 'GET',
-                apiUrl: '/catalog/productSpecification',
+                apiUrl: '/DSProductCatalog/productSpecification',
                 body: JSON.stringify(body),
                 user: user
             };
@@ -3328,7 +3328,7 @@ describe('Catalog API', function() {
         it('should call the offering attachment when the request is a product offering creation', function (done) {
             var req = {
                 method: 'POST',
-                apiUrl: '/catalog/catalog/1/productOffering',
+                apiUrl: '/DSProductCatalog/catalogManagement/api/v2/catalog/1/productOffering',
                 body: JSON.stringify(body),
                 user: user
             };
@@ -3338,7 +3338,7 @@ describe('Catalog API', function() {
         it('should call the offering update validation when the request is a product offering update', function (done) {
             var req = {
                 method: 'PATCH',
-                apiUrl: '/catalog/catalog/1/productOffering/1',
+                apiUrl: '/DSProductCatalog/catalogManagement/api/v2/catalog/1/productOffering/1',
                 body: JSON.stringify(body),
                 user: user
             };

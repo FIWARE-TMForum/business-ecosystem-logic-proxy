@@ -28,8 +28,9 @@ var createUrl = function createUrl(api, extra) {
     return (config.appSsl ? "https" : "http") + "://" + utils.getAPIHost(api) + ":" + utils.getAPIPort(api) + extra;
 };
 
-var genericRequest = function genericRequest(options) {
+var genericRequest = function genericRequest(options, extra) {
     var p = new Promise();
+
     request(options, function (err, response, body) {
         if (err) {
             console.log(err);
@@ -38,7 +39,17 @@ var genericRequest = function genericRequest(options) {
         }
 
         if (response.statusCode == 200) {
-            p.resolve(JSON.parse(body));
+            var parsedBody = JSON.parse(body);
+
+            if (extra) {
+                parsedBody.forEach(function (element) {
+                    element[extra.field] = extra.value;
+                });
+            }
+            p.resolve(parsedBody);
+        } else {
+            p.reject("Unexpected HTTP error code: " + response.statusCode);
+            return;
         }
     });
 
@@ -50,10 +61,18 @@ var getProducts = function getProducts() {
     return genericRequest(url);
 };
 
-var getOfferings = function getOfferings() {
+var getOfferings = function getOfferings(catalog, qstring) {
      // For every catalog!
-    var url = createUrl("DSProductCatalog", "/DSProductCatalog/api/catalogManagement/v2/productOffering");
-    return genericRequest(url);
+    var url = createUrl("DSProductCatalog", "/DSProductCatalog/api/catalogManagement/v2/catalog/" + catalog + "/productOffering");
+
+    if (qstring) {
+        url += qstring;
+    }
+
+    return genericRequest(url, {
+        field: "catalog",
+        value: catalog
+    });
 };
 
 var getCatalogs = function getCatalogs() {
@@ -71,28 +90,42 @@ var getOrders = function getOrders() {
     return genericRequest(url);
 };
 
-var logAllIndexes = function logAllIndexes(path) {
-    return indexes.search(path, { AND: { "*": ["*"] } })
-        .catch(err => console.log(err))
-        .then(results => {
-            console.log(results);
-            results.hits.forEach(x => console.log(x));
-        });
-};
-
 var downloadProducts = function downloadProducts() {
     return getProducts()
         .then(indexes.saveIndexProduct);
 };
 
-var downloadOfferings = function downloadOfferings() {
-    return getOfferings()
+var downloadOfferings = function downloadOfferings(catalog, qstring) {
+    return getOfferings(catalog, qstring)
         .then(indexes.saveIndexOffering);
+};
+
+var downloadCatalogOfferings = function downloadCatalogOfferings(catalogs) {
+    var promise = Promise.resolve();
+    if (catalogs.length) {
+        catalogs.forEach(function (catalog) {
+            promise = promise.then(function () {
+                return downloadOfferings(catalog.id, '?isBundle=false');
+            });
+        });
+        catalogs.forEach(function (catalog) {
+            promise = promise.then(function () {
+                return downloadOfferings(catalog.id, '?isBundle=true');
+            });
+        });
+
+        promise = promise.then(function ()  {
+            return indexes.saveIndexCatalog(catalogs)
+        });
+    } else {
+        promise = indexes.saveIndexCatalog(catalogs);
+    }
+    return promise;
 };
 
 var downloadCatalogs = function downloadCatalogs() {
     return getCatalogs()
-        .then(indexes.saveIndexCatalog);
+        .then(downloadCatalogOfferings);
 };
 
 var downloadInventory = function downloadInventory() {
@@ -105,13 +138,24 @@ var downloadOrdering = function downloadOrdering() {
         .then(indexes.saveIndexOrder);
 };
 
-downloadCatalogs()
-    .then(downloadProducts)
-    .then(downloadOfferings)
+
+var logAllIndexes = function logAllIndexes(path) {
+    return indexes.search(path, { AND: { "*": ["*"] } })
+            .catch(err => console.log(err))
+    .then(results => {
+        console.log(results);
+    results.hits.forEach(x => console.log(x));
+});
+};
+
+
+downloadProducts()
+    .then(downloadCatalogs)
     .then(downloadInventory)
     .then(downloadOrdering)
     .then(() => console.log("All saved!"))
-    .catch(e => console.log("Error: ", e));
+    .catch(e => console.log("Error: ", e.stack));
+
 
 // logAllIndexes(indexes.siTables.catalogs);
 // logAllIndexes(indexes.siTables.products);
