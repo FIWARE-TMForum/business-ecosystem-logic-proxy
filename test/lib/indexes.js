@@ -631,7 +631,7 @@ describe("Test index helper library", function () {
         productOffering: {
             id: 5
         },
-        relatedParty: [{id: "rock"}],
+        relatedParty: [{id: "rock", role: "customer"}],
         href: "http://12",
         name: "inventoryName",
         status: "status",
@@ -680,7 +680,7 @@ describe("Test index helper library", function () {
 
     var orderData = {
         id: 23,
-        relatedParty: [{id: "rock"}],
+        relatedParty: [{id: "rock", role: "customer"}, {id: "user", role: "seller"}],
         href: "http://23",
         priority: "prior",
         category: "endofunctor",
@@ -694,7 +694,8 @@ describe("Test index helper library", function () {
         originalId: 23,
         sortedId: "000000000023",
         relatedPartyHash: [md5("rock")],
-        relatedParty: ["rock"],
+        sellerHash: [md5("user")],
+        relatedParty: ["rock", "user"],
         href: "http://23",
         priority: "prior",
         category: "endofunctor",

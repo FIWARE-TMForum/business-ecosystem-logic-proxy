@@ -69,7 +69,7 @@ var ordering = (function(){
     //////////////////////////////////////////////////////////////////////////////////////////////
 
     var validateRetrieving = function(req, callback) {
-        tmfUtils.filterRelatedPartyFields(req, callback);
+        tmfUtils.filterRelatedPartyWithRole(req, ['customer', 'seller'], callback);
     };
 
 
@@ -597,8 +597,14 @@ var ordering = (function(){
         ["priority", "category", "state", "notificationContact", "note"],
         "order",
         function (req, query) {
-            if (req.query["relatedParty.id"]) {
+            if (req.query["relatedParty.id"] && (!req.query["relatedParty.role"]
+                || req.query["relatedParty.role"].toLowerCase() == 'customer') ) {
                 indexes.addAndCondition(query, { relatedPartyHash: [indexes.fixUserId(req.query["relatedParty.id"])] });
+            }
+
+            if (req.query["relatedParty.id"] && req.query["relatedParty.role"]
+                && req.query["relatedParty.role"].toLowerCase() == 'seller' ) {
+                indexes.addAndCondition(query, { sellerHash: [indexes.fixUserId(req.query["relatedParty.id"])] });
             }
         }
     );

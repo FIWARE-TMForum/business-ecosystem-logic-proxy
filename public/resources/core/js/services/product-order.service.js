@@ -100,6 +100,10 @@
                 params['size'] = filters.size;
             }
 
+            if (filters.role) {
+                params['relatedParty.role'] = filters.role;
+            }
+
             method(params, callback, function (response) {
                 deferred.reject(response);
             });
@@ -110,14 +114,6 @@
 
             query(filters, deferred, resource.query, function (productOrderList) {
                 var productOfferingFilters = {};
-
-                productOrderList = productOrderList.filter(function(ordering) {
-
-                    return ordering.relatedParty.some(function(party) {
-                        return party.role === filters.role && party.id === User.loggedUser.id;
-                    });
-
-                });
 
                 if (productOrderList.length) {
                     productOfferingFilters.id = getProductOfferingIds(productOrderList).join();
