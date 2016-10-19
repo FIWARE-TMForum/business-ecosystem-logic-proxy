@@ -38,12 +38,12 @@
 
         return {
             search: search,
+            count: count,
             detail: detail,
             renew: renew
         };
 
-        function search(filters) {
-            var deferred = $q.defer();
+        function query(deferred, filters, method, callback) {
             var params = {};
 
             if (!angular.isObject(filters)) {
@@ -58,7 +58,24 @@
                 params['status'] = filters.status;
             }
 
-            resource.query(params, function (productList) {
+            if (filters.action) {
+                params['action'] = filters.action;
+            }
+
+            if (filters.offset !== undefined) {
+                params['offset'] = filters.offset;
+                params['size'] = filters.size;
+            }
+
+            method(params, callback, function (response) {
+                deferred.reject(response);
+            });
+        }
+
+        function search(filters) {
+            var deferred = $q.defer();
+
+            query(deferred, filters, resource.query, function (productList) {
                 if (productList.length) {
                     // Include offering with the product
                     var completeList = angular.copy(productList);
@@ -66,8 +83,6 @@
                 } else {
                     deferred.resolve(productList);
                 }
-            }, function (response) {
-                deferred.reject(response);
             });
 
             return deferred.promise;
@@ -92,6 +107,17 @@
                     deferred.reject(response);
                 });
             }
+        }
+
+        function count(filters) {
+            var deferred = $q.defer();
+
+            filters.action = 'count';
+            query(deferred, filters, resource.get, function (info) {
+                deferred.resolve(info);
+            });
+
+            return deferred.promise;
         }
 
         function detail(productId) {
