@@ -94,6 +94,34 @@ describe('Test inventory subscription helper and endpoint', function () {
         });
     });
 
+    it('should not create subscription if the hubs request gives an error code', function (done) {
+        var req = (url, callback) => {
+            callback(null, { statusCode: 500 }, null);
+        };
+        var request = jasmine.createSpy("request").and.callFake(req);
+        var lib = createMock(request);
+        var expectedUrl = hubsUrl();
+        lib.createSubscription("/path").catch((err) => {
+            expect(request).toHaveBeenCalledWith(expectedUrl, jasmine.any(Function));
+            expect(err).toBe('Error reading inventory hubs: 500');
+            done();
+        });
+    });
+
+    it('should not create subscription if the hubs request gives an error', function (done) {
+        var req = (url, callback) => {
+            callback('ERROR', null, null);
+        };
+        var request = jasmine.createSpy("request").and.callFake(req);
+        var lib = createMock(request);
+        var expectedUrl = hubsUrl();
+        lib.createSubscription("/path").catch((err) => {
+            expect(request).toHaveBeenCalledWith(expectedUrl, jasmine.any(Function));
+            expect(err).toBe('ERROR');
+            done();
+        });
+    });
+
     it('should not do anything in an empty notification', function(done) {
         var inds = createInd();
         var lib = createMock(null, inds);
@@ -103,6 +131,34 @@ describe('Test inventory subscription helper and endpoint', function () {
             expect(res.end).toHaveBeenCalled();
             expect(inds.saveIndexInventory).not.toHaveBeenCalled();
             expect(inds.removeIndex).not.toHaveBeenCalled();
+            done();
+        });
+    });
+
+    it ('should reject the promise with an error if the subscription request fails', function (done) {
+        var req = function(options, callback) {
+            if (options.method == 'POST') {
+                callback(null, {statusCode: 500}, null);
+            } else {
+                callback(null, { statusCode: 200 }, JSON.stringify([]));
+            }
+        };
+        var request = jasmine.createSpy("request").and.callFake(req);
+        var lib = createMock(request);
+        var expectedUrl = hubsUrl();
+
+        var url = createUrl("/path");
+        var expectedPost = {
+            method: "POST",
+            url: hubsUrl(),
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ callback: url })
+        };
+
+        lib.createSubscription("/path").catch((err) => {
+            expect(request.calls.count()).toEqual(2);
+            expect(request.calls.allArgs()).toEqual([[expectedUrl, jasmine.any(Function)], [expectedPost, jasmine.any(Function)]]);
+            expect(err).toBe("It hasn't been possible to create inventory subscription.");
             done();
         });
     });
