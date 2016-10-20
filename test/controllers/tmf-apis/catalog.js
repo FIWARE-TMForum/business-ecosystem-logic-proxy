@@ -656,15 +656,27 @@ describe('Catalog API', function() {
             var defaultErrorMessage = 'Internal Server Error';
             var catalogApi = mockCatalogAPI(body, offeringRequestInfo, storeError, null);
 
-            // The mock server that will handle the request when the product is requested
-            var bodyGetOfferingOk = {
-                isBundle: offeringRequestInfo.isBundle,
-                relatedParty: [{id: userName, role: offeringRequestInfo.role}],
-                lifecycleStatus: offeringRequestInfo.lifecycleStatus
+            var productSpecificationOk = {
+                relatedParty: [{id: userName, role: offeringRequestInfo.role}]
             };
-            var bodyGetOffering = offeringRequestInfo.requestStatus === 200 ? bodyGetOfferingOk : defaultErrorMessage;
+
+            var bodyGetProduct = offeringRequestInfo.productRequestStatus === 200 ? productSpecificationOk : defaultErrorMessage;
 
             for (var i = 0; i < offeringRequestInfo.hrefs.length; i++) {
+                // The mock server that will handle the request when the product is requested
+                var bodyGetOfferingOk = {
+                    isBundle: offeringRequestInfo.isBundle,
+                    lifecycleStatus: offeringRequestInfo.lifecycleStatus,
+                    productSpecification: {
+                        href: serverUrl + offeringRequestInfo.products[i]
+                    }
+                };
+                var bodyGetOffering = offeringRequestInfo.requestStatus === 200 ? bodyGetOfferingOk : defaultErrorMessage;
+
+                nock(serverUrl)
+                    .get(offeringRequestInfo.products[i])
+                    .reply(offeringRequestInfo.productRequestStatus, bodyGetProduct);
+
                 nock(serverUrl)
                     .get(offeringRequestInfo.hrefs[i])
                     .reply(offeringRequestInfo.requestStatus, bodyGetOffering);
@@ -678,9 +690,10 @@ describe('Catalog API', function() {
 
         var offering1 = catalogPath + '/productOffering/1';
         var offering2 = catalogPath + '/productOffering/2';
+        var product1 = '/productSpecification/20';
+        var product2 = '/productSpecification/21';
 
         it('should allow to create an offering bundle', function(done) {
-
             var body = {
                 isBundle: true,
                 bundledProductOffering: [{
@@ -696,7 +709,9 @@ describe('Catalog API', function() {
                 isBundle: false,
                 lifecycleStatus: 'active',
                 hrefs: [offering1, offering2],
-                requestStatus: 200
+                products: [product1, product2],
+                requestStatus: 200,
+                productRequestStatus: 200
             };
             testCreateOfferingBundle(offeringRequestInfo, catalogRequestInfoLaunched, null,
                 body, null, null, done)
@@ -715,7 +730,9 @@ describe('Catalog API', function() {
                 isBundle: false,
                 lifecycleStatus: 'active',
                 hrefs: [],
-                requestStatus: 200
+                products: [],
+                requestStatus: 200,
+                productRequestStatus: 200
             };
 
             testCreateOfferingBundle(offeringRequestInfo, catalogRequestInfoLaunched, null,
@@ -732,7 +749,9 @@ describe('Catalog API', function() {
                 isBundle: false,
                 lifecycleStatus: 'active',
                 hrefs: [],
-                requestStatus: 200
+                products: [],
+                requestStatus: 200,
+                productRequestStatus: 200
             };
 
             testCreateOfferingBundle(offeringRequestInfo, catalogRequestInfoLaunched, null,
@@ -752,7 +771,9 @@ describe('Catalog API', function() {
                 isBundle: false,
                 lifecycleStatus: 'active',
                 hrefs: [],
-                requestStatus: 200
+                products: [],
+                requestStatus: 200,
+                productRequestStatus: 200
             };
 
             testCreateOfferingBundle(offeringRequestInfo, catalogRequestInfoLaunched, null,
@@ -777,7 +798,9 @@ describe('Catalog API', function() {
                 isBundle: false,
                 lifecycleStatus: 'active',
                 hrefs: [offering1, offering2],
-                requestStatus: 500
+                products: [product1, product2],
+                requestStatus: 500,
+                productRequestStatus: 200
             };
             testCreateOfferingBundle(offeringRequestInfo, catalogRequestInfoLaunched, null,
                 body, 422, OFF_BUNDLE_FAILED_TO_RETRIEVE, done)
@@ -799,7 +822,9 @@ describe('Catalog API', function() {
                 isBundle: true,
                 lifecycleStatus: 'active',
                 hrefs: [offering1, offering2],
-                requestStatus: 200
+                products: [product1, product2],
+                requestStatus: 200,
+                productRequestStatus: 200
             };
             testCreateOfferingBundle(offeringRequestInfo, catalogRequestInfoLaunched, null,
                 body, 422, OFF_BUNDLE_IN_BUNDLE, done)
@@ -821,7 +846,33 @@ describe('Catalog API', function() {
                 isBundle: false,
                 lifecycleStatus: 'active',
                 hrefs: [offering1, offering2],
-                requestStatus: 200
+                products: [product1, product2],
+                requestStatus: 200,
+                productRequestStatus: 200
+            };
+            testCreateOfferingBundle(offeringRequestInfo, catalogRequestInfoLaunched, null,
+                body, 403, UNAUTHORIZED_OFF_BUNDLE, done)
+        });
+
+        it('should not allow to create a bundle when bundled offering product cannot be accessed', function(done) {
+
+            var body = {
+                isBundle: true,
+                bundledProductOffering: [{
+                    href: serverUrl + offering1
+                }, {
+                    href: serverUrl + offering2
+                }]
+            };
+
+            var offeringRequestInfo = {
+                role: 'Owner',
+                isBundle: false,
+                lifecycleStatus: 'active',
+                hrefs: [offering1, offering2],
+                products: [product1, product2],
+                requestStatus: 200,
+                productRequestStatus: 500
             };
             testCreateOfferingBundle(offeringRequestInfo, catalogRequestInfoLaunched, null,
                 body, 403, UNAUTHORIZED_OFF_BUNDLE, done)
@@ -1749,7 +1800,7 @@ describe('Catalog API', function() {
         var utils = {
             validateLoggedIn: validateLoggedOk,
             hasRole: checkRoleMethod
-        }
+        };
 
         var catalogApi = getCatalogApi({}, tmfUtils, utils);
 

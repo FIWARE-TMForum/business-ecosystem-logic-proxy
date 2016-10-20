@@ -61,7 +61,6 @@ var catalog = (function() {
         var uri = utils.getAPIURL(config.appSsl, config.endpoints.catalog.host, config.endpoints.catalog.port, assetPath);
 
         request(uri, function(err, response, body) {
-
             if (err || response.statusCode >= 400) {
                 callback({
                     status: response ? response.statusCode : 500
