@@ -8,7 +8,7 @@ form(name="step.form", novalidate)
           ng-change="createVM.toggleBundle()"
         )
         i.fa.fa-2x
-  .row(ng-if="createVM.data.isBundle", ng-controller="ProductSearchCtrl as searchVM")
+  .row(ng-if="createVM.data.isBundle && createForm.stepIndex == $index", ng-controller="ProductSearchCtrl as searchVM")
     .col-xs-12(ng-if="searchVM.list.status === searchVM.STATUS.LOADED" ng-switch="searchVM.list.length")
       .alert.alert-info.text-center(ng-switch-when="0") No products found.
 

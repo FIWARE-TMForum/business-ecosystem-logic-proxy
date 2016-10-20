@@ -1,5 +1,5 @@
 form(name="step.form", novalidate)
-  .form-group(ng-controller="CatalogueSearchCtrl as searchVM")
+  .form-group(ng-controller="CatalogueSearchCtrl as searchVM" ng-if="createForm.stepIndex == $index")
     input(type="hidden", ng-model="createVM.catalogue.id", required)
     .row
       .col-xs-12(ng-if="searchVM.list.status === searchVM.STATUS.LOADING")

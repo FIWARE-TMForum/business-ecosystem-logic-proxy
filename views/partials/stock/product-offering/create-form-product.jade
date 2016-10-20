@@ -3,7 +3,7 @@ form(name="step.form", novalidate)
     .alert.alert-info.text-center Offering bundles cannot include product specs
 
   div(ng-if="!createVM.data.isBundle")
-    .form-group(ng-controller="ProductSearchCtrl as searchVM")
+    .form-group(ng-controller="ProductSearchCtrl as searchVM" ng-if="createForm.stepIndex == $index")
       input(type="hidden", ng-model="createVM.product.id", required)
       .row
         .col-xs-12(ng-if="searchVM.list.status === searchVM.STATUS.LOADING")

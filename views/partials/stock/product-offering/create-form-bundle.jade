@@ -8,7 +8,7 @@ form(name="step.form", novalidate)
           ng-change="createVM.toggleBundle()"
         )
         i.fa.fa-2x
-  div(ng-if="createVM.data.isBundle", ng-controller="OfferingSearchCtrl as searchVM")
+  div(ng-if="createVM.data.isBundle && createForm.stepIndex == $index", ng-controller="OfferingSearchCtrl as searchVM")
     div(ng-switch="searchVM.list.status")
       div(ng-switch-when="LOADED", ng-switch="searchVM.list.length")
         div(ng-switch-when="0")

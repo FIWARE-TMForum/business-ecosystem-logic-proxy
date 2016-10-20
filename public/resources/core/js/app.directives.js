@@ -169,9 +169,17 @@
                 repositionPager(true);
             });
 
-            $timeout(function() {
-                repositionPager(false);
-            }, 500);
+            // reposition the pager controller when the elements have been loaded
+            function loadPager() {
+                if ($scope.vm.list.status == 'LOADED') {
+                    repositionPager(false);
+                } else {
+                    $timeout(function() {
+                        loadPager();
+                    }, 100);
+                }
+            }
+            loadPager();
         }
     }
 
