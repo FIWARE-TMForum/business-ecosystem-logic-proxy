@@ -2119,3 +2119,8 @@ a.thumbnail:focus {
         margin-left: 85px !important;
     }
 }
+
+.home-catalog-pager ul {
+    margin-bottom: 5px;
+    margin-top: 5px;
+}

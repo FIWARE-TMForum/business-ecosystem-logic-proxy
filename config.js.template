@@ -44,45 +44,56 @@ config.mongoDb = {
     db: 'belp'
 };
 
-// TMForum APIs final paths
-config.appHost = '';
-
 // Configure endpoints
 config.endpoints = {
+    'management': {
+        'path': 'management',
+        'host': 'localhost',
+        'port': config.port
+    },
     'catalog': {
         'path': 'DSProductCatalog',
+        'host': 'localhost',
         'port': '8080'
     },
     'ordering': {
          'path': 'DSProductOrdering',
+         'host': 'localhost',
          'port': '8080'
     },
     'inventory': {
         'path': 'DSProductInventory',
+        'host': 'localhost',
         'port': '8080'
     },
     'charging': {
         'path': 'charging',
+        'host': 'localhost',
         'port': '8006'
     },
     'rss': {
         'path': 'DSRevenueSharing',
+        'host': 'localhost',
         'port': '8080'
     },
     'party': {
         'path': 'DSPartyManagement',
+        'host': 'localhost',
         'port': '8080'
     },
     'billing':{
         'path': 'DSBillingManagement',
+        'host': 'localhost',
         'port': '8080'
     },
     'customer': {
         'path': 'DSCustomerManagement',
+        'host': 'localhost',
         'port': '8080'
     },
     'usage':  {
         'path': 'DSUsageManagement',
+        'host': 'localhost',
         'port': '8080'
     }
 };

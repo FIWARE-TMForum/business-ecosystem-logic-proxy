@@ -32,6 +32,9 @@ describe('TMF Controller', function() {
         getAPIPort: function() {
             return 1234;
         },
+        getAPIHost: function () {
+            return 'example.com'
+        },
         proxiedRequestHeaders: function() {
             return {
                 'Authorization': 'Bearer EXAMPLE',
@@ -101,7 +104,7 @@ describe('TMF Controller', function() {
             tmf.public(req, res);
 
             var expectedOptions = {
-                url: protocol + '://' + config.appHost + ':' + utils.getAPIPort() + path,
+                url: protocol + '://' + utils.getAPIHost() + ':' + utils.getAPIPort() + path,
                 method: method,
                 encoding: null,
                 headers: utils.proxiedRequestHeaders(),
@@ -259,7 +262,7 @@ describe('TMF Controller', function() {
             setTimeout(function () {
 
                 var expectedOptions = {
-                    url: protocol + '://' + config.appHost + ':' + utils.getAPIPort() + req.apiUrl,
+                    url: protocol + '://' + utils.getAPIHost() + ':' + utils.getAPIPort() + req.apiUrl,
                     method: method,
                     body: req.body,
                     encoding: null,
@@ -417,7 +420,7 @@ describe('TMF Controller', function() {
 
                 expect(options).toEqual(
                     {
-                        url: 'http://' + config.appHost + ':' + utils.getAPIPort() + reqPath,
+                        url: 'http://' + utils.getAPIHost() + ':' + utils.getAPIPort() + reqPath,
                         method: 'POST',
                         encoding: null,
                         headers: utils.proxiedRequestHeaders(),

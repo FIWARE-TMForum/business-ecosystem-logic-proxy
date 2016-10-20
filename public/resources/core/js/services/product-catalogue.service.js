@@ -44,6 +44,7 @@
 
         return {
             search: search,
+            count: count,
             exists: exists,
             create: create,
             detail: detail,
@@ -51,12 +52,16 @@
             buildInitialData: buildInitialData
         };
 
-        function search(filters) {
+        function queryCatalog(filters, method) {
             var deferred = $q.defer();
             var params = {};
 
             if (!angular.isObject(filters)) {
                 filters = {};
+            }
+
+            if (filters.action) {
+                params['action'] = filters.action;
             }
 
             if (filters.status) {
@@ -73,13 +78,31 @@
                 params['lifecycleStatus'] = LIFECYCLE_STATUS.LAUNCHED;
             }
 
-            resource.query(params, function (catalogueList) {
-                deferred.resolve(catalogueList);
+            if (filters.offset !== undefined) {
+                params['offset'] = filters.offset;
+                params['size'] = filters.size;
+            }
+
+            method(params, function (catalogueResp) {
+                deferred.resolve(catalogueResp);
             }, function (response) {
                 deferred.reject(response);
             });
 
             return deferred.promise;
+        }
+
+        function search(filters) {
+            return queryCatalog(filters, resource.query);
+        }
+
+        function count(filters) {
+            if (!angular.isObject(filters)) {
+                filters = {};
+            }
+
+            filters.action = 'count';
+            return queryCatalog(filters, resource.get);
         }
 
         function exists(params) {

@@ -36,33 +36,70 @@
         .controller('ProductCreateCtrl', ProductCreateController)
         .controller('ProductUpdateCtrl', ProductUpdateController);
 
-    function ProductSearchController($state, $rootScope, EVENTS, ProductSpec, LIFECYCLE_STATUS, PROMISE_STATUS, Utils) {
+    function ProductSearchController($scope, $state, $rootScope, EVENTS, ProductSpec, LIFECYCLE_STATUS, DATA_STATUS, Utils) {
         /* jshint validthis: true */
         var vm = this;
+        var filters = {};
 
         vm.state = $state;
-        vm.STATUS = PROMISE_STATUS;
+        vm.STATUS = DATA_STATUS;
+
+        vm.offset = -1;
+        vm.size = -1;
+        vm.list = [];
 
         vm.list = [];
         vm.list.flow = $state.params.flow;
 
         vm.showFilters = showFilters;
-
-        var searchPromise = ProductSpec.search($state.params);
-
-        searchPromise.then(function (productList) {
-            angular.copy(productList, vm.list);
-        }, function (response) {
-            vm.errorMessage = Utils.parseError(response, 'It was impossible to load the list of products');
-        });
-
-        Object.defineProperty(vm, 'status', {
-            get: function () { return searchPromise != null ? searchPromise.$$state.status : -1; }
-        });
+        vm.getElementsLength = getElementsLength;
+        vm.setFilters = setFilters;
 
         function showFilters() {
             $rootScope.$broadcast(EVENTS.FILTERS_OPENED, LIFECYCLE_STATUS);
         }
+
+        function getElementsLength() {
+            var params = {};
+            angular.copy($state.params, params);
+            return ProductSpec.count(params);
+        }
+
+        function setFilters(newFilters) {
+            filters = newFilters;
+        }
+
+        vm.list.status = vm.STATUS.LOADING;
+        $scope.$watch(function () {
+            return vm.offset;
+
+        }, function () {
+            vm.list.status = vm.STATUS.LOADING;
+
+            if (vm.offset >= 0) {
+                var params = {};
+                angular.copy($state.params, params);
+
+                params.offset = vm.offset;
+                params.size = vm.size;
+
+                if (filters.status) {
+                    params.status = filters.status;
+                }
+
+                if (filters.bundle !== undefined) {
+                    params.bundle = filters.bundle;
+                }
+
+                ProductSpec.search(params).then(function (productList) {
+                    angular.copy(productList, vm.list);
+                    vm.list.status = vm.STATUS.LOADED;
+                }, function (response) {
+                    vm.errorMessage = Utils.parseError(response, 'It was impossible to load the list of products');
+                    vm.list.status = vm.STATUS.ERROR;
+                });
+            }
+        });
     }
 
     function ProductCreateController($q, $scope, $state, $rootScope, EVENTS, PROMISE_STATUS, ProductSpec, Asset, AssetType, Utils) {
@@ -307,7 +344,10 @@
         }
 
         function hasProduct(product) {
-            return vm.data.bundledProductSpecification.indexOf(product) !== -1;
+            var filtered = vm.data.bundledProductSpecification.filter(function (bundledProduct) {
+                return bundledProduct.id == product.id;
+            });
+            return filtered.length > 0;
         }
 
         function uploadAsset(file, contentType, publicFile, callback, errCallback) {

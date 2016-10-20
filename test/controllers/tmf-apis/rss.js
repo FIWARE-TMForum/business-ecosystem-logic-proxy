@@ -24,7 +24,6 @@ var nock = require('nock'),
 describe('RSS API', function() {
 
     var config = testUtils.getDefaultConfig();
-    var SERVER = (config.appSsl ? 'https' : 'http') + '://' + config.appHost + ':' + config.endpoints.rss.port;
 
     var getRSSAPI = function(rssClient, tmfUtils, utils) {
         return proxyquire('../../../controllers/tmf-apis/rss', {
@@ -296,7 +295,7 @@ describe('RSS API', function() {
         });
 
   		it('should add callbackUrl to charging backend if not provided', function (done) {
-			var chargbackUrl = (config.appSsl ? 'https' : 'http') + '://' + config.appHost + ':' + config.endpoints.charging.port + "/charging/api/reportManagement/created";
+			var chargbackUrl = (config.appSsl ? 'https' : 'http') + '://' + config.endpoints.charging.host + ':' + config.endpoints.charging.port + "/charging/api/reportManagement/created";
 			var req = {
 				method: 'POST',
 				apiUrl: '/rss/settlement',
@@ -318,7 +317,7 @@ describe('RSS API', function() {
 		});
 
 		it('should not change callbackUrl if provided', function (done) {
-			var url = (config.appSsl ? 'https' : 'http') + '://' + config.appHost + ':' + config.endpoints.charging.port + "/charging/api/reportManagement/maybeCreated";
+			var url = (config.appSsl ? 'https' : 'http') + '://' + config.endpoints.charging.host + ':' + config.endpoints.charging.port + "/charging/api/reportManagement/maybeCreated";
             var req = {
                 method: 'POST',
                 apiUrl: '/rss/settlement',

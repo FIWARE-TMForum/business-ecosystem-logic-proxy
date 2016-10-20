@@ -190,7 +190,7 @@ describe('Catalog API', function() {
         return true;
     };
 
-    var SERVER = (config.appSsl ? 'https' : 'http') + '://' + config.appHost + ':' + config.endpoints.catalog.port;
+    var SERVER = (config.appSsl ? 'https' : 'http') + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
 
     var mockBundles = function(bundles) {
 
@@ -309,7 +309,7 @@ describe('Catalog API', function() {
         var catalogPath = '/catalog/7';
         var offeringPath = catalogPath + '/productOffering';
         var protocol = config.appSsl ? 'https' : 'http';
-        var serverUrl = protocol + '://' + config.appHost + ':' + config.endpoints.catalog.port;
+        var serverUrl = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
         var productPath = '/product/7';
         var categoryPath = '/category'
 
@@ -322,7 +322,7 @@ describe('Catalog API', function() {
             productSpecification: {
                 // the server will be avoided by the SW
                 // The catalog server will be used instead
-                href: config.appHost + ':' + config.endpoints.catalog.port + productPath
+                href: config.endpoints.catalog.host + ':' + config.endpoints.catalog.port + productPath
             },
             serviceCandidate: {
                 id: 'productClass'
@@ -656,15 +656,27 @@ describe('Catalog API', function() {
             var defaultErrorMessage = 'Internal Server Error';
             var catalogApi = mockCatalogAPI(body, offeringRequestInfo, storeError, null);
 
-            // The mock server that will handle the request when the product is requested
-            var bodyGetOfferingOk = {
-                isBundle: offeringRequestInfo.isBundle,
-                relatedParty: [{id: userName, role: offeringRequestInfo.role}],
-                lifecycleStatus: offeringRequestInfo.lifecycleStatus
+            var productSpecificationOk = {
+                relatedParty: [{id: userName, role: offeringRequestInfo.role}]
             };
-            var bodyGetOffering = offeringRequestInfo.requestStatus === 200 ? bodyGetOfferingOk : defaultErrorMessage;
+
+            var bodyGetProduct = offeringRequestInfo.productRequestStatus === 200 ? productSpecificationOk : defaultErrorMessage;
 
             for (var i = 0; i < offeringRequestInfo.hrefs.length; i++) {
+                // The mock server that will handle the request when the product is requested
+                var bodyGetOfferingOk = {
+                    isBundle: offeringRequestInfo.isBundle,
+                    lifecycleStatus: offeringRequestInfo.lifecycleStatus,
+                    productSpecification: {
+                        href: serverUrl + offeringRequestInfo.products[i]
+                    }
+                };
+                var bodyGetOffering = offeringRequestInfo.requestStatus === 200 ? bodyGetOfferingOk : defaultErrorMessage;
+
+                nock(serverUrl)
+                    .get(offeringRequestInfo.products[i])
+                    .reply(offeringRequestInfo.productRequestStatus, bodyGetProduct);
+
                 nock(serverUrl)
                     .get(offeringRequestInfo.hrefs[i])
                     .reply(offeringRequestInfo.requestStatus, bodyGetOffering);
@@ -678,9 +690,10 @@ describe('Catalog API', function() {
 
         var offering1 = catalogPath + '/productOffering/1';
         var offering2 = catalogPath + '/productOffering/2';
+        var product1 = '/productSpecification/20';
+        var product2 = '/productSpecification/21';
 
         it('should allow to create an offering bundle', function(done) {
-
             var body = {
                 isBundle: true,
                 bundledProductOffering: [{
@@ -696,7 +709,9 @@ describe('Catalog API', function() {
                 isBundle: false,
                 lifecycleStatus: 'active',
                 hrefs: [offering1, offering2],
-                requestStatus: 200
+                products: [product1, product2],
+                requestStatus: 200,
+                productRequestStatus: 200
             };
             testCreateOfferingBundle(offeringRequestInfo, catalogRequestInfoLaunched, null,
                 body, null, null, done)
@@ -715,7 +730,9 @@ describe('Catalog API', function() {
                 isBundle: false,
                 lifecycleStatus: 'active',
                 hrefs: [],
-                requestStatus: 200
+                products: [],
+                requestStatus: 200,
+                productRequestStatus: 200
             };
 
             testCreateOfferingBundle(offeringRequestInfo, catalogRequestInfoLaunched, null,
@@ -732,7 +749,9 @@ describe('Catalog API', function() {
                 isBundle: false,
                 lifecycleStatus: 'active',
                 hrefs: [],
-                requestStatus: 200
+                products: [],
+                requestStatus: 200,
+                productRequestStatus: 200
             };
 
             testCreateOfferingBundle(offeringRequestInfo, catalogRequestInfoLaunched, null,
@@ -752,7 +771,9 @@ describe('Catalog API', function() {
                 isBundle: false,
                 lifecycleStatus: 'active',
                 hrefs: [],
-                requestStatus: 200
+                products: [],
+                requestStatus: 200,
+                productRequestStatus: 200
             };
 
             testCreateOfferingBundle(offeringRequestInfo, catalogRequestInfoLaunched, null,
@@ -777,7 +798,9 @@ describe('Catalog API', function() {
                 isBundle: false,
                 lifecycleStatus: 'active',
                 hrefs: [offering1, offering2],
-                requestStatus: 500
+                products: [product1, product2],
+                requestStatus: 500,
+                productRequestStatus: 200
             };
             testCreateOfferingBundle(offeringRequestInfo, catalogRequestInfoLaunched, null,
                 body, 422, OFF_BUNDLE_FAILED_TO_RETRIEVE, done)
@@ -799,7 +822,9 @@ describe('Catalog API', function() {
                 isBundle: true,
                 lifecycleStatus: 'active',
                 hrefs: [offering1, offering2],
-                requestStatus: 200
+                products: [product1, product2],
+                requestStatus: 200,
+                productRequestStatus: 200
             };
             testCreateOfferingBundle(offeringRequestInfo, catalogRequestInfoLaunched, null,
                 body, 422, OFF_BUNDLE_IN_BUNDLE, done)
@@ -821,7 +846,33 @@ describe('Catalog API', function() {
                 isBundle: false,
                 lifecycleStatus: 'active',
                 hrefs: [offering1, offering2],
-                requestStatus: 200
+                products: [product1, product2],
+                requestStatus: 200,
+                productRequestStatus: 200
+            };
+            testCreateOfferingBundle(offeringRequestInfo, catalogRequestInfoLaunched, null,
+                body, 403, UNAUTHORIZED_OFF_BUNDLE, done)
+        });
+
+        it('should not allow to create a bundle when bundled offering product cannot be accessed', function(done) {
+
+            var body = {
+                isBundle: true,
+                bundledProductOffering: [{
+                    href: serverUrl + offering1
+                }, {
+                    href: serverUrl + offering2
+                }]
+            };
+
+            var offeringRequestInfo = {
+                role: 'Owner',
+                isBundle: false,
+                lifecycleStatus: 'active',
+                hrefs: [offering1, offering2],
+                products: [product1, product2],
+                requestStatus: 200,
+                productRequestStatus: 500
             };
             testCreateOfferingBundle(offeringRequestInfo, catalogRequestInfoLaunched, null,
                 body, 403, UNAUTHORIZED_OFF_BUNDLE, done)
@@ -1069,7 +1120,7 @@ describe('Catalog API', function() {
         // Basic properties
         var userName = 'test';
         var protocol = config.appSsl ? 'https' : 'http';
-        var url = protocol + '://' + config.appHost + ':' + config.endpoints.catalog.port;
+        var url = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
         var catalogPath = '/catalog/category';
 
         // Call the method
@@ -1238,7 +1289,7 @@ describe('Catalog API', function() {
         // Basic properties
         var userName = 'test';
         var protocol = config.appSsl ? 'https' : 'http';
-        var url = protocol + '://' + config.appHost + ':' + config.endpoints.catalog.port;
+        var url = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
         var catalogPath = '/DSProductCatalog/api/catalogManagement/v2/catalog';
 
         // Call the method
@@ -1351,7 +1402,7 @@ describe('Catalog API', function() {
         var userName = 'test';
         var path = '/catalog/product/1';
         var protocol = config.appSsl ? 'https' : 'http';
-        var url = protocol + '://' + config.appHost + ':' + config.endpoints.catalog.port;
+        var url = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
         var role = isOwnerMethod() ? 'Owner': 'Seller';
 
         // User information is send when the request does not fail
@@ -1434,7 +1485,7 @@ describe('Catalog API', function() {
         return {
             // the server will be avoided by the SW
             // The catalog server will be used instead
-            href: config.appHost + ':' + config.endpoints.catalog.port + path
+            href: config.endpoints.catalog.host + ':' + config.endpoints.catalog.port + path
         }
     };
 
@@ -1474,7 +1525,7 @@ describe('Catalog API', function() {
         var offeringPath = catalogPath + '/productOffering/1';
         var productPath = productRequestInfo.path || '/productSpecification/7';
         var protocol = config.appSsl ? 'https' : 'http';
-        var serverUrl = protocol + '://' + config.appHost + ':' + config.endpoints.catalog.port;
+        var serverUrl = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
 
         // HTTP MOCK - OFFERING
         var bodyGetOffering = {
@@ -1749,14 +1800,14 @@ describe('Catalog API', function() {
         var utils = {
             validateLoggedIn: validateLoggedOk,
             hasRole: checkRoleMethod
-        }
+        };
 
         var catalogApi = getCatalogApi({}, tmfUtils, utils);
 
         // Basic properties
         var userName = 'test';
         var protocol = config.appSsl ? 'https' : 'http';
-        var serverUrl = protocol + '://' + config.appHost + ':' + config.endpoints.catalog.port;
+        var serverUrl = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
 
         // The service will check that the user is the owner of the offering by making a request
         // to the API. However, a body is not required since the function isOwner has been set up
@@ -2535,7 +2586,7 @@ describe('Catalog API', function() {
         var basicPath = '/catalog/category';
         var categoryResourcePath = basicPath + '/7';
         var protocol = config.appSsl ? 'https' : 'http';
-        var url = protocol + '://' + config.appHost + ':' + config.endpoints.catalog.port;
+        var url = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
 
         // The mock server that will handle the request to retrieve the old state of the category
         nock(url)
@@ -3275,8 +3326,8 @@ describe('Catalog API', function() {
             var saveIndexCalled = false;
             var offIndexCalled = false;
 
-            var checkIndexCalls = function (data, userInfo) {
-                expect(data).toEqual([{id: '1'}]);
+            var checkIndexCalls = function (data, userInfo, expected) {
+                expect(data).toEqual(expected);
                 expect(userInfo).toEqual(user);
                 return Promise.resolve();
             };
@@ -3284,11 +3335,11 @@ describe('Catalog API', function() {
             var indexes = {
                 saveIndexProduct: function(data, userInfo) {
                     saveIndexCalled = true;
-                    return checkIndexCalls(data, userInfo);
+                    return checkIndexCalls(data, userInfo, [{id: '1'}]);
                 },
                 saveIndexOffering: function (data, userInfo) {
                     offIndexCalled = true;
-                    return checkIndexCalls(data, userInfo);
+                    return checkIndexCalls(data, userInfo, [{id: '1', catalog: '1'}]);
                 }
             };
 
@@ -3308,7 +3359,7 @@ describe('Catalog API', function() {
         it('should call the store product attachment when a valid product creation request has been redirected', function(done) {
             var req = {
                 method: 'POST',
-                apiUrl: '/catalog/productSpecification',
+                apiUrl: '/DSProductCatalog/productSpecification',
                 body: JSON.stringify(body),
                 user: user
             };
@@ -3318,7 +3369,7 @@ describe('Catalog API', function() {
         it('should not call the store attachment when the request is not a product creation', function(done) {
             var req = {
                 method: 'GET',
-                apiUrl: '/catalog/productSpecification',
+                apiUrl: '/DSProductCatalog/productSpecification',
                 body: JSON.stringify(body),
                 user: user
             };
@@ -3328,7 +3379,7 @@ describe('Catalog API', function() {
         it('should call the offering attachment when the request is a product offering creation', function (done) {
             var req = {
                 method: 'POST',
-                apiUrl: '/catalog/catalog/1/productOffering',
+                apiUrl: '/DSProductCatalog/catalogManagement/api/v2/catalog/1/productOffering',
                 body: JSON.stringify(body),
                 user: user
             };
@@ -3338,7 +3389,7 @@ describe('Catalog API', function() {
         it('should call the offering update validation when the request is a product offering update', function (done) {
             var req = {
                 method: 'PATCH',
-                apiUrl: '/catalog/catalog/1/productOffering/1',
+                apiUrl: '/DSProductCatalog/catalogManagement/api/v2/catalog/1/productOffering/1',
                 body: JSON.stringify(body),
                 user: user
             };

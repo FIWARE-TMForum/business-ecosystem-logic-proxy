@@ -31,33 +31,56 @@
         .controller('RelationshipCreateCtrl', RelationshipCreateController)
         .controller('RelationshipDeleteCtrl', RelationshipDeleteController);
 
-    function RelationshipCreateController($controller, $rootScope, $scope, EVENTS, PROMISE_STATUS, LIFECYCLE_STATUS, Utils, ProductSpec) {
+    function RelationshipCreateController($controller, $rootScope, $scope, EVENTS, DATA_STATUS, LIFECYCLE_STATUS, Utils, ProductSpec) {
         /* jshint validthis: true */
         var vm = this;
+        vm.offset = -1;
+        vm.size = 0;
+        vm.list = [];
 
         angular.extend(vm, $controller('FormMixinCtrl', {$scope: $scope}));
 
         vm.RELATIONSHIPS = ProductSpec.TYPES.RELATIONSHIP;
-        vm.STATUS = PROMISE_STATUS;
+        vm.STATUS = DATA_STATUS;
 
         vm.data = new ProductSpec.Relationship({}, vm.RELATIONSHIPS.MIGRATION.code);
 
         vm.create = create;
         vm.setProductSpec = setProductSpec;
+        vm.getElementsLength = getElementsLength;
         vm.hasRelationship = hasRelationship;
 
-        var searchPromise = ProductSpec.search({
-            owner: true,
-            status: LIFECYCLE_STATUS.LAUNCHED
-        });
-        searchPromise.then(function (collection) {
-            vm.list = collection;
-        }, function (response) {
-            vm.errorMessage = Utils.parseError(response, 'Unexpected error trying to retrieve product specifications.');
-        });
+        function getElementsLength() {
+            var params = {
+                owner: true,
+                status: LIFECYCLE_STATUS.LAUNCHED
+            };
+            return ProductSpec.count(params);
+        }
 
-        Object.defineProperty(vm, 'status', {
-            get: function () { return searchPromise != null ? searchPromise.$$state.status : -1; }
+        vm.list.status = vm.STATUS.LOADING;
+        $scope.$watch(function () {
+            return vm.offset;
+
+        }, function () {
+            vm.list.status = vm.STATUS.LOADING;
+
+            if (vm.offset >= 0) {
+                var params = {
+                    owner: true,
+                    status: LIFECYCLE_STATUS.LAUNCHED,
+                    offset: vm.offset,
+                    size: vm.size
+                };
+
+                ProductSpec.search(params).then(function (productList) {
+                    angular.copy(productList, vm.list);
+                    vm.list.status = vm.STATUS.LOADED;
+                }, function (response) {
+                    vm.errorMessage = Utils.parseError(response, 'Unexpected error trying to retrieve product specifications.');
+                    vm.list.status = vm.STATUS.ERROR;
+                });
+            }
         });
 
         var createPromise = null;

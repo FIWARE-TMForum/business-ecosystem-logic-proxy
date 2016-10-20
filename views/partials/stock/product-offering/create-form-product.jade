@@ -3,16 +3,16 @@ form(name="step.form", novalidate)
     .alert.alert-info.text-center Offering bundles cannot include product specs
 
   div(ng-if="!createVM.data.isBundle")
-    .form-group(ng-controller="ProductSearchCtrl as searchVM")
+    .form-group(ng-controller="ProductSearchCtrl as searchVM" ng-if="createForm.stepIndex == $index")
       input(type="hidden", ng-model="createVM.product.id", required)
       .row
-        .col-xs-12(ng-if="searchVM.status === searchVM.STATUS.PENDING")
+        .col-xs-12(ng-if="searchVM.list.status === searchVM.STATUS.LOADING")
           .container-spinner
             span.fa.fa-spinner.fa-spin.fa-2x
-        .col-xs-12(ng-if="searchVM.status === searchVM.STATUS.REJECTED")
+        .col-xs-12(ng-if="searchVM.list.status === searchVM.STATUS.ERROR")
           .alert.alert-danger.text-center
             span {{ searchVM.errorMessage }}
-        .col-xs-12(ng-if="searchVM.status === searchVM.STATUS.RESOLVED" ng-switch="searchVM.list.length")
+        .col-xs-12(ng-if="searchVM.list.status === searchVM.STATUS.LOADED" ng-switch="searchVM.list.length")
           .alert.alert-info.text-center(ng-switch-when="0")
             span No product specifications found.
           .table-responsive(ng-switch-default)
@@ -26,7 +26,7 @@ form(name="step.form", novalidate)
                   th Type
                   th Updated
               tbody
-                tr(ng-repeat="product in searchVM.list | status:STATUS.ACTIVE:STATUS.LAUNCHED as results",
+                tr(ng-repeat="product in searchVM.list",
                     ng-class="{ active: createVM.product.id == product.id }", ng-click="createVM.setProduct(product)")
 
                   td
@@ -41,6 +41,7 @@ form(name="step.form", novalidate)
                       | {{ product.isBundle ? 'Bundle' : 'Single' }}
                   td
                     time(am-time-ago="product.lastUpdate")
+        pager(controller="searchVM", size="12", max="12" ng-init="searchVM.setFilters({status: STATUS.ACTIVE + ',' + STATUS.LAUNCHED})")
 
   .form-group.text-right
     a.btn.btn-default.z-depth-1(ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])", ng-disabled="!step.form.$valid")

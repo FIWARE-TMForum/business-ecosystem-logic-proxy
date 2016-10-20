@@ -45,7 +45,7 @@ var billing = (function() {
     var validateProductCharge = function(req, productId, callback) {
         // Check that the specified product id belongs to the user
         var productUrl = utils.getAPIURL(
-            config.appSsl, config.appHost, config.endpoints.inventory.port,
+            config.appSsl, config.endpoints.inventory.host, config.endpoints.inventory.port,
             config.endpoints.inventory.path + '/api/productInventory/v2/product/' + productId);
 
         makeRequest(productUrl, function(err, product) {
@@ -93,7 +93,7 @@ var billing = (function() {
         if ('customerAccount' in req.json && 'href' in req.json.customerAccount) {
 
             var customerAccountPath = url.parse(req.json.customerAccount.href).pathname;
-            var customerAccountUrl = utils.getAPIURL(config.appSsl, config.appHost, config.endpoints.customer.port, customerAccountPath);
+            var customerAccountUrl = utils.getAPIURL(config.appSsl, config.endpoints.customer.host, config.endpoints.customer.port, customerAccountPath);
 
             makeRequest(customerAccountUrl, function(err, body) {
 
@@ -105,7 +105,7 @@ var billing = (function() {
                 } else {
 
                     var customerPath = url.parse(body.customer.href).pathname;
-                    var customerUrl = utils.getAPIURL(config.appSsl, config.appHost, config.endpoints.customer.port, customerPath);
+                    var customerUrl = utils.getAPIURL(config.appSsl, config.endpoints.customer.host, config.endpoints.customer.port, customerPath);
 
                     makeRequest(customerUrl, function(err, body) {
 
@@ -191,7 +191,7 @@ var billing = (function() {
 
     var validateOwner = function(req, callback) {
 
-        var internalUrl = utils.getAPIURL(config.appSsl, config.appHost, config.endpoints.billing.port, req.apiUrl);
+        var internalUrl = utils.getAPIURL(config.appSsl, config.endpoints.billing.host, config.endpoints.billing.port, req.apiUrl);
 
         makeRequest(internalUrl, function(err, body) {
 

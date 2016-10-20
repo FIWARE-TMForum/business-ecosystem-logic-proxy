@@ -50,7 +50,7 @@ describe('Store Client', function() {
 
         // Mock the server
         config.appSsl = protocol === 'https' ? true : false;
-        var serverUrl = protocol + '://' + config.appHost + ':' + config.endpoints.charging.port;
+        var serverUrl = protocol + '://' + config.endpoints.charging.host + ':' + config.endpoints.charging.port;
         var receivedBody;
 
         nock(serverUrl, {
@@ -104,7 +104,7 @@ describe('Store Client', function() {
     var testValidateProductError = function(assetType, errorStatus, response, expectedErrMsg, done) {
         // Mock the server
         config.appSsl = false;
-        var serverUrl = 'http' + '://' + config.appHost + ':' + config.endpoints.charging.port;
+        var serverUrl = 'http' + '://' + config.endpoints.charging.host + ':' + config.endpoints.charging.port;
         var receivedBody;
 
         if (errorStatus) {
@@ -194,7 +194,7 @@ describe('Store Client', function() {
         var redirectUrl = 'http://redirecturl.com';
 
         // Mock the server
-        var serverUrl = 'http' + '://' + config.appHost + ':' + config.endpoints.charging.port;
+        var serverUrl = 'http' + '://' + config.endpoints.charging.host + ':' + config.endpoints.charging.port;
         var receivedBody;
         var response = {
             'redirectUrl': redirectUrl
@@ -232,7 +232,7 @@ describe('Store Client', function() {
 
         // Mock the server
         config.appSsl = false;
-        var serverUrl = 'http://' + config.appHost + ':' + config.endpoints.charging.port;
+        var serverUrl = 'http://' + config.endpoints.charging.host + ':' + config.endpoints.charging.port;
         var receivedBody;
 
         nock(serverUrl, {
@@ -266,7 +266,7 @@ describe('Store Client', function() {
 
         // Mock the server
         config.appSsl = false;
-        var serverUrl = 'http://' + config.appHost + ':' + config.endpoints.charging.port;
+        var serverUrl = 'http://' + config.endpoints.charging.host + ':' + config.endpoints.charging.port;
         var receivedBody;
 
         nock(serverUrl, {
@@ -301,7 +301,7 @@ describe('Store Client', function() {
 
         // Mock the server
         config.appSsl = false;
-        var serverUrl = 'http://' + config.appHost + ':' + config.endpoints.charging.port;
+        var serverUrl = 'http://' + config.endpoints.charging.host + ':' + config.endpoints.charging.port;
 
         nock(serverUrl, {
             reqheaders: {
@@ -325,7 +325,7 @@ describe('Store Client', function() {
 
         // Mock the server
         config.appSsl = false;
-        var serverUrl = 'http://' + config.appHost + ':' + config.endpoints.charging.port;
+        var serverUrl = 'http://' + config.endpoints.charging.host + ':' + config.endpoints.charging.port;
 
         nock(serverUrl, {
             reqheaders: {

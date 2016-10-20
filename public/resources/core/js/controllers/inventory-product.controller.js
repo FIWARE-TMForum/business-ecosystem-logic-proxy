@@ -35,7 +35,7 @@
         .controller('InventorySearchCtrl', InventorySearchController)
         .controller('InventoryDetailsCtrl', ProductDetailController);
 
-    function InventorySearchController($state, $rootScope, EVENTS, InventoryProduct, INVENTORY_STATUS, Utils) {
+    function InventorySearchController($scope, $state, $rootScope, EVENTS, InventoryProduct, INVENTORY_STATUS, Utils) {
         /* jshint validthis: true */
         var vm = this;
 
@@ -43,19 +43,42 @@
 
         vm.list = [];
         vm.list.flow = $state.params.flow;
+        vm.offset = -1;
+        vm.size = -1;
 
         vm.showFilters = showFilters;
+        vm.getElementsLength = getElementsLength;
 
-        InventoryProduct.search($state.params).then(function (productList) {
-            vm.list.status = LOADED;
-            angular.copy(productList, vm.list);
-        }, function (response) {
-            vm.error = Utils.parseError(response, 'It was impossible to load the list of products');
-            vm.list.status = ERROR;
+        $scope.$watch(function () {
+            return vm.offset;
+        }, function () {
+            vm.list.status = LOADING;
+
+            if (vm.offset >= 0) {
+                var params = {};
+                angular.copy($state.params, params);
+
+                params.offset = vm.offset;
+                params.size = vm.size;
+
+                InventoryProduct.search(params).then(function (productList) {
+                    vm.list.status = LOADED;
+                    angular.copy(productList, vm.list);
+                }, function (response) {
+                    vm.error = Utils.parseError(response, 'It was impossible to load the list of products');
+                    vm.list.status = ERROR;
+                });
+            }
         });
 
         function showFilters() {
             $rootScope.$broadcast(EVENTS.FILTERS_OPENED, INVENTORY_STATUS);
+        }
+
+        function getElementsLength() {
+            var params = {};
+            angular.copy($state.params, params);
+            return InventoryProduct.count(params);
         }
     }
 

@@ -411,6 +411,7 @@ describe("Test index helper library", function () {
     var bundleExpected = {
         id: "offering:3",
         originalId: 3,
+        name: "name",
         sortedId: "000000000003",
         body: ["name", "description"],
         userId: md5("rock-8"),
@@ -423,6 +424,7 @@ describe("Test index helper library", function () {
     var notBundleExpected = Object.assign({}, bundleExpected, {
         id: "offering:2",
         originalId: 2,
+        name: "name",
         sortedId: "000000000002",
         productSpecification: "000000000001",
         href: "http://2",
@@ -432,6 +434,7 @@ describe("Test index helper library", function () {
     var notBundleCategoriesOfferExpect = Object.assign({}, notBundleExpected, {
         id: "offering:12",
         originalId: 12,
+        name: "name",
         sortedId: "000000000012",
         lifecycleStatus: "Disabled",
         categoriesId: [13],
@@ -483,9 +486,10 @@ describe("Test index helper library", function () {
 
     it('should convert offer with categories', function (done) {
         var user = {id: "rock-8"};
+        var api = "DSProductCatalog";
 
         var extra = { request: (url, f) => {
-            var curl = (config.appSsl ? "https" : "http") + "://" + config.appHost + ":" + utils.getAPIPort("DSProductCatalog") + "/DSProductCatalog/api/catalogManagement/v2/category/13";
+            var curl = (config.appSsl ? "https" : "http") + "://" + utils.getAPIHost(api) + ":" + utils.getAPIPort(api) + "/DSProductCatalog/api/catalogManagement/v2/category/13";
             expect(url).toEqual(curl);
 
             f(null, {}, JSON.stringify({
@@ -507,10 +511,11 @@ describe("Test index helper library", function () {
     it('should convert offer with multiple categories', function (done) {
         var user = {id: "rock-8"};
         var ids = [13, 14];
+        var api = "DSProductCatalog";
 
         var extra = { request: (url, f) => {
             var id = ids.shift();
-            var curl = (config.appSsl ? "https" : "http") + "://" + config.appHost + ":" + utils.getAPIPort("DSProductCatalog") + "/DSProductCatalog/api/catalogManagement/v2/category/" + id;
+            var curl = (config.appSsl ? "https" : "http") + "://" + utils.getAPIHost(api) + ":" + utils.getAPIPort(api) + "/DSProductCatalog/api/catalogManagement/v2/category/" + id;
             expect(url).toEqual(curl);
 
             f(null, {}, JSON.stringify({
@@ -626,7 +631,7 @@ describe("Test index helper library", function () {
         productOffering: {
             id: 5
         },
-        relatedParty: [{id: "rock"}],
+        relatedParty: [{id: "rock", role: "customer"}],
         href: "http://12",
         name: "inventoryName",
         status: "status",
@@ -675,7 +680,7 @@ describe("Test index helper library", function () {
 
     var orderData = {
         id: 23,
-        relatedParty: [{id: "rock"}],
+        relatedParty: [{id: "rock", role: "customer"}, {id: "user", role: "seller"}],
         href: "http://23",
         priority: "prior",
         category: "endofunctor",
@@ -689,7 +694,8 @@ describe("Test index helper library", function () {
         originalId: 23,
         sortedId: "000000000023",
         relatedPartyHash: [md5("rock")],
-        relatedParty: ["rock"],
+        sellerHash: [md5("user")],
+        relatedParty: ["rock", "user"],
         href: "http://23",
         priority: "prior",
         category: "endofunctor",

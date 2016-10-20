@@ -16,6 +16,7 @@ var authorizeService = require('./controllers/authorizeService').authorizeServic
     passport = require('passport'),
     session = require('express-session'),
     shoppingCart = require('./controllers/shoppingCart').shoppingCart,
+    management = require('./controllers/management').management,
     tmf = require('./controllers/tmf').tmf,
     TokenService = require('./db/schemas/tokenService'),
     trycatch = require('trycatch'),
@@ -63,7 +64,6 @@ config.shoppingCartPath = checkPrefix(config.shoppingCartPath, '/shoppingCart');
 config.authorizeServicePath = checkPrefix(config.authorizeServicePath, '/authorizeService');
 config.logInPath = config.logInPath || '/login';
 config.logOutPath = config.logOutPath || '/logout';
-config.appHost = config.appHost || 'localhost';
 config.mongoDb = config.mongoDb || {};
 config.mongoDb.user = config.mongoDb.user || '';
 config.mongoDb.password = config.mongoDb.password || '';
@@ -419,6 +419,11 @@ app.get(config.shoppingCartPath + '/item/:id', shoppingCart.getItem);
 app.delete(config.shoppingCartPath + '/item/:id', shoppingCart.remove);
 app.post(config.shoppingCartPath + '/empty', shoppingCart.empty);
 
+/////////////////////////////////////////////////////////////////////
+////////////////////////// MANAGEMENT API ///////////////////////////
+/////////////////////////////////////////////////////////////////////
+
+app.get('/' + config.endpoints.management.path + '/count/:size', management.getCount);
 
 /////////////////////////////////////////////////////////////////////
 ///////////////////////// AUTHORIZE SERVICE /////////////////////////
@@ -502,6 +507,7 @@ var jsAppFilesToInject = [
     'controllers/unauthorized.controller',
     'controllers/party.individual.controller',
     'controllers/party.contact-medium.controller',
+    'controllers/pager.controller',
     'controllers/billing-account.controller',
     'controllers/customer.controller',
     'routes/offering.routes',

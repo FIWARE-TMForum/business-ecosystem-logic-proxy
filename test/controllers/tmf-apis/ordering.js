@@ -26,9 +26,9 @@ var nock = require('nock'),
 describe('Ordering API', function() {
 
     var config = testUtils.getDefaultConfig();
-    var SERVER = (config.appSsl ? 'https' : 'http') + '://' + config.appHost + ':' + config.endpoints.ordering.port;
-    var CATALOG_SERVER = (config.appSsl ? 'https' : 'http') + '://' + config.appHost + ':' + config.endpoints.catalog.port;
-    var BILLING_SERVER = (config.appSsl ? 'https' : 'http') + '://' + config.appHost + ':' + config.endpoints.billing.port;
+    var SERVER = (config.appSsl ? 'https' : 'http') + '://' + config.endpoints.ordering.host + ':' + config.endpoints.ordering.port;
+    var CATALOG_SERVER = (config.appSsl ? 'https' : 'http') + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
+    var BILLING_SERVER = (config.appSsl ? 'https' : 'http') + '://' + config.endpoints.billing.host + ':' + config.endpoints.billing.port;
 
     // Errors
     var BILLING_ACCOUNT_REQUIRED = {
@@ -192,7 +192,7 @@ describe('Ordering API', function() {
 
                 var tmfUtils = {
 
-                    filterRelatedPartyFields: filterRelatedPartyFields,
+                    filterRelatedPartyWithRole: filterRelatedPartyFields,
 
                     ensureRelatedPartyIncluded: function(req, callback) {
                         ensureRelatedPartyIncludedCalled = true;
@@ -229,7 +229,7 @@ describe('Ordering API', function() {
                     message: 'Invalid filters'
                 };
 
-                var filterRelatedPartyFields = function (req, callback) {
+                var filterRelatedPartyFields = function (req, allowedRoles,callback) {
                     callback(error);
                 };
 
@@ -239,7 +239,7 @@ describe('Ordering API', function() {
 
             it('should call callback without errors when user is allowed to retrieve the list of orderings', function (done) {
 
-                var filterRelatedPartyFields = function (req, callback) {
+                var filterRelatedPartyFields = function (req, allowedRoles, callback) {
                     callback();
                 };
 
@@ -1121,6 +1121,7 @@ describe('Ordering API', function() {
         //////////////////////////////////////////////////////////////////////////////////////////////
 
         describe('Update (PATCH)', function() {
+            var SERVER = 'http://ordering.com:189';
 
             it('should fail when the body is invalid', function (done) {
 
@@ -1148,7 +1149,6 @@ describe('Ordering API', function() {
 
             it('should fail when the ordering cannot be retrieved', function (done) {
 
-                var SERVER = 'http://example.com:189';
                 var productOfferingPath = '/productOrdering/ordering/7';
 
                 var orderingApi = getOrderingAPI({}, {}, {});
@@ -1189,7 +1189,6 @@ describe('Ordering API', function() {
                 };
 
                 var orderId = 7;
-                var SERVER = 'http://example.com:189';
                 var productOfferingPath = '/productOrdering/ordering/7';
 
                 var tmfUtils = jasmine.createSpyObj('tmfUtils', ['hasPartyRole']);
@@ -1661,11 +1660,16 @@ describe('Ordering API', function() {
 
         var testPostValidationStoreNotifyOk = function(repeatedUser, getBillingFails, updateBillingFails, err, done) {
 
-            var buildUser = function(userName) {
-                return {
+            var buildUser = function(userName, role) {
+                var user = {
                     id: userName,
                     href: 'http://example.com/user/' + userName
+                };
+
+                if (role) {
+                    user.role = role;
                 }
+                return user;
             };
 
             var headers = {};
@@ -1673,8 +1677,8 @@ describe('Ordering API', function() {
             var ordering = getBaseOrdering(billingAccountPath);
             var user = getBaseUser();
 
-            var user1 = buildUser('user1');
-            var user2 = buildUser('user2');
+            var user1 = buildUser('user1', 'customer');
+            var user2 = buildUser('user2', 'seller');
             ordering.relatedParty = [ user1, user2 ];
 
             var getBillingReq = {

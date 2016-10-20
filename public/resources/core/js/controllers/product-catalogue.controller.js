@@ -38,47 +38,97 @@
         .controller('CatalogueDetailCtrl', CatalogueDetailController)
         .controller('CatalogueUpdateCtrl', CatalogueUpdateController);
 
-    function CatalogueListController(Catalogue, Utils) {
+    function CatalogueListController($scope, Catalogue, Utils) {
         /* jshint validthis: true */
         var vm = this;
 
         vm.list = [];
+        vm.offset = -1;
+        vm.size = -1;
+        vm.getElementsLength = getElementsLength;
 
-        Catalogue.search().then(function (catalogueList) {
-            angular.copy(catalogueList, vm.list);
-            vm.list.status = LOADED;
-        }, function (response) {
-            vm.error = Utils.parseError(response, 'It was impossible to load the list of catalogs');
-            vm.list.status = ERROR;
+        function getElementsLength() {
+            return Catalogue.count();
+        }
+
+        $scope.$watch(function () {
+            return vm.offset;
+        }, function () {
+            vm.list.status = LOADING;
+
+            if (vm.offset >= 0) {
+                var page = {
+                    offset: vm.offset,
+                    size: vm.size
+                };
+
+                Catalogue.search(page).then(function (catalogueList) {
+                    angular.copy(catalogueList, vm.list);
+                    vm.list.status = LOADED;
+                }, function (response) {
+                    vm.error = Utils.parseError(response, 'It was impossible to load the list of catalogs');
+                    vm.list.status = ERROR;
+                });
+            }
         });
     }
 
-    function CatalogueSearchController($state, $rootScope, EVENTS, Catalogue, LIFECYCLE_STATUS, PROMISE_STATUS, Utils) {
+    function CatalogueSearchController($scope, $state, $rootScope, EVENTS, Catalogue, LIFECYCLE_STATUS, DATA_STATUS, Utils) {
         /* jshint validthis: true */
         var vm = this;
+        var filters = {};
 
-        vm.STATUS = PROMISE_STATUS;
+        vm.STATUS = DATA_STATUS;
         vm.state = $state;
 
+        vm.offset = -1;
+        vm.size = -1;
         vm.list = [];
 
         vm.showFilters = showFilters;
-
-        var searchPromise = Catalogue.search($state.params);
-
-        searchPromise.then(function (catalogueList) {
-            angular.copy(catalogueList, vm.list);
-        }, function (response) {
-            vm.errorMessage = Utils.parseError(response, 'It was impossible to load the list of catalogs');
-        });
-
-        Object.defineProperty(vm, 'status', {
-            get: function () { return searchPromise != null ? searchPromise.$$state.status : -1; }
-        });
+        vm.getElementsLength = getElementsLength;
+        vm.setFilters = setFilters;
 
         function showFilters() {
             $rootScope.$broadcast(EVENTS.FILTERS_OPENED, LIFECYCLE_STATUS);
         }
+
+        function getElementsLength() {
+            var params = {};
+            angular.copy($state.params, params);
+            return Catalogue.count(params);
+        }
+
+        function setFilters(newFilters) {
+            filters = newFilters;
+        }
+
+        vm.list.status = vm.STATUS.LOADING;
+        $scope.$watch(function () {
+            return vm.offset;
+        }, function () {
+            vm.list.status = vm.STATUS.LOADING;
+
+            if (vm.offset >= 0) {
+                var params = {};
+                angular.copy($state.params, params);
+
+                params.offset = vm.offset;
+                params.size = vm.size;
+
+                if (filters.status) {
+                    params.status = filters.status;
+                }
+
+                Catalogue.search(params).then(function (catalogueList) {
+                    angular.copy(catalogueList, vm.list);
+                    vm.list.status = vm.STATUS.LOADED;
+                }, function (response) {
+                    vm.errorMessage = Utils.parseError(response, 'It was impossible to load the list of catalogs');
+                    vm.list.status = vm.STATUS.ERROR;
+                });
+            }
+        });
     }
 
     function CatalogueCreateController($state, $rootScope, EVENTS, PROMISE_STATUS, Catalogue, Utils) {

@@ -29,7 +29,8 @@ var async = require('async'),
     logger = require('./../../lib/logger').logger.getLogger('TMF'),
     tmfUtils = require('./../../lib/tmfUtils'),
     indexes = require('./../../lib/indexes.js'),
-    Promise = require('promiz');
+    Promise = require('promiz'),
+    deepcopy = require("deepcopy");
 
 
 var LIFE_CYCLE = 'lifecycleStatus';
@@ -48,6 +49,7 @@ var catalog = (function() {
     //////////////////////////////////////////////////////////////////////////////////////////////
 
     var offeringsPattern = new RegExp('/productOffering/?$');
+    var catalogOfferingsPattern = new RegExp('/catalog/[^/]+/productOffering/?');
     var offeringPattern = new RegExp('/catalog/[^/]+/productOffering/[^/]+/?$');
     var productsPattern = new RegExp('/productSpecification/?$');
     var categoryPattern = new RegExp('/category/[^/]+/?$');
@@ -56,10 +58,9 @@ var catalog = (function() {
 
     var retrieveAsset = function(assetPath, callback) {
 
-        var uri = utils.getAPIURL(config.appSsl, config.appHost, config.endpoints.catalog.port, assetPath);
+        var uri = utils.getAPIURL(config.appSsl, config.endpoints.catalog.host, config.endpoints.catalog.port, assetPath);
 
         request(uri, function(err, response, body) {
-
             if (err || response.statusCode >= 400) {
                 callback({
                     status: response ? response.statusCode : 500
@@ -1034,11 +1035,11 @@ var catalog = (function() {
     };
 
     var createProductQuery = indexes.genericCreateQuery.bind(
-	null,
-	["isBundle", "productNumber"],
+	    null,
+	    ["isBundle", "productNumber"],
         "product",
-	function (req, query) {
-	    if (req.query["relatedParty.id"]) {
+    	function (req, query) {
+	        if (req.query["relatedParty.id"]) {
                 indexes.addAndCondition(query, { relatedPartyHash: [indexes.fixUserId(req.query["relatedParty.id"])]});
     	    }
 
@@ -1046,13 +1047,17 @@ var catalog = (function() {
 	});
 
     var createOfferQuery = indexes.genericCreateQuery.bind(
-	null,
-	["isBundle"],
+	    null,
+	    ["isBundle", "name"],
         "offering",
-	function (req, query) {
+	    function (req, query) {
+	        if (catalogOfferingsPattern.test(req.apiUrl)) {
+	            var catalog = req.apiUrl.split('/')[6];
+	            indexes.addAndCondition(query, { catalog: [catalog] });
+            }
             if (req.query.relatedParty) {
                 indexes.addAndCondition(query, { userId: [indexes.fixUserId(req.query.relatedParty)] });
-	    }
+            }
             if (req.query["category.id"]) {
                 indexes.addAndCondition(query, { categoriesId: [req.query["category.id"]]});
             }
@@ -1073,7 +1078,6 @@ var catalog = (function() {
         function (req, query) {
             if (req.query["relatedParty.id"]) {
                 indexes.addAndCondition(query, { relatedPartyHash: [indexes.fixUserId(req.query["relatedParty.id"])] });
-                // query.AND.push( { relatedPartyHash: [indexes.fixUserId(req.query["relatedParty.id"])]});
             }
 
             lifecycleQuery(req, query);
@@ -1132,12 +1136,29 @@ var catalog = (function() {
             storeClient.attachProduct(body, req.user, middlewareSave(indexes.saveIndexProduct, [body], req.user, callback));
 
         } else if (req.method == 'POST' && offeringsPattern.test(req.apiUrl)) {
+            var catalog = '';
+            var indexBody;
+
             body = JSON.parse(req.body);
-            storeClient.attachOffering(body, req.user, middlewareSave(indexes.saveIndexOffering, [body], req.user, callback));
+
+            if (req.apiUrl.indexOf('/catalog/') > -1) {
+                catalog = req.apiUrl.split('/')[6];
+            }
+
+            indexBody = deepcopy(body);
+            indexBody.catalog = catalog;
+            storeClient.attachOffering(body, req.user, middlewareSave(indexes.saveIndexOffering, [indexBody], req.user, callback));
 
         } else if ((req.method == 'PATCH' || req.method == 'PUT') && offeringPattern.test(req.apiUrl)) {
+            var catalog = req.apiUrl.split('/')[6];
+            var indexBody;
+
             body = JSON.parse(req.body);
-            storeClient.updateOffering(body, req.user, middlewareSave(indexes.saveIndexOffering, [body], req.user, callback));
+
+            indexBody = deepcopy(body);
+            indexBody.catalog = catalog;
+
+            storeClient.updateOffering(body, req.user, middlewareSave(indexes.saveIndexOffering, [indexBody], req.user, callback));
 
         } else if (req.method == 'POST' && catalogsPattern.test(req.apiUrl)) {
             body = JSON.parse(req.body);
