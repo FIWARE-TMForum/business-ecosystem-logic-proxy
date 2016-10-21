@@ -28,6 +28,7 @@ form(name="step.form", novalidate)
         input.form-control(
           type="text"
           name="version"
+          ng-pattern="/^\\d+\\.\\d+(\\.\\d+)*$/"
           ng-model="createVM.data.version"
           required
         )
@@ -36,6 +37,7 @@ form(name="step.form", novalidate)
           ng-show="createForm.hasError(step.form.version)"
         )
           span(ng-message="required") This field is required.
+          span(ng-message="pattern") Invalid version format
   .row
     .col-sm-8
       .form-group(
