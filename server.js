@@ -548,6 +548,10 @@ var renderTemplate = function(req, res, viewName) {
     // TODO: Maybe an object with extra properties (if required)
     var options = {
         user: req.user,
+        helpPortal: config.portals.help,
+        cloudPortal: config.portals.cloud,
+        mashupPortal: config.portals.mashup,
+        dataPortal: config.portals.data,
         contextPath: config.portalPrefix,
         proxyPath: config.proxyPrefix,
         catalogPath: config.endpoints.catalog.path,

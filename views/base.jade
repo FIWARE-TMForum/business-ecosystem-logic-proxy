@@ -1,7 +1,11 @@
 doctype html
 html(ng-app="app")
   head
-    title TM Forum Portal
+    title FIWARE Store
+
+    link(type="image/x-icon", href="#{ contextPath }/resources/core/images/favicon.ico", rel="icon")
+    link(type="image/x-icon", href="#{ contextPath }/resources/core/images/favicon.ico", rel="shortcut icon")
+    link(type="text/css", href="#{ contextPath }/resources/core/css/fonts.css", rel="stylesheet")
 
     meta(charset="utf-8")
     meta(name="viewport", content="width=device-width, initial-scale=1")
@@ -68,7 +72,7 @@ html(ng-app="app")
 
     block scripts
   body(ng-controller="UserCtrl as user")
-    .navbar.navbar-default.navbar-fixed-top.z-depth-2
+    .navbar.navbar-default.navbar-fixed-top
       .container
         .navbar-header
           a.navbar-toggle(data-toggle="dropdown")
@@ -86,19 +90,32 @@ html(ng-app="app")
               a.dropdown-menu-item(ui-sref="inventory", ui-sref-opts="{ reload: true, inherit: false }")
                 span.item-icon.fa.fa-archive
                 span.item-text My inventory
-          a.navbar-brand.hidden-xs(href="#{ contextPath }")
-            img(src="#{ contextPath }/resources/core/images/fiware-tmforum-logo.png")
-        .navbar-text {{ title }}
+          a.navbar-brand.hidden-xs(href="#{ helpPortal }")
+            img(src="#{ contextPath }/resources/core/images/fiware-lab.png")
+        ul.nav.navbar-nav.col-md-push-9
+          li
+            a(href="#{ cloudPortal }") Cloud
+          li.active
+            a(href="") Store
+          li
+            a(href="#{ mashupPortal }") Mashup
+          li
+            a(href="#{ dataPortal }") Data
+          li
+            a(href="#{ accountHost }") Account
+          li
+            a(href="#{ helpPortal }") Help&info
 
         if user
           ul.nav.navbar-nav.navbar-right
             block navbars
             li.dropdown
               a.dropdown-toggle.has-stack(data-toggle="dropdown")
-                span.fa-stack
-                  i.fa.fa-circle-thin.fa-stack-2x
-                  i.fa.fa-user.fa-stack-1x
+                span
+                  i.fa.fa-user
                 span.hidden-xs #{ user.displayName }
+                span
+                  i.fa.fa-angle-double-down
               .dropdown-menu.z-depth-3
                 .dropdown-avatar.z-depth-1
                   span.fa-stack.fa-3x
@@ -117,7 +134,7 @@ html(ng-app="app")
                   span.item-text Sign out
           form(name="signOutForm", method="post", action="#{ contextPath }/logout")
         else
-          a.btn.btn-warning.navbar-btn.navbar-right.z-depth-1(href="#{ contextPath }/login")
+          a.navbar-right.navbar-btn(href="#{ contextPath }/login")
             span.item-text Sign in
 
     .container(ng-controller="FlashMessageListCtrl as listVM")
@@ -132,16 +149,22 @@ html(ng-app="app")
 
     footer.clearfix
       hr.fiware-line
-      .col-sm-6
-        ul.list-inline
-          li.small © 2015-2016 CoNWeT Lab., Universidad Politécnica de Madrid
-      .col-sm-6
-        ul.list-inline.pull-right
+      .col-sm-8.col-sm-offset-2
+        ul.list-inline.fiware-footer
+          li.small 2016 ©
           li.small
             a(href="https://www.fiware.org") FIWARE
-          li.small ·
+            span .
+          li.small The use of FIWARE Lab services is subject to the acceptance of the
           li.small
-            a(href="https://www.tmforum.org") TM FORUM
+            a(href="http://forge.fiware.org/plugins/mediawiki/wiki/fiware/index.php/FIWARE_LAB_Terms_and_Conditions") Terms and Conditions
+            span ,
+          li.small
+            a(href="http://forge.fiware.org/plugins/mediawiki/wiki/fiware/index.php/FIWARE_Privacy_Policy") Privacy Policy
+          li.small and
+          li.small
+            a(href="http://forge.fiware.org/plugins/mediawiki/wiki/fiware/index.php/Cookies_Policy_FIWARE") Cookies Policy
+            span .
 
     if user
       include ./modals/user-profile.modal.jade

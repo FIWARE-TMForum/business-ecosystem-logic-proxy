@@ -19,6 +19,13 @@ config.logInPath = '/login';
 config.logOutPath = '/logOut';
 config.sessionSecret = 'keyboard cat';
 
+config.portals = {
+    cloud: 'https://store.lab.fiware.org/',
+    mashup: 'https://mashup.lab.fiware.org/',
+    data: 'https://data.lab.fiware.org/',
+    help: 'https://help.lab.fiware.org/'
+};
+
 // OAuth2 configuration
 config.oauth2 = {
     'server': 'https://account.lab.fiware.org',
