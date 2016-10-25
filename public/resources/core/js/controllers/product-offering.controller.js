@@ -264,8 +264,17 @@
             get: function () { return createPromise != null ? createPromise.$$state.status : -1; }
         });
 
+        function filterOffering(offering) {
+            var i = -1;
+            vm.data.bundledProductOffering.forEach(function (off, index) {
+                if (off.id == offering.id) {
+                    i = index;
+                }
+            });
+            return i;
+        }
         function toggleOffering(offering) {
-            var index = vm.data.bundledProductOffering.indexOf(offering);
+            var index = filterOffering(offering);
 
             if (index !== -1) {
                 vm.data.bundledProductOffering.splice(index, 1);
@@ -287,9 +296,7 @@
         }
 
         function hasOffering(offering) {
-            return vm.data.bundledProductOffering.filter(function (off) {
-                return off.id == offering.id
-            }).length > 0;
+            return filterOffering(offering) > -1;
         }
 
         /* PRICE PLANS METHODS */
