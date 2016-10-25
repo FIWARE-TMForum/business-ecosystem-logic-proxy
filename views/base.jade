@@ -19,6 +19,8 @@ html(ng-app="app")
     each jsFilePath in jsAppFilesToInject
       script(src="#{ contextPath }/#{ jsFilePath }")
 
+    script(src="https://account.lab.fiware.org/assets/signOut.js" type="text/javascript")
+
     script.
       angular.element(document).ready(function () {
         if (checkCookie(window.cookieName) != window.cookieValue) {
@@ -137,7 +139,7 @@ html(ng-app="app")
                 a.dropdown-menu-item(ng-click="user.signOut()")
                   span.item-icon.fa.fa-sign-out
                   span.item-text Sign out
-          form(name="signOutForm", method="post", action="#{ contextPath }/logout")
+          form(name="signOutForm", method="get", action="#{ contextPath }/logout")
         else
           a.navbar-right.navbar-btn(href="#{ contextPath }/login")
             span.item-text Sign in

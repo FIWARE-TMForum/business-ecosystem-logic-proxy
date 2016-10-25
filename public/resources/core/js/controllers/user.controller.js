@@ -99,7 +99,8 @@
         }
 
         function signOut() {
-            return document.signOutForm.submit();
+            Fiware.signOut('store');
+            return false;
         }
     }
 

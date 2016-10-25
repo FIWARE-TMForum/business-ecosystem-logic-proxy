@@ -387,7 +387,9 @@ app.get('/auth/fiware/callback', passport.authenticate('fiware', { failureRedire
 app.all(config.logOutPath, function(req, res) {
     // Destroy the session and redirect the user to the main page
     req.session.destroy();
-    res.redirect(config.portalPrefix + '/');
+
+    res.status(200);
+    res.end();
 });
 
 
