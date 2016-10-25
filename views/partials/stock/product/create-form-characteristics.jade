@@ -18,8 +18,8 @@ table.table.table-bordered(ng-if="createVM.characteristics.length")
           span {{ createVM.getFormattedValueOf(characteristic, value) }}
       td {{ createVM.getFormattedValueOf(characteristic, createVM.getDefaultValueOf(characteristic)) }}
       td
-        a.alert-link-danger(ng-click="createVM.removeCharacteristic($index)")
-          span.fa.fa-trash
+        a.btn.btn-sm.btn-icon.btn-danger(ng-click="createVM.removeCharacteristic($index)")
+          span.item-icon.fa.fa-trash
 .alert.alert-info.text-center(ng-if="!createVM.characteristics.length")
   | No characteristic included.
 include ./create-form-characteristic-form.jade

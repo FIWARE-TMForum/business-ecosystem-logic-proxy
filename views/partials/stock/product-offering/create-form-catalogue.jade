@@ -17,7 +17,7 @@ form(name="step.form", novalidate)
               tr
                 th Status
                 th Name
-                th Rol
+                th Role
                 th Updated
             tbody
               tr(ng-repeat="catalogue in searchVM.list", ng-class="{ active: createVM.catalogue.id == catalogue.id }", ng-click="createVM.setCatalogue(catalogue)")

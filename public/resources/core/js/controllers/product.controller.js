@@ -322,8 +322,18 @@
             return vm.currFormat === format;
         }
 
+        function filterProduct(product) {
+            var i = -1;
+            vm.data.bundledProductSpecification.forEach(function (bundledProduct, index) {
+                if (bundledProduct.id == product.id) {
+                    i = index;
+                }
+            });
+            return i;
+        }
+
         function toggleProduct(product) {
-            var index = vm.data.bundledProductSpecification.indexOf(product);
+            var index = filterProduct(product);
 
             if (index !== -1) {
                 vm.data.bundledProductSpecification.splice(index, 1);
@@ -344,10 +354,7 @@
         }
 
         function hasProduct(product) {
-            var filtered = vm.data.bundledProductSpecification.filter(function (bundledProduct) {
-                return bundledProduct.id == product.id;
-            });
-            return filtered.length > 0;
+            return filterProduct(product) > -1;
         }
 
         function uploadAsset(file, contentType, publicFile, callback, errCallback) {
@@ -403,13 +410,14 @@
 
         function saveProduct() {
             // Append product characteristics
-            vm.data.productSpecCharacteristic = vm.characteristics;
+            var data = angular.copy(vm.data);
+            data.productSpecCharacteristic = angular.copy(vm.characteristics);
 
             if (vm.isDigital) {
-                vm.data.productSpecCharacteristic = vm.data.productSpecCharacteristic.concat(vm.digitalChars);
+                data.productSpecCharacteristic = data.productSpecCharacteristic.concat(vm.digitalChars);
             }
 
-            createPromise = ProductSpec.create(vm.data);
+            createPromise = ProductSpec.create(data);
             createPromise.then(function (productCreated) {
                 $state.go('stock.product.update', {
                     productId: productCreated.id

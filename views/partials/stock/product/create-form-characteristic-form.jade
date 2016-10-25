@@ -159,6 +159,7 @@
     .form-group.text-left
       a.btn.btn-default.z-depth-1(ng-click="createVM.characteristicEnabled = true", ng-if="!createVM.characteristicEnabled")
         span.item-icon.fa.fa-plus
-        span.item-text Add characteristic
-      a.btn.btn-success.z-depth-1(ng-click="createVM.createCharacteristic() && createForm.resetForm(step.characteristicForm)", ng-disabled="!step.characteristicForm.$valid || !step.characteristicValuesForm.$valid", ng-if="createVM.characteristicEnabled")
-        span.item-text Add characteristic
+        span.item-text New Characteristic
+      a.btn.btn-warning.z-depth-1(ng-click="createVM.createCharacteristic() && createForm.resetForm(step.characteristicForm)", ng-disabled="!step.characteristicForm.$valid || !step.characteristicValuesForm.$valid", ng-if="createVM.characteristicEnabled")
+        span.item-icon.fa.fa-save
+        span.item-text Create

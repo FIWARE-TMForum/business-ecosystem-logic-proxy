@@ -208,7 +208,7 @@
 
                     var defaultMessage = 'There was an unexpected error that prevented the ' +
                         'system from creating a new revenue sharing model';
-                    var error = Utils.parseError(response, defaultMessage);
+                    var error = Utils.parseError(response, defaultMessage, 'exceptionText');
 
                     $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
                         error: error
@@ -274,7 +274,7 @@
 
                     var defaultMessage = 'There was an unexpected error that prevented the ' +
                         'system from updating the given revenue sharing model';
-                    var error = Utils.parseError(response, defaultMessage);
+                    var error = Utils.parseError(response, defaultMessage, 'exceptionText');
 
                     $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
                         error: error
