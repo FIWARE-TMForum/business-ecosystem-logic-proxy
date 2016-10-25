@@ -442,7 +442,8 @@ var cssFilesToInject = [
     'bootstrap-3.3.5/css/bootstrap',
     'font-awesome-4.5.0/css/font-awesome',
     'intl-tel-input-8.4.7/css/intlTelInput',
-    'core/css/default-theme'
+    'core/css/default-theme',
+    'core/css/cookies_policy'
 ].map(function (path) {
     return 'resources/' + path + '.css';
 });
@@ -465,6 +466,7 @@ var jsDepFilesToInject = [
 });
 
 var jsAppFilesToInject = [
+    'cookies_policy',
     'app.config',
     'app.filters',
     'app.directives',

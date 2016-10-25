@@ -20,6 +20,11 @@ html(ng-app="app")
       script(src="#{ contextPath }/#{ jsFilePath }")
 
     script.
+      angular.element(document).ready(function () {
+        if (checkCookie(window.cookieName) != window.cookieValue) {
+          createDiv();
+        }
+      });
       angular.module('app')
         .constant('URLS', {
           IMAGE: '#{ contextPath }/resources/core/images',
