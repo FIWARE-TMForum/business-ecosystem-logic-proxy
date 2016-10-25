@@ -41,11 +41,14 @@
             parseError: parseError
         };
 
-        function parseError(response, defaultMessage) {
-
+        function parseError(response, defaultMessage, errField) {
+            var errorField = 'error';
             var finalErrorMessage = defaultMessage;
-
             var data = response['data'];
+
+            if (errField) {
+                errorField = errField;
+            }
 
             if (angular.isString(response) && response.length) {
                 return response;
@@ -65,12 +68,12 @@
                     finalErrorMessage = data;
                 }
 
-            } else if (data !== null && typeof(data) === 'object' && 'error' in data) {
+            } else if (data !== null && typeof(data) === 'object' && errorField in data) {
                 // JSON
-                if (typeof(data['error']) === 'object' && 'title' in data['error']) {
-                    finalErrorMessage = data['error']['title'];
+                if (typeof(data[errorField]) === 'object' && 'title' in data[errorField]) {
+                    finalErrorMessage = data[errorField]['title'];
                 } else {
-                    finalErrorMessage = data['error'];
+                    finalErrorMessage = data[errorField];
                 }
             }
 
