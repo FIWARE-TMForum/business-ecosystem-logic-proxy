@@ -66,5 +66,5 @@ form(name="step.form", novalidate)
         strong Total: {{ createVM.getTotalPercentage() }} %
 
   .form-group.text-right
-    a.btn.btn-success(ng-click="createVM.create()", ng-disabled="!step.form.$valid || createVM.getTotalPercentage() != 100")
+    a.btn.btn-warning(ng-click="createVM.create()", ng-disabled="!step.form.$valid || createVM.getTotalPercentage() != 100")
       span.item-text Create
