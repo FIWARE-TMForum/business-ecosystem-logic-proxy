@@ -236,9 +236,11 @@
         var createPromise = null;
 
         function create() {
-            vm.data.category = formatCategory();
-            vm.data.place = formatPlaces();
-            createPromise = Offering.create(vm.data, vm.product, vm.catalogue);
+            var data = angular.copy(vm.data);
+
+            data.category = formatCategory();
+            data.place = formatPlaces();
+            createPromise = Offering.create(data, vm.product, vm.catalogue);
 
             createPromise.then(function (offeringCreated) {
                 $state.go('stock.offering.update', {
