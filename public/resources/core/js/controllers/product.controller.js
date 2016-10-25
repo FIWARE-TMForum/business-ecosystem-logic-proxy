@@ -403,13 +403,14 @@
 
         function saveProduct() {
             // Append product characteristics
-            vm.data.productSpecCharacteristic = vm.characteristics;
+            var data = angular.copy(vm.data);
+            data.productSpecCharacteristic = angular.copy(vm.characteristics);
 
             if (vm.isDigital) {
-                vm.data.productSpecCharacteristic = vm.data.productSpecCharacteristic.concat(vm.digitalChars);
+                data.productSpecCharacteristic = data.productSpecCharacteristic.concat(vm.digitalChars);
             }
 
-            createPromise = ProductSpec.create(vm.data);
+            createPromise = ProductSpec.create(data);
             createPromise.then(function (productCreated) {
                 $state.go('stock.product.update', {
                     productId: productCreated.id
