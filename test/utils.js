@@ -22,6 +22,7 @@ var defaultConfig = {
     proxyPrefix: '',
     oauth2: {
         server: 'https://account.lab.fiware.org',
+        clientID: 'client',
         roles: {
             admin: 'provider',
             seller: 'seller',
