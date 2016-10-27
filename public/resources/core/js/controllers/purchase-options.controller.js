@@ -43,13 +43,18 @@
         vm.priceplansTab = {
             title: "Price plans"
         };
+        vm.legalTab = {
+            title: "Terms & Conditions"
+        };
 
         vm.tabs = [];
         vm.tabActive = null;
 
         vm.characteristics = [];
         vm.priceplans = [];
+        vm.terms = [];
         vm.selectedOffering = null;
+        vm.termsAccepted = false;
 
         vm.order = order;
         vm.isValid = isValid;
@@ -71,16 +76,19 @@
             vm.tabActive = null;
             vm.priceplans = [];
             vm.characteristics = [];
+            vm.terms = [];
             vm.isBundle = productOffering.isBundle;
             vm.bundledOfferings = [];
             vm.selectedOffering = {
                 id: productOffering.id
             };
+            vm.termsAccepted = false;
 
             $scope.priceplanSelected = null;
 
             if (!productOffering.isBundle) {
                 processProductCharacteristics(productOffering.productSpecification, {offId: productOffering.id}, function() {
+                    loadTerms();
                     loadPriceplans(productOffering.productOfferingPrice);
                     showModal();
                 });
@@ -103,6 +111,7 @@
                         });
 
                         if (processed === productOffering.bundledProductOffering.length) {
+                            loadTerms();
                             loadPriceplans(productOffering.productOfferingPrice);
                             showModal();
                         }
@@ -149,7 +158,7 @@
         }
 
         function isValid() {
-            return !vm.priceplans.length || priceplan != null;
+            return (!vm.priceplans.length || priceplan != null) && ((vm.terms.length > 0 && vm.termsAccepted) || (!vm.terms.length));
         }
 
         function formatCharacteristicValue(characteristic, characteristicValue) {
@@ -187,7 +196,17 @@
                 productSpecCharacteristic = [];
             }
 
-            productInfo.characteristics = productSpecCharacteristic.map(function (characteristic) {
+            productInfo.characteristics = productSpecCharacteristic.filter(function(characteristic) {
+                var isLicense = characteristic.name.toLowerCase() == 'license';
+                if (isLicense) {
+                    vm.terms.push(angular.extend({
+                        title: characteristic.productSpecCharacteristicValue[0].value,
+                        text: characteristic.description
+                    }, productInfo));
+                }
+                return !isLicense;
+
+            }).map(function (characteristic) {
                 return {
                     characteristic: characteristic,
                     value: getDefaultCharacteristicValue(characteristic)
@@ -231,6 +250,15 @@
             }
 
             return characteristicValue;
+        }
+
+        function loadTerms() {
+            if (vm.terms.length && vm.tabs.indexOf(vm.legalTab) === -1) {
+                vm.tabs.push(vm.legalTab);
+                if (vm.tabActive == null) {
+                    vm.tabActive = vm.legalTab;
+                }
+            }
         }
     }
 

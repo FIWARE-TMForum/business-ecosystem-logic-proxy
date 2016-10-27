@@ -1888,6 +1888,16 @@ a.thumbnail:focus {
     border-top-width: 0;
 }
 
+.terms-container {
+    max-height: 600px;
+    overflow-y: scroll;
+    overflow-x: hidden;
+}
+
+.terms-container pre {
+    max-width: 99%;
+}
+
 /* ===================================================================================
  *   COMPONENT - ITEM PRODUCT
  * =================================================================================== */
