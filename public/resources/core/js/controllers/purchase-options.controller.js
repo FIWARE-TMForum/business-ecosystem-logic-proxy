@@ -142,7 +142,7 @@
         }
 
         function showModal() {
-            if (vm.characteristics.length || vm.priceplans.length) {
+            if (vm.characteristics.length || vm.priceplans.length || vm.terms.length) {
                 $element.modal('show');
             } else {
                 order();

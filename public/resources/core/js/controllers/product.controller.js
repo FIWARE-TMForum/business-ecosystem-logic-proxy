@@ -132,6 +132,10 @@
                 templateUrl: 'stock/product/create/relationships'
             },
             {
+                title: 'Terms & Conditions',
+                templateUrl: 'stock/product/create/terms'
+            },
+            {
                 title: 'Finish',
                 templateUrl: 'stock/product/create/finish'
             }
@@ -145,6 +149,7 @@
         vm.charList = [];
         vm.isDigital = false;
         vm.digitalChars = [];
+        vm.terms = {};
 
         vm.characteristicEnabled = false;
         vm.pictureFormat = "url";
@@ -415,6 +420,24 @@
 
             if (vm.isDigital) {
                 data.productSpecCharacteristic = data.productSpecCharacteristic.concat(vm.digitalChars);
+            }
+
+            if (vm.terms.title || vm.terms.text) {
+                // Include the terms and condition characteristic
+                var title = vm.terms.title ? vm.terms.title : 'Terms and Conditions';
+                var text = vm.terms.text ? vm.terms.text : vm.terms.title;
+
+                var legalChar = ProductSpec.createCharacteristic({
+                    name: 'License',
+                    description: text
+                });
+
+                legalChar.productSpecCharacteristicValue.push(ProductSpec.createCharacteristicValue({
+                    default: true,
+                    value: title
+                }));
+
+                data.productSpecCharacteristic.push(legalChar);
             }
 
             createPromise = ProductSpec.create(data);
