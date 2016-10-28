@@ -5,7 +5,7 @@
         .h4
           strong {{ characteristic.name }}
       .panel-body
-        p.text-dark-secondary {{ characteristic.description ? characteristic.description : 'No description provided.' }}
+        p.text-dark-secondary.text-preline {{ characteristic.description ? characteristic.description : 'No description provided.' }}
         .form-group
           .item-radio.readonly(ng-repeat="characteristicValue in characteristic.productSpecCharacteristicValue")
             label.radio
@@ -24,7 +24,7 @@
           .h4
             strong {{ characteristic.name }}
         .panel-body
-          p.text-dark-secondary {{ characteristic.description ? characteristic.description : 'No description provided.' }}
+          p.text-dark-secondary.text-preline {{ characteristic.description ? characteristic.description : 'No description provided.' }}
           .form-group
             .item-radio.readonly(ng-repeat="characteristicValue in characteristic.productSpecCharacteristicValue")
               label.radio

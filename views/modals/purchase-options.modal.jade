@@ -37,6 +37,23 @@
                       input(type="radio", ng-model="charObject.value" ng-value="characteristicValue")
                       i.fa.fa-lg
                     | {{ createVM.formatCharacteristicValue(charObject.characteristic, characteristicValue) }}
+          .col-xs-12(ng-if="createVM.tabActive == createVM.legalTab")
+            div(ng-if="createVM.isBundle")
+              select.form-control(
+                ng-options="offering as offering.name for offering in createVM.bundledOfferings track by offering.id"
+                ng-model="createVM.selectedOffering")
+
+            .terms-container
+              div(ng-repeat="term in createVM.terms" ng-show="term.offId == createVM.selectedOffering.id")
+                .h3(style="margin-top: 20px;")
+                  strong {{ term.name }}
+                .h4.text-dark-secondary
+                  strong {{ term.title }}
+                pre {{ term.text }}
+
+            hr
+            input(type="checkbox" ng-model="createVM.termsAccepted")
+            span  I have read and agreed the terms and conditions
       .modal-footer
         a.btn.btn-success.z-depth-1(data-dismiss="modal", ng-click="createVM.order()", ng-disabled="!createVM.isValid()")
           span.item-icon.fa.fa-shopping-cart

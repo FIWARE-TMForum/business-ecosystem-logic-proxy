@@ -47,6 +47,14 @@ form(name="step.form", novalidate)
           required
           readonly
         )
+  .form-group
+    label Description
+    textarea.form-control(
+      rows="3"
+      name="description"
+      ng-model="createVM.data.description"
+      readonly
+    )
   .row(ng-if="createVM.characteristics.length")
     .col-sm-12
       .h4.text-dark-secondary
@@ -66,18 +74,10 @@ form(name="step.form", novalidate)
             td {{ characteristic.valueType }}
             td
               span(ng-repeat="value in characteristic.productSpecCharacteristicValue")
-                span(ng-if="!$first") , 
+                span(ng-if="!$first") ,
                 span {{ createVM.getFormattedValueOf(characteristic, value) }}
             td {{ createVM.getFormattedValueOf(characteristic, createVM.getDefaultValueOf(characteristic)) }}
-  .form-group
-    label Description
-    textarea.form-control(
-      rows="3"
-      name="description"
-      ng-model="createVM.data.description"
-      readonly
-    )
-  .row
+  .row(ng-if="createVM.data.attachment[0].url")
     .col-sm-12
       .h4.text-dark-secondary
         strong Attachments
@@ -132,6 +132,23 @@ form(name="step.form", novalidate)
                   | {{ relationship.productSpec.isBundle ? 'Bundle' : 'Single' }}
               td
                 time(am-time-ago="relationship.productSpec.lastUpdate")
+   div(ng-if="createVM.terms.title")
+    .row
+      .col-sm-12
+        .form-group
+          label Agreement title
+          input.form-control(
+            type="text"
+            name="title"
+            ng-model="createVM.terms.title"
+            readonly
+          )
+
+    .form-group
+      label
+        span Enter agreement text
+      textarea.form-control(rows="6", name="text", ng-model="createVM.terms.text", readonly)
+
   .form-group.text-right
     a.btn.btn-warning(
       ng-click="createVM.create()"
