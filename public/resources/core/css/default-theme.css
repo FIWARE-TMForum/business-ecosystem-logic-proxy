@@ -946,6 +946,11 @@ a.dropdown-menu-item:hover {
     float: right;
     margin-right: 0 !important;
 }
+
+.nav-loged {
+    margin-right: -30px !important;
+}
+
 .navbar-right .dropdown-menu {
     right: 0;
     left: auto;
