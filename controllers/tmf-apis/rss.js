@@ -89,7 +89,7 @@ var rss = (function () {
         if (/rss\/settlement$/.test(req.apiUrl)) {
             var body = JSON.parse(req.body);
             if (!body.callbackUrl) {
-				var url = utils.getAPIURL(config.appSsl, config.endpoints.charging.host, config.endpoints.charging.port, "/charging/api/reportManagement/created");
+				var url = utils.getAPIURL(config.endpoints.charging.appSsl, config.endpoints.charging.host, config.endpoints.charging.port, "/charging/api/reportManagement/created");
                 body.callbackUrl = url;
                 utils.updateBody(req, body);
             }

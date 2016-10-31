@@ -24,9 +24,9 @@ var nock = require('nock'),
 describe('Billing API', function() {
 
     var config = testUtils.getDefaultConfig();
-    var BILLING_SERVER = (config.appSsl ? 'https' : 'http') + '://' + config.endpoints.billing.host + ':' + config.endpoints.billing.port;
-    var CUSTOMER_SERVER = (config.appSsl ? 'https' : 'http') + '://' + config.endpoints.customer.host + ':' + config.endpoints.customer.port;
-    var PRODUCT_SERVER = (config.appSsl ? 'https' : 'http') + '://' + config.endpoints.inventory.host + ':' + config.endpoints.inventory.port;
+    var BILLING_SERVER = (config.endpoints.billing.appSsl ? 'https' : 'http') + '://' + config.endpoints.billing.host + ':' + config.endpoints.billing.port;
+    var CUSTOMER_SERVER = (config.endpoints.customer.appSsl ? 'https' : 'http') + '://' + config.endpoints.customer.host + ':' + config.endpoints.customer.port;
+    var PRODUCT_SERVER = (config.endpoints.inventory.appSsl ? 'https' : 'http') + '://' + config.endpoints.inventory.host + ':' + config.endpoints.inventory.port;
 
     var VALID_BILLING_PATH = '/' + config.endpoints.billing.path + '/api/billingManagement/v2/billingAccount';
     var VALID_CHARGES_PATH = '/' + config.endpoints.billing.path + '/api/billingManagement/v2/appliedCustomerBillingCharge';

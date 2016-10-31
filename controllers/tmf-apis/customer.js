@@ -32,7 +32,7 @@ var customer = (function() {
     };
 
     var getCustomerAPIUrl = function(path) {
-        return utils.getAPIURL(config.appSsl, config.endpoints.customer.host, config.endpoints.customer.port, path);
+        return utils.getAPIURL(config.endpoints.customer.appSsl, config.endpoints.customer.host, config.endpoints.customer.port, path);
     };
 
     var retrieveAsset = function(path, callback) {
@@ -328,7 +328,7 @@ var customer = (function() {
 
         var billingPath = config.endpoints.billing.path + '/api/billingManagement/v2/billingAccount?customerAccount.id=' +
             ids.join(',');
-        var billingUrl = utils.getAPIURL(config.appSsl, config.endpoints.billing.host, config.endpoints.billing.port, billingPath);
+        var billingUrl = utils.getAPIURL(config.endpoints.billing.appSsl, config.endpoints.billing.host, config.endpoints.billing.port, billingPath);
 
         request(billingUrl, function(err, response, body) {
 

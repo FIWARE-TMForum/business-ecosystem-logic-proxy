@@ -29,57 +29,66 @@ var defaultConfig = {
             customer: 'customer'
         }
     },
-    appSsl: false,
     endpoints: {
         management: {
             path: 'management',
             host: 'localhost',
-            port: 7496
+            port: 7496,
+            appSsl: false
         },
         catalog: {
             path: 'catalog',
             host: 'catalog.com',
-            port: 99
+            port: 99,
+            appSsl: false
         },
         ordering: {
             path: 'ordering',
             host: 'ordering.com',
-            port: 189
+            port: 189,
+            appSsl: false
         },
         inventory: {
             path: 'inventory',
             host: 'inventory.com',
-            port: 475
+            port: 475,
+            appSsl: false
         },
         charging: {
             path: 'charging',
             host: 'charging.com',
-            port: 35
+            port: 35,
+            appSsl: false
         },
         rss: {
             path: 'rss',
             host: 'rss.com',
-            port: 753
+            port: 753,
+            appSsl: false
         },
         party: {
             path: 'party',
             host: 'party.com',
-            port: 74
+            port: 74,
+            appSsl: false
         },
         billing: {
             path: 'billing',
             host: 'billing.com',
-            port: 78
+            port: 78,
+            appSsl: false
         },
         customer: {
             path: 'customer',
             host: 'customer.com',
-            port: 82
+            port: 82,
+            appSsl: false
         },
         usage: {
             path: 'usage',
             host: 'usage.com',
-            port: 78
+            port: 78,
+            appSsl: false
         }
     },
     billingAccountOwnerRole: 'bill receiver',

@@ -190,7 +190,7 @@ describe('Catalog API', function() {
         return true;
     };
 
-    var SERVER = (config.appSsl ? 'https' : 'http') + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
+    var SERVER = (config.endpoints.catalog.appSsl ? 'https' : 'http') + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
 
     var mockBundles = function(bundles) {
 
@@ -308,7 +308,7 @@ describe('Catalog API', function() {
         var userName = 'test';
         var catalogPath = '/catalog/7';
         var offeringPath = catalogPath + '/productOffering';
-        var protocol = config.appSsl ? 'https' : 'http';
+        var protocol = config.endpoints.catalog.appSsl ? 'https' : 'http';
         var serverUrl = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
         var productPath = '/product/7';
         var categoryPath = '/category'
@@ -1119,7 +1119,7 @@ describe('Catalog API', function() {
 
         // Basic properties
         var userName = 'test';
-        var protocol = config.appSsl ? 'https' : 'http';
+        var protocol = config.endpoints.catalog.appSsl ? 'https' : 'http';
         var url = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
         var catalogPath = '/catalog/category';
 
@@ -1288,7 +1288,7 @@ describe('Catalog API', function() {
 
         // Basic properties
         var userName = 'test';
-        var protocol = config.appSsl ? 'https' : 'http';
+        var protocol = config.endpoints.catalog.appSsl ? 'https' : 'http';
         var url = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
         var catalogPath = '/DSProductCatalog/api/catalogManagement/v2/catalog';
 
@@ -1401,7 +1401,7 @@ describe('Catalog API', function() {
 
         var userName = 'test';
         var path = '/catalog/product/1';
-        var protocol = config.appSsl ? 'https' : 'http';
+        var protocol = config.endpoints.catalog.appSsl ? 'https' : 'http';
         var url = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
         var role = isOwnerMethod() ? 'Owner': 'Seller';
 
@@ -1524,7 +1524,7 @@ describe('Catalog API', function() {
         var catalogPath = '/catalog/8';
         var offeringPath = catalogPath + '/productOffering/1';
         var productPath = productRequestInfo.path || '/productSpecification/7';
-        var protocol = config.appSsl ? 'https' : 'http';
+        var protocol = config.endpoints.catalog.appSsl ? 'https' : 'http';
         var serverUrl = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
 
         // HTTP MOCK - OFFERING
@@ -1806,7 +1806,7 @@ describe('Catalog API', function() {
 
         // Basic properties
         var userName = 'test';
-        var protocol = config.appSsl ? 'https' : 'http';
+        var protocol = config.endpoints.catalog.appSsl ? 'https' : 'http';
         var serverUrl = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
 
         // The service will check that the user is the owner of the offering by making a request
@@ -2585,7 +2585,7 @@ describe('Catalog API', function() {
         var userName = 'test';
         var basicPath = '/catalog/category';
         var categoryResourcePath = basicPath + '/7';
-        var protocol = config.appSsl ? 'https' : 'http';
+        var protocol = config.endpoints.catalog.appSsl ? 'https' : 'http';
         var url = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
 
         // The mock server that will handle the request to retrieve the old state of the category

@@ -89,7 +89,10 @@ describe('TMF Controller', function() {
             var tmf = getTmfInstance(request);
 
             // Depending on the desired protocol, the config.appSsl var has to be set up
-            config.appSsl = protocol === 'https' ? true : false;
+            utils.getAPIProtocol = function () {
+                return protocol;
+            };
+
             var path = '/example/url?a=b&c=d';
 
             var req = {
@@ -234,6 +237,10 @@ describe('TMF Controller', function() {
             // API controller. For this reason, we do not check with other protocols or methods
 
             var protocol = 'http';
+            utils.getAPIProtocol = function () {
+                return protocol;
+            };
+
             var method = 'GET';
 
             // Configure the API controller
