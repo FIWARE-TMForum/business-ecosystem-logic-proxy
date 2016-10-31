@@ -56,52 +56,62 @@ config.endpoints = {
     'management': {
         'path': 'management',
         'host': 'localhost',
-        'port': config.port
+        'port': config.port,
+        'appSsl': config.https.enabled
     },
     'catalog': {
         'path': 'DSProductCatalog',
         'host': 'localhost',
-        'port': '8080'
+        'port': '8080',
+        'appSsl': false
     },
     'ordering': {
          'path': 'DSProductOrdering',
          'host': 'localhost',
-         'port': '8080'
+         'port': '8080',
+         'appSsl': false
     },
     'inventory': {
         'path': 'DSProductInventory',
         'host': 'localhost',
-        'port': '8080'
+        'port': '8080',
+        'appSsl': false
     },
     'charging': {
         'path': 'charging',
         'host': 'localhost',
-        'port': '8006'
+        'port': '8006',
+        'appSsl': false
     },
     'rss': {
         'path': 'DSRevenueSharing',
         'host': 'localhost',
-        'port': '8080'
+        'port': '8080',
+        'appSsl': false
     },
     'party': {
         'path': 'DSPartyManagement',
         'host': 'localhost',
-        'port': '8080'
+        'port': '8080',
+        'appSsl': false
     },
     'billing':{
         'path': 'DSBillingManagement',
         'host': 'localhost',
-        'port': '8080'
+        'port': '8080',
+        'appSsl': false
     },
     'customer': {
         'path': 'DSCustomerManagement',
         'host': 'localhost',
-        'port': '8080'
+        'port': '8080',
+        'appSsl': false
     },
     'usage':  {
         'path': 'DSUsageManagement',
         'host': 'localhost',
-        'port': '8080'
+        'port': '8080',
+        'appSsl': false
     }
 };
 
@@ -110,9 +120,6 @@ config.revenueModel = 30;
 
 // Billing Account owner role
 config.billingAccountOwnerRole = 'bill receiver';
-
-// Use true if the app server listens in https
-config.appSsl = false;
 
 // list of paths that will not check authentication/authorization
 // example: ['/public/*', '/static/css/']

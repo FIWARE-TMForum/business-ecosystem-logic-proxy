@@ -26,9 +26,9 @@ var nock = require('nock'),
 describe('Ordering API', function() {
 
     var config = testUtils.getDefaultConfig();
-    var SERVER = (config.appSsl ? 'https' : 'http') + '://' + config.endpoints.ordering.host + ':' + config.endpoints.ordering.port;
-    var CATALOG_SERVER = (config.appSsl ? 'https' : 'http') + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
-    var BILLING_SERVER = (config.appSsl ? 'https' : 'http') + '://' + config.endpoints.billing.host + ':' + config.endpoints.billing.port;
+    var SERVER = (config.endpoints.ordering.appSsl ? 'https' : 'http') + '://' + config.endpoints.ordering.host + ':' + config.endpoints.ordering.port;
+    var CATALOG_SERVER = (config.endpoints.catalog.appSsl ? 'https' : 'http') + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
+    var BILLING_SERVER = (config.endpoints.billing.appSsl ? 'https' : 'http') + '://' + config.endpoints.billing.host + ':' + config.endpoints.billing.port;
 
     // Errors
     var BILLING_ACCOUNT_REQUIRED = {

@@ -49,7 +49,7 @@ describe('RSS Client', function() {
     };
 
 
-    var protocol = config.appSsl ? 'https' : 'http';
+    var protocol = config.endpoints.rss.appSsl ? 'https' : 'http';
     var serverUrl = protocol + '://' + config.endpoints.rss.host + ':' + config.endpoints.rss.port;
 
     var mockRSSServer = function(expOptions, err, resp, body) {

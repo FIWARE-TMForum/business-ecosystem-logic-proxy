@@ -49,7 +49,7 @@ describe('Store Client', function() {
     var testValidateAssetOk = function(assetType, protocol, done) {
 
         // Mock the server
-        config.appSsl = protocol === 'https' ? true : false;
+        config.endpoints.charging.appSsl = protocol === 'https' ? true : false;
         var serverUrl = protocol + '://' + config.endpoints.charging.host + ':' + config.endpoints.charging.port;
         var receivedBody;
 
@@ -103,7 +103,7 @@ describe('Store Client', function() {
 
     var testValidateProductError = function(assetType, errorStatus, response, expectedErrMsg, done) {
         // Mock the server
-        config.appSsl = false;
+        config.endpoints.charging.appSsl = false;
         var serverUrl = 'http' + '://' + config.endpoints.charging.host + ':' + config.endpoints.charging.port;
         var receivedBody;
 
@@ -231,7 +231,7 @@ describe('Store Client', function() {
     it('should call callback without errors when refund works', function(done) {
 
         // Mock the server
-        config.appSsl = false;
+        config.endpoints.charging.appSsl = false;
         var serverUrl = 'http://' + config.endpoints.charging.host + ':' + config.endpoints.charging.port;
         var receivedBody;
 
@@ -265,7 +265,7 @@ describe('Store Client', function() {
         var errorStatus = 500;
 
         // Mock the server
-        config.appSsl = false;
+        config.endpoints.charging.appSsl = false;
         var serverUrl = 'http://' + config.endpoints.charging.host + ':' + config.endpoints.charging.port;
         var receivedBody;
 
@@ -300,7 +300,7 @@ describe('Store Client', function() {
     it('should call callback without errors when usage notification works', function (done) {
 
         // Mock the server
-        config.appSsl = false;
+        config.endpoints.charging.appSsl = false;
         var serverUrl = 'http://' + config.endpoints.charging.host + ':' + config.endpoints.charging.port;
 
         nock(serverUrl, {
@@ -324,7 +324,7 @@ describe('Store Client', function() {
         var errorStatus = 500;
 
         // Mock the server
-        config.appSsl = false;
+        config.endpoints.charging.appSsl = false;
         var serverUrl = 'http://' + config.endpoints.charging.host + ':' + config.endpoints.charging.port;
 
         nock(serverUrl, {

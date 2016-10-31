@@ -489,7 +489,7 @@ describe("Test index helper library", function () {
         var api = "DSProductCatalog";
 
         var extra = { request: (url, f) => {
-            var curl = (config.appSsl ? "https" : "http") + "://" + utils.getAPIHost(api) + ":" + utils.getAPIPort(api) + "/DSProductCatalog/api/catalogManagement/v2/category/13";
+            var curl = utils.getAPIProtocol(api) + "://" + utils.getAPIHost(api) + ":" + utils.getAPIPort(api) + "/DSProductCatalog/api/catalogManagement/v2/category/13";
             expect(url).toEqual(curl);
 
             f(null, {}, JSON.stringify({
@@ -515,7 +515,7 @@ describe("Test index helper library", function () {
 
         var extra = { request: (url, f) => {
             var id = ids.shift();
-            var curl = (config.appSsl ? "https" : "http") + "://" + utils.getAPIHost(api) + ":" + utils.getAPIPort(api) + "/DSProductCatalog/api/catalogManagement/v2/category/" + id;
+            var curl = utils.getAPIProtocol(api) + "://" + utils.getAPIHost(api) + ":" + utils.getAPIPort(api) + "/DSProductCatalog/api/catalogManagement/v2/category/" + id;
             expect(url).toEqual(curl);
 
             f(null, {}, JSON.stringify({

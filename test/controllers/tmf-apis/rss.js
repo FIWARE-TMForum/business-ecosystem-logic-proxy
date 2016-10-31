@@ -295,7 +295,7 @@ describe('RSS API', function() {
         });
 
   		it('should add callbackUrl to charging backend if not provided', function (done) {
-			var chargbackUrl = (config.appSsl ? 'https' : 'http') + '://' + config.endpoints.charging.host + ':' + config.endpoints.charging.port + "/charging/api/reportManagement/created";
+			var chargbackUrl = (config.endpoints.charging.appSsl ? 'https' : 'http') + '://' + config.endpoints.charging.host + ':' + config.endpoints.charging.port + "/charging/api/reportManagement/created";
 			var req = {
 				method: 'POST',
 				apiUrl: '/rss/settlement',
@@ -317,7 +317,7 @@ describe('RSS API', function() {
 		});
 
 		it('should not change callbackUrl if provided', function (done) {
-			var url = (config.appSsl ? 'https' : 'http') + '://' + config.endpoints.charging.host + ':' + config.endpoints.charging.port + "/charging/api/reportManagement/maybeCreated";
+			var url = (config.endpoints.charging.appSsl ? 'https' : 'http') + '://' + config.endpoints.charging.host + ':' + config.endpoints.charging.port + "/charging/api/reportManagement/maybeCreated";
             var req = {
                 method: 'POST',
                 apiUrl: '/rss/settlement',
