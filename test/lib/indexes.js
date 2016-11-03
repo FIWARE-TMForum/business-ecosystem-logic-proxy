@@ -437,12 +437,12 @@ describe("Test index helper library", function () {
         name: "name",
         sortedId: "000000000012",
         lifecycleStatus: "Disabled",
-        categoriesId: [13],
+        categoriesId: ['cat:13'],
         categoriesName: ["TestCat"]
     });
 
     var notBundleMultipleCategoriesOfferExpected = Object.assign({}, notBundleCategoriesOfferExpect, {
-        categoriesId: [13, 14],
+        categoriesId: ['cat:13', 'cat:14'],
         categoriesName: ["TestCat13", "TestCat14"]
     });
 
