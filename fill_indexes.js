@@ -63,7 +63,12 @@ var getProducts = function getProducts() {
 
 var getOfferings = function getOfferings(catalog, qstring) {
      // For every catalog!
-    var url = createUrl("DSProductCatalog", "/DSProductCatalog/api/catalogManagement/v2/catalog/" + catalog + "/productOffering");
+    var url;
+    if (catalog) {
+        url = createUrl("DSProductCatalog", "/DSProductCatalog/api/catalogManagement/v2/catalog/" + catalog + "/productOffering");
+    } else {
+        url = createUrl("DSProductCatalog", "/DSProductCatalog/api/catalogManagement/v2/productOffering");
+    }
 
     if (qstring) {
         url += qstring;
@@ -114,12 +119,14 @@ var downloadCatalogOfferings = function downloadCatalogOfferings(catalogs) {
             });
         });
 
-        promise = promise.then(function ()  {
-            return indexes.saveIndexCatalog(catalogs)
-        });
     } else {
-        promise = indexes.saveIndexCatalog(catalogs);
+        promise = promise.then(function() {
+            return downloadOfferings();
+        });
     }
+    promise = promise.then(function ()  {
+        return indexes.saveIndexCatalog(catalogs)
+    });
     return promise;
 };
 
