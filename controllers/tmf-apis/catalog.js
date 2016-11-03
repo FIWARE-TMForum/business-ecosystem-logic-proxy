@@ -1059,7 +1059,7 @@ var catalog = (function() {
                 indexes.addAndCondition(query, { userId: [indexes.fixUserId(req.query.relatedParty)] });
             }
             if (req.query["category.id"]) {
-                indexes.addAndCondition(query, { categoriesId: [req.query["category.id"]]});
+                indexes.addAndCondition(query, { categoriesId: ["cat:" + req.query["category.id"]]});
             }
             if (req.query["category.name"]) {
                 indexes.addAndCondition(query, { categoriesName: [req.query["category.name"].toLowerCase()]});

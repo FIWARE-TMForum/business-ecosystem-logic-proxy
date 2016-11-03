@@ -437,12 +437,12 @@ describe("Test index helper library", function () {
         name: "name",
         sortedId: "000000000012",
         lifecycleStatus: "Disabled",
-        categoriesId: [13],
+        categoriesId: ['cat:13'],
         categoriesName: ["TestCat"]
     });
 
     var notBundleMultipleCategoriesOfferExpected = Object.assign({}, notBundleCategoriesOfferExpect, {
-        categoriesId: [13, 14],
+        categoriesId: ['cat:13', 'cat:14'],
         categoriesName: ["TestCat13", "TestCat14"]
     });
 
@@ -585,10 +585,13 @@ describe("Test index helper library", function () {
 
     it("should save converted offer data correctly", function (done) {
         var user = {id: "rock-8"};
+        var expData = [[notBundleExpected], []];
+        var call = 0;
 
         var extra = {
             checkadd: (data, ops) => {
-                expect(data).toEqual([notBundleExpected]);
+                expect(data).toEqual(expData[call]);
+                call++;
                 expect(ops).toEqual({fieldOptions: [{fieldName: 'body', filter: true}]});
             }
         };
@@ -605,10 +608,13 @@ describe("Test index helper library", function () {
 
     it("should save converted bundled offer data correctly", function (done) {
         var user = {id: "rock-8"};
+        var expData = [[], [bundleExpected]];
+        var call = 0;
 
         var extra = {
             checkadd: (data, ops) => {
-                expect(data).toEqual([bundleExpected]);
+                expect(data).toEqual(expData[call]);
+                call++;
                 expect(ops).toEqual({fieldOptions: [{fieldName: 'body', filter: true}]});
             }
         };

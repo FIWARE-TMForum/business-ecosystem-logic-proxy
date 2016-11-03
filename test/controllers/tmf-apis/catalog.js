@@ -3123,7 +3123,7 @@ describe('Catalog API', function() {
                           "id=",
                           {
                               sort: ["sortedId", "asc"],
-                              query: [{AND: [{categoriesId: [201]}]}]
+                              query: [{AND: [{categoriesId: ['cat:201']}]}]
                           });
         });
 

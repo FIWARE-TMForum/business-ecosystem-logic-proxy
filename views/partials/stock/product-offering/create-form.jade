@@ -10,8 +10,7 @@ form(name="step.form", novalidate)
           name="name"
           ng-model="createVM.data.name"
           required
-          ng-maxlength="30"
-          field-unique="Offering"
+          ng-maxlength="100"
         )
         .help-block(
           ng-messages="step.form.name.$error"
