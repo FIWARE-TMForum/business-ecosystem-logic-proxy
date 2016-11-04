@@ -37,7 +37,8 @@
                 url: '/product?status&type',
                 params: {
                     owner: true,
-                    flow: 1
+                    flow: 1,
+                    status: 'Active,Launched'
                 },
                 data: {
                     filters: ['status', 'type']
