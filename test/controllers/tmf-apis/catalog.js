@@ -3138,7 +3138,7 @@ describe('Catalog API', function() {
                           "id=",
                           {
                               sort: ["sortedId", "asc"],
-                              query: [{AND: [{categoriesName: ["testcat"]}]}]
+                              query: [{AND: [{categoriesName: [md5("testcat")]}]}]
                           });
         });
 

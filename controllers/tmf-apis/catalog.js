@@ -19,18 +19,19 @@
 
 var async = require('async'),
     config = require('./../../config'),
-    leftPad = require("left-pad"),
+    deepcopy = require("deepcopy"),
     equal = require('deep-equal'),
-    request = require('request'),
-    storeClient = require('./../../lib/store').storeClient,
-    rssClient = require('./../../lib/rss').rssClient,
-    url = require('url'),
-    utils = require('./../../lib/utils'),
-    logger = require('./../../lib/logger').logger.getLogger('TMF'),
-    tmfUtils = require('./../../lib/tmfUtils'),
     indexes = require('./../../lib/indexes.js'),
+    leftPad = require("left-pad"),
+    logger = require('./../../lib/logger').logger.getLogger('TMF'),
+    md5 = require("blueimp-md5"),
     Promise = require('promiz'),
-    deepcopy = require("deepcopy");
+    request = require('request'),
+    rssClient = require('./../../lib/rss').rssClient,
+    storeClient = require('./../../lib/store').storeClient,
+    tmfUtils = require('./../../lib/tmfUtils'),
+    url = require('url'),
+    utils = require('./../../lib/utils');
 
 
 var LIFE_CYCLE = 'lifecycleStatus';
@@ -1062,7 +1063,7 @@ var catalog = (function() {
                 indexes.addAndCondition(query, { categoriesId: ["cat:" + req.query["category.id"]]});
             }
             if (req.query["category.name"]) {
-                indexes.addAndCondition(query, { categoriesName: [req.query["category.name"].toLowerCase()]});
+                indexes.addAndCondition(query, { categoriesName: [md5(req.query["category.name"].toLowerCase())]});
             }
 
             queryAndOrCommas(req.query["productSpecification.id"], "productSpecification", query, x => leftPad(x, 12, 0));

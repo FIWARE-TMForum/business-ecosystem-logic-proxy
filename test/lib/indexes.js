@@ -438,12 +438,12 @@ describe("Test index helper library", function () {
         sortedId: "000000000012",
         lifecycleStatus: "Disabled",
         categoriesId: ['cat:13'],
-        categoriesName: ["TestCat"]
+        categoriesName: [md5("testcat")]
     });
 
     var notBundleMultipleCategoriesOfferExpected = Object.assign({}, notBundleCategoriesOfferExpect, {
         categoriesId: ['cat:13', 'cat:14'],
-        categoriesName: ["TestCat13", "TestCat14"]
+        categoriesName: [md5("testcat13"), md5("testcat14")]
     });
 
     it('should convert offer without bundle with an explicit user', function (done) {
