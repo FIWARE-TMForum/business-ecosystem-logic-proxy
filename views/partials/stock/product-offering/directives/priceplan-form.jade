@@ -13,6 +13,7 @@ form(name="form" novalidate)
         .help-block(ng-messages="form.name.$error" ng-show="vm.hasFieldError(form.name)")
           span(ng-message="required") This field is required.
           span(ng-message="maxlength") This field must not exceed 30 chars.
+          span(ng-message="conflictName") This name is being used in other price plan
     .col-md-4
       .form-group
         label Choose a type
