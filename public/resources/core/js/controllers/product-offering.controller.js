@@ -381,6 +381,27 @@
 
             return category;
         }
+
+        $scope.$watch(function (scope) {
+            return vm.pricePlan.name;
+        }, function() {
+            var conflict = false;
+            vm.data.productOfferingPrice.forEach(function (plan) {
+                if (plan.name.toLowerCase() == vm.pricePlan.name.toLowerCase()) {
+                    conflict = true;
+                    vm.pricePlanCreateForm.name.$invalid = true;
+                    vm.pricePlanCreateForm.name.$error.conflictName = true;
+                }
+            });
+
+            if (!conflict && vm.pricePlanCreateForm && vm.pricePlanCreateForm.name.$invalid && vm.pricePlan.name && vm.pricePlan.name.length < 30) {
+                vm.pricePlanCreateForm.name.$invalid = false;
+
+                if (vm.pricePlanCreateForm.name.$error.conflictName) {
+                    vm.pricePlanCreateForm.name.$error.conflictName = false;
+                }
+            }
+        });
     }
 
     function ProductOfferingDetailController($state, Offering, ProductSpec, Utils) {
