@@ -17,7 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var nock = require('nock'),
+var deepcopy = require("deepcopy"),
+    nock = require('nock'),
     proxyquire =  require('proxyquire'),
     Promise = require('promiz'),
     md5 = require("blueimp-md5"),
@@ -326,6 +327,9 @@ describe('Catalog API', function() {
             },
             serviceCandidate: {
                 id: 'productClass'
+            },
+            validFor: {
+                startDateTime: '2016-05-01'
             }
         };
 
@@ -654,7 +658,24 @@ describe('Catalog API', function() {
         var testCreateOfferingBundle = function(offeringRequestInfo, catalogRequestInfo, storeError, body, errorStatus, errorMsg, done) {
 
             var defaultErrorMessage = 'Internal Server Error';
-            var catalogApi = mockCatalogAPI(body, offeringRequestInfo, storeError, null);
+
+            // Mock date
+            var fakeDate = function () {
+                this.toISOString = function () {
+                    return '2016-05-01';
+                }
+            };
+
+            spyOn(global, 'Date').and.callFake(function() {
+                return new fakeDate();
+            });
+
+            var expBody = deepcopy(body);
+            expBody.validFor = {
+                startDateTime: '2016-05-01'
+            };
+
+            var catalogApi = mockCatalogAPI(expBody, offeringRequestInfo, storeError, null);
 
             var productSpecificationOk = {
                 relatedParty: [{id: userName, role: offeringRequestInfo.role}]
@@ -1246,7 +1267,7 @@ describe('Catalog API', function() {
 
         var parentCategoryRequest = {
             status: 404
-        }
+        };
 
         testCreateCategory(true, category, null, parentCategoryRequest, 400, INVALID_CATEGORY_ID + category.parentId, callback);
     });
@@ -1631,6 +1652,22 @@ describe('Catalog API', function() {
 
         testUpdateProductOffering(JSON.stringify({ productSpecification: {} }), productRequestInfo,
             null, catalogRequestInfo, 403, 'Field productSpecification cannot be modified', done);
+    });
+
+    it('should not allow to update an offering when the validFor field changes', function (done) {
+        var productRequestInfo = {
+            requestStatus: 200,
+            owner: true,
+            lifecycleStatus: 'active'
+        };
+
+        var catalogRequestInfo = {
+            requestStatus: 200,
+            lifecycleStatus: 'active'
+        };
+
+        testUpdateProductOffering(JSON.stringify({ validFor: {} }), productRequestInfo,
+            null, catalogRequestInfo, 403, 'Field validFor cannot be modified', done);
     });
 
     it('should not allow to update a non-owned offering', function(done) {

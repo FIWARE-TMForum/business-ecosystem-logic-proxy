@@ -151,7 +151,7 @@ var catalog = (function() {
     };
 
     var validateOfferingFields = function(previousBody, newBody) {
-        var fixedFields = ['isBundle', 'productSpecification', 'bundledProductOffering'];
+        var fixedFields = ['isBundle', 'productSpecification', 'bundledProductOffering', 'validFor'];
         var modified = null;
 
         for (var i = 0; i < fixedFields.length && modified == null; i++) {
@@ -274,6 +274,12 @@ var catalog = (function() {
                     status: 403,
                     message: 'Field ' + modifiedField +' cannot be modified'
                 });
+            }
+        }
+
+        if (newBody && !previousBody && !newBody.validFor) {
+            newBody.validFor = {
+                startDateTime: new Date().toISOString()
             }
         }
 
