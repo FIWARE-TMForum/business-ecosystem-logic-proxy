@@ -51,6 +51,7 @@
         return {
             EVENTS: EVENTS,
             searchModels: searchModels,
+            countModels: countModels,
             createModel: createModel,
             detailModel: detailModel,
             updateModel: updateModel,
@@ -100,10 +101,26 @@
             return deferred.promise;
         }
 
-        function search(resource, params) {
+        function search(resource, params, method) {
             var deferred = $q.defer();
+            var qParams = {};
 
-            resource.query(params, function(list) {
+            if (params.providerId) {
+                qParams.providerId = params.providerId;
+            }
+
+            if (params.action) {
+                qParams.action = params.action;
+            } else if (params.offset >= 0) {
+                qParams.offset = params.offset;
+                qParams.size = params.size;
+            }
+
+            if (!method) {
+                method = resource.query;
+            }
+
+            method(qParams, function(list) {
                 deferred.resolve(list);
             }, function (response) {
                 deferred.reject(response);
@@ -112,13 +129,22 @@
             return deferred.promise;
         }
 
-        function searchModels () {
-            var params = {
-                providerId: User.loggedUser.id
-            };
+        function searchModels (params) {
+            if (!params) {
+                params = {};
+            }
+
+            params.providerId = User.loggedUser.id;
             return search(modelsResource, params);
         }
 
+        function countModels() {
+            var params = {
+                providerId: User.loggedUser.id,
+                action: "count"
+            };
+            return search(modelsResource, params, modelsResource.get);
+        }
         function searchProviders () {
             return search(providersResource, {});
         }

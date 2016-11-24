@@ -29,7 +29,7 @@
         .module('app')
         .controller('PagerController', PagerController);
 
-    function PagerController($scope) {
+    function PagerController($scope, Utils) {
         // Load controller to paginate
         var managedCtrl = $scope.vm;
 
