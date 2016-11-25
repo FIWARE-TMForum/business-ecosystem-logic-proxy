@@ -70,6 +70,8 @@ describe('Auth lib', function () {
     };
 
     describe('Update party API', function () {
+	
+	var auth = getAuthLib(strategy, {});
 	var req = {
 	    id: 'test_user',
 	    appId: config.oauth2.clientID,
@@ -125,14 +127,13 @@ describe('Auth lib', function () {
 		accessToken: 'token',
 		user: { id: 'eugenio'}
             };
-
-	    auth.tokensCache = {'token': {'orgProcessed' : true}};
+	    auth.getCache()['token'] = {orgProcessed: true};
 	    auth.checkOrganizations(req, {}, done);
 	});
 
 	it ('should continue with middleware processing if the request if currently being processed', function (done) {
-
-	    auth.tokensCache = {'token': { orgProcessed : false, orgProcessing: true}};
+	    
+	    auth.getCache()['token'] = { orgProcessed : false, orgProcessing: true};
 	    auth.checkOrganizations(req, {}, function () {
 		done();
 	    });
@@ -140,11 +141,11 @@ describe('Auth lib', function () {
 
 	it ('should continue with middleware processing if getOrganization call fails', function (done) {
 	    var getOrganizations = function (callback){
-		    return callback({status: 500, message: 'An error occurred during request'})
+		return callback({status: 500, message: 'An error occurred during request'});
 	    };
 	    var auth = getAuthLib(strategy, {}, null, getOrganizations);
 
-	    auth.tokensCache = {'token': { orgProcessed : false, orgProcessing: true}};
+	    auth.getCache()['token'] = { orgProcessed : false, orgProcessing: false};
 	    auth.checkOrganizations(req, {}, function (){
 		done();
 	    });
@@ -168,8 +169,7 @@ describe('Auth lib', function () {
 	    };
 	    var auth = getAuthLib(strategy, {}, null, getOrganizations, createOrganization);
 	    
-
-	    auth.tokensCache = {'token': { orgProcessed : false, orgProcessing: true}}
+	    auth.getCache()['token'] = { orgProcessed : false, orgProcessing: true};
 	    auth.checkOrganizations(req, {}, function () {
 		done();
 	    });
@@ -197,8 +197,8 @@ describe('Auth lib', function () {
 		return callback({status: 500, message: 'An error occurred during request'})
 	    };
 	    var auth = getAuthLib(strategy, {}, null, getOrganizations, createOrganization, updateIndividual);
-	    
-	    auth.tokensCache = {'token': { orgProcessed : false, orgProcessing: true}}
+
+	    auth.getCache()['token'] = { orgProcessed : false, orgProcessing: true};
 	    auth.checkOrganizations(req, {}, function () {
 		done();
 	    });
@@ -227,9 +227,8 @@ describe('Auth lib', function () {
 		return callback(null, {status: 200})
 	    };
 	    var auth = getAuthLib(strategy, {}, null, getOrganizations, createOrganization, updateIndividual);
-	    
-	    auth.tokensCache = {'token': {'orgProcessed' : false, 'orgProcessing': false}};
 
+	    auth.getCache()['token'] = { orgProcessed : false, orgProcessing: true};
 	    auth.checkOrganizations(req, {}, function () {
 		done();
 	    });
