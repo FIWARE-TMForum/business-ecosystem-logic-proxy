@@ -24,12 +24,18 @@ describe('Auth lib', function () {
 
     var config = testUtils.getDefaultConfig();
 
-    var getAuthLib = function(strategy, tokenService, unauthorized) {
+    var getAuthLib = function(strategy, tokenService, unauthorized,
+			      getOrganizations, createOrganization, updateIndividual) {
         return proxyquire('../../lib/auth', {
             '../config': config,
             'passport-fiware-oauth': strategy,
             '../db/schemas/tokenService': tokenService,
-            './utils': {
+	    './party': {
+		getOrganizations: getOrganizations,
+		createOrganization: createOrganization,
+		updateIndividual: updateIndividual
+	    },
+	    './utils': {
                 log: function() {
                 },
                 sendUnauthorized: unauthorized
@@ -63,6 +69,175 @@ describe('Auth lib', function () {
         };
     };
 
+    describe('Update party API', function () {
+	var req = {
+	    id: 'test_user',
+	    appId: config.oauth2.clientID,
+	    accessToken: 'token',
+	    user: { id: 'rick',
+		    nickName: 'theMagician',
+		    organizations: [{
+			id: '123456789',
+			name: 'patty',
+			roles: [{
+			    id: '3',
+			    name: 'Seller'
+			},{
+			    id: '6',
+			    name: 'provider'
+			}]
+		    }, {
+			id: '987654321',
+			name: 'MntyPythn',
+			roles: [{
+			    id: '6',
+			    name: 'provider'
+			}]
+		    }, {
+			id: '111555999',
+			name: 'AmaneceQueNoEsPoco',
+			roles: [{
+			    id: '3',
+			    name: 'Seller'
+			}, {
+			    id: '1',
+			    name: 'purchuaser'
+			}]
+		    }]
+		  }
+        };
+	
+	it ('should continue with middleware processing if not user object has been provided', function (done) {
+	    var req = {
+		id: 'test_user',
+		appId: config.oauth2.clientID,
+		accesstoken: 'token'
+            };
+	    auth.checkOrganizations(req, {}, function () {
+		done();
+	    });
+	});
+
+	it ('should continue with middleware processing if the request have been already processed', function (done) {
+	    var req = {
+		id: 'test_user',
+		appId: config.oauth2.clientID,
+		accessToken: 'token',
+		user: { id: 'eugenio'}
+            };
+
+	    auth.tokensCache = {'token': {'orgProcessed' : true}};
+	    auth.checkOrganizations(req, {}, done);
+	});
+
+	it ('should continue with middleware processing if the request if currently being processed', function (done) {
+
+	    auth.tokensCache = {'token': { orgProcessed : false, orgProcessing: true}};
+	    auth.checkOrganizations(req, {}, function () {
+		done();
+	    });
+	});
+
+	it ('should continue with middleware processing if getOrganization call fails', function (done) {
+	    var getOrganizations = function (callback){
+		    return callback({status: 500, message: 'An error occurred during request'})
+	    };
+	    var auth = getAuthLib(strategy, {}, null, getOrganizations);
+
+	    auth.tokensCache = {'token': { orgProcessed : false, orgProcessing: true}};
+	    auth.checkOrganizations(req, {}, function (){
+		done();
+	    });
+	});
+	
+	it ('should continue with middleware processing if createOrganization call fails', function (done) {
+
+	    var getOrganizations = function (callback){
+		return callback(null,
+				{status: 200,
+				 body: [{id: '123456789',
+					 name: 'patty',
+					 href: 'www.exampleuri.com/orgs/patty'},
+					{id: '987654321',
+					 name: 'MntyPythn',
+					 href: 'www.exampleuri.com/orgs/MntyPythn'}]
+				})
+	    };
+	    var createOrganization = function (content, callback){
+		return callback({status: 500, message: 'An error occurred during request'})
+	    };
+	    var auth = getAuthLib(strategy, {}, null, getOrganizations, createOrganization);
+	    
+
+	    auth.tokensCache = {'token': { orgProcessed : false, orgProcessing: true}}
+	    auth.checkOrganizations(req, {}, function () {
+		done();
+	    });
+	});
+
+	it('should continue with middleware processing if updateIndividual call fails', function (done) {
+	    var getOrganizations = function (callback){
+		return callback(null,
+				{status: 200,
+				 body: [{id: '123456789',
+					 name: 'patty',
+					 href: 'www.exampleuri.com/orgs/patty'},
+					{id: '987654321',
+					 name: 'MntyPythn',
+					 href: 'www.exampleuri.com/orgs/MntyPythn'}]
+				})
+	    };
+	    var createOrganization = function (content, callback){
+		return callback(null,
+				{id: '111555999',
+				 tradingName: 'AmaneceQueNoEsPoco',
+				 href: 'www.exampleuri.com/orgs/AmaneceQueNoEsPoco'})
+	    };
+	    var updateIndividual = function (id, roles, callback){
+		return callback({status: 500, message: 'An error occurred during request'})
+	    };
+	    var auth = getAuthLib(strategy, {}, null, getOrganizations, createOrganization, updateIndividual);
+	    
+	    auth.tokensCache = {'token': { orgProcessed : false, orgProcessing: true}}
+	    auth.checkOrganizations(req, {}, function () {
+		done();
+	    });
+	    
+	});
+	
+	it('should continue with middleware processing after updating partyAPI backend data', function (done) {
+	    var getOrganizations = function (callback){
+		return callback(null,
+				{status: 200,
+				 body: [{id: '123456789',
+					 name: 'patty',
+					 href: 'www.exampleuri.com/orgs/patty'},
+					{id: '987654321',
+					 name: 'MntyPythn',
+					 href: 'www.exampleuri.com/orgs/MntyPythn'}]
+				})
+	    };
+	    var createOrganization = function (content, callback){
+		return callback(null,
+				{id: '111555999',
+				 tradingName: 'AmaneceQueNoEsPoco',
+				 href: 'www.exampleuri.com/orgs/AmaneceQueNoEsPoco'})
+	    };
+	    var updateIndividual = function (id, roles, callback){
+		return callback(null, {status: 200})
+	    };
+	    var auth = getAuthLib(strategy, {}, null, getOrganizations, createOrganization, updateIndividual);
+	    
+	    auth.tokensCache = {'token': {'orgProcessed' : false, 'orgProcessing': false}};
+
+	    auth.checkOrganizations(req, {}, function () {
+		done();
+	    });
+	    
+	});
+	
+    });
+    
     describe('Invalid headers', function () {
         // Request without access token
         it('should continue with middleware processing if not auth header has been provided', function (done) {
