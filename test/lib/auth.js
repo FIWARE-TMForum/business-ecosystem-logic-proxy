@@ -75,37 +75,37 @@ describe('Auth lib', function () {
 	var req = {
 	    id: 'test_user',
 	    appId: config.oauth2.clientID,
-	    accessToken: 'token',
-	    user: { id: 'rick',
-		    nickName: 'theMagician',
-		    organizations: [{
-			id: '123456789',
-			name: 'patty',
-			roles: [{
-			    id: '3',
-			    name: 'Seller'
-			},{
-			    id: '6',
-			    name: 'provider'
-			}]
-		    }, {
-			id: '987654321',
-			name: 'MntyPythn',
-			roles: [{
-			    id: '6',
-			    name: 'provider'
-			}]
-		    }, {
-			id: '111555999',
-			name: 'AmaneceQueNoEsPoco',
-			roles: [{
-			    id: '3',
-			    name: 'Seller'
+	    user: {accessToken: 'token',
+		   id: 'rick',
+		   nickName: 'theMagician',
+		   organizations: [{
+		       id: '123456789',
+		       name: 'patty',
+		       roles: [{
+			   id: '3',
+			   name: 'Seller'
+		       }, {
+			   id: '6',
+			   name: 'provider'
+		       }]
+		   }, {
+		       id: '987654321',
+		       name: 'MntyPythn',
+		       roles: [{
+			   id: '6',
+			   name: 'provider'
+		       }]
+		   }, {
+		       id: '111555999',
+		       name: 'AmaneceQueNoEsPoco',
+		       roles: [{
+			   id: '3',
+			   name: 'Seller'
 			}, {
 			    id: '1',
 			    name: 'purchuaser'
 			}]
-		    }]
+		   }]
 		  }
         };
 	
@@ -124,15 +124,20 @@ describe('Auth lib', function () {
 	    var req = {
 		id: 'test_user',
 		appId: config.oauth2.clientID,
-		accessToken: 'token',
-		user: { id: 'eugenio'}
+		user: { accessToken: 'token',
+			id: 'eugenio'}
             };
 	    auth.getCache()['token'] = {orgProcessed: true};
 	    auth.checkOrganizations(req, {}, done);
 	});
 
 	it ('should continue with middleware processing if the request if currently being processed', function (done) {
-	    
+	    var req = {
+		id: 'test_user',
+		appId: config.oauth2.clientID,
+		user: { accessToken: 'token',
+			id: 'eugenio'}
+            };
 	    auth.getCache()['token'] = { orgProcessed : false, orgProcessing: true};
 	    auth.checkOrganizations(req, {}, function () {
 		done();
@@ -141,7 +146,7 @@ describe('Auth lib', function () {
 
 	it ('should continue with middleware processing if getOrganization call fails', function (done) {
 	    var getOrganizations = function (callback){
-		return callback({status: 500, message: 'An error occurred during request'});
+		return callback({status: 500, message: 'An error occurred during request', body: 'Server error'});
 	    };
 	    var auth = getAuthLib(strategy, {}, null, getOrganizations);
 
