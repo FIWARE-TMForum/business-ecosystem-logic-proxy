@@ -61,6 +61,7 @@
             searchProductClasses: searchProductClasses,
             countTransactions: countTransactions,
             searchReports: searchReports,
+            countReports: countReports,
             createReport: createReport
         };
 
@@ -177,11 +178,21 @@
             return search(classesResource, params, classesResource.get);
         }
 
-        function searchReports() {
-            var params = {
-                providerId: User.loggedUser.id
-            };
+        function searchReports(params) {
+            if (!params) {
+                params = {};
+            }
+
+            params.providerId = User.loggedUser.id;
             return search(reportResource, params);
+        }
+
+        function countReports() {
+            var params = {
+                providerId: User.loggedUser.id,
+                action: "count"
+            };
+            return search(reportResource, params, reportResource.get);
         }
 
         function createReport(report) {
