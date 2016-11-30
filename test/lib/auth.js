@@ -25,13 +25,13 @@ describe('Auth lib', function () {
     var config = testUtils.getDefaultConfig();
 
     var getAuthLib = function(strategy, tokenService, unauthorized,
-			      getOrganizations, createOrganization, updateIndividual) {
+			      getOrganization, createOrganization, updateIndividual) {
         return proxyquire('../../lib/auth', {
             '../config': config,
             'passport-fiware-oauth': strategy,
             '../db/schemas/tokenService': tokenService,
 	    './party': {
-		getOrganizations: getOrganizations,
+		getOrganization: getOrganization,
 		createOrganization: createOrganization,
 		updateIndividual: updateIndividual
 	    },
@@ -115,9 +115,7 @@ describe('Auth lib', function () {
 		appId: config.oauth2.clientID,
 		accesstoken: 'token'
             };
-	    auth.checkOrganizations(req, {}, function () {
-		done();
-	    });
+	    auth.checkOrganizations(req, {}, done());
 	});
 
 	it ('should continue with middleware processing if the request have been already processed', function (done) {
@@ -127,7 +125,7 @@ describe('Auth lib', function () {
 		user: { accessToken: 'token',
 			id: 'eugenio'}
             };
-	    auth.getCache()['token'] = {orgProcessed: true};
+	    auth.getCache()['token'] = {orgState: 3};
 	    auth.checkOrganizations(req, {}, done);
 	});
 
@@ -138,27 +136,27 @@ describe('Auth lib', function () {
 		user: { accessToken: 'token',
 			id: 'eugenio'}
             };
-	    auth.getCache()['token'] = { orgProcessed : false, orgProcessing: true};
-	    auth.checkOrganizations(req, {}, function () {
-		done();
-	    });
+	    auth.getCache()['token'] = {orgProcessed: 2};
+	    auth.checkOrganizations(req, {}, done());
 	});
 
 	it ('should continue with middleware processing if getOrganization call fails', function (done) {
-	    var getOrganizations = function (callback){
+	    var getOrganization = function (callback){
 		return callback({status: 500, message: 'An error occurred during request', body: 'Server error'});
 	    };
-	    var auth = getAuthLib(strategy, {}, null, getOrganizations);
-
-	    auth.getCache()['token'] = { orgProcessed : false, orgProcessing: false};
+	    var auth = getAuthLib(strategy, {}, null, getOrganization);
+	    spyOn(auth, 'getOrganization')
+	    
+	    auth.getCache()['token'] = {orgProcessed: 1};
 	    auth.checkOrganizations(req, {}, function (){
+		expect(auth.getOrganization).toHaveBeenCalled();
 		done();
 	    });
 	});
 	
 	it ('should continue with middleware processing if createOrganization call fails', function (done) {
 
-	    var getOrganizations = function (callback){
+	    var getOrganization = function (callback){
 		return callback(null,
 				{status: 200,
 				 body: [{id: '123456789',
@@ -172,16 +170,17 @@ describe('Auth lib', function () {
 	    var createOrganization = function (content, callback){
 		return callback({status: 500, message: 'An error occurred during request'})
 	    };
-	    var auth = getAuthLib(strategy, {}, null, getOrganizations, createOrganization);
-	    
-	    auth.getCache()['token'] = { orgProcessed : false, orgProcessing: true};
+	    var auth = getAuthLib(strategy, {}, null, getOrganization, createOrganization);
+
+	    // TODO: check if the functions are being call. Check about how to mock the several calls to getOrganization
+	    auth.getCache()['token'] = {orgProcessed: 1};
 	    auth.checkOrganizations(req, {}, function () {
 		done();
 	    });
 	});
 
 	it('should continue with middleware processing if updateIndividual call fails', function (done) {
-	    var getOrganizations = function (callback){
+	    var getOrganization = function (callback){
 		return callback(null,
 				{status: 200,
 				 body: [{id: '123456789',
@@ -201,9 +200,9 @@ describe('Auth lib', function () {
 	    var updateIndividual = function (id, roles, callback){
 		return callback({status: 500, message: 'An error occurred during request'})
 	    };
-	    var auth = getAuthLib(strategy, {}, null, getOrganizations, createOrganization, updateIndividual);
+	    var auth = getAuthLib(strategy, {}, null, getOrganization, createOrganization, updateIndividual);
 
-	    auth.getCache()['token'] = { orgProcessed : false, orgProcessing: true};
+	    auth.getCache()['token'] = {orgProcessed: 1};
 	    auth.checkOrganizations(req, {}, function () {
 		done();
 	    });
@@ -211,7 +210,7 @@ describe('Auth lib', function () {
 	});
 	
 	it('should continue with middleware processing after updating partyAPI backend data', function (done) {
-	    var getOrganizations = function (callback){
+	    var getOrganization = function (callback){
 		return callback(null,
 				{status: 200,
 				 body: [{id: '123456789',
@@ -231,9 +230,9 @@ describe('Auth lib', function () {
 	    var updateIndividual = function (id, roles, callback){
 		return callback(null, {status: 200})
 	    };
-	    var auth = getAuthLib(strategy, {}, null, getOrganizations, createOrganization, updateIndividual);
+	    var auth = getAuthLib(strategy, {}, null, getOrganization, createOrganization, updateIndividual);
 
-	    auth.getCache()['token'] = { orgProcessed : false, orgProcessing: true};
+	    auth.getCache()['token'] = {orgProcessed: 1};
 	    auth.checkOrganizations(req, {}, function () {
 		done();
 	    });
