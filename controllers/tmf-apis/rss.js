@@ -47,13 +47,14 @@ var rss = (function () {
 
         // Check if the provider object has been already created
         rssClient.createProvider(req.user, function(err) {
+            var status = null;
             if (err) {
-                return callback({
+                status = {
                     status: 500,
                     message: 'An unexpected error in the RSS API prevented your request to be processed'
-                });
+                };
             }
-            callback();
+            callback(status);
         });
     };
 

@@ -42,6 +42,7 @@
         var transactionResource = $resource(URLS.SHARING_TRANSACTIONS, {}, {});
         var reportResource = $resource(URLS.SHARING_REPORTS, {}, {});
         var settlementResource = $resource(URLS.SHARING_SETTLEMENT, {}, {});
+        var classesResource = $resource(URLS.SHARING_CLASSES, {}, {});
 
         var EVENTS = {
             REPORT_CREATE: '$reportCreate',
@@ -57,6 +58,8 @@
             updateModel: updateModel,
             searchProviders: searchProviders,
             searchTransactions: searchTransactions,
+            searchProductClasses: searchProductClasses,
+            countTransactions: countTransactions,
             searchReports: searchReports,
             createReport: createReport
         };
@@ -145,15 +148,33 @@
             };
             return search(modelsResource, params, modelsResource.get);
         }
+
         function searchProviders () {
             return search(providersResource, {});
         }
 
-        function searchTransactions() {
+        function searchTransactions(params) {
+            if (!params) {
+                params = {};
+            }
+
+            params.providerId = User.loggedUser.id;
+            return search(transactionResource, params);
+        }
+
+        function countTransactions() {
+            var params = {
+                providerId: User.loggedUser.id,
+                action: "count"
+            };
+            return search(transactionResource, params, transactionResource.get);
+        }
+
+        function searchProductClasses() {
             var params = {
                 providerId: User.loggedUser.id
             };
-            return search(transactionResource, params);
+            return search(classesResource, params, classesResource.get);
         }
 
         function searchReports() {
