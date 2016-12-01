@@ -24,7 +24,7 @@ config.oauth2 = {
     'server': 'https://account.lab.fiware.org',
     'clientID': '--client-id--',
     'clientSecret': '--client-secret--',
-    'callbackURL': '--callback-url--',
+    'callbackURL': 'http://localhost/auth/fiware/callback',
     'roles': {
         'admin': 'provider',
         'customer': 'customer',
