@@ -387,7 +387,8 @@ describe("Test index helper library", function () {
         description: "description",
         href: "http://2",
         lifecycleStatus: "Active",
-        isBundle: false
+        isBundle: false,
+        catalog: "2"
     };
 
     var notBundleCategoriesOffer = Object.assign({}, notBundleOffer, {
@@ -405,7 +406,8 @@ describe("Test index helper library", function () {
         bundledProductOffering: [{ id: 2 }],
         href: "http://3",
         productSpecification: null,
-        isBundle: true
+        isBundle: true,
+        catalog: "2"
     });
 
     var bundleExpected = {
@@ -418,7 +420,8 @@ describe("Test index helper library", function () {
         productSpecification: undefined,
         href: "http://3",
         lifecycleStatus: "Active",
-        isBundle: true
+        isBundle: true,
+        catalog: "catalog:2"
     };
 
     var notBundleExpected = Object.assign({}, bundleExpected, {
@@ -428,7 +431,8 @@ describe("Test index helper library", function () {
         sortedId: "000000000002",
         productSpecification: "000000000001",
         href: "http://2",
-        isBundle: false
+        isBundle: false,
+        catalog: "catalog:2"
     });
 
     var notBundleCategoriesOfferExpect = Object.assign({}, notBundleExpected, {
@@ -438,7 +442,8 @@ describe("Test index helper library", function () {
         sortedId: "000000000012",
         lifecycleStatus: "Disabled",
         categoriesId: ['cat:13'],
-        categoriesName: [md5("testcat")]
+        categoriesName: [md5("testcat")],
+        catalog: "catalog:2"
     });
 
     var notBundleMultipleCategoriesOfferExpected = Object.assign({}, notBundleCategoriesOfferExpect, {

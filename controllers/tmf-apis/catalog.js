@@ -1060,7 +1060,7 @@ var catalog = (function() {
 	    function (req, query) {
 	        if (catalogOfferingsPattern.test(req.apiUrl)) {
 	            var catalog = req.apiUrl.split('/')[6];
-	            indexes.addAndCondition(query, { catalog: [catalog] });
+	            indexes.addAndCondition(query, { catalog: ["catalog:" + catalog] });
             }
             if (req.query.relatedParty) {
                 indexes.addAndCondition(query, { userId: [indexes.fixUserId(req.query.relatedParty)] });
