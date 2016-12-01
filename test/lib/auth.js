@@ -24,17 +24,12 @@ describe('Auth lib', function () {
 
     var config = testUtils.getDefaultConfig();
 
-    var getAuthLib = function(strategy, tokenService, unauthorized,
-			      getOrganization, createOrganization, updateIndividual) {
+    var getAuthLib = function(strategy, tokenService, unauthorized, party) {
         return proxyquire('../../lib/auth', {
             '../config': config,
             'passport-fiware-oauth': strategy,
             '../db/schemas/tokenService': tokenService,
-	    './party': {
-		getOrganization: getOrganization,
-		createOrganization: createOrganization,
-		updateIndividual: updateIndividual
-	    },
+	    './party': party,
 	    './utils': {
                 log: function() {
                 },
@@ -71,11 +66,12 @@ describe('Auth lib', function () {
 
     describe('Update party API', function () {
 	
-	var auth = getAuthLib(strategy, {});
+	var auth = getAuthLib(strategy, {}, null, {});
 	var req = {
 	    id: 'test_user',
 	    appId: config.oauth2.clientID,
 	    user: {accessToken: 'token',
+		   orgState: 1,
 		   id: 'rick',
 		   nickName: 'theMagician',
 		   organizations: [{
@@ -113,7 +109,6 @@ describe('Auth lib', function () {
 	    var req = {
 		id: 'test_user',
 		appId: config.oauth2.clientID,
-		accesstoken: 'token'
             };
 	    auth.checkOrganizations(req, {}, done());
 	});
@@ -122,11 +117,18 @@ describe('Auth lib', function () {
 	    var req = {
 		id: 'test_user',
 		appId: config.oauth2.clientID,
-		user: { accessToken: 'token',
-			id: 'eugenio'}
+		user: {accessToken: 'token',
+		       id: 'eugenio'}
             };
+	    var party = {getOrganization: function (orgId, callback) {}}
+	    spyOn(party, 'getOrganization').and.callFake(function (orgId, callback) {
+		callback({status: 500, message: 'An error occurred during request', body: 'Server error'})
+	    });
 	    auth.getCache()['token'] = {orgState: 3};
-	    auth.checkOrganizations(req, {}, done);
+	    auth.checkOrganizations(req, {}, function() {
+		expect(party.getOrganization).not.toHaveBeenCalled();
+		done();
+	    });
 	});
 
 	it ('should continue with middleware processing if the request if currently being processed', function (done) {
@@ -136,104 +138,205 @@ describe('Auth lib', function () {
 		user: { accessToken: 'token',
 			id: 'eugenio'}
             };
-	    auth.getCache()['token'] = {orgProcessed: 2};
-	    auth.checkOrganizations(req, {}, done());
+	    
+	    var party = {getOrganization: function (orgId, callback) {}}
+	    spyOn(party, 'getOrganization').and.callFake(function (orgId, callback) {
+		callback({status: 500, message: 'An error occurred during request', body: 'Server error'})
+	    });
+	    
+	    auth.getCache()['token'] = {orgState: 2};
+	    auth.checkOrganizations(req, {}, function () {
+		expect(party.getOrganization).not.toHaveBeenCalled();
+		done()
+	    });
 	});
 
 	it ('should continue with middleware processing if getOrganization call fails', function (done) {
-	    var getOrganization = function (callback){
-		return callback({status: 500, message: 'An error occurred during request', body: 'Server error'});
-	    };
-	    var auth = getAuthLib(strategy, {}, null, getOrganization);
-	    spyOn(auth, 'getOrganization')
+	    var party = {getOrganization: function (orgId, callback) {},
+			 createOrganization: function (content, callback) {}};
+	    var auth = getAuthLib(strategy, {}, null, party);
+	    spyOn(party, 'getOrganization').and.callFake(function (orgId, callback) {
+		callback({status: 500, message: 'An error occurred during request', body: 'Server error'})
+	    });
+	    spyOn(party, 'createOrganization');
 	    
-	    auth.getCache()['token'] = {orgProcessed: 1};
-	    auth.checkOrganizations(req, {}, function (){
-		expect(auth.getOrganization).toHaveBeenCalled();
+	    auth.getCache()['token'] = {orgState: 1};
+	    auth.checkOrganizations(req, {}, function () {
+		expect(party.getOrganization).toHaveBeenCalled();
+		expect(party.createOrganization).not.toHaveBeenCalled();
 		done();
 	    });
 	});
 	
 	it ('should continue with middleware processing if createOrganization call fails', function (done) {
+	    var party = {getOrganization: function (orgId, callback) {},
+			 createOrganization: function (content, callback) {},
+			 updateIndividual: function(finalRoles, callback) {}}
+	    var auth = getAuthLib(strategy, {}, null, party);
+	    var i = 0;
+	    spyOn(party, 'getOrganization').and.callFake(
+		function (orgId, callback){
+		    switch (i) {
+		    case 0:
+			i++;
+			return callback(null,
+					{status: JSON.stringify(200),
+					 body: JSON.stringify({id: '123456789',
+							       name: 'patty',
+							       href: 'www.exampleuri.com/orgs/patty'})
+					});
+			break;
+		    case 1:
+			i++;
+			return callback(null,
+					{status: JSON.stringify(200),
+					 body: JSON.stringify({id: '987654321',
+							       name: 'MntyPythn',
+							       href: 'www.exampleuri.com/orgs/MntyPythn'})
+					});
+			break;
+		    case 2:
+			return callback({status: 404, message: 'Org not found'});
+			break;
+		    }
+		}
+	    );
+	    
+	    spyOn(party, 'createOrganization').and.callFake(
+		function (content, callback) {
+		    return callback({status: 500, message: 'An error occurred while creating the organization'});
+		}
+	    );
 
-	    var getOrganization = function (callback){
-		return callback(null,
-				{status: 200,
-				 body: [{id: '123456789',
-					 name: 'patty',
-					 href: 'www.exampleuri.com/orgs/patty'},
-					{id: '987654321',
-					 name: 'MntyPythn',
-					 href: 'www.exampleuri.com/orgs/MntyPythn'}]
-				})
-	    };
-	    var createOrganization = function (content, callback){
-		return callback({status: 500, message: 'An error occurred during request'})
-	    };
-	    var auth = getAuthLib(strategy, {}, null, getOrganization, createOrganization);
-
-	    // TODO: check if the functions are being call. Check about how to mock the several calls to getOrganization
-	    auth.getCache()['token'] = {orgProcessed: 1};
+	    spyOn(party, 'updateIndividual');
+	    
+	    auth.getCache()['token'] = {orgState: 1};
 	    auth.checkOrganizations(req, {}, function () {
+		expect(party.getOrganization).toHaveBeenCalled();
+		expect(party.createOrganization).toHaveBeenCalled();
+		expect(party.updateIndividual).not.toHaveBeenCalled();
 		done();
 	    });
 	});
 
 	it('should continue with middleware processing if updateIndividual call fails', function (done) {
-	    var getOrganization = function (callback){
-		return callback(null,
-				{status: 200,
-				 body: [{id: '123456789',
-					 name: 'patty',
-					 href: 'www.exampleuri.com/orgs/patty'},
-					{id: '987654321',
-					 name: 'MntyPythn',
-					 href: 'www.exampleuri.com/orgs/MntyPythn'}]
-				})
-	    };
-	    var createOrganization = function (content, callback){
-		return callback(null,
-				{id: '111555999',
-				 tradingName: 'AmaneceQueNoEsPoco',
-				 href: 'www.exampleuri.com/orgs/AmaneceQueNoEsPoco'})
-	    };
-	    var updateIndividual = function (id, roles, callback){
-		return callback({status: 500, message: 'An error occurred during request'})
-	    };
-	    var auth = getAuthLib(strategy, {}, null, getOrganization, createOrganization, updateIndividual);
+	    var party = {getOrganization: function (orgId, callback) {},
+			 createOrganization: function (content, callback) {},
+			 updateIndividual: function (finalRoles, callback) {}};
+	    var auth = getAuthLib(strategy, {}, null, party);
+	    
+	    var i = 0;
+	    spyOn(party, 'getOrganization').and.callFake(
+		function (orgId, callback){
+		    switch (i) {
+		    case 0:
+			i++;
+			return callback(null,
+					{status: JSON.stringify(200),
+					 body: JSON.stringify({id: '123456789',
+							       name: 'patty',
+							       href: 'www.exampleuri.com/orgs/patty'})
+					});
+			break;
+		    case 1:
+			i++;
+			return callback(null,
+					{status: JSON.stringify(200),
+					 body: JSON.stringify({id: '987654321',
+							       name: 'MntyPythn',
+							       href: 'www.exampleuri.com/orgs/MntyPythn'})
+					});
+			break;
+		    case 2:
+			return callback({status: 404, message: 'Org not found'});
+			break;
+		    }
+		}
+	    );
+	    spyOn(party, 'createOrganization').and.callFake(
+		function (content, callback) {
+		    return callback(null,
+				    {status: JSON.stringify(200),
+				     body: JSON.stringify({id: '111555999',
+							   tradingName: 'AmaneceQueNoEsPoco',
+							   href: 'www.exampleuri.com/orgs/AmaneceQueNoEsPoco'})
+				    });
+		}
+	    );
 
-	    auth.getCache()['token'] = {orgProcessed: 1};
+	    spyOn(party, 'updateIndividual').and.callFake(
+		function (id, finalRoles, callback) {
+		    return callback({status: 500, message: 'An error occurred while updating the individual roles'})
+		}
+	    )
+	    
+	    auth.getCache()['token'] = {orgState: 1};
 	    auth.checkOrganizations(req, {}, function () {
+		expect(party.getOrganization).toHaveBeenCalled();
+		expect(party.createOrganization).toHaveBeenCalled();
+		expect(party.updateIndividual).toHaveBeenCalled();
 		done();
 	    });
 	    
 	});
 	
 	it('should continue with middleware processing after updating partyAPI backend data', function (done) {
-	    var getOrganization = function (callback){
-		return callback(null,
-				{status: 200,
-				 body: [{id: '123456789',
-					 name: 'patty',
-					 href: 'www.exampleuri.com/orgs/patty'},
-					{id: '987654321',
-					 name: 'MntyPythn',
-					 href: 'www.exampleuri.com/orgs/MntyPythn'}]
-				})
-	    };
-	    var createOrganization = function (content, callback){
-		return callback(null,
-				{id: '111555999',
-				 tradingName: 'AmaneceQueNoEsPoco',
-				 href: 'www.exampleuri.com/orgs/AmaneceQueNoEsPoco'})
-	    };
-	    var updateIndividual = function (id, roles, callback){
-		return callback(null, {status: 200})
-	    };
-	    var auth = getAuthLib(strategy, {}, null, getOrganization, createOrganization, updateIndividual);
+	    var party = {getOrganization: function (orgId, callback) {},
+			 createOrganization: function (content, callback) {},
+			 updateIndividual: function (finalRoles, callback) {}};
+	    var auth = getAuthLib(strategy, {}, null, party);
 
-	    auth.getCache()['token'] = {orgProcessed: 1};
+	    var i = 0;
+	    spyOn(party, 'getOrganization').and.callFake(
+		function (orgId, callback){
+		    switch (i) {
+		    case 0:
+			i++;
+			return callback(null,
+					{status: JSON.stringify(200),
+					 body: JSON.stringify({id: '123456789',
+							       name: 'patty',
+							       href: 'www.exampleuri.com/orgs/patty'})
+					});
+			break;
+		    case 1:
+			i++;
+			return callback(null,
+					{status: JSON.stringify(200),
+					 body: JSON.stringify({id: '987654321',
+							       name: 'MntyPythn',
+							       href: 'www.exampleuri.com/orgs/MntyPythn'})
+					});
+			break;
+		    case 2:
+			return callback({status: 404, message: 'Org not found'});
+			break;
+		    }
+		}
+	    );
+	    spyOn(party, 'createOrganization').and.callFake(
+		function (content, callback) {
+		    return callback(null,
+				    {status: JSON.stringify(200),
+				     body: JSON.stringify({id: '111555999',
+							   tradingName: 'AmaneceQueNoEsPoco',
+							   href: 'www.exampleuri.com/orgs/AmaneceQueNoEsPoco'})
+				    });
+		}
+	    );
+
+	    spyOn(party, 'updateIndividual').and.callFake(
+		function (id, finalRoles, callback) {
+		    return callback(null,
+				    {status: 200, message: 'Updated the roles correctly'})
+		}
+	    )
+
+	    auth.getCache()['token'] = {orgState: 1};
 	    auth.checkOrganizations(req, {}, function () {
+		expect(party.getOrganization).toHaveBeenCalled();
+		expect(party.createOrganization).toHaveBeenCalled();
+		expect(party.updateIndividual).toHaveBeenCalled();
 		done();
 	    });
 	    
@@ -248,7 +351,7 @@ describe('Auth lib', function () {
                 headers: {}
             };
 
-            var auth = getAuthLib(strategy, {});
+            var auth = getAuthLib(strategy, {}, null, {});
 
             auth.headerAuthentication(req, {}, function () {
                 done();
@@ -268,7 +371,7 @@ describe('Auth lib', function () {
 
             var unauthorized = getUnauthorizedMock(resExp, msgExp, done);
 
-            var auth = getAuthLib(strategy, {}, unauthorized);
+            var auth = getAuthLib(strategy, {}, unauthorized, {});
 
             auth.headerAuthentication(req, resExp, function () {
             });
@@ -288,7 +391,7 @@ describe('Auth lib', function () {
             var msgExp = 'invalid auth-token';
 
             var unauthorized = getUnauthorizedMock(resExp, msgExp, done);
-            var auth = getAuthLib(strategy, {}, unauthorized);
+            var auth = getAuthLib(strategy, {}, unauthorized, {});
 
             var err = {
                 error: 'Invalid token'
@@ -314,7 +417,7 @@ describe('Auth lib', function () {
                 accessToken: 'token'
             };
 
-            var auth = getAuthLib(strategy, {});
+            var auth = getAuthLib(strategy, {}, null, {});
             mockUserProfile(auth, ['token'], null, [userProfile]);
 
             auth.headerAuthentication(req, {}, function () {
@@ -338,7 +441,7 @@ describe('Auth lib', function () {
                 expire: Date.now() + 3600000
             };
 
-            var auth = getAuthLib(strategy, {});
+            var auth = getAuthLib(strategy, {}, null, {});
 
             auth.getCache()['token'] = userProfile;
             auth.FIWARE_STRATEGY._userProfile = jasmine.createSpy('_userProfile');
@@ -402,7 +505,7 @@ describe('Auth lib', function () {
                 }
             });
 
-            var auth = getAuthLib(strategy, TokenService, unauthorized);
+            var auth = getAuthLib(strategy, TokenService, unauthorized, {});
 
             if (sideEffect) {
                 sideEffect(auth, calls);
@@ -485,7 +588,7 @@ describe('Auth lib', function () {
 
             var TokenService = mockTokenService(calls, null, savedProfile, updateParams);
 
-            var auth = getAuthLib(strategy, TokenService);
+            var auth = getAuthLib(strategy, TokenService, null, {});
 
             if (refresh) {
                 updatedExp = true;
@@ -555,7 +658,7 @@ describe('Auth lib', function () {
             };
             var TokenService = mockTokenService(calls, null, savedProfile, null);
 
-            var auth = getAuthLib(strategy, TokenService);
+            var auth = getAuthLib(strategy, TokenService, null, {});
 
             mockUserProfile(auth, ['external'], null, [extProfile]);
             auth.getCache()['token'] = intProfile;
