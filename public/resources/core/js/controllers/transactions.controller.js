@@ -30,21 +30,33 @@
         .module('app')
         .controller('RSTransSearchCtrl', RSTransSearchController);
 
-    function RSTransSearchController($state, $rootScope, DATA_STATUS, RSS, Utils) {
+    function RSTransSearchController($scope, $state, $rootScope, DATA_STATUS, RSS, Utils) {
         var vm = this;
 
         vm.$params = $state.params;
         vm.state = $state;
-        vm.getTxType = getTxType;
+        vm.offset = -1;
+        vm.size = -1;
         vm.list = [];
         vm.list.status = DATA_STATUS.LOADING;
 
         var sharingModels = [];
 
+        vm.getTxType = getTxType;
         vm.createReport = createReport;
+        vm.getElementsLength = getElementsLength;
+
+        function getElementsLength() {
+            return RSS.countTransactions();
+        }
 
         function createReport() {
-            $rootScope.$broadcast(RSS.EVENTS.REPORT_CREATE, sharingModels);
+            RSS.searchProductClasses().then(function(classes) {
+                $rootScope.$broadcast(RSS.EVENTS.REPORT_CREATE, classes.productClasses);
+            }, function () {
+                vm.error = Utils.parseError(response, 'It was impossible to load the list of product classes');
+                vm.list.status = DATA_STATUS.ERROR;
+            });
         }
 
         function getTxType(txType) {
@@ -55,24 +67,26 @@
             return types[txType];
         }
 
-        RSS.searchTransactions().then(function(transactions) {
-            vm.list = angular.copy(transactions);
-            vm.list.status = DATA_STATUS.LOADED;
-            filterProductClass(transactions);
-        }, function() {
-            vm.error = Utils.parseError(response, 'It was impossible to load the list of transactions');
-            vm.list.status = DATA_STATUS.ERROR;
+        $scope.$watch(function () {
+            return vm.offset;
+        }, function () {
+            vm.list.status = DATA_STATUS.LOADING;
+
+            if (vm.offset >= 0) {
+                var params = {
+                    offset: vm.offset,
+                    size: vm.size
+                };
+
+                RSS.searchTransactions(params).then(function (transactions) {
+                    vm.list = angular.copy(transactions);
+                    vm.list.status = DATA_STATUS.LOADED;
+                }, function () {
+                    vm.error = Utils.parseError(response, 'It was impossible to load the list of transactions');
+                    vm.list.status = DATA_STATUS.ERROR;
+                });
+            }
         });
-
-        function filterProductClass(transactions) {
-            var set = {};
-
-            transactions.forEach(function (transaction) {
-                set[transaction.productClass] = {};
-            });
-
-            sharingModels = Object.keys(set);
-        }
     }
 
 })();

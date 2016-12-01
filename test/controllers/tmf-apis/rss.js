@@ -421,7 +421,7 @@ describe('RSS API', function() {
 
         it('should call the callback with error if the server fails creating the default RS model', function(done) {
             var errorStatus = 500;
-            var errorMessage = 'Error creating default RS model'
+            var errorMessage = 'Error creating default RS model';
             var req = {
                 method: 'GET',
                 apiUrl: '/rss/models',
@@ -450,6 +450,31 @@ describe('RSS API', function() {
                 expect(err).not.toBe(undefined);
                 expect(err.status).toBe(errorStatus);
                 expect(err.message).toBe(errorMessage);
+                done();
+            });
+        });
+
+        it('should call the callback and set to 1 the count if the default RS model has not been created', function (done) {
+            var req = {
+                method: 'GET',
+                apiUrl: '/rss/models',
+                body: JSON.stringify({
+                    size: 0
+                }),
+                user: {
+                    id: 'username'
+                },
+                headers: {}
+            };
+
+            var rssAPI = getRSSAPI({}, {}, {});
+            rssAPI.executePostValidation(req, function(err) {
+                expect(err).toBe(undefined);
+
+                var body = JSON.parse(req.body);
+                expect(body).toEqual({
+                    size: 1
+                });
                 done();
             });
         });

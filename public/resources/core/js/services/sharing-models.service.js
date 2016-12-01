@@ -42,6 +42,7 @@
         var transactionResource = $resource(URLS.SHARING_TRANSACTIONS, {}, {});
         var reportResource = $resource(URLS.SHARING_REPORTS, {}, {});
         var settlementResource = $resource(URLS.SHARING_SETTLEMENT, {}, {});
+        var classesResource = $resource(URLS.SHARING_CLASSES, {}, {});
 
         var EVENTS = {
             REPORT_CREATE: '$reportCreate',
@@ -51,12 +52,16 @@
         return {
             EVENTS: EVENTS,
             searchModels: searchModels,
+            countModels: countModels,
             createModel: createModel,
             detailModel: detailModel,
             updateModel: updateModel,
             searchProviders: searchProviders,
             searchTransactions: searchTransactions,
+            searchProductClasses: searchProductClasses,
+            countTransactions: countTransactions,
             searchReports: searchReports,
+            countReports: countReports,
             createReport: createReport
         };
 
@@ -100,10 +105,26 @@
             return deferred.promise;
         }
 
-        function search(resource, params) {
+        function search(resource, params, method) {
             var deferred = $q.defer();
+            var qParams = {};
 
-            resource.query(params, function(list) {
+            if (params.providerId) {
+                qParams.providerId = params.providerId;
+            }
+
+            if (params.action) {
+                qParams.action = params.action;
+            } else if (params.offset >= 0) {
+                qParams.offset = params.offset;
+                qParams.size = params.size;
+            }
+
+            if (!method) {
+                method = resource.query;
+            }
+
+            method(qParams, function(list) {
                 deferred.resolve(list);
             }, function (response) {
                 deferred.reject(response);
@@ -112,29 +133,66 @@
             return deferred.promise;
         }
 
-        function searchModels () {
-            var params = {
-                providerId: User.loggedUser.id
-            };
+        function searchModels (params) {
+            if (!params) {
+                params = {};
+            }
+
+            params.providerId = User.loggedUser.id;
             return search(modelsResource, params);
+        }
+
+        function countModels() {
+            var params = {
+                providerId: User.loggedUser.id,
+                action: "count"
+            };
+            return search(modelsResource, params, modelsResource.get);
         }
 
         function searchProviders () {
             return search(providersResource, {});
         }
 
-        function searchTransactions() {
-            var params = {
-                providerId: User.loggedUser.id
-            };
+        function searchTransactions(params) {
+            if (!params) {
+                params = {};
+            }
+
+            params.providerId = User.loggedUser.id;
             return search(transactionResource, params);
         }
 
-        function searchReports() {
+        function countTransactions() {
+            var params = {
+                providerId: User.loggedUser.id,
+                action: "count"
+            };
+            return search(transactionResource, params, transactionResource.get);
+        }
+
+        function searchProductClasses() {
             var params = {
                 providerId: User.loggedUser.id
             };
+            return search(classesResource, params, classesResource.get);
+        }
+
+        function searchReports(params) {
+            if (!params) {
+                params = {};
+            }
+
+            params.providerId = User.loggedUser.id;
             return search(reportResource, params);
+        }
+
+        function countReports() {
+            var params = {
+                providerId: User.loggedUser.id,
+                action: "count"
+            };
+            return search(reportResource, params, reportResource.get);
         }
 
         function createReport(report) {

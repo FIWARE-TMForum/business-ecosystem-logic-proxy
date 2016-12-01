@@ -31,18 +31,38 @@
         .controller('RSReportCreateCtrl', RSReportCreateController)
         .controller('RSReportSearchCtrl', RSReportSearchController);
 
-    function RSReportSearchController(DATA_STATUS, RSS, Utils) {
+    function RSReportSearchController($scope, DATA_STATUS, RSS, Utils) {
         var vm = this;
 
         vm.list = [];
+        vm.offset = -1;
+        vm.size = -1;
         vm.list.status = DATA_STATUS.LOADING;
 
-        RSS.searchReports().then(function(reports) {
-            vm.list = angular.copy(reports);
-            vm.list.status = DATA_STATUS.LOADED;
-        }, function (response) {
-            vm.error = Utils.parseError(response, 'Unexpected error trying to retrieve the reports.');
-            vm.list.status = DATA_STATUS.ERROR;
+        vm.getElementsLength = getElementsLength;
+
+        function getElementsLength() {
+            return RSS.countReports();
+        }
+
+        $scope.$watch(function () {
+            return vm.offset;
+        }, function () {
+            vm.list.status = DATA_STATUS.LOADING;
+
+            if (vm.offset >= 0) {
+                var params = {
+                    offset: vm.offset,
+                    size: vm.size
+                };
+                RSS.searchReports(params).then(function(reports) {
+                    vm.list = angular.copy(reports);
+                    vm.list.status = DATA_STATUS.LOADED;
+                }, function (response) {
+                    vm.error = Utils.parseError(response, 'Unexpected error trying to retrieve the reports.');
+                    vm.list.status = DATA_STATUS.ERROR;
+                });
+            }
         });
     }
 
