@@ -64,7 +64,7 @@ describe('Auth lib', function () {
         };
     };
 
-    describe('Update party API', function () {
+    fdescribe('Update party API', function () {
 	
 	var auth = getAuthLib(strategy, {}, null, {});
 	var req = {
@@ -152,18 +152,27 @@ describe('Auth lib', function () {
 	});
 
 	it ('should continue with middleware processing if getOrganization call fails', function (done) {
-	    var party = {getOrganization: function (orgId, callback) {},
-			 createOrganization: function (content, callback) {}};
-	    var auth = getAuthLib(strategy, {}, null, party);
-	    spyOn(party, 'getOrganization').and.callFake(function (orgId, callback) {
+
+	    // USE THIS TEMPLATE TO REPAIR THE REST OF TESTS
+	    var partyClient = jasmine.createSpyObj('partyClient',
+						   ['getOrganization', 'createOrganization'])
+	    partyClient.getOrganization.and.callFake(function (orgId, callback) {
 		callback({status: 500, message: 'An error occurred during request', body: 'Server error'})
 	    });
-	    spyOn(party, 'createOrganization');
+
+	    partyClient.createOrganization.and.callFake(function (content, callback) {
+		return callback({status: 500, message: 'An error occurred while creating the organization'});
+	    });
+	    var party = {
+		partyClient : partyClient
+	    }
 	    
+	    var auth = getAuthLib(strategy, {}, null, party);
+
 	    auth.getCache()['token'] = {orgState: 1};
 	    auth.checkOrganizations(req, {}, function () {
-		expect(party.getOrganization).toHaveBeenCalled();
-		expect(party.createOrganization).not.toHaveBeenCalled();
+		expect(partyClient.getOrganization).toHaveBeenCalled();
+		expect(partyClient.createOrganization).not.toHaveBeenCalled();
 		done();
 	    });
 	});
@@ -171,7 +180,7 @@ describe('Auth lib', function () {
 	it ('should continue with middleware processing if createOrganization call fails', function (done) {
 	    var party = {getOrganization: function (orgId, callback) {},
 			 createOrganization: function (content, callback) {},
-			 updateIndividual: function(finalRoles, callback) {}}
+			 updateIndividual: function (indId, finalRoles, callback) {}};
 	    var auth = getAuthLib(strategy, {}, null, party);
 	    var i = 0;
 	    spyOn(party, 'getOrganization').and.callFake(
@@ -222,7 +231,7 @@ describe('Auth lib', function () {
 	it('should continue with middleware processing if updateIndividual call fails', function (done) {
 	    var party = {getOrganization: function (orgId, callback) {},
 			 createOrganization: function (content, callback) {},
-			 updateIndividual: function (finalRoles, callback) {}};
+			 updateIndividual: function (indId, finalRoles, callback) {}};
 	    var auth = getAuthLib(strategy, {}, null, party);
 	    
 	    var i = 0;
@@ -283,7 +292,7 @@ describe('Auth lib', function () {
 	it('should continue with middleware processing after updating partyAPI backend data', function (done) {
 	    var party = {getOrganization: function (orgId, callback) {},
 			 createOrganization: function (content, callback) {},
-			 updateIndividual: function (finalRoles, callback) {}};
+			 updateIndividual: function (indId, finalRoles, callback) {}};
 	    var auth = getAuthLib(strategy, {}, null, party);
 
 	    var i = 0;
