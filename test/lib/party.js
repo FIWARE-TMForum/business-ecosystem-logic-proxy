@@ -47,15 +47,22 @@ describe('Party lib', function () {
     FUNCTION_MAPPING['getInd'] = 'getIndividual';
     FUNCTION_MAPPING['updInd'] = 'updateIndividual';
 
+    var orgPath = '/DSPartyManagement/api/partyManagement/v2/organization/';
+    var orgId = '111555999';
+    var indPath = '/DSPartyManagement/api/partyManagement/v2/individual/';
+    var indId = 'eugenio';
+
+    // TODO
+    // Extract common functions instead of rewriting the same code over and over.
+    // test results in case of succesfull exit
+
     describe('Party API', function () {
 	
 	it ('getOrganizations should return error fields if req fails', function (done) {
-
-	    var path = '/DSPartyManagement/api/partyManagement/v2/organization/';
 	    
 	    nock(url, {
 		reqheaders: headers
-	    }).get(path)
+	    }).get(orgPath)
 		.reply(500, {
 		    status: 500,
 		    message: 'An error occurred',
@@ -71,12 +78,11 @@ describe('Party lib', function () {
 	});
 
 	it ('getOrganization should return error fields if req fails', function (done) {
-	    var orgId = '111555999'
-	    var path = '/DSPartyManagement/api/partyManagement/v2/organization/' + orgId;
+	    orgPath = orgPath + orgId;
 
 	    nock(url, {
 		reqheaders: headers
-	    }).get(path)
+	    }).get(orgPath)
 		.reply(500, {
 		    status: 500,
 		    message: 'An error occurred',
@@ -93,11 +99,9 @@ describe('Party lib', function () {
 
 	it ('createOrganization should return error fields if req fails', function (done) {
 
-	    var path = '/DSPartyManagement/api/partyManagement/v2/organization/';
-
 	    nock(url, {
 		reqheaders: headers
-	    }).post(path)
+	    }).post(orgPath)
 		.reply(500, {
 		    status: 500,
 		    message: 'An error occurred',
@@ -120,12 +124,11 @@ describe('Party lib', function () {
 
 	it ('updateOrganization should return error fields if req fails', function (done) {
 
-	    var orgId = '111555999'
-	    var path = '/DSPartyManagement/api/partyManagement/v2/organization/';
+	    orgPath = orgPath + orgId;
 
 	    nock(url, {
 		reqheaders: headers
-	    }).patch(path)
+	    }).patch(orgPath)
 		.reply(500, {
 		    status: 500,
 		    message: 'An error occurred',
@@ -146,12 +149,11 @@ describe('Party lib', function () {
 
 	it ('getIndividual should return error fields if req fails', function (done) {
 
-	    var indId = 'eugenio'
-	    var path = '/DSPartyManagement/api/partyManagement/v2/individual/' + indId;
+	    indPath = indPath + indId;
 
 	    nock(url, {
 		reqheaders: headers
-	    }).get(path)
+	    }).get(indPath)
 		.reply(500, {
 		    status: 500,
 		    message: 'An error occurred',
@@ -168,12 +170,11 @@ describe('Party lib', function () {
 
 	it ('updateIndividual should return error fields if req fails', function (done) {
 
-	    var indId = 'eugenio'
-	    var path = '/DSPartyManagement/api/partyManagement/v2/organization/' + indId;
+	    indPath = indPath + indId;
 
 	    nock(url, {
 		reqheaders: headers
-	    }).patch(path)
+	    }).patch(indPath)
 		.reply(500, {
 		    status: 500,
 		    message: 'An error occurred',
