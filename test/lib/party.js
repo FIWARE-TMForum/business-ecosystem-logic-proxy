@@ -27,13 +27,15 @@ describe('Party lib', function () {
 
     var url = 'http://' + config.endpoints.party.host + ':' + config.endpoints.party.port;
     
-    var partyClient = proxyquire('../../lib/party', {
-	'../config.js': config,
-	'./utils.js': {
-	    getAPIURL: function () {return url}
-	}
-    }).partyClient;
-
+    var partyClient = function(path) {
+	return proxyquire('../../lib/party', {
+	    '../config.js': config,
+	    './utils.js': {
+		getAPIURL: function () {return url+path}
+	    }
+	}).partyClient;
+    };
+    
     var headers = {
         'content-type': 'application/json',
         'accept': 'application/json'
@@ -52,11 +54,10 @@ describe('Party lib', function () {
     var indPath = '/DSPartyManagement/api/partyManagement/v2/individual/';
     var indId = 'eugenio';
 
-    // TODO
-    // Extract common functions instead of rewriting the same code over and over.
-    // test results in case of succesfull exit
+    var orgPartyClient = partyClient(orgPath);
+    var indPartyClient = partyClient(indPath);
 
-    describe('Party API', function () {
+    describe('Party API error cases', function () {
 	
 	it ('getOrganizations should return error fields if req fails', function (done) {
 	    
@@ -69,7 +70,7 @@ describe('Party lib', function () {
 		    body: 'Internal error detected'
 		});
 	    
-	    partyClient[FUNCTION_MAPPING['getOrgs']](
+	    orgPartyClient[FUNCTION_MAPPING['getOrgs']](
 		(err, res) => {
 		    expect(res).toBe(undefined);
 		    done();	     
@@ -78,18 +79,18 @@ describe('Party lib', function () {
 	});
 
 	it ('getOrganization should return error fields if req fails', function (done) {
-	    orgPath = orgPath + orgId;
-
+	    orgP = orgPath + orgId;
+	    var orgPartyClient = partyClient(orgP);
 	    nock(url, {
 		reqheaders: headers
-	    }).get(orgPath)
+	    }).get(orgP)
 		.reply(500, {
 		    status: 500,
 		    message: 'An error occurred',
 		    body: 'Internal error detected'
 		});
 	    
-	    partyClient[FUNCTION_MAPPING['getOrg']](orgId, 
+	    orgPartyClient[FUNCTION_MAPPING['getOrg']](orgId, 
 		(err, res) => {
 		    expect(res).toBe(undefined);
 		    done();	     
@@ -114,7 +115,7 @@ describe('Party lib', function () {
 		href: 'http://exampleuri.com/lack/of/imagination'
 	    };
 	    
-	    partyClient[FUNCTION_MAPPING['mkOrg']](content,
+	    orgPartyClient[FUNCTION_MAPPING['mkOrg']](content,
 		(err, res) => {
 		    expect(res).toBe(undefined);
 		    done();	     
@@ -124,11 +125,11 @@ describe('Party lib', function () {
 
 	it ('updateOrganization should return error fields if req fails', function (done) {
 
-	    orgPath = orgPath + orgId;
-
+	    orgP = orgPath + orgId;
+	    var orgPartyClient = partyClient(orgP);
 	    nock(url, {
 		reqheaders: headers
-	    }).patch(orgPath)
+	    }).patch(orgP)
 		.reply(500, {
 		    status: 500,
 		    message: 'An error occurred',
@@ -139,7 +140,7 @@ describe('Party lib', function () {
 		tradingName: 'LifeOfBrian'
 	    };
 	    
-	    partyClient[FUNCTION_MAPPING['updOrg']](orgId, content, 
+	    orgPartyClient[FUNCTION_MAPPING['updOrg']](orgId, content, 
 		(err, res) => {
 		    expect(res).toBe(undefined);
 		    done();	     
@@ -149,18 +150,19 @@ describe('Party lib', function () {
 
 	it ('getIndividual should return error fields if req fails', function (done) {
 
-	    indPath = indPath + indId;
-
+	    indP = indPath + indId;
+	    var indPartyClient = partyClient(indP);
+	    
 	    nock(url, {
 		reqheaders: headers
-	    }).get(indPath)
+	    }).get(indP)
 		.reply(500, {
 		    status: 500,
 		    message: 'An error occurred',
 		    body: 'Internal error detected'
 		});
 	    
-	    partyClient[FUNCTION_MAPPING['getInd']](indId, 
+	    indPartyClient[FUNCTION_MAPPING['getInd']](indId, 
 		(err, res) => {
 		    expect(res).toBe(undefined);
 		    done();	     
@@ -170,11 +172,12 @@ describe('Party lib', function () {
 
 	it ('updateIndividual should return error fields if req fails', function (done) {
 
-	    indPath = indPath + indId;
-
+	    indP = indPath + indId;
+	    var indPartyClient = partyClient(indP);
+	    
 	    nock(url, {
 		reqheaders: headers
-	    }).patch(indPath)
+	    }).patch(indP)
 		.reply(500, {
 		    status: 500,
 		    message: 'An error occurred',
@@ -185,7 +188,7 @@ describe('Party lib', function () {
 		title: 'Sir lancelot of the Holy Grial'
 	    };
 	    
-	    partyClient[FUNCTION_MAPPING['updInd']](indId, content,  
+	    indPartyClient[FUNCTION_MAPPING['updInd']](indId, content,  
 		(err, res) => {
 		    expect(res).toBe(undefined);
 		    done();	     
@@ -194,5 +197,134 @@ describe('Party lib', function () {
 	});
 
 	
+    });
+
+    describe('Party API success cases', function () {
+
+	it ('getOrganizations should return the list of all organizations', function (done) {
+
+	    expectedValue = [{ 'id': '111555999',
+			       'href': 'www.example.org/org/1'},
+			     { 'id': '123456789',
+			       'href': 'www.example.org/org/2'}]
+	    nock(url, {
+		reqheaders: headers
+	    }).get(orgPath)
+		.reply(200, expectedValue);
+	    
+	    orgPartyClient[FUNCTION_MAPPING['getOrgs']](
+		(err, res) => {
+		    expect(err).toBeNull();
+		    expect(res.body).toBe(JSON.stringify(expectedValue));
+		    done();	     
+		});
+	});
+
+	it ('getOrganization should return the required organization', function (done) {
+
+	    orgP = orgPath + orgId;
+	    var orgPartyClient = partyClient(orgP);
+	    
+	    expectedValue = { 'id': '111555999',
+			       'href': 'www.example.org/org/1'}
+
+	    nock(url, {
+		reqheaders: headers
+	    }).get(orgP)
+		.reply(200, expectedValue);
+	    
+	    orgPartyClient[FUNCTION_MAPPING['getOrgs']](
+		(err, res) => {
+		    expect(err).toBeNull();
+		    expect(res.body).toBe(JSON.stringify(expectedValue));
+		    done();	     
+		});
+	});
+
+	it ('createOrganization should return the created organization', function (done) {
+
+	    var content = {
+		id: '111555999',
+		tradingName: 'AmaneceQueNoEsPoco',
+		href: 'http://exampleuri.com/lack/of/imagination'
+	    };
+	    
+	    nock(url, {
+		reqheaders: headers
+	    }).post(orgPath)
+		.reply(200, content);
+	    
+	    orgPartyClient[FUNCTION_MAPPING['mkOrg']](content,
+		(err, res) => {
+		    expect(err).toBeNull();
+		    expect(res).not.toBeNull();
+		    done();	     
+		});
+	});
+
+	it ('updateOrganization should return the organization updated', function (done) {
+
+	    orgP = orgPath + orgId;
+	    var orgPartyClient = partyClient(orgP);
+	    nock(url, {
+		reqheaders: headers
+	    }).patch(orgP)
+		.reply(200, {
+		    'id': '111555999',
+		    'tradingName': 'AmaneceQueNoEsPoco'
+		});
+	    
+	    var content = {
+		tradingName: 'LifeOfBrian'
+	    };
+	    
+	    orgPartyClient[FUNCTION_MAPPING['updOrg']](orgId, content, 
+		(err, res) => {
+		    expect(err).toBeNull();
+		    done();	     
+		});
+	    
+	});
+
+	it ('getIndividual should return the required Individual', function (done) {
+
+	    indP = indPath + indId;
+	    var indPartyClient = partyClient(indP);
+	    
+	    nock(url, {
+		reqheaders: headers
+	    }).get(indP)
+		.reply(200, {
+		    'id': '111555999',
+		    'name': 'Vercingetorix'
+		});
+	    
+	    indPartyClient[FUNCTION_MAPPING['getInd']](indId, 
+		(err, res) => {
+		    expect(err).toBeNull();
+		    done();	     
+		});
+	});
+
+	it ('updateIndividual should return the individual updated', function (done) {
+
+	    indP = indPath + indId;
+	    var indPartyClient = partyClient(indP);
+
+	    var content = {
+		title: 'Sir lancelot of the Holy Grial'
+	    };
+	    
+	    nock(url, {
+		reqheaders: headers
+	    }).patch(indP)
+		.reply(200, content);
+	    
+	    indPartyClient[FUNCTION_MAPPING['updInd']](indId, content,  
+		(err, res) => {
+		    expect(err).toBeNull();
+		    done();	     
+		});
+	});
     });
 });
