@@ -59,6 +59,12 @@
         vm.isAdmin = isAdmin;
         vm.isSeller = isSeller;
         vm.isAuthenticated = isAuthenticated;
+	vm.cambiaCesvar = cambiaCesvar;
+	$scope.cesvar = 'Potorro';
+
+	function cambiaCesvar() {
+	    $scope.cesvar = "Patata";
+	}
 
         $scope.$on('$stateChangeSuccess', function (event, toState) {
             $scope.title = toState.data.title;

@@ -109,6 +109,9 @@ html(ng-app="app")
                 a.dropdown-menu-item(ng-if="user.isAdmin()", ui-sref="admin", ui-sref-opts="{ reload: true, inherit: false }")
                   span.item-icon.fa.fa-dashboard
                   span.item-text Administration
+                a.dropdown-menu-item(ng-mouseover="user.cambiaCesvar()")
+                  span.item-icon.fa.fa-users
+                  span.item-text {{ cesvar }}                  
                 a.dropdown-menu-item(ui-sref="settings", ui-sref-opts="{ reload: true, inherit: false }")
                   span.item-icon.fa.fa-cog
                   span.item-text Settings
