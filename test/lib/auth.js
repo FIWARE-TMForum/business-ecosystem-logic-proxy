@@ -104,13 +104,28 @@ describe('Auth lib', function () {
 		   }]
 		  }
         };
-	
-	it ('should continue with middleware processing if not user object has been provided', function (done) {
+
+	var roles = { 'relatedParty': [
+	    {'id': '123456789',
+	     'name': 'patty',
+	     'href': 'www.exampleuri.com/orgs/patty',
+	     'role': 'Seller,provider'},
+	    {'id': '987654321',
+	     'name': 'MntyPythn',
+	     'href': 'www.exampleuri.com/orgs/MntyPythn',
+	     'role': 'provider'},
+	    {'id': '111555999',
+	     'name': 'AmaneceQueNoEsPoco',
+	     'href': 'www.exampleuri.com/orgs/AmaneceQueNoEsPoco',
+	     'role': 'Seller,purchuaser'}
+	]}
+
+	it ('should continue with middleware processing if no user object has been provided', function (done) {
 	    var req = {
 		id: 'test_user',
 		appId: config.oauth2.clientID,
             };
-	    auth.checkOrganizations(req, {}, done());
+	    auth.checkOrganizations(req, {}, done);
 	});
 
 	it ('should continue with middleware processing if the request have been already processed', function (done) {
@@ -121,9 +136,8 @@ describe('Auth lib', function () {
 		       id: 'eugenio'}
             };
 	    var party = {getOrganization: function (orgId, callback) {}}
-	    spyOn(party, 'getOrganization').and.callFake(function (orgId, callback) {
-		callback({status: 500, message: 'An error occurred during request', body: 'Server error'})
-	    });
+	    spyOn(party, 'getOrganization');
+	    
 	    auth.getCache()['token'] = {orgState: 3};
 	    auth.checkOrganizations(req, {}, function() {
 		expect(party.getOrganization).not.toHaveBeenCalled();
@@ -140,9 +154,7 @@ describe('Auth lib', function () {
             };
 	    
 	    var party = {getOrganization: function (orgId, callback) {}}
-	    spyOn(party, 'getOrganization').and.callFake(function (orgId, callback) {
-		callback({status: 500, message: 'An error occurred during request', body: 'Server error'})
-	    });
+	    spyOn(party, 'getOrganization')
 	    
 	    auth.getCache()['token'] = {orgState: 2};
 	    auth.checkOrganizations(req, {}, function () {
@@ -153,9 +165,6 @@ describe('Auth lib', function () {
 
 	it ('should continue with middleware processing if getOrganization call fails', function (done) {
 
-	    // TODO
-	    // Extract common function instead of rewriting the same code over and over again.
-	    // Like a function when error occur and function when proper output happens
 	    var partyClient = jasmine.createSpyObj('partyClient',
 						   ['getOrganization', 'createOrganization', 'updateIndividual']);
 	    partyClient.getOrganization.and.callFake(function (orgId, callback) {
@@ -178,7 +187,9 @@ describe('Auth lib', function () {
 
 	    auth.getCache()['token'] = {orgState: 1};
 	    auth.checkOrganizations(req, {}, function () {
-		expect(partyClient.getOrganization).toHaveBeenCalled();
+		expect(partyClient.getOrganization.calls.count()).toEqual(3);
+		expect(
+		    partyClient.getOrganization.calls.allArgs().reduce((x, y) => x.concat(y[0]), [])).toEqual(['123456789', '987654321', '111555999'])
 		expect(partyClient.createOrganization).not.toHaveBeenCalled();
 		expect(partyClient.updateIndividual).not.toHaveBeenCalled();
 		done();
@@ -236,8 +247,14 @@ describe('Auth lib', function () {
 	    
 	    auth.getCache()['token'] = {orgState: 1};
 	    auth.checkOrganizations(req, {}, function () {
-		expect(partyClient.getOrganization).toHaveBeenCalled();
-		expect(partyClient.createOrganization).toHaveBeenCalled();
+		expect(partyClient.getOrganization.calls.count()).toEqual(3);
+		expect(
+		    partyClient.getOrganization.calls.allArgs().reduce(
+			(x, y) => x.concat(y[0]), [])).toEqual(
+			    ['123456789', '987654321', '111555999']);
+		expect(partyClient.createOrganization.calls.argsFor(0)[0]).toEqual(
+		    {'id': '111555999',
+		     'tradingName': 'AmaneceQueNoEsPoco'});
 		expect(partyClient.updateIndividual).not.toHaveBeenCalled();
 		done();
 	    });
@@ -302,9 +319,16 @@ describe('Auth lib', function () {
 	    	    
 	    auth.getCache()['token'] = {orgState: 1};
 	    auth.checkOrganizations(req, {}, function () {
-		expect(partyClient.getOrganization).toHaveBeenCalled();
-		expect(partyClient.createOrganization).toHaveBeenCalled();
-		expect(partyClient.updateIndividual).toHaveBeenCalled();
+		expect(partyClient.getOrganization.calls.count()).toEqual(3);
+		expect(
+		    partyClient.getOrganization.calls.allArgs().reduce(
+			(x, y) => x.concat(y[0]), [])).toEqual(
+			    ['123456789', '987654321', '111555999']);
+		expect(partyClient.createOrganization.calls.argsFor(0)[0]).toEqual(
+		    {'id': '111555999',
+		     'tradingName': 'AmaneceQueNoEsPoco'});
+		expect(partyClient.updateIndividual.calls.argsFor(0)[0]).toEqual('rick');
+		expect(partyClient.updateIndividual.calls.argsFor(0)[1]).toEqual(roles);
 		done();
 	    });
 	    
@@ -369,9 +393,14 @@ describe('Auth lib', function () {
 
 	    auth.getCache()['token'] = {orgState: 1};
 	    auth.checkOrganizations(req, {}, function () {
-		expect(partyClient.getOrganization).toHaveBeenCalled();
-		expect(partyClient.createOrganization).toHaveBeenCalled();
-		expect(partyClient.updateIndividual).toHaveBeenCalled();
+		expect(partyClient.getOrganization.calls.count()).toEqual(3);
+		expect(
+		    partyClient.getOrganization.calls.allArgs().reduce((x, y) => x.concat(y[0]), [])).toEqual(['123456789', '987654321', '111555999']);
+		expect(partyClient.createOrganization.calls.argsFor(0)[0]).toEqual(
+		    {'id': '111555999',
+		     'tradingName': 'AmaneceQueNoEsPoco'});
+		expect(partyClient.updateIndividual.calls.argsFor(0)[0]).toEqual('rick');
+		expect(partyClient.updateIndividual.calls.argsFor(0)[1]).toEqual(roles);
 		done();
 	    });
 	    

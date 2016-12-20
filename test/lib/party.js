@@ -57,21 +57,26 @@ describe('Party lib', function () {
     var orgPartyClient = partyClient(orgPath);
     var indPartyClient = partyClient(indPath);
 
-    describe('Party API error cases', function () {
+    fdescribe('Party API error cases', function () {
+
+
+	var errObj = {
+	    status: 500,
+	    message: 'The connection has failed while requesting all the organizations of the party API'
+	};
 	
 	it ('getOrganizations should return error fields if req fails', function (done) {
 	    
 	    nock(url, {
 		reqheaders: headers
 	    }).get(orgPath)
-		.reply(500, {
-		    status: 500,
-		    message: 'An error occurred',
-		    body: 'Internal error detected'
-		});
+		.reply(500, errObj);
+
+	    errObj['obj'] = errObj;
 	    
 	    orgPartyClient[FUNCTION_MAPPING['getOrgs']](
 		(err, res) => {
+		    expect(err).toBe(errObj);
 		    expect(res).toBe(undefined);
 		    done();	     
 		});
@@ -84,11 +89,7 @@ describe('Party lib', function () {
 	    nock(url, {
 		reqheaders: headers
 	    }).get(orgP)
-		.reply(500, {
-		    status: 500,
-		    message: 'An error occurred',
-		    body: 'Internal error detected'
-		});
+		.reply(500, errObj);
 	    
 	    orgPartyClient[FUNCTION_MAPPING['getOrg']](orgId, 
 		(err, res) => {
@@ -103,11 +104,7 @@ describe('Party lib', function () {
 	    nock(url, {
 		reqheaders: headers
 	    }).post(orgPath)
-		.reply(500, {
-		    status: 500,
-		    message: 'An error occurred',
-		    body: 'Internal error detected'
-		});
+		.reply(500, errObj);
 	    
 	    var content = {
 		id: '111555999',
@@ -130,11 +127,7 @@ describe('Party lib', function () {
 	    nock(url, {
 		reqheaders: headers
 	    }).patch(orgP)
-		.reply(500, {
-		    status: 500,
-		    message: 'An error occurred',
-		    body: 'Internal error detected'
-		});
+		.reply(500, errObj);
 	    
 	    var content = {
 		tradingName: 'LifeOfBrian'
@@ -156,11 +149,7 @@ describe('Party lib', function () {
 	    nock(url, {
 		reqheaders: headers
 	    }).get(indP)
-		.reply(500, {
-		    status: 500,
-		    message: 'An error occurred',
-		    body: 'Internal error detected'
-		});
+		.reply(500, errObj);
 	    
 	    indPartyClient[FUNCTION_MAPPING['getInd']](indId, 
 		(err, res) => {
@@ -178,11 +167,7 @@ describe('Party lib', function () {
 	    nock(url, {
 		reqheaders: headers
 	    }).patch(indP)
-		.reply(500, {
-		    status: 500,
-		    message: 'An error occurred',
-		    body: 'Internal error detected'
-		});
+		.reply(500, errObj);
 
 	    var content = {
 		title: 'Sir lancelot of the Holy Grial'
@@ -266,13 +251,16 @@ describe('Party lib', function () {
 
 	    orgP = orgPath + orgId;
 	    var orgPartyClient = partyClient(orgP);
+
+	    var expectedValue = {
+		'id': '111555999',
+		'tradingName': 'AmaneceQueNoEsPoco'
+	    };
+
 	    nock(url, {
 		reqheaders: headers
 	    }).patch(orgP)
-		.reply(200, {
-		    'id': '111555999',
-		    'tradingName': 'AmaneceQueNoEsPoco'
-		});
+		.reply(200, expectedValue);
 	    
 	    var content = {
 		tradingName: 'LifeOfBrian'
