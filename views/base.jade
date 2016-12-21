@@ -115,6 +115,19 @@ html(ng-app="app")
                 a.dropdown-menu-item(ng-click="user.signOut()")
                   span.item-icon.fa.fa-sign-out
                   span.item-text Sign out
+                  
+            li.dropdown
+              a.dropdown-toggle.has-stack(data-toggle="dropdown")
+                span.fa-stack
+                  i.fa.fa-circle-thin.fa-stack-2x
+                  i.fa.fa-group.fa-stack-1x
+                span.hidden-xs #{ user.displayName }
+              .dropdown-menu.z-depth-3          
+                each organization in user.organizations
+                  a.dropdown-menu-item
+                    spat.item-text #{organization.name}
+                a.dropdown-menu-item(ng-mouseover="user.cambiaCesvar()")                  
+                  span.item-text {{ cesvar }}
           form(name="signOutForm", method="post", action="#{ contextPath }/logout")
         else
           a.btn.btn-warning.navbar-btn.navbar-right.z-depth-1(href="#{ contextPath }/login")
