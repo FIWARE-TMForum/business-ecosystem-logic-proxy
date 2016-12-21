@@ -57,26 +57,28 @@ describe('Party lib', function () {
     var orgPartyClient = partyClient(orgPath);
     var indPartyClient = partyClient(indPath);
 
-    fdescribe('Party API error cases', function () {
-
-
-	var errObj = {
-	    status: 500,
-	    message: 'The connection has failed while requesting all the organizations of the party API'
-	};
+    describe('Party API error cases', function () {
 	
 	it ('getOrganizations should return error fields if req fails', function (done) {
+
+	    var errObj = {
+		status: 500,
+		message: 'The connection has failed while requesting all the organizations of the party API'
+	    };
 	    
 	    nock(url, {
 		reqheaders: headers
 	    }).get(orgPath)
 		.reply(500, errObj);
 
-	    errObj['obj'] = errObj;
+	    errObj['body'] = JSON.stringify({
+		status: 500,
+		message: 'The connection has failed while requesting all the organizations of the party API'
+	});
 	    
 	    orgPartyClient[FUNCTION_MAPPING['getOrgs']](
 		(err, res) => {
-		    expect(err).toBe(errObj);
+		    expect(err).toEqual(errObj);
 		    expect(res).toBe(undefined);
 		    done();	     
 		});
@@ -86,13 +88,25 @@ describe('Party lib', function () {
 	it ('getOrganization should return error fields if req fails', function (done) {
 	    orgP = orgPath + orgId;
 	    var orgPartyClient = partyClient(orgP);
+
+	    var errObj = {
+		status: 500,
+		message: 'The connection has failed while requesting organization with id: ' + orgId
+	    };
+	    
 	    nock(url, {
 		reqheaders: headers
 	    }).get(orgP)
 		.reply(500, errObj);
-	    
-	    orgPartyClient[FUNCTION_MAPPING['getOrg']](orgId, 
+
+	    errObj['body'] = JSON.stringify({
+		status: 500,
+		message: 'The connection has failed while requesting organization with id: ' + orgId
+	    });
+	    orgPartyClient[FUNCTION_MAPPING['getOrg']](
+		orgId, 
 		(err, res) => {
+		    expect(err).toEqual(errObj);
 		    expect(res).toBe(undefined);
 		    done();	     
 		});
@@ -101,10 +115,20 @@ describe('Party lib', function () {
 
 	it ('createOrganization should return error fields if req fails', function (done) {
 
+	    var errObj = {
+		status: 500,
+		message: 'The connection has failed while creating the organization'
+	    };
+	    
 	    nock(url, {
 		reqheaders: headers
 	    }).post(orgPath)
 		.reply(500, errObj);
+
+	    errObj['body'] = JSON.stringify({
+		status: 500,
+		message: 'The connection has failed while creating the organization'
+	    });
 	    
 	    var content = {
 		id: '111555999',
@@ -112,8 +136,10 @@ describe('Party lib', function () {
 		href: 'http://exampleuri.com/lack/of/imagination'
 	    };
 	    
-	    orgPartyClient[FUNCTION_MAPPING['mkOrg']](content,
+	    orgPartyClient[FUNCTION_MAPPING['mkOrg']](
+		content,
 		(err, res) => {
+		    expect(err).toEqual(errObj);
 		    expect(res).toBe(undefined);
 		    done();	     
 		});
@@ -124,17 +150,31 @@ describe('Party lib', function () {
 
 	    orgP = orgPath + orgId;
 	    var orgPartyClient = partyClient(orgP);
+
+	    var errObj = {
+		status: 500,
+		message: 'The connection has failed while updating the organization'
+	    };
+	    
 	    nock(url, {
 		reqheaders: headers
 	    }).patch(orgP)
 		.reply(500, errObj);
+
+	    errObj['body'] = JSON.stringify({
+		status: 500,
+		message: 'The connection has failed while updating the organization'
+	    });
 	    
 	    var content = {
 		tradingName: 'LifeOfBrian'
 	    };
 	    
-	    orgPartyClient[FUNCTION_MAPPING['updOrg']](orgId, content, 
+	    orgPartyClient[FUNCTION_MAPPING['updOrg']](
+		orgId,
+		content, 
 		(err, res) => {
+		    expect(err).toEqual(errObj);
 		    expect(res).toBe(undefined);
 		    done();	     
 		});
@@ -145,14 +185,26 @@ describe('Party lib', function () {
 
 	    indP = indPath + indId;
 	    var indPartyClient = partyClient(indP);
+
+	    var errObj = {
+		status: 500,
+		message: 'The connection has failed getting user info'
+	    };
 	    
 	    nock(url, {
 		reqheaders: headers
 	    }).get(indP)
 		.reply(500, errObj);
+
+	    errObj['body'] = JSON.stringify({
+		status: 500,
+		message: 'The connection has failed getting user info'
+	    });
 	    
-	    indPartyClient[FUNCTION_MAPPING['getInd']](indId, 
+	    indPartyClient[FUNCTION_MAPPING['getInd']](
+		indId, 
 		(err, res) => {
+		    expect(err).toEqual(errObj);
 		    expect(res).toBe(undefined);
 		    done();	     
 		});
@@ -163,18 +215,31 @@ describe('Party lib', function () {
 
 	    indP = indPath + indId;
 	    var indPartyClient = partyClient(indP);
+
+	    var errObj = {
+		status: 500,
+		message: 'The connection has failed while updating the individual'
+	    };
 	    
 	    nock(url, {
 		reqheaders: headers
 	    }).patch(indP)
 		.reply(500, errObj);
 
+	    errObj['body'] = JSON.stringify({
+		status: 500,
+		message: 'The connection has failed while updating the individual'
+	    });
+	    
 	    var content = {
 		title: 'Sir lancelot of the Holy Grial'
 	    };
 	    
-	    indPartyClient[FUNCTION_MAPPING['updInd']](indId, content,  
+	    indPartyClient[FUNCTION_MAPPING['updInd']](
+		indId,
+		content,  
 		(err, res) => {
+		    expect(err).toEqual(errObj);
 		    expect(res).toBe(undefined);
 		    done();	     
 		});
@@ -188,10 +253,10 @@ describe('Party lib', function () {
 
 	it ('getOrganizations should return the list of all organizations', function (done) {
 
-	    expectedValue = [{ 'id': '111555999',
-			       'href': 'www.example.org/org/1'},
-			     { 'id': '123456789',
-			       'href': 'www.example.org/org/2'}]
+	    expectedValue = [{ id: '111555999',
+			       href: 'www.example.org/org/1'},
+			     { id: '123456789',
+			       href: 'www.example.org/org/2'}];
 	    nock(url, {
 		reqheaders: headers
 	    }).get(orgPath)
@@ -200,7 +265,7 @@ describe('Party lib', function () {
 	    orgPartyClient[FUNCTION_MAPPING['getOrgs']](
 		(err, res) => {
 		    expect(err).toBeNull();
-		    expect(res.body).toBe(JSON.stringify(expectedValue));
+		    expect(JSON.parse(res.body)).toEqual(expectedValue);
 		    done();	     
 		});
 	});
@@ -210,8 +275,8 @@ describe('Party lib', function () {
 	    orgP = orgPath + orgId;
 	    var orgPartyClient = partyClient(orgP);
 	    
-	    expectedValue = { 'id': '111555999',
-			       'href': 'www.example.org/org/1'}
+	    expectedValue = { id: '111555999',
+			      href: 'www.example.org/org/1'}
 
 	    nock(url, {
 		reqheaders: headers
@@ -221,7 +286,7 @@ describe('Party lib', function () {
 	    orgPartyClient[FUNCTION_MAPPING['getOrgs']](
 		(err, res) => {
 		    expect(err).toBeNull();
-		    expect(res.body).toBe(JSON.stringify(expectedValue));
+		    expect(JSON.parse(res.body)).toEqual(expectedValue);
 		    done();	     
 		});
 	});
@@ -238,11 +303,17 @@ describe('Party lib', function () {
 		reqheaders: headers
 	    }).post(orgPath)
 		.reply(200, content);
+
+	    var expectedResult = {
+		id: '111555999',
+		tradingName: 'AmaneceQueNoEsPoco',
+		href: 'http://exampleuri.com/lack/of/imagination'
+	    };
 	    
 	    orgPartyClient[FUNCTION_MAPPING['mkOrg']](content,
 		(err, res) => {
 		    expect(err).toBeNull();
-		    expect(res).not.toBeNull();
+		    expect(JSON.parse(res.body)).toEqual(expectedResult);
 		    done();	     
 		});
 	});
@@ -266,9 +337,12 @@ describe('Party lib', function () {
 		tradingName: 'LifeOfBrian'
 	    };
 	    
-	    orgPartyClient[FUNCTION_MAPPING['updOrg']](orgId, content, 
+	    orgPartyClient[FUNCTION_MAPPING['updOrg']](
+		orgId,
+		content, 
 		(err, res) => {
 		    expect(err).toBeNull();
+		    expect(JSON.parse(res.body)).toEqual(expectedValue);
 		    done();	     
 		});
 	    
@@ -278,18 +352,21 @@ describe('Party lib', function () {
 
 	    indP = indPath + indId;
 	    var indPartyClient = partyClient(indP);
+
+	    var ind = {
+		'id': '111555999',
+		'name': 'Vercingetorix'
+	    };
 	    
 	    nock(url, {
 		reqheaders: headers
 	    }).get(indP)
-		.reply(200, {
-		    'id': '111555999',
-		    'name': 'Vercingetorix'
-		});
+		.reply(200, ind);
 	    
 	    indPartyClient[FUNCTION_MAPPING['getInd']](indId, 
 		(err, res) => {
 		    expect(err).toBeNull();
+		    expect(JSON.parse(res.body)).toEqual(ind);
 		    done();	     
 		});
 	});
@@ -307,10 +384,13 @@ describe('Party lib', function () {
 		reqheaders: headers
 	    }).patch(indP)
 		.reply(200, content);
+
+	    
 	    
 	    indPartyClient[FUNCTION_MAPPING['updInd']](indId, content,  
 		(err, res) => {
 		    expect(err).toBeNull();
+		    expect(JSON.parse(res.body)).toEqual(content);
 		    done();	     
 		});
 	});
