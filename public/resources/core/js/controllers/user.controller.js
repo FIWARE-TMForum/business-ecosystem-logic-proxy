@@ -50,6 +50,8 @@
 
         if (isAuthenticated()) {
             vm.id = User.loggedUser.id;
+	    vm.loggedUser = User.loggedUser.logInfo;
+	    vm.currentUser = User.loggedUser.currentUser;
         }
 
         vm.order = order;
@@ -59,11 +61,41 @@
         vm.isAdmin = isAdmin;
         vm.isSeller = isSeller;
         vm.isAuthenticated = isAuthenticated;
-	vm.cambiaCesvar = cambiaCesvar;
-	$scope.cesvar = 'Potorro';
+	vm.orgsVisible = orgsVisible;
+	vm.orgsInvisible = orgsInvisible;
+	vm.loggedAsIndividual = loggedAsIndividual;
+	vm.switchSession = switchSession;
+	vm.switchToUser = switchToUser;
+	vm.showOrgList = showOrgList;
+	vm.showOrgs = false;
 
-	function cambiaCesvar() {
-	    $scope.cesvar = "Patata";
+	function loggedAsIndividual() {
+	    return vm.currentUser.id != User.loggedUser.id;
+	}
+
+	function showOrgList(orgId) {
+	    return vm.currentUser.id != orgId;
+	}
+
+	function switchSession(orgId) {
+	    var currUser = User.loggedUser.organizations.find(x => x.id == orgId);
+	    vm.currentUser.name = currUser.name;
+	    vm.currentUser.email = currUser.email ? currUser.email : "email@example.com";
+	    vm.currentUser.id = currUser.id;
+	}
+
+	function switchToUser() {
+	    vm.currentUser.name = vm.loggedUser.name;
+	    vm.currentUser.id = vm.loggedUser.id;
+	    vm.currentUser.email = vm.loggedUser.email;
+	}
+	
+	function orgsVisible() {
+	    vm.showOrgs = true;
+	};
+
+	function orgsInvisible() {
+	    vm.showOrgs = false;
 	}
 
         $scope.$on('$stateChangeSuccess', function (event, toState) {
