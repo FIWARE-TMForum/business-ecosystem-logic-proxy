@@ -68,6 +68,12 @@
 	vm.switchToUser = switchToUser;
 	vm.showOrgList = showOrgList;
 	vm.showOrgs = false;
+	vm.hasAdminRole = hasAdminRole;
+
+	function hasAdminRole() {
+	    var org = User.loggedUser.organizations.find(x => x.id == vm.currentUser.id);
+	    return !loggedAsIndividual() || org.roles.findIndex(x => x.name == "Admin") > -1;
+	}
 
 	function loggedAsIndividual() {
 	    return vm.currentUser.id != User.loggedUser.id;

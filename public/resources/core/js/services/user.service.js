@@ -38,7 +38,7 @@
 
 	if (loggedUser != null) {
 	    var organizations = JSON.parse(loggedUser.organizations.replace(/&quot;/g, '"'));
-	    loggedUser.organizations = organizations.organizations
+	    loggedUser.organizations = organizations.organizations;
 	}
 	
         return {

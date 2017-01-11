@@ -136,7 +136,7 @@ html(ng-app="app")
                 a.dropdown-menu-item(ng-if="user.isAdmin()", ui-sref="admin", ui-sref-opts="{ reload: true, inherit: false }")
                   span.item-icon.fa.fa-dashboard
                   span.item-text Administration
-                a.dropdown-menu-item(ui-sref="settings", ui-sref-opts="{ reload: true, inherit: false }")
+                a.dropdown-menu-item(ui-sref="settings", ui-sref-opts="{ reload: true, inherit: false }", ng-if="user.hasAdminRole()")
                   span.item-icon.fa.fa-cog
                   span.item-text Settings
                 a.dropdown-menu-item(ng-click="user.signOut()")
