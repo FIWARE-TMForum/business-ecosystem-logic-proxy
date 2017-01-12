@@ -58,16 +58,12 @@ html(ng-app="app")
         angular.module('app')
           .constant('LOGGED_USER', {
             id: '#{ user.id }',
+            name: '#{ user.displayName }',
             href: '#{ contextPath }/#{ partyPath }/api/partyManagement/v2/individual/#{ user.id }',
             email: '#{ user.email }',
             bearerToken: '#{ user.accessToken }',
             organizations: '#{ '{ "organizations":' + JSON.stringify(user.organizations) + '}' }',
             currentUser: {
-              id: '#{ user.id }',
-              name: '#{ user.displayName }',
-              email: '#{ user.email }'
-            },
-            logInfo: {
               id: '#{ user.id }',
               name: '#{ user.displayName }',
               email: '#{ user.email }'
@@ -109,15 +105,15 @@ html(ng-app="app")
               a.dropdown-toggle.has-stack(data-toggle="dropdown")
                 span.fa-stack
                   i.fa.fa-circle-thin.fa-stack-2x
-                  i.fa.fa-users.fa-stack-1x(ng-show="user.loggedAsIndividual()")
-                  i.fa.fa-user.fa-stack-1x(ng-hide="user.loggedAsIndividual()")
+                  i.fa.fa-users.fa-stack-1x(ng-hide="user.loggedAsIndividual()")
+                  i.fa.fa-user.fa-stack-1x(ng-show="user.loggedAsIndividual()")
                 span.hidden-xs {{ user.currentUser.name }}
               .dropdown-menu.z-depth-3
                 .dropdown-avatar.z-depth-1
                   span.fa-stack.fa-3x
                     i.fa.fa-circle.fa-stack-2x
-                    i.fa.fa-user.fa-stack-1x(ng-hide="user.loggedAsIndividual()")
-                    i.fa.fa-users.fa-stack-1x(ng-show="user.loggedAsIndividual()")
+                    i.fa.fa-user.fa-stack-1x(ng-show="user.loggedAsIndividual()")
+                    i.fa.fa-users.fa-stack-1x(ng-hide="user.loggedAsIndividual()")
                   .title.h4 {{ user.currentUser.name }}
                   .subtitle {{ user.currentUser.email }}
                 a.dropdown-menu-item(ng-mouseenter="user.orgsVisible()", ng-mouseleave="user.orgsInvisible()")
@@ -125,9 +121,9 @@ html(ng-app="app")
                   span.item-text Switch Session
                 .dropdown(ng-show="user.showOrgs", ng-mouseenter="user.orgsVisible()", ng-mouseleave="user.orgsInvisible()")
                   .dropdown-menu.z-depth-3.org-menu
-                    a.dropdown-menu-item(ng-if="user.loggedAsIndividual()", ng-click="user.switchToUser()")
+                    a.dropdown-menu-item(ng-if="!user.loggedAsIndividual()", ng-click="user.switchToUser()")
                       span.item-icon.fa.fa-user
-                      span.item-text {{ user.loggedUser.name }}
+                      span.item-text {{ user.name }}
                     each organization in user.organizations
                       a.dropdown-menu-item(ng-click="user.switchSession(" + "'#{ organization.id }'" + ")", ng-show="user.showOrgList(" + "'#{ organization.id }'" + ")")
                         span.item-icon.fa.fa-users

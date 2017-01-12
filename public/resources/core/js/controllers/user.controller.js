@@ -50,7 +50,8 @@
 
         if (isAuthenticated()) {
             vm.id = User.loggedUser.id;
-	    vm.loggedUser = User.loggedUser.logInfo;
+	    vm.name = User.loggedUser.name;
+	    vm.email = User.loggedUser.email;
 	    vm.currentUser = User.loggedUser.currentUser;
         }
 
@@ -72,11 +73,11 @@
 
 	function hasAdminRole() {
 	    var org = User.loggedUser.organizations.find(x => x.id == vm.currentUser.id);
-	    return !loggedAsIndividual() || org.roles.findIndex(x => x.name == "Admin") > -1;
+	    return loggedAsIndividual() || org.roles.findIndex(x => x.name == "Admin") > -1;
 	}
 
 	function loggedAsIndividual() {
-	    return vm.currentUser.id != User.loggedUser.id;
+	    return vm.currentUser.id == User.loggedUser.id;
 	}
 
 	function showOrgList(orgId) {
@@ -86,14 +87,14 @@
 	function switchSession(orgId) {
 	    var currUser = User.loggedUser.organizations.find(x => x.id == orgId);
 	    vm.currentUser.name = currUser.name;
-	    vm.currentUser.email = currUser.email ? currUser.email : "email@example.com";
+	    vm.currentUser.email = currUser.email;
 	    vm.currentUser.id = currUser.id;
 	}
 
 	function switchToUser() {
-	    vm.currentUser.name = vm.loggedUser.name;
-	    vm.currentUser.id = vm.loggedUser.id;
-	    vm.currentUser.email = vm.loggedUser.email;
+	    vm.currentUser.name = User.loggedUser.name;
+	    vm.currentUser.id = User.loggedUser.id;
+	    vm.currentUser.email = User.loggedUser.email;
 	}
 	
 	function orgsVisible() {
