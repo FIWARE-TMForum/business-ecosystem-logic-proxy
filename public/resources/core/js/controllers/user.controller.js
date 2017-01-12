@@ -72,20 +72,20 @@
 	vm.hasAdminRole = hasAdminRole;
 
 	function hasAdminRole() {
-	    var org = User.loggedUser.organizations.find(x => x.id == vm.currentUser.id);
-	    return loggedAsIndividual() || org.roles.findIndex(x => x.name == "Admin") > -1;
+	    var org = User.loggedUser.organizations.find(x => x.id === vm.currentUser.id);
+	    return loggedAsIndividual() || org.roles.findIndex(x => x.name === "Admin") > -1;
 	}
 
 	function loggedAsIndividual() {
-	    return vm.currentUser.id == User.loggedUser.id;
+	    return vm.currentUser.id === User.loggedUser.id;
 	}
 
 	function showOrgList(orgId) {
-	    return vm.currentUser.id != orgId;
+	    return vm.currentUser.id !== orgId;
 	}
 
 	function switchSession(orgId) {
-	    var currUser = User.loggedUser.organizations.find(x => x.id == orgId);
+	    var currUser = User.loggedUser.organizations.find(x => x.id === orgId);
 	    vm.currentUser.name = currUser.name;
 	    vm.currentUser.email = currUser.email;
 	    vm.currentUser.id = currUser.id;
