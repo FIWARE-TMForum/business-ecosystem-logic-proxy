@@ -385,8 +385,6 @@ describe('Party lib', function () {
 	    }).patch(indP)
 		.reply(200, content);
 
-	    
-	    
 	    indPartyClient[FUNCTION_MAPPING['updInd']](indId, content,  
 		(err, res) => {
 		    expect(err).toBeNull();

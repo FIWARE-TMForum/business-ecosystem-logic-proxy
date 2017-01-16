@@ -553,6 +553,12 @@ select.form-control {
     border-radius: 0;
 }
 
+.dropdown-menu.org-menu {
+    display: block;
+    top: -48px;
+    right: 240px !important;
+}
+
 /* ===================================================================================
  *   COMPONENT - DROPDOWN-MENU ITEM
  * =================================================================================== */

@@ -36,6 +36,11 @@
 
         var loggedUser = $injector.has('LOGGED_USER') ? $injector.get('LOGGED_USER') : null;
 
+	if (loggedUser != null) {
+	    var organizations = JSON.parse(loggedUser.organizations.replace(/&quot;/g, '"'));
+	    loggedUser.organizations = organizations.organizations;
+	}
+	
         return {
             detail: detail,
             updatePartial: updatePartial,
@@ -44,6 +49,7 @@
             serialize: serialize,
             serializeBasic: serializeBasic
         };
+	
 
         function detail(next) {
             resource.get({username: loggedUser.id}, next);
