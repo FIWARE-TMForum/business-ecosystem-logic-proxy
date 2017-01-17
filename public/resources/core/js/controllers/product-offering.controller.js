@@ -53,12 +53,6 @@
         vm.setFilters = setFilters;
         vm.searchInput = "";
 
-        // Fill searchInput array
-        vm.fillSearchInput = fillSearchInput;
-        function fillSearchInput() {
-            return searchVM.searchInput;
-        }
-
         // Initialize the search input content
         vm.initializeInput = initializeInput;
         function initializeInput() {
@@ -73,12 +67,12 @@
             return vm.searchInput;
         }
 
-        // Handle enter press event on input
-        $("#searchparams").keyup(function(event){
-            if (event.keyCode == 13){
-                $("#searchbutton").click();
-            }
-        });
+	// Handle enter press event
+	vm.handleEnterKeyUp = handleEnterKeyUp;
+	function handleEnterKeyUp(event) {
+            if (event.keyCode == 13)
+		$("#searchbutton").click();
+	}
 
         function showFilters() {
             $rootScope.$broadcast(EVENTS.FILTERS_OPENED, LIFECYCLE_STATUS);
