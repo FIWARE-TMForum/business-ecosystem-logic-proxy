@@ -67,12 +67,12 @@
             return vm.searchInput;
         }
 
-	// Handle enter press event
-	vm.handleEnterKeyUp = handleEnterKeyUp;
-	function handleEnterKeyUp(event) {
+        // Handle enter press event
+        vm.handleEnterKeyUp = handleEnterKeyUp;
+        function handleEnterKeyUp(event) {
             if (event.keyCode == 13)
-		$("#searchbutton").click();
-	}
+                $("#searchbutton").click();
+        }
 
         function showFilters() {
             $rootScope.$broadcast(EVENTS.FILTERS_OPENED, LIFECYCLE_STATUS);
