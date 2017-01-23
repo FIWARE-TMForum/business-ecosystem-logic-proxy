@@ -34,7 +34,7 @@
 
         $stateProvider
             .state('stock.offering', {
-                url: '/offering?status&type',
+                url: '/offering?status&type&body',
                 params: {
                     owner: true,
                     flow: 1,
