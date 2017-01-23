@@ -222,9 +222,9 @@
                 params['size'] = filters.size;
             }
 
-	    if (filters.body !== undefined) {
-		params['body'] = filters.body;
-	    }
+            if (filters.body !== undefined) {
+                params['body'] = filters.body.replace(/\s/g, ',');
+            }
 
             method(params, function (offeringList) {
                 callback(offeringList);
@@ -237,9 +237,6 @@
 
         function search(filters) {
             var deferred = $q.defer();
-
-	    if (filters.body !== undefined)
-		filters.body = filters.body.replace(/\s/g, ',');
 
             function searchOfferingProducts(productFilters, offeringList) {
                 ProductSpec.search(productFilters).then(function (productList) {
