@@ -38,6 +38,20 @@ Note in the previous command that it is needed to provide some environment varia
 * **CHARGING_HOST**: Host where the Business Ecosystem Charging Backend is running
 * **CHARGING_PORT**: Port where the Business Ecosystem Charging Backend is running
 
+Additionally, the Business Ecosystem Logic Proxy image includes a volume located at */business-ecosystem-logic-proxy/indexes* where the different index files are stored.
+
+If you want to locate the host directory where the volume is being mounted, execute the following command:
+```
+$ docker inspect your-containe
+```
+
+As an alternative, you can specify the host directory for the container volume using the -v flag as follows:
+```
+$ sudo docker run \
+    ...
+    -v /home/user/indexes:/business-ecosystem-logic-proxy/indexes
+    ...
+```
 
 ## Build the image
 
