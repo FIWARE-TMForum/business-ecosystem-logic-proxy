@@ -16,6 +16,9 @@ RUN echo 'export PATH=$PATH:/business-ecosystem-logic-proxy/node-v6.9.1-linux-x6
 
 RUN git checkout develop
 
+RUN mkdir indexes
+VOLUME /business-ecosystem-logic-proxy/indexes
+
 RUN export PATH=$PATH:/business-ecosystem-logic-proxy/node-v6.9.1-linux-x64/bin; npm install
 
 RUN cp config.js.template config.js
