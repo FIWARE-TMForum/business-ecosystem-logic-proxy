@@ -3,7 +3,7 @@
   "version": "5.4.1",
   "description": "Logic Layer for the Business API Ecosystem",
   "author": "UPM",
-  "license": "AGPLv3",
+  "license": "AGPL-3.0",
   "dependencies": {
     "async": "^1.5.0",
     "async-lock": "^0.3.8",
