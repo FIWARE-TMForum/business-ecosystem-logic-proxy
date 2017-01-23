@@ -59,10 +59,10 @@ config.endpoints = {
         'appSsl': false
     },
     'ordering': {
-         'path': 'DSProductOrdering',
-         'host': 'localhost',
-         'port': '8080',
-         'appSsl': false
+        'path': 'DSProductOrdering',
+        'host': 'localhost',
+        'port': '8080',
+        'appSsl': false
     },
     'inventory': {
         'path': 'DSProductInventory',
