@@ -1,0 +1,47 @@
+.panel.panel-default.z-depth-1
+  .panel-body
+    .h4.text-dark-secondary
+      strong Profile
+    hr
+    form(name="updateVM.form", novalidate)
+      .alert.alert-info This information is public so it may be viewed by anyone.
+      .row
+        .col-sm-6
+          .form-group(ng-class="{ 'has-error': updateVM.hasFieldError(updateVM.form.name) }")
+            label Trading Name
+            input.form-control(
+              type="text"
+              name="name"
+              ng-model="updateVM.orgData.tradingName"
+              required
+              ng-maxlength="30"
+            )
+            .help-block(
+              ng-messages="updateVM.form.name.$error"
+              ng-show="updateVM.hasFieldError(updateVM.form.name)"
+            )
+              span(ng-message="required") This field is required.
+              span(ng-message="maxlength") This field must not exceed 30 chars.
+              
+      .row
+        .col-sm-6
+          .form-group(ng-class="{ 'has-error': updateVM.hasFieldError(updateVM.form.description) }")
+            label Description
+            input.form-control(
+            type="text"
+            name="description"
+            ng-model="updateVM.orgData.description"
+            ng-maxlength="100"
+            )
+            .help-block(
+              ng-messages="updateVM.form.description.$error"
+              ng-show="updateVM.hasFieldError(updateVM.form.description)"
+            )
+              span(ng-message="maxlength") This field must not exceed 100 chars.
+      .form-group.text-right
+        a.btn.btn-success(
+          ng-click="updateVM.update()"
+          ng-disabled="!updateVM.form.$valid || updateVM.update.status === updateVM.STATUS.PENDING"
+        )
+          span.item-icon.fa.fa-spin.fa-spinner(ng-if="updateVM.update.status === updateVM.STATUS.PENDING")
+          span.item-text Update

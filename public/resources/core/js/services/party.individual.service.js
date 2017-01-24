@@ -30,15 +30,19 @@
 
     angular
         .module('app')
-        .factory('Individual', IndividualService);
+        .factory('partyService', partyService)
 
-    function IndividualService($q, $resource, URLS, COUNTRIES, User) {
+    function partyService($q, $resource, URLS, COUNTRIES, User) {
         var Individual = $resource(URLS.PARTY_MANAGEMENT + '/individual/:id', {}, {
             update: {method: 'PUT'},
             updatePartial: {method: 'PATCH'}
         });
 
-        Individual.prototype.getUser = getUser;
+	var Organization = $resource(URLS.PARTY_MANAGEMENT + '/organization/:id', {}, {
+	    update: {method: 'PUT'},
+            updatePartial: {method: 'PATCH'}
+        });
+
         Individual.prototype.appendContactMedium = appendContactMedium;
         Individual.prototype.updateContactMedium = updateContactMedium;
         Individual.prototype.removeContactMedium = removeContactMedium;
@@ -46,7 +50,8 @@
         var EVENTS = {
             CONTACT_MEDIUM_CREATED: '$contactMediumCreated',
             CONTACT_MEDIUM_UPDATE: '$contactMediumUpdate',
-            CONTACT_MEDIUM_UPDATED: '$contactMediumUpdated'
+            CONTACT_MEDIUM_UPDATED: '$contactMediumUpdated',
+	    USER_SESSION_SWITCHED: '$userSessionSwitched'
         };
 
         var TYPES = {
@@ -138,93 +143,165 @@
             create: create,
             detail: detail,
             update: update,
-            launch: launch
+            launch: launch,
+	    getCurrentOrg: getCurrentOrg,
+	    hasAdminRole: hasAdminRole
         };
 
-        function create(data) {
+	function getCurrentOrg() {
+	    var org = User.loggedUser.currentUser;
+	    return User.loggedUser.organizations.find( x => x.id === org.id);
+	};
+	
+	function hasAdminRole() {
+	    var org = User.loggedUser.organizations.find(
+		x => x.id === User.loggedUser.currentUser.id);
+	    return org.roles.findIndex(x => x.name === "Admin") > -1;
+	};
+
+	function process(func, params) {
+
+	    var deferred = params.pop();
+	    var resol = function (partyObj) {
+		deferred.resolve(partyObj);
+	    };
+
+	    var rejec = function (response) {
+		deferred.reject(response);
+	    };
+
+	    // params.pop();
+	    params.push(resol, rejec);
+	    
+	    func.apply(null, params);
+
+	};
+
+        function create(data, isOrg) {
             var deferred = $q.defer();
 
-            Individual.save(data, function (individualCreated) {
-                deferred.resolve(individualCreated);
-            }, function (response) {
-                deferred.reject(response);
-            });
+	    if(!isOrg){
+		process(Individual.save, [data, deferred]);
+		// Individual.save(data, function (individualCreated) {
+                //     deferred.resolve(individualCreated);
+		// }, function (response) {
+                //     deferred.reject(response);
+		// });
+	    } else {
+		process(Organization.save, [data, deferred]);
+		// Organization.save(data, function (individualCreated) {
+                //     deferred.resolve(individualCreated);
+		// }, function (response) {
+                //     deferred.reject(response);
+		// });
+	    }
 
             return deferred.promise;
-        }
+        };
 
-        function detail(id) {
+        function detail(id, isOrg) {
             var deferred = $q.defer();
             var params = {
                 id: id
             };
+	    if(!isOrg){
+		process(Individual.get, [params, deferred]);
+		// Individual.get(params, function (individual) {
+                //     extendContactMedium(individual);
+                //     deferred.resolve(individual);
+		// }, function (response) {
+                //     deferred.reject(response);
+		// });
+		
+	    } else {
+		process(Organization.get, [params, deferred]);
+		// Organization.get(params, function (org) {
+                //     extendContactMedium(org);
+                //     deferred.resolve(org);
+		// }, function (response) {
+                //     deferred.reject(response);
+		// });
+	    }
+	    return deferred.promise;
+        };
 
-            Individual.get(params, function (individual) {
-                extendContactMedium(individual);
-                deferred.resolve(individual);
-            }, function (response) {
-                deferred.reject(response);
-            });
+        function update(entry, data, isOrg) {
+	    var deferred = $q.defer();
+            var params = {
+                id: entry.id
+            };
+	    if(!isOrg) {
+		process(Individual.update, [params, data, deferred]);
+		// Individual.update(params, data, function (individual) {
+                //     deferred.resolve(individual);
+		// }, function (response) {
+                //     deferred.reject(response);
+		// });
+	    } else {
+		process(Organization.update, [params, data, deferred]);
+		// Organization.update(params, data, function (organization) {
+                //     deferred.resolve(organization);
+		// }, function (response) {
+                //     deferred.reject(response);
+		// });
+	    }
+	    return deferred.promise;
+        };
 
-            return deferred.promise;
-        }
-
-        function update(entry, data) {
+        function updatePartial(entry, data, isOrg) {
             var deferred = $q.defer();
             var params = {
                 id: entry.id
             };
 
-            Individual.update(params, data, function (individual) {
-                deferred.resolve(individual);
-            }, function (response) {
-                deferred.reject(response);
-            });
+	    if (!isOrg){		
+		process(Individual.updatePartial, [params, data, deferred]);
+		// Individual.updatePartial(params, data, function (individual) {
+                //     deferred.resolve(individual);
+		// }, function (response) {
+                //     deferred.reject(response);
+		// });
+	    } else {
+		process(Organization.updatePartial, [params, data, deferred]);
+	    }
 
             return deferred.promise;
-        }
+        };
 
-        function updatePartial(entry, data) {
-            var deferred = $q.defer();
-            var params = {
-                id: entry.id
-            };
-
-            Individual.updatePartial(params, data, function (individual) {
-                deferred.resolve(individual);
-            }, function (response) {
-                deferred.reject(response);
+        function launch(isOrg) {
+	    if(isOrg){
+		return new Individual({
+                    id: User.loggedUser.id,
+                    birthDate: '',
+                    contactMedium: [],
+                    countryOfBirth: '',
+                    familyName: '',
+                    gender: '',
+                    givenName: '',
+                    maritalStatus: '',
+                    nationality: '',
+                    placeOfBirth: '',
+                    title: ''
+		});
+	    } else {
+		return new Organization({
+                    id: "PATATA",
+                    contactMedium: [],
+		    description: ""
             });
+	    }
+        };
 
-            return deferred.promise;
-        }
+        function extendContactMedium(param) {
 
-        function launch() {
-            return new Individual({
-                id: User.loggedUser.id,
-                birthDate: '',
-                contactMedium: [],
-                countryOfBirth: '',
-                familyName: '',
-                gender: '',
-                givenName: '',
-                maritalStatus: '',
-                nationality: '',
-                placeOfBirth: '',
-                title: ''
-            });
-        }
-
-        function extendContactMedium(individual) {
-
-            if (angular.isArray(individual.contactMedium)) {
-                individual.contactMedium = individual.contactMedium.map(function (data) {
+            if (angular.isArray(param.contactMedium)) {
+                param.contactMedium = param.contactMedium.map(function (data) {
                     return new ContactMedium(data);
                 });
             } else {
-                individual.contactMedium = [];
+                param.contactMedium = [];
             }
-        }
+        };
 
         function parseCountry(code) {
             var i;
@@ -236,12 +313,8 @@
             }
 
             return code;
-        }
-
-        function getUser() {
-            return User.loggedUser;
-        }
-
+        };
+	
         function appendContactMedium(contactMedium) {
             /* jshint validthis: true */
             var deferred = $q.defer();
@@ -257,7 +330,7 @@
             });
 
             return deferred.promise;
-        }
+        };
 
         function updateContactMedium(index, contactMedium) {
             /* jshint validthis: true */
@@ -276,7 +349,7 @@
             });
 
             return deferred.promise;
-        }
+        };
 
         function removeContactMedium(index) {
             /* jshint validthis: true */
@@ -295,8 +368,8 @@
             });
 
             return deferred.promise;
-        }
+        };
 
-    }
+    };
 
 })();

@@ -39,7 +39,7 @@
         .controller('UserProfileCtrl', UserProfileController)
         .controller('UserShoppingCartCtrl', UserShoppingCartController);
 
-    function UserController($state, $scope, $rootScope, EVENTS, LIFECYCLE_STATUS, FILTER_STATUS, User) {
+    function UserController($state, $scope, $rootScope, EVENTS, LIFECYCLE_STATUS, FILTER_STATUS, User, partyService) {
         /* jshint validthis: true */
         var vm = this;
         vm.itemsContained = {};
@@ -74,28 +74,34 @@
 	function hasAdminRole() {
 	    var org = User.loggedUser.organizations.find(x => x.id === vm.currentUser.id);
 	    return loggedAsIndividual() || org.roles.findIndex(x => x.name === "Admin") > -1;
-	}
+	};
 
 	function loggedAsIndividual() {
 	    return vm.currentUser.id === User.loggedUser.id;
-	}
+	};
 
 	function showOrgList(orgId) {
 	    return vm.currentUser.id !== orgId;
-	}
+	};
 
 	function switchSession(orgId) {
 	    var currUser = User.loggedUser.organizations.find(x => x.id === orgId);
 	    vm.currentUser.name = currUser.name;
 	    vm.currentUser.email = currUser.email;
 	    vm.currentUser.id = currUser.id;
-	}
+	    propagateSwitch();
+	};
+
+	function propagateSwitch() {
+	    $scope.$broadcast(partyService.EVENTS.USER_SESSION_SWITCHED, 'User has switched session', {});
+	};
 
 	function switchToUser() {
 	    vm.currentUser.name = User.loggedUser.name;
 	    vm.currentUser.id = User.loggedUser.id;
 	    vm.currentUser.email = User.loggedUser.email;
-	}
+	    propagateSwitch();
+	};
 	
 	function orgsVisible() {
 	    vm.showOrgs = true;
@@ -103,7 +109,7 @@
 
 	function orgsInvisible() {
 	    vm.showOrgs = false;
-	}
+	};
 
         $scope.$on('$stateChangeSuccess', function (event, toState) {
             $scope.title = toState.data.title;
