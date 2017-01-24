@@ -24,7 +24,6 @@ var nock = require('nock'),
 describe('RSS API', function() {
 
     var config = testUtils.getDefaultConfig();
-    var SERVER = (config.appSsl ? 'https' : 'http') + '://' + config.appHost + ':' + config.endpoints.rss.port;
 
     var getRSSAPI = function(rssClient, tmfUtils, utils) {
         return proxyquire('../../../controllers/tmf-apis/rss', {
@@ -294,6 +293,28 @@ describe('RSS API', function() {
             };
             testCheckPermissions(req, null, validator, done);
         });
+
+  		it('should add callbackUrl to charging backend if not provided', function (done) {
+			var chargbackUrl = (config.endpoints.charging.appSsl ? 'https' : 'http') + '://' + config.endpoints.charging.host + ':' + config.endpoints.charging.port + "/charging/api/reportManagement/created";
+			var req = {
+				method: 'POST',
+				apiUrl: '/rss/settlement',
+				user: {
+                    id: 'username',
+                    roles: [{
+                        name: 'seller'
+                    }]
+                },
+				body: JSON.stringify({ aggregatorValue: 0 }),
+                headers: {}
+			};
+			var validator = function(err) {
+                expect(err).toBe(null);
+                var body = JSON.parse(req.body);
+                expect(body.callbackUrl).toEqual(chargbackUrl);
+            };
+            testCheckPermissions(req, null, validator, done);
+		});
     });
 
     describe('Post validation', function() {
@@ -377,7 +398,7 @@ describe('RSS API', function() {
 
         it('should call the callback with error if the server fails creating the default RS model', function(done) {
             var errorStatus = 500;
-            var errorMessage = 'Error creating default RS model'
+            var errorMessage = 'Error creating default RS model';
             var req = {
                 method: 'GET',
                 apiUrl: '/rss/models',
@@ -406,6 +427,31 @@ describe('RSS API', function() {
                 expect(err).not.toBe(undefined);
                 expect(err.status).toBe(errorStatus);
                 expect(err.message).toBe(errorMessage);
+                done();
+            });
+        });
+
+        it('should call the callback and set to 1 the count if the default RS model has not been created', function (done) {
+            var req = {
+                method: 'GET',
+                apiUrl: '/rss/models',
+                body: JSON.stringify({
+                    size: 0
+                }),
+                user: {
+                    id: 'username'
+                },
+                headers: {}
+            };
+
+            var rssAPI = getRSSAPI({}, {}, {});
+            rssAPI.executePostValidation(req, function(err) {
+                expect(err).toBe(undefined);
+
+                var body = JSON.parse(req.body);
+                expect(body).toEqual({
+                    size: 1
+                });
                 done();
             });
         });

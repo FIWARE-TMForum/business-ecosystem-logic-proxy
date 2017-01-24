@@ -11,7 +11,7 @@
       dt Version
       dd.text-dark-secondary {{ detailVM.item.version }}
       dt Description
-      dd.text-dark-secondary {{ detailVM.item.description ? detailVM.item.description : 'No description provided.' }}
+      dd.text-dark-secondary.text-preline {{ detailVM.item.description ? detailVM.item.description : 'No description provided.' }}
       dt(ng-if="detailVM.item.place.length") Places
       dd(ng-if="detailVM.item.place.length")
         .h4
@@ -31,7 +31,7 @@
         dt Version
         dd.text-dark-secondary {{ detailVM.item.productSpecification.version }}
         dt Description
-        dd.text-dark-secondary {{ detailVM.item.productSpecification.description  ? detailVM.item.productSpecification.description : 'No description provided.' }}
+        dd.text-dark-secondary.text-preline {{ detailVM.item.productSpecification.description  ? detailVM.item.productSpecification.description : 'No description provided.' }}
         dt Updated
         dd.text-dark-secondary
           time {{ detailVM.item.productSpecification.lastUpdate | amDateFormat: 'dddd, MMMM Do YYYY, h:mm a' }}
@@ -60,7 +60,7 @@
                     dt Version
                     dd.text-dark-secondary {{ product.version }}
                     dt Description
-                    dd.text-dark-secondary {{ product.description  ? product.description : 'No description provided.' }}
+                    dd.text-dark-secondary.text-preline {{ product.description  ? product.description : 'No description provided.' }}
                     dt Updated
                     dd.text-dark-secondary
                       time {{ product.lastUpdate | amDateFormat: 'dddd, MMMM Do YYYY, h:mm a' }}

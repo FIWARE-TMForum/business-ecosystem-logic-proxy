@@ -36,33 +36,70 @@
         .controller('ProductCreateCtrl', ProductCreateController)
         .controller('ProductUpdateCtrl', ProductUpdateController);
 
-    function ProductSearchController($state, $rootScope, EVENTS, ProductSpec, LIFECYCLE_STATUS, PROMISE_STATUS, Utils) {
+    function ProductSearchController($scope, $state, $rootScope, EVENTS, ProductSpec, LIFECYCLE_STATUS, DATA_STATUS, Utils) {
         /* jshint validthis: true */
         var vm = this;
+        var filters = {};
 
         vm.state = $state;
-        vm.STATUS = PROMISE_STATUS;
+        vm.STATUS = DATA_STATUS;
+
+        vm.offset = -1;
+        vm.size = -1;
+        vm.list = [];
 
         vm.list = [];
         vm.list.flow = $state.params.flow;
 
         vm.showFilters = showFilters;
-
-        var searchPromise = ProductSpec.search($state.params);
-
-        searchPromise.then(function (productList) {
-            angular.copy(productList, vm.list);
-        }, function (response) {
-            vm.errorMessage = Utils.parseError(response, 'It was impossible to load the list of products');
-        });
-
-        Object.defineProperty(vm, 'status', {
-            get: function () { return searchPromise != null ? searchPromise.$$state.status : -1; }
-        });
+        vm.getElementsLength = getElementsLength;
+        vm.setFilters = setFilters;
 
         function showFilters() {
             $rootScope.$broadcast(EVENTS.FILTERS_OPENED, LIFECYCLE_STATUS);
         }
+
+        function getElementsLength() {
+            var params = {};
+            angular.copy($state.params, params);
+            return ProductSpec.count(params);
+        }
+
+        function setFilters(newFilters) {
+            filters = newFilters;
+        }
+
+        vm.list.status = vm.STATUS.LOADING;
+        $scope.$watch(function () {
+            return vm.offset;
+
+        }, function () {
+            vm.list.status = vm.STATUS.LOADING;
+
+            if (vm.offset >= 0) {
+                var params = {};
+                angular.copy($state.params, params);
+
+                params.offset = vm.offset;
+                params.size = vm.size;
+
+                if (filters.status) {
+                    params.status = filters.status;
+                }
+
+                if (filters.bundle !== undefined) {
+                    params.bundle = filters.bundle;
+                }
+
+                ProductSpec.search(params).then(function (productList) {
+                    angular.copy(productList, vm.list);
+                    vm.list.status = vm.STATUS.LOADED;
+                }, function (response) {
+                    vm.errorMessage = Utils.parseError(response, 'It was impossible to load the list of products');
+                    vm.list.status = vm.STATUS.ERROR;
+                });
+            }
+        });
     }
 
     function ProductCreateController($q, $scope, $state, $rootScope, EVENTS, PROMISE_STATUS, ProductSpec, Asset, AssetType, Utils) {
@@ -95,6 +132,10 @@
                 templateUrl: 'stock/product/create/relationships'
             },
             {
+                title: 'Terms & Conditions',
+                templateUrl: 'stock/product/create/terms'
+            },
+            {
                 title: 'Finish',
                 templateUrl: 'stock/product/create/finish'
             }
@@ -108,6 +149,7 @@
         vm.charList = [];
         vm.isDigital = false;
         vm.digitalChars = [];
+        vm.terms = {};
 
         vm.characteristicEnabled = false;
         vm.pictureFormat = "url";
@@ -285,8 +327,18 @@
             return vm.currFormat === format;
         }
 
+        function filterProduct(product) {
+            var i = -1;
+            vm.data.bundledProductSpecification.forEach(function (bundledProduct, index) {
+                if (bundledProduct.id == product.id) {
+                    i = index;
+                }
+            });
+            return i;
+        }
+
         function toggleProduct(product) {
-            var index = vm.data.bundledProductSpecification.indexOf(product);
+            var index = filterProduct(product);
 
             if (index !== -1) {
                 vm.data.bundledProductSpecification.splice(index, 1);
@@ -307,7 +359,7 @@
         }
 
         function hasProduct(product) {
-            return vm.data.bundledProductSpecification.indexOf(product) !== -1;
+            return filterProduct(product) > -1;
         }
 
         function uploadAsset(file, contentType, publicFile, callback, errCallback) {
@@ -363,13 +415,32 @@
 
         function saveProduct() {
             // Append product characteristics
-            vm.data.productSpecCharacteristic = vm.characteristics;
+            var data = angular.copy(vm.data);
+            data.productSpecCharacteristic = angular.copy(vm.characteristics);
 
             if (vm.isDigital) {
-                vm.data.productSpecCharacteristic = vm.data.productSpecCharacteristic.concat(vm.digitalChars);
+                data.productSpecCharacteristic = data.productSpecCharacteristic.concat(vm.digitalChars);
             }
 
-            createPromise = ProductSpec.create(vm.data);
+            if (vm.terms.title || vm.terms.text) {
+                // Include the terms and condition characteristic
+                var title = vm.terms.title ? vm.terms.title : 'Terms and Conditions';
+                var text = vm.terms.text ? vm.terms.text : vm.terms.title;
+
+                var legalChar = ProductSpec.createCharacteristic({
+                    name: 'License',
+                    description: text
+                });
+
+                legalChar.productSpecCharacteristicValue.push(ProductSpec.createCharacteristicValue({
+                    default: true,
+                    value: title
+                }));
+
+                data.productSpecCharacteristic.push(legalChar);
+            }
+
+            createPromise = ProductSpec.create(data);
             createPromise.then(function (productCreated) {
                 $state.go('stock.product.update', {
                     productId: productCreated.id

@@ -19,14 +19,16 @@
 
 var nock = require('nock'),
     proxyquire =  require('proxyquire'),
+    Promise = require('promiz'),
+    md5 = require("blueimp-md5"),
     testUtils = require('../../utils');
 
 describe('Ordering API', function() {
 
     var config = testUtils.getDefaultConfig();
-    var SERVER = (config.appSsl ? 'https' : 'http') + '://' + config.appHost + ':' + config.endpoints.ordering.port;
-    var CATALOG_SERVER = (config.appSsl ? 'https' : 'http') + '://' + config.appHost + ':' + config.endpoints.catalog.port;
-    var BILLING_SERVER = (config.appSsl ? 'https' : 'http') + '://' + config.appHost + ':' + config.endpoints.billing.port;
+    var SERVER = (config.endpoints.ordering.appSsl ? 'https' : 'http') + '://' + config.endpoints.ordering.host + ':' + config.endpoints.ordering.port;
+    var CATALOG_SERVER = (config.endpoints.catalog.appSsl ? 'https' : 'http') + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
+    var BILLING_SERVER = (config.endpoints.billing.appSsl ? 'https' : 'http') + '://' + config.endpoints.billing.host + ':' + config.endpoints.billing.port;
 
     // Errors
     var BILLING_ACCOUNT_REQUIRED = {
@@ -40,12 +42,22 @@ describe('Ordering API', function() {
     };
 
 
-    var getOrderingAPI = function(storeClient, tmfUtils, utils) {
+    var getOrderingAPI = function(storeClient, tmfUtils, utils, indexes) {
+        if (!indexes) {
+            indexes = {
+                safeIndexExecute: function () {
+                    return Promise.resolve();
+                }
+            };
+        }
+
         return proxyquire('../../../controllers/tmf-apis/ordering', {
             './../../config': config,
             './../../lib/logger': testUtils.emptyLogger,
             './../../lib/store': storeClient,
             './../../lib/tmfUtils': tmfUtils,
+            './../../lib/indexes': indexes,
+            './../../lib/indexes.js': indexes,
             './../../lib/utils': utils
         }).ordering;
     };
@@ -180,7 +192,7 @@ describe('Ordering API', function() {
 
                 var tmfUtils = {
 
-                    filterRelatedPartyFields: filterRelatedPartyFields,
+                    filterRelatedPartyWithRole: filterRelatedPartyFields,
 
                     ensureRelatedPartyIncluded: function(req, callback) {
                         ensureRelatedPartyIncludedCalled = true;
@@ -217,7 +229,7 @@ describe('Ordering API', function() {
                     message: 'Invalid filters'
                 };
 
-                var filterRelatedPartyFields = function (req, callback) {
+                var filterRelatedPartyFields = function (req, allowedRoles,callback) {
                     callback(error);
                 };
 
@@ -227,12 +239,172 @@ describe('Ordering API', function() {
 
             it('should call callback without errors when user is allowed to retrieve the list of orderings', function (done) {
 
-                var filterRelatedPartyFields = function (req, callback) {
+                var filterRelatedPartyFields = function (req, allowedRoles, callback) {
                     callback();
                 };
 
                 testRetrieval(filterRelatedPartyFields, null, done);
 
+            });
+
+            //////////////////////////////////////////////////////////////////////////////////////////////
+            ///////////////////////////////////////// INDEXES / //////////////////////////////////////////
+            //////////////////////////////////////////////////////////////////////////////////////////////
+
+            describe('Test index in checkPermissions middleware', function() {
+
+                var requestHelper = function requestHelper(done, results, url, query, expectedUrl, expectedQuery) {
+                    var pathname = "/productOrder";
+                    url = pathname + "?" + url;
+                    expectedUrl = pathname + "?" + expectedUrl;
+
+                    var indexes = {
+                        searchOrders: q => {
+                            if (expectedQuery) {
+                                expect(q).toEqual(expectedQuery);
+                            }
+
+
+                            return Promise.resolve({
+                                hits: results.map(x => ({document: {originalId: x}}))
+                            });
+                        }
+                    };
+
+                    var orderApi = getOrderingAPI({}, {}, {}, indexes);
+                    var req = {
+                        method: "GET",
+                        apiUrl: url,
+                        _parsedUrl: {
+                            pathname: pathname
+                        },
+                        query: query
+                    };
+
+                    orderApi.checkPermissions(req, function() {
+                        expect(req.apiUrl).toEqual(expectedUrl);
+                        done();
+                    });
+                };
+
+                it('should not change request URL when order index fails', function(done) {
+                    var indexes = {
+                        searchOrders: () => Promise.reject("Error")
+                    };
+                    var orderApi = getOrderingAPI({}, {}, {}, indexes);
+                    var url = "/productOrder?relatedParty.id=rock";
+                    var req = {
+                        method: "GET",
+                        apiUrl: url,
+                        _parsedUrl: {
+                            pathname: "/productOrder"
+                        },
+                        query: {
+                            "relatedParty.id": "rock"
+                        }
+                    };
+
+                    orderApi.checkPermissions(req, function() {
+                        expect(req.apiUrl).toEqual(url);
+                        done();
+                    });
+                });
+
+                it('should change request URL to include order IDs when relatedParty.id is provided', function(done) {
+                    requestHelper(done,
+                                  [3, 4],
+                                  "relatedParty.id=rock",
+                                  {
+                                      "relatedParty.id": "rock"
+                                  },
+                                  "id=3,4",
+                                  {
+                                      sort: ["sortedId", "asc"],
+                                      query: [{AND: [{relatedPartyHash: [md5("rock")]}]}]
+                                  }
+                                 );
+                });
+
+                var testQueryParameters = function testQueryParameters(done, params) {
+                    // Transform object to param=value&param2=value2
+                    var paramUrl = Object.keys(params).map(key => key + "=" + params[key]).join("&");
+                    // Transform object to index AND query (String keys must be lower case to perform index search correctly)
+                    var ANDs = Object.keys(params)
+                            .map(key => (
+                                {[key]: [ (typeof params[key] === "string") ? params[key].toLowerCase() : params[key]]}));
+
+                    requestHelper(done,
+                                  [7, 9, 11],
+                                  paramUrl,
+                                  params,
+                                  "id=7,9,11",
+                                  {
+                                      sort: ["sortedId", "asc"],
+                                      query: [{AND: ANDs}]
+                                  });
+                };
+
+                it('should should change URL to include order IDs when no parameter are provided', function(done) {
+                    requestHelper(done,
+                                  [1, 2],
+                                  "",
+                                  {},
+                                  "id=1,2",
+                                  {
+                                      sort: ["sortedId", "asc"],
+                                      query: {AND: [{"*": ["*"]}]}
+                                  });
+                });
+
+                it('should change request URL to not add any id if no order results', function(done) {
+                    requestHelper(done,
+                                  [],
+                                  "relatedParty.id=someother",
+                                  {
+                                      "relatedParty.id": "someother"
+                                  },
+                                  "id=",
+                                  {
+                                      sort: ["sortedId", "asc"],
+                                      query: [{AND: [{relatedPartyHash: [md5("someother")]}]}]
+                                  });
+                });
+
+                it('should change request URL adding extra params and ids', function(done) {
+                    requestHelper(done,
+                                  [1, 2],
+                                  "depth=2&fields=name",
+                                  {
+                                      depth: "2",
+                                      fields: "name"
+                                  },
+                                  "id=1,2&depth=2&fields=name",
+                                  {
+                                      sort: ["sortedId", "asc"],
+                                      query: {AND: [{"*": ["*"]}]}
+                                  });
+
+                });
+
+                it('should change request URL to include order IDs when priority is provided', function(done) {
+                    testQueryParameters(done, { priority: "prior"});
+                });
+
+                it('should change request URL to include order IDs when category is provided', function(done) {
+                    testQueryParameters(done, { category: "category1" });
+                });
+
+                it('should change request URL to include order IDs when state is provided', function(done) {
+                    testQueryParameters(done, { state: "OK" });
+                });
+
+                it('should change request URL to include order IDs when notification contact is provided', function(done) {
+                    testQueryParameters(done, { notificationContact: "a@b.c" });
+                });
+
+                it('should change request URL to include order IDs when note is provided', function(done) {
+                    testQueryParameters(done, { note: "some note" });
+                });
             });
         });
 
@@ -309,7 +481,7 @@ describe('Ordering API', function() {
                         ]
                     });
                 }
-                
+
                 var body = {
                     relatedParty: [{
                         id: userName,
@@ -949,6 +1121,7 @@ describe('Ordering API', function() {
         //////////////////////////////////////////////////////////////////////////////////////////////
 
         describe('Update (PATCH)', function() {
+            var SERVER = 'http://ordering.com:189';
 
             it('should fail when the body is invalid', function (done) {
 
@@ -976,7 +1149,6 @@ describe('Ordering API', function() {
 
             it('should fail when the ordering cannot be retrieved', function (done) {
 
-                var SERVER = 'http://example.com:189';
                 var productOfferingPath = '/productOrdering/ordering/7';
 
                 var orderingApi = getOrderingAPI({}, {}, {});
@@ -1017,7 +1189,6 @@ describe('Ordering API', function() {
                 };
 
                 var orderId = 7;
-                var SERVER = 'http://example.com:189';
                 var productOfferingPath = '/productOrdering/ordering/7';
 
                 var tmfUtils = jasmine.createSpyObj('tmfUtils', ['hasPartyRole']);
@@ -1489,11 +1660,16 @@ describe('Ordering API', function() {
 
         var testPostValidationStoreNotifyOk = function(repeatedUser, getBillingFails, updateBillingFails, err, done) {
 
-            var buildUser = function(userName) {
-                return {
+            var buildUser = function(userName, role) {
+                var user = {
                     id: userName,
                     href: 'http://example.com/user/' + userName
+                };
+
+                if (role) {
+                    user.role = role;
                 }
+                return user;
             };
 
             var headers = {};
@@ -1501,8 +1677,8 @@ describe('Ordering API', function() {
             var ordering = getBaseOrdering(billingAccountPath);
             var user = getBaseUser();
 
-            var user1 = buildUser('user1');
-            var user2 = buildUser('user2');
+            var user1 = buildUser('user1', 'customer');
+            var user2 = buildUser('user2', 'seller');
             ordering.relatedParty = [ user1, user2 ];
 
             var getBillingReq = {

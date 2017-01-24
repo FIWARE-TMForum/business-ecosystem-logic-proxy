@@ -36,7 +36,8 @@
             .state('stock.catalogue', {
                 url: '/catalogue?status&role',
                 params: {
-                    owner: true
+                    owner: true,
+                    status: 'Active,Launched'
                 },
                 data: {
                     filters: ['status', 'role']

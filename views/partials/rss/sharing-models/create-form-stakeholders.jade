@@ -9,8 +9,8 @@ table.table.table-bordered(ng-if="createVM.data.stakeholders.length")
       td {{ stakeholder.stakeholderId }}
       td {{ stakeholder.modelValue }} %
       td
-        a.alert-link-danger(ng-click="createVM.removeStakeholder($index)")
-          span.fa.fa-trash
+        a.btn.btn-sm.btn-icon.btn-danger(ng-click="createVM.removeStakeholder($index)")
+          span.item-icon.fa.fa-trash
 .alert.alert-info.text-center(ng-if="!createVM.data.stakeholders.length")
   | No stakeholders included.
 
@@ -19,7 +19,7 @@ table.table.table-bordered(ng-if="createVM.data.stakeholders.length")
     .form-group.text-left
       a.btn.btn-default.z-depth-1(ng-click="createVM.stakeholderEnabled = true", ng-if="!createVM.stakeholderEnabled && createVM.providers.length")
         span.item-icon.fa.fa-plus
-        span.item-text Add stakeholder
+        span.item-text New stakeholder
 
     form(name="step.stakeholdersForm", novalidate, ng-if="createVM.stakeholderEnabled")
       .row
@@ -57,8 +57,9 @@ table.table.table-bordered(ng-if="createVM.data.stakeholders.length")
 
     .row
       .col-sm-6
-        a.btn.btn-success.z-depth-1(ng-disabled="!step.stakeholdersForm.$valid", ng-click="createVM.addStakeholder() && createForm.resetForm(step.stakeholdersForm)", ng-if="createVM.stakeholderEnabled")
-          span.item-text Add stakeholder
+        a.btn.btn-warning.z-depth-1(ng-disabled="!step.stakeholdersForm.$valid", ng-click="createVM.addStakeholder() && createForm.resetForm(step.stakeholdersForm)", ng-if="createVM.stakeholderEnabled")
+          span.item-icon.fa.fa-save
+          span.item-text Create
         a.btn.btn-danger.z-depth-1(style="margin-left: 10px;" ng-click="createVM.cancelStakeholder() && createForm.resetForm(step.stakeholdersForm)", ng-if="createVM.stakeholderEnabled")
           span.item-text Cancel
 

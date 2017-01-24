@@ -10,8 +10,7 @@ form(name="step.form", novalidate)
           name="name"
           ng-model="createVM.data.name"
           required
-          ng-maxlength="30"
-          field-unique="Offering"
+          ng-maxlength="100"
         )
         .help-block(
           ng-messages="step.form.name.$error"
@@ -28,6 +27,7 @@ form(name="step.form", novalidate)
         input.form-control(
           type="text"
           name="version"
+          ng-pattern="/^\\d+\\.\\d+(\\.\\d+)*$/"
           ng-model="createVM.data.version"
           required
         )
@@ -36,6 +36,7 @@ form(name="step.form", novalidate)
           ng-show="createVM.hasFieldError(step.form.version)"
         )
           span(ng-message="required") This field is required.
+          span(ng-message="pattern") Invalid version format
   .form-group
     label
       span Enter a description

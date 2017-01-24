@@ -18,15 +18,27 @@
  */
 
 var proxyquire =  require('proxyquire'),
+    Promise = require('promiz'),
+    md5 = require("blueimp-md5"),
     testUtils = require('../../utils');
 
 describe('Inventory API', function() {
 
-    var getInventoryAPI = function(tmfUtils, utils) {
+    var getInventoryAPI = function(tmfUtils, utils, indexes) {
+        if (!indexes) {
+            indexes = {
+                safeIndexExecute: function () {
+                    return Promise.resolve();
+                }
+            };
+        }
+
         return proxyquire('../../../controllers/tmf-apis/inventory', {
             './../../lib/logger': testUtils.emptyLogger,
             './../../lib/tmfUtils': tmfUtils,
-            './../../lib/utils': utils
+            './../../lib/utils': utils,
+            './../../lib/indexes': indexes,
+            './../../lib/indexes.js': indexes
         }).inventory;
     };
 
@@ -97,6 +109,152 @@ describe('Inventory API', function() {
                 expect(err.message).toBe(errorMessage);
 
                 done();
+            });
+        });
+
+        //////////////////////////////////////////////////////////////////////////////////////////////
+        ///////////////////////////////////////// INDEXES / //////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////////////////////////
+
+        describe('Test index in checkPermissions middleware', function() {
+            var requestHelper = function requestHelper(done, results, url, query, expectedUrl, expectedQuery) {
+                var pathname = "/product";
+                url = pathname + "?" + url;
+                expectedUrl = pathname + "?" + expectedUrl;
+
+                var indexes = {
+                    searchInventory: q => {
+                        if (expectedQuery) {
+                            expect(q).toEqual(expectedQuery);
+                        }
+
+
+                        return Promise.resolve({
+                            hits: results.map(x => ({document: {originalId: x}}))
+                        });
+                    }
+                };
+
+                var inventoryApi = getInventoryAPI({}, {}, indexes);
+                var req = {
+                    method: "GET",
+                    apiUrl: url,
+                    _parsedUrl: {
+                        pathname: pathname
+                    },
+                    query: query
+                };
+
+                inventoryApi.checkPermissions(req, function() {
+                    expect(req.apiUrl).toEqual(expectedUrl);
+                    done();
+                });
+            };
+
+            it('should not change request URL when inventory index fails', function(done) {
+                var indexes = {
+                    searchInventory: () => Promise.reject("Error")
+                };
+                var inventoryApi = getInventoryAPI({}, {}, indexes);
+                var url = "/product?relatedParty.id=rock";
+                var req = {
+                    method: "GET",
+                    apiUrl: url,
+                    _parsedUrl: {
+                        pathname: "/product"
+                    },
+                    query: {
+                        "relatedParty.id": "rock"
+                    }
+                };
+
+                inventoryApi.checkPermissions(req, function() {
+                    expect(req.apiUrl).toEqual(url);
+                    done();
+                });
+            });
+
+            it('should change request URL to include inventory IDs when relatedParty.id is provided', function(done) {
+                requestHelper(done,
+                              [3, 4],
+                              "relatedParty.id=rock",
+                              {
+                                  "relatedParty.id": "rock"
+                              },
+                              "id=3,4",
+                              {
+                                  sort: ["sortedId", "asc"],
+                                  query: [{AND: [{relatedPartyHash: [md5("rock")]}]}]
+                              });
+            });
+
+            var testQueryParameters = function testQueryParameters(done, params) {
+                // Transform object to param=value&param2=value2
+                var paramUrl = Object.keys(params).map(key => key + "=" + params[key]).join("&");
+                // Transform object to index AND query (String keys must be lower case to perform index search correctly)
+                var ANDs = Object.keys(params)
+                        .map(key => (
+                            {[key]: [ (typeof params[key] === "string") ? params[key].toLowerCase() : params[key]]}));
+
+                requestHelper(done,
+                              [7, 9, 11],
+                              paramUrl,
+                              params,
+                              "id=7,9,11",
+                              {
+                                  sort: ["sortedId", "asc"],
+                                  query: [{AND: ANDs}]
+                              });
+            };
+
+            it('should should change URL to include inventory IDs when no parameter are provided', function(done) {
+                requestHelper(done,
+                              [1, 2],
+                              "",
+                              {},
+                              "id=1,2",
+                              {
+                                  sort: ["sortedId", "asc"],
+                                  query: {AND: [{"*": ["*"]}]}
+                              });
+            });
+
+            it('should change request URL to not add any id if no inventory results', function(done) {
+                requestHelper(done,
+                              [],
+                              "relatedParty.id=someother",
+                              {
+                                  "relatedParty.id": "someother"
+                              },
+                              "id=",
+                              {
+                                  sort: ["sortedId", "asc"],
+                                  query: [{AND: [{relatedPartyHash: [md5("someother")]}]}]
+                              });
+            });
+
+            it('should change request URL adding extra params and ids', function(done) {
+                requestHelper(done,
+                              [1, 2],
+                              "depth=2&fields=name",
+                              {
+                                  depth: "2",
+                                  fields: "name"
+                              },
+                              "id=1,2&depth=2&fields=name",
+                              {
+                                  sort: ["sortedId", "asc"],
+                                  query: {AND: [{"*": ["*"]}]}
+                              });
+
+            });
+
+            it('should change request URL to include inventory IDs when status is provided', function(done) {
+                testQueryParameters(done, { status: "Accepted" });
+            });
+
+            it('should change request URL to include inventory IDs when name is provided', function(done) {
+                testQueryParameters(done, { name: "Name" });
             });
         });
 

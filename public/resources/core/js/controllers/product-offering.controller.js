@@ -37,28 +37,64 @@
         .controller('OfferingDetailCtrl', ProductOfferingDetailController)
         .controller('OfferingUpdateCtrl', ProductOfferingUpdateController);
 
-    function ProductOfferingSearchController($state, $rootScope, EVENTS, Offering, LIFECYCLE_STATUS, Utils) {
+    function ProductOfferingSearchController($scope, $state, $rootScope, EVENTS, Offering, LIFECYCLE_STATUS, Utils) {
         /* jshint validthis: true */
         var vm = this;
+        var filters = {};
 
         vm.state = $state;
 
         vm.list = [];
         vm.list.flow = $state.params.flow;
-
+        vm.offset = -1;
+        vm.size = -1;
         vm.showFilters = showFilters;
-
-        Offering.search($state.params).then(function (offeringList) {
-            angular.copy(offeringList, vm.list);
-            vm.list.status = LOADED;
-        }, function (response) {
-            vm.error = Utils.parseError(response, 'It was impossible to load the list of offerings');
-            vm.list.status = ERROR;
-        });
+        vm.getElementsLength = getElementsLength;
+        vm.setFilters = setFilters;
 
         function showFilters() {
             $rootScope.$broadcast(EVENTS.FILTERS_OPENED, LIFECYCLE_STATUS);
         }
+
+        function getElementsLength() {
+            var params = {};
+            angular.copy($state.params, params);
+            return Offering.count(params);
+        }
+
+        function setFilters(newFilters) {
+            filters = newFilters;
+        }
+
+        $scope.$watch(function () {
+            return vm.offset;
+        }, function () {
+            vm.list.status = LOADING;
+
+            if (vm.offset >= 0) {
+                var params = {};
+                angular.copy($state.params, params);
+
+                params.offset = vm.offset;
+                params.size = vm.size;
+
+                if (filters.status) {
+                    params.status = filters.status;
+                }
+
+                if (filters.bundle !== undefined) {
+                    params.type = filters.bundle;
+                }
+
+                Offering.search(params).then(function (offeringList) {
+                    angular.copy(offeringList, vm.list);
+                    vm.list.status = LOADED;
+                }, function (response) {
+                    vm.error = Utils.parseError(response, 'It was impossible to load the list of offerings');
+                    vm.list.status = ERROR;
+                });
+            }
+        });
     }
 
     function ProductOfferingCreateController($q, $scope, $state, $rootScope, $controller, EVENTS, LIFECYCLE_STATUS, PROMISE_STATUS, Offering, Catalogue, ProductSpec, Utils) {
@@ -200,9 +236,11 @@
         var createPromise = null;
 
         function create() {
-            vm.data.category = formatCategory();
-            vm.data.place = formatPlaces();
-            createPromise = Offering.create(vm.data, vm.product, vm.catalogue);
+            var data = angular.copy(vm.data);
+
+            data.category = formatCategory();
+            data.place = formatPlaces();
+            createPromise = Offering.create(data, vm.product, vm.catalogue);
 
             createPromise.then(function (offeringCreated) {
                 $state.go('stock.offering.update', {
@@ -228,8 +266,17 @@
             get: function () { return createPromise != null ? createPromise.$$state.status : -1; }
         });
 
+        function filterOffering(offering) {
+            var i = -1;
+            vm.data.bundledProductOffering.forEach(function (off, index) {
+                if (off.id == offering.id) {
+                    i = index;
+                }
+            });
+            return i;
+        }
         function toggleOffering(offering) {
-            var index = vm.data.bundledProductOffering.indexOf(offering);
+            var index = filterOffering(offering);
 
             if (index !== -1) {
                 vm.data.bundledProductOffering.splice(index, 1);
@@ -251,7 +298,7 @@
         }
 
         function hasOffering(offering) {
-            return vm.data.bundledProductOffering.indexOf(offering) !== -1;
+            return filterOffering(offering) > -1;
         }
 
         /* PRICE PLANS METHODS */
@@ -334,6 +381,27 @@
 
             return category;
         }
+
+        $scope.$watch(function (scope) {
+            return vm.pricePlan.name;
+        }, function() {
+            var conflict = false;
+            vm.data.productOfferingPrice.forEach(function (plan) {
+                if (plan.name.toLowerCase() == vm.pricePlan.name.toLowerCase()) {
+                    conflict = true;
+                    vm.pricePlanCreateForm.name.$invalid = true;
+                    vm.pricePlanCreateForm.name.$error.conflictName = true;
+                }
+            });
+
+            if (!conflict && vm.pricePlanCreateForm && vm.pricePlanCreateForm.name.$invalid && vm.pricePlan.name && vm.pricePlan.name.length < 30) {
+                vm.pricePlanCreateForm.name.$invalid = false;
+
+                if (vm.pricePlanCreateForm.name.$error.conflictName) {
+                    vm.pricePlanCreateForm.name.$error.conflictName = false;
+                }
+            }
+        });
     }
 
     function ProductOfferingDetailController($state, Offering, ProductSpec, Utils) {

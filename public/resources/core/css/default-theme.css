@@ -1888,6 +1888,16 @@ a.thumbnail:focus {
     border-top-width: 0;
 }
 
+.terms-container {
+    max-height: 600px;
+    overflow-y: scroll;
+    overflow-x: hidden;
+}
+
+.terms-container pre {
+    max-width: 99%;
+}
+
 /* ===================================================================================
  *   COMPONENT - ITEM PRODUCT
  * =================================================================================== */
@@ -2118,4 +2128,9 @@ a.thumbnail:focus {
     .order-title-info {
         margin-left: 85px !important;
     }
+}
+
+.home-catalog-pager ul {
+    margin-bottom: 5px;
+    margin-top: 5px;
 }

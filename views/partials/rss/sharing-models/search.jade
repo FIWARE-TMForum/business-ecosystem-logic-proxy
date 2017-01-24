@@ -2,8 +2,8 @@ ui-view
   .row
     .col-xs-12
       include search-toolbar
-    .col-xs-12(ng-switch="searchVM.list.status")
-      div(ng-switch-when="LOADED", ng-switch="searchVM.list.length")
+    .col-xs-12
+      div(ng-if="searchVM.list.status == searchVM.STATUS.LOADED", ng-switch="searchVM.list.length")
         div(ng-switch-when="0")
           .alert.alert-info.text-center No revenue sharing models found.
         div(ng-switch-default)
@@ -29,8 +29,10 @@ ui-view
                   td
                     span {{ rsModel.stakeholders.length }}
 
-      div(ng-switch-when="ERROR")
+      div(ng-if="searchVM.list.status == searchVM.STATUS.ERROR")
         .alert.alert-danger.text-center {{ searchVM.error }}
-      div(ng-switch-default)
+      div(ng-if="searchVM.list.status == searchVM.STATUS.LOADING")
         .container-spinner
           span.fa.fa-spinner.fa-spin.fa-2x
+      .col-xs-12
+        pager(controller="searchVM", size="15", max="12")

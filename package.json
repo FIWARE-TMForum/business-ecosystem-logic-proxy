@@ -1,26 +1,36 @@
 {
   "name": "business-ecosystem-logic-proxy",
-  "version": "0.1.0",
+  "version": "5.4.1",
   "description": "Logic Layer for the Business API Ecosystem",
   "author": "UPM",
+  "license": "AGPL-3.0",
   "dependencies": {
     "async": "^1.5.0",
+    "async-lock": "^0.3.8",
+    "aureooms-js-itertools": "^1.3.0",
+    "babel-polyfill": "^6.16.0",
     "base64url": "1.0.x",
+    "blueimp-md5": "^2.3.1",
     "body-parser": "1.14.1",
     "cookie-parser": "1.4.0",
     "deep-equal": "^1.0.1",
+    "deepcopy": "^0.6.3",
     "errorhandler": "1.4.x",
     "express": "4.x",
     "express-session": "1.12.1",
     "jade": "^1.11.0",
+    "left-pad": "^1.1.1",
     "log4js": "0.6.x",
     "moment": "^2.13.0",
     "mongoose": "^4.3.6",
     "node-uuid": "^1.4.7",
+    "normalize-url": "^1.8.0",
     "on-finished": "^2.3.0",
     "passport": "0.3.0",
     "passport-fiware-oauth": "0.1.5",
+    "promiz": "^1.0.5",
     "request": "^2.69.0",
+    "search-index": "^0.8.15",
     "trycatch": "^1.5.21"
   },
   "devDependencies": {
@@ -34,11 +44,11 @@
     "proxyquire": "1.7.3"
   },
   "scripts": {
-    "test": "JASMINE_CONFIG_PATH=test/config/jasmine.json node_modules/.bin/istanbul cover --include-all-sources -x public/**/*.js -x server.js -x Gruntfile.js --report cobertura node_modules/.bin/jasmine"
+    "test": "JASMINE_CONFIG_PATH=test/config/jasmine.json node_modules/.bin/istanbul cover --include-all-sources -x public/**/*.js -x server.js -x Gruntfile.js -x fill_indexes.js --report cobertura node_modules/.bin/jasmine"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/FIWARE-TMForum/fiware-pep-proxy"
+    "url": "https://github.com/FIWARE-TMForum/business-ecosystem-logic-proxy"
   },
   "contributors": [
     {
@@ -52,6 +62,10 @@
     {
       "name": "Jaime Pajuelo",
       "email": "jpajuelo@conwet.com"
+    },
+    {
+      "name": "Miguel Garcia",
+      "email": "mgarcia@conwet.com"
     }
   ]
 }

@@ -90,6 +90,7 @@
             TYPES: TYPES,
             Relationship: Relationship,
             search: search,
+            count: count,
             exists: exists,
             create: create,
             detail: detail,
@@ -100,7 +101,7 @@
             extendBundledProducts: extendBundledProducts
         };
 
-        function search(filters) {
+        function query(filters, method) {
             var deferred = $q.defer();
             var params = {};
 
@@ -120,13 +121,35 @@
                 params['relatedParty.id'] = User.loggedUser.id;
             }
 
-            ProductSpec.query(params, function (productSpecList) {
+            if (filters.offset !== undefined) {
+                params['offset'] = filters.offset;
+                params['size'] = filters.size;
+            }
+
+            if (filters.action) {
+                params['action'] = filters.action;
+            }
+
+            if (filters.bundle !== undefined) {
+                params['isBundle'] = filters.bundle;
+            }
+
+            method(params, function (productSpecList) {
                 deferred.resolve(productSpecList);
             }, function (response) {
                 deferred.reject(response);
             });
 
             return deferred.promise;
+        }
+
+        function search(filters) {
+            return query(filters, ProductSpec.query);
+        }
+
+        function count(filters) {
+            filters.action = 'count';
+            return query(filters, ProductSpec.get);
         }
 
         function exists(params) {

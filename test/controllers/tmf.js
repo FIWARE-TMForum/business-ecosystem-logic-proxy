@@ -32,6 +32,9 @@ describe('TMF Controller', function() {
         getAPIPort: function() {
             return 1234;
         },
+        getAPIHost: function () {
+            return 'example.com'
+        },
         proxiedRequestHeaders: function() {
             return {
                 'Authorization': 'Bearer EXAMPLE',
@@ -48,17 +51,27 @@ describe('TMF Controller', function() {
     };
 
     // Function to get a custom tmf.js instance
-    var getTmfInstance = function(request, catalog, ordering, inventory, party) {
+    var getTmfInstance = function(request, catalog, ordering, inventory, party, searchIndex) {
+
+        if (!searchIndex) {
+            searchIndex = {
+                add: (a, cb) => {cb();},
+                close: cb => {cb();},
+                del: (key, cb) => {cb();},
+                search: (q, cb) => {cb();}
+            };
+        }
 
         return proxyquire('../../controllers/tmf', {
             'request': request,
-            './../config': config, 
+            './../config': config,
             './../lib/utils': utils,
             './../lib/logger': testUtils.emptyLogger,
             './tmf-apis/catalog': { catalog: catalog },
             './tmf-apis/ordering': {ordering: ordering},
             './tmf-apis/inventory': { inventory: inventory },
-            './tnf-apis/party': { party: party }
+            './tnf-apis/party': { party: party },
+            'search-index': searchIndex
         }).tmf;
     };
 
@@ -76,7 +89,10 @@ describe('TMF Controller', function() {
             var tmf = getTmfInstance(request);
 
             // Depending on the desired protocol, the config.appSsl var has to be set up
-            config.appSsl = protocol === 'https' ? true : false;
+            utils.getAPIProtocol = function () {
+                return protocol;
+            };
+
             var path = '/example/url?a=b&c=d';
 
             var req = {
@@ -91,7 +107,7 @@ describe('TMF Controller', function() {
             tmf.public(req, res);
 
             var expectedOptions = {
-                url: protocol + '://' + config.appHost + ':' + utils.getAPIPort() + path,
+                url: protocol + '://' + utils.getAPIHost() + ':' + utils.getAPIPort() + path,
                 method: method,
                 encoding: null,
                 headers: utils.proxiedRequestHeaders(),
@@ -221,6 +237,10 @@ describe('TMF Controller', function() {
             // API controller. For this reason, we do not check with other protocols or methods
 
             var protocol = 'http';
+            utils.getAPIProtocol = function () {
+                return protocol;
+            };
+
             var method = 'GET';
 
             // Configure the API controller
@@ -249,7 +269,7 @@ describe('TMF Controller', function() {
             setTimeout(function () {
 
                 var expectedOptions = {
-                    url: protocol + '://' + config.appHost + ':' + utils.getAPIPort() + req.apiUrl,
+                    url: protocol + '://' + utils.getAPIHost() + ':' + utils.getAPIPort() + req.apiUrl,
                     method: method,
                     body: req.body,
                     encoding: null,
@@ -407,7 +427,7 @@ describe('TMF Controller', function() {
 
                 expect(options).toEqual(
                     {
-                        url: 'http://' + config.appHost + ':' + utils.getAPIPort() + reqPath,
+                        url: 'http://' + utils.getAPIHost() + ':' + utils.getAPIPort() + reqPath,
                         method: 'POST',
                         encoding: null,
                         headers: utils.proxiedRequestHeaders(),

@@ -6,19 +6,21 @@ var authorizeService = require('./controllers/authorizeService').authorizeServic
     cookieParser = require('cookie-parser'),
     errorhandler = require('errorhandler'),
     express = require('express'),
-    FIWAREStrategy = require('passport-fiware-oauth').OAuth2Strategy,
     fs = require('fs'),
     https = require('https'),
+    inventorySubscription = require('./lib/inventory_subscription'),
     logger = require('./lib/logger').logger.getLogger("Server"),
     mongoose = require('mongoose'),
     onFinished = require('on-finished'),
     passport = require('passport'),
     session = require('express-session'),
     shoppingCart = require('./controllers/shoppingCart').shoppingCart,
+    management = require('./controllers/management').management,
     tmf = require('./controllers/tmf').tmf,
     trycatch = require('trycatch'),
     url = require('url'),
     utils = require('./lib/utils'),
+    auth = require('./lib/auth').auth,
     uuid = require('node-uuid');
 
 
@@ -61,7 +63,6 @@ config.shoppingCartPath = checkPrefix(config.shoppingCartPath, '/shoppingCart');
 config.authorizeServicePath = checkPrefix(config.authorizeServicePath, '/authorizeService');
 config.logInPath = config.logInPath || '/login';
 config.logOutPath = config.logOutPath || '/logout';
-config.appHost = config.appHost || 'localhost';
 config.mongoDb = config.mongoDb || {};
 config.mongoDb.user = config.mongoDb.user || '';
 config.mongoDb.password = config.mongoDb.password || '';
@@ -70,22 +71,10 @@ config.mongoDb.port = config.mongoDb.port || 27017;
 config.mongoDb.db = config.mongoDb.db || 'belp';
 config.revenueModel = (config.revenueModel && config.revenueModel >= 0 && config.revenueModel <= 100 ) ? config.revenueModel : 30;
 
-var PORT = config.https.enabled ? 
-    config.https.port || 443 :      // HTTPS
-    config.port || 80;              // HTTP
+var PORT = config.https.enabled ?
+	config.https.port || 443 :      // HTTPS
+        config.port || 80;              // HTTP
 
-var FIWARE_STRATEGY = new FIWAREStrategy({
-        clientID: config.oauth2.clientID,
-        clientSecret: config.oauth2.clientSecret,
-        callbackURL: config.oauth2.callbackURL,
-        serverURL: config.oauth2.server
-    },
-
-    function(accessToken, refreshToken, profile, done) {
-        profile['accessToken'] = accessToken;
-        done(null, profile);
-    }
-);
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
@@ -203,74 +192,6 @@ var failIfNotAuthenticated = function(req, res, next) {
 
 };
 
-var headerAuthentication = function(req, res, next) {
-
-    // If the user is already logged, this is not required...
-    if (!req.user) {
-
-        try {
-            var authToken = utils.getAuthToken(req.headers);
-            FIWARE_STRATEGY.userProfile(authToken, function (err, userProfile) {
-                if (err) {
-                    utils.log(logger, 'warn', req, 'Token ' + authToken + ' invalid');
-                    utils.sendUnauthorized(res, 'invalid auth-token');
-                } else {
-                    // Check that the provided access token is valid for the given application
-                    if (userProfile.appId !== config.oauth2.clientID) {
-                        utils.log(logger, 'warn', req, 'Token ' + authToken + ' is from a different app');
-                        utils.sendUnauthorized(res, 'The auth-token scope is not valid for the current application');
-                    } else {
-                        req.user = userProfile;
-                        req.user.accessToken = authToken;
-                        next();
-                    }
-                }
-            });
-
-        } catch (err) {
-
-            if (err.name === 'AuthorizationTokenNotFound') {
-                utils.log(logger, 'info', req, 'request without authentication');
-                next();
-            } else {
-                utils.log(logger, 'warn', req, err.message);
-                utils.sendUnauthorized(res, err.message);
-            }
-        }
-
-    } else {
-        next();
-    }
-};
-
-// Replace userProfile function to check
-
-var tokensCache = {};
-
-FIWARE_STRATEGY._userProfile = FIWARE_STRATEGY.userProfile;
-
-FIWARE_STRATEGY.userProfile = function(authToken, callback) {
-
-    // TODO: Remove tokens from the cache every hour...
-
-    if (tokensCache[authToken]) {
-        logger.debug('Using cached token for user ' +  tokensCache[authToken].id);
-        callback(null, tokensCache[authToken]);
-    } else {
-
-        FIWARE_STRATEGY._userProfile(authToken, function(err, userProfile) {
-
-            if (err) {
-                callback(err);
-            } else {
-                logger.debug('Token for user ' + userProfile.id + ' stored');
-                tokensCache[authToken] = userProfile;
-                callback(err, userProfile);
-            }
-        });
-    }
-};
-
 
 // Configure Passport to use FIWARE as authentication strategy
 
@@ -282,7 +203,7 @@ passport.deserializeUser(function(obj, done) {
     done(null, obj);
 });
 
-passport.use(FIWARE_STRATEGY);
+passport.use(auth.FIWARE_STRATEGY);
 
 // Passport middlewares
 app.use(passport.initialize());
@@ -332,13 +253,18 @@ var checkMongoUp = function(req, res, next) {
 
 };
 
-app.use(config.shoppingCartPath + '/*', checkMongoUp, headerAuthentication, failIfNotAuthenticated);
+app.use(config.shoppingCartPath + '/*', checkMongoUp, auth.headerAuthentication, failIfNotAuthenticated);
 app.get(config.shoppingCartPath + '/item/', shoppingCart.getCart);
 app.post(config.shoppingCartPath + '/item/', shoppingCart.add);
 app.get(config.shoppingCartPath + '/item/:id', shoppingCart.getItem);
 app.delete(config.shoppingCartPath + '/item/:id', shoppingCart.remove);
 app.post(config.shoppingCartPath + '/empty', shoppingCart.empty);
 
+/////////////////////////////////////////////////////////////////////
+////////////////////////// MANAGEMENT API ///////////////////////////
+/////////////////////////////////////////////////////////////////////
+
+app.get('/' + config.endpoints.management.path + '/count/:size', management.getCount);
 
 /////////////////////////////////////////////////////////////////////
 ///////////////////////// AUTHORIZE SERVICE /////////////////////////
@@ -422,6 +348,7 @@ var jsAppFilesToInject = [
     'controllers/unauthorized.controller',
     'controllers/party.individual.controller',
     'controllers/party.contact-medium.controller',
+    'controllers/pager.controller',
     'controllers/billing-account.controller',
     'controllers/customer.controller',
     'routes/offering.routes',
@@ -503,6 +430,17 @@ app.get(config.portalPrefix + '/payment', ensureAuthenticated, function(req, res
     renderTemplate(req, res, 'app-payment');
 });
 
+/////////////////////////////////////////////////////////////////////
+//////////////////////////////// APIs ///////////////////////////////
+/////////////////////////////////////////////////////////////////////
+
+var inventorySubscriptionPath = config.proxyPrefix + "/create/inventory";
+app.post(config.proxyPrefix + inventorySubscriptionPath, inventorySubscription.postNotification);
+inventorySubscription.createSubscription(inventorySubscriptionPath).then(() => {
+    console.log("Subscribed to inventory hub!");
+}).catch(e => {
+    console.log(e);
+});
 
 /////////////////////////////////////////////////////////////////////
 //////////////////////////////// APIs ///////////////////////////////
@@ -533,7 +471,7 @@ for (var p in config.publicPaths) {
     app.all(config.proxyPrefix + '/' + config.publicPaths[p], tmf.public);
 }
 
-app.all(config.proxyPrefix + '/*', headerAuthentication, function(req, res, next) {
+app.all(config.proxyPrefix + '/*', auth.headerAuthentication, function(req, res, next) {
 
     // The API path is the actual path that should be used to access the resource
     // This path contains the query string!!

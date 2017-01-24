@@ -73,13 +73,14 @@
             TYPES: TYPES,
             Comment: Comment,
             search: search,
+            count: count,
             create: create,
             detail: detail,
             update: update
         };
 
-        function search(filters) {
-            var deferred = $q.defer();
+        function query(filters, deferred, method, callback) {
+
             var params = {};
 
             if (filters.owner) {
@@ -90,16 +91,29 @@
                 params['state'] = filters.status;
             }
 
-            resource.query(params, function (productOrderList) {
+            if (filters.action) {
+                params['action'] = filters.action;
+            }
+
+            if (filters.offset !== undefined) {
+                params['offset'] = filters.offset;
+                params['size'] = filters.size;
+            }
+
+            if (filters.role) {
+                params['relatedParty.role'] = filters.role;
+            }
+
+            method(params, callback, function (response) {
+                deferred.reject(response);
+            });
+        }
+
+        function search(filters) {
+            var deferred = $q.defer();
+
+            query(filters, deferred, resource.query, function (productOrderList) {
                 var productOfferingFilters = {};
-
-                productOrderList = productOrderList.filter(function(ordering) {
-
-                    return ordering.relatedParty.some(function(party) {
-                       return party.role === filters.role && party.id === User.loggedUser.id;
-                    });
-
-                });
 
                 if (productOrderList.length) {
                     productOfferingFilters.id = getProductOfferingIds(productOrderList).join();
@@ -111,8 +125,6 @@
                 } else {
                     deferred.resolve(productOrderList);
                 }
-            }, function (response) {
-                deferred.reject(response);
             });
 
             return deferred.promise;
@@ -142,6 +154,17 @@
                     });
                 });
             }
+        }
+
+        function count(filters) {
+            filters.action = 'count';
+            var deferred = $q.defer();
+
+            query(filters, deferred, resource.get, function (info) {
+                deferred.resolve(info);
+            });
+
+            return deferred.promise;
         }
 
         function create(orderInfo) {

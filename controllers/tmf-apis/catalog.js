@@ -19,14 +19,20 @@
 
 var async = require('async'),
     config = require('./../../config'),
+    deepcopy = require("deepcopy"),
     equal = require('deep-equal'),
-    request = require('request'),
-    storeClient = require('./../../lib/store').storeClient,
-    rssClient = require('./../../lib/rss').rssClient,
-    url = require('url'),
-    utils = require('./../../lib/utils'),
+    indexes = require('./../../lib/indexes.js'),
+    leftPad = require("left-pad"),
     logger = require('./../../lib/logger').logger.getLogger('TMF'),
-    tmfUtils = require('./../../lib/tmfUtils');
+    md5 = require("blueimp-md5"),
+    Promise = require('promiz'),
+    request = require('request'),
+    rssClient = require('./../../lib/rss').rssClient,
+    storeClient = require('./../../lib/store').storeClient,
+    tmfUtils = require('./../../lib/tmfUtils'),
+    url = require('url'),
+    utils = require('./../../lib/utils');
+
 
 var LIFE_CYCLE = 'lifecycleStatus';
 
@@ -44,6 +50,8 @@ var catalog = (function() {
     //////////////////////////////////////////////////////////////////////////////////////////////
 
     var offeringsPattern = new RegExp('/productOffering/?$');
+    var catalogOfferingsPattern = new RegExp('/catalog/[^/]+/productOffering/?');
+    var offeringPattern = new RegExp('/catalog/[^/]+/productOffering/[^/]+/?$');
     var productsPattern = new RegExp('/productSpecification/?$');
     var categoryPattern = new RegExp('/category/[^/]+/?$');
     var categoriesPattern = new RegExp('/category/?$');
@@ -51,10 +59,9 @@ var catalog = (function() {
 
     var retrieveAsset = function(assetPath, callback) {
 
-        var uri = utils.getAPIURL(config.appSsl, config.appHost, config.endpoints.catalog.port, assetPath);
+        var uri = utils.getAPIURL(config.endpoints.catalog.appSsl, config.endpoints.catalog.host, config.endpoints.catalog.port, assetPath);
 
         request(uri, function(err, response, body) {
-
             if (err || response.statusCode >= 400) {
                 callback({
                     status: response ? response.statusCode : 500
@@ -144,7 +151,7 @@ var catalog = (function() {
     };
 
     var validateOfferingFields = function(previousBody, newBody) {
-        var fixedFields = ['isBundle', 'productSpecification', 'bundledProductOffering'];
+        var fixedFields = ['isBundle', 'productSpecification', 'bundledProductOffering', 'validFor'];
         var modified = null;
 
         for (var i = 0; i < fixedFields.length && modified == null; i++) {
@@ -267,6 +274,12 @@ var catalog = (function() {
                     status: 403,
                     message: 'Field ' + modifiedField +' cannot be modified'
                 });
+            }
+        }
+
+        if (newBody && !previousBody && !newBody.validFor) {
+            newBody.validFor = {
+                startDateTime: new Date().toISOString()
             }
         }
 
@@ -436,7 +449,7 @@ var catalog = (function() {
                 callback(null);
             }
         });
-    }
+    };
 
     var checkExistingCategory = function(apiUrl, categoryName, isRoot, parentId, callback) {
 
@@ -892,7 +905,7 @@ var catalog = (function() {
                                         message: 'The field "relatedParty" can not be modified'
                                     });
 
-                            } else { 
+                            } else {
 
                                 if (catalogsPattern.test(req.apiUrl)) {
 
@@ -969,6 +982,135 @@ var catalog = (function() {
     };
 
     //////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////// INDEXES ///////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////////////
+
+    var middlewareSave = function middlewareSave(f, body, user, cb) {
+        return function (err, data) {
+            f(body, user)
+                .then(() => cb(err, data))
+                .catch(() => cb(err, data));
+        };
+    };
+
+    var handleIndexes = function handleIndexes(req, callback) {
+        // Handle PUT and PATCH data
+        var offeringsPattern = new RegExp('/productOffering/?');
+        var productsPattern = new RegExp('/productSpecification/?');
+        var catalogPattern = new RegExp('/catalog/?');
+
+        var genericSave = function genericSave(f) {
+            f([JSON.parse(req.body)], req.user)
+                .then(() => callback(null))
+                .catch(() => callback(null));
+        };
+
+        var patternsF = [
+            [offeringsPattern, indexes.saveIndexOffering],
+            [productsPattern, indexes.saveIndexProduct],
+            [catalogPattern, indexes.saveIndexCatalog]];
+
+        for(var ind in patternsF) {
+            var pattern = patternsF[ind][0];
+            var f = patternsF[ind][1];
+            if (pattern.test(req.apiUrl) && (req.method == 'PATCH' || req.method == 'PUT')) {
+                genericSave(f);
+                return;
+            }
+        }
+
+        callback(null);
+    };
+
+    var queryAndOrCommas = function queryAndOrCommas(q, name, query, f) {
+        if (!f) {
+            f = x => x.toLowerCase();
+        }
+        if (!q) {
+            return;
+        }
+
+        if (q.split(",").length <= 1) {
+            indexes.addAndCondition(query, { [name]: [f(q)] });
+        } else {
+            indexes.addOrCondition(query, name, q.split(",").map(f));
+        }
+    };
+
+    var lifecycleQuery = function lifecycleQuery(req, query) {
+        queryAndOrCommas(req.query.lifecycleStatus, "lifecycleStatus", query);
+    };
+
+    var createProductQuery = indexes.genericCreateQuery.bind(
+	    null,
+	    ["isBundle", "productNumber"],
+        "product",
+    	function (req, query) {
+	        if (req.query["relatedParty.id"]) {
+                indexes.addAndCondition(query, { relatedPartyHash: [indexes.fixUserId(req.query["relatedParty.id"])]});
+    	    }
+
+            lifecycleQuery(req, query);
+	});
+
+    var createOfferQuery = indexes.genericCreateQuery.bind(
+	    null,
+	    ["isBundle", "name"],
+        "offering",
+	    function (req, query) {
+	        if (catalogOfferingsPattern.test(req.apiUrl)) {
+	            var catalog = req.apiUrl.split('/')[6];
+	            indexes.addAndCondition(query, { catalog: ["catalog:" + catalog] });
+            }
+            if (req.query.relatedParty) {
+                indexes.addAndCondition(query, { userId: [indexes.fixUserId(req.query.relatedParty)] });
+            }
+            if (req.query["category.id"]) {
+                indexes.addAndCondition(query, { categoriesId: ["cat:" + req.query["category.id"]]});
+            }
+            if (req.query["category.name"]) {
+                indexes.addAndCondition(query, { categoriesName: [md5(req.query["category.name"].toLowerCase())]});
+            }
+
+            queryAndOrCommas(req.query["productSpecification.id"], "productSpecification", query, x => leftPad(x, 12, 0));
+            queryAndOrCommas(req.query["bundledProductOffering.id"], "bundledProductOffering", query, x => leftPad(x, 12, 0));
+
+            lifecycleQuery(req, query);
+	});
+
+    var createCatalogQuery = indexes.genericCreateQuery.bind(
+        null,
+        ["name"],
+        "catalog",
+        function (req, query) {
+            if (req.query["relatedParty.id"]) {
+                indexes.addAndCondition(query, { relatedPartyHash: [indexes.fixUserId(req.query["relatedParty.id"])] });
+            }
+
+            lifecycleQuery(req, query);
+        }
+    );
+
+    var offeringGetParams = new RegExp('/productOffering(\\?|$)');
+    var productGetParams = new RegExp('/productSpecification(\\?|$)');
+    var catalogGetParams = new RegExp('/catalog(\\?|$)');
+
+    var getCatalogRequest = indexes.getMiddleware.bind(null, catalogGetParams, createCatalogQuery, indexes.searchCatalogs);
+
+    var getProductRequest = indexes.getMiddleware.bind(null, productGetParams, createProductQuery, indexes.searchProducts);
+
+    var getOfferRequest = indexes.getMiddleware.bind(null, offeringGetParams, createOfferQuery, indexes.searchOfferings);
+
+
+    var methodIndexed = function methodIndexed(req) {
+        // I'm gonna feel so bad with this... but I have to use mutability on an input parameter :(
+        // The methods change req.apiUrl as needed... Sorry
+        return getOfferRequest(req)
+			.then(() => getProductRequest(req))
+            .then(() => getCatalogRequest(req));
+    };
+
+    //////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////////// COMMON ///////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -981,25 +1123,59 @@ var catalog = (function() {
     };
 
     var checkPermissions = function (req, callback) {
-
         var reqValidators = [];
 
         for (var i in validators[req.method]) {
             reqValidators.push(validators[req.method][i].bind(this, req));
         }
 
-        async.series(reqValidators, callback);
+        methodIndexed(req)
+            .catch(() => Promise.resolve(req))
+            .then(() => { async.series(reqValidators, callback);});
     };
 
     var executePostValidation = function(req, callback) {
         // Attach product spec info for product creation request
+        var body;
 
         if (req.method == 'POST' && productsPattern.test(req.apiUrl)) {
-            storeClient.attachProduct(JSON.parse(req.body), req.user, callback);
+            body = JSON.parse(req.body);
+            storeClient.attachProduct(body, req.user, middlewareSave(indexes.saveIndexProduct, [body], req.user, callback));
+
         } else if (req.method == 'POST' && offeringsPattern.test(req.apiUrl)) {
-            storeClient.attachOffering(JSON.parse(req.body), req.user, callback);
+            var catalog = '';
+            var indexBody;
+
+            body = JSON.parse(req.body);
+
+            if (req.apiUrl.indexOf('/catalog/') > -1) {
+                catalog = req.apiUrl.split('/')[6];
+            }
+
+            indexBody = deepcopy(body);
+            indexBody.catalog = catalog;
+            storeClient.attachOffering(body, req.user, middlewareSave(indexes.saveIndexOffering, [indexBody], req.user, callback));
+
+        } else if ((req.method == 'PATCH' || req.method == 'PUT') && offeringPattern.test(req.apiUrl)) {
+            var catalog = req.apiUrl.split('/')[6];
+            var indexBody;
+
+            body = JSON.parse(req.body);
+
+            indexBody = deepcopy(body);
+            indexBody.catalog = catalog;
+
+            storeClient.updateOffering(body, req.user, middlewareSave(indexes.saveIndexOffering, [indexBody], req.user, callback));
+
+        } else if (req.method == 'POST' && catalogsPattern.test(req.apiUrl)) {
+            body = JSON.parse(req.body);
+            indexes.saveIndexCatalog([body])
+                .then(() => callback(null))
+                .catch(() => callback(null));
+
         } else {
-            callback(null);
+            // TODO PATCHes
+            handleIndexes(req, callback);
         }
     };
 

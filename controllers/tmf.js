@@ -69,7 +69,7 @@ var tmf = (function() {
 
         var api = getAPIName(req.apiUrl);
 
-        var url = (config.appSsl ? 'https' : 'http') + '://' + config.appHost + ':' + utils.getAPIPort(api) + req.apiUrl;
+        var url = utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + req.apiUrl;
 
         var options = {
             url: url,

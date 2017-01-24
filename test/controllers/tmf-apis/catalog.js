@@ -17,8 +17,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var nock = require('nock'),
+var deepcopy = require("deepcopy"),
+    nock = require('nock'),
     proxyquire =  require('proxyquire'),
+    Promise = require('promiz'),
+    md5 = require("blueimp-md5"),
     testUtils = require('../../utils');
 
 // ERRORS
@@ -69,9 +72,17 @@ describe('Catalog API', function() {
 
     var config = testUtils.getDefaultConfig();
 
-    var getCatalogApi = function(storeClient, tmfUtils, utils, rssClient) {
+    var getCatalogApi = function(storeClient, tmfUtils, utils, rssClient, indexes, async) {
         if (!rssClient) {
             rssClient = {};
+        }
+
+        if (!indexes) {
+            indexes = {};
+        }
+
+        if (!async) {
+            async = {};
         }
 
         return proxyquire('../../../controllers/tmf-apis/catalog', {
@@ -79,8 +90,11 @@ describe('Catalog API', function() {
             './../../lib/logger': testUtils.emptyLogger,
             './../../lib/store': storeClient,
             './../../lib/rss': rssClient,
+            './../../lib/indexes': indexes,
+            './../../lib/indexes.js': indexes,
             './../../lib/tmfUtils': tmfUtils,
-            './../../lib/utils': utils
+            './../../lib/utils': utils,
+            'async': async
         }).catalog;
     };
 
@@ -177,7 +191,7 @@ describe('Catalog API', function() {
         return true;
     };
 
-    var SERVER = (config.appSsl ? 'https' : 'http') + '://' + config.appHost + ':' + config.endpoints.catalog.port;
+    var SERVER = (config.endpoints.catalog.appSsl ? 'https' : 'http') + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
 
     var mockBundles = function(bundles) {
 
@@ -231,8 +245,8 @@ describe('Catalog API', function() {
             method: 'POST',
             body: body,
             user: {
-                id: user, 
-                roles: roles 
+                id: user,
+                roles: roles
             }
         };
 
@@ -295,8 +309,8 @@ describe('Catalog API', function() {
         var userName = 'test';
         var catalogPath = '/catalog/7';
         var offeringPath = catalogPath + '/productOffering';
-        var protocol = config.appSsl ? 'https' : 'http';
-        var serverUrl = protocol + '://' + config.appHost + ':' + config.endpoints.catalog.port;
+        var protocol = config.endpoints.catalog.appSsl ? 'https' : 'http';
+        var serverUrl = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
         var productPath = '/product/7';
         var categoryPath = '/category'
 
@@ -309,10 +323,13 @@ describe('Catalog API', function() {
             productSpecification: {
                 // the server will be avoided by the SW
                 // The catalog server will be used instead
-                href: config.appHost + ':' + config.endpoints.catalog.port + productPath
+                href: config.endpoints.catalog.host + ':' + config.endpoints.catalog.port + productPath
             },
             serviceCandidate: {
                 id: 'productClass'
+            },
+            validFor: {
+                startDateTime: '2016-05-01'
             }
         };
 
@@ -608,7 +625,7 @@ describe('Catalog API', function() {
 
             var errorMsg = CATEGORY_CANNOT_BE_CHECKED[0] + categoryId2 + CATEGORY_CANNOT_BE_CHECKED[1];
 
-            testCreateOffering(productRequestInfoActive, catalogRequestInfoLaunched, categoriesRequestInfo, null, 500, 
+            testCreateOffering(productRequestInfoActive, catalogRequestInfoLaunched, categoriesRequestInfo, null, 500,
                 errorMsg, null, offeringBody, done);
         });
 
@@ -634,24 +651,53 @@ describe('Catalog API', function() {
 
             var errorMsg = INVALID_CATEGORY_ID + categoryId2;
 
-            testCreateOffering(productRequestInfoActive, catalogRequestInfoLaunched, categoriesRequestInfo, null, 400, 
+            testCreateOffering(productRequestInfoActive, catalogRequestInfoLaunched, categoriesRequestInfo, null, 400,
                 errorMsg, null, offeringBody, done);
         });
 
         var testCreateOfferingBundle = function(offeringRequestInfo, catalogRequestInfo, storeError, body, errorStatus, errorMsg, done) {
 
             var defaultErrorMessage = 'Internal Server Error';
-            var catalogApi = mockCatalogAPI(body, offeringRequestInfo, storeError, null);
 
-            // The mock server that will handle the request when the product is requested
-            var bodyGetOfferingOk = {
-                isBundle: offeringRequestInfo.isBundle,
-                relatedParty: [{id: userName, role: offeringRequestInfo.role}],
-                lifecycleStatus: offeringRequestInfo.lifecycleStatus
+            // Mock date
+            var fakeDate = function () {
+                this.toISOString = function () {
+                    return '2016-05-01';
+                }
             };
-            var bodyGetOffering = offeringRequestInfo.requestStatus === 200 ? bodyGetOfferingOk : defaultErrorMessage;
+
+            spyOn(global, 'Date').and.callFake(function() {
+                return new fakeDate();
+            });
+
+            var expBody = deepcopy(body);
+            expBody.validFor = {
+                startDateTime: '2016-05-01'
+            };
+
+            var catalogApi = mockCatalogAPI(expBody, offeringRequestInfo, storeError, null);
+
+            var productSpecificationOk = {
+                relatedParty: [{id: userName, role: offeringRequestInfo.role}]
+            };
+
+            var bodyGetProduct = offeringRequestInfo.productRequestStatus === 200 ? productSpecificationOk : defaultErrorMessage;
 
             for (var i = 0; i < offeringRequestInfo.hrefs.length; i++) {
+                // The mock server that will handle the request when the product is requested
+                var bodyGetOfferingOk = {
+                    isBundle: offeringRequestInfo.isBundle,
+                    lifecycleStatus: offeringRequestInfo.lifecycleStatus,
+                    productSpecification: {
+                        href: serverUrl + offeringRequestInfo.products[i]
+                    }
+                };
+                var bodyGetOffering = offeringRequestInfo.requestStatus === 200 ? bodyGetOfferingOk : defaultErrorMessage;
+
+                nock(serverUrl)
+                    .get(offeringRequestInfo.products[i])
+                    .reply(offeringRequestInfo.productRequestStatus, bodyGetProduct);
+
                 nock(serverUrl)
                     .get(offeringRequestInfo.hrefs[i])
                     .reply(offeringRequestInfo.requestStatus, bodyGetOffering);
@@ -665,9 +711,10 @@ describe('Catalog API', function() {
 
         var offering1 = catalogPath + '/productOffering/1';
         var offering2 = catalogPath + '/productOffering/2';
+        var product1 = '/productSpecification/20';
+        var product2 = '/productSpecification/21';
 
         it('should allow to create an offering bundle', function(done) {
-
             var body = {
                 isBundle: true,
                 bundledProductOffering: [{
@@ -683,7 +730,9 @@ describe('Catalog API', function() {
                 isBundle: false,
                 lifecycleStatus: 'active',
                 hrefs: [offering1, offering2],
-                requestStatus: 200
+                products: [product1, product2],
+                requestStatus: 200,
+                productRequestStatus: 200
             };
             testCreateOfferingBundle(offeringRequestInfo, catalogRequestInfoLaunched, null,
                 body, null, null, done)
@@ -702,7 +751,9 @@ describe('Catalog API', function() {
                 isBundle: false,
                 lifecycleStatus: 'active',
                 hrefs: [],
-                requestStatus: 200
+                products: [],
+                requestStatus: 200,
+                productRequestStatus: 200
             };
 
             testCreateOfferingBundle(offeringRequestInfo, catalogRequestInfoLaunched, null,
@@ -719,7 +770,9 @@ describe('Catalog API', function() {
                 isBundle: false,
                 lifecycleStatus: 'active',
                 hrefs: [],
-                requestStatus: 200
+                products: [],
+                requestStatus: 200,
+                productRequestStatus: 200
             };
 
             testCreateOfferingBundle(offeringRequestInfo, catalogRequestInfoLaunched, null,
@@ -739,7 +792,9 @@ describe('Catalog API', function() {
                 isBundle: false,
                 lifecycleStatus: 'active',
                 hrefs: [],
-                requestStatus: 200
+                products: [],
+                requestStatus: 200,
+                productRequestStatus: 200
             };
 
             testCreateOfferingBundle(offeringRequestInfo, catalogRequestInfoLaunched, null,
@@ -764,7 +819,9 @@ describe('Catalog API', function() {
                 isBundle: false,
                 lifecycleStatus: 'active',
                 hrefs: [offering1, offering2],
-                requestStatus: 500
+                products: [product1, product2],
+                requestStatus: 500,
+                productRequestStatus: 200
             };
             testCreateOfferingBundle(offeringRequestInfo, catalogRequestInfoLaunched, null,
                 body, 422, OFF_BUNDLE_FAILED_TO_RETRIEVE, done)
@@ -786,7 +843,9 @@ describe('Catalog API', function() {
                 isBundle: true,
                 lifecycleStatus: 'active',
                 hrefs: [offering1, offering2],
-                requestStatus: 200
+                products: [product1, product2],
+                requestStatus: 200,
+                productRequestStatus: 200
             };
             testCreateOfferingBundle(offeringRequestInfo, catalogRequestInfoLaunched, null,
                 body, 422, OFF_BUNDLE_IN_BUNDLE, done)
@@ -808,7 +867,33 @@ describe('Catalog API', function() {
                 isBundle: false,
                 lifecycleStatus: 'active',
                 hrefs: [offering1, offering2],
-                requestStatus: 200
+                products: [product1, product2],
+                requestStatus: 200,
+                productRequestStatus: 200
+            };
+            testCreateOfferingBundle(offeringRequestInfo, catalogRequestInfoLaunched, null,
+                body, 403, UNAUTHORIZED_OFF_BUNDLE, done)
+        });
+
+        it('should not allow to create a bundle when bundled offering product cannot be accessed', function(done) {
+
+            var body = {
+                isBundle: true,
+                bundledProductOffering: [{
+                    href: serverUrl + offering1
+                }, {
+                    href: serverUrl + offering2
+                }]
+            };
+
+            var offeringRequestInfo = {
+                role: 'Owner',
+                isBundle: false,
+                lifecycleStatus: 'active',
+                hrefs: [offering1, offering2],
+                products: [product1, product2],
+                requestStatus: 200,
+                productRequestStatus: 500
             };
             testCreateOfferingBundle(offeringRequestInfo, catalogRequestInfoLaunched, null,
                 body, 403, UNAUTHORIZED_OFF_BUNDLE, done)
@@ -1055,8 +1140,8 @@ describe('Catalog API', function() {
 
         // Basic properties
         var userName = 'test';
-        var protocol = config.appSsl ? 'https' : 'http';
-        var url = protocol + '://' + config.appHost + ':' + config.endpoints.catalog.port;
+        var protocol = config.endpoints.catalog.appSsl ? 'https' : 'http';
+        var url = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
         var catalogPath = '/catalog/category';
 
         // Call the method
@@ -1182,14 +1267,14 @@ describe('Catalog API', function() {
 
         var parentCategoryRequest = {
             status: 404
-        }
+        };
 
         testCreateCategory(true, category, null, parentCategoryRequest, 400, INVALID_CATEGORY_ID + category.parentId, callback);
     });
 
     it('should not allow to create non-root category when parent category cannot be checked', function(callback) {
 
-        var parentId = 'wrong'; 
+        var parentId = 'wrong';
 
         var category = {
             name: 'example',
@@ -1224,8 +1309,8 @@ describe('Catalog API', function() {
 
         // Basic properties
         var userName = 'test';
-        var protocol = config.appSsl ? 'https' : 'http';
-        var url = protocol + '://' + config.appHost + ':' + config.endpoints.catalog.port;
+        var protocol = config.endpoints.catalog.appSsl ? 'https' : 'http';
+        var url = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
         var catalogPath = '/DSProductCatalog/api/catalogManagement/v2/catalog';
 
         // Call the method
@@ -1337,8 +1422,8 @@ describe('Catalog API', function() {
 
         var userName = 'test';
         var path = '/catalog/product/1';
-        var protocol = config.appSsl ? 'https' : 'http';
-        var url = protocol + '://' + config.appHost + ':' + config.endpoints.catalog.port;
+        var protocol = config.endpoints.catalog.appSsl ? 'https' : 'http';
+        var url = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
         var role = isOwnerMethod() ? 'Owner': 'Seller';
 
         // User information is send when the request does not fail
@@ -1421,7 +1506,7 @@ describe('Catalog API', function() {
         return {
             // the server will be avoided by the SW
             // The catalog server will be used instead
-            href: config.appHost + ':' + config.endpoints.catalog.port + path
+            href: config.endpoints.catalog.host + ':' + config.endpoints.catalog.port + path
         }
     };
 
@@ -1460,9 +1545,9 @@ describe('Catalog API', function() {
         var catalogPath = '/catalog/8';
         var offeringPath = catalogPath + '/productOffering/1';
         var productPath = productRequestInfo.path || '/productSpecification/7';
-        var protocol = config.appSsl ? 'https' : 'http';
-        var serverUrl = protocol + '://' + config.appHost + ':' + config.endpoints.catalog.port;
-        
+        var protocol = config.endpoints.catalog.appSsl ? 'https' : 'http';
+        var serverUrl = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
+
         // HTTP MOCK - OFFERING
         var bodyGetOffering = {
             productSpecification: getProductSpecification(productPath)
@@ -1569,6 +1654,22 @@ describe('Catalog API', function() {
             null, catalogRequestInfo, 403, 'Field productSpecification cannot be modified', done);
     });
 
+    it('should not allow to update an offering when the validFor field changes', function (done) {
+        var productRequestInfo = {
+            requestStatus: 200,
+            owner: true,
+            lifecycleStatus: 'active'
+        };
+
+        var catalogRequestInfo = {
+            requestStatus: 200,
+            lifecycleStatus: 'active'
+        };
+
+        testUpdateProductOffering(JSON.stringify({ validFor: {} }), productRequestInfo,
+            null, catalogRequestInfo, 403, 'Field validFor cannot be modified', done);
+    });
+
     it('should not allow to update a non-owned offering', function(done) {
 
         var productRequestInfo = {
@@ -1670,7 +1771,7 @@ describe('Catalog API', function() {
 
         var errorMsg = 'RSS failure';
         var statusCode = 500;
-        
+
         var offeringBody = JSON.stringify({
             serviceCandidate: {
                 id: 'example'
@@ -1706,7 +1807,7 @@ describe('Catalog API', function() {
     });
 
     // PRODUCTS & CATALOGS
-    
+
     var previousProductBody = {
         relatedParty: [{
             id: 'exmaple1',
@@ -1736,14 +1837,14 @@ describe('Catalog API', function() {
         var utils = {
             validateLoggedIn: validateLoggedOk,
             hasRole: checkRoleMethod
-        }
+        };
 
         var catalogApi = getCatalogApi({}, tmfUtils, utils);
 
         // Basic properties
         var userName = 'test';
-        var protocol = config.appSsl ? 'https' : 'http';
-        var serverUrl = protocol + '://' + config.appHost + ':' + config.endpoints.catalog.port;
+        var protocol = config.endpoints.catalog.appSsl ? 'https' : 'http';
+        var serverUrl = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
 
         // The service will check that the user is the owner of the offering by making a request
         // to the API. However, a body is not required since the function isOwner has been set up
@@ -2261,7 +2362,7 @@ describe('Catalog API', function() {
 
         var productBody = JSON.stringify({
             relatedParty: [
-            previousProductBody.relatedParty[1],
+                previousProductBody.relatedParty[1],
             previousProductBody.relatedParty[0]]
         });
 
@@ -2521,8 +2622,8 @@ describe('Catalog API', function() {
         var userName = 'test';
         var basicPath = '/catalog/category';
         var categoryResourcePath = basicPath + '/7';
-        var protocol = config.appSsl ? 'https' : 'http';
-        var url = protocol + '://' + config.appHost + ':' + config.endpoints.catalog.port;
+        var protocol = config.endpoints.catalog.appSsl ? 'https' : 'http';
+        var url = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
 
         // The mock server that will handle the request to retrieve the old state of the category
         nock(url)
@@ -2909,49 +3010,427 @@ describe('Catalog API', function() {
             parentCategoryRequest, { name: categoryName, parentId: parentId, isRoot: false }, 500, errorMsg, done);
     });
 
+    describe('Test index in checkPermissions widdleware', function() {
+        var helperUrls = {
+            catalog: {url: "/catalog", f: "searchCatalogs"},
+            product: {url: "/productSpecification", f: "searchProducts"},
+            offer: {url: "/productOffering", f: "searchOfferings"}
+        };
+
+        var errorRequestHelper = function errorRequestHelper(done, base, url, query) {
+            var pathname = helperUrls[base].url;
+            url = pathname + "?" + url;
+
+            var indexes = {};
+            indexes[helperUrls[base].f] = () => Promise.reject("Error");
+
+            var catalogApi = getCatalogApi({}, {}, {}, {}, indexes);
+            var req = {
+                method: "GET",
+                apiUrl: url,
+                _parsedUrl: {
+                    pathname: pathname
+                },
+                query: query
+            };
+
+            catalogApi.checkPermissions(req, function() {
+                expect(req.apiUrl).toEqual(url);
+                done();
+            });
+        };
+
+        var requestHelper = function requestHelper(done, base, results, url, query, expectedUrl, expectedQuery) {
+            var pathname = helperUrls[base].url;
+            url = pathname + "?" + url;
+            expectedUrl = pathname + "?" + expectedUrl;
+
+            var indexes = {};
+            indexes[helperUrls[base].f] = q => {
+                if (expectedQuery) {
+                    expect(q).toEqual(expectedQuery);
+                }
+
+
+                return Promise.resolve({
+                    hits: results.map(x => ({document: {originalId: x}}))
+                });
+            };
+
+            var catalogApi = getCatalogApi({}, {}, {}, {}, indexes);
+            var req = {
+                method: "GET",
+                apiUrl: url,
+                _parsedUrl: {
+                    pathname: pathname
+                },
+                query: query
+            };
+
+            catalogApi.checkPermissions(req, function() {
+                expect(req.apiUrl).toEqual(expectedUrl);
+                done();
+            });
+        };
+
+        it('should not change request URL when catalog index fails', function (done) {
+            errorRequestHelper(done, "catalog", "relatedParty.id=rock", { "relatedParty.id": "rock"});
+        });
+
+        it('should change request URL to not add any id if no catalog results', function(done) {
+            requestHelper(done,
+                          "catalog",
+                          [],
+                          "relatedParty.id=someother",
+                          {
+                              "relatedParty.id": "someother"
+                          },
+                          "id=",
+                          {
+                              sort: ["sortedId", "asc"],
+                              query: [{AND: [{relatedPartyHash: [md5("someother")]}]}]
+                          });
+        });
+
+        it('should change request URL to include catalog IDs when relatedParty.id is provided', function(done) {
+            requestHelper(done,
+                          "catalog",
+                          [2, 12],
+                          "relatedParty.id=rock-8&extraparam=hola&depth=2&fields=name",
+                          {
+                              "relatedParty.id": "rock-8",
+                              extraparam: "hola",
+                              depth: "2",
+                              fields: "name"
+                          },
+                          "id=2,12&depth=2&fields=name",
+                          {
+                              sort: ["sortedId", "asc"],
+                              query: [{AND: [{relatedPartyHash: [md5("rock-8")]}]}]
+                          });
+        });
+
+        it('should not change request URL when product index fails', function (done) {
+            errorRequestHelper(done, "product", "relatedParty.id=rock", { "relatedParty.id": "rock"});
+        });
+
+        it('should change request URL to not add any id if no product results', function(done) {
+            requestHelper(done,
+                          "product",
+                          [],
+                          "relatedParty.id=someother",
+                          {
+                              "relatedParty.id": "someother"
+                          },
+                          "id=",
+                          {
+                              sort: ["sortedId", "asc"],
+                              query: [{AND: [{relatedPartyHash: [md5("someother")]}]}]
+                          });
+        });
+
+        it('should change request URL to include product IDs when relatedParty.id is provided', function(done) {
+            requestHelper(done,
+                          "product",
+                          [3,4,13],
+                          "relatedParty.id=rock&size=3",
+                          {
+                              "relatedParty.id": "rock",
+                              size: 3
+                          },
+                          "id=3,4,13",
+                          {
+                              sort: ["sortedId", "asc"],
+                              query: [{AND: [{relatedPartyHash: [md5("rock")]}]}]
+                          });
+        });
+
+        it('should not change request URL when offer index fails', function (done) {
+            errorRequestHelper(done, "offer", "relatedParty=rock", { "relatedParty": "rock" });
+        });
+
+        it('should request for category', function(done) {
+            requestHelper(done,
+                          "offer",
+                          [],
+                          "category.id=201",
+                          {
+                              "category.id": 201
+                          },
+                          "id=",
+                          {
+                              sort: ["sortedId", "asc"],
+                              query: [{AND: [{categoriesId: ['cat:201']}]}]
+                          });
+        });
+
+        it('should request for category name', function(done) {
+            requestHelper(done,
+                          "offer",
+                          [],
+                          "category.name=TesTCat",
+                          {
+                              "category.name": "TesTCat"
+                          },
+                          "id=",
+                          {
+                              sort: ["sortedId", "asc"],
+                              query: [{AND: [{categoriesName: [md5("testcat")]}]}]
+                          });
+        });
+
+        it('should change request URL to not add any id if no offer results', function(done) {
+            requestHelper(done,
+                          "offer",
+                          [],
+                          "relatedParty=someother",
+                          {
+                              relatedParty: "someother"
+                          },
+                          "id=",
+                          {
+                              sort: ["sortedId", "asc"],
+                              query: [{AND: [{userId: [md5("someother")]}]}]
+                          });
+        });
+
+        it('should change request URL to include offering IDs when the related party is provided', function(done) {
+            requestHelper(done,
+                          "offer",
+                          [9, 11],
+                          "relatedParty=rock&offset=3&other=test&size=25",
+                          {
+                              relatedParty: "rock",
+                              offset: 3,
+                              size: 25,
+                              other: "test"
+                          },
+                          "id=9,11",
+                          {
+                              offset: 3,
+                              pageSize: 25,
+                              sort: ["sortedId", "asc"],
+                              query: [{AND: [{userId: [md5("rock")]}]}]
+                          });
+        });
+
+        var testQueryAllIndex = function testQueryAllIndex(done, base) {
+            requestHelper(done,
+                          base,
+                          [1, 2],
+                          "",
+                          {},
+                          "id=1,2",
+                          {
+                              sort: ["sortedId", "asc"],
+                              query: {AND: [{"*": ["*"]}]}
+                          });
+        };
+
+
+        var testQueryParameters = function testQueryParameters(done, base, params) {
+            // Transform object to param=value&param2=value2
+            var paramUrl = Object.keys(params).map(key => key + "=" + params[key]).join("&");
+            // Transform object to index AND query (String keys must be lower case to perform index search correctly)
+            var ANDs = Object.keys(params)
+                    .map(key => (
+                        {[key]: [ (typeof params[key] === "string") ? params[key].toLowerCase() : params[key]]}));
+
+            requestHelper(done,
+                          base,
+                          [7, 9, 11],
+                          paramUrl,
+                          params,
+                          "id=7,9,11",
+                          {
+                              sort: ["sortedId", "asc"],
+                              query: [{AND: ANDs}]
+                          });
+        };
+
+        // CATALOGS
+
+        it('should change request URL to include catalog IDs when no parameter are provided', function (done) {
+            testQueryAllIndex(done, "catalog");
+        });
+
+        it('should change request URL to include catalog IDs when simple lifecycleStatus is provided', function (done) {
+            testQueryParameters(done, "catalog", { lifecycleStatus: "Active" });
+        });
+
+        it('should change request URL to include catalog IDs when multiple lifecycleStatus are provided', function(done) {
+            requestHelper(done,
+                          "catalog",
+                          [7, 9, 11],
+                          "lifecycleStatus=Active,Disabled",
+                          {lifecycleStatus: "Active,Disabled"},
+                          "id=7,9,11",
+                          {
+                              sort: ["sortedId", "asc"],
+                              query: [{AND: [{lifecycleStatus: ["active"]}]}, {AND: [{lifecycleStatus: ["disabled"]}]}]
+                          });
+
+        });
+
+        it('should change request URL to include catalog IDs when name is provided', function (done) {
+            testQueryParameters(done, "catalog", { name: "CatalogName"});
+        });
+
+        it('should change request URL to include catalog IDs when lifecycleStatus and name are provided', function (done) {
+            testQueryParameters(done, "catalog", { lifecycleStatus: "Obsolete", name: "CatalogName"});
+        });
+
+        // PRODUCTS
+
+        it('should change request URL to include product IDs when no parameter are provided', function (done) {
+            testQueryAllIndex(done, "product");
+        });
+
+        it('should change request URL to include product IDs when lifecycleStatus is provided', function(done) {
+            testQueryParameters(done, "product", {lifecycleStatus: "Enable"});
+        });
+
+        it('should change request URL to include product IDs when isBundle is provided', function(done) {
+            testQueryParameters(done, "product", {isBundle: true});
+        });
+
+        it('should change request URL to include product IDs when productNumber is provided', function(done) {
+            testQueryParameters(done, "product", {productNumber: 234});
+        });
+
+        it('should change request URL to include product IDs when lifecycleStatus, isBundle and productNumber are provided', function(done) {
+            testQueryParameters(done, "product", {lifecycleStatus: "Enable", isBundle: false, productNumber: 256});
+        });
+
+        // OFFERINGS
+
+        it('should change request URL to include offer IDs when no parameter are provided', function (done) {
+            testQueryAllIndex(done, "offer");
+        });
+
+        it('should change request URL to include offer IDs when lifecycleStatus is provided', function (done) {
+            testQueryParameters(done, "offer", { lifecycleStatus: "Active" });
+        });
+
+        it('should change request URL to include offer IDs when isBundle is provided', function (done) {
+            testQueryParameters(done, "offer", { isBundle: true });
+        });
+
+        it('should change request URL to include offer IDs when lifecycleStatus and isBundle are provided', function (done) {
+            testQueryParameters(done, "offer", { lifecycleStatus: "Obsolete", isBundle: false});
+        });
+    });
+
     describe('Post validation', function() {
 
-        var testProductPostvalidation = function(method, callExp, done) {
-            var body = {
-                id: '1'
+        var body = {
+            id: '1'
+        };
+
+        var user = {
+            username: 'test'
+        };
+
+        var testPostValidation = function(req, productAttExp, offeringAttExp, offeringUpdExp, saveIndexExp, offIndexExp, done) {
+
+            var productAttached = false;
+            var offeringAttached = false;
+            var offeringUpdated = false;
+
+            var checkStoreClientCalls = function (asset, userInfo, callback) {
+                expect(asset).toEqual(body);
+                expect(userInfo).toEqual(user);
+                callback(null);
             };
 
-            var user = {
-                username: 'test'
-            };
-
-            var called = false;
             var storeClient = {
                 storeClient: {
                     attachProduct: function(product, userInfo, callback) {
-                        called = true;
-                        expect(product).toEqual(body);
-                        expect(userInfo).toEqual(user);
-                        callback(null);
+                        productAttached = true;
+                        checkStoreClientCalls(product, userInfo, callback)
+                    },
+                    attachOffering: function (offering, userInfo, callback) {
+                        offeringAttached = true;
+                        checkStoreClientCalls(offering, userInfo, callback)
+                    },
+                    updateOffering: function (offering, userInfo, callback) {
+                        offeringUpdated = true;
+                        checkStoreClientCalls(offering, userInfo, callback)
                     }
                 }
             };
-            var catalogApi = getCatalogApi(storeClient, {}, {}, {});
 
-            var req = {
-                method: method,
-                apiUrl: '/catalog/productSpecification',
-                body: JSON.stringify(body),
-                user: user
+            var saveIndexCalled = false;
+            var offIndexCalled = false;
+
+            var checkIndexCalls = function (data, userInfo, expected) {
+                expect(data).toEqual(expected);
+                expect(userInfo).toEqual(user);
+                return Promise.resolve();
             };
 
+            var indexes = {
+                saveIndexProduct: function(data, userInfo) {
+                    saveIndexCalled = true;
+                    return checkIndexCalls(data, userInfo, [{id: '1'}]);
+                },
+                saveIndexOffering: function (data, userInfo) {
+                    offIndexCalled = true;
+                    return checkIndexCalls(data, userInfo, [{id: '1', catalog: '1'}]);
+                }
+            };
+
+            var catalogApi = getCatalogApi(storeClient, {}, {}, {}, indexes);
+
             catalogApi.executePostValidation(req, function() {
-                expect(called).toBe(callExp);
+                expect(productAttached).toBe(productAttExp);
+                expect(offeringAttached).toBe(offeringAttExp);
+                expect(offeringUpdated).toBe(offeringUpdExp);
+
+                expect(saveIndexCalled).toBe(saveIndexExp);
+                expect(offIndexCalled).toBe(offIndexExp);
                 done();
             });
         };
 
         it('should call the store product attachment when a valid product creation request has been redirected', function(done) {
-            testProductPostvalidation('POST', true, done);
+            var req = {
+                method: 'POST',
+                apiUrl: '/DSProductCatalog/productSpecification',
+                body: JSON.stringify(body),
+                user: user
+            };
+            testPostValidation(req, true, false, false, true, false, done);
         });
 
         it('should not call the store attachment when the request is not a product creation', function(done) {
-            testProductPostvalidation('GET', false, done);
+            var req = {
+                method: 'GET',
+                apiUrl: '/DSProductCatalog/productSpecification',
+                body: JSON.stringify(body),
+                user: user
+            };
+            testPostValidation(req, false, false, false, false, false, done);
+        });
+
+        it('should call the offering attachment when the request is a product offering creation', function (done) {
+            var req = {
+                method: 'POST',
+                apiUrl: '/DSProductCatalog/catalogManagement/api/v2/catalog/1/productOffering',
+                body: JSON.stringify(body),
+                user: user
+            };
+            testPostValidation(req, false, true, false, false, true, done);
+        });
+
+        it('should call the offering update validation when the request is a product offering update', function (done) {
+            var req = {
+                method: 'PATCH',
+                apiUrl: '/DSProductCatalog/catalogManagement/api/v2/catalog/1/productOffering/1',
+                body: JSON.stringify(body),
+                user: user
+            };
+            testPostValidation(req, false, false, true, false, true, done);
         });
     });
 });

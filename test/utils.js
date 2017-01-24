@@ -22,50 +22,73 @@ var defaultConfig = {
     proxyPrefix: '',
     oauth2: {
         server: 'https://account.lab.fiware.org',
+        clientID: 'client',
         roles: {
             admin: 'provider',
             seller: 'seller',
             customer: 'customer'
         }
     },
-    appHost: 'example.com',
-    appSsl: false,
     endpoints: {
+        management: {
+            path: 'management',
+            host: 'localhost',
+            port: 7496,
+            appSsl: false
+        },
         catalog: {
             path: 'catalog',
-            port: 99
+            host: 'catalog.com',
+            port: 99,
+            appSsl: false
         },
         ordering: {
             path: 'ordering',
-            port: 189
+            host: 'ordering.com',
+            port: 189,
+            appSsl: false
         },
         inventory: {
             path: 'inventory',
-            port: 475
+            host: 'inventory.com',
+            port: 475,
+            appSsl: false
         },
         charging: {
             path: 'charging',
-            port: 35
+            host: 'charging.com',
+            port: 35,
+            appSsl: false
         },
         rss: {
             path: 'rss',
-            port: 753
+            host: 'rss.com',
+            port: 753,
+            appSsl: false
         },
         party: {
             path: 'party',
-            port: 74
+            host: 'party.com',
+            port: 74,
+            appSsl: false
         },
         billing: {
             path: 'billing',
-            port: 78
+            host: 'billing.com',
+            port: 78,
+            appSsl: false
         },
         customer: {
             path: 'customer',
-            port: 82
+            host: 'customer.com',
+            port: 82,
+            appSsl: false
         },
         usage: {
             path: 'usage',
-            port: 78
+            host: 'usage.com',
+            port: 78,
+            appSsl: false
         }
     },
     billingAccountOwnerRole: 'bill receiver',

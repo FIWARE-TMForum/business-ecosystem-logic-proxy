@@ -1,14 +1,14 @@
 form(name="step.form", novalidate)
-  .form-group(ng-controller="CatalogueSearchCtrl as searchVM")
+  .form-group(ng-controller="CatalogueSearchCtrl as searchVM" ng-if="createForm.stepIndex == $index")
     input(type="hidden", ng-model="createVM.catalogue.id", required)
     .row
-      .col-xs-12(ng-if="searchVM.status === searchVM.STATUS.PENDING")
+      .col-xs-12(ng-if="searchVM.list.status === searchVM.STATUS.LOADING")
         .container-spinner
           span.fa.fa-spinner.fa-spin.fa-2x
-      .col-xs-12(ng-if="searchVM.status === searchVM.STATUS.REJECTED")
+      .col-xs-12(ng-if="searchVM.list.status === searchVM.STATUS.ERROR")
         .alert.alert-danger.text-center
           span {{ searchVM.errorMessage }}
-      .col-xs-12(ng-if="searchVM.status === searchVM.STATUS.RESOLVED" ng-switch="searchVM.list.length")
+      .col-xs-12(ng-if="searchVM.list.status === searchVM.STATUS.LOADED" ng-switch="searchVM.list.length")
         .alert.alert-info.text-center(ng-switch-when="0")
           span No catalogs found.
         .table-responsive(ng-switch-default)
@@ -17,10 +17,10 @@ form(name="step.form", novalidate)
               tr
                 th Status
                 th Name
-                th Rol
+                th Role
                 th Updated
             tbody
-              tr(ng-repeat="catalogue in searchVM.list | status:STATUS.ACTIVE:STATUS.LAUNCHED as results", ng-class="{ active: createVM.catalogue.id == catalogue.id }", ng-click="createVM.setCatalogue(catalogue)")
+              tr(ng-repeat="catalogue in searchVM.list", ng-class="{ active: createVM.catalogue.id == catalogue.id }", ng-click="createVM.setCatalogue(catalogue)")
                 td
                   .status-item(class="status-{{ catalogue.lifecycleStatus | lowercase }}")
                     span.item-icon
@@ -29,6 +29,7 @@ form(name="step.form", novalidate)
                 td {{ catalogue.getRoleOf(user.id) }}
                 td
                   time(am-time-ago="catalogue.lastUpdate")
+      pager(controller="searchVM", size="12", max="12" ng-init="searchVM.setFilters({status: STATUS.ACTIVE + ',' + STATUS.LAUNCHED})")
   .form-group.text-right
     a.btn.btn-default.z-depth-1(ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])", ng-disabled="!step.form.$valid")
       span.item-text Next

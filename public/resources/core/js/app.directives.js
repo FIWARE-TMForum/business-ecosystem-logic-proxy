@@ -36,6 +36,7 @@
         .directive('shippingAddressForm', shippingAddressFormDirective)
         .directive('pricePlanForm', pricePlanFormDirective)
         .directive('pricePlanTable', pricePlanTableDirective)
+        .directive('pager', pagerDirective)
         .directive('relationshipCreateForm', relationshipCreateFormDirective)
         .directive('relationshipDeleteForm', relationshipDeleteFormDirective)
         .directive('convertToDate', convertToDateDirective)
@@ -130,6 +131,56 @@
             },
             templateUrl: 'directives/forms/priceplan'
         };
+    }
+
+    function pagerDirective($window, $timeout) {
+        return {
+            restrict: 'E',
+            scope: {
+                vm: '=controller',
+                pageSize: '=size',
+                max: '=max'
+            },
+            templateUrl: 'directives/pager',
+            link: link
+        };
+
+        function link($scope, element, attrs) {
+            function repositionPager(retry) {
+                var nav = element.find('nav');
+                var ul = element.find('ul');
+
+                var margin =  Math.floor((nav.width()/2) - (ul.width()/2));
+
+                var prevMargin = ul.attr('style');
+                var marginStr = 'margin-left: ' + margin +'px;';
+
+                if (prevMargin == marginStr && retry) {
+                    $timeout(function() {
+                        repositionPager(false);
+                    }, 100);
+                } else {
+                    ul.attr('style', marginStr);
+                    nav.removeClass('invisible');
+                }
+            }
+
+            angular.element($window).bind('resize', function() {
+                repositionPager(true);
+            });
+
+            // reposition the pager controller when the elements have been loaded
+            function loadPager() {
+                if ($scope.vm.list.status == 'LOADED') {
+                    repositionPager(false);
+                } else {
+                    $timeout(function() {
+                        loadPager();
+                    }, 100);
+                }
+            }
+            loadPager();
+        }
     }
 
     function businessAddressFormDirective() {

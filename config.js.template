@@ -24,7 +24,7 @@ config.oauth2 = {
     'server': 'https://account.lab.fiware.org',
     'clientID': '--client-id--',
     'clientSecret': '--client-secret--',
-    'callbackURL': '--callback-url--',
+    'callbackURL': 'http://localhost/auth/fiware/callback',
     'roles': {
         'admin': 'provider',
         'customer': 'customer',
@@ -44,46 +44,67 @@ config.mongoDb = {
     db: 'belp'
 };
 
-// TMForum APIs final paths
-config.appHost = '';
-
 // Configure endpoints
 config.endpoints = {
+    'management': {
+        'path': 'management',
+        'host': 'localhost',
+        'port': config.port,
+        'appSsl': config.https.enabled
+    },
     'catalog': {
         'path': 'DSProductCatalog',
-        'port': '8080'
+        'host': 'localhost',
+        'port': '8080',
+        'appSsl': false
     },
     'ordering': {
-         'path': 'DSProductOrdering',
-         'port': '8080'
+        'path': 'DSProductOrdering',
+        'host': 'localhost',
+        'port': '8080',
+        'appSsl': false
     },
     'inventory': {
         'path': 'DSProductInventory',
-        'port': '8080'
+        'host': 'localhost',
+        'port': '8080',
+        'appSsl': false
     },
     'charging': {
         'path': 'charging',
-        'port': '8006'
+        'host': 'localhost',
+        'port': '8006',
+        'appSsl': false
     },
     'rss': {
         'path': 'DSRevenueSharing',
-        'port': '8080'
+        'host': 'localhost',
+        'port': '8080',
+        'appSsl': false
     },
     'party': {
         'path': 'DSPartyManagement',
-        'port': '8080'
+        'host': 'localhost',
+        'port': '8080',
+        'appSsl': false
     },
     'billing':{
         'path': 'DSBillingManagement',
-        'port': '8080'
+        'host': 'localhost',
+        'port': '8080',
+        'appSsl': false
     },
     'customer': {
         'path': 'DSCustomerManagement',
-        'port': '8080'
+        'host': 'localhost',
+        'port': '8080',
+        'appSsl': false
     },
     'usage':  {
         'path': 'DSUsageManagement',
-        'port': '8080'
+        'host': 'localhost',
+        'port': '8080',
+        'appSsl': false
     }
 };
 
@@ -92,9 +113,6 @@ config.revenueModel = 30;
 
 // Billing Account owner role
 config.billingAccountOwnerRole = 'bill receiver';
-
-// Use true if the app server listens in https
-config.appSsl = false;
 
 // list of paths that will not check authentication/authorization
 // example: ['/public/*', '/static/css/']

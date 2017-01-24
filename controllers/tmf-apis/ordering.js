@@ -20,6 +20,7 @@
 var async = require('async'),
     config = require('./../../config'),
     equal = require('deep-equal'),
+    indexes = require('./../../lib/indexes'),
     moment = require('moment'),
     request = require('request'),
     storeClient = require('./../../lib/store').storeClient,
@@ -59,7 +60,7 @@ var ordering = (function(){
 
     var getBillingAccountUrl = function(billingAccount) {
         var billingAccountPath = url.parse(billingAccount.href).pathname;
-        return utils.getAPIURL(config.appSsl, config.appHost, config.endpoints.billing.port, billingAccountPath);
+        return utils.getAPIURL(config.endpoints.billing.appSsl, config.endpoints.billing.host, config.endpoints.billing.port, billingAccountPath);
     };
 
 
@@ -68,7 +69,7 @@ var ordering = (function(){
     //////////////////////////////////////////////////////////////////////////////////////////////
 
     var validateRetrieving = function(req, callback) {
-        tmfUtils.filterRelatedPartyFields(req, callback);
+        tmfUtils.filterRelatedPartyWithRole(req, ['customer', 'seller'], callback);
     };
 
 
@@ -80,7 +81,7 @@ var ordering = (function(){
 
         var errorMessageProduct = 'The system fails to retrieve the product attached to the ordering item ' + item.id;
 
-        var productUrl = utils.getAPIURL(config.appSsl, config.appHost, config.endpoints.catalog.port,
+        var productUrl = utils.getAPIURL(config.endpoints.catalog.appSsl, config.endpoints.catalog.host, config.endpoints.catalog.port,
             url.parse(offering.productSpecification.href).path);
 
         makeRequest(productUrl, errorMessageProduct, function (err, product) {
@@ -126,7 +127,7 @@ var ordering = (function(){
                 if (!offering.isBundle) {
                     includeProductParty(offering, item, individualCollectionUrl, callback);
                 } else {
-                    var offeringUrl = utils.getAPIURL(config.appSsl, config.appHost, config.endpoints.catalog.port,
+                    var offeringUrl = utils.getAPIURL(config.endpoints.catalog.appSsl, config.endpoints.catalog.host, config.endpoints.catalog.port,
                         url.parse(offering.bundledProductOffering[0].href).path);
                     includeOfferingParty(offeringUrl, item, individualCollectionUrl, callback);
                 }
@@ -180,7 +181,7 @@ var ordering = (function(){
         // Inject customer and seller related parties in the order items in order to make this info
         // available thought the inventory API
 
-        var offeringUrl = utils.getAPIURL(config.appSsl, config.appHost, config.endpoints.catalog.port,
+        var offeringUrl = utils.getAPIURL(config.endpoints.catalog.appSsl, config.endpoints.catalog.host, config.endpoints.catalog.port,
             url.parse(item.productOffering.href).path);
 
         includeOfferingParty(offeringUrl, item, individualCollectionUrl, callback);
@@ -480,7 +481,7 @@ var ordering = (function(){
         try {
 
             var ordering = JSON.parse(req.body);
-            var orderingUrl = utils.getAPIURL(config.appSsl, config.appHost, config.endpoints.ordering.port, req.apiUrl);
+            var orderingUrl = utils.getAPIURL(config.endpoints.ordering.appSsl, config.endpoints.ordering.host, config.endpoints.ordering.port, req.apiUrl);
 
             makeRequest(orderingUrl, 'The requested ordering cannot be retrieved', function(err, previousOrdering) {
                 if (err) {
@@ -589,6 +590,30 @@ var ordering = (function(){
         }
     };
 
+    var orderRegex = new RegExp('/productOrder(\\?|$)');
+
+    var createQuery = indexes.genericCreateQuery.bind(
+        null,
+        ["priority", "category", "state", "notificationContact", "note"],
+        "order",
+        function (req, query) {
+            if (req.query["relatedParty.id"] && (!req.query["relatedParty.role"]
+                || req.query["relatedParty.role"].toLowerCase() == 'customer') ) {
+                indexes.addAndCondition(query, { relatedPartyHash: [indexes.fixUserId(req.query["relatedParty.id"])] });
+            }
+
+            if (req.query["relatedParty.id"] && req.query["relatedParty.role"]
+                && req.query["relatedParty.role"].toLowerCase() == 'seller' ) {
+                indexes.addAndCondition(query, { sellerHash: [indexes.fixUserId(req.query["relatedParty.id"])] });
+            }
+        }
+    );
+
+    var getOrderRequest = indexes.getMiddleware.bind(null, orderRegex, createQuery, indexes.searchOrders);
+
+    var methodIndexed = function methodIndexed(req) {
+        return getOrderRequest(req);
+    };
 
     //////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////// PRE-VALIDATION ///////////////////////////////////////
@@ -610,7 +635,9 @@ var ordering = (function(){
             reqValidators.push(validators[req.method][i].bind(this, req));
         }
 
-        async.series(reqValidators, callback);
+        methodIndexed(req)
+            .catch(() => Promise.resolve(req))
+            .then(() => { async.series(reqValidators, callback); });
     };
 
 
@@ -787,6 +814,14 @@ var ordering = (function(){
         });
     };
 
+    var saveOrderIndex = function saveOrderIndex(req, callback) {
+        var body = JSON.parse(req.body);
+
+        indexes.saveIndexOrder([body])
+            .then(() => callback(null))
+            .catch(() => callback(null));
+    };
+
     var executePostValidation = function(req, callback) {
 
         if (['GET', 'PUT', 'PATCH'].indexOf(req.method.toUpperCase()) >= 0) {
@@ -798,7 +833,7 @@ var ordering = (function(){
             var tasks = [];
             tasks.push(notifyOrder.bind(this, req));
             tasks.push(includeSellersInBillingAccount.bind(this, req));
-
+            tasks.push(saveOrderIndex.bind(this, req));
             async.series(tasks, callback);
 
         } else {

@@ -1,7 +1,7 @@
 .row
-  .col-xs-12
+  .col-xs-12(ng-if="createForm.stepIndex == $index")
     relationship-delete-form(controller="createVM" resource="createVM.data")
-  .col-xs-12
+  .col-xs-12(ng-if="createForm.stepIndex == $index")
     .h4.text-dark-secondary
       strong New relationship
     hr

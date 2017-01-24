@@ -4,6 +4,8 @@ Starting on version 5.4.0, you are able to run the Business API Ecosystem with D
 
 You can build a docker image based on this Dockerfile. This image will contain only an instance of the Business Ecosystem Logic Proxy, exposing port `8000`. This requires that you have [docker](https://docs.docker.com/installation/) installed on your machine.
 
+The current Business API Ecosystem uses the FIWARE IdM to run. In this way, you have to register your instance in the FIWARE IdM as described in the [Business API Ecosystem installation guide](http://business-api-ecosystem.readthedocs.io/en/latest/installation-administration-guide.html#configuring-the-logic-proxy) before running the container since the IdM credentials are required.
+
 If you just want to have a Business Ecosystem Logic Proxy instance running as quickly as possible jump to section *The Fastest Way*.
 
 If you want to know what is behind the scenes of our container you can go ahead and read the build and run sections.
@@ -13,18 +15,43 @@ If you want to know what is behind the scenes of our container you can go ahead 
 To run Business Ecosystem Logic Proxy using Docker, just run the following command:
 
 ```
-sudo docker run -e OAUTH2_CLIENT_ID=your-oauth-client-id -e OAUTH2_CLIENT_SECRET=your-oauth-client-secret -e BIZ_ECOSYS_PORT=your-port -e BIZ_ECOSYS_HOST=your-host -e APIS_HOST=apis-host -e GLASSFISH_PORT=glass-port -e CHARGING_PORT=charg-port -p your-port:8000 conwetlab/biz-ecosystem-logic-proxy
+sudo docker run \
+    -e OAUTH2_CLIENT_ID=your-oauth-client-id \
+    -e OAUTH2_CLIENT_SECRET=your-oauth-client-secret \
+    -e BIZ_ECOSYS_PORT=your-port \
+    -e BIZ_ECOSYS_HOST=your-host \
+    -e GLASSFISH_HOST=glass-host \
+    -e GLASSFISH_PORT=glass-port \
+    -e CHARGING_HOST=charg-host \
+    -e CHARGING_PORT=charg-port \
+    -p your-port:8000 conwetlab/biz-ecosystem-logic-proxy
 ```
 
 Note in the previous command that it is needed to provide some environment variables. Concretely:
 
 * **OAUTH2_CLIENT_ID**: the client id of your application provided  by the FIWARE IdM
 * **OAUTH2_CLIENT_SECRET**: the client secret of your application provided  by the FIWARE IdM
-* **BIZ_ECOSYS_PORT**: Port where the Business Ecosystem Logic proxy is going to run
-* **BIZ_ECOSYS_HOST**: Host where the Business Ecosystem Logic proxy is going to run
-* **APIS_HOST**: Host where the different APIs of the Business API Ecosystem are running
-* **CHARGING_PORT**: Port where the Business Charging Backend is running
-* **GLASSFISH_PORT**: Port where the Glassfish instance with the TMForum APIs is running
+* **BIZ_ECOSYS_PORT**: Port where the Business Ecosystem Logic proxy is going to run, used to build the callaback URL for the IdM
+* **BIZ_ECOSYS_HOST**: Host where the Business Ecosystem Logic proxy is going to run,  used to build the callaback URL for the IdM
+* **GLASSFISH_HOST**: Host where the Glassfish instance with the TMForum and RSS APIs is running
+* **GLASSFISH_PORT**: Port where the Glassfish instance with the TMForum and RSS APIs is running
+* **CHARGING_HOST**: Host where the Business Ecosystem Charging Backend is running
+* **CHARGING_PORT**: Port where the Business Ecosystem Charging Backend is running
+
+Additionally, the Business Ecosystem Logic Proxy image includes a volume located at */business-ecosystem-logic-proxy/indexes* where the different index files are stored.
+
+If you want to locate the host directory where the volume is being mounted, execute the following command:
+```
+$ docker inspect your-containe
+```
+
+As an alternative, you can specify the host directory for the container volume using the -v flag as follows:
+```
+$ sudo docker run \
+    ...
+    -v /home/user/indexes:/business-ecosystem-logic-proxy/indexes
+    ...
+```
 
 ## Build the image
 
@@ -48,7 +75,16 @@ The following line will run the container exposing port `8004`, give it a name -
 
 ```
 
-sudo docker run --name charging1 -e OAUTH2_CLIENT_ID=1111 -e OAUTH2_CLIENT_SECRET=1111 -e BIZ_ECOSYS_PORT=8004 -e BIZ_ECOSYS_HOST=localhost -e APIS_HOST=192.168.1.3 -e GLASSFISH_PORT=8080 -e CHARGING_PORT=8006 -p 8004:8000 biz-ecosystem-logic-proxy
+sudo docker run --name charging1 \
+    -e OAUTH2_CLIENT_ID=1111 \
+    -e OAUTH2_CLIENT_SECRET=1111 \
+    -e BIZ_ECOSYS_PORT=8004 \
+    -e BIZ_ECOSYS_HOST=localhost \
+    -e GLASSFISH_HOST=192.168.1.3 \
+    -e GLASSFISH_PORT=8080 \
+    -e CHARGING_HOST=localhost \
+    -e CHARGING_PORT=8006 \
+    -p 8004:8000 biz-ecosystem-logic-proxy
 
 ```
 

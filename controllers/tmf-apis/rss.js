@@ -47,13 +47,14 @@ var rss = (function () {
 
         // Check if the provider object has been already created
         rssClient.createProvider(req.user, function(err) {
+            var status = null;
             if (err) {
-                return callback({
+                status = {
                     status: 500,
                     message: 'An unexpected error in the RSS API prevented your request to be processed'
-                });
+                };
             }
-            callback();
+            callback(status);
         });
     };
 
@@ -82,12 +83,25 @@ var rss = (function () {
             body.aggregatorValue = config.revenueModel;
             utils.updateBody(req, body);
         }
-        callback();
+        callback(null);
+    };
+
+    var changeCallbackUrl = function changeCallbackUrl(req, callback) {
+        if (/rss\/settlement$/.test(req.apiUrl)) {
+            var body = JSON.parse(req.body);
+            var url = utils.getAPIURL(
+                config.endpoints.charging.appSsl, config.endpoints.charging.host, config.endpoints.charging.port, "/charging/api/reportManagement/created");
+
+            body.callbackUrl = url;
+            utils.updateBody(req, body);
+        }
+
+        callback(null);
     };
 
     var validators = {
         'GET': [utils.validateLoggedIn, validateProvider],
-        'POST': [utils.validateLoggedIn, validateProvider, validateContentRequest],
+        'POST': [utils.validateLoggedIn, validateProvider, validateContentRequest, changeCallbackUrl],
         'PUT': [utils.validateLoggedIn, validateProvider, validateContentRequest],
         'DELETE': [utils.validateLoggedIn, validateProvider],
         'PATCH': [utils.methodNotAllowed]
@@ -107,6 +121,7 @@ var rss = (function () {
     var executePostValidation = function(req, callback) {
         logger.info("Executing RSS post validation");
         if (req.method == 'GET' && req.apiUrl.indexOf('rss/models') >= 0) {
+            var body;
             // Check if the models list is empty
             try {
                 body = JSON.parse(req.body);
@@ -117,8 +132,8 @@ var rss = (function () {
             }
 
             // If the models list is empty create the default revenue model
-            if (!body.length) {
-                rssClient.createDefaultModel(req.user, function(err, response) {
+            if (Array.isArray(body) && !body.length) {
+                rssClient.createDefaultModel(req.user, function (err, response) {
                     if (err) {
                         return callback(err);
                     }
@@ -127,6 +142,16 @@ var rss = (function () {
                     utils.updateBody(req, body);
                     callback();
                 });
+            // Is a Count request
+            } else if (!Array.isArray(body) && !body.size) {
+                // If the count result is 0 means that the default model is not created yet.
+                // It will be created in the first model request, so the 0 is changed by 1
+                body = {
+                    size: 1
+                };
+
+                utils.updateBody(req, body);
+                callback();
             } else {
                 callback();
             }
