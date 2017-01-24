@@ -169,8 +169,6 @@
 	    var rejec = function (response) {
 		deferred.reject(response);
 	    };
-
-	    // params.pop();
 	    params.push(resol, rejec);
 	    
 	    func.apply(null, params);
@@ -182,18 +180,8 @@
 
 	    if(!isOrg){
 		process(Individual.save, [data, deferred]);
-		// Individual.save(data, function (individualCreated) {
-                //     deferred.resolve(individualCreated);
-		// }, function (response) {
-                //     deferred.reject(response);
-		// });
 	    } else {
 		process(Organization.save, [data, deferred]);
-		// Organization.save(data, function (individualCreated) {
-                //     deferred.resolve(individualCreated);
-		// }, function (response) {
-                //     deferred.reject(response);
-		// });
 	    }
 
             return deferred.promise;
@@ -206,21 +194,8 @@
             };
 	    if(!isOrg){
 		process(Individual.get, [params, deferred]);
-		// Individual.get(params, function (individual) {
-                //     extendContactMedium(individual);
-                //     deferred.resolve(individual);
-		// }, function (response) {
-                //     deferred.reject(response);
-		// });
-		
 	    } else {
 		process(Organization.get, [params, deferred]);
-		// Organization.get(params, function (org) {
-                //     extendContactMedium(org);
-                //     deferred.resolve(org);
-		// }, function (response) {
-                //     deferred.reject(response);
-		// });
 	    }
 	    return deferred.promise;
         };
@@ -232,18 +207,8 @@
             };
 	    if(!isOrg) {
 		process(Individual.update, [params, data, deferred]);
-		// Individual.update(params, data, function (individual) {
-                //     deferred.resolve(individual);
-		// }, function (response) {
-                //     deferred.reject(response);
-		// });
 	    } else {
 		process(Organization.update, [params, data, deferred]);
-		// Organization.update(params, data, function (organization) {
-                //     deferred.resolve(organization);
-		// }, function (response) {
-                //     deferred.reject(response);
-		// });
 	    }
 	    return deferred.promise;
         };
@@ -253,14 +218,8 @@
             var params = {
                 id: entry.id
             };
-
 	    if (!isOrg){		
 		process(Individual.updatePartial, [params, data, deferred]);
-		// Individual.updatePartial(params, data, function (individual) {
-                //     deferred.resolve(individual);
-		// }, function (response) {
-                //     deferred.reject(response);
-		// });
 	    } else {
 		process(Organization.updatePartial, [params, data, deferred]);
 	    }
@@ -284,11 +243,12 @@
                     title: ''
 		});
 	    } else {
+		// TODO: Add proper fields. But this object should never be created like this, so its ok
 		return new Organization({
-                    id: "PATATA",
+                    id: "POTATO",
                     contactMedium: [],
 		    description: ""
-            });
+		});
 	    }
         };
 
