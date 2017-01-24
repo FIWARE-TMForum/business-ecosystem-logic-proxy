@@ -32,19 +32,19 @@
         .module('app')
         .factory('Customer', CustomerService);
 
-    function CustomerService($q, $resource, URLS, User, Individual) {
+    function CustomerService($q, $resource, URLS, User, Party) {
         var Customer = $resource(URLS.CUSTOMER_MANAGEMENT + '/customer/:id', {}, {
             update: {method: 'PUT'},
             updatePartial: {method: 'PATCH'}
         });
         Customer.prototype.getEmailAddress = function getEmailAddress() {
-            return findContactMedium(this.contactMedium, Individual.TYPES.CONTACT_MEDIUM.EMAIL_ADDRESS.code);
+            return findContactMedium(this.contactMedium, Party.TYPES.CONTACT_MEDIUM.EMAIL_ADDRESS.code);
         };
         Customer.prototype.getPostalAddress = function getPostalAddress() {
-            return findContactMedium(this.contactMedium, Individual.TYPES.CONTACT_MEDIUM.POSTAL_ADDRESS.code);
+            return findContactMedium(this.contactMedium, Party.TYPES.CONTACT_MEDIUM.POSTAL_ADDRESS.code);
         };
         Customer.prototype.getTelephoneNumber = function getTelephoneNumber() {
-            return findContactMedium(this.contactMedium, Individual.TYPES.CONTACT_MEDIUM.TELEPHONE_NUMBER.code);
+            return findContactMedium(this.contactMedium, Party.TYPES.CONTACT_MEDIUM.TELEPHONE_NUMBER.code);
         };
         Customer.prototype.serialize = function serialize() {
             return {
@@ -61,7 +61,7 @@
         };
 
         var TYPES = {
-            CONTACT_MEDIUM: Individual.TYPES.CONTACT_MEDIUM
+            CONTACT_MEDIUM: Party.TYPES.CONTACT_MEDIUM
         };
 
         var TEMPLATES = {
@@ -70,14 +70,14 @@
                 contactMedium: [],
                 relatedParty: {}
             },
-            CONTACT_MEDIUM: Individual.TEMPLATES.CONTACT_MEDIUM
+            CONTACT_MEDIUM: Party.TEMPLATES.CONTACT_MEDIUM
         };
 
         return {
             EVENTS: EVENTS,
             TEMPLATES: TEMPLATES,
             TYPES: TYPES,
-            ContactMedium: Individual.ContactMedium,
+            ContactMedium: Party.ContactMedium,
             search: search,
             create: create,
             detail: detail,
@@ -154,7 +154,7 @@
         function extendContactMedium(customer) {
             if (angular.isArray(customer.contactMedium)) {
                 customer.contactMedium.forEach(function (data, index) {
-                    customer.contactMedium[index] = new Individual.ContactMedium(data);
+                    customer.contactMedium[index] = new Party.ContactMedium(data);
                 });
             } else {
                 customer.contactMedium = [];

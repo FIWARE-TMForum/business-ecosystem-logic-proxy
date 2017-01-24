@@ -31,49 +31,49 @@
         .controller('ContactMediumCreateCtrl', ContactMediumCreateController)
         .controller('ContactMediumUpdateCtrl', ContactMediumUpdateController);
 
-    function ContactMediumCreateController($scope, $rootScope, $controller, COUNTRIES, Individual) {
+    function ContactMediumCreateController($scope, $rootScope, $controller, COUNTRIES, Party) {
         /* jshint validthis: true */
         var vm = this;
 
         angular.extend(vm, $controller('FormMixinCtrl', {$scope: $scope}));
 
-        vm.CONTACT_MEDIUM = Individual.TYPES.CONTACT_MEDIUM;
+        vm.CONTACT_MEDIUM = Party.TYPES.CONTACT_MEDIUM;
         vm.COUNTRIES = COUNTRIES;
 
-        vm.data = new Individual.ContactMedium();
+        vm.data = new Party.ContactMedium();
         vm.data.resetMedium();
 
         vm.create = create;
 
         function create(form, $parentController) {
             $parentController.createContactMedium(vm.data).then(function () {
-                vm.data = new Individual.ContactMedium();
+                vm.data = new Party.ContactMedium();
                 vm.data.resetMedium();
                 vm.resetForm(form);
             });
         }
     }
 
-    function ContactMediumUpdateController($element, $scope, $rootScope, $controller, COUNTRIES, Individual) {
+    function ContactMediumUpdateController($element, $scope, $rootScope, $controller, COUNTRIES, Party) {
         /* jshint validthis: true */
         var vm = this;
         var _index;
 
         angular.extend(vm, $controller('FormMixinCtrl', {$scope: $scope}));
 
-        vm.CONTACT_MEDIUM = Individual.TYPES.CONTACT_MEDIUM;
+        vm.CONTACT_MEDIUM = Party.TYPES.CONTACT_MEDIUM;
         vm.COUNTRIES = COUNTRIES;
 
         vm.update = update;
 
-        $scope.$on(Individual.EVENTS.CONTACT_MEDIUM_UPDATE, function (event, index, contactMedium) {
+        $scope.$on(Party.EVENTS.CONTACT_MEDIUM_UPDATE, function (event, index, contactMedium) {
             vm.data = angular.copy(contactMedium);
             _index = index;
             $element.modal('show');
         });
 
         function update(form) {
-            $rootScope.$broadcast(Individual.EVENTS.CONTACT_MEDIUM_UPDATED, _index, vm.data);
+            $rootScope.$broadcast(Party.EVENTS.CONTACT_MEDIUM_UPDATED, _index, vm.data);
             vm.resetForm(form);
         }
     }

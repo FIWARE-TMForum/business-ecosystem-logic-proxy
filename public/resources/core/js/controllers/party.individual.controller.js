@@ -30,7 +30,7 @@
         .module('app')
         .controller('IndividualUpdateCtrl', IndividualUpdateController);
 
-    function IndividualUpdateController($state, $scope, $rootScope, $controller, EVENTS, DATA_STATUS, COUNTRIES, PROMISE_STATUS, Utils, Individual, User) {
+    function IndividualUpdateController($state, $scope, $rootScope, $controller, EVENTS, DATA_STATUS, COUNTRIES, PROMISE_STATUS, Utils, Party, User) {
         /* jshint validthis: true */
         var vm = this;
 
@@ -44,8 +44,12 @@
         vm.createContactMedium = createContactMedium;
         vm.updateContactMedium = updateContactMedium;
         vm.removeContactMedium = removeContactMedium;
+	vm.isOrganization = isOrganization;
+	vm.hasAdminRole = hasAdminRole;
+	vm.loggedUser = User.loggedUser;
+	vm.individual = User.loggedUser;
 
-        $scope.$on(Individual.EVENTS.CONTACT_MEDIUM_UPDATED, function (event, index, contactMedium) {
+        $scope.$on(Party.EVENTS.CONTACT_MEDIUM_UPDATED, function (event, index, contactMedium) {
             updateContactMediumPromise = vm.item.updateContactMedium(index, contactMedium).then(function () {
                 angular.merge(vm.data.contactMedium[index], contactMedium);
                 $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {
@@ -58,37 +62,58 @@
             });
         });
 
-        Individual.detail(User.loggedUser.id).then(function (individualRetrieved) {
-            retrieveIndividual(individualRetrieved);
-        }, function (response) {
+	// Now, this function is called at the beginning of the execution and every change call this function in order to keep frontend and backend coherence
+	$scope.$on(Party.EVENTS.USER_SESSION_SWITCHED, function (event, message, obj) {
+	    if (isOrganization() || User.loggedUser.currentUser.id === User.loggedUser.id){
+		initialiceData();
+	    }
+	});
 
-            if (response.status === 404) {
-                retrieveIndividual();
-            } else {
-                vm.status = DATA_STATUS.ERROR;
-                vm.errorMessage = Utils.parseError(response, 'Unexpected error trying to retrieve your personal information.')
-            }
-        });
+	initialiceData()
 
-        function retrieveIndividual(individual) {
+	function initialiceData() {  
+            Party.detail(User.loggedUser.currentUser.id, isOrganization()).then(function (infoRetrieved) {
+		if (isOrganization()) {
+		    vm.orgData = infoRetrieved;
+		}
+		retrievePartyInfo(infoRetrieved);
+            }, function (response) {
+		if (response.status === 404) {
+		    retrievePartyInfo();
+		} else {
+                    vm.status = DATA_STATUS.ERROR;
+                    vm.errorMessage = Utils.parseError(response, 'Unexpected error trying to retrieve your personal information.')
+		}
+            });
+	};
+	
+	function isOrganization() {
+	    return User.loggedUser.id !== User.loggedUser.currentUser.id;
+	};
 
-            if (individual == null) {
-                individual = Individual.launch();
-                vm.isNotCreated = true;
-            }
+	function hasAdminRole(){
+	    return Party.hasAdminRole();
+	};
 
-            vm.status = DATA_STATUS.LOADED;
-            vm.item = individual;
-            vm.data = angular.copy(individual);
-            //vm.data.birthDate = new Date(vm.data.birthDate);
-        }
+	function retrieveProfile(profile) {
+	    vm.status = DATA_STATUS.LOADED;
+	    vm.item = profile;
+            vm.data = angular.copy(profile);
+	};
+
+	function retrievePartyInfo(party) {
+	    if (party == null) {
+		party = Party.launch(isOrganization());
+		vm.isNotCreated = true;
+	    }
+	    retrieveProfile(party);
+	};
 
         var updatePromise = null;
 
         function update() {
-
             if (vm.isNotCreated) {
-                updatePromise = Individual.create(vm.data);
+                updatePromise = Party.create(vm.data, isOrganization());
                 updatePromise.then(function () {
                     $state.go('settings.general', {}, {
                         reload: true
@@ -102,7 +127,7 @@
                     });
                 });
             } else {
-                updatePromise = Individual.update(vm.item, vm.data);
+                updatePromise = Party.update(vm.item, vm.data, isOrganization());
                 updatePromise.then(function () {
                     $state.go('settings.general', {}, {
                         reload: true
@@ -147,7 +172,7 @@
         var updateContactMediumPromise = null;
 
         function updateContactMedium(index) {
-            $rootScope.$broadcast(Individual.EVENTS.CONTACT_MEDIUM_UPDATE, index, vm.item.contactMedium[index]);
+            $rootScope.$broadcast(Party.EVENTS.CONTACT_MEDIUM_UPDATE, index, vm.item.contactMedium[index]);
         }
 
         Object.defineProperty(updateContactMedium, 'status', {
