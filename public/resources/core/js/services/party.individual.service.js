@@ -30,7 +30,7 @@
 
     angular
         .module('app')
-        .factory('partyService', partyService)
+        .factory('Party', partyService)
 
     function partyService($q, $resource, URLS, COUNTRIES, User) {
         var Individual = $resource(URLS.PARTY_MANAGEMENT + '/individual/:id', {}, {
@@ -159,10 +159,13 @@
 	    return org.roles.findIndex(x => x.name === "Admin") > -1;
 	};
 
-	function process(func, params) {
+	function process(func, params, deferred, transform) {
 
-	    var deferred = params.pop();
+	    // credits to @RockNeurotiko for this tip.
+	    transform = (transform == null) ? x => x : transform;
+	    
 	    var resol = function (partyObj) {
+		transform(partyObj);
 		deferred.resolve(partyObj);
 	    };
 
@@ -179,9 +182,9 @@
             var deferred = $q.defer();
 
 	    if(!isOrg){
-		process(Individual.save, [data, deferred]);
+		process(Individual.save, [data], deferred);
 	    } else {
-		process(Organization.save, [data, deferred]);
+		process(Organization.save, [data], deferred);
 	    }
 
             return deferred.promise;
@@ -193,9 +196,9 @@
                 id: id
             };
 	    if(!isOrg){
-		process(Individual.get, [params, deferred]);
+		process(Individual.get, [params], deferred, extendContactMedium);
 	    } else {
-		process(Organization.get, [params, deferred]);
+		process(Organization.get, [params], deferred, extendContactMedium);
 	    }
 	    return deferred.promise;
         };
@@ -206,9 +209,9 @@
                 id: entry.id
             };
 	    if(!isOrg) {
-		process(Individual.update, [params, data, deferred]);
+		process(Individual.update, [params, data], deferred);
 	    } else {
-		process(Organization.update, [params, data, deferred]);
+		process(Organization.update, [params, data], deferred);
 	    }
 	    return deferred.promise;
         };
@@ -219,9 +222,9 @@
                 id: entry.id
             };
 	    if (!isOrg){		
-		process(Individual.updatePartial, [params, data, deferred]);
+		process(Individual.updatePartial, [params, data], deferred);
 	    } else {
-		process(Organization.updatePartial, [params, data, deferred]);
+		process(Organization.updatePartial, [params, data], deferred);
 	    }
 
             return deferred.promise;
@@ -252,14 +255,14 @@
 	    }
         };
 
-        function extendContactMedium(param) {
+        function extendContactMedium(party) {
 
-            if (angular.isArray(param.contactMedium)) {
-                param.contactMedium = param.contactMedium.map(function (data) {
+            if (angular.isArray(party.contactMedium)) {
+                party.contactMedium = party.contactMedium.map(function (data) {
                     return new ContactMedium(data);
                 });
             } else {
-                param.contactMedium = [];
+                party.contactMedium = [];
             }
         };
 

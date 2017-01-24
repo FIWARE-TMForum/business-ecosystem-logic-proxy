@@ -39,7 +39,7 @@
         .controller('UserProfileCtrl', UserProfileController)
         .controller('UserShoppingCartCtrl', UserShoppingCartController);
 
-    function UserController($state, $scope, $rootScope, EVENTS, LIFECYCLE_STATUS, FILTER_STATUS, User, partyService) {
+    function UserController($state, $scope, $rootScope, EVENTS, LIFECYCLE_STATUS, FILTER_STATUS, User, Party) {
         /* jshint validthis: true */
         var vm = this;
         vm.itemsContained = {};
@@ -93,7 +93,7 @@
 	};
 
 	function propagateSwitch() {
-	    $scope.$broadcast(partyService.EVENTS.USER_SESSION_SWITCHED, 'User has switched session', {});
+	    $scope.$broadcast(Party.EVENTS.USER_SESSION_SWITCHED, 'User has switched session', {});
 	};
 
 	function switchToUser() {
