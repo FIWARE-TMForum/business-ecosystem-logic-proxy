@@ -58,19 +58,16 @@
         vm.updateList = updateList;
         function updateList() {
             vm.list.status = LOADING;
-	    // Offset to 0 because we are going to refresh the list
-	    vm.offset = 0;
-	    
-	    // Keep checking if offset >= 0, just in case...
+
             if (vm.offset >= 0) {
-		// Create query with body for filtering catalogs
+                // Create query with body for filtering catalogs
                 var page = {
                     offset: vm.offset,
                     size: vm.size,
                     body: vm.sidebarInput
                 };
 
-		// Search query
+                // Search query
                 Catalogue.search(page).then(function (catalogueList) {
                     angular.copy(catalogueList, vm.list);
                     vm.list.status = LOADED;
@@ -82,31 +79,13 @@
         }
 
         function getElementsLength() {
-	    // Count apllies filters such as body
+            // Count apllies filters such as body
             return Catalogue.count({ body: vm.sidebarInput });
         }
 
         $scope.$watch(function () {
             return vm.offset;
-        }, function () {
-            vm.list.status = LOADING;
-
-            if (vm.offset >= 0) {
-                var page = {
-                    offset: vm.offset,
-                    size: vm.size,
-                    body: vm.sidebarInput
-                };
-
-                Catalogue.search(page).then(function (catalogueList) {
-                    angular.copy(catalogueList, vm.list);
-                    vm.list.status = LOADED;
-                }, function (response) {
-                    vm.error = Utils.parseError(response, 'It was impossible to load the list of catalogs');
-                    vm.list.status = ERROR;
-                });
-            }
-        });
+        }, updateList);
     }
 
     function CatalogueSearchController($scope, $state, $rootScope, EVENTS, Catalogue, LIFECYCLE_STATUS, DATA_STATUS, Utils) {

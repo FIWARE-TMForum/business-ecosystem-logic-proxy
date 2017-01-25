@@ -290,7 +290,7 @@ describe("Test index helper library", function () {
     var catalogData = {
         id: 3,
         href: "http://3",
-	description: "Description",
+        description: "Description",
         lifecycleStatus: "Obsolete",
         name: "Name",
         relatedParty: [{id: "rock"}]
@@ -299,7 +299,7 @@ describe("Test index helper library", function () {
     var catalogExpected = {
         id: "catalog:3",
         originalId: 3,
-	body: ["name", "description"],
+        body: ["name", "description"],
         sortedId: "000000000003",
         relatedPartyHash: [md5("rock")],
         relatedParty: ["rock"],

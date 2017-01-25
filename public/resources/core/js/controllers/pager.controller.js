@@ -108,7 +108,7 @@
             managedCtrl.getElementsLength().then(function (response) {
                 nPages = Math.ceil(response.size/pageSize);
 
-		pages = [];
+                pages = [];
                 var maxP = nPages < maxPages ? nPages : maxPages;
                 for (var i = 0; i < maxP; i++) {
                     pages.push({
@@ -123,15 +123,13 @@
             });
         }
 
-	// Load initial pages
+        // Load initial pages
         loadPages();
 
         $scope.$watch(() => managedCtrl.sidebarInput, () => {
-	    console.log(managedCtrl.sidebarInput);
+            console.log(managedCtrl.sidebarInput);
             if (typeof managedCtrl.sidebarInput === "undefined") return;
             loadPages();
         });
-
     }
-
 })();
