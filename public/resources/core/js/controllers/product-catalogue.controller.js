@@ -48,13 +48,6 @@
         vm.getElementsLength = getElementsLength;
         vm.sidebarInput = "";
 
-        // Initialize the search input content
-        vm.initializeInput = initializeInput;
-        function initializeInput() {
-            if($state.params.body !== undefined)
-                vm.sidebarInput = $state.params.body;
-        }
-
         vm.updateList = updateList;
         function updateList() {
             vm.list.status = LOADING;

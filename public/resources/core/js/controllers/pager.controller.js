@@ -127,7 +127,6 @@
         loadPages();
 
         $scope.$watch(() => managedCtrl.sidebarInput, () => {
-            console.log(managedCtrl.sidebarInput);
             if (typeof managedCtrl.sidebarInput === "undefined") return;
             loadPages();
         });
