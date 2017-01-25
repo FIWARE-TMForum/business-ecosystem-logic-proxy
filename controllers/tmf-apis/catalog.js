@@ -1050,6 +1050,7 @@ var catalog = (function() {
                 indexes.addAndCondition(query, { relatedPartyHash: [indexes.fixUserId(req.query["relatedParty.id"])]});
     	    }
 
+            queryAndOrCommas(req.query["body"], "body", query);
             lifecycleQuery(req, query);
 	});
 
@@ -1087,6 +1088,7 @@ var catalog = (function() {
                 indexes.addAndCondition(query, { relatedPartyHash: [indexes.fixUserId(req.query["relatedParty.id"])] });
             }
 
+            queryAndOrCommas(req.query["body"], "body", query);
             lifecycleQuery(req, query);
         }
     );
