@@ -40,10 +40,6 @@ text = ""
 with open("./config.js") as f:
     text = f.read()
 
-
-text = text.replace("'port': '8080'", "'port': '{}'".format(getenv('GLASSFISH_PORT')))
-text = text.replace("'port': '8006'", "'port': '{}'".format(getenv('CHARGING_PORT')))
-
 # Include general configuration
 port = {'matchport': "config.port = 80;",
         'port': "config.port = {};".format("8000")}
