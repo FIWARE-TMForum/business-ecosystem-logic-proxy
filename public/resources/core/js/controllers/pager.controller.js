@@ -104,21 +104,32 @@
             return currPage == nPages - 1;
         }
 
-        managedCtrl.getElementsLength().then(function (response) {
-            nPages = Math.ceil(response.size/pageSize);
+        function loadPages() {
+            managedCtrl.getElementsLength().then(function (response) {
+                nPages = Math.ceil(response.size/pageSize);
 
-            var maxP = nPages < maxPages ? nPages : maxPages;
-            for (var i = 0; i < maxP; i++) {
-                pages.push({
-                    page: i
-                })
-            }
-            // Load initial page
-            managedCtrl.offset = 0;
-        }, function (response) {
-            managedCtrl.error = Utils.parseError(response, 'It was impossible to load the list of elements');
-            managedCtrl.list.status = 'ERROR';
+                pages = [];
+                var maxP = nPages < maxPages ? nPages : maxPages;
+                for (var i = 0; i < maxP; i++) {
+                    pages.push({
+                        page: i
+                    })
+                }
+                // Load initial page
+                managedCtrl.offset = 0;
+            }, function (response) {
+                managedCtrl.error = Utils.parseError(response, 'It was impossible to load the list of elements');
+                managedCtrl.list.status = 'ERROR';
+            });
+        }
+
+        // Load initial pages
+        loadPages();
+
+        $scope.$watch(() => managedCtrl.sidebarInput, () => {
+            console.log(managedCtrl.sidebarInput);
+            if (typeof managedCtrl.sidebarInput === "undefined") return;
+            loadPages();
         });
     }
-
 })();
