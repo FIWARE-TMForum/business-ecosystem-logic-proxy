@@ -17,7 +17,7 @@
               input.form-control(
                 type="text"
                 name="userName"
-                ng-model="updateVM.individual.id"
+                ng-model="updateVM.loggedUser.id"
                 readonly
               )
           .col-sm-6
@@ -26,7 +26,7 @@
               input.form-control(
                 type="text"
                 name="accessToken"
-                ng-model="updateVM.individual.bearerToken"
+                ng-model="updateVM.loggedUser.bearerToken"
                 readonly
               )
         .row
@@ -36,7 +36,7 @@
               input.form-control(
                 type="email"
                 name="email"
-                ng-model="updateVM.individual.email"
+                ng-model="updateVM.loggedUser.email"
                 readonly
               )
     .a(ng-if="!updateVM.isOrganization()")
