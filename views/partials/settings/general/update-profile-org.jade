@@ -15,14 +15,14 @@
                 name="name"
                 ng-model="updateVM.data.tradingName"
                 required
-                ng-maxlength="30"
+                ng-maxlength="100"
               )
               .help-block(
                 ng-messages="updateVM.formOrg.name.$error"
                 ng-show="updateVM.hasFieldError(updateVM.formOrg.name)"
               )
                 span(ng-message="required") This field is required.
-                span(ng-message="maxlength") This field must not exceed 30 chars.
+                span(ng-message="maxlength") This field must not exceed 100 chars.
           .col-sm-6
             .form-group(ng-class="{ 'has-error': updateVM.hasFieldError(updateVM.formOrg.type) }")
               label Type
@@ -78,7 +78,7 @@
             .form-group(ng-class="{ 'has-error': updateVM.hasFieldError(updateVM.formOrg.organizationIdentification.issuingDate) }")
               label Issuing Date
                 input.form-control(
-                  type="text"
+                  type="date"
                   name="organizationIdentification.issuingDate"
                   ng-model="updateVM.data.organizationIdentification.issuingDate"
                   placeholder="yyyy-MM-dd"

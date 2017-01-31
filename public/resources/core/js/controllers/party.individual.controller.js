@@ -47,6 +47,8 @@
 	vm.isOrganization = isOrganization;
 	vm.hasAdminRole = hasAdminRole;
 	vm.loggedUser = User.loggedUser;
+	
+
 
         $scope.$on(Party.EVENTS.CONTACT_MEDIUM_UPDATED, function (event, index, contactMedium) {
             updateContactMediumPromise = vm.item.updateContactMedium(index, contactMedium).then(function () {
@@ -70,7 +72,7 @@
 
 	initialiceData()
 
-	function initialiceData() {  
+	function initialiceData() {
             Party.detail(User.loggedUser.currentUser.id, isOrganization()).then(function (infoRetrieved) {
 		retrievePartyInfo(infoRetrieved);
             }, function (response) {
@@ -95,6 +97,19 @@
 	    vm.status = DATA_STATUS.LOADED;
 	    vm.item = profile;
             vm.data = angular.copy(profile);
+	    unparseDate();
+	};
+
+	function unparseDate() {
+	    if (isOrganization()) {
+	    	vm.data.organizationIdentification.issuingDate = new Date(vm.data.organizationIdentification.issuingDate);
+	    }
+	};
+
+	function parseDate(){
+	    if (isOrganization()) {
+		vm.data.organizationIdentification.issuingDate = moment(vm.data.organizationIdentification.issuingDate).format()
+	    }
 	};
 
 	function retrievePartyInfo(party) {
@@ -123,7 +138,9 @@
                     });
                 });
             } else {
+		parseDate();
                 updatePromise = Party.update(vm.item, vm.data, isOrganization());
+		unparseDate();
                 updatePromise.then(function () {
                     $state.go('settings.general', {}, {
                         reload: true
