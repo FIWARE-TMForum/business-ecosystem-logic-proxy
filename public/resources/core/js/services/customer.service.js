@@ -99,10 +99,12 @@
             return deferred.promise;
         }
 
+	
+
         function create(data) {
             var deferred = $q.defer();
 
-            data.name = User.loggedUser.id;
+            data.name = User.loggedUser.currentUser.id;
             data.relatedParty = User.serialize();
 
             Customer.save(data, function (customer) {
