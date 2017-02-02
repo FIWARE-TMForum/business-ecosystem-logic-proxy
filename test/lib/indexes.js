@@ -22,7 +22,9 @@
 var proxyrequire = require("proxyquire"),
     md5 = require("blueimp-md5"),
     config = require("../../config"),
-    utils = require("../../lib/utils");
+    utils = require("../../lib/utils"),
+    testUtils = require("../utils.js"),
+    nock = require('nock');
 
 describe("Test index helper library", function () {
     var createSearchMock = function createSearchMock(path, err, extra) {
@@ -83,9 +85,21 @@ describe("Test index helper library", function () {
             request = function () {};
         }
 
+        var mockUtils = {
+            getAPIHost: function(){
+                return testUtils.getDefaultConfig().endpoints.catalog.host;
+            },
+
+            getAPIPort: function(){
+                return testUtils.getDefaultConfig().endpoints.catalog.port;
+            }
+            
+        };
+        
         return proxyrequire("../../lib/indexes.js", {
             "search-index": method,
-            request: request
+            request: request,
+            "./utils": mockUtils
         });
     };
 
@@ -642,8 +656,10 @@ describe("Test index helper library", function () {
     var inventoryData = {
         id: 12,
         productOffering: {
-            id: 5
+            id: 5,
+            href: "http://example.com/catalog/offering/5"
         },
+        searchable: ["offername", "offerdescription"],
         relatedParty: [{id: "rock", role: "customer"}],
         href: "http://12",
         name: "inventoryName",
@@ -653,9 +669,11 @@ describe("Test index helper library", function () {
         terminationDate: 232323233
     };
 
+    
     var inventoryExpected = {
         id: "inventory:12",
         originalId: 12,
+        body: ["offername", "offerdescription"],
         sortedId: "000000000012",
         productOffering: 5,
         relatedPartyHash: [md5("rock")],
@@ -670,16 +688,27 @@ describe("Test index helper library", function () {
 
     it("should convert inventory data correctly", function () {
         var indexes = getIndexLib();
+
         expect(indexes.convertInventoryData(inventoryData)).toEqual(inventoryExpected);
     });
 
-    it("should save converted inventory data correctly", function (done) {
+    fit("should save converted inventory data correctly", function (done) {
         var extra = {
             extraadd: (data, ops) => {
                 expect(data).toEqual([inventoryExpected]);
                 expect(ops).toEqual({});
-            }
+            },
+            request: require('request')
         };
+
+        console.log("NO PETA");
+        
+        nock("http://" + testUtils.getDefaultConfig().endpoints.host + ":" + testUtils.getDefaultConfig().endpoints.port)
+            .get("/catalog/offering/5")
+            .reply(200, {name: "OfferName2", description: "Description2"});
+
+        console.log("NO PETA TEST1");
+        
         helper("indexes/inventory", null, extra, "saveIndexInventory", (si, extra) => {
             expect(extra).toBeUndefined();
             expect(si.add).toHaveBeenCalled();

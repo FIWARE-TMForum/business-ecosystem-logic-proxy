@@ -67,6 +67,10 @@
                 params['size'] = filters.size;
             }
 
+            if (filters.body !== undefined) {
+                params['body'] = filters.body.replace(/\s/g, ',');
+            }
+
             method(params, callback, function (response) {
                 deferred.reject(response);
             });

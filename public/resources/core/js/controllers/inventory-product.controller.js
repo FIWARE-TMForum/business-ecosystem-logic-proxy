@@ -48,6 +48,28 @@
 
         vm.showFilters = showFilters;
         vm.getElementsLength = getElementsLength;
+        vm.searchInput = "";
+
+        // Initialize the search input content
+        vm.initializeInput = initializeInput;
+        function initializeInput() {
+            if($state.params.body !== undefined)
+                vm.searchInput = $state.params.body;
+        }
+
+        // Returns the input content
+        vm.getSearchInputContent = getSearchInputContent;
+        function getSearchInputContent() {
+            // Returns the content of the search input
+            return vm.searchInput;
+        }
+
+        // Handle enter press event
+        vm.handleEnterKeyUp = handleEnterKeyUp;
+        function handleEnterKeyUp(event) {
+            if (event.keyCode == 13)
+                $("#searchbutton").click();
+        }
 
         $scope.$watch(function () {
             return vm.offset;
@@ -229,7 +251,7 @@
 
         function isRenewable() {
             return hasProductPrice() && (vm.item.productPrice[0].priceType.toLowerCase() == 'recurring'
-                || isUsage());
+                                         || isUsage());
         }
 
         function renewProduct() {
