@@ -47,6 +47,10 @@
         Individual.prototype.updateContactMedium = updateContactMedium;
         Individual.prototype.removeContactMedium = removeContactMedium;
 
+	Organization.prototype.appendContactMedium = appendContactMedium;
+	Organization.prototype.updateContactMedium = updateContactMedium;
+        Organization.prototype.removeContactMedium = removeContactMedium;
+
         var EVENTS = {
             CONTACT_MEDIUM_CREATED: '$contactMediumCreated',
             CONTACT_MEDIUM_UPDATE: '$contactMediumUpdate',
@@ -145,9 +149,14 @@
             update: update,
             launch: launch,
 	    getCurrentOrg: getCurrentOrg,
-	    hasAdminRole: hasAdminRole
+	    hasAdminRole: hasAdminRole,
+	    isOrganization: isOrganization
         };
 
+	function isOrganization() {
+	    return User.loggedUser.id !== User.loggedUser.currentUser.id;
+	};
+	
 	function getCurrentOrg() {
 	    var org = User.loggedUser.currentUser;
 	    return User.loggedUser.organizations.find( x => x.id === org.id);
@@ -256,7 +265,6 @@
         };
 
         function extendContactMedium(party) {
-
             if (angular.isArray(party.contactMedium)) {
                 party.contactMedium = party.contactMedium.map(function (data) {
                     return new ContactMedium(data);
@@ -284,8 +292,8 @@
             var dataUpdated = {
                 contactMedium: this.contactMedium.concat(contactMedium)
             };
-
-            updatePartial(this, dataUpdated).then(function () {
+	    
+            updatePartial(this, dataUpdated, isOrganization()).then(function () {
                 this.contactMedium.push(contactMedium);
                 deferred.resolve(this);
             }.bind(this), function (response) {
@@ -303,8 +311,7 @@
             };
 
             dataUpdated.contactMedium[index] = contactMedium;
-
-            updatePartial(this, dataUpdated).then(function () {
+            updatePartial(this, dataUpdated, isOrganization()).then(function () {
                 angular.merge(this.contactMedium[index], contactMedium);
                 deferred.resolve(this);
             }.bind(this), function (response) {
@@ -323,7 +330,7 @@
 
             dataUpdated.contactMedium.splice(index, 1);
 
-            updatePartial(this, dataUpdated).then(function () {
+            updatePartial(this, dataUpdated, isOrganization()).then(function () {
                 this.contactMedium.splice(index, 1);
                 deferred.resolve(this);
             }.bind(this), function (response) {
