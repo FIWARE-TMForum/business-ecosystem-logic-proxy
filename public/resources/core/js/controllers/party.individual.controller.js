@@ -35,7 +35,7 @@
         var vm = this;
 
         angular.extend(vm, $controller('FormMixinCtrl', {$scope: $scope}));
-
+	
         vm.COUNTRIES = COUNTRIES;
         vm.STATUS = PROMISE_STATUS;
 
@@ -47,7 +47,8 @@
 	vm.isOrganization = isOrganization;
 	vm.hasAdminRole = hasAdminRole;
 	vm.loggedUser = User.loggedUser;
-	vm.individual = User.loggedUser;
+	
+
 
         $scope.$on(Party.EVENTS.CONTACT_MEDIUM_UPDATED, function (event, index, contactMedium) {
             updateContactMediumPromise = vm.item.updateContactMedium(index, contactMedium).then(function () {
@@ -71,11 +72,8 @@
 
 	initialiceData()
 
-	function initialiceData() {  
+	function initialiceData() {
             Party.detail(User.loggedUser.currentUser.id, isOrganization()).then(function (infoRetrieved) {
-		if (isOrganization()) {
-		    vm.orgData = infoRetrieved;
-		}
 		retrievePartyInfo(infoRetrieved);
             }, function (response) {
 		if (response.status === 404) {
@@ -99,6 +97,19 @@
 	    vm.status = DATA_STATUS.LOADED;
 	    vm.item = profile;
             vm.data = angular.copy(profile);
+	    unparseDate();
+	};
+
+	function unparseDate() {
+	    if (isOrganization()) {
+	    	vm.data.organizationIdentification.issuingDate = new Date(vm.data.organizationIdentification.issuingDate);
+	    }
+	};
+
+	function parseDate(){
+	    if (isOrganization()) {
+		vm.data.organizationIdentification.issuingDate = moment(vm.data.organizationIdentification.issuingDate).format()
+	    }
 	};
 
 	function retrievePartyInfo(party) {
@@ -127,7 +138,9 @@
                     });
                 });
             } else {
+		parseDate();
                 updatePromise = Party.update(vm.item, vm.data, isOrganization());
+		unparseDate();
                 updatePromise.then(function () {
                     $state.go('settings.general', {}, {
                         reload: true

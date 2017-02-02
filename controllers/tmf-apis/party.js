@@ -54,20 +54,20 @@ var party = (function() {
     var validateUpdate = function(req, callback) {
 
         var individualsPattern = new RegExp('^/' + config.endpoints.party.path +
-            '/api/partyManagement/v2/individual(/([^/]*))?$');
+            '/api/partyManagement/v2/(individual|organization)(/([^/]*))?$');
         var apiPath = url.parse(req.apiUrl).pathname;
 
         var regexResult = individualsPattern.exec(apiPath);
 
-        if (!regexResult || !regexResult[2]) {
+        if (!regexResult || !regexResult[3]) {
             callback({
                 status: 404,
                 message: 'The given path is invalid'
             });
         } else {
-
-            // regexResult[2] contains the user name
-            if (req.user.id === regexResult[2]) {
+            // regexResult[3] contains the user id
+	    var bod = JSON.parse(req.body)
+            if (req.user.id === regexResult[3] || bod.id === regexResult[3]) {
                 callback(null);
             } else {
                 callback({

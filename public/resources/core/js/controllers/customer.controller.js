@@ -31,7 +31,7 @@
         .controller('CustomerSearchCtrl', CustomerSearchController)
         .controller('CustomerUpdateCtrl', CustomerUpdateController);
 
-    function CustomerSearchController($scope, $rootScope, DATA_STATUS, PROMISE_STATUS, EVENTS, Utils, Customer) {
+    function CustomerSearchController($scope, $rootScope, DATA_STATUS, PROMISE_STATUS, EVENTS, Utils, Customer, User, Party) {
         /* jshint validthis: true */
         var vm = this;
         var updateCustomerPromise = null;
@@ -40,7 +40,8 @@
 
         vm.list = [];
         vm.status = DATA_STATUS.LOADING;
-
+	vm.canEditOrAdd = canEditOrAdd;
+	
         vm.updateCustomer = updateCustomer;
 
         $scope.$on(Customer.EVENTS.CUSTOMER_CREATED, function (event, customer) {
@@ -62,14 +63,27 @@
                 });
             });
         });
+	
+	$scope.$on(Party.EVENTS.USER_SESSION_SWITCHED, function (event, message, obj) {
+	    updateShippingList();
+	});
 
-        Customer.search().then(function (customers) {
-            vm.list = customers;
-            vm.status = DATA_STATUS.LOADED;
-        }, function (response) {
-            vm.errorMessage = Utils.parseError(response, 'Unexpected error trying to retrieve the list of shipping address.');
-            vm.status = DATA_STATUS.ERROR;
-        });
+	function canEditOrAdd() {
+	    return User.loggedUser.currentUser.id === User.loggedUser.id || Party.hasAdminRole();
+	};
+
+	updateShippingList();
+	
+	function updateShippingList() {
+            Customer.search().then(function (customers) {
+		vm.list = customers.filter(x =>
+					   x.name === User.loggedUser.currentUser.id);
+		vm.status = DATA_STATUS.LOADED;
+            }, function (response) {
+		vm.errorMessage = Utils.parseError(response, 'Unexpected error trying to retrieve the list of shipping address.');
+		vm.status = DATA_STATUS.ERROR;
+            });
+	}
 
         function updateCustomer(index) {
             $rootScope.$broadcast(Customer.EVENTS.CUSTOMER_UPDATE, vm.list[index]);
