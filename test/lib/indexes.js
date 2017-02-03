@@ -24,6 +24,7 @@ var proxyrequire = require("proxyquire"),
     config = require("../../config"),
     utils = require("../../lib/utils"),
     testUtils = require("../utils.js"),
+    requestLib = require('request'),
     nock = require('nock');
 
 describe("Test index helper library", function () {
@@ -692,23 +693,19 @@ describe("Test index helper library", function () {
         expect(indexes.convertInventoryData(inventoryData)).toEqual(inventoryExpected);
     });
 
-    fit("should save converted inventory data correctly", function (done) {
+    it("should save converted inventory data correctly", function (done) {
         var extra = {
             extraadd: (data, ops) => {
                 expect(data).toEqual([inventoryExpected]);
                 expect(ops).toEqual({});
             },
-            request: require('request')
+            request: requestLib
         };
 
-        console.log("NO PETA");
-        
-        nock("http://" + testUtils.getDefaultConfig().endpoints.host + ":" + testUtils.getDefaultConfig().endpoints.port)
+        nock("http://" + testUtils.getDefaultConfig().endpoints.catalog.host + ":" + testUtils.getDefaultConfig().endpoints.catalog.port)
             .get("/catalog/offering/5")
             .reply(200, {name: "OfferName2", description: "Description2"});
 
-        console.log("NO PETA TEST1");
-        
         helper("indexes/inventory", null, extra, "saveIndexInventory", (si, extra) => {
             expect(extra).toBeUndefined();
             expect(si.add).toHaveBeenCalled();
