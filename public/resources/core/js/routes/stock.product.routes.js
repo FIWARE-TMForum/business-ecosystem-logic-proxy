@@ -34,7 +34,7 @@
 
         $stateProvider
             .state('stock.product', {
-                url: '/product?status&type',
+                url: '/product?status&type&body',
                 params: {
                     owner: true,
                     flow: 1,

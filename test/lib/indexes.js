@@ -22,7 +22,10 @@
 var proxyrequire = require("proxyquire"),
     md5 = require("blueimp-md5"),
     config = require("../../config"),
-    utils = require("../../lib/utils");
+    utils = require("../../lib/utils"),
+    testUtils = require("../utils.js"),
+    requestLib = require('request'),
+    nock = require('nock');
 
 describe("Test index helper library", function () {
     var createSearchMock = function createSearchMock(path, err, extra) {
@@ -83,9 +86,21 @@ describe("Test index helper library", function () {
             request = function () {};
         }
 
+        var mockUtils = {
+            getAPIHost: function(){
+                return testUtils.getDefaultConfig().endpoints.catalog.host;
+            },
+
+            getAPIPort: function(){
+                return testUtils.getDefaultConfig().endpoints.catalog.port;
+            }
+            
+        };
+        
         return proxyrequire("../../lib/indexes.js", {
             "search-index": method,
-            request: request
+            request: request,
+            "./utils": mockUtils
         });
     };
 
@@ -290,6 +305,7 @@ describe("Test index helper library", function () {
     var catalogData = {
         id: 3,
         href: "http://3",
+        description: "Description",
         lifecycleStatus: "Obsolete",
         name: "Name",
         relatedParty: [{id: "rock"}]
@@ -298,6 +314,7 @@ describe("Test index helper library", function () {
     var catalogExpected = {
         id: "catalog:3",
         originalId: 3,
+        body: ["name", "description"],
         sortedId: "000000000003",
         relatedPartyHash: [md5("rock")],
         relatedParty: ["rock"],
@@ -640,8 +657,10 @@ describe("Test index helper library", function () {
     var inventoryData = {
         id: 12,
         productOffering: {
-            id: 5
+            id: 5,
+            href: "http://example.com/catalog/offering/5"
         },
+        searchable: ["offername", "offerdescription"],
         relatedParty: [{id: "rock", role: "customer"}],
         href: "http://12",
         name: "inventoryName",
@@ -651,9 +670,11 @@ describe("Test index helper library", function () {
         terminationDate: 232323233
     };
 
+    
     var inventoryExpected = {
         id: "inventory:12",
         originalId: 12,
+        body: ["offername", "offerdescription"],
         sortedId: "000000000012",
         productOffering: 5,
         relatedPartyHash: [md5("rock")],
@@ -668,6 +689,7 @@ describe("Test index helper library", function () {
 
     it("should convert inventory data correctly", function () {
         var indexes = getIndexLib();
+
         expect(indexes.convertInventoryData(inventoryData)).toEqual(inventoryExpected);
     });
 
@@ -676,8 +698,14 @@ describe("Test index helper library", function () {
             extraadd: (data, ops) => {
                 expect(data).toEqual([inventoryExpected]);
                 expect(ops).toEqual({});
-            }
+            },
+            request: requestLib
         };
+
+        nock("http://" + testUtils.getDefaultConfig().endpoints.catalog.host + ":" + testUtils.getDefaultConfig().endpoints.catalog.port)
+            .get("/catalog/offering/5")
+            .reply(200, {name: "OfferName2", description: "Description2"});
+
         helper("indexes/inventory", null, extra, "saveIndexInventory", (si, extra) => {
             expect(extra).toBeUndefined();
             expect(si.add).toHaveBeenCalled();
