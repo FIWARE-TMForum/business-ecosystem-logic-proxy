@@ -20,7 +20,9 @@
 var async = require('async'),
     config = require('./../../config'),
     url = require('url'),
-    utils = require('./../../lib/utils');
+    utils = require('./../../lib/utils'),
+    partyAPI = require('./../../lib/party').partyClient,
+    logger = require('./../../lib/logger').logger.getLogger('TMF');
 
 var party = (function() {
 
@@ -52,7 +54,6 @@ var party = (function() {
     };
 
     var validateUpdate = function(req, callback) {
-
         var individualsPattern = new RegExp('^/' + config.endpoints.party.path +
             '/api/partyManagement/v2/(individual|organization)(/([^/]*))?$');
         var apiPath = url.parse(req.apiUrl).pathname;
@@ -66,15 +67,16 @@ var party = (function() {
             });
         } else {
             // regexResult[3] contains the user id
-	    var bod = JSON.parse(req.body)
-            if (req.user.id === regexResult[3] || bod.id === regexResult[3]) {
+	    var org = req.user.organizations.find( x => x.id === regexResult[3]);
+	    // the first condition checks if the individual is the one calling
+	    if (req.user.id === regexResult[3] || org.roles.findIndex(x => x.name === "Admin") > -1) {
                 callback(null);
-            } else {
-                callback({
-                    status: 403,
-                    message: 'You are not allowed to access this resource'
+	    } else {
+		callback({
+		    status: 403,
+		    message: 'You are not allowed to access this resource'
                 });
-            }
+	    }
         }
     };
 

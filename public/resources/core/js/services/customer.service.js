@@ -123,7 +123,7 @@
             data.name = User.loggedUser.currentUser.id;
             data.relatedParty = User.serialize();
 
-	    process(Customer.save, data, deferred, extendContactMedium);
+	    process(Customer.save, [data], deferred, extendContactMedium);
 
             // Customer.save(data, function (customer) {
             //     extendContactMedium(customer);
@@ -141,7 +141,7 @@
                 id: id
             };
 
-	    process(Customer.get, params, deferred, extendContactMedium);
+	    process(Customer.get, [params], deferred, extendContactMedium);
 
             // Customer.get(params, function (customer) {
             //     extendContactMedium(customer);
