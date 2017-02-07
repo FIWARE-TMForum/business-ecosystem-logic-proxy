@@ -31,18 +31,31 @@
     angular
         .module('app')
         .factory('Party', partyService)
-
+	.config(function($httpProvider){
+	    $httpProvider.interceptors.push('testInterceptor');
+	})
+	.factory('testInterceptor', ['$rootScope', function($rootScope) {
+	    return {
+		'request': function(config) {
+		    config.headers['currentOrgId'] = $rootScope.currentOrgId;
+		    config.headers['loggedAsOrg'] = $rootScope.loggedAsOrg;
+		    return config;
+		}
+	    };
+	}])
+    
     function partyService($q, $resource, URLS, COUNTRIES, User) {
+	
         var Individual = $resource(URLS.PARTY_MANAGEMENT + '/individual/:id', {}, {
             update: {method: 'PUT'},
             updatePartial: {method: 'PATCH'}
         });
-
+	
 	var Organization = $resource(URLS.PARTY_MANAGEMENT + '/organization/:id', {}, {
 	    update: {method: 'PUT'},
             updatePartial: {method: 'PATCH'}
         });
-
+	
         Individual.prototype.appendContactMedium = appendContactMedium;
         Individual.prototype.updateContactMedium = updateContactMedium;
         Individual.prototype.removeContactMedium = removeContactMedium;
@@ -154,12 +167,12 @@
         };
 
 	function isOrganization() {
-	    return User.loggedUser.id !== User.loggedUser.currentUser.id;
+	    return User.loggedUser && User.loggedUser.id !== User.loggedUser.currentUser.id;
 	};
 	
 	function getCurrentOrg() {
 	    var org = User.loggedUser.currentUser;
-	    return User.loggedUser.organizations.find( x => x.id === org.id);
+	    return (isOrganization()) ? User.loggedUser.organizations.find( x => x.id === org.id) : {};
 	};
 	
 	function hasAdminRole() {
@@ -169,6 +182,7 @@
 	};
 
 	function process(func, params, deferred, transform) {
+	    console.log(User.loggedUser.currentUser.id)
 
 	    // credits to @RockNeurotiko for this tip.
 	    transform = (transform == null) ? x => x : transform;

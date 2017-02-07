@@ -73,6 +73,8 @@
 	initialiceData()
 
 	function initialiceData() {
+	    $rootScope['loggedAsOrg'] = Party.isOrganization();
+	    $rootScope['currentOrgId'] = User.loggedUser.currentUser.id;
             Party.detail(User.loggedUser.currentUser.id, Party.isOrganization()).then(function (infoRetrieved) {
 		retrievePartyInfo(infoRetrieved);
             }, function (response) {
