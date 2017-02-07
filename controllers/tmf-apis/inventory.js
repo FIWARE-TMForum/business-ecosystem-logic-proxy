@@ -39,6 +39,21 @@ var inventory = (function() {
 
     var inventoryRegex = new RegExp('/product(\\?|$)');
 
+    var queryAndOrCommas = function queryAndOrCommas(q, name, query, f) {
+        if (!f) {
+            f = x => x.toLowerCase();
+        }
+        if (!q) {
+            return;
+        }
+
+        if (q.split(",").length <= 1) {
+            indexes.addAndCondition(query, { [name]: [f(q)] });
+        } else {
+            indexes.addOrCondition(query, name, q.split(",").map(f));
+        }
+    };
+
     var createQuery = indexes.genericCreateQuery.bind(
         null,
         ["status", "name"],
@@ -47,6 +62,8 @@ var inventory = (function() {
             if (req.query["relatedParty.id"]) {
                 indexes.addAndCondition(query, { relatedPartyHash: [indexes.fixUserId(req.query["relatedParty.id"])] });
             }
+
+            queryAndOrCommas(req.query["body"], "body", query);
         }
     );
 

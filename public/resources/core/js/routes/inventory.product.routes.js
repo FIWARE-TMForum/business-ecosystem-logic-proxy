@@ -34,7 +34,7 @@
 
         $stateProvider
             .state('inventory.product', {
-                url: '/product?status',
+                url: '/product?status&body',
                 params: {
                     customer: true,
                     flow: 1
