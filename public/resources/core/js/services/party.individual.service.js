@@ -32,15 +32,18 @@
         .module('app')
         .factory('Party', partyService)
 	.config(function($httpProvider){
-	    $httpProvider.interceptors.push('testInterceptor');
+	    $httpProvider.interceptors.push('interceptor');
 	})
-	.factory('testInterceptor', ['$rootScope', function($rootScope) {
+	.factory('interceptor', ['$rootScope', '$injector', function($rootScope, $injector) {
 	    return {
 		'request': function(config) {
-		    config.headers['currentOrgId'] = $rootScope.currentOrgId;
-		    config.headers['loggedAsOrg'] = $rootScope.loggedAsOrg;
+		    var party = $injector.get('Party');
+		    var user = $injector.get('User');
+		    if(user.loggedUser && party.isOrganization()){
+			config.headers['currentOrgId'] = $rootScope.currentOrgId;
+		    }
 		    return config;
-		}
+		};
 	    };
 	}])
     

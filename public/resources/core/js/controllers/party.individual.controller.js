@@ -62,18 +62,16 @@
                 });
             });
         });
-
-	// Now, this function is called at the beginning of the execution and every change call this function in order to keep frontend and backend coherence
 	$scope.$on(Party.EVENTS.USER_SESSION_SWITCHED, function (event, message, obj) {
 	    if (Party.isOrganization() || User.loggedUser.currentUser.id === User.loggedUser.id){
 		initialiceData();
 	    }
 	});
-
+	
+	// Now, this function is called at the beginning of the execution and every switch call this function in order to keep frontend and backend coherence
 	initialiceData()
 
 	function initialiceData() {
-	    $rootScope['loggedAsOrg'] = Party.isOrganization();
 	    $rootScope['currentOrgId'] = User.loggedUser.currentUser.id;
             Party.detail(User.loggedUser.currentUser.id, Party.isOrganization()).then(function (infoRetrieved) {
 		retrievePartyInfo(infoRetrieved);
