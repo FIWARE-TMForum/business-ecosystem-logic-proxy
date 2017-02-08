@@ -43,7 +43,7 @@
 			config.headers['currentOrgId'] = $rootScope.currentOrgId;
 		    }
 		    return config;
-		};
+		}
 	    };
 	}])
     
