@@ -190,6 +190,25 @@
         vm.getFormattedValueOf = getFormattedValueOf;
         vm.clearFileInput = clearFileInput;
 
+        /* Meta info management */
+        vm.meta = {};
+        vm.getMetaLabel = getMetaLabel;
+
+        function getMetaLabel(id) {
+            return typeof vm.currentType.form[id].label !== 'undefined' ? vm.currentType.form[id].label : id;
+        }
+
+        function initMetaData() {
+            // Evaluate form field in order to include default values
+            if (typeof vm.currentType.form !== 'undefined') {
+                for (var id in vm.currentType.form) {
+                    if (typeof vm.currentType.form[id].default !== 'undefined') {
+                        vm.meta[id] = vm.currentType.form[id].default;
+                    }
+                }
+            }
+        }
+
         function createRelationship(data) {
             var deferred = $q.defer();
 
@@ -368,6 +387,9 @@
                 content: url,
                 contentType: contentType
             };
+            if (Object.keys(vm.meta).length) {
+                data.metadata = vm.meta;
+            }
             Asset.create(data).then(callback, errCallback);
         }
 
@@ -386,6 +408,9 @@
                     data.isPublic = true;
                 } else {
                     data.resourceType = assetType;
+                }
+                if (Object.keys(vm.meta).length) {
+                    data.metadata = vm.meta;
                 }
 
                 Asset.create(data).then(callback, errCallback);
@@ -440,6 +465,8 @@
                 if (assetType === vm.assetTypes[i].name) {
                     found = true;
                     vm.currentType = vm.assetTypes[i];
+                    vm.meta = {};
+                    initMetaData();
                 }
             }
             vm.currFormat = vm.currentType.formats[0];
