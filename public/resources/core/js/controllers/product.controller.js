@@ -362,7 +362,16 @@
             return filterProduct(product) > -1;
         }
 
-        function uploadAsset(file, contentType, publicFile, callback, errCallback) {
+        function registerAsset(url, assetType, contentType, callback, errCallback) {
+            var data = {
+                resourceType: assetType,
+                content: url,
+                contentType: contentType
+            };
+            Asset.create(data).then(callback, errCallback);
+        }
+
+        function uploadAsset(file, assetType, contentType, publicFile, callback, errCallback) {
             var reader = new FileReader();
             reader.onload = function(e) {
                 var data = {
@@ -375,6 +384,8 @@
 
                 if (publicFile) {
                     data.isPublic = true;
+                } else {
+                    data.resourceType = assetType;
                 }
 
                 Asset.create(data).then(callback, errCallback);
@@ -383,13 +394,34 @@
         }
 
         function create() {
+
+            function showAssetError(response) {
+                var defaultMessage = 'There was an unexpected error that prevented your ' +
+                    'digital asset to be registered';
+                var error = Utils.parseError(response, defaultMessage);
+
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                    error: error
+                });
+            }
+
             // If the format is file upload it to the asset manager
             if (vm.isDigital && vm.currFormat === 'FILE') {
-                uploadAsset(vm.assetFile, vm.digitalChars[1].productSpecCharacteristicValue[0].value, false, function (result) {
+                uploadAsset(vm.assetFile,
+                    vm.digitalChars[0].productSpecCharacteristicValue[0].value,
+                    vm.digitalChars[1].productSpecCharacteristicValue[0].value, false, function (result) {
                     // Set file location
                     vm.digitalChars[2].productSpecCharacteristicValue[0].value = result.content;
                     saveProduct();
-                });
+                }, (response) => showAssetError(response));
+            } else if (vm.isDigital && vm.currFormat === 'URL') {
+                registerAsset(
+                    vm.digitalChars[2].productSpecCharacteristicValue[0].value,
+                    vm.digitalChars[0].productSpecCharacteristicValue[0].value,
+                    vm.digitalChars[1].productSpecCharacteristicValue[0].value,
+                    () => saveProduct(),
+                    (response) => showAssetError(response)
+                );
             } else {
                 saveProduct();
             }
@@ -491,7 +523,7 @@
                 }
 
                 // Upload the file to the server when it is included in the input
-                uploadAsset(vm.pictureFile, vm.pictureFile.type, true, function(result) {
+                uploadAsset(vm.pictureFile, null, vm.pictureFile.type, true, function(result) {
                     vm.data.attachment[0].url = result.content
                 }, function() {
                     // The picture cannot be uploaded set error in input
