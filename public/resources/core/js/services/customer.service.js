@@ -85,9 +85,25 @@
             launch: launch
         };
 
+	function process(func, params, deferred, transform) {
+	    transform = (transform == null) ? x => x : transform;
+
+	    var resol = function (partyObj) {
+		transform(partyObj);
+		deferred.resolve(partyObj);
+	    };
+
+	    var rejec = function (response) {
+		deferred.reject(response);
+	    };
+	    params.push(resol, rejec);
+	    
+	    func.apply(null, params);
+	};
+
         function search(filters) {
             var deferred = $q.defer();
-            var params = {};
+            var params = (filters == null) ? {} : filters;
 
             Customer.query(params, function (customers) {
                 customers.forEach(extendContactMedium);
@@ -97,7 +113,7 @@
             });
 
             return deferred.promise;
-        }
+        };
 
 	
 
@@ -107,12 +123,14 @@
             data.name = User.loggedUser.currentUser.id;
             data.relatedParty = User.serialize();
 
-            Customer.save(data, function (customer) {
-                extendContactMedium(customer);
-                deferred.resolve(customer);
-            }, function (response) {
-                deferred.reject(response);
-            });
+	    process(Customer.save, [data], deferred, extendContactMedium);
+
+            // Customer.save(data, function (customer) {
+            //     extendContactMedium(customer);
+            //     deferred.resolve(customer);
+            // }, function (response) {
+            //     deferred.reject(response);
+            // });
 
             return deferred.promise;
         }
@@ -123,12 +141,14 @@
                 id: id
             };
 
-            Customer.get(params, function (customer) {
-                extendContactMedium(customer);
-                deferred.resolve(customer);
-            }, function (response) {
-                deferred.reject(response);
-            });
+	    process(Customer.get, [params], deferred, extendContactMedium);
+
+            // Customer.get(params, function (customer) {
+            //     extendContactMedium(customer);
+            //     deferred.resolve(customer);
+            // }, function (response) {
+            //     deferred.reject(response);
+            // });
 
             return deferred.promise;
         }
@@ -139,12 +159,14 @@
                 id: resource.id
             };
 
-            Customer.updatePartial(params, dataUpdated, function (customer) {
-                extendContactMedium(customer);
-                deferred.resolve(customer);
-            }, function (response) {
-                deferred.reject(response);
-            });
+	    process(Customer.updatePartial, [params, dataUpdated], deferred, extendContactMedium);
+
+            // Customer.updatePartial(params, dataUpdated, function (customer) {
+            //     extendContactMedium(customer);
+            //     deferred.resolve(customer);
+            // }, function (response) {
+            //     deferred.reject(response);
+            // });
 
             return deferred.promise;
         }

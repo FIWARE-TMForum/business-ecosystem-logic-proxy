@@ -76,8 +76,9 @@
 	
 	function updateShippingList() {
             Customer.search().then(function (customers) {
-		vm.list = customers.filter(x =>
-					   x.name === User.loggedUser.currentUser.id);
+		// vm.list = customers.filter(x =>
+		// 			   x.name === User.loggedUser.currentUser.id);
+		vm.list = customers;
 		vm.status = DATA_STATUS.LOADED;
             }, function (response) {
 		vm.errorMessage = Utils.parseError(response, 'Unexpected error trying to retrieve the list of shipping address.');

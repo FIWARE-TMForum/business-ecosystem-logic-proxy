@@ -146,7 +146,7 @@
                 angular.copy(providersList, vm.providers);
 
                 // Remove the current user from the provider list since it cannot be a stakeholder of the model
-                removeProvider(User.loggedUser.id);
+                removeProvider(User.loggedUser.currentUser.id);
 
                 if (vm.providers.length) {
                     vm.currentStakeholder = vm.providers[0];

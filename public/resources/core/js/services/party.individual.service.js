@@ -31,21 +31,26 @@
     angular
         .module('app')
         .factory('Party', partyService)
-
+    
     function partyService($q, $resource, URLS, COUNTRIES, User) {
+	
         var Individual = $resource(URLS.PARTY_MANAGEMENT + '/individual/:id', {}, {
             update: {method: 'PUT'},
             updatePartial: {method: 'PATCH'}
         });
-
+	
 	var Organization = $resource(URLS.PARTY_MANAGEMENT + '/organization/:id', {}, {
 	    update: {method: 'PUT'},
             updatePartial: {method: 'PATCH'}
         });
-
+	
         Individual.prototype.appendContactMedium = appendContactMedium;
         Individual.prototype.updateContactMedium = updateContactMedium;
         Individual.prototype.removeContactMedium = removeContactMedium;
+
+	Organization.prototype.appendContactMedium = appendContactMedium;
+	Organization.prototype.updateContactMedium = updateContactMedium;
+        Organization.prototype.removeContactMedium = removeContactMedium;
 
         var EVENTS = {
             CONTACT_MEDIUM_CREATED: '$contactMediumCreated',
@@ -145,12 +150,17 @@
             update: update,
             launch: launch,
 	    getCurrentOrg: getCurrentOrg,
-	    hasAdminRole: hasAdminRole
+	    hasAdminRole: hasAdminRole,
+	    isOrganization: isOrganization
         };
 
+	function isOrganization() {
+	    return User.loggedUser && User.loggedUser.id !== User.loggedUser.currentUser.id;
+	};
+	
 	function getCurrentOrg() {
 	    var org = User.loggedUser.currentUser;
-	    return User.loggedUser.organizations.find( x => x.id === org.id);
+	    return (isOrganization()) ? User.loggedUser.organizations.find( x => x.id === org.id) : {};
 	};
 	
 	function hasAdminRole() {
@@ -160,7 +170,6 @@
 	};
 
 	function process(func, params, deferred, transform) {
-
 	    // credits to @RockNeurotiko for this tip.
 	    transform = (transform == null) ? x => x : transform;
 	    
@@ -256,7 +265,6 @@
         };
 
         function extendContactMedium(party) {
-
             if (angular.isArray(party.contactMedium)) {
                 party.contactMedium = party.contactMedium.map(function (data) {
                     return new ContactMedium(data);
@@ -284,8 +292,8 @@
             var dataUpdated = {
                 contactMedium: this.contactMedium.concat(contactMedium)
             };
-
-            updatePartial(this, dataUpdated).then(function () {
+	    
+            updatePartial(this, dataUpdated, isOrganization()).then(function () {
                 this.contactMedium.push(contactMedium);
                 deferred.resolve(this);
             }.bind(this), function (response) {
@@ -303,8 +311,7 @@
             };
 
             dataUpdated.contactMedium[index] = contactMedium;
-
-            updatePartial(this, dataUpdated).then(function () {
+            updatePartial(this, dataUpdated, isOrganization()).then(function () {
                 angular.merge(this.contactMedium[index], contactMedium);
                 deferred.resolve(this);
             }.bind(this), function (response) {
@@ -323,7 +330,7 @@
 
             dataUpdated.contactMedium.splice(index, 1);
 
-            updatePartial(this, dataUpdated).then(function () {
+            updatePartial(this, dataUpdated, isOrganization()).then(function () {
                 this.contactMedium.splice(index, 1);
                 deferred.resolve(this);
             }.bind(this), function (response) {

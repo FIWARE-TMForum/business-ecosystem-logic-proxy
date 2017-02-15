@@ -89,6 +89,8 @@
 	    vm.currentUser.name = currUser.name;
 	    vm.currentUser.email = currUser.email;
 	    vm.currentUser.id = currUser.id;
+	    vm.currentUser.href = User.loggedUser.href.replace(/(individual)\/(.*)/g,
+							       'organization/' + currUser.id);
 	    propagateSwitch();
 	};
 
@@ -100,6 +102,7 @@
 	    vm.currentUser.name = User.loggedUser.name;
 	    vm.currentUser.id = User.loggedUser.id;
 	    vm.currentUser.email = User.loggedUser.email;
+	    vm.currentUser.href = User.loggedUser.href;
 	    propagateSwitch();
 	};
 	

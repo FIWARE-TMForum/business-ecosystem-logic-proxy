@@ -86,7 +86,7 @@
             var deferred = $q.defer();
 
             modelsResource.query({
-                providerId: User.loggedUser.id,
+                providerId: User.loggedUser.currentUser.id,
                 productClass: productClass
             }, function(models) {
                 if (models.length) {
@@ -114,7 +114,7 @@
 
         function searchModels () {
             var params = {
-                providerId: User.loggedUser.id
+                providerId: User.loggedUser.currentUser.id
             };
             return search(modelsResource, params);
         }
@@ -125,20 +125,20 @@
 
         function searchTransactions() {
             var params = {
-                providerId: User.loggedUser.id
+                providerId: User.loggedUser.currentUser.id
             };
             return search(transactionResource, params);
         }
 
         function searchReports() {
             var params = {
-                providerId: User.loggedUser.id
+                providerId: User.loggedUser.currentUser.id
             };
             return search(reportResource, params);
         }
 
         function createReport(report) {
-            report.providerId = User.loggedUser.id;
+            report.providerId = User.loggedUser.currentUser.id;
             report.callbackUrl = $location.protocol() + '://' + $location.host() + ':' + $location.port() + '/#/rss/reports';
 
             return settlementResource.save(report).$promise;

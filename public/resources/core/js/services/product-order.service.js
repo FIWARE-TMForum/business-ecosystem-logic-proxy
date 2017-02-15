@@ -84,7 +84,7 @@
             var params = {};
 
             if (filters.owner) {
-                params['relatedParty.id'] = User.loggedUser.id;
+                params['relatedParty.id'] = User.loggedUser.currentUser.id;
             }
 
             if (filters.status) {

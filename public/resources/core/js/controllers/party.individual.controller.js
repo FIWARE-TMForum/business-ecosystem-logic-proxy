@@ -44,7 +44,7 @@
         vm.createContactMedium = createContactMedium;
         vm.updateContactMedium = updateContactMedium;
         vm.removeContactMedium = removeContactMedium;
-	vm.isOrganization = isOrganization;
+	vm.isOrganization = Party.isOrganization;
 	vm.hasAdminRole = hasAdminRole;
 	vm.loggedUser = User.loggedUser;
 	
@@ -62,18 +62,17 @@
                 });
             });
         });
-
-	// Now, this function is called at the beginning of the execution and every change call this function in order to keep frontend and backend coherence
 	$scope.$on(Party.EVENTS.USER_SESSION_SWITCHED, function (event, message, obj) {
-	    if (isOrganization() || User.loggedUser.currentUser.id === User.loggedUser.id){
+	    if (Party.isOrganization() || User.loggedUser.currentUser.id === User.loggedUser.id){
 		initialiceData();
 	    }
 	});
-
+	
+	// Now, this function is called at the beginning of the execution and every switch call this function in order to keep frontend and backend coherence
 	initialiceData()
 
 	function initialiceData() {
-            Party.detail(User.loggedUser.currentUser.id, isOrganization()).then(function (infoRetrieved) {
+            Party.detail(User.loggedUser.currentUser.id, Party.isOrganization()).then(function (infoRetrieved) {
 		retrievePartyInfo(infoRetrieved);
             }, function (response) {
 		if (response.status === 404) {
@@ -83,10 +82,6 @@
                     vm.errorMessage = Utils.parseError(response, 'Unexpected error trying to retrieve your personal information.')
 		}
             });
-	};
-	
-	function isOrganization() {
-	    return User.loggedUser.id !== User.loggedUser.currentUser.id;
 	};
 
 	function hasAdminRole(){
@@ -101,20 +96,20 @@
 	};
 
 	function unparseDate() {
-	    if (isOrganization()) {
+	    if (Party.isOrganization() && vm.data.organizationIdentification) {
 	    	vm.data.organizationIdentification.issuingDate = new Date(vm.data.organizationIdentification.issuingDate);
 	    }
 	};
 
 	function parseDate(){
-	    if (isOrganization()) {
+	    if (Party.isOrganization() && vm.data.organizationIdentification) {
 		vm.data.organizationIdentification.issuingDate = moment(vm.data.organizationIdentification.issuingDate).format()
 	    }
 	};
 
 	function retrievePartyInfo(party) {
 	    if (party == null) {
-		party = Party.launch(isOrganization());
+		party = Party.launch(Party.isOrganization());
 		vm.isNotCreated = true;
 	    }
 	    retrieveProfile(party);
@@ -124,7 +119,7 @@
 
         function update() {
             if (vm.isNotCreated) {
-                updatePromise = Party.create(vm.data, isOrganization());
+                updatePromise = Party.create(vm.data, Party.isOrganization());
                 updatePromise.then(function () {
                     $state.go('settings.general', {}, {
                         reload: true
@@ -139,7 +134,7 @@
                 });
             } else {
 		parseDate();
-                updatePromise = Party.update(vm.item, vm.data, isOrganization());
+                updatePromise = Party.update(vm.item, vm.data, Party.isOrganization());
 		unparseDate();
                 updatePromise.then(function () {
                     $state.go('settings.general', {}, {
