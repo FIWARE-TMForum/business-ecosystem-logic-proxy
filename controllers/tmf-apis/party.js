@@ -69,7 +69,7 @@ var party = (function() {
             // regexResult[3] contains the user id
 	    var org = req.user.organizations.find( x => x.id === regexResult[3]);
 	    // the first condition checks if the individual is the one calling
-	    if (req.user.id === regexResult[3] || org.roles.findIndex(x => x.name === "Admin") > -1) {
+	    if (req.user.id === regexResult[3] || (org && org.roles.findIndex(x => x.name === "Admin") > -1)) {
                 callback(null);
 	    } else {
 		callback({
