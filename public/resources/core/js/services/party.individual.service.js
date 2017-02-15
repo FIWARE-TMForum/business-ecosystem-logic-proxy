@@ -31,21 +31,6 @@
     angular
         .module('app')
         .factory('Party', partyService)
-	.config(function($httpProvider){
-	    $httpProvider.interceptors.push('interceptor');
-	})
-	.factory('interceptor', ['$rootScope', '$injector', function($rootScope, $injector) {
-	    return {
-		'request': function(config) {
-		    var party = $injector.get('Party');
-		    var user = $injector.get('User');
-		    if(user.loggedUser && party.isOrganization()){
-			config.headers['currentOrgId'] = $rootScope.currentOrgId;
-		    }
-		    return config;
-		}
-	    };
-	}])
     
     function partyService($q, $resource, URLS, COUNTRIES, User) {
 	
@@ -185,8 +170,6 @@
 	};
 
 	function process(func, params, deferred, transform) {
-	    console.log(User.loggedUser.currentUser.id)
-
 	    // credits to @RockNeurotiko for this tip.
 	    transform = (transform == null) ? x => x : transform;
 	    

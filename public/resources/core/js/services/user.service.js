@@ -72,8 +72,8 @@
 
         function serializeBasic() {
             return {
-                id: loggedUser.id,
-                href: $location.protocol() + '://' + $location.host() + ':' + $location.port() + loggedUser.href,
+                id: loggedUser.currentUser.id,
+                href: $location.protocol() + '://' + $location.host() + ':' + $location.port() + loggedUser.currentUser.href
             };
         }
     }

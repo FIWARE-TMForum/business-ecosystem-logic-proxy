@@ -95,4 +95,4 @@
             span.item-icon.fa.fa-spin.fa-spinner(ng-if="updateVM.update.status === updateVM.STATUS.PENDING")
             span.item-text Update
       .a(ng-if="!updateVM.hasAdminRole()")
-        .alert.alert-info You are not allowed to change this organization info since you don't have an Admin role.
+        .alert.alert-warning You are not allowed to change this organization info since you don't have an Admin role.

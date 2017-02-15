@@ -72,7 +72,6 @@
 	initialiceData()
 
 	function initialiceData() {
-	    $rootScope['currentOrgId'] = User.loggedUser.currentUser.id;
             Party.detail(User.loggedUser.currentUser.id, Party.isOrganization()).then(function (infoRetrieved) {
 		retrievePartyInfo(infoRetrieved);
             }, function (response) {
@@ -97,13 +96,13 @@
 	};
 
 	function unparseDate() {
-	    if (Party.isOrganization()) {
+	    if (Party.isOrganization() && vm.data.organizationIdentification) {
 	    	vm.data.organizationIdentification.issuingDate = new Date(vm.data.organizationIdentification.issuingDate);
 	    }
 	};
 
 	function parseDate(){
-	    if (Party.isOrganization()) {
+	    if (Party.isOrganization() && vm.data.organizationIdentification) {
 		vm.data.organizationIdentification.issuingDate = moment(vm.data.organizationIdentification.issuingDate).format()
 	    }
 	};

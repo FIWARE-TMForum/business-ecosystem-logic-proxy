@@ -540,11 +540,11 @@
         }
 
         function isCustomer() {
-            return getCustomerName() === User.loggedUser.id;
+            return getCustomerName() === User.loggedUser.currentUser.id;
         }
 
         function isVendor(orderItem) {
-            return getVendorName(orderItem) === User.loggedUser.id;
+            return getVendorName(orderItem) === User.loggedUser.currentUser.id;
         }
 
         function isTransitable(orderItem) {
@@ -603,7 +603,7 @@
         function createNote() {
             var dataUpdated = {
                 note: [{
-                    author: User.loggedUser.id,
+                    author: User.loggedUser.currentUser.id,
                     date: new Date(),
                     text: vm.note.text
                 }].concat(vm.item.note)
