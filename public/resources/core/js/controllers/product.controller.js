@@ -393,7 +393,7 @@
             Asset.create(data).then(callback, errCallback);
         }
 
-        function uploadAsset(file, assetType, contentType, publicFile, callback, errCallback) {
+        function uploadAsset(file, assetType, contentType, publicFile, meta, callback, errCallback) {
             var reader = new FileReader();
             reader.onload = function(e) {
                 var data = {
@@ -409,8 +409,8 @@
                 } else {
                     data.resourceType = assetType;
                 }
-                if (Object.keys(vm.meta).length) {
-                    data.metadata = vm.meta;
+                if (meta !== null) {
+                    data.metadata = meta;
                 }
 
                 Asset.create(data).then(callback, errCallback);
@@ -432,9 +432,13 @@
 
             // If the format is file upload it to the asset manager
             if (vm.isDigital && vm.currFormat === 'FILE') {
+                var meta = null;
+                if (Object.keys(vm.meta).length) {
+                    meta = vm.meta;
+                }
                 uploadAsset(vm.assetFile,
                     vm.digitalChars[0].productSpecCharacteristicValue[0].value,
-                    vm.digitalChars[1].productSpecCharacteristicValue[0].value, false, function (result) {
+                    vm.digitalChars[1].productSpecCharacteristicValue[0].value, false, meta, function (result) {
                     // Set file location
                     vm.digitalChars[2].productSpecCharacteristicValue[0].value = result.content;
                     saveProduct();
@@ -550,7 +554,7 @@
                 }
 
                 // Upload the file to the server when it is included in the input
-                uploadAsset(vm.pictureFile, null, vm.pictureFile.type, true, function(result) {
+                uploadAsset(vm.pictureFile, null, vm.pictureFile.type, true, null, function(result) {
                     vm.data.attachment[0].url = result.content
                 }, function() {
                     // The picture cannot be uploaded set error in input
