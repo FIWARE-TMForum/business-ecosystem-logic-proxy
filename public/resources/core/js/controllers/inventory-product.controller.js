@@ -282,9 +282,10 @@
 
         function getUsageURL() {
             var startingChar = USAGE_CHART_URL.indexOf('?') > -1 ? '&' : '?';
+            var server = window.location.origin;
 
             // Get the endpoint of the usage mashup including the access token and the product id
-            return USAGE_CHART_URL + startingChar + 'productId=' + vm.item.id + '&token=' + LOGGED_USER.bearerToken;
+            return USAGE_CHART_URL + startingChar + 'productId=' + vm.item.id + '&token=' + LOGGED_USER.bearerToken + '&server=' + server;
         }
 
         function characteristicMatches(productChar, specChar, offId, productId) {
