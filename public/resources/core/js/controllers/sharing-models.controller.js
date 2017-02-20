@@ -33,19 +33,29 @@
         .controller('RSModelUpdateCtrl', RSModelUpdateController)
         .controller('RSModelUpdateSTCtrl', RSModelUpdateSTController);
 
-    function RSModelSearchController($state, DATA_STATUS, RSS, Utils) {
+    function RSModelSearchController($state, $scope,DATA_STATUS, RSS, Utils, Party, User) {
         var vm = this;
 
         vm.list = [];
         vm.state = $state;
 
-        RSS.searchModels().then(function (modelsList) {
-            angular.copy(modelsList, vm.list);
-            vm.list.status = DATA_STATUS.LOADED;
-        }, function (response) {
-            vm.error = Utils.parseError(response, 'It was impossible to load the list of revenue sharing models');
-            vm.list.status = DATA_STATUS.ERROR;
-        });
+	$scope.$on(Party.EVENTS.USER_SESSION_SWITCHED, function (event, message, obj) {
+	    if (Party.isOrganization() || User.loggedUser.currentUser.id === User.loggedUser.id){
+		initialiceData();
+	    }
+	});
+
+	initialiceData()
+	
+        function initialiceData() {
+	    RSS.searchModels().then(function (modelsList) {
+		angular.copy(modelsList, vm.list);
+		vm.list.status = DATA_STATUS.LOADED;
+            }, function (response) {
+		vm.error = Utils.parseError(response, 'It was impossible to load the list of revenue sharing models');
+		vm.list.status = DATA_STATUS.ERROR;
+            });
+	};
     }
 
     function calculateTotalPercentage(platformValue, ownerValue, currentStValue, stakeholders) {
@@ -205,7 +215,6 @@
                         name: modelCreated.productClass
                     });
                 }, function (response) {
-
                     var defaultMessage = 'There was an unexpected error that prevented the ' +
                         'system from creating a new revenue sharing model';
                     var error = Utils.parseError(response, defaultMessage, 'exceptionText');

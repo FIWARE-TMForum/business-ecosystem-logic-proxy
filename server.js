@@ -471,7 +471,7 @@ for (var p in config.publicPaths) {
     app.all(config.proxyPrefix + '/' + config.publicPaths[p], tmf.public);
 }
 
-app.all(config.proxyPrefix + '/*', auth.headerAuthentication, auth.checkOrganizations, function(req, res, next) {
+app.all(config.proxyPrefix + '/*', auth.headerAuthentication, auth.checkOrganizations, auth.setPartyObj, function(req, res, next) {
 
     // The API path is the actual path that should be used to access the resource
     // This path contains the query string!!
