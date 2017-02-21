@@ -39,7 +39,7 @@
         .controller('ProductOrderCreateCtrl', ProductOrderCreateController)
         .controller('ProductOrderDetailCtrl', ProductOrderDetailController);
 
-    function ProductOrderSearchController($scope, $state, $rootScope, EVENTS, PRODUCTORDER_STATUS, PRODUCTORDER_LIFECYCLE, ProductOrder, Utils) {
+    function ProductOrderSearchController($scope, $state, $rootScope, EVENTS, PRODUCTORDER_STATUS, PRODUCTORDER_LIFECYCLE, ProductOrder, Utils, Party, User) {
         /* jshint validthis: true */
         var vm = this;
 
@@ -61,10 +61,14 @@
 
         vm.cancellingOrder = false;
 
-        $scope.$watch(function () {
-            return vm.offset;
-        }, function () {
-            vm.list.status = LOADING;
+	$scope.$on(Party.EVENTS.USER_SESSION_SWITCHED, function (event, message, obj) {
+	    if (Party.isOrganization() || User.loggedUser.currentUser.id === User.loggedUser.id){
+		productOrderSearch();
+	    }
+	});
+
+	function productOrderSearch() {
+	    vm.list.status = LOADING;
 
             if (vm.offset >= 0) {
                 var params = {};
@@ -81,7 +85,11 @@
                     vm.list.status = ERROR;
                 });
             }
-        });
+	};
+
+        $scope.$watch(function () {
+            return vm.offset;
+        }, productOrderSearch);
 
         function getElementsLength() {
             var params = {};

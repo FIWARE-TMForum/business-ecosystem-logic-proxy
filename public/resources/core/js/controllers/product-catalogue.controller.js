@@ -38,7 +38,7 @@
         .controller('CatalogueDetailCtrl', CatalogueDetailController)
         .controller('CatalogueUpdateCtrl', CatalogueUpdateController);
 
-    function CatalogueListController($scope, Catalogue, Utils) {
+    function CatalogueListController($scope, Catalogue, Utils, Party, User) {
         /* jshint validthis: true */
         var vm = this;
 
@@ -51,17 +51,21 @@
             return Catalogue.count();
         }
 
-        $scope.$watch(function () {
-            return vm.offset;
-        }, function () {
-            vm.list.status = LOADING;
+	$scope.$on(Party.EVENTS.USER_SESSION_SWITCHED, function (event, message, obj) {
+	    if (Party.isOrganization() || User.loggedUser.currentUser.id === User.loggedUser.id){
+		catalogueList();
+	    }
+	});
 
+	function catalogueList() {
+	    vm.list.status = LOADING;
+	    
             if (vm.offset >= 0) {
                 var page = {
                     offset: vm.offset,
                     size: vm.size
                 };
-
+		
                 Catalogue.search(page).then(function (catalogueList) {
                     angular.copy(catalogueList, vm.list);
                     vm.list.status = LOADED;
@@ -70,10 +74,15 @@
                     vm.list.status = ERROR;
                 });
             }
-        });
+	};
+	
+
+        $scope.$watch(function () {
+            return vm.offset;
+        }, catalogueList);
     }
 
-    function CatalogueSearchController($scope, $state, $rootScope, EVENTS, Catalogue, LIFECYCLE_STATUS, DATA_STATUS, Utils) {
+    function CatalogueSearchController($scope, $state, $rootScope, EVENTS, Catalogue, LIFECYCLE_STATUS, DATA_STATUS, Utils, Party, User) {
         /* jshint validthis: true */
         var vm = this;
         var filters = {};
@@ -103,23 +112,26 @@
             filters = newFilters;
         }
 
-        vm.list.status = vm.STATUS.LOADING;
-        $scope.$watch(function () {
-            return vm.offset;
-        }, function () {
-            vm.list.status = vm.STATUS.LOADING;
+	$scope.$on(Party.EVENTS.USER_SESSION_SWITCHED, function (event, message, obj) {
+	    if (Party.isOrganization() || User.loggedUser.currentUser.id === User.loggedUser.id){
+		catalogueSearch();
+	    }
+	});
 
+	function catalogueSearch() {
+	    vm.list.status = vm.STATUS.LOADING;
+	    
             if (vm.offset >= 0) {
                 var params = {};
                 angular.copy($state.params, params);
-
+		
                 params.offset = vm.offset;
                 params.size = vm.size;
-
+		
                 if (filters.status) {
                     params.status = filters.status;
                 }
-
+		
                 Catalogue.search(params).then(function (catalogueList) {
                     angular.copy(catalogueList, vm.list);
                     vm.list.status = vm.STATUS.LOADED;
@@ -128,7 +140,13 @@
                     vm.list.status = vm.STATUS.ERROR;
                 });
             }
-        });
+	};
+	
+
+        vm.list.status = vm.STATUS.LOADING;
+        $scope.$watch(function () {
+            return vm.offset;
+        }, catalogueSearch);
     }
 
     function CatalogueCreateController($state, $rootScope, EVENTS, PROMISE_STATUS, Catalogue, Utils) {

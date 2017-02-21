@@ -51,7 +51,7 @@
             }
 
             if(filters.customer) {
-                params['relatedParty.id'] = User.loggedUser.id;
+                params['relatedParty.id'] = User.loggedUser.currentUser.id;
             }
 
             if (filters.status) {

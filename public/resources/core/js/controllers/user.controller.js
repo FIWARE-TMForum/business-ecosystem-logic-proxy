@@ -95,7 +95,7 @@
 	};
 
 	function propagateSwitch() {
-	    $scope.$broadcast(Party.EVENTS.USER_SESSION_SWITCHED, 'User has switched session', {});
+	    $rootScope.$broadcast(Party.EVENTS.USER_SESSION_SWITCHED, 'User has switched session', {});
 	};
 
 	function switchToUser() {

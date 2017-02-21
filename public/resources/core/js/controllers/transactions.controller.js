@@ -30,7 +30,7 @@
         .module('app')
         .controller('RSTransSearchCtrl', RSTransSearchController);
 
-    function RSTransSearchController($state, $rootScope, DATA_STATUS, RSS, Utils) {
+    function RSTransSearchController($state, $rootScope, $scope, DATA_STATUS, RSS, Utils, Party, User) {
         var vm = this;
 
         vm.$params = $state.params;
@@ -55,14 +55,24 @@
             return types[txType];
         }
 
-        RSS.searchTransactions().then(function(transactions) {
-            vm.list = angular.copy(transactions);
-            vm.list.status = DATA_STATUS.LOADED;
-            filterProductClass(transactions);
-        }, function() {
-            vm.error = Utils.parseError(response, 'It was impossible to load the list of transactions');
-            vm.list.status = DATA_STATUS.ERROR;
-        });
+	$scope.$on(Party.EVENTS.USER_SESSION_SWITCHED, function (event, message, obj) {
+	    if (Party.isOrganization() || User.loggedUser.currentUser.id === User.loggedUser.id){
+		RSTransSearch();
+	    }
+	});
+
+	function RSTransSearch() {
+	    RSS.searchTransactions().then(function(transactions) {
+		vm.list = angular.copy(transactions);
+		vm.list.status = DATA_STATUS.LOADED;
+		filterProductClass(transactions);
+            }, function(response) {
+		vm.error = Utils.parseError(response, 'It was impossible to load the list of transactions');
+		vm.list.status = DATA_STATUS.ERROR;
+            });
+	};
+
+	RSTransSearch();
 
         function filterProductClass(transactions) {
             var set = {};
