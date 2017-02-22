@@ -64,7 +64,192 @@ describe('Auth lib', function () {
         };
     };
 
-    describe('Update party API', function () {
+    describe('Set req.user object', function() {
+	var auth = getAuthLib(strategy, {}, null, {});
+	var reqInd = {
+	    id: 'test_user',
+	    appId: config.oauth2.clientID,
+	    user: {
+		id: 'rick',
+		nickName: 'theMagician',
+		accessToken: 'accesstoken',
+		refreshToken: 'refreshToken',
+		organizations: [{
+		    id: '123456789',
+		    name: 'patty',
+		    roles: [{
+			id: '3',
+			name: 'Seller'
+		    }, {
+			id: '6',
+			name: 'provider'
+		    }]
+		}, {
+		    id: '987654321',
+		    name: 'MntyPythn',
+		    roles: [{
+			id: '6',
+			name: 'provider'
+		    }]
+		}, {
+		    id: '111555999',
+		    name: 'AmaneceQueNoEsPoco',
+		    roles: [{
+			id: '3',
+			name: 'Seller'
+		    }, {
+			id: '1',
+			name: 'purchuaser'
+		    }]
+		}]
+	    }
+        };
+
+	var reqOrg = {
+	    id: 'test_user',
+	    appId: config.oauth2.clientID,
+	    user: {
+		id: 'rick',
+		nickName: 'theMagician',
+		accessToken: 'accessToken',
+		refreshToken: 'refreshToken',
+		organizations: [{
+		    id: '123456789',
+		    name: 'patty',
+		    roles: [{
+			id: '3',
+			name: 'Seller'
+		    }, {
+			id: '6',
+			name: 'provider'
+		    }]
+		}, {
+		    id: '987654321',
+		    name: 'MntyPythn',
+		    roles: [{
+			id: '6',
+			name: 'provider'
+		    }]
+		}, {
+		    id: '111555999',
+		    name: 'AmaneceQueNoEsPoco',
+		    roles: [{
+			id: '3',
+			name: 'Seller'
+		    }, {
+			id: '1',
+			name: 'purchuaser'
+		    }]
+		}]
+	    },
+	    headers: {
+		'x-organization': '123456789'
+	    }
+        };
+
+	it ('should continue with middleware processing if no user object has been provided', function (done) {
+	    var req = {
+		id: 'test_user',
+		appId: config.oauth2.clientID,
+            };
+	    auth.checkOrganizations(req, {}, done);
+	});
+	    
+	it('Function should return unauthorized if header has been set but that org isnt on the organization list', function(done) {
+
+	    var resExp = {};
+	    var msgExp = 'Not allowed to access the provided organization';
+	    
+	    var unauthorized = getUnauthorizedMock(resExp, msgExp, done);
+	    
+	    var auth = getAuthLib(strategy, {}, unauthorized, {});
+	    
+	    var req = {
+		id: 'test_user',
+		appId: config.oauth2.clientID,
+		user: {
+		    id: 'rick',
+		    nickName: 'theMagician',
+		    accessToken: 'accesstoken',
+		    refreshToken: 'refreshToken',
+		    organizations: []
+		},
+		headers: {
+		    'x-organization': '111555999'
+		}
+	    };
+	    
+	    auth.setPartyObj(req, resExp, done);
+	});
+
+	it('Individual object should be selected if x-organization header not present', function(done) {
+	    var user = {
+		id: 'rick',
+		nickName: 'theMagician',
+		accessToken: 'accesstoken',
+		refreshToken: 'refreshToken',
+		organizations: [{
+		    id: '123456789',
+		    name: 'patty',
+		    roles: [{
+			id: '3',
+			name: 'Seller'
+		    }, {
+			id: '6',
+			name: 'provider'
+		    }]
+		}, {
+		    id: '987654321',
+		    name: 'MntyPythn',
+		    roles: [{
+			id: '6',
+			name: 'provider'
+		    }]
+		}, {
+		    id: '111555999',
+		    name: 'AmaneceQueNoEsPoco',
+		    roles: [{
+			id: '3',
+			name: 'Seller'
+		    }, {
+			id: '1',
+			name: 'purchuaser'
+		    }]
+		}]
+	    };
+	    auth.setPartyObj(reqInd, {}, function() {
+		expect(reqInd.user).toEqual(user);
+		done();
+	    });
+	    
+	});
+
+	it('Organization object should be selected if x-organization header is present', function(done) {
+	    var org = {
+		userNickname: 'rick',
+		id: '123456789',
+		roles: [{
+		    id: '3',
+		    name: 'Seller'
+		}, {
+		    id: '6',
+		    name: 'provider'
+		}],
+		displayName: 'patty',
+		accessToken: 'accessToken',
+		refreshToken: 'refreshToken',
+		email: '123456789' + '@emailnotusable.com'
+	    };
+
+	    auth.setPartyObj(reqOrg, {}, function() {
+		expect(reqOrg.user).toEqual(org);
+		done();
+	    });
+	});
+	
+    });
+
+    describe('Update party API', function() {
 	
 	var auth = getAuthLib(strategy, {}, null, {});
 	var req = {
