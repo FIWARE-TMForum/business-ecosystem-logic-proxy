@@ -188,14 +188,21 @@ describe('Party API', function() {
                 var user = 'test';
 
                 var req = {
-                    // Individual has been replaced by organization in this path
+                    // OLD // Individual has been replaced by organization in this path
+		    // This test no longer returns invalid_path, since organization now is a
+		    // valid path.
                     apiUrl: '/' + config.endpoints.party.path + '/api/partyManagement/v2/organization/' + user,
                     method: 'PATCH',
                     user: user
                 };
 
+		var expectedErr = {
+                    status: 403,
+                    message: 'You are not allowed to access this resource'
+                };
+
                 partyAPI.checkPermissions(req, function(err) {
-                    expect(err).toEqual(INVALID_PATH_ERROR);
+                    expect(err).toEqual(expectedErr);
                     done();
                 });
             });

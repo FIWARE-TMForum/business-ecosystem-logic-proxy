@@ -52,9 +52,7 @@
         }
 
 	$scope.$on(Party.EVENTS.USER_SESSION_SWITCHED, function (event, message, obj) {
-	    if (Party.isOrganization() || User.loggedUser.currentUser.id === User.loggedUser.id){
 		catalogueList();
-	    }
 	});
 
 	function catalogueList() {
@@ -113,9 +111,7 @@
         }
 
 	$scope.$on(Party.EVENTS.USER_SESSION_SWITCHED, function (event, message, obj) {
-	    if (Party.isOrganization() || User.loggedUser.currentUser.id === User.loggedUser.id){
-		catalogueSearch();
-	    }
+	    catalogueSearch();
 	});
 
 	function catalogueSearch() {

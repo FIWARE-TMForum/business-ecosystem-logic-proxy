@@ -54,6 +54,7 @@ var party = (function() {
     };
 
     var validateUpdate = function(req, callback) {
+
         var individualsPattern = new RegExp('^/' + config.endpoints.party.path +
             '/api/partyManagement/v2/(individual|organization)(/([^/]*))?$');
         var apiPath = url.parse(req.apiUrl).pathname;
@@ -67,7 +68,7 @@ var party = (function() {
             });
         } else {
             // regexResult[3] contains the user id
-	    var org = req.user.organizations.find( x => x.id === regexResult[3]);
+	    var org = req.user.organizations ? req.user.organizations.find( x => x.id === regexResult[3]) : undefined;
 	    // the first condition checks if the individual is the one calling
 	    if (req.user.id === regexResult[3] || (org && org.roles.findIndex(x => x.name === "Admin") > -1)) {
                 callback(null);

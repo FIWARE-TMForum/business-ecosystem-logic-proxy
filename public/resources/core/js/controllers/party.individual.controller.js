@@ -63,9 +63,7 @@
             });
         });
 	$scope.$on(Party.EVENTS.USER_SESSION_SWITCHED, function (event, message, obj) {
-	    if (Party.isOrganization() || User.loggedUser.currentUser.id === User.loggedUser.id){
-		initialiceData();
-	    }
+	    initialiceData();
 	});
 	
 	// Now, this function is called at the beginning of the execution and every switch call this function in order to keep frontend and backend coherence
