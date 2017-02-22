@@ -96,7 +96,7 @@
 	.config(function($httpProvider){
 	    $httpProvider.interceptors.push('interceptor');
 	})
-	.factory('interceptor', ['$rootScope', '$injector', function($rootScope, $injector) {
+	.factory('interceptor', ['$injector', function($injector) {
 	    return {
 		'request': function(config) {
 		    var party = $injector.get('Party');

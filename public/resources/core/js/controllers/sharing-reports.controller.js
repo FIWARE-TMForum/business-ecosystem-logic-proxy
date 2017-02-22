@@ -31,19 +31,29 @@
         .controller('RSReportCreateCtrl', RSReportCreateController)
         .controller('RSReportSearchCtrl', RSReportSearchController);
 
-    function RSReportSearchController(DATA_STATUS, RSS, Utils) {
+    function RSReportSearchController(DATA_STATUS, RSS, Utils, $scope, User, Party) {
         var vm = this;
 
         vm.list = [];
         vm.list.status = DATA_STATUS.LOADING;
 
-        RSS.searchReports().then(function(reports) {
-            vm.list = angular.copy(reports);
-            vm.list.status = DATA_STATUS.LOADED;
-        }, function (response) {
-            vm.error = Utils.parseError(response, 'Unexpected error trying to retrieve the reports.');
-            vm.list.status = DATA_STATUS.ERROR;
-        });
+	$scope.$on(Party.EVENTS.USER_SESSION_SWITCHED, function (event, message, obj) {
+	    if (Party.isOrganization() || User.loggedUser.currentUser.id === User.loggedUser.id){
+		RSReportSearch();
+	    }
+	});
+	
+	function RSReportSearch() {
+	    RSS.searchReports().then(function(reports) {
+		vm.list = angular.copy(reports);
+		vm.list.status = DATA_STATUS.LOADED;
+            }, function (response) {
+		vm.error = Utils.parseError(response, 'Unexpected error trying to retrieve the reports.');
+		vm.list.status = DATA_STATUS.ERROR;
+            });
+	};
+
+	RSReportSearch();
     }
 
     function RSReportCreateController($state, $scope, $rootScope, $element, RSS, EVENTS, Utils) {

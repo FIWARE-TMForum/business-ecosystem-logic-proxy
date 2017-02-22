@@ -37,7 +37,7 @@
         .controller('OfferingDetailCtrl', ProductOfferingDetailController)
         .controller('OfferingUpdateCtrl', ProductOfferingUpdateController);
 
-    function ProductOfferingSearchController($scope, $state, $rootScope, EVENTS, Offering, LIFECYCLE_STATUS, Utils) {
+    function ProductOfferingSearchController($scope, $state, $rootScope, EVENTS, Offering, LIFECYCLE_STATUS, Utils, Party, User) {
         /* jshint validthis: true */
         var vm = this;
         var filters = {};
@@ -66,10 +66,14 @@
             filters = newFilters;
         }
 
-        $scope.$watch(function () {
-            return vm.offset;
-        }, function () {
-            vm.list.status = LOADING;
+	$scope.$on(Party.EVENTS.USER_SESSION_SWITCHED, function (event, message, obj) {
+	    if (Party.isOrganization() || User.loggedUser.currentUser.id === User.loggedUser.id){
+		offeringSearch();
+	    }
+	});
+
+	function offeringSearch() {
+	    vm.list.status = LOADING;
 
             if (vm.offset >= 0) {
                 var params = {};
@@ -94,7 +98,11 @@
                     vm.list.status = ERROR;
                 });
             }
-        });
+	};
+
+        $scope.$watch(function () {
+            return vm.offset;
+        }, offeringSearch);
     }
 
     function ProductOfferingCreateController($q, $scope, $state, $rootScope, $controller, EVENTS, LIFECYCLE_STATUS, PROMISE_STATUS, Offering, Catalogue, ProductSpec, Utils) {
