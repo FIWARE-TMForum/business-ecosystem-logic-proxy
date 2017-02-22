@@ -254,6 +254,8 @@
                         if (closeModal) {
                             $rootScope.$emit(EVENTS.MESSAGE_CLOSED);
                         }
+                        // Reload inventory page
+                        $state.go($state.current, {}, {reload: true})
 
                     };
 
