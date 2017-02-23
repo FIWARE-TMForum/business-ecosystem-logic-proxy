@@ -28,7 +28,7 @@ describe('Utils', function() {
 
     describe('Attach User Headers', function() {
 
-        it('should include Nick Name and Display Name', function() {
+        it('should include Nick Name, Display Name and X Actor', function() {
             
             var headers = {};
             var userInfo = {
@@ -53,6 +53,7 @@ describe('Utils', function() {
             expect(headers['X-Nick-Name']).toBe(userInfo.id);
             expect(headers['X-Display-Name']).toBe(userInfo.displayName);
             expect(headers['X-Roles']).toBe('provider,seller,');
+	    expect(headers['X-Actor']).toBe(userInfo.id)
         });
     });
 

@@ -62,9 +62,7 @@
         vm.cancellingOrder = false;
 
 	$scope.$on(Party.EVENTS.USER_SESSION_SWITCHED, function (event, message, obj) {
-	    if (Party.isOrganization() || User.loggedUser.currentUser.id === User.loggedUser.id){
-		productOrderSearch();
-	    }
+	    productOrderSearch();
 	});
 
 	function productOrderSearch() {

@@ -67,9 +67,7 @@
         }
 
 	$scope.$on(Party.EVENTS.USER_SESSION_SWITCHED, function (event, message, obj) {
-	    if (Party.isOrganization() || User.loggedUser.currentUser.id === User.loggedUser.id){
-		offeringSearch();
-	    }
+	    offeringSearch();
 	});
 
 	function offeringSearch() {
