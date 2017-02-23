@@ -72,45 +72,6 @@ describe('Auth lib', function () {
 	    user: {
 		id: 'rick',
 		nickName: 'theMagician',
-		accessToken: 'accesstoken',
-		refreshToken: 'refreshToken',
-		organizations: [{
-		    id: '123456789',
-		    name: 'patty',
-		    roles: [{
-			id: '3',
-			name: 'Seller'
-		    }, {
-			id: '6',
-			name: 'provider'
-		    }]
-		}, {
-		    id: '987654321',
-		    name: 'MntyPythn',
-		    roles: [{
-			id: '6',
-			name: 'provider'
-		    }]
-		}, {
-		    id: '111555999',
-		    name: 'AmaneceQueNoEsPoco',
-		    roles: [{
-			id: '3',
-			name: 'Seller'
-		    }, {
-			id: '1',
-			name: 'purchuaser'
-		    }]
-		}]
-	    }
-        };
-
-	var reqOrg = {
-	    id: 'test_user',
-	    appId: config.oauth2.clientID,
-	    user: {
-		id: 'rick',
-		nickName: 'theMagician',
 		accessToken: 'accessToken',
 		refreshToken: 'refreshToken',
 		organizations: [{
@@ -141,11 +102,12 @@ describe('Auth lib', function () {
 			name: 'purchuaser'
 		    }]
 		}]
-	    },
-	    headers: {
-		'x-organization': '123456789'
 	    }
         };
+
+	var header =  {
+	    'x-organization': '123456789'
+	};
 
 	it ('should continue with middleware processing if no user object has been provided', function (done) {
 	    var req = {
@@ -170,7 +132,7 @@ describe('Auth lib', function () {
 		user: {
 		    id: 'rick',
 		    nickName: 'theMagician',
-		    accessToken: 'accesstoken',
+		    accessToken: 'accessToken',
 		    refreshToken: 'refreshToken',
 		    organizations: []
 		},
@@ -183,10 +145,10 @@ describe('Auth lib', function () {
 	});
 
 	it('Individual object should be selected if x-organization header not present', function(done) {
-	    var user = {
+	    var expectedUser = {
 		id: 'rick',
 		nickName: 'theMagician',
-		accessToken: 'accesstoken',
+		accessToken: 'accessToken',
 		refreshToken: 'refreshToken',
 		organizations: [{
 		    id: '123456789',
@@ -218,14 +180,14 @@ describe('Auth lib', function () {
 		}]
 	    };
 	    auth.setPartyObj(reqInd, {}, function() {
-		expect(reqInd.user).toEqual(user);
+		expect(reqInd.user).toEqual(expectedUser);
 		done();
 	    });
 	    
 	});
 
 	it('Organization object should be selected if x-organization header is present', function(done) {
-	    var org = {
+	    var expectedUser = {
 		userNickname: 'rick',
 		id: '123456789',
 		roles: [{
@@ -241,8 +203,10 @@ describe('Auth lib', function () {
 		email: '123456789' + '@emailnotusable.com'
 	    };
 
-	    auth.setPartyObj(reqOrg, {}, function() {
-		expect(reqOrg.user).toEqual(org);
+	    reqInd.headers = header;
+
+	    auth.setPartyObj(reqInd, {}, function() {
+		expect(reqInd.user).toEqual(expectedUser);
 		done();
 	    });
 	});
