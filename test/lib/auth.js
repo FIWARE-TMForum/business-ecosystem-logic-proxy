@@ -202,11 +202,11 @@ describe('Auth lib', function () {
 		refreshToken: 'refreshToken',
 		email: '123456789' + '@emailnotusable.com'
 	    };
+	    var req = reqInd;
+	    req.headers = header;
 
-	    reqInd.headers = header;
-
-	    auth.setPartyObj(reqInd, {}, function() {
-		expect(reqInd.user).toEqual(expectedUser);
+	    auth.setPartyObj(req, {}, function() {
+		expect(req.user).toEqual(expectedUser);
 		done();
 	    });
 	});
