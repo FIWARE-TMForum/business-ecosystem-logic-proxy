@@ -86,21 +86,15 @@ describe("Test index helper library", function () {
             request = function () {};
         }
 
-        var mockUtils = {
-            getAPIHost: function(){
-                return testUtils.getDefaultConfig().endpoints.catalog.host;
-            },
-
-            getAPIPort: function(){
-                return testUtils.getDefaultConfig().endpoints.catalog.port;
-            }
-            
-        };
+        var mockUtils = proxyrequire('../../lib/utils.js', {
+            './../config.js': testUtils.getDefaultConfig()
+        });
         
         return proxyrequire("../../lib/indexes.js", {
             "search-index": method,
             request: request,
-            "./utils": mockUtils
+            "./utils": mockUtils,
+            '../config': testUtils.getDefaultConfig()
         });
     };
 
@@ -508,17 +502,23 @@ describe("Test index helper library", function () {
 
     it('should convert offer with categories', function (done) {
         var user = {id: "rock-8"};
-        var api = "DSProductCatalog";
 
-        var extra = { request: (url, f) => {
-            var curl = utils.getAPIProtocol(api) + "://" + utils.getAPIHost(api) + ":" + utils.getAPIPort(api) + "/DSProductCatalog/api/catalogManagement/v2/category/13";
-            expect(url).toEqual(curl);
+        var extra = {
+            request: (url, f) => {
+                var catInfo = testUtils.getDefaultConfig().endpoints.catalog;
+                var protocol = catInfo.appSsl ? 'https': 'http';
 
-            f(null, {}, JSON.stringify({
-                id: 13,
-                name: "TestCat"
-            }));
-        }};
+                var curl = protocol +'://' + catInfo.host + ':' + catInfo.port +'/' +
+                    catInfo.path + "/api/catalogManagement/v2/category/13";
+
+                expect(url).toEqual(curl);
+
+                f(null, {}, JSON.stringify({
+                    id: 13,
+                    name: "TestCat"
+                }));
+            }
+        };
 
         helper("indexes/products", null, extra, "convertOfferingData", (si, extra) => {
             expect(extra).toEqual(notBundleCategoriesOfferExpect);
@@ -533,18 +533,24 @@ describe("Test index helper library", function () {
     it('should convert offer with multiple categories', function (done) {
         var user = {id: "rock-8"};
         var ids = [13, 14];
-        var api = "DSProductCatalog";
 
-        var extra = { request: (url, f) => {
-            var id = ids.shift();
-            var curl = utils.getAPIProtocol(api) + "://" + utils.getAPIHost(api) + ":" + utils.getAPIPort(api) + "/DSProductCatalog/api/catalogManagement/v2/category/" + id;
-            expect(url).toEqual(curl);
+        var extra = {
+            request: (url, f) => {
+                var id = ids.shift();
+                var catInfo = testUtils.getDefaultConfig().endpoints.catalog;
+                var protocol = catInfo.appSsl ? 'https': 'http';
 
-            f(null, {}, JSON.stringify({
-                id: id,
-                name: "TestCat" + id
-            }));
-        }};
+                var curl = protocol +'://' + catInfo.host + ':' + catInfo.port +'/' +
+                    catInfo.path + "/api/catalogManagement/v2/category/" + id;
+
+                expect(url).toEqual(curl);
+
+                f(null, {}, JSON.stringify({
+                    id: id,
+                    name: "TestCat" + id
+                }));
+            }
+        };
 
         helper("indexes/products", null, extra, "convertOfferingData", (si, extra) => {
             expect(extra).toEqual(notBundleMultipleCategoriesOfferExpected);
