@@ -63,7 +63,7 @@ ui-view
                   .container-spinner(ng-if="searchVM.status === 'LOADING'")
                     span.fa.fa-spinner.fa-spin.fa-2x
                   .table-responsive(ng-if="searchVM.status === 'LOADED' && searchVM.list.length")
-                    table.table.table-bordered.table-hover.table-selectable
+                    table.table.table-bordered.table-hover.table-selectable(ng-init="orderVM.setBillingAccount(searchVM.list[0])")
                       thead
                         tr
                           th Email address

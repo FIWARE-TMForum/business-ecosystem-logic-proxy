@@ -48,6 +48,28 @@
 
         vm.showFilters = showFilters;
         vm.getElementsLength = getElementsLength;
+        vm.searchInput = "";
+
+        // Initialize the search input content
+        vm.initializeInput = initializeInput;
+        function initializeInput() {
+            if($state.params.body !== undefined)
+                vm.searchInput = $state.params.body;
+        }
+
+        // Returns the input content
+        vm.getSearchInputContent = getSearchInputContent;
+        function getSearchInputContent() {
+            // Returns the content of the search input
+            return vm.searchInput;
+        }
+
+        // Handle enter press event
+        vm.handleEnterKeyUp = handleEnterKeyUp;
+        function handleEnterKeyUp(event) {
+            if (event.keyCode == 13)
+                $("#searchbutton").click();
+        }
 
         $scope.$watch(function () {
             return vm.offset;
@@ -229,7 +251,7 @@
 
         function isRenewable() {
             return hasProductPrice() && (vm.item.productPrice[0].priceType.toLowerCase() == 'recurring'
-                || isUsage());
+                                         || isUsage());
         }
 
         function renewProduct() {
@@ -254,6 +276,8 @@
                         if (closeModal) {
                             $rootScope.$emit(EVENTS.MESSAGE_CLOSED);
                         }
+                        // Reload inventory page
+                        $state.go($state.current, {}, {reload: true})
 
                     };
 
@@ -282,9 +306,10 @@
 
         function getUsageURL() {
             var startingChar = USAGE_CHART_URL.indexOf('?') > -1 ? '&' : '?';
+            var server = window.location.origin;
 
             // Get the endpoint of the usage mashup including the access token and the product id
-            return USAGE_CHART_URL + startingChar + 'productId=' + vm.item.id + '&token=' + LOGGED_USER.bearerToken;
+            return USAGE_CHART_URL + startingChar + 'productId=' + vm.item.id + '&token=' + LOGGED_USER.bearerToken + '&server=' + server;
         }
 
         function characteristicMatches(productChar, specChar, offId, productId) {

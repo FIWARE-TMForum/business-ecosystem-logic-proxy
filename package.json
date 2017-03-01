@@ -1,8 +1,9 @@
 {
   "name": "business-ecosystem-logic-proxy",
-  "version": "5.4.0",
+  "version": "5.4.1",
   "description": "Logic Layer for the Business API Ecosystem",
   "author": "UPM",
+  "license": "AGPL-3.0",
   "dependencies": {
     "async": "^1.5.0",
     "async-lock": "^0.3.8",

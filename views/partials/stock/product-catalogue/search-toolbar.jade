@@ -1,12 +1,18 @@
 .row
-  .col-xs-12.col-sm-6
+  .col-xs-12.col-sm-3
     include ./breadcrumb.jade
-  .col-xs-12.col-sm-6
+  .col-xs-12.col-sm-9
     .btn-toolbar.pull-right
       .btn-group.z-depth-1
         a.btn.btn-success(ui-sref="stock.catalogue.create", ui-sref-opts="{ inherit: false }")
           span.item-icon.fa.fa-plus-circle
           span.item-text New
+      .btn-group.z-depth-1
+        input.form-control(ng-keyup="searchVM.handleEnterKeyUp($event)", ng-init="searchVM.initializeInput()", ng-model="searchVM.searchInput", type="text", placeholder="Search...", id="searchparams")
+      .btn-group.z-depth-1
+        a.btn.btn-default(ui-sref="stock.catalogue({ body: searchVM.getSearchInputContent() })", id="searchbutton")
+          span.item-icon.fa.fa-search
+          span.item-text.hidden-xs Search
       .btn-group.z-depth-1
         a.btn.btn-default(ng-click="searchVM.showFilters()")
           span.item-icon.fa.fa-sliders

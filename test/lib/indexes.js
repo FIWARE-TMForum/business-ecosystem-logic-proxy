@@ -22,7 +22,10 @@
 var proxyrequire = require("proxyquire"),
     md5 = require("blueimp-md5"),
     config = require("../../config"),
-    utils = require("../../lib/utils");
+    utils = require("../../lib/utils"),
+    testUtils = require("../utils.js"),
+    requestLib = require('request'),
+    nock = require('nock');
 
 describe("Test index helper library", function () {
     var createSearchMock = function createSearchMock(path, err, extra) {
@@ -83,9 +86,15 @@ describe("Test index helper library", function () {
             request = function () {};
         }
 
+        var mockUtils = proxyrequire('../../lib/utils.js', {
+            './../config.js': testUtils.getDefaultConfig()
+        });
+        
         return proxyrequire("../../lib/indexes.js", {
             "search-index": method,
-            request: request
+            request: request,
+            "./utils": mockUtils,
+            '../config': testUtils.getDefaultConfig()
         });
     };
 
@@ -290,6 +299,7 @@ describe("Test index helper library", function () {
     var catalogData = {
         id: 3,
         href: "http://3",
+        description: "Description",
         lifecycleStatus: "Obsolete",
         name: "Name",
         relatedParty: [{id: "rock"}]
@@ -298,6 +308,7 @@ describe("Test index helper library", function () {
     var catalogExpected = {
         id: "catalog:3",
         originalId: 3,
+        body: ["name", "description"],
         sortedId: "000000000003",
         relatedPartyHash: [md5("rock")],
         relatedParty: ["rock"],
@@ -336,6 +347,7 @@ describe("Test index helper library", function () {
         href: "http://1",
         name: "name",
         brand: "brand",
+        description: "Product Description",
         lifecycleStatus: "Active",
         isBundle: false,
         productNumber: 12,
@@ -350,7 +362,7 @@ describe("Test index helper library", function () {
         productNumber: 12,
         originalId: 1,
         sortedId: "000000000001",
-        body: ["name", "brand"],
+        body: ["name", "brand", "product description"],
         relatedPartyHash: [md5("rock-8"),  md5("rock-9")],
         relatedParty: ["rock-8", "rock-9"]
     };
@@ -387,7 +399,8 @@ describe("Test index helper library", function () {
         description: "description",
         href: "http://2",
         lifecycleStatus: "Active",
-        isBundle: false
+        isBundle: false,
+        catalog: "2"
     };
 
     var notBundleCategoriesOffer = Object.assign({}, notBundleOffer, {
@@ -405,7 +418,8 @@ describe("Test index helper library", function () {
         bundledProductOffering: [{ id: 2 }],
         href: "http://3",
         productSpecification: null,
-        isBundle: true
+        isBundle: true,
+        catalog: "2"
     });
 
     var bundleExpected = {
@@ -418,7 +432,8 @@ describe("Test index helper library", function () {
         productSpecification: undefined,
         href: "http://3",
         lifecycleStatus: "Active",
-        isBundle: true
+        isBundle: true,
+        catalog: "catalog:2"
     };
 
     var notBundleExpected = Object.assign({}, bundleExpected, {
@@ -428,7 +443,8 @@ describe("Test index helper library", function () {
         sortedId: "000000000002",
         productSpecification: "000000000001",
         href: "http://2",
-        isBundle: false
+        isBundle: false,
+        catalog: "catalog:2"
     });
 
     var notBundleCategoriesOfferExpect = Object.assign({}, notBundleExpected, {
@@ -438,7 +454,8 @@ describe("Test index helper library", function () {
         sortedId: "000000000012",
         lifecycleStatus: "Disabled",
         categoriesId: ['cat:13'],
-        categoriesName: [md5("testcat")]
+        categoriesName: [md5("testcat")],
+        catalog: "catalog:2"
     });
 
     var notBundleMultipleCategoriesOfferExpected = Object.assign({}, notBundleCategoriesOfferExpect, {
@@ -486,17 +503,23 @@ describe("Test index helper library", function () {
 
     it('should convert offer with categories', function (done) {
         var user = {id: "rock-8"};
-        var api = "DSProductCatalog";
 
-        var extra = { request: (url, f) => {
-            var curl = utils.getAPIProtocol(api) + "://" + utils.getAPIHost(api) + ":" + utils.getAPIPort(api) + "/DSProductCatalog/api/catalogManagement/v2/category/13";
-            expect(url).toEqual(curl);
+        var extra = {
+            request: (url, f) => {
+                var catInfo = testUtils.getDefaultConfig().endpoints.catalog;
+                var protocol = catInfo.appSsl ? 'https': 'http';
 
-            f(null, {}, JSON.stringify({
-                id: 13,
-                name: "TestCat"
-            }));
-        }};
+                var curl = protocol +'://' + catInfo.host + ':' + catInfo.port +'/' +
+                    catInfo.path + "/api/catalogManagement/v2/category/13";
+
+                expect(url).toEqual(curl);
+
+                f(null, {}, JSON.stringify({
+                    id: 13,
+                    name: "TestCat"
+                }));
+            }
+        };
 
         helper("indexes/products", null, extra, "convertOfferingData", (si, extra) => {
             expect(extra).toEqual(notBundleCategoriesOfferExpect);
@@ -511,18 +534,24 @@ describe("Test index helper library", function () {
     it('should convert offer with multiple categories', function (done) {
         var user = {id: "rock-8"};
         var ids = [13, 14];
-        var api = "DSProductCatalog";
 
-        var extra = { request: (url, f) => {
-            var id = ids.shift();
-            var curl = utils.getAPIProtocol(api) + "://" + utils.getAPIHost(api) + ":" + utils.getAPIPort(api) + "/DSProductCatalog/api/catalogManagement/v2/category/" + id;
-            expect(url).toEqual(curl);
+        var extra = {
+            request: (url, f) => {
+                var id = ids.shift();
+                var catInfo = testUtils.getDefaultConfig().endpoints.catalog;
+                var protocol = catInfo.appSsl ? 'https': 'http';
 
-            f(null, {}, JSON.stringify({
-                id: id,
-                name: "TestCat" + id
-            }));
-        }};
+                var curl = protocol +'://' + catInfo.host + ':' + catInfo.port +'/' +
+                    catInfo.path + "/api/catalogManagement/v2/category/" + id;
+
+                expect(url).toEqual(curl);
+
+                f(null, {}, JSON.stringify({
+                    id: id,
+                    name: "TestCat" + id
+                }));
+            }
+        };
 
         helper("indexes/products", null, extra, "convertOfferingData", (si, extra) => {
             expect(extra).toEqual(notBundleMultipleCategoriesOfferExpected);
@@ -635,8 +664,10 @@ describe("Test index helper library", function () {
     var inventoryData = {
         id: 12,
         productOffering: {
-            id: 5
+            id: 5,
+            href: "http://example.com/catalog/offering/5"
         },
+        searchable: ["offername", "offerdescription"],
         relatedParty: [{id: "rock", role: "customer"}],
         href: "http://12",
         name: "inventoryName",
@@ -646,9 +677,11 @@ describe("Test index helper library", function () {
         terminationDate: 232323233
     };
 
+    
     var inventoryExpected = {
         id: "inventory:12",
         originalId: 12,
+        body: ["offername", "offerdescription"],
         sortedId: "000000000012",
         productOffering: 5,
         relatedPartyHash: [md5("rock")],
@@ -663,6 +696,7 @@ describe("Test index helper library", function () {
 
     it("should convert inventory data correctly", function () {
         var indexes = getIndexLib();
+
         expect(indexes.convertInventoryData(inventoryData)).toEqual(inventoryExpected);
     });
 
@@ -671,8 +705,14 @@ describe("Test index helper library", function () {
             extraadd: (data, ops) => {
                 expect(data).toEqual([inventoryExpected]);
                 expect(ops).toEqual({});
-            }
+            },
+            request: requestLib
         };
+
+        nock("http://" + testUtils.getDefaultConfig().endpoints.catalog.host + ":" + testUtils.getDefaultConfig().endpoints.catalog.port)
+            .get("/catalog/offering/5")
+            .reply(200, {name: "OfferName2", description: "Description2"});
+
         helper("indexes/inventory", null, extra, "saveIndexInventory", (si, extra) => {
             expect(extra).toBeUndefined();
             expect(si.add).toHaveBeenCalled();

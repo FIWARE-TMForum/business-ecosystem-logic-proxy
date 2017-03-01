@@ -1050,6 +1050,7 @@ var catalog = (function() {
                 indexes.addAndCondition(query, { relatedPartyHash: [indexes.fixUserId(req.query["relatedParty.id"])]});
     	    }
 
+            queryAndOrCommas(req.query["body"], "body", query);
             lifecycleQuery(req, query);
 	});
 
@@ -1060,7 +1061,7 @@ var catalog = (function() {
 	    function (req, query) {
 	        if (catalogOfferingsPattern.test(req.apiUrl)) {
 	            var catalog = req.apiUrl.split('/')[6];
-	            indexes.addAndCondition(query, { catalog: [catalog] });
+	            indexes.addAndCondition(query, { catalog: ["catalog:" + catalog] });
             }
             if (req.query.relatedParty) {
                 indexes.addAndCondition(query, { userId: [indexes.fixUserId(req.query.relatedParty)] });
@@ -1074,7 +1075,7 @@ var catalog = (function() {
 
             queryAndOrCommas(req.query["productSpecification.id"], "productSpecification", query, x => leftPad(x, 12, 0));
             queryAndOrCommas(req.query["bundledProductOffering.id"], "bundledProductOffering", query, x => leftPad(x, 12, 0));
-
+            queryAndOrCommas(req.query["body"], "body", query);
             lifecycleQuery(req, query);
 	});
 
@@ -1087,6 +1088,7 @@ var catalog = (function() {
                 indexes.addAndCondition(query, { relatedPartyHash: [indexes.fixUserId(req.query["relatedParty.id"])] });
             }
 
+            queryAndOrCommas(req.query["body"], "body", query);
             lifecycleQuery(req, query);
         }
     );

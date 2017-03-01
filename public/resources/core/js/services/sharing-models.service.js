@@ -197,8 +197,6 @@
 
         function createReport(report) {
             report.providerId = User.loggedUser.id;
-            report.callbackUrl = $location.protocol() + '://' + $location.host() + ':' + $location.port() + '/#/rss/reports';
-
             return settlementResource.save(report).$promise;
         }
     }

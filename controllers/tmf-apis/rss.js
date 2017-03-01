@@ -83,20 +83,20 @@ var rss = (function () {
             body.aggregatorValue = config.revenueModel;
             utils.updateBody(req, body);
         }
-        callback();
+        callback(null);
     };
 
     var changeCallbackUrl = function changeCallbackUrl(req, callback) {
         if (/rss\/settlement$/.test(req.apiUrl)) {
             var body = JSON.parse(req.body);
-            if (!body.callbackUrl) {
-				var url = utils.getAPIURL(config.endpoints.charging.appSsl, config.endpoints.charging.host, config.endpoints.charging.port, "/charging/api/reportManagement/created");
-                body.callbackUrl = url;
-                utils.updateBody(req, body);
-            }
+            var url = utils.getAPIURL(
+                config.endpoints.charging.appSsl, config.endpoints.charging.host, config.endpoints.charging.port, "/charging/api/reportManagement/created");
+
+            body.callbackUrl = url;
+            utils.updateBody(req, body);
         }
 
-        callback();
+        callback(null);
     };
 
     var validators = {
