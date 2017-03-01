@@ -347,6 +347,7 @@ describe("Test index helper library", function () {
         href: "http://1",
         name: "name",
         brand: "brand",
+        description: "Product Description",
         lifecycleStatus: "Active",
         isBundle: false,
         productNumber: 12,
@@ -361,7 +362,7 @@ describe("Test index helper library", function () {
         productNumber: 12,
         originalId: 1,
         sortedId: "000000000001",
-        body: ["name", "brand"],
+        body: ["name", "brand", "product description"],
         relatedPartyHash: [md5("rock-8"),  md5("rock-9")],
         relatedParty: ["rock-8", "rock-9"]
     };
