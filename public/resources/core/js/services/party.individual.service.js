@@ -187,10 +187,10 @@
 
 	};
 
-        function create(data, isOrg) {
+        function create(data) {
             var deferred = $q.defer();
 
-	    if(!isOrg){
+	    if(!isOrganization()){
 		process(Individual.save, [data], deferred);
 	    } else {
 		process(Organization.save, [data], deferred);
@@ -199,12 +199,12 @@
             return deferred.promise;
         };
 
-        function detail(id, isOrg) {
+        function detail(id) {
             var deferred = $q.defer();
             var params = {
                 id: id
             };
-	    if(!isOrg){
+	    if(!isOrganization()){
 		process(Individual.get, [params], deferred, extendContactMedium);
 	    } else {
 		process(Organization.get, [params], deferred, extendContactMedium);
@@ -212,12 +212,12 @@
 	    return deferred.promise;
         };
 
-        function update(entry, data, isOrg) {
+        function update(entry, data) {
 	    var deferred = $q.defer();
             var params = {
                 id: entry.id
             };
-	    if(!isOrg) {
+	    if(!isOrganization()) {
 		process(Individual.update, [params, data], deferred);
 	    } else {
 		process(Organization.update, [params, data], deferred);
@@ -225,12 +225,12 @@
 	    return deferred.promise;
         };
 
-        function updatePartial(entry, data, isOrg) {
+        function updatePartial(entry, data) {
             var deferred = $q.defer();
             var params = {
                 id: entry.id
             };
-	    if (!isOrg){		
+	    if (!isOrganization()){		
 		process(Individual.updatePartial, [params, data], deferred);
 	    } else {
 		process(Organization.updatePartial, [params, data], deferred);
@@ -239,10 +239,10 @@
             return deferred.promise;
         };
 
-        function launch(isOrg) {
-	    if(isOrg){
+        function launch() {
+	    if(!isOrganization()){
 		return new Individual({
-                    id: User.loggedUser.id,
+                    id: User.loggedUser.currentUser.id,
                     birthDate: '',
                     contactMedium: [],
                     countryOfBirth: '',
@@ -257,7 +257,7 @@
 	    } else {
 		// TODO: Add proper fields. But this object should never be created like this, so its ok
 		return new Organization({
-                    id: "POTATO",
+                    id: "ThisShouldntBeHappeningEver:ERROR!",
                     contactMedium: [],
 		    description: ""
 		});

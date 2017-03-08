@@ -70,7 +70,7 @@
 	initialiceData()
 
 	function initialiceData() {
-            Party.detail(User.loggedUser.currentUser.id, Party.isOrganization()).then(function (infoRetrieved) {
+            Party.detail(User.loggedUser.currentUser.id).then(function (infoRetrieved) {
 		retrievePartyInfo(infoRetrieved);
             }, function (response) {
 		if (response.status === 404) {
@@ -93,6 +93,14 @@
 	    unparseDate();
 	};
 
+	function retrievePartyInfo(party) {
+	    if (party == null) {
+		party = Party.launch();
+		vm.isNotCreated = true;
+	    }
+	    retrieveProfile(party);
+	};
+
 	function unparseDate() {
 	    if (Party.isOrganization() && vm.data.organizationIdentification) {
 	    	vm.data.organizationIdentification.issuingDate = new Date(vm.data.organizationIdentification.issuingDate);
@@ -104,20 +112,13 @@
 		vm.data.organizationIdentification.issuingDate = moment(vm.data.organizationIdentification.issuingDate).format()
 	    }
 	};
-
-	function retrievePartyInfo(party) {
-	    if (party == null) {
-		party = Party.launch(Party.isOrganization());
-		vm.isNotCreated = true;
-	    }
-	    retrieveProfile(party);
-	};
-
         var updatePromise = null;
 
         function update() {
             if (vm.isNotCreated) {
-                updatePromise = Party.create(vm.data, Party.isOrganization());
+		parseDate();
+                updatePromise = Party.create(vm.data);
+		unparseDate();
                 updatePromise.then(function () {
                     $state.go('settings.general', {}, {
                         reload: true
@@ -132,7 +133,7 @@
                 });
             } else {
 		parseDate();
-                updatePromise = Party.update(vm.item, vm.data, Party.isOrganization());
+                updatePromise = Party.update(vm.item, vm.data);
 		unparseDate();
                 updatePromise.then(function () {
                     $state.go('settings.general', {}, {
