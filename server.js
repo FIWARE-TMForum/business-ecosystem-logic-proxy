@@ -8,6 +8,7 @@ var authorizeService = require('./controllers/authorizeService').authorizeServic
     express = require('express'),
     fs = require('fs'),
     https = require('https'),
+    indexes = require('./lib/indexes'),
     inventorySubscription = require('./lib/inventory_subscription'),
     logger = require('./lib/logger').logger.getLogger("Server"),
     mongoose = require('mongoose'),
@@ -520,40 +521,44 @@ app.use(function(err, req, res, next) {
 //////////////////////////// START SERVER ///////////////////////////
 /////////////////////////////////////////////////////////////////////
 
-logger.info('Business Ecosystem Logic Proxy starting on port ' + PORT);
+// Initialize indexes
+indexes.init().then(function() {
+    logger.info('Business Ecosystem Logic Proxy starting on port ' + PORT);
+    if (config.https.enabled === true) {
 
-if (config.https.enabled === true) {
+        var options = {
+            secureOptions: constants.SSL_OP_NO_SSLv3 | constants.SSL_OP_NO_SSLv2,
+            ciphers: [
+                "ECDHE-RSA-AES256-SHA384",
+                "DHE-RSA-AES256-SHA384",
+                "ECDHE-RSA-AES256-SHA256",
+                "DHE-RSA-AES256-SHA256",
+                "ECDHE-RSA-AES128-SHA256",
+                "DHE-RSA-AES128-SHA256",
+                "HIGH",
+                "!aNULL",
+                "!eNULL",
+                "!EXPORT",
+                "!DES",
+                "!RC4",
+                "!MD5",
+                "!PSK",
+                "!SRP",
+                "!CAMELLIA"
+            ].join(':'),
+            honorCipherOrder: true,
+            key: fs.readFileSync(config.https.keyFile),
+            cert: fs.readFileSync(config.https.certFile),
+            ca: fs.readFileSync(config.https.caFile)
+        };
 
-    var options = {
-        secureOptions: constants.SSL_OP_NO_SSLv3 | constants.SSL_OP_NO_SSLv2,
-        ciphers: [
-            "ECDHE-RSA-AES256-SHA384",
-            "DHE-RSA-AES256-SHA384",
-            "ECDHE-RSA-AES256-SHA256",
-            "DHE-RSA-AES256-SHA256",
-            "ECDHE-RSA-AES128-SHA256",
-            "DHE-RSA-AES128-SHA256",
-            "HIGH",
-            "!aNULL",
-            "!eNULL",
-            "!EXPORT",
-            "!DES",
-            "!RC4",
-            "!MD5",
-            "!PSK",
-            "!SRP",
-            "!CAMELLIA"
-        ].join(':'),
-        honorCipherOrder: true,
-        key: fs.readFileSync(config.https.keyFile),
-        cert: fs.readFileSync(config.https.certFile),
-        ca: fs.readFileSync(config.https.caFile)
-    };
+        https.createServer(options, function(req,res) {
+            app.handle(req, res);
+        }).listen(app.get('port'));
 
-    https.createServer(options, function(req,res) {
-        app.handle(req, res);
-    }).listen(app.get('port'));
-
-} else {
-    app.listen(app.get('port'));
-}
+    } else {
+        app.listen(app.get('port'));
+    }
+}).catch(function() {
+    logger.error('CRITICAL: The indexes could not be created, the server is not starting')
+});

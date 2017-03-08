@@ -1061,13 +1061,13 @@ var catalog = (function() {
 	    function (req, query) {
 	        if (catalogOfferingsPattern.test(req.apiUrl)) {
 	            var catalog = req.apiUrl.split('/')[6];
-	            indexes.addAndCondition(query, { catalog: ["catalog:" + catalog] });
+	            indexes.addAndCondition(query, { catalog: [leftPad(catalog, 12, 0)] });
             }
             if (req.query.relatedParty) {
                 indexes.addAndCondition(query, { userId: [indexes.fixUserId(req.query.relatedParty)] });
             }
             if (req.query["category.id"]) {
-                indexes.addAndCondition(query, { categoriesId: ["cat:" + req.query["category.id"]]});
+                indexes.addAndCondition(query, { categoriesId: [leftPad(req.query["category.id"], 12, 0)]});
             }
             if (req.query["category.name"]) {
                 indexes.addAndCondition(query, { categoriesName: [md5(req.query["category.name"].toLowerCase())]});
