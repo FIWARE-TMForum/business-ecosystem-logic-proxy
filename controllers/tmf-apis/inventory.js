@@ -64,6 +64,7 @@ var inventory = (function() {
             }
 
             queryAndOrCommas(req.query["body"], "body", query);
+            queryAndOrCommas(req.query["status"], "status", query);
         }
     );
 
