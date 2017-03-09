@@ -312,10 +312,36 @@ describe('Auth lib', function () {
 	    });
 	});
 
-	it ('should continue with middleware processing if getOrganization call fails', function (done) {
+	it ('should call to createIndividual if getIndividual call fails and return error if it fails too', function (done) {
 
+	    var user = {id: req.user.id,
+			birthDate: '',
+			contactMedium: [],
+			countryOfBirth: '',
+			familyName: req.user.displayName,
+			gender: '',
+			givenName: req.user.displayName,
+			maritalStatus: '',
+			nationality: '',
+			placeOfBirth: '',
+			title: ''
+		       };
+	    
 	    var partyClient = jasmine.createSpyObj('partyClient',
-						   ['getOrganization', 'createOrganization', 'updateIndividual']);
+						   ['getIndividual',
+						    'createIndividual',
+						    'getOrganization',
+						    'createOrganization',
+						    'updateIndividual']);
+
+	    partyClient.getIndividual.and.callFake(function (indId, callback) {
+		return callback({status: 500, message: 'Im making this error up', body: 'Server error'})
+	    });
+
+	    partyClient.createIndividual.and.callFake(function (user, callback) {
+		return callback({status: 500, message: 'Im making this error up', body: 'Server error'})
+	    });
+	    
 	    partyClient.getOrganization.and.callFake(function (orgId, callback) {
 		callback({status: 500, message: 'An error occurred during request', body: 'Server error'})
 	    });
@@ -336,9 +362,118 @@ describe('Auth lib', function () {
 
 	    auth.getCache()['token'] = {orgState: 1};
 	    auth.checkOrganizations(req, {}, function () {
+		expect(partyClient.getIndividual).toHaveBeenCalled();
+		expect(partyClient.createIndividual).toHaveBeenCalled();
+		expect(partyClient.getOrganization).not.toHaveBeenCalled();
+		expect(partyClient.createOrganization).not.toHaveBeenCalled();
+		expect(partyClient.updateIndividual).not.toHaveBeenCalled();
+		done();
+	    });
+	});
+
+	it ('should call to createIndividual if getIndividual call fails and continue if it succeed', function (done) {
+
+	    var user = {id: req.user.id,
+			birthDate: '',
+			contactMedium: [],
+			countryOfBirth: '',
+			familyName: req.user.displayName,
+			gender: '',
+			givenName: req.user.displayName,
+			maritalStatus: '',
+			nationality: '',
+			placeOfBirth: '',
+			title: ''
+		       };
+	    
+	    var partyClient = jasmine.createSpyObj('partyClient',
+						   ['getIndividual',
+						    'createIndividual',
+						    'getOrganization',
+						    'createOrganization',
+						    'updateIndividual']);
+
+	    partyClient.getIndividual.and.callFake(function (indId, callback) {
+		return callback({status: 500, message: 'An error occurred during request', body: 'Server error'})
+	    });
+
+	    partyClient.createIndividual.and.callFake(function (user, callback) {
+		return callback(null)
+	    });
+	    
+	    partyClient.getOrganization.and.callFake(function (orgId, callback) {
+		callback({status: 500, message: 'An error occurred during request', body: 'Server error'})
+	    });
+
+	    partyClient.createOrganization.and.callFake(function (content, callback) {
+		return callback({status: 500, message: 'An error occurred while creating the organization'});
+	    });
+
+	    partyClient.updateIndividual.and.callFake(function (indId, content, callback) {
+		return callback({status: 500, message: 'An error occurred while updating the individual'});
+	    });
+	    
+	    var party = {
+		partyClient : partyClient
+	    }
+	    
+	    var auth = getAuthLib(strategy, {}, null, party);
+
+	    auth.getCache()['token'] = {orgState: 1};
+	    auth.checkOrganizations(req, {}, function () {
+		expect(partyClient.getIndividual).toHaveBeenCalled();
+		expect(partyClient.createIndividual).toHaveBeenCalled();
 		expect(partyClient.getOrganization.calls.count()).toEqual(3);
 		expect(
-		    partyClient.getOrganization.calls.allArgs().reduce((x, y) => x.concat(y[0]), [])).toEqual(['123456789', '987654321', '111555999'])
+		    partyClient.getOrganization.calls.allArgs().reduce((x, y) => x.concat(y[0]), [])).toEqual(['123456789', '987654321', '111555999']);
+		expect(partyClient.createOrganization).not.toHaveBeenCalled();
+		expect(partyClient.updateIndividual).not.toHaveBeenCalled();
+		done();
+	    });
+	});
+
+	it ('should continue with middleware processing if getOrganization call fails', function (done) {
+
+	    var partyClient = jasmine.createSpyObj('partyClient',
+						   ['getIndividual',
+						    'createIndividual',
+						    'getOrganization',
+						    'createOrganization',
+						    'updateIndividual']);
+
+	    partyClient.getIndividual.and.callFake(function (indId, callback) {
+		return callback(null)
+	    });
+
+	    partyClient.createIndividual.and.callFake(function (user, callback) {
+		return callback({status: 500, message: 'Im making this error up', body: 'Server error'})
+	    });
+	    
+	    partyClient.getOrganization.and.callFake(function (orgId, callback) {
+		callback({status: 500, message: 'An error occurred during request', body: 'Server error'})
+	    });
+
+	    partyClient.createOrganization.and.callFake(function (content, callback) {
+		return callback({status: 500, message: 'An error occurred while creating the organization'});
+	    });
+
+	    partyClient.updateIndividual.and.callFake(function (indId, content, callback) {
+		return callback({status: 500, message: 'An error occurred while updating the individual'});
+	    });
+	    
+	    var party = {
+		partyClient : partyClient
+	    }
+	    
+	    var auth = getAuthLib(strategy, {}, null, party);
+
+	    auth.getCache()['token'] = {orgState: 1};
+	    auth.checkOrganizations(req, {}, function () {
+		expect(partyClient.getIndividual).toHaveBeenCalled();
+		expect(partyClient.createIndividual).not.toHaveBeenCalled();
+		expect(partyClient.getOrganization.calls.count()).toEqual(3);
+		expect(
+		    partyClient.getOrganization.calls.allArgs().reduce((x, y) => x.concat(y[0]), [])).toEqual(['123456789', '987654321', '111555999']);
 		expect(partyClient.createOrganization).not.toHaveBeenCalled();
 		expect(partyClient.updateIndividual).not.toHaveBeenCalled();
 		done();
@@ -348,9 +483,19 @@ describe('Auth lib', function () {
 	it ('should continue with middleware processing if createOrganization call fails', function (done) {
 
 	    var partyClient = jasmine.createSpyObj('partyClient',
-						   ['getOrganization',
+						   ['getIndividual',
+						    'createIndividual',
+						    'getOrganization',
 						    'createOrganization',
 						    'updateIndividual']);
+	    partyClient.getIndividual.and.callFake(function (indId, callback) {
+		return callback(null)
+	    });
+
+	    partyClient.createIndividual.and.callFake(function (user, callback) {
+		return callback({status: 500, message: 'Im making this error up', body: 'Server error'})
+	    });
+	    
 	    var i = 0;
 	    partyClient.getOrganization.and.callFake(
 		function (orgId, callback){
@@ -396,6 +541,8 @@ describe('Auth lib', function () {
 	    
 	    auth.getCache()['token'] = {orgState: 1};
 	    auth.checkOrganizations(req, {}, function () {
+		expect(partyClient.getIndividual).toHaveBeenCalled();
+		expect(partyClient.createIndividual).not.toHaveBeenCalled();
 		expect(partyClient.getOrganization.calls.count()).toEqual(3);
 		expect(
 		    partyClient.getOrganization.calls.allArgs().reduce(
@@ -412,9 +559,20 @@ describe('Auth lib', function () {
 	it('should continue with middleware processing if updateIndividual call fails', function (done) {
 
 	    var partyClient = jasmine.createSpyObj('partyClient',
-						   ['getOrganization',
+						   ['getIndividual',
+						    'createIndividual',
+						    'getOrganization',
 						    'createOrganization',
-						    'updateIndividual'])
+						    'updateIndividual']);
+
+	    partyClient.getIndividual.and.callFake(function (indId, callback) {
+		return callback(null)
+	    });
+
+	    partyClient.createIndividual.and.callFake(function (user, callback) {
+		return callback({status: 500, message: 'Im making this error up', body: 'Server error'})
+	    });
+	    
 	    var i = 0;
 	    partyClient.getOrganization.and.callFake(
 		function (orgId, callback){
@@ -468,6 +626,8 @@ describe('Auth lib', function () {
 	    	    
 	    auth.getCache()['token'] = {orgState: 1};
 	    auth.checkOrganizations(req, {}, function () {
+		expect(partyClient.getIndividual).toHaveBeenCalled();
+		expect(partyClient.createIndividual).not.toHaveBeenCalled();
 		expect(partyClient.getOrganization.calls.count()).toEqual(3);
 		expect(
 		    partyClient.getOrganization.calls.allArgs().reduce(
@@ -485,9 +645,20 @@ describe('Auth lib', function () {
 	
 	it('should continue with middleware processing after updating partyAPI backend data', function (done) {
 	    var partyClient = jasmine.createSpyObj('partyClient',
-						   ['getOrganization',
+						   ['getIndividual',
+						    'createIndividual',
+						    'getOrganization',
 						    'createOrganization',
-						    'updateIndividual'])
+						    'updateIndividual']);
+
+	    partyClient.getIndividual.and.callFake(function (indId, callback) {
+		return callback(null)
+	    });
+
+	    partyClient.createIndividual.and.callFake(function (user, callback) {
+		return callback({status: 500, message: 'Im making this error up', body: 'Server error'})
+	    });
+	    
 	    var i = 0;
 	    partyClient.getOrganization.and.callFake(
 		function (orgId, callback){
@@ -542,6 +713,8 @@ describe('Auth lib', function () {
 
 	    auth.getCache()['token'] = {orgState: 1};
 	    auth.checkOrganizations(req, {}, function () {
+		expect(partyClient.getIndividual).toHaveBeenCalled();
+		expect(partyClient.createIndividual).not.toHaveBeenCalled();
 		expect(partyClient.getOrganization.calls.count()).toEqual(3);
 		expect(
 		    partyClient.getOrganization.calls.allArgs().reduce((x, y) => x.concat(y[0]), [])).toEqual(['123456789', '987654321', '111555999']);

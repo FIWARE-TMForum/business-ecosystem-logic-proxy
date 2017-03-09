@@ -427,7 +427,7 @@ describe('Ordering API', function() {
                 };
 
                 var tmfUtils = jasmine.createSpyObj('tmfUtils', ['getIndividualURL', 'hasPartyRole']);
-                tmfUtils.getIndividualURL.and.returnValue(getIndividualURL());
+                tmfUtils.getIndividualURL.and.returnValue(getIndividualURL(userInfo.id));
                 tmfUtils.hasPartyRole.and.returnValue(hasPartyRole);
 
                 var orderingApi = getOrderingAPI({}, tmfUtils, utils);
@@ -522,8 +522,7 @@ describe('Ordering API', function() {
                         },
                         {
                             id: ownerName,
-                            role: 'Seller',
-                            href: getIndividualURL(ownerName)
+                            role: 'Seller'
                         }]);
                 });
             };
