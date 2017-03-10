@@ -1022,23 +1022,8 @@ var catalog = (function() {
         callback(null);
     };
 
-    var queryAndOrCommas = function queryAndOrCommas(q, name, query, f) {
-        if (!f) {
-            f = x => x.toLowerCase();
-        }
-        if (!q) {
-            return;
-        }
-
-        if (q.split(",").length <= 1) {
-            indexes.addAndCondition(query, { [name]: [f(q)] });
-        } else {
-            indexes.addOrCondition(query, name, q.split(",").map(f));
-        }
-    };
-
     var lifecycleQuery = function lifecycleQuery(req, query) {
-        queryAndOrCommas(req.query.lifecycleStatus, "lifecycleStatus", query);
+        utils.queryAndOrCommas(req.query.lifecycleStatus, "lifecycleStatus", query);
     };
 
     var createProductQuery = indexes.genericCreateQuery.bind(
@@ -1050,7 +1035,7 @@ var catalog = (function() {
                 indexes.addAndCondition(query, { relatedPartyHash: [indexes.fixUserId(req.query["relatedParty.id"])]});
     	    }
 
-            queryAndOrCommas(req.query["body"], "body", query);
+            utils.queryAndOrCommas(req.query["body"], "body", query);
             lifecycleQuery(req, query);
 	});
 
@@ -1073,9 +1058,9 @@ var catalog = (function() {
                 indexes.addAndCondition(query, { categoriesName: [md5(req.query["category.name"].toLowerCase())]});
             }
 
-            queryAndOrCommas(req.query["productSpecification.id"], "productSpecification", query, x => leftPad(x, 12, 0));
-            queryAndOrCommas(req.query["bundledProductOffering.id"], "bundledProductOffering", query, x => leftPad(x, 12, 0));
-            queryAndOrCommas(req.query["body"], "body", query);
+            utils.queryAndOrCommas(req.query["productSpecification.id"], "productSpecification", query, x => leftPad(x, 12, 0));
+            utils.queryAndOrCommas(req.query["bundledProductOffering.id"], "bundledProductOffering", query, x => leftPad(x, 12, 0));
+            utils.queryAndOrCommas(req.query["body"], "body", query);
             lifecycleQuery(req, query);
 	});
 
@@ -1088,7 +1073,7 @@ var catalog = (function() {
                 indexes.addAndCondition(query, { relatedPartyHash: [indexes.fixUserId(req.query["relatedParty.id"])] });
             }
 
-            queryAndOrCommas(req.query["body"], "body", query);
+            utils.queryAndOrCommas(req.query["body"], "body", query);
             lifecycleQuery(req, query);
         }
     );
