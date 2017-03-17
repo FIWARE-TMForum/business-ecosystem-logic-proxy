@@ -415,18 +415,6 @@ describe("Test index helper library", function () {
         expect(indexes.fixUserId("some-id_")).toEqual(md5("some-id_"));
     });
 
-    it("should search the ID fixing it before", function () {
-        var indexes = getIndexLib();
-        var f = {
-            f: () => {}
-        };
-
-        spyOn(f, "f");
-        indexes.searchUserId(f.f, "id");
-
-        expect(f.f).toHaveBeenCalledWith({query: {AND: {userId: [md5("id")]}}});
-    });
-
     // CATALOGS
 
     var catalogData = {
