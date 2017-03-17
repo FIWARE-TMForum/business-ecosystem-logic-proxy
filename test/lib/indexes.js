@@ -632,6 +632,37 @@ describe("Test index helper library", function () {
         }, undefined, extra);
     });
 
+    var testOfferingProductError = function testOfferingProductError(extra, errMsg, done) {
+
+        helper(extra, 'saveIndexOffering', () => {
+            expect("Error, promise resolved instead of rejected: " + err).toBe(true);
+            done();
+        }, (si, err) => {
+            expect(si.search).toHaveBeenCalledWith({query: {AND: {sortedId: ['000000000001']}}});
+            expect(err).toBe(errMsg);
+
+            expect(si.add).not.toHaveBeenCalled();
+            expect(si.defaultPipeline).not.toHaveBeenCalled();
+            done();
+        }, [notBundleOffer]);
+    };
+
+    it('should reject promise when saving offering and searching product gives an error', function (done) {
+        var extra = {
+            searcherr: 'ERROR searching'
+        };
+
+        testOfferingProductError(extra, 'ERROR searching', done);
+    });
+
+    it('should reject promise when saving offering and searching product gives no results', function (done) {
+        var extra = {
+            searchdata: []
+        };
+
+        testOfferingProductError(extra, 'The specified product id is not indexed', done);
+    });
+
     var testSaveCategoryOffering = function testSaveCategoryOffering (ids, offer, convOffer, done) {
         var auxIds = Object.assign([], ids);
 
@@ -716,8 +747,7 @@ describe("Test index helper library", function () {
         name: "inventoryName",
         status: "status",
         startDate: 232323232,
-        orderDate: 232323231,
-        terminationDate: 232323233
+        orderDate: 232323231
     };
     
     var inventoryExpected = {
@@ -732,8 +762,7 @@ describe("Test index helper library", function () {
         name: "inventoryName",
         status: "status",
         startDate: 232323232,
-        orderDate: 232323231,
-        terminationDate: 232323233
+        orderDate: 232323231
     };
 
     var invOpt = {
