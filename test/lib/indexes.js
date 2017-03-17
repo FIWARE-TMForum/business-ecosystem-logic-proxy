@@ -19,6 +19,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+"use strict";
+
 var proxyrequire = require("proxyquire"),
     md5 = require("blueimp-md5"),
     config = require("../../config"),

@@ -19,6 +19,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+"use strict";
+
 var config = require('./../../config'),
     utils = require('./../../lib/utils'),
     Promise = require('promiz'),
