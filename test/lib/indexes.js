@@ -471,12 +471,12 @@ describe("Test index helper library", function () {
             expect(si.close).not.toHaveBeenCalled();
 
             // Loaded by the writable stream
-            expect(extra.readStream).toEqual([expected]);
+            expect(extra.readStream).toEqual(expected);
             done(si);
         }, (si, err) => {
             expect("Error, promise rejected instead of resolved: " + err).toBe(true);
             done();
-        }, [data], user);
+        }, data, user);
     };
 
     var testSaveIndexesErr = function testSaveIndexesErr(method, data, done) {
@@ -497,7 +497,7 @@ describe("Test index helper library", function () {
     };
 
     it("should save converted catalog data correctly", function (done) {
-        testSaveIndexes('saveIndexCatalog', catalogData, catalogExpected, done);
+        testSaveIndexes('saveIndexCatalog', [catalogData], [catalogExpected], done);
     });
 
     it("should reject the promise when the catalog data cannot be saved", function (done) {
@@ -533,7 +533,7 @@ describe("Test index helper library", function () {
 
 
     it("should save converted product data correctly", function (done) {
-        testSaveIndexes('saveIndexProduct', productData, productExpected, done);
+        testSaveIndexes('saveIndexProduct', [productData], [productExpected], done);
     });
 
     it("should reject the promise when the product data cannot be saved", function (done) {
@@ -614,7 +614,7 @@ describe("Test index helper library", function () {
     });
 
     it('should save converted offering data with a explicit user', function (done) {
-        testSaveIndexes('saveIndexOffering', notBundleOffer, notBundleExpected, done, {id: "rock-8"});
+        testSaveIndexes('saveIndexOffering', [notBundleOffer], [notBundleExpected], done, {id: "rock-8"});
     });
 
     it('should save converted offering data searching owner in products index', function (done) {
@@ -626,7 +626,7 @@ describe("Test index helper library", function () {
             }]
         };
 
-        testSaveIndexes('saveIndexOffering', notBundleOffer, notBundleExpected, (si) => {
+        testSaveIndexes('saveIndexOffering', [notBundleOffer], [notBundleExpected], (si) => {
             expect(si.search).toHaveBeenCalledWith({query: {AND: {sortedId: ['000000000001']}}});
             done();
         }, undefined, extra);
@@ -678,7 +678,7 @@ describe("Test index helper library", function () {
             request: request
         };
 
-        testSaveIndexes('saveIndexOffering', offer, convOffer, () => {
+        testSaveIndexes('saveIndexOffering', [offer], [convOffer], () => {
 
             var catInfo = testUtils.getDefaultConfig().endpoints.catalog;
             var protocol = catInfo.appSsl ? 'https': 'http';
@@ -704,7 +704,7 @@ describe("Test index helper library", function () {
     });
 
     it('should save converted bundle with an explicit user', function (done) {
-        testSaveIndexes('saveIndexOffering', bundleOffer, bundleExpected, done, {id: "rock-8"});
+        testSaveIndexes('saveIndexOffering', [bundleOffer], [bundleExpected], done, {id: "rock-8"});
     });
 
     it('should convert offer with bundle searching user in products and offerings index', function(done) {
@@ -724,7 +724,7 @@ describe("Test index helper library", function () {
             dataArray: [offer, product]
         };
 
-        testSaveIndexes('saveIndexOffering', bundleOffer, bundleExpected, (si) => {
+        testSaveIndexes('saveIndexOffering', [bundleOffer], [bundleExpected], (si) => {
 
             [{query: {AND: {sortedId: ["000000000001"]}}}, {query: {AND: {sortedId: ["000000000002"]}}}].forEach((q) => {
                 expect(si.search).toHaveBeenCalledWith(q);
@@ -736,7 +736,7 @@ describe("Test index helper library", function () {
 
     // Inventory && Orders
 
-    var inventoryData = {
+    var inventoryData = [{
         id: 12,
         productOffering: {
             id: 5,
@@ -748,9 +748,21 @@ describe("Test index helper library", function () {
         status: "status",
         startDate: 232323232,
         orderDate: 232323231
-    };
+    }, {
+        id: 13,
+        productOffering: {
+            id: 6,
+            href: "http://myserver.com/catalog/offering/6"
+        },
+        relatedParty: [{id: "rock", role: "customer"}],
+        href: "http://13",
+        name: "inventoryName2",
+        status: "status",
+        startDate: 232323232,
+        orderDate: 232323231
+    }];
     
-    var inventoryExpected = {
+    var inventoryExpected = [{
         id: "inventory:12",
         originalId: 12,
         body: ["offername2", "description2"],
@@ -763,7 +775,20 @@ describe("Test index helper library", function () {
         status: "status",
         startDate: 232323232,
         orderDate: 232323231
-    };
+    }, {
+        id: "inventory:13",
+        originalId: 13,
+        body: ["offername3", ""],
+        sortedId: "000000000013",
+        productOffering: 6,
+        relatedPartyHash: [md5("rock")],
+        relatedParty: ["rock"],
+        href: "http://13",
+        name: "inventoryName2",
+        status: "status",
+        startDate: 232323232,
+        orderDate: 232323231
+    }];
 
     var invOpt = {
         status: {
@@ -780,17 +805,24 @@ describe("Test index helper library", function () {
 
     it('should save converted inventory data correctly', function (done) {
         var extra = {
-            request: requestLib
+            dataArray: [[{
+                document: {
+                    searchable: ["offername2", "description2"]
+                }
+            }], [{
+                document: {
+                    searchable: ["offername3", ""]
+                }
+            }]]
         };
 
-        var catHost = "http://" + testUtils.getDefaultConfig().endpoints.catalog.host + ":" + testUtils.getDefaultConfig().endpoints.catalog.port;
-        var catPath = "/catalog/offering/5";
+        testSaveIndexes('saveIndexInventory', inventoryData, inventoryExpected, (si) => {
+            [{query: {AND: {sortedId: ["000000000005"]}}}, {query: {AND: {sortedId: ["000000000006"]}}}].forEach((q) => {
+                expect(si.search).toHaveBeenCalledWith(q);
+            });
+            done();
 
-        nock(catHost)
-            .get(catPath)
-            .reply(200, {name: "OfferName2", description: "Description2"});
-
-        testSaveIndexes('saveIndexInventory', inventoryData, inventoryExpected, done, undefined, extra, invOpt);
+        }, undefined, extra, invOpt);
     });
 
     var orderData = {
@@ -828,7 +860,7 @@ describe("Test index helper library", function () {
     };
 
     it("should save converted order data correctly", function (done) {
-        testSaveIndexes('saveIndexOrder', orderData, orderExpected, done, undefined, {}, orderOpt);
+        testSaveIndexes('saveIndexOrder', [orderData], [orderExpected], done, undefined, {}, orderOpt);
     });
 
     describe("Request helpers", function () {
