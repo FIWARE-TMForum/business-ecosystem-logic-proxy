@@ -211,7 +211,7 @@ describe('Test inventory subscription helper and endpoint', function () {
         lib.postNotification({ body: JSON.stringify(event) }, res).then(() => {
             expect(res.end).toHaveBeenCalled();
             expect(inds.saveIndexInventory).not.toHaveBeenCalled();
-            expect(inds.removeIndex).toHaveBeenCalledWith("indexes/inventory", 9);
+            expect(inds.removeIndex).toHaveBeenCalledWith("inventory", 9);
             done();
         });
     });
@@ -240,7 +240,7 @@ describe('Test inventory subscription helper and endpoint', function () {
         lib.postNotification({ body: JSON.stringify(event) }, res).then(() => {
             expect(res.end).toHaveBeenCalled();
             expect(inds.saveIndexInventory).toHaveBeenCalledWith(["data"]);
-            expect(inds.removeIndex).toHaveBeenCalledWith("indexes/inventory", 9);
+            expect(inds.removeIndex).toHaveBeenCalledWith("inventory", 9);
             done();
         });
     });

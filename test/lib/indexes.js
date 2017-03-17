@@ -24,18 +24,48 @@ var proxyrequire = require("proxyquire"),
     config = require("../../config"),
     utils = require("../../lib/utils"),
     testUtils = require("../utils.js"),
+    Readable = require('stream').Readable,
+    Transform = require('stream').Transform,
     requestLib = require('request'),
     nock = require('nock');
 
 describe("Test index helper library", function () {
-    var createSearchMock = function createSearchMock(path, err, extra) {
+
+    var createSearchMock = function createSearchMock(extra, indexStore) {
         var si = {
-            add: function (data, ops, cb) {
-                if (extra.checkadd) {
-                    extra.checkadd(data, ops);
+            add: function () {
+
+                class AddWrite extends Transform {
+                    constructor(opt) {
+                        super(opt);
+                    }
+
+                    _transform(data, encoding, callback) {
+                        extra.readStream.push(data);
+                        callback(extra.adderr);
+                    }
                 }
 
-                cb(extra.adderr);
+                return new AddWrite({
+                    writableObjectMode: true,
+                    readableObjectMode: true
+                })
+            },
+            defaultPipeline(opt) {
+                class DefaultPipe extends Transform {
+                    constructor(opt) {
+                        super(opt);
+                    }
+
+                    _transform(data, encoding, callback) {
+                        this.push(data);
+                        callback();
+                    }
+                }
+                return new DefaultPipe({
+                    writableObjectMode: true,
+                    readableObjectMode: true
+                });
             },
             close: function (cb) {
                 cb(extra.closeerr);
@@ -47,37 +77,57 @@ describe("Test index helper library", function () {
 
                 cb(extra.delerr);
             },
-            search: function (query, cb) {
+            search: function (query) {
                 if (extra.checksearch) {
                     extra.checksearch(query);
                 }
-                var data = extra.searchdata;
-                if (Array.isArray(extra.searchdata)) {
-                    data = extra.searchdata[0];
-                    extra.searchdata = extra.searchdata.slice(1);
+
+                if (extra.dataArray) {
+                    extra.searchdata = extra.dataArray.shift();
                 }
-                cb(extra.searcherr, data || {});
+
+                // Create a mock read stream to map the results
+                class SearchRead extends Readable {
+                    constructor(opt) {
+                        super(opt);
+                        this._data = Array.isArray(extra.searchdata) ? extra.searchdata.slice() : [];
+                    }
+
+                    _read() {
+                        if (extra.searcherr) {
+                            process.nextTick(() => this.emit('error', extra.searcherr));
+                            return;
+                        }
+
+                        if (this._data.length > 0) {
+                            var elem = this._data.shift();
+                            this.push(elem);
+                        } else {
+                            this.push(null);
+                        }
+                    }
+                }
+
+                return new SearchRead({
+                    objectMode: true
+                });
             }
         };
 
         spyOn(si, "add").and.callThrough();
+        spyOn(si, "defaultPipeline").and.callThrough();
         spyOn(si, "close").and.callThrough();
         spyOn(si, "del").and.callThrough();
         spyOn(si, "search").and.callThrough();
 
-        return {
-            method: function (cfg, f) {
-                if (!extra.notpath) {
-                    expect(cfg).toEqual({ indexPath: path });
-                }
+        ['offerings', 'products', 'catalogs', 'inventory', 'orders'].forEach((index) => {
+            indexStore[index] = si;
+        });
 
-                f(err, si);
-            },
-            si: si
-        };
+        return si;
     };
 
-    var getIndexLib = function getIndexLib(method, request) {
+    var getIndexLib = function getIndexLib(method, request, level) {
         if (!method) {
             method = function () {};
         }
@@ -86,14 +136,21 @@ describe("Test index helper library", function () {
             request = function () {};
         }
 
+        if (!level) {
+            level = function(tab, opt, cb) {
+                cb(null, null);
+            }
+        }
+
         var mockUtils = proxyrequire('../../lib/utils.js', {
             './../config.js': testUtils.getDefaultConfig()
         });
         
         return proxyrequire("../../lib/indexes.js", {
             "search-index": method,
-            request: request,
+            "request": request,
             "./utils": mockUtils,
+            "levelup": level,
             '../config': testUtils.getDefaultConfig()
         });
     };
@@ -105,131 +162,190 @@ describe("Test index helper library", function () {
         expect(indexes.siTables.catalogs).toEqual("indexes/catalogs");
     });
 
-    var helper = function helper(db, err, extra, f1, success, error) {
-        var si = createSearchMock(db, err, extra);
-        var indexes = getIndexLib(si.method, extra.request);
+    var testIndexInit = function (
+        levelErr, levelResp, searchErr, searchResp, levCalls, searchCalls, store, callValidator, errValidator, done) {
 
-        indexes[f1].apply(this, Array.prototype.slice.call(arguments, 6))
-            .then(extra => success(si.si, extra))
-            .catch(err => error(si.si, err));
+        var levelMock = jasmine.createSpy().and.callFake((val, opt, cb) => {
+            cb(levelErr, levelResp);
+        });
+        var searchIndex = jasmine.createSpy().and.callFake((opt, cb) => {
+            cb(searchErr, searchResp);
+        });
+
+        var indexes = getIndexLib(searchIndex, null, levelMock);
+
+        var validator = function (handler) {
+            expect(levelMock.calls.count()).toBe(levCalls);
+            expect(searchIndex.calls.count()).toBe(searchCalls);
+
+            handler(levelMock, searchIndex);
+
+            expect(indexes.getDataStores()).toEqual(store);
+            done();
+        };
+
+        indexes.init()
+            .then(validator.bind(this, callValidator))
+            .catch(validator.bind(this, errValidator));
     };
 
-    var helperErrorOpenDB = function helperErrorOpenDB(done, f1, f2) {
-        helper(arguments[3], "ERROR", {}, f1, (si, err) => {
-            expect("Error, promise resolved instead of rejected!: " + err).toBe(true);
-            done();
-        }, (si, err) => {
-            expect(err).toBe("ERROR");
-            expect(si[f2]).not.toHaveBeenCalled();
-            expect(si.close).not.toHaveBeenCalled();
-            done();
-        }, ...Array.prototype.slice.call(arguments, 3));
+    it('should initialize the search index when calling init', function(done) {
+        var db = {};
+        var si = {};
+        var down = require('leveldown');
+
+        testIndexInit(null, db, null, si, 5, 5, {
+            offerings: si,
+            products: si,
+            catalogs: si,
+            inventory: si,
+            orders: si
+        }, (levelMock, searchIndex) => {
+            var expInd = ['indexes/offerings', 'indexes/products', 'indexes/catalogs', 'indexes/inventory', 'indexes/orders'];
+
+            expInd.forEach(indexPath => {
+                // Validate levelup creation
+                expect(levelMock).toHaveBeenCalledWith(indexPath, {
+                    valueEncoding: 'json',
+                    db: down
+                }, jasmine.any(Function));
+
+                // Validate search indexes creation
+                expect(searchIndex).toHaveBeenCalledWith({
+                    indexes: db
+                }, jasmine.any(Function));
+            });
+        }, null, done);
+    });
+
+    it('should fail to initialize the search index when leveldb fails', function (done) {
+        var down = require('leveldown');
+
+        testIndexInit('Level error', {}, null, {}, 1, 0, {}, null, (levelMock) => {
+            expect(levelMock).toHaveBeenCalledWith('indexes/offerings', {
+                valueEncoding: 'json',
+                db: down
+            }, jasmine.any(Function));
+        }, done);
+    });
+
+    it('should fail to initialize the search index when si fails', function (done) {
+        var down = require('leveldown');
+        var db = {};
+
+        testIndexInit(null, db, 'Search error', {}, 1, 1, {}, null, (levelMock, searchIndex) => {
+            expect(levelMock).toHaveBeenCalledWith('indexes/offerings', {
+                valueEncoding: 'json',
+                db: down
+            }, jasmine.any(Function));
+
+            expect(searchIndex).toHaveBeenCalledWith({
+                indexes: db
+            }, jasmine.any(Function));
+
+        }, done);
+    });
+
+    var mockCloseIndexes = function (err) {
+        var searchIndex = jasmine.createSpyObj('searchIndex', ['close']);
+        searchIndex.close.and.callFake((cb) => {
+            cb(err);
+        });
+
+        var indexes = getIndexLib();
+        var dataStores = indexes.getDataStores();
+
+        dataStores.offerings = searchIndex;
+        dataStores.products = searchIndex;
+        dataStores.catalogs = searchIndex;
+        dataStores.inventory = searchIndex;
+        dataStores.orders = searchIndex;
+
+        return {
+            searchIndex: searchIndex,
+            indexes: indexes
+        };
     };
 
-    var helperErrorInMethod = function helperErrorInMethod(done, f1, f2) {
-        var extra = {};
-        extra[f2 + "err"] = "ERROR";
-        helper("testp", null, extra, f1, (si, data) => {
+    it('should close the indexes when calling close', function(done) {
+        var closeMock = mockCloseIndexes(null);
+
+        closeMock.indexes.close().then(function() {
+            expect(closeMock.searchIndex.close.calls.count()).toBe(5);
+            done();
+        });
+    });
+
+    it('should fail closing the indexes when close gives an error', function (done) {
+        var errMsg = 'Closing error';
+        var closeMock = mockCloseIndexes(errMsg);
+
+        closeMock.indexes.close().catch(function(err) {
+            expect(closeMock.searchIndex.close.calls.count()).toBe(1);
+            expect(err).toBe(errMsg);
+            done();
+        });
+    });
+
+    var helper = function helper(extra, f1, success, error) {
+        var indexes = getIndexLib(null, extra.request);
+        var si = createSearchMock(extra, indexes.getDataStores());
+
+        indexes[f1].apply(this, Array.prototype.slice.call(arguments, 4))
+            .then(extra => success(si, extra))
+            .catch(err => error(si, err));
+    };
+
+    it("should reject promise when an invalid path has been provided when removing an index", function (done) {
+        var path = 'testp';
+
+        helper({}, "removeIndex", (si, data) => {
             expect("Error, promise resolved instead of rejected!: " + data).toBe(true);
             done();
         }, (si, err) => {
-            expect(err).toBe("ERROR");
-            expect(si[f2]).toHaveBeenCalled();
-            expect(si.close).toHaveBeenCalled();
+            expect(err).toBe('There is not a search index for the given path');
+            expect(si.del).not.toHaveBeenCalled();
             done();
-        }, ...Array.prototype.slice.call(arguments, 3));
-    };
-
-    it("should reject promise and call close with an error when open database while saving", function (done) {
-        helperErrorOpenDB(done, "saveIndex", "add", "testp", [], {});
+        }, path, "key");
     });
 
-    it("should reject promise and call close with an error when adding an index while saving", function (done) {
-        helperErrorInMethod(done, "saveIndex", "add", "testp", [], {});
-    });
-
-    it("should resolve the promise, close index and call save with the correct data", function (done) {
-        var testdata = [1, 2, 3];
-        var testops = { t: 1 };
+    it("should reject promise when index del method gives an error", function(done) {
+        var path = 'inventory';
         var extra = {
-            checkadd: function (data, op) {
-                expect(data).toEqual(testdata);
-                expect(op).toEqual(testops);
-            }
+            delerr: 'ERROR'
         };
 
-        helper("testp", null, extra, "saveIndex", (si, data) => {
-            expect(data).toBeUndefined();
-            expect(si.add).toHaveBeenCalled();
-            expect(si.close).toHaveBeenCalled();
+        helper(extra, "removeIndex", (si, data) => {
+            expect("Error, promise resolved instead of rejected!: " + data).toBe(true);
             done();
         }, (si, err) => {
-            expect("Error, promise rejected instead of resolved: " + err).toBe(true);
+            expect(err).toBe('ERROR');
+            expect(si.del).toHaveBeenCalledWith(['key'], jasmine.any(Function));
             done();
-        }, "testp", testdata, testops);
+        }, path, "key");
     });
 
-    it("should reject promise and call close with an error when open database while removing", function (done) {
-        helperErrorOpenDB(done, "removeIndex", "del", "testp", "key");
-    });
-
-    it("should reject promise and call close with an error when removing the index", function (done) {
-        helperErrorInMethod(done, "removeIndex", "del", "testp", "key");
-    });
-
-    it("should resolve the promise, close index and call del with the correct key", function (done) {
+    it("should resolve the promise when index del method works", function (done) {
         var testkey = "KEY";
+        var path = 'inventory';
+
         var extra = {
             checkdel: key => {
-                expect(key).toEqual(testkey);
+                expect(key).toEqual([testkey]);
             }
         };
 
-        helper("testp", null, extra, "removeIndex", (si, data) => {
+        helper(extra, "removeIndex", (si, data) => {
             expect(data).toBeUndefined();
-            expect(si.del).toHaveBeenCalledWith(testkey, jasmine.any(Function));
-            expect(si.close).toHaveBeenCalled();
+            expect(si.del).toHaveBeenCalledWith([testkey], jasmine.any(Function));
             done();
         }, (si, err) => {
             expect("Error, promise rejected instead of resolved: " + err).toBe(true);
             done();
-        }, "testp", testkey);
+        }, path, testkey);
     });
 
-    it("should create queries correctly", function () {
-        var indexes = getIndexLib();
-        expect(indexes.createQuery()).toEqual({});
-        expect(indexes.createQuery("q")).toEqual({query: "q"});
-        expect(indexes.createQuery(null, "o")).toEqual({offset: "o"});
-        expect(indexes.createQuery(null, null, "s")).toEqual({pageSize: "s"});
-        expect(indexes.createQuery(null, null, null, "s")).toEqual({sort: "s"});
-
-        expect(indexes.createQuery({"*": ["*"]}, 0, 25, ["id", "asc"])).toEqual({
-            query: {"*": ["*"]},
-            pageSize: 25,
-            sort: ["id", "asc"]
-        });
-
-        expect(indexes.createQuery({"*": ["*"]}, 2, 0,["id", "asc"])).toEqual({
-            query: {"*": ["*"]},
-            offset: 2,
-            pageSize: 0,
-            sort: ["id", "asc"]
-        });
-    });
-
-    it("should reject promise and call close with an error when open database while searching", function (done) {
-        helperErrorOpenDB(done, "search", "search", "testp", {"*": ["*"]});
-    });
-
-    it("should reject promise and call close with an error when searching", function (done) {
-        helperErrorInMethod(done, "search", "search", "testp", {"*": ["*"]});
-    });
-
-    var searchHelper = function searchHelper(done, path, q, d, method) {
-        method = method || "search";
-        d = {hits: d};
-        var sendp = (method === "search") ? path : q;
+    var searchHelper = function searchHelper(done, q, d, method) {
         var newq = q;
         if (!q.query) {
             newq = {query: q};
@@ -242,39 +358,54 @@ describe("Test index helper library", function () {
             searchdata: d
         };
 
-        helper(path, null, extra, method, (si, data) => {
+        helper(extra, method, (si, data) => {
             expect(data).toEqual(d);
-            expect(si.search).toHaveBeenCalledWith(newq, jasmine.any(Function));
-            expect(si.close).toHaveBeenCalled();
+            expect(si.search).toHaveBeenCalledWith(newq);
             done();
         }, (si, err) => {
             expect("Error, promise rejected instead of resolved: " + err).toBe(true);
             done();
-        }, sendp, q);
+        }, q);
     };
 
-    it("should resolve the promise, close index and call search with the correct data", function (done) {
-        var q = {"*": ["*"]};
-        var d = {hits: [1, 2, 3, 4]};
-        searchHelper(done, "testp", q, d);
-    });
-
-    it("should resolve the promise, close index and call search with the correct data, using full query", function (done) {
-        var q = {query: {"*": ["*"]}};
-        var d = {hits: [1, 2, 3, 4]};
-        searchHelper(done, "testp", q, d);
-    });
-
     it("should use offering index and search correctly", function (done) {
-        searchHelper(done, "indexes/offerings", {}, [1], "searchOfferings");
+        searchHelper(done, {}, [1], "searchOfferings");
     });
 
     it("should use products index and search correctly", function (done) {
-        searchHelper(done, "indexes/products", {}, [1], "searchProducts");
+        searchHelper(done, {}, [1], "searchProducts");
     });
 
     it("should use catalogs index and search correctly", function (done) {
-        searchHelper(done, "indexes/catalogs", {}, [1], "searchCatalogs");
+        searchHelper(done, {}, [1], "searchCatalogs");
+    });
+
+    it("should use inventory index and search correctly", function (done) {
+        searchHelper(done, {}, [1], "searchInventory");
+    });
+
+    it("should use order index and search correctly", function (done) {
+        searchHelper(done, {}, [1, 2, 3], "searchOrders");
+    });
+
+    it("should reject search promise when search method fails", function (done) {
+        var extra = {
+            searcherr: 'ERROR stream',
+            searchdata: [1]
+        };
+
+        var q = {
+            query: {}
+        };
+
+        helper(extra, 'searchInventory', () => {
+            expect("Error, promise resolved instead of rejected: ").toBe(true);
+            done();
+        }, (si, err) => {
+            expect(si.search).toHaveBeenCalledWith(q);
+            expect(err).toBe(extra.searcherr);
+            done()
+        }, q);
     });
 
     it("should fix the user id doing an MD5 hash", function () {
@@ -317,27 +448,70 @@ describe("Test index helper library", function () {
         name: "Name"
     };
 
-    it("should convert catalog data correctly", function () {
-        var indexes = getIndexLib();
-        expect(indexes.convertCatalogData(catalogData)).toEqual(catalogExpected);
-    });
-
-    it("should save converted catalog data correctly", function (done) {
-        var extra = {
-            checkadd: (data, ops) => {
-                expect(data).toEqual([catalogExpected]);
-                expect(ops).toEqual({});
+    var catOpt = {
+        lifecycleStatus: {
+            fieldOptions: {
+                preserveCase: false
             }
-        };
-        helper("indexes/catalogs", null, extra, "saveIndexCatalog", (si, extra) => {
-            expect(extra).toBeUndefined();
+        },
+        body: {
+            fieldOptions: {
+                preserveCase: false
+            }
+        }
+    };
+
+    var testSaveIndexes = function testSaveIndexes(method, data, expected, done, user, ext, opts) {
+        if(!ext) {
+            ext = {};
+        }
+
+        if(!opts) {
+            opts = catOpt;
+        }
+
+        var extra = Object.assign({
+            readStream : []
+        }, ext);
+
+        helper(extra, method, (si, val) => {
+            expect(val).toBeUndefined();
             expect(si.add).toHaveBeenCalled();
-            expect(si.close).toHaveBeenCalled();
-            done();
+            expect(si.defaultPipeline).toHaveBeenCalledWith(opts);
+            expect(si.close).not.toHaveBeenCalled();
+
+            // Loaded by the writable stream
+            expect(extra.readStream).toEqual([expected]);
+            done(si);
         }, (si, err) => {
             expect("Error, promise rejected instead of resolved: " + err).toBe(true);
             done();
-        }, [catalogData]);
+        }, [data], user);
+    };
+
+    var testSaveIndexesErr = function testSaveIndexesErr(method, data, done) {
+        var extra = {
+            adderr: 'Error adding',
+            readStream : []
+        };
+
+        helper(extra, method, () => {
+            expect("Error, promise resolved instead of rejected: " + err).toBe(true);
+            done();
+        }, (si, err) => {
+            expect(si.add).toHaveBeenCalled();
+            expect(si.defaultPipeline).toHaveBeenCalledWith(catOpt);
+            expect(err).toBe(extra.adderr);
+            done();
+        }, [data]);
+    };
+
+    it("should save converted catalog data correctly", function (done) {
+        testSaveIndexes('saveIndexCatalog', catalogData, catalogExpected, done);
+    });
+
+    it("should reject the promise when the catalog data cannot be saved", function (done) {
+        testSaveIndexesErr('saveIndexCatalog', catalogData, done);
     });
 
     // PRODUCTS
@@ -367,27 +541,13 @@ describe("Test index helper library", function () {
         relatedParty: ["rock-8", "rock-9"]
     };
 
-    it("should convert product data correctly", function () {
-        var indexes = getIndexLib();
-        expect(indexes.convertProductData(productData)).toEqual(productExpected);
-    });
 
     it("should save converted product data correctly", function (done) {
-        var extra = {
-            checkadd: (data, ops) => {
-                expect(data).toEqual([productExpected]);
-                expect(ops).toEqual({fieldOptions: [{fieldName: "body", filter: true}, {fieldName: "relatedParty", filter: true}]});
-            }
-        };
-        helper("indexes/products", null, extra, "saveIndexProduct", (si, extra) => {
-            expect(extra).toBeUndefined();
-            expect(si.add).toHaveBeenCalled();
-            expect(si.close).toHaveBeenCalled();
-            done();
-        }, (si, err) => {
-            expect("Error, promise rejected instead of resolved: " + err).toBe(true);
-            done();
-        }, [productData]);
+        testSaveIndexes('saveIndexProduct', productData, productExpected, done);
+    });
+
+    it("should reject the promise when the product data cannot be saved", function (done) {
+        testSaveIndexesErr('saveIndexProduct', productData, done);
     });
 
     // OFFERINGS
@@ -433,7 +593,7 @@ describe("Test index helper library", function () {
         href: "http://3",
         lifecycleStatus: "Active",
         isBundle: true,
-        catalog: "catalog:2"
+        catalog: "000000000002"
     };
 
     var notBundleExpected = Object.assign({}, bundleExpected, {
@@ -444,7 +604,7 @@ describe("Test index helper library", function () {
         productSpecification: "000000000001",
         href: "http://2",
         isBundle: false,
-        catalog: "catalog:2"
+        catalog: "000000000002"
     });
 
     var notBundleCategoriesOfferExpect = Object.assign({}, notBundleExpected, {
@@ -453,221 +613,114 @@ describe("Test index helper library", function () {
         name: "name",
         sortedId: "000000000012",
         lifecycleStatus: "Disabled",
-        categoriesId: ['cat:13'],
-        categoriesName: [md5("testcat")],
-        catalog: "catalog:2"
+        categoriesId: ['000000000013'],
+        categoriesName: [md5("testcat13")],
+        catalog: "000000000002"
     });
 
     var notBundleMultipleCategoriesOfferExpected = Object.assign({}, notBundleCategoriesOfferExpect, {
-        categoriesId: ['cat:13', 'cat:14'],
+        categoriesId: ['000000000013', '000000000014'],
         categoriesName: [md5("testcat13"), md5("testcat14")]
     });
 
-    it('should convert offer without bundle with an explicit user', function (done) {
-        var user = {id: "rock-8"};
-
-        helper("indexes/products", null, {}, "convertOfferingData", (si, extra) => {
-            expect(extra).toEqual(notBundleExpected);
-            expect(si.search).not.toHaveBeenCalled();
-            done();
-        }, (si, err) => {
-            expect("Error, promise rejected instead of resolved: " + err).toBe(true);
-            done();
-        }, notBundleOffer, user);
+    it('should save converted offering data with a explicit user', function (done) {
+        testSaveIndexes('saveIndexOffering', notBundleOffer, notBundleExpected, done, {id: "rock-8"});
     });
 
-    it('should convert offer without bundle searching user the user in products index', function(done) {
+    it('should save converted offering data searching owner in products index', function (done) {
         var extra = {
-            checksearch: query => {
-                expect(query).toEqual({query: {AND: {id: ["product:1"]}}});
-            },
-            searchdata: {
-                hits: [{
-                    document: {
-                        relatedParty: ["rock-8"]
-                    }
-                }]
-            }
-
-        };
-
-        helper("indexes/products", null, extra, "convertOfferingData", (si, extra) => {
-            expect(extra).toEqual(notBundleExpected);
-            expect(si.search).toHaveBeenCalled();
-            done();
-        }, (si, err) => {
-            expect("Error, promise rejected instead of resolved: " + err).toBe(true);
-            done();
-        }, notBundleOffer);
-    });
-
-    it('should convert offer with categories', function (done) {
-        var user = {id: "rock-8"};
-
-        var extra = {
-            request: (url, f) => {
-                var catInfo = testUtils.getDefaultConfig().endpoints.catalog;
-                var protocol = catInfo.appSsl ? 'https': 'http';
-
-                var curl = protocol +'://' + catInfo.host + ':' + catInfo.port +'/' +
-                    catInfo.path + "/api/catalogManagement/v2/category/13";
-
-                expect(url).toEqual(curl);
-
-                f(null, {}, JSON.stringify({
-                    id: 13,
-                    name: "TestCat"
-                }));
-            }
-        };
-
-        helper("indexes/products", null, extra, "convertOfferingData", (si, extra) => {
-            expect(extra).toEqual(notBundleCategoriesOfferExpect);
-            expect(si.search).not.toHaveBeenCalled();
-            done();
-        }, (si, err) => {
-            expect("Error promise rejected instead of resolved: " + err).toBe(true);
-            done();
-        }, notBundleCategoriesOffer, user);
-    });
-
-    it('should convert offer with multiple categories', function (done) {
-        var user = {id: "rock-8"};
-        var ids = [13, 14];
-
-        var extra = {
-            request: (url, f) => {
-                var id = ids.shift();
-                var catInfo = testUtils.getDefaultConfig().endpoints.catalog;
-                var protocol = catInfo.appSsl ? 'https': 'http';
-
-                var curl = protocol +'://' + catInfo.host + ':' + catInfo.port +'/' +
-                    catInfo.path + "/api/catalogManagement/v2/category/" + id;
-
-                expect(url).toEqual(curl);
-
-                f(null, {}, JSON.stringify({
-                    id: id,
-                    name: "TestCat" + id
-                }));
-            }
-        };
-
-        helper("indexes/products", null, extra, "convertOfferingData", (si, extra) => {
-            expect(extra).toEqual(notBundleMultipleCategoriesOfferExpected);
-            expect(si.search).not.toHaveBeenCalled();
-            done();
-        }, (si, err) => {
-            expect("Error promise rejected instead of resolved: " + err).toBe(true);
-            done();
-        }, notBundleMultipleCategoriesOffer, user);
-    });
-
-    it('should convert offer with bundle with an explicit user', function(done) {
-        var user = {id: "rock-8"};
-
-        helper("indexes/products", null, {}, "convertOfferingData", (si, extra) => {
-            expect(extra).toEqual(bundleExpected);
-            expect(si.search).not.toHaveBeenCalled();
-            done();
-        }, (si, err) => {
-            expect("Error, promise rejected instead of resolved: " + err).toBe(true);
-            done();
-        }, bundleOffer, user);
-    });
-
-    it('should convert offer with bundle searching user in products and offerings index', function(done) {
-        var offer = {
-            hits: [{
-                document: {
-                    productSpecification: "00000000001"
-                }
-            }]
-        };
-        var product = {
-            hits: [{
+            searchdata: [{
                 document: {
                     relatedParty: ["rock-8"]
                 }
             }]
         };
-        var queries = [{query: {AND: {id: ["product:1"]}}}, {query: {AND: {id: ["offering:2"]}}}];
 
-        var extra = {
-            notpath: true,
-            checksearch: query => {
-                var q = queries.pop();
-                expect(query).toEqual(q);
-            },
-            searchdata: [offer, product]
-        };
-
-        helper("indexes/offering", null, extra, "convertOfferingData", (si, extra) => {
-            expect(extra).toEqual(bundleExpected);
-            expect(si.search).toHaveBeenCalled();
+        testSaveIndexes('saveIndexOffering', notBundleOffer, notBundleExpected, (si) => {
+            expect(si.search).toHaveBeenCalledWith({query: {AND: {sortedId: ['000000000001']}}});
             done();
-        }, (si, err) => {
-            expect("Error, promise rejected instead of resolved: " + err).toBe(true);
-            done();
-        }, bundleOffer);
+        }, undefined, extra);
     });
 
-    it("should save converted offer data correctly", function (done) {
-        var user = {id: "rock-8"};
-        var expData = [[notBundleExpected], []];
-        var call = 0;
+    var testSaveCategoryOffering = function testSaveCategoryOffering (ids, offer, convOffer, done) {
+        var auxIds = Object.assign([], ids);
+
+        var request = jasmine.createSpy().and.callFake((url, f) => {
+            var id = ids.shift();
+            f(null, {}, JSON.stringify({
+                id: id,
+                name: "TestCat" + id
+            }));
+        });
 
         var extra = {
-            checkadd: (data, ops) => {
-                expect(data).toEqual(expData[call]);
-                call++;
-                expect(ops).toEqual({fieldOptions: [{fieldName: 'body', filter: true}]});
+            request: request
+        };
+
+        testSaveIndexes('saveIndexOffering', offer, convOffer, () => {
+
+            var catInfo = testUtils.getDefaultConfig().endpoints.catalog;
+            var protocol = catInfo.appSsl ? 'https': 'http';
+
+            auxIds.forEach((id) => {
+                var curl = protocol +'://' + catInfo.host + ':' + catInfo.port +'/' +
+                    catInfo.path + "/api/catalogManagement/v2/category/" + id;
+
+                expect(request).toHaveBeenCalledWith(curl, jasmine.any(Function));
+            });
+
+            done()
+
+            }, {id: "rock-8"}, extra);
+    };
+
+    it('should save converted offering with categories', function (done) {
+        testSaveCategoryOffering([13], notBundleCategoriesOffer, notBundleCategoriesOfferExpect, done);
+    });
+
+    it('should save converted offering with multiple categories', function (done) {
+        testSaveCategoryOffering([13, 14], notBundleMultipleCategoriesOffer, notBundleMultipleCategoriesOfferExpected, done);
+    });
+
+    it('should save converted bundle with an explicit user', function (done) {
+        testSaveIndexes('saveIndexOffering', bundleOffer, bundleExpected, done, {id: "rock-8"});
+    });
+
+    it('should convert offer with bundle searching user in products and offerings index', function(done) {
+        var offer = [{
+            document: {
+                productSpecification: "00000000001"
             }
-        };
-        helper("indexes/offerings", null, extra, "saveIndexOffering", (si, extra) => {
-            expect(extra).toBeUndefined();
-            expect(si.add).toHaveBeenCalled();
-            expect(si.close).toHaveBeenCalled();
-            done();
-        }, (si, err) => {
-            expect("Error, promise rejected instead of resolved: " + err).toBe(true);
-            done();
-        }, [notBundleOffer], user);
-    });
+        }];
 
-    it("should save converted bundled offer data correctly", function (done) {
-        var user = {id: "rock-8"};
-        var expData = [[], [bundleExpected]];
-        var call = 0;
+        var product = [{
+            document: {
+                relatedParty: ["rock-8"]
+            }
+        }];
 
         var extra = {
-            checkadd: (data, ops) => {
-                expect(data).toEqual(expData[call]);
-                call++;
-                expect(ops).toEqual({fieldOptions: [{fieldName: 'body', filter: true}]});
-            }
+            dataArray: [offer, product]
         };
-        helper("indexes/offerings", null, extra, "saveIndexOffering", (si, extra) => {
-            expect(extra).toBeUndefined();
-            expect(si.add).toHaveBeenCalled();
-            expect(si.close).toHaveBeenCalled();
-            done();
-        }, (si, err) => {
-            expect("Error, promise rejected instead of resolved: " + err).toBe(true);
-            done();
-        }, [bundleOffer], user);
+
+        testSaveIndexes('saveIndexOffering', bundleOffer, bundleExpected, (si) => {
+
+            [{query: {AND: {sortedId: ["000000000001"]}}}, {query: {AND: {sortedId: ["000000000002"]}}}].forEach((q) => {
+                expect(si.search).toHaveBeenCalledWith(q);
+            });
+
+            done()
+        }, undefined, extra);
     });
 
-
-    // TODO: Inventory && Orders
+    // Inventory && Orders
 
     var inventoryData = {
         id: 12,
         productOffering: {
             id: 5,
-            href: "http://example.com/catalog/offering/5"
+            href: "http://myserver.com/catalog/offering/5"
         },
-        searchable: ["offername", "offerdescription"],
         relatedParty: [{id: "rock", role: "customer"}],
         href: "http://12",
         name: "inventoryName",
@@ -676,12 +729,11 @@ describe("Test index helper library", function () {
         orderDate: 232323231,
         terminationDate: 232323233
     };
-
     
     var inventoryExpected = {
         id: "inventory:12",
         originalId: 12,
-        body: ["offername", "offerdescription"],
+        body: ["offername2", "description2"],
         sortedId: "000000000012",
         productOffering: 5,
         relatedPartyHash: [md5("rock")],
@@ -694,34 +746,32 @@ describe("Test index helper library", function () {
         terminationDate: 232323233
     };
 
-    it("should convert inventory data correctly", function () {
-        var indexes = getIndexLib();
+    var invOpt = {
+        status: {
+            fieldOptions: {
+                preserveCase: false
+            }
+        },
+        body: {
+            fieldOptions: {
+                preserveCase: false
+            }
+        }
+    };
 
-        expect(indexes.convertInventoryData(inventoryData)).toEqual(inventoryExpected);
-    });
-
-    it("should save converted inventory data correctly", function (done) {
+    it('should save converted inventory data correctly', function (done) {
         var extra = {
-            extraadd: (data, ops) => {
-                expect(data).toEqual([inventoryExpected]);
-                expect(ops).toEqual({});
-            },
             request: requestLib
         };
 
-        nock("http://" + testUtils.getDefaultConfig().endpoints.catalog.host + ":" + testUtils.getDefaultConfig().endpoints.catalog.port)
-            .get("/catalog/offering/5")
+        var catHost = "http://" + testUtils.getDefaultConfig().endpoints.catalog.host + ":" + testUtils.getDefaultConfig().endpoints.catalog.port;
+        var catPath = "/catalog/offering/5";
+
+        nock(catHost)
+            .get(catPath)
             .reply(200, {name: "OfferName2", description: "Description2"});
 
-        helper("indexes/inventory", null, extra, "saveIndexInventory", (si, extra) => {
-            expect(extra).toBeUndefined();
-            expect(si.add).toHaveBeenCalled();
-            expect(si.close).toHaveBeenCalled();
-            done();
-        }, (si, err) => {
-            expect("Error, promise rejected instead of resolved: " + err).toBe(true);
-            done();
-        }, [inventoryData]);
+        testSaveIndexes('saveIndexInventory', inventoryData, inventoryExpected, done, undefined, extra, invOpt);
     });
 
     var orderData = {
@@ -750,27 +800,16 @@ describe("Test index helper library", function () {
         note: ""
     };
 
-    it("should convert order data correctly", function () {
-        var indexes = getIndexLib();
-        expect(indexes.convertOrderData(orderData)).toEqual(orderExpected);
-    });
+    var orderOpt = {
+        status: {
+            fieldOptions: {
+                preserveCase: false
+            }
+        }
+    };
 
     it("should save converted order data correctly", function (done) {
-        var extra = {
-            extraadd: (data, ops) => {
-                expect(data).toEqual([orderExpected]);
-                expect(ops).toEqual({});
-            }
-        };
-        helper("indexes/orders", null, extra, "saveIndexOrder", (si, extra) => {
-            expect(extra).toBeUndefined();
-            expect(si.add).toHaveBeenCalled();
-            expect(si.close).toHaveBeenCalled();
-            done();
-        }, (si, err) => {
-            expect("Error, promise rejected instead of resolved: " + err).toBe(true);
-            done();
-        }, [orderData]);
+        testSaveIndexes('saveIndexOrder', orderData, orderExpected, done, undefined, {}, orderOpt);
     });
 
     describe("Request helpers", function () {
@@ -806,17 +845,6 @@ describe("Test index helper library", function () {
             expect(q).toEqual({ AND: ["COND"]});
         });
 
-        it('should transform query correctly', function() {
-            var indexes = getIndexLib();
-            var q = {};
-            indexes.addAndCondition(q, {id: "rock"});
-            indexes.addAndCondition(q, {name: "rock2"});
-            indexes.addOrCondition(q, "lifecycleStatus", ["Active", "Disabled"]);
-
-            expect(indexes.transformQuery(q));
-        });
-
-
         it('should create query correctly', function() {
             var indexes = getIndexLib();
 
@@ -829,9 +857,12 @@ describe("Test index helper library", function () {
             expect(fs.f).toHaveBeenCalledWith(req, { AND: [], OR: [] });
 
             expect(query).toEqual({
-                sort: ["sortedId", "asc"],
+                sort: {
+                    field: "sortedId",
+                    direction: "asc"
+                },
                 query: [{
-                    AND: []
+                    AND: {}
                 }]
             });
         });
@@ -854,9 +885,12 @@ describe("Test index helper library", function () {
             expect(query).toEqual({
                 offset: 2,
                 pageSize: 23,
-                sort: ["sortedId", "asc"],
+                sort: {
+                    field: "sortedId",
+                    direction: "asc"
+                },
                 query: [{
-                    AND: []
+                    AND: {}
                 }]
             });
         });
@@ -873,12 +907,15 @@ describe("Test index helper library", function () {
             var query = indexes.genericCreateQuery(["key1", "key2", "notextra"], "", null, req);
 
             expect(query).toEqual({
-                sort: ["sortedId", "asc"],
+                sort: {
+                    field: "sortedId",
+                    direction: "asc"
+                },
                 query: [{
-                    AND: [
-                        { key1: ["value1"] },
-                        { key2: [23] }
-                    ]
+                    AND: {
+                        key1: ["value1"],
+                        key2: [23]
+                    }
                 }]
             });
         });
@@ -978,14 +1015,15 @@ describe("Test index helper library", function () {
                 search: () => {}
             };
 
-            var results = {
-                hits: [{document: {originalId: 1}}, {document: {originalId: 2}}]
-            };
+            var results =[{document: {originalId: 1}}, {document: {originalId: 2}}];
 
             var search = {
-                sort: ["sortedId", "asc"],
+                sort: {
+                    field: "sortedId",
+                    direction: "asc"
+                },
                 query: {
-                    AND: [{ "*": ["*"]}]
+                    AND: { "*": ["*"]}
                 }
             };
 
@@ -1019,12 +1057,10 @@ describe("Test index helper library", function () {
                 }
             };
 
-            var results = {
-                hits: []
-            };
+            var results = [];
             var search = {
                 query: [{
-                    AND: [{'search': ['value']}]
+                    AND: {'search': ['value']}
                 }]
             };
 
