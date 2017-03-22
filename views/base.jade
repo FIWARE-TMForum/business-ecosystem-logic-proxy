@@ -102,7 +102,7 @@ html(ng-app="app")
         if user
           ul.nav.navbar-nav.navbar-right
             block navbars
-            li.dropdown
+            li.dropdown#DropDown
               a.dropdown-toggle.has-stack(data-toggle="dropdown")
                 span.fa-stack
                   i.fa.fa-circle-thin.fa-stack-2x
@@ -117,7 +117,7 @@ html(ng-app="app")
                     i.fa.fa-users.fa-stack-1x(ng-hide="user.loggedAsIndividual()")
                   .title.h4 {{ user.currentUser.name }}
                   .subtitle {{ user.currentUser.email }}
-                a.dropdown-menu-item(ng-mouseenter="user.orgsVisible()", ng-mouseleave="user.orgsInvisible()")
+                a.dropdown-menu-item#SwitchSession(ng-mouseenter="user.orgsVisible()", ng-mouseleave="user.orgsInvisible()")
                   span.item-icon.fa.fa-angle-double-left
                   span.item-text Switch Session
                 .dropdown(ng-show="user.showOrgs", ng-mouseenter="user.orgsVisible()", ng-mouseleave="user.orgsInvisible()")
@@ -130,13 +130,13 @@ html(ng-app="app")
                         span.item-icon.fa.fa-users
                         span.item-text #{ organization.name }
                         
-                a.dropdown-menu-item(ng-if="user.isAdmin()", ui-sref="admin", ui-sref-opts="{ reload: true, inherit: false }")
+                a.dropdown-menu-item#Admin(ng-if="user.isAdmin()", ui-sref="admin", ui-sref-opts="{ reload: true, inherit: false }")
                   span.item-icon.fa.fa-dashboard
                   span.item-text Administration
-                a.dropdown-menu-item(ui-sref="settings", ui-sref-opts="{ reload: true, inherit: false }", ng-if="user.hasAdminRole()")
+                a.dropdown-menu-item#Settings(ui-sref="settings", ui-sref-opts="{ reload: true, inherit: false }", ng-if="user.hasAdminRole()")
                   span.item-icon.fa.fa-cog
                   span.item-text Settings
-                a.dropdown-menu-item(ng-click="user.signOut()")
+                a.dropdown-menu-item#SignOut(ng-click="user.signOut()")
                   span.item-icon.fa.fa-sign-out
                   span.item-text Sign out
           form(name="signOutForm", method="post", action="#{ contextPath }/logout")
