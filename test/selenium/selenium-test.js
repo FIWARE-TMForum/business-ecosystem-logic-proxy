@@ -23,27 +23,30 @@ describe('Integration tests', function () {
 	    done();
 	});
 
+	userNormal = {id: 'patata@mailinator.com',
+		      pass: 'test'};
+
+	userProvider = {id: '58d5266e056d1@mailbox92.biz',
+			pass: 'test'};
+	
 	
 	driver.get('http://localhost:8000/#/offering');
 	
-	fit('Should be able to log in with a correct username and password', function (done) {
+	it('Should be able to log in with a correct username and password', function (done) {
 	    driver.wait(until.titleIs('Biz Ecosystem'));
 	    driver.wait(until.elementLocated(By.linkText('Sign in')));
 	    driver.findElement(By.linkText('Sign in')).click();
 	    driver.wait(until.elementLocated(By.id('id_username')));
 	    // CAUTION: CHANGE patata TO potorro BEFORE ANY TEST. 
-	    driver.findElement(By.id('id_username')).sendKeys('patata@mailinator.com');
-	    driver.findElement(By.id('id_password')).sendKeys('test');
+	    driver.findElement(By.id('id_username')).sendKeys(userProvider.id);
+	    driver.findElement(By.id('id_password')).sendKeys(userProvider.pass);
 	    driver.findElement(By.className('btn btn-primary pull-right')).click();
-	    driver.wait(until.titleIs('Biz Ecosystem'))
-	    // TODO: Check if everything that should be appearing is, in fact, appearing and
-	    // everything that shouldnt appear is not.
+	    driver.wait(until.titleIs('Biz Ecosystem'));
 	    var userLogged = driver.findElement(By.className("hidden-xs ng-binding"));
 	    userLogged.getText().then(function(name){
 		expect(name).toBe('test2');
 		done();
 	    });
-	    
 	});
 
 	it('Should be able to update his/her info', function(done) {
@@ -60,7 +63,6 @@ describe('Integration tests', function () {
 	    // TODO: Change this expect. This checks nothing
 	    driver.getTitle().then(function (title) {
 		expect(title).toBe('Biz Ecosystem');
-		// expect(driver.findElement(By.className('dropdown')))
 		done();
 	    });
 	});
@@ -83,9 +85,34 @@ describe('Integration tests', function () {
 	    	// TODO: Change this expect. This checks nothing
 	    	driver.getTitle().then(function (title) {
 	    	    expect(title).toBe('Biz Ecosystem');
-	    	    // expect(driver.findElement(By.className('dropdown')))
 	    	});
 	    }
+	    done();
+	});
+
+	it('Create a new catalog', function(done) {
+	    driver.findElement(By.className('btn btn-default z-depth-1')).click();
+	    driver.wait(until.titleIs('Biz Ecosystem'));
+	    driver.findElement(By.linkText('My stock')).click();
+	    driver.wait(until.elementLocated(By.className('btn btn-success')));
+	    driver.findElement(By.className('btn btn-success')).click();
+	    driver.wait(until.elementLocated(By.name('name')));
+	    driver.findElement(By.name('name')).sendKeys('testCatalog');
+	    driver.findElement(By.name('description')).sendKeys('A testing description');
+	    driver.wait(until.elementLocated(By.className('h4 text-dark-secondary')));
+	    driver.findElement(By.className('btn btn-warning')).click();	    
+	    driver.wait(until.titleIs('Biz Ecosystem'));
+	    var catalogName = driver.findElement(By.name("name"));
+	    catalogName.getText().then(function(name){
+		expect(name).toBe('testCatalog');
+	    });
+	    driver.wait(until.elementLocated(By.className('status-item status-launched')));
+	    driver.findElement(By.className('status-item status-launched')).click();
+	    driver.findElement(By.className('btn btn-success')).click();
+	    driver.findElement(By.linkText('Home')).click();
+	    driver.wait(until.elementLocated(By.className('panel-heading')));
+	    foundCatalog = !!driver.findElements(By.linkText('testCatalog'));
+	    expect(foundCatalog).toBe(true);
 	    done();
 	});
     });
