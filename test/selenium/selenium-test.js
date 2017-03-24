@@ -26,22 +26,24 @@ describe('Integration tests', function () {
 	
 	driver.get('http://localhost:8000/#/offering');
 	
-	it('Should be able to log in with a correct username and password', function (done) {
+	fit('Should be able to log in with a correct username and password', function (done) {
 	    driver.wait(until.titleIs('Biz Ecosystem'));
 	    driver.wait(until.elementLocated(By.linkText('Sign in')));
 	    driver.findElement(By.linkText('Sign in')).click();
 	    driver.wait(until.elementLocated(By.id('id_username')));
 	    // CAUTION: CHANGE patata TO potorro BEFORE ANY TEST. 
-	    driver.findElement(By.id('id_username')).sendKeys('potorro@mailinator.com');
+	    driver.findElement(By.id('id_username')).sendKeys('patata@mailinator.com');
 	    driver.findElement(By.id('id_password')).sendKeys('test');
 	    driver.findElement(By.className('btn btn-primary pull-right')).click();
 	    driver.wait(until.titleIs('Biz Ecosystem'))
-	    // TODO: Change this expect. This checks nothing
-	    driver.getTitle().then(function(title) {
-	    	expect(title).toBe('Biz Ecosystem');
-	    	// expect(driver.findElement(By.className('dropdown')))
-	    	done();
+	    // TODO: Check if everything that should be appearing is, in fact, appearing and
+	    // everything that shouldnt appear is not.
+	    var userLogged = driver.findElement(By.className("hidden-xs ng-binding"));
+	    userLogged.getText().then(function(name){
+		expect(name).toBe('test2');
+		done();
 	    });
+	    
 	});
 
 	it('Should be able to update his/her info', function(done) {
@@ -70,7 +72,6 @@ describe('Integration tests', function () {
 	    // Create a new parent category
 	    driver.wait(until.elementLocated(By.className('btn btn-success')));
 	    foundCats = !!driver.findElements(By.linkText('testCategory1'));
-
 	    if (!foundCats) {
 	    	driver.findElement(By.className('btn btn-success')).click();
 	    	var catName = driver.wait(until.elementLocated(By.name('name')));
@@ -83,9 +84,9 @@ describe('Integration tests', function () {
 	    	driver.getTitle().then(function (title) {
 	    	    expect(title).toBe('Biz Ecosystem');
 	    	    // expect(driver.findElement(By.className('dropdown')))
-	    	    done();
 	    	});
 	    }
+	    done();
 	});
     });
 });
