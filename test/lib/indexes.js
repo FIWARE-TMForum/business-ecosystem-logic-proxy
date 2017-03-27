@@ -654,7 +654,7 @@ describe("Test index helper library", function () {
     var testOfferingProductError = function testOfferingProductError(extra, errMsg, done) {
 
         helper(extra, 'saveIndexOffering', () => {
-            expect("Error, promise resolved instead of rejected: " + err).toBe(true);
+            expect("Error, promise resolved instead of rejected").toBe(true);
             done();
         }, (si, err) => {
             expect(si.search).toHaveBeenCalledWith({query: {AND: {sortedId: ['000000000001']}}});
@@ -687,7 +687,7 @@ describe("Test index helper library", function () {
 
         var request = jasmine.createSpy().and.callFake((url, f) => {
             var id = ids.shift();
-            f(null, {}, JSON.stringify({
+            f(null, {statusCode: 200}, JSON.stringify({
                 id: id,
                 name: "TestCat" + id
             }));
@@ -720,6 +720,45 @@ describe("Test index helper library", function () {
 
     it('should save converted offering with multiple categories', function (done) {
         testSaveCategoryOffering([13, 14], notBundleMultipleCategoriesOffer, notBundleMultipleCategoriesOfferExpected, done);
+    });
+
+    var testSaveCategoryError = function testSaveCategoryError (err, response, done) {
+        var request = jasmine.createSpy().and.callFake((url, f) => {
+            f(err, response, null);
+        });
+
+        var extra = {
+            request: request
+        };
+
+        var errMsg = 'One of the categories could not be indexed';
+
+        helper(extra, 'saveIndexOffering', () => {
+            expect("Error, promise resolved instead of rejected").toBe(true);
+            done();
+        }, (si, err) => {
+            expect(err).toBe(errMsg);
+
+            var catInfo = testUtils.getDefaultConfig().endpoints.catalog;
+            var protocol = catInfo.appSsl ? 'https': 'http';
+            var curl = protocol +'://' + catInfo.host + ':' + catInfo.port +'/' +
+                catInfo.path + "/api/catalogManagement/v2/category/13";
+
+            expect(request).toHaveBeenCalledWith(curl, jasmine.any(Function));
+
+            expect(si.search).not.toHaveBeenCalled();
+            expect(si.add).not.toHaveBeenCalled();
+            expect(si.defaultPipeline).not.toHaveBeenCalled();
+            done();
+        }, [notBundleCategoriesOffer], {id: "rock-8"});
+    };
+
+    it('should reject promise when included category could not be downloaded', function (done) {
+        testSaveCategoryError('ERROR', {}, done);
+    });
+
+    it('should reject promise when included category do not exists', function (done) {
+        testSaveCategoryError(null, {statusCode: 404}, done);
     });
 
     it('should save converted bundle with an explicit user', function (done) {
