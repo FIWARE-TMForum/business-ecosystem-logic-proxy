@@ -1171,16 +1171,13 @@ describe("Test index helper library", function () {
                 });
         });
 
-        it('should execute middleware search correctly without results', function(done) {
+        var testSearchMiddleware = function testSearchMiddleware(query, expUrl, done) {
             var indexes = getIndexLib();
 
             var req = {
                 method: "GET",
                 apiUrl: "url",
-                query: {
-                    fields: "value",
-                    notadd: "not"
-                },
+                query: query,
                 _parsedUrl: {
                     pathname: "path"
                 }
@@ -1209,9 +1206,22 @@ describe("Test index helper library", function () {
                     expect(fs.createOffer).toHaveBeenCalled();
                     expect(fs.search).toHaveBeenCalledWith(search);
 
-                    expect(req.apiUrl).toEqual("path?id=&fields=value");
+                    expect(req.apiUrl).toEqual(expUrl);
                     done();
                 });
+        };
+
+        it('should execute middleware search correctly without results', function(done) {
+            testSearchMiddleware({
+                fields: "value",
+                notadd: "not"
+            }, "path?id=&fields=value", done);
+        });
+
+        it('should execute middleware and return count URL when action param included', function (done) {
+            testSearchMiddleware({
+                action: 'count'
+            }, "/" + testUtils.getDefaultConfig().endpoints.management.path + '/count/0', done);
         });
     });
 });
