@@ -606,6 +606,8 @@ var ordering = (function(){
                 && req.query["relatedParty.role"].toLowerCase() == 'seller' ) {
                 indexes.addAndCondition(query, { sellerHash: [indexes.fixUserId(req.query["relatedParty.id"])] });
             }
+
+            utils.queryAndOrCommas(req.query.state, "state", query);
         }
     );
 
