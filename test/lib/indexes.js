@@ -28,7 +28,6 @@ var proxyrequire = require("proxyquire"),
     testUtils = require("../utils.js"),
     Readable = require('stream').Readable,
     Transform = require('stream').Transform,
-    requestLib = require('request'),
     nock = require('nock');
 
 describe("Test index helper library", function () {
@@ -823,6 +822,26 @@ describe("Test index helper library", function () {
             done();
 
         }, undefined, extra, invOpt);
+    });
+
+    it('should reject promise when the offering specified in a product is not indexed', function (done) {
+        var extra = {
+            searchdata: []
+        };
+
+        var errMsg = 'The offering specified in the product is not indexed';
+
+        helper(extra, 'saveIndexInventory', () => {
+            expect("Error, promise resolved instead of rejected").toBe(true);
+            done();
+        }, (si, err) => {
+            expect(si.search).toHaveBeenCalledWith({query: {AND: {sortedId: ['000000000005']}}});
+            expect(err).toBe(errMsg);
+
+            expect(si.add).not.toHaveBeenCalled();
+            expect(si.defaultPipeline).not.toHaveBeenCalled();
+            done();
+        }, inventoryData);
     });
 
     var orderData = {
