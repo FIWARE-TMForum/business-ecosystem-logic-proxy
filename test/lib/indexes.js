@@ -499,6 +499,16 @@ describe("Test index helper library", function () {
         testSaveIndexes('saveIndexCatalog', [catalogData], [catalogExpected], done);
     });
 
+    it('Should save catalog data when catalog description is not provided', function (done) {
+        var catalog = Object.assign({}, catalogData);
+        catalog.description = undefined;
+
+        var catalogExp = Object.assign({}, catalogExpected);
+        catalogExp.body = ["name", ""];
+
+        testSaveIndexes('saveIndexCatalog', [catalog], [catalogExp], done);
+    });
+
     it("should reject the promise when the catalog data cannot be saved", function (done) {
         testSaveIndexesErr('saveIndexCatalog', catalogData, done);
     });
@@ -533,6 +543,16 @@ describe("Test index helper library", function () {
 
     it("should save converted product data correctly", function (done) {
         testSaveIndexes('saveIndexProduct', [productData], [productExpected], done);
+    });
+
+    it('Should save product data when product description is not provided', function (done) {
+        var product = Object.assign({}, productData);
+        product.description = undefined;
+
+        var productExp = Object.assign({}, productExpected);
+        productExp.body = ["name", "brand", ""];
+
+        testSaveIndexes('saveIndexProduct', [product], [productExp], done);
     });
 
     it("should reject the promise when the product data cannot be saved", function (done) {
