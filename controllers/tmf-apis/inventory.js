@@ -47,6 +47,9 @@ var inventory = (function() {
             if (req.query["relatedParty.id"]) {
                 indexes.addAndCondition(query, { relatedPartyHash: [indexes.fixUserId(req.query["relatedParty.id"])] });
             }
+
+            utils.queryAndOrCommas(req.query["body"], "body", query);
+            utils.queryAndOrCommas(req.query["status"], "status", query);
         }
     );
 

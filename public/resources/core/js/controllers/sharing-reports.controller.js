@@ -31,27 +31,45 @@
         .controller('RSReportCreateCtrl', RSReportCreateController)
         .controller('RSReportSearchCtrl', RSReportSearchController);
 
-    function RSReportSearchController(DATA_STATUS, RSS, Utils, $scope, User, Party) {
+    function RSReportSearchController(DATA_STATUS, RSS, Utils, $scope, Party) {
         var vm = this;
 
         vm.list = [];
+        vm.offset = -1;
+        vm.size = -1;
         vm.list.status = DATA_STATUS.LOADING;
 
-	$scope.$on(Party.EVENTS.USER_SESSION_SWITCHED, function (event, message, obj) {
-	    RSReportSearch();
-	});
-	
-	function RSReportSearch() {
-	    RSS.searchReports().then(function(reports) {
-		vm.list = angular.copy(reports);
-		vm.list.status = DATA_STATUS.LOADED;
-            }, function (response) {
-		vm.error = Utils.parseError(response, 'Unexpected error trying to retrieve the reports.');
-		vm.list.status = DATA_STATUS.ERROR;
-            });
-	};
+        vm.getElementsLength = getElementsLength;
 
-	RSReportSearch();
+        function getElementsLength() {
+            return RSS.countReports();
+        }
+
+        function updateRSReports () {
+            vm.list.status = DATA_STATUS.LOADING;
+
+            if (vm.offset >= 0) {
+                var params = {
+                    offset: vm.offset,
+                    size: vm.size
+                };
+                RSS.searchReports(params).then(function(reports) {
+                    vm.list = angular.copy(reports);
+                    vm.list.status = DATA_STATUS.LOADED;
+                }, function (response) {
+                    vm.error = Utils.parseError(response, 'Unexpected error trying to retrieve the reports.');
+                    vm.list.status = DATA_STATUS.ERROR;
+                });
+            }
+        }
+
+        $scope.$watch(function () {
+            return vm.offset;
+        }, updateRSReports);
+
+        $scope.$on(Party.EVENTS.USER_SESSION_SWITCHED, function (event, message, obj) {
+            updateRSReports();
+        });
     }
 
     function RSReportCreateController($state, $scope, $rootScope, $element, RSS, EVENTS, Utils) {

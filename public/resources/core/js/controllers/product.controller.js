@@ -54,6 +54,28 @@
         vm.showFilters = showFilters;
         vm.getElementsLength = getElementsLength;
         vm.setFilters = setFilters;
+        vm.searchInput = "";
+
+        // Initialize the search input content
+        vm.initializeInput = initializeInput;
+        function initializeInput() {
+            if($state.params.body !== undefined)
+                vm.searchInput = $state.params.body;
+        }
+
+        // Returns the input content
+        vm.getSearchInputContent = getSearchInputContent;
+        function getSearchInputContent() {
+            // Returns the content of the search input
+            return vm.searchInput;
+        }
+
+        // Handle enter press event
+        vm.handleEnterKeyUp = handleEnterKeyUp;
+        function handleEnterKeyUp(event) {
+            if (event.keyCode == 13)
+                $("#searchbutton").click();
+        }
 
         function showFilters() {
             $rootScope.$broadcast(EVENTS.FILTERS_OPENED, LIFECYCLE_STATUS);
@@ -196,6 +218,25 @@
         vm.resetCharacteristicValue = resetCharacteristicValue;
         vm.getFormattedValueOf = getFormattedValueOf;
         vm.clearFileInput = clearFileInput;
+
+        /* Meta info management */
+        vm.meta = {};
+        vm.getMetaLabel = getMetaLabel;
+
+        function getMetaLabel(id) {
+            return typeof vm.currentType.form[id].label !== 'undefined' ? vm.currentType.form[id].label : id;
+        }
+
+        function initMetaData() {
+            // Evaluate form field in order to include default values
+            if (typeof vm.currentType.form !== 'undefined') {
+                for (var id in vm.currentType.form) {
+                    if (typeof vm.currentType.form[id].default !== 'undefined') {
+                        vm.meta[id] = vm.currentType.form[id].default;
+                    }
+                }
+            }
+        }
 
         function createRelationship(data) {
             var deferred = $q.defer();
@@ -369,7 +410,19 @@
             return filterProduct(product) > -1;
         }
 
-        function uploadAsset(file, contentType, publicFile, callback, errCallback) {
+        function registerAsset(url, assetType, contentType, callback, errCallback) {
+            var data = {
+                resourceType: assetType,
+                content: url,
+                contentType: contentType
+            };
+            if (Object.keys(vm.meta).length) {
+                data.metadata = vm.meta;
+            }
+            Asset.create(data).then(callback, errCallback);
+        }
+
+        function uploadAsset(file, assetType, contentType, publicFile, meta, callback, errCallback) {
             var reader = new FileReader();
             reader.onload = function(e) {
                 var data = {
@@ -382,6 +435,11 @@
 
                 if (publicFile) {
                     data.isPublic = true;
+                } else {
+                    data.resourceType = assetType;
+                }
+                if (meta !== null) {
+                    data.metadata = meta;
                 }
 
                 Asset.create(data).then(callback, errCallback);
@@ -390,13 +448,38 @@
         }
 
         function create() {
+
+            function showAssetError(response) {
+                var defaultMessage = 'There was an unexpected error that prevented your ' +
+                    'digital asset to be registered';
+                var error = Utils.parseError(response, defaultMessage);
+
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                    error: error
+                });
+            }
+
             // If the format is file upload it to the asset manager
             if (vm.isDigital && vm.currFormat === 'FILE') {
-                uploadAsset(vm.assetFile, vm.digitalChars[1].productSpecCharacteristicValue[0].value, false, function (result) {
+                var meta = null;
+                if (Object.keys(vm.meta).length) {
+                    meta = vm.meta;
+                }
+                uploadAsset(vm.assetFile,
+                    vm.digitalChars[0].productSpecCharacteristicValue[0].value,
+                    vm.digitalChars[1].productSpecCharacteristicValue[0].value, false, meta, function (result) {
                     // Set file location
                     vm.digitalChars[2].productSpecCharacteristicValue[0].value = result.content;
                     saveProduct();
-                });
+                }, (response) => showAssetError(response));
+            } else if (vm.isDigital && vm.currFormat === 'URL') {
+                registerAsset(
+                    vm.digitalChars[2].productSpecCharacteristicValue[0].value,
+                    vm.digitalChars[0].productSpecCharacteristicValue[0].value,
+                    vm.digitalChars[1].productSpecCharacteristicValue[0].value,
+                    () => saveProduct(),
+                    (response) => showAssetError(response)
+                );
             } else {
                 saveProduct();
             }
@@ -415,6 +498,8 @@
                 if (assetType === vm.assetTypes[i].name) {
                     found = true;
                     vm.currentType = vm.assetTypes[i];
+                    vm.meta = {};
+                    initMetaData();
                 }
             }
             vm.currFormat = vm.currentType.formats[0];
@@ -487,7 +572,7 @@
                 vm.stepList[4].form.pictureFile.$dirty = true;
 
                 if (vm.pictureFile.type != 'image/gif' && vm.pictureFile.type != 'image/jpeg' &&
-                vm.pictureFile.type != 'image/png' && vm.pictureFile.type != 'image/bmp') {
+                    vm.pictureFile.type != 'image/png' && vm.pictureFile.type != 'image/bmp') {
 
                     // Set input error
                     vm.stepList[4].form.pictureFile.$invalid = true;
@@ -498,7 +583,7 @@
                 }
 
                 // Upload the file to the server when it is included in the input
-                uploadAsset(vm.pictureFile, vm.pictureFile.type, true, function(result) {
+                uploadAsset(vm.pictureFile, null, vm.pictureFile.type, true, null, function(result) {
                     vm.data.attachment[0].url = result.content
                 }, function() {
                     // The picture cannot be uploaded set error in input

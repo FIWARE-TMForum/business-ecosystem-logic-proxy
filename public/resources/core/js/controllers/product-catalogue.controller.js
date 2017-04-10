@@ -46,24 +46,22 @@
         vm.offset = -1;
         vm.size = -1;
         vm.getElementsLength = getElementsLength;
+        vm.sidebarInput = "";
 
-        function getElementsLength() {
-            return Catalogue.count();
-        }
+        vm.updateList = updateList;
 
-	$scope.$on(Party.EVENTS.USER_SESSION_SWITCHED, function (event, message, obj) {
-		catalogueList();
-	});
-
-	function catalogueList() {
-	    vm.list.status = LOADING;
+        function updateList() {
+            vm.list.status = LOADING;
 	    
             if (vm.offset >= 0) {
+                // Create query with body for filtering catalogs
                 var page = {
                     offset: vm.offset,
-                    size: vm.size
+                    size: vm.size,
+                    body: vm.sidebarInput
                 };
-		
+                // Search query
+
                 Catalogue.search(page).then(function (catalogueList) {
                     angular.copy(catalogueList, vm.list);
                     vm.list.status = LOADED;
@@ -72,12 +70,20 @@
                     vm.list.status = ERROR;
                 });
             }
-	};
-	
+        }
+
+        function getElementsLength() {
+            // Count apllies filters such as body
+            return Catalogue.count({ body: vm.sidebarInput });
+        }
 
         $scope.$watch(function () {
             return vm.offset;
-        }, catalogueList);
+        }, updateList);
+	
+        $scope.$on(Party.EVENTS.USER_SESSION_SWITCHED, function (event, message, obj) {
+		    updateList();
+	    });
     }
 
     function CatalogueSearchController($scope, $state, $rootScope, EVENTS, Catalogue, LIFECYCLE_STATUS, DATA_STATUS, Utils, Party, User) {
@@ -95,6 +101,28 @@
         vm.showFilters = showFilters;
         vm.getElementsLength = getElementsLength;
         vm.setFilters = setFilters;
+        vm.searchInput = "";
+
+        // Initialize the search input content
+        vm.initializeInput = initializeInput;
+        function initializeInput() {
+            if($state.params.body !== undefined)
+                vm.searchInput = $state.params.body;
+        }
+
+        // Returns the input content
+        vm.getSearchInputContent = getSearchInputContent;
+        function getSearchInputContent() {
+            // Returns the content of the search input
+            return vm.searchInput;
+        }
+
+        // Handle enter press event
+        vm.handleEnterKeyUp = handleEnterKeyUp;
+        function handleEnterKeyUp(event) {
+            if (event.keyCode == 13)
+                $("#searchbutton").click();
+        }
 
         function showFilters() {
             $rootScope.$broadcast(EVENTS.FILTERS_OPENED, LIFECYCLE_STATUS);

@@ -34,7 +34,7 @@
 
         $stateProvider
             .state('stock.catalogue', {
-                url: '/catalogue?status&role',
+                url: '/catalogue?status&role&body',
                 params: {
                     owner: true,
                     status: 'Active,Launched'

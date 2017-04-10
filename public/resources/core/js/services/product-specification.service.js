@@ -134,6 +134,10 @@
                 params['isBundle'] = filters.bundle;
             }
 
+            if (filters.body !== undefined) {
+                params['body'] = filters.body.replace(/\s/g, ',');
+            }
+
             method(params, function (productSpecList) {
                 deferred.resolve(productSpecList);
             }, function (response) {
@@ -209,10 +213,10 @@
             };
 
             return ProductSpec.update(params, angular.extend(resource.toJSON(), dataUpdated, {
-                    bundledProductSpecification: resource.bundledProductSpecification.map(function (productSpec) {
-                        return productSpec.serialize();
-                    })
-                }))
+                bundledProductSpecification: resource.bundledProductSpecification.map(function (productSpec) {
+                    return productSpec.serialize();
+                })
+            }))
                 .$promise
                 .then(detailBundled)
                 .then(detailRelationship);
