@@ -118,7 +118,7 @@ html(ng-app="app")
                     i.fa.fa-users.fa-stack-1x(ng-hide="user.loggedAsIndividual()")
                   .title.h4 {{ user.currentUser.name }}
                   .subtitle {{ user.currentUser.email }}
-                a.dropdown-menu-item(ng-mouseenter="user.orgsVisible()", ng-mouseleave="user.orgsInvisible()")
+                a.dropdown-menu-item(ng-if="user.hasOrgs()", ng-mouseenter="user.orgsVisible()", ng-mouseleave="user.orgsInvisible()")
                   span.item-icon.fa.fa-angle-double-left
                   span.item-text Switch Session
                 .dropdown(ng-show="user.showOrgs", ng-mouseenter="user.orgsVisible()", ng-mouseleave="user.orgsInvisible()")
