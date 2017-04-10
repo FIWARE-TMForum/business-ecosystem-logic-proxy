@@ -10,46 +10,109 @@ describe('Integration tests', function () {
     var driver = new webdriver.Builder()
 	.forBrowser('chrome')
 	.build();
-
-    function checkLogin(driver, done) {
-	driver.wait(until.titleIs('Biz Ecosystem'));
-	driver.wait(until.elementLocated(By.linkText('Sign in')));
-	driver.findElement(By.linkText('Sign in')).click();
-	driver.wait(until.elementLocated(By.id('id_username')));
-	driver.findElement(By.id('id_username')).sendKeys(userProvider.id);
-	driver.findElement(By.id('id_password')).sendKeys(userProvider.pass);
-	driver.findElement(By.className('btn btn-primary pull-right')).click();
-	driver.wait(until.titleIs('Biz Ecosystem'));
-	var userLogged = driver.findElement(By.className("hidden-xs ng-binding"));
-	userLogged.getText().then(function(name){
-	    expect(name).toBe('testfiware');
-	    done();
-	});
-    };
     
+    beforeAll(function(done) {
+	jasmine.DEFAULT_TIMEOUT_INTERVAL = 60000;
+	// DDBB must be cleaned from data, the only thing it should have is the schema.
+	done();
+    });
+    
+    afterAll(function(done) {
+	driver.quit();
+	done();
+    });
+
     fdescribe('User.', function () {
-	
+
 	beforeAll(function(done) {
-	    jasmine.DEFAULT_TIMEOUT_INTERVAL = 60000;
-	    done()
+	    // Populate DDBB
+	    done();
 	});
 
 	afterAll(function(done) {
-	    driver.quit();
+	    // Depopulate DDBB
 	    done();
 	});
-
+	
 	userNormal = {id: 'patata@mailinator.com',
 		      pass: 'test'};
 
 	userProvider = {id: '58d5266e056d1@mailbox92.biz',
 			pass: 'test'};
 	
+	function checkLogin(driver, user, expectedName, done) {
+	    driver.wait(until.titleIs('Biz Ecosystem'));
+	    driver.wait(until.elementLocated(By.linkText('Sign in')));
+	    driver.findElement(By.linkText('Sign in')).click();
+	    driver.wait(until.elementLocated(By.id('id_username')));
+	    driver.findElement(By.id('id_username')).sendKeys(user.id);
+	    driver.findElement(By.id('id_password')).sendKeys(user.pass);
+	    driver.findElement(By.className('btn btn-primary pull-right')).click();
+	    driver.wait(until.titleIs('Biz Ecosystem'));
+	    var userLogged = driver.findElement(By.className("hidden-xs ng-binding"));
+	    userLogged.getText().then(function(name){
+		expect(name).toBe(expectedName);
+		done();
+	    });
+	};
 
+	function createProductSpec(driver, product, expectedProduct, done) {
+	    var stringSelector = '/html/body/div[4]/div/div[3]/ui-view/ui-view/ui-view/div/div[2]/div/div/div[2]/div[2]/div[4]/div/ng-include/div[2]/div/form[1]/div[1]/div[2]/div/select/option[1]';
+	    var numberSelector = '/html/body/div[4]/div/div[3]/ui-view/ui-view/ui-view/div/div[2]/div/div/div[2]/div[2]/div[4]/div/ng-include/div[2]/div/form[1]/div[1]/div[2]/div/select/option[2]';
+	    var numberRangeSelector = '/html/body/div[4]/div/div[3]/ui-view/ui-view/ui-view/div/div[2]/div/div/div[2]/div[2]/div[4]/div/ng-include/div[2]/div/form[1]/div[1]/div[2]/div/select/option[3]';
+	    driver.findElement(By.linkText('My stock')).click();
+	    driver.findElement(By.className('item-icon fa fa-file')).click();
+	    // 1
+	    driver.findElement(By.className('btn btn-success')).click();
+	    driver.wait(until.elementLocated(By.name('name')));
+	    driver.findElement(By.name('ProductSpecTest')).sendKeys(product.name);
+	    driver.findElement(By.name('version')).sendKeys(product.version);
+	    driver.findElement(By.name('brand')).sendKeys(product.brand);
+	    driver.findElement(By.name('productNumber')).sendKeys(product.productNumber);
+	    driver.findElement(By.name('description')).sendKeys(product.description);
+	    driver.findElement(By.className('btn btn-default z-depth-1')).click();
+	    // 2
+	    driver.wait(until.elementLocated(By.className('track')));
+	    driver.findElement(By.className('btn btn-default z-depth-1')).click();
+	    // 3
+	    driver.wait(until.elementLocated(By.className('track')));
+	    driver.findElement(By.className('btn btn-default z-depth-1')).click();
+	    // 4
+	    driver.wait(until.elementLocated(By.className('item-icon fa fa-plus')));
+	    // TODO
+	    if(product.characteristics){
+		product.characteristics.forEach(characteristic =>
+						driver.findElement(By.className('btn btn-default z-depth-1 ng-scope')).click();
+						driver.wait(until.elementLocated(By.name('name')));
+						driver.findElement(By.name('name')).sendKeys(characteristic.name);
+						driver.findElement(By.name('description')).sendKeys(characteristic.description);
+						if (characteristic.value.type === 'number'){
+						    driver.findElement(By.name('value')).sendKeys(characteristic.value.val);
+						}else if(characteristic.value.type === 'numberRange'){
+						    driver.findElement(By.name('value')).sendKeys(characteristic.value.val);
+						}else{
+						    driver.findElement(By.name('value')).sendKeys(characteristic.value.val);
+						}
+						driver.findElement(By.className('item-icon fa fa-plus')).click();
+					       )
+		driver.findElement(By.className('btn btn-warning z-depth-1 ng-scope')).click();
+	    }
+	    driver.findElement(By.className('btn btn-default z-depth-1')).click();
+	    driver.wait(until.elementLocated(By.className('thumbnail thumbnail-lg')));
+	    if (product.picture){
+		driver.findElement(By.name('picture')).sendKeys(product.picture)
+	    }
+	    driver.findElement(By.className('btn btn-default z-depth-1')).click();
+	    driver.wait(until.elementLocated(By.name('type')));
+	    driver.findElement(By.className('btn btn-default z-depth-1')).click();
+	    driver.wait(until.elementLocated(By.className('text-muted')));
+	    driver.findElement(By.name('title')).sendKeys(product.title);
+	    driver.findElement(By.name('text')).sendKeys(product.text);
+	    driver.findElement(By.className('btn btn-default z-depth-1')).click();
+	};
 	/*
 	  As far as i know, these test must be passed in this order as they emulate user possible actions.
 	 */
-
 
 	// Use this as a placeholder for new tests. Doing all the tests is horrible enough without worrying about what
 	// html thing should be checked.
@@ -57,11 +120,13 @@ describe('Integration tests', function () {
 	// driver.getTitle().then(function (title) {
 	//     expect(title).toBe('Biz Ecosystem');
 	// });
+
+	
 	
 	driver.get('http://localhost:8000/#/offering');
 	
 	it('Should be able to log in with a correct username and password', function (done) {
-	    checkLogin(driver, done)
+	    checkLogin(driver, userProvider, 'testfiware', done);
 	});
 
 	it('Should be able to update his/her info', function(done) {
@@ -112,40 +177,23 @@ describe('Integration tests', function () {
 	    driver.findElement(By.className('btn btn-default z-depth-1')).click();
 	    driver.wait(until.titleIs('Biz Ecosystem'));
 	    driver.findElement(By.linkText('My stock')).click();
-	    driver.wait(until.elementLocated(By.linkText('testCatalog19')));
-	    var foundCatalog = !!driver.findElements(By.linkText('testCatalog22'));
+	    var foundCatalog = !!driver.wait(until.elementLocated(By.linkText('testCata')));
 	    if(foundCatalog){
-		driver.findElement(By.linkText('testCatalog23')).click();
-		// driver.wait(until.elementLocated(By.className('status-item status-launched')));
-		// expect(name).toBe('testCatalog20');
-		// var icon = driver.findElement(By.css("div.status-item.status-launched"));
-		// driver
-		//     .actions()
-		//     .click(icon)
-		//     .perform();
-		driver.wait(until.elementLocated(By.className('status-item status-launched active')));
+		driver.findElement(By.linkText('testCata')).click();
 		driver.findElement(By.className('btn btn-success')).click();
-		driver.wait(until.elementLocated(By.linkText('Home')));
-		// var home = driver.findElement(By.linkText('Home'));
-		// home.click();
-		// home.then(function(webElement){
-		//     driver.actions().mouseMove(webElement).click().perform();
-		//     driver.wait(until.elementLocated(By.className('panel-heading')));
-		//     foundCatalog = !!driver.findElements(By.linkText('testCatalog23'));
-		//     expect(foundCatalog).toBe(true);
-		// });
-		
+		driver.wait(until.elementLocated(By.linkText('Home')));		
 		// Selenium has a bug where it wont load the second instruction of a goTo("URL"). I dont even know why this work around works. But it does.
+		// If Jesus can walk on water. Can he swim on land?
 		driver.navigate().to("chrome://version/")
-		
 		driver.navigate().to("http://localhost:8000/#/offering")
-		driver.wait(until.elementLocated(By.linkText('testCatalog23')));
-		foundCatalog = driver.findElement(By.linkText('testCatalog23'));
+		
+		driver.wait(until.elementLocated(By.linkText('testCata')));
+		foundCatalog = driver.findElement(By.linkText('testCata'));
 		foundCatalog.then(x => x.getText().then(function(text) {
 			expect(text).toBe('testCatalog23');
 			done();
 		}));
-		
+		// TODO
 	    }else{
 		driver.findElement(By.className('btn btn-success')).click();
 		driver.wait(until.elementLocated(By.name('name')));
@@ -157,15 +205,25 @@ describe('Integration tests', function () {
 		driver.wait(until.elementLocated(By.className('h4 text-dark-secondary')));
 		var catalogName = driver.findElement(By.name("name"));
 		catalogName.getAttribute("value").then(function(name){
-		    
-		});				       
+		    // TODO
+		});
+		// driver.wait(until.elementLocated(By.className('status-item status-launched')));
+		// expect(name).toBe('testCatalog20');
+		// var icon = driver.findElement(By.css("div.status-item.status-launched"));
+		// driver
+		//     .actions()
+		//     .click(icon)
+		//     .perform();
+		driver.wait(until.elementLocated(By.className('status-item status-launched active')));
 	    }
 	});
 
-	// xit('Create a new product Specification', function(done) {
+	it('Create a new product Specification', function(done) {
+	    driver.wait(until.titleIs('Biz Ecosystem'));
+	    // Call the function
 	    
-	//     done();
-	// });
+	    // done();
+	});
     });
 });
 
