@@ -2,6 +2,21 @@ require("chromedriver");
 
 describe('Integration tests', function () {
 
+    var mysql = require('mysql');
+    var connection = mysql.createConnection({
+	host: 'localhost',
+	user: 'root',
+	password: 'toor'
+    });
+    
+    connection.connect(function(err) {
+	if (err) {
+	    console.error('error connecting: ' + err.stack);
+	    return;
+	}
+ 
+	console.log('connected as id ' + connection.threadId);
+    });
     
     var webdriver = require('selenium-webdriver'),
 	By = webdriver.By,
@@ -13,6 +28,7 @@ describe('Integration tests', function () {
     
     beforeAll(function(done) {
 	jasmine.DEFAULT_TIMEOUT_INTERVAL = 60000;
+	
 	// DDBB must be cleaned from data, the only thing it should have is the schema.
 	done();
     });
@@ -79,17 +95,21 @@ describe('Integration tests', function () {
 	    driver.findElement(By.className('btn btn-default z-depth-1')).click();
 	    // 4
 	    driver.wait(until.elementLocated(By.className('item-icon fa fa-plus')));
-	    // TODO
 	    if(product.characteristics){
 		product.characteristics.forEach(characteristic =>
 						driver.findElement(By.className('btn btn-default z-depth-1 ng-scope')).click();
-						driver.wait(until.elementLocated(By.name('name')));
-						driver.findElement(By.name('name')).sendKeys(characteristic.name);
+						driver.wait(until.elementLocated(By.name('name'))).sendKeys(characteristic.name);
 						driver.findElement(By.name('description')).sendKeys(characteristic.description);
+						// Now i should send the value to the proper field, but first i need to select the correct selector
 						if (characteristic.value.type === 'number'){
+						    driver.findElement(By.css(numberSelector)).click();
+						    driver.findElement(By.name('unitOfMeasure')).sendKeys(characteristic.value.unit);
 						    driver.findElement(By.name('value')).sendKeys(characteristic.value.val);
 						}else if(characteristic.value.type === 'numberRange'){
-						    driver.findElement(By.name('value')).sendKeys(characteristic.value.val);
+						    driver.findElement(By.css(numberRangeSelector)).click();
+						    driver.findElement(By.name('valueFrom')).sendKeys(characteristic.value.valFrom);
+						    driver.findElement(By.name('valueTo')).sendKeys(characteristic.value.valTo);
+						    driver.findElement(By.name('unitOfMeasure')).sendKeys(characteristic.value.unit);
 						}else{
 						    driver.findElement(By.name('value')).sendKeys(characteristic.value.val);
 						}
@@ -98,17 +118,27 @@ describe('Integration tests', function () {
 		driver.findElement(By.className('btn btn-warning z-depth-1 ng-scope')).click();
 	    }
 	    driver.findElement(By.className('btn btn-default z-depth-1')).click();
+	    // 5
 	    driver.wait(until.elementLocated(By.className('thumbnail thumbnail-lg')));
 	    if (product.picture){
+		// Its only a test so we only accept picture URLs
 		driver.findElement(By.name('picture')).sendKeys(product.picture)
 	    }
 	    driver.findElement(By.className('btn btn-default z-depth-1')).click();
+	    // 6
 	    driver.wait(until.elementLocated(By.name('type')));
 	    driver.findElement(By.className('btn btn-default z-depth-1')).click();
+	    // 7
 	    driver.wait(until.elementLocated(By.className('text-muted')));
 	    driver.findElement(By.name('title')).sendKeys(product.title);
 	    driver.findElement(By.name('text')).sendKeys(product.text);
 	    driver.findElement(By.className('btn btn-default z-depth-1')).click();
+	    driver.wait(until.elementLocated(By.name('name')));
+	    // TODO: Check that all parameters are the correct ones before creating the product.
+
+
+	    
+	    driver.findElement(By.className('btn btn-warning')).click();
 	};
 	/*
 	  As far as i know, these test must be passed in this order as they emulate user possible actions.
@@ -218,11 +248,14 @@ describe('Integration tests', function () {
 	    }
 	});
 
-	it('Create a new product Specification', function(done) {
+	xit('Create a new product Specification', function(done) {
+	    var product = {};
+	    var expectedProduct = {};
+	    
 	    driver.wait(until.titleIs('Biz Ecosystem'));
 	    // Call the function
+	    createProductSpec(driver, product, expectedProduct, done);
 	    
-	    // done();
 	});
     });
 });
