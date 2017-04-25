@@ -39,7 +39,7 @@
         .controller('UserProfileCtrl', UserProfileController)
         .controller('UserShoppingCartCtrl', UserShoppingCartController);
 
-    function UserController($state, $scope, $rootScope, EVENTS, LIFECYCLE_STATUS, FILTER_STATUS, ORG_ADMIN, User, Party) {
+    function UserController($state, $scope, $rootScope, EVENTS, LIFECYCLE_STATUS, FILTER_STATUS, ROLES, User, Party) {
         /* jshint validthis: true */
         var vm = this;
         vm.itemsContained = {};
@@ -74,7 +74,7 @@
 
         function hasAdminRole() {
             var org = User.loggedUser.organizations.find(x => x.id === vm.currentUser.id);
-            return loggedAsIndividual() || org.roles.findIndex(x => x.name === ORG_ADMIN) > -1;
+            return loggedAsIndividual() || org.roles.findIndex(x => x.name === ROLES.orgAdmin) > -1;
         }
 
         function loggedAsIndividual() {
@@ -92,6 +92,9 @@
             vm.currentUser.id = currUser.id;
             vm.currentUser.href = User.loggedUser.href.replace(/(individual)\/(.*)/g,
 							       'organization/' + currUser.id);
+
+            vm.currentUser.roles = currUser.roles;
+
             propagateSwitch();
         }
 
@@ -104,6 +107,8 @@
             vm.currentUser.id = User.loggedUser.id;
             vm.currentUser.email = User.loggedUser.email;
             vm.currentUser.href = User.loggedUser.href;
+            vm.currentUser.roles = User.loggedUser.roles;
+
             propagateSwitch();
         }
 	
@@ -125,8 +130,7 @@
         }
 
         function isSeller() {
-            // If stock.catalogue route is loaded, the user is a seller
-            return $state.get('stock.catalogue') != null;
+            return vm.currentUser.roles.findIndex(x => x.name === ROLES.seller) > -1;
         }
 
         function isAuthenticated() {

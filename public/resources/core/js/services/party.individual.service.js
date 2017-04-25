@@ -30,9 +30,9 @@
 
     angular
         .module('app')
-        .factory('Party', partyService)
+        .factory('Party', partyService);
     
-    function partyService($q, $resource, URLS, COUNTRIES, ORG_ADMIN, User) {
+    function partyService($q, $resource, URLS, COUNTRIES, ROLES, User) {
 	
         var Individual = $resource(URLS.PARTY_MANAGEMENT + '/individual/:id', {}, {
             update: {method: 'PUT'},
@@ -170,7 +170,7 @@
             var org = User.loggedUser.organizations.find(
                 x => x.id === User.loggedUser.currentUser.id);
 
-            return org.roles.findIndex(x => x.name === ORG_ADMIN) > -1;
+            return org.roles.findIndex(x => x.name === ROLES.orgAdmin) > -1;
         }
 
         function process(func, params, deferred, transform) {

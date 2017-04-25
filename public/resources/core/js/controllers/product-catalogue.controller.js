@@ -138,12 +138,12 @@
             filters = newFilters;
         }
 
-	$scope.$on(Party.EVENTS.USER_SESSION_SWITCHED, function (event, message, obj) {
-	    catalogueSearch();
-	});
+        $scope.$on(Party.EVENTS.USER_SESSION_SWITCHED, function (event, message, obj) {
+            catalogueSearch();
+        });
 
-	function catalogueSearch() {
-	    vm.list.status = vm.STATUS.LOADING;
+        function catalogueSearch() {
+            vm.list.status = vm.STATUS.LOADING;
 	    
             if (vm.offset >= 0) {
                 var params = {};
@@ -164,9 +164,8 @@
                     vm.list.status = vm.STATUS.ERROR;
                 });
             }
-	};
+        }
 	
-
         vm.list.status = vm.STATUS.LOADING;
         $scope.$watch(function () {
             return vm.offset;

@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -35,11 +35,6 @@
         });
 
         var loggedUser = $injector.has('LOGGED_USER') ? $injector.get('LOGGED_USER') : null;
-
-	if (loggedUser != null) {
-	    var organizations = JSON.parse(loggedUser.organizations.replace(/&quot;/g, '"'));
-	    loggedUser.organizations = organizations.organizations;
-	}
 	
         return {
             detail: detail,

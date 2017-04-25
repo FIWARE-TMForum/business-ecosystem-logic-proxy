@@ -354,10 +354,6 @@ var jsAppFilesToInject = [
     'controllers/customer.controller',
     'routes/offering.routes',
     'routes/settings.routes',
-    'routes/rss.routes',
-    'routes/rss.sharing-models.routes',
-    'routes/rss.transactions.routes',
-    'routes/rss.reports.routes',
     'routes/inventory.routes',
     'routes/inventory.product-order.routes',
     'routes/inventory.product.routes',
@@ -372,7 +368,11 @@ var jsStockFilesToInject = [
     'routes/stock.routes',
     'routes/stock.product.routes',
     'routes/stock.product-offering.routes',
-    'routes/stock.product-catalogue.routes'
+    'routes/stock.product-catalogue.routes',
+    'routes/rss.routes',
+    'routes/rss.sharing-models.routes',
+    'routes/rss.transactions.routes',
+    'routes/rss.reports.routes'
 ].map(function (path) {
     return 'resources/core/js/' + path + '.js';
 });
@@ -408,16 +408,16 @@ var renderTemplate = function(req, res, viewName) {
         jsAppFilesToInject: jsAppFilesToInject,
         accountHost: config.oauth2.server,
         usageChartURL: config.usageChartURL,
-        orgAdmin: config.oauth2.roles.orgAdmin
+        orgAdmin: config.oauth2.roles.orgAdmin,
+        seller: config.oauth2.roles.seller,
+        customer: config.oauth2.customer
     };
 
     if (utils.isAdmin(req.user)) {
         options.jsAppFilesToInject = options.jsAppFilesToInject.concat(jsAdminFilesToInject);
     }
 
-    if (utils.hasRole(req.user, config.oauth2.roles.seller)) {
-        options.jsAppFilesToInject = options.jsAppFilesToInject.concat(jsStockFilesToInject);
-    }
+    options.jsAppFilesToInject = options.jsAppFilesToInject.concat(jsStockFilesToInject);
 
     res.render(viewName, options);
 
