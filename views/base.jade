@@ -72,7 +72,6 @@ html(ng-app="app")
               roles: '#{ JSON.stringify(user.roles) }',
               href: '#{ contextPath }/#{ partyPath }/api/partyManagement/v2/individual/#{ user.id }'
             }
-            
           })
           .run(function ($http, LOGGED_USER) {
             $http.defaults.headers.common.Authorization = 'Bearer ' + LOGGED_USER.bearerToken;
