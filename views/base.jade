@@ -39,6 +39,7 @@ html(ng-app="app")
         })
         .constant('PLATFORM_REVENUE', #{ platformRevenue })
         .constant('USAGE_CHART_URL', '#{ usageChartURL }')
+        .constant('ORG_ADMIN', '#{ orgAdmin }')
         .run(function($rootScope, $state, $injector) {
 
           $rootScope.$on('$stateChangeStart', function (e, toState, toParams) {

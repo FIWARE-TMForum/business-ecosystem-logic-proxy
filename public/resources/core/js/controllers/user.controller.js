@@ -39,7 +39,7 @@
         .controller('UserProfileCtrl', UserProfileController)
         .controller('UserShoppingCartCtrl', UserShoppingCartController);
 
-    function UserController($state, $scope, $rootScope, EVENTS, LIFECYCLE_STATUS, FILTER_STATUS, User, Party) {
+    function UserController($state, $scope, $rootScope, EVENTS, LIFECYCLE_STATUS, FILTER_STATUS, ORG_ADMIN, User, Party) {
         /* jshint validthis: true */
         var vm = this;
         vm.itemsContained = {};
@@ -74,16 +74,16 @@
 
         function hasAdminRole() {
             var org = User.loggedUser.organizations.find(x => x.id === vm.currentUser.id);
-            return loggedAsIndividual() || org.roles.findIndex(x => x.name === "Admin") > -1;
-        };
+            return loggedAsIndividual() || org.roles.findIndex(x => x.name === ORG_ADMIN) > -1;
+        }
 
         function loggedAsIndividual() {
             return vm.currentUser.id === User.loggedUser.id;
-        };
+        }
 
         function showOrgList(orgId) {
             return vm.currentUser.id !== orgId;
-        };
+        }
 
         function switchSession(orgId) {
             var currUser = User.loggedUser.organizations.find(x => x.id === orgId);
@@ -93,11 +93,11 @@
             vm.currentUser.href = User.loggedUser.href.replace(/(individual)\/(.*)/g,
 							       'organization/' + currUser.id);
             propagateSwitch();
-        };
+        }
 
         function propagateSwitch() {
             $rootScope.$broadcast(Party.EVENTS.USER_SESSION_SWITCHED, 'User has switched session', {});
-        };
+        }
 
         function switchToUser() {
             vm.currentUser.name = User.loggedUser.name;
@@ -105,15 +105,15 @@
             vm.currentUser.email = User.loggedUser.email;
             vm.currentUser.href = User.loggedUser.href;
             propagateSwitch();
-        };
+        }
 	
         function orgsVisible() {
             vm.showOrgs = true;
-        };
+        }
 
         function orgsInvisible() {
             vm.showOrgs = false;
-        };
+        }
 
         $scope.$on('$stateChangeSuccess', function (event, toState) {
             $scope.title = toState.data.title;

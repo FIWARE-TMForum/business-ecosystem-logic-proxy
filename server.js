@@ -407,7 +407,8 @@ var renderTemplate = function(req, res, viewName) {
         jsDepFilesToInject: jsDepFilesToInject,
         jsAppFilesToInject: jsAppFilesToInject,
         accountHost: config.oauth2.server,
-        usageChartURL: config.usageChartURL
+        usageChartURL: config.usageChartURL,
+        orgAdmin: config.oauth2.roles.orgAdmin
     };
 
     if (utils.isAdmin(req.user)) {
