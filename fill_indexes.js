@@ -17,7 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 var config = require("./config"),
     indexes = require("./lib/indexes.js"),
     request = require("request"),
@@ -25,7 +24,7 @@ var config = require("./config"),
     Promise = require("promiz");
 
 var createUrl = function createUrl(api, extra) {
-    return (config.appSsl ? "https" : "http") + "://" + utils.getAPIHost(api) + ":" + utils.getAPIPort(api) + extra;
+    return utils.getAPIProtocol(api) + "://" + utils.getAPIHost(api) + ":" + utils.getAPIPort(api) + extra;
 };
 
 var genericRequest = function genericRequest(options, extra) {
@@ -155,11 +154,12 @@ var logAllIndexes = function logAllIndexes(path) {
 });
 };
 
-
-downloadProducts()
+indexes.init()
+    .then(downloadProducts)
     .then(downloadCatalogs)
     .then(downloadInventory)
     .then(downloadOrdering)
+    .then(indexes.close)
     .then(() => console.log("All saved!"))
     .catch(e => console.log("Error: ", e.stack));
 

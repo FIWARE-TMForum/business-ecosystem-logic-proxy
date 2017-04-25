@@ -24,7 +24,7 @@ config.oauth2 = {
     'server': 'https://account.lab.fiware.org',
     'clientID': '--client-id--',
     'clientSecret': '--client-secret--',
-    'callbackURL': '--callback-url--',
+    'callbackURL': 'http://localhost/auth/fiware/callback',
     'roles': {
         'admin': 'provider',
         'customer': 'customer',
@@ -59,10 +59,10 @@ config.endpoints = {
         'appSsl': false
     },
     'ordering': {
-         'path': 'DSProductOrdering',
-         'host': 'localhost',
-         'port': '8080',
-         'appSsl': false
+        'path': 'DSProductOrdering',
+        'host': 'localhost',
+        'port': '8080',
+        'appSsl': false
     },
     'inventory': {
         'path': 'DSProductInventory',

@@ -129,9 +129,7 @@ describe('Inventory API', function() {
                         }
 
 
-                        return Promise.resolve({
-                            hits: results.map(x => ({document: {originalId: x}}))
-                        });
+                        return Promise.resolve(results.map(x => ({document: {originalId: x}})));
                     }
                 };
 
@@ -176,76 +174,80 @@ describe('Inventory API', function() {
 
             it('should change request URL to include inventory IDs when relatedParty.id is provided', function(done) {
                 requestHelper(done,
-                              [3, 4],
-                              "relatedParty.id=rock",
-                              {
-                                  "relatedParty.id": "rock"
-                              },
-                              "id=3,4",
-                              {
-                                  sort: ["sortedId", "asc"],
-                                  query: [{AND: [{relatedPartyHash: [md5("rock")]}]}]
-                              });
+                    [3, 4], "relatedParty.id=rock", {
+                        "relatedParty.id": "rock"
+                    }, "id=3,4", {
+                        sort: {
+                            field: "sortedId",
+                            direction:"asc"
+                        },
+                        query: {
+                            AND: {relatedPartyHash: [md5("rock")]}
+                        }
+                    });
             });
 
             var testQueryParameters = function testQueryParameters(done, params) {
                 // Transform object to param=value&param2=value2
                 var paramUrl = Object.keys(params).map(key => key + "=" + params[key]).join("&");
                 // Transform object to index AND query (String keys must be lower case to perform index search correctly)
-                var ANDs = Object.keys(params)
+                var ANDs = {};
+                Object.keys(params)
                         .map(key => (
-                            {[key]: [ (typeof params[key] === "string") ? params[key].toLowerCase() : params[key]]}));
+                            ANDs[key]= [ (typeof params[key] === "string") ? params[key].toLowerCase() : params[key]]));
 
                 requestHelper(done,
-                              [7, 9, 11],
-                              paramUrl,
-                              params,
-                              "id=7,9,11",
-                              {
-                                  sort: ["sortedId", "asc"],
-                                  query: [{AND: ANDs}]
-                              });
+                    [7, 9, 11], paramUrl, params, "id=7,9,11", {
+                        sort: {
+                            field: "sortedId",
+                            direction:"asc"
+                        },
+                        query: {AND: ANDs}
+                    }
+                );
             };
 
             it('should should change URL to include inventory IDs when no parameter are provided', function(done) {
                 requestHelper(done,
-                              [1, 2],
-                              "",
-                              {},
-                              "id=1,2",
-                              {
-                                  sort: ["sortedId", "asc"],
-                                  query: {AND: [{"*": ["*"]}]}
-                              });
+                    [1, 2], "", {}, "id=1,2", {
+                        sort: {
+                            field: "sortedId",
+                            direction:"asc"
+                        },
+                        query: {AND: {"*": ["*"]}}
+                    }
+                );
             });
 
             it('should change request URL to not add any id if no inventory results', function(done) {
                 requestHelper(done,
-                              [],
-                              "relatedParty.id=someother",
-                              {
-                                  "relatedParty.id": "someother"
-                              },
-                              "id=",
-                              {
-                                  sort: ["sortedId", "asc"],
-                                  query: [{AND: [{relatedPartyHash: [md5("someother")]}]}]
-                              });
+                    [], "relatedParty.id=someother", {
+                        "relatedParty.id": "someother"
+                    }, "id=", {
+                        sort: {
+                            field: "sortedId",
+                            direction:"asc"
+                        },
+                        query: {
+                            AND: {relatedPartyHash: [md5("someother")]}
+                        }
+                    }
+                );
             });
 
             it('should change request URL adding extra params and ids', function(done) {
                 requestHelper(done,
-                              [1, 2],
-                              "depth=2&fields=name",
-                              {
-                                  depth: "2",
-                                  fields: "name"
-                              },
-                              "id=1,2&depth=2&fields=name",
-                              {
-                                  sort: ["sortedId", "asc"],
-                                  query: {AND: [{"*": ["*"]}]}
-                              });
+                    [1, 2], "depth=2&fields=name", {
+                        depth: "2",
+                        fields: "name"
+                    }, "id=1,2&depth=2&fields=name", {
+                        sort: {
+                            field: "sortedId",
+                            direction:"asc"
+                        },
+                        query: {AND: {"*": ["*"]}}
+                    }
+                );
 
             });
 

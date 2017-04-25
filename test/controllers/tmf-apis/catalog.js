@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -17,7 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var nock = require('nock'),
+var deepcopy = require("deepcopy"),
+    nock = require('nock'),
     proxyquire =  require('proxyquire'),
     Promise = require('promiz'),
     md5 = require("blueimp-md5"),
@@ -326,6 +327,9 @@ describe('Catalog API', function() {
             },
             serviceCandidate: {
                 id: 'productClass'
+            },
+            validFor: {
+                startDateTime: '2016-05-01'
             }
         };
 
@@ -654,7 +658,24 @@ describe('Catalog API', function() {
         var testCreateOfferingBundle = function(offeringRequestInfo, catalogRequestInfo, storeError, body, errorStatus, errorMsg, done) {
 
             var defaultErrorMessage = 'Internal Server Error';
-            var catalogApi = mockCatalogAPI(body, offeringRequestInfo, storeError, null);
+
+            // Mock date
+            var fakeDate = function () {
+                this.toISOString = function () {
+                    return '2016-05-01';
+                }
+            };
+
+            spyOn(global, 'Date').and.callFake(function() {
+                return new fakeDate();
+            });
+
+            var expBody = deepcopy(body);
+            expBody.validFor = {
+                startDateTime: '2016-05-01'
+            };
+
+            var catalogApi = mockCatalogAPI(expBody, offeringRequestInfo, storeError, null);
 
             var productSpecificationOk = {
                 relatedParty: [{id: userName, role: offeringRequestInfo.role}]
@@ -1246,7 +1267,7 @@ describe('Catalog API', function() {
 
         var parentCategoryRequest = {
             status: 404
-        }
+        };
 
         testCreateCategory(true, category, null, parentCategoryRequest, 400, INVALID_CATEGORY_ID + category.parentId, callback);
     });
@@ -1631,6 +1652,22 @@ describe('Catalog API', function() {
 
         testUpdateProductOffering(JSON.stringify({ productSpecification: {} }), productRequestInfo,
             null, catalogRequestInfo, 403, 'Field productSpecification cannot be modified', done);
+    });
+
+    it('should not allow to update an offering when the validFor field changes', function (done) {
+        var productRequestInfo = {
+            requestStatus: 200,
+            owner: true,
+            lifecycleStatus: 'active'
+        };
+
+        var catalogRequestInfo = {
+            requestStatus: 200,
+            lifecycleStatus: 'active'
+        };
+
+        testUpdateProductOffering(JSON.stringify({ validFor: {} }), productRequestInfo,
+            null, catalogRequestInfo, 403, 'Field validFor cannot be modified', done);
     });
 
     it('should not allow to update a non-owned offering', function(done) {
@@ -2973,7 +3010,7 @@ describe('Catalog API', function() {
             parentCategoryRequest, { name: categoryName, parentId: parentId, isRoot: false }, 500, errorMsg, done);
     });
 
-    describe('Test index in checkPermissions widdleware', function() {
+    describe('Test index in checkPermissions middleware', function() {
         var helperUrls = {
             catalog: {url: "/catalog", f: "searchCatalogs"},
             product: {url: "/productSpecification", f: "searchProducts"},
@@ -3014,10 +3051,7 @@ describe('Catalog API', function() {
                     expect(q).toEqual(expectedQuery);
                 }
 
-
-                return Promise.resolve({
-                    hits: results.map(x => ({document: {originalId: x}}))
-                });
+                return Promise.resolve(results.map(x => ({document: {originalId: x}})));
             };
 
             var catalogApi = getCatalogApi({}, {}, {}, {}, indexes);
@@ -3042,35 +3076,38 @@ describe('Catalog API', function() {
 
         it('should change request URL to not add any id if no catalog results', function(done) {
             requestHelper(done,
-                          "catalog",
-                          [],
-                          "relatedParty.id=someother",
-                          {
-                              "relatedParty.id": "someother"
-                          },
-                          "id=",
-                          {
-                              sort: ["sortedId", "asc"],
-                              query: [{AND: [{relatedPartyHash: [md5("someother")]}]}]
-                          });
+                "catalog", [], "relatedParty.id=someother", {
+                    "relatedParty.id": "someother"
+                },
+                "id=", {
+                    sort: {
+                        field: "sortedId",
+                        direction: "asc"
+                    },
+                    query: {
+                        AND: {relatedPartyHash: [md5("someother")]}
+                    }
+                }
+            );
         });
 
         it('should change request URL to include catalog IDs when relatedParty.id is provided', function(done) {
             requestHelper(done,
-                          "catalog",
-                          [2, 12],
-                          "relatedParty.id=rock-8&extraparam=hola&depth=2&fields=name",
-                          {
-                              "relatedParty.id": "rock-8",
-                              extraparam: "hola",
-                              depth: "2",
-                              fields: "name"
-                          },
-                          "id=2,12&depth=2&fields=name",
-                          {
-                              sort: ["sortedId", "asc"],
-                              query: [{AND: [{relatedPartyHash: [md5("rock-8")]}]}]
-                          });
+                "catalog", [2, 12], "relatedParty.id=rock-8&extraparam=hola&depth=2&fields=name", {
+                    "relatedParty.id": "rock-8",
+                    extraparam: "hola",
+                    depth: "2",
+                    fields: "name"
+                }, "id=2,12&depth=2&fields=name", {
+                    sort: {
+                        field: "sortedId",
+                        direction: "asc"
+                    },
+                    query: {
+                        AND: {relatedPartyHash: [md5("rock-8")]}
+                    }
+                }
+            );
         });
 
         it('should not change request URL when product index fails', function (done) {
@@ -3079,33 +3116,35 @@ describe('Catalog API', function() {
 
         it('should change request URL to not add any id if no product results', function(done) {
             requestHelper(done,
-                          "product",
-                          [],
-                          "relatedParty.id=someother",
-                          {
-                              "relatedParty.id": "someother"
-                          },
-                          "id=",
-                          {
-                              sort: ["sortedId", "asc"],
-                              query: [{AND: [{relatedPartyHash: [md5("someother")]}]}]
-                          });
+                "product", [], "relatedParty.id=someother", {
+                    "relatedParty.id": "someother"
+                }, "id=", {
+                    sort: {
+                        field: "sortedId",
+                        direction: "asc"
+                    },
+                    query: {
+                        AND: {relatedPartyHash: [md5("someother")]}
+                    }
+                }
+            );
         });
 
         it('should change request URL to include product IDs when relatedParty.id is provided', function(done) {
             requestHelper(done,
-                          "product",
-                          [3,4,13],
-                          "relatedParty.id=rock&size=3",
-                          {
-                              "relatedParty.id": "rock",
-                              size: 3
-                          },
-                          "id=3,4,13",
-                          {
-                              sort: ["sortedId", "asc"],
-                              query: [{AND: [{relatedPartyHash: [md5("rock")]}]}]
-                          });
+                "product", [3,4,13], "relatedParty.id=rock&size=3", {
+                    "relatedParty.id": "rock",
+                    size: 3
+                }, "id=3,4,13", {
+                    sort: {
+                        field: "sortedId",
+                        direction: "asc"
+                    },
+                    query: {
+                        AND: {relatedPartyHash: [md5("rock")]}
+                    }
+                }
+            );
         });
 
         it('should not change request URL when offer index fails', function (done) {
@@ -3114,80 +3153,83 @@ describe('Catalog API', function() {
 
         it('should request for category', function(done) {
             requestHelper(done,
-                          "offer",
-                          [],
-                          "category.id=201",
-                          {
-                              "category.id": 201
-                          },
-                          "id=",
-                          {
-                              sort: ["sortedId", "asc"],
-                              query: [{AND: [{categoriesId: ['cat:201']}]}]
-                          });
+                "offer", [], "category.id=201", {
+                    "category.id": 201
+                }, "id=", {
+                    sort: {
+                        field: "sortedId",
+                        direction: "asc"
+                    },
+                    query: {
+                        AND: {categoriesId: ['000000000201']}
+                    }
+                }
+            );
         });
 
         it('should request for category name', function(done) {
             requestHelper(done,
-                          "offer",
-                          [],
-                          "category.name=TesTCat",
-                          {
-                              "category.name": "TesTCat"
-                          },
-                          "id=",
-                          {
-                              sort: ["sortedId", "asc"],
-                              query: [{AND: [{categoriesName: [md5("testcat")]}]}]
-                          });
+                "offer", [], "category.name=TesTCat", {
+                    "category.name": "TesTCat"
+                }, "id=", {
+                    sort: {
+                        field: "sortedId",
+                        direction: "asc"
+                    },
+                    query: {
+                        AND: {categoriesName: [md5("testcat")]}
+                    }
+                }
+            );
         });
 
         it('should change request URL to not add any id if no offer results', function(done) {
             requestHelper(done,
-                          "offer",
-                          [],
-                          "relatedParty=someother",
-                          {
-                              relatedParty: "someother"
-                          },
-                          "id=",
-                          {
-                              sort: ["sortedId", "asc"],
-                              query: [{AND: [{userId: [md5("someother")]}]}]
-                          });
+                "offer", [], "relatedParty=someother", {
+                    relatedParty: "someother"
+                }, "id=", {
+                    sort: {
+                        field: "sortedId",
+                        direction: "asc"
+                    },
+                    query: {
+                        AND: {userId: [md5("someother")]}
+                    }
+                }
+            );
         });
 
         it('should change request URL to include offering IDs when the related party is provided', function(done) {
             requestHelper(done,
-                          "offer",
-                          [9, 11],
-                          "relatedParty=rock&offset=3&other=test&size=25",
-                          {
-                              relatedParty: "rock",
-                              offset: 3,
-                              size: 25,
-                              other: "test"
-                          },
-                          "id=9,11",
-                          {
-                              offset: 3,
-                              pageSize: 25,
-                              sort: ["sortedId", "asc"],
-                              query: [{AND: [{userId: [md5("rock")]}]}]
-                          });
+                "offer", [9, 11], "relatedParty=rock&offset=3&other=test&size=25", {
+                    relatedParty: "rock",
+                    offset: 3,
+                    size: 25,
+                    other: "test"
+                }, "id=9,11", {
+                    offset: 3,
+                    pageSize: 25,
+                    sort: {
+                        field: "sortedId",
+                        direction: "asc"
+                    },
+                    query: {
+                        AND: {userId: [md5("rock")]}
+                    }
+                }
+            );
         });
 
         var testQueryAllIndex = function testQueryAllIndex(done, base) {
             requestHelper(done,
-                          base,
-                          [1, 2],
-                          "",
-                          {},
-                          "id=1,2",
-                          {
-                              sort: ["sortedId", "asc"],
-                              query: {AND: [{"*": ["*"]}]}
-                          });
+                base, [1, 2], "", {}, "id=1,2", {
+                    sort: {
+                        field: "sortedId",
+                        direction: "asc"
+                    },
+                    query: {AND: {"*": ["*"]}}
+                }
+            );
         };
 
 
@@ -3195,25 +3237,26 @@ describe('Catalog API', function() {
             // Transform object to param=value&param2=value2
             var paramUrl = Object.keys(params).map(key => key + "=" + params[key]).join("&");
             // Transform object to index AND query (String keys must be lower case to perform index search correctly)
-            var ANDs = Object.keys(params)
-                    .map(key => (
-                        {[key]: [ (typeof params[key] === "string") ? params[key].toLowerCase() : params[key]]}));
+            var ANDs = {};
+            Object.keys(params)
+                    .forEach(key => (
+                        ANDs[key] = [ (typeof params[key] === "string") ? params[key].toLowerCase() : params[key]]
+                    ));
 
             requestHelper(done,
-                          base,
-                          [7, 9, 11],
-                          paramUrl,
-                          params,
-                          "id=7,9,11",
-                          {
-                              sort: ["sortedId", "asc"],
-                              query: [{AND: ANDs}]
-                          });
+                base, [7, 9, 11], paramUrl, params, "id=7,9,11", {
+                    sort: {
+                        field: "sortedId",
+                        direction: "asc"
+                    },
+                    query: {AND: ANDs}
+                }
+            );
         };
 
         // CATALOGS
 
-        it('should change request URL to include catalog IDs when no parameter are provided', function (done) {
+        it('should change request URL to include catalog IDs when no parameter is provided', function (done) {
             testQueryAllIndex(done, "catalog");
         });
 
@@ -3223,15 +3266,19 @@ describe('Catalog API', function() {
 
         it('should change request URL to include catalog IDs when multiple lifecycleStatus are provided', function(done) {
             requestHelper(done,
-                          "catalog",
-                          [7, 9, 11],
-                          "lifecycleStatus=Active,Disabled",
-                          {lifecycleStatus: "Active,Disabled"},
-                          "id=7,9,11",
-                          {
-                              sort: ["sortedId", "asc"],
-                              query: [{AND: [{lifecycleStatus: ["active"]}]}, {AND: [{lifecycleStatus: ["disabled"]}]}]
-                          });
+                "catalog", [7, 9, 11], "lifecycleStatus=Active,Disabled", {lifecycleStatus: "Active,Disabled"},
+                "id=7,9,11", {
+                    sort: {
+                        field: "sortedId",
+                        direction: "asc"
+                    },
+                    query: [{
+                        AND: {lifecycleStatus: ["active"]}
+                    }, {
+                        AND: {lifecycleStatus: ["disabled"]}
+                    }]
+                }
+            );
 
         });
 

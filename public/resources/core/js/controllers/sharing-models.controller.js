@@ -33,27 +33,49 @@
         .controller('RSModelUpdateCtrl', RSModelUpdateController)
         .controller('RSModelUpdateSTCtrl', RSModelUpdateSTController);
 
-    function RSModelSearchController($state, $scope,DATA_STATUS, RSS, Utils, Party, User) {
+    function RSModelSearchController($state, $scope, DATA_STATUS, RSS, Utils, Party) {
         var vm = this;
+        vm.STATUS = DATA_STATUS;
+
+        vm.offset = -1;
+        vm.size = -1;
 
         vm.list = [];
         vm.state = $state;
+        vm.getElementsLength = getElementsLength;
 
-	$scope.$on(Party.EVENTS.USER_SESSION_SWITCHED, function (event, message, obj) {
-	    initialiceData();
-	});
+        function getElementsLength() {
+            return RSS.countModels();
+        }
 
-	initialiceData()
-	
-        function initialiceData() {
-	    RSS.searchModels().then(function (modelsList) {
-		angular.copy(modelsList, vm.list);
-		vm.list.status = DATA_STATUS.LOADED;
-            }, function (response) {
-		vm.error = Utils.parseError(response, 'It was impossible to load the list of revenue sharing models');
-		vm.list.status = DATA_STATUS.ERROR;
-            });
-	};
+        function updateRSModels() {
+            vm.list.status = vm.STATUS.LOADING;
+
+            if (vm.offset >= 0) {
+                var params = {
+                    offset: vm.offset,
+                    size: vm.size
+                };
+
+                RSS.searchModels(params).then(function (modelsList) {
+                    angular.copy(modelsList, vm.list);
+                    vm.list.status = DATA_STATUS.LOADED;
+                }, function (response) {
+                    vm.error = Utils.parseError(response, 'It was impossible to load the list of revenue sharing models');
+                    vm.list.status = DATA_STATUS.ERROR;
+                });
+            }
+        }
+        
+        vm.list.status = vm.STATUS.LOADING;
+        
+        $scope.$watch(function () {
+            return vm.offset;
+        }, updateRSModels);
+
+        $scope.$on(Party.EVENTS.USER_SESSION_SWITCHED, function (event, message, obj) {
+            updateRSModels();
+        });
     }
 
     function calculateTotalPercentage(platformValue, ownerValue, currentStValue, stakeholders) {

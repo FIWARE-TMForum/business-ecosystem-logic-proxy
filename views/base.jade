@@ -32,6 +32,7 @@ html(ng-app="app")
           SHARING_MODELS: '#{ proxyPath }/#{ rssPath }/rss/models',
           SHARING_PROVIDERS: '#{ proxyPath }/#{ rssPath }/rss/providers',
           SHARING_TRANSACTIONS: '#{ proxyPath }/#{ rssPath }/rss/cdrs',
+          SHARING_CLASSES: '#{ proxyPath }/#{ rssPath }/rss/cdrs/classes',
           SHARING_SETTLEMENT: '#{ proxyPath }/#{ rssPath }/rss/settlement',
           SHARING_REPORTS: '#{ proxyPath }/#{ rssPath }/rss/settlement/reports',
           SHOPPING_CART: '#{ shoppingCartPath }/:action/:id'
@@ -117,7 +118,7 @@ html(ng-app="app")
                     i.fa.fa-users.fa-stack-1x(ng-hide="user.loggedAsIndividual()")
                   .title.h4 {{ user.currentUser.name }}
                   .subtitle {{ user.currentUser.email }}
-                a.dropdown-menu-item#SwitchSession(ng-mouseenter="user.orgsVisible()", ng-mouseleave="user.orgsInvisible()")
+                a.dropdown-menu-item(ng-if="user.hasOrgs()", ng-mouseenter="user.orgsVisible()", ng-mouseleave="user.orgsInvisible()")
                   span.item-icon.fa.fa-angle-double-left
                   span.item-text Switch Session
                 .dropdown(ng-show="user.showOrgs", ng-mouseenter="user.orgsVisible()", ng-mouseleave="user.orgsInvisible()")

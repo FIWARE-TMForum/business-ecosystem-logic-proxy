@@ -21,7 +21,6 @@ var async = require('async'),
     config = require('./../../config'),
     url = require('url'),
     utils = require('./../../lib/utils'),
-    partyAPI = require('./../../lib/party').partyClient,
     logger = require('./../../lib/logger').logger.getLogger('TMF');
 
 var party = (function() {
@@ -68,16 +67,16 @@ var party = (function() {
             });
         } else {
             // regexResult[3] contains the user id
-	    var org = req.user.organizations ? req.user.organizations.find( x => x.id === regexResult[3]) : undefined;
-	    // the first condition checks if the individual is the one calling
-	    if (req.user.id === regexResult[3] || (org && org.roles.findIndex(x => x.name === "Admin") > -1)) {
+	        var org = req.user.organizations ? req.user.organizations.find( x => x.id === regexResult[3]) : undefined;
+	        // the first condition checks if the individual is the one calling
+	        if (req.user.id === regexResult[3] || (org && org.roles.findIndex(x => x.name === "Admin") > -1)) {
                 callback(null);
-	    } else {
-		callback({
-		    status: 403,
-		    message: 'You are not allowed to access this resource'
+	        } else {
+		        callback({
+		            status: 403,
+		            message: 'You are not allowed to access this resource'
                 });
-	    }
+	        }
         }
     };
 
