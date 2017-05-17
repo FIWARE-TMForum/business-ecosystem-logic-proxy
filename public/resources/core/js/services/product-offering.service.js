@@ -226,6 +226,10 @@
                 params['body'] = filters.body.replace(/\s/g, ',');
             }
 
+            if (filters.productSpecId !== undefined) {
+                params['productSpecification.id'] = filters.productSpecId;
+            }
+
             method(params, function (offeringList) {
                 callback(offeringList);
             }, function (response) {
