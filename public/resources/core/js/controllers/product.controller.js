@@ -36,10 +36,11 @@
         .controller('ProductCreateCtrl', ProductCreateController)
         .controller('ProductUpdateCtrl', ProductUpdateController);
 
-    function ProductSearchController($scope, $state, $rootScope, EVENTS, ProductSpec, LIFECYCLE_STATUS, DATA_STATUS, Utils) {
+    function ProductSearchController($scope, $state, $timeout, $rootScope, EVENTS, ProductSpec, LIFECYCLE_STATUS, DATA_STATUS, Utils) {
         /* jshint validthis: true */
         var vm = this;
         var filters = {};
+        var formMode = false;
 
         vm.state = $state;
         vm.STATUS = DATA_STATUS;
@@ -54,6 +55,8 @@
         vm.showFilters = showFilters;
         vm.getElementsLength = getElementsLength;
         vm.setFilters = setFilters;
+        vm.launchSearch = launchSearch;
+        vm.setFormMode = setFormMode;
         vm.searchInput = "";
 
         // Initialize the search input content
@@ -73,38 +76,24 @@
         // Handle enter press event
         vm.handleEnterKeyUp = handleEnterKeyUp;
         function handleEnterKeyUp(event) {
-            if (event.keyCode == 13)
-                $("#searchbutton").click();
+            if (event.keyCode == 13) {
+                var selector = formMode ? "#formSearch" : "#searchbutton" ;
+                $timeout(function () {
+                    $(selector).click();
+                });
+            }
         }
 
         function showFilters() {
             $rootScope.$broadcast(EVENTS.FILTERS_OPENED, LIFECYCLE_STATUS);
         }
 
-        function getElementsLength() {
+        function getParams() {
             var params = {};
-            angular.copy($state.params, params);
-            return ProductSpec.count(params);
-        }
 
-        function setFilters(newFilters) {
-            filters = newFilters;
-        }
-
-        vm.list.status = vm.STATUS.LOADING;
-        $scope.$watch(function () {
-            return vm.offset;
-
-        }, function () {
-            vm.list.status = vm.STATUS.LOADING;
-
-            if (vm.offset >= 0) {
-                var params = {};
+            if (!formMode) {
                 angular.copy($state.params, params);
-
-                params.offset = vm.offset;
-                params.size = vm.size;
-
+                // Read params from the URL (filters)
                 if (filters.status) {
                     params.status = filters.status;
                 }
@@ -112,6 +101,38 @@
                 if (filters.bundle !== undefined) {
                     params.bundle = filters.bundle;
                 }
+            } else {
+                params.status = 'Active,Launched';
+                // When the searchProduct controller is used in a form (Product Spec Bundle or Offering Product)
+                // the search text is not retrieved from the URL page
+                if (vm.searchInput.length) {
+                    params.body = vm.searchInput;
+                }
+            }
+            return params;
+        }
+
+        function getElementsLength() {
+            var params = getParams();
+            return ProductSpec.count(params);
+        }
+
+        function setFilters(newFilters) {
+            filters = newFilters;
+        }
+
+        function setFormMode(mode) {
+            formMode = mode;
+        }
+
+        function launchSearch() {
+            vm.list.status = vm.STATUS.LOADING;
+
+            if (vm.offset >= 0) {
+                var params = getParams();
+
+                params.offset = vm.offset;
+                params.size = vm.size;
 
                 ProductSpec.search(params).then(function (productList) {
                     angular.copy(productList, vm.list);
@@ -121,7 +142,12 @@
                     vm.list.status = vm.STATUS.ERROR;
                 });
             }
-        });
+        }
+
+        vm.list.status = vm.STATUS.LOADING;
+        $scope.$watch(function () {
+            return vm.offset;
+        }, launchSearch);
     }
 
     function ProductCreateController($q, $scope, $state, $rootScope, EVENTS, PROMISE_STATUS, ProductSpec, Asset, AssetType, Utils) {
