@@ -103,6 +103,7 @@
                 }
             } else {
                 params.status = 'Active,Launched';
+                params.owner = true;
                 // When the searchProduct controller is used in a form (Product Spec Bundle or Offering Product)
                 // the search text is not retrieved from the URL page
                 if (vm.searchInput.length) {
