@@ -93,15 +93,11 @@
 
             if (!formMode) {
                 angular.copy($state.params, params);
-                // Read params from the URL (filters)
-                if (filters.status) {
-                    params.status = filters.status;
+            } else {
+                if (filters.bundle !== undefined) {
+                    params.type = filters.bundle;
                 }
 
-                if (filters.bundle !== undefined) {
-                    params.bundle = filters.bundle;
-                }
-            } else {
                 params.status = 'Active,Launched';
                 params.owner = true;
                 // When the searchProduct controller is used in a form (Product Spec Bundle or Offering Product)
@@ -127,6 +123,14 @@
         }
 
         function launchSearch() {
+            vm.offset = -1;
+            vm.reloadPager();
+        }
+
+        vm.list.status = vm.STATUS.LOADING;
+        $scope.$watch(function () {
+            return vm.offset;
+        }, function () {
             vm.list.status = vm.STATUS.LOADING;
 
             if (vm.offset >= 0) {
@@ -143,12 +147,7 @@
                     vm.list.status = vm.STATUS.ERROR;
                 });
             }
-        }
-
-        vm.list.status = vm.STATUS.LOADING;
-        $scope.$watch(function () {
-            return vm.offset;
-        }, launchSearch);
+        });
     }
 
     function ProductCreateController($q, $scope, $state, $rootScope, EVENTS, PROMISE_STATUS, ProductSpec, Asset, AssetType, Utils) {

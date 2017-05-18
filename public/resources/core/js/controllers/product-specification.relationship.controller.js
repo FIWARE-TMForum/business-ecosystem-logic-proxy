@@ -61,28 +61,38 @@
             }
         }
 
-        function getElementsLength() {
+        function getParams() {
             var params = {
                 owner: true,
                 status: LIFECYCLE_STATUS.LAUNCHED
             };
+
+            if (vm.searchInput.length) {
+                params.body = vm.searchInput;
+            }
+            return params;
+        }
+
+        function getElementsLength() {
+            var params = getParams();
             return ProductSpec.count(params);
         }
 
         function launchSearch() {
+            vm.offset = -1;
+            vm.reloadPager();
+        }
+
+        vm.list.status = vm.STATUS.LOADING;
+        $scope.$watch(function () {
+            return vm.offset;
+        }, function () {
             vm.list.status = vm.STATUS.LOADING;
 
             if (vm.offset >= 0) {
-                var params = {
-                    owner: true,
-                    status: LIFECYCLE_STATUS.LAUNCHED,
-                    offset: vm.offset,
-                    size: vm.size
-                };
-
-                if (vm.searchInput.length) {
-                    params.body = vm.searchInput;
-                }
+                var params = getParams();
+                params.offset = vm.offset;
+                params.size = vm.size;
 
                 ProductSpec.search(params).then(function (productList) {
                     angular.copy(productList, vm.list);
@@ -92,12 +102,7 @@
                     vm.list.status = vm.STATUS.ERROR;
                 });
             }
-        }
-
-        vm.list.status = vm.STATUS.LOADING;
-        $scope.$watch(function () {
-            return vm.offset;
-        }, launchSearch);
+        });
 
         var createPromise = null;
 
