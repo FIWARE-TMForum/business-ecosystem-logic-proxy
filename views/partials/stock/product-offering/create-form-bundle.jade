@@ -28,7 +28,8 @@ form(name="step.form", novalidate)
           .alert.alert-info.text-center No offerings found.
 
         div(ng-switch-default)
-          .alert.alert-danger.text-center(ng-show="!step.form.$valid") Offering bundles must contain at least two offerings
+          .alert.alert-danger.text-center(
+            ng-show="!createVM.bundleControl.valid && createVM.bundleControl.used") Offering bundles must contain at least two offerings
           .table-responsive
             table.table.table-bordered.table-hover.table-selectable
               thead
@@ -58,5 +59,6 @@ form(name="step.form", novalidate)
       pager(controller="searchVM", size="12", max="12")
 
   .form-group.text-right
-    a.btn.btn-default.z-depth-1(ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])", ng-disabled="!step.form.$valid")
+    a.btn.btn-default.z-depth-1(ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])",
+    ng-disabled="createVM.data.isBundle && !createVM.bundleControl.valid")
       span.item-text Next

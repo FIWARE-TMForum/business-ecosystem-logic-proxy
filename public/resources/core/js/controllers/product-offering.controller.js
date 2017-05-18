@@ -315,6 +315,11 @@
             });
             return i;
         }
+
+        vm.bundleControl = {
+            valid: false,
+            used: false
+        };
         function toggleOffering(offering) {
             var index = filterOffering(offering);
 
@@ -322,19 +327,21 @@
                 vm.data.bundledProductOffering.splice(index, 1);
             } else {
                 vm.data.bundledProductOffering.push(offering);
+                vm.bundleControl.used = true;
             }
 
-            stepList[1].form.$valid = vm.data.bundledProductOffering.length >= 2;
+            vm.bundleControl.valid = vm.data.bundledProductOffering.length >= 2;
         }
 
         function toggleBundle() {
             if (!vm.data.isBundle) {
                 vm.data.bundledProductOffering.length = 0;
-                stepList[1].form.$valid = true;
+                vm.bundleControl.valid = true;
             } else {
-                stepList[1].form.$valid = false;
+                vm.bundleControl.valid = false;
                 vm.product = undefined;
             }
+            vm.bundleControl.used = false;
         }
 
         function hasOffering(offering) {
