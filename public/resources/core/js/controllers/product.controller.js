@@ -404,6 +404,11 @@
             return i;
         }
 
+        vm.bundleControl = {
+            valid: false,
+            used: false
+        };
+
         function toggleProduct(product) {
             var index = filterProduct(product);
 
@@ -411,18 +416,20 @@
                 vm.data.bundledProductSpecification.splice(index, 1);
             } else {
                 vm.data.bundledProductSpecification.push(product);
+                vm.bundleControl.used = true;
             }
 
-            stepList[1].form.$valid = vm.data.bundledProductSpecification.length >= 2;
+            vm.bundleControl.valid = vm.data.bundledProductSpecification.length >= 2;
         }
 
         function toggleBundle() {
             if (!vm.data.isBundle) {
                 vm.data.bundledProductSpecification.length = 0;
-                stepList[1].form.$valid = true;
+                vm.bundleControl.valid = true;
             } else {
-                stepList[1].form.$valid = false;
+                vm.bundleControl.valid = false;
             }
+            vm.bundleControl.used = false;
         }
 
         function hasProduct(product) {

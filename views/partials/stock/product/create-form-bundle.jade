@@ -27,7 +27,8 @@ form(name="step.form", novalidate)
         .alert.alert-info.text-center(ng-switch-when="0") No products found.
 
         div(ng-switch-default)
-          .alert.alert-danger.text-center(ng-show="!step.form.$valid") Bundles must contain at least two product specs
+          .alert.alert-danger.text-center(
+            ng-show="createVM.bundleControl.used && !createVM.bundleControl.valid") Bundles must contain at least two product specs
           .table-responsive
             table.table.table-bordered.table-hover.table-selectable
               thead
@@ -62,5 +63,6 @@ form(name="step.form", novalidate)
     pager(controller="searchVM", size="12", max="12" ng-init="searchVM.setFilters({bundle: 'Single'})")
 
   .form-group.text-right
-    a.btn.btn-default.z-depth-1(ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])", ng-disabled="!step.form.$valid")
+    a.btn.btn-default.z-depth-1(ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])",
+    ng-disabled="createVM.data.isBundle && !createVM.bundleControl.valid")
       span.item-text Next
