@@ -40,6 +40,7 @@
         var nPages = 0;
 
         managedCtrl.size = pageSize;
+        managedCtrl.reloadPager = reload;
 
         this.nextPage = nextPage;
         this.prevPage = prevPage;
@@ -102,6 +103,13 @@
 
         function nextDisabled() {
             return currPage == nPages - 1;
+        }
+
+        function reload() {
+            pages = [];
+            nPages = 0;
+            currPage = 0;
+            loadPages()
         }
 
         function loadPages() {
