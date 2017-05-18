@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -31,12 +31,13 @@
         .controller('RelationshipCreateCtrl', RelationshipCreateController)
         .controller('RelationshipDeleteCtrl', RelationshipDeleteController);
 
-    function RelationshipCreateController($controller, $rootScope, $scope, EVENTS, DATA_STATUS, LIFECYCLE_STATUS, Utils, ProductSpec) {
+    function RelationshipCreateController($controller, $rootScope, $scope, $timeout, EVENTS, DATA_STATUS, LIFECYCLE_STATUS, Utils, ProductSpec) {
         /* jshint validthis: true */
         var vm = this;
         vm.offset = -1;
         vm.size = 0;
         vm.list = [];
+        vm.searchInput = "";
 
         angular.extend(vm, $controller('FormMixinCtrl', {$scope: $scope}));
 
@@ -49,6 +50,16 @@
         vm.setProductSpec = setProductSpec;
         vm.getElementsLength = getElementsLength;
         vm.hasRelationship = hasRelationship;
+        vm.handleEnterKeyUp = handleEnterKeyUp;
+        vm.launchSearch = launchSearch;
+
+        function handleEnterKeyUp(event) {
+            if (event.keyCode == 13) {
+                $timeout(function () {
+                    $("#relSearch").click();
+                });
+            }
+        }
 
         function getElementsLength() {
             var params = {
@@ -58,11 +69,7 @@
             return ProductSpec.count(params);
         }
 
-        vm.list.status = vm.STATUS.LOADING;
-        $scope.$watch(function () {
-            return vm.offset;
-
-        }, function () {
+        function launchSearch() {
             vm.list.status = vm.STATUS.LOADING;
 
             if (vm.offset >= 0) {
@@ -73,6 +80,10 @@
                     size: vm.size
                 };
 
+                if (vm.searchInput.length) {
+                    params.body = vm.searchInput;
+                }
+
                 ProductSpec.search(params).then(function (productList) {
                     angular.copy(productList, vm.list);
                     vm.list.status = vm.STATUS.LOADED;
@@ -81,7 +92,12 @@
                     vm.list.status = vm.STATUS.ERROR;
                 });
             }
-        });
+        }
+
+        vm.list.status = vm.STATUS.LOADING;
+        $scope.$watch(function () {
+            return vm.offset;
+        }, launchSearch);
 
         var createPromise = null;
 
