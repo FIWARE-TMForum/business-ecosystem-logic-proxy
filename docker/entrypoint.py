@@ -3,6 +3,7 @@ from os import getenv
 import sys
 import time
 import socket
+import requests
 
 if getenv("OAUTH2_CLIENT_ID") is None:
     print("Environment variable OAUTH2_CLIENT_ID not set")
@@ -70,6 +71,8 @@ text = text.replace("'host': 'localhost',\n        'port': '8006'",
 with open("./config.js", "w+") as f:
     f.write(text)
 
+glassfish_ready = False
+
 for i in range(20):
     try:
         time.sleep(5)
@@ -82,3 +85,9 @@ for i in range(20):
     except:
         print("Connection failed, retrying in a few seconds...")
         continue
+
+while not glassfish_ready:
+    time.sleep(10)
+    r = requests.get("http://biz_apis:8080/DSUsageManagement")
+    if r.status_code == 200:
+        glassfish_ready = True
