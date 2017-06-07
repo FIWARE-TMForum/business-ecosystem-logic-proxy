@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -297,8 +297,7 @@ describe('Store Client', function() {
 
     });
 
-    it('should call callback without errors when usage notification works', function (done) {
-
+    var mockUsageNotification = function testUsageNotification (status, path) {
         // Mock the server
         config.endpoints.charging.appSsl = false;
         var serverUrl = 'http://' + config.endpoints.charging.host + ':' + config.endpoints.charging.port;
@@ -307,43 +306,48 @@ describe('Store Client', function() {
             reqheaders: {
                 'content-type': 'application/json'
             }
-        }).post('/charging/api/orderManagement/accounting/', function (body) {
+        }).post(path, function (body) {
             return true;
-        }).reply(200);
+        }).reply(status);
+    };
 
+    it('should call callback without errors when usage notification works', function (done) {
+        mockUsageNotification(200, '/charging/api/orderManagement/accounting/');
         storeClient.validateUsage({}, function (err) {
-
             expect(err).toBe(null);
-
             done();
         });
     });
 
     it('should call callback with errors when usage notification fails', function (done) {
-
         var errorStatus = 500;
-
-        // Mock the server
-        config.endpoints.charging.appSsl = false;
-        var serverUrl = 'http://' + config.endpoints.charging.host + ':' + config.endpoints.charging.port;
-
-        nock(serverUrl, {
-            reqheaders: {
-                'content-type': 'application/json'
-            }
-        }).post('/charging/api/orderManagement/accounting/', function (body) {
-            return true;
-        }).reply(errorStatus);
-
+        mockUsageNotification(errorStatus, '/charging/api/orderManagement/accounting/');
         storeClient.validateUsage({}, function (err) {
-
             expect(err).toEqual({
                 status: errorStatus,
                 message: 'The server has failed validating the usage'
             });
-
             done();
         });
     });
 
+    it('should call callback without error when refresh usage notification works', function(done) {
+        mockUsageNotification(200, '/charging/api/orderManagement/accounting/refresh/');
+        storeClient.refreshUsage('1', '2', function (err) {
+            expect(err).toBe(null);
+            done();
+        });
+    });
+
+    it('should call callback with errors when refresh usage notification fails', function (done) {
+        var errorStatus = 500;
+        mockUsageNotification(errorStatus, '/charging/api/orderManagement/accounting/refresh/');
+        storeClient.refreshUsage('1', '2', function (err) {
+            expect(err).toEqual({
+                status: errorStatus,
+                message: 'The server has failed loading usage info'
+            });
+            done();
+        });
+    });
 });

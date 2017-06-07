@@ -36,10 +36,11 @@
         .controller('ProductCreateCtrl', ProductCreateController)
         .controller('ProductUpdateCtrl', ProductUpdateController);
 
-    function ProductSearchController($scope, $state, $rootScope, EVENTS, ProductSpec, LIFECYCLE_STATUS, DATA_STATUS, Utils) {
+    function ProductSearchController($scope, $state, $timeout, $rootScope, EVENTS, ProductSpec, LIFECYCLE_STATUS, DATA_STATUS, Utils) {
         /* jshint validthis: true */
         var vm = this;
         var filters = {};
+        var formMode = false;
 
         vm.state = $state;
         vm.STATUS = DATA_STATUS;
@@ -54,6 +55,8 @@
         vm.showFilters = showFilters;
         vm.getElementsLength = getElementsLength;
         vm.setFilters = setFilters;
+        vm.launchSearch = launchSearch;
+        vm.setFormMode = setFormMode;
         vm.searchInput = "";
 
         // Initialize the search input content
@@ -73,17 +76,41 @@
         // Handle enter press event
         vm.handleEnterKeyUp = handleEnterKeyUp;
         function handleEnterKeyUp(event) {
-            if (event.keyCode == 13)
-                $("#searchbutton").click();
+            if (event.keyCode == 13) {
+                var selector = formMode ? "#formSearch" : "#searchbutton" ;
+                $timeout(function () {
+                    $(selector).click();
+                });
+            }
         }
 
         function showFilters() {
             $rootScope.$broadcast(EVENTS.FILTERS_OPENED, LIFECYCLE_STATUS);
         }
 
-        function getElementsLength() {
+        function getParams() {
             var params = {};
-            angular.copy($state.params, params);
+
+            if (!formMode) {
+                angular.copy($state.params, params);
+            } else {
+                if (filters.bundle !== undefined) {
+                    params.type = filters.bundle;
+                }
+
+                params.status = 'Active,Launched';
+                params.owner = true;
+                // When the searchProduct controller is used in a form (Product Spec Bundle or Offering Product)
+                // the search text is not retrieved from the URL page
+                if (vm.searchInput.length) {
+                    params.body = vm.searchInput;
+                }
+            }
+            return params;
+        }
+
+        function getElementsLength() {
+            var params = getParams();
             return ProductSpec.count(params);
         }
 
@@ -91,27 +118,26 @@
             filters = newFilters;
         }
 
+        function setFormMode(mode) {
+            formMode = mode;
+        }
+
+        function launchSearch() {
+            vm.offset = -1;
+            vm.reloadPager();
+        }
+
         vm.list.status = vm.STATUS.LOADING;
         $scope.$watch(function () {
             return vm.offset;
-
         }, function () {
             vm.list.status = vm.STATUS.LOADING;
 
             if (vm.offset >= 0) {
-                var params = {};
-                angular.copy($state.params, params);
+                var params = getParams();
 
                 params.offset = vm.offset;
                 params.size = vm.size;
-
-                if (filters.status) {
-                    params.status = filters.status;
-                }
-
-                if (filters.bundle !== undefined) {
-                    params.bundle = filters.bundle;
-                }
 
                 ProductSpec.search(params).then(function (productList) {
                     angular.copy(productList, vm.list);
@@ -378,6 +404,11 @@
             return i;
         }
 
+        vm.bundleControl = {
+            valid: false,
+            used: false
+        };
+
         function toggleProduct(product) {
             var index = filterProduct(product);
 
@@ -385,18 +416,20 @@
                 vm.data.bundledProductSpecification.splice(index, 1);
             } else {
                 vm.data.bundledProductSpecification.push(product);
+                vm.bundleControl.used = true;
             }
 
-            stepList[1].form.$valid = vm.data.bundledProductSpecification.length >= 2;
+            vm.bundleControl.valid = vm.data.bundledProductSpecification.length >= 2;
         }
 
         function toggleBundle() {
             if (!vm.data.isBundle) {
                 vm.data.bundledProductSpecification.length = 0;
-                stepList[1].form.$valid = true;
+                vm.bundleControl.valid = true;
             } else {
-                stepList[1].form.$valid = false;
+                vm.bundleControl.valid = false;
             }
+            vm.bundleControl.used = false;
         }
 
         function hasProduct(product) {

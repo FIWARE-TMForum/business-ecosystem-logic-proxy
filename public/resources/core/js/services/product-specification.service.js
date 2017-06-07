@@ -130,8 +130,8 @@
                 params['action'] = filters.action;
             }
 
-            if (filters.bundle !== undefined) {
-                params['isBundle'] = filters.bundle;
+            if (filters.type !== undefined) {
+                params['isBundle'] = filters.type == 'Bundle';
             }
 
             if (filters.body !== undefined) {

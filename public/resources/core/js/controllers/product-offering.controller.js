@@ -37,10 +37,10 @@
         .controller('OfferingDetailCtrl', ProductOfferingDetailController)
         .controller('OfferingUpdateCtrl', ProductOfferingUpdateController);
 
-    function ProductOfferingSearchController($scope, $state, $rootScope, EVENTS, Offering, LIFECYCLE_STATUS, Utils) {
+    function ProductOfferingSearchController($scope, $state, $rootScope, $timeout, EVENTS, Offering, LIFECYCLE_STATUS, Utils) {
         /* jshint validthis: true */
         var vm = this;
-        var filters = {};
+        var formMode = false;
 
         vm.state = $state;
 
@@ -50,8 +50,13 @@
         vm.size = -1;
         vm.showFilters = showFilters;
         vm.getElementsLength = getElementsLength;
-        vm.setFilters = setFilters;
+        vm.setFormMode = setFormMode;
+        vm.launchSearch = launchSearch;
         vm.searchInput = "";
+
+        function setFormMode(mode) {
+            formMode = mode;
+        }
 
         // Initialize the search input content
         vm.initializeInput = initializeInput;
@@ -70,8 +75,12 @@
         // Handle enter press event
         vm.handleEnterKeyUp = handleEnterKeyUp;
         function handleEnterKeyUp(event) {
-            if (event.keyCode == 13)
-                $("#searchbutton").click();
+            if (event.keyCode == 13) {
+                var selector = formMode ? "#formSearch" : "#searchbutton";
+                $timeout(function () {
+                    $(selector).click();
+                });
+            }
         }
 
         function showFilters() {
@@ -79,13 +88,31 @@
         }
 
         function getElementsLength() {
-            var params = {};
-            angular.copy($state.params, params);
+            var params = getParams();
             return Offering.count(params);
         }
 
-        function setFilters(newFilters) {
-            filters = newFilters;
+        function getParams() {
+            var params = {};
+
+            if (!formMode) {
+                angular.copy($state.params, params);
+            } else {
+                params.status = 'Active,Launched';
+                params.owner = true;
+                params.type = 'Single';
+                // When the searchProduct controller is used in a form (Product Spec Bundle or Offering Product)
+                // the search text is not retrieved from the URL page
+                if (vm.searchInput.length) {
+                    params.body = vm.searchInput;
+                }
+            }
+            return params;
+        }
+
+        function launchSearch() {
+            vm.offset = -1;
+            vm.reloadPager();
         }
 
         $scope.$watch(function () {
@@ -94,19 +121,10 @@
             vm.list.status = LOADING;
 
             if (vm.offset >= 0) {
-                var params = {};
-                angular.copy($state.params, params);
+                var params = getParams();
 
                 params.offset = vm.offset;
                 params.size = vm.size;
-
-                if (filters.status) {
-                    params.status = filters.status;
-                }
-
-                if (filters.bundle !== undefined) {
-                    params.type = filters.bundle;
-                }
 
                 Offering.search(params).then(function (offeringList) {
                     angular.copy(offeringList, vm.list);
@@ -297,6 +315,11 @@
             });
             return i;
         }
+
+        vm.bundleControl = {
+            valid: false,
+            used: false
+        };
         function toggleOffering(offering) {
             var index = filterOffering(offering);
 
@@ -304,19 +327,21 @@
                 vm.data.bundledProductOffering.splice(index, 1);
             } else {
                 vm.data.bundledProductOffering.push(offering);
+                vm.bundleControl.used = true;
             }
 
-            stepList[1].form.$valid = vm.data.bundledProductOffering.length >= 2;
+            vm.bundleControl.valid = vm.data.bundledProductOffering.length >= 2;
         }
 
         function toggleBundle() {
             if (!vm.data.isBundle) {
                 vm.data.bundledProductOffering.length = 0;
-                stepList[1].form.$valid = true;
+                vm.bundleControl.valid = true;
             } else {
-                stepList[1].form.$valid = false;
+                vm.bundleControl.valid = false;
                 vm.product = undefined;
             }
+            vm.bundleControl.used = false;
         }
 
         function hasOffering(offering) {
