@@ -34,7 +34,7 @@
 
         $stateProvider
             .state('offering', {
-                url: '/offering?catalogueId&categoryId&type&body',
+                url: '/offering?catalogueId&categoryId&type&body&productSpecId',
                 data: {
                     title: 'Marketplace',
                     loggingRequired: false,

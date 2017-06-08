@@ -86,13 +86,13 @@
 	    });
     }
 
-    function CatalogueSearchController($scope, $state, $rootScope, EVENTS, Catalogue, LIFECYCLE_STATUS, DATA_STATUS, Utils, Party, User) {
+    function CatalogueSearchController($scope, $state, $rootScope, $timeout, EVENTS, Catalogue, LIFECYCLE_STATUS, DATA_STATUS, Utils, Party, User) {
         /* jshint validthis: true */
         var vm = this;
-        var filters = {};
+        var formMode = false;
 
-        vm.STATUS = DATA_STATUS;
         vm.state = $state;
+        vm.STATUS = DATA_STATUS;
 
         vm.offset = -1;
         vm.size = -1;
@@ -100,8 +100,13 @@
 
         vm.showFilters = showFilters;
         vm.getElementsLength = getElementsLength;
-        vm.setFilters = setFilters;
+        vm.setFormMode = setFormMode;
+        vm.launchSearch = launchSearch;
         vm.searchInput = "";
+
+        function setFormMode(mode) {
+            formMode = mode;
+        }
 
         // Initialize the search input content
         vm.initializeInput = initializeInput;
@@ -120,22 +125,43 @@
         // Handle enter press event
         vm.handleEnterKeyUp = handleEnterKeyUp;
         function handleEnterKeyUp(event) {
-            if (event.keyCode == 13)
-                $("#searchbutton").click();
+            if (event.keyCode == 13) {
+                var selector = formMode ? "#formSearch" : "#searchbutton";
+                $timeout(function () {
+                    $(selector).click();
+                });
+            }
         }
 
         function showFilters() {
             $rootScope.$broadcast(EVENTS.FILTERS_OPENED, LIFECYCLE_STATUS);
         }
 
-        function getElementsLength() {
+        function getParams() {
             var params = {};
-            angular.copy($state.params, params);
+
+            if (!formMode) {
+                angular.copy($state.params, params);
+            } else {
+                params.status = LIFECYCLE_STATUS.ACTIVE + ',' + LIFECYCLE_STATUS.LAUNCHED;
+                params.owner = true;
+                // When the searchProduct controller is used in a form (Product Spec Bundle or Offering Product)
+                // the search text is not retrieved from the URL page
+                if (vm.searchInput.length) {
+                    params.body = vm.searchInput;
+                }
+            }
+            return params;
+        }
+
+        function getElementsLength() {
+            var params = getParams();
             return Catalogue.count(params);
         }
 
-        function setFilters(newFilters) {
-            filters = newFilters;
+        function launchSearch() {
+            vm.offset = -1;
+            vm.reloadPager();
         }
 
         $scope.$on(Party.EVENTS.USER_SESSION_SWITCHED, function (event, message, obj) {
@@ -146,16 +172,11 @@
             vm.list.status = vm.STATUS.LOADING;
 	    
             if (vm.offset >= 0) {
-                var params = {};
-                angular.copy($state.params, params);
-		
+                var params = getParams();
+
                 params.offset = vm.offset;
                 params.size = vm.size;
-		
-                if (filters.status) {
-                    params.status = filters.status;
-                }
-		
+
                 Catalogue.search(params).then(function (catalogueList) {
                     angular.copy(catalogueList, vm.list);
                     vm.list.status = vm.STATUS.LOADED;

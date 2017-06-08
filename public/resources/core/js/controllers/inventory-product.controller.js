@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -314,9 +314,11 @@
         function getUsageURL() {
             var startingChar = USAGE_CHART_URL.indexOf('?') > -1 ? '&' : '?';
             var server = window.location.origin;
+            var orderId = vm.item.name.split('=')[1];
 
             // Get the endpoint of the usage mashup including the access token and the product id
-            return USAGE_CHART_URL + startingChar + 'productId=' + vm.item.id + '&token=' + LOGGED_USER.bearerToken + '&server=' + server;
+            return USAGE_CHART_URL + startingChar + 'orderId=' + orderId +
+                '&productId=' + vm.item.id + '&token=' + LOGGED_USER.bearerToken + '&server=' + server;
         }
 
         function characteristicMatches(productChar, specChar, offId, productId) {
