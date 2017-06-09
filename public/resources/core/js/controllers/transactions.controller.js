@@ -89,9 +89,5 @@
         $scope.$watch(function () {
             return vm.offset;
         }, updateRSTrans);
-
-        $scope.$on(Party.EVENTS.USER_SESSION_SWITCHED, function (event, message, obj) {
-            updateRSTrans();
-        });
     }
 })();

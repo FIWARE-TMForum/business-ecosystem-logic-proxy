@@ -80,10 +80,6 @@
         $scope.$watch(function () {
             return vm.offset;
         }, updateList);
-	
-        $scope.$on(Party.EVENTS.USER_SESSION_SWITCHED, function (event, message, obj) {
-		    updateList();
-	    });
     }
 
     function CatalogueSearchController($scope, $state, $rootScope, $timeout, EVENTS, Catalogue, LIFECYCLE_STATUS, DATA_STATUS, Utils, Party, User) {
@@ -163,10 +159,6 @@
             vm.offset = -1;
             vm.reloadPager();
         }
-
-        $scope.$on(Party.EVENTS.USER_SESSION_SWITCHED, function (event, message, obj) {
-            catalogueSearch();
-        });
 
         function catalogueSearch() {
             vm.list.status = vm.STATUS.LOADING;

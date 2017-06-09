@@ -35,7 +35,7 @@
         .controller('InventorySearchCtrl', InventorySearchController)
         .controller('InventoryDetailsCtrl', ProductDetailController);
 
-    function InventorySearchController($scope, $state, $rootScope, EVENTS, InventoryProduct, INVENTORY_STATUS, Utils, Party, User) {
+    function InventorySearchController($scope, $state, $rootScope, EVENTS, InventoryProduct, INVENTORY_STATUS, Utils) {
         /* jshint validthis: true */
         var vm = this;
 
@@ -71,12 +71,8 @@
                 $("#searchbutton").click();
         }
 
-	$scope.$on(Party.EVENTS.USER_SESSION_SWITCHED, function (event, message, obj) {
-	    inventorySearch();
-	});
-
-	function inventorySearch() {
-	    vm.list.status = LOADING;
+        function inventorySearch() {
+            vm.list.status = LOADING;
 
             if (vm.offset >= 0) {
                 var params = {};
@@ -93,7 +89,7 @@
                     vm.list.status = ERROR;
                 });
             }
-	};
+        }
 	
 
         $scope.$watch(function () {

@@ -66,10 +66,6 @@
         $scope.$watch(function () {
             return vm.offset;
         }, updateRSReports);
-
-        $scope.$on(Party.EVENTS.USER_SESSION_SWITCHED, function (event, message, obj) {
-            updateRSReports();
-        });
     }
 
     function RSReportCreateController($state, $scope, $rootScope, $element, RSS, EVENTS, Utils) {

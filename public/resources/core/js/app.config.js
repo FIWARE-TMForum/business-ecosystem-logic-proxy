@@ -69,7 +69,8 @@
             ORDER_CREATED: '$eventOrderCreated',
             MESSAGE_CREATED: '$eventMessageCreated',
             MESSAGE_CLOSED: '$eventMessageClosed',
-            ORDERING_COMPLETED: '$eventOrderingCompleted'
+            ORDERING_COMPLETED: '$eventOrderingCompleted',
+            PAGER_RELOADED: '$eventPagerReloaded'
         })
         .constant('PARTY_ROLES', {
             OWNER: 'Owner',

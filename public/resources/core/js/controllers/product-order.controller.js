@@ -39,7 +39,7 @@
         .controller('ProductOrderCreateCtrl', ProductOrderCreateController)
         .controller('ProductOrderDetailCtrl', ProductOrderDetailController);
 
-    function ProductOrderSearchController($scope, $state, $rootScope, EVENTS, PRODUCTORDER_STATUS, PRODUCTORDER_LIFECYCLE, ProductOrder, Utils, Party, User) {
+    function ProductOrderSearchController($scope, $state, $rootScope, EVENTS, PRODUCTORDER_STATUS, PRODUCTORDER_LIFECYCLE, ProductOrder, Utils) {
         /* jshint validthis: true */
         var vm = this;
 
@@ -60,10 +60,6 @@
         vm.getElementsLength = getElementsLength;
 
         vm.cancellingOrder = false;
-
-        $scope.$on(Party.EVENTS.USER_SESSION_SWITCHED, function (event, message, obj) {
-            productOrderSearch();
-        });
 
         function productOrderSearch() {
             vm.list.status = LOADING;

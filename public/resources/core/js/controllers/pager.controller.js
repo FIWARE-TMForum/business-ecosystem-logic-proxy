@@ -29,7 +29,7 @@
         .module('app')
         .controller('PagerController', PagerController);
 
-    function PagerController($scope, Utils) {
+    function PagerController($rootScope, $scope, Utils, Party, EVENTS) {
         // Load controller to paginate
         var managedCtrl = $scope.vm;
 
@@ -137,6 +137,14 @@
         $scope.$watch(() => managedCtrl.sidebarInput, () => {
             if (typeof managedCtrl.sidebarInput === "undefined") return;
             loadPages();
+        });
+
+        $scope.$on(Party.EVENTS.USER_SESSION_SWITCHED, function () {
+            managedCtrl.list.status = 'LOADING';
+            managedCtrl.offset = -1;
+            reload();
+
+            $rootScope.$broadcast(EVENTS.PAGER_RELOADED);
         });
     }
 })();

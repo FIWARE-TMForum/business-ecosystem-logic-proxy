@@ -37,7 +37,7 @@
         .controller('OfferingDetailCtrl', ProductOfferingDetailController)
         .controller('OfferingUpdateCtrl', ProductOfferingUpdateController);
 
-    function ProductOfferingSearchController($scope, $state, $rootScope, $timeout, EVENTS, Offering, LIFECYCLE_STATUS, Utils, Party, User) {
+    function ProductOfferingSearchController($scope, $state, $rootScope, $timeout, EVENTS, Offering, LIFECYCLE_STATUS, Utils) {
         /* jshint validthis: true */
         var vm = this;
         var formMode = false;
@@ -115,12 +115,8 @@
             vm.reloadPager();
         }
 
-	$scope.$on(Party.EVENTS.USER_SESSION_SWITCHED, function (event, message, obj) {
-	    offeringSearch();
-	});
-
-	function offeringSearch() {
-	    vm.list.status = LOADING;
+        function offeringSearch() {
+            vm.list.status = LOADING;
 
             if (vm.offset >= 0) {
                 var params = getParams();
@@ -136,7 +132,7 @@
                     vm.list.status = ERROR;
                 });
             }
-	};
+        }
 
         $scope.$watch(function () {
             return vm.offset;
