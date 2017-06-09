@@ -204,7 +204,7 @@
         });
     }
 
-    function UserShoppingCartController($rootScope, $scope, EVENTS, ShoppingCart, Utils) {
+    function UserShoppingCartController($rootScope, $scope, EVENTS, ShoppingCart, Utils, Party) {
         /* jshint validthis: true */
         var vm = this;
 
@@ -299,6 +299,10 @@
 
         // Init the list of items
         updateItemsList(true);
+
+        $scope.$on(Party.EVENTS.USER_SESSION_SWITCHED, function () {
+            updateItemsList(true);
+        });
     }
 
 })();

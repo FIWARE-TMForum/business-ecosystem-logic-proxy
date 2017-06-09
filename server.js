@@ -254,7 +254,7 @@ var checkMongoUp = function(req, res, next) {
 
 };
 
-app.use(config.shoppingCartPath + '/*', checkMongoUp, auth.headerAuthentication, failIfNotAuthenticated);
+app.use(config.shoppingCartPath + '/*', checkMongoUp, auth.headerAuthentication, auth.checkOrganizations, auth.setPartyObj, failIfNotAuthenticated);
 app.get(config.shoppingCartPath + '/item/', shoppingCart.getCart);
 app.post(config.shoppingCartPath + '/item/', shoppingCart.add);
 app.get(config.shoppingCartPath + '/item/:id', shoppingCart.getItem);
