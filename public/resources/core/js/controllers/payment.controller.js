@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -20,7 +20,17 @@
 angular.module('app')
     .controller('PaymentController', ['$scope', '$location', 'Payment', function($scope, $location, Payment) {
 
-        var urlParams = function urlParams() {
+        var vm = this;
+
+        var LOADING = 'LOADING';
+        var ACCEPTED = 'ACCEPTED';
+        var ERROR = 'ERROR';
+
+        vm.message = '';
+        vm.state = LOADING;
+        vm.initPayment = initPayment;
+
+        function urlParams() {
 
             var search = window.location.search,
                 params = {};
@@ -37,55 +47,54 @@ angular.module('app')
             }
 
             return params;
-        };
-
-        var LOADING = 'LOADING';
-        var ACCEPTED = 'ACCEPTED';
-        var ERROR = 'ERROR';
-
-        $scope.message = '';
-        $scope.state = LOADING;
-
-        // Get related information from the location URL
-        var params = urlParams();
-
-        // Read reference
-        var ref = params.ref;
-
-        if (!ref) {
-            $scope.state = ERROR;
-            $scope.message = 'It has not been provided any ordering reference, so your payment cannot be executed';
-        } else {
-            var action = params.action;
-
-            // If the action is cancel of just invalid the payment is canceled
-            if (action !== 'accept' || (action === 'accept' && (!params.paymentId || !params.PayerID))) {
-                action = 'cancel';
-            }
-
-            var data = {
-                action: action,
-                reference: ref
-            };
-
-            if (action === 'accept') {
-                data.paymentId = params.paymentId;
-                data.payerId = params.PayerID;
-            }
-
-            // Make request to the backend
-            Payment.create(data, function() {
-                if (action === 'accept') {
-                    $scope.message = 'Your payment has been accepted. You can close this tab.';
-                    $scope.state = ACCEPTED;
-                } else {
-                    $scope.accepted = ERROR;
-                    $scope.message = 'Your payment has been canceled. You can close this tab.'
-                }
-            }, function(response) {
-                $scope.state = ERROR;
-                $scope.message = response.data.message;
-            });
         }
 
+        function initPayment(userCtl) {
+            // Get related information from the location URL
+            var params = urlParams();
+
+            // Read reference
+            var ref = params.ref;
+
+            if (!ref) {
+                vm.state = ERROR;
+                vm.message = 'It has not been provided any ordering reference, so your payment cannot be executed';
+            } else {
+                var action = params.action;
+
+                // If the action is cancel of just invalid the payment is canceled
+                if (action !== 'accept' || (action === 'accept' && (!params.paymentId || !params.PayerID))) {
+                    action = 'cancel';
+                }
+
+                var data = {
+                    action: action,
+                    reference: ref
+                };
+
+                if (action === 'accept') {
+                    data.paymentId = params.paymentId;
+                    data.payerId = params.PayerID;
+                }
+
+                // Check if the acquisition has been done by an organization
+                if(!!params.organization) {
+                    userCtl.switchSession(params.organization);
+                }
+
+                // Make request to the backend
+                Payment.create(data, function() {
+                    if (action === 'accept') {
+                        vm.message = 'Your payment has been accepted. You can close this tab.';
+                        vm.state = ACCEPTED;
+                    } else {
+                        vm.accepted = ERROR;
+                        vm.message = 'Your payment has been canceled. You can close this tab.'
+                    }
+                }, function(response) {
+                    vm.state = ERROR;
+                    vm.message = response.data.error;
+                });
+            }
+        }
     }]);

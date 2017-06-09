@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -61,12 +61,12 @@
 
         vm.cancellingOrder = false;
 
-	$scope.$on(Party.EVENTS.USER_SESSION_SWITCHED, function (event, message, obj) {
-	    productOrderSearch();
-	});
+        $scope.$on(Party.EVENTS.USER_SESSION_SWITCHED, function (event, message, obj) {
+            productOrderSearch();
+        });
 
-	function productOrderSearch() {
-	    vm.list.status = LOADING;
+        function productOrderSearch() {
+            vm.list.status = LOADING;
 
             if (vm.offset >= 0) {
                 var params = {};
@@ -83,7 +83,7 @@
                     vm.list.status = ERROR;
                 });
             }
-	};
+        }
 
         $scope.$watch(function () {
             return vm.offset;

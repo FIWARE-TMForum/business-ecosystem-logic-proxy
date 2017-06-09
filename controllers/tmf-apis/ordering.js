@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -32,12 +32,6 @@ var ordering = (function(){
 
     var CUSTOMER = 'Customer';
     var SELLER = 'Seller';
-
-    var ACKNOWLEDGED = 'Acknowledged';
-    var IN_PROGRESS = 'InProgress';
-    var COMPLETED = 'Completed';
-    var FAILED = 'Failed';
-    var PARTIAL = 'Partial';
 
     //////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////////// COMMON ///////////////////////////////////////////
@@ -174,7 +168,7 @@ var ordering = (function(){
             item.product.relatedParty.push({
                 id: user.id,
                 role: CUSTOMER,
-                href: tmfUtils.getIndividualURL(req, req.user)
+                href: tmfUtils.getIndividualURL(req, user.id)
             });
         }
 

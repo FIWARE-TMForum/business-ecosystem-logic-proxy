@@ -65,6 +65,7 @@
             return userInfo;
         }
 
+
         function serializeBasic() {
             return {
                 id: loggedUser.currentUser.id,

@@ -93,21 +93,21 @@
             PRODUCTORDER_STATUS.INPROGRESS,
             PRODUCTORDER_STATUS.COMPLETED
         ])
-	.config(function($httpProvider){
-	    $httpProvider.interceptors.push('interceptor');
-	})
-	.factory('interceptor', ['$injector', function($injector) {
-	    return {
-		'request': function(config) {
-		    var party = $injector.get('Party');
-		    var user = $injector.get('User');
-		    if(user.loggedUser && party.isOrganization()){
-			config.headers['X-Organization'] = user.loggedUser.currentUser.id;
-		    }
-		    return config;
-		}
-	    };
-	}])
+        .config(function($httpProvider){
+            $httpProvider.interceptors.push('interceptor');
+        })
+        .factory('interceptor', ['$injector', function($injector) {
+            return {
+                'request': function(config) {
+                    var party = $injector.get('Party');
+                    var user = $injector.get('User');
+                    if(user.loggedUser && party.isOrganization()){
+                        config.headers['X-Organization'] = user.loggedUser.currentUser.id;
+                    }
+                    return config;
+                }
+            };
+        }])
         .constant('COUNTRIES', [
             {
                 code: 'AF',
