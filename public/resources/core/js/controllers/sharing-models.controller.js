@@ -75,11 +75,15 @@
     }
 
     function calculateTotalPercentage(platformValue, ownerValue, currentStValue, stakeholders) {
-        var total = platformValue + ownerValue + currentStValue;
+        var values = [platformValue, ownerValue, currentStValue];
 
-        for (var i = 0; i < stakeholders.length; i++) {
-            total += stakeholders[i].modelValue;
-        }
+        stakeholders.forEach((st) => {
+            values.push(st.modelValue);
+        });
+
+        var total = values.filter((value) => !isNaN(value)).reduce((val, curr) => {
+            return val + curr;
+        }, 0);
 
         return total;
     }
