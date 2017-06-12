@@ -87,6 +87,8 @@
 
         function switchSession(orgId) {
             var currUser = User.loggedUser.organizations.find(x => x.id === orgId);
+
+            vm.showOrgs = false;
             vm.currentUser.name = currUser.name;
             vm.currentUser.email = currUser.email;
             vm.currentUser.id = currUser.id;
@@ -103,6 +105,8 @@
         }
 
         function switchToUser() {
+            vm.showOrgs = false;
+
             vm.currentUser.name = User.loggedUser.name;
             vm.currentUser.id = User.loggedUser.id;
             vm.currentUser.email = User.loggedUser.email;

@@ -136,7 +136,7 @@ html(ng-app="app")
                       span.item-icon.fa.fa-user
                       span.item-text {{ user.name }}
                     each organization in user.organizations
-                      a.dropdown-menu-item(ng-click="user.switchSession(" + "'#{ organization.id }'" + ")", ng-show="user.showOrgList(" + "'#{ organization.id }'" + ")")
+                      a.dropdown-menu-item(ng-click="user.switchSession(" + "'#{ organization.id }'" + ")", ng-if="user.showOrgList(" + "'#{ organization.id }'" + ")")
                         span.item-icon.fa.fa-users
                         span.item-text #{ organization.name }
                         
