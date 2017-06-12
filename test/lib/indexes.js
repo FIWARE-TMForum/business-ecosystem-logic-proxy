@@ -449,7 +449,8 @@ describe("Test index helper library", function () {
         description: "Description",
         lifecycleStatus: "Obsolete",
         name: "Name",
-        relatedParty: [{id: "rock"}]
+        relatedParty: [{id: "rock"}],
+        lastUpdate: "2017-06-01"
     };
 
     var catalogExpected = {
@@ -461,17 +462,19 @@ describe("Test index helper library", function () {
         relatedParty: ["rock"],
         href: "http://3",
         lifecycleStatus: "Obsolete",
-        name: "Name"
+        name: "Name",
+        lastUpdate: 1496275200000
     };
 
     var catOpt = {
-        lifecycleStatus: {
-            fieldOptions: {
+        fieldOptions: {
+            lastUpdate: {
+                sortable: true
+            },
+            lifecycleStatus: {
                 preserveCase: false
-            }
-        },
-        body: {
-            fieldOptions: {
+            },
+            body: {
                 preserveCase: false
             }
         }
@@ -551,7 +554,8 @@ describe("Test index helper library", function () {
         lifecycleStatus: "Active",
         isBundle: false,
         productNumber: 12,
-        relatedParty: [{id: "rock-8"}, {id: "rock-9"}]
+        relatedParty: [{id: "rock-8"}, {id: "rock-9"}],
+        lastUpdate: "2017-06-01"
     };
 
     var productExpected = {
@@ -564,7 +568,8 @@ describe("Test index helper library", function () {
         sortedId: "000000000001",
         body: ["name", "brand", "product description"],
         relatedPartyHash: [md5("rock-8"),  md5("rock-9")],
-        relatedParty: ["rock-8", "rock-9"]
+        relatedParty: ["rock-8", "rock-9"],
+        lastUpdate: 1496275200000
     };
 
 
@@ -596,13 +601,14 @@ describe("Test index helper library", function () {
         href: "http://2",
         lifecycleStatus: "Active",
         isBundle: false,
-        catalog: "2"
+        catalog: "2",
+        lastUpdate: "2017-06-01"
     };
 
     var notBundleCategoriesOffer = Object.assign({}, notBundleOffer, {
         id: 12,
         lifecycleStatus: "Disabled",
-        category: [{ id: 13, href: "http://cat/13" }]
+        category: [{ id: 13, href: "http://cat/13" }],
     });
 
     var notBundleMultipleCategoriesOffer = Object.assign({}, notBundleCategoriesOffer, {
@@ -629,7 +635,8 @@ describe("Test index helper library", function () {
         href: "http://3",
         lifecycleStatus: "Active",
         isBundle: true,
-        catalog: "000000000002"
+        catalog: "000000000002",
+        lastUpdate: 1496275200000
     };
 
     var notBundleExpected = Object.assign({}, bundleExpected, {
@@ -831,7 +838,7 @@ describe("Test index helper library", function () {
         href: "http://12",
         name: "inventoryName",
         status: "status",
-        startDate: 232323232,
+        startDate: "2017-06-01",
         orderDate: 232323231
     }, {
         id: 13,
@@ -843,7 +850,7 @@ describe("Test index helper library", function () {
         href: "http://13",
         name: "inventoryName2",
         status: "status",
-        startDate: 232323232,
+        startDate: "2017-06-01",
         orderDate: 232323231
     }];
     
@@ -858,8 +865,9 @@ describe("Test index helper library", function () {
         href: "http://12",
         name: "inventoryName",
         status: "status",
-        startDate: 232323232,
-        orderDate: 232323231
+        lastUpdate: 1496275200000,
+        orderDate: 232323231,
+        startDate: "2017-06-01",
     }, {
         id: "inventory:13",
         originalId: 13,
@@ -871,19 +879,21 @@ describe("Test index helper library", function () {
         href: "http://13",
         name: "inventoryName2",
         status: "status",
-        startDate: 232323232,
-        orderDate: 232323231
+        lastUpdate: 1496275200000,
+        orderDate: 232323231,
+        startDate: "2017-06-01",
     }];
 
     var invOpt = {
-        status: {
-            fieldOptions: {
+        fieldOptions: {
+            status: {
                 preserveCase: false
-            }
-        },
-        body: {
-            fieldOptions: {
+            },
+            body: {
                 preserveCase: false
+            },
+            lastUpdate: {
+                sortable: true
             }
         }
     };
@@ -938,7 +948,8 @@ describe("Test index helper library", function () {
         category: "endofunctor",
         state: "active",
         notificationContact: "m@c.es",
-        note: ""
+        note: "",
+        orderDate: "2017-06-01"
     };
 
     var orderExpected = {
@@ -953,12 +964,16 @@ describe("Test index helper library", function () {
         category: "endofunctor",
         state: "active",
         notificationContact: "m@c.es",
-        note: ""
+        note: "",
+        lastUpdate: 1496275200000
     };
 
     var orderOpt = {
-        status: {
-            fieldOptions: {
+        fieldOptions: {
+            lastUpdate: {
+                sortable: true
+            },
+            status: {
                 preserveCase: false
             }
         }
@@ -1014,8 +1029,8 @@ describe("Test index helper library", function () {
 
             expect(query).toEqual({
                 sort: {
-                    field: "sortedId",
-                    direction: "asc"
+                    field: "lastUpdate",
+                    direction: "desc"
                 },
                 query: [{
                     AND: {}
@@ -1042,8 +1057,8 @@ describe("Test index helper library", function () {
                 offset: 2,
                 pageSize: 23,
                 sort: {
-                    field: "sortedId",
-                    direction: "asc"
+                    field: "lastUpdate",
+                    direction: "desc"
                 },
                 query: [{
                     AND: {}
@@ -1064,8 +1079,8 @@ describe("Test index helper library", function () {
 
             expect(query).toEqual({
                 sort: {
-                    field: "sortedId",
-                    direction: "asc"
+                    field: "lastUpdate",
+                    direction: "desc"
                 },
                 query: [{
                     AND: {
@@ -1175,8 +1190,8 @@ describe("Test index helper library", function () {
 
             var search = {
                 sort: {
-                    field: "sortedId",
-                    direction: "asc"
+                    field: "lastUpdate",
+                    direction: "desc"
                 },
                 query: {
                     AND: { "*": ["*"]}

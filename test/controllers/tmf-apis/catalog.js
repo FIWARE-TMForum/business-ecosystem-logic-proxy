@@ -3081,8 +3081,8 @@ describe('Catalog API', function() {
                 },
                 "id=", {
                     sort: {
-                        field: "sortedId",
-                        direction: "asc"
+                        field: "lastUpdate",
+                        direction: "desc"
                     },
                     query: {
                         AND: {relatedPartyHash: [md5("someother")]}
@@ -3100,8 +3100,8 @@ describe('Catalog API', function() {
                     fields: "name"
                 }, "id=2,12&depth=2&fields=name", {
                     sort: {
-                        field: "sortedId",
-                        direction: "asc"
+                        field: "lastUpdate",
+                        direction: "desc"
                     },
                     query: {
                         AND: {relatedPartyHash: [md5("rock-8")]}
@@ -3120,8 +3120,8 @@ describe('Catalog API', function() {
                     "relatedParty.id": "someother"
                 }, "id=", {
                     sort: {
-                        field: "sortedId",
-                        direction: "asc"
+                        field: "lastUpdate",
+                        direction: "desc"
                     },
                     query: {
                         AND: {relatedPartyHash: [md5("someother")]}
@@ -3137,8 +3137,8 @@ describe('Catalog API', function() {
                     size: 3
                 }, "id=3,4,13", {
                     sort: {
-                        field: "sortedId",
-                        direction: "asc"
+                        field: "lastUpdate",
+                        direction: "desc"
                     },
                     query: {
                         AND: {relatedPartyHash: [md5("rock")]}
@@ -3157,8 +3157,8 @@ describe('Catalog API', function() {
                     "category.id": 201
                 }, "id=", {
                     sort: {
-                        field: "sortedId",
-                        direction: "asc"
+                        field: "lastUpdate",
+                        direction: "desc"
                     },
                     query: {
                         AND: {categoriesId: ['000000000201']}
@@ -3173,8 +3173,8 @@ describe('Catalog API', function() {
                     "category.name": "TesTCat"
                 }, "id=", {
                     sort: {
-                        field: "sortedId",
-                        direction: "asc"
+                        field: "lastUpdate",
+                        direction: "desc"
                     },
                     query: {
                         AND: {categoriesName: [md5("testcat")]}
@@ -3189,8 +3189,8 @@ describe('Catalog API', function() {
                     relatedParty: "someother"
                 }, "id=", {
                     sort: {
-                        field: "sortedId",
-                        direction: "asc"
+                        field: "lastUpdate",
+                        direction: "desc"
                     },
                     query: {
                         AND: {userId: [md5("someother")]}
@@ -3210,8 +3210,8 @@ describe('Catalog API', function() {
                     offset: 3,
                     pageSize: 25,
                     sort: {
-                        field: "sortedId",
-                        direction: "asc"
+                        field: "lastUpdate",
+                        direction: "desc"
                     },
                     query: {
                         AND: {userId: [md5("rock")]}
@@ -3224,8 +3224,8 @@ describe('Catalog API', function() {
             requestHelper(done,
                 base, [1, 2], "", {}, "id=1,2", {
                     sort: {
-                        field: "sortedId",
-                        direction: "asc"
+                        field: "lastUpdate",
+                        direction: "desc"
                     },
                     query: {AND: {"*": ["*"]}}
                 }
@@ -3246,8 +3246,8 @@ describe('Catalog API', function() {
             requestHelper(done,
                 base, [7, 9, 11], paramUrl, params, "id=7,9,11", {
                     sort: {
-                        field: "sortedId",
-                        direction: "asc"
+                        field: "lastUpdate",
+                        direction: "desc"
                     },
                     query: {AND: ANDs}
                 }
@@ -3269,8 +3269,8 @@ describe('Catalog API', function() {
                 "catalog", [7, 9, 11], "lifecycleStatus=Active,Disabled", {lifecycleStatus: "Active,Disabled"},
                 "id=7,9,11", {
                     sort: {
-                        field: "sortedId",
-                        direction: "asc"
+                        field: "lastUpdate",
+                        direction: "desc"
                     },
                     query: [{
                         AND: {lifecycleStatus: ["active"]}

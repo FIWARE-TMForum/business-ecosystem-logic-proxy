@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -178,8 +178,8 @@ describe('Inventory API', function() {
                         "relatedParty.id": "rock"
                     }, "id=3,4", {
                         sort: {
-                            field: "sortedId",
-                            direction:"asc"
+                            field: "lastUpdate",
+                            direction: "desc"
                         },
                         query: {
                             AND: {relatedPartyHash: [md5("rock")]}
@@ -199,8 +199,8 @@ describe('Inventory API', function() {
                 requestHelper(done,
                     [7, 9, 11], paramUrl, params, "id=7,9,11", {
                         sort: {
-                            field: "sortedId",
-                            direction:"asc"
+                            field: "lastUpdate",
+                            direction: "desc"
                         },
                         query: {AND: ANDs}
                     }
@@ -211,8 +211,8 @@ describe('Inventory API', function() {
                 requestHelper(done,
                     [1, 2], "", {}, "id=1,2", {
                         sort: {
-                            field: "sortedId",
-                            direction:"asc"
+                            field: "lastUpdate",
+                            direction: "desc"
                         },
                         query: {AND: {"*": ["*"]}}
                     }
@@ -225,8 +225,8 @@ describe('Inventory API', function() {
                         "relatedParty.id": "someother"
                     }, "id=", {
                         sort: {
-                            field: "sortedId",
-                            direction:"asc"
+                            field: "lastUpdate",
+                            direction: "desc"
                         },
                         query: {
                             AND: {relatedPartyHash: [md5("someother")]}
@@ -242,8 +242,8 @@ describe('Inventory API', function() {
                         fields: "name"
                     }, "id=1,2&depth=2&fields=name", {
                         sort: {
-                            field: "sortedId",
-                            direction:"asc"
+                            field: "lastUpdate",
+                            direction: "desc"
                         },
                         query: {AND: {"*": ["*"]}}
                     }
