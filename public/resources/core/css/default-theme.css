@@ -126,6 +126,10 @@ dd {
     color: #5E5E5E;
 }
 
+.limit-table dd {
+    overflow: hidden;
+    max-height: 62px;
+}
 .dl-list {
     position: relative;
     display: flex;
