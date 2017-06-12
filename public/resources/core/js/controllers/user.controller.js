@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -39,7 +39,7 @@
         .controller('UserProfileCtrl', UserProfileController)
         .controller('UserShoppingCartCtrl', UserShoppingCartController);
 
-    function UserController($state, $scope, $rootScope, EVENTS, LIFECYCLE_STATUS, FILTER_STATUS, User) {
+    function UserController($state, $scope, $rootScope, EVENTS, LIFECYCLE_STATUS, FILTER_STATUS, ROLES, User, Party) {
         /* jshint validthis: true */
         var vm = this;
         vm.itemsContained = {};
@@ -50,6 +50,9 @@
 
         if (isAuthenticated()) {
             vm.id = User.loggedUser.id;
+            vm.name = User.loggedUser.name;
+            vm.email = User.loggedUser.email;
+            vm.currentUser = User.loggedUser.currentUser;
         }
 
         vm.order = order;
@@ -59,6 +62,63 @@
         vm.isAdmin = isAdmin;
         vm.isSeller = isSeller;
         vm.isAuthenticated = isAuthenticated;
+        vm.orgsVisible = orgsVisible;
+        vm.orgsInvisible = orgsInvisible;
+        vm.loggedAsIndividual = loggedAsIndividual;
+        vm.switchSession = switchSession;
+        vm.switchToUser = switchToUser;
+        vm.showOrgList = showOrgList;
+        vm.hasOrgs = hasOrgs;
+        vm.showOrgs = false;
+        vm.hasAdminRole = hasAdminRole;
+
+        function hasAdminRole() {
+            var org = User.loggedUser.organizations.find(x => x.id === vm.currentUser.id);
+            return loggedAsIndividual() || org.roles.findIndex(x => x.name === ROLES.orgAdmin) > -1;
+        }
+
+        function loggedAsIndividual() {
+            return vm.currentUser.id === User.loggedUser.id;
+        }
+
+        function showOrgList(orgId) {
+            return vm.currentUser.id !== orgId;
+        }
+
+        function switchSession(orgId) {
+            var currUser = User.loggedUser.organizations.find(x => x.id === orgId);
+            vm.currentUser.name = currUser.name;
+            vm.currentUser.email = currUser.email;
+            vm.currentUser.id = currUser.id;
+            vm.currentUser.href = User.loggedUser.href.replace(/(individual)\/(.*)/g,
+							       'organization/' + currUser.id);
+
+            vm.currentUser.roles = currUser.roles;
+
+            propagateSwitch();
+        }
+
+        function propagateSwitch() {
+            $rootScope.$broadcast(Party.EVENTS.USER_SESSION_SWITCHED, 'User has switched session', {});
+        }
+
+        function switchToUser() {
+            vm.currentUser.name = User.loggedUser.name;
+            vm.currentUser.id = User.loggedUser.id;
+            vm.currentUser.email = User.loggedUser.email;
+            vm.currentUser.href = User.loggedUser.href;
+            vm.currentUser.roles = User.loggedUser.roles;
+
+            propagateSwitch();
+        }
+	
+        function orgsVisible() {
+            vm.showOrgs = true;
+        }
+
+        function orgsInvisible() {
+            vm.showOrgs = false;
+        }
 
         $scope.$on('$stateChangeSuccess', function (event, toState) {
             $scope.title = toState.data.title;
@@ -70,12 +130,15 @@
         }
 
         function isSeller() {
-            // If stock.catalogue route is loaded, the user is a seller
-            return $state.get('stock.catalogue') != null;
+            return vm.currentUser.roles.findIndex(x => x.name === ROLES.seller) > -1;
         }
 
         function isAuthenticated() {
             return User.isAuthenticated();
+        }
+
+        function hasOrgs() {
+            return User.loggedUser.organizations.length > 0;
         }
 
         function contains(offering) {
@@ -141,7 +204,7 @@
         });
     }
 
-    function UserShoppingCartController($rootScope, $scope, EVENTS, ShoppingCart, Utils) {
+    function UserShoppingCartController($rootScope, $scope, EVENTS, ShoppingCart, Utils, Party) {
         /* jshint validthis: true */
         var vm = this;
 
@@ -236,6 +299,10 @@
 
         // Init the list of items
         updateItemsList(true);
+
+        $scope.$on(Party.EVENTS.USER_SESSION_SWITCHED, function () {
+            updateItemsList(true);
+        });
     }
 
 })();

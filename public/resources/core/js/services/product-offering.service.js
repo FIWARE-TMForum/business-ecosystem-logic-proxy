@@ -212,7 +212,7 @@
             }
 
             if (filters.owner) {
-                params['relatedParty'] = User.loggedUser.id;
+                params['relatedParty'] = User.loggedUser.currentUser.id;
             } else {
                 params['lifecycleStatus'] = LIFECYCLE_STATUS.LAUNCHED;
             }

@@ -128,11 +128,9 @@
         }
 
         vm.list.status = vm.STATUS.LOADING;
-        $scope.$watch(function () {
-            return vm.offset;
-        }, function () {
-            vm.list.status = vm.STATUS.LOADING;
 
+        function productSearch() {
+            vm.list.status = vm.STATUS.LOADING;
             if (vm.offset >= 0) {
                 var params = getParams();
 
@@ -147,7 +145,11 @@
                     vm.list.status = vm.STATUS.ERROR;
                 });
             }
-        });
+        }
+	
+        $scope.$watch(function () {
+            return vm.offset;
+        }, productSearch);
     }
 
     function ProductCreateController($q, $scope, $state, $rootScope, EVENTS, PROMISE_STATUS, ProductSpec, Asset, AssetType, Utils) {

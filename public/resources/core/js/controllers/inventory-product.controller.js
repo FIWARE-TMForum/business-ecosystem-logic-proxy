@@ -71,9 +71,7 @@
                 $("#searchbutton").click();
         }
 
-        $scope.$watch(function () {
-            return vm.offset;
-        }, function () {
+        function inventorySearch() {
             vm.list.status = LOADING;
 
             if (vm.offset >= 0) {
@@ -91,7 +89,12 @@
                     vm.list.status = ERROR;
                 });
             }
-        });
+        }
+	
+
+        $scope.$watch(function () {
+            return vm.offset;
+        }, inventorySearch);
 
         function showFilters() {
             $rootScope.$broadcast(EVENTS.FILTERS_OPENED, INVENTORY_STATUS);

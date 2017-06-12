@@ -94,7 +94,7 @@
                     // has the 'bill received' role are returned. Modify this function in case
                     // another filter is required. At this point, other filters are not expected.
                     return account.relatedParty.some(function(party) {
-                        return party.role === 'bill receiver' && party.id === User.loggedUser.id;
+                        return party.role === 'bill receiver' && party.id === User.loggedUser.currentUser.id;
                     });
 
                 });

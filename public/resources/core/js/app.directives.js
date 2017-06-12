@@ -133,7 +133,7 @@
         };
     }
 
-    function pagerDirective($window, $timeout) {
+    function pagerDirective($window, $timeout, EVENTS) {
         return {
             restrict: 'E',
             scope: {
@@ -145,7 +145,7 @@
             link: link
         };
 
-        function link($scope, element, attrs) {
+        function link($scope, element, attrs, ctrls) {
             function repositionPager(retry) {
                 var nav = element.find('nav');
                 var ul = element.find('ul');
@@ -179,6 +179,11 @@
                     }, 100);
                 }
             }
+
+            $scope.$on(EVENTS.PAGER_RELOADED, function () {
+                loadPager();
+            });
+
             loadPager();
         }
     }

@@ -1,0 +1,98 @@
+.panel.panel-default.z-depth-1
+  .panel-body
+    .h4.text-dark-secondary
+      strong Profile
+    hr
+    form(name="updateVM.formOrg", novalidate)
+      .a(ng-if="updateVM.hasAdminRole()")
+        .alert.alert-info This information is public so it may be viewed by anyone.
+        .row
+          .col-sm-6
+            .form-group(ng-class="{ 'has-error': updateVM.hasFieldError(updateVM.formOrg.name) }")
+              label Trading Name
+              input.form-control(
+                type="text"
+                name="name"
+                ng-model="updateVM.data.tradingName"
+                required
+                ng-maxlength="100"
+              )
+              .help-block(
+                ng-messages="updateVM.formOrg.name.$error"
+                ng-show="updateVM.hasFieldError(updateVM.formOrg.name)"
+              )
+                span(ng-message="required") This field is required.
+                span(ng-message="maxlength") This field must not exceed 100 chars.
+          .col-sm-6
+            .form-group(ng-class="{ 'has-error': updateVM.hasFieldError(updateVM.formOrg.type) }")
+              label Type
+              input.form-control(
+                type="text"
+                name="type"
+                ng-model="updateVM.data.type"
+                placeholder="Company"
+              )
+              .help-block(
+                ng-show="updateVM.hasFieldError(updateVM.formOrg.type)"
+              )
+        .h4.text-dark-secondary
+          strong Legal
+        hr
+        .row
+          .col-sm-6
+            .form-group(ng-class="{ 'has-error': updateVM.hasFieldError(updateVM.formOrg.organizationidentification.identificationId) }")
+              label CIF or Organization ID
+                input.form-control(
+                  type="text"
+                  name="organizationIdentification.identificationId"
+                  ng-model="updateVM.data.organizationIdentification.identificationId"
+                )
+                .help-block(
+                  ng-show="updateVM.hasFieldError(updateVM.formOrg.organizationIdentification.identificationId)"
+                )
+          .col-sm-6
+            .form-group(ng-class="{ 'has-error': updateVM.hasFieldError(updateVM.formOrg.organizationIdentification.type) }")
+              label Type
+                input.form-control(
+                  type="text"
+                  name="organizationIdentification.type"
+                  ng-model="updateVM.data.organizationIdentification.type"
+                  placeholder="Type of identification"
+                )
+                .help-block(
+                  ng-show="updateVM.hasFieldError(updateVM.formOrg.organizationIdentification.type)"
+                )
+        .row
+          .col-sm-6
+            .form-group(ng-class="{ 'has-error': updateVM.hasFieldError(updateVM.formOrg.organizationIdentification.issuingAuthority) }")
+              label Issuing Authority
+                input.form-control(
+                  type="text"
+                  name="organizationIdentification.issuingAuthority"
+                  ng-model="updateVM.data.organizationIdentification.issuingAuthority"
+                )
+                .help-block(
+                  ng-show="updateVM.hasFieldError(updateVM.formOrg.organizationIdentification.issuingAuthority)"
+                )
+          .col-sm-6
+            .form-group(ng-class="{ 'has-error': updateVM.hasFieldError(updateVM.formOrg.organizationIdentification.issuingDate) }")
+              label Issuing Date
+                input.form-control(
+                  type="date"
+                  name="organizationIdentification.issuingDate"
+                  ng-model="updateVM.data.organizationIdentification.issuingDate"
+                  placeholder="yyyy-MM-dd"
+                )
+                .help-block(
+                  ng-show="updateVM.hasFieldError(updateVM.formOrg.organizationIdentification.issuingDate)"
+                )
+                
+        .form-group.text-right
+          a.btn.btn-success(
+            ng-click="updateVM.update()"
+            ng-disabled="!updateVM.formOrg.$valid || updateVM.update.status === updateVM.STATUS.PENDING"
+          )
+            span.item-icon.fa.fa-spin.fa-spinner(ng-if="updateVM.update.status === updateVM.STATUS.PENDING")
+            span.item-text Update
+      .a(ng-if="!updateVM.hasAdminRole()")
+        .alert.alert-warning You are not allowed to change this organization info since you don't have an Admin role.

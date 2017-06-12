@@ -38,7 +38,7 @@
         .controller('CatalogueDetailCtrl', CatalogueDetailController)
         .controller('CatalogueUpdateCtrl', CatalogueUpdateController);
 
-    function CatalogueListController($scope, Catalogue, Utils) {
+    function CatalogueListController($scope, Catalogue, Utils, Party, User) {
         /* jshint validthis: true */
         var vm = this;
 
@@ -49,9 +49,10 @@
         vm.sidebarInput = "";
 
         vm.updateList = updateList;
+
         function updateList() {
             vm.list.status = LOADING;
-
+	    
             if (vm.offset >= 0) {
                 // Create query with body for filtering catalogs
                 var page = {
@@ -59,8 +60,8 @@
                     size: vm.size,
                     body: vm.sidebarInput
                 };
-
                 // Search query
+
                 Catalogue.search(page).then(function (catalogueList) {
                     angular.copy(catalogueList, vm.list);
                     vm.list.status = LOADED;
@@ -81,7 +82,7 @@
         }, updateList);
     }
 
-    function CatalogueSearchController($scope, $state, $rootScope, $timeout, EVENTS, Catalogue, LIFECYCLE_STATUS, DATA_STATUS, Utils) {
+    function CatalogueSearchController($scope, $state, $rootScope, $timeout, EVENTS, Catalogue, LIFECYCLE_STATUS, DATA_STATUS, Utils, Party, User) {
         /* jshint validthis: true */
         var vm = this;
         var formMode = false;
@@ -159,12 +160,9 @@
             vm.reloadPager();
         }
 
-        vm.list.status = vm.STATUS.LOADING;
-        $scope.$watch(function () {
-            return vm.offset;
-        }, function () {
+        function catalogueSearch() {
             vm.list.status = vm.STATUS.LOADING;
-
+	    
             if (vm.offset >= 0) {
                 var params = getParams();
 
@@ -179,7 +177,12 @@
                     vm.list.status = vm.STATUS.ERROR;
                 });
             }
-        });
+        }
+	
+        vm.list.status = vm.STATUS.LOADING;
+        $scope.$watch(function () {
+            return vm.offset;
+        }, catalogueSearch);
     }
 
     function CatalogueCreateController($state, $rootScope, EVENTS, PROMISE_STATUS, Catalogue, Utils) {

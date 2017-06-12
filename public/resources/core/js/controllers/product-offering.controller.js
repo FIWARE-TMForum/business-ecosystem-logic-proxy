@@ -115,9 +115,7 @@
             vm.reloadPager();
         }
 
-        $scope.$watch(function () {
-            return vm.offset;
-        }, function () {
+        function offeringSearch() {
             vm.list.status = LOADING;
 
             if (vm.offset >= 0) {
@@ -134,7 +132,11 @@
                     vm.list.status = ERROR;
                 });
             }
-        });
+        }
+
+        $scope.$watch(function () {
+            return vm.offset;
+        }, offeringSearch);
     }
 
     function ProductOfferingCreateController($q, $scope, $state, $rootScope, $controller, EVENTS, LIFECYCLE_STATUS, PROMISE_STATUS, Offering, Catalogue, ProductSpec, Utils) {

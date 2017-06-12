@@ -26,7 +26,8 @@ var defaultConfig = {
         roles: {
             admin: 'provider',
             seller: 'seller',
-            customer: 'customer'
+            customer: 'customer',
+            orgAdmin: 'orgAdmin'
         }
     },
     endpoints: {

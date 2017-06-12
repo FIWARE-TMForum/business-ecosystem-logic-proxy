@@ -31,7 +31,7 @@
         .controller('RSReportCreateCtrl', RSReportCreateController)
         .controller('RSReportSearchCtrl', RSReportSearchController);
 
-    function RSReportSearchController($scope, DATA_STATUS, RSS, Utils) {
+    function RSReportSearchController(DATA_STATUS, RSS, Utils, $scope, Party) {
         var vm = this;
 
         vm.list = [];
@@ -45,9 +45,7 @@
             return RSS.countReports();
         }
 
-        $scope.$watch(function () {
-            return vm.offset;
-        }, function () {
+        function updateRSReports () {
             vm.list.status = DATA_STATUS.LOADING;
 
             if (vm.offset >= 0) {
@@ -63,7 +61,11 @@
                     vm.list.status = DATA_STATUS.ERROR;
                 });
             }
-        });
+        }
+
+        $scope.$watch(function () {
+            return vm.offset;
+        }, updateRSReports);
     }
 
     function RSReportCreateController($state, $scope, $rootScope, $element, RSS, EVENTS, Utils) {

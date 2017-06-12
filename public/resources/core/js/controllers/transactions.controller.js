@@ -30,7 +30,7 @@
         .module('app')
         .controller('RSTransSearchCtrl', RSTransSearchController);
 
-    function RSTransSearchController($scope, $state, $rootScope, DATA_STATUS, RSS, Utils) {
+    function RSTransSearchController($state, $rootScope, $scope, DATA_STATUS, RSS, Utils, Party, User) {
         var vm = this;
 
         vm.$params = $state.params;
@@ -67,9 +67,7 @@
             return types[txType];
         }
 
-        $scope.$watch(function () {
-            return vm.offset;
-        }, function () {
+        function updateRSTrans () {
             vm.list.status = DATA_STATUS.LOADING;
 
             if (vm.offset >= 0) {
@@ -86,7 +84,10 @@
                     vm.list.status = DATA_STATUS.ERROR;
                 });
             }
-        });
-    }
+        }
 
+        $scope.$watch(function () {
+            return vm.offset;
+        }, updateRSTrans);
+    }
 })();
