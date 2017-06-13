@@ -88,6 +88,7 @@ for i in range(20):
 
 while not glassfish_ready:
     time.sleep(10)
-    r = requests.get("http://biz_apis:8080/DSUsageManagement")
+    r = requests.get("http://{}:{}/DSUsageManagement".format(getenv("GLASSFISH_HOST"), getenv("GLASSFISH_PORT")))
+    print("Glassfish status response: {}".format(r.status_code))
     if r.status_code == 200:
         glassfish_ready = True
