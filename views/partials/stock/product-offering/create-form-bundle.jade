@@ -8,14 +8,28 @@ form(name="step.form", novalidate)
           ng-change="createVM.toggleBundle()"
         )
         i.fa.fa-2x
-  div(ng-if="createVM.data.isBundle && createForm.stepIndex == $index", ng-controller="OfferingSearchCtrl as searchVM")
+  div(ng-if="createVM.data.isBundle && createForm.stepIndex == $index", ng-controller="OfferingSearchCtrl as searchVM",
+    ng-init="searchVM.setFormMode(true)")
+
+    .row(style="margin-bottom: 25px")
+      .col-sm-12
+        .input-group
+          input.form-control(ng-keyup="searchVM.handleEnterKeyUp($event)",
+          ng-model="searchVM.searchInput", type="text", placeholder="Search...")
+
+          .input-group-btn
+            a.btn.btn-default.z-depth-0(ng-click="searchVM.launchSearch()", id="formSearch")
+              span.item-icon.fa.fa-search
+              span.item-text.hidden-xs Search
+
     div(ng-switch="searchVM.list.status")
       div(ng-switch-when="LOADED", ng-switch="searchVM.list.length")
         div(ng-switch-when="0")
           .alert.alert-info.text-center No offerings found.
 
         div(ng-switch-default)
-          .alert.alert-danger.text-center(ng-show="!step.form.$valid") Offering bundles must contain at least two offerings
+          .alert.alert-danger.text-center(
+            ng-show="!createVM.bundleControl.valid && createVM.bundleControl.used") Offering bundles must contain at least two offerings
           .table-responsive
             table.table.table-bordered.table-hover.table-selectable
               thead
@@ -42,8 +56,9 @@ form(name="step.form", novalidate)
       .container-spinner(ng-switch-default)
         span.fa.fa-spinner.fa-spin.fa-2x
 
-      pager(controller="searchVM", size="12", max="12" ng-init="searchVM.setFilters({status: STATUS.ACTIVE + ',' + STATUS.LAUNCHED, bundle: false})")
+      pager(controller="searchVM", size="12", max="12")
 
   .form-group.text-right
-    a.btn.btn-default.z-depth-1(ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])", ng-disabled="!step.form.$valid")
+    a.btn.btn-default.z-depth-1(ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])",
+    ng-disabled="createVM.data.isBundle && !createVM.bundleControl.valid")
       span.item-text Next

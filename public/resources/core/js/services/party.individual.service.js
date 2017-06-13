@@ -30,33 +30,33 @@
 
     angular
         .module('app')
-        .factory('Party', partyService)
+        .factory('Party', partyService);
     
-    function partyService($q, $resource, URLS, COUNTRIES, User) {
+    function partyService($q, $resource, URLS, COUNTRIES, ROLES, User) {
 	
         var Individual = $resource(URLS.PARTY_MANAGEMENT + '/individual/:id', {}, {
             update: {method: 'PUT'},
             updatePartial: {method: 'PATCH'}
         });
-	
-	var Organization = $resource(URLS.PARTY_MANAGEMENT + '/organization/:id', {}, {
-	    update: {method: 'PUT'},
+
+        var Organization = $resource(URLS.PARTY_MANAGEMENT + '/organization/:id', {}, {
+            update: {method: 'PUT'},
             updatePartial: {method: 'PATCH'}
         });
-	
+
         Individual.prototype.appendContactMedium = appendContactMedium;
         Individual.prototype.updateContactMedium = updateContactMedium;
         Individual.prototype.removeContactMedium = removeContactMedium;
 
-	Organization.prototype.appendContactMedium = appendContactMedium;
-	Organization.prototype.updateContactMedium = updateContactMedium;
+        Organization.prototype.appendContactMedium = appendContactMedium;
+        Organization.prototype.updateContactMedium = updateContactMedium;
         Organization.prototype.removeContactMedium = removeContactMedium;
 
         var EVENTS = {
             CONTACT_MEDIUM_CREATED: '$contactMediumCreated',
             CONTACT_MEDIUM_UPDATE: '$contactMediumUpdate',
             CONTACT_MEDIUM_UPDATED: '$contactMediumUpdated',
-	    USER_SESSION_SWITCHED: '$userSessionSwitched'
+            USER_SESSION_SWITCHED: '$userSessionSwitched'
         };
 
         var TYPES = {
@@ -92,6 +92,7 @@
         var ContactMedium = function ContactMedium(data) {
             angular.merge(this, TEMPLATES.CONTACT_MEDIUM, data);
         };
+
         ContactMedium.prototype.getType = function getType() {
             var key;
 
@@ -103,6 +104,7 @@
 
             return null;
         };
+
         ContactMedium.prototype.resetMedium = function resetMedium() {
 
             switch (this.type) {
@@ -119,6 +121,7 @@
 
             return this;
         };
+
         ContactMedium.prototype.toString = function toString() {
             var result = '';
 
@@ -149,99 +152,102 @@
             detail: detail,
             update: update,
             launch: launch,
-	    getCurrentOrg: getCurrentOrg,
-	    hasAdminRole: hasAdminRole,
-	    isOrganization: isOrganization
+            getCurrentOrg: getCurrentOrg,
+            hasAdminRole: hasAdminRole,
+            isOrganization: isOrganization
         };
 
-	function isOrganization() {
-	    return User.loggedUser && User.loggedUser.id !== User.loggedUser.currentUser.id;
-	};
-	
-	function getCurrentOrg() {
-	    var org = User.loggedUser.currentUser;
-	    return (isOrganization()) ? User.loggedUser.organizations.find( x => x.id === org.id) : {};
-	};
-	
-	function hasAdminRole() {
-	    var org = User.loggedUser.organizations.find(
-		x => x.id === User.loggedUser.currentUser.id);
-	    return org.roles.findIndex(x => x.name === "Admin") > -1;
-	};
+        function isOrganization() {
+            return User.loggedUser && User.loggedUser.id !== User.loggedUser.currentUser.id;
+        }
 
-	function process(func, params, deferred, transform) {
-	    // credits to @RockNeurotiko for this tip.
-	    transform = (transform == null) ? x => x : transform;
-	    
-	    var resol = function (partyObj) {
-		transform(partyObj);
-		deferred.resolve(partyObj);
-	    };
+        function getCurrentOrg() {
+            var org = User.loggedUser.currentUser;
+            return (isOrganization()) ? User.loggedUser.organizations.find( x => x.id === org.id) : {};
+        }
 
-	    var rejec = function (response) {
-		deferred.reject(response);
-	    };
-	    params.push(resol, rejec);
-	    
-	    func.apply(null, params);
+        function hasAdminRole() {
+            var org = User.loggedUser.organizations.find(
+                x => x.id === User.loggedUser.currentUser.id);
 
-	};
+            return org.roles.findIndex(x => x.name === ROLES.orgAdmin) > -1;
+        }
+
+        function process(func, params, deferred, transform) {
+            // credits to @RockNeurotiko for this tip.
+            transform = (transform == null) ? x => x : transform;
+
+            var resol = function (partyObj) {
+                transform(partyObj);
+                deferred.resolve(partyObj);
+            };
+
+            var rejec = function (response) {
+                deferred.reject(response);
+            };
+            params.push(resol, rejec);
+
+            func.apply(null, params);
+        }
 
         function create(data) {
             var deferred = $q.defer();
 
-	    if(!isOrganization()){
-		process(Individual.save, [data], deferred);
-	    } else {
-		process(Organization.save, [data], deferred);
-	    }
+            if(!isOrganization()){
+                process(Individual.save, [data], deferred);
+            } else {
+                process(Organization.save, [data], deferred);
+            }
 
             return deferred.promise;
-        };
+        }
 
         function detail(id) {
             var deferred = $q.defer();
             var params = {
                 id: id
             };
-	    if(!isOrganization()){
-		process(Individual.get, [params], deferred, extendContactMedium);
-	    } else {
-		process(Organization.get, [params], deferred, extendContactMedium);
-	    }
-	    return deferred.promise;
-        };
+
+            if(!isOrganization()){
+                process(Individual.get, [params], deferred, extendContactMedium);
+            } else {
+                process(Organization.get, [params], deferred, extendContactMedium);
+            }
+            return deferred.promise;
+        }
 
         function update(entry, data) {
-	    var deferred = $q.defer();
+            var deferred = $q.defer();
             var params = {
                 id: entry.id
             };
-	    if(!isOrganization()) {
-		process(Individual.update, [params, data], deferred);
-	    } else {
-		process(Organization.update, [params, data], deferred);
-	    }
-	    return deferred.promise;
-        };
+
+            if(!isOrganization()) {
+                process(Individual.update, [params, data], deferred);
+            } else {
+                process(Organization.update, [params, data], deferred);
+            }
+            return deferred.promise;
+        }
 
         function updatePartial(entry, data) {
             var deferred = $q.defer();
             var params = {
                 id: entry.id
             };
-	    if (!isOrganization()){		
-		process(Individual.updatePartial, [params, data], deferred);
-	    } else {
-		process(Organization.updatePartial, [params, data], deferred);
-	    }
+
+            if (!isOrganization()){
+                process(Individual.updatePartial, [params, data], deferred);
+            } else {
+                process(Organization.updatePartial, [params, data], deferred);
+            }
 
             return deferred.promise;
-        };
+        }
 
         function launch() {
-	    if(!isOrganization()){
-		return new Individual({
+            if(!isOrganization()){
+                return new Individual({
                     id: User.loggedUser.currentUser.id,
                     birthDate: '',
                     contactMedium: [],
@@ -253,16 +259,16 @@
                     nationality: '',
                     placeOfBirth: '',
                     title: ''
-		});
-	    } else {
-		// TODO: Add proper fields. But this object should never be created like this, so its ok
-		return new Organization({
+                });
+            } else {
+                // TODO: Add proper fields. But this object should never be created like this, so its ok
+                return new Organization({
                     id: "ThisShouldntBeHappeningEver:ERROR!",
                     contactMedium: [],
-		    description: ""
-		});
-	    }
-        };
+                    description: ""
+                });
+            }
+        }
 
         function extendContactMedium(party) {
             if (angular.isArray(party.contactMedium)) {
@@ -272,7 +278,7 @@
             } else {
                 party.contactMedium = [];
             }
-        };
+        }
 
         function parseCountry(code) {
             var i;
@@ -284,7 +290,7 @@
             }
 
             return code;
-        };
+        }
 	
         function appendContactMedium(contactMedium) {
             /* jshint validthis: true */
@@ -301,7 +307,7 @@
             });
 
             return deferred.promise;
-        };
+        }
 
         function updateContactMedium(index, contactMedium) {
             /* jshint validthis: true */
@@ -319,7 +325,7 @@
             });
 
             return deferred.promise;
-        };
+        }
 
         function removeContactMedium(index) {
             /* jshint validthis: true */
@@ -338,8 +344,7 @@
             });
 
             return deferred.promise;
-        };
-
-    };
+        }
+    }
 
 })();

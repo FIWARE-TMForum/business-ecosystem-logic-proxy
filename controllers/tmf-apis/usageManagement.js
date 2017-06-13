@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -78,43 +78,32 @@ var usageManagement = ( function () {
         }
     };
 
+    var checkFilters = function (req, callback) {
+        // If retrieving the usage of a particular product
+        // refresh the accounting info
+        if (!!req.query && !!req.query['usageCharacteristic.orderId'] && !!req.query['usageCharacteristic.productId']) {
+            return storeClient.refreshUsage(req.query['usageCharacteristic.orderId'], req.query['usageCharacteristic.productId'], callback);
+        }
+
+        if (!!req.query && req.query['usageCharacteristic.value']){
+            // By default productId value
+            req.query['usageCharacteristic.productId'] = req.query['usageCharacteristic.value'];
+            delete req.query['usageCharacteristic.value'];
+        }
+
+        return callback(null);
+    };
+
     // If the usage notification to the usage management API is successful, 
-    //  it will notify the the Store with the API response
+    // it will notify the the Store with the API response
     var executePostValidation = function (req, callback) {
 
         var body = JSON.parse(req.body);
 
         var expr = /usage($|\/)/;
-        var parsedUrl = url.parse(req.apiUrl, true);
 
         if (req.method === 'POST' && req.status === 201 && expr.test(req.apiUrl)) {
-
             storeClient.validateUsage(body, callback);
-
-        } else if (req.method === 'GET' && expr.test(parsedUrl.pathname)){
-            // Check if is needed to filter the list
-            var query = parsedUrl.query;
-
-            if (query['usageCharacteristic.value']) {
-                var productValue = query['usageCharacteristic.value'];
-                var filteredBody = body.filter(function(usage) {
-                    var valid = false;
-                    var characteristics = usage.usageCharacteristic;
-
-                    for (var i = 0; i < characteristics.length && !valid; i++) {
-                        if (characteristics[i].name.toLowerCase() == 'productid' &&
-                                characteristics[i].value == productValue) {
-                            valid = true;
-                        }
-                    }
-
-                    return valid;
-                });
-
-                // Attach new body
-                utils.updateBody(req, filteredBody);
-            }
-            return callback(null);
         } else {
             return callback(null);
         }
@@ -125,7 +114,7 @@ var usageManagement = ( function () {
     //////////////////////////////////////////////////////////////////////////////////////////////
 
     var validators = {
-        'GET': [ utils.validateLoggedIn, tmfUtils.filterRelatedPartyFields ],
+        'GET': [ utils.validateLoggedIn, tmfUtils.filterRelatedPartyFields, checkFilters ],
         'POST': [ validateApiKey ],
         'PATCH': [ utils.methodNotAllowed ],
         'PUT': [ utils.methodNotAllowed ],

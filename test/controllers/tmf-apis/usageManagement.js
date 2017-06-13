@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -135,7 +135,7 @@ describe('Usage Management API', function () {
         
         describe('GET', function () {
 
-            var testRelatedParty = function (filterRelatedPartyFields, expectedErr, done) {
+            var testGetUsage = function (filterRelatedPartyFields, expectedErr, validator, query, done) {
 
                 var utils = jasmine.createSpyObj('utils', ['validateLoggedIn']);
                 utils.validateLoggedIn.and.callFake(function (req, callback) {
@@ -145,17 +145,24 @@ describe('Usage Management API', function () {
                 var tmfUtils = jasmine.createSpyObj('tmfUtils', ['filterRelatedPartyFields']);
                 tmfUtils.filterRelatedPartyFields.and.callFake(filterRelatedPartyFields);
 
+                var storeClient = jasmine.createSpyObj('storeClient', ['refreshUsage']);
+                storeClient.refreshUsage.and.callFake((o, p, cb) => {
+                    cb(null);
+                });
+
                 var req = {
-                    method: 'GET'
+                    method: 'GET',
+                    query: query
                 };
 
-                var usageManagementAPI = getUsageManagementAPI({}, {}, utils, tmfUtils);
+                var usageManagementAPI = getUsageManagementAPI({}, {storeClient: storeClient}, utils, tmfUtils);
 
                 usageManagementAPI.checkPermissions(req, function (err) {
                     expect(err).toBe(expectedErr);
                     expect(utils.validateLoggedIn).toHaveBeenCalled();
                     expect(tmfUtils.filterRelatedPartyFields).toHaveBeenCalled();
-                    
+
+                    validator(storeClient);
                     done();
                 });
             };
@@ -166,7 +173,9 @@ describe('Usage Management API', function () {
                     return callback();
                 };
 
-                testRelatedParty(filterRelatedPartyFields, null, done);
+                testGetUsage(filterRelatedPartyFields, null, (storeClient) => {
+                    expect(storeClient.refreshUsage).not.toHaveBeenCalled();
+                }, null, done);
             });
 
             it('should call callback with error when retrieving list of usages and using invalid filters', function (done) {
@@ -180,7 +189,45 @@ describe('Usage Management API', function () {
                     return callback(error);
                 };
 
-                testRelatedParty(filterRelatedPartyFields, error, done);
+                testGetUsage(filterRelatedPartyFields, error, (storeClient) => {
+                    expect(storeClient.refreshUsage).not.toHaveBeenCalled();
+                }, null, done);
+            });
+
+            it('should call refreshAccounting when the orderId and productId filter has been included', function (done) {
+                var filterRelatedPartyFields = function (req, callback) {
+                    return callback();
+                };
+
+                var query = {
+                    'usageCharacteristic.orderId': '1',
+                    'usageCharacteristic.productId': '2'
+                };
+
+                testGetUsage(filterRelatedPartyFields, null, (storeClient) => {
+                    expect(storeClient.refreshUsage)
+                        .toHaveBeenCalledWith(
+                            query['usageCharacteristic.orderId'],
+                            query['usageCharacteristic.productId'],
+                            jasmine.any(Function));
+                }, query, done);
+            });
+
+            it('should include productId filter when usageCharacteristic.value query string has been included', function (done) {
+                var filterRelatedPartyFields = function (req, callback) {
+                    return callback();
+                };
+
+                var query = {
+                    'usageCharacteristic.value': '2'
+                };
+
+                testGetUsage(filterRelatedPartyFields, null, (storeClient) => {
+                    expect(storeClient.refreshUsage).not.toHaveBeenCalled();
+                    expect(query).toEqual({
+                        'usageCharacteristic.productId': '2'
+                    });
+                }, query, done);
             });
         });
 
@@ -196,7 +243,6 @@ describe('Usage Management API', function () {
                 accountingService.findOne.and.callFake(findOne);
 
                 var usageManagementAPI = getUsageManagementAPI(accountingService, {}, {}, {});
-                var path = '/apiKey';
 
                 var req = {
                     method: 'POST',
@@ -318,97 +364,6 @@ describe('Usage Management API', function () {
                 it('should notify the Store if the usage management API notification is successful (path end with "/")', function (done) {
 
                     testPostValidation(USAGE_URL, true, done);
-                });
-            });
-
-            describe('GET request', function() {
-                var rawBody = [{
-                    'usageCharacteristic': [{
-                        name: 'correlationNumber',
-                        value: '2'
-                    }, {
-                        name: 'productId',
-                        value: '1'
-                    }]
-                }, {
-                    'usageCharacteristic': [{
-                        name: 'correlationNumber',
-                        value: '2'
-                    }, {
-                        name: 'productId',
-                        value: '1'
-                    }]
-                }, {
-                    'usageCharacteristic': [{
-                        name: 'correlationNumber',
-                        value: '2'
-                    }, {
-                        name: 'productId',
-                        value: '2'
-                    }]
-                }];
-
-                var testUsageFilter = function(query, expBody, done) {
-                    var utils = jasmine.createSpyObj('utils', ['updateBody']);
-                    utils.updateBody.and.callFake(function (req, body) {
-                    });
-
-                    var storeClient = mockStoreClient();
-                    var store = {
-                        storeClient: storeClient
-                    };
-
-                    var req = {
-                        method: 'GET',
-                        status: 200,
-                        body: JSON.stringify(rawBody),
-                        apiUrl: USAGE_URL + query
-                    };
-
-                    var usageManagementAPI = getUsageManagementAPI({}, store, utils, {});
-
-                    usageManagementAPI.executePostValidation(req, function (err) {
-
-                        expect(err).toBe(null);
-                        expect(storeClient.validateUsage).not.toHaveBeenCalled();
-
-                        if (expBody) {
-                            expect(utils.updateBody).toHaveBeenCalledWith(req, expBody);
-                        } else {
-                            expect(utils.updateBody).not.toHaveBeenCalled();
-                        }
-
-                        done();
-                    });
-                };
-
-                it ('should return the complete usage list when a product id has not been included', function(done) {
-                    testUsageFilter('', null, done);
-                });
-
-                it ('should filter the returned usage list when a product id has been included', function(done) {
-                    var expBody = [{
-                        'usageCharacteristic': [{
-                            name: 'correlationNumber',
-                            value: '2'
-                        }, {
-                            name: 'productId',
-                            value: '1'
-                        }]
-                    }, {
-                        'usageCharacteristic': [{
-                            name: 'correlationNumber',
-                            value: '2'
-                        }, {
-                            name: 'productId',
-                            value: '1'
-                        }]
-                    }];
-                    testUsageFilter('?usageCharacteristic.value=1', expBody, done);
-                });
-
-                it ('should return an empty list when none of the usages includes the specified product id', function(done) {
-                    testUsageFilter('?usageCharacteristic.value=3', [], done);
                 });
             });
         });

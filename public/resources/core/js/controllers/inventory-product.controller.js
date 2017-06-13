@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -35,7 +35,7 @@
         .controller('InventorySearchCtrl', InventorySearchController)
         .controller('InventoryDetailsCtrl', ProductDetailController);
 
-    function InventorySearchController($scope, $state, $rootScope, EVENTS, InventoryProduct, INVENTORY_STATUS, Utils, Party, User) {
+    function InventorySearchController($scope, $state, $rootScope, EVENTS, InventoryProduct, INVENTORY_STATUS, Utils) {
         /* jshint validthis: true */
         var vm = this;
 
@@ -71,12 +71,8 @@
                 $("#searchbutton").click();
         }
 
-	$scope.$on(Party.EVENTS.USER_SESSION_SWITCHED, function (event, message, obj) {
-	    inventorySearch();
-	});
-
-	function inventorySearch() {
-	    vm.list.status = LOADING;
+        function inventorySearch() {
+            vm.list.status = LOADING;
 
             if (vm.offset >= 0) {
                 var params = {};
@@ -93,7 +89,7 @@
                     vm.list.status = ERROR;
                 });
             }
-	};
+        }
 	
 
         $scope.$watch(function () {
@@ -314,9 +310,11 @@
         function getUsageURL() {
             var startingChar = USAGE_CHART_URL.indexOf('?') > -1 ? '&' : '?';
             var server = window.location.origin;
+            var orderId = vm.item.name.split('=')[1];
 
             // Get the endpoint of the usage mashup including the access token and the product id
-            return USAGE_CHART_URL + startingChar + 'productId=' + vm.item.id + '&token=' + LOGGED_USER.bearerToken + '&server=' + server;
+            return USAGE_CHART_URL + startingChar + 'orderId=' + orderId +
+                '&productId=' + vm.item.id + '&token=' + LOGGED_USER.bearerToken + '&server=' + server;
         }
 
         function characteristicMatches(productChar, specChar, offId, productId) {

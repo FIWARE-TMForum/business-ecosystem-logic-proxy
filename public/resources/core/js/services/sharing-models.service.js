@@ -138,7 +138,7 @@
                 params = {};
             }
 
-            params.providerId = User.loggedUser.id;
+            params.providerId = User.loggedUser.currentUser.id;
             return search(modelsResource, params);
         }
 
@@ -159,7 +159,7 @@
                 params = {};
             }
 
-            params.providerId = User.loggedUser.id;
+            params.providerId = User.loggedUser.currentUser.id;
             return search(transactionResource, params);
         }
 
@@ -183,7 +183,7 @@
                 params = {};
             }
 
-            params.providerId = User.loggedUser.id;
+            params.providerId = User.loggedUser.currentUser.id;
             return search(reportResource, params);
         }
 

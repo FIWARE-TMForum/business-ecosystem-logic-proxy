@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -72,10 +72,6 @@
         $scope.$watch(function () {
             return vm.offset;
         }, updateRSModels);
-
-        $scope.$on(Party.EVENTS.USER_SESSION_SWITCHED, function (event, message, obj) {
-            updateRSModels();
-        });
     }
 
     function calculateTotalPercentage(platformValue, ownerValue, currentStValue, stakeholders) {

@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -29,29 +29,6 @@ var party = (function() {
         callback(null);
     };
 
-    var validateCreation = function(req, callback) {
-
-        try {
-
-            var party = JSON.parse(req.body);
-
-            if (party.id && party.id === req.user.id) {
-                callback(null);
-            } else {
-                callback({
-                    status: 403,
-                    message: 'Provided party ID and request user ID mismatch'
-                });
-            }
-
-        } catch (e) {
-            callback({
-                status: 400,
-                message: 'The provided body is not a valid JSON'
-            });
-        }
-    };
-
     var validateUpdate = function(req, callback) {
 
         var individualsPattern = new RegExp('^/' + config.endpoints.party.path +
@@ -65,18 +42,17 @@ var party = (function() {
                 status: 404,
                 message: 'The given path is invalid'
             });
+        } else if (req.user.id !== regexResult[3] || (regexResult[1] == 'individual' && utils.isOrganization(req))
+                || (regexResult[1] == 'organization' && !utils.isOrganization(req))
+                || (regexResult[1] == 'organization' && utils.isOrganization(req)
+                    && !utils.hasRole(req.user, config.oauth2.roles.orgAdmin))) {
+
+            callback({
+                status: 403,
+                message: 'You are not allowed to access this resource'
+            });
         } else {
-            // regexResult[3] contains the user id
-	        var org = req.user.organizations ? req.user.organizations.find( x => x.id === regexResult[3]) : undefined;
-	        // the first condition checks if the individual is the one calling
-	        if (req.user.id === regexResult[3] || (org && org.roles.findIndex(x => x.name === "Admin") > -1)) {
-                callback(null);
-	        } else {
-		        callback({
-		            status: 403,
-		            message: 'You are not allowed to access this resource'
-                });
-	        }
+            callback(null);
         }
     };
 
@@ -86,7 +62,7 @@ var party = (function() {
 
     var validators = {
         'GET': [ validateAllowed ],
-        'POST': [ utils.validateLoggedIn, validateCreation ],
+        'POST': [ utils.methodNotAllowed ],
         'PATCH': [ utils.validateLoggedIn, validateUpdate ],
         'PUT': [ utils.validateLoggedIn, validateUpdate ],
         'DELETE': [ utils.validateLoggedIn, validateUpdate ]

@@ -29,7 +29,7 @@
         .module('app')
         .controller('PagerController', PagerController);
 
-    function PagerController($scope, Utils) {
+    function PagerController($rootScope, $scope, Utils, Party, EVENTS) {
         // Load controller to paginate
         var managedCtrl = $scope.vm;
 
@@ -40,6 +40,7 @@
         var nPages = 0;
 
         managedCtrl.size = pageSize;
+        managedCtrl.reloadPager = reload;
 
         this.nextPage = nextPage;
         this.prevPage = prevPage;
@@ -104,6 +105,13 @@
             return currPage == nPages - 1;
         }
 
+        function reload() {
+            pages = [];
+            nPages = 0;
+            currPage = 0;
+            loadPages()
+        }
+
         function loadPages() {
             managedCtrl.getElementsLength().then(function (response) {
                 nPages = Math.ceil(response.size/pageSize);
@@ -129,6 +137,14 @@
         $scope.$watch(() => managedCtrl.sidebarInput, () => {
             if (typeof managedCtrl.sidebarInput === "undefined") return;
             loadPages();
+        });
+
+        $scope.$on(Party.EVENTS.USER_SESSION_SWITCHED, function () {
+            managedCtrl.list.status = 'LOADING';
+            managedCtrl.offset = -1;
+            reload();
+
+            $rootScope.$broadcast(EVENTS.PAGER_RELOADED);
         });
     }
 })();

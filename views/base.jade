@@ -39,6 +39,7 @@ html(ng-app="app")
         })
         .constant('PLATFORM_REVENUE', #{ platformRevenue })
         .constant('USAGE_CHART_URL', '#{ usageChartURL }')
+        .constant('ROLES', { seller: '#{ seller }', customer: '#{ customer }', orgAdmin: '#{ orgAdmin }'})
         .run(function($rootScope, $state, $injector) {
 
           $rootScope.$on('$stateChangeStart', function (e, toState, toParams) {
@@ -68,12 +69,20 @@ html(ng-app="app")
               id: '#{ user.id }',
               name: '#{ user.displayName }',
               email: '#{ user.email }',
+              roles: '#{ JSON.stringify(user.roles) }',
               href: '#{ contextPath }/#{ partyPath }/api/partyManagement/v2/individual/#{ user.id }'
             }
-            
           })
           .run(function ($http, LOGGED_USER) {
             $http.defaults.headers.common.Authorization = 'Bearer ' + LOGGED_USER.bearerToken;
+          })
+          .run(function (LOGGED_USER) {
+            // Load initial objects
+            var organizations = JSON.parse(LOGGED_USER.organizations.replace(/&quot;/g, '"'));
+            var roles = JSON.parse(LOGGED_USER.currentUser.roles.replace(/&quot;/g, '"'));
+            LOGGED_USER.organizations = organizations.organizations;
+            LOGGED_USER.currentUser.roles = roles;
+            LOGGED_USER.roles = roles;
           });
 
     block scripts

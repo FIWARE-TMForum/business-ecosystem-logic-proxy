@@ -112,6 +112,12 @@ describe("Test index helper library", function () {
                 return new SearchRead({
                     objectMode: true
                 });
+            },
+            totalHits: function (query, callback) {
+                if (extra.checksearch) {
+                    extra.checksearch(query);
+                }
+                callback(null, extra.countdata);
             }
         };
 
@@ -120,6 +126,7 @@ describe("Test index helper library", function () {
         spyOn(si, "close").and.callThrough();
         spyOn(si, "del").and.callThrough();
         spyOn(si, "search").and.callThrough();
+        spyOn(si, "totalHits").and.callThrough();
 
         ['offerings', 'products', 'catalogs', 'inventory', 'orders'].forEach((index) => {
             indexStore[index] = si;
@@ -412,6 +419,26 @@ describe("Test index helper library", function () {
     it("should fix the user id doing an MD5 hash", function () {
         var indexes = getIndexLib();
         expect(indexes.fixUserId("some-id_")).toEqual(md5("some-id_"));
+    });
+
+    it('should use offering index and return a count', function (done) {
+        var q = {query: {}};
+
+        var extra = {
+            checksearch: query => {
+                expect(query).toEqual(q);
+            },
+            countdata: 5
+        };
+
+        helper(extra, "searchOfferings", (si, count) => {
+            expect(count).toEqual(5);
+            expect(si.totalHits).toHaveBeenCalledWith(q, jasmine.any(Function));
+            done();
+        }, (si, err) => {
+            expect("Error, promise rejected instead of resolved: " + err).toBe(true);
+            done();
+        }, q, true);
     });
 
     // CATALOGS
@@ -1164,14 +1191,14 @@ describe("Test index helper library", function () {
                 .then(() => {
                     expect(fs.reg.test).toHaveBeenCalledWith("url");
                     expect(fs.createOffer).toHaveBeenCalled();
-                    expect(fs.search).toHaveBeenCalledWith(search);
+                    expect(fs.search).toHaveBeenCalledWith(search, false);
 
                     expect(req.apiUrl).toEqual("path?id=1,2&depth=2");
                     done();
                 });
         });
 
-        var testSearchMiddleware = function testSearchMiddleware(query, expUrl, done) {
+        var testSearchMiddleware = function testSearchMiddleware(query, expUrl, isC, results, done) {
             var indexes = getIndexLib();
 
             var req = {
@@ -1183,7 +1210,6 @@ describe("Test index helper library", function () {
                 }
             };
 
-            var results = [];
             var search = {
                 query: [{
                     AND: {'search': ['value']}
@@ -1193,7 +1219,7 @@ describe("Test index helper library", function () {
             var fs = {
                 reg: {test: () => {}},
                 createOffer: () => search,
-                search: () => {}
+                search: () => {},
             };
 
             spyOn(fs.reg, "test").and.returnValue(true);
@@ -1204,7 +1230,7 @@ describe("Test index helper library", function () {
                 .then(() => {
                     expect(fs.reg.test).toHaveBeenCalledWith("url");
                     expect(fs.createOffer).toHaveBeenCalled();
-                    expect(fs.search).toHaveBeenCalledWith(search);
+                    expect(fs.search).toHaveBeenCalledWith(search, isC);
 
                     expect(req.apiUrl).toEqual(expUrl);
                     done();
@@ -1215,13 +1241,13 @@ describe("Test index helper library", function () {
             testSearchMiddleware({
                 fields: "value",
                 notadd: "not"
-            }, "path?id=&fields=value", done);
+            }, "path?id=&fields=value", false, [], done);
         });
 
         it('should execute middleware and return count URL when action param included', function (done) {
             testSearchMiddleware({
                 action: 'count'
-            }, "/" + testUtils.getDefaultConfig().endpoints.management.path + '/count/0', done);
+            }, "/" + testUtils.getDefaultConfig().endpoints.management.path + '/count/0', true, 0, done);
         });
     });
 });
