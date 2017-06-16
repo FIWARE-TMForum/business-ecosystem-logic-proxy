@@ -1,11 +1,10 @@
 .row
-  .col-xs-12.col-sm-3
-    include ./breadcrumb.jade
-  .col-xs-12.col-sm-9
-    .btn-toolbar.pull-right
-      .btn-group.z-depth-1
+  .col-xs-12
+    .btn-toolbar.toolbar-container
+      include ./breadcrumb.jade
+      .btn-group.z-depth-1.search-bar
         input.form-control(ng-keyup="searchVM.handleEnterKeyUp($event)", ng-init="searchVM.initializeInput()", ng-model="searchVM.searchInput", type="text", placeholder="Search...", id="searchparams")
-      .btn-group.z-depth-1
+      .btn-group.z-depth-1.search-bar
         a.btn.btn-default(ui-sref="inventory.product({ body: searchVM.getSearchInputContent() })", id="searchbutton")
           span.item-icon.fa.fa-search
           span.item-text.hidden-xs Search
