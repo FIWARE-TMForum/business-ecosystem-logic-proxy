@@ -562,6 +562,7 @@ describe("Test index helper library", function () {
     };
 
     var productExpected = {
+        name: 'name',
         id: "product:1",
         href: "http://1",
         lifecycleStatus: "Active",

@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -136,6 +136,10 @@
 
             if (filters.body !== undefined) {
                 params['body'] = filters.body.replace(/\s/g, ',');
+            }
+
+            if (filters.sort) {
+                params['sort'] = filters.sort;
             }
 
             method(params, function (productSpecList) {

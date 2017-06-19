@@ -34,14 +34,14 @@
 
         $stateProvider
             .state('stock.offering', {
-                url: '/offering?status&type&body',
+                url: '/offering?status&type&body&sort',
                 params: {
                     owner: true,
                     flow: 1,
                     status: 'Active,Launched'
                 },
                 data: {
-                    filters: ['status', 'type']
+                    filters: ['status', 'type', 'sort']
                 },
                 templateUrl: 'stock/product-offering/search',
                 controller: 'OfferingSearchCtrl as searchVM'

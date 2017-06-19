@@ -34,13 +34,13 @@
 
         $stateProvider
             .state('stock.catalogue', {
-                url: '/catalogue?status&role&body',
+                url: '/catalogue?status&role&body&sort',
                 params: {
                     owner: true,
                     status: 'Active,Launched'
                 },
                 data: {
-                    filters: ['status', 'role']
+                    filters: ['status', 'role', 'sort']
                 },
                 templateUrl: 'stock/product-catalogue/search',
                 controller: 'CatalogueSearchCtrl as searchVM'
