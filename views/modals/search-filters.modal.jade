@@ -59,6 +59,22 @@
                 input(type="radio", ng-model="filterVM.filters.type", value="Bundle")
                 i.fa.fa-lg
               | Bundle
+        .form-group.no-user-select(ng-show="filterVM.exists('sort')")
+          .h4
+            strong Sort By
+          hr
+          .item-radio
+            label.radio
+              .track
+                input(type="radio", ng-model="filterVM.filters.sort")
+                i.fa.fa-lg
+              | Last Updated
+          .item-radio
+            label.radio
+              .track
+                input(type="radio", ng-model="filterVM.filters.sort", value="name")
+                i.fa.fa-lg
+              | Name
       .modal-footer
         a.btn.btn-default.z-depth-1(data-dismiss="modal")
           span.item-text Close

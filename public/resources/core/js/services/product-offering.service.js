@@ -217,6 +217,10 @@
                 params['lifecycleStatus'] = LIFECYCLE_STATUS.LAUNCHED;
             }
 
+            if (filters.sort) {
+                params['sort'] = filters.sort;
+            }
+
             if (filters.offset !== undefined) {
                 params['offset'] = filters.offset;
                 params['size'] = filters.size;

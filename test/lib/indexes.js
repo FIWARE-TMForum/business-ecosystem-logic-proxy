@@ -471,6 +471,9 @@ describe("Test index helper library", function () {
             lastUpdate: {
                 sortable: true
             },
+            name: {
+                sortable: true
+            },
             lifecycleStatus: {
                 preserveCase: false
             },
@@ -1165,20 +1168,8 @@ describe("Test index helper library", function () {
             expect(fs.search).not.toHaveBeenCalled();
         });
 
-        it('should execute middleware with default search correctly', function(done) {
+        var testSearchMiddlewareQuery = function (req, search, done) {
             var indexes = getIndexLib();
-
-            var req = {
-                method: "GET",
-                apiUrl: "url",
-                query: {
-                    depth: "2",
-                    notadd: "not"
-                },
-                _parsedUrl: {
-                    pathname: "path"
-                }
-            };
 
             var fs = {
                 reg: {test: () => {}},
@@ -1187,16 +1178,6 @@ describe("Test index helper library", function () {
             };
 
             var results =[{document: {originalId: 1}}, {document: {originalId: 2}}];
-
-            var search = {
-                sort: {
-                    field: "lastUpdate",
-                    direction: "desc"
-                },
-                query: {
-                    AND: { "*": ["*"]}
-                }
-            };
 
             spyOn(fs.reg, "test").and.returnValue(true);
             spyOn(fs, "createOffer").and.callFake(indexes.genericCreateQuery.bind(this, [], "", null));
@@ -1211,6 +1192,57 @@ describe("Test index helper library", function () {
                     expect(req.apiUrl).toEqual("path?id=1,2&depth=2");
                     done();
                 });
+        };
+
+        it('should execute middleware with default search correctly', function(done) {
+            var req = {
+                method: "GET",
+                apiUrl: "url",
+                query: {
+                    depth: "2",
+                    notadd: "not"
+                },
+                _parsedUrl: {
+                    pathname: "path"
+                }
+            };
+
+            var search = {
+                sort: {
+                    field: "lastUpdate",
+                    direction: "desc"
+                },
+                query: {
+                    AND: { "*": ["*"]}
+                }
+            };
+            testSearchMiddlewareQuery(req, search, done);
+        });
+
+        it('should execute search middleware with explicit sorting parameter', function (done) {
+            var req = {
+                method: "GET",
+                apiUrl: "url",
+                query: {
+                    depth: "2",
+                    notadd: "not",
+                    sort: "name"
+                },
+                _parsedUrl: {
+                    pathname: "path"
+                }
+            };
+
+            var search = {
+                sort: {
+                    field: "name",
+                    direction: "asc"
+                },
+                query: {
+                    AND: { "*": ["*"]}
+                }
+            };
+            testSearchMiddlewareQuery(req, search, done);
         });
 
         var testSearchMiddleware = function testSearchMiddleware(query, expUrl, isC, results, done) {
