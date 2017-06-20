@@ -48,7 +48,7 @@
 
           .form-group.text-right
             a.btn.btn-success(
-            ng-click="updateVM.update()"
+            ng-click="updateVM.updateImage()"
             ng-disabled="!updateVM.form.$valid || updateVM.update.status === updateVM.STATUS.PENDING"
             )
               span.item-icon.fa.fa-spin.fa-spinner(ng-if="updateVM.update.status === updateVM.STATUS.PENDING")

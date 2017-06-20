@@ -36,7 +36,7 @@
             productId: '@id'
         }, {
             update: {
-                method:'PUT'
+                method:'PATCH'
             }
         });
 
@@ -58,6 +58,8 @@
                 SUBSTITUTION: {code: 'substitution', name: 'Substitution'}
             }
         };
+
+        var PATCHABLE_ATTRS = ['description', 'lifecycleStatus', 'name', 'brand', 'productNumber', 'version'];
 
         var Relationship = function Relationship(productSpec, relationshipType) {
             this.productSpec = productSpec;
@@ -88,6 +90,7 @@
         return {
             VALUE_TYPES: VALUE_TYPES,
             TYPES: TYPES,
+            PATCHABLE_ATTRS: PATCHABLE_ATTRS,
             Relationship: Relationship,
             search: search,
             count: count,
@@ -216,11 +219,7 @@
                 productSpecId: resource.id
             };
 
-            return ProductSpec.update(params, angular.extend(resource.toJSON(), dataUpdated, {
-                bundledProductSpecification: resource.bundledProductSpecification.map(function (productSpec) {
-                    return productSpec.serialize();
-                })
-            }))
+            return ProductSpec.update(params, dataUpdated)
                 .$promise
                 .then(detailBundled)
                 .then(detailRelationship);

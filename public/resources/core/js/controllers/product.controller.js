@@ -621,6 +621,7 @@
         vm.pictureFormat = 'url';
 
         vm.update = update;
+        vm.updateImage = updateImage;
         vm.updateStatus = updateStatus;
         vm.formatCharacteristicValue = formatCharacteristicValue;
 
@@ -647,8 +648,8 @@
 
         var updatePromise = null;
 
-        function update() {
-            updatePromise = ProductSpec.update(vm.item, vm.data.toJSON());
+        function executeUpdate(dataUpdated) {
+            updatePromise = ProductSpec.update(vm.item, dataUpdated);
             updatePromise.then(function (productUpdated) {
                 $state.go('stock.product.update', {
                     productId: productUpdated.id
@@ -664,6 +665,26 @@
                     error: Utils.parseError(response, 'Unexpected error trying to update the product spec.')
                 });
             });
+        }
+
+        function updateImage() {
+            if (!angular.equals(vm.item.attachment[0].url, vm.data.attachment[0].url)) {
+                executeUpdate({
+                    attachment: vm.data.attachment
+                })
+            }
+        }
+
+        function update() {
+            var dataUpdated = {};
+
+            ProductSpec.PATCHABLE_ATTRS.forEach(function (attr) {
+                if (!angular.equals(vm.item[attr], vm.data[attr])) {
+                    dataUpdated[attr] = vm.data[attr];
+                }
+            });
+
+            executeUpdate(dataUpdated);
         }
 
         Object.defineProperty(update, 'status', {
