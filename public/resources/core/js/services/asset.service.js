@@ -34,7 +34,8 @@
         var resource = $resource(URLS.ASSET_MANAGEMENT + '/assets/uploadJob');
 
         return {
-            create: create
+            registerAsset: registerAsset,
+            uploadAsset: uploadAsset
         };
 
         function create(data) {
@@ -47,6 +48,44 @@
             });
 
             return deferred.promise;
+        }
+
+        function registerAsset(url, assetType, contentType, meta, callback, errCallback) {
+            var data = {
+                resourceType: assetType,
+                content: url,
+                contentType: contentType
+            };
+
+            if (meta !== null) {
+                data.metadata = meta;
+            }
+            create(data).then(callback, errCallback);
+        }
+
+        function uploadAsset(file, scope, assetType, contentType, publicFile, meta, callback, errCallback) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var data = {
+                    content: {
+                        name: scope + '__' + file.name,
+                        data: btoa(e.target.result)
+                    },
+                    contentType: contentType
+                };
+
+                if (publicFile) {
+                    data.isPublic = true;
+                } else {
+                    data.resourceType = assetType;
+                }
+                if (meta !== null) {
+                    data.metadata = meta;
+                }
+
+                create(data).then(callback, errCallback);
+            };
+            reader.readAsBinaryString(file);
         }
     }
 

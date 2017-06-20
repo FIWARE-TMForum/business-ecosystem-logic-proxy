@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -152,6 +152,58 @@
         }, productSearch);
     }
 
+    function buildPictureController(vm, $scope, pictureForm, Asset) {
+        vm.clearFileInput = clearFileInput;
+
+        function clearFileInput() {
+            if (!pictureForm.pictureFile) {
+                pictureForm.pictureFile = {};
+            } else {
+                // Reset possible previous errors
+                pictureForm.pictureFile.$invalid = false;
+                pictureForm.pictureFile.$error = {};
+            }
+        }
+
+        $scope.$watch(function watchFile() {
+            return vm.pictureFile;
+        }, function() {
+            // Check that the new file is a valid image
+            if (vm.pictureFile) {
+                vm.clearFileInput();
+                pictureForm.pictureFile.$dirty = true;
+
+                if (vm.pictureFile.type != 'image/gif' && vm.pictureFile.type != 'image/jpeg' &&
+                    vm.pictureFile.type != 'image/png' && vm.pictureFile.type != 'image/bmp') {
+
+                    // Set input error
+                    pictureForm.pictureFile.$invalid = true;
+                    pictureForm.pictureFile.$error = {
+                        format: true
+                    };
+                    return;
+                }
+
+                var scope = vm.data.name.replace(/ /g, '');
+
+                if (scope.length > 10) {
+                    scope = scope.substr(0, 10);
+                }
+                // Upload the file to the server when it is included in the input
+                Asset.uploadAsset(vm.pictureFile, scope, null, vm.pictureFile.type, true, null, function(result) {
+                    vm.data.attachment[0].url = result.content
+                }, function() {
+                    // The picture cannot be uploaded set error in input
+                    pictureForm.pictureFile.$invalid = true;
+                    pictureForm.pictureFile.$error = {
+                        upload: true
+                    };
+                });
+            }
+        });
+        clearFileInput();
+    }
+
     function ProductCreateController($q, $scope, $state, $rootScope, EVENTS, PROMISE_STATUS, ProductSpec, Asset, AssetType, Utils) {
         /* jshint validthis: true */
         var vm = this;
@@ -238,7 +290,8 @@
 
         vm.resetCharacteristicValue = resetCharacteristicValue;
         vm.getFormattedValueOf = getFormattedValueOf;
-        vm.clearFileInput = clearFileInput;
+
+        vm.loadPictureController = loadPictureController;
 
         /* Meta info management */
         vm.meta = {};
@@ -438,43 +491,6 @@
             return filterProduct(product) > -1;
         }
 
-        function registerAsset(url, assetType, contentType, callback, errCallback) {
-            var data = {
-                resourceType: assetType,
-                content: url,
-                contentType: contentType
-            };
-            if (Object.keys(vm.meta).length) {
-                data.metadata = vm.meta;
-            }
-            Asset.create(data).then(callback, errCallback);
-        }
-
-        function uploadAsset(file, assetType, contentType, publicFile, meta, callback, errCallback) {
-            var reader = new FileReader();
-            reader.onload = function(e) {
-                var data = {
-                    content: {
-                        name: file.name,
-                        data: btoa(e.target.result)
-                    },
-                    contentType: contentType
-                };
-
-                if (publicFile) {
-                    data.isPublic = true;
-                } else {
-                    data.resourceType = assetType;
-                }
-                if (meta !== null) {
-                    data.metadata = meta;
-                }
-
-                Asset.create(data).then(callback, errCallback);
-            };
-            reader.readAsBinaryString(file);
-        }
-
         function create() {
 
             function showAssetError(response) {
@@ -487,13 +503,20 @@
                 });
             }
 
+            var meta = null;
+            if (Object.keys(vm.meta).length) {
+                meta = vm.meta;
+            }
+
             // If the format is file upload it to the asset manager
             if (vm.isDigital && vm.currFormat === 'FILE') {
-                var meta = null;
-                if (Object.keys(vm.meta).length) {
-                    meta = vm.meta;
+                var scope = vm.data.name.replace(/ /g, '');
+
+                if (scope.length > 10) {
+                    scope = scope.substr(0, 10);
                 }
-                uploadAsset(vm.assetFile,
+
+                Asset.uploadAsset(vm.assetFile, scope,
                     vm.digitalChars[0].productSpecCharacteristicValue[0].value,
                     vm.digitalChars[1].productSpecCharacteristicValue[0].value, false, meta, function (result) {
                     // Set file location
@@ -501,10 +524,11 @@
                     saveProduct();
                 }, (response) => showAssetError(response));
             } else if (vm.isDigital && vm.currFormat === 'URL') {
-                registerAsset(
+                Asset.registerAsset(
                     vm.digitalChars[2].productSpecCharacteristicValue[0].value,
                     vm.digitalChars[0].productSpecCharacteristicValue[0].value,
                     vm.digitalChars[1].productSpecCharacteristicValue[0].value,
+                    meta,
                     () => saveProduct(),
                     (response) => showAssetError(response)
                 );
@@ -581,50 +605,12 @@
             });
         }
 
-        function clearFileInput() {
-            if (!vm.stepList[4].form.pictureFile) {
-                vm.stepList[4].form.pictureFile = {};
-            } else {
-                // Reset possible previous errors
-                vm.stepList[4].form.pictureFile.$invalid = false;
-                vm.stepList[4].form.pictureFile.$error = {};
-            }
+        function loadPictureController() {
+            buildPictureController(vm, $scope, vm.stepList[4].form, Asset);
         }
-
-        $scope.$watch(function watchFile(scope) {
-            return vm.pictureFile;
-        }, function() {
-            // Check that the new file is a valid image
-            if (vm.pictureFile) {
-                vm.clearFileInput();
-                vm.stepList[4].form.pictureFile.$dirty = true;
-
-                if (vm.pictureFile.type != 'image/gif' && vm.pictureFile.type != 'image/jpeg' &&
-                    vm.pictureFile.type != 'image/png' && vm.pictureFile.type != 'image/bmp') {
-
-                    // Set input error
-                    vm.stepList[4].form.pictureFile.$invalid = true;
-                    vm.stepList[4].form.pictureFile.$error = {
-                        format: true
-                    };
-                    return;
-                }
-
-                // Upload the file to the server when it is included in the input
-                uploadAsset(vm.pictureFile, null, vm.pictureFile.type, true, null, function(result) {
-                    vm.data.attachment[0].url = result.content
-                }, function() {
-                    // The picture cannot be uploaded set error in input
-                    vm.stepList[4].form.pictureFile.$invalid = true;
-                    vm.stepList[4].form.pictureFile.$error = {
-                        upload: true
-                    };
-                });
-            }
-        });
     }
 
-    function ProductUpdateController($state, $rootScope, EVENTS, PROMISE_STATUS, ProductSpec, Utils) {
+    function ProductUpdateController($state, $scope, $rootScope, EVENTS, PROMISE_STATUS, ProductSpec, Utils, Asset) {
         /* jshint validthis: true */
         var vm = this;
 
@@ -632,6 +618,7 @@
 
         vm.$state = $state;
         vm.item = {};
+        vm.pictureFormat = 'url';
 
         vm.update = update;
         vm.updateStatus = updateStatus;
@@ -639,6 +626,7 @@
 
         vm.createRelationship = createRelationship;
         vm.removeRelationship = removeRelationship;
+        vm.loadPictureController = loadPictureController;
 
         var detailPromise = ProductSpec.detail($state.params.productId);
         detailPromise.then(function (productRetrieved) {
@@ -725,6 +713,10 @@
             }
 
             return result;
+        }
+
+        function loadPictureController() {
+            buildPictureController(vm, $scope, vm.form, Asset);
         }
     }
 
