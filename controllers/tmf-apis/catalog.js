@@ -53,6 +53,7 @@ var catalog = (function() {
     var catalogOfferingsPattern = new RegExp('/catalog/[^/]+/productOffering/?');
     var offeringPattern = new RegExp('/catalog/[^/]+/productOffering/[^/]+/?$');
     var productsPattern = new RegExp('/productSpecification/?$');
+    var productPattern = new RegExp('/productSpecification/[^/]+/?$');
     var categoryPattern = new RegExp('/category/[^/]+/?$');
     var categoriesPattern = new RegExp('/category/?$');
     var catalogsPattern = new RegExp('/catalog/?$');
@@ -568,6 +569,44 @@ var catalog = (function() {
         }
     };
 
+    var validateProductUpdate = function (req, prevBody, newBody, callback) {
+        if (!!newBody.isBundle || !!newBody.bundledProductSpecification) {
+            // TODO: Support bundle updates of Active products
+            return callback({
+                status: 422,
+                message: 'It is not allowed to update bundle related attributes (isBundle, bundledProductSpecification) '
+            })
+        }
+
+        if (!!newBody.version  && tmfUtils.isDigitalProduct(prevBody.productSpecCharacteristic) &&
+            typeof newBody.productSpecCharacteristic === 'undefined' && newBody.version != prevBody.version) {
+            // Trying to upgrade the product without providing new asset info
+            return callback({
+                status: 422,
+                message: 'To upgrade digital product specifications it is required to provide new asset info'
+            });
+        }
+
+        if (typeof newBody.version === 'undefined' &&
+            !!newBody.productSpecCharacteristic && tmfUtils.isDigitalProduct(prevBody.productSpecCharacteristic)) {
+            // Trying to provide new asset info without upgrading the product
+            return callback({
+                status: 422,
+                message: 'To provide new asset info it is required to upgrade the product specification'
+            });
+        }
+
+        if (!!newBody.version && !!newBody.productSpecCharacteristic) {
+            return storeClient.upgradeProduct({
+                id: prevBody.id,
+                version: newBody.version,
+                productSpecCharacteristic: newBody.productSpecCharacteristic
+            }, req.user, callback);
+        }
+
+        return callback(null);
+    };
+
     var validateProduct = function(req, productSpec, callback) {
         // Check if the product is a bundle
         if (!productSpec.isBundle) {
@@ -724,7 +763,6 @@ var catalog = (function() {
                             }
                         });
                     }
-
                 });
             } else if (productsPattern.test(req.apiUrl)) {
 
@@ -920,14 +958,6 @@ var catalog = (function() {
                                     async.series([
                                         function (callback) {
 
-                                            if (parsedBody) {
-                                                validateProduct(req, parsedBody, callback);
-                                            } else {
-                                                callback(null);
-                                            }
-                                        },
-                                        function (callback) {
-
                                             var url = req.apiUrl;
 
                                             if (url.endsWith('/')) {
@@ -944,6 +974,14 @@ var catalog = (function() {
 
                                             validateInvolvedOfferingsState('product', parsedBody, offeringsContainProductPath, callback);
 
+                                        },
+                                        function (callback) {
+
+                                            if (parsedBody) {
+                                                validateProductUpdate(req, previousBody, parsedBody, callback);
+                                            } else {
+                                                callback(null);
+                                            }
                                         }], callback);
 
                                 } else {
@@ -1105,7 +1143,7 @@ var catalog = (function() {
         'GET': [ validateAllowed ],
         'POST': [ utils.validateLoggedIn, validateCreation ],
         'PATCH': [ utils.validateLoggedIn, validateUpdate ],
-        'PUT': [ utils.validateLoggedIn, validateUpdate ],
+        'PUT': [ utils.methodNotAllowed ],
         'DELETE': [ utils.validateLoggedIn, isCategory, validateUpdate]
     };
 
@@ -1166,9 +1204,50 @@ var catalog = (function() {
         }
     };
 
+    var handleAPIError = function (req, callback) {
+        if (productsPattern.test(req.apiUrl) && req.method == 'POST') {
+
+            var body = JSON.parse(req.reqBody);
+
+            // Notify the error to the charging backend to remove tha asset
+            storeClient.rollbackProduct(req.user, body, () => {
+                // No matter rollback status, return API message
+                callback(null);
+            });
+        } else if (productPattern.test(req.apiUrl) && req.method == 'PATCH') {
+
+            // There has been an error updating the product, check if the update was an
+            // asset upgrade
+
+            var body = JSON.parse(req.reqBody);
+            var getURLId = function(apiUrl) {
+                return apiUrl.split('/')[6];
+            };
+
+            if (!!body.version && !!body.productSpecCharacteristic) {
+                var id = !!body.id ? body.id : getURLId(req.apiUrl);
+
+                // Notify the error to the charging backend to downgrade the asset
+                return storeClient.rollbackProductUpgrade(req.user, {
+                    id: id,
+                    version: body.version,
+                    productSpecCharacteristic: body.productSpecCharacteristic
+                }, () => {
+                    callback(null);
+                });
+            }
+
+            callback(null);
+
+        }  else {
+            callback(null);
+        }
+    };
+
     return {
         checkPermissions: checkPermissions,
-        executePostValidation: executePostValidation
+        executePostValidation: executePostValidation,
+        handleAPIError: handleAPIError
     };
 
 })();
