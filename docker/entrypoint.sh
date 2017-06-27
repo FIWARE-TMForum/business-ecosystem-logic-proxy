@@ -14,8 +14,6 @@ echo "serviceIndexes  54645/tcp" >> /etc/services
 echo "Restarting xinetd service"
 service xinetd restart
 
-sed -i "s|config\.port|'$BIZ_ECOSYS_PORT'|" /business-ecosystem-logic-proxy/lib/tmfUtils.js
-
 echo "Cleaning indexes"
 rm -rf ./indexes/*
 
