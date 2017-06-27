@@ -1,6 +1,6 @@
 FROM ubuntu:16.04
 
-RUN apt-get update && apt-get install -y git python-pip wget mongodb vim; \
+RUN apt-get update && apt-get install -y git xinetd python-pip wget mongodb vim; \
     pip install sh requests; \
     git clone https://github.com/FIWARE-TMForum/business-ecosystem-logic-proxy;
 
@@ -16,19 +16,19 @@ VOLUME /business-ecosystem-logic-proxy/indexes
 
 RUN export PATH=$PATH:/business-ecosystem-logic-proxy/node-v6.9.1-linux-x64/bin; \
     npm install; \
-# This should be deleted as soon as the dependecies are fixed
     npm remove search-index-searcher; \
     npm install search-index-searcher@0.1.27; \
     npm install search-index-adder@^0.1.27; \
     npm install bunyan@^1.8.1; \
     npm install leveldown@^1.5.0; \
-    npm install levelup@^1.3.3;
+    npm install levelup@^1.3.3; \
+    cp config.js.template config.js
 
-RUN cp config.js.template config.js; 
-
-COPY ./entrypoint.py /
-COPY ./entrypoint.sh /
-#COPY ../fill_indexes.js /
+COPY ./entrypoint.py / \
+     ./entrypoint.sh / \
+     ./cleanIndex.sh /
+     
+COPY ./serviceIndexes /etc/xinetd.d/
 
 EXPOSE 8000
 
