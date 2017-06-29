@@ -8,6 +8,14 @@ sleep 15
 
 sed -i "s|config\.port|'$BIZ_ECOSYS_PORT'|" /business-ecosystem-logic-proxy/lib/tmfUtils.js
 
+echo "Adding cleanService to services"
+echo "serviceIndexes  54645/tcp" >> /etc/services
+
+echo "Restarting xinetd service"
+service xinetd restart
+
+echo "Cleaning indexes"
+rm -rf ./indexes/*
 
 echo "Creating indexes..."
 /business-ecosystem-logic-proxy/node-v6.9.1-linux-x64/bin/node fill_indexes.js
