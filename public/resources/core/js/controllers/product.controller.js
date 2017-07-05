@@ -34,7 +34,8 @@
         .module('app')
         .controller('ProductSearchCtrl', ProductSearchController)
         .controller('ProductCreateCtrl', ProductCreateController)
-        .controller('ProductUpdateCtrl', ProductUpdateController);
+        .controller('ProductUpdateCtrl', ProductUpdateController)
+        .controller('AssetController', AssetController);
 
     function ProductSearchController($scope, $state, $timeout, $rootScope, EVENTS, ProductSpec, LIFECYCLE_STATUS, DATA_STATUS, Utils) {
         /* jshint validthis: true */
@@ -204,6 +205,145 @@
         clearFileInput();
     }
 
+    function AssetController($scope, $rootScope, Asset, ProductSpec) {
+        var controller = $scope.vm;
+        var vm = this;
+
+        vm.assetTypes = [];
+        vm.digitalChars = [];
+        vm.meta = {};
+
+        vm.isSelected = isSelected;
+        vm.setCurrentType = setCurrentType;
+        vm.initMediaType = initMediaType;
+        /* Meta info management */
+        vm.getMetaLabel = getMetaLabel;
+
+        function isSelected(format) {
+            return vm.currFormat === format;
+        }
+
+        function getMetaLabel(id) {
+            return typeof vm.currentType.form[id].label !== 'undefined' ? vm.currentType.form[id].label : id;
+        }
+
+        function initMetaData() {
+            // Evaluate form field in order to include default values
+            if (typeof vm.currentType.form !== 'undefined') {
+                for (var id in vm.currentType.form) {
+                    if (typeof vm.currentType.form[id].default !== 'undefined') {
+                        vm.meta[id] = vm.currentType.form[id].default;
+                    }
+                }
+            }
+        }
+
+        function setCurrentType() {
+            var i, found = false;
+            var assetType = vm.digitalChars[0].productSpecCharacteristicValue[0].value;
+
+            for (i = 0; i < vm.assetTypes.length && !found; i++) {
+
+                if (assetType === vm.assetTypes[i].name) {
+                    found = true;
+                    vm.currentType = vm.assetTypes[i];
+                    vm.meta = {};
+                    initMetaData();
+                }
+            }
+            vm.currFormat = vm.currentType.formats[0];
+        }
+
+        function saveAsset(scope, callback) {
+            var meta = null;
+
+            function showAssetError(response) {
+                var defaultMessage = 'There was an unexpected error that prevented your ' +
+                    'digital asset to be registered';
+                var error = Utils.parseError(response, defaultMessage);
+
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                    error: error
+                });
+            }
+
+            if (Object.keys(vm.meta).length) {
+                meta = vm.meta;
+            }
+
+            if (vm.currFormat === 'FILE') {
+                // If the format is file, upload it to the asset manager
+                Asset.uploadAsset(vm.assetFile, scope,
+                    vm.digitalChars[0].productSpecCharacteristicValue[0].value,
+                    vm.digitalChars[1].productSpecCharacteristicValue[0].value, false, meta, function (result) {
+                        // Set file location
+                        vm.digitalChars[2].productSpecCharacteristicValue[0].value = result.content;
+                        callback();
+                    }, (response) => showAssetError(response));
+            } else if (controller.isDigital && vm.currFormat === 'URL') {
+                Asset.registerAsset(
+                    vm.digitalChars[2].productSpecCharacteristicValue[0].value,
+                    vm.digitalChars[0].productSpecCharacteristicValue[0].value,
+                    vm.digitalChars[1].productSpecCharacteristicValue[0].value,
+                    meta,
+                    () => callback(),
+                    (response) => showAssetError(response)
+                );
+            }
+        }
+
+        function getDigitalChars() {
+            return vm.digitalChars;
+        }
+
+        function initMediaType() {
+            if (vm.currentType.mediaTypes.length > 0) {
+                vm.digitalChars[1].productSpecCharacteristicValue[0].value = vm.currentType.mediaTypes[0];
+            } else {
+                vm.digitalChars[1].productSpecCharacteristicValue[0].value = '';
+            }
+        }
+
+        // Inject handler for creating asset
+        controller.assetCtl = {
+            saveAsset: saveAsset,
+            getDigitalChars: getDigitalChars
+        };
+
+        // Get the asset types related to the current scope
+        controller.getAssetTypes().then(function (typeList) {
+            angular.copy(typeList, vm.assetTypes);
+
+            if (typeList.length) {
+                // Initialize digital asset characteristics
+                vm.digitalChars.push(ProductSpec.createCharacteristic({
+                    name: "Asset type",
+                    description: "Type of the digital asset described in this product specification"
+                }));
+                vm.digitalChars[0].productSpecCharacteristicValue.push(ProductSpec.createCharacteristicValue({
+                    default: true,
+                    value: typeList[0].name
+                }));
+                vm.digitalChars.push(ProductSpec.createCharacteristic({
+                    name: "Media type",
+                    description: "Media type of the digital asset described in this product specification"
+                }));
+                vm.digitalChars[1].productSpecCharacteristicValue.push(ProductSpec.createCharacteristicValue({
+                    default: true
+                }));
+                vm.digitalChars.push(ProductSpec.createCharacteristic({
+                    name: "Location",
+                    description: "URL pointing to the digital asset described in this product specification"
+                }));
+                vm.digitalChars[2].productSpecCharacteristicValue.push(ProductSpec.createCharacteristicValue({
+                    default: true
+                }));
+                vm.currentType = typeList[0];
+                vm.currFormat = vm.currentType.formats[0];
+            }
+        })
+    }
+
     function ProductCreateController($q, $scope, $state, $rootScope, EVENTS, PROMISE_STATUS, ProductSpec, Asset, AssetType, Utils) {
         /* jshint validthis: true */
         var vm = this;
@@ -247,27 +387,24 @@
 
         vm.data = ProductSpec.buildInitialData();
         vm.stepList = stepList;
-        vm.assetTypes = [];
+
         vm.charList = [];
         vm.isDigital = false;
-        vm.digitalChars = [];
         vm.terms = {};
 
         vm.characteristicEnabled = false;
         vm.pictureFormat = "url";
 
         vm.create = create;
-        vm.setCurrentType = setCurrentType;
 
         vm.toggleBundle = toggleBundle;
 
         vm.hasProduct = hasProduct;
         vm.toggleProduct = toggleProduct;
 
-        vm.isSelected = isSelected;
-
         vm.createRelationship = createRelationship;
         vm.removeRelationship = removeRelationship;
+        vm.getAssetTypes = getAssetTypes;
 
         /* CHARACTERISTICS MEMBERS */
 
@@ -293,24 +430,6 @@
 
         vm.loadPictureController = loadPictureController;
 
-        /* Meta info management */
-        vm.meta = {};
-        vm.getMetaLabel = getMetaLabel;
-
-        function getMetaLabel(id) {
-            return typeof vm.currentType.form[id].label !== 'undefined' ? vm.currentType.form[id].label : id;
-        }
-
-        function initMetaData() {
-            // Evaluate form field in order to include default values
-            if (typeof vm.currentType.form !== 'undefined') {
-                for (var id in vm.currentType.form) {
-                    if (typeof vm.currentType.form[id].default !== 'undefined') {
-                        vm.meta[id] = vm.currentType.form[id].default;
-                    }
-                }
-            }
-        }
 
         function createRelationship(data) {
             var deferred = $q.defer();
@@ -413,40 +532,8 @@
             vm.characteristic.productSpecCharacteristicValue[index].default = true;
         }
 
-        AssetType.search().then(function (typeList) {
-            angular.copy(typeList, vm.assetTypes);
-
-            if (typeList.length) {
-                // Initialize digital asset characteristics
-                vm.digitalChars.push(ProductSpec.createCharacteristic({
-                    name: "Asset type",
-                    description: "Type of the digital asset described in this product specification"
-                }));
-                vm.digitalChars[0].productSpecCharacteristicValue.push(ProductSpec.createCharacteristicValue({
-                    default: true,
-                    value: typeList[0].name
-                }));
-                vm.digitalChars.push(ProductSpec.createCharacteristic({
-                    name: "Media type",
-                    description: "Media type of the digital asset described in this product specification"
-                }));
-                vm.digitalChars[1].productSpecCharacteristicValue.push(ProductSpec.createCharacteristicValue({
-                    default: true
-                }));
-                vm.digitalChars.push(ProductSpec.createCharacteristic({
-                    name: "Location",
-                    description: "URL pointing to the digital asset described in this product specification"
-                }));
-                vm.digitalChars[2].productSpecCharacteristicValue.push(ProductSpec.createCharacteristicValue({
-                    default: true
-                }));
-                vm.currentType = typeList[0];
-                vm.currFormat = vm.currentType.formats[0];
-            }
-        });
-
-        function isSelected(format) {
-            return vm.currFormat === format;
+        function getAssetTypes() {
+            return AssetType.search();
         }
 
         function filterProduct(product) {
@@ -492,46 +579,14 @@
         }
 
         function create() {
-
-            function showAssetError(response) {
-                var defaultMessage = 'There was an unexpected error that prevented your ' +
-                    'digital asset to be registered';
-                var error = Utils.parseError(response, defaultMessage);
-
-                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
-                    error: error
-                });
-            }
-
-            var meta = null;
-            if (Object.keys(vm.meta).length) {
-                meta = vm.meta;
-            }
-
-            // If the format is file upload it to the asset manager
-            if (vm.isDigital && vm.currFormat === 'FILE') {
+            if (vm.isDigital) {
                 var scope = vm.data.name.replace(/ /g, '');
 
                 if (scope.length > 10) {
                     scope = scope.substr(0, 10);
                 }
 
-                Asset.uploadAsset(vm.assetFile, scope,
-                    vm.digitalChars[0].productSpecCharacteristicValue[0].value,
-                    vm.digitalChars[1].productSpecCharacteristicValue[0].value, false, meta, function (result) {
-                    // Set file location
-                    vm.digitalChars[2].productSpecCharacteristicValue[0].value = result.content;
-                    saveProduct();
-                }, (response) => showAssetError(response));
-            } else if (vm.isDigital && vm.currFormat === 'URL') {
-                Asset.registerAsset(
-                    vm.digitalChars[2].productSpecCharacteristicValue[0].value,
-                    vm.digitalChars[0].productSpecCharacteristicValue[0].value,
-                    vm.digitalChars[1].productSpecCharacteristicValue[0].value,
-                    meta,
-                    () => saveProduct(),
-                    (response) => showAssetError(response)
-                );
+                vm.assetCtl.saveAsset(scope, saveProduct)
             } else {
                 saveProduct();
             }
@@ -541,29 +596,13 @@
             get: function () { return createPromise != null ? createPromise.$$state.status : -1; }
         });
 
-        function setCurrentType() {
-            var i, found = false;
-            var assetType = vm.digitalChars[0].productSpecCharacteristicValue[0].value;
-
-            for (i = 0; i < vm.assetTypes.length && !found; i++) {
-
-                if (assetType === vm.assetTypes[i].name) {
-                    found = true;
-                    vm.currentType = vm.assetTypes[i];
-                    vm.meta = {};
-                    initMetaData();
-                }
-            }
-            vm.currFormat = vm.currentType.formats[0];
-        }
-
         function saveProduct() {
             // Append product characteristics
             var data = angular.copy(vm.data);
             data.productSpecCharacteristic = angular.copy(vm.characteristics);
 
             if (vm.isDigital) {
-                data.productSpecCharacteristic = data.productSpecCharacteristic.concat(vm.digitalChars);
+                data.productSpecCharacteristic = data.productSpecCharacteristic.concat(vm.assetCtl.getDigitalChars());
             }
 
             if (vm.terms.title || vm.terms.text) {

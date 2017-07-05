@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -42,7 +42,8 @@
         .directive('convertToDate', convertToDateDirective)
         .directive('convertToNumber', convertToNumberDirective)
         .directive('fieldArray', fieldArrayDirective)
-        .directive('convertToPhoneNumber', convertToPhoneNumberDirective);
+        .directive('convertToPhoneNumber', convertToPhoneNumberDirective)
+        .directive('createAssetForm', createAssetFormDirective);
 
     function bsTooltipDirective() {
         return {
@@ -185,6 +186,16 @@
             });
 
             loadPager();
+        }
+    }
+
+    function createAssetFormDirective() {
+        return {
+            restrict: 'E',
+            scope: {
+                vm: '=controller'
+            },
+            templateUrl: 'directives/forms/create-asset'
         }
     }
 
