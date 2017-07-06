@@ -1,43 +1,102 @@
 div(ng-controller="AssetController as assetVM")
   div(ng-show="assetVM.assetTypes.length")
-    .form-group
-      .row
-        .col-sm-8
-          label Digital Asset Type
-          select.form-control(name="asset", ng-model="assetVM.digitalChars[0].productSpecCharacteristicValue[0].value", ng-change="assetVM.setCurrentType()")
-            option(ng-repeat="asset in assetVM.assetTypes", value="{{ asset.name }}") {{ asset.name }}
-        .col-sm-4
-          label How to provide?
-          select.form-control(ng-model="assetVM.currFormat", ng-options="format for format in assetVM.currentType.formats")
-    .form-group(ng-show="assetVM.isSelected('URL')")
-      label Asset URL
-      input.form-control(type="url", ng-model="assetVM.digitalChars[2].productSpecCharacteristicValue[0].value")
-    .form-group(ng-show="assetVM.isSelected('FILE')")
-      label Asset File
-      input.form-control(type="file", file-model="assetVM.assetFile")
-    .form-group
-      label Media Type
-      div(ng-if="!assetVM.currentType.mediaTypes.length" ng-init="assetVM.initMediaType()")
-        input.form-control(type="text", ng-model="assetVM.digitalChars[1].productSpecCharacteristicValue[0].value")
-      div(ng-if="assetVM.currentType.mediaTypes.length" ng-init="assetVM.initMediaType()")
-        select.form-control(ng-model="assetVM.digitalChars[1].productSpecCharacteristicValue[0].value"
-          ng-options="media for media in assetVM.currentType.mediaTypes track by media")
+    form(name="assetForm" ng-controller="FormWizardCtrl as assetFormCtl")
+      .form-group(ng-init="assetVM.setForm(assetForm)")
+        .row
+          .col-sm-8
+            label Digital Asset Type
+            select.form-control(name="asset", ng-model="assetVM.digitalChars[0].productSpecCharacteristicValue[0].value", ng-change="assetVM.setCurrentType()")
+              option(ng-repeat="asset in assetVM.assetTypes", value="{{ asset.name }}") {{ asset.name }}
+          .col-sm-4
+            label How to provide?
+            select.form-control(ng-model="assetVM.currFormat", ng-options="format for format in assetVM.currentType.formats")
+      .form-group(ng-if="assetVM.isSelected('URL')")
+        label Asset URL
+        .form-group(
+          ng-class="{ 'has-error': assetFormCtl.hasError(assetForm.url) }"
+        )
+          input.form-control(
+            type="url"
+            name="url"
+            ng-model="assetVM.digitalChars[2].productSpecCharacteristicValue[0].value"
+            required
+          )
+          .help-block(
+            ng-messages="assetForm.url.$error"
+            ng-show="assetFormCtl.hasError(assetForm.url)"
+          )
+            span(ng-message="url") This field must be a valid URL
+            span(ng-message="required") This field is required
 
-    div(ng-repeat="(id, value) in assetVM.currentType.form")
+      .form-group(ng-if="assetVM.isSelected('FILE')")
+        label Asset File
+        .form-group(
+          ng-class="{ 'has-error': assetFormCtl.hasError(assetForm.fileAsset) }"
+        )
+          input.form-control(
+            type="file"
+            name="fileAsset"
+            ng-model="assetVM.fileName"
+            file-model="assetVM.assetFile"
+            required-file
+          )
+          .help-block(
+            ng-messages="assetForm.fileAsset.$error"
+            ng-show="assetFormCtl.hasError(assetForm.fileAsset)"
+          )
+            span(ng-message="requiredFile") This field is required
       .form-group
-        label(ng-if="value.type != 'checkbox'") {{ assetVM.getMetaLabel(id) }}
-        div(ng-if="value.type == 'text'")
-          input.form-control(type="text", name="{{ id }}", ng-model="assetVM.meta[id]", placeholder="{{ value.placeholder }}")
-        div(ng-if="value.type == 'textarea'")
-          textarea.form-control(name="{{ id }}", ng-model="assetVM.meta[id]", placeholder="{{ value.placeholder }}")
-        div(ng-if="value.type == 'select'")
-          select.form-control(
-            type="text", name="{{ id }}", ng-model="assetVM.meta[id]", ng-options="opt.value as opt.text for opt in value.options track by opt.value")
-        .item-toggle(ng-if="value.type == 'checkbox'")
-          label.toggle {{ assetVM.getMetaLabel(id) }}
-            .track
-              input(type="checkbox", ng-model="assetVM.meta[id]")
-              i.fa.fa-2x
+        label Media Type
+        div(ng-if="!assetVM.currentType.mediaTypes.length" ng-init="assetVM.initMediaType()")
+          .form-group(
+            ng-class="{ 'has-error': assetFormCtl.hasError(assetForm.mediaType) }"
+          )
+            input.form-control(
+              type="text"
+              name="mediaType"
+              ng-model="assetVM.digitalChars[1].productSpecCharacteristicValue[0].value"
+              required
+            )
+            .help-block(
+              ng-messages="assetForm.mediaType.$error"
+              ng-show="assetFormCtl.hasError(assetForm.mediaType)"
+            )
+              span(ng-message="required") This field is required
+
+        div(ng-if="assetVM.currentType.mediaTypes.length" ng-init="assetVM.initMediaType()")
+          select.form-control(ng-model="assetVM.digitalChars[1].productSpecCharacteristicValue[0].value"
+            ng-options="media for media in assetVM.currentType.mediaTypes track by media")
+
+      div(ng-repeat="(id, value) in assetVM.currentType.form")
+        .form-group
+          label(ng-if="value.type != 'checkbox'") {{ assetVM.getMetaLabel(id) }}
+          div(ng-if="value.type == 'text'")
+            .form-group(
+              ng-class="{ 'has-error': assetFormCtl.hasError(assetForm[id]) }"
+            )
+              input.form-control(
+                type="text",
+                name="{{ id }}",
+                ng-model="assetVM.meta[id]",
+                placeholder="{{ value.placeholder }}"
+                ng-required="value.mandatory"
+              )
+              .help-block(
+                ng-messages="assetForm[id].$error"
+                ng-show="assetFormCtl.hasError(assetForm[id])"
+              )
+                span(ng-message="required") This field is required
+
+          div(ng-if="value.type == 'textarea'")
+            textarea.form-control(name="{{ id }}", ng-model="assetVM.meta[id]", placeholder="{{ value.placeholder }}")
+          div(ng-if="value.type == 'select'")
+            select.form-control(
+              type="text", name="{{ id }}", ng-model="assetVM.meta[id]", ng-options="opt.value as opt.text for opt in value.options track by opt.value")
+          .item-toggle(ng-if="value.type == 'checkbox'")
+            label.toggle {{ assetVM.getMetaLabel(id) }}
+              .track
+                input(type="checkbox", ng-model="assetVM.meta[id]")
+                i.fa.fa-2x
 
   div(ng-show="!assetVM.assetTypes.length")
     .alert.alert-info There isn't any digital asset type supported.

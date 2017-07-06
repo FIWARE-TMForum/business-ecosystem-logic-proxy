@@ -207,6 +207,8 @@
 
     function AssetController($scope, $rootScope, Asset, ProductSpec) {
         var controller = $scope.vm;
+        var form;
+
         var vm = this;
 
         vm.assetTypes = [];
@@ -216,6 +218,7 @@
         vm.isSelected = isSelected;
         vm.setCurrentType = setCurrentType;
         vm.initMediaType = initMediaType;
+        vm.setForm = setForm;
         /* Meta info management */
         vm.getMetaLabel = getMetaLabel;
 
@@ -304,10 +307,19 @@
             }
         }
 
+        function setForm(modelForm) {
+            form = modelForm;
+        }
+
+        function isValidAsset() {
+            return form.$valid;
+        }
+
         // Inject handler for creating asset
         controller.assetCtl = {
             saveAsset: saveAsset,
-            getDigitalChars: getDigitalChars
+            getDigitalChars: getDigitalChars,
+            isValidAsset: isValidAsset
         };
 
         // Get the asset types related to the current scope

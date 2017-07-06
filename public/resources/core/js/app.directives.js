@@ -43,7 +43,8 @@
         .directive('convertToNumber', convertToNumberDirective)
         .directive('fieldArray', fieldArrayDirective)
         .directive('convertToPhoneNumber', convertToPhoneNumberDirective)
-        .directive('createAssetForm', createAssetFormDirective);
+        .directive('createAssetForm', createAssetFormDirective)
+        .directive('requiredFile', requiredFile);
 
     function bsTooltipDirective() {
         return {
@@ -321,6 +322,23 @@
                 });
             }
         };
+    }
+
+    function requiredFile() {
+        return {
+            require: 'ngModel',
+            link: function(scope, element, attrs, ngModel) {
+                ngModel.$setValidity('requiredFile', element.val() != '');
+
+                element.bind('change', () => {
+                    ngModel.$setValidity('requiredFile', element.val() != '');
+                    scope.$apply(() => {
+                        ngModel.$setViewValue(element.val());
+                        ngModel.$render();
+                    })
+                });
+            }
+        }
     }
 
 

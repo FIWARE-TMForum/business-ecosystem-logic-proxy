@@ -16,5 +16,6 @@ form(name="step.form", novalidate)
       create-asset-form(controller="createVM")
 
   .form-group.text-right
-    a.btn.btn-default.z-depth-1(ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])", ng-disabled="!step.form.$valid")
+    a.btn.btn-default.z-depth-1(ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])",
+        ng-disabled="createVM.isDigital && !createVM.assetCtl.isValidAsset()")
       span.item-text Next

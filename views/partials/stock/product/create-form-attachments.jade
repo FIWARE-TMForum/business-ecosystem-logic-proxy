@@ -24,7 +24,7 @@ form(name="step.form", novalidate)
           ng-messages="step.form.picture.$error"
           ng-show="createForm.hasError(step.form.picture)"
         )
-          span(ng-message="url") This field must be a valid URL.
+          span(ng-message="url") This field must be a valid URL
 
     .col-sm-8(ng-if="createVM.pictureFormat == 'file'", ng-init="createVM.loadPictureController()")
       .form-group(
