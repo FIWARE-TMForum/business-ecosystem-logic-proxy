@@ -26,6 +26,7 @@ var deepcopy = require("deepcopy"),
 
 // ERRORS
 var INVALID_METHOD = 'The HTTP method DELETE is not allowed in the accessed API';
+var INVALID_METHOD_PUT = 'The HTTP method PUT is not allowed in the accessed API';
 var PARENT_ID_INCLUDED = 'Parent ID cannot be included when the category is root';
 var MISSING_PARENT_ID = 'Non-root categories must contain a parent category';
 var FAILED_TO_RETRIEVE = 'The TMForum APIs fails to retrieve the object you are trying to update/delete';
@@ -54,6 +55,7 @@ var MISSING_HREF_PRODUCT_SPEC = 'Missing required field href in product specific
 var BUNDLED_OFFERING_NOT_BUNDLE = 'Product offerings which are not a bundle cannot contain a bundled product offering';
 var INVALID_BUNDLE_WITH_PRODUCT = 'Product offering bundles cannot contain a product specification';
 var INVALID_BUNDLE_MISSING_OFF = 'Product offering bundles must contain at least two bundled offerings';
+var INVALID_BUNDLE_STATUS = 'It is not allowed to update bundle related attributes (isBundle, bundledProductSpecification) in launched products';
 var INVALID_BUNDLE_MISSING_OFF_HREF = 'Missing required field href in bundled offering';
 var OFF_BUNDLE_FAILED_TO_RETRIEVE = 'The bundled offering 2 cannot be accessed or does not exists';
 var OFF_BUNDLE_IN_BUNDLE = 'Product offering bundles cannot include another bundle';
@@ -67,6 +69,10 @@ var INVALID_RELATED_PARTY = 'The field "relatedParty" can not be modified';
 var INVALID_CATEGORY_ID = 'Invalid category with id: ';
 var CATEGORY_CANNOT_BE_CHECKED = ['It was impossible to check if the category with id: ', ' already exists'];
 
+var UPGRADE_ASSET_NOT_PROVIDED = 'To upgrade digital product specifications it is required to provide new asset info';
+var UPGRADE_VERSION_NOT_PROVIDED = 'Product specification characteristics only can be updated for upgrading digital products';
+var UPGRADE_CUSTOM_CHAR_MOD = 'It is not allowed to update custom characteristics during a product upgrade';
+var INVALID_NON_DIGITAL_UPGRADE = 'Product spec characteristics cannot be updated';
 
 describe('Catalog API', function() {
 
@@ -163,16 +169,32 @@ describe('Catalog API', function() {
         testNotLoggedIn('POST', done);
     });
 
-    it('should reject not authenticated PUT requests', function(done) {
-        testNotLoggedIn('PUT', done);
-    });
-
     it('should reject not authenticated PATCH requests', function(done) {
         testNotLoggedIn('PATCH', done);
     });
 
     it('should reject not authenticated DELETE requests', function(done) {
         testNotLoggedIn('DELETE', done);
+    });
+
+    it('should reject PUT requests', function(done) {
+        var catalogApi = getCatalogApi({}, {}, {});
+        var path = '/catalog/product/1';
+
+        // Call the method
+        var req = {
+            method: 'PUT',
+            apiUrl: path
+        };
+
+        catalogApi.checkPermissions(req, function(err) {
+
+            expect(err).not.toBe(null);
+            expect(err.status).toBe(405);
+            expect(err.message).toBe(INVALID_METHOD_PUT);
+
+            done();
+        });
     });
 
     //////////////////////////////////////////////////////////////////////////////////////////////
@@ -1427,7 +1449,7 @@ describe('Catalog API', function() {
         var role = isOwnerMethod() ? 'Owner': 'Seller';
 
         // User information is send when the request does not fail
-        var bodyOk = { relatedParty: [{id: userName, role: role}]};
+        var bodyOk = { relatedParty: [{id: userName, role: role}], lifecycleStatus: 'Active'};
         var bodyErr = 'Internal Server Error';
         var returnedBody = requestStatus != 200 ? bodyErr : bodyOk;
 
@@ -1459,24 +1481,6 @@ describe('Catalog API', function() {
             done();
         });
     };
-
-    it('should allow to to update (PUT) an owned resource', function(done) {
-        testUpdate('PUT', 200, isOwnerTrue, null, null, done);
-    });
-
-    it('should not allow to update (PUT) a non-owned resource', function(done) {
-        testUpdate('PUT', 200, isOwnerFalse, 403, INVALID_USER_UPDATE, done);
-    });
-
-    it('should not allow to update (PUT) a resource that cannot be checked', function(done) {
-        // The value of isOwner does not matter when requestFails is set to true
-        testUpdate('PUT', 500, isOwnerTrue, 500, FAILED_TO_RETRIEVE, done);
-    });
-
-    it('should not allow to update (PUT) a resource that does not exist', function(done) {
-        // The value of isOwner does not matter when requestFails is set to true
-        testUpdate('PUT', 404, isOwnerTrue, 404, 'The required resource does not exist', done);
-    });
 
     it('should allow to to update (PATCH) an owned resource', function(done) {
         testUpdate('PATCH', 200, isOwnerTrue, null, null, done);
@@ -1579,7 +1583,7 @@ describe('Catalog API', function() {
             // If the previous tests works, it can be deducted that PUT, PATCH and DELETE
             // requests are handled in the same way so here we do not need additional tests
             // for the different HTTP verbs.
-            method: 'PUT',
+            method: 'PATCH',
             apiUrl: offeringPath,
             user: {
                 id: userName,
@@ -1821,7 +1825,7 @@ describe('Catalog API', function() {
     };
 
     var testChangeProductCatalogStatus = function(assetPath, offeringsPath, previousAssetBody, assetBody,
-                                                  offeringsInfo, errorStatus, errorMsg, done) {
+                                                  offeringsInfo, errorStatus, errorMsg, done, storeClient) {
 
         var checkRoleMethod = jasmine.createSpy();
         checkRoleMethod.and.returnValue(true);
@@ -1839,7 +1843,12 @@ describe('Catalog API', function() {
             hasRole: checkRoleMethod
         };
 
-        var catalogApi = getCatalogApi({}, tmfUtils, utils);
+        var store = {};
+        if (storeClient) {
+            store = storeClient;
+        }
+
+        var catalogApi = getCatalogApi(store, tmfUtils, utils);
 
         // Basic properties
         var userName = 'test';
@@ -1895,13 +1904,22 @@ describe('Catalog API', function() {
 
     // PRODUCTS
 
-    var testChangeProductStatus = function(productBody, offeringsInfo, errorStatus, errorMsg, done) {
+    var testChangeProductStatus = function(productBody, offeringsInfo, errorStatus, errorMsg, done, status) {
 
         var productId = '7';
         var productPath = '/productSpecification/' + productId;
         var offeringsPath = '/productOffering?productSpecification.id=' + productId;
 
-        testChangeProductCatalogStatus(productPath, offeringsPath, { }, productBody, offeringsInfo,
+        var bodyStatus = 'Active';
+
+        if (status) {
+            bodyStatus = status;
+        }
+
+        var prevBody = {
+            lifecycleStatus: bodyStatus
+        };
+        testChangeProductCatalogStatus(productPath, offeringsPath, prevBody, productBody, offeringsInfo,
                 errorStatus, errorMsg, done);
     };
 
@@ -1949,7 +1967,7 @@ describe('Catalog API', function() {
         testChangeCatalogStatus(productBody, offeringsInfo, 409, INVALID_RELATED_PARTY, done);
     });
 
-    it('should allow to update a product if the body does not modifie the original relatedParty', function(done) {
+    it('should allow to update a product if the body does not modify the original relatedParty', function(done) {
 
         var productBody = JSON.stringify({
             relatedParty: [
@@ -2194,10 +2212,255 @@ describe('Catalog API', function() {
 
     });
 
+    // UPGRADES
+
+    var testProductUpgrade = function (prevBody, productBody, errorStatus, errorMsg, storeClient, done) {
+        var productId = '7';
+        var productPath = '/productSpecification/' + productId;
+        var offeringsPath = '/productOffering?productSpecification.id=' + productId;
+
+        testChangeProductCatalogStatus(
+            productPath, offeringsPath, prevBody, JSON.stringify(productBody), null, errorStatus, errorMsg, done, storeClient);
+    };
+
+    var testNonDigitalUpgrade = function(newBody, errorStatus, errorMsg, done) {
+        var prevBody = {
+            version: '1.0',
+            lifecycleStatus: 'Active',
+            productSpecCharacteristic: [{
+                name: 'Color',
+                productSpecCharacteristicValue: [{
+                    value: 'blue'
+                }, {
+                    value: 'green'
+                }]
+            }]
+        };
+
+        testProductUpgrade(prevBody, newBody, errorStatus, errorMsg, null, done);
+    };
+
+    it('should allow to upgrade a non-digital product when the characteristics are provided', function (done) {
+        var newBody = {
+            version: '1.1',
+            productSpecCharacteristic: [{
+                name: 'Color',
+                productSpecCharacteristicValue: [{
+                    value: 'blue'
+                }, {
+                    value: 'green'
+                }]
+            }]
+        };
+        testNonDigitalUpgrade(newBody, null, null, done);
+    });
+
+    it('should allow to upgrade a non-digital product when the characteristics are not provided', function (done) {
+        var newBody = {
+            version: '1.1'
+        };
+        testNonDigitalUpgrade(newBody, null, null, done);
+    });
+
+    it('should allow to upgrade a non-digital product when the characteristics are provided', function (done) {
+        var newBody = {
+            version: '1.1',
+            productSpecCharacteristic: [{
+                name: 'Color',
+                productSpecCharacteristicValue: [{
+                    value: 'blue'
+                }, {
+                    value: 'red'
+                }]
+            }]
+        };
+        testNonDigitalUpgrade(newBody, 422, INVALID_NON_DIGITAL_UPGRADE, done);
+    });
+
+    var testDigitalUpgrade = function (newBody, errorStatus, errorMsg, done) {
+        var storeClient = jasmine.createSpyObj('storeClient', ['upgradeProduct']);
+        storeClient.upgradeProduct.and.callFake((data, user, callback) => {
+            callback(null);
+        });
+
+        var prevBody = {
+            id: 2,
+            version: '1.0',
+            lifecycleStatus: 'Active',
+            productSpecCharacteristic: [{
+                name: 'speed',
+                productSpecCharacteristicValue: [{
+                    value: '100mb'
+                }]
+            }, {
+                name: 'media type',
+                productSpecCharacteristicValue: [{
+                    value: 'JSON'
+                }]
+            }, {
+                name: 'location',
+                productSpecCharacteristicValue: [{
+                    value: 'http://assset.com'
+                }]
+            }, {
+                name: 'asset type',
+                productSpecCharacteristicValue: [{
+                    value: 'basic service'
+                }]
+            }]
+        };
+
+        testProductUpgrade(prevBody, newBody, errorStatus, errorMsg, {storeClient: storeClient}, () => {
+            // Check store client call
+            if (!errorMsg) {
+                expect(storeClient.upgradeProduct).toHaveBeenCalledWith({
+                    id: prevBody.id,
+                    version: newBody.version,
+                    productSpecCharacteristic: newBody.productSpecCharacteristic
+                }, {
+                    id: 'test',
+                    roles: [{name: 'seller'}]
+                }, jasmine.any(Function));
+            } else {
+                expect(storeClient.upgradeProduct).not.toHaveBeenCalled()
+            }
+            done();
+        });
+    };
+
+    it('should upgrade a digital product when the new characteristics and version are provided', function (done) {
+        var newVersion = {
+            version: '1.1',
+            lifecycleStatus: 'Active',
+            productSpecCharacteristic: [{
+                name: 'speed',
+                productSpecCharacteristicValue: [{
+                    value: '100mb'
+                }]
+            }, {
+                name: 'media type',
+                productSpecCharacteristicValue: [{
+                    value: 'JSON'
+                }]
+            }, {
+                name: 'location',
+                productSpecCharacteristicValue: [{
+                    value: 'http://assetv2.com'
+                }]
+            }, {
+                name: 'asset type',
+                productSpecCharacteristicValue: [{
+                    value: 'basic service'
+                }]
+            }]
+        };
+
+        testDigitalUpgrade(newVersion, null, null, done);
+    });
+
+    it('should not upgrade a digital product when the asset is not provided', function (done) {
+        var newVersion = {
+            version: '1.1',
+            lifecycleStatus: 'Active',
+            productSpecCharacteristic: [{
+                name: 'speed',
+                productSpecCharacteristicValue: [{
+                    value: '100mb'
+                }]
+            }]
+        };
+
+        testDigitalUpgrade(newVersion, 422, UPGRADE_ASSET_NOT_PROVIDED, done);
+    });
+
+    it('should not upgrade a digital product when the new version is not provided', function (done) {
+        var newVersion = {
+            lifecycleStatus: 'Active',
+            productSpecCharacteristic: [{
+                name: 'speed',
+                productSpecCharacteristicValue: [{
+                    value: '100mb'
+                }]
+            }, {
+                name: 'media type',
+                productSpecCharacteristicValue: [{
+                    value: 'JSON'
+                }]
+            }, {
+                name: 'location',
+                productSpecCharacteristicValue: [{
+                    value: 'http://assetv2.com'
+                }]
+            }, {
+                name: 'asset type',
+                productSpecCharacteristicValue: [{
+                    value: 'basic service'
+                }]
+            }]
+        };
+
+        testDigitalUpgrade(newVersion, 422, UPGRADE_VERSION_NOT_PROVIDED, done);
+    });
+
+    it('should not upgrade a digital product when the new version is equal to the previous one', function (done) {
+        var newVersion = {
+            version: '1.0',
+            lifecycleStatus: 'Active',
+            productSpecCharacteristic: [{
+                name: 'speed',
+                productSpecCharacteristicValue: [{
+                    value: '100mb'
+                }]
+            }, {
+                name: 'media type',
+                productSpecCharacteristicValue: [{
+                    value: 'JSON'
+                }]
+            }, {
+                name: 'location',
+                productSpecCharacteristicValue: [{
+                    value: 'http://assetv2.com'
+                }]
+            }, {
+                name: 'asset type',
+                productSpecCharacteristicValue: [{
+                    value: 'basic service'
+                }]
+            }]
+        };
+
+        testDigitalUpgrade(newVersion, 422, UPGRADE_VERSION_NOT_PROVIDED, done);
+    });
+
+    it('should not upgrade a digital product when the custom characteristics are modified', function (done) {
+        var newVersion = {
+            version: '1.1',
+            lifecycleStatus: 'Active',
+            productSpecCharacteristic: [{
+                name: 'media type',
+                productSpecCharacteristicValue: [{
+                    value: 'JSON'
+                }]
+            }, {
+                name: 'location',
+                productSpecCharacteristicValue: [{
+                    value: 'http://assetv2.com'
+                }]
+            }, {
+                name: 'asset type',
+                productSpecCharacteristicValue: [{
+                    value: 'basic service'
+                }]
+            }]
+        };
+
+        testDigitalUpgrade(newVersion, 422, UPGRADE_CUSTOM_CHAR_MOD, done);
+    });
+
+    // Bundles
     var testUpdateBundle = function(bundles, offeringsInfo, errorStatus, errorMsg, done) {
 
         var body = mockBundles(bundles);
-
         testChangeProductStatus(JSON.stringify(body), offeringsInfo, errorStatus, errorMsg, done);
     };
 
@@ -2301,6 +2564,29 @@ describe('Catalog API', function() {
         }];
 
         testUpdateBundle(bundles, null, 422, INVALID_BUNDLED_PRODUCT_STATUS, done);
+    });
+
+    it('should not allow to update bundle info when the product is not in Active state', function (done) {
+        var bundles = [{
+            id: '1',
+            status: 200,
+            body: {
+                id: '1',
+                isBundle: false,
+                lifecycleStatus: 'Active'
+            }
+        }, {
+            id: '2',
+            status: 200,
+            body: {
+                id: '2',
+                isBundle: false,
+                lifecycleStatus: 'Active'
+            }
+        }];
+
+        var body = mockBundles(bundles);
+        testChangeProductStatus(JSON.stringify(body), null, 422, INVALID_BUNDLE_STATUS, done, 'Launched');
     });
 
     // CATALOGS

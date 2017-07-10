@@ -570,38 +570,61 @@ var catalog = (function() {
     };
 
     var validateProductUpdate = function (req, prevBody, newBody, callback) {
-        if (!!newBody.isBundle || !!newBody.bundledProductSpecification) {
-            // TODO: Support bundle updates of Active products
-            return callback({
-                status: 422,
-                message: 'It is not allowed to update bundle related attributes (isBundle, bundledProductSpecification) '
-            })
-        }
+        if ((!!newBody.isBundle || !!newBody.bundledProductSpecification) &&
+                prevBody.lifecycleStatus.toLowerCase() != 'active') {
 
-        if (!!newBody.version  && tmfUtils.isDigitalProduct(prevBody.productSpecCharacteristic) &&
-            typeof newBody.productSpecCharacteristic === 'undefined' && newBody.version != prevBody.version) {
-            // Trying to upgrade the product without providing new asset info
             return callback({
                 status: 422,
-                message: 'To upgrade digital product specifications it is required to provide new asset info'
+                message: 'It is not allowed to update bundle related attributes (isBundle, bundledProductSpecification) in launched products'
             });
         }
 
-        if (typeof newBody.version === 'undefined' &&
-            !!newBody.productSpecCharacteristic && tmfUtils.isDigitalProduct(prevBody.productSpecCharacteristic)) {
-            // Trying to provide new asset info without upgrading the product
+        // Check upgrade problems if the product is a digital one
+        if (tmfUtils.isDigitalProduct(prevBody.productSpecCharacteristic)) {
+            if (!!newBody.version && !tmfUtils.isDigitalProduct(newBody.productSpecCharacteristic)
+                    && newBody.version != prevBody.version) {
+
+                // Trying to upgrade the product without providing new asset info
+                return callback({
+                    status: 422,
+                    message: 'To upgrade digital product specifications it is required to provide new asset info'
+                });
+            }
+
+            if((!!newBody.version && newBody.version == prevBody.version) || typeof newBody.version === 'undefined'
+                    && !!newBody.productSpecCharacteristic &&
+                    !equal(newBody.productSpecCharacteristic, prevBody.productSpecCharacteristic)) {
+
+                return callback({
+                    status: 422,
+                    message: 'Product specification characteristics only can be updated for upgrading digital products'
+                });
+            }
+
+            if (!!newBody.version && newBody.version != prevBody.version &&
+                    tmfUtils.isDigitalProduct(newBody.productSpecCharacteristic) &&
+                    !tmfUtils.equalCustomCharacteristics(newBody.productSpecCharacteristic, prevBody.productSpecCharacteristic)) {
+
+                return callback({
+                    status: 422,
+                    message: 'It is not allowed to update custom characteristics during a product upgrade'
+                });
+            }
+
+            if (!!newBody.version && newBody.version != prevBody.version && !!newBody.productSpecCharacteristic) {
+                return storeClient.upgradeProduct({
+                    id: prevBody.id,
+                    version: newBody.version,
+                    productSpecCharacteristic: newBody.productSpecCharacteristic
+                }, req.user, callback);
+            }
+        } else if (!!newBody.productSpecCharacteristic &&
+                !equal(newBody.productSpecCharacteristic, prevBody.productSpecCharacteristic)){
+
             return callback({
                 status: 422,
-                message: 'To provide new asset info it is required to upgrade the product specification'
+                message: 'Product spec characteristics cannot be updated'
             });
-        }
-
-        if (!!newBody.version && !!newBody.productSpecCharacteristic) {
-            return storeClient.upgradeProduct({
-                id: prevBody.id,
-                version: newBody.version,
-                productSpecCharacteristic: newBody.productSpecCharacteristic
-            }, req.user, callback);
         }
 
         return callback(null);
@@ -979,6 +1002,12 @@ var catalog = (function() {
 
                                             if (parsedBody) {
                                                 validateProductUpdate(req, previousBody, parsedBody, callback);
+                                            } else {
+                                                callback(null);
+                                            }
+                                        }, function (callback) {
+                                            if (parsedBody) {
+                                                validateProduct(req, parsedBody, callback);
                                             } else {
                                                 callback(null);
                                             }
