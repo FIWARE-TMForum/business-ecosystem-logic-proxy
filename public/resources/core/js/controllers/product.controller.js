@@ -35,6 +35,7 @@
         .controller('ProductSearchCtrl', ProductSearchController)
         .controller('ProductCreateCtrl', ProductCreateController)
         .controller('ProductUpdateCtrl', ProductUpdateController)
+        .controller('ProductUpgradeCtrl', ProductUpgradeController)
         .controller('AssetController', AssetController);
 
     function ProductSearchController($scope, $state, $timeout, $rootScope, EVENTS, ProductSpec, LIFECYCLE_STATUS, DATA_STATUS, Utils) {
@@ -205,15 +206,16 @@
         clearFileInput();
     }
 
-    function AssetController($scope, $rootScope, Asset, ProductSpec) {
+    function AssetController($scope, $rootScope, Asset, ProductSpec, Utils, EVENTS) {
         var controller = $scope.vm;
-        var form;
+        var form = null;
 
         var vm = this;
 
         vm.assetTypes = [];
         vm.digitalChars = [];
         vm.meta = {};
+        vm.status = LOADING;
 
         vm.isSelected = isSelected;
         vm.setCurrentType = setCurrentType;
@@ -257,18 +259,18 @@
             vm.currFormat = vm.currentType.formats[0];
         }
 
-        function saveAsset(scope, callback) {
+        function showAssetError(response) {
+            var defaultMessage = 'There was an unexpected error that prevented your ' +
+                'digital asset to be registered';
+            var error = Utils.parseError(response, defaultMessage);
+
+            $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                error: error
+            });
+        }
+
+        function save(uploadM, registerM, assetId, scope, callback) {
             var meta = null;
-
-            function showAssetError(response) {
-                var defaultMessage = 'There was an unexpected error that prevented your ' +
-                    'digital asset to be registered';
-                var error = Utils.parseError(response, defaultMessage);
-
-                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
-                    error: error
-                });
-            }
 
             if (Object.keys(vm.meta).length) {
                 meta = vm.meta;
@@ -276,23 +278,35 @@
 
             if (vm.currFormat === 'FILE') {
                 // If the format is file, upload it to the asset manager
-                Asset.uploadAsset(vm.assetFile, scope,
+                uploadM(vm.assetFile, scope,
                     vm.digitalChars[0].productSpecCharacteristicValue[0].value,
                     vm.digitalChars[1].productSpecCharacteristicValue[0].value, false, meta, function (result) {
                         // Set file location
                         vm.digitalChars[2].productSpecCharacteristicValue[0].value = result.content;
                         callback();
-                    }, (response) => showAssetError(response));
+                    }, (response) => showAssetError(response), assetId);
             } else if (controller.isDigital && vm.currFormat === 'URL') {
-                Asset.registerAsset(
+                registerM(
                     vm.digitalChars[2].productSpecCharacteristicValue[0].value,
                     vm.digitalChars[0].productSpecCharacteristicValue[0].value,
                     vm.digitalChars[1].productSpecCharacteristicValue[0].value,
                     meta,
                     () => callback(),
-                    (response) => showAssetError(response)
+                    (response) => showAssetError(response),
+                    assetId
                 );
             }
+        }
+
+        var saveAsset = save.bind(this, Asset.uploadAsset, Asset.registerAsset, null);
+
+        function upgradeAsset (scope, callback) {
+            // Get asset id using product id
+            Asset.searchByProduct(controller.data.id).then((assetInfo) => {
+                save(Asset.upgradeAsset, Asset.upgradeRegisteredAsset, assetInfo[0].id, scope, callback);
+            }, (err) => {
+                showAssetError(err);
+            });
         }
 
         function getDigitalChars() {
@@ -312,12 +326,13 @@
         }
 
         function isValidAsset() {
-            return form.$valid;
+            return form !== null && form.$valid;
         }
 
         // Inject handler for creating asset
         controller.assetCtl = {
             saveAsset: saveAsset,
+            upgradeAsset: upgradeAsset,
             getDigitalChars: getDigitalChars,
             isValidAsset: isValidAsset
         };
@@ -353,6 +368,11 @@
                 vm.currentType = typeList[0];
                 vm.currFormat = vm.currentType.formats[0];
             }
+
+            vm.status = LOADED;
+        }, function() {
+            vm.errMsg = 'There has been an error trying to retrieve asset type info';
+            vm.status = ERROR;
         })
     }
 
@@ -441,7 +461,6 @@
         vm.getFormattedValueOf = getFormattedValueOf;
 
         vm.loadPictureController = loadPictureController;
-
 
         function createRelationship(data) {
             var deferred = $q.defer();
@@ -661,8 +680,109 @@
         }
     }
 
+    function ProductUpgradeController($state, $rootScope, $element, AssetType, ProductSpec, Utils, EVENTS) {
+        var vm = this;
+        var form = null;
+
+        vm.isDigital = true;
+        vm.data = null;
+        vm.assetCtl = null;
+        vm.version = '';
+        vm.status = LOADING;
+
+        vm.getAssetTypes = getAssetTypes;
+        vm.setVersionForm = setVersionForm;
+        vm.isValid = isValid;
+
+        vm.upgrade = upgrade;
+
+        function getAssetTypes() {
+            // Return the current asset type
+            var typeChar = vm.data.productSpecCharacteristic.find((char) => {
+                return char.name.toLowerCase() == 'asset type' && char.productSpecCharacteristicValue.length == 1;
+            });
+
+            var typeName = typeChar.productSpecCharacteristicValue[0].value;
+            return AssetType.detail(typeName.toLowerCase().replace(/ /g, '-'));
+        }
+
+        function setVersionForm(versionForm) {
+            form = versionForm;
+        }
+
+        function isValid() {
+            return vm.assetCtl !== null && form !== null && !!form.version
+                && vm.assetCtl.isValidAsset() && form.version.$valid
+        }
+
+        function upgrade() {
+            $element.modal('hide');
+            var scope = vm.data.name.replace(/ /g, '');
+
+            if (scope.length > 10) {
+                scope = scope.substr(0, 10);
+            }
+
+            vm.assetCtl.upgradeAsset(scope, upgradeProduct);
+        }
+
+        function upgradeProduct() {
+            // Build JSON to be sent
+            var upgradeBody = {
+                version: vm.version,
+                productSpecCharacteristic: []
+            };
+
+            // Include product characteristics
+            upgradeBody.productSpecCharacteristic = vm.data.productSpecCharacteristic.filter((char) => {
+                return !['asset type', 'media type', 'location'].some((digChar) => {
+                    return digChar == char.name.toLocaleLowerCase();
+                });
+            });
+
+            // Include new digital characteristics
+            upgradeBody.productSpecCharacteristic = upgradeBody.productSpecCharacteristic.concat(vm.assetCtl.getDigitalChars());
+
+            // Call update method
+            ProductSpec.update({
+                id: vm.data.id
+            }, upgradeBody).then((productUpdated) => {
+                $state.go('stock.product.update', {
+                    productId: productUpdated.id
+                }, {
+                    reload: true
+                });
+
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'upgraded', {
+                    resource: 'product',
+                    name: productUpdated.name
+                });
+
+            }, (err) => {
+                var defaultMessage = 'There was an unexpected error that prevented the ' +
+                    'system from upgrading the product spec';
+
+                var error = Utils.parseError(err, defaultMessage);
+
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                    error: error
+                });
+            });
+        }
+
+        $rootScope.$on(ProductSpec.EVENTS.UPGRADE, function(event, data) {
+            vm.data = data;
+            vm.status = LOADED;
+            $element.modal('show');
+            $element.on('hide.bs.modal', () => {
+                vm.status = LOADING;
+            });
+        });
+    }
+
     function ProductUpdateController($state, $scope, $rootScope, EVENTS, PROMISE_STATUS, ProductSpec, Utils, Asset) {
         /* jshint validthis: true */
+        var digital = false;
         var vm = this;
 
         vm.STATUS = PROMISE_STATUS;
@@ -672,6 +792,8 @@
         vm.pictureFormat = 'url';
 
         vm.update = update;
+        vm.isDigital = isDigital;
+        vm.showUpgrade = showUpgrade;
         vm.updateImage = updateImage;
         vm.updateStatus = updateStatus;
         vm.formatCharacteristicValue = formatCharacteristicValue;
@@ -684,6 +806,8 @@
         detailPromise.then(function (productRetrieved) {
             vm.data = angular.copy(productRetrieved);
             vm.item = productRetrieved;
+
+            digital = checkDigital();
         }, function (response) {
             vm.error = Utils.parseError(response, 'The requested product could not be retrieved');
         });
@@ -691,6 +815,30 @@
         Object.defineProperty(vm, 'status', {
             get: function () { return detailPromise != null ? detailPromise.$$state.status : -1; }
         });
+
+        function isDigital () {
+            return digital;
+        }
+
+        function checkDigital() {
+            var isDigital = false;
+
+            // Check if the product is digital
+            if (vm.data.productSpecCharacteristic) {
+                isDigital = true;
+                ['asset type', 'media type', 'location'].forEach((name) => {
+                    isDigital = isDigital && vm.data.productSpecCharacteristic.some((element) => {
+                        return element.name.toLowerCase() == name;
+                    })
+                });
+            }
+
+            return isDigital;
+        }
+
+        function showUpgrade() {
+            $rootScope.$broadcast(ProductSpec.EVENTS.UPGRADE, vm.data);
+        }
 
         function updateStatus(status) {
             vm.data.lifecycleStatus = status;

@@ -10,6 +10,10 @@
           .panel-body
             .h4.text-center.text-dark-secondary
               strong {{ updateVM.item.name }}
+            .btn-toolbar.pull-right
+              a.btn.btn-success.z-depth-1(ng-if="updateVM.isDigital()" ng-click="updateVM.showUpgrade()")
+                span.item-icon.fa.fa-upload
+                span.item-text Upgrade
           ul.nav.nav-justified.nav-pills
             li(ui-sref-active-eq="active")
               a(ui-sref="stock.product.update")

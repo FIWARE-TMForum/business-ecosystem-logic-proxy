@@ -41,13 +41,14 @@
         });
 
         var VALUE_TYPES = {
-            STRING: 'String',
-            NUMBER: 'Number',
-            NUMBER_RANGE: 'Number range'
+            STRING: 'string',
+            NUMBER: 'number',
+            NUMBER_RANGE: 'number range'
         };
 
         var EVENTS = {
-            UPDATED: '$productSpecUpdated'
+            UPGRADE: '$productSpecUpgrade',
+            UPGRADED: '$productSpecUpgraded'
         };
 
         var TYPES = {
@@ -91,6 +92,7 @@
             VALUE_TYPES: VALUE_TYPES,
             TYPES: TYPES,
             PATCHABLE_ATTRS: PATCHABLE_ATTRS,
+            EVENTS: EVENTS,
             Relationship: Relationship,
             search: search,
             count: count,
