@@ -1239,7 +1239,7 @@ var catalog = (function() {
             var body = JSON.parse(req.reqBody);
 
             // Notify the error to the charging backend to remove tha asset
-            storeClient.rollbackProduct(req.user, body, () => {
+            storeClient.rollbackProduct(body, req.user, () => {
                 // No matter rollback status, return API message
                 callback(null);
             });
@@ -1257,11 +1257,11 @@ var catalog = (function() {
                 var id = !!body.id ? body.id : getURLId(req.apiUrl);
 
                 // Notify the error to the charging backend to downgrade the asset
-                return storeClient.rollbackProductUpgrade(req.user, {
+                return storeClient.rollbackProductUpgrade({
                     id: id,
                     version: body.version,
                     productSpecCharacteristic: body.productSpecCharacteristic
-                }, () => {
+                }, req.user, () => {
                     callback(null);
                 });
             }
