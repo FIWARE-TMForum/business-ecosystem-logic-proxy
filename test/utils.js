@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -19,6 +19,13 @@
 
 var defaultConfig = {
     port: 7496,
+    version: {
+        version: '6.3.0',
+        releaseDate: '2017-07-01',
+        gitHash: '1234567890',
+        doc: 'https://fiware-tmforum.github.io/Business-API-Ecosystem/',
+        userDoc: 'http://business-api-ecosystem.readthedocs.io/en/develop'
+    },
     proxyPrefix: '',
     oauth2: {
         server: 'https://account.lab.fiware.org',

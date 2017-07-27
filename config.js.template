@@ -1,5 +1,14 @@
 var config = {};
 
+// Version of the software
+config.version = {
+    version: '6.3.0-rc',
+    releaseDate: '',
+    gitHash: '',
+    doc: 'https://fiware-tmforum.github.io/Business-API-Ecosystem/',
+    userDoc: 'http://business-api-ecosystem.readthedocs.io/en/develop'
+};
+
 // The PORT used by 
 config.port = 80;
 
