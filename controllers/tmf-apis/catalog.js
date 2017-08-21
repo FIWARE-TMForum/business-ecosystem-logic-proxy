@@ -1188,6 +1188,27 @@ var catalog = (function() {
             .then(() => { async.series(reqValidators, callback);});
     };
 
+    var handleUpgradePostAction = function (req, body, storeMethod, callback) {
+        var getURLId = function(apiUrl) {
+            return apiUrl.split('/')[6];
+        };
+
+        // Check if the product has been upgraded
+        if (!!body.version && !!body.productSpecCharacteristic) {
+            var id = !!body.id ? body.id : getURLId(req.apiUrl);
+
+            // Notify the error to the charging backend to downgrade the asset
+            return storeMethod({
+                id: id,
+                version: body.version,
+                productSpecCharacteristic: body.productSpecCharacteristic
+            }, req.user, () => {
+                callback(null);
+            });
+        }
+        callback(null);
+    };
+
     var executePostValidation = function(req, callback) {
         // Attach product spec info for product creation request
         var body;
@@ -1221,6 +1242,11 @@ var catalog = (function() {
 
             storeClient.updateOffering(body, req.user, middlewareSave(indexes.saveIndexOffering, [indexBody], req.user, callback));
 
+        } else if (req.method == 'PATCH' && productPattern.test(req.apiUrl)) {
+            var body = JSON.parse(req.reqBody);
+            handleUpgradePostAction(
+                req, body, storeClient.attachUpgradedProduct, middlewareSave(indexes.saveIndexProduct, [body], req.user, callback));
+
         } else if (req.method == 'POST' && catalogsPattern.test(req.apiUrl)) {
             body = JSON.parse(req.body);
             indexes.saveIndexCatalog([body])
@@ -1244,29 +1270,8 @@ var catalog = (function() {
                 callback(null);
             });
         } else if (productPattern.test(req.apiUrl) && req.method == 'PATCH') {
-
-            // There has been an error updating the product, check if the update was an
-            // asset upgrade
-
             var body = JSON.parse(req.reqBody);
-            var getURLId = function(apiUrl) {
-                return apiUrl.split('/')[6];
-            };
-
-            if (!!body.version && !!body.productSpecCharacteristic) {
-                var id = !!body.id ? body.id : getURLId(req.apiUrl);
-
-                // Notify the error to the charging backend to downgrade the asset
-                return storeClient.rollbackProductUpgrade({
-                    id: id,
-                    version: body.version,
-                    productSpecCharacteristic: body.productSpecCharacteristic
-                }, req.user, () => {
-                    callback(null);
-                });
-            }
-
-            callback(null);
+            handleUpgradePostAction(req, body, storeClient.rollbackProductUpgrade, callback);
 
         }  else {
             callback(null);
