@@ -121,6 +121,14 @@ describe('Store Client', function() {
         testValidateAssetOk(OFFERING_ASSET, 'validateOffering', 'create', 'https', done);
     });
 
+    it('should attach offering info', function (done) {
+        testValidateAssetOk(OFFERING_ASSET, 'attachOffering', 'attach', 'https', done);
+    });
+
+    it('should notify offering update', function (done) {
+        testValidateAssetOk(OFFERING_ASSET, 'updateOffering', 'update', 'https', done);
+    });
+
     var testValidateProductError = function(assetType, errorStatus, response, expectedErrMsg, done) {
         // Mock the server
         config.endpoints.charging.appSsl = false;
