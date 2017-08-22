@@ -46,7 +46,7 @@ describe('Store Client', function() {
     }).storeClient;
 
 
-    var testValidateAssetOk = function(assetType, protocol, done) {
+    var testValidateAssetOk = function(assetType, method, action, protocol, done) {
 
         // Mock the server
         config.endpoints.charging.appSsl = protocol === 'https' ? true : false;
@@ -64,10 +64,10 @@ describe('Store Client', function() {
 
         // Call the validator
         var assetInfo = { 'a': 'b', 'example': 'c' };
-        storeClient[ASSETS_FUNCTION_MAPPING[assetType]](assetInfo, {id: 'test'}, function(err) {
+        storeClient[method](assetInfo, {id: 'test'}, function(err) {
 
             var expectedBody = {
-                action: 'create'
+                action: action
             };
 
             expectedBody[assetType] = assetInfo;
@@ -83,22 +83,42 @@ describe('Store Client', function() {
     // Products
 
     it('should validate product (HTTP)', function(done) {
-        testValidateAssetOk(PRODUCT_ASSET, 'http', done);
+        testValidateAssetOk(PRODUCT_ASSET, 'validateProduct', 'create', 'http', done);
     });
 
     it('should validate product (HTTPS)', function(done) {
-        testValidateAssetOk(PRODUCT_ASSET, 'https', done);
+        testValidateAssetOk(PRODUCT_ASSET, 'validateProduct', 'create', 'https', done);
+    });
+
+    it('should attach product', function (done) {
+        testValidateAssetOk(PRODUCT_ASSET, 'attachProduct', 'attach', 'http', done);
+    });
+
+    it('should rollback product creation', function (done) {
+        testValidateAssetOk(PRODUCT_ASSET, 'rollbackProduct', 'rollback_create', 'http', done);
+    });
+
+    it('should validate product upgrade', function (done) {
+        testValidateAssetOk(PRODUCT_ASSET, 'upgradeProduct', 'upgrade', 'http', done);
+    });
+
+    it('should notify product upgraded', function (done) {
+        testValidateAssetOk(PRODUCT_ASSET, 'attachUpgradedProduct', 'attach_upgrade', 'http', done);
+    });
+
+    it('should rollback product upgrade', function (done) {
+        testValidateAssetOk(PRODUCT_ASSET, 'rollbackProductUpgrade', 'rollback_upgrade', 'http', done);
     });
 
 
     // Offerings
 
     it('should validate offering (HTTP)', function(done) {
-        testValidateAssetOk(OFFERING_ASSET, 'http', done);
+        testValidateAssetOk(OFFERING_ASSET, 'validateOffering', 'create', 'http', done);
     });
 
     it('should validate offering (HTTPS)', function(done) {
-        testValidateAssetOk(OFFERING_ASSET, 'https', done);
+        testValidateAssetOk(OFFERING_ASSET, 'validateOffering', 'create', 'https', done);
     });
 
     var testValidateProductError = function(assetType, errorStatus, response, expectedErrMsg, done) {

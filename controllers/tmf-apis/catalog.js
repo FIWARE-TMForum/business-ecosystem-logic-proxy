@@ -311,6 +311,18 @@ var catalog = (function() {
 
                     // Check if the offering is a bundle.
                     var offeringBody = previousBody || newBody;
+
+                    var lifecycleHandler = function (err) {
+                        if (err) {
+                            callback(err);
+                        } else if (validStates != null) {
+                            // This validation only need to be executed once
+                            validateCatalog(req, offeringPath, validStates, newBody, errorMessageStateCatalog, callback);
+                        } else {
+                            callback(null);
+                        }
+                    };
+
                     if (offeringBody.isBundle) {
                         // Bundle offerings cannot contain a productSpecification
                         if(offeringBody.productSpecification) {
@@ -361,16 +373,7 @@ var catalog = (function() {
 
                             });
 
-                        }, function(err) {
-                            if (err) {
-                                callback(err);
-                            } else if (validStates != null) {
-                                // This validation only need to be executed once
-                                validateCatalog(req, offeringPath, validStates, newBody, errorMessageStateCatalog, callback);
-                            } else {
-                                callback(null);
-                            }
-                        })
+                        }, lifecycleHandler)
 
                     } else {
 
@@ -406,15 +409,7 @@ var catalog = (function() {
                                 var userNotAllowedMsg = 'You are not allowed to ' + operation + ' offerings for products you do not own';
                                 var product = JSON.parse(result.body);
 
-                                validateAssetPermissions(req, product, validStates, errorMessageStateProduct, userNotAllowedMsg, function(err) {
-                                    if (err) {
-                                        callback(err);
-                                    } else if (validStates != null) {
-                                        validateCatalog(req, offeringPath, validStates, newBody, errorMessageStateCatalog, callback);
-                                    } else {
-                                        callback(null);
-                                    }
-                                });
+                                validateAssetPermissions(req, product, validStates, errorMessageStateProduct, userNotAllowedMsg, lifecycleHandler);
                             }
                         });
                     }
@@ -887,36 +882,6 @@ var catalog = (function() {
         }
     };
 
-    var isEqualRelatedParty = function (relatedParty1, relatedParty2) {
-
-        if (relatedParty1.length != relatedParty2.length) {
-            return false;
-        } else {
-
-            // Copy relatedParties
-            var copyRelatedParty1 = relatedParty1.slice();
-            var copyRelatedParty2 = relatedParty2.slice();
-
-            var matched = 0;
-
-            for (var i = 0; i < copyRelatedParty1.length; i++) {
-
-                for (var j = 0; j < copyRelatedParty2.length; j++) {
-
-                    if (copyRelatedParty1[i].id === copyRelatedParty2[j].id &&
-                        copyRelatedParty1[i].href === copyRelatedParty2[j].href &&
-                        copyRelatedParty1[i].role === copyRelatedParty2[j].role) {
-
-                        copyRelatedParty2[j] = {};
-                        matched += 1;
-                    }
-                }
-            }
-
-            return matched === relatedParty1.length;
-        }
-    };
-
     // Validate the modification of a resource
     var validateUpdate = function(req, callback) {
 
@@ -958,9 +923,13 @@ var catalog = (function() {
                     } else {
 
                         if (tmfUtils.isOwner(req, previousBody)) {
+                            // The related party field is sorted, since the order is not important
+                            var sortParty = (p1, p2) => {
+                                return  (p1.id > p2.id) ? 1 : ((p2.id > p1.id) ? -1 : 0);
+                            };
 
                             if (parsedBody != null && parsedBody.relatedParty &&
-                                !isEqualRelatedParty(previousBody.relatedParty, parsedBody.relatedParty)) {
+                                !equal(previousBody.relatedParty.sort(sortParty), parsedBody.relatedParty.sort(sortParty))) {
                                     callback({
                                         status: 409,
                                         message: 'The field "relatedParty" can not be modified'
@@ -1244,8 +1213,10 @@ var catalog = (function() {
 
         } else if (req.method == 'PATCH' && productPattern.test(req.apiUrl)) {
             var body = JSON.parse(req.reqBody);
+            var respBody = JSON.parse(req.body);
+
             handleUpgradePostAction(
-                req, body, storeClient.attachUpgradedProduct, middlewareSave(indexes.saveIndexProduct, [body], req.user, callback));
+                req, body, storeClient.attachUpgradedProduct, middlewareSave(indexes.saveIndexProduct, [respBody], req.user, callback));
 
         } else if (req.method == 'POST' && catalogsPattern.test(req.apiUrl)) {
             body = JSON.parse(req.body);
