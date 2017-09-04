@@ -318,7 +318,7 @@
         }
 
         function characteristicMatches(productChar, specChar, offId, productId) {
-            var name;
+            var name = '';
 
             if (vm.offerings.length > 1 && productId) {
                 var parsedName = productChar.name.split(' ');
@@ -343,19 +343,15 @@
                 name = productChar.name;
             }
 
-            return name === specChar.name;
+            return name.toLowerCase() === specChar.name.toLowerCase();
         }
 
         function characteristicValueSelected(characteristic, characteristicValue, offId, productId) {
-            var result, productCharacteristic, i;
+            var result = formatCharacteristicValue(characteristic, characteristicValue);
 
-            for (i = 0; i < vm.item.productCharacteristic.length; i++) {
-                if (characteristicMatches(vm.item.productCharacteristic[i], characteristic, offId, productId)) {
-                    productCharacteristic = vm.item.productCharacteristic[i];
-                }
-            }
-
-            result = formatCharacteristicValue(characteristic, characteristicValue);
+            var productCharacteristic = vm.item.productCharacteristic.filter((prodCharacteristic) => {
+                return characteristicMatches(prodCharacteristic, characteristic, offId, productId)
+            })[0];
 
             return result === productCharacteristic.value;
         }
