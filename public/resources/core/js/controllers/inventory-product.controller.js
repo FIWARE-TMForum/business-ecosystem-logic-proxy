@@ -319,24 +319,26 @@
 
         function characteristicMatches(productChar, specChar, offId, productId) {
             var name = '';
+            var prodCharId = productId ? 'product:' + productId : null;
+            var offCharId = offId ? 'offering:' + offId : null;
 
             if (vm.offerings.length > 1 && productId) {
                 var parsedName = productChar.name.split(' ');
 
-                if (parsedName.length > 2 && parsedName[0] === offId && parsedName[1] === productId) {
+                if (parsedName.length > 2 && parsedName[0] === offCharId && parsedName[1] === prodCharId) {
                     name = parsedName.slice(2).join(' ');
                 }
 
             } else if (vm.offerings.length <= 1 && productId){
                 var parsedName = productChar.name.split(' ');
 
-                if (parsedName.length > 1 && parsedName[0] === productId) {
+                if (parsedName.length > 1 && parsedName[0] === prodCharId) {
                     name = parsedName.slice(1).join(' ');
                 }
             } else if (vm.offerings.length > 1 && !productId) {
                 var parsedName = productChar.name.split(' ');
 
-                if (parsedName.length > 1 && parsedName[0] === offId) {
+                if (parsedName.length > 1 && parsedName[0] === offCharId) {
                     name = parsedName.slice(1).join(' ');
                 }
             } else {
