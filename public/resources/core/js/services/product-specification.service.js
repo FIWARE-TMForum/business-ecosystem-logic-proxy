@@ -36,18 +36,19 @@
             productId: '@id'
         }, {
             update: {
-                method:'PUT'
+                method:'PATCH'
             }
         });
 
         var VALUE_TYPES = {
-            STRING: 'String',
-            NUMBER: 'Number',
-            NUMBER_RANGE: 'Number range'
+            STRING: 'string',
+            NUMBER: 'number',
+            NUMBER_RANGE: 'number range'
         };
 
         var EVENTS = {
-            UPDATED: '$productSpecUpdated'
+            UPGRADE: '$productSpecUpgrade',
+            UPGRADED: '$productSpecUpgraded'
         };
 
         var TYPES = {
@@ -58,6 +59,8 @@
                 SUBSTITUTION: {code: 'substitution', name: 'Substitution'}
             }
         };
+
+        var PATCHABLE_ATTRS = ['description', 'lifecycleStatus', 'name', 'brand', 'productNumber', 'version'];
 
         var Relationship = function Relationship(productSpec, relationshipType) {
             this.productSpec = productSpec;
@@ -88,6 +91,8 @@
         return {
             VALUE_TYPES: VALUE_TYPES,
             TYPES: TYPES,
+            PATCHABLE_ATTRS: PATCHABLE_ATTRS,
+            EVENTS: EVENTS,
             Relationship: Relationship,
             search: search,
             count: count,
@@ -216,11 +221,7 @@
                 productSpecId: resource.id
             };
 
-            return ProductSpec.update(params, angular.extend(resource.toJSON(), dataUpdated, {
-                bundledProductSpecification: resource.bundledProductSpecification.map(function (productSpec) {
-                    return productSpec.serialize();
-                })
-            }))
+            return ProductSpec.update(params, dataUpdated)
                 .$promise
                 .then(detailBundled)
                 .then(detailRelationship);

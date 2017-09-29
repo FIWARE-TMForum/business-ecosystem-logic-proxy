@@ -53,6 +53,7 @@ var catalog = (function() {
     var catalogOfferingsPattern = new RegExp('/catalog/[^/]+/productOffering/?');
     var offeringPattern = new RegExp('/catalog/[^/]+/productOffering/[^/]+/?$');
     var productsPattern = new RegExp('/productSpecification/?$');
+    var productPattern = new RegExp('/productSpecification/[^/]+/?$');
     var categoryPattern = new RegExp('/category/[^/]+/?$');
     var categoriesPattern = new RegExp('/category/?$');
     var catalogsPattern = new RegExp('/catalog/?$');
@@ -310,6 +311,18 @@ var catalog = (function() {
 
                     // Check if the offering is a bundle.
                     var offeringBody = previousBody || newBody;
+
+                    var lifecycleHandler = function (err) {
+                        if (err) {
+                            callback(err);
+                        } else if (validStates != null) {
+                            // This validation only need to be executed once
+                            validateCatalog(req, offeringPath, validStates, newBody, errorMessageStateCatalog, callback);
+                        } else {
+                            callback(null);
+                        }
+                    };
+
                     if (offeringBody.isBundle) {
                         // Bundle offerings cannot contain a productSpecification
                         if(offeringBody.productSpecification) {
@@ -360,16 +373,7 @@ var catalog = (function() {
 
                             });
 
-                        }, function(err) {
-                            if (err) {
-                                callback(err);
-                            } else if (validStates != null) {
-                                // This validation only need to be executed once
-                                validateCatalog(req, offeringPath, validStates, newBody, errorMessageStateCatalog, callback);
-                            } else {
-                                callback(null);
-                            }
-                        })
+                        }, lifecycleHandler)
 
                     } else {
 
@@ -405,15 +409,7 @@ var catalog = (function() {
                                 var userNotAllowedMsg = 'You are not allowed to ' + operation + ' offerings for products you do not own';
                                 var product = JSON.parse(result.body);
 
-                                validateAssetPermissions(req, product, validStates, errorMessageStateProduct, userNotAllowedMsg, function(err) {
-                                    if (err) {
-                                        callback(err);
-                                    } else if (validStates != null) {
-                                        validateCatalog(req, offeringPath, validStates, newBody, errorMessageStateCatalog, callback);
-                                    } else {
-                                        callback(null);
-                                    }
-                                });
+                                validateAssetPermissions(req, product, validStates, errorMessageStateProduct, userNotAllowedMsg, lifecycleHandler);
                             }
                         });
                     }
@@ -566,6 +562,67 @@ var catalog = (function() {
                 callback(null);
             }
         }
+    };
+
+    var validateProductUpdate = function (req, prevBody, newBody, callback) {
+        if ((!!newBody.isBundle || !!newBody.bundledProductSpecification) &&
+                prevBody.lifecycleStatus.toLowerCase() != 'active') {
+
+            return callback({
+                status: 422,
+                message: 'It is not allowed to update bundle related attributes (isBundle, bundledProductSpecification) in launched products'
+            });
+        }
+
+        // Check upgrade problems if the product is a digital one
+        if (tmfUtils.isDigitalProduct(prevBody.productSpecCharacteristic)) {
+            if (!!newBody.version && !tmfUtils.isDigitalProduct(newBody.productSpecCharacteristic)
+                    && newBody.version != prevBody.version) {
+
+                // Trying to upgrade the product without providing new asset info
+                return callback({
+                    status: 422,
+                    message: 'To upgrade digital product specifications it is required to provide new asset info'
+                });
+            }
+
+            if((!!newBody.version && newBody.version == prevBody.version) || typeof newBody.version === 'undefined'
+                    && !!newBody.productSpecCharacteristic &&
+                    !equal(newBody.productSpecCharacteristic, prevBody.productSpecCharacteristic)) {
+
+                return callback({
+                    status: 422,
+                    message: 'Product specification characteristics only can be updated for upgrading digital products'
+                });
+            }
+
+            if (!!newBody.version && newBody.version != prevBody.version &&
+                    tmfUtils.isDigitalProduct(newBody.productSpecCharacteristic) &&
+                    !tmfUtils.equalCustomCharacteristics(newBody.productSpecCharacteristic, prevBody.productSpecCharacteristic)) {
+
+                return callback({
+                    status: 422,
+                    message: 'It is not allowed to update custom characteristics during a product upgrade'
+                });
+            }
+
+            if (!!newBody.version && newBody.version != prevBody.version && !!newBody.productSpecCharacteristic) {
+                return storeClient.upgradeProduct({
+                    id: prevBody.id,
+                    version: newBody.version,
+                    productSpecCharacteristic: newBody.productSpecCharacteristic
+                }, req.user, callback);
+            }
+        } else if (!!newBody.productSpecCharacteristic &&
+                !equal(newBody.productSpecCharacteristic, prevBody.productSpecCharacteristic)){
+
+            return callback({
+                status: 422,
+                message: 'Product spec characteristics cannot be updated'
+            });
+        }
+
+        return callback(null);
     };
 
     var validateProduct = function(req, productSpec, callback) {
@@ -724,7 +781,6 @@ var catalog = (function() {
                             }
                         });
                     }
-
                 });
             } else if (productsPattern.test(req.apiUrl)) {
 
@@ -826,36 +882,6 @@ var catalog = (function() {
         }
     };
 
-    var isEqualRelatedParty = function (relatedParty1, relatedParty2) {
-
-        if (relatedParty1.length != relatedParty2.length) {
-            return false;
-        } else {
-
-            // Copy relatedParties
-            var copyRelatedParty1 = relatedParty1.slice();
-            var copyRelatedParty2 = relatedParty2.slice();
-
-            var matched = 0;
-
-            for (var i = 0; i < copyRelatedParty1.length; i++) {
-
-                for (var j = 0; j < copyRelatedParty2.length; j++) {
-
-                    if (copyRelatedParty1[i].id === copyRelatedParty2[j].id &&
-                        copyRelatedParty1[i].href === copyRelatedParty2[j].href &&
-                        copyRelatedParty1[i].role === copyRelatedParty2[j].role) {
-
-                        copyRelatedParty2[j] = {};
-                        matched += 1;
-                    }
-                }
-            }
-
-            return matched === relatedParty1.length;
-        }
-    };
-
     // Validate the modification of a resource
     var validateUpdate = function(req, callback) {
 
@@ -897,9 +923,13 @@ var catalog = (function() {
                     } else {
 
                         if (tmfUtils.isOwner(req, previousBody)) {
+                            // The related party field is sorted, since the order is not important
+                            var sortParty = (p1, p2) => {
+                                return  (p1.id > p2.id) ? 1 : ((p2.id > p1.id) ? -1 : 0);
+                            };
 
                             if (parsedBody != null && parsedBody.relatedParty &&
-                                !isEqualRelatedParty(previousBody.relatedParty, parsedBody.relatedParty)) {
+                                !equal(previousBody.relatedParty.sort(sortParty), parsedBody.relatedParty.sort(sortParty))) {
                                     callback({
                                         status: 409,
                                         message: 'The field "relatedParty" can not be modified'
@@ -920,14 +950,6 @@ var catalog = (function() {
                                     async.series([
                                         function (callback) {
 
-                                            if (parsedBody) {
-                                                validateProduct(req, parsedBody, callback);
-                                            } else {
-                                                callback(null);
-                                            }
-                                        },
-                                        function (callback) {
-
                                             var url = req.apiUrl;
 
                                             if (url.endsWith('/')) {
@@ -944,6 +966,20 @@ var catalog = (function() {
 
                                             validateInvolvedOfferingsState('product', parsedBody, offeringsContainProductPath, callback);
 
+                                        },
+                                        function (callback) {
+
+                                            if (parsedBody) {
+                                                validateProductUpdate(req, previousBody, parsedBody, callback);
+                                            } else {
+                                                callback(null);
+                                            }
+                                        }, function (callback) {
+                                            if (parsedBody) {
+                                                validateProduct(req, parsedBody, callback);
+                                            } else {
+                                                callback(null);
+                                            }
                                         }], callback);
 
                                 } else {
@@ -1105,7 +1141,7 @@ var catalog = (function() {
         'GET': [ validateAllowed ],
         'POST': [ utils.validateLoggedIn, validateCreation ],
         'PATCH': [ utils.validateLoggedIn, validateUpdate ],
-        'PUT': [ utils.validateLoggedIn, validateUpdate ],
+        'PUT': [ utils.methodNotAllowed ],
         'DELETE': [ utils.validateLoggedIn, isCategory, validateUpdate]
     };
 
@@ -1119,6 +1155,27 @@ var catalog = (function() {
         methodIndexed(req)
             .catch(() => Promise.resolve(req))
             .then(() => { async.series(reqValidators, callback);});
+    };
+
+    var handleUpgradePostAction = function (req, body, storeMethod, callback) {
+        var getURLId = function(apiUrl) {
+            return apiUrl.split('/')[6];
+        };
+
+        // Check if the product has been upgraded
+        if (!!body.version && !!body.productSpecCharacteristic) {
+            var id = !!body.id ? body.id : getURLId(req.apiUrl);
+
+            // Notify the error to the charging backend to downgrade the asset
+            return storeMethod({
+                id: id,
+                version: body.version,
+                productSpecCharacteristic: body.productSpecCharacteristic
+            }, req.user, () => {
+                callback(null);
+            });
+        }
+        callback(null);
     };
 
     var executePostValidation = function(req, callback) {
@@ -1154,6 +1211,13 @@ var catalog = (function() {
 
             storeClient.updateOffering(body, req.user, middlewareSave(indexes.saveIndexOffering, [indexBody], req.user, callback));
 
+        } else if (req.method == 'PATCH' && productPattern.test(req.apiUrl)) {
+            var body = JSON.parse(req.reqBody);
+            var respBody = JSON.parse(req.body);
+
+            handleUpgradePostAction(
+                req, body, storeClient.attachUpgradedProduct, middlewareSave(indexes.saveIndexProduct, [respBody], req.user, callback));
+
         } else if (req.method == 'POST' && catalogsPattern.test(req.apiUrl)) {
             body = JSON.parse(req.body);
             indexes.saveIndexCatalog([body])
@@ -1166,9 +1230,29 @@ var catalog = (function() {
         }
     };
 
+    var handleAPIError = function (req, callback) {
+        if (productsPattern.test(req.apiUrl) && req.method == 'POST') {
+
+            var body = JSON.parse(req.reqBody);
+
+            // Notify the error to the charging backend to remove tha asset
+            storeClient.rollbackProduct(body, req.user, () => {
+                // No matter rollback status, return API message
+                callback(null);
+            });
+        } else if (productPattern.test(req.apiUrl) && req.method == 'PATCH') {
+            var body = JSON.parse(req.reqBody);
+            handleUpgradePostAction(req, body, storeClient.rollbackProductUpgrade, callback);
+
+        }  else {
+            callback(null);
+        }
+    };
+
     return {
         checkPermissions: checkPermissions,
-        executePostValidation: executePostValidation
+        executePostValidation: executePostValidation,
+        handleAPIError: handleAPIError
     };
 
 })();

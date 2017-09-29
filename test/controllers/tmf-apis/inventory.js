@@ -396,63 +396,10 @@ describe('Inventory API', function() {
 
             var error = {
                 'status': 403,
-                'message': 'You are not authorized to retrieve the specified offering from the inventory'
+                'message': 'You are not authorized to retrieve the specified product from the inventory'
             };
 
             testPostValidation(false, error, done);
-        });
-
-        it('should filter non-owned products when retrieving list of products', function(done) {
-
-            var utils = jasmine.createSpyObj('utils', ['updateBody']);
-            var tmfUtils = jasmine.createSpyObj('tmfUtils', ['hasPartyRole']);
-            tmfUtils.hasPartyRole.and.returnValues(false, true, false);
-
-            var inventory = getInventoryAPI(tmfUtils, utils);
-
-            var validProduct = {
-                relatedParty: [{
-                    id: 'test',
-                    role: 'customEr'
-                }]
-            };
-
-            var body = [{
-                relatedParty: [{
-                    id: 'owner',
-                    role: 'Customer'
-                }]
-            },{
-                relatedParty: [{
-                    id: 'test',
-                    role: 'customEr'
-                }]
-            },{
-                relatedParty: [{
-                    id: 'test',
-                    role: 'Seller'
-                }]
-            }];
-
-            var req = {
-                method: 'GET',
-                path: 'DSProductCatalog/api/productManagement/product',
-                user: {
-                    id: 'test'
-                },
-                body: JSON.stringify(body)
-            };
-
-            inventory.executePostValidation(req, function(err) {
-                expect(err).toBe(null);
-                expect(utils.updateBody).toHaveBeenCalledWith(req, [validProduct]);
-
-                for (var i in body) {
-                    expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(req, body[i].relatedParty, 'customer');
-                }
-
-                done();
-            });
         });
     });
 });

@@ -190,6 +190,7 @@ html(ng-app="app")
       include ./modals/shipping-address.modal.jade
       include ./modals/priceplan.modal.jade
       include ./modals/sharing-report.modal.jade
+      include ./modals/upgrade-product.modal.jade
 
     script(type="text/ng-template", id="settings/sidebar")
       include ./partials/settings/sidebar.jade
@@ -253,6 +254,9 @@ html(ng-app="app")
       include ./partials/stock/product/update-form-attachment.jade
     script(type="text/ng-template", id="stock/product/update/relationship")
       include ./partials/stock/product/update-relationship.jade
+
+    script(type="text/ng-template", id="directives/forms/create-asset")
+      include ./partials/stock/product/directives/create-asset-form.jade
 
     script(type="text/ng-template", id="stock/product-offering/search")
       include ./partials/stock/product-offering/search.jade

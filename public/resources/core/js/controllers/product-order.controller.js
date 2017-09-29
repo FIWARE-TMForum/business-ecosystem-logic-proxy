@@ -249,10 +249,10 @@
 
                                     var charIdName = '';
                                     if (productChars.offName) {
-                                        charIdName = productChars.offId + ' ';
+                                        charIdName = 'offering:' + productChars.offId + ' ';
                                     }
                                     if (productChars.id) {
-                                        charIdName += productChars.id + ' ';
+                                        charIdName += 'product:' + productChars.id + ' ';
                                     }
 
                                     item.product.productCharacteristic.push({

@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -311,6 +311,15 @@ describe('TMF Controller', function() {
 
     describe('Proxy', function() {
 
+        var reqMethod = 'POST';
+        var secure = true;
+        var hostname = 'belp.fiware.org';
+        var reqBody = 'Example';
+        var reqPath = '/ordering';
+        var url = '/proxy' + reqPath;
+        var userId = 'user';
+        var reqId = 'EXAMPLE-REQUEST-ID';
+        var connection = { remoteAddress: '127.0.0.1' };
 
         var executePostValidationOk = function(req, callback) {
             callback();
@@ -365,19 +374,23 @@ describe('TMF Controller', function() {
             }, 100);
         });
 
-        var testAPIPostValidation = function(postValidator, responseCode, expectedPostValidatorCalled, error, done) {
+        var testPostAction = function(postValidationMethod, postValidator, responseCode, expectedPostValidatorCalled, error, done) {
+            var methods = ['checkPermissions'];
 
-            var postValidatorCalled = false;
+            if (postValidator) {
+                methods.push(postValidationMethod);
+            }
 
-            var reqMethod = 'POST';
-            var secure = true;
-            var hostname = 'belp.fiware.org';
-            var reqBody = 'Example';
-            var reqPath = '/ordering';
-            var url = '/proxy' + reqPath;
-            var userId = 'user';
-            var reqId = 'EXAMPLE-REQUEST-ID';
-            var connection = { remoteAddress: '127.0.0.1' };
+            var controller = jasmine.createSpyObj('controller', methods);
+            controller.checkPermissions.and.callFake((req, callback) => {
+                callback(null);
+            });
+
+            if (postValidator) {
+                controller[postValidationMethod].and.callFake((req, callback) => {
+                    postValidator(req, callback);
+                });
+            }
 
             var returnedResponse = {
                 statusCode: responseCode,
@@ -390,77 +403,44 @@ describe('TMF Controller', function() {
 
             var returnedBody = '%%%%%%%%%---BODY---%%%%%%%%%';
 
-            // Configure the API controller
-            var controller = {
-                checkPermissions: function(req, callback) {
-                    callback();
-                }
-            };
-
-            if (postValidator) {
-                controller.executePostValidation = function(req, callback) {
-
-                    postValidatorCalled = true;
-
-                    expect(req).toEqual(
-                        {
-                            secure: secure,
-                            hostname: hostname,
-                            status: returnedResponse.statusCode,
-                            headers: returnedResponse.headers,
-                            body: returnedBody,
-                            user: { id: userId },
-                            method: reqMethod,
-                            apiUrl: reqPath,
-                            url: url,
-                            connection: connection,
-                            id: reqId
-                        }
-                    );
-
-                    postValidator(req, callback);
-                }
-            }
-
-            // TMF API
-            var request = function(options, callback) {
-
-                expect(options).toEqual(
-                    {
-                        url: 'http://' + utils.getAPIHost() + ':' + utils.getAPIPort() + reqPath,
-                        method: 'POST',
-                        encoding: null,
-                        headers: utils.proxiedRequestHeaders(),
-                        body: reqBody
-                    }
-                );
-
+            var request = jasmine.createSpy().and.callFake((options, callback) => {
                 callback(null, returnedResponse, returnedBody);
-            };
+            });
 
             var tmf = getTmfInstance(request, null, controller, null);
-
-            // Actual call
-            var req = {
-                id: reqId,
-                url: url,
-                apiUrl: reqPath,
-                //path: reqPath,
-                body: reqBody,
-                hostname: hostname,
-                secure: secure,
-                method: reqMethod,
-                user: {'id': userId },
-                headers: {},
-                connection: connection
-            };
 
             var res = jasmine.createSpyObj('res', ['status', 'setHeader', 'json', 'write', 'end']);
             res.status.and.returnValue(res);
 
-            tmf.checkPermissions(req, res);
+            var resMethod = error ? 'json': 'end';
 
-            setTimeout(function() {
+            res[resMethod].and.callFake(() => {
+                if (postValidator && expectedPostValidatorCalled) {
+                    expect(controller[postValidationMethod]).toHaveBeenCalledWith({
+                        secure: secure,
+                        hostname: hostname,
+                        status: returnedResponse.statusCode,
+                        headers: returnedResponse.headers,
+                        body: returnedBody,
+                        user: { id: userId },
+                        method: reqMethod,
+                        apiUrl: reqPath,
+                        url: url,
+                        connection: connection,
+                        id: reqId,
+                        reqBody: reqBody
+                    }, jasmine.any(Function));
+                } else if (postValidator && !expectedPostValidatorCalled) {
+                    expect(controller[postValidationMethod]).not.toHaveBeenCalled();
+                }
+
+                expect(request).toHaveBeenCalledWith({
+                    url: 'http://' + utils.getAPIHost() + ':' + utils.getAPIPort() + reqPath,
+                    method: 'POST',
+                    encoding: null,
+                    headers: utils.proxiedRequestHeaders(),
+                    body: reqBody
+                }, jasmine.any(Function));
 
                 if (error) {
 
@@ -478,11 +458,28 @@ describe('TMF Controller', function() {
                     }
                 }
 
-                expect(postValidatorCalled).toBe(expectedPostValidatorCalled);
-
                 done();
+            });
 
-            }, 100);
+            var req = {
+                id: reqId,
+                url: url,
+                apiUrl: reqPath,
+                //path: reqPath,
+                body: reqBody,
+                hostname: hostname,
+                secure: secure,
+                method: reqMethod,
+                user: {'id': userId },
+                headers: {},
+                connection: connection
+            };
+
+            tmf.checkPermissions(req, res);
+        };
+
+        var testAPIPostValidation = function(postValidator, responseCode, expectedPostValidatorCalled, error, done) {
+            testPostAction('executePostValidation', postValidator, responseCode, expectedPostValidatorCalled, error, done);
         };
 
         it('should proxy request when no post validation method defined', function(done) {
@@ -499,6 +496,22 @@ describe('TMF Controller', function() {
 
         it('should send an error message after executing post validation method', function(done) {
             testAPIPostValidation(executeValidationError, 200, true, true, done);
+        });
+
+        var testAPIErrorHandling = function(postValidator, responseCode, expectedPostValidatorCalled, error, done) {
+            testPostAction('handleAPIError', postValidator, responseCode, expectedPostValidatorCalled, error, done);
+        };
+
+        it('should proxy request when no API error handler has been defined', function(done) {
+            testAPIErrorHandling(null, 500, false, false, done);
+        });
+
+        it('should call API error handler when the error code is higher than 400 and is defined', function (done) {
+            testAPIErrorHandling(executePostValidationOk, 500, true, false, done);
+        });
+
+        it('should call API error handler and return an error given in the handler', function (done) {
+            testAPIErrorHandling(executeValidationError, 500, true, true, done);
         });
     });
 

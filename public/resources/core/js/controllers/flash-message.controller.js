@@ -36,6 +36,7 @@
         var messages = {
             created: 'The {{ resource }} <strong>{{ name }}</strong> was created.',
             updated: 'The {{ resource }} <strong>{{ name }}</strong> was updated.',
+            upgraded: 'The {{ resource }} <strong>{{ name }}</strong> was upgraded',
             success: '{{ message }}',
             info: '{{ message }}',
             error: '{{ error }}'
@@ -73,6 +74,7 @@
                     break;
                 case 'created':
                 case 'updated':
+                case 'upgraded':
                 case 'success':
                     state = 'success';
                     break;
