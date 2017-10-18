@@ -31,7 +31,7 @@
         .module('app')
         .factory('Offering', ['$q', '$resource', 'URLS', 'LIFECYCLE_STATUS', 'User', 'ProductSpec', 'Category', ProductOfferingService]);
 
-    function ProductOfferingService($q, $resource, URLS, TAX_RATE, LIFECYCLE_STATUS, User, ProductSpec, Category) {
+    function ProductOfferingService($q, $resource, URLS, CHARGE_PERIODS, CURRENCY_CODES, TAX_RATE, LIFECYCLE_STATUS, User, ProductSpec, Category) {
         var resource = $resource(URLS.CATALOGUE_MANAGEMENT + '/:catalogue/:catalogueId/productOffering/:offeringId', {
             offeringId: '@id'
         }, {
@@ -55,17 +55,21 @@
             PRICEPLAN_UPDATED: '$pricePlanUpdated'
         };
 
+        var CHARGE_PERIOD = {};
+
+        CHARGE_PERIODS.forEach(function (period) {
+            CHARGE_PERIOD[period.title.toUpperCase()] = period.title.toLowerCase();
+        });
+
+        var CURRENCY_CODE = {};
+
+        CURRENCY_CODES.forEach(function (code) {
+            CURRENCY_CODE[code.value] = code.title;
+        });
+
         var TYPES = {
-            CHARGE_PERIOD: {
-                MONTHLY: 'monthly',
-                WEEKLY: 'weekly',
-                YEARLY: 'yearly'
-            },
-            CURRENCY_CODE: {
-                CAD: 'canadian dollar',
-                EUR: 'euro',
-                USD: 'us dollar'
-            },
+            CHARGE_PERIOD: CHARGE_PERIOD,
+            CURRENCY_CODE: CURRENCY_CODE,
             PRICE: {
                 ONE_TIME: 'one time',
                 RECURRING: 'recurring',
@@ -75,7 +79,7 @@
 
         var TEMPLATES = {
             PRICE: {
-                currencyCode: 'EUR',
+                currencyCode: CURRENCY_CODES[0].value,
                 dutyFreeAmount: 0,
                 percentage: 0,
                 taxIncludedAmount: 0,

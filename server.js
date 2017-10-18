@@ -459,11 +459,64 @@ indexes.init().then(function() {
 
         https.createServer(options, function(req,res) {
             app.handle(req, res);
-        }).listen(app.get('port'));
-
+        }).listen(app.get('port'), onlistening);
     } else {
-        app.listen(app.get('port'));
+        app.listen(app.get('port'), onlistening);
     }
 }).catch(function() {
     logger.error('CRITICAL: The indexes could not be created, the server is not starting')
 });
+
+
+function onlistening() {
+    var request = require('request');
+    var urldata = config.endpoints.charging;
+
+    Promise
+        .all([
+            new Promise(function (resolve, reject) {
+                var uri = url.format({
+                    protocol: 'http',
+                    hostname: urldata.host,
+                    port: urldata.port,
+                    pathname: '/'+ urldata.path + '/api/assetManagement/chargePeriods/',
+                });
+
+                request(uri, function(err, res, body) {
+                    if (err || res.statusCode != 200) {
+                        console.debug(res.statusCode, err);
+                        reject('Failed to retreive charge periods');
+                    } else {
+                        resolve(JSON.parse(body));
+                    }
+                });
+            }),
+            new Promise(function (resolve, reject) {
+                var uri = url.format({
+                    protocol: 'http',
+                    hostname: urldata.host,
+                    port: urldata.port,
+                    pathname: '/'+ urldata.path + '/api/assetManagement/currencyCodes/',
+                });
+
+                request(uri, function(err, res, body) {
+                    if (err || res.statusCode != 200) {
+                        console.debug(res.statusCode, err);
+                        reject('Failed to retreive currency codes');
+                    } else {
+                        resolve(JSON.parse(body));
+                    }
+                });
+            }),
+        ])
+        .then(function (result) {
+            app.locals.chargePeriods = result[0].map(function (cp) {
+                return cp.title + ':' + cp.value;
+            });
+            app.locals.currencyCodes = result[1].map(function (cc) {
+                return cc.value + ':' + cc.title;
+            });
+        }, function (reason) {
+            console.error(reason);
+        });
+}
