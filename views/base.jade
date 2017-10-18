@@ -37,6 +37,7 @@ html(ng-app="app")
           SHARING_REPORTS: '#{ proxyPath }/#{ rssPath }/rss/settlement/reports',
           SHOPPING_CART: '#{ shoppingCartPath }/:action/:id'
         })
+        .constant('TAX_RATE', #{ taxRate })
         .constant('PLATFORM_REVENUE', #{ platformRevenue })
         .constant('USAGE_CHART_URL', '#{ usageChartURL }')
         .constant('ROLES', { seller: '#{ seller }', customer: '#{ customer }', orgAdmin: '#{ orgAdmin }'})

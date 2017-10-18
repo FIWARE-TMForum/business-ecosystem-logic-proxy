@@ -31,7 +31,7 @@
         .module('app')
         .factory('Offering', ['$q', '$resource', 'URLS', 'LIFECYCLE_STATUS', 'User', 'ProductSpec', 'Category', ProductOfferingService]);
 
-    function ProductOfferingService($q, $resource, URLS, LIFECYCLE_STATUS, User, ProductSpec, Category) {
+    function ProductOfferingService($q, $resource, URLS, TAX_RATE, LIFECYCLE_STATUS, User, ProductSpec, Category) {
         var resource = $resource(URLS.CATALOGUE_MANAGEMENT + '/:catalogue/:catalogueId/productOffering/:offeringId', {
             offeringId: '@id'
         }, {
@@ -79,7 +79,7 @@
                 dutyFreeAmount: 0,
                 percentage: 0,
                 taxIncludedAmount: 0,
-                taxRate: 20
+                taxRate: TAX_RATE,
             },
             PRICEPLAN: {
                 description: '',
