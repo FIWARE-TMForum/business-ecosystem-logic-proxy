@@ -1,0 +1,20 @@
+version: '3'
+services:
+    mongo:
+        image: mongo:3.2
+        ports:
+            - 27017:27017
+        volumes:
+            - ./proxy-data:/data/db
+
+    proxy:
+        image: proxy
+        links:
+            - mongo
+        depends_on:
+            - mongo
+        ports:
+            - 8000:8000
+        volumes:
+            - ./proxy-conf:/business-ecosystem-logic-proxy/etc
+            - ./proxy-indexes:/business-ecosystem-logic-proxy/indexes
