@@ -27,7 +27,7 @@
     "normalize-url": "^1.8.0",
     "on-finished": "^2.3.0",
     "passport": "0.3.0",
-    "passport-fiware-oauth": "0.1.5",
+    "passport-fiware-oauth": "^0.1.7",
     "promiz": "^1.0.5",
     "request": "^2.69.0",
     "search-index": "0.9.15",
