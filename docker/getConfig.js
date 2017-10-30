@@ -1,11 +1,13 @@
 const config = require('./etc/config.js');
 
-if (process.argv[2] == 'mongohost') {
-    console.log(config.mongoDb.server);
-} else if (process.argv[2] == 'mongoport') {
-    console.log(config.mongoDb.port);
-} else if (process.argv[2] == 'glasshost') {
-    console.log(config.endpoints.catalog.host);
-} else if (process.argv[2] == 'glassport') {
-    console.log(config.endpoints.catalog.port);
-}
+const availableConf = {
+    mongohost: config.mongoDb.server,
+    mongoport: config.mongoDb.port,
+    glasshost: config.endpoints.inventory.host,
+    glassport: config.endpoints.inventory.port,
+    glassprot: config.endpoints.inventory.appSsl ? 'https' : 'http',
+    glasspath: config.endpoints.inventory.path
+};
+
+console.log(availableConf[process.argv[2]]);
+

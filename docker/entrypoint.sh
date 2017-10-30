@@ -10,11 +10,9 @@ function test_connection {
         echo "Connection refused, retrying in 5 seconds..."
         sleep 5
 
-        if [[ ${STATUS} -ne 0 ]]; then
-            exec 10<>/dev/tcp/$2/$3
-            STATUS=$?
+        exec 10<>/dev/tcp/$2/$3
+        STATUS=$?
 
-        fi
         I=${I}+1
     done
 
@@ -42,6 +40,25 @@ GLASSFISH_PORT=`/business-ecosystem-logic-proxy/node-v6.9.1-linux-x64/bin/node g
 
 # Wait for glassfish to be running
 test_connection 'Glassfish' ${GLASSFISH_HOST} ${GLASSFISH_PORT}
+
+# Wait for APIs to be deployed
+GLASSFISH_SCH=`/business-ecosystem-logic-proxy/node-v6.9.1-linux-x64/bin/node getConfig glassprot`
+GLASSFISH_PATH=`/business-ecosystem-logic-proxy/node-v6.9.1-linux-x64/bin/node getConfig glasspath`
+
+echo "Testing Glasfish APIs deployed"
+wget ${GLASSFISH_SCH}://${GLASSFISH_HOST}:${GLASSFISH_PORT}/${GLASSFISH_PATH}
+STATUS=$?
+I=0
+while [[ ${STATUS} -ne 0  && ${I} -lt 50 ]]; do
+    echo "Glassfish APIs not deployed yet, retrying in 5 seconds..."
+
+    sleep 5
+    wget ${GLASSFISH_SCH}://${GLASSFISH_HOST}:${GLASSFISH_PORT}/${GLASSFISH_PATH}
+    STATUS=$?
+
+    I=${I}+1
+done
+
 
 # Include this setting to avoid inconsistencies between docker container port and used port
 sed -i "s|config\.port|config\.extPort|" /business-ecosystem-logic-proxy/lib/tmfUtils.js
