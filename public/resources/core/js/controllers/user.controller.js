@@ -74,7 +74,7 @@
 
         function hasAdminRole() {
             var org = User.loggedUser.organizations.find(x => x.id === vm.currentUser.id);
-            return loggedAsIndividual() || org.roles.findIndex(x => x.name === ROLES.orgAdmin) > -1;
+            return loggedAsIndividual() || org.roles.findIndex(x => x.name.toLowerCase() === ROLES.orgAdmin.toLowerCase()) > -1;
         }
 
         function loggedAsIndividual() {
@@ -134,7 +134,7 @@
         }
 
         function isSeller() {
-            return vm.currentUser.roles.findIndex(x => x.name === ROLES.seller) > -1;
+            return vm.currentUser.roles.findIndex(x => x.name.toLowerCase() === ROLES.seller.toLowerCase()) > -1;
         }
 
         function isAuthenticated() {
