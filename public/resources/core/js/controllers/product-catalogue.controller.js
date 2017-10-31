@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -279,7 +279,14 @@
         }
 
         function update() {
-            updatePromise = Catalogue.update(vm.data);
+            var dataUpdated = {};
+            Catalogue.PATCHABLE_ATTRS.forEach(function (attr) {
+                if (!angular.equals(vm.item[attr], vm.data[attr])) {
+                    dataUpdated[attr] = vm.data[attr];
+                }
+            });
+
+            updatePromise = Catalogue.update(vm.data, dataUpdated);
             updatePromise.then(function (catalogueUpdated) {
                 $state.go('stock.catalogue.update', {
                     catalogueId: catalogueUpdated.id

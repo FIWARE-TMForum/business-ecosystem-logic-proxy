@@ -32,7 +32,6 @@ var config = require('./../config'),
     // Other dependencies
     logger = require('./../lib/logger').logger.getLogger('TMF'),
     request = require('request'),
-    url = require('url'),
     utils = require('./../lib/utils');
 
 var tmf = (function() {

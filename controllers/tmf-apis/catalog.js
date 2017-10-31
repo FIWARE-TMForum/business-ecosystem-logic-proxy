@@ -164,7 +164,7 @@ var catalog = (function() {
         return modified;
     };
 
-    var validateCatalog = function(req, offeringPath, validStates, newBody, errorMessageStateCatalog, callback) {
+    var validateOfferingCatalog = function(req, offeringPath, validStates, newBody, errorMessageStateCatalog, callback) {
         // Retrieve the catalog
         var catalogPath = catalogPathFromOfferingUrl(offeringPath);
         retrieveAsset(catalogPath, function (err, result) {
@@ -278,10 +278,12 @@ var catalog = (function() {
             }
         }
 
-        if (newBody && !previousBody && !newBody.validFor) {
+        // When the offering is created the validFor in injected if not provided
+        if (newBody && (!previousBody || (previousBody && !previousBody.validFor)) && !newBody.validFor) {
             newBody.validFor = {
                 startDateTime: new Date().toISOString()
-            }
+            };
+            utils.updateBody(req, newBody);
         }
 
         async.series([
@@ -317,7 +319,7 @@ var catalog = (function() {
                             callback(err);
                         } else if (validStates != null) {
                             // This validation only need to be executed once
-                            validateCatalog(req, offeringPath, validStates, newBody, errorMessageStateCatalog, callback);
+                            validateOfferingCatalog(req, offeringPath, validStates, newBody, errorMessageStateCatalog, callback);
                         } else {
                             callback(null);
                         }
@@ -718,6 +720,22 @@ var catalog = (function() {
         });
     };
 
+    var validateCatalog = function (req, prevCatalog, catalog, callback) {
+        // Check if the validFor field has been included in the body
+        if (catalog && (!prevCatalog || (prevCatalog && !prevCatalog.validFor)) && !catalog.validFor) {
+            catalog.validFor = {
+                startDateTime: new Date().toISOString()
+            };
+            utils.updateBody(req, catalog);
+        }
+
+        // Check that the catalog name is not already taken
+        if (catalog && (!prevCatalog || !!catalog.name)) {
+            checkExistingCatalog(req.apiUrl, catalog.name, callback)
+        } else {
+            callback(null);
+        }
+    };
 
     //////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////// CREATION //////////////////////////////////////////
@@ -801,18 +819,13 @@ var catalog = (function() {
                 });
 
             } else if (catalogsPattern.test(req.apiUrl)) {
-
-                var catalogName = body.name;
-
-                // Check that the catalog name is not already taken
-                checkExistingCatalog(req.apiUrl, catalogName, function (result) {
+                validateCatalog(req, null, body, function (result) {
                     if (result) {
                         callback(result);
                     } else {
                         createHandler(req, body, callback);
                     }
-                })
-
+                });
             } else {
                 createHandler(req, body, callback);
             }
@@ -939,11 +952,17 @@ var catalog = (function() {
 
                                 if (catalogsPattern.test(req.apiUrl)) {
 
-                                    // Retrieve all the offerings contained in the catalog
-                                    var slash = req.apiUrl.endsWith('/') ? '' : '/';
-                                    var offeringsInCatalogPath = req.apiUrl + slash + 'productOffering';
+                                    async.series([function (callback) {
+                                        // Validate catalog new contents
+                                        validateCatalog(req, previousBody, parsedBody, callback);
 
-                                    validateInvolvedOfferingsState('catalog', parsedBody, offeringsInCatalogPath, callback);
+                                    }, function (callback) {
+                                        // Retrieve all the offerings contained in the catalog
+                                        var slash = req.apiUrl.endsWith('/') ? '' : '/';
+                                        var offeringsInCatalogPath = req.apiUrl + slash + 'productOffering';
+
+                                        validateInvolvedOfferingsState('catalog', parsedBody, offeringsInCatalogPath, callback);
+                                    }], callback)
 
                                 } else if (productsPattern.test(req.apiUrl)) {
 

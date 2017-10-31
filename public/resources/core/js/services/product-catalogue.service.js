@@ -36,9 +36,11 @@
             catalogueId: '@id'
         }, {
             update: {
-                method: 'PUT'
+                method: 'PATCH'
             }
         });
+
+        var PATCHABLE_ATTRS = ['name', 'description', 'lifecycleStatus'];
 
         resource.prototype.getRoleOf = getRoleOf;
 
@@ -49,7 +51,8 @@
             create: create,
             detail: detail,
             update: update,
-            buildInitialData: buildInitialData
+            buildInitialData: buildInitialData,
+            PATCHABLE_ATTRS: PATCHABLE_ATTRS
         };
 
         function queryCatalog(filters, method) {
@@ -150,13 +153,13 @@
             return deferred.promise;
         }
 
-        function update(catalogue) {
+        function update(catalogue, updatedData) {
             var deferred = $q.defer();
             var params = {
                 catalogueId: catalogue.id
             };
 
-            resource.update(params, catalogue, function (catalogueUpdated) {
+            resource.update(params, updatedData, function (catalogueUpdated) {
                 deferred.resolve(catalogueUpdated);
             }, function (response) {
                 deferred.reject(response);
