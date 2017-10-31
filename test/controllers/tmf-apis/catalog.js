@@ -221,6 +221,9 @@ describe('Catalog API', function() {
 
         // Mock bundles
         var body = {
+            validFor: {
+                startDateTime: '2019-06-10'
+            },
             isBundle: true,
             bundledProductSpecification: []
         };
@@ -292,13 +295,19 @@ describe('Catalog API', function() {
 
     };
 
+    var basicBody = {
+        validFor: {
+            startDateTime: '2016-07-12T10:56:00'
+        }
+    };
+
     it('should reject creation requests with invalid JSON', function(done) {
         testCreateBasic('test', '{', [], true, 400, INVALID_JSON, true, false,
             true, done);
     });
 
     it('should reject creation requests when user has not the seller role', function(done) {
-        testCreateBasic('test', '{}', [], true, 403, 'You are not authorized to create resources', false, true,
+        testCreateBasic('test', JSON.stringify(basicBody), [], true, 403, 'You are not authorized to create resources', false, true,
             false, done);
     });
 
@@ -306,7 +315,8 @@ describe('Catalog API', function() {
 
         var user = 'test';
         var resource = {
-            relatedParty: [{ name: user, role: 'invalid role' }]
+            relatedParty: [{ name: user, role: 'invalid role' }],
+            validFor: basicBody.validFor
         };
 
         testCreateBasic(user, JSON.stringify(resource), [{ name: config.oauth2.roles.seller }], true, 403,
@@ -317,7 +327,8 @@ describe('Catalog API', function() {
 
         var user = 'test';
         var resource = {
-            relatedParty: [{ id: user, role: 'OwNeR' }]
+            relatedParty: [{ id: user, role: 'OwNeR' }],
+            validFor: basicBody.validFor
         };
 
         // Error parameters are not required when the resource can be created
@@ -334,7 +345,7 @@ describe('Catalog API', function() {
         var protocol = config.endpoints.catalog.appSsl ? 'https' : 'http';
         var serverUrl = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
         var productPath = '/product/7';
-        var categoryPath = '/category'
+        var categoryPath = '/category';
 
         var user = {
             id: userName,
@@ -981,7 +992,7 @@ describe('Catalog API', function() {
             var catalogApi = mockCatalogAPI(owner ? isOwnerTrue : isOwnerFalse, storeValidator);
 
             var role = owner ? 'Owner': 'Seller';
-            var body = { relatedParty: [{id: 'test', role: role}]};
+            var body = { relatedParty: [{id: 'test', role: role}], validFor: {startDateTime: '2010-04-12'}};
             var req = buildProductRequest(body);
 
             checkProductCreationResult(catalogApi, req, errorStatus, errorMsg, done);
@@ -1027,7 +1038,6 @@ describe('Catalog API', function() {
         };
 
         it('should allow to create bundles when all products specs are single and owned by the user', function(done) {
-
             var bundles = [{
                 id: '1',
                 status: 200,
@@ -1165,6 +1175,7 @@ describe('Catalog API', function() {
         var url = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
         var catalogPath = '/catalog/category';
 
+        category.validFor = {};
         // Call the method
         var req = {
             method: 'POST',
@@ -1702,22 +1713,6 @@ describe('Catalog API', function() {
             null, catalogRequestInfo, 403, 'Field productSpecification cannot be modified', false, done);
     });
 
-    it('should not allow to update an offering when the validFor field changes', function (done) {
-        var productRequestInfo = {
-            requestStatus: 200,
-            owner: true,
-            lifecycleStatus: 'active'
-        };
-
-        var catalogRequestInfo = {
-            requestStatus: 200,
-            lifecycleStatus: 'active'
-        };
-
-        testUpdateProductOffering(JSON.stringify({ validFor: {} }), productRequestInfo,
-            null, catalogRequestInfo, 403, 'Field validFor cannot be modified', false, done);
-    });
-
     it('should not allow to update a non-owned offering', function(done) {
 
         var productRequestInfo = {
@@ -1962,13 +1957,15 @@ describe('Catalog API', function() {
 
         var prevBody = {
             lifecycleStatus: bodyStatus,
-            relatedParty: previousProductBody.relatedParty
+            relatedParty: previousProductBody.relatedParty,
+            validFor: {}
         };
         testChangeProductCatalogStatus(productPath, offeringsPath, prevBody, productBody, offeringsInfo,
                 errorStatus, errorMsg, done);
     };
 
     it('should not allow to retire a product when the body is invalid', function(done) {
+
         var productBody = "{'lifecycleStatus': retired}";
 
         var offeringsInfo = {
@@ -2267,6 +2264,7 @@ describe('Catalog API', function() {
         var prevBody = {
             version: '1.0',
             lifecycleStatus: 'Active',
+            validFor: {},
             productSpecCharacteristic: [{
                 name: 'Color',
                 productSpecCharacteristicValue: [{
@@ -2281,6 +2279,7 @@ describe('Catalog API', function() {
     };
 
     it('should allow to upgrade a non-digital product when the characteristics are provided', function (done) {
+
         var newBody = {
             version: '1.1',
             productSpecCharacteristic: [{
@@ -2327,6 +2326,7 @@ describe('Catalog API', function() {
             id: 2,
             version: '1.0',
             lifecycleStatus: 'Active',
+            validFor: {},
             productSpecCharacteristic: [{
                 name: 'speed',
                 productSpecCharacteristicValue: [{
@@ -2959,6 +2959,9 @@ describe('Catalog API', function() {
         var url = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
 
         // The mock server that will handle the request to retrieve the old state of the category
+        if (oldStateRequest.body) {
+            oldStateRequest.body.validFor = {};
+        }
         nock(url)
             .get(categoryResourcePath)
             .reply(oldStateRequest.status, JSON.stringify(oldStateRequest.body));

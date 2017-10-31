@@ -152,7 +152,7 @@ var catalog = (function() {
     };
 
     var validateOfferingFields = function(previousBody, newBody) {
-        var fixedFields = ['isBundle', 'productSpecification', 'bundledProductOffering', 'validFor'];
+        var fixedFields = ['isBundle', 'productSpecification', 'bundledProductOffering'];
         var modified = null;
 
         for (var i = 0; i < fixedFields.length && modified == null; i++) {
@@ -276,14 +276,6 @@ var catalog = (function() {
                     message: 'Field ' + modifiedField +' cannot be modified'
                 });
             }
-        }
-
-        // When the offering is created the validFor in injected if not provided
-        if (newBody && (!previousBody || (previousBody && !previousBody.validFor)) && !newBody.validFor) {
-            newBody.validFor = {
-                startDateTime: new Date().toISOString()
-            };
-            utils.updateBody(req, newBody);
         }
 
         async.series([
@@ -721,14 +713,6 @@ var catalog = (function() {
     };
 
     var validateCatalog = function (req, prevCatalog, catalog, callback) {
-        // Check if the validFor field has been included in the body
-        if (catalog && (!prevCatalog || (prevCatalog && !prevCatalog.validFor)) && !catalog.validFor) {
-            catalog.validFor = {
-                startDateTime: new Date().toISOString()
-            };
-            utils.updateBody(req, catalog);
-        }
-
         // Check that the catalog name is not already taken
         if (catalog && (!prevCatalog || !!catalog.name)) {
             checkExistingCatalog(req.apiUrl, catalog.name, callback)
@@ -767,6 +751,14 @@ var catalog = (function() {
             });
 
             return; // EXIT
+        }
+
+        // Catalog stuff should include a validFor field
+        if (!body.validFor) {
+            body.validFor = {
+                startDateTime: new Date().toISOString()
+            };
+            utils.updateBody(req, body);
         }
 
         if (categoriesPattern.test(req.apiUrl)) {
@@ -926,6 +918,14 @@ var catalog = (function() {
                 } else {
 
                     var previousBody = JSON.parse(result.body);
+
+                    // Catalog stuff should include a validFor field
+                    if (parsedBody && !previousBody.validFor && !parsedBody.validFor) {
+                        parsedBody.validFor = {
+                            startDateTime: new Date().toISOString()
+                        };
+                        utils.updateBody(req, parsedBody);
+                    }
 
                     if (categoryPattern.test(req.apiUrl)) {
                         validateCategory(req, parsedBody, previousBody, 'modify', callback);
