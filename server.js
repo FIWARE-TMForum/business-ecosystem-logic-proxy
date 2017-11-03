@@ -484,8 +484,7 @@ function onlistening() {
 
                 request(uri, function(err, res, body) {
                     if (err || res.statusCode != 200) {
-                        console.debug(res.statusCode, err);
-                        reject('Failed to retreive charge periods');
+                        reject('Failed to retrieve charge periods');
                     } else {
                         resolve(JSON.parse(body));
                     }
@@ -501,8 +500,7 @@ function onlistening() {
 
                 request(uri, function(err, res, body) {
                     if (err || res.statusCode != 200) {
-                        console.debug(res.statusCode, err);
-                        reject('Failed to retreive currency codes');
+                        reject('Failed to retrieve currency codes');
                     } else {
                         resolve(JSON.parse(body));
                     }
@@ -517,6 +515,6 @@ function onlistening() {
                 return cc.value + ':' + cc.title;
             });
         }, function (reason) {
-            console.error(reason);
+            logger.error(reason);
         });
 }
