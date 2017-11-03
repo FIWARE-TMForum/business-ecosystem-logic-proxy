@@ -27,6 +27,7 @@ config.portalPrefix = '';
 config.logInPath = '/login';
 config.logOutPath = '/logOut';
 config.sessionSecret = 'keyboard cat';
+config.theme = '';
 
 // OAuth2 configuration
 config.oauth2 = {

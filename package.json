@@ -33,7 +33,8 @@
     "search-index": "0.9.15",
     "trycatch": "^1.5.21",
     "leveldown": "^1.5.0",
-    "levelup": "^1.3.3"
+    "levelup": "^1.3.3",
+    "merge-dirs": "^0.2.1"
   },
   "devDependencies": {
     "freeport": "1.0.5",

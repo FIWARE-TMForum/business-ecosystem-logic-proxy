@@ -154,8 +154,12 @@ app.use(function(req, res, next) {
 });
 
 // Static files && templates
-app.use(config.portalPrefix + '/', express.static(__dirname + '/public'));
-app.set('views', __dirname + '/views');
+
+// Check if a theme has been loaded
+var staticPath = !config.theme ? '' : '/static';
+
+app.use(config.portalPrefix + '/', express.static(__dirname + staticPath + '/public'));
+app.set('views', __dirname + staticPath + '/views');
 app.set('view engine', 'jade');
 
 
