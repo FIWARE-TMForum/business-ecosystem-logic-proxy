@@ -476,7 +476,7 @@ function onlistening() {
         .all([
             new Promise(function (resolve, reject) {
                 var uri = url.format({
-                    protocol: 'http',
+                    protocol: urldata.appSsl ? 'https': 'http',
                     hostname: urldata.host,
                     port: urldata.port,
                     pathname: '/'+ urldata.path + '/api/assetManagement/chargePeriods/',
@@ -492,7 +492,7 @@ function onlistening() {
             }),
             new Promise(function (resolve, reject) {
                 var uri = url.format({
-                    protocol: 'http',
+                    protocol: urldata.appSsl ? 'https': 'http',
                     hostname: urldata.host,
                     port: urldata.port,
                     pathname: '/'+ urldata.path + '/api/assetManagement/currencyCodes/',
