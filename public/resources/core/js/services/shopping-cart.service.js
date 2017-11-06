@@ -46,26 +46,9 @@
         };
 
         function addItem(item) {
-            var headers = {};
-
-            if ('termsAccepted' in item) {
-                headers['X-Terms-Accepted'] = !!item.termsAccepted;
-                delete item.termsAccepted;
-            }
-
-            var resourceWithHeaders = $resource(URLS.SHOPPING_CART, {
-                id: '@id',
-                action: '@action'
-            },
-            {
-                save: {
-                    method: 'POST',
-                    headers: headers,
-                },
-            });
             var deferred = $q.defer();
 
-            resourceWithHeaders.save({ action: 'item', id: '' }, item, function () {
+            resource.save({ action: 'item', id: '' }, item, function () {
                 deferred.resolve({});
             }, function (response) {
                 deferred.reject(response);
