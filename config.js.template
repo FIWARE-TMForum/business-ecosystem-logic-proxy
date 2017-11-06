@@ -11,6 +11,7 @@ config.version = {
 
 // The PORT used by 
 config.port = 80;
+config.host = 'localhost';
 
 // Set this var to undefined if you don't want the server to listen on HTTPS
 config.https = {
@@ -41,7 +42,7 @@ config.oauth2 = {
         'seller': 'seller',
         'orgAdmin': 'orgAdmin'
     }
-}
+};
 
 // Customer Role Required to buy items
 config.customerRoleRequired = false;

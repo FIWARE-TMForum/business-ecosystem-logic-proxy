@@ -1,6 +1,6 @@
 /*global expect, it, jasmine, describe */
 
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -58,7 +58,7 @@ describe('Test inventory subscription helper and endpoint', function () {
 
     var createUrl = function createUrl(path) {
         var port = config.https.enabled ? config.https.port || 443 : config.port || 80;
-        return (config.https.enabled ? "https" : "http") + "://" + 'localhost' + ":" + port + path;
+        return (config.https.enabled ? "https" : "http") + "://" + config.host + ":" + port + path;
     };
 
     var hubsUrl = function hubsUrl() {
