@@ -41,6 +41,7 @@ services:
         volumes:
             - ./proxy-conf:/business-ecosystem-logic-proxy/etc
             - ./proxy-indexes:/business-ecosystem-logic-proxy/indexes
+            - ./proxy-themes:/business-ecosystem-logic-proxy/themes
 ```
 
 
