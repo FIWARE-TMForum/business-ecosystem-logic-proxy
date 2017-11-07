@@ -45,8 +45,9 @@ services:
 
 
 Additionally, the biz-ecosystem-charging-backend image contains 2 volumes. In particular:
-* */business-ecosystem-logic-proxy/indexes*: This directory contains the indexes used by the Business API Ecosystem for searching
 * */business-ecosystem-logic-proxy/etc*: This directory must include the `config.js` file with the software configuration
+* */business-ecosystem-logic-proxy/indexes*: This directory contains the indexes used by the Business API Ecosystem for searching
+* */business-ecosystem-logic-proxy/themes*: This directory contains the themes used to customize the web portal
 
 > **Note**
 > The *config.js* file must include an extra setting not provided by default called *config.extPort* that must include the port where the proxy is going to run in the host machine
