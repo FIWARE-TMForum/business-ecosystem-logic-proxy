@@ -114,6 +114,12 @@ var tmf = (function() {
                     reqBody: req.body
                 };
 
+                var header = req.get('X-Terms-Accepted');
+
+                if (result.user != null && header != null) {
+                    result.user.agreedOnTerms = header.toLowerCase() === 'true';
+                }
+
                 // Execute postValidation if status code is lower than 400 and the
                 // function is defined
                 if (response.statusCode < 400 && apiControllers[api] !== undefined
