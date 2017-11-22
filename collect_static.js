@@ -18,10 +18,14 @@
  */
 
 const config = require('./config');
+const compressor = require('node-minify');
 const fs = require('fs');
 const mergedirs = require('merge-dirs');
+const path = require('path');
 
 const staticPath = './static';
+
+const debug = !(process.env.NODE_ENV == 'production');
 
 const deleteDir = function (path) {
     if(fs.existsSync(path)) {
@@ -38,15 +42,55 @@ const deleteDir = function (path) {
     }
 };
 
-// Check if a theme has been provided
-if (!config.theme) {
-    console.log('The default theme is configured, nothing to do');
-    process.exit(1);
-}
+const loadTheme = function () {
+    // Check if the provided theme exists
+    if (!fs.existsSync('./themes/' + config.theme)) {
+        console.log('The configured theme ' + config.theme + ' has not been provided');
+        process.exit(1);
+    }
 
-// Check if the provided theme exists
-if (!fs.existsSync('./themes/' + config.theme)) {
-    console.log('The configured theme ' + config.theme + ' has not been provided');
+    console.log('Loading Theme ' + config.theme);
+
+    // Merge default files with theme ones
+    mergedirs.default('./themes/' + config.theme, './static', 'overwrite');
+
+    console.log('Theme loaded');
+};
+
+const minimizejs = function () {
+    let files = [];
+    let output = staticPath + '/public/resources/core/js/bae.min.js';
+
+    let compileJs = (jsFile) => {
+        if (jsFile.indexOf('.js') != -1) {
+            files.push(jsFile);
+            console.log('Including ' + jsFile);
+        }
+    };
+
+    let compileFiles = (d) => fs.statSync(d).isDirectory() ? fs.readdirSync(d).map(f => compileFiles(path.join(d, f))) : compileJs(d);
+    compileFiles(staticPath + '/public/resources/core/js');
+
+    console.log('Generating ' + output);
+    compressor.minify({
+        compressor: 'gcc',
+        input: files,
+        output: output,
+        callback: function (err, min) {
+            files.forEach((f) => {
+                fs.unlinkSync(f);
+            });
+            fs.rmdirSync(staticPath + '/public/resources/core/js/controllers');
+            fs.rmdirSync(staticPath + '/public/resources/core/js/directives');
+            fs.rmdirSync(staticPath + '/public/resources/core/js/services');
+            fs.rmdirSync(staticPath + '/public/resources/core/js/routes');
+        }
+    });
+};
+
+// Check if a theme has been provided or the system is in production
+if (!config.theme && debug) {
+    console.log('The default theme is configured and debug mode is active, nothing to do');
     process.exit(1);
 }
 
@@ -58,7 +102,13 @@ fs.mkdirSync(staticPath);
 mergedirs.default('./views', './static/views', 'overwrite');
 mergedirs.default('./public', './static/public', 'overwrite');
 
-// Merge default files with theme ones
-mergedirs.default('./themes/' + config.theme, './static', 'overwrite');
+if (config.theme) {
+    // If a theme has been provided merge it with default files
+    loadTheme();
+}
 
-console.log('Theme loaded');
+if (!debug) {
+    // If the system is in production compile jades and minimize js files
+    minimizejs();
+    console.log('JavaScript files minimized');
+}
