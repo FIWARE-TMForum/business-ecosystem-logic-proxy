@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -26,7 +26,7 @@
 
     angular
         .module('app')
-        .controller('UnauthorizedCtrl', UnauthorizedCtrl);
+        .controller('UnauthorizedCtrl', ['$window', '$stateParams', UnauthorizedCtrl]);
 
     function UnauthorizedCtrl($window, $stateParams) {
         this.loginLink = 'login?came_from=' + $stateParams['came_from'];

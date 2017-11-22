@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -32,10 +32,10 @@
 
     angular
         .module('app')
-        .controller('CategoryBreadcrumbCtrl', CategoryBreadcrumbController)
-        .controller('CategorySearchCtrl', CategorySearchController)
-        .controller('CategoryCreateCtrl', CategoryCreateController)
-        .controller('CategoryUpdateCtrl', CategoryUpdateController);
+        .controller('CategoryBreadcrumbCtrl', ['$state', '$rootScope', 'EVENTS', 'Utils', 'Category', CategoryBreadcrumbController])
+        .controller('CategorySearchCtrl', ['Category', 'PROMISE_STATUS', 'Utils', CategorySearchController])
+        .controller('CategoryCreateCtrl', ['$state', '$rootScope', 'EVENTS', 'PROMISE_STATUS', 'Category', 'Utils', CategoryCreateController])
+        .controller('CategoryUpdateCtrl', ['$state', '$rootScope', 'EVENTS', 'PROMISE_STATUS', 'Category', 'Utils', CategoryUpdateController]);
 
     function CategoryBreadcrumbController($state, $rootScope, EVENTS, Utils, Category) {
         /* jshint validthis: true */
@@ -61,7 +61,7 @@
         });
     }
 
-    function CategorySearchController($state, Category, $rootScope, EVENTS, PROMISE_STATUS, Utils) {
+    function CategorySearchController(Category, PROMISE_STATUS, Utils) {
         /* jshint validthis: true */
         var vm = this;
 
@@ -81,7 +81,7 @@
         });
     }
 
-    function CategoryCreateController($scope, $state, $rootScope, EVENTS, PROMISE_STATUS, Category, Utils) {
+    function CategoryCreateController($state, $rootScope, EVENTS, PROMISE_STATUS, Category, Utils) {
         /* jshint validthis: true */
         var vm = this;
         var stepList = [

@@ -28,12 +28,12 @@
 
     angular
         .module('app')
-        .controller('RSModelSearchCtrl', RSModelSearchController)
-        .controller('RSModelCreateCtrl', RSModelCreateController)
-        .controller('RSModelUpdateCtrl', RSModelUpdateController)
+        .controller('RSModelSearchCtrl', ['$state', '$scope', 'DATA_STATUS', 'RSS', 'Utils', RSModelSearchController])
+        .controller('RSModelCreateCtrl', ['$state', '$rootScope', 'DATA_STATUS', 'EVENTS', 'PLATFORM_REVENUE', 'RSS', 'Utils', 'User', RSModelCreateController])
+        .controller('RSModelUpdateCtrl', ['$state', '$rootScope', 'EVENTS', 'PLATFORM_REVENUE', 'DATA_STATUS', 'RSS', 'Utils', 'User', RSModelUpdateController])
         .controller('RSModelUpdateSTCtrl', RSModelUpdateSTController);
 
-    function RSModelSearchController($state, $scope, DATA_STATUS, RSS, Utils, Party) {
+    function RSModelSearchController($state, $scope, DATA_STATUS, RSS, Utils) {
         var vm = this;
         vm.STATUS = DATA_STATUS;
 

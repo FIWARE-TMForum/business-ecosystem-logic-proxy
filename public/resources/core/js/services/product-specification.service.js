@@ -29,7 +29,7 @@
 
     angular
         .module('app')
-        .factory('ProductSpec', ProductSpecificationService);
+        .factory('ProductSpec', ['$q', '$resource', 'URLS', 'LIFECYCLE_STATUS', 'User', ProductSpecificationService]);
 
     function ProductSpecificationService($q, $resource, URLS, LIFECYCLE_STATUS, User) {
         var ProductSpec = $resource(URLS.CATALOGUE_MANAGEMENT + '/productSpecification/:productSpecId', {

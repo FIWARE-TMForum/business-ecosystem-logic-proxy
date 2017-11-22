@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -30,7 +30,7 @@
 
     angular
         .module('app')
-        .factory('Customer', CustomerService);
+        .factory('Customer', ['$q', '$resource', 'URLS', 'User', 'Party', CustomerService]);
 
     function CustomerService($q, $resource, URLS, User, Party) {
         var Customer = $resource(URLS.CUSTOMER_MANAGEMENT + '/customer/:id', {}, {

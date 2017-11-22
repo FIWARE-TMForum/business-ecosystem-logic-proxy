@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -28,7 +28,8 @@
 
     angular
         .module('app')
-        .controller('IndividualUpdateCtrl', IndividualUpdateController);
+        .controller('IndividualUpdateCtrl', ['$state', '$scope', '$rootScope', '$controller', 'EVENTS', 'DATA_STATUS',
+            'COUNTRIES', 'PROMISE_STATUS', 'Utils', 'Party', 'User', IndividualUpdateController]);
 
     function IndividualUpdateController($state, $scope, $rootScope, $controller, EVENTS, DATA_STATUS, COUNTRIES, PROMISE_STATUS, Utils, Party, User) {
         /* jshint validthis: true */
@@ -67,7 +68,7 @@
 	});
 	
 	// Now, this function is called at the beginning of the execution and every switch call this function in order to keep frontend and backend coherence
-	initialiceData()
+	initialiceData();
 
 	function initialiceData() {
             Party.detail(User.loggedUser.currentUser.id).then(function (infoRetrieved) {
@@ -80,18 +81,18 @@
                     vm.errorMessage = Utils.parseError(response, 'Unexpected error trying to retrieve your personal information.')
 		}
             });
-	};
+	}
 
 	function hasAdminRole(){
 	    return Party.hasAdminRole();
-	};
+	}
 
 	function retrieveProfile(profile) {
 	    vm.status = DATA_STATUS.LOADED;
 	    vm.item = profile;
             vm.data = angular.copy(profile);
 	    unparseDate();
-	};
+	}
 
 	function retrievePartyInfo(party) {
 	    if (party == null) {
@@ -99,19 +100,19 @@
 		vm.isNotCreated = true;
 	    }
 	    retrieveProfile(party);
-	};
+	}
 
 	function unparseDate() {
 	    if (Party.isOrganization() && vm.data.organizationIdentification) {
 	    	vm.data.organizationIdentification.issuingDate = new Date(vm.data.organizationIdentification.issuingDate);
 	    }
-	};
+	}
 
 	function parseDate(){
 	    if (Party.isOrganization() && vm.data.organizationIdentification) {
 		vm.data.organizationIdentification.issuingDate = moment(vm.data.organizationIdentification.issuingDate).format()
 	    }
-	};
+	}
         var updatePromise = null;
 
         function update() {

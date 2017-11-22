@@ -28,7 +28,7 @@
 
     angular
         .module('app')
-        .config(OfferingRouteConfig);
+        .config(['$stateProvider', OfferingRouteConfig]);
 
     function OfferingRouteConfig($stateProvider) {
 

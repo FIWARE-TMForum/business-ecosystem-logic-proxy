@@ -27,7 +27,7 @@
 
     angular
         .module('app')
-        .factory('AssetType', AssetTypeService);
+        .factory('AssetType', ['$q', '$resource', 'URLS', AssetTypeService]);
 
     function AssetTypeService($q, $resource, URLS) {
         var resource = $resource(URLS.ASSET_MANAGEMENT + '/assetTypes/:typeId', {

@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -28,10 +28,10 @@
 
     angular
         .module('app')
-        .controller('RSReportCreateCtrl', RSReportCreateController)
-        .controller('RSReportSearchCtrl', RSReportSearchController);
+        .controller('RSReportCreateCtrl', ['$state', '$scope', '$rootScope', '$element', 'RSS', 'EVENTS', 'Utils', RSReportCreateController])
+        .controller('RSReportSearchCtrl', ['DATA_STATUS', 'RSS', 'Utils', '$scope', RSReportSearchController]);
 
-    function RSReportSearchController(DATA_STATUS, RSS, Utils, $scope, Party) {
+    function RSReportSearchController(DATA_STATUS, RSS, Utils, $scope) {
         var vm = this;
 
         vm.list = [];

@@ -32,11 +32,19 @@
 
     angular
         .module('app')
-        .controller('ProductSearchCtrl', ProductSearchController)
-        .controller('ProductCreateCtrl', ProductCreateController)
-        .controller('ProductUpdateCtrl', ProductUpdateController)
-        .controller('ProductUpgradeCtrl', ProductUpgradeController)
-        .controller('AssetController', AssetController);
+        .controller('ProductSearchCtrl', ['$scope', '$state', '$timeout', '$rootScope', 'EVENTS', 'ProductSpec',
+            'LIFECYCLE_STATUS', 'DATA_STATUS', 'Utils', ProductSearchController])
+
+        .controller('ProductCreateCtrl', ['$q', '$scope', '$state', '$rootScope', 'EVENTS', 'PROMISE_STATUS',
+            'ProductSpec', 'Asset', 'AssetType', 'Utils', ProductCreateController])
+
+        .controller('ProductUpdateCtrl', ['$state', '$scope', '$rootScope', 'EVENTS', 'PROMISE_STATUS', 'ProductSpec',
+            'Utils', 'Asset', ProductUpdateController])
+
+        .controller('ProductUpgradeCtrl', ['$state', '$rootScope', '$element', 'AssetType', 'ProductSpec', 'Utils',
+            'EVENTS', ProductUpgradeController])
+
+        .controller('AssetController', ['$scope', '$rootScope', 'Asset', 'ProductSpec', 'Utils', 'EVENTS', AssetController]);
 
     function ProductSearchController($scope, $state, $timeout, $rootScope, EVENTS, ProductSpec, LIFECYCLE_STATUS, DATA_STATUS, Utils) {
         /* jshint validthis: true */

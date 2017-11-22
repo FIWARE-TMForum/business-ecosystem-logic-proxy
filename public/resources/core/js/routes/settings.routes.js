@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -28,7 +28,9 @@
 
     angular
         .module('app')
-        .config(RouteConfig);
+        .config(['$stateProvider', RouteConfig])
+        .controller('RouteRedirectContactCtl', ['$state', RedirectControllerContact])
+        .controller('RouteRedirectCtl', ['$state', RedirectController]);
 
     function RouteConfig($stateProvider) {
 
@@ -42,12 +44,7 @@
                 views: {
                     'sidebar@': {
                         templateUrl: 'settings/sidebar',
-                        controller: function RedirectController($state) {
-
-                            if ($state.is('settings')) {
-                                $state.go('settings.general');
-                            }
-                        }
+                        controller: 'RouteRedirectCtl'
                     },
                     'content@': {
                         template: '<ui-view>'
@@ -62,11 +59,7 @@
             .state('settings.contact', {
                 url: '/contact',
                 templateUrl: 'settings/contact/update',
-                controller: function RedirectController($state) {
-                    if ($state.is('settings.contact')) {
-                        $state.go('settings.contact.shipping');
-                    }
-                }
+                controller: 'RouteRedirectContactCtl'
             })
             .state('settings.contact.shipping', {
                 url: '/shipping',
@@ -80,4 +73,16 @@
             });
     }
 
+    function RedirectControllerContact($state) {
+        if ($state.is('settings.contact')) {
+            $state.go('settings.contact.shipping');
+        }
+    }
+
+    function RedirectController($state) {
+
+        if ($state.is('settings')) {
+            $state.go('settings.general');
+        }
+    }
 })();

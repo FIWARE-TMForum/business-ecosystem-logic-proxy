@@ -29,14 +29,14 @@
     angular
         .module('app')
         .directive('bsTooltip', bsTooltipDirective)
-        .directive('fileModel', fileModelDirective)
-        .directive('noImage', noImageDirective)
-        .directive('fieldUnique', fieldUniqueDirective)
+        .directive('fileModel', ['$parse', fileModelDirective])
+        .directive('noImage', ['URLS', noImageDirective])
+        .directive('fieldUnique', ['$injector', fieldUniqueDirective])
         .directive('businessAddressForm', businessAddressFormDirective)
         .directive('shippingAddressForm', shippingAddressFormDirective)
         .directive('pricePlanForm', pricePlanFormDirective)
         .directive('pricePlanTable', pricePlanTableDirective)
-        .directive('pager', pagerDirective)
+        .directive('pager', ['$window', '$timeout', 'EVENTS', pagerDirective])
         .directive('relationshipCreateForm', relationshipCreateFormDirective)
         .directive('relationshipDeleteForm', relationshipDeleteFormDirective)
         .directive('convertToDate', convertToDateDirective)
@@ -101,7 +101,7 @@
         }
     }
 
-    function fieldUniqueDirective($http, $injector) {
+    function fieldUniqueDirective($injector) {
         return {
             require: 'ngModel',
             link: function (scope, element, attrs, controller) {
@@ -261,7 +261,7 @@
         };
     }
 
-    function fieldArrayDirective($http, $injector) {
+    function fieldArrayDirective() {
         return {
             require: 'ngModel',
             link: function (scope, element, attrs, controller) {

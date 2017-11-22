@@ -35,9 +35,11 @@
 
     angular
         .module('app')
-        .controller('UserCtrl', UserController)
-        .controller('UserProfileCtrl', UserProfileController)
-        .controller('UserShoppingCartCtrl', UserShoppingCartController);
+        .controller('UserCtrl', ['$state', '$scope', '$rootScope', 'EVENTS', 'LIFECYCLE_STATUS', 'FILTER_STATUS',
+            'ROLES', 'User', 'Party', UserController])
+
+        .controller('UserProfileCtrl', ['$scope', '$element', 'EVENTS', 'User', UserProfileController])
+        .controller('UserShoppingCartCtrl', ['$rootScope', '$scope', 'EVENTS', 'ShoppingCart', 'Utils', 'Party', UserShoppingCartController]);
 
     function UserController($state, $scope, $rootScope, EVENTS, LIFECYCLE_STATUS, FILTER_STATUS, ROLES, User, Party) {
         /* jshint validthis: true */

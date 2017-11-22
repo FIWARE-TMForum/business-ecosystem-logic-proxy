@@ -28,8 +28,10 @@
 
     angular
         .module('app')
-        .controller('RelationshipCreateCtrl', RelationshipCreateController)
-        .controller('RelationshipDeleteCtrl', RelationshipDeleteController);
+        .controller('RelationshipCreateCtrl', ['$controller', '$rootScope', '$scope', '$timeout', 'EVENTS',
+            'DATA_STATUS', 'LIFECYCLE_STATUS', 'Utils', 'ProductSpec', RelationshipCreateController])
+
+        .controller('RelationshipDeleteCtrl', ['$rootScope', 'EVENTS', 'PROMISE_STATUS', 'Utils', RelationshipDeleteController]);
 
     function RelationshipCreateController($controller, $rootScope, $scope, $timeout, EVENTS, DATA_STATUS, LIFECYCLE_STATUS, Utils, ProductSpec) {
         /* jshint validthis: true */

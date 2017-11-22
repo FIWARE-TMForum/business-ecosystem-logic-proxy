@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -28,7 +28,8 @@
 
     angular
         .module('app')
-        .config(RouteConfig);
+        .config(['$stateProvider', RouteConfig])
+        .controller('RouteAdminCtl', ['$state', AdminController]);
 
     function RouteConfig($stateProvider) {
 
@@ -42,7 +43,7 @@
                 views: {
                     sidebar: {
                         templateUrl: 'admin/sidebar',
-                        controller: AdminController
+                        controller: 'RouteAdminCtl'
                     },
                     content: {
                         template: '<ui-view name="admin-content">'

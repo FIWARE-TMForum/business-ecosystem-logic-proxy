@@ -35,9 +35,14 @@
 
     angular
         .module('app')
-        .controller('ProductOrderSearchCtrl', ProductOrderSearchController)
-        .controller('ProductOrderCreateCtrl', ProductOrderCreateController)
-        .controller('ProductOrderDetailCtrl', ProductOrderDetailController);
+        .controller('ProductOrderSearchCtrl', ['$scope', '$state', '$rootScope', 'EVENTS', 'PRODUCTORDER_STATUS',
+            'PRODUCTORDER_LIFECYCLE', 'ProductOrder', 'Utils', ProductOrderSearchController])
+
+        .controller('ProductOrderCreateCtrl', ['$state', '$rootScope', '$scope', '$window', '$interval', 'User',
+            'ProductOrder', 'Offering', 'ShoppingCart', 'Utils', 'EVENTS', ProductOrderCreateController])
+
+        .controller('ProductOrderDetailCtrl', ['$rootScope', '$state', 'EVENTS', 'PROMISE_STATUS', 'PRODUCTORDER_STATUS',
+            'Utils', 'User', 'ProductOrder', ProductOrderDetailController]);
 
     function ProductOrderSearchController($scope, $state, $rootScope, EVENTS, PRODUCTORDER_STATUS, PRODUCTORDER_LIFECYCLE, ProductOrder, Utils) {
         /* jshint validthis: true */

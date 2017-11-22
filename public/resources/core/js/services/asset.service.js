@@ -28,7 +28,7 @@
 
     angular
         .module('app')
-        .factory('Asset', AssetService);
+        .factory('Asset', ['$q', '$resource', 'URLS', AssetService]);
 
     function AssetService($q, $resource, URLS) {
         var resource = $resource(URLS.ASSET_MANAGEMENT + '/assets/uploadJob');
