@@ -27,19 +27,21 @@ const staticPath = './static';
 
 const debug = !(process.env.NODE_ENV == 'production');
 
-const deleteDir = function (path) {
-    if(fs.existsSync(path)) {
-        fs.readdirSync(path).forEach((file) => {
-            let curPath = path + "/" + file;
+const deleteContents = function (path) {
+    fs.readdirSync(path).forEach((file) => {
+        let curPath = path + "/" + file;
 
-            if (fs.lstatSync(curPath).isDirectory()) { // recurse
-                deleteDir(curPath);
-            } else { // delete file
-                fs.unlinkSync(curPath);
-            }
-        });
-        fs.rmdirSync(path);
-    }
+        if (fs.lstatSync(curPath).isDirectory()) { // recurse
+            deleteDir(curPath);
+        } else { // delete file
+            fs.unlinkSync(curPath);
+        }
+    });
+};
+
+const deleteDir = function (path) {
+    deleteContents(path);
+    fs.rmdirSync(path);
 };
 
 const loadTheme = function () {
@@ -95,8 +97,11 @@ if (!config.theme && debug) {
 }
 
 // Delete prev static files
-deleteDir(staticPath);
-fs.mkdirSync(staticPath);
+if(fs.existsSync(staticPath)) {
+    deleteContents(staticPath);
+} else {
+    fs.mkdirSync(staticPath);
+}
 
 // Copy default theme files
 mergedirs.default('./views', './static/views', 'overwrite');
