@@ -14,7 +14,7 @@ If you want to know what is behind the scenes of our container you can go ahead 
 
 ### New versions
 
-New versions of the Business Ecosystem Logic Proxy container than 5.4.1 use an external MongoDB container as database and are
+New versions of the Business Ecosystem Logic Proxy container higher than 5.4.1, use an external MongoDB container as database and are
 configured using the standard `config.js` file as it is done with the software.
 
 To run the Business Ecosystem Logic Proxy, `docker-compose` is used. To do so, you must create a folder to place a
@@ -42,13 +42,20 @@ services:
             - ./proxy-conf:/business-ecosystem-logic-proxy/etc
             - ./proxy-indexes:/business-ecosystem-logic-proxy/indexes
             - ./proxy-themes:/business-ecosystem-logic-proxy/themes
+            - ./proxy-static:/business-ecosystem-logic-proxy/static
+        environment:
+            - NODE_ENV=development
 ```
 
 
-Additionally, the biz-ecosystem-charging-backend image contains 2 volumes. In particular:
+Additionally, the biz-ecosystem-logic-proxy image contains 4 volumes. In particular:
 * */business-ecosystem-logic-proxy/etc*: This directory must include the `config.js` file with the software configuration
 * */business-ecosystem-logic-proxy/indexes*: This directory contains the indexes used by the Business API Ecosystem for searching
-* */business-ecosystem-logic-proxy/themes*: This directory contains the themes used to customize the web portal
+* */business-ecosystem-logic-proxy/themes*: This directory contains the themes that can be used to customize the web portal
+* */business-ecosystem-logic-proxy/static*: This directory includes the static files ready to be rendered including the selected theme and js files
+
+Finally, the biz-ecosystem-logic-proxy uses the environment variable *NODE_ENV* to determine if the software is being used
+in *development* or in *production* mode. 
 
 > **Note**
 > The *config.js* file must include an extra setting not provided by default called *config.extPort* that must include the port where the proxy is going to run in the host machine
