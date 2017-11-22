@@ -1,4 +1,4 @@
-/* Copyright (c) 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2016 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -27,7 +27,7 @@
 
     angular
         .module('app')
-        .controller('PagerController', PagerController);
+        .controller('PagerController', ['$rootScope', '$scope', 'Utils', 'Party', 'EVENTS', PagerController]);
 
     function PagerController($rootScope, $scope, Utils, Party, EVENTS) {
         // Load controller to paginate

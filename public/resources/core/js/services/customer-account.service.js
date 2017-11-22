@@ -30,7 +30,7 @@
 
     angular
         .module('app')
-        .factory('CustomerAccount', CustomerAccountService);
+        .factory('CustomerAccount', ['$q', '$resource', 'URLS', 'Customer', CustomerAccountService]);
 
     function CustomerAccountService($q, $resource, URLS, Customer) {
         var CustomerAccount = $resource(URLS.CUSTOMER_MANAGEMENT + '/customerAccount/:id', {}, {

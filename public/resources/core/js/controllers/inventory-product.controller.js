@@ -32,8 +32,9 @@
 
     angular
         .module('app')
-        .controller('InventorySearchCtrl', InventorySearchController)
-        .controller('InventoryDetailsCtrl', ProductDetailController);
+        .controller('InventorySearchCtrl', ['$scope', '$state', '$rootScope', 'EVENTS', 'InventoryProduct', 'INVENTORY_STATUS', 'Utils', InventorySearchController])
+        .controller('InventoryDetailsCtrl', ['$rootScope', '$scope', '$state', 'InventoryProduct', 'Utils', 'ProductSpec', 'EVENTS', '$interval',
+            '$window', 'LOGGED_USER', 'USAGE_CHART_URL', 'BillingAccount', ProductDetailController]);
 
     function InventorySearchController($scope, $state, $rootScope, EVENTS, InventoryProduct, INVENTORY_STATUS, Utils) {
         /* jshint validthis: true */

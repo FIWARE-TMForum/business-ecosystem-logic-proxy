@@ -32,13 +32,15 @@
 
     angular
         .module('app')
-        .controller('CatalogueListCtrl', CatalogueListController)
-        .controller('CatalogueSearchCtrl', CatalogueSearchController)
-        .controller('CatalogueCreateCtrl', CatalogueCreateController)
-        .controller('CatalogueDetailCtrl', CatalogueDetailController)
-        .controller('CatalogueUpdateCtrl', CatalogueUpdateController);
+        .controller('CatalogueListCtrl', ['$scope', 'Catalogue', 'Utils', CatalogueListController])
+        .controller('CatalogueSearchCtrl', ['$scope', '$state', '$rootScope', '$timeout', 'EVENTS', 'Catalogue',
+            'LIFECYCLE_STATUS', 'DATA_STATUS', 'Utils', CatalogueSearchController])
 
-    function CatalogueListController($scope, Catalogue, Utils, Party, User) {
+        .controller('CatalogueCreateCtrl', ['$state', '$rootScope', 'EVENTS', 'PROMISE_STATUS', 'Catalogue', 'Utils', CatalogueCreateController])
+        .controller('CatalogueDetailCtrl', ['$state', 'Catalogue', 'Utils', CatalogueDetailController])
+        .controller('CatalogueUpdateCtrl', ['$state', '$rootScope', 'EVENTS', 'PROMISE_STATUS', 'Catalogue', 'Utils', CatalogueUpdateController]);
+
+    function CatalogueListController($scope, Catalogue, Utils) {
         /* jshint validthis: true */
         var vm = this;
 
@@ -82,7 +84,7 @@
         }, updateList);
     }
 
-    function CatalogueSearchController($scope, $state, $rootScope, $timeout, EVENTS, Catalogue, LIFECYCLE_STATUS, DATA_STATUS, Utils, Party, User) {
+    function CatalogueSearchController($scope, $state, $rootScope, $timeout, EVENTS, Catalogue, LIFECYCLE_STATUS, DATA_STATUS, Utils) {
         /* jshint validthis: true */
         var vm = this;
         var formMode = false;

@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -28,10 +28,10 @@
 
     angular
         .module('app')
-        .controller('ContactMediumCreateCtrl', ContactMediumCreateController)
-        .controller('ContactMediumUpdateCtrl', ContactMediumUpdateController);
+        .controller('ContactMediumCreateCtrl', ['$scope', '$controller', 'COUNTRIES', 'Party', ContactMediumCreateController])
+        .controller('ContactMediumUpdateCtrl', ['$element', '$scope', '$rootScope', '$controller', 'COUNTRIES', 'Party', ContactMediumUpdateController]);
 
-    function ContactMediumCreateController($scope, $rootScope, $controller, COUNTRIES, Party) {
+    function ContactMediumCreateController($scope, $controller, COUNTRIES, Party) {
         /* jshint validthis: true */
         var vm = this;
 

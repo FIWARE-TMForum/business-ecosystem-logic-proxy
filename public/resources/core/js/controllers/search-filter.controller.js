@@ -27,7 +27,7 @@
 
     angular
         .module('app')
-        .controller('SearchFilterCtrl', SearchFilterController);
+        .controller('SearchFilterCtrl', ['$state', '$scope', '$element', 'EVENTS', SearchFilterController]);
 
     function SearchFilterController($state, $scope, $element, EVENTS) {
         /* jshint validthis: true */

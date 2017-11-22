@@ -29,7 +29,7 @@
 
     angular
         .module('app')
-        .factory('Catalogue', CatalogueService);
+        .factory('Catalogue', ['$q', '$resource', 'URLS', 'LIFECYCLE_STATUS', 'User', CatalogueService]);
 
     function CatalogueService($q, $resource, URLS, LIFECYCLE_STATUS, User) {
         var resource = $resource(URLS.CATALOGUE_MANAGEMENT + '/catalog/:catalogueId', {

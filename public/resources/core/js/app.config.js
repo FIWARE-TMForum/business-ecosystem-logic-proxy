@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -38,7 +38,7 @@
 
     angular
         .module('app', ['ngResource', 'ngMessages', 'angularMoment', 'ui.router', 'internationalPhoneNumber'])
-        .config(function(ipnConfig) {
+        .config(['ipnConfig', function(ipnConfig) {
             ipnConfig.separateDialCode = true;
             ipnConfig.utilsScript = '/resources/intl-tel-input-8.4.7/js/utils.js';
             ipnConfig.initialCountry = 'auto';
@@ -48,7 +48,7 @@
                     callback(countryCode);
                 });
             };
-        })
+        }])
         .constant('DATA_STATUS', {
             ERROR: 'ERROR',
             LOADED: 'LOADED',
@@ -94,9 +94,9 @@
             PRODUCTORDER_STATUS.INPROGRESS,
             PRODUCTORDER_STATUS.COMPLETED
         ])
-        .config(function($httpProvider){
+        .config(['$httpProvider', function($httpProvider){
             $httpProvider.interceptors.push('interceptor');
-        })
+        }])
         .factory('interceptor', ['$injector', function($injector) {
             return {
                 'request': function(config) {

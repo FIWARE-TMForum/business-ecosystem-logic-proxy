@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -28,9 +28,9 @@
 
     angular
         .module('app')
-        .controller('RSTransSearchCtrl', RSTransSearchController);
+        .controller('RSTransSearchCtrl', ['$state', '$rootScope', '$scope', 'DATA_STATUS', 'RSS', 'Utils', RSTransSearchController]);
 
-    function RSTransSearchController($state, $rootScope, $scope, DATA_STATUS, RSS, Utils, Party, User) {
+    function RSTransSearchController($state, $rootScope, $scope, DATA_STATUS, RSS, Utils) {
         var vm = this;
 
         vm.$params = $state.params;

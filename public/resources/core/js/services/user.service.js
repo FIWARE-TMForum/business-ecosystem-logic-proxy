@@ -23,7 +23,7 @@
 
     angular
         .module('app')
-        .factory('User', UserService);
+        .factory('User', ['$resource', '$injector', '$location', 'URLS', 'PARTY_ROLES', UserService]);
 
     function UserService($resource, $injector, $location, URLS, PARTY_ROLES) {
         var resource = $resource(URLS.USER, {

@@ -30,9 +30,9 @@
 
     angular
         .module('app')
-        .factory('Party', partyService);
+        .factory('Party', ['$q', '$resource', 'URLS', 'COUNTRIES', 'ROLES', 'User', PartyService]);
     
-    function partyService($q, $resource, URLS, COUNTRIES, ROLES, User) {
+    function PartyService($q, $resource, URLS, COUNTRIES, ROLES, User) {
 	
         var Individual = $resource(URLS.PARTY_MANAGEMENT + '/individual/:id', {}, {
             update: {method: 'PUT'},

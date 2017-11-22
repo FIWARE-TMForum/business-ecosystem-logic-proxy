@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -28,8 +28,8 @@
 
     angular
         .module('app')
-        .controller('CustomerSearchCtrl', CustomerSearchController)
-        .controller('CustomerUpdateCtrl', CustomerUpdateController);
+        .controller('CustomerSearchCtrl', ['$scope', '$rootScope', 'DATA_STATUS', 'PROMISE_STATUS', 'EVENTS', 'Utils', 'Customer', 'User', 'Party', CustomerSearchController])
+        .controller('CustomerUpdateCtrl', ['$element', '$scope', '$rootScope', '$controller', 'COUNTRIES', 'Customer', CustomerUpdateController]);
 
     function CustomerSearchController($scope, $rootScope, DATA_STATUS, PROMISE_STATUS, EVENTS, Utils, Customer, User, Party) {
         /* jshint validthis: true */
@@ -40,8 +40,8 @@
 
         vm.list = [];
         vm.status = DATA_STATUS.LOADING;
-	vm.canEditOrAdd = canEditOrAdd;
-	
+	    vm.canEditOrAdd = canEditOrAdd;
+
         vm.updateCustomer = updateCustomer;
 
         $scope.$on(Customer.EVENTS.CUSTOMER_CREATED, function (event, customer) {
@@ -70,7 +70,7 @@
 
 	function canEditOrAdd() {
 	    return User.loggedUser.currentUser.id === User.loggedUser.id || Party.hasAdminRole();
-	};
+	}
 
 	updateShippingList();
 	
@@ -95,7 +95,7 @@
         });
     }
 
-    function CustomerUpdateController($element, $scope, $rootScope, $controller, EVENTS, COUNTRIES, Utils, Customer) {
+    function CustomerUpdateController($element, $scope, $rootScope, $controller, COUNTRIES, Customer) {
         /* jshint validthis: true */
         var vm = this;
         var _customer;

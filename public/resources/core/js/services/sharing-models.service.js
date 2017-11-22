@@ -29,7 +29,7 @@
 
     angular
         .module('app')
-        .factory('RSS', RSSService);
+        .factory('RSS', ['$q', '$resource', '$location', 'URLS', 'User', RSSService]);
 
     function RSSService($q, $resource, $location, URLS, User) {
         var modelsResource = $resource(URLS.SHARING_MODELS, {}, {

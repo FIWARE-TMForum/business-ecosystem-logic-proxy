@@ -28,8 +28,9 @@
 
     angular
         .module('app')
-        .controller('BillingAccountSearchCtrl', BillingAccountSearchController)
-        .controller('BillingAccountCreateCtrl', BillingAccountCreateController);
+        .controller('BillingAccountSearchCtrl', ['DATA_STATUS', 'Utils', 'BillingAccount', BillingAccountSearchController])
+        .controller('BillingAccountCreateCtrl', ['$scope', '$rootScope', '$controller', 'COUNTRIES', 'EVENTS',
+            'PROMISE_STATUS', 'Utils', 'BillingAccount', 'Customer', BillingAccountCreateController]);
 
     function BillingAccountSearchController(DATA_STATUS, Utils, BillingAccount) {
         /* jshint validthis: true */

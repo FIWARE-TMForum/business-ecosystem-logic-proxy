@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -32,10 +32,15 @@
 
     angular
         .module('app')
-        .controller('OfferingSearchCtrl', ProductOfferingSearchController)
-        .controller('OfferingCreateCtrl', ProductOfferingCreateController)
-        .controller('OfferingDetailCtrl', ProductOfferingDetailController)
-        .controller('OfferingUpdateCtrl', ProductOfferingUpdateController);
+        .controller('OfferingSearchCtrl', ['$scope', '$state', '$rootScope', '$timeout', 'EVENTS', 'Offering',
+            'LIFECYCLE_STATUS', 'Utils', ProductOfferingSearchController])
+
+        .controller('OfferingCreateCtrl', ['$q', '$scope', '$state', '$rootScope', '$controller', 'EVENTS',
+            'LIFECYCLE_STATUS', 'PROMISE_STATUS', 'Offering', 'Catalogue', 'ProductSpec', 'Utils', ProductOfferingCreateController])
+
+        .controller('OfferingDetailCtrl', ['$state', 'Offering', 'ProductSpec', 'Utils', ProductOfferingDetailController])
+        .controller('OfferingUpdateCtrl', ['$state', '$scope', '$rootScope', '$controller', 'EVENTS', 'PROMISE_STATUS',
+            'Offering', 'Utils', ProductOfferingUpdateController]);
 
     function ProductOfferingSearchController($scope, $state, $rootScope, $timeout, EVENTS, Offering, LIFECYCLE_STATUS, Utils) {
         /* jshint validthis: true */
