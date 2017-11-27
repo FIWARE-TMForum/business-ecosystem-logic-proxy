@@ -816,6 +816,17 @@
             vm.item = productRetrieved;
 
             digital = checkDigital();
+
+            vm.item.productSpecCharacteristic = productRetrieved.productSpecCharacteristic.filter(function (char) {
+                if (char.name.toLowerCase() === 'license') {
+                    vm.item.license = {
+                        title: char.productSpecCharacteristicValue[0].value,
+                        description: char.description
+                    };
+                    return false;
+                }
+                return true;
+            });
         }, function (response) {
             vm.error = Utils.parseError(response, 'The requested product could not be retrieved');
         });
