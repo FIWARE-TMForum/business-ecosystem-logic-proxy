@@ -36,7 +36,7 @@
             categoryId: '@id'
         }, {
             update: {
-                method: 'PUT'
+                method: 'PATCH'
             }
         });
 
@@ -44,6 +44,8 @@
             roots: {},
             subcategories: {}
         };
+
+        var PATCHEABLE_ATTRS = ['name', 'description'];
 
         resource.prototype.getBreadcrumb = getBreadcrumb;
         resource.prototype.serialize = serialize;
@@ -54,7 +56,8 @@
             create: create,
             detail: detail,
             update: update,
-            initiate: initiate
+            initiate: initiate,
+            PATCHEABLE_ATTRS: PATCHEABLE_ATTRS
         };
 
         function search(filters) {
@@ -147,10 +150,10 @@
             return deferred.promise;
         }
 
-        function update(category) {
+        function update(categoryId, category) {
             var deferred = $q.defer();
             var params = {
-                categoryId: category.id
+                categoryId: categoryId
             };
 
             resource.update(params, category, function (categoryUpdated) {

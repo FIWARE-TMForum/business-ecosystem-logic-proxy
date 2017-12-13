@@ -166,7 +166,15 @@
         });
 
         function update() {
-            updatePromise = Category.update(vm.data);
+            var updated = {};
+
+            Category.PATCHEABLE_ATTRS.forEach((attr) => {
+                if (!angular.equals(vm.item[attr], vm.data[attr])) {
+                    updated[attr] = vm.data[attr];
+                }
+            });
+
+            updatePromise = Category.update(vm.item.id, updated);
             updatePromise.then(function (categoryUpdated) {
                 $state.go('admin.productCategory.update', {
                     categoryId: categoryUpdated.id
