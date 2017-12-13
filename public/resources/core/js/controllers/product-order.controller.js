@@ -409,6 +409,7 @@
         /* jshint validthis: true */
         var vm = this;
 
+        var notes;
         vm.STATUS = PROMISE_STATUS;
 
         vm.item = {};
@@ -428,6 +429,7 @@
             vm.item = productOrderRetrieved;
             vm.item.status = LOADED;
             vm.comments = createComments(vm.item.note);
+            notes = vm.item.note;
         }, function (response) {
             vm.error = Utils.parseError(response, 'The requested product order could not be retrieved');
             vm.item.status = ERROR;
@@ -613,11 +615,12 @@
                     author: User.loggedUser.currentUser.id,
                     date: new Date(),
                     text: vm.note.text
-                }].concat(vm.item.note)
+                }].concat(notes)
             };
 
             promises.createNote = ProductOrder.update(vm.item, dataUpdated).then(function (productOrder) {
                 vm.note.text = "";
+                notes = productOrder.note;
                 vm.comments = createComments(productOrder.note);
             }, function (response) {
             });
