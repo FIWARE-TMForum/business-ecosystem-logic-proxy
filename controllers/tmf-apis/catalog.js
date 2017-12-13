@@ -1052,7 +1052,7 @@ var catalog = (function() {
         // Handle PUT and PATCH data
         var offeringsPattern = new RegExp('/productOffering/?');
         var productsPattern = new RegExp('/productSpecification/?');
-        var catalogPattern = new RegExp('/catalog/?');
+        var catalogPattern = new RegExp('/v2/catalog/?');
 
         var genericSave = function genericSave(f) {
             f([JSON.parse(req.body)], req.user)
@@ -1244,7 +1244,6 @@ var catalog = (function() {
                 .catch(() => callback(null));
 
         } else {
-            // TODO PATCHes
             handleIndexes(req, callback);
         }
     };
