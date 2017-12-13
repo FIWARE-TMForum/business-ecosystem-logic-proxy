@@ -34,7 +34,7 @@
         .module('app')
         .controller('InventorySearchCtrl', ['$scope', '$state', '$rootScope', 'EVENTS', 'InventoryProduct', 'INVENTORY_STATUS', 'Utils', InventorySearchController])
         .controller('InventoryDetailsCtrl', ['$rootScope', '$scope', '$state', 'InventoryProduct', 'Utils', 'ProductSpec', 'EVENTS', '$interval',
-            '$window', 'LOGGED_USER', 'USAGE_CHART_URL', 'BillingAccount', ProductDetailController]);
+            '$window', 'LOGGED_USER', 'USAGE_CHART_URL', 'BillingAccount', 'Download', ProductDetailController]);
 
     function InventorySearchController($scope, $state, $rootScope, EVENTS, InventoryProduct, INVENTORY_STATUS, Utils) {
         /* jshint validthis: true */
@@ -110,7 +110,7 @@
 
     function ProductDetailController(
         $rootScope, $scope, $state, InventoryProduct, Utils, ProductSpec, EVENTS, $interval,
-        $window, LOGGED_USER, USAGE_CHART_URL, BillingAccount) {
+        $window, LOGGED_USER, USAGE_CHART_URL, BillingAccount, Download) {
 
         /* jshint validthis: true */
         var vm = this;
@@ -241,7 +241,15 @@
 
         function downloadAsset() {
             locations.forEach(function(location) {
-                $window.open(location, '_blank');
+                // Check if the file is internal or not
+                if (location.startsWith($window.location.origin)) {
+                    Download.download(location).then((result) => {
+                        let url = $window.URL.createObjectURL(result);
+                        $window.open(url, '_blank');
+                    });
+                } else {
+                    $window.open(location, '_blank');
+                }
             });
         }
 
@@ -360,7 +368,10 @@
         }
 
         function downloadInvoice(invoice) {
-            $window.open(invoice, '_blank');
+            Download.download(invoice).then((result) => {
+                let url = $window.URL.createObjectURL(result);
+                $window.open(url, '_blank')
+            });
         }
 
         function formatCharacteristicValue(characteristic, characteristicValue) {

@@ -65,6 +65,7 @@ let jsAppFilesToInject = [
     'services/billing-account.service',
     'services/customer.service',
     'services/customer-account.service',
+    'services/download.service',
     'controllers/form-wizard.controller',
     'controllers/flash-message.controller',
     'controllers/user.controller',
