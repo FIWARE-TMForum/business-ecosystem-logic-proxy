@@ -22,7 +22,7 @@ VOLUME /business-ecosystem-logic-proxy/themes
 VOLUME /business-ecosystem-logic-proxy/static
 
 RUN export PATH=$PATH:/business-ecosystem-logic-proxy/node-v6.9.1-linux-x64/bin && \
-    npm install && \
+    ./install.sh && \
     mkdir etc && \
     cp config.js.template etc/config.js && \
     echo "module.exports = require('./etc/config');" > config.js
