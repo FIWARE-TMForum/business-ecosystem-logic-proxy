@@ -8,7 +8,9 @@ var authorizeService = require('./controllers/authorizeService').authorizeServic
     express = require('express'),
     fs = require('fs'),
     https = require('https'),
+    indexes = require('./lib/indexes'),
     inventorySubscription = require('./lib/inventory_subscription'),
+    imports = require('./public/imports').imports,
     logger = require('./lib/logger').logger.getLogger("Server"),
     mongoose = require('mongoose'),
     onFinished = require('on-finished'),
@@ -23,6 +25,7 @@ var authorizeService = require('./controllers/authorizeService').authorizeServic
     auth = require('./lib/auth').auth,
     uuid = require('node-uuid');
 
+const debug = !(process.env.NODE_ENV == 'production');
 
 /////////////////////////////////////////////////////////////////////
 ////////////////////////// CONFIG CHECKERS //////////////////////////
@@ -153,10 +156,13 @@ app.use(function(req, res, next) {
 });
 
 // Static files && templates
-app.use(config.portalPrefix + '/', express.static(__dirname + '/public'));
-app.set('views', __dirname + '/views');
-app.set('view engine', 'jade');
 
+// Check if a theme has been loaded or the system is in production
+var staticPath = config.theme || !debug ? '/static' : '' ;
+
+app.use(config.portalPrefix + '/', express.static(__dirname + staticPath + '/public'));
+app.set('views', __dirname + staticPath + '/views');
+app.set('view engine', 'jade');
 
 /////////////////////////////////////////////////////////////////////
 ////////////////////////////// PASSPORT /////////////////////////////
@@ -253,7 +259,7 @@ var checkMongoUp = function(req, res, next) {
 
 };
 
-app.use(config.shoppingCartPath + '/*', checkMongoUp, auth.headerAuthentication, failIfNotAuthenticated);
+app.use(config.shoppingCartPath + '/*', checkMongoUp, auth.headerAuthentication, auth.checkOrganizations, auth.setPartyObj, failIfNotAuthenticated);
 app.get(config.shoppingCartPath + '/item/', shoppingCart.getCart);
 app.post(config.shoppingCartPath + '/item/', shoppingCart.add);
 app.get(config.shoppingCartPath + '/item/:id', shoppingCart.getItem);
@@ -264,6 +270,7 @@ app.post(config.shoppingCartPath + '/empty', shoppingCart.empty);
 ////////////////////////// MANAGEMENT API ///////////////////////////
 /////////////////////////////////////////////////////////////////////
 
+app.get('/version', management.getVersion);
 app.get('/' + config.endpoints.management.path + '/count/:size', management.getCount);
 
 /////////////////////////////////////////////////////////////////////
@@ -279,110 +286,6 @@ app.post(config.authorizeServicePath + '/apiKeys/:apiKey/commit', authorizeServi
 /////////////////////////////// PORTAL //////////////////////////////
 /////////////////////////////////////////////////////////////////////
 
-var cssFilesToInject = [
-    'bootstrap-3.3.5/css/bootstrap',
-    'font-awesome-4.5.0/css/font-awesome',
-    'intl-tel-input-8.4.7/css/intlTelInput',
-    'core/css/default-theme'
-].map(function (path) {
-    return 'resources/' + path + '.css';
-});
-
-var jsDepFilesToInject = [
-    // Dependencies:
-    'jquery-1.11.3/js/jquery',
-    'bootstrap-3.3.5/js/bootstrap',
-    'moment-2.10.6/js/moment',
-    'intl-tel-input-8.4.7/js/intlTelInput',
-    'angular-1.4.7/js/angular',
-    // Angular Dependencies:
-    'angular-1.4.7/js/angular-messages',
-    'angular-1.4.7/js/angular-moment',
-    'angular-1.4.7/js/angular-resource',
-    'angular-1.4.7/js/angular-ui-router',
-    'angular-1.4.7/js/international-phone-number'
-].map(function (path) {
-    return 'resources/' + path + '.js';
-});
-
-var jsAppFilesToInject = [
-    'app.config',
-    'app.filters',
-    'app.directives',
-    'directives/product-offering.directives',
-    'services/user.service',
-    'services/payment.service',
-    'services/product-specification.service',
-    'services/product-category.service',
-    'services/product-offering.service',
-    'services/product-catalogue.service',
-    'services/sharing-models.service',
-    'services/asset.service',
-    'services/asset-type.service',
-    'services/product-order.service',
-    'services/shopping-cart.service',
-    'services/inventory-product.service',
-    'services/utils.service',
-    'services/party.individual.service',
-    'services/billing-account.service',
-    'services/customer.service',
-    'services/customer-account.service',
-    'controllers/form-wizard.controller',
-    'controllers/flash-message.controller',
-    'controllers/user.controller',
-    'controllers/search-filter.controller',
-    'controllers/payment.controller',
-    'controllers/product.controller',
-    'controllers/product-specification.relationship.controller',
-    'controllers/product-category.controller',
-    'controllers/product-offering.controller',
-    'controllers/product-offering.price.controller',
-    'controllers/product-catalogue.controller',
-    'controllers/sharing-models.controller',
-    'controllers/transactions.controller',
-    'controllers/sharing-reports.controller',
-    'controllers/purchase-options.controller',
-    'controllers/product-order.controller',
-    'controllers/message.controller',
-    'controllers/inventory-product.controller',
-    'controllers/unauthorized.controller',
-    'controllers/party.individual.controller',
-    'controllers/party.contact-medium.controller',
-    'controllers/pager.controller',
-    'controllers/billing-account.controller',
-    'controllers/customer.controller',
-    'routes/offering.routes',
-    'routes/settings.routes',
-    'routes/rss.routes',
-    'routes/rss.sharing-models.routes',
-    'routes/rss.transactions.routes',
-    'routes/rss.reports.routes',
-    'routes/inventory.routes',
-    'routes/inventory.product-order.routes',
-    'routes/inventory.product.routes',
-    'routes/shopping-cart.routes',
-    'routes/unauthorized.routes'
-].map(function (path) {
-    return 'resources/core/js/' + path + '.js';
-});
-
-// Stock dependencies
-var jsStockFilesToInject = [
-    'routes/stock.routes',
-    'routes/stock.product.routes',
-    'routes/stock.product-offering.routes',
-    'routes/stock.product-catalogue.routes'
-].map(function (path) {
-    return 'resources/core/js/' + path + '.js';
-});
-
-// Admin dependencies
-var jsAdminFilesToInject = [
-    'routes/admin.routes',
-    'routes/admin.product-category.routes'
-].map(function (path) {
-    return 'resources/core/js/' + path + '.js';
-});
 
 var renderTemplate = function(req, res, viewName) {
 
@@ -402,20 +305,21 @@ var renderTemplate = function(req, res, viewName) {
         authorizeServicePath: config.authorizeServicePath,
         rssPath: config.endpoints.rss.path,
         platformRevenue: config.revenueModel,
-        cssFilesToInject: cssFilesToInject,
-        jsDepFilesToInject: jsDepFilesToInject,
-        jsAppFilesToInject: jsAppFilesToInject,
+        cssFilesToInject: imports.cssFilesToInject,
+        jsDepFilesToInject: imports.jsDepFilesToInject,
+        jsAppFilesToInject: imports.jsAppFilesToInject,
         accountHost: config.oauth2.server,
-        usageChartURL: config.usageChartURL
+        usageChartURL: config.usageChartURL,
+        orgAdmin: config.oauth2.roles.orgAdmin,
+        seller: config.oauth2.roles.seller,
+        customer: config.oauth2.customer
     };
 
     if (utils.isAdmin(req.user)) {
-        options.jsAppFilesToInject = options.jsAppFilesToInject.concat(jsAdminFilesToInject);
+        options.jsAppFilesToInject = options.jsAppFilesToInject.concat(imports.jsAdminFilesToInject);
     }
 
-    if (utils.hasRole(req.user, config.oauth2.roles.seller)) {
-        options.jsAppFilesToInject = options.jsAppFilesToInject.concat(jsStockFilesToInject);
-    }
+    options.jsAppFilesToInject = options.jsAppFilesToInject.concat(imports.jsStockFilesToInject);
 
     res.render(viewName, options);
 
@@ -471,7 +375,7 @@ for (var p in config.publicPaths) {
     app.all(config.proxyPrefix + '/' + config.publicPaths[p], tmf.public);
 }
 
-app.all(config.proxyPrefix + '/*', auth.headerAuthentication, function(req, res, next) {
+app.all(config.proxyPrefix + '/*', auth.headerAuthentication, auth.checkOrganizations, auth.setPartyObj, function(req, res, next) {
 
     // The API path is the actual path that should be used to access the resource
     // This path contains the query string!!
@@ -520,40 +424,44 @@ app.use(function(err, req, res, next) {
 //////////////////////////// START SERVER ///////////////////////////
 /////////////////////////////////////////////////////////////////////
 
-logger.info('Business Ecosystem Logic Proxy starting on port ' + PORT);
+// Initialize indexes
+indexes.init().then(function() {
+    logger.info('Business Ecosystem Logic Proxy starting on port ' + PORT);
+    if (config.https.enabled === true) {
 
-if (config.https.enabled === true) {
+        var options = {
+            secureOptions: constants.SSL_OP_NO_SSLv3 | constants.SSL_OP_NO_SSLv2,
+            ciphers: [
+                "ECDHE-RSA-AES256-SHA384",
+                "DHE-RSA-AES256-SHA384",
+                "ECDHE-RSA-AES256-SHA256",
+                "DHE-RSA-AES256-SHA256",
+                "ECDHE-RSA-AES128-SHA256",
+                "DHE-RSA-AES128-SHA256",
+                "HIGH",
+                "!aNULL",
+                "!eNULL",
+                "!EXPORT",
+                "!DES",
+                "!RC4",
+                "!MD5",
+                "!PSK",
+                "!SRP",
+                "!CAMELLIA"
+            ].join(':'),
+            honorCipherOrder: true,
+            key: fs.readFileSync(config.https.keyFile),
+            cert: fs.readFileSync(config.https.certFile),
+            ca: fs.readFileSync(config.https.caFile)
+        };
 
-    var options = {
-        secureOptions: constants.SSL_OP_NO_SSLv3 | constants.SSL_OP_NO_SSLv2,
-        ciphers: [
-            "ECDHE-RSA-AES256-SHA384",
-            "DHE-RSA-AES256-SHA384",
-            "ECDHE-RSA-AES256-SHA256",
-            "DHE-RSA-AES256-SHA256",
-            "ECDHE-RSA-AES128-SHA256",
-            "DHE-RSA-AES128-SHA256",
-            "HIGH",
-            "!aNULL",
-            "!eNULL",
-            "!EXPORT",
-            "!DES",
-            "!RC4",
-            "!MD5",
-            "!PSK",
-            "!SRP",
-            "!CAMELLIA"
-        ].join(':'),
-        honorCipherOrder: true,
-        key: fs.readFileSync(config.https.keyFile),
-        cert: fs.readFileSync(config.https.certFile),
-        ca: fs.readFileSync(config.https.caFile)
-    };
+        https.createServer(options, function(req,res) {
+            app.handle(req, res);
+        }).listen(app.get('port'));
 
-    https.createServer(options, function(req,res) {
-        app.handle(req, res);
-    }).listen(app.get('port'));
-
-} else {
-    app.listen(app.get('port'));
-}
+    } else {
+        app.listen(app.get('port'));
+    }
+}).catch(function() {
+    logger.error('CRITICAL: The indexes could not be created, the server is not starting')
+});

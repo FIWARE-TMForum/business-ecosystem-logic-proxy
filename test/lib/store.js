@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -46,7 +46,7 @@ describe('Store Client', function() {
     }).storeClient;
 
 
-    var testValidateAssetOk = function(assetType, protocol, done) {
+    var testValidateAssetOk = function(assetType, method, action, protocol, done) {
 
         // Mock the server
         config.endpoints.charging.appSsl = protocol === 'https' ? true : false;
@@ -64,10 +64,10 @@ describe('Store Client', function() {
 
         // Call the validator
         var assetInfo = { 'a': 'b', 'example': 'c' };
-        storeClient[ASSETS_FUNCTION_MAPPING[assetType]](assetInfo, {id: 'test'}, function(err) {
+        storeClient[method](assetInfo, {id: 'test'}, function(err) {
 
             var expectedBody = {
-                action: 'create'
+                action: action
             };
 
             expectedBody[assetType] = assetInfo;
@@ -83,22 +83,50 @@ describe('Store Client', function() {
     // Products
 
     it('should validate product (HTTP)', function(done) {
-        testValidateAssetOk(PRODUCT_ASSET, 'http', done);
+        testValidateAssetOk(PRODUCT_ASSET, 'validateProduct', 'create', 'http', done);
     });
 
     it('should validate product (HTTPS)', function(done) {
-        testValidateAssetOk(PRODUCT_ASSET, 'https', done);
+        testValidateAssetOk(PRODUCT_ASSET, 'validateProduct', 'create', 'https', done);
+    });
+
+    it('should attach product', function (done) {
+        testValidateAssetOk(PRODUCT_ASSET, 'attachProduct', 'attach', 'http', done);
+    });
+
+    it('should rollback product creation', function (done) {
+        testValidateAssetOk(PRODUCT_ASSET, 'rollbackProduct', 'rollback_create', 'http', done);
+    });
+
+    it('should validate product upgrade', function (done) {
+        testValidateAssetOk(PRODUCT_ASSET, 'upgradeProduct', 'upgrade', 'http', done);
+    });
+
+    it('should notify product upgraded', function (done) {
+        testValidateAssetOk(PRODUCT_ASSET, 'attachUpgradedProduct', 'attach_upgrade', 'http', done);
+    });
+
+    it('should rollback product upgrade', function (done) {
+        testValidateAssetOk(PRODUCT_ASSET, 'rollbackProductUpgrade', 'rollback_upgrade', 'http', done);
     });
 
 
     // Offerings
 
     it('should validate offering (HTTP)', function(done) {
-        testValidateAssetOk(OFFERING_ASSET, 'http', done);
+        testValidateAssetOk(OFFERING_ASSET, 'validateOffering', 'create', 'http', done);
     });
 
     it('should validate offering (HTTPS)', function(done) {
-        testValidateAssetOk(OFFERING_ASSET, 'https', done);
+        testValidateAssetOk(OFFERING_ASSET, 'validateOffering', 'create', 'https', done);
+    });
+
+    it('should attach offering info', function (done) {
+        testValidateAssetOk(OFFERING_ASSET, 'attachOffering', 'attach', 'https', done);
+    });
+
+    it('should notify offering update', function (done) {
+        testValidateAssetOk(OFFERING_ASSET, 'updateOffering', 'update', 'https', done);
     });
 
     var testValidateProductError = function(assetType, errorStatus, response, expectedErrMsg, done) {
@@ -297,8 +325,7 @@ describe('Store Client', function() {
 
     });
 
-    it('should call callback without errors when usage notification works', function (done) {
-
+    var mockUsageNotification = function testUsageNotification (status, path) {
         // Mock the server
         config.endpoints.charging.appSsl = false;
         var serverUrl = 'http://' + config.endpoints.charging.host + ':' + config.endpoints.charging.port;
@@ -307,43 +334,48 @@ describe('Store Client', function() {
             reqheaders: {
                 'content-type': 'application/json'
             }
-        }).post('/charging/api/orderManagement/accounting/', function (body) {
+        }).post(path, function (body) {
             return true;
-        }).reply(200);
+        }).reply(status);
+    };
 
+    it('should call callback without errors when usage notification works', function (done) {
+        mockUsageNotification(200, '/charging/api/orderManagement/accounting/');
         storeClient.validateUsage({}, function (err) {
-
             expect(err).toBe(null);
-
             done();
         });
     });
 
     it('should call callback with errors when usage notification fails', function (done) {
-
         var errorStatus = 500;
-
-        // Mock the server
-        config.endpoints.charging.appSsl = false;
-        var serverUrl = 'http://' + config.endpoints.charging.host + ':' + config.endpoints.charging.port;
-
-        nock(serverUrl, {
-            reqheaders: {
-                'content-type': 'application/json'
-            }
-        }).post('/charging/api/orderManagement/accounting/', function (body) {
-            return true;
-        }).reply(errorStatus);
-
+        mockUsageNotification(errorStatus, '/charging/api/orderManagement/accounting/');
         storeClient.validateUsage({}, function (err) {
-
             expect(err).toEqual({
                 status: errorStatus,
                 message: 'The server has failed validating the usage'
             });
-
             done();
         });
     });
 
+    it('should call callback without error when refresh usage notification works', function(done) {
+        mockUsageNotification(200, '/charging/api/orderManagement/accounting/refresh/');
+        storeClient.refreshUsage('1', '2', function (err) {
+            expect(err).toBe(null);
+            done();
+        });
+    });
+
+    it('should call callback with errors when refresh usage notification fails', function (done) {
+        var errorStatus = 500;
+        mockUsageNotification(errorStatus, '/charging/api/orderManagement/accounting/refresh/');
+        storeClient.refreshUsage('1', '2', function (err) {
+            expect(err).toEqual({
+                status: errorStatus,
+                message: 'The server has failed loading usage info'
+            });
+            done();
+        });
+    });
 });

@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -28,20 +28,20 @@
 
     angular
         .module('app')
-        .config(ProductRouteConfig);
+        .config(['$stateProvider', ProductRouteConfig]);
 
     function ProductRouteConfig($stateProvider) {
 
         $stateProvider
             .state('stock.product', {
-                url: '/product?status&type',
+                url: '/product?status&type&body&sort',
                 params: {
                     owner: true,
                     flow: 1,
                     status: 'Active,Launched'
                 },
                 data: {
-                    filters: ['status', 'type']
+                    filters: ['status', 'type', 'sort']
                 },
                 templateUrl: 'stock/product/search',
                 controller: 'ProductSearchCtrl as searchVM'
@@ -74,7 +74,7 @@
             .state('stock.product.update.characteristic', {
                 url: '/characteristic',
                 templateUrl: 'stock/product/update/characteristic'
-            });;
+            });
     }
 
 })();

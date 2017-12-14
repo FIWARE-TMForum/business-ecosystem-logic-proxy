@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -53,6 +53,7 @@ var catalog = (function() {
     var catalogOfferingsPattern = new RegExp('/catalog/[^/]+/productOffering/?');
     var offeringPattern = new RegExp('/catalog/[^/]+/productOffering/[^/]+/?$');
     var productsPattern = new RegExp('/productSpecification/?$');
+    var productPattern = new RegExp('/productSpecification/[^/]+/?$');
     var categoryPattern = new RegExp('/category/[^/]+/?$');
     var categoriesPattern = new RegExp('/category/?$');
     var catalogsPattern = new RegExp('/catalog/?$');
@@ -151,7 +152,7 @@ var catalog = (function() {
     };
 
     var validateOfferingFields = function(previousBody, newBody) {
-        var fixedFields = ['isBundle', 'productSpecification', 'bundledProductOffering', 'validFor'];
+        var fixedFields = ['isBundle', 'productSpecification', 'bundledProductOffering'];
         var modified = null;
 
         for (var i = 0; i < fixedFields.length && modified == null; i++) {
@@ -163,7 +164,7 @@ var catalog = (function() {
         return modified;
     };
 
-    var validateCatalog = function(req, offeringPath, validStates, newBody, errorMessageStateCatalog, callback) {
+    var validateOfferingCatalog = function(req, offeringPath, validStates, newBody, errorMessageStateCatalog, callback) {
         // Retrieve the catalog
         var catalogPath = catalogPathFromOfferingUrl(offeringPath);
         retrieveAsset(catalogPath, function (err, result) {
@@ -277,12 +278,6 @@ var catalog = (function() {
             }
         }
 
-        if (newBody && !previousBody && !newBody.validFor) {
-            newBody.validFor = {
-                startDateTime: new Date().toISOString()
-            }
-        }
-
         async.series([
             function (callback) {
                 // Check the RS model
@@ -310,6 +305,18 @@ var catalog = (function() {
 
                     // Check if the offering is a bundle.
                     var offeringBody = previousBody || newBody;
+
+                    var lifecycleHandler = function (err) {
+                        if (err) {
+                            callback(err);
+                        } else if (validStates != null) {
+                            // This validation only need to be executed once
+                            validateOfferingCatalog(req, offeringPath, validStates, newBody, errorMessageStateCatalog, callback);
+                        } else {
+                            callback(null);
+                        }
+                    };
+
                     if (offeringBody.isBundle) {
                         // Bundle offerings cannot contain a productSpecification
                         if(offeringBody.productSpecification) {
@@ -360,16 +367,7 @@ var catalog = (function() {
 
                             });
 
-                        }, function(err) {
-                            if (err) {
-                                callback(err);
-                            } else if (validStates != null) {
-                                // This validation only need to be executed once
-                                validateCatalog(req, offeringPath, validStates, newBody, errorMessageStateCatalog, callback);
-                            } else {
-                                callback(null);
-                            }
-                        })
+                        }, lifecycleHandler)
 
                     } else {
 
@@ -405,15 +403,7 @@ var catalog = (function() {
                                 var userNotAllowedMsg = 'You are not allowed to ' + operation + ' offerings for products you do not own';
                                 var product = JSON.parse(result.body);
 
-                                validateAssetPermissions(req, product, validStates, errorMessageStateProduct, userNotAllowedMsg, function(err) {
-                                    if (err) {
-                                        callback(err);
-                                    } else if (validStates != null) {
-                                        validateCatalog(req, offeringPath, validStates, newBody, errorMessageStateCatalog, callback);
-                                    } else {
-                                        callback(null);
-                                    }
-                                });
+                                validateAssetPermissions(req, product, validStates, errorMessageStateProduct, userNotAllowedMsg, lifecycleHandler);
                             }
                         });
                     }
@@ -568,6 +558,67 @@ var catalog = (function() {
         }
     };
 
+    var validateProductUpdate = function (req, prevBody, newBody, callback) {
+        if ((!!newBody.isBundle || !!newBody.bundledProductSpecification) &&
+                prevBody.lifecycleStatus.toLowerCase() != 'active') {
+
+            return callback({
+                status: 422,
+                message: 'It is not allowed to update bundle related attributes (isBundle, bundledProductSpecification) in launched products'
+            });
+        }
+
+        // Check upgrade problems if the product is a digital one
+        if (tmfUtils.isDigitalProduct(prevBody.productSpecCharacteristic)) {
+            if (!!newBody.version && !tmfUtils.isDigitalProduct(newBody.productSpecCharacteristic)
+                    && newBody.version != prevBody.version) {
+
+                // Trying to upgrade the product without providing new asset info
+                return callback({
+                    status: 422,
+                    message: 'To upgrade digital product specifications it is required to provide new asset info'
+                });
+            }
+
+            if((!!newBody.version && newBody.version == prevBody.version) || typeof newBody.version === 'undefined'
+                    && !!newBody.productSpecCharacteristic &&
+                    !equal(newBody.productSpecCharacteristic, prevBody.productSpecCharacteristic)) {
+
+                return callback({
+                    status: 422,
+                    message: 'Product specification characteristics only can be updated for upgrading digital products'
+                });
+            }
+
+            if (!!newBody.version && newBody.version != prevBody.version &&
+                    tmfUtils.isDigitalProduct(newBody.productSpecCharacteristic) &&
+                    !tmfUtils.equalCustomCharacteristics(newBody.productSpecCharacteristic, prevBody.productSpecCharacteristic)) {
+
+                return callback({
+                    status: 422,
+                    message: 'It is not allowed to update custom characteristics during a product upgrade'
+                });
+            }
+
+            if (!!newBody.version && newBody.version != prevBody.version && !!newBody.productSpecCharacteristic) {
+                return storeClient.upgradeProduct({
+                    id: prevBody.id,
+                    version: newBody.version,
+                    productSpecCharacteristic: newBody.productSpecCharacteristic
+                }, req.user, callback);
+            }
+        } else if (!!newBody.productSpecCharacteristic &&
+                !equal(newBody.productSpecCharacteristic, prevBody.productSpecCharacteristic)){
+
+            return callback({
+                status: 422,
+                message: 'Product spec characteristics cannot be updated'
+            });
+        }
+
+        return callback(null);
+    };
+
     var validateProduct = function(req, productSpec, callback) {
         // Check if the product is a bundle
         if (!productSpec.isBundle) {
@@ -661,6 +712,14 @@ var catalog = (function() {
         });
     };
 
+    var validateCatalog = function (req, prevCatalog, catalog, callback) {
+        // Check that the catalog name is not already taken
+        if (catalog && (!prevCatalog || !!catalog.name)) {
+            checkExistingCatalog(req.apiUrl, catalog.name, callback)
+        } else {
+            callback(null);
+        }
+    };
 
     //////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////// CREATION //////////////////////////////////////////
@@ -694,6 +753,14 @@ var catalog = (function() {
             return; // EXIT
         }
 
+        // Catalog stuff should include a validFor field
+        if (!body.validFor) {
+            body.validFor = {
+                startDateTime: new Date().toISOString()
+            };
+            utils.updateBody(req, body);
+        }
+
         if (categoriesPattern.test(req.apiUrl)) {
 
             validateCategory(req, body, null, 'create', callback);
@@ -724,7 +791,6 @@ var catalog = (function() {
                             }
                         });
                     }
-
                 });
             } else if (productsPattern.test(req.apiUrl)) {
 
@@ -745,18 +811,13 @@ var catalog = (function() {
                 });
 
             } else if (catalogsPattern.test(req.apiUrl)) {
-
-                var catalogName = body.name;
-
-                // Check that the catalog name is not already taken
-                checkExistingCatalog(req.apiUrl, catalogName, function (result) {
+                validateCatalog(req, null, body, function (result) {
                     if (result) {
                         callback(result);
                     } else {
                         createHandler(req, body, callback);
                     }
-                })
-
+                });
             } else {
                 createHandler(req, body, callback);
             }
@@ -826,36 +887,6 @@ var catalog = (function() {
         }
     };
 
-    var isEqualRelatedParty = function (relatedParty1, relatedParty2) {
-
-        if (relatedParty1.length != relatedParty2.length) {
-            return false;
-        } else {
-
-            // Copy relatedParties
-            var copyRelatedParty1 = relatedParty1.slice();
-            var copyRelatedParty2 = relatedParty2.slice();
-
-            var matched = 0;
-
-            for (var i = 0; i < copyRelatedParty1.length; i++) {
-
-                for (var j = 0; j < copyRelatedParty2.length; j++) {
-
-                    if (copyRelatedParty1[i].id === copyRelatedParty2[j].id &&
-                        copyRelatedParty1[i].href === copyRelatedParty2[j].href &&
-                        copyRelatedParty1[i].role === copyRelatedParty2[j].role) {
-
-                        copyRelatedParty2[j] = {};
-                        matched += 1;
-                    }
-                }
-            }
-
-            return matched === relatedParty1.length;
-        }
-    };
-
     // Validate the modification of a resource
     var validateUpdate = function(req, callback) {
 
@@ -888,6 +919,14 @@ var catalog = (function() {
 
                     var previousBody = JSON.parse(result.body);
 
+                    // Catalog stuff should include a validFor field
+                    if (parsedBody && !previousBody.validFor && !parsedBody.validFor) {
+                        parsedBody.validFor = {
+                            startDateTime: new Date().toISOString()
+                        };
+                        utils.updateBody(req, parsedBody);
+                    }
+
                     if (categoryPattern.test(req.apiUrl)) {
                         validateCategory(req, parsedBody, previousBody, 'modify', callback);
 
@@ -897,9 +936,13 @@ var catalog = (function() {
                     } else {
 
                         if (tmfUtils.isOwner(req, previousBody)) {
+                            // The related party field is sorted, since the order is not important
+                            var sortParty = (p1, p2) => {
+                                return  (p1.id > p2.id) ? 1 : ((p2.id > p1.id) ? -1 : 0);
+                            };
 
                             if (parsedBody != null && parsedBody.relatedParty &&
-                                !isEqualRelatedParty(previousBody.relatedParty, parsedBody.relatedParty)) {
+                                !equal(previousBody.relatedParty.sort(sortParty), parsedBody.relatedParty.sort(sortParty))) {
                                     callback({
                                         status: 409,
                                         message: 'The field "relatedParty" can not be modified'
@@ -909,23 +952,21 @@ var catalog = (function() {
 
                                 if (catalogsPattern.test(req.apiUrl)) {
 
-                                    // Retrieve all the offerings contained in the catalog
-                                    var slash = req.apiUrl.endsWith('/') ? '' : '/';
-                                    var offeringsInCatalogPath = req.apiUrl + slash + 'productOffering';
+                                    async.series([function (callback) {
+                                        // Validate catalog new contents
+                                        validateCatalog(req, previousBody, parsedBody, callback);
 
-                                    validateInvolvedOfferingsState('catalog', parsedBody, offeringsInCatalogPath, callback);
+                                    }, function (callback) {
+                                        // Retrieve all the offerings contained in the catalog
+                                        var slash = req.apiUrl.endsWith('/') ? '' : '/';
+                                        var offeringsInCatalogPath = req.apiUrl + slash + 'productOffering';
+
+                                        validateInvolvedOfferingsState('catalog', parsedBody, offeringsInCatalogPath, callback);
+                                    }], callback)
 
                                 } else if (productsPattern.test(req.apiUrl)) {
 
                                     async.series([
-                                        function (callback) {
-
-                                            if (parsedBody) {
-                                                validateProduct(req, parsedBody, callback);
-                                            } else {
-                                                callback(null);
-                                            }
-                                        },
                                         function (callback) {
 
                                             var url = req.apiUrl;
@@ -944,6 +985,20 @@ var catalog = (function() {
 
                                             validateInvolvedOfferingsState('product', parsedBody, offeringsContainProductPath, callback);
 
+                                        },
+                                        function (callback) {
+
+                                            if (parsedBody) {
+                                                validateProductUpdate(req, previousBody, parsedBody, callback);
+                                            } else {
+                                                callback(null);
+                                            }
+                                        }, function (callback) {
+                                            if (parsedBody) {
+                                                validateProduct(req, parsedBody, callback);
+                                            } else {
+                                                callback(null);
+                                            }
                                         }], callback);
 
                                 } else {
@@ -997,7 +1052,7 @@ var catalog = (function() {
         // Handle PUT and PATCH data
         var offeringsPattern = new RegExp('/productOffering/?');
         var productsPattern = new RegExp('/productSpecification/?');
-        var catalogPattern = new RegExp('/catalog/?');
+        var catalogPattern = new RegExp('/v2/catalog/?');
 
         var genericSave = function genericSave(f) {
             f([JSON.parse(req.body)], req.user)
@@ -1022,23 +1077,8 @@ var catalog = (function() {
         callback(null);
     };
 
-    var queryAndOrCommas = function queryAndOrCommas(q, name, query, f) {
-        if (!f) {
-            f = x => x.toLowerCase();
-        }
-        if (!q) {
-            return;
-        }
-
-        if (q.split(",").length <= 1) {
-            indexes.addAndCondition(query, { [name]: [f(q)] });
-        } else {
-            indexes.addOrCondition(query, name, q.split(",").map(f));
-        }
-    };
-
     var lifecycleQuery = function lifecycleQuery(req, query) {
-        queryAndOrCommas(req.query.lifecycleStatus, "lifecycleStatus", query);
+        utils.queryAndOrCommas(req.query.lifecycleStatus, "lifecycleStatus", query);
     };
 
     var createProductQuery = indexes.genericCreateQuery.bind(
@@ -1050,6 +1090,7 @@ var catalog = (function() {
                 indexes.addAndCondition(query, { relatedPartyHash: [indexes.fixUserId(req.query["relatedParty.id"])]});
     	    }
 
+            utils.queryAndOrCommas(req.query["body"], "body", query);
             lifecycleQuery(req, query);
 	});
 
@@ -1060,21 +1101,21 @@ var catalog = (function() {
 	    function (req, query) {
 	        if (catalogOfferingsPattern.test(req.apiUrl)) {
 	            var catalog = req.apiUrl.split('/')[6];
-	            indexes.addAndCondition(query, { catalog: ["catalog:" + catalog] });
+	            indexes.addAndCondition(query, { catalog: [leftPad(catalog, 12, 0)] });
             }
             if (req.query.relatedParty) {
                 indexes.addAndCondition(query, { userId: [indexes.fixUserId(req.query.relatedParty)] });
             }
             if (req.query["category.id"]) {
-                indexes.addAndCondition(query, { categoriesId: ["cat:" + req.query["category.id"]]});
+                indexes.addAndCondition(query, { categoriesId: [leftPad(req.query["category.id"], 12, 0)]});
             }
             if (req.query["category.name"]) {
                 indexes.addAndCondition(query, { categoriesName: [md5(req.query["category.name"].toLowerCase())]});
             }
 
-            queryAndOrCommas(req.query["productSpecification.id"], "productSpecification", query, x => leftPad(x, 12, 0));
-            queryAndOrCommas(req.query["bundledProductOffering.id"], "bundledProductOffering", query, x => leftPad(x, 12, 0));
-
+            utils.queryAndOrCommas(req.query["productSpecification.id"], "productSpecification", query, x => leftPad(x, 12, 0));
+            utils.queryAndOrCommas(req.query["bundledProductOffering.id"], "bundledProductOffering", query, x => leftPad(x, 12, 0));
+            utils.queryAndOrCommas(req.query["body"], "body", query);
             lifecycleQuery(req, query);
 	});
 
@@ -1087,6 +1128,7 @@ var catalog = (function() {
                 indexes.addAndCondition(query, { relatedPartyHash: [indexes.fixUserId(req.query["relatedParty.id"])] });
             }
 
+            utils.queryAndOrCommas(req.query["body"], "body", query);
             lifecycleQuery(req, query);
         }
     );
@@ -1118,7 +1160,7 @@ var catalog = (function() {
         'GET': [ validateAllowed ],
         'POST': [ utils.validateLoggedIn, validateCreation ],
         'PATCH': [ utils.validateLoggedIn, validateUpdate ],
-        'PUT': [ utils.validateLoggedIn, validateUpdate ],
+        'PUT': [ utils.methodNotAllowed ],
         'DELETE': [ utils.validateLoggedIn, isCategory, validateUpdate]
     };
 
@@ -1132,6 +1174,27 @@ var catalog = (function() {
         methodIndexed(req)
             .catch(() => Promise.resolve(req))
             .then(() => { async.series(reqValidators, callback);});
+    };
+
+    var handleUpgradePostAction = function (req, body, storeMethod, callback) {
+        var getURLId = function(apiUrl) {
+            return apiUrl.split('/')[6];
+        };
+
+        // Check if the product has been upgraded
+        if (!!body.version && !!body.productSpecCharacteristic) {
+            var id = !!body.id ? body.id : getURLId(req.apiUrl);
+
+            // Notify the error to the charging backend to downgrade the asset
+            return storeMethod({
+                id: id,
+                version: body.version,
+                productSpecCharacteristic: body.productSpecCharacteristic
+            }, req.user, () => {
+                callback(null);
+            });
+        }
+        callback(null);
     };
 
     var executePostValidation = function(req, callback) {
@@ -1167,6 +1230,13 @@ var catalog = (function() {
 
             storeClient.updateOffering(body, req.user, middlewareSave(indexes.saveIndexOffering, [indexBody], req.user, callback));
 
+        } else if (req.method == 'PATCH' && productPattern.test(req.apiUrl)) {
+            var body = JSON.parse(req.reqBody);
+            var respBody = JSON.parse(req.body);
+
+            handleUpgradePostAction(
+                req, body, storeClient.attachUpgradedProduct, middlewareSave(indexes.saveIndexProduct, [respBody], req.user, callback));
+
         } else if (req.method == 'POST' && catalogsPattern.test(req.apiUrl)) {
             body = JSON.parse(req.body);
             indexes.saveIndexCatalog([body])
@@ -1174,14 +1244,33 @@ var catalog = (function() {
                 .catch(() => callback(null));
 
         } else {
-            // TODO PATCHes
             handleIndexes(req, callback);
+        }
+    };
+
+    var handleAPIError = function (req, callback) {
+        if (productsPattern.test(req.apiUrl) && req.method == 'POST') {
+
+            var body = JSON.parse(req.reqBody);
+
+            // Notify the error to the charging backend to remove tha asset
+            storeClient.rollbackProduct(body, req.user, () => {
+                // No matter rollback status, return API message
+                callback(null);
+            });
+        } else if (productPattern.test(req.apiUrl) && req.method == 'PATCH') {
+            var body = JSON.parse(req.reqBody);
+            handleUpgradePostAction(req, body, storeClient.rollbackProductUpgrade, callback);
+
+        }  else {
+            callback(null);
         }
     };
 
     return {
         checkPermissions: checkPermissions,
-        executePostValidation: executePostValidation
+        executePostValidation: executePostValidation,
+        handleAPIError: handleAPIError
     };
 
 })();

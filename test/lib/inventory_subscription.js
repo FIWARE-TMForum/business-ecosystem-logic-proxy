@@ -1,6 +1,6 @@
 /*global expect, it, jasmine, describe */
 
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -18,6 +18,8 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
+"use strict";
 
 var config = require('./../../config'),
     utils = require('./../../lib/utils'),
@@ -56,7 +58,7 @@ describe('Test inventory subscription helper and endpoint', function () {
 
     var createUrl = function createUrl(path) {
         var port = config.https.enabled ? config.https.port || 443 : config.port || 80;
-        return (config.https.enabled ? "https" : "http") + "://" + 'localhost' + ":" + port + path;
+        return (config.https.enabled ? "https" : "http") + "://" + config.host + ":" + port + path;
     };
 
     var hubsUrl = function hubsUrl() {
@@ -211,7 +213,7 @@ describe('Test inventory subscription helper and endpoint', function () {
         lib.postNotification({ body: JSON.stringify(event) }, res).then(() => {
             expect(res.end).toHaveBeenCalled();
             expect(inds.saveIndexInventory).not.toHaveBeenCalled();
-            expect(inds.removeIndex).toHaveBeenCalledWith("indexes/inventory", 9);
+            expect(inds.removeIndex).toHaveBeenCalledWith("inventory", 9);
             done();
         });
     });
@@ -240,7 +242,7 @@ describe('Test inventory subscription helper and endpoint', function () {
         lib.postNotification({ body: JSON.stringify(event) }, res).then(() => {
             expect(res.end).toHaveBeenCalled();
             expect(inds.saveIndexInventory).toHaveBeenCalledWith(["data"]);
-            expect(inds.removeIndex).toHaveBeenCalledWith("indexes/inventory", 9);
+            expect(inds.removeIndex).toHaveBeenCalledWith("inventory", 9);
             done();
         });
     });

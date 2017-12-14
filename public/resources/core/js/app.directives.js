@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -29,20 +29,22 @@
     angular
         .module('app')
         .directive('bsTooltip', bsTooltipDirective)
-        .directive('fileModel', fileModelDirective)
-        .directive('noImage', noImageDirective)
-        .directive('fieldUnique', fieldUniqueDirective)
+        .directive('fileModel', ['$parse', fileModelDirective])
+        .directive('noImage', ['URLS', noImageDirective])
+        .directive('fieldUnique', ['$injector', fieldUniqueDirective])
         .directive('businessAddressForm', businessAddressFormDirective)
         .directive('shippingAddressForm', shippingAddressFormDirective)
         .directive('pricePlanForm', pricePlanFormDirective)
         .directive('pricePlanTable', pricePlanTableDirective)
-        .directive('pager', pagerDirective)
+        .directive('pager', ['$window', '$timeout', 'EVENTS', pagerDirective])
         .directive('relationshipCreateForm', relationshipCreateFormDirective)
         .directive('relationshipDeleteForm', relationshipDeleteFormDirective)
         .directive('convertToDate', convertToDateDirective)
         .directive('convertToNumber', convertToNumberDirective)
         .directive('fieldArray', fieldArrayDirective)
-        .directive('convertToPhoneNumber', convertToPhoneNumberDirective);
+        .directive('convertToPhoneNumber', convertToPhoneNumberDirective)
+        .directive('createAssetForm', createAssetFormDirective)
+        .directive('requiredFile', requiredFile);
 
     function bsTooltipDirective() {
         return {
@@ -99,7 +101,7 @@
         }
     }
 
-    function fieldUniqueDirective($http, $injector) {
+    function fieldUniqueDirective($injector) {
         return {
             require: 'ngModel',
             link: function (scope, element, attrs, controller) {
@@ -133,7 +135,7 @@
         };
     }
 
-    function pagerDirective($window, $timeout) {
+    function pagerDirective($window, $timeout, EVENTS) {
         return {
             restrict: 'E',
             scope: {
@@ -145,7 +147,7 @@
             link: link
         };
 
-        function link($scope, element, attrs) {
+        function link($scope, element, attrs, ctrls) {
             function repositionPager(retry) {
                 var nav = element.find('nav');
                 var ul = element.find('ul');
@@ -179,7 +181,22 @@
                     }, 100);
                 }
             }
+
+            $scope.$on(EVENTS.PAGER_RELOADED, function () {
+                loadPager();
+            });
+
             loadPager();
+        }
+    }
+
+    function createAssetFormDirective() {
+        return {
+            restrict: 'E',
+            scope: {
+                vm: '=controller'
+            },
+            templateUrl: 'directives/forms/create-asset'
         }
     }
 
@@ -244,7 +261,7 @@
         };
     }
 
-    function fieldArrayDirective($http, $injector) {
+    function fieldArrayDirective() {
         return {
             require: 'ngModel',
             link: function (scope, element, attrs, controller) {
@@ -305,6 +322,23 @@
                 });
             }
         };
+    }
+
+    function requiredFile() {
+        return {
+            require: 'ngModel',
+            link: function(scope, element, attrs, ngModel) {
+                ngModel.$setValidity('requiredFile', element.val() != '');
+
+                element.bind('change', () => {
+                    ngModel.$setValidity('requiredFile', element.val() != '');
+                    scope.$apply(() => {
+                        ngModel.$setViewValue(element.val());
+                        ngModel.$render();
+                    })
+                });
+            }
+        }
     }
 
 

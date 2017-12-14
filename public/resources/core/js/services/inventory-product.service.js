@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -29,7 +29,7 @@
 
     angular
         .module('app')
-        .factory('InventoryProduct', InventoryProductService);
+        .factory('InventoryProduct', ['$q', '$resource', 'URLS', 'User', 'Offering', InventoryProductService]);
 
     function InventoryProductService($q, $resource, URLS, User, Offering) {
         var resource = $resource(URLS.INVENTORY + '/product/:productId', {
@@ -51,7 +51,7 @@
             }
 
             if(filters.customer) {
-                params['relatedParty.id'] = User.loggedUser.id;
+                params['relatedParty.id'] = User.loggedUser.currentUser.id;
             }
 
             if (filters.status) {
@@ -65,6 +65,10 @@
             if (filters.offset !== undefined) {
                 params['offset'] = filters.offset;
                 params['size'] = filters.size;
+            }
+
+            if (filters.body !== undefined) {
+                params['body'] = filters.body.replace(/\s/g, ',');
             }
 
             method(params, callback, function (response) {

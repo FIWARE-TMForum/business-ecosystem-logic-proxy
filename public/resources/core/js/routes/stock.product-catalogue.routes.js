@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -28,19 +28,19 @@
 
     angular
         .module('app')
-        .config(CatalogueRouteConfig);
+        .config(['$stateProvider', CatalogueRouteConfig]);
 
     function CatalogueRouteConfig($stateProvider) {
 
         $stateProvider
             .state('stock.catalogue', {
-                url: '/catalogue?status&role',
+                url: '/catalogue?status&role&body&sort',
                 params: {
                     owner: true,
                     status: 'Active,Launched'
                 },
                 data: {
-                    filters: ['status', 'role']
+                    filters: ['status', 'role', 'sort']
                 },
                 templateUrl: 'stock/product-catalogue/search',
                 controller: 'CatalogueSearchCtrl as searchVM'

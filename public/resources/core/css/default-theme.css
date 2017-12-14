@@ -126,6 +126,10 @@ dd {
     color: #5E5E5E;
 }
 
+.limit-table dd {
+    overflow: hidden;
+    max-height: 62px;
+}
 .dl-list {
     position: relative;
     display: flex;
@@ -529,7 +533,8 @@ select.form-control {
 .btn-toolbar > .btn-group {
     margin-left: 0;
 }
-.btn-toolbar > .btn-group + .btn-group {
+.btn-toolbar > .btn-group + .btn-group,
+.btn-toolbar > .row > .btn-group{
     margin-left: 5px;
 }
 
@@ -539,6 +544,39 @@ select.form-control {
 
 .btn-group .btn + .btn {
     margin-left: 0;
+}
+
+.toolbar-container {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 20px;
+}
+
+.toolbar-container > .z-depth-1:first-child {
+    margin-right: auto;
+}
+
+@media (max-width: 565px) {
+    .toolbar-container {
+        flex-wrap: wrap;
+    }
+
+    .toolbar-container::after {
+        content: '';
+        width: 100%;
+    }
+
+    .search-bar:nth-of-type(2), .catalog-bar:nth-of-type(3) {
+        order: 3;
+        flex-grow: 1;
+        margin-top: 5px;
+        margin-left: 0 !important;
+    }
+
+    .search-bar:nth-of-type(3), .catalog-bar:nth-of-type(4) {
+        order: 4;
+        margin-top: 5px;
+    }
 }
 
 /* ===================================================================================
@@ -551,6 +589,12 @@ select.form-control {
     background-color: #FFFFFF;
     border-width: 0;
     border-radius: 0;
+}
+
+.dropdown-menu.org-menu {
+    display: block;
+    top: -48px;
+    right: 240px !important;
 }
 
 /* ===================================================================================
@@ -1186,7 +1230,6 @@ a.dropdown-menu-item:hover {
 .breadcrumb-triangle {
     display: inline-block;
     padding: 0;
-    margin-bottom: 10px;
     background-color: #F5F5F5;
     border-radius: 2px;
 }

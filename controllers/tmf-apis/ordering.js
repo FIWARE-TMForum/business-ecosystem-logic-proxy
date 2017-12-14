@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -32,12 +32,6 @@ var ordering = (function(){
 
     var CUSTOMER = 'Customer';
     var SELLER = 'Seller';
-
-    var ACKNOWLEDGED = 'Acknowledged';
-    var IN_PROGRESS = 'InProgress';
-    var COMPLETED = 'Completed';
-    var FAILED = 'Failed';
-    var PARTIAL = 'Partial';
 
     //////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////////// COMMON ///////////////////////////////////////////
@@ -77,12 +71,12 @@ var ordering = (function(){
     ////////////////////////////////////////// CREATION //////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
 
-    var includeProductParty = function(offering, item, individualCollectionUrl, callback) {
-
+    var includeProductParty = function(offering, item, callback) {
         var errorMessageProduct = 'The system fails to retrieve the product attached to the ordering item ' + item.id;
 
-        var productUrl = utils.getAPIURL(config.endpoints.catalog.appSsl, config.endpoints.catalog.host, config.endpoints.catalog.port,
-            url.parse(offering.productSpecification.href).path);
+        var productUrl = utils.getAPIURL(config.endpoints.catalog.appSsl,
+					 config.endpoints.catalog.host, config.endpoints.catalog.port,
+					 url.parse(offering.productSpecification.href).path);
 
         makeRequest(productUrl, errorMessageProduct, function (err, product) {
 
@@ -105,7 +99,7 @@ var ordering = (function(){
                         item.product.relatedParty.push({
                             id: owner.id,
                             role: SELLER,
-                            href: individualCollectionUrl + owner.id
+                            href: owner.href
                         });
                     });
 
@@ -115,7 +109,7 @@ var ordering = (function(){
         });
     };
 
-    var includeOfferingParty = function(offeringUrl, item, individualCollectionUrl, callback) {
+    var includeOfferingParty = function(offeringUrl, item, callback) {
 
         var errorMessageOffer = 'The system fails to retrieve the offering attached to the ordering item ' + item.id;
 
@@ -125,17 +119,17 @@ var ordering = (function(){
                 callback(err);
             } else {
                 if (!offering.isBundle) {
-                    includeProductParty(offering, item, individualCollectionUrl, callback);
+                    includeProductParty(offering, item, callback);
                 } else {
                     var offeringUrl = utils.getAPIURL(config.endpoints.catalog.appSsl, config.endpoints.catalog.host, config.endpoints.catalog.port,
                         url.parse(offering.bundledProductOffering[0].href).path);
-                    includeOfferingParty(offeringUrl, item, individualCollectionUrl, callback);
+                    includeOfferingParty(offeringUrl, item, callback);
                 }
             }
         });
     };
 
-    var completeRelatedPartyInfo = function(individualCollectionUrl, item, user, callback) {
+    var completeRelatedPartyInfo = function(req, item, user, callback) {
 
         if (!item.product) {
 
@@ -174,7 +168,7 @@ var ordering = (function(){
             item.product.relatedParty.push({
                 id: user.id,
                 role: CUSTOMER,
-                href: individualCollectionUrl + user.id
+                href: tmfUtils.getIndividualURL(req, user.id)
             });
         }
 
@@ -184,7 +178,7 @@ var ordering = (function(){
         var offeringUrl = utils.getAPIURL(config.endpoints.catalog.appSsl, config.endpoints.catalog.host, config.endpoints.catalog.port,
             url.parse(item.productOffering.href).path);
 
-        includeOfferingParty(offeringUrl, item, individualCollectionUrl, callback);
+        includeOfferingParty(offeringUrl, item, callback);
     };
 
     var validateCreation = function(req, callback) {
@@ -243,10 +237,9 @@ var ordering = (function(){
         }
 
         var asyncTasks = [];
-        var individualCollectionUrl = tmfUtils.getIndividualURL(req);
 
         body.orderItem.forEach(function(item) {
-            asyncTasks.push(completeRelatedPartyInfo.bind(this, individualCollectionUrl, item, req.user));
+            asyncTasks.push(completeRelatedPartyInfo.bind(this, req, item, req.user));
         });
 
         async.series(asyncTasks, function(err/*, results*/) {
@@ -479,7 +472,7 @@ var ordering = (function(){
     var validateUpdate = function(req, callback) {
 
         try {
-
+	    
             var ordering = JSON.parse(req.body);
             var orderingUrl = utils.getAPIURL(config.endpoints.ordering.appSsl, config.endpoints.ordering.host, config.endpoints.ordering.port, req.apiUrl);
 
@@ -606,6 +599,8 @@ var ordering = (function(){
                 && req.query["relatedParty.role"].toLowerCase() == 'seller' ) {
                 indexes.addAndCondition(query, { sellerHash: [indexes.fixUserId(req.query["relatedParty.id"])] });
             }
+
+            utils.queryAndOrCommas(req.query.state, "state", query);
         }
     );
 
@@ -663,7 +658,6 @@ var ordering = (function(){
     var filterOrderItems = function(req, callback) {
 
         var body = JSON.parse(req.body);
-
         var orderings = [];
         var isArray = true;
 
@@ -680,7 +674,7 @@ var ordering = (function(){
 
             var customer = tmfUtils.hasPartyRole(req, ordering.relatedParty, CUSTOMER);
             var seller = tmfUtils.hasPartyRole(req, ordering.relatedParty, SELLER);
-
+	    
             if (!customer && !seller) {
                 // This can happen when a user ask for a specific ordering.
                 orderingsToRemove.push(ordering);
@@ -688,10 +682,11 @@ var ordering = (function(){
 
                 // When a user is involved only as a seller in an ordering, only the order items
                 // where the user is a seller have to be returned
-
                 ordering.orderItem = ordering.orderItem.filter(function(item) {
                     return tmfUtils.hasPartyRole(req, item.product.relatedParty, SELLER);
                 });
+		
+		
             }
             // ELSE: If the user is the customer, order items don't have to be filtered
 

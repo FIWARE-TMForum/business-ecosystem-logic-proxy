@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -28,52 +28,52 @@
 
     angular
         .module('app')
-        .controller('ContactMediumCreateCtrl', ContactMediumCreateController)
-        .controller('ContactMediumUpdateCtrl', ContactMediumUpdateController);
+        .controller('ContactMediumCreateCtrl', ['$scope', '$controller', 'COUNTRIES', 'Party', ContactMediumCreateController])
+        .controller('ContactMediumUpdateCtrl', ['$element', '$scope', '$rootScope', '$controller', 'COUNTRIES', 'Party', ContactMediumUpdateController]);
 
-    function ContactMediumCreateController($scope, $rootScope, $controller, COUNTRIES, Individual) {
+    function ContactMediumCreateController($scope, $controller, COUNTRIES, Party) {
         /* jshint validthis: true */
         var vm = this;
 
         angular.extend(vm, $controller('FormMixinCtrl', {$scope: $scope}));
 
-        vm.CONTACT_MEDIUM = Individual.TYPES.CONTACT_MEDIUM;
+        vm.CONTACT_MEDIUM = Party.TYPES.CONTACT_MEDIUM;
         vm.COUNTRIES = COUNTRIES;
 
-        vm.data = new Individual.ContactMedium();
+        vm.data = new Party.ContactMedium();
         vm.data.resetMedium();
 
         vm.create = create;
 
         function create(form, $parentController) {
             $parentController.createContactMedium(vm.data).then(function () {
-                vm.data = new Individual.ContactMedium();
+                vm.data = new Party.ContactMedium();
                 vm.data.resetMedium();
                 vm.resetForm(form);
             });
         }
     }
 
-    function ContactMediumUpdateController($element, $scope, $rootScope, $controller, COUNTRIES, Individual) {
+    function ContactMediumUpdateController($element, $scope, $rootScope, $controller, COUNTRIES, Party) {
         /* jshint validthis: true */
         var vm = this;
         var _index;
 
         angular.extend(vm, $controller('FormMixinCtrl', {$scope: $scope}));
 
-        vm.CONTACT_MEDIUM = Individual.TYPES.CONTACT_MEDIUM;
+        vm.CONTACT_MEDIUM = Party.TYPES.CONTACT_MEDIUM;
         vm.COUNTRIES = COUNTRIES;
 
         vm.update = update;
 
-        $scope.$on(Individual.EVENTS.CONTACT_MEDIUM_UPDATE, function (event, index, contactMedium) {
+        $scope.$on(Party.EVENTS.CONTACT_MEDIUM_UPDATE, function (event, index, contactMedium) {
             vm.data = angular.copy(contactMedium);
             _index = index;
             $element.modal('show');
         });
 
         function update(form) {
-            $rootScope.$broadcast(Individual.EVENTS.CONTACT_MEDIUM_UPDATED, _index, vm.data);
+            $rootScope.$broadcast(Party.EVENTS.CONTACT_MEDIUM_UPDATED, _index, vm.data);
             vm.resetForm(form);
         }
     }

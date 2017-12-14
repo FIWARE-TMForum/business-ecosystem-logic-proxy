@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -29,7 +29,7 @@
 
     angular
         .module('app')
-        .factory('ProductOrder', ProductOrderService);
+        .factory('ProductOrder', ['$q', '$resource', 'URLS', 'User', 'Offering', 'BillingAccount', ProductOrderService]);
 
     function ProductOrderService($q, $resource, URLS, User, Offering, BillingAccount) {
         var resource = $resource(URLS.PRODUCTORDER_MANAGEMENT + '/productOrder/:productOrderId', {
@@ -84,7 +84,7 @@
             var params = {};
 
             if (filters.owner) {
-                params['relatedParty.id'] = User.loggedUser.id;
+                params['relatedParty.id'] = User.loggedUser.currentUser.id;
             }
 
             if (filters.status) {

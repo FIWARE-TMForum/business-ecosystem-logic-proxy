@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -26,6 +26,7 @@ var nock = require('nock'),
 describe('Ordering API', function() {
 
     var config = testUtils.getDefaultConfig();
+
     var SERVER = (config.endpoints.ordering.appSsl ? 'https' : 'http') + '://' + config.endpoints.ordering.host + ':' + config.endpoints.ordering.port;
     var CATALOG_SERVER = (config.endpoints.catalog.appSsl ? 'https' : 'http') + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
     var BILLING_SERVER = (config.endpoints.billing.appSsl ? 'https' : 'http') + '://' + config.endpoints.billing.host + ':' + config.endpoints.billing.port;
@@ -46,6 +47,9 @@ describe('Ordering API', function() {
         if (!indexes) {
             indexes = {
                 safeIndexExecute: function () {
+                    return Promise.resolve();
+                },
+                queryIndexExecute: function () {
                     return Promise.resolve();
                 }
             };
@@ -264,10 +268,7 @@ describe('Ordering API', function() {
                                 expect(q).toEqual(expectedQuery);
                             }
 
-
-                            return Promise.resolve({
-                                hits: results.map(x => ({document: {originalId: x}}))
-                            });
+                            return Promise.resolve(results.map(x => ({document: {originalId: x}})));
                         }
                     };
 
@@ -312,77 +313,81 @@ describe('Ordering API', function() {
 
                 it('should change request URL to include order IDs when relatedParty.id is provided', function(done) {
                     requestHelper(done,
-                                  [3, 4],
-                                  "relatedParty.id=rock",
-                                  {
-                                      "relatedParty.id": "rock"
-                                  },
-                                  "id=3,4",
-                                  {
-                                      sort: ["sortedId", "asc"],
-                                      query: [{AND: [{relatedPartyHash: [md5("rock")]}]}]
-                                  }
-                                 );
+                        [3, 4], "relatedParty.id=rock", {
+                            "relatedParty.id": "rock"
+                        }, "id=3,4", {
+                            sort: {
+                                field: "lastUpdate",
+                                direction: "desc"
+                            },
+                            query: {
+                                AND: {relatedPartyHash: [md5("rock")]}
+                            }
+                        }
+                    );
                 });
 
                 var testQueryParameters = function testQueryParameters(done, params) {
                     // Transform object to param=value&param2=value2
                     var paramUrl = Object.keys(params).map(key => key + "=" + params[key]).join("&");
                     // Transform object to index AND query (String keys must be lower case to perform index search correctly)
-                    var ANDs = Object.keys(params)
-                            .map(key => (
-                                {[key]: [ (typeof params[key] === "string") ? params[key].toLowerCase() : params[key]]}));
+                    var ANDs = {};
+                    Object.keys(params)
+                            .forEach(key => (
+                                ANDs[key] = [ (typeof params[key] === "string") ? params[key].toLowerCase() : params[key]]
+                            ));
 
                     requestHelper(done,
-                                  [7, 9, 11],
-                                  paramUrl,
-                                  params,
-                                  "id=7,9,11",
-                                  {
-                                      sort: ["sortedId", "asc"],
-                                      query: [{AND: ANDs}]
-                                  });
+                        [7, 9, 11], paramUrl, params, "id=7,9,11", {
+                            sort: {
+                                field: "lastUpdate",
+                                direction: "desc"
+                            },
+                            query: {AND: ANDs}
+                        }
+                    );
                 };
 
                 it('should should change URL to include order IDs when no parameter are provided', function(done) {
                     requestHelper(done,
-                                  [1, 2],
-                                  "",
-                                  {},
-                                  "id=1,2",
-                                  {
-                                      sort: ["sortedId", "asc"],
-                                      query: {AND: [{"*": ["*"]}]}
-                                  });
+                        [1, 2], "", {}, "id=1,2", {
+                            sort: {
+                                field: "lastUpdate",
+                                direction: "desc"
+                            },
+                            query: {AND: {"*": ["*"]}}
+                        }
+                    );
                 });
 
                 it('should change request URL to not add any id if no order results', function(done) {
                     requestHelper(done,
-                                  [],
-                                  "relatedParty.id=someother",
-                                  {
-                                      "relatedParty.id": "someother"
-                                  },
-                                  "id=",
-                                  {
-                                      sort: ["sortedId", "asc"],
-                                      query: [{AND: [{relatedPartyHash: [md5("someother")]}]}]
-                                  });
+                        [], "relatedParty.id=someother", {"relatedParty.id": "someother"},
+                        "id=", {
+                            sort: {
+                                field: "lastUpdate",
+                                direction: "desc"
+                            },
+                            query: {
+                                AND: {relatedPartyHash: [md5("someother")]}
+                            }
+                        }
+                    );
                 });
 
                 it('should change request URL adding extra params and ids', function(done) {
                     requestHelper(done,
-                                  [1, 2],
-                                  "depth=2&fields=name",
-                                  {
-                                      depth: "2",
-                                      fields: "name"
-                                  },
-                                  "id=1,2&depth=2&fields=name",
-                                  {
-                                      sort: ["sortedId", "asc"],
-                                      query: {AND: [{"*": ["*"]}]}
-                                  });
+                        [1, 2], "depth=2&fields=name", {
+                            depth: "2",
+                            fields: "name"
+                        }, "id=1,2&depth=2&fields=name", {
+                            sort: {
+                                field: "lastUpdate",
+                                direction: "desc"
+                            },
+                            query: {AND: {"*": ["*"]}}
+                        }
+                    );
 
                 });
 
@@ -427,7 +432,7 @@ describe('Ordering API', function() {
                 };
 
                 var tmfUtils = jasmine.createSpyObj('tmfUtils', ['getIndividualURL', 'hasPartyRole']);
-                tmfUtils.getIndividualURL.and.returnValue(getIndividualURL());
+                tmfUtils.getIndividualURL.and.returnValue(getIndividualURL(userInfo.id));
                 tmfUtils.hasPartyRole.and.returnValue(hasPartyRole);
 
                 var orderingApi = getOrderingAPI({}, tmfUtils, utils);
@@ -522,8 +527,7 @@ describe('Ordering API', function() {
                         },
                         {
                             id: ownerName,
-                            role: 'Seller',
-                            href: getIndividualURL(ownerName)
+                            role: 'Seller'
                         }]);
                 });
             };
@@ -1632,9 +1636,9 @@ describe('Ordering API', function() {
             };
         };
 
-        var testPostValidation = function (ordering, userInfo, storeClient, headers, getBillingReq, updateBillingReq, checker) {
+        var testPostValidation = function (ordering, userInfo, storeClient, headers, getBillingReq, updateBillingReq, indexes, checker) {
 
-            var orderingApi = getOrderingAPI({ storeClient: storeClient }, {}, {});
+            var orderingApi = getOrderingAPI({ storeClient: storeClient }, {}, {}, indexes);
 
             var req = {
                 method: 'POST',
@@ -1658,7 +1662,7 @@ describe('Ordering API', function() {
             orderingApi.executePostValidation(req, checker);
         };
 
-        var testPostValidationStoreNotifyOk = function(repeatedUser, getBillingFails, updateBillingFails, err, done) {
+        var testPostValidationStoreNotifyOk = function(repeatedUser, getBillingFails, updateBillingFails, indexCalled, err, done) {
 
             var buildUser = function(userName, role) {
                 var user = {
@@ -1719,24 +1723,35 @@ describe('Ordering API', function() {
                 })
             });
 
-            testPostValidation(ordering, user, storeClient, headers, getBillingReq, updateBillingReq, function (err) {
+            var indexes = jasmine.createSpyObj('indexes', ['saveIndexOrder']);
+            indexes.saveIndexOrder.and.callFake(function(body) {
+                return Promise.resolve();
+            });
+
+            testPostValidation(ordering, user, storeClient, headers, getBillingReq, updateBillingReq, indexes, function (err) {
                 expect(err).toEqual(err);
                 expect(headers).toEqual({'X-Redirect-URL': redirectUrl});
                 expect(storeClient.notifyOrder).toHaveBeenCalledWith(ordering, user, jasmine.any(Function));
+
+                if (indexCalled) {
+                    expect(indexes.saveIndexOrder).toHaveBeenCalledWith([ordering]);
+                } else {
+                    expect(indexes.saveIndexOrder).not.toHaveBeenCalled();
+                }
                 done();
             });
         };
 
         it('should return extra headers and push all users into the billing account', function (done) {
-            testPostValidationStoreNotifyOk(false, false, false, null, done);
+            testPostValidationStoreNotifyOk(false, false, false, true, null, done);
         });
 
         it('should not insert repeated users in the billing account', function(done) {
-            testPostValidationStoreNotifyOk(true, false, false, null, done);
+            testPostValidationStoreNotifyOk(true, false, false, false, null, done);
         });
 
         it('should fail when the billing account cannot be retrieved', function(done) {
-            testPostValidationStoreNotifyOk(false, true, false, {
+            testPostValidationStoreNotifyOk(false, true, false, false, {
                 status: 500,
                 message: 'Unexpected error when checking the given billing account'
             }, done);
@@ -1744,7 +1759,7 @@ describe('Ordering API', function() {
 
         it('should fail when the billing account cannot be updated', function(done) {
 
-            testPostValidationStoreNotifyOk(false, false, true, {
+            testPostValidationStoreNotifyOk(false, false, true, false, {
                 status: 500,
                 message: 'Unexpected error when updating the given billing account'
             }, done);
@@ -1761,7 +1776,7 @@ describe('Ordering API', function() {
                 callback({status: 500});
             });
 
-            testPostValidation(ordering, user, storeClient, {}, null, null, function (err) {
+            testPostValidation(ordering, user, storeClient, {}, null, null, null, function (err) {
 
                 expect(err).toEqual({status: 500});
                 expect(headers).toEqual({});

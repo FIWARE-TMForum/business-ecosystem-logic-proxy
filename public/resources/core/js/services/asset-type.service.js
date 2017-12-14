@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -27,7 +27,7 @@
 
     angular
         .module('app')
-        .factory('AssetType', AssetTypeService);
+        .factory('AssetType', ['$q', '$resource', 'URLS', AssetTypeService]);
 
     function AssetTypeService($q, $resource, URLS) {
         var resource = $resource(URLS.ASSET_MANAGEMENT + '/assetTypes/:typeId', {
@@ -35,7 +35,8 @@
         });
 
         return {
-            search: search
+            search: search,
+            detail: detail
         };
 
         function search() {
@@ -47,6 +48,21 @@
             });
 
             return deferred.promise;
+        }
+
+        function detail(id) {
+            var deferred = $q.defer();
+
+            var params = {
+                typeId: id
+            };
+
+            resource.get(params, function (typeIt) {
+                deferred.resolve([typeIt]);
+            });
+
+            return deferred.promise;
+
         }
     }
 

@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -28,12 +28,12 @@
 
     angular
         .module('app')
-        .controller('RSModelSearchCtrl', RSModelSearchController)
-        .controller('RSModelCreateCtrl', RSModelCreateController)
-        .controller('RSModelUpdateCtrl', RSModelUpdateController)
+        .controller('RSModelSearchCtrl', ['$state', '$scope', 'DATA_STATUS', 'RSS', 'Utils', RSModelSearchController])
+        .controller('RSModelCreateCtrl', ['$state', '$rootScope', 'DATA_STATUS', 'EVENTS', 'PLATFORM_REVENUE', 'RSS', 'Utils', 'User', RSModelCreateController])
+        .controller('RSModelUpdateCtrl', ['$state', '$rootScope', 'EVENTS', 'PLATFORM_REVENUE', 'DATA_STATUS', 'RSS', 'Utils', 'User', RSModelUpdateController])
         .controller('RSModelUpdateSTCtrl', RSModelUpdateSTController);
 
-    function RSModelSearchController($scope, $state, DATA_STATUS, RSS, Utils) {
+    function RSModelSearchController($state, $scope, DATA_STATUS, RSS, Utils) {
         var vm = this;
         vm.STATUS = DATA_STATUS;
 
@@ -42,17 +42,13 @@
 
         vm.list = [];
         vm.state = $state;
-
         vm.getElementsLength = getElementsLength;
 
         function getElementsLength() {
             return RSS.countModels();
         }
 
-        vm.list.status = vm.STATUS.LOADING;
-        $scope.$watch(function () {
-            return vm.offset;
-        }, function () {
+        function updateRSModels() {
             vm.list.status = vm.STATUS.LOADING;
 
             if (vm.offset >= 0) {
@@ -69,15 +65,25 @@
                     vm.list.status = DATA_STATUS.ERROR;
                 });
             }
-        });
+        }
+        
+        vm.list.status = vm.STATUS.LOADING;
+        
+        $scope.$watch(function () {
+            return vm.offset;
+        }, updateRSModels);
     }
 
     function calculateTotalPercentage(platformValue, ownerValue, currentStValue, stakeholders) {
-        var total = platformValue + ownerValue + currentStValue;
+        var values = [platformValue, ownerValue, currentStValue];
 
-        for (var i = 0; i < stakeholders.length; i++) {
-            total += stakeholders[i].modelValue;
-        }
+        stakeholders.forEach((st) => {
+            values.push(st.modelValue);
+        });
+
+        var total = values.filter((value) => !isNaN(value)).reduce((val, curr) => {
+            return val + curr;
+        }, 0);
 
         return total;
     }
@@ -170,7 +176,7 @@
                 angular.copy(providersList, vm.providers);
 
                 // Remove the current user from the provider list since it cannot be a stakeholder of the model
-                removeProvider(User.loggedUser.id);
+                removeProvider(User.loggedUser.currentUser.id);
 
                 if (vm.providers.length) {
                     vm.currentStakeholder = vm.providers[0];
@@ -229,7 +235,6 @@
                         name: modelCreated.productClass
                     });
                 }, function (response) {
-
                     var defaultMessage = 'There was an unexpected error that prevented the ' +
                         'system from creating a new revenue sharing model';
                     var error = Utils.parseError(response, defaultMessage, 'exceptionText');

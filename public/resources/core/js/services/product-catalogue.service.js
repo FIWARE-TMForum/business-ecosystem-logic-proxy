@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -29,16 +29,18 @@
 
     angular
         .module('app')
-        .factory('Catalogue', CatalogueService);
+        .factory('Catalogue', ['$q', '$resource', 'URLS', 'LIFECYCLE_STATUS', 'User', CatalogueService]);
 
     function CatalogueService($q, $resource, URLS, LIFECYCLE_STATUS, User) {
         var resource = $resource(URLS.CATALOGUE_MANAGEMENT + '/catalog/:catalogueId', {
             catalogueId: '@id'
         }, {
             update: {
-                method: 'PUT'
+                method: 'PATCH'
             }
         });
+
+        var PATCHABLE_ATTRS = ['name', 'description', 'lifecycleStatus'];
 
         resource.prototype.getRoleOf = getRoleOf;
 
@@ -49,7 +51,8 @@
             create: create,
             detail: detail,
             update: update,
-            buildInitialData: buildInitialData
+            buildInitialData: buildInitialData,
+            PATCHABLE_ATTRS: PATCHABLE_ATTRS
         };
 
         function queryCatalog(filters, method) {
@@ -73,7 +76,7 @@
             }
 
             if (filters.owner) {
-                params['relatedParty.id'] = User.loggedUser.id;
+                params['relatedParty.id'] = User.loggedUser.currentUser.id;
             } else {
                 params['lifecycleStatus'] = LIFECYCLE_STATUS.LAUNCHED;
             }
@@ -81,6 +84,14 @@
             if (filters.offset !== undefined) {
                 params['offset'] = filters.offset;
                 params['size'] = filters.size;
+            }
+
+            if (filters.body !== undefined) {
+                params['body'] = filters.body.replace(/\s/g, ',');
+            }
+
+            if (filters.sort) {
+                params['sort'] = filters.sort;
             }
 
             method(params, function (catalogueResp) {
@@ -142,13 +153,13 @@
             return deferred.promise;
         }
 
-        function update(catalogue) {
+        function update(catalogue, updatedData) {
             var deferred = $q.defer();
             var params = {
                 catalogueId: catalogue.id
             };
 
-            resource.update(params, catalogue, function (catalogueUpdated) {
+            resource.update(params, updatedData, function (catalogueUpdated) {
                 deferred.resolve(catalogueUpdated);
             }, function (response) {
                 deferred.reject(response);

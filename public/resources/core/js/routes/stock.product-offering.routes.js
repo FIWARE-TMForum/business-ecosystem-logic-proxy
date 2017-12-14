@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -28,20 +28,20 @@
 
     angular
         .module('app')
-        .config(OfferingRouteConfig);
+        .config(['$stateProvider', OfferingRouteConfig]);
 
     function OfferingRouteConfig($stateProvider) {
 
         $stateProvider
             .state('stock.offering', {
-                url: '/offering?status&type',
+                url: '/offering?status&type&body&sort',
                 params: {
                     owner: true,
                     flow: 1,
                     status: 'Active,Launched'
                 },
                 data: {
-                    filters: ['status', 'type']
+                    filters: ['status', 'type', 'sort']
                 },
                 templateUrl: 'stock/product-offering/search',
                 controller: 'OfferingSearchCtrl as searchVM'

@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -20,7 +20,8 @@
 var async = require('async'),
     config = require('./../../config'),
     url = require('url'),
-    utils = require('./../../lib/utils');
+    utils = require('./../../lib/utils'),
+    logger = require('./../../lib/logger').logger.getLogger('TMF');
 
 var party = (function() {
 
@@ -28,53 +29,30 @@ var party = (function() {
         callback(null);
     };
 
-    var validateCreation = function(req, callback) {
-
-        try {
-
-            var party = JSON.parse(req.body);
-
-            if (party.id && party.id === req.user.id) {
-                callback(null);
-            } else {
-                callback({
-                    status: 403,
-                    message: 'Provided party ID and request user ID mismatch'
-                });
-            }
-
-        } catch (e) {
-            callback({
-                status: 400,
-                message: 'The provided body is not a valid JSON'
-            });
-        }
-    };
-
     var validateUpdate = function(req, callback) {
 
         var individualsPattern = new RegExp('^/' + config.endpoints.party.path +
-            '/api/partyManagement/v2/individual(/([^/]*))?$');
+            '/api/partyManagement/v2/(individual|organization)(/([^/]*))?$');
         var apiPath = url.parse(req.apiUrl).pathname;
 
         var regexResult = individualsPattern.exec(apiPath);
 
-        if (!regexResult || !regexResult[2]) {
+        if (!regexResult || !regexResult[3]) {
             callback({
                 status: 404,
                 message: 'The given path is invalid'
             });
-        } else {
+        } else if (req.user.id !== regexResult[3] || (regexResult[1] == 'individual' && utils.isOrganization(req))
+                || (regexResult[1] == 'organization' && !utils.isOrganization(req))
+                || (regexResult[1] == 'organization' && utils.isOrganization(req)
+                    && !utils.hasRole(req.user, config.oauth2.roles.orgAdmin))) {
 
-            // regexResult[2] contains the user name
-            if (req.user.id === regexResult[2]) {
-                callback(null);
-            } else {
-                callback({
-                    status: 403,
-                    message: 'You are not allowed to access this resource'
-                });
-            }
+            callback({
+                status: 403,
+                message: 'You are not allowed to access this resource'
+            });
+        } else {
+            callback(null);
         }
     };
 
@@ -84,7 +62,7 @@ var party = (function() {
 
     var validators = {
         'GET': [ validateAllowed ],
-        'POST': [ utils.validateLoggedIn, validateCreation ],
+        'POST': [ utils.methodNotAllowed ],
         'PATCH': [ utils.validateLoggedIn, validateUpdate ],
         'PUT': [ utils.validateLoggedIn, validateUpdate ],
         'DELETE': [ utils.validateLoggedIn, validateUpdate ]

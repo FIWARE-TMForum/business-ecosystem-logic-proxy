@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -32,6 +32,11 @@ describe('Party API', function() {
         message: 'The given path is invalid'
     };
 
+    var NOT_AUTH_ERROR = {
+        status: 403,
+        message: 'You are not allowed to access this resource'
+    };
+
     var loggedIn;
     var config = testUtils.getDefaultConfig();
     var utils = {
@@ -52,7 +57,7 @@ describe('Party API', function() {
     }).party;
 
 
-    describe('Individuals', function() {
+    describe('Party', function() {
 
         var failIfNotLoggedIn = function(method, done) {
 
@@ -85,63 +90,32 @@ describe('Party API', function() {
         });
 
         describe('Creation', function() {
-
-            it('should not allow to create individuals if not logged in', function(done) {
-                failIfNotLoggedIn('POST', done);
-            });
-
-            var createTest = function(party, user, expectedErr, done) {
-
-                loggedIn = true;
-
+            it('should not allow to create parties', function(done) {
                 var req = {
                     method: 'POST',
-                    body: party,
-                    user: user
                 };
 
                 partyAPI.checkPermissions(req, function(err) {
-
-                    expect(err).toEqual(expectedErr);
+                    expect(err).toEqual({
+                        status: 405,
+                        message: 'The HTTP method POST is not allowed in the accessed API'
+                    });
                     done();
                 });
-            };
-
-
-            it('should not allow to create individuals if body is invalid', function(done) {
-
-                var expectedErr = {
-                    status: 400,
-                    message: 'The provided body is not a valid JSON'
-                };
-
-                createTest('{ INVALID JSON', null, expectedErr, done);
-            });
-
-            it('should not allow to create individuals when party id and user id mismatch', function(done) {
-
-                var expectedErr = {
-                    status: 403,
-                    message: 'Provided party ID and request user ID mismatch'
-                };
-
-                createTest(JSON.stringify({ id: 'user' }), { id: 'another_user' }, expectedErr, done);
-            });
-
-            it('should allow to create individuals when party id an user id match', function(done) {
-                var userId = 'user';
-                createTest(JSON.stringify({ id: userId }), { id: userId }, null, done);
             });
         });
 
         describe('Modification', function() {
 
-            var accessIndividualTest = function(individual, user, expectedErr, done) {
+	    var indPath = 'individual/';
+	    var orgPath = 'organization/';
+
+            var accessPartyTest = function(party, path, user, expectedErr, done) {
 
                 loggedIn = true;
 
                 var req = {
-                    apiUrl: '/' + config.endpoints.party.path + '/api/partyManagement/v2/individual/' + individual,
+                    apiUrl: '/' + config.endpoints.party.path + '/api/partyManagement/v2/' + path + party,
                     method: 'PATCH',
                     user: user
                 };
@@ -152,46 +126,79 @@ describe('Party API', function() {
                 });
             };
 
-            it('should not allow to modify individual if not logged in', function(done) {
+            it('should not allow to modify party if not logged in', function(done) {
                 failIfNotLoggedIn('PATCH', done);
             });
 
-            it('should not allow to modify individual if path and request user id mismatch', function(done) {
+            it('should not allow to modify party if path and request user id mismatch', function(done) {
+                accessPartyTest('user', indPath, { id: 'another_user' }, NOT_AUTH_ERROR, done);
 
-                var expectedErr = {
-                    status: 403,
-                    message: 'You are not allowed to access this resource'
+            });
+
+            it('should allow to modify party if path and request user id match', function(done) {
+                var user = 'user';
+                accessPartyTest(user, indPath, { id: user }, null, done);
+            });
+
+            it('should allow to modify party if path and request user id match even if query string included', function(done) {
+                var user = 'user';
+                accessPartyTest(user + '?fields=status', indPath, { id: user }, null, done);
+            });
+
+            it('should not allow to modify party if user ID is not included in the path', function(done) {
+                accessPartyTest('', orgPath, { id: 'test'}, INVALID_PATH_ERROR, done);
+            });
+
+            it('should allow to modify organization if the user is an org admin', function (done) {
+                var userObj = {
+                    id: 'org',
+                    userNickname: 'user',
+                    roles: [{name: testUtils.getDefaultConfig().oauth2.roles.orgAdmin}]
                 };
-
-                accessIndividualTest('user', { id: 'another_user' }, expectedErr, done);
-
+                accessPartyTest('org', orgPath, userObj, null, done);
             });
 
-            it('should allow to modify individual if path and request user id match', function(done) {
-                var user = 'user';
-                accessIndividualTest(user, { id: user }, null, done);
+            it('should not allow to modify individual if the user is an organization', function (done) {
+                var userObj = {
+                    id: 'org',
+                    userNickname: 'user',
+                    roles: [{name: testUtils.getDefaultConfig().oauth2.roles.orgAdmin}]
+                };
+                accessPartyTest('org', indPath, userObj, NOT_AUTH_ERROR, done);
             });
 
-            it('should allow to modify individual if path and request user id match even if query string included', function(done) {
-                var user = 'user';
-                accessIndividualTest(user + '?fields=status', { id: user }, null, done);
+            it('should not allow to modify organization if the user is an individual', function (done) {
+                var userObj = {
+                    id: 'org',
+                };
+                accessPartyTest('org', orgPath, userObj, NOT_AUTH_ERROR, done);
             });
 
-            it('should not allow to modify individual if user ID is not included in the path', function(done) {
-                accessIndividualTest('', { id: 'test'}, INVALID_PATH_ERROR, done);
+            it ('should not allow to modify organization if the user is not an org admin', function (done) {
+                var userObj = {
+                    id: 'org',
+                    userNickname: 'user',
+                    roles: []
+                };
+                accessPartyTest('org', orgPath, userObj, NOT_AUTH_ERROR, done);
             });
 
-            it('should not allow to modify individual if the path is not valid', function(done) {
+            it('should not allow to modify party if the path is not valid', function(done) {
 
                 loggedIn = true;
 
                 var user = 'test';
 
                 var req = {
-                    // Individual has been replaced by organization in this path
-                    apiUrl: '/' + config.endpoints.party.path + '/api/partyManagement/v2/organization/' + user,
+                    // OLD // Individual has been replaced by BAD_PATH in this path
+                    apiUrl: '/' + config.endpoints.party.path + '/api/partyManagement/v2/BAD_PATH/' + user,
                     method: 'PATCH',
                     user: user
+                };
+
+                var expectedErr = {
+                    status: 403,
+                    message: 'You are not allowed to access this resource'
                 };
 
                 partyAPI.checkPermissions(req, function(err) {
@@ -220,5 +227,5 @@ describe('Party API', function() {
                 done();
             });
         });
-   });
+    });
 });

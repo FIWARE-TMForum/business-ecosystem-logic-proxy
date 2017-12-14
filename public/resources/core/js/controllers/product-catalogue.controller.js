@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -32,11 +32,13 @@
 
     angular
         .module('app')
-        .controller('CatalogueListCtrl', CatalogueListController)
-        .controller('CatalogueSearchCtrl', CatalogueSearchController)
-        .controller('CatalogueCreateCtrl', CatalogueCreateController)
-        .controller('CatalogueDetailCtrl', CatalogueDetailController)
-        .controller('CatalogueUpdateCtrl', CatalogueUpdateController);
+        .controller('CatalogueListCtrl', ['$scope', 'Catalogue', 'Utils', CatalogueListController])
+        .controller('CatalogueSearchCtrl', ['$scope', '$state', '$rootScope', '$timeout', 'EVENTS', 'Catalogue',
+            'LIFECYCLE_STATUS', 'DATA_STATUS', 'Utils', CatalogueSearchController])
+
+        .controller('CatalogueCreateCtrl', ['$state', '$rootScope', 'EVENTS', 'PROMISE_STATUS', 'Catalogue', 'Utils', CatalogueCreateController])
+        .controller('CatalogueDetailCtrl', ['$state', 'Catalogue', 'Utils', CatalogueDetailController])
+        .controller('CatalogueUpdateCtrl', ['$state', '$rootScope', 'EVENTS', 'PROMISE_STATUS', 'Catalogue', 'Utils', CatalogueUpdateController]);
 
     function CatalogueListController($scope, Catalogue, Utils) {
         /* jshint validthis: true */
@@ -46,21 +48,21 @@
         vm.offset = -1;
         vm.size = -1;
         vm.getElementsLength = getElementsLength;
+        vm.sidebarInput = "";
 
-        function getElementsLength() {
-            return Catalogue.count();
-        }
+        vm.updateList = updateList;
 
-        $scope.$watch(function () {
-            return vm.offset;
-        }, function () {
+        function updateList() {
             vm.list.status = LOADING;
-
+	    
             if (vm.offset >= 0) {
+                // Create query with body for filtering catalogs
                 var page = {
                     offset: vm.offset,
-                    size: vm.size
+                    size: vm.size,
+                    body: vm.sidebarInput
                 };
+                // Search query
 
                 Catalogue.search(page).then(function (catalogueList) {
                     angular.copy(catalogueList, vm.list);
@@ -70,16 +72,25 @@
                     vm.list.status = ERROR;
                 });
             }
-        });
+        }
+
+        function getElementsLength() {
+            // Count apllies filters such as body
+            return Catalogue.count({ body: vm.sidebarInput });
+        }
+
+        $scope.$watch(function () {
+            return vm.offset;
+        }, updateList);
     }
 
-    function CatalogueSearchController($scope, $state, $rootScope, EVENTS, Catalogue, LIFECYCLE_STATUS, DATA_STATUS, Utils) {
+    function CatalogueSearchController($scope, $state, $rootScope, $timeout, EVENTS, Catalogue, LIFECYCLE_STATUS, DATA_STATUS, Utils) {
         /* jshint validthis: true */
         var vm = this;
-        var filters = {};
+        var formMode = false;
 
-        vm.STATUS = DATA_STATUS;
         vm.state = $state;
+        vm.STATUS = DATA_STATUS;
 
         vm.offset = -1;
         vm.size = -1;
@@ -87,38 +98,78 @@
 
         vm.showFilters = showFilters;
         vm.getElementsLength = getElementsLength;
-        vm.setFilters = setFilters;
+        vm.setFormMode = setFormMode;
+        vm.launchSearch = launchSearch;
+        vm.searchInput = "";
+
+        function setFormMode(mode) {
+            formMode = mode;
+        }
+
+        // Initialize the search input content
+        vm.initializeInput = initializeInput;
+        function initializeInput() {
+            if($state.params.body !== undefined)
+                vm.searchInput = $state.params.body;
+        }
+
+        // Returns the input content
+        vm.getSearchInputContent = getSearchInputContent;
+        function getSearchInputContent() {
+            // Returns the content of the search input
+            return vm.searchInput;
+        }
+
+        // Handle enter press event
+        vm.handleEnterKeyUp = handleEnterKeyUp;
+        function handleEnterKeyUp(event) {
+            if (event.keyCode == 13) {
+                var selector = formMode ? "#formSearch" : "#searchbutton";
+                $timeout(function () {
+                    $(selector).click();
+                });
+            }
+        }
 
         function showFilters() {
             $rootScope.$broadcast(EVENTS.FILTERS_OPENED, LIFECYCLE_STATUS);
         }
 
-        function getElementsLength() {
+        function getParams() {
             var params = {};
-            angular.copy($state.params, params);
+
+            if (!formMode) {
+                angular.copy($state.params, params);
+            } else {
+                params.status = LIFECYCLE_STATUS.ACTIVE + ',' + LIFECYCLE_STATUS.LAUNCHED;
+                params.owner = true;
+                // When the searchProduct controller is used in a form (Product Spec Bundle or Offering Product)
+                // the search text is not retrieved from the URL page
+                if (vm.searchInput.length) {
+                    params.body = vm.searchInput;
+                }
+            }
+            return params;
+        }
+
+        function getElementsLength() {
+            var params = getParams();
             return Catalogue.count(params);
         }
 
-        function setFilters(newFilters) {
-            filters = newFilters;
+        function launchSearch() {
+            vm.offset = -1;
+            vm.reloadPager();
         }
 
-        vm.list.status = vm.STATUS.LOADING;
-        $scope.$watch(function () {
-            return vm.offset;
-        }, function () {
+        function catalogueSearch() {
             vm.list.status = vm.STATUS.LOADING;
-
+	    
             if (vm.offset >= 0) {
-                var params = {};
-                angular.copy($state.params, params);
+                var params = getParams();
 
                 params.offset = vm.offset;
                 params.size = vm.size;
-
-                if (filters.status) {
-                    params.status = filters.status;
-                }
 
                 Catalogue.search(params).then(function (catalogueList) {
                     angular.copy(catalogueList, vm.list);
@@ -128,7 +179,12 @@
                     vm.list.status = vm.STATUS.ERROR;
                 });
             }
-        });
+        }
+	
+        vm.list.status = vm.STATUS.LOADING;
+        $scope.$watch(function () {
+            return vm.offset;
+        }, catalogueSearch);
     }
 
     function CatalogueCreateController($state, $rootScope, EVENTS, PROMISE_STATUS, Catalogue, Utils) {
@@ -225,7 +281,14 @@
         }
 
         function update() {
-            updatePromise = Catalogue.update(vm.data);
+            var dataUpdated = {};
+            Catalogue.PATCHABLE_ATTRS.forEach(function (attr) {
+                if (!angular.equals(vm.item[attr], vm.data[attr])) {
+                    dataUpdated[attr] = vm.data[attr];
+                }
+            });
+
+            updatePromise = Catalogue.update(vm.data, dataUpdated);
             updatePromise.then(function (catalogueUpdated) {
                 $state.go('stock.catalogue.update', {
                     catalogueId: catalogueUpdated.id

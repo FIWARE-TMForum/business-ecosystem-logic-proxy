@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -32,8 +32,9 @@
 
     angular
         .module('app')
-        .controller('InventorySearchCtrl', InventorySearchController)
-        .controller('InventoryDetailsCtrl', ProductDetailController);
+        .controller('InventorySearchCtrl', ['$scope', '$state', '$rootScope', 'EVENTS', 'InventoryProduct', 'INVENTORY_STATUS', 'Utils', InventorySearchController])
+        .controller('InventoryDetailsCtrl', ['$rootScope', '$scope', '$state', 'InventoryProduct', 'Utils', 'ProductSpec', 'EVENTS', '$interval',
+            '$window', 'LOGGED_USER', 'USAGE_CHART_URL', 'BillingAccount', 'Download', ProductDetailController]);
 
     function InventorySearchController($scope, $state, $rootScope, EVENTS, InventoryProduct, INVENTORY_STATUS, Utils) {
         /* jshint validthis: true */
@@ -48,10 +49,30 @@
 
         vm.showFilters = showFilters;
         vm.getElementsLength = getElementsLength;
+        vm.searchInput = "";
 
-        $scope.$watch(function () {
-            return vm.offset;
-        }, function () {
+        // Initialize the search input content
+        vm.initializeInput = initializeInput;
+        function initializeInput() {
+            if($state.params.body !== undefined)
+                vm.searchInput = $state.params.body;
+        }
+
+        // Returns the input content
+        vm.getSearchInputContent = getSearchInputContent;
+        function getSearchInputContent() {
+            // Returns the content of the search input
+            return vm.searchInput;
+        }
+
+        // Handle enter press event
+        vm.handleEnterKeyUp = handleEnterKeyUp;
+        function handleEnterKeyUp(event) {
+            if (event.keyCode == 13)
+                $("#searchbutton").click();
+        }
+
+        function inventorySearch() {
             vm.list.status = LOADING;
 
             if (vm.offset >= 0) {
@@ -69,7 +90,12 @@
                     vm.list.status = ERROR;
                 });
             }
-        });
+        }
+	
+
+        $scope.$watch(function () {
+            return vm.offset;
+        }, inventorySearch);
 
         function showFilters() {
             $rootScope.$broadcast(EVENTS.FILTERS_OPENED, INVENTORY_STATUS);
@@ -84,7 +110,7 @@
 
     function ProductDetailController(
         $rootScope, $scope, $state, InventoryProduct, Utils, ProductSpec, EVENTS, $interval,
-        $window, LOGGED_USER, USAGE_CHART_URL, BillingAccount) {
+        $window, LOGGED_USER, USAGE_CHART_URL, BillingAccount, Download) {
 
         /* jshint validthis: true */
         var vm = this;
@@ -215,7 +241,15 @@
 
         function downloadAsset() {
             locations.forEach(function(location) {
-                $window.open(location, '_blank');
+                // Check if the file is internal or not
+                if (location.startsWith($window.location.origin)) {
+                    Download.download(location).then((result) => {
+                        let url = $window.URL.createObjectURL(result);
+                        $window.open(url, '_blank');
+                    });
+                } else {
+                    $window.open(location, '_blank');
+                }
             });
         }
 
@@ -229,7 +263,7 @@
 
         function isRenewable() {
             return hasProductPrice() && (vm.item.productPrice[0].priceType.toLowerCase() == 'recurring'
-                || isUsage());
+                                         || isUsage());
         }
 
         function renewProduct() {
@@ -254,6 +288,8 @@
                         if (closeModal) {
                             $rootScope.$emit(EVENTS.MESSAGE_CLOSED);
                         }
+                        // Reload inventory page
+                        $state.go($state.current, {}, {reload: true})
 
                     };
 
@@ -282,56 +318,60 @@
 
         function getUsageURL() {
             var startingChar = USAGE_CHART_URL.indexOf('?') > -1 ? '&' : '?';
+            var server = window.location.origin;
+            var orderId = vm.item.name.split('=')[1];
 
             // Get the endpoint of the usage mashup including the access token and the product id
-            return USAGE_CHART_URL + startingChar + 'productId=' + vm.item.id + '&token=' + LOGGED_USER.bearerToken;
+            return USAGE_CHART_URL + startingChar + 'orderId=' + orderId +
+                '&productId=' + vm.item.id + '&token=' + LOGGED_USER.bearerToken + '&server=' + server;
         }
 
         function characteristicMatches(productChar, specChar, offId, productId) {
-            var name;
+            var name = '';
+            var prodCharId = productId ? 'product:' + productId : null;
+            var offCharId = offId ? 'offering:' + offId : null;
 
             if (vm.offerings.length > 1 && productId) {
                 var parsedName = productChar.name.split(' ');
 
-                if (parsedName.length > 2 && parsedName[0] === offId && parsedName[1] === productId) {
+                if (parsedName.length > 2 && parsedName[0] === offCharId && parsedName[1] === prodCharId) {
                     name = parsedName.slice(2).join(' ');
                 }
 
             } else if (vm.offerings.length <= 1 && productId){
                 var parsedName = productChar.name.split(' ');
 
-                if (parsedName.length > 1 && parsedName[0] === productId) {
+                if (parsedName.length > 1 && parsedName[0] === prodCharId) {
                     name = parsedName.slice(1).join(' ');
                 }
             } else if (vm.offerings.length > 1 && !productId) {
                 var parsedName = productChar.name.split(' ');
 
-                if (parsedName.length > 1 && parsedName[0] === offId) {
+                if (parsedName.length > 1 && parsedName[0] === offCharId) {
                     name = parsedName.slice(1).join(' ');
                 }
             } else {
                 name = productChar.name;
             }
 
-            return name === specChar.name;
+            return name.toLowerCase() === specChar.name.toLowerCase();
         }
 
         function characteristicValueSelected(characteristic, characteristicValue, offId, productId) {
-            var result, productCharacteristic, i;
+            var result = formatCharacteristicValue(characteristic, characteristicValue);
 
-            for (i = 0; i < vm.item.productCharacteristic.length; i++) {
-                if (characteristicMatches(vm.item.productCharacteristic[i], characteristic, offId, productId)) {
-                    productCharacteristic = vm.item.productCharacteristic[i];
-                }
-            }
-
-            result = formatCharacteristicValue(characteristic, characteristicValue);
+            var productCharacteristic = vm.item.productCharacteristic.filter((prodCharacteristic) => {
+                return characteristicMatches(prodCharacteristic, characteristic, offId, productId)
+            })[0];
 
             return result === productCharacteristic.value;
         }
 
         function downloadInvoice(invoice) {
-            $window.open(invoice, '_blank');
+            Download.download(invoice).then((result) => {
+                let url = $window.URL.createObjectURL(result);
+                $window.open(url, '_blank')
+            });
         }
 
         function formatCharacteristicValue(characteristic, characteristicValue) {

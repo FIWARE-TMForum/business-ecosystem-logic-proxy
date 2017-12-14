@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -28,10 +28,10 @@
 
     angular
         .module('app')
-        .controller('CustomerSearchCtrl', CustomerSearchController)
-        .controller('CustomerUpdateCtrl', CustomerUpdateController);
+        .controller('CustomerSearchCtrl', ['$scope', '$rootScope', 'DATA_STATUS', 'PROMISE_STATUS', 'EVENTS', 'Utils', 'Customer', 'User', 'Party', CustomerSearchController])
+        .controller('CustomerUpdateCtrl', ['$element', '$scope', '$rootScope', '$controller', 'COUNTRIES', 'Customer', CustomerUpdateController]);
 
-    function CustomerSearchController($scope, $rootScope, DATA_STATUS, PROMISE_STATUS, EVENTS, Utils, Customer) {
+    function CustomerSearchController($scope, $rootScope, DATA_STATUS, PROMISE_STATUS, EVENTS, Utils, Customer, User, Party) {
         /* jshint validthis: true */
         var vm = this;
         var updateCustomerPromise = null;
@@ -40,6 +40,7 @@
 
         vm.list = [];
         vm.status = DATA_STATUS.LOADING;
+	    vm.canEditOrAdd = canEditOrAdd;
 
         vm.updateCustomer = updateCustomer;
 
@@ -62,14 +63,28 @@
                 });
             });
         });
+	
+	$scope.$on(Party.EVENTS.USER_SESSION_SWITCHED, function (event, message, obj) {
+	    updateShippingList();
+	});
 
-        Customer.search().then(function (customers) {
-            vm.list = customers;
-            vm.status = DATA_STATUS.LOADED;
-        }, function (response) {
-            vm.errorMessage = Utils.parseError(response, 'Unexpected error trying to retrieve the list of shipping address.');
-            vm.status = DATA_STATUS.ERROR;
-        });
+	function canEditOrAdd() {
+	    return User.loggedUser.currentUser.id === User.loggedUser.id || Party.hasAdminRole();
+	}
+
+	updateShippingList();
+	
+	function updateShippingList() {
+            Customer.search().then(function (customers) {
+		// vm.list = customers.filter(x =>
+		// 			   x.name === User.loggedUser.currentUser.id);
+		vm.list = customers;
+		vm.status = DATA_STATUS.LOADED;
+            }, function (response) {
+		vm.errorMessage = Utils.parseError(response, 'Unexpected error trying to retrieve the list of shipping address.');
+		vm.status = DATA_STATUS.ERROR;
+            });
+	}
 
         function updateCustomer(index) {
             $rootScope.$broadcast(Customer.EVENTS.CUSTOMER_UPDATE, vm.list[index]);
@@ -80,7 +95,7 @@
         });
     }
 
-    function CustomerUpdateController($element, $scope, $rootScope, $controller, EVENTS, COUNTRIES, Utils, Customer) {
+    function CustomerUpdateController($element, $scope, $rootScope, $controller, COUNTRIES, Customer) {
         /* jshint validthis: true */
         var vm = this;
         var _customer;

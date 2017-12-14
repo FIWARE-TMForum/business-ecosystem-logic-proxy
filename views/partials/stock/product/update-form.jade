@@ -20,9 +20,9 @@ form(name="updateVM.form", novalidate)
           ng-messages="updateVM.form.name.$error"
           ng-show="updateForm.hasError(updateVM.form.name)"
         )
-          span(ng-message="required") This field is required.
-          span(ng-message="maxlength") This field must not exceed 30 chars.
-          span(ng-message="unique") This name is already taken.
+          span(ng-message="required") This field is required
+          span(ng-message="maxlength") This field must not exceed 30 chars
+          span(ng-message="unique") This name is already taken
     .col-sm-4
       .form-group(
         ng-class="{ 'has-error': updateForm.hasError(updateVM.form.version) }"
@@ -32,13 +32,16 @@ form(name="updateVM.form", novalidate)
           type="text"
           name="version"
           ng-model="updateVM.data.version"
+          ng-pattern="/^\\d+\\.\\d+(\\.\\d+)*$/"
+          ng-disabled="updateVM.isDigital()"
           required
         )
         .help-block(
           ng-messages="updateVM.form.version.$error"
           ng-show="updateForm.hasError(updateVM.form.version)"
         )
-          span(ng-message="required") This field is required.
+          span(ng-message="required") This field is required
+          span(ng-message="pattern") Invalid version format
   .form-group
     label Status
     .status-group

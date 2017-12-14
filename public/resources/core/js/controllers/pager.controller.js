@@ -1,4 +1,4 @@
-/* Copyright (c) 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2016 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -27,9 +27,9 @@
 
     angular
         .module('app')
-        .controller('PagerController', PagerController);
+        .controller('PagerController', ['$rootScope', '$scope', 'Utils', 'Party', 'EVENTS', PagerController]);
 
-    function PagerController($scope, Utils) {
+    function PagerController($rootScope, $scope, Utils, Party, EVENTS) {
         // Load controller to paginate
         var managedCtrl = $scope.vm;
 
@@ -40,6 +40,7 @@
         var nPages = 0;
 
         managedCtrl.size = pageSize;
+        managedCtrl.reloadPager = reload;
 
         this.nextPage = nextPage;
         this.prevPage = prevPage;
@@ -104,21 +105,46 @@
             return currPage == nPages - 1;
         }
 
-        managedCtrl.getElementsLength().then(function (response) {
-            nPages = Math.ceil(response.size/pageSize);
+        function reload() {
+            pages = [];
+            nPages = 0;
+            currPage = 0;
+            loadPages()
+        }
 
-            var maxP = nPages < maxPages ? nPages : maxPages;
-            for (var i = 0; i < maxP; i++) {
-                pages.push({
-                    page: i
-                })
-            }
-            // Load initial page
-            managedCtrl.offset = 0;
-        }, function (response) {
-            managedCtrl.error = Utils.parseError(response, 'It was impossible to load the list of elements');
-            managedCtrl.list.status = 'ERROR';
+        function loadPages() {
+            managedCtrl.getElementsLength().then(function (response) {
+                nPages = Math.ceil(response.size/pageSize);
+
+                pages = [];
+                var maxP = nPages < maxPages ? nPages : maxPages;
+                for (var i = 0; i < maxP; i++) {
+                    pages.push({
+                        page: i
+                    })
+                }
+                // Load initial page
+                managedCtrl.offset = 0;
+            }, function (response) {
+                managedCtrl.error = Utils.parseError(response, 'It was impossible to load the list of elements');
+                managedCtrl.list.status = 'ERROR';
+            });
+        }
+
+        // Load initial pages
+        loadPages();
+
+        $scope.$watch(() => managedCtrl.sidebarInput, () => {
+            if (typeof managedCtrl.sidebarInput === "undefined") return;
+            loadPages();
+        });
+
+        $scope.$on(Party.EVENTS.USER_SESSION_SWITCHED, function () {
+            managedCtrl.list.status = 'LOADING';
+            managedCtrl.offset = -1;
+            reload();
+
+            $rootScope.$broadcast(EVENTS.PAGER_RELOADED);
         });
     }
-
 })();

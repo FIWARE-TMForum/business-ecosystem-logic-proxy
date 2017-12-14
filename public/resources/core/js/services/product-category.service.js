@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -29,14 +29,14 @@
 
     angular
         .module('app')
-        .factory('Category', CategoryService);
+        .factory('Category', ['$q', '$resource', 'URLS', 'LIFECYCLE_STATUS', CategoryService]);
 
     function CategoryService($q, $resource, URLS, LIFECYCLE_STATUS) {
         var resource = $resource(URLS.CATALOGUE_MANAGEMENT + '/category/:categoryId', {
             categoryId: '@id'
         }, {
             update: {
-                method: 'PUT'
+                method: 'PATCH'
             }
         });
 
@@ -44,6 +44,8 @@
             roots: {},
             subcategories: {}
         };
+
+        var PATCHEABLE_ATTRS = ['name', 'description'];
 
         resource.prototype.getBreadcrumb = getBreadcrumb;
         resource.prototype.serialize = serialize;
@@ -54,7 +56,8 @@
             create: create,
             detail: detail,
             update: update,
-            initiate: initiate
+            initiate: initiate,
+            PATCHEABLE_ATTRS: PATCHEABLE_ATTRS
         };
 
         function search(filters) {
@@ -147,10 +150,10 @@
             return deferred.promise;
         }
 
-        function update(category) {
+        function update(categoryId, category) {
             var deferred = $q.defer();
             var params = {
-                categoryId: category.id
+                categoryId: categoryId
             };
 
             resource.update(params, category, function (categoryUpdated) {

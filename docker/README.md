@@ -12,7 +12,85 @@ If you want to know what is behind the scenes of our container you can go ahead 
 
 ## The Fastest Way
 
-To run Business Ecosystem Logic Proxy using Docker, just run the following command:
+### New versions
+
+New versions of the Business Ecosystem Logic Proxy container higher than 5.4.1, use an external MongoDB container as database and are
+configured using the standard `config.js` file as it is done with the software.
+
+To run the Business Ecosystem Logic Proxy, `docker-compose` is used. To do so, you must create a folder to place a
+new file file called `docker-compose.yml` that should include the following content:
+
+```
+version: '3'
+services:
+    mongo:
+        image: mongo:3.2
+        ports:
+            - 27017:27017
+        volumes:
+            - ./proxy-data:/data/db
+
+    proxy:
+        image: conwetlab/biz-ecosystem-logic-proxy
+        links:
+            - mongo
+        depends_on:
+            - mongo
+        ports:
+            - 8000:8000
+        volumes:
+            - ./proxy-conf:/business-ecosystem-logic-proxy/etc
+            - ./proxy-indexes:/business-ecosystem-logic-proxy/indexes
+            - ./proxy-themes:/business-ecosystem-logic-proxy/themes
+            - ./proxy-static:/business-ecosystem-logic-proxy/static
+        environment:
+            - NODE_ENV=development
+```
+
+
+Additionally, the biz-ecosystem-logic-proxy image contains 4 volumes. In particular:
+* */business-ecosystem-logic-proxy/etc*: This directory must include the `config.js` file with the software configuration
+* */business-ecosystem-logic-proxy/indexes*: This directory contains the indexes used by the Business API Ecosystem for searching
+* */business-ecosystem-logic-proxy/themes*: This directory contains the themes that can be used to customize the web portal
+* */business-ecosystem-logic-proxy/static*: This directory includes the static files ready to be rendered including the selected theme and js files
+
+Finally, the biz-ecosystem-logic-proxy uses the environment variable *NODE_ENV* to determine if the software is being used
+in *development* or in *production* mode. 
+
+> **Note**
+> The *config.js* file must include an extra setting not provided by default called *config.extPort* that must include the port where the proxy is going to run in the host machine
+
+Once you have created the file, run the following command:
+
+```
+docker-compose up
+```
+
+Then, the Business Ecosystem Logic Proxy should be up and running in `http://YOUR_HOST:PORT/` replacing `YOUR_HOST` by the host of your machine and `PORT` by the port selected in the previous step.
+
+Once the different containers are running, you can stop them using:
+
+```
+docker-compose stop
+```
+
+And start them again using:
+
+```
+docker-compose start
+```
+
+Additionally, you can terminate the different containers by executing:
+
+```
+docker-compose down
+```
+
+### Version 5.4.1
+
+Version 5.4.1 of the docker container uses environment variables for configuration and deploys an internal MongoDB instance.
+
+To run Business Ecosystem Logic Proxy v5.4.1 using Docker, just run the following command:
 
 ```
 sudo docker run \
@@ -24,7 +102,7 @@ sudo docker run \
     -e GLASSFISH_PORT=glass-port \
     -e CHARGING_HOST=charg-host \
     -e CHARGING_PORT=charg-port \
-    -p your-port:8000 conwetlab/biz-ecosystem-logic-proxy
+    -p your-port:8000 conwetlab/biz-ecosystem-logic-proxy:v5.4.1
 ```
 
 Note in the previous command that it is needed to provide some environment variables. Concretely:
@@ -42,7 +120,7 @@ Additionally, the Business Ecosystem Logic Proxy image includes a volume located
 
 If you want to locate the host directory where the volume is being mounted, execute the following command:
 ```
-$ docker inspect your-containe
+$ docker inspect your-container
 ```
 
 As an alternative, you can specify the host directory for the container volume using the -v flag as follows:
@@ -69,28 +147,3 @@ The parameter `-t biz-ecosystem-logic-proxy` gives the image a name. This name c
 
 If you want to know more about images and the building process you can find it in [Docker's documentation](https://docs.docker.com/userguide/dockerimages/).
 
-### Run the container
-
-The following line will run the container exposing port `8004`, give it a name -in this case `proxy1`. This uses the image built in the previous section.
-
-```
-
-sudo docker run --name charging1 \
-    -e OAUTH2_CLIENT_ID=1111 \
-    -e OAUTH2_CLIENT_SECRET=1111 \
-    -e BIZ_ECOSYS_PORT=8004 \
-    -e BIZ_ECOSYS_HOST=localhost \
-    -e GLASSFISH_HOST=192.168.1.3 \
-    -e GLASSFISH_PORT=8080 \
-    -e CHARGING_HOST=localhost \
-    -e CHARGING_PORT=8006 \
-    -p 8004:8000 biz-ecosystem-logic-proxy
-
-```
-
-As a result of this command, there is a Logic Proxy listening on port 8004 on localhost.
-
-A few points to consider:
-
-* The name `proxy1` can be anything and doesn't have to be related to the name given to the docker image in the previous section.
-* In `-p 8004:8000` the first value represents the port to listen on localhost. If you want to run a second Logic Proxy on your machine you should change this value to something else, for example `-p 8001:8000`.

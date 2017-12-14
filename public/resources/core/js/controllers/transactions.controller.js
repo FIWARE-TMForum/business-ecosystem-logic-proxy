@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -28,9 +28,9 @@
 
     angular
         .module('app')
-        .controller('RSTransSearchCtrl', RSTransSearchController);
+        .controller('RSTransSearchCtrl', ['$state', '$rootScope', '$scope', 'DATA_STATUS', 'RSS', 'Utils', RSTransSearchController]);
 
-    function RSTransSearchController($scope, $state, $rootScope, DATA_STATUS, RSS, Utils) {
+    function RSTransSearchController($state, $rootScope, $scope, DATA_STATUS, RSS, Utils) {
         var vm = this;
 
         vm.$params = $state.params;
@@ -67,9 +67,7 @@
             return types[txType];
         }
 
-        $scope.$watch(function () {
-            return vm.offset;
-        }, function () {
+        function updateRSTrans () {
             vm.list.status = DATA_STATUS.LOADING;
 
             if (vm.offset >= 0) {
@@ -86,7 +84,10 @@
                     vm.list.status = DATA_STATUS.ERROR;
                 });
             }
-        });
-    }
+        }
 
+        $scope.$watch(function () {
+            return vm.offset;
+        }, updateRSTrans);
+    }
 })();

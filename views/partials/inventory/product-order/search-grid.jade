@@ -36,7 +36,7 @@
               strong
                 a(ui-sref="offering.detail({ offeringId: orderItem.productOffering.id })", ui-sref-opts="{ inherit: false }")
                   span.item-text {{ orderItem.productOffering.name }}
-            dl
+            dl.limit-table
               dt Description
               dd.text-dark-secondary {{ orderItem.productOffering.description ? orderItem.productOffering.description : 'No description provided.' }}
               dt State

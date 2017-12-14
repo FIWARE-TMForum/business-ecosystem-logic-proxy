@@ -32,7 +32,6 @@ var config = require('./../config'),
     // Other dependencies
     logger = require('./../lib/logger').logger.getLogger('TMF'),
     request = require('request'),
-    url = require('url'),
     utils = require('./../lib/utils');
 
 var tmf = (function() {
@@ -111,7 +110,8 @@ var tmf = (function() {
                     url: req.url,
                     id: req.id,
                     apiUrl: req.apiUrl,
-                    connection: req.connection
+                    connection: req.connection,
+                    reqBody: req.body
                 };
 
                 // Execute postValidation if status code is lower than 400 and the
@@ -119,18 +119,31 @@ var tmf = (function() {
                 if (response.statusCode < 400 && apiControllers[api] !== undefined
                     && apiControllers[api].executePostValidation) {
 
-                    apiControllers[api].executePostValidation(result, function(err) {
+                    apiControllers[api].executePostValidation(result, function (err) {
 
                         var basicLogMessage = 'Post-Validation (' + api + '): ';
 
                         if (err) {
                             utils.log(logger, 'warn', req, basicLogMessage + err.message);
-                            res.status(err.status).json({ error: err.message });
+                            res.status(err.status).json({error: err.message});
                         } else {
                             utils.log(logger, 'info', req, basicLogMessage + 'OK');
                             completeRequest(result);
                         }
                     });
+                } else if (response.statusCode >= 400 && apiControllers[api] !== undefined
+                    && apiControllers[api].handleAPIError){
+
+                    apiControllers[api].handleAPIError(result, (err) => {
+                        utils.log(logger, 'warn', req, 'Handling API error (' + api + ')');
+
+                        if (err) {
+                            res.status(err.status).json({error: err.message});
+                        } else {
+                            completeRequest(result);
+                        }
+                    })
+
                 } else {
                     completeRequest(result);
                 }

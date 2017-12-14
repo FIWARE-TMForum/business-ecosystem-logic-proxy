@@ -1,4 +1,4 @@
-/* Copyright (c) 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2016 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -16,6 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+const config = require('../config');
 
 var management = (function() {
 
@@ -28,8 +29,30 @@ var management = (function() {
         res.end();
     };
 
+    var getVersion = function(req, res) {
+        var uptime = process.uptime();
+        var days = Math.floor(uptime / 86400);
+        var hours = Math.floor((uptime - (days * 86400)) / 3600);
+        var minutes = Math.floor((uptime - (days * 86400) - (hours * 3600)) / 60);
+        var seconds = Math.floor(uptime - (days * 86400) - (hours * 3600) - (minutes * 60));
+
+        var upMsg = days + ' d, ' + hours + ' h, ' + minutes + ' m, ' + seconds + ' s';
+
+        res.statusCode = 200;
+        res.json({
+            version: config.version.version,
+            release_date: config.version.releaseDate,
+            uptime: upMsg,
+            git_hash: config.version.gitHash,
+            doc: config.version.doc,
+            user_doc: config.version.userDoc
+        });
+        res.end();
+    };
+
     return {
-        getCount: getCount
+        getCount: getCount,
+        getVersion: getVersion
     };
 
 })();

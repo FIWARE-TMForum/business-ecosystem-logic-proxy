@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -32,15 +32,20 @@
 
     angular
         .module('app')
-        .controller('OfferingSearchCtrl', ProductOfferingSearchController)
-        .controller('OfferingCreateCtrl', ProductOfferingCreateController)
-        .controller('OfferingDetailCtrl', ProductOfferingDetailController)
-        .controller('OfferingUpdateCtrl', ProductOfferingUpdateController);
+        .controller('OfferingSearchCtrl', ['$scope', '$state', '$rootScope', '$timeout', 'EVENTS', 'Offering',
+            'LIFECYCLE_STATUS', 'Utils', ProductOfferingSearchController])
 
-    function ProductOfferingSearchController($scope, $state, $rootScope, EVENTS, Offering, LIFECYCLE_STATUS, Utils) {
+        .controller('OfferingCreateCtrl', ['$q', '$scope', '$state', '$rootScope', '$controller', 'EVENTS',
+            'LIFECYCLE_STATUS', 'PROMISE_STATUS', 'Offering', 'Catalogue', 'ProductSpec', 'Utils', ProductOfferingCreateController])
+
+        .controller('OfferingDetailCtrl', ['$state', 'Offering', 'ProductSpec', 'Utils', ProductOfferingDetailController])
+        .controller('OfferingUpdateCtrl', ['$state', '$scope', '$rootScope', '$controller', 'EVENTS', 'PROMISE_STATUS',
+            'Offering', 'Utils', ProductOfferingUpdateController]);
+
+    function ProductOfferingSearchController($scope, $state, $rootScope, $timeout, EVENTS, Offering, LIFECYCLE_STATUS, Utils) {
         /* jshint validthis: true */
         var vm = this;
-        var filters = {};
+        var formMode = false;
 
         vm.state = $state;
 
@@ -50,41 +55,79 @@
         vm.size = -1;
         vm.showFilters = showFilters;
         vm.getElementsLength = getElementsLength;
-        vm.setFilters = setFilters;
+        vm.setFormMode = setFormMode;
+        vm.launchSearch = launchSearch;
+        vm.searchInput = "";
+
+        function setFormMode(mode) {
+            formMode = mode;
+        }
+
+        // Initialize the search input content
+        vm.initializeInput = initializeInput;
+        function initializeInput() {
+            if($state.params.body !== undefined)
+                vm.searchInput = $state.params.body;
+        }
+
+        // Returns the input content
+        vm.getSearchInputContent = getSearchInputContent;
+        function getSearchInputContent() {
+            // Returns the content of the search input
+            return vm.searchInput;
+        }
+
+        // Handle enter press event
+        vm.handleEnterKeyUp = handleEnterKeyUp;
+        function handleEnterKeyUp(event) {
+            if (event.keyCode == 13) {
+                var selector = formMode ? "#formSearch" : "#searchbutton";
+                $timeout(function () {
+                    $(selector).click();
+                });
+            }
+        }
 
         function showFilters() {
             $rootScope.$broadcast(EVENTS.FILTERS_OPENED, LIFECYCLE_STATUS);
         }
 
         function getElementsLength() {
-            var params = {};
-            angular.copy($state.params, params);
+            var params = getParams();
             return Offering.count(params);
         }
 
-        function setFilters(newFilters) {
-            filters = newFilters;
+        function getParams() {
+            var params = {};
+
+            if (!formMode) {
+                angular.copy($state.params, params);
+            } else {
+                params.status = 'Active,Launched';
+                params.owner = true;
+                params.type = 'Single';
+                // When the searchProduct controller is used in a form (Product Spec Bundle or Offering Product)
+                // the search text is not retrieved from the URL page
+                if (vm.searchInput.length) {
+                    params.body = vm.searchInput;
+                }
+            }
+            return params;
         }
 
-        $scope.$watch(function () {
-            return vm.offset;
-        }, function () {
+        function launchSearch() {
+            vm.offset = -1;
+            vm.reloadPager();
+        }
+
+        function offeringSearch() {
             vm.list.status = LOADING;
 
             if (vm.offset >= 0) {
-                var params = {};
-                angular.copy($state.params, params);
+                var params = getParams();
 
                 params.offset = vm.offset;
                 params.size = vm.size;
-
-                if (filters.status) {
-                    params.status = filters.status;
-                }
-
-                if (filters.bundle !== undefined) {
-                    params.type = filters.bundle;
-                }
 
                 Offering.search(params).then(function (offeringList) {
                     angular.copy(offeringList, vm.list);
@@ -94,7 +137,11 @@
                     vm.list.status = ERROR;
                 });
             }
-        });
+        }
+
+        $scope.$watch(function () {
+            return vm.offset;
+        }, offeringSearch);
     }
 
     function ProductOfferingCreateController($q, $scope, $state, $rootScope, $controller, EVENTS, LIFECYCLE_STATUS, PROMISE_STATUS, Offering, Catalogue, ProductSpec, Utils) {
@@ -275,6 +322,11 @@
             });
             return i;
         }
+
+        vm.bundleControl = {
+            valid: false,
+            used: false
+        };
         function toggleOffering(offering) {
             var index = filterOffering(offering);
 
@@ -282,19 +334,21 @@
                 vm.data.bundledProductOffering.splice(index, 1);
             } else {
                 vm.data.bundledProductOffering.push(offering);
+                vm.bundleControl.used = true;
             }
 
-            stepList[1].form.$valid = vm.data.bundledProductOffering.length >= 2;
+            vm.bundleControl.valid = vm.data.bundledProductOffering.length >= 2;
         }
 
         function toggleBundle() {
             if (!vm.data.isBundle) {
                 vm.data.bundledProductOffering.length = 0;
-                stepList[1].form.$valid = true;
+                vm.bundleControl.valid = true;
             } else {
-                stepList[1].form.$valid = false;
+                vm.bundleControl.valid = false;
                 vm.product = undefined;
             }
+            vm.bundleControl.used = false;
         }
 
         function hasOffering(offering) {

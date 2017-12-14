@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -29,25 +29,26 @@
 
     angular
         .module('app')
-        .factory('ProductSpec', ProductSpecificationService);
+        .factory('ProductSpec', ['$q', '$resource', 'URLS', 'LIFECYCLE_STATUS', 'User', ProductSpecificationService]);
 
     function ProductSpecificationService($q, $resource, URLS, LIFECYCLE_STATUS, User) {
         var ProductSpec = $resource(URLS.CATALOGUE_MANAGEMENT + '/productSpecification/:productSpecId', {
             productId: '@id'
         }, {
             update: {
-                method:'PUT'
+                method:'PATCH'
             }
         });
 
         var VALUE_TYPES = {
-            STRING: 'String',
-            NUMBER: 'Number',
-            NUMBER_RANGE: 'Number range'
+            STRING: 'string',
+            NUMBER: 'number',
+            NUMBER_RANGE: 'number range'
         };
 
         var EVENTS = {
-            UPDATED: '$productSpecUpdated'
+            UPGRADE: '$productSpecUpgrade',
+            UPGRADED: '$productSpecUpgraded'
         };
 
         var TYPES = {
@@ -58,6 +59,8 @@
                 SUBSTITUTION: {code: 'substitution', name: 'Substitution'}
             }
         };
+
+        var PATCHABLE_ATTRS = ['description', 'lifecycleStatus', 'name', 'brand', 'productNumber', 'version'];
 
         var Relationship = function Relationship(productSpec, relationshipType) {
             this.productSpec = productSpec;
@@ -88,6 +91,8 @@
         return {
             VALUE_TYPES: VALUE_TYPES,
             TYPES: TYPES,
+            PATCHABLE_ATTRS: PATCHABLE_ATTRS,
+            EVENTS: EVENTS,
             Relationship: Relationship,
             search: search,
             count: count,
@@ -118,7 +123,7 @@
             }
 
             if (filters.owner) {
-                params['relatedParty.id'] = User.loggedUser.id;
+                params['relatedParty.id'] = User.loggedUser.currentUser.id;
             }
 
             if (filters.offset !== undefined) {
@@ -130,8 +135,16 @@
                 params['action'] = filters.action;
             }
 
-            if (filters.bundle !== undefined) {
-                params['isBundle'] = filters.bundle;
+            if (filters.type !== undefined) {
+                params['isBundle'] = filters.type == 'Bundle';
+            }
+
+            if (filters.body !== undefined) {
+                params['body'] = filters.body.replace(/\s/g, ',');
+            }
+
+            if (filters.sort) {
+                params['sort'] = filters.sort;
             }
 
             method(params, function (productSpecList) {
@@ -208,11 +221,7 @@
                 productSpecId: resource.id
             };
 
-            return ProductSpec.update(params, angular.extend(resource.toJSON(), dataUpdated, {
-                    bundledProductSpecification: resource.bundledProductSpecification.map(function (productSpec) {
-                        return productSpec.serialize();
-                    })
-                }))
+            return ProductSpec.update(params, dataUpdated)
                 .$promise
                 .then(detailBundled)
                 .then(detailRelationship);

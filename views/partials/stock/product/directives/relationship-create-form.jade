@@ -12,6 +12,17 @@
             option(ng-repeat="(key, value) in createVM.RELATIONSHIPS" value="{{ value.code }}") {{ value.name }}
         .form-group
           label Choose a product specification
+          .row(style="margin-bottom: 25px")
+            .col-sm-12
+              .input-group
+                input.form-control(ng-keyup="createVM.handleEnterKeyUp($event)",
+                ng-model="createVM.searchInput", type="text", placeholder="Search...")
+
+                .input-group-btn
+                  a.btn.btn-default.z-depth-0(ng-click="createVM.launchSearch()", id="relSearch")
+                    span.item-icon.fa.fa-search
+                    span.item-text.hidden-xs Search
+
           input(type="hidden" ng-model="createVM.data.productSpec.id" required)
           .table-responsive
             table.table.table-bordered.table-hover.table-selectable
@@ -21,7 +32,10 @@
                   th Type
                   th Updated
               tbody
-                tr(ng-repeat="productSpec in createVM.list" ng-class="{ active: productSpec.id === createVM.data.productSpec.id, disabled: createVM.hasRelationship(resource, productSpec) }" ng-click="createVM.setProductSpec(productSpec)")
+                tr(ng-repeat="productSpec in createVM.list",
+                  ng-class="{ active: productSpec.id === createVM.data.productSpec.id, disabled: createVM.hasRelationship(resource, productSpec) }",
+                  ng-click="createVM.setProductSpec(productSpec)")
+
                   th {{ productSpec.name }}
                   td
                     span.label(ng-class="productSpec.isBundle ? 'label-bundle' : 'label-single'")
@@ -30,8 +44,8 @@
                     time(am-time-ago="productSpec.lastUpdate")
         .form-group.text-right
           a.btn.btn-warning(
-          ng-click="createVM.create(parentVM)"
-          ng-disabled="!createVM.form.$valid || createVM.create.status === createVM.STATUS.LOADING"
+            ng-click="createVM.create(parentVM)"
+            ng-disabled="!createVM.form.$valid || createVM.create.status === createVM.STATUS.LOADING"
           )
             span.item-icon.fa.fa-spin.fa-spinner(ng-if="createVM.create.status === createVM.STATUS.LOADING")
             span.item-text Create

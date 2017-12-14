@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -29,7 +29,7 @@
 
     angular
         .module('app')
-        .factory('RSS', RSSService);
+        .factory('RSS', ['$q', '$resource', '$location', 'URLS', 'User', RSSService]);
 
     function RSSService($q, $resource, $location, URLS, User) {
         var modelsResource = $resource(URLS.SHARING_MODELS, {}, {
@@ -91,7 +91,7 @@
             var deferred = $q.defer();
 
             modelsResource.query({
-                providerId: User.loggedUser.id,
+                providerId: User.loggedUser.currentUser.id,
                 productClass: productClass
             }, function(models) {
                 if (models.length) {
@@ -138,13 +138,13 @@
                 params = {};
             }
 
-            params.providerId = User.loggedUser.id;
+            params.providerId = User.loggedUser.currentUser.id;
             return search(modelsResource, params);
         }
 
         function countModels() {
             var params = {
-                providerId: User.loggedUser.id,
+                providerId: User.loggedUser.currentUser.id,
                 action: "count"
             };
             return search(modelsResource, params, modelsResource.get);
@@ -159,13 +159,13 @@
                 params = {};
             }
 
-            params.providerId = User.loggedUser.id;
+            params.providerId = User.loggedUser.currentUser.id;
             return search(transactionResource, params);
         }
 
         function countTransactions() {
             var params = {
-                providerId: User.loggedUser.id,
+                providerId: User.loggedUser.currentUser.id,
                 action: "count"
             };
             return search(transactionResource, params, transactionResource.get);
@@ -173,7 +173,7 @@
 
         function searchProductClasses() {
             var params = {
-                providerId: User.loggedUser.id
+                providerId: User.loggedUser.currentUser.id
             };
             return search(classesResource, params, classesResource.get);
         }
@@ -183,20 +183,22 @@
                 params = {};
             }
 
-            params.providerId = User.loggedUser.id;
+            params.providerId = User.loggedUser.currentUser.id;
             return search(reportResource, params);
         }
 
         function countReports() {
             var params = {
-                providerId: User.loggedUser.id,
+                providerId: User.loggedUser.currentUser.id,
                 action: "count"
             };
             return search(reportResource, params, reportResource.get);
         }
 
         function createReport(report) {
-            report.providerId = User.loggedUser.id;
+            report.providerId = User.loggedUser.currentUser.id;
+            report.callbackUrl = $location.protocol() + '://' + $location.host() + ':' + $location.port() + '/#/rss/reports';
+
             return settlementResource.save(report).$promise;
         }
     }

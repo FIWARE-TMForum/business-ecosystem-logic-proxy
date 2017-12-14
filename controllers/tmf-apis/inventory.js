@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -47,6 +47,9 @@ var inventory = (function() {
             if (req.query["relatedParty.id"]) {
                 indexes.addAndCondition(query, { relatedPartyHash: [indexes.fixUserId(req.query["relatedParty.id"])] });
             }
+
+            utils.queryAndOrCommas(req.query["body"], "body", query);
+            utils.queryAndOrCommas(req.query["status"], "status", query);
         }
     );
 
@@ -83,37 +86,15 @@ var inventory = (function() {
     var executePostValidation = function(req, callback) {
         var body = JSON.parse(req.body);
 
-        var orderings = [];
-        var isArray = true;
-
-        if (!Array.isArray(body)) {
-            orderings = [body];
-            isArray = false;
+        // Check if the user is allowed to retrieve the requested product
+        if (!Array.isArray(body) && !tmfUtils.hasPartyRole(req, body.relatedParty, 'customer')) {
+            callback({
+                status: 403,
+                message: 'You are not authorized to retrieve the specified product from the inventory'
+            });
         } else {
-            orderings = body;
-        }
-
-        var filteredOrders = orderings.filter(function(order) {
-            return tmfUtils.hasPartyRole(req, order.relatedParty, 'customer');
-        });
-
-        if (!isArray) {
-
-            if (filteredOrders.length === 0) {
-                callback({
-                    status: 403,
-                    message: 'You are not authorized to retrieve the specified offering from the inventory'
-                });
-            } else {
-                utils.updateBody(req, filteredOrders[0]);
-                callback(null);
-            }
-
-        } else {
-            utils.updateBody(req, filteredOrders);
             callback(null);
         }
-
     };
 
     return {

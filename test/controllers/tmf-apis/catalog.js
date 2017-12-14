@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -26,6 +26,7 @@ var deepcopy = require("deepcopy"),
 
 // ERRORS
 var INVALID_METHOD = 'The HTTP method DELETE is not allowed in the accessed API';
+var INVALID_METHOD_PUT = 'The HTTP method PUT is not allowed in the accessed API';
 var PARENT_ID_INCLUDED = 'Parent ID cannot be included when the category is root';
 var MISSING_PARENT_ID = 'Non-root categories must contain a parent category';
 var FAILED_TO_RETRIEVE = 'The TMForum APIs fails to retrieve the object you are trying to update/delete';
@@ -54,6 +55,7 @@ var MISSING_HREF_PRODUCT_SPEC = 'Missing required field href in product specific
 var BUNDLED_OFFERING_NOT_BUNDLE = 'Product offerings which are not a bundle cannot contain a bundled product offering';
 var INVALID_BUNDLE_WITH_PRODUCT = 'Product offering bundles cannot contain a product specification';
 var INVALID_BUNDLE_MISSING_OFF = 'Product offering bundles must contain at least two bundled offerings';
+var INVALID_BUNDLE_STATUS = 'It is not allowed to update bundle related attributes (isBundle, bundledProductSpecification) in launched products';
 var INVALID_BUNDLE_MISSING_OFF_HREF = 'Missing required field href in bundled offering';
 var OFF_BUNDLE_FAILED_TO_RETRIEVE = 'The bundled offering 2 cannot be accessed or does not exists';
 var OFF_BUNDLE_IN_BUNDLE = 'Product offering bundles cannot include another bundle';
@@ -67,6 +69,10 @@ var INVALID_RELATED_PARTY = 'The field "relatedParty" can not be modified';
 var INVALID_CATEGORY_ID = 'Invalid category with id: ';
 var CATEGORY_CANNOT_BE_CHECKED = ['It was impossible to check if the category with id: ', ' already exists'];
 
+var UPGRADE_ASSET_NOT_PROVIDED = 'To upgrade digital product specifications it is required to provide new asset info';
+var UPGRADE_VERSION_NOT_PROVIDED = 'Product specification characteristics only can be updated for upgrading digital products';
+var UPGRADE_CUSTOM_CHAR_MOD = 'It is not allowed to update custom characteristics during a product upgrade';
+var INVALID_NON_DIGITAL_UPGRADE = 'Product spec characteristics cannot be updated';
 
 describe('Catalog API', function() {
 
@@ -163,16 +169,32 @@ describe('Catalog API', function() {
         testNotLoggedIn('POST', done);
     });
 
-    it('should reject not authenticated PUT requests', function(done) {
-        testNotLoggedIn('PUT', done);
-    });
-
     it('should reject not authenticated PATCH requests', function(done) {
         testNotLoggedIn('PATCH', done);
     });
 
     it('should reject not authenticated DELETE requests', function(done) {
         testNotLoggedIn('DELETE', done);
+    });
+
+    it('should reject PUT requests', function(done) {
+        var catalogApi = getCatalogApi({}, {}, {});
+        var path = '/catalog/product/1';
+
+        // Call the method
+        var req = {
+            method: 'PUT',
+            apiUrl: path
+        };
+
+        catalogApi.checkPermissions(req, function(err) {
+
+            expect(err).not.toBe(null);
+            expect(err.status).toBe(405);
+            expect(err.message).toBe(INVALID_METHOD_PUT);
+
+            done();
+        });
     });
 
     //////////////////////////////////////////////////////////////////////////////////////////////
@@ -199,6 +221,9 @@ describe('Catalog API', function() {
 
         // Mock bundles
         var body = {
+            validFor: {
+                startDateTime: '2019-06-10'
+            },
             isBundle: true,
             bundledProductSpecification: []
         };
@@ -270,13 +295,19 @@ describe('Catalog API', function() {
 
     };
 
+    var basicBody = {
+        validFor: {
+            startDateTime: '2016-07-12T10:56:00'
+        }
+    };
+
     it('should reject creation requests with invalid JSON', function(done) {
         testCreateBasic('test', '{', [], true, 400, INVALID_JSON, true, false,
             true, done);
     });
 
     it('should reject creation requests when user has not the seller role', function(done) {
-        testCreateBasic('test', '{}', [], true, 403, 'You are not authorized to create resources', false, true,
+        testCreateBasic('test', JSON.stringify(basicBody), [], true, 403, 'You are not authorized to create resources', false, true,
             false, done);
     });
 
@@ -284,7 +315,8 @@ describe('Catalog API', function() {
 
         var user = 'test';
         var resource = {
-            relatedParty: [{ name: user, role: 'invalid role' }]
+            relatedParty: [{ name: user, role: 'invalid role' }],
+            validFor: basicBody.validFor
         };
 
         testCreateBasic(user, JSON.stringify(resource), [{ name: config.oauth2.roles.seller }], true, 403,
@@ -295,7 +327,8 @@ describe('Catalog API', function() {
 
         var user = 'test';
         var resource = {
-            relatedParty: [{ id: user, role: 'OwNeR' }]
+            relatedParty: [{ id: user, role: 'OwNeR' }],
+            validFor: basicBody.validFor
         };
 
         // Error parameters are not required when the resource can be created
@@ -312,7 +345,7 @@ describe('Catalog API', function() {
         var protocol = config.endpoints.catalog.appSsl ? 'https' : 'http';
         var serverUrl = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
         var productPath = '/product/7';
-        var categoryPath = '/category'
+        var categoryPath = '/category';
 
         var user = {
             id: userName,
@@ -523,7 +556,6 @@ describe('Catalog API', function() {
         });
 
         it('should not allow to create an offering when product cannot be retrieved', function(done) {
-
             var productRequestInfo = {
                 requestStatus: 500,
                 role: 'Owner',
@@ -960,7 +992,7 @@ describe('Catalog API', function() {
             var catalogApi = mockCatalogAPI(owner ? isOwnerTrue : isOwnerFalse, storeValidator);
 
             var role = owner ? 'Owner': 'Seller';
-            var body = { relatedParty: [{id: 'test', role: role}]};
+            var body = { relatedParty: [{id: 'test', role: role}], validFor: {startDateTime: '2010-04-12'}};
             var req = buildProductRequest(body);
 
             checkProductCreationResult(catalogApi, req, errorStatus, errorMsg, done);
@@ -1006,7 +1038,6 @@ describe('Catalog API', function() {
         };
 
         it('should allow to create bundles when all products specs are single and owned by the user', function(done) {
-
             var bundles = [{
                 id: '1',
                 status: 200,
@@ -1144,6 +1175,7 @@ describe('Catalog API', function() {
         var url = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
         var catalogPath = '/catalog/category';
 
+        category.validFor = {};
         // Call the method
         var req = {
             method: 'POST',
@@ -1235,7 +1267,7 @@ describe('Catalog API', function() {
 
         var parentCategoryName = {
             status: 200
-        }
+        };
 
         testCreateCategory(true, { name: categoryName, isRoot: false, parentId: parentId }, categoriesRequest,
             parentCategoryName, 409, CATEGORY_EXISTS, callback);
@@ -1284,21 +1316,28 @@ describe('Catalog API', function() {
 
         var parentCategoryRequest = {
             status: 500
-        }
+        };
 
         var errorMsg = CATEGORY_CANNOT_BE_CHECKED[0] + category.parentId + CATEGORY_CANNOT_BE_CHECKED[1];
 
         testCreateCategory(true, category, null, parentCategoryRequest, 500, errorMsg, callback);
     });
 
-    var testCreateCatalog = function (admin, owner, catalog, catalogRequest, errorStatus, errorMsg, done) {
+    var testCreateCatalog = function (admin, owner, catalog, catalogRequest, errorStatus, errorMsg, updated, done) {
 
         var checkRoleMethod = jasmine.createSpy();
         checkRoleMethod.and.returnValues(admin);
 
+        var nowStr = '2017-10-06T10:00:00.000Z';
+        jasmine.clock().mockDate(new Date(nowStr));
+
+        var updateBody = jasmine.createSpy();
+
+
         var utils = {
             validateLoggedIn: validateLoggedOk,
-            hasRole: checkRoleMethod
+            hasRole: checkRoleMethod,
+            updateBody: updateBody
         };
 
         var tmfUtils = {
@@ -1335,17 +1374,50 @@ describe('Catalog API', function() {
 
             if (!errorStatus && !errorMsg ) {
                 expect(err).toBe(null);
+                if (updated) {
+                    // Valid for field should have been injected
+                    var expCat = JSON.parse(JSON.stringify(catalog));
+                    expCat.validFor = {
+                        startDateTime: nowStr
+                    };
+                    expect(utils.updateBody).toHaveBeenCalledWith(req, expCat);
+                } else {
+                    expect(utils.updateBody).not.toHaveBeenCalled();
+                }
             } else {
                 expect(err.status).toBe(errorStatus);
                 expect(err.message).toBe(errorMsg);
-
             }
 
             done();
         });
     };
 
-    it('should allow to create owned catalog', function (callback) {
+    it('should allow to create owned catalog', function (done) {
+        var catalogName = 'example';
+
+        var catalogRequest = {
+            query: '?name=' + catalogName,
+            status: 200,
+            body: []
+        };
+
+        testCreateCatalog(true, isOwnerTrue, { name: catalogName }, catalogRequest, null, null, true, done);
+    });
+
+    it('should allow to create an owned catalog providing the validFor field', function (done) {
+        var catalogName = 'example';
+
+        var catalogRequest = {
+            query: '?name=' + catalogName,
+            status: 200,
+            body: []
+        };
+
+        testCreateCatalog(true, isOwnerTrue, { name: catalogName, validFor: '2017-10-05T10:00:00' }, catalogRequest, null, null, false, done);
+    });
+
+    it('should not allow to create not owned catalog', function (done) {
 
         var catalogName = 'example';
 
@@ -1355,23 +1427,10 @@ describe('Catalog API', function() {
             body: []
         };
 
-        testCreateCatalog(true, isOwnerTrue, { name: catalogName }, catalogRequest, null, null, callback);
+        testCreateCatalog(true, isOwnerFalse, { name: catalogName, validFor: '2017-10-05T10:00:00' }, catalogRequest, null, null, false, done);
     });
 
-    it('should not allow to create not owned catalog', function (callback) {
-
-        var catalogName = 'example';
-
-        var catalogRequest = {
-            query: '?name=' + catalogName,
-            status: 200,
-            body: []
-        };
-
-        testCreateCatalog(true, isOwnerFalse, { name: catalogName }, catalogRequest, null, null, callback);
-    });
-
-    it('should not allow to create catalog when existing catalogs cannot be checked', function (callback) {
+    it('should not allow to create catalog when existing catalogs cannot be checked', function (done) {
 
         var catalogName = 'example';
 
@@ -1381,10 +1440,10 @@ describe('Catalog API', function() {
             body: 'ERROR'
         };
 
-        testCreateCatalog(true, isOwnerFalse, { name: catalogName }, catalogRequest, 500, CATALOG_CANNOT_BE_CHECKED, callback);
+        testCreateCatalog(true, isOwnerFalse, { name: catalogName }, catalogRequest, 500, CATALOG_CANNOT_BE_CHECKED, false, done);
     });
 
-    it('should not allow to create catalog if there is a catalog with the same name', function (callback) {
+    it('should not allow to create catalog if there is a catalog with the same name', function (done) {
 
         var catalogName = 'example';
 
@@ -1394,7 +1453,7 @@ describe('Catalog API', function() {
             body: [{}]
         };
 
-        testCreateCatalog(true, isOwnerFalse, { name: catalogName }, catalogRequest, 409, CATALOG_EXISTS, callback);
+        testCreateCatalog(true, isOwnerFalse, { name: catalogName }, catalogRequest, 409, CATALOG_EXISTS, false, done);
     });
 
 
@@ -1427,7 +1486,7 @@ describe('Catalog API', function() {
         var role = isOwnerMethod() ? 'Owner': 'Seller';
 
         // User information is send when the request does not fail
-        var bodyOk = { relatedParty: [{id: userName, role: role}]};
+        var bodyOk = { relatedParty: [{id: userName, role: role}], lifecycleStatus: 'Active'};
         var bodyErr = 'Internal Server Error';
         var returnedBody = requestStatus != 200 ? bodyErr : bodyOk;
 
@@ -1459,24 +1518,6 @@ describe('Catalog API', function() {
             done();
         });
     };
-
-    it('should allow to to update (PUT) an owned resource', function(done) {
-        testUpdate('PUT', 200, isOwnerTrue, null, null, done);
-    });
-
-    it('should not allow to update (PUT) a non-owned resource', function(done) {
-        testUpdate('PUT', 200, isOwnerFalse, 403, INVALID_USER_UPDATE, done);
-    });
-
-    it('should not allow to update (PUT) a resource that cannot be checked', function(done) {
-        // The value of isOwner does not matter when requestFails is set to true
-        testUpdate('PUT', 500, isOwnerTrue, 500, FAILED_TO_RETRIEVE, done);
-    });
-
-    it('should not allow to update (PUT) a resource that does not exist', function(done) {
-        // The value of isOwner does not matter when requestFails is set to true
-        testUpdate('PUT', 404, isOwnerTrue, 404, 'The required resource does not exist', done);
-    });
 
     it('should allow to to update (PATCH) an owned resource', function(done) {
         testUpdate('PATCH', 200, isOwnerTrue, null, null, done);
@@ -1511,7 +1552,7 @@ describe('Catalog API', function() {
     };
 
     var testUpdateProductOffering = function(offeringBody, productRequestInfo, rsModelRequestInfo, catalogRequestInfo, expectedErrorStatus,
-                                             expectedErrorMsg, done) {
+                                             expectedErrorMsg, updated, done) {
 
         var checkRoleMethod = jasmine.createSpy();
         checkRoleMethod.and.returnValue(true);
@@ -1522,9 +1563,15 @@ describe('Catalog API', function() {
             isOwner: productRequestInfo.owner ? isOwnerTrue : isOwnerFalse
         };
 
+        var nowStr = '2017-10-06T10:00:00.000Z';
+        jasmine.clock().mockDate(new Date(nowStr));
+
+        var updateBody = jasmine.createSpy();
+
         var utils = {
             validateLoggedIn: validateLoggedOk,
-            hasRole: checkRoleMethod
+            hasRole: checkRoleMethod,
+            updateBody: updateBody
         };
 
         var rssClient = {
@@ -1579,7 +1626,7 @@ describe('Catalog API', function() {
             // If the previous tests works, it can be deducted that PUT, PATCH and DELETE
             // requests are handled in the same way so here we do not need additional tests
             // for the different HTTP verbs.
-            method: 'PUT',
+            method: 'PATCH',
             apiUrl: offeringPath,
             user: {
                 id: userName,
@@ -1592,6 +1639,19 @@ describe('Catalog API', function() {
 
             if (!expectedErrorStatus && !expectedErrorMsg) {
                 expect(err).toBe(null);
+
+                if (updated) {
+                    // Valid for field should have been injected
+                    var expOff = JSON.parse(offeringBody);
+
+                    expOff.validFor = {
+                        startDateTime: nowStr
+                    };
+
+                    expect(utils.updateBody).toHaveBeenCalledWith(req, expOff);
+                } else {
+                    expect(utils.updateBody).not.toHaveBeenCalled();
+                }
             } else {
                 expect(err.status).toBe(expectedErrorStatus);
                 expect(err.message).toBe(expectedErrorMsg);
@@ -1613,12 +1673,11 @@ describe('Catalog API', function() {
             lifecycleStatus: 'active'
         };
 
-        testUpdateProductOffering({}, productRequestInfo, null, catalogRequestInfo, null, null, done);
+        testUpdateProductOffering({}, productRequestInfo, null, catalogRequestInfo, null, null, false, done);
     });
 
 
     it('should allow to update an owned offering when productSpecification is included but the content does not vary', function(done) {
-
         var productRequestInfo = {
             requestStatus: 200,
             owner: true,
@@ -1635,7 +1694,7 @@ describe('Catalog API', function() {
             productSpecification: getProductSpecification(productRequestInfo.path)
         });
 
-        testUpdateProductOffering(newOffering, productRequestInfo, null, catalogRequestInfo, null, null, done);
+        testUpdateProductOffering(newOffering, productRequestInfo, null, catalogRequestInfo, null, null, true, done);
     });
 
     it('should not allow to update an owned offering when productSpecification changes', function(done) {
@@ -1651,23 +1710,7 @@ describe('Catalog API', function() {
         };
 
         testUpdateProductOffering(JSON.stringify({ productSpecification: {} }), productRequestInfo,
-            null, catalogRequestInfo, 403, 'Field productSpecification cannot be modified', done);
-    });
-
-    it('should not allow to update an offering when the validFor field changes', function (done) {
-        var productRequestInfo = {
-            requestStatus: 200,
-            owner: true,
-            lifecycleStatus: 'active'
-        };
-
-        var catalogRequestInfo = {
-            requestStatus: 200,
-            lifecycleStatus: 'active'
-        };
-
-        testUpdateProductOffering(JSON.stringify({ validFor: {} }), productRequestInfo,
-            null, catalogRequestInfo, 403, 'Field validFor cannot be modified', done);
+            null, catalogRequestInfo, 403, 'Field productSpecification cannot be modified', false, done);
     });
 
     it('should not allow to update a non-owned offering', function(done) {
@@ -1682,7 +1725,7 @@ describe('Catalog API', function() {
             requestStatus: 200,
             lifecycleStatus: 'active'
         };
-        testUpdateProductOffering({}, productRequestInfo, null, catalogRequestInfo, 403, UPDATE_OFFERING_WITH_NON_OWNED_PRODUCT, done);
+        testUpdateProductOffering({}, productRequestInfo, null, catalogRequestInfo, 403, UPDATE_OFFERING_WITH_NON_OWNED_PRODUCT, false, done);
     });
 
     it('should not allow to update an offering when the attached product cannot be retrieved', function(done) {
@@ -1698,7 +1741,7 @@ describe('Catalog API', function() {
             lifecycleStatus: 'active'
         };
 
-        testUpdateProductOffering({}, productRequestInfo, null, catalogRequestInfo, 422, INVALID_PRODUCT, done);
+        testUpdateProductOffering({}, productRequestInfo, null, catalogRequestInfo, 422, INVALID_PRODUCT, false, done);
     });
 
     it('should allow to change the status of an offering to launched when product and catalog are launched', function(done) {
@@ -1717,12 +1760,12 @@ describe('Catalog API', function() {
             requestStatus: 200,
             lifecycleStatus: 'launched'
         };
-        testUpdateProductOffering(offeringBody, productRequestInfo, null, catalogRequestInfo, null, null, done);
+        testUpdateProductOffering(offeringBody, productRequestInfo, null, catalogRequestInfo, null, null, true, done);
 
     });
 
     it('should not allow to update offerings when the body is not a valid JSON', function(done) {
-        testUpdateProductOffering('{ TEST', {}, null, {}, 400, INVALID_JSON, done);
+        testUpdateProductOffering('{ TEST', {}, null, {}, 400, INVALID_JSON, false, done);
     });
 
     it('should not allow to launch an offering when the catalog is active', function(done) {
@@ -1743,7 +1786,7 @@ describe('Catalog API', function() {
         };
 
         testUpdateProductOffering(offeringBody, productRequestInfo, null, catalogRequestInfo, 400, 'Offerings can only be ' +
-            'launched when the attached catalog is also launched', done);
+            'launched when the attached catalog is also launched', false, done);
     });
 
     it('should not allow to launch an offering when the product is active', function(done) {
@@ -1764,7 +1807,7 @@ describe('Catalog API', function() {
         };
 
         testUpdateProductOffering(offeringBody, productRequestInfo, null, catalogRequestInfo, 400, 'Offerings can only be ' +
-            'launched when the attached product is also launched', done);
+            'launched when the attached product is also launched', false, done);
     });
 
     it('should not allow to update offerings when the RS model cannot be checked', function(done) {
@@ -1785,7 +1828,7 @@ describe('Catalog API', function() {
             }
         };
 
-        testUpdateProductOffering(offeringBody, {}, rsModelRequestInfo, {}, statusCode, errorMsg, done);
+        testUpdateProductOffering(offeringBody, {}, rsModelRequestInfo, {}, statusCode, errorMsg, false, done);
     });
 
     it('should not allow to update offerings when the RS model is not valid', function(done) {
@@ -1803,7 +1846,7 @@ describe('Catalog API', function() {
             }
         };
 
-        testUpdateProductOffering(offeringBody, {}, rsModelRequestInfo, {}, 422, INVALID_PRODUCT_CLASS, done);
+        testUpdateProductOffering(offeringBody, {}, rsModelRequestInfo, {}, 422, INVALID_PRODUCT_CLASS, false, done);
     });
 
     // PRODUCTS & CATALOGS
@@ -1821,7 +1864,7 @@ describe('Catalog API', function() {
     };
 
     var testChangeProductCatalogStatus = function(assetPath, offeringsPath, previousAssetBody, assetBody,
-                                                  offeringsInfo, errorStatus, errorMsg, done) {
+                                                  offeringsInfo, errorStatus, errorMsg, done, storeClient) {
 
         var checkRoleMethod = jasmine.createSpy();
         checkRoleMethod.and.returnValue(true);
@@ -1839,7 +1882,12 @@ describe('Catalog API', function() {
             hasRole: checkRoleMethod
         };
 
-        var catalogApi = getCatalogApi({}, tmfUtils, utils);
+        var store = {};
+        if (storeClient) {
+            store = storeClient;
+        }
+
+        var catalogApi = getCatalogApi(store, tmfUtils, utils);
 
         // Basic properties
         var userName = 'test';
@@ -1895,13 +1943,24 @@ describe('Catalog API', function() {
 
     // PRODUCTS
 
-    var testChangeProductStatus = function(productBody, offeringsInfo, errorStatus, errorMsg, done) {
+    var testChangeProductStatus = function(productBody, offeringsInfo, errorStatus, errorMsg, done, status) {
 
         var productId = '7';
         var productPath = '/productSpecification/' + productId;
         var offeringsPath = '/productOffering?productSpecification.id=' + productId;
 
-        testChangeProductCatalogStatus(productPath, offeringsPath, { }, productBody, offeringsInfo,
+        var bodyStatus = 'Active';
+
+        if (status) {
+            bodyStatus = status;
+        }
+
+        var prevBody = {
+            lifecycleStatus: bodyStatus,
+            relatedParty: previousProductBody.relatedParty,
+            validFor: {}
+        };
+        testChangeProductCatalogStatus(productPath, offeringsPath, prevBody, productBody, offeringsInfo,
                 errorStatus, errorMsg, done);
     };
 
@@ -1919,7 +1978,6 @@ describe('Catalog API', function() {
     });
 
     it('should allow to update a product if the body does not contains cycle information', function(done) {
-
         var productBody = { };
 
         var offeringsInfo = {
@@ -1932,7 +1990,6 @@ describe('Catalog API', function() {
     });
 
     it('should not allow to update a product if the body modifies the original relatedParty', function(done) {
-
         var productBody = JSON.stringify({
             relatedParty: [{
                 id: 'wrong',
@@ -1946,15 +2003,15 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testChangeCatalogStatus(productBody, offeringsInfo, 409, INVALID_RELATED_PARTY, done);
+        testChangeProductStatus(productBody, offeringsInfo, 409, INVALID_RELATED_PARTY, done);
     });
 
-    it('should allow to update a product if the body does not modifie the original relatedParty', function(done) {
-
+    it('should allow to update a product if the body does not modify the original relatedParty', function(done) {
         var productBody = JSON.stringify({
             relatedParty: [
-            previousProductBody.relatedParty[1],
-            previousProductBody.relatedParty[0]]
+                previousProductBody.relatedParty[1],
+                previousProductBody.relatedParty[0]
+            ]
         });
 
         var offeringsInfo = {
@@ -1962,11 +2019,10 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testChangeCatalogStatus(productBody, offeringsInfo, null, null, done);
+        testChangeProductStatus(productBody, offeringsInfo, null, null, done);
     });
 
     it('should allow launch a product', function(done) {
-
         var productBody = JSON.stringify({
             lifecycleStatus: 'launched'
         });
@@ -2045,7 +2101,6 @@ describe('Catalog API', function() {
     });
 
     it('should allow to retire a product when there are two attached offerings - one retired and one obsolete', function(done) {
-
         var productBody = JSON.stringify({
             lifecycleStatus: 'retired'
         });
@@ -2194,10 +2249,258 @@ describe('Catalog API', function() {
 
     });
 
+    // UPGRADES
+
+    var testProductUpgrade = function (prevBody, productBody, errorStatus, errorMsg, storeClient, done) {
+        var productId = '7';
+        var productPath = '/productSpecification/' + productId;
+        var offeringsPath = '/productOffering?productSpecification.id=' + productId;
+
+        testChangeProductCatalogStatus(
+            productPath, offeringsPath, prevBody, JSON.stringify(productBody), null, errorStatus, errorMsg, done, storeClient);
+    };
+
+    var testNonDigitalUpgrade = function(newBody, errorStatus, errorMsg, done) {
+        var prevBody = {
+            version: '1.0',
+            lifecycleStatus: 'Active',
+            validFor: {},
+            productSpecCharacteristic: [{
+                name: 'Color',
+                productSpecCharacteristicValue: [{
+                    value: 'blue'
+                }, {
+                    value: 'green'
+                }]
+            }]
+        };
+
+        testProductUpgrade(prevBody, newBody, errorStatus, errorMsg, null, done);
+    };
+
+    it('should allow to upgrade a non-digital product when the characteristics are provided', function (done) {
+
+        var newBody = {
+            version: '1.1',
+            productSpecCharacteristic: [{
+                name: 'Color',
+                productSpecCharacteristicValue: [{
+                    value: 'blue'
+                }, {
+                    value: 'green'
+                }]
+            }]
+        };
+        testNonDigitalUpgrade(newBody, null, null, done);
+    });
+
+    it('should allow to upgrade a non-digital product when the characteristics are not provided', function (done) {
+        var newBody = {
+            version: '1.1'
+        };
+        testNonDigitalUpgrade(newBody, null, null, done);
+    });
+
+    it('should allow to upgrade a non-digital product when the characteristics are provided', function (done) {
+        var newBody = {
+            version: '1.1',
+            productSpecCharacteristic: [{
+                name: 'Color',
+                productSpecCharacteristicValue: [{
+                    value: 'blue'
+                }, {
+                    value: 'red'
+                }]
+            }]
+        };
+        testNonDigitalUpgrade(newBody, 422, INVALID_NON_DIGITAL_UPGRADE, done);
+    });
+
+    var testDigitalUpgrade = function (newBody, errorStatus, errorMsg, done) {
+        var storeClient = jasmine.createSpyObj('storeClient', ['upgradeProduct']);
+        storeClient.upgradeProduct.and.callFake((data, user, callback) => {
+            callback(null);
+        });
+
+        var prevBody = {
+            id: 2,
+            version: '1.0',
+            lifecycleStatus: 'Active',
+            validFor: {},
+            productSpecCharacteristic: [{
+                name: 'speed',
+                productSpecCharacteristicValue: [{
+                    value: '100mb'
+                }]
+            }, {
+                name: 'media type',
+                productSpecCharacteristicValue: [{
+                    value: 'JSON'
+                }]
+            }, {
+                name: 'location',
+                productSpecCharacteristicValue: [{
+                    value: 'http://assset.com'
+                }]
+            }, {
+                name: 'asset type',
+                productSpecCharacteristicValue: [{
+                    value: 'basic service'
+                }]
+            }]
+        };
+
+        testProductUpgrade(prevBody, newBody, errorStatus, errorMsg, {storeClient: storeClient}, () => {
+            // Check store client call
+            if (!errorMsg) {
+                expect(storeClient.upgradeProduct).toHaveBeenCalledWith({
+                    id: prevBody.id,
+                    version: newBody.version,
+                    productSpecCharacteristic: newBody.productSpecCharacteristic
+                }, {
+                    id: 'test',
+                    roles: [{name: 'seller'}]
+                }, jasmine.any(Function));
+            } else {
+                expect(storeClient.upgradeProduct).not.toHaveBeenCalled()
+            }
+            done();
+        });
+    };
+
+    it('should upgrade a digital product when the new characteristics and version are provided', function (done) {
+        var newVersion = {
+            version: '1.1',
+            lifecycleStatus: 'Active',
+            productSpecCharacteristic: [{
+                name: 'speed',
+                productSpecCharacteristicValue: [{
+                    value: '100mb'
+                }]
+            }, {
+                name: 'media type',
+                productSpecCharacteristicValue: [{
+                    value: 'JSON'
+                }]
+            }, {
+                name: 'location',
+                productSpecCharacteristicValue: [{
+                    value: 'http://assetv2.com'
+                }]
+            }, {
+                name: 'asset type',
+                productSpecCharacteristicValue: [{
+                    value: 'basic service'
+                }]
+            }]
+        };
+
+        testDigitalUpgrade(newVersion, null, null, done);
+    });
+
+    it('should not upgrade a digital product when the asset is not provided', function (done) {
+        var newVersion = {
+            version: '1.1',
+            lifecycleStatus: 'Active',
+            productSpecCharacteristic: [{
+                name: 'speed',
+                productSpecCharacteristicValue: [{
+                    value: '100mb'
+                }]
+            }]
+        };
+
+        testDigitalUpgrade(newVersion, 422, UPGRADE_ASSET_NOT_PROVIDED, done);
+    });
+
+    it('should not upgrade a digital product when the new version is not provided', function (done) {
+        var newVersion = {
+            lifecycleStatus: 'Active',
+            productSpecCharacteristic: [{
+                name: 'speed',
+                productSpecCharacteristicValue: [{
+                    value: '100mb'
+                }]
+            }, {
+                name: 'media type',
+                productSpecCharacteristicValue: [{
+                    value: 'JSON'
+                }]
+            }, {
+                name: 'location',
+                productSpecCharacteristicValue: [{
+                    value: 'http://assetv2.com'
+                }]
+            }, {
+                name: 'asset type',
+                productSpecCharacteristicValue: [{
+                    value: 'basic service'
+                }]
+            }]
+        };
+
+        testDigitalUpgrade(newVersion, 422, UPGRADE_VERSION_NOT_PROVIDED, done);
+    });
+
+    it('should not upgrade a digital product when the new version is equal to the previous one', function (done) {
+        var newVersion = {
+            version: '1.0',
+            lifecycleStatus: 'Active',
+            productSpecCharacteristic: [{
+                name: 'speed',
+                productSpecCharacteristicValue: [{
+                    value: '100mb'
+                }]
+            }, {
+                name: 'media type',
+                productSpecCharacteristicValue: [{
+                    value: 'JSON'
+                }]
+            }, {
+                name: 'location',
+                productSpecCharacteristicValue: [{
+                    value: 'http://assetv2.com'
+                }]
+            }, {
+                name: 'asset type',
+                productSpecCharacteristicValue: [{
+                    value: 'basic service'
+                }]
+            }]
+        };
+
+        testDigitalUpgrade(newVersion, 422, UPGRADE_VERSION_NOT_PROVIDED, done);
+    });
+
+    it('should not upgrade a digital product when the custom characteristics are modified', function (done) {
+        var newVersion = {
+            version: '1.1',
+            lifecycleStatus: 'Active',
+            productSpecCharacteristic: [{
+                name: 'media type',
+                productSpecCharacteristicValue: [{
+                    value: 'JSON'
+                }]
+            }, {
+                name: 'location',
+                productSpecCharacteristicValue: [{
+                    value: 'http://assetv2.com'
+                }]
+            }, {
+                name: 'asset type',
+                productSpecCharacteristicValue: [{
+                    value: 'basic service'
+                }]
+            }]
+        };
+
+        testDigitalUpgrade(newVersion, 422, UPGRADE_CUSTOM_CHAR_MOD, done);
+    });
+
+    // Bundles
     var testUpdateBundle = function(bundles, offeringsInfo, errorStatus, errorMsg, done) {
 
         var body = mockBundles(bundles);
-
         testChangeProductStatus(JSON.stringify(body), offeringsInfo, errorStatus, errorMsg, done);
     };
 
@@ -2303,6 +2606,29 @@ describe('Catalog API', function() {
         testUpdateBundle(bundles, null, 422, INVALID_BUNDLED_PRODUCT_STATUS, done);
     });
 
+    it('should not allow to update bundle info when the product is not in Active state', function (done) {
+        var bundles = [{
+            id: '1',
+            status: 200,
+            body: {
+                id: '1',
+                isBundle: false,
+                lifecycleStatus: 'Active'
+            }
+        }, {
+            id: '2',
+            status: 200,
+            body: {
+                id: '2',
+                isBundle: false,
+                lifecycleStatus: 'Active'
+            }
+        }];
+
+        var body = mockBundles(bundles);
+        testChangeProductStatus(JSON.stringify(body), null, 422, INVALID_BUNDLE_STATUS, done, 'Launched');
+    });
+
     // CATALOGS
 
     var testChangeCatalogStatus = function(productBody, offeringsInfo, errorStatus, errorMsg, done) {
@@ -2310,39 +2636,46 @@ describe('Catalog API', function() {
         var catalogPath = '/catalog/7';
         var offeringsPath = catalogPath + '/productOffering';
 
-        testChangeProductCatalogStatus(catalogPath, offeringsPath, previousProductBody, productBody, offeringsInfo,
+        var prevBody = {
+            validFor: {
+                startDateTime: '2017-10-12T10:00:08'
+            },
+            relatedParty: previousProductBody.relatedParty
+        };
+
+        testChangeProductCatalogStatus(catalogPath, offeringsPath, prevBody, productBody, offeringsInfo,
                 errorStatus, errorMsg, done);
     };
 
     it('should not allow to retire a catalog when the body is invalid', function(done) {
 
-        var productBody = "{'lifecycleStatus': retired}";
+        var catalogBody = "{'lifecycleStatus': retired}";
 
         var offeringsInfo = {
             requestStatus: 200,
             offerings: []
         };
 
-        testChangeCatalogStatus(productBody, offeringsInfo, 400, INVALID_JSON, done);
+        testChangeCatalogStatus(catalogBody, offeringsInfo, 400, INVALID_JSON, done);
 
     });
 
     it('should allow to update a catalog if the body does not contains cycle information', function(done) {
 
-        var productBody = {};
+        var catalogBody = {};
 
         var offeringsInfo = {
             requestStatus: 200,
             offerings: []
         };
 
-        testChangeCatalogStatus(productBody, offeringsInfo, null, null, done);
+        testChangeCatalogStatus(catalogBody, offeringsInfo, null, null, done);
 
     });
 
     it('should not allow to update a catalog if the body modifies the original relatedParty', function(done) {
 
-        var productBody = JSON.stringify({
+        var catalogBody = JSON.stringify({
             relatedParty: [{
                 id: 'wrong',
                 href: previousProductBody.relatedParty[0].href,
@@ -2355,12 +2688,12 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testChangeCatalogStatus(productBody, offeringsInfo, 409, INVALID_RELATED_PARTY, done);
+        testChangeCatalogStatus(catalogBody, offeringsInfo, 409, INVALID_RELATED_PARTY, done);
     });
 
     it('should allow to update a catalog if the body does not modifie the original relatedParty', function(done) {
 
-        var productBody = JSON.stringify({
+        var catalogBody = JSON.stringify({
             relatedParty: [
                 previousProductBody.relatedParty[1],
             previousProductBody.relatedParty[0]]
@@ -2371,12 +2704,12 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testChangeCatalogStatus(productBody, offeringsInfo, null, null, done);
+        testChangeCatalogStatus(catalogBody, offeringsInfo, null, null, done);
     });
 
     it('should allow launch a catalog', function(done) {
 
-        var productBody = JSON.stringify({
+        var catalogBody = JSON.stringify({
             lifecycleStatus: 'launched'
         });
 
@@ -2387,7 +2720,7 @@ describe('Catalog API', function() {
             }]
         };
 
-        testChangeCatalogStatus(productBody, offeringsInfo, null, null, done);
+        testChangeCatalogStatus(catalogBody, offeringsInfo, null, null, done);
 
     });
 
@@ -2395,7 +2728,7 @@ describe('Catalog API', function() {
 
     it('should allow to retire a catalog when there are no attached offerings', function(done) {
 
-        var productBody = JSON.stringify({
+        var catalogBody = JSON.stringify({
             lifecycleStatus: 'retired'
         });
 
@@ -2404,12 +2737,12 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testChangeCatalogStatus(productBody, offeringsInfo, null, null, done);
+        testChangeCatalogStatus(catalogBody, offeringsInfo, null, null, done);
     });
 
     it('should allow to retire a catalog when there is one attached offering with retired status', function(done) {
 
-        var productBody = JSON.stringify({
+        var catalogBody = JSON.stringify({
             lifecycleStatus: 'retired'
         });
 
@@ -2420,12 +2753,12 @@ describe('Catalog API', function() {
             }]
         };
 
-        testChangeCatalogStatus(productBody, offeringsInfo, null, null, done);
+        testChangeCatalogStatus(catalogBody, offeringsInfo, null, null, done);
     });
 
     it('should allow to retire a catalog when there is one attached offering with obsolete status', function(done) {
 
-        var productBody = JSON.stringify({
+        var catalogBody = JSON.stringify({
             lifecycleStatus: 'retired'
         });
 
@@ -2436,12 +2769,12 @@ describe('Catalog API', function() {
             }]
         };
 
-        testChangeCatalogStatus(productBody, offeringsInfo, null, null, done);
+        testChangeCatalogStatus(catalogBody, offeringsInfo, null, null, done);
     });
 
     it('should not allow to retire a catalog when there is one attached offering with active status', function(done) {
 
-        var productBody = JSON.stringify({
+        var catalogBody = JSON.stringify({
             lifecycleStatus: 'retired'
         });
 
@@ -2452,12 +2785,12 @@ describe('Catalog API', function() {
             }]
         };
 
-        testChangeCatalogStatus(productBody, offeringsInfo, 400, OFFERS_NOT_RETIRED_CATALOG, done);
+        testChangeCatalogStatus(catalogBody, offeringsInfo, 400, OFFERS_NOT_RETIRED_CATALOG, done);
     });
 
     it('should allow to retire a catalog when there are two attached offerings - one retired and one obsolete', function(done) {
 
-        var productBody = JSON.stringify({
+        var catalogBody = JSON.stringify({
             lifecycleStatus: 'retired'
         });
 
@@ -2470,12 +2803,12 @@ describe('Catalog API', function() {
             }]
         };
 
-        testChangeCatalogStatus(productBody, offeringsInfo, null, null, done);
+        testChangeCatalogStatus(catalogBody, offeringsInfo, null, null, done);
     });
 
     it('should not allow to retire a catalog when there is at least one attached offering with launched status', function(done) {
 
-        var productBody = JSON.stringify({
+        var catalogBody = JSON.stringify({
             lifecycleStatus: 'retired'
         });
 
@@ -2488,12 +2821,12 @@ describe('Catalog API', function() {
             }]
         };
 
-        testChangeCatalogStatus(productBody, offeringsInfo, 400, OFFERS_NOT_RETIRED_CATALOG, done);
+        testChangeCatalogStatus(catalogBody, offeringsInfo, 400, OFFERS_NOT_RETIRED_CATALOG, done);
     });
 
     it('should not allow to retire a catalog if the attached offerings cannot be retrieved', function(done) {
 
-        var productBody = JSON.stringify({
+        var catalogBody = JSON.stringify({
             lifecycleStatus: 'retired'
         });
 
@@ -2502,7 +2835,7 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testChangeCatalogStatus(productBody, offeringsInfo, 500, OFFERINGS_NOT_RETRIEVED, done);
+        testChangeCatalogStatus(catalogBody, offeringsInfo, 500, OFFERINGS_NOT_RETRIEVED, done);
 
     });
 
@@ -2510,7 +2843,7 @@ describe('Catalog API', function() {
 
     it('should allow to make a catalog obsolete when there are no attached offerings', function(done) {
 
-        var productBody = JSON.stringify({
+        var catalogBody = JSON.stringify({
             lifecycleStatus: 'obsolete'
         });
 
@@ -2519,12 +2852,12 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testChangeCatalogStatus(productBody, offeringsInfo, null, null, done);
+        testChangeCatalogStatus(catalogBody, offeringsInfo, null, null, done);
     });
 
     it('should allow to make a catalog obsolete when there is one attached offering with obsolete status', function(done) {
 
-        var productBody = JSON.stringify({
+        var catalogBody = JSON.stringify({
             lifecycleStatus: 'obsolete'
         });
 
@@ -2535,12 +2868,12 @@ describe('Catalog API', function() {
             }]
         };
 
-        testChangeCatalogStatus(productBody, offeringsInfo, null, null, done);
+        testChangeCatalogStatus(catalogBody, offeringsInfo, null, null, done);
     });
 
     it('should not allow to make a catalog obsolete when there is one attached offering with retired status', function(done) {
 
-        var productBody = JSON.stringify({
+        var catalogBody = JSON.stringify({
             lifecycleStatus: 'obsolete'
         });
 
@@ -2551,12 +2884,12 @@ describe('Catalog API', function() {
             }]
         };
 
-        testChangeCatalogStatus(productBody, offeringsInfo, 400, OFFERS_NOT_OBSOLETE_CATALOG, done);
+        testChangeCatalogStatus(catalogBody, offeringsInfo, 400, OFFERS_NOT_OBSOLETE_CATALOG, done);
     });
 
     it('should allow to make a catalog obsolete when there are two attached obsolete offerings', function(done) {
 
-        var productBody = JSON.stringify({
+        var catalogBody = JSON.stringify({
             lifecycleStatus: 'obsolete'
         });
 
@@ -2569,12 +2902,12 @@ describe('Catalog API', function() {
             }]
         };
 
-        testChangeCatalogStatus(productBody, offeringsInfo, null, null, done);
+        testChangeCatalogStatus(catalogBody, offeringsInfo, null, null, done);
     });
 
     it('should not allow to make a catalog obsolete when there is at least one attached offering with retired status', function(done) {
 
-        var productBody = JSON.stringify({
+        var catalogBody = JSON.stringify({
             lifecycleStatus: 'ObsOletE'
         });
 
@@ -2587,12 +2920,12 @@ describe('Catalog API', function() {
             }]
         };
 
-        testChangeCatalogStatus(productBody, offeringsInfo, 400, OFFERS_NOT_OBSOLETE_CATALOG, done);
+        testChangeCatalogStatus(catalogBody, offeringsInfo, 400, OFFERS_NOT_OBSOLETE_CATALOG, done);
     });
 
     it('should not allow to make a catalog obsolete if the attached offerings cannot be retrieved', function(done) {
 
-        var productBody = JSON.stringify({
+        var catalogBody = JSON.stringify({
             lifecycleStatus: 'obsolete'
         });
 
@@ -2601,7 +2934,7 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testChangeCatalogStatus(productBody, offeringsInfo, 500, OFFERINGS_NOT_RETRIEVED, done);
+        testChangeCatalogStatus(catalogBody, offeringsInfo, 500, OFFERINGS_NOT_RETRIEVED, done);
 
     });
 
@@ -2626,6 +2959,9 @@ describe('Catalog API', function() {
         var url = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
 
         // The mock server that will handle the request to retrieve the old state of the category
+        if (oldStateRequest.body) {
+            oldStateRequest.body.validFor = {};
+        }
         nock(url)
             .get(categoryResourcePath)
             .reply(oldStateRequest.status, JSON.stringify(oldStateRequest.body));
@@ -3010,7 +3346,7 @@ describe('Catalog API', function() {
             parentCategoryRequest, { name: categoryName, parentId: parentId, isRoot: false }, 500, errorMsg, done);
     });
 
-    describe('Test index in checkPermissions widdleware', function() {
+    describe('Test index in checkPermissions middleware', function() {
         var helperUrls = {
             catalog: {url: "/catalog", f: "searchCatalogs"},
             product: {url: "/productSpecification", f: "searchProducts"},
@@ -3051,10 +3387,7 @@ describe('Catalog API', function() {
                     expect(q).toEqual(expectedQuery);
                 }
 
-
-                return Promise.resolve({
-                    hits: results.map(x => ({document: {originalId: x}}))
-                });
+                return Promise.resolve(results.map(x => ({document: {originalId: x}})));
             };
 
             var catalogApi = getCatalogApi({}, {}, {}, {}, indexes);
@@ -3079,35 +3412,38 @@ describe('Catalog API', function() {
 
         it('should change request URL to not add any id if no catalog results', function(done) {
             requestHelper(done,
-                          "catalog",
-                          [],
-                          "relatedParty.id=someother",
-                          {
-                              "relatedParty.id": "someother"
-                          },
-                          "id=",
-                          {
-                              sort: ["sortedId", "asc"],
-                              query: [{AND: [{relatedPartyHash: [md5("someother")]}]}]
-                          });
+                "catalog", [], "relatedParty.id=someother", {
+                    "relatedParty.id": "someother"
+                },
+                "id=", {
+                    sort: {
+                        field: "lastUpdate",
+                        direction: "desc"
+                    },
+                    query: {
+                        AND: {relatedPartyHash: [md5("someother")]}
+                    }
+                }
+            );
         });
 
         it('should change request URL to include catalog IDs when relatedParty.id is provided', function(done) {
             requestHelper(done,
-                          "catalog",
-                          [2, 12],
-                          "relatedParty.id=rock-8&extraparam=hola&depth=2&fields=name",
-                          {
-                              "relatedParty.id": "rock-8",
-                              extraparam: "hola",
-                              depth: "2",
-                              fields: "name"
-                          },
-                          "id=2,12&depth=2&fields=name",
-                          {
-                              sort: ["sortedId", "asc"],
-                              query: [{AND: [{relatedPartyHash: [md5("rock-8")]}]}]
-                          });
+                "catalog", [2, 12], "relatedParty.id=rock-8&extraparam=hola&depth=2&fields=name", {
+                    "relatedParty.id": "rock-8",
+                    extraparam: "hola",
+                    depth: "2",
+                    fields: "name"
+                }, "id=2,12&depth=2&fields=name", {
+                    sort: {
+                        field: "lastUpdate",
+                        direction: "desc"
+                    },
+                    query: {
+                        AND: {relatedPartyHash: [md5("rock-8")]}
+                    }
+                }
+            );
         });
 
         it('should not change request URL when product index fails', function (done) {
@@ -3116,33 +3452,35 @@ describe('Catalog API', function() {
 
         it('should change request URL to not add any id if no product results', function(done) {
             requestHelper(done,
-                          "product",
-                          [],
-                          "relatedParty.id=someother",
-                          {
-                              "relatedParty.id": "someother"
-                          },
-                          "id=",
-                          {
-                              sort: ["sortedId", "asc"],
-                              query: [{AND: [{relatedPartyHash: [md5("someother")]}]}]
-                          });
+                "product", [], "relatedParty.id=someother", {
+                    "relatedParty.id": "someother"
+                }, "id=", {
+                    sort: {
+                        field: "lastUpdate",
+                        direction: "desc"
+                    },
+                    query: {
+                        AND: {relatedPartyHash: [md5("someother")]}
+                    }
+                }
+            );
         });
 
         it('should change request URL to include product IDs when relatedParty.id is provided', function(done) {
             requestHelper(done,
-                          "product",
-                          [3,4,13],
-                          "relatedParty.id=rock&size=3",
-                          {
-                              "relatedParty.id": "rock",
-                              size: 3
-                          },
-                          "id=3,4,13",
-                          {
-                              sort: ["sortedId", "asc"],
-                              query: [{AND: [{relatedPartyHash: [md5("rock")]}]}]
-                          });
+                "product", [3,4,13], "relatedParty.id=rock&size=3", {
+                    "relatedParty.id": "rock",
+                    size: 3
+                }, "id=3,4,13", {
+                    sort: {
+                        field: "lastUpdate",
+                        direction: "desc"
+                    },
+                    query: {
+                        AND: {relatedPartyHash: [md5("rock")]}
+                    }
+                }
+            );
         });
 
         it('should not change request URL when offer index fails', function (done) {
@@ -3151,80 +3489,83 @@ describe('Catalog API', function() {
 
         it('should request for category', function(done) {
             requestHelper(done,
-                          "offer",
-                          [],
-                          "category.id=201",
-                          {
-                              "category.id": 201
-                          },
-                          "id=",
-                          {
-                              sort: ["sortedId", "asc"],
-                              query: [{AND: [{categoriesId: ['cat:201']}]}]
-                          });
+                "offer", [], "category.id=201", {
+                    "category.id": 201
+                }, "id=", {
+                    sort: {
+                        field: "lastUpdate",
+                        direction: "desc"
+                    },
+                    query: {
+                        AND: {categoriesId: ['000000000201']}
+                    }
+                }
+            );
         });
 
         it('should request for category name', function(done) {
             requestHelper(done,
-                          "offer",
-                          [],
-                          "category.name=TesTCat",
-                          {
-                              "category.name": "TesTCat"
-                          },
-                          "id=",
-                          {
-                              sort: ["sortedId", "asc"],
-                              query: [{AND: [{categoriesName: [md5("testcat")]}]}]
-                          });
+                "offer", [], "category.name=TesTCat", {
+                    "category.name": "TesTCat"
+                }, "id=", {
+                    sort: {
+                        field: "lastUpdate",
+                        direction: "desc"
+                    },
+                    query: {
+                        AND: {categoriesName: [md5("testcat")]}
+                    }
+                }
+            );
         });
 
         it('should change request URL to not add any id if no offer results', function(done) {
             requestHelper(done,
-                          "offer",
-                          [],
-                          "relatedParty=someother",
-                          {
-                              relatedParty: "someother"
-                          },
-                          "id=",
-                          {
-                              sort: ["sortedId", "asc"],
-                              query: [{AND: [{userId: [md5("someother")]}]}]
-                          });
+                "offer", [], "relatedParty=someother", {
+                    relatedParty: "someother"
+                }, "id=", {
+                    sort: {
+                        field: "lastUpdate",
+                        direction: "desc"
+                    },
+                    query: {
+                        AND: {userId: [md5("someother")]}
+                    }
+                }
+            );
         });
 
         it('should change request URL to include offering IDs when the related party is provided', function(done) {
             requestHelper(done,
-                          "offer",
-                          [9, 11],
-                          "relatedParty=rock&offset=3&other=test&size=25",
-                          {
-                              relatedParty: "rock",
-                              offset: 3,
-                              size: 25,
-                              other: "test"
-                          },
-                          "id=9,11",
-                          {
-                              offset: 3,
-                              pageSize: 25,
-                              sort: ["sortedId", "asc"],
-                              query: [{AND: [{userId: [md5("rock")]}]}]
-                          });
+                "offer", [9, 11], "relatedParty=rock&offset=3&other=test&size=25", {
+                    relatedParty: "rock",
+                    offset: 3,
+                    size: 25,
+                    other: "test"
+                }, "id=9,11", {
+                    offset: 3,
+                    pageSize: 25,
+                    sort: {
+                        field: "lastUpdate",
+                        direction: "desc"
+                    },
+                    query: {
+                        AND: {userId: [md5("rock")]}
+                    }
+                }
+            );
         });
 
         var testQueryAllIndex = function testQueryAllIndex(done, base) {
             requestHelper(done,
-                          base,
-                          [1, 2],
-                          "",
-                          {},
-                          "id=1,2",
-                          {
-                              sort: ["sortedId", "asc"],
-                              query: {AND: [{"*": ["*"]}]}
-                          });
+                base, [1, 2], "", {}, "id=1,2", {
+                    sort: {
+                        field: "lastUpdate",
+                        direction: "desc"
+                    },
+                    query: {AND: {"*": ["*"]}}
+                }
+            );
         };
 
 
@@ -3232,25 +3573,26 @@ describe('Catalog API', function() {
             // Transform object to param=value&param2=value2
             var paramUrl = Object.keys(params).map(key => key + "=" + params[key]).join("&");
             // Transform object to index AND query (String keys must be lower case to perform index search correctly)
-            var ANDs = Object.keys(params)
-                    .map(key => (
-                        {[key]: [ (typeof params[key] === "string") ? params[key].toLowerCase() : params[key]]}));
+            var ANDs = {};
+            Object.keys(params)
+                    .forEach(key => (
+                        ANDs[key] = [ (typeof params[key] === "string") ? params[key].toLowerCase() : params[key]]
+                    ));
 
             requestHelper(done,
-                          base,
-                          [7, 9, 11],
-                          paramUrl,
-                          params,
-                          "id=7,9,11",
-                          {
-                              sort: ["sortedId", "asc"],
-                              query: [{AND: ANDs}]
-                          });
+                base, [7, 9, 11], paramUrl, params, "id=7,9,11", {
+                    sort: {
+                        field: "lastUpdate",
+                        direction: "desc"
+                    },
+                    query: {AND: ANDs}
+                }
+            );
         };
 
         // CATALOGS
 
-        it('should change request URL to include catalog IDs when no parameter are provided', function (done) {
+        it('should change request URL to include catalog IDs when no parameter is provided', function (done) {
             testQueryAllIndex(done, "catalog");
         });
 
@@ -3260,15 +3602,19 @@ describe('Catalog API', function() {
 
         it('should change request URL to include catalog IDs when multiple lifecycleStatus are provided', function(done) {
             requestHelper(done,
-                          "catalog",
-                          [7, 9, 11],
-                          "lifecycleStatus=Active,Disabled",
-                          {lifecycleStatus: "Active,Disabled"},
-                          "id=7,9,11",
-                          {
-                              sort: ["sortedId", "asc"],
-                              query: [{AND: [{lifecycleStatus: ["active"]}]}, {AND: [{lifecycleStatus: ["disabled"]}]}]
-                          });
+                "catalog", [7, 9, 11], "lifecycleStatus=Active,Disabled", {lifecycleStatus: "Active,Disabled"},
+                "id=7,9,11", {
+                    sort: {
+                        field: "lastUpdate",
+                        direction: "desc"
+                    },
+                    query: [{
+                        AND: {lifecycleStatus: ["active"]}
+                    }, {
+                        AND: {lifecycleStatus: ["disabled"]}
+                    }]
+                }
+            );
 
         });
 
@@ -3331,64 +3677,49 @@ describe('Catalog API', function() {
             username: 'test'
         };
 
-        var testPostValidation = function(req, productAttExp, offeringAttExp, offeringUpdExp, saveIndexExp, offIndexExp, done) {
+        var off = {
+            id: '1',
+            catalog: '1'
+        };
 
-            var productAttached = false;
-            var offeringAttached = false;
-            var offeringUpdated = false;
+        var upgrade = {
+            version: '1.1',
+            productSpecCharacteristic: []
+        };
 
-            var checkStoreClientCalls = function (asset, userInfo, callback) {
-                expect(asset).toEqual(body);
-                expect(userInfo).toEqual(user);
-                callback(null);
+        var testPostValidation = function(req, validator, done) {
+
+            var callCallback = (a, b, cb) => {
+                cb(null);
             };
+
+            var storeMethods = ['attachProduct', 'attachOffering', 'updateOffering', 'attachUpgradedProduct'];
+            var storeClientMock = jasmine.createSpyObj('storeClient', storeMethods);
+
+            storeMethods.forEach((method) => {
+                storeClientMock[method].and.callFake(callCallback);
+            });
 
             var storeClient = {
-                storeClient: {
-                    attachProduct: function(product, userInfo, callback) {
-                        productAttached = true;
-                        checkStoreClientCalls(product, userInfo, callback)
-                    },
-                    attachOffering: function (offering, userInfo, callback) {
-                        offeringAttached = true;
-                        checkStoreClientCalls(offering, userInfo, callback)
-                    },
-                    updateOffering: function (offering, userInfo, callback) {
-                        offeringUpdated = true;
-                        checkStoreClientCalls(offering, userInfo, callback)
-                    }
-                }
+                storeClient: storeClientMock
             };
 
-            var saveIndexCalled = false;
-            var offIndexCalled = false;
-
-            var checkIndexCalls = function (data, userInfo, expected) {
-                expect(data).toEqual(expected);
-                expect(userInfo).toEqual(user);
+            var returnPromise = () => {
                 return Promise.resolve();
             };
 
-            var indexes = {
-                saveIndexProduct: function(data, userInfo) {
-                    saveIndexCalled = true;
-                    return checkIndexCalls(data, userInfo, [{id: '1'}]);
-                },
-                saveIndexOffering: function (data, userInfo) {
-                    offIndexCalled = true;
-                    return checkIndexCalls(data, userInfo, [{id: '1', catalog: '1'}]);
-                }
-            };
+            var indexMethods = ['saveIndexProduct', 'saveIndexOffering', 'saveIndexCatalog'];
+            var indexes = jasmine.createSpyObj('indexes', indexMethods);
+
+            indexMethods.forEach((method) => {
+                indexes[method].and.callFake(returnPromise);
+            });
+
 
             var catalogApi = getCatalogApi(storeClient, {}, {}, {}, indexes);
 
             catalogApi.executePostValidation(req, function() {
-                expect(productAttached).toBe(productAttExp);
-                expect(offeringAttached).toBe(offeringAttExp);
-                expect(offeringUpdated).toBe(offeringUpdExp);
-
-                expect(saveIndexCalled).toBe(saveIndexExp);
-                expect(offIndexCalled).toBe(offIndexExp);
+                validator(storeClientMock, indexes);
                 done();
             });
         };
@@ -3400,7 +3731,17 @@ describe('Catalog API', function() {
                 body: JSON.stringify(body),
                 user: user
             };
-            testPostValidation(req, true, false, false, true, false, done);
+
+            testPostValidation(req, (storeMock, indexesMock) => {
+                expect(storeMock.attachProduct).toHaveBeenCalledWith(body, user, jasmine.any(Function));
+                expect(storeMock.attachOffering).not.toHaveBeenCalled();
+                expect(storeMock.updateOffering).not.toHaveBeenCalled();
+                expect(storeMock.attachUpgradedProduct).not.toHaveBeenCalled();
+
+                expect(indexesMock.saveIndexProduct).toHaveBeenCalledWith([body], user);
+                expect(indexesMock.saveIndexOffering).not.toHaveBeenCalled();
+                expect(indexesMock.saveIndexCatalog).not.toHaveBeenCalled();
+            }, done);
         });
 
         it('should not call the store attachment when the request is not a product creation', function(done) {
@@ -3410,7 +3751,16 @@ describe('Catalog API', function() {
                 body: JSON.stringify(body),
                 user: user
             };
-            testPostValidation(req, false, false, false, false, false, done);
+            testPostValidation(req, (storeMock, indexesMock) => {
+                expect(storeMock.attachProduct).not.toHaveBeenCalled();
+                expect(storeMock.attachOffering).not.toHaveBeenCalled();
+                expect(storeMock.updateOffering).not.toHaveBeenCalled();
+                expect(storeMock.attachUpgradedProduct).not.toHaveBeenCalled();
+
+                expect(indexesMock.saveIndexProduct).not.toHaveBeenCalled();
+                expect(indexesMock.saveIndexOffering).not.toHaveBeenCalled();
+                expect(indexesMock.saveIndexCatalog).not.toHaveBeenCalled();
+            }, done);
         });
 
         it('should call the offering attachment when the request is a product offering creation', function (done) {
@@ -3420,7 +3770,16 @@ describe('Catalog API', function() {
                 body: JSON.stringify(body),
                 user: user
             };
-            testPostValidation(req, false, true, false, false, true, done);
+            testPostValidation(req, (storeMock, indexesMock) => {
+                expect(storeMock.attachProduct).not.toHaveBeenCalled();
+                expect(storeMock.attachOffering).toHaveBeenCalledWith(body, user, jasmine.any(Function));
+                expect(storeMock.updateOffering).not.toHaveBeenCalled();
+                expect(storeMock.attachUpgradedProduct).not.toHaveBeenCalled();
+
+                expect(indexesMock.saveIndexProduct).not.toHaveBeenCalled();
+                expect(indexesMock.saveIndexOffering).toHaveBeenCalledWith([off], user);
+                expect(indexesMock.saveIndexCatalog).not.toHaveBeenCalled();
+            }, done);
         });
 
         it('should call the offering update validation when the request is a product offering update', function (done) {
@@ -3430,7 +3789,166 @@ describe('Catalog API', function() {
                 body: JSON.stringify(body),
                 user: user
             };
-            testPostValidation(req, false, false, true, false, true, done);
+            testPostValidation(req, (storeMock, indexesMock) => {
+                expect(storeMock.attachProduct).not.toHaveBeenCalled();
+                expect(storeMock.attachOffering).not.toHaveBeenCalled();
+                expect(storeMock.updateOffering).toHaveBeenCalledWith(body, user, jasmine.any(Function));
+                expect(storeMock.attachUpgradedProduct).not.toHaveBeenCalled();
+
+                expect(indexesMock.saveIndexProduct).not.toHaveBeenCalled();
+                expect(indexesMock.saveIndexOffering).toHaveBeenCalledWith([off], user);
+                expect(indexesMock.saveIndexCatalog).not.toHaveBeenCalled();
+            }, done);
+        });
+
+        it('should create catalog indexes when a new catalog has been created', function(done) {
+            var req = {
+                method: 'POST',
+                apiUrl: '/DSProductCatalog/catalogManagement/api/v2/catalog/',
+                body: JSON.stringify(body),
+                user: user
+            };
+
+            testPostValidation(req, (storeMock, indexesMock) => {
+                expect(storeMock.attachProduct).not.toHaveBeenCalled();
+                expect(storeMock.attachOffering).not.toHaveBeenCalled();
+                expect(storeMock.updateOffering).not.toHaveBeenCalled();
+                expect(storeMock.attachUpgradedProduct).not.toHaveBeenCalled();
+
+                expect(indexesMock.saveIndexProduct).not.toHaveBeenCalled();
+                expect(indexesMock.saveIndexOffering).not.toHaveBeenCalled();
+                expect(indexesMock.saveIndexCatalog).toHaveBeenCalledWith([body]);
+            }, done);
+        });
+
+        it('should notify the store when a product upgrade has finished', function (done) {
+            var req = {
+                method: 'PATCH',
+                apiUrl: '/DSProductCatalog/catalogManagement/api/v2/productSpecification/1',
+                reqBody: JSON.stringify(upgrade),
+                body: JSON.stringify(body),
+                user: user
+            };
+
+            testPostValidation(req, (storeMock, indexesMock) => {
+                expect(storeMock.attachProduct).not.toHaveBeenCalled();
+                expect(storeMock.attachOffering).not.toHaveBeenCalled();
+                expect(storeMock.updateOffering).not.toHaveBeenCalled();
+                expect(storeMock.attachUpgradedProduct).toHaveBeenCalledWith({
+                    id: '1',
+                    version: upgrade.version,
+                    productSpecCharacteristic: upgrade.productSpecCharacteristic
+                }, user, jasmine.any(Function));
+
+                expect(indexesMock.saveIndexProduct).toHaveBeenCalledWith([body], user);
+                expect(indexesMock.saveIndexOffering).not.toHaveBeenCalled();
+                expect(indexesMock.saveIndexCatalog).not.toHaveBeenCalled();
+            }, done);
+        });
+
+        it('should not notify the store when the product PATCH request is not an upgrade', function (done) {
+            var req = {
+                method: 'PATCH',
+                apiUrl: '/DSProductCatalog/catalogManagement/api/v2/productSpecification/1',
+                reqBody: JSON.stringify(body),
+                body: JSON.stringify(body),
+                user: user
+            };
+
+            testPostValidation(req, (storeMock, indexesMock) => {
+                expect(storeMock.attachProduct).not.toHaveBeenCalled();
+                expect(storeMock.attachOffering).not.toHaveBeenCalled();
+                expect(storeMock.updateOffering).not.toHaveBeenCalled();
+                expect(storeMock.attachUpgradedProduct).not.toHaveBeenCalled();
+
+                expect(indexesMock.saveIndexProduct).toHaveBeenCalledWith([body], user);
+                expect(indexesMock.saveIndexOffering).not.toHaveBeenCalled();
+                expect(indexesMock.saveIndexCatalog).not.toHaveBeenCalled();
+            }, done);
+        });
+    });
+
+    describe('API Error handler', function () {
+
+        var body = {
+            id: '1'
+        };
+
+        var user = {
+            username: 'test'
+        };
+
+        var upgrade = {
+            version: '1.1',
+            productSpecCharacteristic: []
+        };
+
+        var testErrorHandler = function (req, validator, done) {
+            var callCallback = (a, b, cb) => {
+                cb(null);
+            };
+
+            var storeMethods = ['rollbackProduct', 'rollbackProductUpgrade'];
+            var storeClientMock = jasmine.createSpyObj('storeClient', storeMethods);
+
+            storeMethods.forEach((method) => {
+                storeClientMock[method].and.callFake(callCallback);
+            });
+
+            var storeClient = {
+                storeClient: storeClientMock
+            };
+
+            var catalogApi = getCatalogApi(storeClient, {}, {}, {}, {});
+
+            catalogApi.handleAPIError(req, function() {
+                validator(storeClientMock);
+                done();
+            });
+        };
+
+        it('should just call the callback if the error was not related to products', function (done) {
+            var req = {
+                method: 'POST',
+                apiUrl: '/DSProductCatalog/catalogManagement/api/v2/catalog/',
+            };
+
+            testErrorHandler(req, (storeMock) => {
+                expect(storeMock.rollbackProduct).not.toHaveBeenCalled();
+                expect(storeMock.rollbackProductUpgrade).not.toHaveBeenCalled();
+            }, done);
+        });
+
+        it('should call product creation rollback if the product creation has failed in the API', function(done) {
+            var req = {
+                method: 'POST',
+                apiUrl: '/DSProductCatalog/catalogManagement/api/v2/productSpecification',
+                reqBody: JSON.stringify(body),
+                user: user
+            };
+
+            testErrorHandler(req, (storeMock) => {
+                expect(storeMock.rollbackProduct).toHaveBeenCalledWith(body, user, jasmine.any(Function));
+                expect(storeMock.rollbackProductUpgrade).not.toHaveBeenCalled();
+            }, done);
+        });
+
+        it('should call the product upgrade rollback if the PATCH has failed in the API', function (done) {
+            var req = {
+                method: 'PATCH',
+                apiUrl: '/DSProductCatalog/catalogManagement/api/v2/productSpecification/1',
+                reqBody: JSON.stringify(upgrade),
+                user: user
+            };
+
+            testErrorHandler(req, (storeMock) => {
+                expect(storeMock.rollbackProduct).not.toHaveBeenCalled();
+                expect(storeMock.rollbackProductUpgrade).toHaveBeenCalledWith({
+                    id: '1',
+                    version: upgrade.version,
+                    productSpecCharacteristic: upgrade.productSpecCharacteristic
+                }, user, jasmine.any(Function));
+            }, done);
         });
     });
 });

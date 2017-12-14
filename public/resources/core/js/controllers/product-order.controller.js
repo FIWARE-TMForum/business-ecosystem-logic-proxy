@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -35,9 +35,14 @@
 
     angular
         .module('app')
-        .controller('ProductOrderSearchCtrl', ProductOrderSearchController)
-        .controller('ProductOrderCreateCtrl', ProductOrderCreateController)
-        .controller('ProductOrderDetailCtrl', ProductOrderDetailController);
+        .controller('ProductOrderSearchCtrl', ['$scope', '$state', '$rootScope', 'EVENTS', 'PRODUCTORDER_STATUS',
+            'PRODUCTORDER_LIFECYCLE', 'ProductOrder', 'Utils', ProductOrderSearchController])
+
+        .controller('ProductOrderCreateCtrl', ['$state', '$rootScope', '$scope', '$window', '$interval', 'User',
+            'ProductOrder', 'Offering', 'ShoppingCart', 'Utils', 'EVENTS', ProductOrderCreateController])
+
+        .controller('ProductOrderDetailCtrl', ['$rootScope', '$state', 'EVENTS', 'PROMISE_STATUS', 'PRODUCTORDER_STATUS',
+            'Utils', 'User', 'ProductOrder', ProductOrderDetailController]);
 
     function ProductOrderSearchController($scope, $state, $rootScope, EVENTS, PRODUCTORDER_STATUS, PRODUCTORDER_LIFECYCLE, ProductOrder, Utils) {
         /* jshint validthis: true */
@@ -61,9 +66,7 @@
 
         vm.cancellingOrder = false;
 
-        $scope.$watch(function () {
-            return vm.offset;
-        }, function () {
+        function productOrderSearch() {
             vm.list.status = LOADING;
 
             if (vm.offset >= 0) {
@@ -81,7 +84,11 @@
                     vm.list.status = ERROR;
                 });
             }
-        });
+        }
+
+        $scope.$watch(function () {
+            return vm.offset;
+        }, productOrderSearch);
 
         function getElementsLength() {
             var params = {};
@@ -247,10 +254,10 @@
 
                                     var charIdName = '';
                                     if (productChars.offName) {
-                                        charIdName = productChars.offId + ' ';
+                                        charIdName = 'offering:' + productChars.offId + ' ';
                                     }
                                     if (productChars.id) {
-                                        charIdName += productChars.id + ' ';
+                                        charIdName += 'product:' + productChars.id + ' ';
                                     }
 
                                     item.product.productCharacteristic.push({
@@ -402,6 +409,7 @@
         /* jshint validthis: true */
         var vm = this;
 
+        var notes;
         vm.STATUS = PROMISE_STATUS;
 
         vm.item = {};
@@ -421,6 +429,7 @@
             vm.item = productOrderRetrieved;
             vm.item.status = LOADED;
             vm.comments = createComments(vm.item.note);
+            notes = vm.item.note;
         }, function (response) {
             vm.error = Utils.parseError(response, 'The requested product order could not be retrieved');
             vm.item.status = ERROR;
@@ -540,11 +549,11 @@
         }
 
         function isCustomer() {
-            return getCustomerName() === User.loggedUser.id;
+            return getCustomerName() === User.loggedUser.currentUser.id;
         }
 
         function isVendor(orderItem) {
-            return getVendorName(orderItem) === User.loggedUser.id;
+            return getVendorName(orderItem) === User.loggedUser.currentUser.id;
         }
 
         function isTransitable(orderItem) {
@@ -603,14 +612,15 @@
         function createNote() {
             var dataUpdated = {
                 note: [{
-                    author: User.loggedUser.id,
+                    author: User.loggedUser.currentUser.id,
                     date: new Date(),
                     text: vm.note.text
-                }].concat(vm.item.note)
+                }].concat(notes)
             };
 
             promises.createNote = ProductOrder.update(vm.item, dataUpdated).then(function (productOrder) {
                 vm.note.text = "";
+                notes = productOrder.note;
                 vm.comments = createComments(productOrder.note);
             }, function (response) {
             });

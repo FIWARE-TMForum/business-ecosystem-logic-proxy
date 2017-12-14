@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -29,7 +29,7 @@
 
     angular
         .module('app')
-        .factory('Offering', ProductOfferingService);
+        .factory('Offering', ['$q', '$resource', 'URLS', 'LIFECYCLE_STATUS', 'User', 'ProductSpec', 'Category', ProductOfferingService]);
 
     function ProductOfferingService($q, $resource, URLS, LIFECYCLE_STATUS, User, ProductSpec, Category) {
         var resource = $resource(URLS.CATALOGUE_MANAGEMENT + '/:catalogue/:catalogueId/productOffering/:offeringId', {
@@ -212,14 +212,26 @@
             }
 
             if (filters.owner) {
-                params['relatedParty'] = User.loggedUser.id;
+                params['relatedParty'] = User.loggedUser.currentUser.id;
             } else {
                 params['lifecycleStatus'] = LIFECYCLE_STATUS.LAUNCHED;
+            }
+
+            if (filters.sort) {
+                params['sort'] = filters.sort;
             }
 
             if (filters.offset !== undefined) {
                 params['offset'] = filters.offset;
                 params['size'] = filters.size;
+            }
+
+            if (filters.body !== undefined) {
+                params['body'] = filters.body.replace(/\s/g, ',');
+            }
+
+            if (filters.productSpecId !== undefined) {
+                params['productSpecification.id'] = filters.productSpecId;
             }
 
             method(params, function (offeringList) {

@@ -1,0 +1,29 @@
+version: '3'
+services:
+    mongo:
+        image: mongo:3.2
+        ports:
+            - 27017:27017
+        networks:
+            main:
+        volumes:
+            - ./proxy-data:/data/db
+
+    proxy:
+        image: proxy-dev
+        links:
+            - mongo
+        depends_on:
+            - mongo
+        ports:
+            - 8004:8004
+        networks:
+            main:
+                aliases:
+                    - proxy.docker
+        volumes:
+            - ../:/business-ecosystem-logic-proxy
+
+networks:
+    main:
+        external: true

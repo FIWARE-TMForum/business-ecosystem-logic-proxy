@@ -17,7 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var management = require('../../controllers/management').management;
+const management = require('../../controllers/management').management;
+const config = require('../utils.js').getDefaultConfig();
+const proxyquire =  require('proxyquire');
 
 describe('Management API', function () {
 
@@ -45,6 +47,42 @@ describe('Management API', function () {
             expect(res.statusCode).toBe(200);
             expect(res.json).toHaveBeenCalledWith({
                 size: '10'
+            });
+            expect(res.end).toHaveBeenCalledWith();
+        });
+    });
+    describe('get version', function() {
+        function getManagement() {
+            return proxyquire('../../controllers/management', {
+                '../config': config
+            });
+        };
+
+        it('should return the valid value of version object', function() { 
+            var res = {
+                json: function (val) {
+                },
+                end: function () {
+                }
+            };
+            var uptime = 90061;
+
+            spyOn(res, 'json');
+            spyOn(res, 'end');
+
+            spyOn(process, 'uptime').and.returnValue(uptime);
+
+            var manageCtl = getManagement().management;
+            manageCtl.getVersion({}, res);
+
+            expect(res.statusCode).toBe(200);
+            expect(res.json).toHaveBeenCalledWith({
+               version: config.version.version,
+               release_date: config.version.releaseDate,
+               uptime: '1 d, 1 h, 1 m, 1 s',
+               git_hash: config.version.gitHash,
+               doc: config.version.doc,
+               user_doc: config.version.userDoc
             });
             expect(res.end).toHaveBeenCalledWith();
         });
