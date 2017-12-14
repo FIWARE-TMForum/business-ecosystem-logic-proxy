@@ -2,11 +2,11 @@ var config = {};
 
 // Version of the software
 config.version = {
-    version: '6.3.0-rc',
+    version: '6.4.0',
     releaseDate: '',
     gitHash: '',
     doc: 'https://fiware-tmforum.github.io/Business-API-Ecosystem/',
-    userDoc: 'http://business-api-ecosystem.readthedocs.io/en/develop'
+    userDoc: 'http://business-api-ecosystem.readthedocs.io/en/v6.4.0'
 };
 
 // The PORT used by 
