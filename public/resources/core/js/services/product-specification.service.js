@@ -82,6 +82,7 @@
             };
         };
 
+        ProductSpec.prototype.getExtraFiles = getExtraFiles;
         ProductSpec.prototype.getPicture = getPicture;
         ProductSpec.prototype.getCharacteristicDefaultValue = getCharacteristicDefaultValue;
         ProductSpec.prototype.serialize = serialize;
@@ -347,6 +348,31 @@
             }
 
             return src;
+        }
+
+        function getExtraFiles() {
+            /* jshint validthis: true */
+            var i, extraFiles = [];
+
+            var prefix = this.name.replace(/ /g, '');
+
+            if (prefix.length > 10) {
+                prefix = prefix.substr(0, 10);
+            }
+
+            if (angular.isArray(this.attachment)) {
+                for (i = 0; i < this.attachment.length; i++) {
+                    if (this.attachment[i].type.toLowerCase() !== 'picture') {
+                        extraFiles.push({
+                            href: this.attachment[i].url,
+                            name: this.attachment[i].url.split(prefix + '__')[1],
+                            type: this.attachment[i].type
+                        })
+                    }
+                }
+            }
+
+            return extraFiles;
         }
 
         function serialize() {
