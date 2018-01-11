@@ -46,7 +46,6 @@
         };
 
         function addItem(item) {
-
             var deferred = $q.defer();
 
             resource.save({ action: 'item', id: '' }, item, function () {

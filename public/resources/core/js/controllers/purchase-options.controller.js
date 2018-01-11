@@ -154,6 +154,11 @@
                 characteristics: vm.characteristics,
                 pricing: priceplan
             };
+
+            if (vm.terms.length) {
+                data.termsAccepted = vm.termsAccepted;
+            }
+
             $rootScope.$broadcast(EVENTS.OFFERING_CONFIGURED, data);
         }
 
