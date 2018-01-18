@@ -4,6 +4,8 @@ node_js:
   - "8"
   - "7"
   - "6"
+before_script:
+  - "cp config.js.template config.js"
 after_success: coveralls
 branches:
   only:
