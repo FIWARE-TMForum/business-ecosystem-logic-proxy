@@ -83,8 +83,11 @@
         };
 
         ProductSpec.prototype.getExtraFiles = getExtraFiles;
+        ProductSpec.prototype.getLicense = getLicense;
         ProductSpec.prototype.getPicture = getPicture;
+        ProductSpec.prototype.getCharacteristics = getCharacteristics;
         ProductSpec.prototype.getCharacteristicDefaultValue = getCharacteristicDefaultValue;
+        ProductSpec.prototype.hasCharacteristics = hasCharacteristics;
         ProductSpec.prototype.serialize = serialize;
         ProductSpec.prototype.appendRelationship = appendRelationship;
         ProductSpec.prototype.removeRelationship = removeRelationship;
@@ -333,6 +336,45 @@
             }
 
             return value;
+        }
+
+        function getCharacteristics() {
+            /* jshint validthis: true */
+            if (angular.isArray(this.productSpecCharacteristic)) {
+                return this.productSpecCharacteristic.filter(function (char) {
+                    return char.name.toLowerCase() !== 'license';
+                });
+            }
+
+            return [];
+        }
+
+        function hasCharacteristics() {
+            /* jshint validthis: true */
+            if (angular.isArray(this.productSpecCharacteristic)) {
+                return this.productSpecCharacteristic.length > 0;
+            }
+
+            return false;
+        }
+
+        function getLicense() {
+            /* jshint validthis: true */
+            var i, license = null;
+
+            if (angular.isArray(this.productSpecCharacteristic)) {
+                for (i = 0; i < this.productSpecCharacteristic.length && !license; i++) {
+                    if (this.productSpecCharacteristic[i].name.toLowerCase() === 'license') {
+                        var char = this.productSpecCharacteristic[i];
+                        license = {
+                            title: char.productSpecCharacteristicValue[0].value,
+                            description: char.description,
+                        };
+                    }
+                }
+            }
+
+            return license;
         }
 
         function getPicture() {
