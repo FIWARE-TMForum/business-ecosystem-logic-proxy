@@ -1,0 +1,27 @@
+.row
+  .col-sm-12
+    .panel.panel-default.z-depth-1
+      .panel-body
+        .h4.text-dark-secondary
+          strong Attachments
+        table.table.table-bordered(
+          ng-if="detailVM.attachments.length"
+        )
+          thead
+            tr
+              th #
+              th Name
+              th Type
+          tbody
+            tr(ng-repeat="attachment in detailVM.attachments")
+              th {{ $index + 1 }}
+              td
+                a(
+                  ng-href="{{ attachment.href }}"
+                  target="_blank"
+                ) {{ attachment.name }}
+              td {{ attachment.type }}
+        .col-xs-12(
+          ng-if="!detailVM.attachments.length"
+        )
+          .alert.alert-info.text-center No attachments included.

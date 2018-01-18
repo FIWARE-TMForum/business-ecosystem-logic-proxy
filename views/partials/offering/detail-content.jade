@@ -29,6 +29,10 @@
           a(ui-sref="offering.detail.productCharacteristic")
             span.item-icon.fa.fa-gears
             span.item-text.hidden-xs Characteristics
+        li(ui-sref-active-eq="active", ng-if="!detailVM.item.isBundle")
+          a(ui-sref="offering.detail.productAttachment")
+            span.item-icon.fa.fa-paperclip
+            span.item-text.hidden-xs Attachments
         li(ui-sref-active-eq="active", ng-if="detailVM.item.isBundle")
           a(ui-sref="offering.detail.bundled")
             span.item-icon.fa.fa-cube
