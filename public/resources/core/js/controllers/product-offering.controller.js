@@ -471,6 +471,7 @@
             vm.item = offeringRetrieved;
             vm.item.status = LOADED;
             vm.categories = vm.item.getCategories();
+            vm.attachments = vm.item.productSpecification.getExtraFiles();
         }, function (response) {
             vm.error = Utils.parseError(response, 'The requested offering could not be retrieved');
             vm.item.status = ERROR;
