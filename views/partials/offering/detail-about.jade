@@ -39,6 +39,16 @@
           dd.text-dark-secondary {{ detailVM.item.productSpecification.version }}
           dt ID Number
           dd.text-dark-secondary {{ detailVM.item.productSpecification.productNumber }}
+    .row(
+      ng-if="detailVM.item.productSpecification.getLicense() != null"
+    )
+      .col-md-12
+        .h4.text-dark-secondary
+          strong License
+      .col-md-12
+        dl
+          dt {{ detailVM.item.productSpecification.getLicense().title }}
+          dd.text-dark-secondary {{ detailVM.item.productSpecification.getLicense().description }}
     div
       div(ng-if="detailVM.item.productSpecification.isBundle")
         .h5.text-dark-primary
