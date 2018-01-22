@@ -472,7 +472,8 @@ describe('TMF Controller', function() {
                 method: reqMethod,
                 user: {'id': userId },
                 headers: {},
-                connection: connection
+                connection: connection,
+                get: jasmine.createSpy('get'),
             };
 
             tmf.checkPermissions(req, res);
