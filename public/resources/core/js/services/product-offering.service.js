@@ -299,7 +299,7 @@
             return this.productOfferPriceAlteration;
         };
         PricePlan.prototype.formatCurrencyCode = function formatCurrencyCode() {
-            return '(' + TYPES.CURRENCY_CODE[this.price.currencyCode].code + ') ' + TYPES.CURRENCY_CODE[this.price.currencyCode].name;
+            return '(' + this.price.currencyCode + ') ' + TYPES.CURRENCY_CODE[this.price.currencyCode];
         };
 
         return {

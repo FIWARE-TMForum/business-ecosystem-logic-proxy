@@ -42,7 +42,7 @@ form(name="form" novalidate)
               span.item-icon.fa.fa-caret-down
             .dropdown-menu.dropdown-menu-right.z-depth-2
               a.dropdown-menu-item(ng-repeat="(key, value) in vm.CURRENCY_CODES" ng-click="pricePlan.setCurrencyCode(key)")
-                span.item-text ({{ value.code }}) {{ value.name }}
+                span.item-text ({{ key }}) {{ value }}
         .help-block(ng-messages="form.taxIncludedAmount.$error" ng-show="vm.hasFieldError(form.taxIncludedAmount)")
           span(ng-message="required") This field is required.
           span(ng-message="min") This field must be a greater than 0.
