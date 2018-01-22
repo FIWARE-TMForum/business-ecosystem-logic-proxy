@@ -194,11 +194,9 @@
         vm.PRICE_ALTERATIONS = Offering.TYPES.PRICE_ALTERATION;
         vm.PRICE_ALTERATIONS_SUPPORTED = Offering.TYPES.PRICE_ALTERATION_SUPPORTED;
         vm.PRICE_CONDITIONS = Offering.TYPES.PRICE_CONDITION;
-        vm.DATA_STATUS = DATA_STATUS;
 
         vm.data = angular.copy(Offering.TEMPLATES.RESOURCE);
         vm.stepList = stepList;
-        vm.status = DATA_STATUS.LOADING;
 
         vm.create = create;
         vm.setProduct = setProduct;
