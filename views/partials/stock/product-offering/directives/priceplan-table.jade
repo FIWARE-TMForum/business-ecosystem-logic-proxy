@@ -5,12 +5,15 @@
         th Name
         th Description
         th Price
+        th Price alteration
         th Actions
     tbody
       tr(ng-repeat="pricePlan in pricePlans")
         th {{ pricePlan.name }}
         td {{ pricePlan.description }}
         td {{ pricePlan.toString() }}
+        td
+          span(style="white-space: pre-line;") {{ pricePlan.priceAlteration().format() }}
         td
           a.btn.btn-sm.btn-icon.btn-info(ng-click="vm.updatePricePlan($index)")
             span.item-icon.fa.fa-spin.fa-spinner(ng-if="vm.updatePricePlan.status === vm.STATUS.PENDING")

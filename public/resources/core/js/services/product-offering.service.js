@@ -74,6 +74,22 @@
                 ONE_TIME: 'one time',
                 RECURRING: 'recurring',
                 USAGE: 'usage'
+            },
+            PRICE_ALTERATION: {
+                DISCOUNT: {code: 'discount', name: 'Discount'},
+                FEE: {code: 'fee', name: 'Fee'}
+            },
+            PRICE_ALTERATION_SUPPORTED: {
+                PRICE_COMPONENT: 0,
+                DISCOUNT_OR_FEE: 1,
+                NOTHING: 2
+            },
+            PRICE_CONDITION: {
+                EQ: {code: 'eq', name: 'Equal'},
+                LT: {code: 'lt', name: 'Less than'},
+                LE: {code: 'le', name: 'Less than or equal'},
+                GT: {code: 'gt', name: 'Greater than'},
+                GE: {code: 'ge', name: 'Greater than or equal'}
             }
         };
 
@@ -85,7 +101,19 @@
                 taxIncludedAmount: 0,
                 taxRate: TAX_RATE,
             },
-            PRICEPLAN: {
+            PRICE_ALTERATION: {
+                description: '',
+                isPercentage: true,
+                name: TYPES.PRICE_ALTERATION.FEE.code,
+                price: {},
+                priceAlterationType: TYPES.PRICE_ALTERATION_SUPPORTED.PRICE_COMPONENT,
+                priceCondition: 0,
+                priceConditionOperator: TYPES.PRICE_CONDITION.GE.code,
+                priceType: TYPES.PRICE.ONE_TIME,
+                recurringChargePeriod: '',
+                unitOfMeasure: ''
+            },
+            PRICE_PLAN: {
                 description: '',
                 name: '',
                 price: {},
@@ -107,43 +135,126 @@
             }
         };
 
-        var Price = function Price(data) {
-            angular.extend(this, TEMPLATES.PRICE, data);
+        var Price = function Price(data, arrayExcluded) {
+            angular.extend(this, angular.copy(TEMPLATES.PRICE), angular.copy(data));
             parseNumber(this, ['dutyFreeAmount', 'percentage', 'taxIncludedAmount', 'taxRate']);
-        };
-        Price.prototype.setCurrencyCode = function setCurrencyCode(codeName) {
-
-            if (codeName in TYPES.CURRENCY_CODE) {
-                this.currencyCode = codeName;
-            }
-
-            return this;
+            this.arrayExcluded = angular.isArray(arrayExcluded) ? arrayExcluded : [];
         };
         Price.prototype.toJSON = function toJSON() {
-            return {
+            var data = {
                 currencyCode: this.currencyCode,
                 dutyFreeAmount: this.taxIncludedAmount / ((100 + this.taxRate) / 100),
                 percentage: this.percentage,
                 taxIncludedAmount: this.taxIncludedAmount,
                 taxRate: this.taxRate
             };
+
+            this.arrayExcluded.forEach(function (name) {
+                if (name in data) {
+                    delete data[name];
+                }
+            });
+
+            return data;
         };
         Price.prototype.toString = function toString() {
-            return this.taxIncludedAmount + ' ' + angular.uppercase(this.currencyCode);
+            return this.taxIncludedAmount + ' ' + this.currencyCode;
+        };
+
+        var PriceAlteration = function PriceAlteration(data) {
+            angular.extend(this, angular.copy(TEMPLATES.PRICE_ALTERATION), angular.copy(data));
+            this.price = new Price(this.price, ['currencyCode']);
+        };
+        PriceAlteration.prototype.setIsPercentage = function setIsPercentage(value) {
+            this.isPercentage = value;
+            this.price.percentage = 0;
+            this.price.taxIncludedAmount = 0;
+        };
+        PriceAlteration.prototype.setType = function setType(priceType) {
+            return PricePlan.prototype.setType.call(this, priceType);
+        };
+        PriceAlteration.prototype.format = function format(extended) {
+            var result = '';
+
+            if (typeof extended !== 'boolean') {
+                extended = true;
+            }
+
+            if (this.priceAlterationType === TYPES.PRICE_ALTERATION_SUPPORTED.DISCOUNT_OR_FEE) {
+                result += ' ' + (extended ? this.formatPriceCondition() : '*');
+            }
+
+            return this.toString() + result;
+        };
+        PriceAlteration.prototype.formatPriceCondition = function formatPriceCondition() {
+            return 'if ' + angular.lowercase(TYPES.PRICE_CONDITION[angular.uppercase(this.priceConditionOperator)].name) + ' ' + this.priceCondition + ' ' + this.price.currencyCode;
+        };
+        PriceAlteration.prototype.toString = function toString() {
+            var result = '';
+
+            switch (this.priceAlterationType) {
+            case TYPES.PRICE_ALTERATION_SUPPORTED.PRICE_CONDITION:
+                result += '+ ' + PricePlan.prototype.toString.call(this);
+                break;
+            case TYPES.PRICE_ALTERATION_SUPPORTED.DISCOUNT_OR_FEE:
+                result += (this.name === TYPES.PRICE_ALTERATION.FEE.code ? '+' : '-');
+                result += '' + (this.isPercentage ? this.price.percentage + '%' : this.price.taxIncludedAmount + ' ' + this.price.currencyCode);
+                break;
+            }
+
+            return result;
+        };
+        PriceAlteration.prototype.toJSON = function toJSON() {
+            var data = {
+                description: this.description,
+                name: this.name,
+                price: this.price,
+                priceType: this.priceType,
+                recurringChargePeriod: this.recurringChargePeriod,
+                unitOfMeasure: this.unitOfMeasure
+            };
+
+            switch (this.priceAlterationType) {
+            case TYPES.PRICE_ALTERATION_SUPPORTED.PRICE_CONDITION:
+                data.priceCondition = '';
+                break;
+            case TYPES.PRICE_ALTERATION_SUPPORTED.DISCOUNT_OR_FEE:
+                data.priceCondition = this.priceConditionOperator + ' ' + this.priceCondition;
+                break;
+            }
+
+            return data;
         };
 
         var PricePlan = function PricePlan(data) {
-            angular.extend(this, TEMPLATES.PRICEPLAN, data);
+            angular.extend(this, angular.copy(TEMPLATES.PRICE_PLAN), angular.copy(data));
             this.price = new Price(this.price);
-        };
-        PricePlan.prototype.setType = function setType(typeName) {
 
-            if (typeName in TYPES.PRICE && !angular.equals(this.priceType, typeName)) {
-                this.priceType = TYPES.PRICE[typeName];
+            if (angular.isObject(this.productOfferPriceAlteration)) {
+                extendPriceAlteration(this, this.productOfferPriceAlteration);
+                this.productOfferPriceAlteration = new PriceAlteration(this.productOfferPriceAlteration);
+            } else {
+                delete this.productOfferPriceAlteration;
+            }
+        };
+        PricePlan.prototype.setCurrencyCode = function setCurrencyCode(currencyCode) {
+
+            if (this.productOfferPriceAlteration) {
+                this.productOfferPriceAlteration.price.currencyCode = currencyCode;
+            }
+
+            this.price.currencyCode = currencyCode;
+
+            return this;
+        };
+        PricePlan.prototype.setType = function setType(priceType) {
+
+            if (!angular.equals(this.priceType, priceType)) {
+                this.priceType = TYPES.PRICE[priceType];
                 this.unitOfMeasure = '';
                 this.recurringChargePeriod = '';
 
-                switch (angular.lowercase(this.priceType)) {
+                switch (this.priceType) {
                 case TYPES.PRICE.RECURRING:
                     this.recurringChargePeriod = TYPES.CHARGE_PERIOD.WEEKLY;
                     break;
@@ -153,20 +264,42 @@
             return this;
         };
         PricePlan.prototype.toString = function toString() {
-            var result = '' + this.price.toString();
+            var result = '';
 
-            switch (angular.lowercase(this.priceType)) {
-            case TYPES.PRICE.ONE_TIME:
-                break;
+            switch (this.priceType) {
             case TYPES.PRICE.RECURRING:
-                result += ' / ' + angular.uppercase(this.recurringChargePeriod);
+                result = ' / ' + this.recurringChargePeriod;
                 break;
             case TYPES.PRICE.USAGE:
-                result += ' / ' + angular.uppercase(this.unitOfMeasure);
+                result = ' / ' + this.unitOfMeasure;
                 break;
             }
 
-            return result;
+            return this.price + result;
+        };
+        PricePlan.prototype.formatPriceAlteration = function formatPriceAlteration(extended) {
+            return this.productOfferPriceAlteration ? this.productOfferPriceAlteration.format(extended) : '';
+        };
+        PricePlan.prototype.resetPriceAlteration = function resetPriceAlteration(priceAlterationType) {
+
+            switch (priceAlterationType) {
+            case TYPES.PRICE_ALTERATION_SUPPORTED.PRICE_COMPONENT:
+            case TYPES.PRICE_ALTERATION_SUPPORTED.DISCOUNT_OR_FEE:
+                this.productOfferPriceAlteration = new PriceAlteration({
+                    priceAlterationType: priceAlterationType
+                });
+                break;
+            default:
+                delete this.productOfferPriceAlteration;
+            }
+
+            return this;
+        };
+        PricePlan.prototype.priceAlteration = function priceAlteration() {
+            return this.productOfferPriceAlteration;
+        };
+        PricePlan.prototype.formatCurrencyCode = function formatCurrencyCode() {
+            return '(' + this.price.currencyCode + ') ' + TYPES.CURRENCY_CODE[this.price.currencyCode];
         };
 
         return {
@@ -175,6 +308,7 @@
             TYPES: TYPES,
             PATCHABLE_ATTRS: PATCHABLE_ATTRS,
             PricePlan: PricePlan,
+            PriceAlteration: PriceAlteration,
             search: search,
             count: count,
             exists: exists,
@@ -573,7 +707,7 @@
             return picture;
         }
 
-        function formatCheapestPricePlan() {
+        function formatCheapestPricePlan(extended) {
             /* jshint validthis: true */
             var result = "", pricePlan = null, pricePlans = [];
 
@@ -588,12 +722,12 @@
                             pricePlan = this.productOfferingPrice[i];
                         }
                     }
-                    result = 'From ' + pricePlan.toString();
+                    result = 'From ' + pricePlan.toString() + '\n' + pricePlan.formatPriceAlteration(extended);
                 } else {
                     pricePlans = this.productOfferingPrice.filter(function (pricePlan) {
                         return [TYPES.PRICE.RECURRING, TYPES.PRICE.USAGE].indexOf(angular.lowercase(pricePlan.priceType)) !== -1;
                     });
-                    result = 'From ' + pricePlans[0].toString();
+                    result = 'From ' + pricePlans[0].toString() + '\n' + pricePlan.formatPriceAlteration(extended);
                 }
             } else {
                 result = 'Free';
@@ -680,6 +814,30 @@
             });
 
             return results;
+        }
+
+        function extendPriceAlteration(pricePlan, priceAlteration) {
+
+            if (angular.isString(priceAlteration.priceCondition) && priceAlteration.priceCondition.length) {
+                var priceCondition = getPriceCondition(priceAlteration);
+                priceAlteration.priceCondition = priceCondition.value;
+                priceAlteration.priceConditionOperator = priceCondition.operator;
+                priceAlteration.isPercentage = !!priceAlteration.price.percentage;
+                priceAlteration.priceAlterationType = TYPES.PRICE_ALTERATION_SUPPORTED.DISCOUNT_OR_FEE;
+            } else {
+                priceAlteration.priceAlterationType = TYPES.PRICE_ALTERATION_SUPPORTED.PRICE_COMPONENT;
+            }
+
+            priceAlteration.price.currencyCode = pricePlan.price.currencyCode;
+
+            return priceAlteration;
+        }
+
+        function getPriceCondition(priceAlteration) {
+            return {
+                operator: priceAlteration.priceCondition.split(" ")[0],
+                value: Number(priceAlteration.priceCondition.split(" ")[1])
+            };
         }
     }
 
