@@ -37,7 +37,7 @@
     };
 
     angular
-        .module('app', ['ngResource', 'ngMessages', 'angularMoment', 'ui.router', 'internationalPhoneNumber'])
+        .module('app', ['ngResource', 'ngMessages', 'angularMoment', 'ui.router', 'internationalPhoneNumber', 'ngCookies'])
         .config(['ipnConfig', function(ipnConfig) {
             ipnConfig.separateDialCode = true;
             ipnConfig.utilsScript = '/resources/intl-tel-input-8.4.7/js/utils.js';

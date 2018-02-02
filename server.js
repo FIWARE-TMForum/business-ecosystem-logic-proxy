@@ -120,13 +120,7 @@ app.set('port', PORT);
 
 // Attach i18n to express
 i18n.expressBind(app, {
-    locales: ['en', 'es'],
-    cookieName: 'locale'
-});
-
-app.use(function(req, res, next) {
-    req.i18n.setLocaleFromCookie();
-    next();
+    locales: ['en', 'es']
 });
 
 app.use(function(req, res, next){
@@ -151,6 +145,11 @@ app.use(bodyParser.text({
     type: '*/*',
     limit: '50mb'
 }));
+
+app.use(function(req, res, next) {
+    req.i18n.setLocaleFromCookie();
+    next();
+});
 
 // Logging Handler
 app.use(function(req, res, next) {

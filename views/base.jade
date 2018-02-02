@@ -171,7 +171,12 @@ html(ng-app="app")
 
     footer.clearfix
       hr.fiware-line
-      .col-sm-6
+      .col-sm-1(ng-controller="LangCtrl as langVM")
+        select(ng-model="langVM.locale" ng-change="langVM.onLocaleChange()")
+          option(value="en") English
+          option(value="es") Español
+
+      .col-sm-5
         ul.list-inline
           li.small © 2015-2017 CoNWeT Lab., Universidad Politécnica de Madrid
       .col-sm-6
