@@ -43,7 +43,7 @@
             ipnConfig.utilsScript = '/resources/intl-tel-input-8.4.7/js/utils.js';
             ipnConfig.initialCountry = 'auto';
             ipnConfig.geoIpLookup = function(callback) {
-                $.get("http://ipinfo.io", function() {}, "jsonp").always(function(resp) {
+                $.get("https://ipinfo.io", function() {}, "jsonp").always(function(resp) {
                     var countryCode = (resp && resp.country) ? resp.country : "";
                     callback(countryCode);
                 });

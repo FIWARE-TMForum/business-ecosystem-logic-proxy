@@ -8,6 +8,7 @@ var authorizeService = require('./controllers/authorizeService').authorizeServic
     express = require('express'),
     fs = require('fs'),
     https = require('https'),
+    i18n = require('i18n-2'),
     indexes = require('./lib/indexes'),
     inventorySubscription = require('./lib/inventory_subscription'),
     imports = require('./public/imports').imports,
@@ -116,6 +117,17 @@ mongoose.connection.on('reconnected', function() {
 
 var app = express();
 app.set('port', PORT);
+
+// Attach i18n to express
+i18n.expressBind(app, {
+    locales: ['en', 'es'],
+    cookieName: 'locale'
+});
+
+app.use(function(req, res, next) {
+    req.i18n.setLocaleFromCookie();
+    next();
+});
 
 app.use(function(req, res, next){
     trycatch(function(){

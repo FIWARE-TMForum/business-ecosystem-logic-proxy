@@ -97,17 +97,17 @@ html(ng-app="app")
           .dropdown-menu.z-depth-3
             a.dropdown-menu-item(ui-sref="offering", ui-sref-opts="{ reload: true, inherit: false }")
               span.item-icon.fa.fa-home
-              span.item-text Home
+              span.item-text #{ __("Home") }
             if user
               a.dropdown-menu-item(ui-sref="inventory", ui-sref-opts="{ reload: true, inherit: false }")
                 span.item-icon.fa.fa-archive
-                span.item-text My inventory
+                span.item-text #{ __("My inventory") }
               a.dropdown-menu-item(ui-sref="stock", ui-sref-opts="{ reload: true, inherit: false }", ng-show="user.isSeller()")
                 span.item-icon.fa.fa-database
-                span.item-text My stock
+                span.item-text #{ __("My stock") }
               a.dropdown-menu-item(ui-sref="rss", ui-sref-opts="{ reload: true, inherit: false }", ng-show="user.isSeller()")
                 span.item-icon.fa.fa-share-alt
-                span.item-text Revenue Sharing
+                span.item-text #{ __("Revenue sharing") }
           a.navbar-brand.hidden-xs(href="#{ contextPath }")
             img(src="#{ contextPath }/resources/core/images/fiware-tmforum-logo.png")
         .navbar-text {{ title }}
