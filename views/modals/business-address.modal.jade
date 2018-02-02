@@ -3,7 +3,7 @@
     .modal-content
       .modal-header
         .h4
-          strong Business address
+          strong #{ __("Business address") }
       .modal-body
         business-address-form(
           form="entryAttrVM.form"
@@ -14,6 +14,6 @@
         )
       .modal-footer
         a.btn.btn-success.z-depth-1(data-dismiss="modal" ng-click="entryAttrVM.update(entryAttrVM.form)" ng-disabled="!entryAttrVM.form.$valid")
-          span.item-text Update
+          span.item-text #{ __("Update") }
         a.btn.btn-default.z-depth-1(data-dismiss="modal")
-          span.item-text Cancel
+          span.item-text #{ __("Cancel") }

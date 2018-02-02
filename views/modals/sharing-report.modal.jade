@@ -3,21 +3,21 @@
     .modal-content
       .modal-header
         .h4
-          strong New report
+          strong #{ __("New report") }
       .modal-body
         form(name="createVM.form" novalidate)
           .form-group
-            label Select a product class
+            label #{ __("Select a product class") }
           .table-responsive
             table.table.table-bordered.table-hover.table-selectable
               thead
                 tr
-                  th Name
+                  th #{ __("Name") }
               tbody
                 tr(ng-repeat="name in createVM.sharingModels" ng-class="{ active: createVM.data.productClass === name }" ng-click="createVM.setProductClass(name)")
                   td {{ name }}
       .modal-footer
         a.btn.btn-success.z-depth-1(data-dismiss="modal" ng-click="createVM.create()")
-          span.item-text Create
+          span.item-text #{ __("Create") }
         a.btn.btn-default.z-depth-1(data-dismiss="modal")
-          span.item-text Cancel
+          span.item-text #{ __("Cancel") }

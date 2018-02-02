@@ -132,7 +132,7 @@ html(ng-app="app")
                   .subtitle {{ user.currentUser.email }}
                 a.dropdown-menu-item(ng-if="user.hasOrgs()", ng-mouseenter="user.orgsVisible()", ng-mouseleave="user.orgsInvisible()")
                   span.item-icon.fa.fa-angle-double-left
-                  span.item-text Switch Session
+                  span.item-text #{ __("Switch Session") }
                 .dropdown(ng-show="user.showOrgs", ng-mouseenter="user.orgsVisible()", ng-mouseleave="user.orgsInvisible()")
                   .dropdown-menu.z-depth-3.org-menu
                     a.dropdown-menu-item(ng-if="!user.loggedAsIndividual()", ng-click="user.switchToUser()")
@@ -145,17 +145,17 @@ html(ng-app="app")
                         
                 a.dropdown-menu-item(ng-if="user.isAdmin()", ui-sref="admin", ui-sref-opts="{ reload: true, inherit: false }")
                   span.item-icon.fa.fa-dashboard
-                  span.item-text Administration
+                  span.item-text #{ __("Administration") }
                 a.dropdown-menu-item(ui-sref="settings", ui-sref-opts="{ reload: true, inherit: false }", ng-if="user.hasAdminRole()")
                   span.item-icon.fa.fa-cog
-                  span.item-text Settings
+                  span.item-text #{ __("Settings") }
                 a.dropdown-menu-item(ng-click="user.signOut()")
                   span.item-icon.fa.fa-sign-out
-                  span.item-text Sign out
+                  span.item-text #{ __("Sign out") }
           form(name="signOutForm", method="post", action="#{ contextPath }/logout")
         else
           a.btn.btn-warning.navbar-btn.navbar-right.z-depth-1(href="#{ contextPath }/login")
-            span.item-text Sign in
+            span.item-text #{ __("Sign in") }
     .row      
           
 

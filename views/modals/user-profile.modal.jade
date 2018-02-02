@@ -3,25 +3,25 @@
     .modal-content
       .modal-header
         .h4
-          strong User profile
+          strong #{ __("User profile") }
       .modal-body
         .row
           .col-xs-12
             ul.nav.nav-justified.nav-pills
               li(ng-class="{'active': (getActiveTab() === 1)}", ng-click="setActiveTab(1)")
                 a(data-target=".tab-profile-form", data-toggle="tab")
-                  span.item-text 1. General
+                  span.item-text 1. #{ __("General") }
               li(ng-class="{'active': (getActiveTab() === 2)}", ng-click="setActiveTab(2)")
                 a(data-target=".tab-profile-form", data-toggle="tab")
-                  span.item-text 2. Billing Address
+                  span.item-text 2. #{ __("Billing Address") }
             .tab-content
               .tab-pane.tab-profile-form.active
                 div(ng-show="getActiveTab() === 1")
-                  label User Name
+                  label #{ __("User Name") }
                   p {{ userInfo.id }}
-                  label Complete Name
+                  label #{ __("Complete Name") }
                   p {{ userInfo.completeName }}
-                  label Access Token
+                  label #{ __("Access Token") }
                   p {{ getAccessToken() }}
                 div(ng-show="getActiveTab() === 2")
                   form(name="updateBillingForm", novalidate)
@@ -30,7 +30,7 @@
                         .form-group(
                           ng-class="{'has-error': updateBillingForm.street.$invalid && (updateBillingForm.street.$dirty || updateBillingForm.street.$touched) }"
                         )
-                          label Street
+                          label #{ __("Street") }
                           input.form-control(
                             type="text"
                             name="street"
@@ -41,12 +41,12 @@
                             ng-messages="updateBillingForm.street.$error"
                             ng-show="updateBillingForm.street.$invalid && (updateBillingForm.street.$dirty || updateBillingForm.street.$touched)"
                           )
-                            span(ng-message="required") This field is required.
+                            span(ng-message="required") #{ __("This field is required.") }
                       .col-sm-4
                         .form-group(
                           ng-class="{'has-error': updateBillingForm.postal.$invalid && (updateBillingForm.postal.$dirty || updateBillingForm.postal.$touched) }"
                         )
-                          label Zip Code
+                          label #{ __("Zip Code") }
                           input.form-control(
                             type="text"
                             name="postal"
@@ -57,13 +57,13 @@
                             ng-messages="updateBillingForm.postal.$error"
                             ng-show="updateBillingForm.postal.$invalid && (updateBillingForm.postal.$dirty || updateBillingForm.postal.$touched)"
                           )
-                            span(ng-message="required") This field is required.
+                            span(ng-message="required") #{ __("This field is required.") }
                     .row
                       .col-sm-6
                         .form-group(
                           ng-class="{'has-error': updateBillingForm.city.$invalid && (updateBillingForm.city.$dirty || updateBillingForm.city.$touched) }"
                         )
-                          label City
+                          label #{ __("City") }
                           input.form-control(
                             type="text"
                             name="city"
@@ -74,12 +74,12 @@
                             ng-messages="updateBillingForm.city.$error"
                             ng-show="updateBillingForm.city.$invalid && (updateBillingForm.city.$dirty || updateBillingForm.city.$touched)"
                           )
-                            span(ng-message="required") This field is required.
+                            span(ng-message="required") #{ __("This field is required.") }
                       .col-sm-6
                         .form-group(
                           ng-class="{'has-error': updateBillingForm.province.$invalid && (updateBillingForm.province.$dirty || updateBillingForm.province.$touched) }"
                         )
-                          label Province
+                          label #{ __("Province") }
                           input.form-control(
                             type="text"
                             name="province"
@@ -90,13 +90,13 @@
                             ng-messages="updateBillingForm.province.$error"
                             ng-show="updateBillingForm.province.$invalid && (updateBillingForm.province.$dirty || updateBillingForm.province.$touched)"
                           )
-                            span(ng-message="required") This field is required.
+                            span(ng-message="required") #{ __("This field is required.") }
                     .row
                       .col-sm-12
                         .form-group(
                           ng-class="{'has-error': updateBillingForm.country.$invalid && (updateBillingForm.country.$dirty || updateBillingForm.country.$touched) }"
                         )
-                          label Country
+                          label #{ __("Country") }
                           input.form-control(
                             type="text"
                             name="country"
@@ -107,13 +107,13 @@
                             ng-messages="updateBillingForm.country.$error"
                             ng-show="updateBillingForm.country.$invalid && (updateBillingForm.country.$dirty || updateBillingForm.country.$touched)"
                           )
-                            span(ng-message="required") This field is required.
+                            span(ng-message="required") #{ __("This field is required.") }
       .modal-footer
         a.btn.btn-success.z-depth-1(
             data-dismiss="modal"
             ng-disabled="!updateBillingForm.$valid && (updateBillingForm.country.$touched || updateBillingForm.province.$touched || updateBillingForm.city.$touched || updateBillingForm.postal.$touched || updateBillingForm.street.$touched)"
             ng-click="updateProfile()"
           )
-          span.item-text Save changes
+          span.item-text #{ __("Update") }
         a.btn.btn-default.z-depth-1(data-dismiss="modal")
-          span.item-text Close
+          span.item-text #{ __("Close") }
