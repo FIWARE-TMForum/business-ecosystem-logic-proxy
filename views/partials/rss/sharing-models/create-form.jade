@@ -4,7 +4,7 @@ form(name="step.form", novalidate)
       .form-group(
         ng-class="{ 'has-error': createForm.hasError(step.form.productClass) }"
       )
-        label Product class
+        label #{ __("Product class") }
         input.form-control(
           type="text"
           name="productClass"
@@ -16,13 +16,13 @@ form(name="step.form", novalidate)
           ng-messages="step.form.productClass.$error"
           ng-show="createForm.hasError(step.form.productClass)"
         )
-          span(ng-message="required") This field is required.
-          span(ng-message="maxlength") This field must not exceed 200 chars.
+          span(ng-message="required") #{ __("This field is required.") }
+          span(ng-message="maxlength") #{ __("This field must not exceed %s chars.", "200") }
 
   .row
     .col-sm-6
       .form-group
-        label Platform percentage
+        label #{ __("Platform percentage") }
         .input-group
           input.form-control(
             type="text"
@@ -34,7 +34,7 @@ form(name="step.form", novalidate)
       .form-group(
       ng-class="{ 'has-error' : createForm.hasError(step.form.providerValue) }"
       )
-        label Provider percentage
+        label #{ __("Provider percentage") }
         .input-group
           input.form-control(
           type="number"
@@ -50,11 +50,11 @@ form(name="step.form", novalidate)
         ng-messages="step.form.providerValue.$error"
         ng-show="createForm.hasError(step.form.providerValue)"
         )
-          span(ng-message="required") This field is required.
-          span(ng-message="min") This field must not be a negative number.
-          span(ng-message="max") This field must not be higher than 100.
-          span(ng-message="number") This field must be a valid number.
+          span(ng-message="required") #{ __("This field is required.") }
+          span(ng-message="min") #{ __("This field must not be a negative number.") }
+          span(ng-message="max") #{ __("This field must not be higher than 100.") }
+          span(ng-message="number") #{ __("This field must be a valid number.") }
 
   .form-group.text-right
     a.btn.btn-default.z-depth-1(ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])", ng-disabled="!step.form.$valid")
-      span.item-text Next
+      span.item-text #{ __("Next") }

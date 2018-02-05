@@ -2,10 +2,10 @@
   table.table.table-bordered.table-hover
     thead
       tr
-        th Status
-        th Offering Name
-        th Offering Version
-        th Order Date
+        th #{ __("Status") }
+        th #{ __("Offering Name") }
+        th #{ __("Offering Version") }
+        th #{ __("Order Date") }
     tbody
       tr(ng-repeat="product in searchVM.list")
         td

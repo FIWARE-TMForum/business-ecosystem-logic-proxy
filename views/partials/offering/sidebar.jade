@@ -1,14 +1,14 @@
 .panel.panel-default.z-depth-1(ng-switch="listVM.list.status")
   .panel-heading
     .h4
-      strong Search by catalog
+      strong #{ __("Search by catalog") }
   .nav.nav-stacked.nav-pills
-        input.form-control(ng-change="listVM.updateList()", ng-model="listVM.sidebarInput", type="text", placeholder="Search...", id="sidebarsearch")
+        input.form-control(ng-change="listVM.updateList()", ng-model="listVM.sidebarInput", type="text", placeholder="#{ __("Search") }...", id="sidebarsearch")
   ul.nav.nav-stacked.nav-pills(ng-switch-when="LOADED")
     li(ui-sref-active-eq="active")
       a(ui-sref="offering({ catalogueId: null })", ui-sref-opts="{ reload: true, inherit: false }")
         span.item-icon.fa.fa-angle-right
-        span.item-text All
+        span.item-text #{ __("All") }
     li(ng-repeat="productCatalog in listVM.list", ui-sref-active="active")
       a(ui-sref="offering({ catalogueId: productCatalog.id })", ui-sref-opts="{ reload: true, inherit: false }")
         span.item-icon.fa.fa-angle-right

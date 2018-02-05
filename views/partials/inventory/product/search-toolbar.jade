@@ -3,15 +3,15 @@
     .btn-toolbar.toolbar-container
       include ./breadcrumb.jade
       .btn-group.z-depth-1.search-bar
-        input.form-control(ng-keyup="searchVM.handleEnterKeyUp($event)", ng-init="searchVM.initializeInput()", ng-model="searchVM.searchInput", type="text", placeholder="Search...", id="searchparams")
+        input.form-control(ng-keyup="searchVM.handleEnterKeyUp($event)", ng-init="searchVM.initializeInput()", ng-model="searchVM.searchInput", type="text", placeholder="#{ __("Search") }...", id="searchparams")
       .btn-group.z-depth-1.search-bar
         a.btn.btn-default(ui-sref="inventory.product({ body: searchVM.getSearchInputContent() })", id="searchbutton")
           span.item-icon.fa.fa-search
-          span.item-text.hidden-xs Search
+          span.item-text.hidden-xs #{ __("Search") }
       .btn-group.z-depth-1
         a.btn.btn-default(ng-click="searchVM.showFilters()")
           span.item-icon.fa.fa-sliders
-          span.item-text.hidden-xs Filters
+          span.item-text.hidden-xs #{ __("Filters") }
       .btn-group.z-depth-1
         a.btn.btn-default(ui-sref="inventory.product({ flow: 1 })", ui-sref-active="active")
           span.item-icon.fa.fa-th

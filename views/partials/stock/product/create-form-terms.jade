@@ -5,8 +5,8 @@ form(name="step.form", novalidate)
         ng-class="{ 'has-error': createForm.hasError(step.form.name) }"
       )
         label
-          span Enter agreement title
-          small.text-muted (optional)
+          span #{ __("Agreement title") }
+          small.text-muted (#{ __("optional") })
         input.form-control(
           type="text"
           name="title"
@@ -17,12 +17,12 @@ form(name="step.form", novalidate)
           ng-messages="step.form.name.$error"
           ng-show="createForm.hasError(step.form.name)"
         )
-          span(ng-message="maxlength") This field must not exceed 50 chars.
+          span(ng-message="maxlength") #{ __("This field must not exceed %s chars.", "50") }
   .form-group
     label
-      span Enter agreement text
-      small.text-muted (optional)
+      span #{ __("Agreement text") }
+      small.text-muted (#{ __("optional") })
     textarea.form-control(rows="6", name="text", ng-model="createVM.terms.text")
   .form-group.text-right
     a.btn.btn-default.z-depth-1(ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])", ng-disabled="!step.form.$valid")
-      span.item-text Next
+      span.item-text #{ __("Next") }

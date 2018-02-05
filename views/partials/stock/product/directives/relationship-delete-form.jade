@@ -1,24 +1,24 @@
 .row(ng-controller="RelationshipDeleteCtrl as deleteVM")
   .col-xs-12(ng-if="!resource.productSpecificationRelationship.length")
     .alert.alert-info.text-center
-      span No relationships included.
+      span #{ __("No relationships included.") }
   .col-xs-12(ng-if="resource.productSpecificationRelationship.length")
     .table-responsive
       table.table.table-bordered
         thead
           tr
-            th Relationship
-            th Name
-            th Type
-            th Updated
-            th Actions
+            th #{ __("Relationship") }
+            th #{ __("Name") }
+            th #{ __("Type") }
+            th #{ __("Last Updated") }
+            th #{ __("Actions") }
         tbody
           tr(ng-repeat="relationship in resource.productSpecificationRelationship")
             td {{ relationship.parseType() }}
             th {{ relationship.productSpec.name }}
             td
               span.label(ng-class="relationship.productSpec.isBundle ? 'label-bundle' : 'label-single'")
-                | {{ relationship.productSpec.isBundle ? 'Bundle' : 'Single' }}
+                | {{ relationship.productSpec.isBundle ? '#{ __("Bundle") }' : '#{ __("Single") }' }}
             td
               time(am-time-ago="relationship.productSpec.lastUpdate")
             td

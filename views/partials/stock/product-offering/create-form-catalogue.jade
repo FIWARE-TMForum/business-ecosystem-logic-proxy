@@ -4,12 +4,12 @@ form(name="step.form", novalidate)
       .col-sm-12
         .input-group
           input.form-control(ng-keyup="searchVM.handleEnterKeyUp($event)",
-          ng-model="searchVM.searchInput", type="text", placeholder="Search...")
+          ng-model="searchVM.searchInput", type="text", placeholder="#{ __("Search") }...")
 
           .input-group-btn
             a.btn.btn-default.z-depth-0(ng-click="searchVM.launchSearch()", id="formSearch")
               span.item-icon.fa.fa-search
-              span.item-text.hidden-xs Search
+              span.item-text.hidden-xs #{ __("Search") }
 
     input(type="hidden", ng-model="createVM.catalogue.id", required)
     .row
@@ -21,15 +21,15 @@ form(name="step.form", novalidate)
           span {{ searchVM.errorMessage }}
       .col-xs-12(ng-if="searchVM.list.status === searchVM.STATUS.LOADED" ng-switch="searchVM.list.length")
         .alert.alert-info.text-center(ng-switch-when="0")
-          span No catalogs found.
+          span #{ __("No catalogs found.") }
         .table-responsive(ng-switch-default)
           table.table.table-bordered.table-hover.table-selectable
             thead
               tr
-                th Status
-                th Name
-                th Role
-                th Updated
+                th #{ __("Status") }
+                th #{ __("Name") }
+                th #{ __("Role") }
+                th #{ __("Last Updated") }
             tbody
               tr(ng-repeat="catalogue in searchVM.list", ng-class="{ active: createVM.catalogue.id == catalogue.id }", ng-click="createVM.setCatalogue(catalogue)")
                 td
@@ -43,4 +43,4 @@ form(name="step.form", novalidate)
       pager(controller="searchVM", size="12", max="12")
   .form-group.text-right
     a.btn.btn-default.z-depth-1(ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])", ng-disabled="!step.form.$valid")
-      span.item-text Next
+      span.item-text #{ __("Next") }

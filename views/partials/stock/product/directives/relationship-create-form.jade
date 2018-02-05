@@ -7,30 +7,30 @@
           span.fa.fa-spinner.fa-spin.fa-2x
       .col-xs-12(ng-if="createVM.list.status === createVM.STATUS.LOADED")
         .form-group
-          label Choose a relationship
+          label #{ __("Choose a relationship") }
           select.form-control(name="type" ng-model="createVM.data.type")
             option(ng-repeat="(key, value) in createVM.RELATIONSHIPS" value="{{ value.code }}") {{ value.name }}
         .form-group
-          label Choose a product specification
+          label #{ __("Choose a product specification") }
           .row(style="margin-bottom: 25px")
             .col-sm-12
               .input-group
                 input.form-control(ng-keyup="createVM.handleEnterKeyUp($event)",
-                ng-model="createVM.searchInput", type="text", placeholder="Search...")
+                ng-model="createVM.searchInput", type="text", placeholder="#{ __("Search") }...")
 
                 .input-group-btn
                   a.btn.btn-default.z-depth-0(ng-click="createVM.launchSearch()", id="relSearch")
                     span.item-icon.fa.fa-search
-                    span.item-text.hidden-xs Search
+                    span.item-text.hidden-xs #{ __("Search") }
 
           input(type="hidden" ng-model="createVM.data.productSpec.id" required)
           .table-responsive
             table.table.table-bordered.table-hover.table-selectable
               thead
                 tr
-                  th Name
-                  th Type
-                  th Updated
+                  th #{ __("Name") }
+                  th #{ __("Type") }
+                  th #{ __("Last Updated") }
               tbody
                 tr(ng-repeat="productSpec in createVM.list",
                   ng-class="{ active: productSpec.id === createVM.data.productSpec.id, disabled: createVM.hasRelationship(resource, productSpec) }",
@@ -39,7 +39,7 @@
                   th {{ productSpec.name }}
                   td
                     span.label(ng-class="productSpec.isBundle ? 'label-bundle' : 'label-single'")
-                      | {{ productSpec.isBundle ? 'Bundle' : 'Single' }}
+                      | {{ productSpec.isBundle ? '#{ __("Bundle") }' : '#{ __("Single") }' }}
                   td
                     time(am-time-ago="productSpec.lastUpdate")
         .form-group.text-right
@@ -48,5 +48,5 @@
             ng-disabled="!createVM.form.$valid || createVM.create.status === createVM.STATUS.LOADING"
           )
             span.item-icon.fa.fa-spin.fa-spinner(ng-if="createVM.create.status === createVM.STATUS.LOADING")
-            span.item-text Create
+            span.item-text #{ __("Create") }
       pager(controller="createVM", size="10", max="12")

@@ -6,14 +6,14 @@ div(ng-controller="AssetController as assetVM")
           .form-group(ng-init="assetVM.setForm(assetForm)")
             .row
               .col-sm-8
-                label Digital Asset Type
+                label #{ __("Digital Asset Type") }
                 select.form-control(name="asset", ng-model="assetVM.digitalChars[0].productSpecCharacteristicValue[0].value", ng-change="assetVM.setCurrentType()")
                   option(ng-repeat="asset in assetVM.assetTypes", value="{{ asset.name }}") {{ asset.name }}
               .col-sm-4
-                label How to provide?
+                label #{ __("How to provide?") }
                 select.form-control(ng-model="assetVM.currFormat", ng-options="format for format in assetVM.currentType.formats")
           .form-group(ng-if="assetVM.isSelected('URL')")
-            label Asset URL
+            label #{ __("Asset URL") }
             .form-group(
               ng-class="{ 'has-error': assetFormCtl.hasError(assetForm.url) }"
             )
@@ -27,11 +27,11 @@ div(ng-controller="AssetController as assetVM")
                 ng-messages="assetForm.url.$error"
                 ng-show="assetFormCtl.hasError(assetForm.url)"
               )
-                span(ng-message="url") This field must be a valid URL
-                span(ng-message="required") This field is required
+                span(ng-message="url") #{ __("This field must be a valid URL") }
+                span(ng-message="required") #{ __("This field is required.") }
 
           .form-group(ng-if="assetVM.isSelected('FILE')")
-            label Asset File
+            label #{ __("Asset File") }
             .form-group(
               ng-class="{ 'has-error': assetFormCtl.hasError(assetForm.fileAsset) }"
             )
@@ -46,9 +46,9 @@ div(ng-controller="AssetController as assetVM")
                 ng-messages="assetForm.fileAsset.$error"
                 ng-show="assetFormCtl.hasError(assetForm.fileAsset)"
               )
-                span(ng-message="requiredFile") This field is required
+                span(ng-message="requiredFile") #{ __("This field is required.") }
           .form-group
-            label Media Type
+            label #{ __("Media Type") }
             div(ng-if="!assetVM.currentType.mediaTypes.length" ng-init="assetVM.initMediaType()")
               .form-group(
                 ng-class="{ 'has-error': assetFormCtl.hasError(assetForm.mediaType) }"
@@ -63,7 +63,7 @@ div(ng-controller="AssetController as assetVM")
                   ng-messages="assetForm.mediaType.$error"
                   ng-show="assetFormCtl.hasError(assetForm.mediaType)"
                 )
-                  span(ng-message="required") This field is required
+                  span(ng-message="required") #{ __("This field is required.") }
 
             div(ng-if="assetVM.currentType.mediaTypes.length" ng-init="assetVM.initMediaType()")
               select.form-control(ng-model="assetVM.digitalChars[1].productSpecCharacteristicValue[0].value"
@@ -87,7 +87,7 @@ div(ng-controller="AssetController as assetVM")
                     ng-messages="assetForm[id].$error"
                     ng-show="assetFormCtl.hasError(assetForm[id])"
                   )
-                    span(ng-message="required") This field is required
+                    span(ng-message="required") #{ __("This field is required.") }
 
               div(ng-if="value.type == 'textarea'")
                 textarea.form-control(name="{{ id }}", ng-model="assetVM.meta[id]", placeholder="{{ value.placeholder }}")
@@ -101,7 +101,7 @@ div(ng-controller="AssetController as assetVM")
                     i.fa.fa-2x
 
       div(ng-show="!assetVM.assetTypes.length")
-        .alert.alert-info There isn't any digital asset type supported.
+        .alert.alert-info #{ __("There isn't any digital asset type supported.") }
 
     div(ng-switch-when="LOADING")
       .container-spinner

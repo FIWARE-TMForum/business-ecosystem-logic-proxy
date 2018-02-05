@@ -2,7 +2,7 @@ form(name="form" novalidate)
   .row
     .col-sm-6
       .form-group(ng-class="{ 'has-error': vm.hasFieldError(form.mediumType) }")
-        label Medium
+        label #{ __("Medium") }
         select.form-control(
           name="mediumType"
           ng-model="emailAddress.type"

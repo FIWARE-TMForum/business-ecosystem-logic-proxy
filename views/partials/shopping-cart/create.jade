@@ -4,23 +4,23 @@ ui-view
       .breadcrumb-triangle.z-depth-1
         a(ui-sref="offering", ui-sref-opts="{ reload: true, inherit: false }")
           span.item-icon.fa.fa-chevron-left
-          span.item-text Back
+          span.item-text #{ __("Back") }
         a.active
           span.item-icon.fa.fa-share
-          span.item-text Checkout
+          span.item-text #{ __("Checkout") }
     .col-xs-12
       .panel.panel-default.z-depth-1
         .panel-body(ng-switch="orderVM.loadingStatus")
           .h4
-            strong Confirm and checkout
+            strong #{ __("Confirm and checkout") }
           hr
           form(ng-switch-when="LOADED", name="order.form", novalidate)
             .row
               .col-xs-12
                 .form-group
                   label
-                    span Enter a name
-                    small.text-muted (optional)
+                    span #{ __("Enter a name") }
+                    small.text-muted (#{ __("optional") })
                   input.form-control(
                     type="text"
                     name="ext-id"
@@ -29,7 +29,7 @@ ui-view
             .row
               .col-xs-12
                 .form-group
-                  label Choose a priority
+                  label #{ __("Choose a priority") }
                   select.form-control(
                     name="priority"
                     ng-model="orderVM.orderInfo.priority"
@@ -39,36 +39,36 @@ ui-view
               .col-xs-12
                 .form-group
                   label
-                    span Enter a description
-                    small.text-muted (optional)
+                    span #{ __("Enter a description") }
+                    small.text-muted (#{ __("optional") })
                   textarea.form-control(rows="3", name="description", ng-model="orderVM.orderInfo.description")
             .row
               .col-xs-12
                 .form-group
                   label
-                    span Enter a note
-                    small.text-muted (optional)
+                    span #{ __("Enter a note") }
+                    small.text-muted (#{ __("optional") })
                   textarea.form-control(rows="3", name="note", ng-model="orderVM.note.text")
             .row
               .col-xs-12
                 .form-group(ng-controller="BillingAccountSearchCtrl as searchVM")
                   label
-                    span Choose a shipping address
+                    span #{ __("Choose a shipping address") }
                   input(type="hidden" ng-model="orderVM.billingAccount.id" required)
                   .alert.alert-danger.text-center(ng-if="searchVM.status === 'ERROR'")
                     span {{ searchVM.errorMessage }}
                   .alert.alert-warning.text-center(ng-if="searchVM.status === 'LOADED' && !searchVM.list.length")
-                    span You should first create at least a shipping address in order to checkout an order. 
-                    a(ui-sref="settings.contact.shipping") Click here.
+                    span #{ __("You should first create at least a shipping address in order to checkout an order.  ") }
+                    a(ui-sref="settings.contact.shipping") #{ __("Click here.") }
                   .container-spinner(ng-if="searchVM.status === 'LOADING'")
                     span.fa.fa-spinner.fa-spin.fa-2x
                   .table-responsive(ng-if="searchVM.status === 'LOADED' && searchVM.list.length")
                     table.table.table-bordered.table-hover.table-selectable(ng-init="orderVM.setBillingAccount(searchVM.list[0])")
                       thead
                         tr
-                          th Email address
-                          th Postal address
-                          th Telephone number
+                          th #{ __("Email address") }
+                          th #{ __("Postal address") }
+                          th #{ __("Telephone number") }
                       tbody
                         tr(ng-repeat="billingAccount in searchVM.list" ng-click="orderVM.setBillingAccount(billingAccount)" ng-class="{ 'active': orderVM.billingAccount.id == billingAccount.id }")
                           td {{ billingAccount.getEmailAddress().toString() }}
@@ -78,7 +78,7 @@ ui-view
             .row
               .col-xs-12
                 .h4.text-dark-secondary
-                  strong Shopping cart
+                  strong #{ __("Shopping Cart") }
                 .panel-group(id="order-item-list")
                   .panel.panel-default.z-depth-1(ng-repeat="item in orderVM.orderInfo.orderItem")
                     .panel-heading
@@ -90,44 +90,44 @@ ui-view
                     .panel-collapse.collapse(id="order-item-{{ item.id }}")
                       .panel-body
                         .h4.text-dark-secondary
-                          strong Overview
+                          strong #{ __("Overview") }
                         .table-responsive
                           table.table.table-bordered
                             thead
                               tr
-                                th Quantity
+                                th #{ __("Quantity") }
                                 th Href
                             tbody
                               tr
                                 td.text-dark-secondary x 1
                                 td.text-dark-secondary {{ item.productOffering.href }}
                         .h4.text-dark-secondary
-                          strong Appointment
+                          strong #{ __("Appointment") }
                         .form-group
                           input.form-control(
                             type="url"
                             ng-model="item.appointment"
                           )
                         .h4.text-dark-secondary(ng-if="item.product.productPrice.length")
-                          strong Price plan
+                          strong #{ __("Price plan") }
                         .table-responsive(ng-if="item.product.productPrice.length")
                           table.table.table-bordered
                             thead
                               tr
-                                th Name
-                                th Price
+                                th #{ __("Name") }
+                                th #{ __("Price") }
                             tbody
                               tr
                                 td.text-dark-secondary {{ item.product.productPrice[0].name }}
                                 td.text-dark-secondary {{ orderVM.formatPriceplan(item) }}
                         .h4.text-dark-secondary(ng-if="item.product.productCharacteristic.length")
-                          strong Characteristics
+                          strong #{ __("Characteristics") }
                         .table-responsive(ng-if="item.product.productCharacteristic.length")
                           table.table.table-bordered
                             thead
                               tr
-                                th Name
-                                th Value
+                                th #{ __("Name") }
+                                th #{ __("Value") }
                             tbody
                               tr(ng-repeat="char in item.product.productCharacteristic")
                                 td.text-dark-secondary {{ char.name }}
@@ -135,7 +135,7 @@ ui-view
             .form-group.text-right
               a.btn.btn-success.z-depth-1(ng-disabled="!order.form.$valid || orderVM.createOrderStatus == 'LOADING'", ng-click="orderVM.makeOrder()")
                 span.item-icon.fa(ng-class="orderVM.createOrderStatus === 'LOADING' ? ['fa-spinner', 'fa-spin'] : 'fa-share'")
-                span.item-text Checkout
+                span.item-text #{ __("Checkout") }
           div(ng-switch-when="ERROR")
             .alert.alert-danger.text-center {{ orderVM.error }}
           div(ng-switch-default)

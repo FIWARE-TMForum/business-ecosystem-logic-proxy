@@ -5,11 +5,11 @@
       .btn-group.z-depth-1
         a.btn.btn-default(ng-click="searchVM.showFilters()")
           span.item-icon.fa.fa-sliders
-          span.item-text.hidden-xs Filters
+          span.item-text.hidden-xs #{ __("Filters") }
       .btn-group.z-depth-1(ng-show="user.isSeller()")
         a.btn.btn-default(ui-sref="inventory.productOrder({ role: 'Customer' })", ui-sref-active="active")
           span.item-icon.fa.fa-send
-          span.item-text.hidden-xs Requested
+          span.item-text.hidden-xs #{ __("Requested") }
         a.btn.btn-default(ui-sref="inventory.productOrder({ role: 'Seller' })", ui-sref-active="active")
           span.item-icon.fa.fa-envelope
-          span.item-text.hidden-xs Received
+          span.item-text.hidden-xs #{ __("Received") }

@@ -1,15 +1,15 @@
 .panel.panel-default.z-depth-1
   .panel-body
     .h4.text-dark-secondary
-      strong Profile
+      strong #{ __("Profile") }
     hr
     form(name="updateVM.formOrg", novalidate)
       .a(ng-if="updateVM.hasAdminRole()")
-        .alert.alert-info This information is public so it may be viewed by anyone.
+        .alert.alert-info #{ __("This information is public so it may be viewed by anyone.") }
         .row
           .col-sm-6
             .form-group(ng-class="{ 'has-error': updateVM.hasFieldError(updateVM.formOrg.name) }")
-              label Trading Name
+              label #{ __("Trading Name") }
               input.form-control(
                 type="text"
                 name="name"
@@ -21,16 +21,16 @@
                 ng-messages="updateVM.formOrg.name.$error"
                 ng-show="updateVM.hasFieldError(updateVM.formOrg.name)"
               )
-                span(ng-message="required") This field is required.
-                span(ng-message="maxlength") This field must not exceed 100 chars.
+                span(ng-message="required") #{ __("This field is required.") }
+                span(ng-message="maxlength") #{ __("This field must not exceed %s chars.", "100") }
           .col-sm-6
             .form-group(ng-class="{ 'has-error': updateVM.hasFieldError(updateVM.formOrg.type) }")
-              label Type
+              label #{ __("Type") }
               input.form-control(
                 type="text"
                 name="type"
                 ng-model="updateVM.data.type"
-                placeholder="Company"
+                placeholder="#{ __("Company") }"
               )
               .help-block(
                 ng-show="updateVM.hasFieldError(updateVM.formOrg.type)"
@@ -41,7 +41,7 @@
         .row
           .col-sm-6
             .form-group(ng-class="{ 'has-error': updateVM.hasFieldError(updateVM.formOrg.organizationidentification.identificationId) }")
-              label CIF or Organization ID
+              label #{ __("CIF or Organization ID") }
                 input.form-control(
                   type="text"
                   name="organizationIdentification.identificationId"
@@ -52,12 +52,12 @@
                 )
           .col-sm-6
             .form-group(ng-class="{ 'has-error': updateVM.hasFieldError(updateVM.formOrg.organizationIdentification.type) }")
-              label Type
+              label #{ __("Type") }
                 input.form-control(
                   type="text"
                   name="organizationIdentification.type"
                   ng-model="updateVM.data.organizationIdentification.type"
-                  placeholder="Type of identification"
+                  placeholder="#{ __("Type of identification") }"
                 )
                 .help-block(
                   ng-show="updateVM.hasFieldError(updateVM.formOrg.organizationIdentification.type)"
@@ -65,7 +65,7 @@
         .row
           .col-sm-6
             .form-group(ng-class="{ 'has-error': updateVM.hasFieldError(updateVM.formOrg.organizationIdentification.issuingAuthority) }")
-              label Issuing Authority
+              label #{ __("Issuing Authority") }
                 input.form-control(
                   type="text"
                   name="organizationIdentification.issuingAuthority"
@@ -76,7 +76,7 @@
                 )
           .col-sm-6
             .form-group(ng-class="{ 'has-error': updateVM.hasFieldError(updateVM.formOrg.organizationIdentification.issuingDate) }")
-              label Issuing Date
+              label #{ __("Issuing Date") }
                 input.form-control(
                   type="date"
                   name="organizationIdentification.issuingDate"
@@ -93,6 +93,6 @@
             ng-disabled="!updateVM.formOrg.$valid || updateVM.update.status === updateVM.STATUS.PENDING"
           )
             span.item-icon.fa.fa-spin.fa-spinner(ng-if="updateVM.update.status === updateVM.STATUS.PENDING")
-            span.item-text Update
+            span.item-text #{ __("Update") }
       .a(ng-if="!updateVM.hasAdminRole()")
-        .alert.alert-warning You are not allowed to change this organization info since you don't have an Admin role.
+        .alert.alert-warning #{ __("You are not allowed to change this organization info since you don't have an Admin role.") }
