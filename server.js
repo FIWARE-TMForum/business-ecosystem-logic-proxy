@@ -11,7 +11,6 @@ var authorizeService = require('./controllers/authorizeService').authorizeServic
     i18n = require('i18n-2'),
     indexes = require('./lib/indexes'),
     inventorySubscription = require('./lib/inventory_subscription'),
-    imports = require('./public/imports').imports,
     logger = require('./lib/logger').logger.getLogger("Server"),
     mongoose = require('mongoose'),
     onFinished = require('on-finished'),
@@ -297,6 +296,9 @@ app.post(config.authorizeServicePath + '/apiKeys/:apiKey/commit', authorizeServi
 /////////////////////////////// PORTAL //////////////////////////////
 /////////////////////////////////////////////////////////////////////
 
+// Load active file imports
+var importPath = config.theme || !debug ? './public/static/imports' : './public/imports' ;
+var imports = require(importPath).imports;
 
 var renderTemplate = function(req, res, viewName) {
 
