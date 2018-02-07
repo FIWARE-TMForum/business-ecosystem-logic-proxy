@@ -12,5 +12,5 @@
         ng-messages="form.emailAddress.$error"
         ng-show="vm.hasFieldError(form.emailAddress)"
       )
-        span(ng-message="required") This field is required.
-        span(ng-message="email") This field must be a valid email.
+        span(ng-message="required") #{ __("This field is required.") }
+        span(ng-message="email") #{ __("This field must be a valid email.") }

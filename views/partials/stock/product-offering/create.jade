@@ -5,7 +5,7 @@
     .panel.panel-default.z-depth-1
       .panel-body
         .h4
-          strong New offering
+          strong #{ __("New offering") }
         hr
         .row
           .col-xs-12(ng-if="createVM.status === createVM.STATUS.PENDING")
@@ -26,5 +26,5 @@
                 .row(ng-repeat="step in createVM.stepList", ng-show="createForm.stepIndex == $index")
                   .col-xs-12
                     .h4.text-dark-secondary
-                      strong Step {{ $index + 1}}: {{ step.title }}
+                      strong #{ __("Step") } {{ $index + 1}}: {{ step.title }}
                     ng-include(src="step.templateUrl")

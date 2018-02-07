@@ -90,6 +90,36 @@ const minimizejs = function () {
     });
 };
 
+const mergeLocales = function() {
+    // Check if the plugin includes locales
+    let localesDir = './themes/' + config.theme + '/locales'
+    if (fs.existsSync(localesDir) && fs.statSync(localesDir).isDirectory()) {
+        // Parse and merge files
+        fs.readdirSync(localesDir).map(f => {
+            let locale = path.join('./default_locales', f);
+            let destLocale = path.join('./locales', f).replace('json', 'js');
+            let localeJson;
+
+            if (fs.existsSync(locale)) {
+                // There is an existing locale, merge with the theme
+                let themeLocaleJson = require('./' + path.join(localesDir, f));
+                localeJson = require('./' + locale);
+
+                Object.assign(localeJson, themeLocaleJson);
+
+            } else {
+                // There is not a locale, save it
+                localeJson = require('./' + path.join(localesDir, f));
+            }
+            // Write new locale
+            fs.open(destLocale, 'w', (err, fd) => {
+                fs.writeSync(fd, JSON.stringify(localeJson));
+                console.log('Locale ' + f + ' updated');
+            });
+        });
+    }
+}
+
 // Check if a theme has been provided or the system is in production
 if (!config.theme && debug) {
     console.log('The default theme is configured and debug mode is active, nothing to do');
@@ -110,6 +140,7 @@ mergedirs.default('./public', './static/public', 'overwrite');
 if (config.theme) {
     // If a theme has been provided merge it with default files
     loadTheme();
+    mergeLocales();
 }
 
 if (!debug) {

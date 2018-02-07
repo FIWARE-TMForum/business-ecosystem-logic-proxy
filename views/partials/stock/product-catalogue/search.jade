@@ -11,7 +11,7 @@ ui-view
     .col-xs-12(ng-if="searchVM.list.status === searchVM.STATUS.LOADED" ng-switch="searchVM.list.length")
       div(ng-switch-when="0")
         .alert.alert-info.text-center
-          span No catalogs found.
+          span #{ __("No catalogs found.") }
       div(ng-switch-default)
         include ./search-list.jade
     .col-xs-12

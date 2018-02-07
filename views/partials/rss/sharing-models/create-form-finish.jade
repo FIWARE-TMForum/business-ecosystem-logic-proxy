@@ -1,16 +1,16 @@
 form(name="step.form", novalidate)
   .row(ng-if="createVM.getTotalPercentage() != 100")
     .col-sm-12
-      .alert.alert-danger.text-center The total percentage must be equal to 100% please review you provider and stakeholders values
+      .alert.alert-danger.text-center #{ __("The total percentage must be equal to 100% please review you provider and stakeholders values") }
 
   .h5.text-dark-secondary
-    strong General
+    strong #{ __("General") }
   .row
     .col-sm-12
       .form-group(
         ng-class="{ 'has-error': createForm.hasError(step.form.productClass) }"
       )
-        label Product class
+        label #{ __("Product class") }
         input.form-control(
           type="text"
           name="productClass"
@@ -21,7 +21,7 @@ form(name="step.form", novalidate)
   .row
     .col-sm-6
       .form-group
-        label Platform percentage
+        label #{ __("Platform percentage") }
         .input-group
           input.form-control(
           type="text"
@@ -33,7 +33,7 @@ form(name="step.form", novalidate)
       .form-group(
       ng-class="{ 'has-error' : createForm.hasError(step.form.providerValue) }"
       )
-        label Provider percentage
+        label #{ __("Provider percentage") }
         .input-group
           input.form-control(
           type="number"
@@ -45,20 +45,20 @@ form(name="step.form", novalidate)
           span.input-group-addon %
 
   .h5.text-dark-secondary
-    strong Stakeholders
+    strong #{ __("Stakeholders") }
   .row
     .col-sm-12
       table.table.table-bordered(ng-if="createVM.data.stakeholders.length")
         thead
           tr
-            th User
-            th Percentage
+            th #{ __("User") }
+            th #{ __("Percentage") }
         tbody
           tr(ng-repeat="stakeholder in createVM.data.stakeholders")
             td {{ stakeholder.stakeholderId }}
             td {{ stakeholder.modelValue }} %
       .alert.alert-info.text-center(ng-if="!createVM.data.stakeholders.length")
-        | No stakeholders included.
+        | #{ __("No stakeholders included.") }
 
   .row
     .col-sm-12
@@ -67,4 +67,4 @@ form(name="step.form", novalidate)
 
   .form-group.text-right
     a.btn.btn-warning(ng-click="createVM.create()", ng-disabled="!step.form.$valid || createVM.getTotalPercentage() != 100")
-      span.item-text Create
+      span.item-text #{ __("Create") }

@@ -5,10 +5,10 @@ form(name="step.form", novalidate)
       table.table.table-bordered.table-hover.table-selectable
         thead
           tr
-            th Product Class
-            th Platform Percentage
-            th Provider Percentage
-            th Nº Stakeholders
+            th #{ __("Product Class") }
+            th #{ __("Platform Percentage") }
+            th #{ __("Provider Percentage") }
+            th Nº #{ __("Stakeholders") }
         tbody
           tr(ng-repeat="rsModel in searchVM.list", ng-class="{ active: createVM.data.serviceCandidate.id == rsModel.productClass }", ng-click="createVM.setSharingModel(rsModel)")
             td
@@ -23,4 +23,4 @@ form(name="step.form", novalidate)
       pager(controller="searchVM", size="12", max="12")
   .form-group.text-right
     a.btn.btn-default.z-depth-1(ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])", ng-disabled="!step.form.$valid")
-      span.item-text Next
+      span.item-text #{ __("Next") }

@@ -1,7 +1,7 @@
 .panel.panel-default(ng-repeat="orderItem in detailVM.item.orderItem")
   .panel-heading
     .panel-heading-wrapper
-      h3.panel-title Product {{ $index + 1 }}
+      h3.panel-title #{ __("Product") } {{ $index + 1 }}
       .panel-actions
         a.btn.btn-sm.btn-default(ng-if="detailVM.can('send', orderItem)" bs-tooltip title="Set as sent" ng-click="detailVM.sendProduct($index)" ng-disabled="detailVM.sendProduct.status === detailVM.STATUS.PENDING")
           span.fa(ng-class="detailVM.sendProduct.status === detailVM.STATUS.PENDING ? ['fa-circle-o-notch', 'fa-spin'] : 'fa-truck'")
@@ -16,16 +16,16 @@
           img(no-image, ng-src="{{ orderItem.productOffering.getPicture() }}")
       .product-body
         dl
-          dt Offering
+          dt #{ __("Offering") }
           dd
             a(ui-sref="offering.detail({ offeringId: orderItem.productOffering.id })" ui-sref-opts="{ inherit: false }") {{ orderItem.productOffering.name }}
-          dt Status
+          dt #{ __("Status") }
           dd {{ orderItem.state }}
-          dt Vendor name
+          dt #{ __("Vendor name") }
           dd {{ detailVM.getVendorName(orderItem) }}
-          dt Characteristics
+          dt #{ __("Characteristics") }
           dd
-            span(ng-if="!orderItem.product.productCharacteristic.length") No data provided
+            span(ng-if="!orderItem.product.productCharacteristic.length") #{ __("No data provided.") }
             dl.dl-horizontal(ng-repeat="characteristic in orderItem.product.productCharacteristic")
               dt {{ characteristic.name }}
               dd {{ characteristic.value }}

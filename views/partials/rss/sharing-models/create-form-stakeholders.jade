@@ -1,9 +1,9 @@
 table.table.table-bordered(ng-if="createVM.data.stakeholders.length")
   thead
     tr
-      th User
-      th Percentage
-      th Delete
+      th #{ __("User") }
+      th #{ __("Percentage") }
+      th #{ __("Delete") }
   tbody
     tr(ng-repeat="stakeholder in createVM.data.stakeholders")
       td {{ stakeholder.stakeholderId }}
@@ -12,20 +12,20 @@ table.table.table-bordered(ng-if="createVM.data.stakeholders.length")
         a.btn.btn-sm.btn-icon.btn-danger(ng-click="createVM.removeStakeholder($index)")
           span.item-icon.fa.fa-trash
 .alert.alert-info.text-center(ng-if="!createVM.data.stakeholders.length")
-  | No stakeholders included.
+  | #{ __("No stakeholders included.") }
 
 .col-xs-12(ng-switch="createVM.providers.status")
   div(ng-switch-when="LOADED")
     .form-group.text-left
       a.btn.btn-default.z-depth-1(ng-click="createVM.stakeholderEnabled = true", ng-if="!createVM.stakeholderEnabled && createVM.providers.length")
         span.item-icon.fa.fa-plus
-        span.item-text New stakeholder
+        span.item-text #{ __("New stakeholder") }
 
     form(name="step.stakeholdersForm", novalidate, ng-if="createVM.stakeholderEnabled")
       .row
         .col-md-8
           .form-group
-            label Select stakeholder
+            label #{ __("Select stakeholder") }
             select.form-control(
               ng-options="provider as provider.providerName for provider in createVM.providers"
               ng-model="createVM.currentStakeholder"
@@ -34,7 +34,7 @@ table.table.table-bordered(ng-if="createVM.data.stakeholders.length")
           .form-group(
           ng-class="{ 'has-error' : createForm.hasError(step.stakeholdersForm.stValue) }"
           )
-            label Stakeholder percentage
+            label #{ __("Stakeholder percentage") }
             .input-group
               input.form-control(
                 type="number"
@@ -50,18 +50,18 @@ table.table.table-bordered(ng-if="createVM.data.stakeholders.length")
               ng-messages="step.stakeholdersForm.stValue.$error"
               ng-show="createForm.hasError(step.stakeholdersForm.stValue)"
             )
-              span(ng-message="required") This field is required.
-              span(ng-message="min") This field must not be a negative number.
-              span(ng-message="max") This field must not be higher than 100.
-              span(ng-message="number") This field must be a valid number.
+              span(ng-message="required") #{ __("This field is required.") }
+              span(ng-message="min") #{ __("This field must not be a negative number.") }
+              span(ng-message="max") #{ __("This field must not be higher than 100.") }
+              span(ng-message="number") #{ __("This field must be a valid number.") }
 
     .row
       .col-sm-6
         a.btn.btn-warning.z-depth-1(ng-disabled="!step.stakeholdersForm.$valid", ng-click="createVM.addStakeholder() && createForm.resetForm(step.stakeholdersForm)", ng-if="createVM.stakeholderEnabled")
           span.item-icon.fa.fa-save
-          span.item-text Create
+          span.item-text #{ __("Create") }
         a.btn.btn-danger.z-depth-1(style="margin-left: 10px;" ng-click="createVM.cancelStakeholder() && createForm.resetForm(step.stakeholdersForm)", ng-if="createVM.stakeholderEnabled")
-          span.item-text Cancel
+          span.item-text #{ __("Cancel") }
 
   div(ng-switch-when="ERROR")
     .alert.alert-danger.text-center {{ createVM.providers.error }}
@@ -74,4 +74,4 @@ form(name="step.form", novalidate)
 
 .form-group.text-right
   a.btn.btn-default.z-depth-1(ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])", ng-disabled="!step.form.$valid")
-    span.item-text Next
+    span.item-text #{ __("Next") }

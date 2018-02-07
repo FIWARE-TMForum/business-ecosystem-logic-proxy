@@ -3,11 +3,11 @@
     .modal-content
       .modal-header
         .h4
-          strong Search filters
+          strong #{ __("Search filters") }
       .modal-body
         .form-group.no-user-select(ng-show="filterVM.exists('status')")
           .h4
-            strong Status
+            strong #{ __("Status") }
           hr
           .item-checkbox(ng-repeat="(key, value) in filterVM.getStatusStates()")
             label.checkbox
@@ -17,64 +17,64 @@
               | {{ value }}
         .form-group.no-user-select(ng-show="filterVM.exists('role')")
           .h4
-            strong Role
+            strong #{ __("Role") }
           hr
           .item-radio
             label.radio
               .track
                 input(type="radio", ng-model="filterVM.filters.role")
                 i.fa.fa-lg
-              | All
+              | #{ __("All") }
           .item-radio
             label.radio
               .track
                 input(type="radio", ng-model="filterVM.filters.role", value="Owner")
                 i.fa.fa-lg
-              | Owner
+              | #{ __("Owner") }
           .item-radio
             label.radio
               .track
                 input(type="radio", ng-model="filterVM.filters.role", value="Seller")
                 i.fa.fa-lg
-              | Seller
+              | #{ __("Seller") }
         .form-group.no-user-select(ng-show="filterVM.exists('type')")
           .h4
-            strong Type
+            strong #{ __("Type") }
           hr
           .item-radio
             label.radio
               .track
                 input(type="radio", ng-model="filterVM.filters.type")
                 i.fa.fa-lg
-              | All
+              | #{ __("All") }
           .item-radio
             label.radio
               .track
                 input(type="radio", ng-model="filterVM.filters.type", value="Single")
                 i.fa.fa-lg
-              | Single
+              | #{ __("Single") }
           .item-radio
             label.radio
               .track
                 input(type="radio", ng-model="filterVM.filters.type", value="Bundle")
                 i.fa.fa-lg
-              | Bundle
+              | #{ __("Bundle") }
         .form-group.no-user-select(ng-show="filterVM.exists('sort')")
           .h4
-            strong Sort By
+            strong #{ __("Sort By") }
           hr
           .item-radio
             label.radio
               .track
                 input(type="radio", ng-model="filterVM.filters.sort")
                 i.fa.fa-lg
-              | Last Updated
+              | #{ __("Last Updated") }
           .item-radio
             label.radio
               .track
                 input(type="radio", ng-model="filterVM.filters.sort", value="name")
                 i.fa.fa-lg
-              | Name
+              | #{ __("Name") }
       .modal-footer
         a.btn.btn-default.z-depth-1(data-dismiss="modal")
-          span.item-text Close
+          span.item-text #{ __("Close") }

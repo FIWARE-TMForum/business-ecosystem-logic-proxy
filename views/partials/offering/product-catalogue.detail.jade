@@ -7,4 +7,4 @@
         .form-group
           p.text-right.text-dark-secondary
             time(am-time-ago="detailVM.item.lastUpdate")
-          p.text-dark-secondary {{ detailVM.item.description ? detailVM.item.description : 'No description provided.' }}
+          p.text-dark-secondary {{ detailVM.item.description ? detailVM.item.description : '#{ __("No description provided.") }' }}

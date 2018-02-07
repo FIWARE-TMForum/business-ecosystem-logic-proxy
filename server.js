@@ -8,9 +8,9 @@ var authorizeService = require('./controllers/authorizeService').authorizeServic
     express = require('express'),
     fs = require('fs'),
     https = require('https'),
+    i18n = require('i18n-2'),
     indexes = require('./lib/indexes'),
     inventorySubscription = require('./lib/inventory_subscription'),
-    imports = require('./public/imports').imports,
     logger = require('./lib/logger').logger.getLogger("Server"),
     mongoose = require('mongoose'),
     onFinished = require('on-finished'),
@@ -117,6 +117,11 @@ mongoose.connection.on('reconnected', function() {
 var app = express();
 app.set('port', PORT);
 
+// Attach i18n to express
+i18n.expressBind(app, {
+    locales: ['en', 'es']
+});
+
 app.use(function(req, res, next){
     trycatch(function(){
         next();
@@ -139,6 +144,11 @@ app.use(bodyParser.text({
     type: '*/*',
     limit: '50mb'
 }));
+
+app.use(function(req, res, next) {
+    req.i18n.setLocaleFromCookie();
+    next();
+});
 
 // Logging Handler
 app.use(function(req, res, next) {
@@ -286,6 +296,9 @@ app.post(config.authorizeServicePath + '/apiKeys/:apiKey/commit', authorizeServi
 /////////////////////////////// PORTAL //////////////////////////////
 /////////////////////////////////////////////////////////////////////
 
+// Load active file imports
+var importPath = config.theme || !debug ? './static/public/imports' : './public/imports' ;
+var imports = require(importPath).imports;
 
 var renderTemplate = function(req, res, viewName) {
 

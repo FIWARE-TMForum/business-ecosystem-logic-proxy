@@ -2,7 +2,7 @@
   .panel.panel-default.item-product.z-depth-1(ng-repeat="product in searchVM.list")
     a.thumbnail.thumbnail-lg(ui-sref="stock.product.update({ productId: product.id })", ui-sref-opts="{ inherit: false }")
       span.label(class="label-{{ product.isBundle ? 'bundle' : 'single' }}")
-        | {{ product.isBundle ? product.bundledProductSpecification.length + ' bundled' : 'Single' }}
+        | {{ product.isBundle ? product.bundledProductSpecification.length + ' #{ __("bundled") }' : '#{ __("Single") }' }}
       img(no-image, ng-src="{{ product.getPicture() }}")
     .panel-body
       .h4.text-ellipsis
@@ -12,7 +12,7 @@
         span.pull-right
           time(am-time-ago="product.lastUpdate")
         p v{{ product.version }}
-        p.item-description {{ product.description ? product.description : 'No description provided.' }}
+        p.item-description {{ product.description ? product.description : '#{ __("No description provided.") }' }}
       .status-group
         .status-item.active(class="status-{{ product.lifecycleStatus | lowercase }}")
           span.item-icon

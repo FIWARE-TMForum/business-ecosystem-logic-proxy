@@ -2,7 +2,7 @@ form(name="form" novalidate)
   .row
     .col-md-8
       .form-group(ng-class="{ 'has-error': vm.hasFieldError(form.name) }")
-        label Enter a name
+        label #{ __("Enter a name") }
         input.form-control(
           type="text"
           name="name"
@@ -11,12 +11,12 @@ form(name="form" novalidate)
           ng-maxlength="30"
         )
         .help-block(ng-messages="form.name.$error" ng-show="vm.hasFieldError(form.name)")
-          span(ng-message="required") This field is required.
-          span(ng-message="maxlength") This field must not exceed 30 chars.
-          span(ng-message="conflictName") This name is being used in other price plan
+          span(ng-message="required") #{ __("This field is required.") }
+          span(ng-message="maxlength") #{ __("This field must not exceed %s chars.", "30") }
+          span(ng-message="conflictName") #{ __("This name is being used in other price plan") }
     .col-md-4
       .form-group
-        label Choose a type
+        label #{ __("Choose a type") }
         .dropdown
           a.btn.btn-block.btn-default.dropdown-toggle.z-depth-0(data-toggle="dropdown")
             span.item-text {{ pricePlan.priceType | uppercase }}
@@ -27,7 +27,7 @@ form(name="form" novalidate)
   .row
     .col-md-8
       .form-group(ng-class="{ 'has-error': vm.hasFieldError(form.taxIncludedAmount) }")
-        label Enter a price
+        label #{ __("Enter a price") }
         .input-group
           input.form-control(
             type="number"
@@ -44,12 +44,12 @@ form(name="form" novalidate)
               a.dropdown-menu-item(ng-repeat="(key, value) in vm.CURRENCY_CODES" ng-click="pricePlan.price.setCurrencyCode(key)")
                 span.item-text ({{ key }}) {{ value | uppercase }}
         .help-block(ng-messages="form.taxIncludedAmount.$error" ng-show="vm.hasFieldError(form.taxIncludedAmount)")
-          span(ng-message="required") This field is required.
-          span(ng-message="min") This field must be a greater than 0.
-          span(ng-message="number") This field must be a valid number.
+          span(ng-message="required") #{ __("This field is required.") }
+          span(ng-message="min") #{ __("This field must be a greater than 0.") }
+          span(ng-message="number") #{ __("This field must be a valid number.") }
     .col-md-4(ng-if="pricePlan.priceType === vm.PRICES.USAGE")
       .form-group(ng-class="{ 'has-error': vm.hasFieldError(form.unitOfMeasure) }")
-        label Enter a unit
+        label #{ __("Enter a unit") }
         .input-group
           span.input-group-addon /
           input.form-control(
@@ -60,11 +60,11 @@ form(name="form" novalidate)
             ng-maxlength="20"
           )
         .help-block(ng-messages="form.unitOfMeasure.$error" ng-show="vm.hasFieldError(form.unitOfMeasure)")
-         span(ng-message="required") This field is required.
-         span(ng-message="maxlength") This field must not exceed 20 chars.
+         span(ng-message="required") #{ __("This field is required.") }
+         span(ng-message="maxlength") #{ __("This field must not exceed %s chars.", "20") }
     .col-md-4(ng-if="pricePlan.priceType === vm.PRICES.RECURRING")
       .form-group
-        label Choose a charge period
+        label #{ __("Choose a charge period") }
         .input-group
           span.input-group-addon /
           select.form-control(
@@ -76,6 +76,6 @@ form(name="form" novalidate)
     .col-md-12
       .form-group
         label
-          span Enter a description
-          small.text-muted (optional)
+          span #{ __("Enter a description") }
+          small.text-muted (#{ __("optional") })
         textarea.form-control(name="description" rows="2" ng-model="pricePlan.description")

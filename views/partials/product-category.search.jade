@@ -8,11 +8,11 @@
         span.item-text {{ category.name }}
       a.dropdown-menu-item(ui-sref="{ categoryId: null }")
         span.item-icon.fa.fa-tag
-        span.item-text All categories
+        span.item-text #{ __("All categories") }
   .btn-group
     a.btn.btn-default(ui-sref="{ categoryId: searchVM.category != null ? searchVM.category.id : null }", ui-sref-active="active")
       span.item-icon.fa.fa-tag
-      span.item-text {{ searchVM.category != null ? searchVM.category.name : 'All categories' }}
+      span.item-text {{ searchVM.category != null ? searchVM.category.name : '#{ __("All categories") }' }}
     a.btn.btn-default.dropdown-toggle(data-toggle="dropdown", ng-if="(searchVM.list.status === 'LOADED' && searchVM.list.length > 0) || searchVM.list.status === 'LOADING'")
       span.item-icon.fa(ng-class="searchVM.list.status === 'LOADED' ? 'fa-caret-down' : ['fa-spinner', 'fa-spin']")
     .dropdown-menu.z-depth-3(ng-if="searchVM.list.length")

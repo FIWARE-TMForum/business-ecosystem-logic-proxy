@@ -2,12 +2,12 @@
   table.table.table-bordered.table-hover
     thead
       tr
-        th Status
-        th Name
-        th ID
-        th Brand
-        th Type
-        th Updated
+        th #{ __("Status") }
+        th #{ __("Name") }
+        th #{ __("ID") }
+        th #{ __("Brand") }
+        th #{ __("Type") }
+        th #{ __("Last Updated") }
     tbody
       tr(ng-repeat="product in searchVM.list")
         td
@@ -20,6 +20,6 @@
         td {{ product.brand }}
         td
           span.label(ng-class="product.isBundle ? 'label-bundle' : 'label-single'")
-            | {{ product.isBundle ? 'Bundle' : 'Single' }}
+            | {{ product.isBundle ? '#{ __("Bundle") }' : '#{ __("Single") }' }}
         td
           time(am-time-ago="product.lastUpdate")

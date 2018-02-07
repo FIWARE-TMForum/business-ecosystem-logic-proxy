@@ -5,11 +5,11 @@
       .btn-group.pull-right
         a.btn.btn-default.z-depth-1(ng-click="searchVM.showFilters()")
           span.item-icon.fa.fa-sliders
-          span.item-text.hidden-xs Filters
+          span.item-text.hidden-xs #{ __("Filters") }
   .col-xs-12(ng-switch="searchVM.list.status")
     div(ng-switch-when="LOADED", ng-switch="searchVM.list.length")
       div(ng-switch-when="0")
-        .alert.alert-info.text-center No offerings found.
+        .alert.alert-info.text-center #{ __("No offerings found.") }
       div(ng-switch-default)
         include ../product-offering/search-list.jade
     div(ng-switch-when="ERROR")
