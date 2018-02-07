@@ -5,7 +5,7 @@
     .btn-toolbar.toolbar-container
       include ../product-category.search.jade
       .btn-group.z-depth-1.search-bar
-        input.form-control(ng-keyup="searchVM.handleEnterKeyUp($event)", ng-init="searchVM.initializeInput()", ng-model="searchVM.searchInput", type="text", placeholder="#{ __("Search") }...", id="searchparams")
+        input.form-control(ng-keyup="searchVM.handleEnterKeyUp($event)", ng-init="searchVM.initializeInput()", ng-model="searchVM.searchInput", type="text", placeholder="#{ __('Search') }...", id="searchparams")
       .btn-group.z-depth-1.search-bar
         a.btn.btn-default(ui-sref="offering({ body: searchVM.getSearchInputContent() })", id="searchbutton")
           span.item-icon.fa.fa-search

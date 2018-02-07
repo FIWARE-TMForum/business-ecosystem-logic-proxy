@@ -4,7 +4,7 @@ form(name="step.form", novalidate)
       .col-sm-12
         .input-group
           input.form-control(ng-keyup="searchVM.handleEnterKeyUp($event)",
-          ng-model="searchVM.searchInput", type="text", placeholder="#{ __("Search") }...")
+          ng-model="searchVM.searchInput", type="text", placeholder="#{ __('Search') }...")
 
           .input-group-btn
             a.btn.btn-default.z-depth-0(ng-click="searchVM.launchSearch()", id="formSearch")

@@ -30,7 +30,7 @@
                 type="text"
                 name="type"
                 ng-model="updateVM.data.type"
-                placeholder="#{ __("Company") }"
+                placeholder="#{ __('Company') }"
               )
               .help-block(
                 ng-show="updateVM.hasFieldError(updateVM.formOrg.type)"
@@ -57,7 +57,7 @@
                   type="text"
                   name="organizationIdentification.type"
                   ng-model="updateVM.data.organizationIdentification.type"
-                  placeholder="#{ __("Type of identification") }"
+                  placeholder="#{ __('Type of identification') }"
                 )
                 .help-block(
                   ng-show="updateVM.hasFieldError(updateVM.formOrg.organizationIdentification.type)"
@@ -86,7 +86,7 @@
                 .help-block(
                   ng-show="updateVM.hasFieldError(updateVM.formOrg.organizationIdentification.issuingDate)"
                 )
-                
+
         .form-group.text-right
           a.btn.btn-success(
             ng-click="updateVM.update()"
