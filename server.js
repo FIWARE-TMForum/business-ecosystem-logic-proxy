@@ -297,7 +297,7 @@ app.post(config.authorizeServicePath + '/apiKeys/:apiKey/commit', authorizeServi
 /////////////////////////////////////////////////////////////////////
 
 // Load active file imports
-var importPath = config.theme || !debug ? './public/static/imports' : './public/imports' ;
+var importPath = config.theme || !debug ? './static/public/imports' : './public/imports' ;
 var imports = require(importPath).imports;
 
 var renderTemplate = function(req, res, viewName) {
