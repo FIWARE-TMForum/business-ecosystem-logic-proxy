@@ -20,6 +20,7 @@ RUN wget https://nodejs.org/dist/v6.9.1/node-v6.9.1-linux-x64.tar.xz && \
 VOLUME /business-ecosystem-logic-proxy/indexes
 VOLUME /business-ecosystem-logic-proxy/themes
 VOLUME /business-ecosystem-logic-proxy/static
+VOLUME /business-ecosystem-logic-proxy/locales
 
 RUN export PATH=$PATH:/business-ecosystem-logic-proxy/node-v6.9.1-linux-x64/bin && \
     ./install.sh && \
