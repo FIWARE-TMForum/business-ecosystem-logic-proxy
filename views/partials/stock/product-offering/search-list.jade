@@ -19,6 +19,6 @@
           a(ui-sref="stock.product.update({ productId: offering.productSpecification.id })") {{ offering.productSpecification.name }}
         td
           span.label(ng-class="offering.isBundle ? 'label-bundle' : 'label-single'")
-            | {{ offering.isBundle ? '#{ __("Bundle") }' : '#{ __("Single") } }}
+            | {{ offering.isBundle ? '#{ __("Bundle") }' : '#{ __("Single") }' }}
         td
           time(am-time-ago="offering.lastUpdate")
