@@ -13,6 +13,13 @@ config.version = {
 config.port = 80;
 config.host = 'localhost';
 
+config.proxy = {
+    enabled: false,
+    host: '',
+    secured: false,
+    port: 80
+}
+
 // Set this var to undefined if you don't want the server to listen on HTTPS
 config.https = {
     enabled: false,
