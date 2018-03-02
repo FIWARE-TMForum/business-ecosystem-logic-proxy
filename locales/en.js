@@ -252,7 +252,7 @@
     "Picture URL": "Picture URL",
     "Attachments": "Attachments",
     "Agreement title": "Agreement title",
-    "Agreement text": "Enter agreement text",
+    "Agreement text": "Agreement text",
     "Enter a version": "Enter a version",
     "Enter a brand": "Enter a brand",
     "Enter an ID Number": "Enter an ID Number",

@@ -251,7 +251,7 @@
     "Picture URL": "Picture URL",
     "Attachments": "Adjuntos",
     "Agreement title": "Titulo del acuerdo de uso",
-    "Enter agreement text": "Texto del acuerdo de uso",
+    "Agreement text": "Texto del acuerdo de uso",
     "Enter a version": "Incluye una versión",
     "Enter a brand": "Incluye una marca",
     "Enter an ID Number": "Incluye un número de identificación",
