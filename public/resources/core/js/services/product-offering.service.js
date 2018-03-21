@@ -80,9 +80,9 @@
                 FEE: {code: 'fee', name: 'Fee'}
             },
             PRICE_ALTERATION_SUPPORTED: {
-                PRICE_COMPONENT: 0,
-                DISCOUNT_OR_FEE: 1,
-                NOTHING: 2
+                PRICE_COMPONENT: 'Price component',
+                DISCOUNT_OR_FEE: 'Discount or fee',
+                NOTHING: 'None'
             },
             PRICE_CONDITION: {
                 EQ: {code: 'eq', name: 'Equal'},
@@ -286,7 +286,10 @@
             case TYPES.PRICE_ALTERATION_SUPPORTED.PRICE_COMPONENT:
             case TYPES.PRICE_ALTERATION_SUPPORTED.DISCOUNT_OR_FEE:
                 this.productOfferPriceAlteration = new PriceAlteration({
-                    priceAlterationType: priceAlterationType
+                    priceAlterationType: priceAlterationType,
+                    price: {
+                        currencyCode: this.price.currencyCode
+                    }
                 });
                 break;
             default:

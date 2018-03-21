@@ -76,49 +76,31 @@ form(name="form" novalidate)
     .col-md-12
       .form-group
         label
-          span Enter a description
-          small.text-muted (optional)
+          span #{ __("Enter a description") }
+          small.text-muted (#{ __("optional") })
         textarea.form-control(name="description" rows="2" ng-model="pricePlan.description")
   .row
-    .col-xs-12
+    .col-xs-4
       .form-group
-        label Include
-        .item-radio
-          label.radio Price component
-            .track
-              input(
-                type="radio"
-                ng-model="vm.priceAlterationType"
-                ng-value="vm.PRICE_ALTERATIONS_SUPPORTED.PRICE_COMPONENT"
-                ng-change="vm.pricePlan.resetPriceAlteration(vm.priceAlterationType)"
-              )
-              i.fa.fa-lg
-        .item-radio
-          label.radio Discount or fee
-            .track
-              input(
-                type="radio"
-                ng-model="vm.priceAlterationType"
-                ng-value="vm.PRICE_ALTERATIONS_SUPPORTED.DISCOUNT_OR_FEE"
-                ng-change="vm.pricePlan.resetPriceAlteration(vm.priceAlterationType)"
-              )
-              i.fa.fa-lg
-        .item-radio
-          label.radio Nothing
-            .track
-              input(
-                type="radio"
-                ng-model="vm.priceAlterationType"
-                ng-value="vm.PRICE_ALTERATIONS_SUPPORTED.NOTHING"
-                ng-change="vm.pricePlan.resetPriceAlteration(vm.priceAlterationType)"
-              )
-              i.fa.fa-lg
+        label #{ __("Price Alteration") }
+        .dropdown
+          a.btn.btn-block.btn-default.dropdown-toggle.z-depth-0(data-toggle="dropdown")
+            span.item-text {{ vm.priceAlterationType }}
+            span.item-icon.fa.fa-caret-down
+          .dropdown-menu.dropdown-menu-right.z-depth-2
+            a.dropdown-menu-item(ng-click="vm.setAlteration(vm.PRICE_ALTERATIONS_SUPPORTED.NOTHING)")
+              span.item-text {{ vm.PRICE_ALTERATIONS_SUPPORTED.NOTHING }}
+            a.dropdown-menu-item(ng-click="vm.setAlteration(vm.PRICE_ALTERATIONS_SUPPORTED.PRICE_COMPONENT)")
+              span.item-text {{ vm.PRICE_ALTERATIONS_SUPPORTED.PRICE_COMPONENT }}
+            a.dropdown-menu-item(ng-click="vm.setAlteration(vm.PRICE_ALTERATIONS_SUPPORTED.DISCOUNT_OR_FEE)")
+              span.item-text {{ vm.PRICE_ALTERATIONS_SUPPORTED.DISCOUNT_OR_FEE }}
+
     .col-xs-12(ng-if="vm.priceAlterationType === vm.PRICE_ALTERATIONS_SUPPORTED.PRICE_COMPONENT")
       hr
       .row
         .col-md-4
           .form-group
-            label Choose a type
+            label #{ __("Choose a type") }
             .dropdown
               a.btn.btn-block.btn-default.dropdown-toggle.z-depth-0(data-toggle="dropdown")
                 span.item-text {{ pricePlan.priceAlteration().priceType | uppercase }}
@@ -129,7 +111,7 @@ form(name="form" novalidate)
       .row
         .col-md-8
           .form-group(ng-class="{ 'has-error': vm.hasFieldError(form.taxIncludedAmount2) }")
-            label Enter a price
+            label #{ __("Enter a price") }
             input.form-control(
               type="number"
               name="taxIncludedAmount2"
@@ -138,12 +120,12 @@ form(name="form" novalidate)
               min="0"
             )
             .help-block(ng-messages="form.taxIncludedAmount2.$error" ng-show="vm.hasFieldError(form.taxIncludedAmount2)")
-              span(ng-message="required") This field is required.
-              span(ng-message="min") This field must not be a negative number.
-              span(ng-message="number") This field must be a valid number.
+              span(ng-message="required") #{ __("This field is required.") }
+              span(ng-message="min") #{ __("This field must not be a negative number.") }
+              span(ng-message="number") #{ __("This field must be a valid number.") }
         .col-md-4(ng-if="pricePlan.priceAlteration().priceType === vm.PRICES.USAGE")
           .form-group(ng-class="{ 'has-error': vm.hasFieldError(form.unitOfMeasure2) }")
-            label Enter a unit
+            label #{ __("Enter a unit") }
             .input-group
               span.input-group-addon /
               input.form-control(
@@ -154,11 +136,11 @@ form(name="form" novalidate)
                 ng-maxlength="20"
               )
             .help-block(ng-messages="form.unitOfMeasure2.$error" ng-show="vm.hasFieldError(form.unitOfMeasure2)")
-             span(ng-message="required") This field is required.
-             span(ng-message="maxlength") This field must not exceed 20 chars.
+             span(ng-message="required") #{ __("This field is required.") }
+             span(ng-message="maxlength") #{ __("This field must not exceed 20 chars.") }
         .col-md-4(ng-if="pricePlan.priceAlteration().priceType === vm.PRICES.RECURRING")
           .form-group
-            label Choose a charge period
+            label #{ __("Choose a charge period") }
             .input-group
               span.input-group-addon /
               select.form-control(
@@ -170,15 +152,15 @@ form(name="form" novalidate)
         .col-md-12
           .form-group
             label
-              span Enter a description
-              small.text-muted (optional)
+              span #{ __("Enter a description") }
+              small.text-muted (#{ __("optional") })
             textarea.form-control(name="description2" rows="2" ng-model="pricePlan.priceAlteration().description")
     .col-xs-12(ng-if="vm.priceAlterationType === vm.PRICE_ALTERATIONS_SUPPORTED.DISCOUNT_OR_FEE")
       hr
       .row
         .col-md-4
           .form-group
-            label Choose a type
+            label #{ __("Choose a type") }
             select.form-control(
               name="name3"
               ng-model="pricePlan.priceAlteration().name"
@@ -186,7 +168,7 @@ form(name="form" novalidate)
               option(ng-repeat="(key, value) in vm.PRICE_ALTERATIONS" value="{{ value.code }}") {{ value.name }}
         .col-md-8
           .form-group(ng-class="{ 'has-error': vm.hasFieldError(form.taxIncludedAmount1) }")
-            label Enter a value
+            label #{ __("Enter a value") }
             .input-group
               input.form-control(
                 type="number"
@@ -210,21 +192,21 @@ form(name="form" novalidate)
                   span.item-icon.fa.fa-caret-down
                 .dropdown-menu.dropdown-menu-right.z-depth-2
                   a.dropdown-menu-item(ng-click="pricePlan.priceAlteration().setIsPercentage(true)")
-                    span.item-text (%) Percentage
+                    span.item-text (%) #{ __("Percentage") }
                   a.dropdown-menu-item(ng-click="pricePlan.priceAlteration().setIsPercentage(false)")
                     span.item-text {{ pricePlan.formatCurrencyCode() }}
             .help-block(ng-messages="form.taxIncludedAmount1.$error" ng-show="vm.hasFieldError(form.taxIncludedAmount1)")
-                span(ng-message="required") This field is required.
-                span(ng-message="min") This field must not be a negative number.
-                span(ng-message="number") This field must be a valid number.
+                span(ng-message="required") #{ __("This field is required.") }
+                span(ng-message="min") #{ __("This field must not be a negative number.") }
+                span(ng-message="number") #{ __("This field must be a valid number.") }
             .help-block(ng-messages="form.percentage.$error" ng-show="vm.hasFieldError(form.percentage)")
-                span(ng-message="required") This field is required.
-                span(ng-message="min") This field must not be a negative number.
-                span(ng-message="number") This field must be a valid number.
+                span(ng-message="required") #{ __("This field is required.") }
+                span(ng-message="min") #{ __("This field must not be a negative number.") }
+                span(ng-message="number") #{ __("This field must be a valid number.") }
       .row
         .col-xs-12
           .form-group(ng-class="{ 'has-error': vm.hasFieldError(form.priceCondition) }")
-            label Enter a price condition
+            label #{ __("Enter a price condition") }
             .input-group
               .input-group-btn
                 a.btn.btn-default.dropdown-toggle.z-depth-0(data-toggle="dropdown")
@@ -241,9 +223,9 @@ form(name="form" novalidate)
                 min="0"
               )
             .help-block(ng-messages="form.priceCondition.$error" ng-show="vm.hasFieldError(form.priceCondition)")
-              span(ng-message="required") This field is required.
-              span(ng-message="min") This field must not be a negative number.
-              span(ng-message="number") This field must be a valid number.
+              span(ng-message="required") #{ __("This field is required.") }
+              span(ng-message="min") #{ __("This field must not be a negative number.") }
+              span(ng-message="number") #{ __("This field must be a valid number.") }
       .row
         .col-md-12
           .form-group

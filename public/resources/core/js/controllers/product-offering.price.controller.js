@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2018 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -45,8 +45,8 @@
         vm.PRICE_CONDITIONS = Offering.TYPES.PRICE_CONDITION;
 
         vm.priceAlterationType = vm.PRICE_ALTERATIONS_SUPPORTED.NOTHING;
-
         vm.update = update;
+        vm.setAlteration = setAlteration;
 
         $scope.$on(Offering.EVENTS.PRICEPLAN_UPDATE, function (event, index, pricePlan) {
             _index = index;
@@ -64,6 +64,11 @@
 
         function update() {
             $rootScope.$broadcast(Offering.EVENTS.PRICEPLAN_UPDATED, _index, vm.data);
+        }
+
+        function setAlteration(alterationType) {
+            vm.priceAlterationType = alterationType;
+            vm.data.resetPriceAlteration(alterationType);
         }
     }
 

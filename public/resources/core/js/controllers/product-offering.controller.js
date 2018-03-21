@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2018 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -223,6 +223,7 @@
         vm.createPricePlan = createPricePlan;
         vm.updatePricePlan = updatePricePlan;
         vm.removePricePlan = removePricePlan;
+        vm.setAlteration = setAlteration;
 
         vm.place = "";
         vm.places = [];
@@ -372,6 +373,11 @@
 
         function removePricePlan(index) {
             vm.data.productOfferingPrice.splice(index, 1);
+        }
+
+        function setAlteration(alterationType) {
+            vm.priceAlterationType = alterationType;
+            vm.pricePlan.resetPriceAlteration(alterationType);
         }
 
         function setProduct(product) {
@@ -539,6 +545,7 @@
         vm.createPricePlan = createPricePlan;
         vm.updatePricePlan = updatePricePlan;
         vm.removePricePlan = removePricePlan;
+        vm.setAlteration = setAlteration;
 
         var updatePricePlanPromise = null;
 
@@ -587,7 +594,8 @@
         });
 
         function updatePricePlan(index) {
-            $rootScope.$broadcast(Offering.EVENTS.PRICEPLAN_UPDATE, index, vm.item.productOfferingPrice[index]);
+            var pricePlan = angular.copy(vm.item.productOfferingPrice[index]);
+            $rootScope.$broadcast(Offering.EVENTS.PRICEPLAN_UPDATE, index, pricePlan);
         }
 
         Object.defineProperty(updatePricePlan, 'status', {
@@ -605,6 +613,11 @@
                     error: Utils.parseError(response, 'Unexpected error trying to remove the offering price plan.')
                 });
             });
+        }
+
+        function setAlteration(alterationType) {
+            vm.priceAlterationType = alterationType;
+            vm.pricePlan.resetPriceAlteration(alterationType);
         }
 
         Object.defineProperty(removePricePlan, 'status', {
