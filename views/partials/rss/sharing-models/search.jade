@@ -5,16 +5,16 @@ ui-view
     .col-xs-12
       div(ng-if="searchVM.list.status == searchVM.STATUS.LOADED", ng-switch="searchVM.list.length")
         div(ng-switch-when="0")
-          .alert.alert-info.text-center No revenue sharing models found.
+          .alert.alert-info.text-center #{ __("No revenue sharing models found.") }
         div(ng-switch-default)
           .table-responsive
             table.table.table-bordered.table-hover.table-selectable
               thead
                 tr
-                  th Product Class
-                  th Platform Percentage
-                  th Provider Percentage
-                  th Nº Stakeholders
+                  th #{ __("Product Class") }
+                  th #{ __("Platform Percentage") }
+                  th #{ __("Provider Percentage") }
+                  th Nº #{ __("Stakeholders") }
               tbody
                 tr(ng-repeat="rsModel in searchVM.list",
                   ui-sref="rss.models.update({ productClass: rsModel.productClass })",

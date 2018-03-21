@@ -15,13 +15,13 @@ block navbars
         span.badge.badge-success(ng-switch-when="LOADED") {{ listVM.list.length }}
         span.badge(ng-switch-when="LOADING") ...
         span.badge.badge-error(ng-switch-when="ERROR") !!!
-      span.item-text.hidden-xs Shopping Cart
+      span.item-text.hidden-xs #{ __("Shopping Cart") }
     .dropdown-menu.z-depth-3(ng-switch="listVM.list.status")
-      .dropdown-header My Shopping Cart
+      .dropdown-header #{ __("My Shopping Cart") }
       .alert.alert-info.text-center(ng-switch-when="LOADED", ng-if="!listVM.list.length")
-        span Your shopping cart is empty!
+        span #{ __("Your shopping cart is empty!") }
       .alert.alert-danger.text-center(ng-switch-when="ERROR")
-        span Your shopping cart cannot be loaded.
+        span #{ __("Your shopping cart cannot be loaded.") }
       .dropdown-menu-item(ng-switch-when="LOADED", ng-repeat="offering in listVM.list")
         .media.item-offering-ordered
           .media-left
@@ -36,7 +36,7 @@ block navbars
       .btn-group.btn-group-justified(ng-switch-when="LOADED", ng-if="listVM.list.length")
         a.btn.btn-success.z-depth-1(ui-sref="shopping-cart")
           span.item-icon.fa.fa-share
-          span.item-text Checkout
+          span.item-text #{ __("Checkout") }
 
 block content
   .container
@@ -53,22 +53,22 @@ block content
                     a.bg-view1(ui-sref="offering", ui-sref-opts="{ reload: true, inherit: false }")
                       span.item-icon-container
                         i.fa.fa-fw.fa-home
-                      strong.item-text Home
+                      strong.item-text #{ __("Home") }
                   li(ui-sref-active="active")
                     a.bg-view2(ui-sref="inventory", ui-sref-opts="{ reload: true, inherit: false }")
                       span.item-icon-container
                         i.fa.fa-fw.fa-archive
-                      strong.item-text My inventory
+                      strong.item-text #{ __("My inventory") }
                   li(ui-sref-active="active", ng-show="user.isSeller()")
                     a.bg-view3(ui-sref="stock", ui-sref-opts="{ reload: true, inherit: false }")
                       span.item-icon-container
                         i.fa.fa-fw.fa-database
-                      strong.item-text My stock
+                      strong.item-text #{ __("My stock") }
                   li(ui-sref-active="active" ng-show="user.isSeller()")
                     a.bg-view4(ui-sref="rss", ui-sref-opts="{ reload: true, inherit: false }")
                       span.item-icon-container
                         i.fa.fa-fw.fa-share-alt
-                      strong.item-text Revenue Sharing
+                      strong.item-text #{ __("Revenue sharing") }
             ui-view(name="sidebar-content")
       .col-xs-12.col-md-9
         ui-view(name="content")

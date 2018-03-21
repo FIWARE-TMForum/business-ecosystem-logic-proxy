@@ -7,19 +7,19 @@
   .col-xs-12(ng-switch-when="LOADED")
     .alert.alert-info.text-center
         span.fa.fa-info-circle
-        span  This information is public so it may be viewed by anyone.
+        span  #{ __("This information is public so it may be viewed by anyone.") }
     .panel.panel-default.z-depth-1(ng-if="updateVM.data.contactMedium.length")
       .panel-body
         .h4.text-dark-secondary
-          strong My business addresses
+          strong #{ __("My business addresses") }
         hr
         .table-responsive
           table.table.table-bordered
             thead
               tr
-                th Medium
-                th Details
-                th Actions
+                th #{ __("Medium") }
+                th #{ __("Details") }
+                th #{ __("Actions") }
             tbody
               tr(ng-repeat="contactMedium in updateVM.item.contactMedium")
                 th {{ contactMedium.getType().name }}
@@ -35,7 +35,7 @@
     .panel.panel-default.z-depth-1
       .panel-body(ng-controller="ContactMediumCreateCtrl as entryAttrVM")
         .h4.text-dark-secondary
-          strong New business address
+          strong #{ __("New business address") }
         hr
         business-address-form(
           form="entryAttrVM.form"
@@ -50,5 +50,5 @@
             ng-disabled="!entryAttrVM.form.$valid || updateVM.createContactMedium.status === updateVM.STATUS.PENDING"
           )
             span.item-icon.fa.fa-spin.fa-spinner(ng-if="updateVM.createContactMedium.status === updateVM.STATUS.PENDING")
-            span.item-text Create
-        .alert.alert-warning(ng-if="updateVM.isNotCreated") Sorry! In order to create contact mediums, you should first create a profile.
+            span.item-text #{ __("Create") }
+        .alert.alert-warning(ng-if="updateVM.isNotCreated") #{ __("Sorry! In order to create contact mediums, you should first create a profile.") }

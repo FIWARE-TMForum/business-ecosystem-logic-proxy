@@ -9,18 +9,18 @@ form(name="step.form", novalidate)
     .col-xs-12(ng-if="categorySearchVM.status === categorySearchVM.STATUS.RESOLVED")
       .row
         .col-xs-12(ng-if="!categorySearchVM.list.length")
-          .alert.alert-info.text-center No categories found.
+          .alert.alert-info.text-center #{ __("No categories found.") }
         .col-xs-12(ng-if="categorySearchVM.list.length")
           .form-group
             label
-              span Choose categories
-              small.text-muted (optional)
+              span #{ __("Choose categories") }
+              small.text-muted (#{ __("optional") })
             .table-responsive
               table.table.table-bordered.table-hover.table-selectable
                 thead
                   tr
-                    th Name
-                    th Updated
+                    th #{ __("Name") }
+                    th #{ __("Last Updated") }
                 tbody
                   tr(ng-repeat="category in categorySearchVM.list | orderByParentId", ng-class="{ active: createVM.categories[category.id] != null, disabled: createVM.categoryIsDisabled(category) }", ng-click="createVM.setCategory(category)")
                     td
@@ -30,4 +30,4 @@ form(name="step.form", novalidate)
                       time(am-time-ago="category.lastUpdate")
   .form-group.text-right
     a.btn.btn-default.z-depth-1(ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])", ng-disabled="!step.form.$valid")
-      span.item-text Next
+      span.item-text #{ __("Next") }

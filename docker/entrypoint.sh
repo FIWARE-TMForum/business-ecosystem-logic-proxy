@@ -59,10 +59,6 @@ while [[ ${STATUS} -ne 0  && ${I} -lt 50 ]]; do
     I=${I}+1
 done
 
-
-# Include this setting to avoid inconsistencies between docker container port and used port
-sed -i "s|config\.port|config\.extPort|" /business-ecosystem-logic-proxy/lib/tmfUtils.js
-
 echo "Adding cleanService to services"
 echo "serviceIndexes  54645/tcp" >> /etc/services
 

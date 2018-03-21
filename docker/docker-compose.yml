@@ -20,5 +20,6 @@ services:
             - ./proxy-indexes:/business-ecosystem-logic-proxy/indexes
             - ./proxy-themes:/business-ecosystem-logic-proxy/themes
             - ./proxy-static:/business-ecosystem-logic-proxy/static
+            - ./proxy-locales:/business-ecosystem-logic-proxy/locales
         environment:
             - NODE_ENV=development

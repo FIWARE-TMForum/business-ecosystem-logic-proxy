@@ -1,10 +1,10 @@
 form(name="step.form", novalidate)
   .h5.text-dark-secondary
-    strong General
+    strong #{ __("General") }
   .row
     .col-sm-8
       .form-group
-        label Name
+        label #{ __("Name") }
         input.form-control(
           type="text"
           name="name"
@@ -14,7 +14,7 @@ form(name="step.form", novalidate)
         )
     .col-sm-4
       .form-group
-        label Version
+        label #{ __("Version") }
         input.form-control(
           type="text"
           name="version"
@@ -23,13 +23,13 @@ form(name="step.form", novalidate)
           readonly
         )
   .form-group
-    label Status
+    label #{ __("Status") }
     .status-group
       .status-item(ng-repeat="status in FILTER_STATUS", class="status-{{ status.value | lowercase }}", ng-class="{ active: createVM.data.lifecycleStatus == status.value }")
         span.item-icon
         span.item-text {{ status.value }}
   .form-group
-    label Description
+    label #{ __("Description") }
     textarea.form-control(
       rows="3"
       name="description"
@@ -37,24 +37,24 @@ form(name="step.form", novalidate)
       readonly
     )
   .form-group(ng-if="createVM.places.length")
-    label Places
+    label #{ __("Places") }
     .h4
       .label.label-default.inline-block(ng-repeat="name in createVM.places")
         span.item-text {{ name }}
 
   div(ng-if="!createVM.data.isBundle")
     .h5.text-dark-secondary
-      strong Product Spec.
+      strong #{ __("Product Spec.") }
     .form-group
       input(type="hidden", ng-model="createVM.product.id", required)
       .table-responsive
         table.table.table-bordered
           thead
             tr
-              th Status
-              th Name
-              th Type
-              th Updated
+              th #{ __("Status") }
+              th #{ __("Name") }
+              th #{ __("Type") }
+              th #{ __("Last Updated") }
           tbody
             tr
               td
@@ -64,21 +64,21 @@ form(name="step.form", novalidate)
               th {{ createVM.product.name }}
               td
                 span.label(ng-class="createVM.product.isBundle ? 'label-bundle' : 'label-single'")
-                  | {{ createVM.product.isBundle ? 'Bundle' : 'Single' }}
+                  | {{ createVM.product.isBundle ? '#{ __("Bundle") }' : '#{ __("Single") }' }}
               td
                 time(am-time-ago="createVM.product.lastUpdate")
 
   .form-group(ng-show="createVM.data.isBundle")
     .h5.text-dark-secondary
-      strong Bundled Offerings
+      strong #{ __("Bundled Offerings") }
     .table-responsive
       table.table.table-bordered
         thead
           tr
-            th Status
-            th Name
-            th Type
-            th Updated
+            th #{ __("Status") }
+            th #{ __("Name") }
+            th #{ __("Type") }
+            th #{ __("Last Updated") }
         tbody
           tr(ng-repeat="offering in createVM.data.bundledProductOffering")
             td
@@ -88,22 +88,22 @@ form(name="step.form", novalidate)
             th {{ offering.name }}
             td
               span.label(ng-class="offering.isBundle ? 'label-bundle' : 'label-single'")
-                | {{ offering.isBundle ? 'Bundle' : 'Single' }}
+                | {{ offering.isBundle ? '#{ __("Bundle") }' : '#{ __("Single") }' }}
             td
               time(am-time-ago="offering.lastUpdate")
 
   .h5.text-dark-secondary
-    strong Catalogue
+    strong #{ __("Catalogue") }
   .form-group
     input(type="hidden", ng-model="createVM.catalogue.id", required)
     .table-responsive
       table.table.table-bordered
         thead
           tr
-            th Status
-            th Name
-            th Role
-            th Updated
+            th #{ __("Status") }
+            th #{ __("Name") }
+            th #{ __("Role") }
+            th #{ __("Last Updated") }
         tbody
           tr
             td
@@ -116,13 +116,13 @@ form(name="step.form", novalidate)
               time(am-time-ago="createVM.catalogue.lastUpdate")
   .form-group(ng-show="createVM.hasCategories()")
     .h5.text-dark-secondary
-      strong Categories
+      strong #{ __("Categories") }
     .table-responsive
       table.table.table-bordered
         thead
           tr
-            th Name
-            th Updated
+            th #{ __("Name") }
+            th #{ __("Last Updated") }
         tbody
           tr(ng-repeat="(key, category) in createVM.categories")
             td
@@ -133,15 +133,15 @@ form(name="step.form", novalidate)
   .row(ng-if="createVM.data.productOfferingPrice.length")
     .col-sm-12
       .h5.text-dark-secondary
-        strong Price plans
+        strong #{ __("Price plans") }
       .table-responsive
       table.table.table-bordered
         thead
           tr
             th #
-            th Name
-            th Description
-            th Price
+            th #{ __("Name") }
+            th #{ __("Description") }
+            th #{ __("Price") }
         tbody
           tr(ng-repeat="priceplan in createVM.data.productOfferingPrice")
             th {{ $index + 1 }}
@@ -152,15 +152,15 @@ form(name="step.form", novalidate)
   .form-group
     input(type="hidden", ng-model="createVM.data.serviceCandidate.id", required)
     .h5.text-dark-secondary
-      strong  Revenue Sharing Model
+      strong  #{ __("Revenue Sharing Model") }
     .table-responsive
       table.table.table-bordered
         thead
           tr
-            th Product Class
-            th Platform Percentage
-            th Provider Percentage
-            th Nº Stakeholders
+            th #{ __("Product Class") }
+            th #{ __("Platform Percentage") }
+            th #{ __("Provider Percentage") }
+            th Nº #{ __("Stakeholders") }
         tbody
           tr
             td
@@ -177,4 +177,4 @@ form(name="step.form", novalidate)
       ng-disabled="!step.form.$valid || createVM.create.status === createVM.STATUS.PENDING"
     )
       span.item-icon.fa.fa-spin.fa-spinner(ng-if="createVM.create.status === createVM.STATUS.PENDING")
-      span.item-text Create
+      span.item-text #{ __("Create") }

@@ -11,7 +11,7 @@ ui-view
     .col-xs-12(ng-if="searchVM.list.status === searchVM.STATUS.LOADED" ng-switch="searchVM.list.length")
       div(ng-switch-when="0")
         .alert.alert-info.text-center
-          span No product specifications found.
+          span #{ __("No product specifications found.") }
       div(ng-switch-default, ng-switch="searchVM.list.flow")
         div(ng-switch-when="1")
           include ./search-grid.jade

@@ -2,11 +2,11 @@
   table.table.table-bordered.table-hover
     thead
       tr
-        th Status
-        th Name
-        th Product Spec.
-        th Type
-        th Updated
+        th #{ __("Status") }
+        th #{ __("Name") }
+        th #{ __("Product Spec.") }
+        th #{ __("Type") }
+        th #{ __("Last Updated") }
     tbody
       tr(ng-repeat="offering in searchVM.list")
         td
@@ -19,6 +19,6 @@
           a(ui-sref="stock.product.update({ productId: offering.productSpecification.id })") {{ offering.productSpecification.name }}
         td
           span.label(ng-class="offering.isBundle ? 'label-bundle' : 'label-single'")
-            | {{ offering.isBundle ? 'Bundle' : 'Single' }}
+            | {{ offering.isBundle ? '#{ __("Bundle") }' : '#{ __("Single") }' }}
         td
           time(am-time-ago="offering.lastUpdate")

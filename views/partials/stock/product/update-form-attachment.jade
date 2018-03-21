@@ -4,24 +4,24 @@
       .panel-body
         form(name="updateVM.form", novalidate)
           .h4.text-dark-secondary
-            strong Attachments
+            strong #{ __("Attachments") }
           .form-group
-            label Picture
+            label #{ __("Picture") }
             .thumbnail.thumbnail-lg
               img(no-image, ng-src="{{ updateVM.data.getPicture() }}")
 
           .row
             .col-sm-4
-              label How to provide?
+              label #{ __("How to provide?") }
               select.form-control(ng-model="updateVM.pictureFormat")
-                option(value="url") Include picture URL
-                option(value="file") Upload picture
+                option(value="url") #{ __("Include picture URL") }
+                option(value="file") #{ __("Upload picture") }
 
             .col-sm-8(ng-if="updateVM.pictureFormat == 'url'")
               .form-group(
                 ng-class="{ 'has-error': updateForm.hasError(updateVM.form.picture) }"
               )
-                label Include picture URL
+                label #{ __("Include picture URL") }
                 input.form-control(
                   type="url"
                   name="picture"
@@ -31,20 +31,20 @@
                   ng-messages="updateVM.form.picture.$error"
                   ng-show="updateForm.hasError(updateVM.form.picture)"
                 )
-                  span(ng-message="url") This field must be a valid URL.
+                  span(ng-message="url") #{ __("This field must be a valid URL.") }
 
             .col-sm-8(ng-if="updateVM.pictureFormat == 'file'", ng-init="updateVM.loadPictureController()")
               .form-group(
               ng-class="{ 'has-error': updateForm.hasError(updateVM.form.pictureFile) }"
               )
-                label Upload picture
+                label #{ __("Upload picture") }
                 input.form-control(type="file", name="pictureFile" file-model="updateVM.pictureFile")
                 .help-block(
                   ng-messages="updateVM.form.pictureFile.$error"
                   ng-show="updateForm.hasError(updateVM.form.pictureFile)"
                 )
-                  span(ng-message="format") The provided file is not a valid image
-                  span(ng-message="upload") The provided image could not be uploaded
+                  span(ng-message="format") #{ __("The provided file is not a valid image") }
+                  span(ng-message="upload") #{ __("The provided image could not be uploaded") }
           .form-group(
             ng-if="updateVM.extraFiles.length"
           )
@@ -70,4 +70,4 @@
             ng-disabled="!updateVM.form.$valid || updateVM.update.status === updateVM.STATUS.PENDING"
             )
               span.item-icon.fa.fa-spin.fa-spinner(ng-if="updateVM.update.status === updateVM.STATUS.PENDING")
-              span.item-text Update
+              span.item-text #{ __("Update") }

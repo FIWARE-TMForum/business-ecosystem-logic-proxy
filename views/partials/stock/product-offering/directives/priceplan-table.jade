@@ -2,11 +2,11 @@
   table.table.table-bordered
     thead
       tr
-        th Name
-        th Description
-        th Price
-        th Price alteration
-        th Actions
+        th #{ __("Name") }
+        th #{ __("Description") }
+        th #{ __("Price") }
+        th #{ __("Price alteration") }
+        th #{ __("Actions") }
     tbody
       tr(ng-repeat="pricePlan in pricePlans")
         th {{ pricePlan.name }}

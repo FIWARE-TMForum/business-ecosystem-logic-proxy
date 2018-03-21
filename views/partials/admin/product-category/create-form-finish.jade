@@ -1,6 +1,6 @@
 form(name="step.form", novalidate)
   .form-group
-    label Name
+    label #{ __("Name") }
     input.form-control(
       type="text"
       name="name"
@@ -9,13 +9,13 @@ form(name="step.form", novalidate)
       readonly
     )
   .form-group
-    label Status
+    label #{ __("Status") }
     .status-group
       .status-item(ng-repeat="status in FILTER_STATUS", class="status-{{ status.value | lowercase }}", ng-class="{ active: createVM.data.lifecycleStatus == status.value }")
         span.item-icon
         span.item-text {{ status.value }}
   .form-group
-    label Description
+    label #{ __("Description") }
     textarea.form-control(
       rows="3",
       name="description",
@@ -23,14 +23,14 @@ form(name="step.form", novalidate)
       readonly
     )
   .form-group(ng-if="!createVM.data.isRoot")
-    label Parent category
+    label #{ __("Parent category") }
     .table-responsive
       input(type="hidden", ng-model="createVM.data.parentId", required)
       table.table.table-bordered
         thead
           tr
-            th Name
-            th Updated
+            th #{ __("Name") }
+            th #{ __("Last Updated") }
         tbody
           tr
             td
@@ -44,4 +44,4 @@ form(name="step.form", novalidate)
       ng-disabled="!step.form.$valid || createVM.create.status === createVM.STATUS.PENDING"
     )
       span.item-icon.fa.fa-spin.fa-spinner(ng-if="createVM.create.status === createVM.STATUS.PENDING")
-      span.item-text Create
+      span.item-text #{ __("Create") }

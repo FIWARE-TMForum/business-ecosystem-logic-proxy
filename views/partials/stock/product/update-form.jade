@@ -1,12 +1,12 @@
 form(name="updateVM.form", novalidate)
   .h4.text-dark-secondary
-    strong General
+    strong #{ __("General") }
   .row
     .col-sm-8
       .form-group(
         ng-class="{ 'has-error': updateForm.hasError(updateVM.form.name) }"
       )
-        label Name
+        label #{ __("Name") }
         input.form-control(
           type="text"
           name="name"
@@ -20,14 +20,14 @@ form(name="updateVM.form", novalidate)
           ng-messages="updateVM.form.name.$error"
           ng-show="updateForm.hasError(updateVM.form.name)"
         )
-          span(ng-message="required") This field is required
-          span(ng-message="maxlength") This field must not exceed 30 chars
-          span(ng-message="unique") This name is already taken
+          span(ng-message="required") #{ __("This field is required.") }
+          span(ng-message="maxlength") #{ __("This field must not exceed %s chars.", "30") }
+          span(ng-message="unique") #{ __("This name is already taken") }
     .col-sm-4
       .form-group(
         ng-class="{ 'has-error': updateForm.hasError(updateVM.form.version) }"
       )
-        label Version
+        label #{ __("Version") }
         input.form-control(
           type="text"
           name="version"
@@ -40,10 +40,10 @@ form(name="updateVM.form", novalidate)
           ng-messages="updateVM.form.version.$error"
           ng-show="updateForm.hasError(updateVM.form.version)"
         )
-          span(ng-message="required") This field is required
-          span(ng-message="pattern") Invalid version format
+          span(ng-message="required") #{ __("This field is required.") }
+          span(ng-message="pattern") #{ __("Invalid version format") }
   .form-group
-    label Status
+    label #{ __("Status") }
     .status-group
       .status-item(ng-repeat="status in FILTER_STATUS", class="status-{{ status.value | lowercase }}", ng-click="updateVM.updateStatus(status.value)", ng-class="{ active: updateVM.data.lifecycleStatus == status.value, enabled: updateVM.data.lifecycleStatus == status.value && !updateVM.statusUpdated }")
         span.item-icon
@@ -53,7 +53,7 @@ form(name="updateVM.form", novalidate)
       .form-group(
         ng-class="{ 'has-error' : updateForm.hasError(updateVM.form.brand) }"
       )
-        label Brand
+        label #{ __("Brand") }
         input.form-control(
           type="text"
           name="brand"
@@ -65,13 +65,13 @@ form(name="updateVM.form", novalidate)
           ng-messages="updateVM.form.brand.$error"
           ng-show="updateForm.hasError(updateVM.form.brand)"
         )
-          span(ng-message="required") This field is required.
-          span(ng-message="maxlength") This field must not exceed 30 chars.
+          span(ng-message="required") #{ __("This field is required.") }
+          span(ng-message="maxlength") #{ __("This field must not exceed %s chars.", "30") }
     .col-sm-4
       .form-group(
         ng-class="{ 'has-error' : updateForm.hasError(updateVM.form.productNumber) }"
       )
-        label ID Number
+        label #{ __("ID Number") }
         input.form-control(
           type="text"
           name="productNumber"
@@ -82,11 +82,11 @@ form(name="updateVM.form", novalidate)
           ng-messages="updateVM.form.productNumber.$error"
           ng-show="updateForm.hasError(updateVM.form.productNumber)"
         )
-          span(ng-message="required") This field is required.
+          span(ng-message="required") #{ __("This field is required.") }
   .form-group
     label
-      span Description
-      small.text-muted (optional)
+      span #{ __("Description") }
+      small.text-muted (#{ __("optional") })
     textarea.form-control(rows="3", name="description", ng-model="updateVM.data.description")
   .row
     .col-md-12
@@ -103,4 +103,4 @@ form(name="updateVM.form", novalidate)
       ng-disabled="!updateVM.form.$valid || updateVM.update.status === updateVM.STATUS.PENDING"
     )
       span.item-icon.fa.fa-spin.fa-spinner(ng-if="updateVM.update.status === updateVM.STATUS.PENDING")
-      span.item-text Update
+      span.item-text #{ __("Update") }

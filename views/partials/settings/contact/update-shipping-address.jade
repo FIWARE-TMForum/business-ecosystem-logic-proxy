@@ -7,20 +7,20 @@
   .col-xs-12(ng-switch-when="LOADED")
     .alert.alert-info.text-center
         span.fa.fa-info-circle
-        span  The shipping addresses will be used in your orders.
+        span  #{ __("The shipping addresses will be used in your orders.") }
     .panel.panel-default.z-depth-1(ng-if="searchVM.list.length")
       .panel-body
         .h4.text-dark-secondary
-          strong My shipping addresses
+          strong #{ __("My shipping addresses") }
         hr
         .table-responsive
           table.table.table-bordered
             thead
               tr
-                th Email address
-                th Postal address
-                th Telephone number
-                th Actions
+                th #{ __("Email address") }
+                th #{ __("Postal address") }
+                th #{ __("Telephone number") }
+                th #{ __("Actions") }
             tbody
               tr(ng-repeat="customer in searchVM.list")
                 td {{ customer.getEmailAddress().toString() }}
@@ -34,7 +34,7 @@
     .panel.panel-default.z-depth-1(ng-show="searchVM.canEditOrAdd()")
       .panel-body(ng-controller="BillingAccountCreateCtrl as createVM")
         .h4.text-dark-secondary
-          strong New shipping address
+          strong #{ __("New shipping address") }
         hr
         shipping-address-form(
           form="createVM.form"
@@ -49,4 +49,4 @@
             ng-disabled="!createVM.form.$valid || createVM.create.status === createVM.STATUS.PENDING"
           )
             span.item-icon.fa.fa-spin.fa-spinner(ng-if="createVM.create.status === createVM.STATUS.PENDING")
-            span.item-text Create
+            span.item-text #{ __("Create") }

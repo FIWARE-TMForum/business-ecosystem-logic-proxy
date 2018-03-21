@@ -7,14 +7,14 @@ ui-view
         .col-xs-12.col-sm-6
           include ./search-toolbar.jade
     .col-xs-12(ng-if="searchVM.status === searchVM.STATUS.RESOLVED")
-      .alert.alert-info.text-center(ng-if="!searchVM.list.length") No categories found.
+      .alert.alert-info.text-center(ng-if="!searchVM.list.length") #{ __("No categories found.") }
       .table-responsive(ng-if="searchVM.list.length")
         table.table.table-bordered.table-hover
           thead
             tr
-              th Status
-              th Name
-              th Updated
+              th #{ __("Status") }
+              th #{ __("Name") }
+              th #{ __("Last Updated") }
           tbody
             tr(ng-repeat="category in searchVM.list | orderByParentId")
               td
