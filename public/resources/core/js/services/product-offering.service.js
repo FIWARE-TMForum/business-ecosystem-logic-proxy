@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2018 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -727,7 +727,7 @@
                     pricePlans = this.productOfferingPrice.filter(function (pricePlan) {
                         return [TYPES.PRICE.RECURRING, TYPES.PRICE.USAGE].indexOf(angular.lowercase(pricePlan.priceType)) !== -1;
                     });
-                    result = 'From ' + pricePlans[0].toString() + '\n' + pricePlan.formatPriceAlteration(extended);
+                    result = 'From ' + pricePlans[0].toString() + '\n' + pricePlans[0].formatPriceAlteration(extended);
                 }
             } else {
                 result = 'Free';
