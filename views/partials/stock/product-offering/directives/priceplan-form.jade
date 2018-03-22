@@ -38,11 +38,11 @@ form(name="form" novalidate)
           )
           .input-group-btn
             a.btn.btn-default.dropdown-toggle.z-depth-0(data-toggle="dropdown")
-              span.item-text {{ pricePlan.price.currencyCode | uppercase }}
+              span.item-text {{ pricePlan.price.currencyCode }}
               span.item-icon.fa.fa-caret-down
             .dropdown-menu.dropdown-menu-right.z-depth-2
-              a.dropdown-menu-item(ng-repeat="(key, value) in vm.CURRENCY_CODES" ng-click="pricePlan.price.setCurrencyCode(key)")
-                span.item-text ({{ key }}) {{ value | uppercase }}
+              a.dropdown-menu-item(ng-repeat="(key, value) in vm.CURRENCY_CODES" ng-click="pricePlan.setCurrencyCode(key)")
+                span.item-text ({{ key }}) {{ value }}
         .help-block(ng-messages="form.taxIncludedAmount.$error" ng-show="vm.hasFieldError(form.taxIncludedAmount)")
           span(ng-message="required") #{ __("This field is required.") }
           span(ng-message="min") #{ __("This field must be a greater than 0.") }
@@ -79,3 +79,157 @@ form(name="form" novalidate)
           span #{ __("Enter a description") }
           small.text-muted (#{ __("optional") })
         textarea.form-control(name="description" rows="2" ng-model="pricePlan.description")
+  .row
+    .col-xs-4
+      .form-group
+        label #{ __("Price Alteration") }
+        .dropdown
+          a.btn.btn-block.btn-default.dropdown-toggle.z-depth-0(data-toggle="dropdown")
+            span.item-text {{ vm.priceAlterationType }}
+            span.item-icon.fa.fa-caret-down
+          .dropdown-menu.dropdown-menu-right.z-depth-2
+            a.dropdown-menu-item(ng-click="vm.setAlteration(vm.PRICE_ALTERATIONS_SUPPORTED.NOTHING)")
+              span.item-text {{ vm.PRICE_ALTERATIONS_SUPPORTED.NOTHING }}
+            a.dropdown-menu-item(ng-click="vm.setAlteration(vm.PRICE_ALTERATIONS_SUPPORTED.PRICE_COMPONENT)")
+              span.item-text {{ vm.PRICE_ALTERATIONS_SUPPORTED.PRICE_COMPONENT }}
+            a.dropdown-menu-item(ng-click="vm.setAlteration(vm.PRICE_ALTERATIONS_SUPPORTED.DISCOUNT_OR_FEE)")
+              span.item-text {{ vm.PRICE_ALTERATIONS_SUPPORTED.DISCOUNT_OR_FEE }}
+
+    .col-xs-12(ng-if="vm.priceAlterationType === vm.PRICE_ALTERATIONS_SUPPORTED.PRICE_COMPONENT")
+      hr
+      .row
+        .col-md-4
+          .form-group
+            label #{ __("Choose a type") }
+            .dropdown
+              a.btn.btn-block.btn-default.dropdown-toggle.z-depth-0(data-toggle="dropdown")
+                span.item-text {{ pricePlan.priceAlteration().priceType | uppercase }}
+                span.item-icon.fa.fa-caret-down
+              .dropdown-menu.dropdown-menu-right.z-depth-2
+                a.dropdown-menu-item(ng-repeat="(key, value) in vm.PRICES" ng-click="pricePlan.priceAlteration().setType(key)")
+                  span.item-text {{ value | uppercase }}
+      .row
+        .col-md-8
+          .form-group(ng-class="{ 'has-error': vm.hasFieldError(form.taxIncludedAmount2) }")
+            label #{ __("Enter a price") }
+            input.form-control(
+              type="number"
+              name="taxIncludedAmount2"
+              ng-model="pricePlan.priceAlteration().price.taxIncludedAmount"
+              required
+              min="0"
+            )
+            .help-block(ng-messages="form.taxIncludedAmount2.$error" ng-show="vm.hasFieldError(form.taxIncludedAmount2)")
+              span(ng-message="required") #{ __("This field is required.") }
+              span(ng-message="min") #{ __("This field must not be a negative number.") }
+              span(ng-message="number") #{ __("This field must be a valid number.") }
+        .col-md-4(ng-if="pricePlan.priceAlteration().priceType === vm.PRICES.USAGE")
+          .form-group(ng-class="{ 'has-error': vm.hasFieldError(form.unitOfMeasure2) }")
+            label #{ __("Enter a unit") }
+            .input-group
+              span.input-group-addon /
+              input.form-control(
+                type="text"
+                name="unitOfMeasure2"
+                ng-model="pricePlan.priceAlteration().unitOfMeasure"
+                required
+                ng-maxlength="20"
+              )
+            .help-block(ng-messages="form.unitOfMeasure2.$error" ng-show="vm.hasFieldError(form.unitOfMeasure2)")
+             span(ng-message="required") #{ __("This field is required.") }
+             span(ng-message="maxlength") #{ __("This field must not exceed 20 chars.") }
+        .col-md-4(ng-if="pricePlan.priceAlteration().priceType === vm.PRICES.RECURRING")
+          .form-group
+            label #{ __("Choose a charge period") }
+            .input-group
+              span.input-group-addon /
+              select.form-control(
+                name="recurringChargePeriod2"
+                ng-model="pricePlan.priceAlteration().recurringChargePeriod"
+              )
+                option(ng-repeat="(key, value) in vm.CHARGE_PERIODS" value="{{ value | lowercase }}") {{ value | uppercase }}
+      .row
+        .col-md-12
+          .form-group
+            label
+              span #{ __("Enter a description") }
+              small.text-muted (#{ __("optional") })
+            textarea.form-control(name="description2" rows="2" ng-model="pricePlan.priceAlteration().description")
+    .col-xs-12(ng-if="vm.priceAlterationType === vm.PRICE_ALTERATIONS_SUPPORTED.DISCOUNT_OR_FEE")
+      hr
+      .row
+        .col-md-4
+          .form-group
+            label #{ __("Choose a type") }
+            select.form-control(
+              name="name3"
+              ng-model="pricePlan.priceAlteration().name"
+            )
+              option(ng-repeat="(key, value) in vm.PRICE_ALTERATIONS" value="{{ value.code }}") {{ value.name }}
+        .col-md-8
+          .form-group(ng-class="{ 'has-error': vm.hasFieldError(form.taxIncludedAmount1) }")
+            label #{ __("Enter a value") }
+            .input-group
+              input.form-control(
+                type="number"
+                name="taxIncludedAmount1"
+                ng-model="pricePlan.priceAlteration().price.taxIncludedAmount"
+                required
+                min="0"
+                ng-if="!pricePlan.priceAlteration().isPercentage"
+              )
+              input.form-control(
+                type="number"
+                name="percentage"
+                ng-model="pricePlan.priceAlteration().price.percentage"
+                required
+                min="0"
+                ng-if="pricePlan.priceAlteration().isPercentage"
+              )
+              .input-group-btn
+                a.btn.btn-default.dropdown-toggle.z-depth-0(data-toggle="dropdown")
+                  span.item-text {{ pricePlan.priceAlteration().isPercentage ? '%' : pricePlan.price.currencyCode }}
+                  span.item-icon.fa.fa-caret-down
+                .dropdown-menu.dropdown-menu-right.z-depth-2
+                  a.dropdown-menu-item(ng-click="pricePlan.priceAlteration().setIsPercentage(true)")
+                    span.item-text (%) #{ __("Percentage") }
+                  a.dropdown-menu-item(ng-click="pricePlan.priceAlteration().setIsPercentage(false)")
+                    span.item-text {{ pricePlan.formatCurrencyCode() }}
+            .help-block(ng-messages="form.taxIncludedAmount1.$error" ng-show="vm.hasFieldError(form.taxIncludedAmount1)")
+                span(ng-message="required") #{ __("This field is required.") }
+                span(ng-message="min") #{ __("This field must not be a negative number.") }
+                span(ng-message="number") #{ __("This field must be a valid number.") }
+            .help-block(ng-messages="form.percentage.$error" ng-show="vm.hasFieldError(form.percentage)")
+                span(ng-message="required") #{ __("This field is required.") }
+                span(ng-message="min") #{ __("This field must not be a negative number.") }
+                span(ng-message="number") #{ __("This field must be a valid number.") }
+      .row
+        .col-xs-12
+          .form-group(ng-class="{ 'has-error': vm.hasFieldError(form.priceCondition) }")
+            label #{ __("Enter a price condition") }
+            .input-group
+              .input-group-btn
+                a.btn.btn-default.dropdown-toggle.z-depth-0(data-toggle="dropdown")
+                  span.item-text {{ pricePlan.priceAlteration().priceConditionOperator | uppercase }}
+                  span.item-icon.fa.fa-caret-down
+                .dropdown-menu.dropdown-menu-right.z-depth-2
+                  a.dropdown-menu-item(ng-repeat="(key, value) in vm.PRICE_CONDITIONS" ng-click="pricePlan.priceAlteration().priceConditionOperator = value.code;")
+                    span.item-text ({{ key }}) {{ value.name }}
+              input.form-control(
+                type="number"
+                name="priceCondition"
+                ng-model="pricePlan.priceAlteration().priceCondition"
+                required
+                min="0"
+              )
+            .help-block(ng-messages="form.priceCondition.$error" ng-show="vm.hasFieldError(form.priceCondition)")
+              span(ng-message="required") #{ __("This field is required.") }
+              span(ng-message="min") #{ __("This field must not be a negative number.") }
+              span(ng-message="number") #{ __("This field must be a valid number.") }
+      .row
+        .col-md-12
+          .form-group
+            label
+              span #{ __("Enter a description") }
+              small.text-muted (#{ __("optional") })
+            textarea.form-control(name="description2" rows="2" ng-model="pricePlan.priceAlteration().description")

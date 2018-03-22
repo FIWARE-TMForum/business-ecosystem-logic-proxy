@@ -35,6 +35,12 @@
         var resource = $resource(URLS.PRODUCTORDER_MANAGEMENT + '/productOrder/:productOrderId', {
             productOrderId: '@id'
         }, {
+            save: {
+                method: 'POST',
+                headers: {
+                    'X-Terms-Accepted': 'True'
+                },
+            },
             updatePartial: {
                 method: 'PATCH'
             }

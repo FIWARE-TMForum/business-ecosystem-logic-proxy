@@ -38,6 +38,40 @@ form(name="step.form", novalidate)
         )
           span(ng-message="format") #{ __("The provided file is not a valid image") }
           span(ng-message="upload") #{ __("The provided image could not be uploaded") }
+  .row
+    .col-sm-12(
+      ng-init="createVM.loadFileController()"
+    )
+      .form-group(
+        ng-class="{ 'has-error': createForm.hasError(step.form.extraFile) }"
+      )
+        label Upload file
+        input.form-control(
+          type="file"
+          name="extraFile"
+          file-model="createVM.extraFile"
+        )
+        .help-block(
+          ng-messages="step.form.extraFile.$error"
+          ng-show="createForm.hasError(step.form.extraFile)"
+        )
+          span(
+            ng-message="upload"
+          ) Failed to upload the file
+  .row
+    .col-sm-12
+      .form-group
+        .input-group(
+          ng-repeat="file in createVM.extraFiles"
+        )
+          input.form-control(
+            type="text"
+            value="{{ file.name }}"
+            readonly
+          )
+          .input-group-btn
+            a.btn.btn-danger.z-depth-0(ng-click="createVM.removeExtraFile($index)")
+              span.item-icon.fa.fa-trash
 
   .form-group.text-right
     a.btn.btn-default.z-depth-1(ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])", ng-disabled="!step.form.$valid")

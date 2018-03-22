@@ -1,6 +1,6 @@
 .row
   .col-xs-12
-    .panel.panel-default.z-depth-1(ng-repeat="characteristic in detailVM.item.productSpecification.productSpecCharacteristic", ng-init="characteristicIndex = $index")
+    .panel.panel-default.z-depth-1(ng-repeat="characteristic in detailVM.item.productSpecification.getCharacteristics()", ng-init="characteristicIndex = $index")
       .panel-heading
         .h4
           strong {{ characteristic.name }}
@@ -33,5 +33,5 @@
                   i.fa.fa-lg
                 | {{ detailVM.formatCharacteristicValue(characteristic, characteristicValue) }}
 
-  .col-xs-12(ng-if="!detailVM.hasCharacteristics()")
+  .col-xs-12(ng-if="!detailVM.item.productSpecification.hasCharacteristics()")
     .alert.alert-info.text-center #{ __("No characteristics included.") }

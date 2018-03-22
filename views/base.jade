@@ -37,6 +37,21 @@ html(ng-app="app")
           SHARING_REPORTS: '#{ proxyPath }/#{ rssPath }/rss/settlement/reports',
           SHOPPING_CART: '#{ shoppingCartPath }/:action/:id'
         })
+        .constant('CHARGE_PERIODS', '#{ chargePeriods }'.split(',').map(function (value) {
+          var cp = value.split(':');
+          return {
+            title: cp[0],
+            value: parseInt(cp[1]),
+          };
+        }))
+        .constant('CURRENCY_CODES', '#{ currencyCodes }'.split(',').map(function (value) {
+          var cc = value.split(':');
+          return {
+            title: cc[1],
+            value: cc[0],
+          };
+        }))
+        .constant('TAX_RATE', #{ taxRate })
         .constant('PLATFORM_REVENUE', #{ platformRevenue })
         .constant('USAGE_CHART_URL', '#{ usageChartURL }')
         .constant('ROLES', { seller: '#{ seller }', customer: '#{ customer }', orgAdmin: '#{ orgAdmin }'})
@@ -219,6 +234,8 @@ html(ng-app="app")
       include ./partials/offering/detail.jade
     script(type="text/ng-template", id="offering/detail/product")
       include ./partials/offering/detail-product.jade
+    script(type="text/ng-template", id="offering/detail/product-attachment")
+      include ./partials/offering/detail-product-attachment.jade
     script(type="text/ng-template", id="offering/detail/bundled")
       include ./partials/offering/detail-bundled.jade
     script(type="text/ng-template", id="offering/detail/pricing")

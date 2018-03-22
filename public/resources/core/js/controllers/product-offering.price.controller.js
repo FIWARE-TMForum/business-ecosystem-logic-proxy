@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2018 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -40,18 +40,35 @@
         vm.CHARGE_PERIODS = Offering.TYPES.CHARGE_PERIOD;
         vm.CURRENCY_CODES = Offering.TYPES.CURRENCY_CODE;
         vm.PRICES = Offering.TYPES.PRICE;
+        vm.PRICE_ALTERATIONS = Offering.TYPES.PRICE_ALTERATION;
+        vm.PRICE_ALTERATIONS_SUPPORTED = Offering.TYPES.PRICE_ALTERATION_SUPPORTED;
+        vm.PRICE_CONDITIONS = Offering.TYPES.PRICE_CONDITION;
 
+        vm.priceAlterationType = vm.PRICE_ALTERATIONS_SUPPORTED.NOTHING;
         vm.update = update;
+        vm.setAlteration = setAlteration;
 
         $scope.$on(Offering.EVENTS.PRICEPLAN_UPDATE, function (event, index, pricePlan) {
             _index = index;
             _pricePlan = pricePlan;
             vm.data = angular.copy(pricePlan);
+
+            if (angular.isObject(pricePlan.productOfferPriceAlteration)) {
+                vm.priceAlterationType = pricePlan.productOfferPriceAlteration.priceAlterationType;
+            } else {
+                vm.priceAlterationType = vm.PRICE_ALTERATIONS_SUPPORTED.NOTHING;
+            }
+
             $element.modal('show');
         });
 
         function update() {
             $rootScope.$broadcast(Offering.EVENTS.PRICEPLAN_UPDATED, _index, vm.data);
+        }
+
+        function setAlteration(alterationType) {
+            vm.priceAlterationType = alterationType;
+            vm.data.resetPriceAlteration(alterationType);
         }
     }
 

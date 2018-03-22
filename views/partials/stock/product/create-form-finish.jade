@@ -80,7 +80,7 @@ form(name="step.form", novalidate)
   .row(ng-if="createVM.data.attachment[0].url")
     .col-sm-12
       .h4.text-dark-secondary
-        strong #{ __("Attachments") }
+        strong #{ __("Cover image") }
       .form-group
         label #{ __("Picture URL") }
         input.form-control(
@@ -89,6 +89,21 @@ form(name="step.form", novalidate)
           ng-model="createVM.data.attachment[0].url"
           readonly
         )
+  .row(ng-if="createVM.extraFiles.length")
+    .col-sm-12
+      .h4.text-dark-secondary
+        strong Attachments
+      table.table.table-bordered
+        thead
+          tr
+            th #
+            th Name
+            th Type
+        tbody
+          tr(ng-repeat="extraFile in createVM.extraFiles")
+            th {{ $index + 1 }}
+            td {{ extraFile.name }}
+            td {{ extraFile.type }}
   .form-group(ng-show="createVM.data.isBundle")
     label #{ __("Bundled Products") }
     .table-responsive

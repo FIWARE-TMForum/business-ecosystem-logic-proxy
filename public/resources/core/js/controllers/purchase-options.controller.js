@@ -154,6 +154,11 @@
                 characteristics: vm.characteristics,
                 pricing: priceplan
             };
+
+            if (vm.terms.length) {
+                data.termsAccepted = vm.termsAccepted;
+            }
+
             $rootScope.$broadcast(EVENTS.OFFERING_CONFIGURED, data);
         }
 
@@ -227,7 +232,7 @@
 
             if (angular.isArray(productOfferingPrice) && productOfferingPrice.length) {
                 if (productOfferingPrice.length === 1) {
-                    priceplan = productOfferingPrice[0];
+                    setPriceplan(productOfferingPrice[0]);
                 }
                 vm.priceplans = productOfferingPrice;
             }

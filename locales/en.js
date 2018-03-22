@@ -21,6 +21,7 @@
     "Upgrade": "Upgrade", 
     "Price plan": "Price plan",
     "Price plans": "Price plans",
+    "Price Alteration": "Price Alteration",
     "Available Options": "Available Options",
     "Choose one": "Choose one",
     "No description provided.": "No description provided.",
@@ -282,5 +283,8 @@
     "Offerings": "Offerings",
     "All categories": "All categories",
     "You need to be logged in to access this resource. You are being redirected to the login page now. If you have": "You need to be logged in to access this resource. You are being redirected to the login page now. If you have",
-    "not been redirected within 10 seconds, please ": "not been redirected within 10 seconds, please "
+    "not been redirected within 10 seconds, please ": "not been redirected within 10 seconds, please ",
+    "Products": "Products",
+    "Product Orders": "Product Orders",
+    "Enter a price condition": "Enter a price condition"
 }

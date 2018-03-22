@@ -88,6 +88,15 @@ form(name="updateVM.form", novalidate)
       span #{ __("Description") }
       small.text-muted (#{ __("optional") })
     textarea.form-control(rows="3", name="description", ng-model="updateVM.data.description")
+  .row
+    .col-md-12
+      .h4.text-dark-secondary
+        strong Terms and conditions
+  .row
+    .col-md-12
+      dl
+        dt {{ updateVM.item.license.title }}
+        dd.text-dark-secondary {{ updateVM.item.license.description }}
   .form-group.text-right
     a.btn.btn-success(
       ng-click="updateVM.update()"

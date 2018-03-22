@@ -45,7 +45,25 @@
                 )
                   span(ng-message="format") #{ __("The provided file is not a valid image") }
                   span(ng-message="upload") #{ __("The provided image could not be uploaded") }
-
+          .form-group(
+            ng-if="updateVM.extraFiles.length"
+          )
+            label Files
+            table.table.table-bordered
+              thead
+                tr
+                  th #
+                  th Name
+                  th Type
+              tbody
+                tr(ng-repeat="extraFile in updateVM.extraFiles")
+                  th {{ $index + 1 }}
+                  td
+                    a(
+                      ng-href="{{ extraFile.href }}"
+                      target="_blank"
+                    ) {{ extraFile.name }}
+                  td {{ extraFile.type }}
           .form-group.text-right
             a.btn.btn-success(
             ng-click="updateVM.updateImage()"

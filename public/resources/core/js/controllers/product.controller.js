@@ -214,6 +214,54 @@
         clearFileInput();
     }
 
+    function buildFileController(vm, $scope, form, Asset) {
+
+        function clearFileInput() {
+            if (!form.extraFile) {
+                form.extraFile = {};
+            } else {
+                // Reset possible previous errors
+                form.extraFile.$invalid = false;
+                form.extraFile.$error = {};
+            }
+        }
+
+        vm.removeExtraFile = function (index) {
+            vm.extraFiles.splice(index, 1);
+        };
+
+        $scope.$watch(function () { return vm.extraFile; }, function () {
+            // Check that the new file is a valid image
+            if (vm.extraFile) {
+                clearFileInput();
+                form.extraFile.$dirty = true;
+
+                var prefix = vm.data.name.replace(/ /g, '');
+
+                if (prefix.length > 10) {
+                    prefix = prefix.substr(0, 10);
+                }
+
+                // Upload the file to the server when it is included in the input
+                Asset.uploadAsset(vm.extraFile, prefix, null, vm.extraFile.type, true, null, function(result) {
+                    vm.extraFiles.push({
+                        name: vm.extraFile.name,
+                        type: vm.extraFile.type,
+                        href: result.content
+                    })
+                }, function() {
+                    // The picture cannot be uploaded set error in input
+                    form.extraFile.$invalid = true;
+                    form.extraFile.$error = {
+                        upload: true
+                    };
+                });
+            }
+        });
+
+        clearFileInput();
+    }
+
     function AssetController($scope, $rootScope, Asset, ProductSpec, Utils, EVENTS) {
         var controller = $scope.vm;
         var form = null;
@@ -431,6 +479,7 @@
         vm.charList = [];
         vm.isDigital = false;
         vm.terms = {};
+        vm.extraFiles = []
 
         vm.characteristicEnabled = false;
         vm.pictureFormat = "url";
@@ -469,6 +518,7 @@
         vm.getFormattedValueOf = getFormattedValueOf;
 
         vm.loadPictureController = loadPictureController;
+        vm.loadFileController = loadFileController;
 
         function createRelationship(data) {
             var deferred = $q.defer();
@@ -662,6 +712,13 @@
                 data.productSpecCharacteristic.push(legalChar);
             }
 
+            vm.extraFiles.forEach(function (extraFile) {
+                data.attachment.push({
+                    type: extraFile.type,
+                    url: extraFile.href
+                })
+            })
+
             createPromise = ProductSpec.create(data);
             createPromise.then(function (productCreated) {
                 $state.go('stock.product.update', {
@@ -685,6 +742,10 @@
 
         function loadPictureController() {
             buildPictureController(vm, $scope, vm.stepList[4].form, Asset);
+        }
+
+        function loadFileController() {
+            buildFileController(vm, $scope, vm.stepList[4].form, Asset);
         }
     }
 
@@ -798,6 +859,7 @@
         vm.$state = $state;
         vm.item = {};
         vm.pictureFormat = 'url';
+        vm.extraFiles = [];
 
         vm.update = update;
         vm.isDigital = isDigital;
@@ -814,8 +876,19 @@
         detailPromise.then(function (productRetrieved) {
             vm.data = angular.copy(productRetrieved);
             vm.item = productRetrieved;
-
+            vm.extraFiles = productRetrieved.getExtraFiles();
             digital = checkDigital();
+
+            vm.item.productSpecCharacteristic = productRetrieved.productSpecCharacteristic.filter(function (char) {
+                if (char.name.toLowerCase() === 'license') {
+                    vm.item.license = {
+                        title: char.productSpecCharacteristicValue[0].value,
+                        description: char.description
+                    };
+                    return false;
+                }
+                return true;
+            });
         }, function (response) {
             vm.error = Utils.parseError(response, 'The requested product could not be retrieved');
         });

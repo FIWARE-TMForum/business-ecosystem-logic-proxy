@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2018 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -191,8 +191,9 @@
         vm.CURRENCY_CODES = Offering.TYPES.CURRENCY_CODE;
         vm.PRICES = Offering.TYPES.PRICE;
         vm.STATUS = PROMISE_STATUS;
-
-        vm.STATUS = PROMISE_STATUS;
+        vm.PRICE_ALTERATIONS = Offering.TYPES.PRICE_ALTERATION;
+        vm.PRICE_ALTERATIONS_SUPPORTED = Offering.TYPES.PRICE_ALTERATION_SUPPORTED;
+        vm.PRICE_CONDITIONS = Offering.TYPES.PRICE_CONDITION;
 
         vm.data = angular.copy(Offering.TEMPLATES.RESOURCE);
         vm.stepList = stepList;
@@ -217,10 +218,12 @@
 
         vm.pricePlan = new Offering.PricePlan();
         vm.pricePlanEnabled = false;
+        vm.priceAlterationType = vm.PRICE_ALTERATIONS_SUPPORTED.NOTHING;
 
         vm.createPricePlan = createPricePlan;
         vm.updatePricePlan = updatePricePlan;
         vm.removePricePlan = removePricePlan;
+        vm.setAlteration = setAlteration;
 
         vm.place = "";
         vm.places = [];
@@ -287,6 +290,7 @@
 
             data.category = formatCategory();
             data.place = formatPlaces();
+
             createPromise = Offering.create(data, vm.product, vm.catalogue);
 
             createPromise.then(function (offeringCreated) {
@@ -361,6 +365,7 @@
             vm.data.productOfferingPrice.push(vm.pricePlan);
             vm.pricePlan = new Offering.PricePlan();
             vm.pricePlanEnabled = false;
+            vm.priceAlterationType = vm.PRICE_ALTERATIONS_SUPPORTED.NOTHING;
         }
 
         function updatePricePlan(index) {
@@ -369,6 +374,11 @@
 
         function removePricePlan(index) {
             vm.data.productOfferingPrice.splice(index, 1);
+        }
+
+        function setAlteration(alterationType) {
+            vm.priceAlterationType = alterationType;
+            vm.pricePlan.resetPriceAlteration(alterationType);
         }
 
         function setProduct(product) {
@@ -471,6 +481,7 @@
             vm.item = offeringRetrieved;
             vm.item.status = LOADED;
             vm.categories = vm.item.getCategories();
+            vm.attachments = vm.item.productSpecification.getExtraFiles();
         }, function (response) {
             vm.error = Utils.parseError(response, 'The requested offering could not be retrieved');
             vm.item.status = ERROR;
@@ -520,6 +531,9 @@
         vm.CURRENCY_CODES = Offering.TYPES.CURRENCY_CODE;
         vm.PRICES = Offering.TYPES.PRICE;
         vm.$state = $state;
+        vm.PRICE_ALTERATIONS = Offering.TYPES.PRICE_ALTERATION;
+        vm.PRICE_ALTERATIONS_SUPPORTED = Offering.TYPES.PRICE_ALTERATION_SUPPORTED;
+        vm.PRICE_CONDITIONS = Offering.TYPES.PRICE_CONDITION;
 
         vm.update = update;
         vm.updateStatus = updateStatus;
@@ -527,10 +541,12 @@
 
         vm.pricePlan = new Offering.PricePlan();
         vm.pricePlanEnabled = false;
+        vm.priceAlterationType = vm.PRICE_ALTERATIONS_SUPPORTED.NOTHING;
 
         vm.createPricePlan = createPricePlan;
         vm.updatePricePlan = updatePricePlan;
         vm.removePricePlan = removePricePlan;
+        vm.setAlteration = setAlteration;
 
         var updatePricePlanPromise = null;
 
@@ -565,6 +581,7 @@
             createPricePlanPromise.then(function (productOffering) {
                 vm.pricePlan = new Offering.PricePlan();
                 vm.pricePlanEnabled = false;
+                vm.priceAlterationType = vm.PRICE_ALTERATIONS_SUPPORTED.NOTHING;
                 $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {message: 'The offering price plan was created.'});
             }, function (response) {
                 $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
@@ -578,7 +595,8 @@
         });
 
         function updatePricePlan(index) {
-            $rootScope.$broadcast(Offering.EVENTS.PRICEPLAN_UPDATE, index, vm.item.productOfferingPrice[index]);
+            var pricePlan = angular.copy(vm.item.productOfferingPrice[index]);
+            $rootScope.$broadcast(Offering.EVENTS.PRICEPLAN_UPDATE, index, pricePlan);
         }
 
         Object.defineProperty(updatePricePlan, 'status', {
@@ -596,6 +614,11 @@
                     error: Utils.parseError(response, 'Unexpected error trying to remove the offering price plan.')
                 });
             });
+        }
+
+        function setAlteration(alterationType) {
+            vm.priceAlterationType = alterationType;
+            vm.pricePlan.resetPriceAlteration(alterationType);
         }
 
         Object.defineProperty(removePricePlan, 'status', {

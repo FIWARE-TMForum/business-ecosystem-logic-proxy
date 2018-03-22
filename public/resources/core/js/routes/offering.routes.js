@@ -74,6 +74,14 @@
                     }
                 }
             })
+            .state('offering.detail.productAttachment', {
+                url: '/attachment',
+                views: {
+                    'offering-content': {
+                        templateUrl: 'offering/detail/product-attachment'
+                    }
+                }
+            })
             .state('offering.detail.bundled', {
                 url: '/bundled',
                 params: {
