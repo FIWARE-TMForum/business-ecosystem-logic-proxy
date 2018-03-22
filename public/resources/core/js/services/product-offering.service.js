@@ -135,28 +135,93 @@
             }
         };
 
+        const serializeAlteration = function(priceAlteration) {
+            var result = '';
+
+            switch (priceAlteration.priceAlterationType) {
+            case TYPES.PRICE_ALTERATION_SUPPORTED.PRICE_CONDITION:
+                result += '+ ' + PricePlan.prototype.toString.call(priceAlteration);
+                break;
+            case TYPES.PRICE_ALTERATION_SUPPORTED.DISCOUNT_OR_FEE:
+                result += (priceAlteration.name === TYPES.PRICE_ALTERATION.FEE.code ? '+' : '-');
+                result += '' + (priceAlteration.isPercentage ? priceAlteration.price.percentage + '%' : priceAlteration.price.taxIncludedAmount + ' ' + priceAlteration.price.currencyCode);
+                break;
+            }
+
+            return result;
+        }
+
+        const builtAterationJSON = function(priceAlteration) {
+            var data = {
+                description: priceAlteration.description,
+                name: priceAlteration.name,
+                price: priceAlteration.price,
+                priceType: priceAlteration.priceType,
+                recurringChargePeriod: priceAlteration.recurringChargePeriod,
+                unitOfMeasure: priceAlteration.unitOfMeasure
+            };
+
+            switch (priceAlteration.priceAlterationType) {
+            case TYPES.PRICE_ALTERATION_SUPPORTED.PRICE_CONDITION:
+                data.priceCondition = '';
+                break;
+            case TYPES.PRICE_ALTERATION_SUPPORTED.DISCOUNT_OR_FEE:
+                data.priceCondition = priceAlteration.priceConditionOperator + ' ' + priceAlteration.priceCondition;
+                break;
+            }
+
+            return data;
+        }
+
+        const formatCondition = function(priceAlteration) {
+            return 'if ' + angular.lowercase(TYPES.PRICE_CONDITION[angular.uppercase(priceAlteration.priceConditionOperator)].name)
+                + ' ' + priceAlteration.priceCondition + ' ' + priceAlteration.price.currencyCode;
+        }
+
+        const formatAlteration = function(priceAlteration, extended) {
+            let result = '';
+
+            if (typeof extended !== 'boolean') {
+                extended = true;
+            }
+
+            if (priceAlteration.priceAlterationType === TYPES.PRICE_ALTERATION_SUPPORTED.DISCOUNT_OR_FEE) {
+                result += ' ' + (extended ? formatCondition(priceAlteration) : '*');
+            }
+
+            return serializeAlteration(priceAlteration) + result;
+        }
+
+        const buildPriceJSON = function(price) {
+            var data = {
+                currencyCode: price.currencyCode,
+                dutyFreeAmount: price.taxIncludedAmount / ((100 + price.taxRate) / 100),
+                percentage: price.percentage,
+                taxIncludedAmount: price.taxIncludedAmount,
+                taxRate: price.taxRate
+            };
+
+            if (typeof price.arrayExcluded !== "undefined") {
+                price.arrayExcluded.forEach(function (name) {
+                    if (name in data) {
+                        delete data[name];
+                    }
+                });
+            }
+
+            return data;
+        }
+
         var Price = function Price(data, arrayExcluded) {
             angular.extend(this, angular.copy(TEMPLATES.PRICE), angular.copy(data));
             parseNumber(this, ['dutyFreeAmount', 'percentage', 'taxIncludedAmount', 'taxRate']);
             this.arrayExcluded = angular.isArray(arrayExcluded) ? arrayExcluded : [];
         };
+
         Price.prototype.toJSON = function toJSON() {
-            var data = {
-                currencyCode: this.currencyCode,
-                dutyFreeAmount: this.taxIncludedAmount / ((100 + this.taxRate) / 100),
-                percentage: this.percentage,
-                taxIncludedAmount: this.taxIncludedAmount,
-                taxRate: this.taxRate
-            };
-
-            this.arrayExcluded.forEach(function (name) {
-                if (name in data) {
-                    delete data[name];
-                }
-            });
-
-            return data;
+            return buildPriceJSON(this);
         };
+
         Price.prototype.toString = function toString() {
             return this.taxIncludedAmount + ' ' + this.currencyCode;
         };
@@ -165,65 +230,31 @@
             angular.extend(this, angular.copy(TEMPLATES.PRICE_ALTERATION), angular.copy(data));
             this.price = new Price(this.price, ['currencyCode']);
         };
+
         PriceAlteration.prototype.setIsPercentage = function setIsPercentage(value) {
             this.isPercentage = value;
             this.price.percentage = 0;
             this.price.taxIncludedAmount = 0;
         };
+
         PriceAlteration.prototype.setType = function setType(priceType) {
             return PricePlan.prototype.setType.call(this, priceType);
         };
+
         PriceAlteration.prototype.format = function format(extended) {
-            var result = '';
-
-            if (typeof extended !== 'boolean') {
-                extended = true;
-            }
-
-            if (this.priceAlterationType === TYPES.PRICE_ALTERATION_SUPPORTED.DISCOUNT_OR_FEE) {
-                result += ' ' + (extended ? this.formatPriceCondition() : '*');
-            }
-
-            return this.toString() + result;
+            return formatAlteration(this, extended);
         };
+
         PriceAlteration.prototype.formatPriceCondition = function formatPriceCondition() {
-            return 'if ' + angular.lowercase(TYPES.PRICE_CONDITION[angular.uppercase(this.priceConditionOperator)].name) + ' ' + this.priceCondition + ' ' + this.price.currencyCode;
+            return formatCondition(this);
         };
+
         PriceAlteration.prototype.toString = function toString() {
-            var result = '';
-
-            switch (this.priceAlterationType) {
-            case TYPES.PRICE_ALTERATION_SUPPORTED.PRICE_CONDITION:
-                result += '+ ' + PricePlan.prototype.toString.call(this);
-                break;
-            case TYPES.PRICE_ALTERATION_SUPPORTED.DISCOUNT_OR_FEE:
-                result += (this.name === TYPES.PRICE_ALTERATION.FEE.code ? '+' : '-');
-                result += '' + (this.isPercentage ? this.price.percentage + '%' : this.price.taxIncludedAmount + ' ' + this.price.currencyCode);
-                break;
-            }
-
-            return result;
+            return serializeAlteration(this);
         };
+
         PriceAlteration.prototype.toJSON = function toJSON() {
-            var data = {
-                description: this.description,
-                name: this.name,
-                price: this.price,
-                priceType: this.priceType,
-                recurringChargePeriod: this.recurringChargePeriod,
-                unitOfMeasure: this.unitOfMeasure
-            };
-
-            switch (this.priceAlterationType) {
-            case TYPES.PRICE_ALTERATION_SUPPORTED.PRICE_CONDITION:
-                data.priceCondition = '';
-                break;
-            case TYPES.PRICE_ALTERATION_SUPPORTED.DISCOUNT_OR_FEE:
-                data.priceCondition = this.priceConditionOperator + ' ' + this.priceCondition;
-                break;
-            }
-
-            return data;
+            return builtAterationJSON(this);
         };
 
         var PricePlan = function PricePlan(data) {
@@ -277,8 +308,19 @@
 
             return this.price + result;
         };
+
+        PricePlan.prototype.toJSON = function toJSON() {
+            let plan = angular.copy(this);
+
+            if (angular.isObject(this.productOfferPriceAlteration)) {
+                plan.productOfferPriceAlteration = builtAterationJSON(this.productOfferPriceAlteration);
+                plan.productOfferPriceAlteration.price = buildPriceJSON(this.productOfferPriceAlteration.price)
+            }
+            return plan;
+        };
+
         PricePlan.prototype.formatPriceAlteration = function formatPriceAlteration(extended) {
-            return this.productOfferPriceAlteration ? this.productOfferPriceAlteration.format(extended) : '';
+            return this.productOfferPriceAlteration ? formatAlteration(this.productOfferPriceAlteration, extended) : '';
         };
         PricePlan.prototype.resetPriceAlteration = function resetPriceAlteration(priceAlterationType) {
 

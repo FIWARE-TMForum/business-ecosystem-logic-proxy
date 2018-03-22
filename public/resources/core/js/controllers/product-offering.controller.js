@@ -290,6 +290,7 @@
 
             data.category = formatCategory();
             data.place = formatPlaces();
+
             createPromise = Offering.create(data, vm.product, vm.catalogue);
 
             createPromise.then(function (offeringCreated) {
