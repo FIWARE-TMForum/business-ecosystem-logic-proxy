@@ -21,6 +21,7 @@
     "Upgrade": "Actualizar",
     "Price plan": "Plan de precios",
     "Price plans": "Planes de precios",
+    "Price Alteration": "Alteración de precios",
     "Available Options": "Opciones disponibles",
     "Choose one": "Elige una",
     "No description provided.": "No se ha incluido descripción",
@@ -281,5 +282,8 @@
     "Offerings": "Ofertas",
     "All categories": "Todas las categorías",
     "You need to be logged in to access this resource. You are being redirected to the login page now. If you have": "Necesitas iniciar sesión para ver este recurso. Estas siendo redirigido a la pagina de login. Si no has",
-    "not been redirected within 10 seconds, please ": "sido redirigido en 10 segundos, por favor "
+    "not been redirected within 10 seconds, please ": "sido redirigido en 10 segundos, por favor ",
+    "Products": "Productos",
+    "Product Orders": "Pedidos",
+    "Enter a price condition": "Incluye una condición"
 }
