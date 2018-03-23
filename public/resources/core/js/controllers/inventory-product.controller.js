@@ -22,10 +22,12 @@
  *         Jaime Pajuelo <jpajuelo@conwet.com>
  *         Aitor Magán <amagan@conwet.com>
  */
+
+
 (function () {
 
     'use strict';
-
+    
     var LOADING = 'LOADING';
     var LOADED = 'LOADED';
     var ERROR = 'ERROR';
@@ -39,7 +41,7 @@
     function InventorySearchController($scope, $state, $rootScope, EVENTS, InventoryProduct, INVENTORY_STATUS, Utils) {
         /* jshint validthis: true */
         var vm = this;
-
+        
         vm.state = $state;
 
         vm.list = [];
@@ -112,6 +114,10 @@
         $rootScope, $scope, $state, InventoryProduct, Utils, ProductSpec, EVENTS, $interval,
         $window, LOGGED_USER, USAGE_CHART_URL, BillingAccount, Download) {
 
+
+        // var accessTokenService = require('./../../../../../db/schemas/accessTokenService'),
+        //     config = require('./../../../../../config'),
+        //     uuid = require('node-uuid');    
         /* jshint validthis: true */
         var vm = this;
         var load = false;
@@ -137,7 +143,11 @@
         vm.downloadAsset = downloadAsset;
         vm.getUsageURL = getUsageURL;
         vm.downloadInvoice = downloadInvoice;
-
+        vm.generateToken = generateToken;
+        vm.retrieveToken = retrieveToken;
+        vm.password = "";
+        vm.token = retrieveToken();
+    
         InventoryProduct.detail($state.params.productId).then(function (productRetrieved) {
             locations = [];
             load = false;
@@ -371,6 +381,48 @@
             Download.download(invoice).then((result) => {
                 let url = $window.URL.createObjectURL(result);
                 $window.open(url, '_blank')
+            });
+        }
+
+        function retrieveToken() {
+            load = true;
+            InventoryProduct.getToken({
+                appId: "47ca01dd15b446b5a5f9f08ad495f52a",
+                userId: LOGGED_USER.id,
+            }).then(function(tokenBody,tokenHeader) {
+                load = false;
+                vm.token = tokenBody.authToken;
+                return tokenBody.authToken;
+            }, function (response) {
+                load = false;
+                var defaultMessage = 'There was an unexpected error that prevented the ' +
+                    'system from renewing your product';
+                var error = Utils.parseError(response, defaultMessage);
+
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                    error: error
+                });
+            });
+        }
+
+        function generateToken() {
+            load = true;
+            InventoryProduct.setToken({
+                username: LOGGED_USER.email,
+                password: vm.password,
+            }).then(function(tokenBody,tokenHeader) {
+                load = false;
+                vm.token = retrieveToken();
+                return tokenBody.access_token;
+            }, function (response) {
+                load = false;
+                var defaultMessage = 'There was an unexpected error that prevented the ' +
+                    'system from renewing your product';
+                var error = Utils.parseError(response, defaultMessage);
+
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                    error: error
+                });
             });
         }
 

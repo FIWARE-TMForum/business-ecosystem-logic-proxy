@@ -40,7 +40,9 @@
             search: search,
             count: count,
             detail: detail,
-            renew: renew
+            renew: renew,
+            getToken: getToken,
+            setToken: setToken
         };
 
         function query(deferred, filters, method, callback) {
@@ -168,6 +170,34 @@
             });
 
             return deferred.promise;
+        }
+
+        function getToken(data) {
+            var tokenResource = $resource(URLS.TOKEN_GET);
+            var deferred = $q.defer();
+
+            tokenResource.save(data, function(res, getResponseHeaders) {
+                deferred.resolve(res, {headers: getResponseHeaders()});
+            }, function (response) {
+                deferred.reject(response);
+            });
+            
+            return deferred.promise;
+        
+        }
+        
+        function setToken(data) {
+            var tokenResource = $resource(URLS.TOKEN_SET);
+            var deferred = $q.defer();
+
+            tokenResource.save(data, function(res, getResponseHeaders) {
+                deferred.resolve(res, {headers: getResponseHeaders()});
+            }, function (response) {
+                deferred.reject(response);
+            });
+            
+            return deferred.promise;
+        
         }
     }
 })();

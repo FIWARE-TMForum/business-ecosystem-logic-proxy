@@ -21,6 +21,8 @@ html(ng-app="app")
           IMAGE: '#{ contextPath }/resources/core/images',
           USER: '#{ proxyPath }/#{ chargingPath }/api/userManagement/users/:username',
           ASSET_MANAGEMENT: '#{ proxyPath }/#{ chargingPath }/api/assetManagement',
+          TOKEN_SET: '#{ proxyPath }/#{ chargingPath }/api/token',
+          TOKEN_GET: '#{ proxyPath }/authorizeService/read',
           RENEW_JOB: '#{ proxyPath }/#{ chargingPath }/api/orderManagement/products/renewJob',
           CATALOGUE_MANAGEMENT: '#{ proxyPath }/#{ catalogPath }/api/catalogManagement/v2',
           PRODUCTORDER_MANAGEMENT: '#{ proxyPath }/#{ orderingPath }/api/productOrdering/v2',
@@ -359,6 +361,8 @@ html(ng-app="app")
       include partials/inventory/product/detail
     script(type="text/ng-template", id="inventory/product/detail/characteristic")
       include ./partials/inventory/product/detail-content-characteristic.jade
+    script(type="text/ng-template", id="inventory/product/detail/access")
+      include ./partials/inventory/product/access.jade
     script(type="text/ng-template", id="inventory/product/detail/priceplan")
       include ./partials/inventory/product/detail-content-priceplan.jade
     script(type="text/ng-template", id="inventory/product/detail/usage")
