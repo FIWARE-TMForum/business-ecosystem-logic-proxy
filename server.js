@@ -287,9 +287,10 @@ app.get('/' + config.endpoints.management.path + '/count/:size', management.getC
 ///////////////////////// AUTHORIZE SERVICE /////////////////////////
 /////////////////////////////////////////////////////////////////////
 
-app.use(config.authorizeServicePath + '/*', checkMongoUp);
-app.post(config.authorizeServicePath + '/apiKeys', authorizeService.getApiKey);
-app.post(config.authorizeServicePath + '/apiKeys/:apiKey/commit', authorizeService.commitApiKey);
+app.use(config.authorizeServicePath + '/*', checkMongoUp, auth.headerAuthentication, auth.checkOrganizations, auth.setPartyObj, failIfNotAuthenticated);
+app.post(config.authorizeServicePath + '/token', authorizeService.saveAppToken);
+app.post(config.authorizeServicePath + '/read', authorizeService.getAppToken);
+//app.post(config.authorizeServicePath + '/apiKeys/:apiKey/commit', authorizeService.commitApiKey);
 
 
 /////////////////////////////////////////////////////////////////////

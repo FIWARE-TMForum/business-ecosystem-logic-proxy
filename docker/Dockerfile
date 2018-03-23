@@ -6,7 +6,7 @@ ENV VERSION develop
 
 RUN apt-get update && apt-get install -y git xinetd python-pip wget && \
     pip install sh requests && \
-    git clone https://github.com/FIWARE-TMForum/business-ecosystem-logic-proxy
+    git clone https://github.com/caposseleDigicat/business-ecosystem-logic-proxy.git
 
 WORKDIR business-ecosystem-logic-proxy
 
@@ -21,6 +21,9 @@ VOLUME /business-ecosystem-logic-proxy/indexes
 VOLUME /business-ecosystem-logic-proxy/themes
 VOLUME /business-ecosystem-logic-proxy/static
 VOLUME /business-ecosystem-logic-proxy/locales
+VOLUME /business-ecosystem-logic-proxy/public/resources/core/js
+VOLUME /business-ecosystem-logic-proxy/views
+VOLUME /business-ecosystem-logic-proxy/lib
 
 RUN export PATH=$PATH:/business-ecosystem-logic-proxy/node-v6.9.1-linux-x64/bin && \
     ./install.sh && \
@@ -34,6 +37,6 @@ COPY ./getConfig.js /business-ecosystem-logic-proxy
      
 COPY ./serviceIndexes /etc/xinetd.d/
 
-EXPOSE 8000
+EXPOSE 8004
 
 ENTRYPOINT ["/entrypoint.sh"]
