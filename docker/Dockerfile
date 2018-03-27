@@ -2,7 +2,7 @@ FROM ubuntu:16.04
 
 MAINTAINER CoNWeT Lab. Universidad Politécnica de Madrid
 
-ENV VERSION develop
+ENV VERSION Synchronicity
 
 RUN apt-get update && apt-get install -y git xinetd python-pip wget && \
     pip install sh requests && \

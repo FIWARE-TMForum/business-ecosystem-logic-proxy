@@ -51,7 +51,7 @@ var authorizeService = (function () {
 
             if (appId) {
 
-                // Generate and save apiKey
+                //Generate and save apiKey
                 var service = new accessTokenService();
                 service.appId = appId;
                 service.userId = userId;
@@ -61,7 +61,7 @@ var authorizeService = (function () {
 
                 accessTokenService.findOneAndUpdate({appId: appId, userId: userId}, { $set: {appId: appId, userId: userId, authToken: authToken, refreshToken: refreshToken, expire: expire}}, {upsert: true}, function (err, rawResp) {
                     if (err) {
-                        res.status(500).json({error: err.message});
+                        res.status(500).json({error: err.message}); 
                     } 
                     else {
                         res.status(200).json(rawResp);
