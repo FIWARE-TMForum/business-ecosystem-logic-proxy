@@ -3,7 +3,7 @@
     div(ng-repeat="offering in detailVM.offerings")
       .h3(ng-if="detailVM.offerings.length > 1") {{ offering.name }}
 
-      .panel.panel-default.z-depth-1(ng-repeat="characteristic in offering.productSpecification.productSpecCharacteristic")
+      .panel.panel-default.z-depth-1(ng-repeat="characteristic in offering.productSpecification.productSpecCharacteristic" ng-if="characteristic.name!='appId'")
         .panel-heading
           .h4
             strong {{ characteristic.name }}
