@@ -1,0 +1,128 @@
+form(name="step.form", novalidate)
+   .btn-group(data-toggle='buttons-radio')
+        .btn(ng-model='displayType', btn-radio="'standard'")
+        .btn(ng-model='displayType', btn-radio="'custom'")
+        .btn(ng-model='displayType', btn-radio="'fullcustom'")
+
+        //.form-group
+          //.row
+            //label Standard
+              //  input(type='radio', ng-model="createVM.mode", value=1)
+            //label Custom
+              //  input(type='radio', ng-model="createVM.mode", value=2)
+            //label Fully Custom
+              //  input(type='radio', ng-model="createVM.mode", value=3)
+
+   .switch(ng-switch='displayType')
+       .switch(ng-switch-when='standard')
+           form(name="step.form", novalidate)
+              .row
+                .col-sm-6
+                  .form-group
+                    .row
+                        .col-sm-10
+                            label Standard Open Data licenses
+                            select.form-control(name="exc", ng-model="createVM.terms.standard")
+                              option(ng-repeat="standard in createVM.standards", value="{{ standard.name }}") {{ standard.name }}
+       .switch(ng-switch-when='custom')
+       //div(ng-if="createVM.customterms")
+           form(name="step.form", novalidate)
+              .row
+                  .col-sm-6
+                    .form-group
+                      .row
+                          .col-sm-10
+                             label Name
+                                     input.form-control(
+                                       type="text"
+                                       name="name"
+                                       ng-model="createVM.terms.name"
+                                       required
+                                       ng-maxlength="100"
+                                     )
+                  .col-sm-6
+                    .form-group
+                      .row
+                          .col-sm-10
+                             label Description
+                                     input.form-control(
+                                       type="text"
+                                       name="name"
+                                       ng-model="createVM.terms.description"
+                                       required
+                                       ng-maxlength="100"
+                                     )
+              .row
+                .col-sm-6
+                  .form-group
+                    .row
+                        .col-sm-10
+                            label Exclusivity
+                            select.form-control(name="exc", ng-model="createVM.terms.exclusivity")
+                              option(ng-repeat="exclusivity in createVM.exclusivities", value="{{ exclusivity.name }}") {{ exclusivity.name }}
+                .col-sm-6
+                  .form-group
+                    .row
+                        .col-sm-10
+                            label Sector
+                            select.form-control(name="sec", ng-model="createVM.terms.sector")
+                              option(ng-repeat="sector in createVM.sectors", value="{{ sector.name }}") {{ sector.name }}
+              .row
+                .col-sm-6
+                  .form-group
+                    .row
+                        .col-sm-10
+                            label Region
+                            select.form-control(name="reg", ng-model="createVM.terms.region")
+                              option(ng-repeat="region in createVM.regions", value="{{ region.name }}") {{ region.name }}
+                .col-sm-6
+                  .form-group
+                    .row
+                        .col-sm-10
+                            label Time Frame
+                            select.form-control(name="time", ng-model="createVM.terms.duration")
+                              option(ng-repeat="duration in createVM.timeframes", value="{{ timeframe.name }}") {{ timeframe.name }}
+              .row
+                .col-sm-6
+                  .form-group
+                    .row
+                        .col-sm-10
+                            label Purpose
+                            select.form-control(name="pur", ng-model="createVM.terms.purpose")
+                              option(ng-repeat="purpose in createVM.purposes", value="{{ purpose.name }}") {{ purpose.name }}
+                .col-sm-6
+                  .form-group
+                    .row
+                        .col-sm-10
+                            label Transferability
+                            select.form-control(name="tra", ng-model="createVM.terms.transferability")
+                              option(ng-repeat="transferability in createVM.transferabilities", value="{{ transferability.name }}") {{ transferability.name }}
+              .row
+                .col-sm-6
+                  .form-group
+                    .row
+                        .col-sm-10
+                            label Start Date
+                               input.form-control(
+                                       type="text"
+                                       name="name"
+                                       ng-model="createVM.terms.validFor.startDate"
+                                       required
+                                       ng-maxlength="100"
+                                     )
+                .col-sm-6
+                  .form-group
+                    .row
+                        .col-sm-10
+                           label End Date
+                              input.form-control(
+                                       type="text"
+                                       name="name"
+                                       ng-model="createVM.terms.validFor.endDate"
+                                       required
+                                       ng-maxlength="100"
+                                     )
+       pre(ng-switch-default) {{displayType}}
+   .form-group.text-right
+      a.btn.btn-default.z-depth-1(ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])", ng-disabled="!step.form.$valid")
+        span.item-text Next

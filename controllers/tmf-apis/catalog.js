@@ -1,6 +1,6 @@
 /* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
- * This file belongs to the business-ecosystem-logic-proxy of the
+ * This file belongs to the bae-logic-proxy-test of the
  * Business API Ecosystem
  *
  * This program is free software: you can redistribute it and/or modify
@@ -327,7 +327,7 @@ var catalog = (function() {
                         }
 
                         // Validate that at least two offerings have been included
-                        if (!offeringBody.bundledProductOffering || offeringBody.bundledProductOffering.length < 2) {
+                        if (!offeringBody.bundledProductOffering || offeringBody.bundledProductSpecification.length < 2) {
                             return callback({
                                 status: 422,
                                 message: 'Product offering bundles must contain at least two bundled offerings'

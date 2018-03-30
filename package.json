@@ -1,6 +1,6 @@
 {
-  "name": "business-ecosystem-logic-proxy",
-  "version": "6.4.0",
+  "name": "bae-logic-proxy-test",
+  "version": "5.4.1",
   "description": "Logic Layer for the Business API Ecosystem",
   "author": "UPM",
   "license": "AGPL-3.0",
@@ -52,7 +52,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/FIWARE-TMForum/business-ecosystem-logic-proxy"
+    "url": "https://github.com/FIWARE-TMForum/bae-logic-proxy-test"
   },
   "contributors": [
     {

@@ -1,0 +1,15 @@
+form(name="step.form", novalidate)
+    .form-group
+      label Datastore base url
+      input.form-control(type="url", ng-model="createVM.datastore.baseUrl")
+    //.form-group
+      //label Media Type
+      //div(ng-show="!createVM.currentType.mediaTypes.length")
+        //input.form-control(type="text", ng-model="createVM.digitalChars[1].productSpecCharacteristicValue[0].value")
+      //div(ng-show="createVM.currentType.mediaTypes.length")
+        //select.form-control(ng-model="createVM.digitalChars[1].productSpecCharacteristicValue[0].value")
+          //option(ng-repeat="media in createVM.currentType.mediaTypes", value="{{ media }}") {{ media }}
+
+  .form-group.text-right
+    a.btn.btn-default.z-depth-1(ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])", ng-disabled="!step.form.$valid")
+      span.item-text Next

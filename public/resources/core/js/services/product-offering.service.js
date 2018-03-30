@@ -1,6 +1,6 @@
 /* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
- * This file belongs to the business-ecosystem-logic-proxy of the
+ * This file belongs to the bae-logic-proxy-test of the
  * Business API Ecosystem
  *
  * This program is free software: you can redistribute it and/or modify
@@ -72,6 +72,29 @@
                 USAGE: 'usage'
             }
         };
+
+        var exclusivities = [{name:'Exclusive'}, {name:'Unlimited'}];
+        var sectors = [{name:'All sectors'}, {name:'Aerospace industry'}, {name:'Agriculture'}, {name:'Chemical industry'},
+                       {name:'Computer industry'}, {name:'Construction industry'}, {name:'Defense industry'},
+                       {name:'Education industry'}, {name:'Entertainment industry'}, {name:'Financial industry'},
+                       {name:'Food industry'}, {name:'Health care industry'}, {name:'Hospitality industry'},
+                       {name:'Information industry'}, {name:'Manufacturing'}, {name:'Mass media'},
+                       {name:'Telecommunications industry'}, {name:'Transport industry'}, {name:'Water industry'}];
+        var regions = [{name:'United Kingdom'}, {name:'Germany'}, {name:'Italy'}, {name:'France'}, {name:'...'}];
+        var timeframes = [{name:'Unlimited'}, {name:'Until Date'}];
+        var purposes = [{name:'All purposes'}, {name:'Academic'}, {name:'Commercial'}];
+        var transferabilities = [{name:'Sublicensing right'}, {name:'Sublicensing right with restrictions'},
+                                 {name:'No sublicensing right'}];
+        var standards = [{name:'Public Domain Dedication and License (PDDL)', summary: 'https://opendatacommons.org/licenses/pddl/summary/', legalText: 'https://opendatacommons.org/licenses/pddl/1.0/'},
+                         {name:'Attribution License (ODC-BY)', summary: 'https://opendatacommons.org/licenses/by/summary/', legalText: 'https://opendatacommons.org/licenses/by/1.0/'},
+                         {name:'Open Database License (ODC-ODbl)', summary: 'https://opendatacommons.org/licenses/odbl/summary/', legalText: 'https://opendatacommons.org/licenses/odbl/1.0/'},
+                         {name:'Attribution 4.0 International (CC BY 4.0)', summary: 'https://creativecommons.org/licenses/by/4.0/', legalText: 'https://creativecommons.org/licenses/by/4.0/legalcode'},
+                         {name:'Attribution-NoDerivatives International 4.0 (CC BY-ND 4.0)', summary: 'https://creativecommons.org/licenses/by-nd/4.0/', legalText: 'https://creativecommons.org/licenses/by-nd/4.0/legalcode'},
+                         {name:'Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)', summary: 'https://creativecommons.org/licenses/by-sa/4.0/', legalText: 'https://creativecommons.org/licenses/by-sa/4.0/legalcode'},
+                         {name: 'Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)', summary: 'https://creativecommons.org/licenses/by-nc/4.0/', legalText: 'https://creativecommons.org/licenses/by-nc/4.0/legalcode'},
+                         {name: 'Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)', summary: 'https://creativecommons.org/licenses/by-nc-nd/4.0/', legalText: 'https://creativecommons.org/licenses/by-nc-nd/4.0/legalcode'},
+                         {name: 'Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)', summary: 'https://creativecommons.org/licenses/by-nc-sa/4.0/', legalText: 'https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode'}];
+
 
         var TEMPLATES = {
             PRICE: {
@@ -176,7 +199,14 @@
             exists: exists,
             create: create,
             detail: detail,
-            update: update
+            update: update,
+            exclusivities: exclusivities,
+            sectors: sectors,
+            regions: regions,
+            timeframes: timeframes,
+            purposes: purposes,
+            transferabilities: transferabilities,
+            standards: standards
         };
 
         function query(deferred, filters, method, callback) {
@@ -319,7 +349,47 @@
             return deferred.promise;
         }
 
-        function create(data, product, catalogue) {
+//{
+//    "bundledProductOffering": [],
+//    "category": [],
+//    "description": "Description",
+//    "isBundle": false,
+//    "lifecycleStatus": "Active",
+//    "name": "Name",
+//    "place": [{
+//        "name": "Place"
+//    }],
+//    "productOfferingPrice": [],
+//    "validFor": {
+//        "startDateTime": "2018-03-09T15:23:21+00:00"
+//    },
+//    "version": "0.1",
+//    "serviceCandidate": {
+//        "id": "defaultRevenue",
+//        "name": "Revenue Sharing Service"
+//    },
+//    "productOfferingTerm": [{
+//        "name": "My custom license",
+//        "description": "description",
+//        "type": "Custom",
+//        "isFullCustom": false,
+//        "exclusivity": "Exclusive",
+//        "sector": "All sectors",
+//        "region": "All regions",
+//        "purpose": "All purposes",
+//        "duration": "12",
+//        "transferability": "Sublicensing right",
+//        "validFor": {
+//                "startDateTime": "2018-04-19T16:42:23-04:00",
+//                "endDateTime": "2019-04-18T16:42:23-04:00"
+//        }
+//    }],
+//    "productSpecification": {
+//        "id": "1",
+//        "href": "http://127.0.0.1:8000/DSProductCatalog/api/catalogManagement/v2/productSpecification/4:(0.1)"
+//    }
+//}
+        function create(data, product, catalogue, terms) {
             var deferred = $q.defer();
             var params = {
                 catalogue: 'catalog',
@@ -341,6 +411,11 @@
                     productSpecification: product.serialize()
                 });
             }
+
+            angular.extend(data, {
+                productOfferingTerm: terms
+            });
+
 
             data.validFor = {
                 startDateTime: moment().format()

@@ -4,7 +4,7 @@ Starting on version 5.4.0, you are able to run the Business API Ecosystem with D
 
 You can build a docker image based on this Dockerfile. This image will contain only an instance of the Business Ecosystem Logic Proxy, exposing port `8000`. This requires that you have [docker](https://docs.docker.com/installation/) installed on your machine.
 
-The current Business API Ecosystem uses the FIWARE IdM to run. In this way, you have to register your instance in the FIWARE IdM as described in the [Business API Ecosystem installation guide](http://business-api-ecosystem.readthedocs.io/en/latest/installation-administration-guide.html#configuring-the-logic-proxy) before running the container since the IdM credentials are required.
+The current Business API Ecosystem uses the FIWARE IdM to run. In this way, you have to register your instance in the FIWARE IdM as described in the [Business API Ecosystem installation guide](http://bae-test.readthedocs.io/en/latest/installation-administration-guide.html#configuring-the-logic-proxy) before running the container since the IdM credentials are required.
 
 If you just want to have a Business Ecosystem Logic Proxy instance running as quickly as possible jump to section *The Fastest Way*.
 
@@ -116,7 +116,7 @@ Note in the previous command that it is needed to provide some environment varia
 * **CHARGING_HOST**: Host where the Business Ecosystem Charging Backend is running
 * **CHARGING_PORT**: Port where the Business Ecosystem Charging Backend is running
 
-Additionally, the Business Ecosystem Logic Proxy image includes a volume located at */business-ecosystem-logic-proxy/indexes* where the different index files are stored.
+Additionally, the Business Ecosystem Logic Proxy image includes a volume located at */bae-logic-proxy-test/indexes* where the different index files are stored.
 
 If you want to locate the host directory where the volume is being mounted, execute the following command:
 ```
@@ -127,13 +127,13 @@ As an alternative, you can specify the host directory for the container volume u
 ```
 $ sudo docker run \
     ...
-    -v /home/user/indexes:/business-ecosystem-logic-proxy/indexes
+    -v /home/user/indexes:/bae-logic-proxy-test/indexes
     ...
 ```
 
 ## Build the image
 
-If you have downloaded the [Business Ecosystem Logic Proxy's source code](https://github.com/FIWARE-TMForum/business-ecosystem-logic-proxy) you can build your own image. The end result will be the same, but this way you have a bit more of control of what's happening.
+If you have downloaded the [Business Ecosystem Logic Proxy's source code](https://github.com/FIWARE-TMForum/bae-logic-proxy-test) you can build your own image. The end result will be the same, but this way you have a bit more of control of what's happening.
 
 To create the image, just navigate to the `docker` directory and run:
 

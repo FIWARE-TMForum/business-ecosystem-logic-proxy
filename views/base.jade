@@ -244,6 +244,16 @@ html(ng-app="app")
       include ./partials/stock/product/create-form-terms.jade
     script(type="text/ng-template", id="stock/product/create/finish")
       include ./partials/stock/product/create-form-finish.jade
+
+    script(type="text/ng-template", id="stock/product/import")
+      include ./partials/stock/product/import.jade
+    script(type="text/ng-template", id="stock/product/import/general")
+      include ./partials/stock/product/import-form.jade
+    script(type="text/ng-template", id="stock/product/import/datastore")
+      include ./partials/stock/product/import-datastore.jade
+    script(type="text/ng-template", id="stock/product/import/finish")
+      include ./partials/stock/product/import-finish.jade
+
     script(type="text/ng-template", id="stock/product/update")
       include ./partials/stock/product/update.jade
     script(type="text/ng-template", id="stock/product/update/bundled")
@@ -264,12 +274,16 @@ html(ng-app="app")
       include ./partials/stock/product-offering/create.jade
     script(type="text/ng-template", id="stock/product-offering/create/general")
       include ./partials/stock/product-offering/create-form.jade
-    script(type="text/ng-template", id="stock/product-offering/create/bundle")
-      include ./partials/stock/product-offering/create-form-bundle.jade
+    script(type="text/ng-template", id="stock/product-offering/create/terms")
+      include ./partials/stock/product-offering/create-form-terms.jade
+    //script(type="text/ng-template", id="stock/product-offering/create/bundle")
+      //include ./partials/stock/product-offering/create-form-bundle.jade
     script(type="text/ng-template", id="stock/product-offering/create/priceplan")
       include ./partials/stock/product-offering/create-form-priceplan.jade
-    script(type="text/ng-template", id="stock/product-offering/create/product")
-      include ./partials/stock/product-offering/create-form-product.jade
+    script(type="text/ng-template", id="stock/product-offering/create/product-bundle")
+      include ./partials/stock/product-offering/create-form-product-bundle.jade
+    //script(type="text/ng-template", id="stock/product-offering/create/product")
+      //include ./partials/stock/product-offering/create-form-product.jade
     script(type="text/ng-template", id="stock/product-offering/create/catalogue")
       include ./partials/stock/product-offering/create-form-catalogue.jade
     script(type="text/ng-template", id="stock/product-offering/create/categories")

@@ -31,6 +31,7 @@ config.sessionSecret = 'keyboard cat';
 config.theme = '';
 
 // OAuth2 configuration
+//'server': 'http://34.213.26.168:8000/',
 config.oauth2 = {
     'server': 'https://account.lab.fiware.org',
     'clientID': '--client-id--',

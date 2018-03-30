@@ -28,22 +28,22 @@ function test_connection {
 }
 
 # Get mongodb host and port from config file
-MONGO_HOST=`/business-ecosystem-logic-proxy/node-v6.9.1-linux-x64/bin/node getConfig mongohost`
-MONGO_PORT=`/business-ecosystem-logic-proxy/node-v6.9.1-linux-x64/bin/node getConfig mongoport`
+MONGO_HOST=`/bae-logic-proxy-dc/node-v6.9.1-linux-x64/bin/node getConfig mongohost`
+MONGO_PORT=`/bae-logic-proxy-dc/node-v6.9.1-linux-x64/bin/node getConfig mongoport`
 
 # Wait for mongodb to be running
 test_connection 'MongoDB' ${MONGO_HOST} ${MONGO_PORT}
 
 # Get glassfish host and port from config
-GLASSFISH_HOST=`/business-ecosystem-logic-proxy/node-v6.9.1-linux-x64/bin/node getConfig glasshost`
-GLASSFISH_PORT=`/business-ecosystem-logic-proxy/node-v6.9.1-linux-x64/bin/node getConfig glassport`
+GLASSFISH_HOST=`/bae-logic-proxy-dc/node-v6.9.1-linux-x64/bin/node getConfig glasshost`
+GLASSFISH_PORT=`/bae-logic-proxy-dc/node-v6.9.1-linux-x64/bin/node getConfig glassport`
 
 # Wait for glassfish to be running
 test_connection 'Glassfish' ${GLASSFISH_HOST} ${GLASSFISH_PORT}
 
 # Wait for APIs to be deployed
-GLASSFISH_SCH=`/business-ecosystem-logic-proxy/node-v6.9.1-linux-x64/bin/node getConfig glassprot`
-GLASSFISH_PATH=`/business-ecosystem-logic-proxy/node-v6.9.1-linux-x64/bin/node getConfig glasspath`
+GLASSFISH_SCH=`/bae-logic-proxy-dc/node-v6.9.1-linux-x64/bin/node getConfig glassprot`
+GLASSFISH_PATH=`/bae-logic-proxy-dc/node-v6.9.1-linux-x64/bin/node getConfig glasspath`
 
 echo "Testing Glasfish APIs deployed"
 wget ${GLASSFISH_SCH}://${GLASSFISH_HOST}:${GLASSFISH_PORT}/${GLASSFISH_PATH}
@@ -61,7 +61,7 @@ done
 
 
 # Include this setting to avoid inconsistencies between docker container port and used port
-sed -i "s|config\.port|config\.extPort|" /business-ecosystem-logic-proxy/lib/tmfUtils.js
+sed -i "s|config\.port|config\.extPort|" /bae-logic-proxy-dc/lib/tmfUtils.js
 
 echo "Adding cleanService to services"
 echo "serviceIndexes  54645/tcp" >> /etc/services
@@ -73,7 +73,7 @@ echo "Cleaning indexes"
 rm -rf ./indexes/*
 
 echo "Creating indexes..."
-/business-ecosystem-logic-proxy/node-v6.9.1-linux-x64/bin/node fill_indexes.js
-/business-ecosystem-logic-proxy/node-v6.9.1-linux-x64/bin/node collect_static.js
+/bae-logic-proxy-dc/node-v6.9.1-linux-x64/bin/node fill_indexes.js
+/bae-logic-proxy-dc/node-v6.9.1-linux-x64/bin/node collect_static.js
 
-/business-ecosystem-logic-proxy/node-v6.9.1-linux-x64/bin/node server.js
+/bae-logic-proxy-dc/node-v6.9.1-linux-x64/bin/node server.js

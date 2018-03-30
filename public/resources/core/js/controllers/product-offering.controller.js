@@ -1,6 +1,6 @@
 /* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
- * This file belongs to the business-ecosystem-logic-proxy of the
+ * This file belongs to the bae-logic-proxy-test of the
  * Business API Ecosystem
  *
  * This program is free software: you can redistribute it and/or modify
@@ -155,13 +155,21 @@
                 title: 'General',
                 templateUrl: 'stock/product-offering/create/general'
             },
-            {
+            /*{
                 title: 'Bundle',
                 templateUrl: 'stock/product-offering/create/bundle'
             },
             {
                 title: 'Product Spec.',
                 templateUrl: 'stock/product-offering/create/product'
+            },*/
+            {
+                title: 'Product Spec.',
+                templateUrl: 'stock/product-offering/create/product-bundle'
+            },
+            {
+                title: 'License',
+                templateUrl: 'stock/product-offering/create/terms'
             },
             {
                 title: 'Catalogue',
@@ -187,6 +195,15 @@
 
         angular.extend(vm, $controller('FormMixinCtrl', {$scope: $scope}));
 
+        vm.exclusivities = Offering.exclusivities;
+        vm.sectors = Offering.sectors;
+        vm.regions = Offering.regions;
+        vm.timeframes = Offering.timeframes;
+        vm.purposes = Offering.purposes;
+        vm.transferabilities = Offering.transferabilities;
+        vm.standards = Offering.standards
+        vm.terms = {type:'Standard', isFullCustom:false};
+        vm.mode = 1;
         vm.CHARGE_PERIODS = Offering.TYPES.CHARGE_PERIOD;
         vm.CURRENCY_CODES = Offering.TYPES.CURRENCY_CODE;
         vm.PRICES = Offering.TYPES.PRICE;
@@ -200,6 +217,9 @@
         vm.create = create;
         vm.setProduct = setProduct;
         vm.setCatalogue = setCatalogue;
+
+        vm.toggleProduct = toggleProduct;
+        vm.hasProduct = hasProduct;
 
         vm.setSharingModel = setSharingModel;
         vm.getSharingModel = getSharingModel;
@@ -282,12 +302,89 @@
 
         var createPromise = null;
 
+
+//{
+//    "bundledProductOffering": [],
+//    "category": [],
+//    "description": "Description",
+//    "isBundle": false,
+//    "lifecycleStatus": "Active",
+//    "name": "Name",
+//    "place": [{
+//        "name": "Place"
+//    }],
+//    "productOfferingPrice": [],
+//    "validFor": {
+//        "startDateTime": "2018-03-09T15:23:21+00:00"
+//    },
+//    "version": "0.1",
+//    "serviceCandidate": {
+//        "id": "defaultRevenue",
+//        "name": "Revenue Sharing Service"
+//    },
+//    "productOfferingTerm": [{
+//        "name": "My custom license",
+//        "description": "description",
+//        "type": "Custom",
+//        "isFullCustom": false,
+//        "exclusivity": "Exclusive",
+//        "sector": "All sectors",
+//        "region": "All regions",
+//        "purpose": "All purposes",
+//        "duration": "12",
+//        "transferability": "Sublicensing right",
+//        "validFor": {
+//                "startDateTime": "2018-04-19T16:42:23-04:00",
+//                "endDateTime": "2019-04-18T16:42:23-04:00"
+//        }
+//    }],
+//    "productSpecification": {
+//        "id": "1",
+//        "href": "http://127.0.0.1:8000/DSProductCatalog/api/catalogManagement/v2/productSpecification/4:(0.1)"
+//    }
+//}
         function create() {
             var data = angular.copy(vm.data);
 
             data.category = formatCategory();
             data.place = formatPlaces();
-            createPromise = Offering.create(data, vm.product, vm.catalogue);
+
+            if(vm.data.isBundle){
+                vm.bundledProductSpecification.forEach(function (prod, index) {
+                                                                        var tmpdata = JSON.parse(JSON.stringify(data));
+                                                                        tmpdata.isBundle = false;
+                                                                        tmpdata.name = data.name+index.toString();
+                                                                        createPromise = Offering.create(tmpdata, prod, vm.catalogue);
+
+                                                                                    createPromise.then(function (offeringCreated) {
+                                                                                        $state.go('stock.offering.update', {
+                                                                                            offeringId: offeringCreated.id
+                                                                                        });
+                                                                                        $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'created', {
+                                                                                            resource: 'offering',
+                                                                                            name: offeringCreated.name
+                                                                                        });
+                                                                                        vm.data.bundledProductOffering.push(offeringCreated);
+                                                                                    }, function (response) {
+
+                                                                                        var defaultMessage = 'There was an unexpected error that prevented the ' +
+                                                                                            'system from creating a new offering';
+                                                                                        var error = Utils.parseError(response, defaultMessage);
+
+                                                                                        $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                                                                                            error: error
+                                                                                        });
+                                                                                    });
+
+                                                                      });
+            }
+
+            if(vm.customterms){
+                vm.terms.type = 'custom';
+            }else{
+
+            }
+            createPromise = Offering.create(data, vm.product, vm.catalogue, vm.terms);
 
             createPromise.then(function (offeringCreated) {
                 $state.go('stock.offering.update', {
@@ -340,11 +437,43 @@
             vm.bundleControl.valid = vm.data.bundledProductOffering.length >= 2;
         }
 
+        function toggleProduct(product) {
+                    var index = filterProduct(product);
+
+                    if (index !== -1) {
+                        vm.bundledProductSpecification.splice(index, 1);
+                        //vm.data.bundledProductOffering.splice(index, 1);
+                    } else {
+                        vm.bundledProductSpecification.push(product);
+                        //vm.data.bundledProductOffering.push(product);
+                    }
+
+                    stepList[1].form.$valid = vm.bundledProductSpecification.length >= 2;
+                }
+
+        function filterProduct(product) {
+                    var i = -1;
+                    vm.bundledProductSpecification.forEach(function (bundledProduct, index) {
+                        if (bundledProduct.id == product.id) {
+                            i = index;
+                        }
+                    });
+                    return i;
+                }
+        function hasProduct(product) {
+            return filterProduct(product) > -1;
+        }
+
+
+
         function toggleBundle() {
             if (!vm.data.isBundle) {
-                vm.data.bundledProductOffering.length = 0;
+                vm.bundledProductSpecification.length = 0;
+                //vm.data.bundledProductOffering.length = 0;
                 vm.bundleControl.valid = true;
             } else {
+                vm.bundledProductSpecification = [];
+                //vm.data.bundledProductOffering = [];
                 vm.bundleControl.valid = false;
                 vm.product = undefined;
             }
