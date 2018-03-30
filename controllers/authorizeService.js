@@ -57,9 +57,9 @@ var authorizeService = (function () {
                 service.userId = userId;
                 service.authToken = authToken;
                 service.refreshToken = refreshToken;
-                service.expire = Date.now() + 3600000; //expire; TODO FIX
+                service.expire = Date.now() + (parseInt(expire) * 1000); 
 
-                accessTokenService.findOneAndUpdate({appId: appId, userId: userId}, { $set: {appId: appId, userId: userId, authToken: authToken, refreshToken: refreshToken, expire: expire}}, {upsert: true}, function (err, rawResp) {
+                accessTokenService.findOneAndUpdate({appId: appId, userId: userId}, { $set: {appId: appId, userId: userId, authToken: authToken, refreshToken: refreshToken, expire: service.expire}}, {upsert: true}, function (err, rawResp) {
                     if (err) {
                         res.status(500).json({error: err.message}); 
                     } 

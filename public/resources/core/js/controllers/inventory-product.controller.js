@@ -115,14 +115,13 @@
         $window, LOGGED_USER, USAGE_CHART_URL, BillingAccount, Download) {
 
 
-        // var accessTokenService = require('./../../../../../db/schemas/accessTokenService'),
-        //     config = require('./../../../../../config'),
-        //     uuid = require('node-uuid');    
         /* jshint validthis: true */
         var vm = this;
         var load = false;
         var digital = false;
         var locations = [];
+        var applicationId = [];
+        var hasApplicationId = false;
 
         vm.item = {};
         vm.offerings = [];
@@ -140,6 +139,7 @@
         vm.renewProduct = renewProduct;
         vm.loading = loading;
         vm.isDigital = isDigital;
+        vm.isProtected = isProtected;
         vm.downloadAsset = downloadAsset;
         vm.getUsageURL = getUsageURL;
         vm.downloadInvoice = downloadInvoice;
@@ -179,6 +179,7 @@
                     return charge;
                 });
                 vm.charges.status = LOADED;
+                vm.token = retrieveToken();
 
             }, function(response) {
                 vm.charges.error = Utils.parseError(response, 'It was impossible to load the list of charges');
@@ -218,22 +219,28 @@
             var hasMedia = false;
             var hasLocation = false;
             var hasAssetType = false;
+            
 
             // Check if the product is digital
             if (characteristics) {
-                for (var i = 0; i < characteristics.length && (!hasMedia || !hasLocation || !hasAssetType); i++) {
+                for (var i = 0; i < characteristics.length ; i++) { //removed && (!hasMedia || !hasLocation || !hasAssetType)
                     var charact = characteristics[i];
                     if (charact.name.toLowerCase() == 'asset type') {
                         hasAssetType = true;
                     }
-
+                    else
                     if (charact.name.toLowerCase() == 'media type') {
                         hasMedia = true;
                     }
-
+                    else
                     if (charact.name.toLowerCase() == 'location') {
                         hasLocation = true;
                         locations.push(charact.productSpecCharacteristicValue[0].value);
+                    }
+                    else
+                    if (charact.name.toLowerCase() == 'appid') {
+                        hasApplicationId = true;
+                        applicationId = charact.productSpecCharacteristicValue[0].value;
                     }
                 }
             }
@@ -269,6 +276,10 @@
 
         function isUsage() {
             return hasProductPrice() && vm.item.productPrice[0].priceType.toLowerCase() == 'usage';
+        }
+
+        function isProtected() {
+            return hasApplicationId;
         }
 
         function isRenewable() {
@@ -384,15 +395,25 @@
             });
         }
 
+        function getApplicationId(){
+            return applicationId;
+        }
+
         function retrieveToken() {
             load = true;
+
             InventoryProduct.getToken({
-                appId: "47ca01dd15b446b5a5f9f08ad495f52a",
+                appId: getApplicationId(),
                 userId: LOGGED_USER.id,
             }).then(function(tokenBody,tokenHeader) {
                 load = false;
-                vm.token = tokenBody.authToken;
-                return tokenBody.authToken;
+                var now = Date.now();
+                var token_expiration = new Date(tokenBody.expire);
+                if(now > token_expiration)
+                    vm.token = "Token expired";
+                else
+                    vm.token = tokenBody.authToken;
+                return vm.token;
             }, function (response) {
                 load = false;
                 var defaultMessage = 'There was an unexpected error that prevented the ' +
@@ -417,7 +438,7 @@
             }, function (response) {
                 load = false;
                 var defaultMessage = 'There was an unexpected error that prevented the ' +
-                    'system from renewing your product';
+                    'system from generating a new token';
                 var error = Utils.parseError(response, defaultMessage);
 
                 $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
