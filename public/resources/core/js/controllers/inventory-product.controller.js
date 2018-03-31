@@ -166,7 +166,7 @@
                 productRetrieved.productOffering.bundledProductOffering.forEach(function(offering) {
                     vm.offerings.push(offering);
                     checkOfferingProduct(offering);
-                })
+                });
             }
 
             // Retrieve existing charges
@@ -310,7 +310,7 @@
                             $rootScope.$emit(EVENTS.MESSAGE_CLOSED);
                         }
                         // Reload inventory page
-                        $state.go($state.current, {}, {reload: true})
+                        $state.go($state.current, {}, {reload: true});
 
                     };
 
@@ -382,7 +382,7 @@
             var result = formatCharacteristicValue(characteristic, characteristicValue);
 
             var productCharacteristic = vm.item.productCharacteristic.filter((prodCharacteristic) => {
-                return characteristicMatches(prodCharacteristic, characteristic, offId, productId)
+                return characteristicMatches(prodCharacteristic, characteristic, offId, productId);
             })[0];
 
             return result === productCharacteristic.value;
@@ -391,7 +391,7 @@
         function downloadInvoice(invoice) {
             Download.download(invoice).then((result) => {
                 let url = $window.URL.createObjectURL(result);
-                $window.open(url, '_blank')
+                $window.open(url, '_blank');
             });
         }
 
