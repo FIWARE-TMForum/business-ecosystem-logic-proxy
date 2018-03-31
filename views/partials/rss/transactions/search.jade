@@ -5,7 +5,7 @@ ui-view
         .btn-group.z-depth-1
           a.btn.btn-success(ng-click="searchVM.createReport()" ng-disabled="!searchVM.list.length")
             span.item-icon.fa.fa-plus
-            span.item-text New report
+            span.item-text #{ __("New report") }
         .btn-group.z-depth-1
           a.btn.btn-default(ui-sref="rss.transactions({ flow: 1 })" ui-sref-active="active")
             span.item-icon.fa.fa-th
@@ -14,7 +14,7 @@ ui-view
     .col-xs-12(ng-switch="searchVM.list.status")
       div(ng-switch-when="LOADED", ng-switch="searchVM.list.length")
         div(ng-switch-when="0")
-          .alert.alert-info.text-center No transactions found.
+          .alert.alert-info.text-center #{ __("No transactions found.") }
         div(ng-switch-default ng-switch="searchVM.$params.flow")
           div(ng-switch-when="1")
             .panel.panel-default.z-depth-1(ng-repeat="tx in searchVM.list")
@@ -29,27 +29,27 @@ ui-view
                 .row
                   .col-md-6
                     dl
-                      dt Transaction Type
+                      dt #{ __("Transaction Type") }
                       dd.text-dark-secondary {{ searchVM.getTxType(tx.transactionType) }}
-                      dt Product Offering
+                      dt #{ __("Offering") }
                       dd.text-dark-secondary {{ tx.application }}
                   .col-md-6
                     dl
-                      dt Charged Amount
+                      dt #{ __("Charged Amount") }
                       dd.text-dark-secondary {{ tx.chargedAmount }} {{ tx.currency }}
-                      dt Description
-                      dd.text-dark-secondary {{ tx.description ? tx.description : 'No description provided.' }}
+                      dt #{ __("Description") }
+                      dd.text-dark-secondary {{ tx.description ? tx.description : '#{ __("No description provided.") }' }}
           .table-responsive(ng-switch-when="2")
             table.table.table-bordered
               thead
                 tr
                   th Timestamp
-                  th Type
-                  th Product class
-                  th Customer
-                  th Product offering
-                  th Amount
-                  th Description
+                  th #{ __("Type") }
+                  th #{ __("Product class") }
+                  th #{ __("Customer") }
+                  th #{ __("Offering") }
+                  th #{ __("Amount") }
+                  th #{ __("Description") }
               tbody
                 tr(ng-repeat="tx in searchVM.list")
                   th {{ tx.timestamp | amDateFormat: 'ddd, MMM Do YYYY, HH:mm' }}
@@ -58,7 +58,7 @@ ui-view
                   td {{ tx.customerId }}
                   td {{ tx.application }}
                   td {{ tx.chargedAmount }} {{ tx.currency }}
-                  td {{ tx.description ? tx.description : 'No description provided.' }}
+                  td {{ tx.description ? tx.description : '#{ __("No description provided.") }' }}
       div(ng-switch-when="ERROR")
         .alert.alert-danger.text-center {{ searchVM.error }}
       div(ng-switch-default)

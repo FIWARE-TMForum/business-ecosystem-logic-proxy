@@ -3,7 +3,7 @@
     .modal-content
       .modal-header
         .h4
-          strong Shipping address
+          strong #{ __("Shipping address") }
       .modal-body
         shipping-address-form(
           form="updateVM.form"
@@ -14,6 +14,6 @@
         )
       .modal-footer
         a.btn.btn-success.z-depth-1(data-dismiss="modal" ng-click="updateVM.update(updateVM.form)" ng-disabled="!updateVM.form.$valid")
-          span.item-text Update
+          span.item-text #{ __("Update") }
         a.btn.btn-default.z-depth-1(data-dismiss="modal")
-          span.item-text Cancel
+          span.item-text #{ __("Cancel") }

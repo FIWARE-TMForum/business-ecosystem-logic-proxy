@@ -10,39 +10,39 @@
     .row
       .col-md-12
         dl
-          dd.text-dark-secondary.text-preline {{ detailVM.item.description ? detailVM.item.description : 'No description provided.' }}
+          dd.text-dark-secondary.text-preline {{ detailVM.item.description ? detailVM.item.description : '#{ __("No description provided.") }' }}
 
     .row
       .col-md-12
         .h4.text-dark-secondary
-          strong Extra Info
+          strong #{ __("Extra Info") }
     .row
       .col-md-6
         dl
-          dt Offering Version
+          dt #{ __("Offering Version") }
           dd.text-dark-secondary {{ detailVM.item.version }}
       .col-md-6
         dl
-          dt Updated
+          dt #{ __("Last Updated") }
           dd.text-dark-secondary
             time {{ detailVM.item.lastUpdate | amDateFormat: 'dddd, MMMM Do YYYY, h:mm a' }}
     .row(ng-if="!detailVM.item.isBundle")
       .col-md-6
         dl
-          dt Product Name
+          dt #{ __("Product Name") }
           dd.text-dark-secondary {{ detailVM.item.productSpecification.name }}
-          dt Brand
+          dt #{ __("Brand") }
           dd.text-dark-secondary {{ detailVM.item.productSpecification.brand }}
       .col-md-6
         dl
-          dt Product Version
+          dt #{ __("Product Version") }
           dd.text-dark-secondary {{ detailVM.item.productSpecification.version }}
-          dt ID Number
+          dt #{ __("ID Number") }
           dd.text-dark-secondary {{ detailVM.item.productSpecification.productNumber }}
     div
       div(ng-if="detailVM.item.productSpecification.isBundle")
         .h5.text-dark-primary
-          strong Bundled Products
+          strong #{ __("Bundled Products") }
 
         .panel-group(id="bundled-products")
           .panel.panel-default.z-depth-1(ng-repeat="product in detailVM.item.productSpecification.bundledProductSpecification")
@@ -57,13 +57,13 @@
                 .row
                   .col-md-6
                     dl
-                      dt Product Name
+                      dt #{ __("Product Name") }
                       dd.text-dark-secondary {{ product.name }}
-                      dt Brand
+                      dt #{ __("Brand") }
                       dd.text-dark-secondary {{ product.brand }}
                   .col-md-6
                     dl
-                      dt Product Version
+                      dt #{ __("Product Version") }
                       dd.text-dark-secondary {{ product.version }}
-                      dt ID Number
+                      dt #{ __("ID Number") }
                       dd.text-dark-secondary {{ product.productNumber }}

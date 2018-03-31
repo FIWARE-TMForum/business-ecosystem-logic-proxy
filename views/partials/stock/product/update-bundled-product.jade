@@ -11,7 +11,7 @@
       .panel.panel-default.item-product.z-depth-1(ng-repeat="product in updateVM.item.bundledProductSpecification")
         a.thumbnail.thumbnail-lg(ui-sref="stock.product.update({ productId: product.id })", ui-sref-opts="{ inherit: false }")
           span.label(class="label-{{ product.isBundle ? 'bundle' : 'single' }}")
-            | {{ product.isBundle ? product.bundledProductSpecification.length + ' bundled' : 'Single' }}
+            | {{ product.isBundle ? product.bundledProductSpecification.length + ' #{ __("bundled") }' : '#{ __("Single") }' }}
           img(no-image, ng-src="{{ product.getPicture() }}")
         .panel-body
           .h4
@@ -21,7 +21,7 @@
             span.pull-right
               time(am-time-ago="product.lastUpdate")
             p v{{ product.version }}
-            p {{ product.description ? product.description : 'No description provided.' }}
+            p {{ product.description ? product.description : '#{ __("No description provided.") }' }}
           .status-group
             .status-item.active(class="status-{{ product.lifecycleStatus | lowercase }}")
               span.item-icon
@@ -30,12 +30,12 @@
       table.table.table-bordered.table-hover
         thead
           tr
-            th Status
-            th Name
-            th ID
-            th Brand
-            th Type
-            th Updated
+            th #{ __("Status") }
+            th #{ __("Name") }
+            th #{ __("ID") }
+            th #{ __("Brand") }
+            th #{ __("Type") }
+            th #{ __("Last Updated") }
         tbody
           tr(ng-repeat="productSpec in updateVM.item.bundledProductSpecification")
             td
@@ -48,6 +48,6 @@
             td {{ productSpec.brand }}
             td
               span.label(ng-class="productSpec.isBundle ? 'label-bundle' : 'label-single'")
-                | {{ productSpec.isBundle ? 'Bundle' : 'Single' }}
+                | {{ productSpec.isBundle ? '#{ __("Bundle") }' : '#{ __("Single") }' }}
             td
               time(am-time-ago="productSpec.lastUpdate")

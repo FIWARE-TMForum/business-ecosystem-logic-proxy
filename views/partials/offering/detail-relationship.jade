@@ -1,7 +1,7 @@
 .row
   .col-xs-12(ng-if="!detailVM.item.relationships().length")
     .alert.alert-info.text-center
-      span No relationships found.
+      span #{ __("No relationships included.") }
   .col-xs-12(ng-if="detailVM.item.relationships().length")
     .container-flex
       .panel.panel-default.item-offering.z-depth-1(ng-repeat="productOffering in detailVM.item.relationships()")
@@ -9,7 +9,7 @@
           span.label.label-relationship.label-to-left
             | {{ detailVM.item.relationshipOf(productOffering).parseType() }}
           span.label(class="label-{{ productOffering.isBundle ? 'bundle' : 'single' }}")
-            | {{ productOffering.isBundle ? productOffering.bundledProductOffering.length + ' bundled' : 'Single' }}
+            | {{ productOffering.isBundle ? productOffering.bundledProductOffering.length + ' #{ __("bundled") }' : '#{ __("Single") }' }}
           img(no-image, ng-src="{{ productOffering.getPicture() }}")
         .panel-body
           .h4.text-ellipsis
@@ -19,10 +19,10 @@
             span.pull-right
               time(am-time-ago="productOffering.lastUpdate")
             p v{{ productOffering.version }}
-            p.item-description {{ productOffering.description ? productOffering.description : 'No description provided.' }}
+            p.item-description {{ productOffering.description ? productOffering.description : '#{ __("No description provided.") }' }}
           .h5.text-right
             strong {{ productOffering.formatCheapestPricePlan() }}
         .btn-group.btn-group-justified(ng-show="user.isAuthenticated()")
           a.btn.btn-success.z-depth-1(ng-click="user.order(productOffering)", ng-disabled="user.contains(productOffering)")
             span.item-icon.fa(class="fa-{{ user.contains(productOffering) ? 'check-circle' : 'shopping-cart' }}")
-            span.item-text {{ user.contains(productOffering) ? 'Added' : 'Add to cart' }}
+            span.item-text {{ user.contains(productOffering) ? '#{ __("Added") }' : '#{ __("Add to cart") }' }}

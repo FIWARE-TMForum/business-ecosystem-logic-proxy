@@ -22,10 +22,12 @@
  *         Jaime Pajuelo <jpajuelo@conwet.com>
  *         Aitor Magán <amagan@conwet.com>
  */
+
+
 (function () {
 
     'use strict';
-
+    
     var LOADING = 'LOADING';
     var LOADED = 'LOADED';
     var ERROR = 'ERROR';
@@ -39,7 +41,7 @@
     function InventorySearchController($scope, $state, $rootScope, EVENTS, InventoryProduct, INVENTORY_STATUS, Utils) {
         /* jshint validthis: true */
         var vm = this;
-
+        
         vm.state = $state;
 
         vm.list = [];
@@ -112,11 +114,14 @@
         $rootScope, $scope, $state, InventoryProduct, Utils, ProductSpec, EVENTS, $interval,
         $window, LOGGED_USER, USAGE_CHART_URL, BillingAccount, Download) {
 
+
         /* jshint validthis: true */
         var vm = this;
         var load = false;
         var digital = false;
         var locations = [];
+        var applicationId = [];
+        var hasApplicationId = false;
 
         vm.item = {};
         vm.offerings = [];
@@ -134,10 +139,15 @@
         vm.renewProduct = renewProduct;
         vm.loading = loading;
         vm.isDigital = isDigital;
+        vm.isProtected = isProtected;
         vm.downloadAsset = downloadAsset;
         vm.getUsageURL = getUsageURL;
         vm.downloadInvoice = downloadInvoice;
-
+        vm.generateToken = generateToken;
+        vm.retrieveToken = retrieveToken;
+        vm.password = "";
+        vm.token = retrieveToken();
+    
         InventoryProduct.detail($state.params.productId).then(function (productRetrieved) {
             locations = [];
             load = false;
@@ -169,6 +179,7 @@
                     return charge;
                 });
                 vm.charges.status = LOADED;
+                vm.token = retrieveToken();
 
             }, function(response) {
                 vm.charges.error = Utils.parseError(response, 'It was impossible to load the list of charges');
@@ -208,22 +219,28 @@
             var hasMedia = false;
             var hasLocation = false;
             var hasAssetType = false;
+            
 
             // Check if the product is digital
             if (characteristics) {
-                for (var i = 0; i < characteristics.length && (!hasMedia || !hasLocation || !hasAssetType); i++) {
+                for (var i = 0; i < characteristics.length ; i++) { //removed && (!hasMedia || !hasLocation || !hasAssetType)
                     var charact = characteristics[i];
                     if (charact.name.toLowerCase() == 'asset type') {
                         hasAssetType = true;
                     }
-
+                    else
                     if (charact.name.toLowerCase() == 'media type') {
                         hasMedia = true;
                     }
-
+                    else
                     if (charact.name.toLowerCase() == 'location') {
                         hasLocation = true;
                         locations.push(charact.productSpecCharacteristicValue[0].value);
+                    }
+                    else
+                    if (charact.name.toLowerCase() == 'appid') {
+                        hasApplicationId = true;
+                        applicationId = charact.productSpecCharacteristicValue[0].value;
                     }
                 }
             }
@@ -259,6 +276,10 @@
 
         function isUsage() {
             return hasProductPrice() && vm.item.productPrice[0].priceType.toLowerCase() == 'usage';
+        }
+
+        function isProtected() {
+            return hasApplicationId;
         }
 
         function isRenewable() {
@@ -371,6 +392,58 @@
             Download.download(invoice).then((result) => {
                 let url = $window.URL.createObjectURL(result);
                 $window.open(url, '_blank')
+            });
+        }
+
+        function getApplicationId(){
+            return applicationId;
+        }
+
+        function retrieveToken() {
+            load = true;
+
+            InventoryProduct.getToken({
+                appId: getApplicationId(),
+                userId: LOGGED_USER.id,
+            }).then(function(tokenBody,tokenHeader) {
+                load = false;
+                var now = Date.now();
+                var token_expiration = new Date(tokenBody.expire);
+                if(now > token_expiration)
+                    vm.token = "Token expired";
+                else
+                    vm.token = tokenBody.authToken;
+                return vm.token;
+            }, function (response) {
+                load = false;
+                var defaultMessage = 'There was an unexpected error that prevented the ' +
+                    'system from renewing your product';
+                var error = Utils.parseError(response, defaultMessage);
+
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                    error: error
+                });
+            });
+        }
+
+        function generateToken() {
+            load = true;
+            InventoryProduct.setToken({
+                username: LOGGED_USER.email,
+                password: vm.password,
+            }).then(function(tokenBody,tokenHeader) {
+                load = false;
+                vm.token = retrieveToken();
+                return tokenBody.access_token;
+            }, function (response) {
+                load = false;
+                var defaultMessage = 'There was an unexpected error that prevented the ' +
+                    'system from generating a new token';
+                var error = Utils.parseError(response, defaultMessage);
+
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                    error: error
+                });
             });
         }
 

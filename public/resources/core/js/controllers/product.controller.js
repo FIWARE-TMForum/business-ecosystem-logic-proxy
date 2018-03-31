@@ -712,6 +712,10 @@
             return vm.digitalChars;
         }
 
+        function getMetaInfo() {
+            return vm.meta;
+        }
+
         function initMediaType() {
             if (vm.currentType.mediaTypes.length > 0) {
                 vm.digitalChars[1].productSpecCharacteristicValue[0].value = vm.currentType.mediaTypes[0];
@@ -733,6 +737,7 @@
             saveAsset: saveAsset,
             upgradeAsset: upgradeAsset,
             getDigitalChars: getDigitalChars,
+            getMetaInfo: getMetaInfo,
             isValidAsset: isValidAsset
         };
 
@@ -744,7 +749,7 @@
                 // Initialize digital asset characteristics
                 vm.digitalChars.push(ProductSpec.createCharacteristic({
                     name: "Asset type",
-                    description: "Type of the digital asset described in this product specification"
+                    description: "Type of the data source described in this product specification"
                 }));
                 vm.digitalChars[0].productSpecCharacteristicValue.push(ProductSpec.createCharacteristicValue({
                     default: true,
@@ -752,14 +757,14 @@
                 }));
                 vm.digitalChars.push(ProductSpec.createCharacteristic({
                     name: "Media type",
-                    description: "Media type of the digital asset described in this product specification"
+                    description: "Media type of the data source described in this product specification"
                 }));
                 vm.digitalChars[1].productSpecCharacteristicValue.push(ProductSpec.createCharacteristicValue({
                     default: true
                 }));
                 vm.digitalChars.push(ProductSpec.createCharacteristic({
                     name: "Location",
-                    description: "URL pointing to the digital asset described in this product specification"
+                    description: "URL pointing to the data source described in this product specification"
                 }));
                 vm.digitalChars[2].productSpecCharacteristicValue.push(ProductSpec.createCharacteristicValue({
                     default: true
@@ -1033,6 +1038,49 @@
 
             if (vm.isDigital) {
                 data.productSpecCharacteristic = data.productSpecCharacteristic.concat(vm.assetCtl.getDigitalChars());
+                
+                var metaInfo = vm.assetCtl.getMetaInfo();
+                if (metaInfo.application_id !== undefined) {
+                    // Include the application ID
+                    var appId = metaInfo.application_id;
+                    var appIdChar = ProductSpec.createCharacteristic({
+                        name: 'appId',
+                        description: 'Application ID of the data source described in this product specification'
+                    });
+    
+                    appIdChar.productSpecCharacteristicValue.push(ProductSpec.createCharacteristicValue({
+                        default: true,
+                        value: appId
+                    }));
+    
+                    data.productSpecCharacteristic.push(appIdChar);
+                }
+
+                if (metaInfo.service !== undefined) {
+                    // Include the Fiware-Service
+                    var fiware_service = metaInfo.service;
+                    
+                    if (fiware_service != "") {
+                        var fiware_serviceChar = ProductSpec.createCharacteristic({
+                            name: 'Fiware-Service',
+                            description: 'Fiware-Service of the data source described in this product specification'
+                        });
+                    }
+                    else{
+                        var fiware_serviceChar = ProductSpec.createCharacteristic({
+                            name: 'Fiware-Service',
+                            description: 'Fiware-Service not required for the data source described in this product specification'
+                        });
+                    }
+
+                    fiware_serviceChar.productSpecCharacteristicValue.push(ProductSpec.createCharacteristicValue({
+                        default: true,
+                        value: fiware_service
+                    }));
+    
+                    data.productSpecCharacteristic.push(fiware_serviceChar);
+                }
+                
             }
 
             if (vm.terms.title || vm.terms.text) {

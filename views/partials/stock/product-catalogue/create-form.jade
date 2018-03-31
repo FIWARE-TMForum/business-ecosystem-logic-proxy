@@ -2,7 +2,7 @@ form(name="step.form", novalidate)
   .form-group(
     ng-class="{ 'has-error': createForm.hasError(step.form.name) }"
   )
-    label Enter a name
+    label #{ __("Enter a name") }
     input.form-control(
       type="text"
       name="name"
@@ -15,14 +15,14 @@ form(name="step.form", novalidate)
       ng-messages="step.form.name.$error"
       ng-show="createForm.hasError(step.form.name)"
     )
-      span(ng-message="required") This field is required.
-      span(ng-message="maxlength") This field must not exceed 30 chars.
-      span(ng-message="unique") This name is already taken.
+      span(ng-message="required") #{ __("This field is required.") }
+      span(ng-message="maxlength") #{ __("This field must not exceed 30 chars.") }
+      span(ng-message="unique") #{ __("This name is already taken.") }
   .form-group
     label
-      span Enter a description
-      small.text-muted (optional)
+      span #{ __("Enter a description") }
+      small.text-muted (#{ __("optional") })
     textarea.form-control(name="description", rows="3", ng-model="createVM.data.description")
   .form-group.text-right
     a.btn.btn-default.z-depth-1(ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])", ng-disabled="!step.form.$valid")
-      span.item-text Next
+      span.item-text #{ __("Next") }

@@ -1,4 +1,4 @@
-/* Copyright (c) 2017 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2017 - 2018 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -35,6 +35,7 @@ const jsDepFilesToInject = [
     'angular-1.4.7/js/angular',
     // Angular Dependencies:
     'angular-1.4.7/js/angular-messages',
+    'angular-1.4.7/js/angular-cookies',
     'angular-1.4.7/js/angular-moment',
     'angular-1.4.7/js/angular-resource',
     'angular-1.4.7/js/angular-ui-router',
@@ -91,6 +92,7 @@ let jsAppFilesToInject = [
     'controllers/pager.controller',
     'controllers/billing-account.controller',
     'controllers/customer.controller',
+    'controllers/lang.controller',
     'routes/offering.routes',
     'routes/settings.routes',
     'routes/inventory.routes',

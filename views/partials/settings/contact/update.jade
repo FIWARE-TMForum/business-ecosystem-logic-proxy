@@ -5,10 +5,10 @@
         li(ui-sref-active-eq="active")
           a(ui-sref="settings.contact.shipping")
             span.item-icon.fa.fa-truck
-            span.item-text.hidden-xs Shipping addresses
+            span.item-text.hidden-xs #{ __("Shipping addresses") }
         li(ui-sref-active-eq="active")
           a(ui-sref="settings.contact.business")
             span.item-icon.fa.fa-fax
-            span.item-text.hidden-xs Business addresses
+            span.item-text.hidden-xs #{ __("Business addresses") }
   .col-xs-12
     ui-view

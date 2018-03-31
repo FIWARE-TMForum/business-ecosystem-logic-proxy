@@ -3,4 +3,4 @@
     .container-flex
       div(offering-priceplan, ng-repeat="priceplan in detailVM.item.productOfferingPrice")
   .col-sm-12(ng-if="!detailVM.item.productOfferingPrice.length")
-    .alert.alert-info.text-center No price plans included.
+    .alert.alert-info.text-center #{ __("No price plans included.") }

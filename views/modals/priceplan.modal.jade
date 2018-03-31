@@ -3,11 +3,11 @@
     .modal-content
       .modal-header
         .h4
-          strong Price plan
+          strong #{ __("Price plan") }
       .modal-body
         price-plan-form(form="entryAttrVM.form" controller="entryAttrVM" data="entryAttrVM.data")
       .modal-footer
         a.btn.btn-success.z-depth-1(data-dismiss="modal", ng-click="entryAttrVM.update()", ng-disabled="!entryAttrVM.form.$valid")
-          span.item-text Update
+          span.item-text #{ __("Update") }
         a.btn.btn-default.z-depth-1(data-dismiss="modal")
-          span.item-text Cancel
+          span.item-text #{ __("Cancel") }

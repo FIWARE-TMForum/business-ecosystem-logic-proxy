@@ -11,4 +11,4 @@
       span.small {{ priceplan.price.currencyCode | uppercase }}
     p.small(ng-if="priceplan.recurringChargePeriod") / {{ priceplan.recurringChargePeriod }}
     p.small(ng-if="priceplan.unitOfMeasure") / {{ priceplan.unitOfMeasure }}
-  .form-group.text-center.text-muted {{ priceplan.description ? priceplan.description : 'No description provided.' }}
+  .form-group.text-center.text-muted {{ priceplan.description ? priceplan.description : '#{ __("No description provided.") }' }}
