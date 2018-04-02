@@ -70,31 +70,41 @@
                 ONE_TIME: 'one time',
                 RECURRING: 'recurring',
                 USAGE: 'usage'
+            },
+            LICENSE: {
+                NONE: 'None',
+                STANDARD: 'Standard open data license',
+                WIZARD: 'Custom license (wizard)',
+                FREETEXT: 'Custom license (free-text)'
             }
         };
 
-        var exclusivities = [{name:'Exclusive'}, {name:'Unlimited'}];
-        var sectors = [{name:'All sectors'}, {name:'Aerospace industry'}, {name:'Agriculture'}, {name:'Chemical industry'},
-                       {name:'Computer industry'}, {name:'Construction industry'}, {name:'Defense industry'},
+        var exclusivities = [{name:'Exclusive'}, {name:'Non-exclusive'}];
+        var sectors = [{name:'All sectors'}, {name:'Aerospace'}, {name:'Agriculture'}, {name:'Chemical'},
+                       {name:'Electronic'}, {name:'Construction'}, {name:'Defense'},
                        {name:'Education industry'}, {name:'Entertainment industry'}, {name:'Financial industry'},
                        {name:'Food industry'}, {name:'Health care industry'}, {name:'Hospitality industry'},
                        {name:'Information industry'}, {name:'Manufacturing'}, {name:'Mass media'},
                        {name:'Telecommunications industry'}, {name:'Transport industry'}, {name:'Water industry'}];
         var regions = [{name:'United Kingdom'}, {name:'Germany'}, {name:'Italy'}, {name:'France'}, {name:'...'}];
-        var timeframes = [{name:'Unlimited'}, {name:'Until Date'}];
+        var timeframes = [{name:'Unlimited', value:-1 }, 
+                          {name:'1 year', value:12}, 
+                          {name:'2 year', value:2*12}, 
+                          {name:'3 year', value:3*12}, 
+                          {name:'5 year', value:5*12}, 
+                          {name:'10 year', value:10*12}];
         var purposes = [{name:'All purposes'}, {name:'Academic'}, {name:'Commercial'}];
-        var transferabilities = [{name:'Sublicensing right'}, {name:'Sublicensing right with restrictions'},
+        var transferabilities = [{name:'Sublicensing right'},
                                  {name:'No sublicensing right'}];
         var standards = [{name:'Public Domain Dedication and License (PDDL)', summary: 'https://opendatacommons.org/licenses/pddl/summary/', legalText: 'https://opendatacommons.org/licenses/pddl/1.0/'},
                          {name:'Attribution License (ODC-BY)', summary: 'https://opendatacommons.org/licenses/by/summary/', legalText: 'https://opendatacommons.org/licenses/by/1.0/'},
-                         {name:'Open Database License (ODC-ODbl)', summary: 'https://opendatacommons.org/licenses/odbl/summary/', legalText: 'https://opendatacommons.org/licenses/odbl/1.0/'},
+                         {name:'Open Database License (ODC-ODbL)', summary: 'https://opendatacommons.org/licenses/odbl/summary/', legalText: 'https://opendatacommons.org/licenses/odbl/1.0/'},
                          {name:'Attribution 4.0 International (CC BY 4.0)', summary: 'https://creativecommons.org/licenses/by/4.0/', legalText: 'https://creativecommons.org/licenses/by/4.0/legalcode'},
                          {name:'Attribution-NoDerivatives International 4.0 (CC BY-ND 4.0)', summary: 'https://creativecommons.org/licenses/by-nd/4.0/', legalText: 'https://creativecommons.org/licenses/by-nd/4.0/legalcode'},
                          {name:'Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)', summary: 'https://creativecommons.org/licenses/by-sa/4.0/', legalText: 'https://creativecommons.org/licenses/by-sa/4.0/legalcode'},
-                         {name: 'Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)', summary: 'https://creativecommons.org/licenses/by-nc/4.0/', legalText: 'https://creativecommons.org/licenses/by-nc/4.0/legalcode'},
-                         {name: 'Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)', summary: 'https://creativecommons.org/licenses/by-nc-nd/4.0/', legalText: 'https://creativecommons.org/licenses/by-nc-nd/4.0/legalcode'},
-                         {name: 'Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)', summary: 'https://creativecommons.org/licenses/by-nc-sa/4.0/', legalText: 'https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode'}];
-
+                         {name:'Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)', summary: 'https://creativecommons.org/licenses/by-nc/4.0/', legalText: 'https://creativecommons.org/licenses/by-nc/4.0/legalcode'},
+                         {name:'Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)', summary: 'https://creativecommons.org/licenses/by-nc-nd/4.0/', legalText: 'https://creativecommons.org/licenses/by-nc-nd/4.0/legalcode'},
+                         {name:'Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)', summary: 'https://creativecommons.org/licenses/by-nc-sa/4.0/', legalText: 'https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode'}];
 
         var TEMPLATES = {
             PRICE: {
@@ -111,6 +121,26 @@
                 priceType: TYPES.PRICE.ONE_TIME,
                 recurringChargePeriod: '',
                 unitOfMeasure: ''
+            },
+            TERMS: {
+                type: 'None',
+                isFullCustom: false,
+                title: '',
+                description: '',
+                exclusivity: '',
+                purpose: '',
+                duration: {},
+                sector: '',
+                transferability: '',
+                region: '',
+                validFor: {
+                    startDateTime: '',
+                    endDateTime: ''
+                }
+            },
+            LICENSE: {
+                terms: {},
+                licenseType: TYPES.LICENSE.NONE
             },
             RESOURCE: {
                 bundledProductOffering: [],
@@ -188,12 +218,115 @@
             return result;
         };
 
+        var Terms = function Terms(data) {
+            angular.extend(this, TEMPLATES.TERMS, data);
+        };
+
+        var License = function License(data) {
+            angular.extend(this, TEMPLATES.LICENSE, data);
+            this.terms = new Terms(this.terms);
+        };
+        License.prototype.setType = function setType(typeName) {
+
+            if (typeName in TYPES.LICENSE && !angular.equals(this.licenseType, typeName)) {
+                this.licenseType = TYPES.LICENSE[typeName];
+            }
+            
+            switch (this.licenseType) {
+                case TYPES.LICENSE.NONE:{
+                    this.terms.type = 'None';
+                    this.terms.isFullCustom = false;
+                    break;
+                }
+                case TYPES.LICENSE.STANDARD:{
+                    this.terms.type = 'Standard';
+                    this.terms.isFullCustom = false;
+                    break;
+                }
+                case TYPES.LICENSE.WIZARD:{
+                    this.terms.type = 'Custom';
+                    this.terms.isFullCustom = false;
+                    break;
+                }
+                case TYPES.LICENSE.STANDARD:{
+                    this.terms.type = 'Standard';
+                    this.terms.isFullCustom = true;
+                    break;
+                }
+            }
+
+            return this;
+        };
+
+        License.prototype.setStandard = function setStandard(standard_t) {
+
+            if (!angular.equals(this.terms.title, standard_t.name)) {
+                this.terms.title = standard_t.name;
+                //this.terms.description = "Summary: " + standard_t.summary + "\nLegal Text: " + standard_t.legalText;
+                this.terms.description = standard_t.summary;    
+            }
+
+            return this;
+        };
+
+        License.prototype.setDuration = function setDuration(duration_t) {
+
+            this.terms.duration.name = duration_t.name;
+            this.terms.duration.value = duration_t.value;
+            if (this.terms.duration.value > 0){
+                var now = new Date();
+                this.terms.validFor.startDateTime = now.toISOString();
+                var endTime = new Date(now);
+                endTime.setMonth(endTime.getMonth() + this.terms.duration.value);
+                this.terms.validFor.endDateTime = endTime.toISOString();
+            }
+            else {
+                this.terms.validFor = {};
+            }
+
+            return this;
+        };
+
+        License.prototype.clearTerms = function clearTerms() {
+            
+            //this.terms.type = 'None';
+            //this.terms.isFullCustom = false;
+            this.terms.title = '';
+            this.terms.description = '';
+            this.terms.exclusivity = '';
+            this.terms.purpose = '';
+            this.terms.duration = {};
+            this.terms.sector = '';
+            this.terms.transferability = '';
+            this.terms.region = '';
+            this.terms.validFor = {};
+
+            return this;
+        };
+
+        License.prototype.toJSON = function toJSON() {
+            return {
+                name : this.terms.title,
+                description : this.terms.description,
+                type : this.terms.type,
+                isFullCustom : this.terms.isFullCustom,
+                exclusivity : this.terms.exclusivity,
+                sector : this.terms.sector,
+                region : this.terms.region,
+                purpose : this.terms.purpose,
+                duration : this.terms.duration.value,
+                transferability : this.terms.transferability,
+                validFor : this.terms.validFor
+            };
+        };
+
         return {
             EVENTS: EVENTS,
             TEMPLATES: TEMPLATES,
             TYPES: TYPES,
             PATCHABLE_ATTRS: PATCHABLE_ATTRS,
             PricePlan: PricePlan,
+            License: License,
             search: search,
             count: count,
             exists: exists,

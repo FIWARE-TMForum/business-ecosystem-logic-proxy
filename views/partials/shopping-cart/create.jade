@@ -17,48 +17,14 @@ ui-view
           form(ng-switch-when="LOADED", name="order.form", novalidate)
             .row
               .col-xs-12
-                .form-group
-                  label
-                    span #{ __("Enter a name") }
-                    small.text-muted (#{ __("optional") })
-                  input.form-control(
-                    type="text"
-                    name="ext-id"
-                    ng-model="orderVM.orderInfo.externalId"
-                  )
-            .row
-              .col-xs-12
-                .form-group
-                  label #{ __("Choose a priority") }
-                  select.form-control(
-                    name="priority"
-                    ng-model="orderVM.orderInfo.priority"
-                  )
-                    option(ng-repeat="priority in orderVM.PRIORITIES" value="{{ $index }}") {{ priority.title }}
-            .row
-              .col-xs-12
-                .form-group
-                  label
-                    span #{ __("Enter a description") }
-                    small.text-muted (#{ __("optional") })
-                  textarea.form-control(rows="3", name="description", ng-model="orderVM.orderInfo.description")
-            .row
-              .col-xs-12
-                .form-group
-                  label
-                    span #{ __("Enter a note") }
-                    small.text-muted (#{ __("optional") })
-                  textarea.form-control(rows="3", name="note", ng-model="orderVM.note.text")
-            .row
-              .col-xs-12
                 .form-group(ng-controller="BillingAccountSearchCtrl as searchVM")
                   label
-                    span #{ __("Choose a shipping address") }
+                    span #{ __("Choose a billing address") }
                   input(type="hidden" ng-model="orderVM.billingAccount.id" required)
                   .alert.alert-danger.text-center(ng-if="searchVM.status === 'ERROR'")
                     span {{ searchVM.errorMessage }}
                   .alert.alert-warning.text-center(ng-if="searchVM.status === 'LOADED' && !searchVM.list.length")
-                    span #{ __("You should first create at least a shipping address in order to checkout an order.  ") }
+                    span #{ __("You should first create at least a billing address in order to checkout an order.  ") }
                     a(ui-sref="settings.contact.shipping") #{ __("Click here.") }
                   .container-spinner(ng-if="searchVM.status === 'LOADING'")
                     span.fa.fa-spinner.fa-spin.fa-2x

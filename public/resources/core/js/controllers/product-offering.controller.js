@@ -168,16 +168,16 @@
                 templateUrl: 'stock/product-offering/create/product-bundle'
             },
             {
-                title: 'License',
-                templateUrl: 'stock/product-offering/create/terms'
-            },
-            {
                 title: 'Catalogue',
                 templateUrl: 'stock/product-offering/create/catalogue'
             },
             {
                 title: 'Category',
                 templateUrl: 'stock/product-offering/create/categories'
+            },
+            {
+                title: 'License',
+                templateUrl: 'stock/product-offering/create/terms'
             },
             {
                 title: 'Price Plans',
@@ -201,12 +201,14 @@
         vm.timeframes = Offering.timeframes;
         vm.purposes = Offering.purposes;
         vm.transferabilities = Offering.transferabilities;
-        vm.standards = Offering.standards
+        vm.standards = Offering.standards;
         vm.terms = {type:'Standard', isFullCustom:false};
-        vm.mode = 1;
+
         vm.CHARGE_PERIODS = Offering.TYPES.CHARGE_PERIOD;
         vm.CURRENCY_CODES = Offering.TYPES.CURRENCY_CODE;
         vm.PRICES = Offering.TYPES.PRICE;
+        vm.LICENSES = Offering.TYPES.LICENSE;
+
         vm.STATUS = PROMISE_STATUS;
 
         vm.STATUS = PROMISE_STATUS;
@@ -241,6 +243,13 @@
         vm.createPricePlan = createPricePlan;
         vm.updatePricePlan = updatePricePlan;
         vm.removePricePlan = removePricePlan;
+
+        /* LICENSE MEMBERS */
+
+        vm.license = new Offering.License();
+        vm.licenseEnabled = false;
+
+        vm.createLicense = createLicense;
 
         vm.place = "";
         vm.places = [];
@@ -378,13 +387,9 @@
 
                                                                       });
             }
-
-            if(vm.customterms){
-                vm.terms.type = 'custom';
-            }else{
-
-            }
-            createPromise = Offering.create(data, vm.product, vm.catalogue, vm.terms);
+            var terms = []; 
+            terms[0] = vm.license.toJSON();
+            createPromise = Offering.create(data, vm.product, vm.catalogue, terms);
 
             createPromise.then(function (offeringCreated) {
                 $state.go('stock.offering.update', {
@@ -483,6 +488,14 @@
         function hasOffering(offering) {
             return filterOffering(offering) > -1;
         }
+
+        /* LICENSE METHODS */
+
+        function createLicense() {
+            //vm.license = new Offering.License();
+            vm.licenseEnabled = false;
+        }
+
 
         /* PRICE PLANS METHODS */
 
@@ -648,6 +661,7 @@
         vm.CHARGE_PERIODS = Offering.TYPES.CHARGE_PERIOD;
         vm.CURRENCY_CODES = Offering.TYPES.CURRENCY_CODE;
         vm.PRICES = Offering.TYPES.PRICE;
+
         vm.$state = $state;
 
         vm.update = update;

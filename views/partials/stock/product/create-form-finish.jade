@@ -132,7 +132,7 @@ form(name="step.form", novalidate)
                   | {{ relationship.productSpec.isBundle ? '#{ __("Bundle") }' : '#{ __("Single") }' }}
               td
                 time(am-time-ago="relationship.productSpec.lastUpdate")
-   div(ng-if="createVM.terms.title")
+   div(ng-if="createVM.license.terms.title")
     .row
       .col-sm-12
         .form-group
@@ -140,14 +140,14 @@ form(name="step.form", novalidate)
           input.form-control(
             type="text"
             name="title"
-            ng-model="createVM.terms.title"
+            ng-model="createVM.license.terms.title"
             readonly
           )
 
     .form-group
       label
         span #{ __("Agreement text") }
-      textarea.form-control(rows="6", name="text", ng-model="createVM.terms.text", readonly)
+      textarea.form-control(rows="6", name="text", ng-model="createVM.license.terms.description", readonly)
 
   .form-group.text-right
     a.btn.btn-warning(

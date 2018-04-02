@@ -53,3 +53,10 @@
             dt(ng-if="detailVM.item.startDate") #{ __("Start date") }
             dd.text-dark-secondary(ng-if="detailVM.item.startDate")
               time(am-time-ago="detailVM.item.startDate")
+          dl(ng-repeat="term in detailVM.item.productOffering.productOfferingTerm")   
+            .h4.text-dark-secondary
+              strong #{ __("Terms and condition") }
+            dl
+              dt {{ term.name }}  
+              dd(ng-if="term.type == 'Custom'") {{ term.description }}
+              dd(ng-if="term.type == 'Standard'") <a ng-href="{{term.description}}" target="_blank"> {{ term.description }} </a>

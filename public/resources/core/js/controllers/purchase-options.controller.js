@@ -76,7 +76,7 @@
             vm.tabActive = null;
             vm.priceplans = [];
             vm.characteristics = [];
-            vm.terms = [];
+            vm.terms = productOffering.productOfferingTerm;
             vm.isBundle = productOffering.isBundle;
             vm.bundledOfferings = [];
             vm.selectedOffering = {
@@ -253,7 +253,7 @@
         }
 
         function loadTerms() {
-            if (vm.terms.length && vm.tabs.indexOf(vm.legalTab) === -1) {
+            if (vm.terms[0].type != 'None' && vm.tabs.indexOf(vm.legalTab) === -1) {
                 vm.tabs.push(vm.legalTab);
                 if (vm.tabActive == null) {
                     vm.tabActive = vm.legalTab;
