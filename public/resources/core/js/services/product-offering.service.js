@@ -230,6 +230,7 @@
 
             if (typeName in TYPES.LICENSE && !angular.equals(this.licenseType, typeName)) {
                 this.licenseType = TYPES.LICENSE[typeName];
+                this.clearTerms();
             }
             
             switch (this.licenseType) {
