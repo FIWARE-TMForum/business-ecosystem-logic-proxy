@@ -124,7 +124,7 @@
     "No appointment included.": "No appointment included.",
     "Requested": "Requested",
     "Received": "Recibidas",
-    "No product orders found.": "No product orders found.",
+    "No Data orders found.": "No Data orders found.",
     "Extra Info": "Extra Info",
     "Product Name": "Product Name",
     "Brand": "Brand",
@@ -258,7 +258,7 @@
     "Enter an ID Number": "Enter an ID Number",
     "New relationship": "New relationship",
     "New product": "New product",
-    "No product specifications found.": "No product specifications found.",
+    "No Data source specifications found.": "No Data source specifications found.",
     "New catalog": "New catalog",
     "No catalogs found.": "No catalogs found.",
     "Parties": "Parties",
@@ -278,11 +278,11 @@
     "Enter places": "Enter places",
     "New offering": "New offering",
     "Catalogs": "Catalogs",
-    "Product Specifications": "Product Specifications",
+    "Data source specifications": "Data source specifications",
     "Offerings": "Offerings",
     "All categories": "All categories",
     "You need to be logged in to access this resource. You are being redirected to the login page now. If you have": "You need to be logged in to access this resource. You are being redirected to the login page now. If you have",
     "not been redirected within 10 seconds, please ": "not been redirected within 10 seconds, please ",
     "Products": "Products",
-    "Product Orders": "Product Orders"
+    "Data orders": "Data orders"
 }

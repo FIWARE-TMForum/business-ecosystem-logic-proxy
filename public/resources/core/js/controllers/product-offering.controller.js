@@ -282,7 +282,7 @@
         });
 
         searchPromise.catch(function (response) {
-            vm.errorMessage = Utils.parseError(response, 'Unexpected error trying to retrieve product specifications and catalogues.');
+            vm.errorMessage = Utils.parseError(response, 'Unexpected error trying to retrieve Data source specifications and catalogues.');
         });
 
         Object.defineProperty(vm, 'status', {

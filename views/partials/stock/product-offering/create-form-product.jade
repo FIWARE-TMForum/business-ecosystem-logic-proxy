@@ -25,7 +25,7 @@ form(name="step.form", novalidate)
             span {{ searchVM.errorMessage }}
         .col-xs-12(ng-if="searchVM.list.status === searchVM.STATUS.LOADED" ng-switch="searchVM.list.length")
           .alert.alert-info.text-center(ng-switch-when="0")
-            span #{ __("No product specifications found.") }
+            span #{ __("No Data source specifications found.") }
           .table-responsive(ng-switch-default)
             table.table.table-bordered.table-hover.table-selectable
               thead

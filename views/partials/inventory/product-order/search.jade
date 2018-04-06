@@ -5,7 +5,7 @@ ui-view
     .col-xs-12(ng-switch="searchVM.list.status")
       div(ng-switch-when="LOADED", ng-switch="searchVM.list.length")
         div(ng-switch-when="0")
-          .alert.alert-info.text-center #{ __("No product orders found.") }
+          .alert.alert-info.text-center #{ __("No Data orders found.") }
         div(ng-switch-default)
           include ./search-grid.jade
       div(ng-switch-when="ERROR")

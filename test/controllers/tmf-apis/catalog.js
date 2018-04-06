@@ -52,27 +52,27 @@ var RSS_CANNOT_BE_ACCESSED = 'An unexpected error in the RSS API prevented your 
 var INVALID_PRODUCT_CLASS = 'The provided productClass does not specify a valid revenue sharing model';
 var MISSING_PRODUCT_SPEC = 'Product offerings must contain a productSpecification';
 var MISSING_HREF_PRODUCT_SPEC = 'Missing required field href in product specification';
-var BUNDLED_OFFERING_NOT_BUNDLE = 'Product offerings which are not a bundle cannot contain a bundled product offering';
-var INVALID_BUNDLE_WITH_PRODUCT = 'Product offering bundles cannot contain a product specification';
-var INVALID_BUNDLE_MISSING_OFF = 'Product offering bundles must contain at least two bundled offerings';
+var BUNDLED_OFFERING_NOT_BUNDLE = 'Data offerings which are not a bundle cannot contain a bundled data offering';
+var INVALID_BUNDLE_WITH_PRODUCT = 'Data offering bundles cannot contain a data specification';
+var INVALID_BUNDLE_MISSING_OFF = 'Data offering bundles must contain at least two bundled offerings';
 var INVALID_BUNDLE_STATUS = 'It is not allowed to update bundle related attributes (isBundle, bundledProductSpecification) in launched products';
 var INVALID_BUNDLE_MISSING_OFF_HREF = 'Missing required field href in bundled offering';
 var OFF_BUNDLE_FAILED_TO_RETRIEVE = 'The bundled offering 2 cannot be accessed or does not exists';
-var OFF_BUNDLE_IN_BUNDLE = 'Product offering bundles cannot include another bundle';
+var OFF_BUNDLE_IN_BUNDLE = 'Data offering bundles cannot include another bundle';
 var UNAUTHORIZED_OFF_BUNDLE = 'You are not allowed to bundle offerings you do not own';
-var MISSING_BUNDLE_PRODUCTS = 'Product spec bundles must contain at least two bundled product specs';
+var MISSING_BUNDLE_PRODUCTS = 'Data source spec bundles must contain at least two bundled data source specs';
 var MISSING_HREF_BUNDLE_INFO = 'Missing required field href in bundleProductSpecification';
-var UNAUTHORIZED_BUNDLE = 'You are not authorized to include the product spec 3 in a product spec bundle';
-var BUNDLE_INSIDE_BUNDLE = 'It is not possible to include a product spec bundle in another product spec bundle';
-var INVALID_BUNDLED_PRODUCT_STATUS = 'Only Active or Launched product specs can be included in a bundle';
+var UNAUTHORIZED_BUNDLE = 'You are not authorized to include the data source spec 3 in a data source spec bundle';
+var BUNDLE_INSIDE_BUNDLE = 'It is not possible to include a product spec bundle in another data source spec bundle';
+var INVALID_BUNDLED_PRODUCT_STATUS = 'Only Active or Launched data source specs can be included in a bundle';
 var INVALID_RELATED_PARTY = 'The field "relatedParty" can not be modified';
 var INVALID_CATEGORY_ID = 'Invalid category with id: ';
 var CATEGORY_CANNOT_BE_CHECKED = ['It was impossible to check if the category with id: ', ' already exists'];
 
-var UPGRADE_ASSET_NOT_PROVIDED = 'To upgrade digital product specifications it is required to provide new asset info';
-var UPGRADE_VERSION_NOT_PROVIDED = 'Product specification characteristics only can be updated for upgrading digital products';
-var UPGRADE_CUSTOM_CHAR_MOD = 'It is not allowed to update custom characteristics during a product upgrade';
-var INVALID_NON_DIGITAL_UPGRADE = 'Product spec characteristics cannot be updated';
+var UPGRADE_ASSET_NOT_PROVIDED = 'To upgrade data source specifications it is required to provide new asset info';
+var UPGRADE_VERSION_NOT_PROVIDED = 'Data source specification characteristics only can be updated for upgrading digital products';
+var UPGRADE_CUSTOM_CHAR_MOD = 'It is not allowed to update custom characteristics during a data source upgrade';
+var INVALID_NON_DIGITAL_UPGRADE = 'Data source spec characteristics cannot be updated';
 
 describe('Catalog API', function() {
 

@@ -31,7 +31,7 @@
     function DatastoreService($q, $resource, URLS, LIFECYCLE_STATUS, User) {
 
         // This service is very similar to the ProductSpecificationService, however, it is able to provide multiple
-        // Product specifications at once
+        // Data source specifications at once
         var datastore = buildInitialData();
 
         var VALUE_TYPES = {
