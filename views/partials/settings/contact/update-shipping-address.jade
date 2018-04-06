@@ -34,7 +34,7 @@
     .panel.panel-default.z-depth-1(ng-show="searchVM.canEditOrAdd()")
       .panel-body(ng-controller="BillingAccountCreateCtrl as createVM")
         .h4.text-dark-secondary
-          strong #{ __("New shipping address") }
+          strong #{ __("New billing address") }
         hr
         shipping-address-form(
           form="createVM.form"

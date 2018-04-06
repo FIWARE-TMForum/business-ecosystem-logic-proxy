@@ -75,7 +75,7 @@
                 vm.resetForm(form);
             }, function (response) {
                 $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
-                    error: Utils.parseError(response, 'Unexpected error trying to create a new shipping address.')
+                    error: Utils.parseError(response, 'Unexpected error trying to create a New billing address.')
                 });
             });
         }
