@@ -82,10 +82,10 @@
         var exclusivities = [{name:'Exclusive'}, {name:'Non-exclusive'}];
         var sectors = [{name:'All sectors'}, {name:'Aerospace'}, {name:'Agriculture'}, {name:'Chemical'},
                        {name:'Electronic'}, {name:'Construction'}, {name:'Defense'},
-                       {name:'Education industry'}, {name:'Entertainment industry'}, {name:'Financial industry'},
-                       {name:'Food industry'}, {name:'Health care industry'}, {name:'Hospitality industry'},
-                       {name:'Information industry'}, {name:'Manufacturing'}, {name:'Mass media'},
-                       {name:'Telecommunications industry'}, {name:'Transport industry'}, {name:'Water industry'}];
+                       {name:'Education'}, {name:'Entertainment'}, {name:'Financial'},
+                       {name:'Food'}, {name:'Health care'}, {name:'Hospitality'},
+                       {name:'Information'}, {name:'Manufacturing'}, {name:'Mass media'},
+                       {name:'Telecommunications'}, {name:'Transport'}, {name:'Water'}];
         var regions = [{name:'United Kingdom'}, {name:'Germany'}, {name:'Italy'}, {name:'France'}, {name:'...'}];
         var timeframes = [{name:'Unlimited', value:-1 }, 
                           {name:'1 year', value:12}, 
