@@ -39,6 +39,13 @@
           dd.text-dark-secondary {{ detailVM.item.productSpecification.version }}
           dt #{ __("ID Number") }
           dd.text-dark-secondary {{ detailVM.item.productSpecification.productNumber }}
+    .row
+      .col-md-6
+        dl(ng-repeat="term in detailVM.item.productOffering.productOfferingTerm")   
+          dt #{ __("Terms and condition") }
+          dt {{ term.name }}  
+          dd.text-dark-secondary(ng-if="term.type == 'Custom'") {{ term.description }}
+          dd.text-dark-secondary(ng-if="term.type == 'Standard'") <a ng-href="{{term.description}}" target="_blank"> {{ term.description }} </a>
     div
       div(ng-if="detailVM.item.productSpecification.isBundle")
         .h5.text-dark-primary

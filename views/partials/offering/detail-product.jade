@@ -19,7 +19,7 @@
       .h4.text-dark-secondary
         strong {{ product.name }}
 
-      .panel.panel-default.z-depth-1(ng-repeat="characteristic in product.productSpecCharacteristic", ng-init="characteristicIndex = $index")
+      .panel.panel-default.z-depth-1(ng-repeat="characteristic in product.productSpecCharacteristic" ng-if="characteristic.name!='appId'", ng-init="characteristicIndex = $index")
         .panel-heading
           .h4
             strong {{ characteristic.name }}
