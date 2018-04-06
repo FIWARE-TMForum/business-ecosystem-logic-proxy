@@ -1308,7 +1308,7 @@
                 });
             }, function (response) {
                 $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
-                    error: Utils.parseError(response, 'Unexpected error trying to update the product spec.')
+                    error: Utils.parseError(response, 'Unexpected error trying to update the Data source spec.')
                 });
             });
         }

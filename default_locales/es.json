@@ -269,7 +269,7 @@
     "Offering bundles must contain at least two offerings": "Las ofertas compuestas deben incluir al menos dos ofertas",
     "Choose categories": "Elige categorias",
     "Places": "Lugares",
-    "Product Spec.": "Especificación de producto",
+    "Data source spec.": "Especificación de producto",
     "Catalogue": "Catálogo",
     "Revenue Sharing Model": "Modelo de reparto de beneficios",
     "New price plan": "Nuevo plan de precios",

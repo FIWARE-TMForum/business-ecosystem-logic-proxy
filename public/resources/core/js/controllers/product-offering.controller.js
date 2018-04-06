@@ -160,11 +160,11 @@
                 templateUrl: 'stock/product-offering/create/bundle'
             },
             {
-                title: 'Product Spec.',
+                title: 'Data source spec.',
                 templateUrl: 'stock/product-offering/create/product'
             },*/
             {
-                title: 'Product Spec.',
+                title: 'Data source spec.',
                 templateUrl: 'stock/product-offering/create/product-bundle'
             },
             {

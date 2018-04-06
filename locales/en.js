@@ -270,7 +270,7 @@
     "Offering bundles must contain at least two offerings": "Offering bundles must contain at least two offerings",
     "Choose categories": "Choose categories",
     "Places": "Places",
-    "Product Spec.": "Product Spec.",
+    "Data source spec.": "Data source spec.",
     "Catalogue": "Catalogue",
     "Revenue Sharing Model": "Revenue Sharing Model",
     "New price plan": "New price plan",
