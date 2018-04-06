@@ -256,7 +256,7 @@
     "Enter a brand": "Incluye una marca",
     "Enter an ID Number": "Incluye un número de identificación",
     "New relationship": "Nueva relación",
-    "New product": "Nuevo producto",
+    "New data source": "Nuevo producto",
     "No Data source specifications found.": "No se han encontrado especificaciones de producto.",
     "New catalog": "Nuevo catálogo",
     "No catalogs found.": "No se han encontrado catálogos",

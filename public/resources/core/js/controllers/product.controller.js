@@ -1113,7 +1113,7 @@
             }, function (response) {
 
                 var defaultMessage = 'There was an unexpected error that prevented the ' +
-                    'system from creating a new product';
+                    'system from creating a New data source';
                 var error = Utils.parseError(response, defaultMessage);
 
                 $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {

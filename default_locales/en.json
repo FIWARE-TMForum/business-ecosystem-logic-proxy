@@ -257,7 +257,7 @@
     "Enter a brand": "Enter a brand",
     "Enter an ID Number": "Enter an ID Number",
     "New relationship": "New relationship",
-    "New product": "New product",
+    "New data source": "New data source",
     "No Data source specifications found.": "No Data source specifications found.",
     "New catalog": "New catalog",
     "No catalogs found.": "No catalogs found.",

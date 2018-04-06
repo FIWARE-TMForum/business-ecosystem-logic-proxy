@@ -596,7 +596,7 @@
                     var comment;
 
                     if (!comments.length || comments[comments.length - 1].author !== note.author) {
-                        comment = new ProductOrder.Comment(note.author);
+                        comment = New data sourceOrder.Comment(note.author);
                         comments.push(comment);
                     } else {
                         comment = comments[comments.length - 1];
