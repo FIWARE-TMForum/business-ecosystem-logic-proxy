@@ -19,7 +19,7 @@
               dd {{ detailVM.getCustomerName() }}
               dt #{ __("Notification email") }
               dd {{ detailVM.item.notificationContact }}
-              dt #{ __("Shipping address") }
+              dt #{ __("Billing address") }
               dd
                 span.text-preline {{ detailVM.getShippingAddress() }}
             dl
@@ -35,7 +35,7 @@
               dd {{ detailVM.item.expectedCompletionDate ? (detailVM.item.expectedCompletionDate | amDateFormat: 'dddd, MMMM Do YYYY, h:mm a') : '#{ __("No data provided.") }' }}
         ul.nav.nav-pills.nav-justified
           li(ui-sref-active-eq="active")
-            a(ui-sref="inventory.productOrder.detail") #{ __("Product") }s
+            a(ui-sref="inventory.productOrder.detail") #{ __("Data order") }s
           li(ui-sref-active-eq="active")
             a(ui-sref="inventory.productOrder.detail.note") #{ __("Notes") }
       ui-view
