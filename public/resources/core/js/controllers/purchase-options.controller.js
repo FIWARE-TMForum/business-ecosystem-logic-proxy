@@ -161,9 +161,9 @@
             if (vm.terms.length > 0){
                 if (vm.terms[0].type != 'None')
                     return (!vm.priceplans.length || priceplan != null) && ((vm.terms.length > 0 && vm.termsAccepted) || (!vm.terms.length));
+                else
+                    return (!vm.priceplans.length || priceplan != null);
             }
-            else
-                return (!vm.priceplans.length || priceplan != null);
                 
         }
 
