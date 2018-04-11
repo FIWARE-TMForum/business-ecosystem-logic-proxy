@@ -158,7 +158,11 @@
         }
 
         function isValid() {
-            return (!vm.priceplans.length || priceplan != null) && ((vm.terms.length > 0 && vm.termsAccepted) || (!vm.terms.length));
+            if (vm.terms[0].type != 'None')
+                return (!vm.priceplans.length || priceplan != null) && ((vm.terms.length > 0 && vm.termsAccepted) || (!vm.terms.length));
+            else
+                return (!vm.priceplans.length || priceplan != null);
+                
         }
 
         function formatCharacteristicValue(characteristic, characteristicValue) {
