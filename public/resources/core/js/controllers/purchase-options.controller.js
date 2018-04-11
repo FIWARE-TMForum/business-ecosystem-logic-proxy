@@ -164,6 +164,7 @@
                 else
                     return (!vm.priceplans.length || priceplan != null);
             }
+            return false;
                 
         }
 
