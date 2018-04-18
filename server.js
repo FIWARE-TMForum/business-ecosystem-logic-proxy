@@ -174,7 +174,7 @@ app.use(config.portalPrefix + '/', express.static(__dirname + staticPath + '/pub
 app.set('views', __dirname + staticPath + '/views');
 app.set('view engine', 'jade');
 
-app.locals.taxRate = config.taxRate;
+app.locals.taxRate = config.taxRate || 20;
 
 /////////////////////////////////////////////////////////////////////
 ////////////////////////////// PASSPORT /////////////////////////////
