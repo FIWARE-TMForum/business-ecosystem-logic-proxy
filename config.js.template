@@ -43,6 +43,7 @@ config.oauth2 = {
     'clientID': '--client-id--',
     'clientSecret': '--client-secret--',
     'callbackURL': 'http://localhost/auth/fiware/callback',
+    'isLegacy': false,
     'roles': {
         'admin': 'provider',
         'customer': 'customer',
