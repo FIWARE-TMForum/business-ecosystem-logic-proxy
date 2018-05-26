@@ -27,6 +27,10 @@ function test_connection {
     echo "$1 connection, OK"
 }
 
+if [ -z $COLLECT ]; then
+    COLLECT="True"
+fi
+
 # Get mongodb host and port from config file
 MONGO_HOST=`/business-ecosystem-logic-proxy/node-v6.9.1-linux-x64/bin/node getConfig mongohost`
 MONGO_PORT=`/business-ecosystem-logic-proxy/node-v6.9.1-linux-x64/bin/node getConfig mongoport`
@@ -68,8 +72,17 @@ service xinetd restart
 echo "Cleaning indexes"
 rm -rf ./indexes/*
 
+# FIXME: Override oauth2.js file
+cd /business-ecosystem-logic-proxy/node_modules/passport-fiware-oauth/lib/passport-fiware-oauth/
+rm oauth2.js
+wget https://raw.githubusercontent.com/conwetlab/passport-fiware-oauth/master/lib/passport-fiware-oauth/oauth2.js
+cd /business-ecosystem-logic-proxy
+
 echo "Creating indexes..."
 /business-ecosystem-logic-proxy/node-v6.9.1-linux-x64/bin/node fill_indexes.js
-/business-ecosystem-logic-proxy/node-v6.9.1-linux-x64/bin/node collect_static.js
+
+if [ ${COLLECT} = "True" ]; then
+    /business-ecosystem-logic-proxy/node-v6.9.1-linux-x64/bin/node collect_static.js
+fi
 
 /business-ecosystem-logic-proxy/node-v6.9.1-linux-x64/bin/node server.js
