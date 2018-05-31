@@ -431,6 +431,7 @@
             InventoryProduct.setToken({
                 username: LOGGED_USER.email,
                 password: vm.password,
+                appId: getApplicationId(),
             }).then(function(tokenBody,tokenHeader) {
                 load = false;
                 vm.token = retrieveToken();
