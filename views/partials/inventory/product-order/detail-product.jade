@@ -22,7 +22,7 @@
           dt #{ __("Status") }
           dd {{ orderItem.state }}
           dt #{ __("Vendor name") }
-          dd {{ detailVM.getVendorName(orderItem) }}
+          dd {{ detailVM.item.getItemSeller(orderItem).name }}
           dt #{ __("Characteristics") }
           dd
             span(ng-if="!orderItem.product.productCharacteristic.length") #{ __("No data provided.") }

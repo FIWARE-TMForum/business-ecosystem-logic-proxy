@@ -16,7 +16,7 @@
               dt #{ __("Name") }
               dd {{ detailVM.item.externalId ? detailVM.item.externalId : '#{ __("No data provided.") }' }}
               dt #{ __("Customer name") }
-              dd {{ detailVM.getCustomerName() }}
+              dd {{ detailVM.item.getCustomer().name }}
               dt #{ __("Notification email") }
               dd {{ detailVM.item.notificationContact }}
               dt #{ __("Shipping address") }
