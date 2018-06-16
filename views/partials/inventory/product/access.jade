@@ -15,6 +15,16 @@
               ng-model="detailVM.token"
               readonly
             )
+
+        .col-sm-6
+          .form-group
+            label #{ __("Refresh Token") }
+            input.form-control(
+              type="text"
+              name="refreshToken"
+              ng-model="detailVM.refreshToken"
+              readonly
+            )
       
       .row
         .col-sm-6

@@ -146,6 +146,7 @@
         vm.generateToken = generateToken;
         vm.retrieveToken = retrieveToken;
         vm.password = "";
+        vm.refreshToken = "";
         vm.token = retrieveToken();
     
         InventoryProduct.detail($state.params.productId).then(function (productRetrieved) {
@@ -413,6 +414,7 @@
                     vm.token = "Token expired";
                 else
                     vm.token = tokenBody.authToken;
+                vm.refreshToken = tokenBody.refreshToken;    
                 return vm.token;
             }, function (response) {
                 load = false;
