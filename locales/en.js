@@ -124,7 +124,7 @@
     "Appointment": "Appointment",
     "No appointment included.": "No appointment included.",
     "Requested": "Requested",
-    "Received": "Recibidas",
+    "Received": "Received",
     "No product orders found.": "No product orders found.",
     "Extra Info": "Extra Info",
     "Product Name": "Product Name",
