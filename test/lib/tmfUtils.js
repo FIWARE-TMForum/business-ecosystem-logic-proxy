@@ -54,7 +54,7 @@ describe('TMF Utils', function() {
                 hostname: 'belp.fiware.org',
                 user: {
                     roles: [],
-                    id: 'test'
+                    id: userName
                 }
             };
 
@@ -582,23 +582,44 @@ describe('TMF Utils', function() {
 
             var req = {
                 secure: false,
-                hostname: 'test'
+                hostname: 'belp.fiware.org'
             };
 
-            testGetIndividualsCollectionURL(req)
+            testGetIndividualsCollectionURL(req);
         });
 
         it('should call utils with https', function() {
 
+	    config.proxy.secured = true;
             var req = {
                 secure: true,
-                hostname: 'another_host.com'
+                hostname: 'belp.fiware.org'
             };
 
-            testGetIndividualsCollectionURL(req)
+            testGetIndividualsCollectionURL(req);
         });
 
+	it('should call utils with http and without proxy', function() {
+	    config.proxy.enabled = false;
 
+	    var req = {
+                secure: false,
+                hostname: 'anotherHost.com',
+            };
+
+	    testGetIndividualsCollectionURL(req);
+	});
+
+	it('should call utils with https and without proxy', function() {
+	    config.proxy.enabled = false;
+
+	    var req = {
+                secure: true,
+                hostname: 'anotherHost.com',
+            };
+
+	    testGetIndividualsCollectionURL(req);
+	});
     });
 
 });
