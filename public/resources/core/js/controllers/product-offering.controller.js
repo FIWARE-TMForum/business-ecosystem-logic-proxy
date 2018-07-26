@@ -155,18 +155,18 @@
                 title: 'General',
                 templateUrl: 'stock/product-offering/create/general'
             },
-            /*{
+            {
                 title: 'Bundle',
                 templateUrl: 'stock/product-offering/create/bundle'
             },
             {
                 title: 'Data source spec.',
                 templateUrl: 'stock/product-offering/create/product'
-            },*/
+            },/*
             {
                 title: 'Data source spec.',
                 templateUrl: 'stock/product-offering/create/product-bundle'
-            },
+            },*/
             {
                 title: 'Catalogue',
                 templateUrl: 'stock/product-offering/create/catalogue'
@@ -364,7 +364,9 @@
                     var tmpdata = JSON.parse(JSON.stringify(data));
                     tmpdata.isBundle = false;
                     tmpdata.name = data.name+index.toString();
-                    createPromise.push(Offering.create(tmpdata, prod, vm.catalogue));
+                    var terms = []; 
+                    terms[0] = vm.license.toJSON();
+                    createPromise.push(Offering.create(tmpdata, prod, vm.catalogue, terms));
 
                     createPromise[index].then(function (offeringCreated) {
                         $state.go('stock.offering.update', {

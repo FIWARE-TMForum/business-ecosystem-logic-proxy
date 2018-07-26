@@ -544,13 +544,13 @@
                 angular.extend(data, {
                     productSpecification: product.serialize()
                 });
-                angular.extend(data, {
-                    productOfferingTerm: terms
-                });
+                
             }
 
             
-
+            angular.extend(data, {
+                productOfferingTerm: terms
+            });
 
             data.validFor = {
                 startDateTime: moment().format()

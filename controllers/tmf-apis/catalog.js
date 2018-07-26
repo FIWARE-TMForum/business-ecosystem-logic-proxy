@@ -327,7 +327,7 @@ var catalog = (function() {
                         }
 
                         // Validate that at least two offerings have been included
-                        if (!offeringBody.bundledProductOffering || offeringBody.bundledProductSpecification.length < 2) {
+                        if (!offeringBody.bundledProductOffering || offeringBody.bundledProductOffering.length < 2) {
                             return callback({
                                 status: 422,
                                 message: 'Product offering bundles must contain at least two bundled offerings'
