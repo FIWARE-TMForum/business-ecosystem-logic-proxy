@@ -357,58 +357,66 @@
 
             data.category = formatCategory();
             data.place = formatPlaces();
-
+            var createPromise = [];
             if(vm.data.isBundle){
+                vm.product = vm.bundledProductSpecification;
                 vm.bundledProductSpecification.forEach(function (prod, index) {
-                                                                        var tmpdata = JSON.parse(JSON.stringify(data));
-                                                                        tmpdata.isBundle = false;
-                                                                        tmpdata.name = data.name+index.toString();
-                                                                        createPromise = Offering.create(tmpdata, prod, vm.catalogue);
+                    var tmpdata = JSON.parse(JSON.stringify(data));
+                    tmpdata.isBundle = false;
+                    tmpdata.name = data.name+index.toString();
+                    createPromise.push(Offering.create(tmpdata, prod, vm.catalogue));
 
-                                                                                    createPromise.then(function (offeringCreated) {
-                                                                                        $state.go('stock.offering.update', {
-                                                                                            offeringId: offeringCreated.id
-                                                                                        });
-                                                                                        $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'created', {
-                                                                                            resource: 'offering',
-                                                                                            name: offeringCreated.name
-                                                                                        });
-                                                                                        vm.data.bundledProductOffering.push(offeringCreated);
-                                                                                    }, function (response) {
+                    createPromise[index].then(function (offeringCreated) {
+                        $state.go('stock.offering.update', {
+                            offeringId: offeringCreated.id
+                        });
+                        $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'created', {
+                            resource: 'offering',
+                            name: offeringCreated.name
+                        });
+                        vm.data.bundledProductOffering.push(offeringCreated);
+                    }, function (response) {
 
-                                                                                        var defaultMessage = 'There was an unexpected error that prevented the ' +
-                                                                                            'system from creating a new offering';
-                                                                                        var error = Utils.parseError(response, defaultMessage);
+                        var defaultMessage = 'There was an unexpected error that prevented the ' +
+                            'system from creating a new offering';
+                        var error = Utils.parseError(response, defaultMessage);
 
-                                                                                        $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
-                                                                                            error: error
-                                                                                        });
-                                                                                    });
-
-                                                                      });
+                        $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                            error: error
+                        });
+                    });
+                });
             }
-            var terms = []; 
-            terms[0] = vm.license.toJSON();
-            createPromise = Offering.create(data, vm.product, vm.catalogue, terms);
+            
+            Promise.all(createPromise).then(function(){
+                //var data = angular.copy(vm.data);
+                vm.data.category = formatCategory();
+                vm.data.place = formatPlaces();
+                var terms = []; 
+                terms[0] = vm.license.toJSON();
+                var offerPromise = Offering.create(vm.data, vm.product, vm.catalogue, terms);
+                offerPromise.then(function (offeringCreated) {
+                    $state.go('stock.offering.update', {
+                        offeringId: offeringCreated.id
+                    });
+                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'created', {
+                        resource: 'offering',
+                        name: offeringCreated.name
+                    });
+                }, function (response) {
 
-            createPromise.then(function (offeringCreated) {
-                $state.go('stock.offering.update', {
-                    offeringId: offeringCreated.id
-                });
-                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'created', {
-                    resource: 'offering',
-                    name: offeringCreated.name
-                });
-            }, function (response) {
+                    var defaultMessage = 'There was an unexpected error that prevented the ' +
+                        'system from creating a new offering';
+                    var error = Utils.parseError(response, defaultMessage);
 
-                var defaultMessage = 'There was an unexpected error that prevented the ' +
-                    'system from creating a new offering';
-                var error = Utils.parseError(response, defaultMessage);
-
-                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
-                    error: error
+                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                        error: error
+                    });
                 });
-            });
+
+            })
+
+            
         }
 
         Object.defineProperty(create, 'status', {
