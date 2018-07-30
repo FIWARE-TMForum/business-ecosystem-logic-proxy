@@ -20,12 +20,12 @@
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
-var slaServiceSchema = new Schema({
+var slaModelSchema = new Schema({
     offerId: {type: String, required: true},
     description: {type: String, required: false},
     services: [],
 });
 
-slaServiceSchema.index({offerId: 1}, {unique: true});
+slaModelSchema.index({offerId: 1}, {unique: true});
 
-module.exports = mongoose.model('slaService', slaServiceSchema);
+module.exports = mongoose.model('slaModel', slaModelSchema);

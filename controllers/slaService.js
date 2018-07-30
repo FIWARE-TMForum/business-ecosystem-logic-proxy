@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var slaService = require('../db/schemas/slaService'),
+var slaModel = require('../db/schemas/slaModel'),
      config = require('../config'),
      uuid = require('node-uuid');
 
@@ -44,7 +44,7 @@ var slaService = (function () {
                 // service.offerId = offerId;
                 // service.description = description;
                 // service.services = services;
-                slaService.findOneAndUpdate({offerId: offerId}, { $set: {offerId: offerId, description: description, services: services}}, {upsert: true}, function (err, rawResp) {
+                slaModel.findOneAndUpdate({offerId: offerId}, { $set: {offerId: offerId, description: description, services: services}}, {upsert: true}, function (err, rawResp) {
                     if (err) {
                         res.status(500).json({error: err.message}); 
                     } 
@@ -85,7 +85,7 @@ var slaService = (function () {
                 //service.refreshToken = refreshToken;
                 //service.expire = Date.now() + 3600000; //expire; TODO FIX
 
-                slaService.findOne({offerId: offerId}, function (err, rawResp) {
+                slaModel.findOne({offerId: offerId}, function (err, rawResp) {
                     if (err) {
                         res.status(500).json({error: err.message});
                     } 
