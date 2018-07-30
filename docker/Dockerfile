@@ -5,6 +5,7 @@ MAINTAINER CoNWeT Lab. Universidad Politécnica de Madrid
 #ENV VERSION Synchronicity-v6.4.0
 ENV VERSION no-cache1
 ENV VERSION multiple-broker
+ENV VERSION sla
 
 RUN apt-get update && apt-get install -y git xinetd python-pip wget && \
     pip install sh requests && \
