@@ -44,7 +44,7 @@ var slaService = (function () {
                 // service.offerId = offerId;
                 // service.description = description;
                 // service.services = services;
-                slaModel.findOneAndUpdate({offerId: offerId}, { $set: {offerId: offerId, description: description, services: services}}, {upsert: true}, function (err, rawResp) {
+                slaModel.findOneAndUpdate({offerId: offerId}, { $set: {offerId: offerId, description: description, services: services}}, {new: true, upsert: true}, function (err, rawResp) {
                     if (err) {
                         res.status(500).json({error: err.message}); 
                     } 

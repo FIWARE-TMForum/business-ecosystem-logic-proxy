@@ -212,6 +212,7 @@
         vm.CURRENCY_CODES = Offering.TYPES.CURRENCY_CODE;
         vm.PRICES = Offering.TYPES.PRICE;
         vm.LICENSES = Offering.TYPES.LICENSE;
+        vm.SLA = Offering.TYPES.SLA;
 
         vm.STATUS = PROMISE_STATUS;
 
