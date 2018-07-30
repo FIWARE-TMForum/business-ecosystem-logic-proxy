@@ -52,12 +52,6 @@ describe('Management API', function () {
         });
     });
     describe('get version', function() {
-        function getManagement() {
-            return proxyquire('../../controllers/management', {
-                '../config': config
-            });
-        };
-
         it('should return the valid value of version object', function() { 
             var res = {
                 json: function (val) {
@@ -66,23 +60,30 @@ describe('Management API', function () {
                 }
             };
             var uptime = 90061;
+            var expVersion = {
+                version: 'develop',
+                releaseDate: '',
+                gitHash: '',
+                doc: 'https://fiware-tmforum.github.io/Business-API-Ecosystem/',
+                userDoc: 'http://business-api-ecosystem.readthedocs.io/en/develop'
+            }
 
             spyOn(res, 'json');
             spyOn(res, 'end');
 
             spyOn(process, 'uptime').and.returnValue(uptime);
 
-            var manageCtl = getManagement().management;
-            manageCtl.getVersion({}, res);
+            management.versionInfo = expVersion;
+            management.getVersion({}, res);
 
             expect(res.statusCode).toBe(200);
             expect(res.json).toHaveBeenCalledWith({
-               version: config.version.version,
-               release_date: config.version.releaseDate,
+               version: expVersion.version,
+               release_date: expVersion.releaseDate,
                uptime: '1 d, 1 h, 1 m, 1 s',
-               git_hash: config.version.gitHash,
-               doc: config.version.doc,
-               user_doc: config.version.userDoc
+               git_hash: expVersion.gitHash,
+               doc: expVersion.doc,
+               user_doc: expVersion.userDoc
             });
             expect(res.end).toHaveBeenCalledWith();
         });
