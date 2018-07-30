@@ -21,6 +21,8 @@ html(ng-app="app")
           IMAGE: '#{ contextPath }/resources/core/images',
           USER: '#{ proxyPath }/#{ chargingPath }/api/userManagement/users/:username',
           ASSET_MANAGEMENT: '#{ proxyPath }/#{ chargingPath }/api/assetManagement',
+          SLA_SET: '#{ proxyPath }/SLAManagement/sla',
+          SLA_GET: '#{ proxyPath }/SLAManagement/sla/:id',
           TOKEN_SET: '#{ proxyPath }/#{ chargingPath }/api/token',
           TOKEN_GET: '#{ proxyPath }/authorizeService/read',
           RENEW_JOB: '#{ proxyPath }/#{ chargingPath }/api/orderManagement/products/renewJob',
@@ -249,6 +251,8 @@ html(ng-app="app")
       include ./partials/stock/product/create-relationship.jade
     script(type="text/ng-template", id="stock/product/create/terms")
       include ./partials/stock/product/create-form-terms.jade
+    script(type="text/ng-template", id="stock/product/create/sla")
+      include ./partials/stock/product/create-form-sla.jade
     script(type="text/ng-template", id="stock/product/create/finish")
       include ./partials/stock/product/create-form-finish.jade
 

@@ -76,6 +76,10 @@
                 STANDARD: 'Standard open data license',
                 WIZARD: 'Custom license (wizard)',
                 FREETEXT: 'Custom license (free-text)'
+            },
+            SLA: {
+                NONE: 'None',
+                SPEC: 'Spec'
             }
         };
 
@@ -141,6 +145,12 @@
             LICENSE: {
                 terms: {},
                 licenseType: TYPES.LICENSE.NONE
+            },
+            SLA: {
+                type: TYPES.SLA.NONE,
+                offerId: '',
+                description: '',
+                services: [] 
             },
             RESOURCE: {
                 bundledProductOffering: [],
@@ -321,6 +331,49 @@
             };
         };
 
+        var Sla = function Sla(data) {
+            angular.extend(this, TEMPLATES.SLA, data);
+        };
+
+        Sla.prototype.setType = function setType(typeName) {
+
+            if (typeName in TYPES.SLA && !angular.equals(this.slaType, typeName)) {
+                this.slaType = TYPES.SLA[typeName];
+                this.clearSla();
+            }
+            
+            switch (this.slaType) {
+                case TYPES.SLA.NONE:{
+                    this.sla.type = 'None';
+                    break;
+                }
+                case TYPES.SLA.SPEC:{
+                    this.sla.type = 'Spec';
+                    break;
+                }
+            }
+
+            return this;
+        };
+
+        Sla.prototype.clearSla = function clearSla() {
+            
+            //this.sla.type = 'None';
+            //this.sla.offerID = '';
+            this.sla.description = '';
+            this.sla.services = [];
+            return this;
+        };
+
+        Sla.prototype.toJSON = function toJSON() {
+            return {
+                offerId : this.sla.offerId,
+                description : this.sla.description,
+                type : this.sla.type,
+                services : this.sla.services
+            };
+        };
+
         return {
             EVENTS: EVENTS,
             TEMPLATES: TEMPLATES,
@@ -328,10 +381,12 @@
             PATCHABLE_ATTRS: PATCHABLE_ATTRS,
             PricePlan: PricePlan,
             License: License,
+            Sla: Sla,
             search: search,
             count: count,
             exists: exists,
             create: create,
+            setSla: setSla,
             detail: detail,
             update: update,
             exclusivities: exclusivities,
@@ -567,6 +622,19 @@
             return deferred.promise;
         }
 
+        function setSla(sla) {
+            var deferred = $q.defer();
+            var slaResource = $resource(URLS.SLA_SET);
+            slaResource.save(sla, function (slaCreated) {
+                slaCreated.id = _id;
+                slaCreated.offeringId = offerId;
+                deferred.resolve(slaCreated);
+            }, function (response) {
+                deferred.reject(response);
+            });
+            return deferred.promise;
+        }
+        
         function parseNumber(context, names) {
             names.forEach(function (name) {
                 if (angular.isString(context[name])) {

@@ -1,0 +1,29 @@
+form(name="step.form", novalidate)
+  .row
+    .col-md-5
+      .form-group
+        label #{ __("Define an SLA") }
+        .dropdown
+          a.btn.btn-block.btn-default.dropdown-toggle.z-depth-0(data-toggle="dropdown")
+            span.item-text {{ createVM.sla.slaType }}
+            span.item-icon.fa.fa-caret-down
+          .dropdown-menu.dropdown-menu-right.z-depth-2
+            a.dropdown-menu-item(ng-repeat="(key, value) in createVM.SLA" ng-click="createVM.sla.setType(key)")
+              span.item-text {{ value }}
+  .row
+    .switch(ng-switch='createVM.sla.slaType' ng-init='createVM.sla.clearSla()')
+
+      .switch(ng-switch-when='Define SLA' ng-init='createVM.sla.clearSla()')
+        .col-md-12
+          .form-group
+            .h4.text-dark-secondary
+              strong #{ __("SLA specification") }
+            .row
+              .col-md-12
+                label
+                  span #{ __("Enter a description") }
+                textarea.form-control(rows="3", name="slaDescription", ng-model="createVM.sla.description")
+     
+  .form-group.text-right
+      a.btn.btn-default.z-depth-1(ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])", ng-disabled="!step.form.$valid")
+        span.item-text Next

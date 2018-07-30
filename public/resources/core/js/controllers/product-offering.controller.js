@@ -180,6 +180,10 @@
                 templateUrl: 'stock/product-offering/create/terms'
             },
             {
+                title: 'SLA',
+                templateUrl: 'stock/product-offering/create/sla'
+            },
+            {
                 title: 'Price Plans',
                 templateUrl: 'stock/product-offering/create/priceplan'
             },
@@ -250,6 +254,12 @@
         vm.licenseEnabled = false;
 
         vm.createLicense = createLicense;
+
+        /* SLA MEMBERS */
+
+        vm.sla = new Offering.Sla();
+        //vm.slaEnabled = false;
+        //vm.createSla = createSla;
 
         vm.place = "";
         vm.places = [];
@@ -398,27 +408,46 @@
                 terms[0] = vm.license.toJSON();
                 var offerPromise = Offering.create(vm.data, vm.product, vm.catalogue, terms);
                 offerPromise.then(function (offeringCreated) {
-                    $state.go('stock.offering.update', {
-                        offeringId: offeringCreated.id
-                    });
-                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'created', {
-                        resource: 'offering',
-                        name: offeringCreated.name
+                    //Create SLA
+                    var sla = vm.sla.toJSON();
+                    sla.offerId = offeringCreated.id;
+                    var slaPromise = Offering.setSla(sla);
+                    //Finalise Offering
+                    slaPromise.then(function (slaCreated) {
+                        $state.go('stock.offering.update', {
+                            offeringId: slaCreated.offeringId
+                        });
+                        $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'created', {
+                            resource: 'offering',
+                            name: offeringCreated.name
+                        });
+                    }, function (response) {
+                        var defaultMessage = 'There was an unexpected error that prevented the ' +
+                            'system from creating a new SLA';
+                        var error = Utils.parseError(response, defaultMessage);
+
+                        $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                            error: error
                     });
                 }, function (response) {
+                        var defaultMessage = 'There was an unexpected error that prevented the ' +
+                            'system from creating a new offering';
+                        var error = Utils.parseError(response, defaultMessage);
 
-                    var defaultMessage = 'There was an unexpected error that prevented the ' +
-                        'system from creating a new offering';
-                    var error = Utils.parseError(response, defaultMessage);
-
-                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
-                        error: error
+                        $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                            error: error
+                        });
                     });
                 });
+            }, function (response) {
+                var defaultMessage = 'There was an unexpected error that prevented the ' +
+                    'system from creating a new offering';
+                var error = Utils.parseError(response, defaultMessage);
 
-            })
-
-            
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                    error: error
+                });
+            });
         }
 
         Object.defineProperty(create, 'status', {
@@ -505,7 +534,6 @@
             //vm.license = new Offering.License();
             vm.licenseEnabled = false;
         }
-
 
         /* PRICE PLANS METHODS */
 
