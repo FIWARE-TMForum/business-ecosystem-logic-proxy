@@ -1,5 +1,5 @@
 var authorizeService = require('./controllers/authorizeService').authorizeService,
-    slaService = require('./controllers/slaService'),
+    slaService = require('./controllers/slaService').slaService,
     bodyParser = require('body-parser'),
     base64url = require('base64url'),
     config = require('./config'),
@@ -65,6 +65,7 @@ config.proxyPrefix = checkPrefix(config.proxyPrefix, '');
 config.portalPrefix = checkPrefix(config.portalPrefix, '');
 config.shoppingCartPath = checkPrefix(config.shoppingCartPath, '/shoppingCart');
 config.authorizeServicePath = checkPrefix(config.authorizeServicePath, '/authorizeService');
+config.slaServicePath = checkPrefix(config.slaServicePath, '/SLAManagement');
 config.logInPath = config.logInPath || '/login';
 config.logOutPath = config.logOutPath || '/logout';
 config.mongoDb = config.mongoDb || {};
