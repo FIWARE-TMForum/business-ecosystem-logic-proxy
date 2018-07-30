@@ -292,6 +292,14 @@ app.post(config.authorizeServicePath + '/token', authorizeService.saveAppToken);
 app.post(config.authorizeServicePath + '/read', authorizeService.getAppToken);
 //app.post(config.authorizeServicePath + '/apiKeys/:apiKey/commit', authorizeService.commitApiKey);
 
+/////////////////////////////////////////////////////////////////////
+///////////////////////// SLA SERVICE /////////////////////////
+/////////////////////////////////////////////////////////////////////
+
+app.use(config.slaServicePath + '/*', checkMongoUp, auth.headerAuthentication, auth.checkOrganizations, auth.setPartyObj, failIfNotAuthenticated);
+app.get(config.slaServicePath + '/sla/:id', slaService.getSla);
+app.post(config.slaServicePath + '/sla', slaService.saveSla);
+
 
 /////////////////////////////////////////////////////////////////////
 /////////////////////////////// PORTAL //////////////////////////////

@@ -125,6 +125,12 @@ config.endpoints = {
         'host': 'localhost',
         'port': '8080',
         'appSsl': false
+    },
+    'sla': {
+        'path': 'sla',
+        'host': 'localhost',
+        'port': config.port,
+        'appSsl': false
     }
 };
 
