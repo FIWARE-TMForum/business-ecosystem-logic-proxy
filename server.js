@@ -1,4 +1,5 @@
 var authorizeService = require('./controllers/authorizeService').authorizeService,
+    slaService = require('./controllers/slaService'),
     bodyParser = require('body-parser'),
     base64url = require('base64url'),
     config = require('./config'),
