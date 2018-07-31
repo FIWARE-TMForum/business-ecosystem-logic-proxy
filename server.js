@@ -22,7 +22,7 @@ var authorizeService = require('./controllers/authorizeService').authorizeServic
     url = require('url'),
     utils = require('./lib/utils'),
     auth = require('./lib/auth').auth,
-    uuid = require('node-uuid');
+    uuidv4 = require('uuid/v4');
 
 const debug = !(process.env.NODE_ENV == 'production');
 
@@ -282,7 +282,7 @@ app.use(function(req, res, next) {
 
 // Logging Handler
 app.use(function(req, res, next) {
-    req.id = uuid.v4();
+    req.id = uuidv4();
 
     utils.log(logger, 'debug', req, 'Headers: ' + JSON.stringify(req.headers));
     utils.log(logger, 'debug', req, 'Body: ' + JSON.stringify(req.body));

@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2018 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -22,13 +22,12 @@ var proxyquire = require('proxyquire').noCallThru();
 describe('Accounting Service', function () {
 
     var DEFAULT_URL = 'http://example/path';
-    var DEFAULT_WSTOREHOST = 'localhost';
     var DEFAULT_APIKEY = 'apiKey';
 
     var getAuthorizeServiceController = function (accServiceSchema, uuidMock) {
         return proxyquire('../../controllers/authorizeService', {
             '../db/schemas/accountingService': accServiceSchema,
-            'node-uuid': uuidMock
+            'uuid/v4': uuidMock
         }).authorizeService;
     };
 
@@ -70,10 +69,8 @@ describe('Accounting Service', function () {
 
         var saveAccountingService = function (saveReturn, sendMessage, statusExpected, done) {
 
-            var uuidMock = {
-                v4: function () {
-                    return DEFAULT_APIKEY;
-                }
+            var uuidMock = function () {
+                return DEFAULT_APIKEY;
             };
 
             var req = {

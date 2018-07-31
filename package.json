@@ -23,7 +23,7 @@
     "log4js": "0.6.x",
     "moment": "^2.13.0",
     "mongoose": "^4.3.6",
-    "node-uuid": "^1.4.7",
+    "uuid": "^3.3.2",
     "normalize-url": "^1.8.0",
     "on-finished": "^2.3.0",
     "passport": "0.3.0",
