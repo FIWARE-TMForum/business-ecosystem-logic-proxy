@@ -40,17 +40,14 @@
   },
   "devDependencies": {
     "freeport": "1.0.5",
-    "grunt": "~0.4.5",
-    "grunt-jasmine-nodejs": "1.4.3",
-    "istanbul": "0.4.0",
-    "jasmine": "2.3.2",
-    "jasmine-reporters": "2.0.7",
+    "istanbul": "0.4.x",
+    "jasmine": "2.9.0",
     "nock": "3.1.0",
     "proxyquire": "1.7.3",
     "coveralls": "^3.0.0"
   },
   "scripts": {
-    "test": "JASMINE_CONFIG_PATH=test/config/jasmine.json node_modules/.bin/istanbul cover --include-all-sources -x public/**/*.js -x server.js -x Gruntfile.js -x fill_indexes.js node_modules/.bin/jasmine"
+    "test": "JASMINE_CONFIG_PATH=test/config/jasmine.json node_modules/.bin/istanbul cover --include-all-sources -x public/**/*.js -x locales/**/*.js -x server.js -x Gruntfile.js -x fill_indexes.js node_modules/.bin/jasmine"
   },
   "repository": {
     "type": "git",
