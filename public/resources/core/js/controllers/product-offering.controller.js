@@ -152,10 +152,6 @@
 
         var stepList = [
             {
-                title: 'SLA',
-                templateUrl: 'stock/product-offering/create/sla'
-            },
-            {
                 title: 'General',
                 templateUrl: 'stock/product-offering/create/general'
             },
@@ -182,6 +178,10 @@
             {
                 title: 'License',
                 templateUrl: 'stock/product-offering/create/terms'
+            },
+            {
+                title: 'SLA',
+                templateUrl: 'stock/product-offering/create/sla'
             },
             {
                 title: 'Price Plans',
