@@ -36,6 +36,8 @@
         .directive('shippingAddressForm', shippingAddressFormDirective)
         .directive('pricePlanForm', pricePlanFormDirective)
         .directive('pricePlanTable', pricePlanTableDirective)
+        .directive('slaForm', slaFormDirective)
+        .directive('slaTable', slaTableDirective)
         .directive('pager', ['$window', '$timeout', 'EVENTS', pagerDirective])
         .directive('relationshipCreateForm', relationshipCreateFormDirective)
         .directive('relationshipDeleteForm', relationshipDeleteFormDirective)
@@ -132,6 +134,18 @@
                 vm: '=controller'
             },
             templateUrl: 'directives/forms/priceplan'
+        };
+    }
+
+    function slaFormDirective() {
+        return {
+            restrict: 'E',
+            scope: {
+                form: '=',
+                sla: '=data',
+                vm: '=controller'
+            },
+            templateUrl: 'directives/forms/sla'
         };
     }
 
@@ -236,6 +250,17 @@
                 vm: '=controller'
             },
             templateUrl: 'directives/tables/priceplan'
+        };
+    }
+
+    function slaTableDirective() {
+        return {
+            restrict: 'E',
+            scope: {
+                sla: '=sla',
+                vm: '=controller'
+            },
+            templateUrl: 'directives/tables/sla'
         };
     }
 

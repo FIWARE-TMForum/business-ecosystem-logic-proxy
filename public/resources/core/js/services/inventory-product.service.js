@@ -42,7 +42,8 @@
             detail: detail,
             renew: renew,
             getToken: getToken,
-            setToken: setToken
+            setToken: setToken,
+            getSla: getSla
         };
 
         function query(deferred, filters, method, callback) {
@@ -198,6 +199,23 @@
             
             return deferred.promise;
         
+        }
+
+        function getSla(id) {
+            var deferred = $q.defer();
+            var params = {
+                id: id
+            };
+            var sla = {};
+            var slaResource = $resource(URLS.SLA_GET);
+            slaResource.get(params, function (collection) {
+                sla = collection;
+                sla.metrics = JSON.parse(sla.services) 
+                deferred.resolve(sla);
+            }, function (response) {
+                deferred.reject(response);
+            });
+            return deferred.promise;
         }
     }
 })();

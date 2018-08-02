@@ -148,6 +148,7 @@
         vm.password = "";
         vm.refreshToken = "";
         vm.token = retrieveToken();
+        vm.sla = "";
     
         InventoryProduct.detail($state.params.productId).then(function (productRetrieved) {
             locations = [];
@@ -169,6 +170,8 @@
                     checkOfferingProduct(offering);
                 });
             }
+
+            getSla(productRetrieved.productOffering.id);
 
             // Retrieve existing charges
             BillingAccount.searchCharges(vm.item.id).then(function(charges) {
@@ -214,6 +217,15 @@
                     });
                 }
             }
+        }
+
+        function getSla(offeringId){
+            InventoryProduct.getSla(offeringId).then(function (slaRetrieved) {
+                vm.sla = slaRetrieved;
+            }, function (response){
+                vm.error = Utils.parseError(response, 'The requested SLA could not be retrieved');
+                vm.item.status = ERROR;
+            })
         }
 
         function checkDigital(characteristics) {

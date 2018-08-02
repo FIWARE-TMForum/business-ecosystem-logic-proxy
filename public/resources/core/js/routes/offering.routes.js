@@ -93,11 +93,11 @@
                     }
                 }
             })
-            .state('offering.detail.relationship', {
-                url: '/relationship',
+            .state('offering.detail.licenseSla', {
+                url: '/licensesla',
                 views: {
                     'offering-content': {
-                        templateUrl: 'offering/detail/relationship'
+                        templateUrl: 'offering/detail/licenseSla'
                     }
                 }
             });

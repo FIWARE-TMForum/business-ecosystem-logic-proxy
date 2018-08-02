@@ -52,7 +52,9 @@
 
         var EVENTS = {
             PRICEPLAN_UPDATE: '$pricePlanUpdate',
-            PRICEPLAN_UPDATED: '$pricePlanUpdated'
+            PRICEPLAN_UPDATED: '$pricePlanUpdated',
+            METRIC_UPDATE: '$metricUpdate',
+            METRIC_UPDATED: '$metricUpdated'
         };
 
         var TYPES = {
@@ -80,6 +82,26 @@
             SLA: {
                 NONE: 'None',
                 SPEC: 'Spec'
+            },
+            METRICS: {
+                UPDATES: 'Updates rate',
+                RESPTIME: 'Response time',
+                DELAY: 'Delay'
+            },
+            MEASURESDESC: {
+                UPDATES: 'Expected number of updates in the given period.',
+                RESPTIME: 'Total amount of time to respond to a data request (GET).',
+                DELAY: 'Total amount of time to deliver a new update (SUBSCRIPTION).'
+            },
+            TIMERANGE: {
+                DAY: 'day',
+                WEEK: 'week',
+                MONTH: 'month'
+            },
+            UNITS: {
+                MSEC: 'ms',
+                SEC: 's',
+                MIN: 'min'
             }
         };
 
@@ -147,10 +169,14 @@
                 licenseType: TYPES.LICENSE.NONE
             },
             SLA: {
-                type: TYPES.SLA.NONE,
                 offerId: '',
-                description: '',
-                services: [] 
+                metrics: [] 
+            },
+            METRIC: {
+                type: '' ,
+                threshold: '',
+                unitMeasure: '',
+                description: ''
             },
             RESOURCE: {
                 bundledProductOffering: [],
@@ -331,46 +357,92 @@
             };
         };
 
+        var Metric = function Metric(data) {
+            angular.extend(this, TEMPLATES.METRIC, data);
+        };
+        
         var Sla = function Sla(data) {
             angular.extend(this, TEMPLATES.SLA, data);
         };
 
-        Sla.prototype.setType = function setType(typeName) {
+        Metric.prototype.setType = function setType(typeName) {
 
-            if (typeName in TYPES.SLA && !angular.equals(this.slaType, typeName)) {
-                this.slaType = TYPES.SLA[typeName];
-                this.clearSla();
+            if (typeName in TYPES.METRICS && !angular.equals(this.type, typeName)) {
+                this.type = TYPES.METRICS[typeName];
+                this.clearMetric();
             }
             
-            switch (this.slaType) {
-                case TYPES.SLA.NONE:{
-                    this.sla.type = 'None';
+            switch (this.type) {
+                case TYPES.METRICS.UPDATES:{
+                    this.unitMeasure = TYPES.TIMERANGE.DAY;
+                    this.description = TYPES.MEASURESDESC.UPDATES;
                     break;
                 }
-                case TYPES.SLA.SPEC:{
-                    this.sla.type = 'Spec';
+                case TYPES.METRICS.RESPTIME:{
+                    this.unitMeasure = TYPES.UNITS.MSEC;
+                    this.description = TYPES.MEASURESDESC.RESPTIME;
+                    break;
+                }
+                case TYPES.METRICS.DELAY:{
+                    this.unitMeasure = TYPES.UNITS.MSEC;
+                    this.description = TYPES.MEASURESDESC.DELAY;
                     break;
                 }
             }
 
             return this;
         };
+
+        Metric.prototype.setUnit = function setUnit(unit) {
+
+            if (unit in TYPES.TIMERANGE && !angular.equals(this.unitMeasure, unit)) {
+                this.unitMeasure = TYPES.TIMERANGE[unit];
+                //this.clearMetric();
+            }
+            if (unit in TYPES.UNITS && !angular.equals(this.unitMeasure, unit)) {
+                this.unitMeasure = TYPES.UNITS[unit];
+                //this.clearMetric();
+            }
+            
+            // switch (this.type) {
+            //     case TYPES.METRICS.UPDATES:{
+            //         this.type = '';
+            //         break;
+            //     }
+            //     case TYPES.METRICS.B:{
+            //         this.type = 'B';
+            //         break;
+            //     }
+            //     case TYPES.METRICS.C:{
+            //         this.type = 'C';
+            //         break;
+            //     }
+            // }
+
+            return this;
+        };
+
+        Metric.prototype.clearMetric = function clearMetric() {
+            //this.type = '';
+            this.threshold = '';
+            this.unitMeasure = '';
+            this.description = '';
+            return this;
+        };
+
 
         Sla.prototype.clearSla = function clearSla() {
             
             //this.sla.type = 'None';
             //this.sla.offerID = '';
-            this.sla.description = '';
-            this.sla.services = [];
+            this.metrics = [];
             return this;
         };
 
         Sla.prototype.toJSON = function toJSON() {
             return {
-                offerId : this.sla.offerId,
-                description : this.sla.description,
-                type : this.sla.type,
-                services : this.sla.services
+                offerId : this.offerId,
+                services : JSON.parse(JSON.stringify(this.metrics))
             };
         };
 
@@ -382,11 +454,13 @@
             PricePlan: PricePlan,
             License: License,
             Sla: Sla,
+            Metric: Metric,
             search: search,
             count: count,
             exists: exists,
             create: create,
             setSla: setSla,
+            getSla: getSla,
             detail: detail,
             update: update,
             exclusivities: exclusivities,
@@ -626,9 +700,26 @@
             var deferred = $q.defer();
             var slaResource = $resource(URLS.SLA_SET);
             slaResource.save(sla, function (slaCreated) {
-                slaCreated.id = _id;
-                slaCreated.offeringId = offerId;
+                //slaCreated.id = _id;
+                //slaCreated.offeringId = offerId;
                 deferred.resolve(slaCreated);
+            }, function (response) {
+                deferred.reject(response);
+            });
+            return deferred.promise;
+        }
+
+        function getSla(id) {
+            var deferred = $q.defer();
+            var params = {
+                id: id
+            };
+            var sla = {};
+            var slaResource = $resource(URLS.SLA_GET);
+            slaResource.get(params, function (collection) {
+                sla = collection;
+                sla.metrics = sla.services;
+                deferred.resolve(sla);
             }, function (response) {
                 deferred.reject(response);
             });

@@ -152,6 +152,10 @@
 
         var stepList = [
             {
+                title: 'SLA',
+                templateUrl: 'stock/product-offering/create/sla'
+            },
+            {
                 title: 'General',
                 templateUrl: 'stock/product-offering/create/general'
             },
@@ -180,10 +184,6 @@
                 templateUrl: 'stock/product-offering/create/terms'
             },
             {
-                title: 'SLA',
-                templateUrl: 'stock/product-offering/create/sla'
-            },
-            {
                 title: 'Price Plans',
                 templateUrl: 'stock/product-offering/create/priceplan'
             },
@@ -207,12 +207,17 @@
         vm.transferabilities = Offering.transferabilities;
         vm.standards = Offering.standards;
         vm.terms = {type:'Standard', isFullCustom:false};
+        //vm.sla = {type:'None'};
 
         vm.CHARGE_PERIODS = Offering.TYPES.CHARGE_PERIOD;
         vm.CURRENCY_CODES = Offering.TYPES.CURRENCY_CODE;
         vm.PRICES = Offering.TYPES.PRICE;
         vm.LICENSES = Offering.TYPES.LICENSE;
         vm.SLA = Offering.TYPES.SLA;
+        vm.METRICS = Offering.TYPES.METRICS;
+        vm.UNITS = Offering.TYPES.UNITS;
+        vm.TIMERANGE = Offering.TYPES.TIMERANGE;
+        vm.MEASURESDESC = Offering.TYPES.MEASURESDESC
 
         vm.STATUS = PROMISE_STATUS;
 
@@ -257,9 +262,19 @@
         vm.createLicense = createLicense;
 
         /* SLA MEMBERS */
+        vm.metrics = []
+        vm.metric = new Offering.Metric();
+        vm.metric.type = vm.METRICS.UPDATES;
+        vm.metric.description = vm.MEASURESDESC.UPDATES;
+        vm.createMetric = createMetric;
+        vm.updateMetric = updateMetric;
+        vm.removeMetric = removeMetric;
+        vm.metricsUsed = [];
 
         vm.sla = new Offering.Sla();
-        //vm.slaEnabled = false;
+        vm.slaEnabled = false;
+        vm.createSla = createSla;
+
         //vm.createSla = createSla;
 
         vm.place = "";
@@ -416,7 +431,7 @@
                     //Finalise Offering
                     slaPromise.then(function (slaCreated) {
                         $state.go('stock.offering.update', {
-                            offeringId: slaCreated.offeringId
+                            offeringId: slaCreated.offerId
                         });
                         $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'created', {
                             resource: 'offering',
@@ -536,6 +551,40 @@
             vm.licenseEnabled = false;
         }
 
+
+        /* SLA METHODS */
+
+        function createMetric() {
+            //vm.metrics.push(vm.sla);
+            //vm.metric = new Offering.Metric();
+            vm.slaEnabled = false;
+            vm.sla.metrics.push(vm.metric);
+            vm.metricsUsed.push(vm.metric.type);
+            vm.metric = new Offering.Metric();
+        }
+        
+        function createSla() {
+            //vm.metrics.push(vm.sla);
+            vm.sla = new Offering.Sla();
+            vm.sla.metrics = [];
+            vm.slaEnabled = false;
+            //vm.sla.metrics.push(vm.metric);
+        }
+
+        function updateMetric(index) {
+            $rootScope.$broadcast(Offering.EVENTS.METRIC_UPDATE, index, vm.sla.metrics[index]);
+        }
+
+        function removeMetric(index) {
+            var value = vm.sla.metrics[index].type;
+ 
+            var idx = vm.metricsUsed.indexOf(value);
+            if (idx > -1) {
+                vm.metricsUsed.splice(idx, 1);
+            }
+            vm.sla.metrics.splice(index, 1);
+        }
+
         /* PRICE PLANS METHODS */
 
         function createPricePlan() {
@@ -642,19 +691,33 @@
     function ProductOfferingDetailController($state, Offering, ProductSpec, Utils) {
         /* jshint validthis: true */
         var vm = this;
-
+        var createPromise = [];
+        vm.sla = {};
         vm.item = {};
         vm.$state = $state;
         vm.hasCharacteristics = hasCharacteristics;
         vm.formatCharacteristicValue = formatCharacteristicValue;
 
-        Offering.detail($state.params.offeringId).then(function (offeringRetrieved) {
+        createPromise.push(Offering.detail($state.params.offeringId).then(function (offeringRetrieved) {
             vm.item = offeringRetrieved;
-            vm.item.status = LOADED;
             vm.categories = vm.item.getCategories();
         }, function (response) {
             vm.error = Utils.parseError(response, 'The requested offering could not be retrieved');
             vm.item.status = ERROR;
+        }));
+        
+        createPromise.push(Offering.getSla($state.params.offeringId).then(function (slaRetrieved) {
+            vm.sla = slaRetrieved;
+        }, function (response){
+            vm.error = Utils.parseError(response, 'The requested SLA could not be retrieved');
+            vm.item.status = ERROR;
+        }));
+    
+        Promise.all(createPromise).then(function(){
+            vm.item.status = LOADED;
+            }, function (response){
+                vm.error = Utils.parseError(response, 'The requested offering could not be retrieved');
+                vm.item.status = ERROR;
         });
 
         function formatCharacteristicValue(characteristic, characteristicValue) {
@@ -714,6 +777,8 @@
         vm.updatePricePlan = updatePricePlan;
         vm.removePricePlan = removePricePlan;
 
+        vm.sla = {};
+
         var updatePricePlanPromise = null;
 
         $scope.$on(Offering.EVENTS.PRICEPLAN_UPDATED, function (event, index, pricePlan) {
@@ -734,6 +799,14 @@
             vm.categories = productOffering.getCategories();
         }, function (response) {
             vm.error = Utils.parseError(response, 'Unexpected error trying to retrieve the offering.');
+        });
+
+        var slaPromise = Offering.getSla($state.params.offeringId);
+        slaPromise.then(function (slaRetrieved) {
+            vm.sla = slaRetrieved;
+        }, function (response){
+            vm.error = Utils.parseError(response, 'The requested SLA could not be retrieved');
+            vm.item.status = ERROR;
         });
 
         Object.defineProperty(vm, 'status', {

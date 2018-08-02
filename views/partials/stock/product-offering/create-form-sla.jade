@@ -5,15 +5,15 @@ form(name="step.form", novalidate)
         label #{ __("Define an SLA") }
         .dropdown
           a.btn.btn-block.btn-default.dropdown-toggle.z-depth-0(data-toggle="dropdown")
-            span.item-text {{ createVM.sla.slaType }}
+            span.item-text {{ createVM.sla.type }}
             span.item-icon.fa.fa-caret-down
           .dropdown-menu.dropdown-menu-right.z-depth-2
             a.dropdown-menu-item(ng-repeat="(key, value) in createVM.SLA" ng-click="createVM.sla.setType(key)")
               span.item-text {{ value }}
   .row
-    .switch(ng-switch='createVM.sla.slaType' ng-init='createVM.sla.clearSla()')
+    .switch(ng-switch='createVM.sla.type' ng-init='createVM.sla.clearSla()')
 
-      .switch(ng-switch-when='Define SLA' ng-init='createVM.sla.clearSla()')
+      .switch(ng-switch-when='Spec' ng-init='createVM.sla.clearSla()')
         .col-md-12
           .form-group
             .h4.text-dark-secondary
