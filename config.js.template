@@ -127,7 +127,13 @@ config.endpoints = {
         'appSsl': false
     },
     'sla': {
-        'path': 'sla',
+        'path': 'SLAManagement',
+        'host': 'localhost',
+        'port': config.port,
+        'appSsl': false
+    },
+    'reputation': {
+        'path': 'REPManagement',
         'host': 'localhost',
         'port': config.port,
         'appSsl': false

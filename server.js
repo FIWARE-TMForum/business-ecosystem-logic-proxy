@@ -1,5 +1,6 @@
 var authorizeService = require('./controllers/authorizeService').authorizeService,
     slaService = require('./controllers/slaService').slaService,
+    reputationService = require('./controllers/reputationService').reputationService,
     bodyParser = require('body-parser'),
     base64url = require('base64url'),
     config = require('./config'),
@@ -66,6 +67,7 @@ config.portalPrefix = checkPrefix(config.portalPrefix, '');
 config.shoppingCartPath = checkPrefix(config.shoppingCartPath, '/shoppingCart');
 config.authorizeServicePath = checkPrefix(config.authorizeServicePath, '/authorizeService');
 config.slaServicePath = checkPrefix(config.slaServicePath, '/SLAManagement');
+config.reputationServicePath = checkPrefix(config.reputationServicePath, '/REPManagement');
 config.logInPath = config.logInPath || '/login';
 config.logOutPath = config.logOutPath || '/logout';
 config.mongoDb = config.mongoDb || {};
@@ -295,13 +297,20 @@ app.post(config.authorizeServicePath + '/read', authorizeService.getAppToken);
 //app.post(config.authorizeServicePath + '/apiKeys/:apiKey/commit', authorizeService.commitApiKey);
 
 /////////////////////////////////////////////////////////////////////
-///////////////////////// SLA SERVICE /////////////////////////
+///////////////////////// SLA SERVICE ///////////////////////////////
 /////////////////////////////////////////////////////////////////////
 
 app.use(config.slaServicePath + '/*', checkMongoUp, auth.headerAuthentication, auth.checkOrganizations, auth.setPartyObj, failIfNotAuthenticated);
 app.get(config.slaServicePath + '/sla/:id', slaService.getSla);
 app.post(config.slaServicePath + '/sla', slaService.saveSla);
 
+/////////////////////////////////////////////////////////////////////
+///////////////////////// REPUTAION SERVICE /////////////////////////
+/////////////////////////////////////////////////////////////////////
+
+app.use(config.reputationServicePath + '/*', checkMongoUp, auth.headerAuthentication, auth.checkOrganizations, auth.setPartyObj, failIfNotAuthenticated);
+app.get(config.reputationServicePath + '/reputation/:id', reputationService.getOverallReputation);
+app.post(config.reputationServicePath + '/reputation', reputationService.saveReputation);
 
 /////////////////////////////////////////////////////////////////////
 /////////////////////////////// PORTAL //////////////////////////////
