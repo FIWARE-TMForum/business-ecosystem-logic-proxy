@@ -309,7 +309,8 @@ app.post(config.slaServicePath + '/sla', slaService.saveSla);
 /////////////////////////////////////////////////////////////////////
 
 app.use(config.reputationServicePath + '/*', checkMongoUp, auth.headerAuthentication, auth.checkOrganizations, auth.setPartyObj, failIfNotAuthenticated);
-app.get(config.reputationServicePath + '/reputation/:id', reputationService.getOverallReputation);
+app.get(config.reputationServicePath + '/reputation', reputationService.getOverallReputation);
+app.get(config.reputationServicePath + '/reputation/:id/:consumerId', reputationService.getReputation);
 app.post(config.reputationServicePath + '/reputation', reputationService.saveReputation);
 
 /////////////////////////////////////////////////////////////////////
