@@ -71,7 +71,7 @@ var reputationService = (function () {
             var offerId = req.params.id
             
             if (offerId) {
-                reputationModel.aggregate({$group:{_id:"$id",avg:{$avg: "$rate"}}}, function (err, resp) {
+                reputationModel.aggregate({$group:{offerId:"$offerId",avg:{$avg: "$rate"}}}, function (err, resp) {
                     if (err) {
                         res.status(500).json({error: err.message});
                     } 
