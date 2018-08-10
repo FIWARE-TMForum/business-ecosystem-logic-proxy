@@ -461,6 +461,8 @@
             create: create,
             setSla: setSla,
             getSla: getSla,
+            getReputation: getReputation,
+            getOverallReputation: getOverallReputation,
             detail: detail,
             update: update,
             exclusivities: exclusivities,
@@ -725,7 +727,34 @@
             });
             return deferred.promise;
         }
+
+        function getReputation(id, consumerId) {
+            var deferred = $q.defer();
+            var params = {
+                id: id,
+                consumerId: consumerId
+            };
+            var reputationResource = $resource(URLS.REPUTATION_GET);
+            reputationResource.get(params, function (reputation) {
+                deferred.resolve(reputation);
+            }, function (response) {
+                deferred.reject(response);
+            });
+            return deferred.promise;
+        }
         
+        function getOverallReputation() {
+            var deferred = $q.defer();
+            var params = {};
+            var reputationResource = $resource(URLS.REPUTATION_GET_ALL);
+            reputationResource.query(params, function (reputationList) {
+                deferred.resolve(reputationList);
+            }, function (response) {
+                deferred.reject(response);
+            });
+            return deferred.promise;
+        }
+
         function parseNumber(context, names) {
             names.forEach(function (name) {
                 if (angular.isString(context[name])) {

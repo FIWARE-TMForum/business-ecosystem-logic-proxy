@@ -131,12 +131,41 @@
 
                 Offering.search(params).then(function (offeringList) {
                     angular.copy(offeringList, vm.list);
-                    vm.list.status = LOADED;
+                    getOverallReputation();
+                    //vm.list.status = LOADED;
                 }, function (response) {
                     vm.error = Utils.parseError(response, 'It was impossible to load the list of offerings');
                     vm.list.status = ERROR;
                 });
+                
             }
+        }
+
+        function getOverallReputation(){
+            Offering.getOverallReputation().then(function (reputationList) {
+                const maxScore = 5;
+                for (let i=0; i < vm.list.length; i++){
+                    vm.list[i].repAvg = 0;
+                    vm.list[i].repCount = 0;
+                    vm.list[i].repAvgStars = [];
+                    let currentScore = 0;
+                    for (let j=0; j < reputationList.length; j++){
+                        if(vm.list[i].id === reputationList[j]._id){
+                            currentScore = reputationList[j].avg;
+                            vm.list[i].repCount = reputationList[j].count;
+                        }
+                    }
+                    for(let k=0; k < maxScore; k++){
+                        vm.list[i].repAvgStars[k] = {};
+                        vm.list[i].repAvgStars[k].value = currentScore > k;
+                        vm.list[i].repAvgStars[k].index = k+1;
+                    }
+                }
+                vm.list.status = LOADED;
+            }, function (response) {
+                vm.error = Utils.parseError(response, 'It was impossible to load the reputation score');
+                vm.list.status = ERROR;
+            });            
         }
 
         $scope.$watch(function () {

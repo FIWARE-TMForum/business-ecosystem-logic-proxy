@@ -43,7 +43,9 @@
             renew: renew,
             getToken: getToken,
             setToken: setToken,
-            getSla: getSla
+            getSla: getSla,
+            setRating : setRating,
+            getOwnRating : getOwnRating
         };
 
         function query(deferred, filters, method, callback) {
@@ -212,6 +214,40 @@
                 sla = collection;
                 sla.metrics = JSON.parse(sla.services) 
                 deferred.resolve(sla);
+            }, function (response) {
+                deferred.reject(response);
+            });
+            return deferred.promise;
+        }
+
+        function setRating(data) {
+            var ratingResource = $resource(URLS.REPUTATION_SET);
+            var deferred = $q.defer();
+
+            ratingResource.save(data, function(res, getResponseHeaders) {
+                deferred.resolve(res, {headers: getResponseHeaders()});
+            }, function (response) {
+                deferred.reject(response);
+            });
+            
+            return deferred.promise;
+        
+        }
+
+        function getOwnRating(id, user) {
+            var deferred = $q.defer();
+            var params = {
+                id: id,
+                consumerId: user
+            };
+            //var rating = {};
+            var ratingResource = $resource(URLS.REPUTATION_GET);
+            ratingResource.get(params, function (collection) {
+                var rating = 0;
+                if(collection.rate){
+                    rating = JSON.parse(collection.rate);
+                } 
+                deferred.resolve(rating);
             }, function (response) {
                 deferred.reject(response);
             });

@@ -99,8 +99,11 @@ var reputationService = (function () {
                         res.status(500).json({error: err.message});
                     } 
                     else {
+                        if(resp[0] === undefined)
                         //calculate and return overall score
-                        res.status(200).json(resp);
+                            res.status(200).json({});
+                        else
+                            res.status(200).json(resp[0]);
                     }
                 });
             } else {

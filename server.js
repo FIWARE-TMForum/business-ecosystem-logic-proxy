@@ -307,11 +307,11 @@ app.post(config.slaServicePath + '/sla', slaService.saveSla);
 /////////////////////////////////////////////////////////////////////
 ///////////////////////// REPUTAION SERVICE /////////////////////////
 /////////////////////////////////////////////////////////////////////
-
-app.use(config.reputationServicePath + '/*', checkMongoUp, auth.headerAuthentication, auth.checkOrganizations, auth.setPartyObj, failIfNotAuthenticated);
+app.use(config.reputationServicePath + '/*', checkMongoUp);
+app.use(config.reputationServicePath + '/reputation/set', checkMongoUp, auth.headerAuthentication, auth.checkOrganizations, auth.setPartyObj, failIfNotAuthenticated);
 app.get(config.reputationServicePath + '/reputation', reputationService.getOverallReputation);
 app.get(config.reputationServicePath + '/reputation/:id/:consumerId', reputationService.getReputation);
-app.post(config.reputationServicePath + '/reputation', reputationService.saveReputation);
+app.post(config.reputationServicePath + '/reputation/set', reputationService.saveReputation);
 
 /////////////////////////////////////////////////////////////////////
 /////////////////////////////// PORTAL //////////////////////////////

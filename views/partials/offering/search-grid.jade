@@ -1,3 +1,4 @@
+
 .container-flex
   .panel.panel-default.item-offering.z-depth-1(ng-repeat="offering in searchVM.list")
     a.thumbnail.thumbnail-lg(ui-sref="offering.detail({ offeringId: offering.id })", ui-sref-opts="{ inherit: false }")
@@ -15,6 +16,12 @@
         p.item-description {{ offering.description ? offering.description : '#{ __("No description provided.") }' }}
       .h5.text-right
         strong {{ offering.formatCheapestPricePlan() }}
+      .h5.text-right
+        strong(ng-repeat="star in offering.repAvgStars")
+          span(ng-if="star.value" class="fa fa-star checked") 
+          span(ng-if="!star.value" class="fa fa-star rating" )
+        span #{ __(" ") }
+        span ({{ offering.repCount }})
     .btn-group.btn-group-justified(ng-show="user.isAuthenticated()")
       a.btn.btn-success.z-depth-1(ng-click="user.order(offering)", ng-disabled="user.contains(offering)")
         span.item-icon.fa(class="fa-{{ user.contains(offering) ? 'check-circle' : 'shopping-cart' }}")

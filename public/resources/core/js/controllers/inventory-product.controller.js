@@ -114,7 +114,54 @@
         $rootScope, $scope, $state, InventoryProduct, Utils, ProductSpec, EVENTS, $interval,
         $window, LOGGED_USER, USAGE_CHART_URL, BillingAccount, Download) {
 
+        /* Rating stuff */
+        $scope.rating = 0;
+        $scope.ratings = {
+            current: 0,
+            max: 5
+        };
 
+        $scope.updateSelectedRating = function (rating) {
+            console.log(rating);
+            //update rating via API
+            /*
+            "offerId": "205",
+	        "description": "rep description",
+	        "consumerId" : "mario",
+	        "rate" : 1
+            */
+           var data = {};
+           data.offerId = vm.item.productOffering.id;
+           data.description = "";
+           data.consumerId = LOGGED_USER.id;
+           data.rate = rating;
+           InventoryProduct.setRating(data).then(function (ratingUpdated) {
+               console.log("Rating update OK")
+               //$scope.ratings.current = rating;
+               //$scope.rating = rating;
+           }, function (response){
+                console.log("Rating update FAIL")
+                //vm.error = Utils.parseError(response, 'The requested rating could not be retrieved');
+                //vm.item.status = ERROR;
+                //$scope.ratings.current = 0;
+            });
+        }
+
+        function getCurrentOwnRating(offeringId){
+            InventoryProduct.getOwnRating(offeringId, LOGGED_USER.id).then(function (ratingRetrieved) {
+                if(ratingRetrieved)
+                    $scope.ratings.current = ratingRetrieved;
+                else{
+                    $scope.rating = 0;
+                    $scope.ratings.current = 0;
+                }
+            }, function (response){
+                //vm.error = Utils.parseError(response, 'The requested rating could not be retrieved');
+                //vm.item.status = ERROR;
+                $scope.rating = 0;
+                $scope.ratings.current = 0;
+            })
+        }
         /* jshint validthis: true */
         var vm = this;
         var load = false;
@@ -172,6 +219,7 @@
             }
 
             getSla(productRetrieved.productOffering.id);
+            getCurrentOwnRating(productRetrieved.productOffering.id);
 
             // Retrieve existing charges
             BillingAccount.searchCharges(vm.item.id).then(function(charges) {

@@ -1,3 +1,4 @@
+
 .row
   .col-xs-12
     .panel.panel-default.z-depth-1.header-product
@@ -6,6 +7,8 @@
       .panel-body
         .h3.text-center.item-offering-name
           strong {{ detailVM.item.productOffering.name }}
+        .h3.text-center
+          span(star-rating rating-value="ratings.current" max="ratings.max" on-rating-selected="updateSelectedRating(rating)")
         //- .btn-toolbar.pull-right
         //-   a.btn.btn-success.z-depth-1(ng-if="detailVM.isDigital()" ng-click="detailVM.downloadAsset()")
         //-     span.item-icon.fa.fa-download
