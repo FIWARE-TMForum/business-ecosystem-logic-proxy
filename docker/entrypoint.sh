@@ -32,22 +32,22 @@ if [ -z $COLLECT ]; then
 fi
 
 # Get mongodb host and port from config file
-MONGO_HOST=`/business-ecosystem-logic-proxy/node-v6.9.1-linux-x64/bin/node getConfig mongohost`
-MONGO_PORT=`/business-ecosystem-logic-proxy/node-v6.9.1-linux-x64/bin/node getConfig mongoport`
+MONGO_HOST=`/business-ecosystem-logic-proxy/node-v8.12.0-linux-x64/bin/node getConfig mongohost`
+MONGO_PORT=`/business-ecosystem-logic-proxy/node-v8.12.0-linux-x64/bin/node getConfig mongoport`
 
 # Wait for mongodb to be running
 test_connection 'MongoDB' ${MONGO_HOST} ${MONGO_PORT}
 
 # Get glassfish host and port from config
-GLASSFISH_HOST=`/business-ecosystem-logic-proxy/node-v6.9.1-linux-x64/bin/node getConfig glasshost`
-GLASSFISH_PORT=`/business-ecosystem-logic-proxy/node-v6.9.1-linux-x64/bin/node getConfig glassport`
+GLASSFISH_HOST=`/business-ecosystem-logic-proxy/node-v8.12.0-linux-x64/bin/node getConfig glasshost`
+GLASSFISH_PORT=`/business-ecosystem-logic-proxy/node-v8.12.0-linux-x64/bin/node getConfig glassport`
 
 # Wait for glassfish to be running
 test_connection 'Glassfish' ${GLASSFISH_HOST} ${GLASSFISH_PORT}
 
 # Wait for APIs to be deployed
-GLASSFISH_SCH=`/business-ecosystem-logic-proxy/node-v6.9.1-linux-x64/bin/node getConfig glassprot`
-GLASSFISH_PATH=`/business-ecosystem-logic-proxy/node-v6.9.1-linux-x64/bin/node getConfig glasspath`
+GLASSFISH_SCH=`/business-ecosystem-logic-proxy/node-v8.12.0-linux-x64/bin/node getConfig glassprot`
+GLASSFISH_PATH=`/business-ecosystem-logic-proxy/node-v8.12.0-linux-x64/bin/node getConfig glasspath`
 
 echo "Testing Glasfish APIs deployed"
 wget ${GLASSFISH_SCH}://${GLASSFISH_HOST}:${GLASSFISH_PORT}/${GLASSFISH_PATH}
@@ -72,17 +72,11 @@ service xinetd restart
 echo "Cleaning indexes"
 rm -rf ./indexes/*
 
-# FIXME: Override oauth2.js file
-cd /business-ecosystem-logic-proxy/node_modules/passport-fiware-oauth/lib/passport-fiware-oauth/
-rm oauth2.js
-wget https://raw.githubusercontent.com/conwetlab/passport-fiware-oauth/master/lib/passport-fiware-oauth/oauth2.js
-cd /business-ecosystem-logic-proxy
-
 echo "Creating indexes..."
-/business-ecosystem-logic-proxy/node-v6.9.1-linux-x64/bin/node fill_indexes.js
+/business-ecosystem-logic-proxy/node-v8.12.0-linux-x64/bin/node fill_indexes.js
 
 if [ ${COLLECT} = "True" ]; then
-    /business-ecosystem-logic-proxy/node-v6.9.1-linux-x64/bin/node collect_static.js
+    /business-ecosystem-logic-proxy/node-v8.12.0-linux-x64/bin/node collect_static.js
 fi
 
-/business-ecosystem-logic-proxy/node-v6.9.1-linux-x64/bin/node server.js
+/business-ecosystem-logic-proxy/node-v8.12.0-linux-x64/bin/node server.js

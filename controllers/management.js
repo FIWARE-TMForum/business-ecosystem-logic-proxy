@@ -1,4 +1,4 @@
-/* Copyright (c) 2016 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2016 - 2018 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -16,9 +16,16 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-const config = require('../config');
 
 var management = (function() {
+
+    var versionInfo = {
+        version: 'develop',
+        releaseDate: '',
+        gitHash: '',
+        doc: 'https://fiware-tmforum.github.io/Business-API-Ecosystem/',
+        userDoc: 'http://business-api-ecosystem.readthedocs.io/en/develop'
+    };
 
     var getCount = function(req, res) {
         var size = req.params.size;
@@ -40,12 +47,12 @@ var management = (function() {
 
         res.statusCode = 200;
         res.json({
-            version: config.version.version,
-            release_date: config.version.releaseDate,
+            version: versionInfo.version,
+            release_date: versionInfo.releaseDate,
             uptime: upMsg,
-            git_hash: config.version.gitHash,
-            doc: config.version.doc,
-            user_doc: config.version.userDoc
+            git_hash: versionInfo.gitHash,
+            doc: versionInfo.doc,
+            user_doc: versionInfo.userDoc
         });
         res.end();
     };
