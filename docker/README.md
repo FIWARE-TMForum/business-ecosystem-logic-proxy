@@ -12,13 +12,13 @@ If you want to know what is behind the scenes of our container you can go ahead 
 
 ## The Fastest Way
 
-### New versions
+Versions of the Business Ecosystem Logic Proxy container higher than 5.4.1, use an external MongoDB container as database and can
+be configured using the same mechanisms supported by the software. In this regard, both providing a `config.js` file and 
+using environment variables (min version 7.4.0) is supported. For details of the different configuration options have a look
+at the [Business API Ecosystem installation guide](https://business-api-ecosystem.readthedocs.io/en/develop/installation-administration-guide.html#configuring-the-logic-proxy)
 
-New versions of the Business Ecosystem Logic Proxy container higher than 5.4.1, use an external MongoDB container as database and are
-configured using the standard `config.js` file as it is done with the software.
-
-To run the Business Ecosystem Logic Proxy, `docker-compose` is used. To do so, you must create a folder to place a
-new file file called `docker-compose.yml` that should include the following content:
+To run the Business Ecosystem Logic Proxy, `docker-compose` is used. You can use the `docker-compose.yml` file included
+with the source of the software, or create a new one with the following content:
 
 ```
 version: '3'
@@ -31,7 +31,7 @@ services:
             - ./proxy-data:/data/db
 
     proxy:
-        image: conwetlab/biz-ecosystem-logic-proxy
+        image: conwetlab/biz-ecosystem-logic-proxy:develop
         links:
             - mongo
         depends_on:
@@ -39,26 +39,71 @@ services:
         ports:
             - 8000:8000
         volumes:
-            - ./proxy-conf:/business-ecosystem-logic-proxy/etc
+            # - ./proxy-conf:/business-ecosystem-logic-proxy/etc  # To be used when congiguring the system with a config file provided in the volume
             - ./proxy-indexes:/business-ecosystem-logic-proxy/indexes
             - ./proxy-themes:/business-ecosystem-logic-proxy/themes
             - ./proxy-static:/business-ecosystem-logic-proxy/static
+            - ./proxy-locales:/business-ecosystem-logic-proxy/locales
         environment:
-            - NODE_ENV=development
+            - NODE_ENV=development  # Deployment in development or in production
+            - COLLECT=True  # Execute the collect static command on startup
+
+            - BAE_LP_PORT=8000  # Port where the node service is going to run in the container
+            - BAE_LP_HOST=proxy.docker  # Host where the node service if going to run in the container
+            # - BAE_SERVICE_HOST=https://store.lab.fiware.org/  # If provided, this URL specifies the actual URL that is used to access the BAE, when the component is proxied (e.g Apache)
+            # - BAE_LP_HTTPS_ENABLED=true  # If provided specifies whether the service is running in HTTPS, default: false
+            # - BAE_LP_HTTPS_CERT=cert/cert.crt  # Certificate for the SSL configuration (when HTTPS enabled is true)
+            # - BAE_LP_HTTPS_CA=cert/ca.crt  # CA certificate for the SSL configuration (when HTTPS enabled is true)
+            # - BAE_LP_HTTPS_KEY=cert/key.key  # Key sfile for the SSL configuration (when HTTPS enabled is true)
+            # - BAE_LP_HTTPS_PORT=443  # Port where the service runs when SSL is enabled (when HTTPS enabled is true)
+
+            # ------ OAUTH2 Config ------
+            - BAE_LP_OAUTH2_SERVER=http://idm.docker:8000  # URL of the FIWARE IDM used for user authentication
+            - BAE_LP_OAUTH2_CLIENT_ID=id  # OAuth2 Client ID of the BAE applicaiton
+            - BAE_LP_OAUTH2_CLIENT_SECRET=secret  # OAuth Client Secret of the BAE application
+            - BAE_LP_OAUTH2_CALLBACK=http://proxy.docker:8004/auth/fiware/callback  # Callback URL for receiving the access tokens
+            - BAE_LP_OAUTH2_ADMIN_ROLE=admin  # Role defined in the IDM client app for admins of the BAE 
+            - BAE_LP_OAUTH2_SELLER_ROLE=seller  # Role defined in the IDM client app for sellers of the BAE 
+            - BAE_LP_OAUTH2_CUSTOMER_ROLE=customer  # Role defined in the IDM client app for customers of the BAE 
+            - BAE_LP_OAUTH2_ORG_ADMIN_ROLE=orgAdmin  # Role defined in the IDM client app for organization admins of the BAE 
+            - BAE_LP_OAUTH2_IS_LEGACY=false  # Whether the used FIWARE IDM is version 6 or lower
+
+            # - BAE_LP_THEME=theme  # If provided custom theme to be used by the web site, it must be included in themes volume
+            
+            # ----- Mongo Config ------
+            # - BAE_LP_MONGO_USER=user
+            # - BAE_LP_MONGO_PASS=pass
+            - BAE_LP_MONGO_SERVER=localhost
+            - BAE_LP_MONGO_PORT=27017
+            - BAE_LP_MONGO_DB=belp
+
+            - BAE_LP_REVENUE_MODEL=30  # Default market owner precentage for Revenue Sharing models
+
+            # ----- APIs Configuration -----
+            # If provided, it supports configuring the contection to the different APIs managed by the logic proxy, by default
+            # apis.docker, charging.docker and rss.docker domains are configured
+            # - BAE_LP_ENDPOINT_CATALOG_PATH=DSProductCatalog
+            # - BAE_LP_ENDPOINT_CATALOG_PORT=8080
+            # - BAE_LP_ENDPOINT_CATALOG_HOST=apis.docker
+            # - BAE_LP_ENDPOINT_CATALOG_SECURED=false
+            # ...
 ```
 
+The biz-ecosystem-logic-proxy image defines 4 volumes. In particular:
+* */business-ecosystem-logic-proxy/etc*: When file configuration is used, this volume must include the `config.js` file with the software configuration
+* */business-ecosystem-logic-proxy/indexes*: This volume contains the indexes used by the Business API Ecosystem for searching
+* */business-ecosystem-logic-proxy/themes*: In this volume, it can be provided the themes that can be used to customize the web portal
+* */business-ecosystem-logic-proxy/static*: This volume includes the static files ready to be rendered including the selected theme and js files
 
-Additionally, the biz-ecosystem-logic-proxy image contains 4 volumes. In particular:
-* */business-ecosystem-logic-proxy/etc*: This directory must include the `config.js` file with the software configuration
-* */business-ecosystem-logic-proxy/indexes*: This directory contains the indexes used by the Business API Ecosystem for searching
-* */business-ecosystem-logic-proxy/themes*: This directory contains the themes that can be used to customize the web portal
-* */business-ecosystem-logic-proxy/static*: This directory includes the static files ready to be rendered including the selected theme and js files
+Additionally, the image defines two environment variables intended to optimize the production deployment of the BAE Logic proxy:
+* *NODE_ENV*: Specifies whether the system is in *development* or in *production* (default: development)
+* *COLLECT*: Specifies if the container should execute the collect static command to generate static files or use the existing on start up (default: True)
 
-Finally, the biz-ecosystem-logic-proxy uses the environment variable *NODE_ENV* to determine if the software is being used
-in *development* or in *production* mode. 
+As can be seen in the `docker-compose.yml` file, configuration can be provided as environment variables (min version 7.4.0). If this feature is used,
+providing a `config.js` file with the configuration is not necessary, taking into account that the environment values override the file ones.
 
 > **Note**
-> The *config.js* file must include an extra setting not provided by default called *config.extPort* that must include the port where the proxy is going to run in the host machine
+> In version 6.4.0, the *config.js* file must include an extra setting not provided by default called *config.extPort* that must include the port where the proxy is going to run in the host machine
 
 Once you have created the file, run the following command:
 
