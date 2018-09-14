@@ -685,6 +685,17 @@
                         callback();
                     }, (response) => showAssetError(response), assetId);
             } else if (controller.isDigital && vm.currFormat === 'URL') {
+                if(meta.idPattern !== undefined){
+                    var entity_id = "<entity_id>"
+                    var entity_type = ""
+                    var idPattern = meta.idPattern.split(":")
+                    if (idPattern.length > 6){
+                        entity_id = idPattern[6]
+                    }
+                    entity_type = idPattern[2]
+                    var end_point = vm.digitalChars[2].productSpecCharacteristicValue[0].value + "/v2/entities/" + entity_id + "/attrs/" + "<attribute>?type=" + entity_type
+                    vm.digitalChars[2].productSpecCharacteristicValue[0].value = end_point
+                }
                 registerM(
                     vm.digitalChars[2].productSpecCharacteristicValue[0].value,
                     vm.digitalChars[0].productSpecCharacteristicValue[0].value,
