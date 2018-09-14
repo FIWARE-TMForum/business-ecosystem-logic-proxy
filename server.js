@@ -209,6 +209,8 @@ var PORT = config.https.enabled ?
         config.port || 80;              // HTTP
 
 
+config.usageChartURL = process.env.BAE_LP_USAGE_CHART || config.usageChartURL;
+
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
 
