@@ -4,13 +4,12 @@ var authorizeService = require('./controllers/authorizeService').authorizeServic
     config = require('./config'),
     constants = require('constants'),
     cookieParser = require('cookie-parser'),
-    errorhandler = require('errorhandler'),
     express = require('express'),
     fs = require('fs'),
     https = require('https'),
+    i18n = require('i18n-2'),
     indexes = require('./lib/indexes'),
     inventorySubscription = require('./lib/inventory_subscription'),
-    imports = require('./public/imports').imports,
     logger = require('./lib/logger').logger.getLogger("Server"),
     mongoose = require('mongoose'),
     onFinished = require('on-finished'),
@@ -23,7 +22,7 @@ var authorizeService = require('./controllers/authorizeService').authorizeServic
     url = require('url'),
     utils = require('./lib/utils'),
     auth = require('./lib/auth').auth,
-    uuid = require('node-uuid');
+    uuidv4 = require('uuid/v4');
 
 const debug = !(process.env.NODE_ENV == 'production');
 
@@ -58,26 +57,159 @@ var checkPrefix = function(prefix, byDefault) {
 var OAUTH2_CAME_FROM_FIELD = 'came_from_path';
 
 // Get preferences and set up default values
-config.sessionSecret = config.sessionSecret || 'keyboard cat';
+config.port = process.env.BAE_LP_PORT || config.port || 8004;
+config.host = process.env.BAE_LP_HOST || config.host || 'localhost';
+
+// Check proxy URL config config
+if (!!process.env.BAE_SERVICE_HOST) {
+    // If this var is enabled, the service is accessible in a different URL
+    let parsedUrl = url.parse(process.env.BAE_SERVICE_HOST);
+    config.proxy = {
+        enabled: true,
+        host: parsedUrl.hostname,
+        port: parsedUrl.port,
+        secured: parsedUrl.protocol == 'https'
+    };
+}
+
+// HTTPS Configuration
 config.https = config.https || {};
+config.https.enabled = process.env.BAE_LP_HTTPS_ENABLED || config.https.enabled;
+config.https.certFile = process.env.BAE_LP_HTTPS_CERT || config.https.certFile;
+config.https.caFile = process.env.BAE_LP_HTTPS_CA || config.https.caFile;
+config.https.keyFile = process.env.BAE_LP_HTTPS_KEY || config.https.keyFile;
+config.https.port = process.env.BAE_LP_HTTPS_PORT || config.https.port;
+
+// OAuth2 Configuration
+config.oauth2.server = process.env.BAE_LP_OAUTH2_SERVER || config.oauth2.server;
+config.oauth2.clientID = process.env.BAE_LP_OAUTH2_CLIENT_ID || config.oauth2.clientID;
+config.oauth2.clientSecret = process.env.BAE_LP_OAUTH2_CLIENT_SECRET || config.oauth2.clientSecret;
+config.oauth2.callbackURL = process.env.BAE_LP_OAUTH2_CALLBACK || config.oauth2.callbackURL;
+
+config.oauth2.roles.admin = process.env.BAE_LP_OAUTH2_ADMIN_ROLE || config.oauth2.roles.admin;
+config.oauth2.roles.seller = process.env.BAE_LP_OAUTH2_SELLER_ROLE || config.oauth2.roles.seller;
+config.oauth2.roles.customer = process.env.BAE_LP_OAUTH2_CUSTOMER_ROLE || config.oauth2.roles.customer;
+config.oauth2.roles.orgAdmin = process.env.BAE_LP_OAUTH2_ORG_ADMIN_ROLE || config.oauth2.roles.orgAdmin;
+
+if (!!process.env.BAE_LP_OAUTH2_IS_LEGACY) {
+    config.oauth2.isLegacy = process.env.BAE_LP_OAUTH2_IS_LEGACY == 'true';
+}
+
+// Theme config
+config.theme = process.env.BAE_LP_THEME || config.theme;
+
+// URL config
+config.sessionSecret = config.sessionSecret || 'keyboard cat';
 config.proxyPrefix = checkPrefix(config.proxyPrefix, '');
 config.portalPrefix = checkPrefix(config.portalPrefix, '');
 config.shoppingCartPath = checkPrefix(config.shoppingCartPath, '/shoppingCart');
 config.authorizeServicePath = checkPrefix(config.authorizeServicePath, '/authorizeService');
 config.logInPath = config.logInPath || '/login';
 config.logOutPath = config.logOutPath || '/logout';
+
+// Endpoint config
+// =====
+
+// Catalog
+config.endpoints.catalog.path = process.env.BAE_LP_ENDPOINT_CATALOG_PATH || config.endpoints.catalog.path;
+config.endpoints.catalog.port = process.env.BAE_LP_ENDPOINT_CATALOG_PORT || config.endpoints.catalog.port;
+config.endpoints.catalog.host = process.env.BAE_LP_ENDPOINT_CATALOG_HOST || config.endpoints.catalog.host;
+
+if (!!process.env.BAE_LP_ENDPOINT_CATALOG_SECURED) {
+    config.endpoints.catalog.appSsl = process.env.BAE_LP_ENDPOINT_CATALOG_SECURED == 'true';
+}
+
+// Ordering
+config.endpoints.ordering.path = process.env.BAE_LP_ENDPOINT_ORDERING_PATH || config.endpoints.ordering.path;
+config.endpoints.ordering.port = process.env.BAE_LP_ENDPOINT_ORDERING_PORT || config.endpoints.ordering.port;
+config.endpoints.ordering.host = process.env.BAE_LP_ENDPOINT_ORDERING_HOST || config.endpoints.ordering.host;
+
+if (!!process.env.BAE_LP_ENDPOINT_ORDERING_SECURED) {
+    config.endpoints.ordering.appSsl = process.env.BAE_LP_ENDPOINT_ORDERING_SECURED == 'true';
+}
+
+// Inventory
+config.endpoints.inventory.path = process.env.BAE_LP_ENDPOINT_INVENTORY_PATH || config.endpoints.inventory.path;
+config.endpoints.inventory.port = process.env.BAE_LP_ENDPOINT_INVENTORY_PORT || config.endpoints.inventory.port;
+config.endpoints.inventory.host = process.env.BAE_LP_ENDPOINT_INVENTORY_HOST || config.endpoints.inventory.host;
+
+if (!!process.env.BAE_LP_ENDPOINT_INVENTORY_SECURED) {
+    config.endpoints.inventory.appSsl = process.env.BAE_LP_ENDPOINT_INVENTORY_SECURED == 'true';
+}
+
+// Charging
+config.endpoints.charging.path = process.env.BAE_LP_ENDPOINT_CHARGING_PATH || config.endpoints.charging.path;
+config.endpoints.charging.port = process.env.BAE_LP_ENDPOINT_CHARGING_PORT || config.endpoints.charging.port;
+config.endpoints.charging.host = process.env.BAE_LP_ENDPOINT_CHARGING_HOST || config.endpoints.charging.host;
+
+if (!!process.env.BAE_LP_ENDPOINT_CHARGING_SECURED) {
+    config.endpoints.charging.appSsl = process.env.BAE_LP_ENDPOINT_CHARGING_SECURED == 'true';
+}
+
+// RSS
+config.endpoints.rss.path = process.env.BAE_LP_ENDPOINT_RSS_PATH || config.endpoints.rss.path;
+config.endpoints.rss.port = process.env.BAE_LP_ENDPOINT_RSS_PORT || config.endpoints.rss.port;
+config.endpoints.rss.host = process.env.BAE_LP_ENDPOINT_RSS_HOST || config.endpoints.rss.host;
+
+if (!!process.env.BAE_LP_ENDPOINT_RSS_SECURED) {
+    config.endpoints.rss.appSsl = process.env.BAE_LP_ENDPOINT_RSS_SECURED == 'true';
+}
+
+// Party
+config.endpoints.party.path = process.env.BAE_LP_ENDPOINT_PARTY_PATH || config.endpoints.party.path;
+config.endpoints.party.port = process.env.BAE_LP_ENDPOINT_PARTY_PORT || config.endpoints.party.port;
+config.endpoints.party.host = process.env.BAE_LP_ENDPOINT_PARTY_HOST || config.endpoints.party.host;
+
+if (!!process.env.BAE_LP_ENDPOINT_PARTY_SECURED) {
+    config.endpoints.party.appSsl = process.env.BAE_LP_ENDPOINT_PARTY_SECURED == 'true';
+}
+
+// Billing
+config.endpoints.billing.path = process.env.BAE_LP_ENDPOINT_BILLING_PATH || config.endpoints.billing.path;
+config.endpoints.billing.port = process.env.BAE_LP_ENDPOINT_BILLING_PORT || config.endpoints.billing.port;
+config.endpoints.billing.host = process.env.BAE_LP_ENDPOINT_BILLING_HOST || config.endpoints.billing.host;
+
+if (!!process.env.BAE_LP_ENDPOINT_BILLING_SECURED) {
+    config.endpoints.billing.appSsl = process.env.BAE_LP_ENDPOINT_BILLING_SECURED == 'true';
+}
+
+// Customer
+config.endpoints.customer.path = process.env.BAE_LP_ENDPOINT_CUSTOMER_PATH || config.endpoints.customer.path;
+config.endpoints.customer.port = process.env.BAE_LP_ENDPOINT_CUSTOMER_PORT || config.endpoints.customer.port;
+config.endpoints.customer.host = process.env.BAE_LP_ENDPOINT_CUSTOMER_HOST || config.endpoints.customer.host;
+
+if (!!process.env.BAE_LP_ENDPOINT_CUSTOMER_SECURED) {
+    config.endpoints.customer.appSsl = process.env.BAE_LP_ENDPOINT_CUSTOMER_SECURED == 'true';
+}
+
+// Usage
+config.endpoints.usage.path = process.env.BAE_LP_ENDPOINT_USAGE_PATH || config.endpoints.usage.path;
+config.endpoints.usage.port = process.env.BAE_LP_ENDPOINT_USAGE_PORT || config.endpoints.usage.port;
+config.endpoints.usage.host = process.env.BAE_LP_ENDPOINT_USAGE_HOST || config.endpoints.usage.host;
+
+if (!!process.env.BAE_LP_ENDPOINT_USAGE_SECURED) {
+    config.endpoints.usage.appSsl = process.env.BAE_LP_ENDPOINT_USAGE_SECURED == 'true';
+}
+
+// ======
+
 config.mongoDb = config.mongoDb || {};
-config.mongoDb.user = config.mongoDb.user || '';
-config.mongoDb.password = config.mongoDb.password || '';
-config.mongoDb.server = config.mongoDb.server || 'localhost';
-config.mongoDb.port = config.mongoDb.port || 27017;
-config.mongoDb.db = config.mongoDb.db || 'belp';
+config.mongoDb.user = process.env.BAE_LP_MONGO_USER || config.mongoDb.user || '';
+config.mongoDb.password = process.env.BAE_LP_MONGO_PASS || config.mongoDb.password || '';
+config.mongoDb.server = process.env.BAE_LP_MONGO_SERVER || config.mongoDb.server || 'localhost';
+config.mongoDb.port = process.env.BAE_LP_MONGO_PORT || config.mongoDb.port || 27017;
+config.mongoDb.db = process.env.BAE_LP_MONGO_DB || config.mongoDb.db || 'belp';
+
 config.revenueModel = (config.revenueModel && config.revenueModel >= 0 && config.revenueModel <= 100 ) ? config.revenueModel : 30;
+config.revenueModel = (!!process.env.BAE_LP_REVENUE_MODEL
+    && Number(process.env.BAE_LP_REVENUE_MODEL) >= 0 && Number(process.env.BAE_LP_REVENUE_MODEL) <= 100) ? Number(process.env.BAE_LP_REVENUE_MODEL) : config.revenueModel;
 
 var PORT = config.https.enabled ?
 	config.https.port || 443 :      // HTTPS
         config.port || 80;              // HTTP
 
+
+config.usageChartURL = process.env.BAE_LP_USAGE_CHART || config.usageChartURL;
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
@@ -117,6 +249,11 @@ mongoose.connection.on('reconnected', function() {
 var app = express();
 app.set('port', PORT);
 
+// Attach i18n to express
+i18n.expressBind(app, {
+    locales: ['en', 'es']
+});
+
 app.use(function(req, res, next){
     trycatch(function(){
         next();
@@ -140,9 +277,14 @@ app.use(bodyParser.text({
     limit: '50mb'
 }));
 
+app.use(function(req, res, next) {
+    req.i18n.setLocaleFromCookie();
+    next();
+});
+
 // Logging Handler
 app.use(function(req, res, next) {
-    req.id = uuid.v4();
+    req.id = uuidv4();
 
     utils.log(logger, 'debug', req, 'Headers: ' + JSON.stringify(req.headers));
     utils.log(logger, 'debug', req, 'Body: ' + JSON.stringify(req.body));
@@ -163,6 +305,8 @@ var staticPath = config.theme || !debug ? '/static' : '' ;
 app.use(config.portalPrefix + '/', express.static(__dirname + staticPath + '/public'));
 app.set('views', __dirname + staticPath + '/views');
 app.set('view engine', 'jade');
+
+app.locals.taxRate = config.taxRate || 20;
 
 /////////////////////////////////////////////////////////////////////
 ////////////////////////////// PASSPORT /////////////////////////////
@@ -286,6 +430,9 @@ app.post(config.authorizeServicePath + '/apiKeys/:apiKey/commit', authorizeServi
 /////////////////////////////// PORTAL //////////////////////////////
 /////////////////////////////////////////////////////////////////////
 
+// Load active file imports
+var importPath = config.theme || !debug ? './static/public/imports' : './public/imports' ;
+var imports = require(importPath).imports;
 
 var renderTemplate = function(req, res, viewName) {
 
@@ -457,11 +604,62 @@ indexes.init().then(function() {
 
         https.createServer(options, function(req,res) {
             app.handle(req, res);
-        }).listen(app.get('port'));
-
+        }).listen(app.get('port'), onlistening);
     } else {
-        app.listen(app.get('port'));
+        app.listen(app.get('port'), onlistening);
     }
 }).catch(function() {
     logger.error('CRITICAL: The indexes could not be created, the server is not starting')
 });
+
+
+function onlistening() {
+    var request = require('request');
+    var urldata = config.endpoints.charging;
+
+    Promise
+        .all([
+            new Promise(function (resolve, reject) {
+                var uri = url.format({
+                    protocol: urldata.appSsl ? 'https': 'http',
+                    hostname: urldata.host,
+                    port: urldata.port,
+                    pathname: '/'+ urldata.path + '/api/assetManagement/chargePeriods/',
+                });
+
+                request(uri, function(err, res, body) {
+                    if (err || res.statusCode != 200) {
+                        reject('Failed to retrieve charge periods');
+                    } else {
+                        resolve(JSON.parse(body));
+                    }
+                });
+            }),
+            new Promise(function (resolve, reject) {
+                var uri = url.format({
+                    protocol: urldata.appSsl ? 'https': 'http',
+                    hostname: urldata.host,
+                    port: urldata.port,
+                    pathname: '/'+ urldata.path + '/api/assetManagement/currencyCodes/',
+                });
+
+                request(uri, function(err, res, body) {
+                    if (err || res.statusCode != 200) {
+                        reject('Failed to retrieve currency codes');
+                    } else {
+                        resolve(JSON.parse(body));
+                    }
+                });
+            }),
+        ])
+        .then(function (result) {
+            app.locals.chargePeriods = result[0].map(function (cp) {
+                return cp.title + ':' + cp.value;
+            });
+            app.locals.currencyCodes = result[1].map(function (cc) {
+                return cc.value + ':' + cc.title;
+            });
+        }, function (reason) {
+            logger.error(reason);
+        });
+}

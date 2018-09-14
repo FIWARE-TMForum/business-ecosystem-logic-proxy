@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2018 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -265,8 +265,7 @@ describe('Usage Management API', function () {
             };
 
             it('should reject requests without "X-API-KEY" header', function (done) {
-
-                testValidateApiKey(null, {}, {status: 401, message: 'Missing header "X-API-KEY"'}, done);
+                testValidateApiKey(() => {}, {}, {status: 401, message: 'Missing header "X-API-KEY"'}, done);
             });
 
             it('should return 500 when db fails', function (done) {

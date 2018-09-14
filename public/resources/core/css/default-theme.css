@@ -1617,13 +1617,13 @@ a.list-group-item > .badge-status {
 
 .item-toggle {
     padding: 0 0;
-    margin-bottom: 15px;
+    margin-bottom: 10px;
 }
 .item-toggle .toggle {
     position: relative;
     display: block;
     cursor: pointer;
-    padding: 10px 0;
+    padding: 0 0;
     padding-right: 35px;
     margin-bottom: 0;
     font-weight: bold;
@@ -1799,11 +1799,15 @@ a.thumbnail:focus {
     border-width: 0;
     border-radius: 2px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.16);
+    display: flex;
+    flex-direction: column;
 }
 
 .panel-heading {
     position: relative;
     border-radius: 0;
+    flex-grow: 0;
+    flex-shrink: 0;
 }
 
 .panel-heading.panel-product {
@@ -1824,6 +1828,13 @@ a.thumbnail:focus {
 .panel-body {
     padding-bottom: 0;
     border-radius: 0;
+    flex-grow: 1;
+    flex-shrink: 1;
+}
+
+.panel-footer {
+    flex-grow: 0;
+    flex-shrink: 0;
 }
 
 .panel-subtitle {

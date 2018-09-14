@@ -2,7 +2,7 @@ form(name="step.form", novalidate)
   .row
     .col-sm-8
       .form-group
-        label Name
+        label #{ __("Name") }
         input.form-control(
           type="text"
           name="name"
@@ -12,7 +12,7 @@ form(name="step.form", novalidate)
         )
     .col-sm-4
       .form-group
-        label Version
+        label #{ __("Version") }
         input.form-control(
           type="text"
           name="version"
@@ -21,7 +21,7 @@ form(name="step.form", novalidate)
           readonly
         )
   .form-group
-    label Status
+    label #{ __("Status") }
     .status-group
       .status-item(ng-repeat="status in FILTER_STATUS", class="status-{{ status.value | lowercase }}", ng-class="{ active: createVM.data.lifecycleStatus == status.value }")
         span.item-icon
@@ -29,7 +29,7 @@ form(name="step.form", novalidate)
   .row
     .col-sm-8
       .form-group
-        label Brand
+        label #{ __("Brand") }
         input.form-control(
           type="text"
           name="brand"
@@ -39,7 +39,7 @@ form(name="step.form", novalidate)
         )
     .col-sm-4
       .form-group
-        label ID Number
+        label #{ __("ID Number") }
         input.form-control(
           type="text"
           name="productNumber"
@@ -48,7 +48,7 @@ form(name="step.form", novalidate)
           readonly
         )
   .form-group
-    label Description
+    label #{ __("Description") }
     textarea.form-control(
       rows="3"
       name="description"
@@ -58,15 +58,15 @@ form(name="step.form", novalidate)
   .row(ng-if="createVM.characteristics.length")
     .col-sm-12
       .h4.text-dark-secondary
-        strong Characteristics
+        strong #{ __("Characteristics") }
       table.table.table-bordered
         thead
           tr
             th #
-            th Name
-            th Type
-            th Values
-            th Default
+            th #{ __("Name") }
+            th #{ __("Type") }
+            th #{ __("Values") }
+            th #{ __("Default") }
         tbody
           tr(ng-repeat="characteristic in createVM.characteristics")
             th {{ $index + 1 }}
@@ -80,25 +80,40 @@ form(name="step.form", novalidate)
   .row(ng-if="createVM.data.attachment[0].url")
     .col-sm-12
       .h4.text-dark-secondary
-        strong Attachments
+        strong #{ __("Cover image") }
       .form-group
-        label Picture URL
+        label #{ __("Picture URL") }
         input.form-control(
           type="url"
           name="picture"
           ng-model="createVM.data.attachment[0].url"
           readonly
         )
+  .row(ng-if="createVM.extraFiles.length")
+    .col-sm-12
+      .h4.text-dark-secondary
+        strong Attachments
+      table.table.table-bordered
+        thead
+          tr
+            th #
+            th Name
+            th Type
+        tbody
+          tr(ng-repeat="extraFile in createVM.extraFiles")
+            th {{ $index + 1 }}
+            td {{ extraFile.name }}
+            td {{ extraFile.type }}
   .form-group(ng-show="createVM.data.isBundle")
-    label Bundled Products
+    label #{ __("Bundled Products") }
     .table-responsive
       table.table.table-bordered
         thead
           tr
-            th Status
-            th Name
-            th Type
-            th Updated
+            th #{ __("Status") }
+            th #{ __("Name") }
+            th #{ __("Type") }
+            th #{ __("Last Updated") }
         tbody
           tr(ng-repeat="product in createVM.data.bundledProductSpecification")
             td
@@ -108,35 +123,35 @@ form(name="step.form", novalidate)
             th {{ product.name }}
             td
               span.label(ng-class="product.isBundle ? 'label-bundle' : 'label-single'")
-                | {{ product.isBundle ? 'Bundle' : 'Single' }}
+                | {{ product.isBundle ? '#{ __("Bundle") }' : '#{ __("Single") }' }}
             td
               time(am-time-ago="product.lastUpdate")
   .row(ng-if="createVM.data.productSpecificationRelationship.length")
     .col-sm-12
       .h4.text-dark-secondary
-        strong Relationships
+        strong #{ __("Relationships") }
       .table-responsive
         table.table.table-bordered
           thead
             tr
-              th Relationship
-              th Name
-              th Type
-              th Updated
+              th #{ __("Relationship") }
+              th #{ __("Name") }
+              th #{ __("Type") }
+              th #{ __("Last Updated") }
           tbody
             tr(ng-repeat="relationship in createVM.data.productSpecificationRelationship")
               td {{ relationship.parseType() }}
               th {{ relationship.productSpec.name }}
               td
                 span.label(ng-class="relationship.productSpec.isBundle ? 'label-bundle' : 'label-single'")
-                  | {{ relationship.productSpec.isBundle ? 'Bundle' : 'Single' }}
+                  | {{ relationship.productSpec.isBundle ? '#{ __("Bundle") }' : '#{ __("Single") }' }}
               td
                 time(am-time-ago="relationship.productSpec.lastUpdate")
    div(ng-if="createVM.terms.title")
     .row
       .col-sm-12
         .form-group
-          label Agreement title
+          label #{ __("Agreement title") }
           input.form-control(
             type="text"
             name="title"
@@ -146,7 +161,7 @@ form(name="step.form", novalidate)
 
     .form-group
       label
-        span Enter agreement text
+        span #{ __("Agreement text") }
       textarea.form-control(rows="6", name="text", ng-model="createVM.terms.text", readonly)
 
   .form-group.text-right
@@ -155,4 +170,4 @@ form(name="step.form", novalidate)
       ng-disabled="!step.form.$valid || createVM.create.status === createVM.STATUS.PENDING"
     )
       span.item-icon.fa.fa-spin.fa-spinner(ng-if="createVM.create.status === createVM.STATUS.PENDING")
-      span.item-text Create
+      span.item-text #{ __("Create") }

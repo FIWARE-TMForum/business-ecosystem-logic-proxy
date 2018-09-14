@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2018 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -29,18 +29,25 @@
 
     angular
         .module('app')
-        .factory('ProductOrder', ['$q', '$resource', 'URLS', 'User', 'Offering', 'BillingAccount', ProductOrderService]);
+        .factory('ProductOrder', ['$q', '$resource', 'URLS', 'User', 'Offering', 'BillingAccount', 'Party', ProductOrderService]);
 
-    function ProductOrderService($q, $resource, URLS, User, Offering, BillingAccount) {
+    function ProductOrderService($q, $resource, URLS, User, Offering, BillingAccount, Party) {
         var resource = $resource(URLS.PRODUCTORDER_MANAGEMENT + '/productOrder/:productOrderId', {
             productOrderId: '@id'
         }, {
+            save: {
+                method: 'POST',
+                headers: {
+                    'X-Terms-Accepted': 'True'
+                },
+            },
             updatePartial: {
                 method: 'PATCH'
             }
         });
 
         resource.prototype.getCustomer = getCustomer;
+        resource.prototype.getItemSeller = getItemSeller;
         resource.prototype.getRoleOf = getRoleOf;
         resource.prototype.getPriceplanOf = getPriceplanOf;
         resource.prototype.formatPriceplanOf = formatPriceplanOf;
@@ -278,17 +285,36 @@
             });
         }
 
-        function getCustomer() {
-            /* jshint validthis: true */
+        function getPartyByRole(parties, role) {
             var i, user;
 
-            for (i = 0; i < this.relatedParty.length && !user; i++) {
-                if (this.relatedParty[i].role === 'Customer') {
-                    user = this.relatedParty[i];
+            for (i = 0; i < parties.length && !user; i++) {
+                if (parties[i].role.toLowerCase() === role) {
+                    user = parties[i];
                 }
             }
 
+            // Include name of the party
+            if (!user.hasOwnProperty('name')) {
+                // Set the id as value to avoid multiple calls while the first is being processing
+                user.name = user.id;
+
+                Party.getPartyName(user.href).then((name) => {
+                    user.name = name;
+                });
+            }
+
             return user;
+        }
+
+        function getCustomer() {
+            /* jshint validthis: true */
+            return getPartyByRole(this.relatedParty, 'customer');
+        }
+
+        function getItemSeller(item) {
+            /* jshint validthis: true */
+            return getPartyByRole(item.product.relatedParty, 'seller');
         }
 
         function getRoleOf(userId) {

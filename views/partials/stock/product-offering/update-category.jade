@@ -1,13 +1,13 @@
 .row(ng-controller="CategorySearchCtrl as categorySearchVM")
   .col-xs-12(ng-if="!categorySearchVM.list.length")
-    .alert.alert-info No categories found.
+    .alert.alert-info #{ __("No categories found.") }
   .col-xs-12(ng-if="categorySearchVM.list.length")
     .table-responsive
       table.table.table-bordered
         thead
           tr
-            th Name
-            th Updated
+            th #{ __("Name") }
+            th #{ __("Last Updated") }
         tbody
           tr(ng-repeat="category in categorySearchVM.list | orderByParentId", ng-class="{ active: updateVM.hasCategory(category) }")
             td

@@ -2,10 +2,10 @@
   .panel-body
     form(name="updateVM.form", novalidate)
       .h4.text-dark-secondary
-        strong General
+        strong #{ __("General") }
       hr
       .form-group(ng-class="{ 'has-error': updateForm.hasError(updateVM.form.name) }")
-        label Name
+        label #{ __("Name") }
         input.form-control(
           type="text"
           name="name"
@@ -19,9 +19,9 @@
           ng-messages="updateVM.form.name.$error"
           ng-show="updateForm.hasError(updateVM.form.name)"
         )
-          span(ng-message="required") This field is required.
-          span(ng-message="maxlength") This field must not exceed 30 chars.
-          span(ng-message="unique") This name is already taken.
+          span(ng-message="required") #{ __("This field is required.") }
+          span(ng-message="maxlength") #{ __("This field must not exceed 30 chars.") }
+          span(ng-message="unique") #{ __("This name is already taken.") }
       .form-group
         label Status
         .status-group
@@ -30,8 +30,8 @@
             span.item-text {{ status.value }}
       .form-group
         label
-          span Description
-          small.text-muted (optional)
+          span #{ __("Description") }
+          small.text-muted (#{ __("optional") })
         textarea.form-control(rows="3", name="description", ng-model="updateVM.data.description")
       .form-group.text-right
         a.btn.btn-success(
@@ -39,4 +39,4 @@
           ng-disabled="!updateVM.form.$valid || updateVM.update.status === updateVM.STATUS.PENDING"
         )
           span.item-icon.fa.fa-spin.fa-spinner(ng-if="updateVM.update.status === updateVM.STATUS.PENDING")
-          span.item-text Update
+          span.item-text #{ __("Update") }

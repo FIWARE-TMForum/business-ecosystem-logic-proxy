@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2018 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -148,6 +148,7 @@
             TEMPLATES: TEMPLATES,
             TYPES: TYPES,
             ContactMedium: ContactMedium,
+            getPartyName: getPartyName,
             create: create,
             detail: detail,
             update: update,
@@ -178,7 +179,7 @@
             transform = (transform == null) ? x => x : transform;
 
             var resol = function (partyObj) {
-                transform(partyObj);
+                partyObj = transform(partyObj);
                 deferred.resolve(partyObj);
             };
 
@@ -198,6 +199,38 @@
             } else {
                 process(Organization.save, [data], deferred);
             }
+
+            return deferred.promise;
+        }
+
+        function getPartyName(href) {
+            let deferred = $q.defer();
+            let spPath = new URL(href).pathname.split('/');
+
+            // Get the ID and type from the Href
+            let partyType = spPath[spPath.length - 2];
+            let id = spPath[spPath.length - 1];
+
+            let method, transform, params = {
+                id: id
+            };
+
+            // Check if the party is an organization
+            if (partyType === 'organization') {
+                method = Organization.get;
+                params.fields = 'tradingName';
+                transform = (party) => {
+                    return party.tradingName;
+                }
+            } else {
+                method = Individual.get;
+                params.fields = 'givenName,familyName';
+                transform = (party) => {
+                    return party.givenName + ' ' + party.familyName;
+                }
+            }
+            // Make a requests asking just for the needed attributes
+            process(method, [params], deferred, transform);
 
             return deferred.promise;
         }
@@ -278,6 +311,7 @@
             } else {
                 party.contactMedium = [];
             }
+            return party;
         }
 
         function parseCountry(code) {

@@ -1,6 +1,7 @@
 # Business Ecosystem Logic Proxy
 
-[![License](https://img.shields.io/badge/license-AGPL%203.0-blue.svg?style=flat)](https://opensource.org/licenses/AGPL-3.0) [![Docs](https://img.shields.io/badge/docs-latest-brightgreen.svg?style=flat)](http://business-api-ecosystem.readthedocs.io/en/latest/) [![Docker](https://img.shields.io/docker/pulls/conwetlab/biz-ecosystem-logic-proxy.svg)](https://hub.docker.com/r/conwetlab/biz-ecosystem-logic-proxy) [![Support](https://img.shields.io/badge/support-askbot-yellowgreen.svg)](https://ask.fiware.org) [![Build Status](https://build.conwet.fi.upm.es/jenkins/buildStatus/icon?job=Business%20Ecosystem%20Logic%20Proxy)](https://build.conwet.fi.upm.es/jenkins/job/Business%20Ecosystem%20Logic%20Proxy/)
+[![License](https://img.shields.io/badge/license-AGPL%203.0-blue.svg?style=flat)](https://opensource.org/licenses/AGPL-3.0) [![Docs](https://img.shields.io/badge/docs-latest-brightgreen.svg?style=flat)](http://business-api-ecosystem.readthedocs.io/en/latest/) [![Docker](https://img.shields.io/docker/pulls/conwetlab/biz-ecosystem-logic-proxy.svg)](https://hub.docker.com/r/conwetlab/biz-ecosystem-logic-proxy) [![Support](https://img.shields.io/badge/support-askbot-yellowgreen.svg)](https://ask.fiware.org) [![Build Status](https://travis-ci.org/FIWARE-TMForum/business-ecosystem-logic-proxy.svg?branch=develop)](https://travis-ci.org/FIWARE-TMForum/business-ecosystem-logic-proxy)
+[![Coverage Status](https://coveralls.io/repos/github/FIWARE-TMForum/business-ecosystem-logic-proxy/badge.svg?branch=develop)](https://coveralls.io/github/FIWARE-TMForum/business-ecosystem-logic-proxy?branch=develop)
 
  * [Introduction](#introduction)
  * [GEi Overall Description](#gei-overall-description)

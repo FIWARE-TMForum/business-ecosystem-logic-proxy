@@ -2,10 +2,10 @@
   table.table.table-bordered.table-hover
     thead
       tr
-        th Status
-        th Name
-        th Role
-        th Updated
+        th #{ __("Status") }
+        th #{ __("Name") }
+        th #{ __("Role") }
+        th #{ __("Last Updated") }
     tbody
       tr(ng-repeat="catalogue in searchVM.list")
         td

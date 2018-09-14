@@ -210,6 +210,7 @@
             ShoppingCart.getItems().then(function(orderItems) {
 
                 vm.loadingStatus = LOADED;
+                vm.orderItems = orderItems;
 
                 if (orderItems.length) {
 
@@ -274,6 +275,10 @@
                                 amount: orderItems[i].options.pricing.price.taxIncludedAmount,
                                 currency: orderItems[i].options.pricing.price.currencyCode
                             };
+                            if (angular.isObject(orderItems[i].pricePlan.priceAlteration())) {
+                                price.description = price.description + '\n' + orderItems[i].pricePlan.priceAlteration().format();
+                            }
+                            delete price.productOfferPriceAlteration;
                             item.product.productPrice = [price];
                         }
 

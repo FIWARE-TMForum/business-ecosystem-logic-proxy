@@ -13,28 +13,28 @@
             .btn-toolbar.pull-right
               a.btn.btn-success.z-depth-1(ng-if="updateVM.isDigital()" ng-click="updateVM.showUpgrade()")
                 span.item-icon.fa.fa-upload
-                span.item-text Upgrade
+                span.item-text #{ __("Upgrade") }
           ul.nav.nav-justified.nav-pills
             li(ui-sref-active-eq="active")
               a(ui-sref="stock.product.update")
                 span.item-icon.fa.fa-newspaper-o
-                span.item-text.hidden-xs About
+                span.item-text.hidden-xs #{ __("About") }
             li(ui-sref-active-eq="active", ng-show="updateVM.item.isBundle")
               a(ui-sref="stock.product.update.bundled")
                 span.item-icon.fa.fa-file
-                span.item-text.hidden-xs Bundled
+                span.item-text.hidden-xs #{ __("Bundled") }
             li(ui-sref-active-eq="active")
               a(ui-sref="stock.product.update.characteristic")
                 span.item-icon.fa.fa-gears
-                span.item-text.hidden-xs Characteristics
+                span.item-text.hidden-xs #{ __("Characteristics") }
             li(ui-sref-active-eq="active")
               a(ui-sref="stock.product.update.attachment")
                 span.item-icon.fa.fa-paperclip
-                span.item-text.hidden-xs Attachments
+                span.item-text.hidden-xs #{ __("Attachments") }
             li(ui-sref-active-eq="active")
               a(ui-sref="stock.product.update.relationship")
                 span.item-icon.fa.fa-chain
-                span.item-text.hidden-xs Relationships
+                span.item-text.hidden-xs #{ __("Relationships") }
       .col-xs-12
         ui-view
           .panel.panel-default.z-depth-1(ng-controller="FormWizardCtrl as updateForm")

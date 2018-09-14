@@ -11,7 +11,7 @@
       .panel.panel-default.item-offering.z-depth-1(ng-repeat="offering in updateVM.item.bundledProductOffering")
         a.thumbnail.thumbnail-lg(ui-sref="stock.offering.update({ offeringId: offering.id })", ui-sref-opts="{ inherit: false }")
           span.label(class="label-{{ offering.isBundle ? 'bundle' : 'single' }}")
-            | {{ offering.isBundle ? offering.bundledProductOffering.length + ' bundled' : 'Single' }}
+            | {{ offering.isBundle ? offering.bundledProductOffering.length + ' #{ __("bundled") }' : '#{ __("Single") }' }}
           img(no-image, ng-src="{{ offering.getPicture() }}")
         .panel-body
           .h4.text-ellipsis
@@ -21,7 +21,7 @@
             span.pull-right
               time(am-time-ago="offering.lastUpdate")
             p v{{ offering.version }}
-            p.item-description {{ offering.description ? offering.description : 'No description provided.' }}
+            p.item-description {{ offering.description ? offering.description : '#{ __("No description provided.") }' }}
           .h5.text-right
             strong {{ offering.formatCheapestPriceplan() }}
           .status-group
@@ -32,11 +32,11 @@
       table.table.table-bordered.table-hover
         thead
           tr
-            th Status
-            th Name
-            th Product Spec.
-            th Type
-            th Updated
+            th #{ __("Status") }
+            th #{ __("Name") }
+            th #{ __("Product Spec.") }
+            th #{ __("Type") }
+            th #{ __("Last Updated") }
         tbody
           tr(ng-repeat="offering in updateVM.item.bundledProductOffering")
             td
@@ -49,6 +49,6 @@
               a(ui-sref="stock.product.update({ productId: offering.productSpecification.id })") {{ offering.productSpecification.name }}
             td
               span.label(ng-class="offering.isBundle ? 'label-bundle' : 'label-single'")
-                | {{ offering.isBundle ? 'Bundle' : 'Single' }}
+                | {{ offering.isBundle ? '#{ __("Bundle") }' : '#{ __("Single") }' }}
             td
               time(am-time-ago="offering.lastUpdate")

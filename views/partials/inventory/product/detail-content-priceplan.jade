@@ -2,4 +2,4 @@
   .col-xs-12
     .container-flex
       div(offering-priceplan, ng-repeat="priceplan in detailVM.item.productOffering.productOfferingPrice")
-    .alert.alert-info.text-center(ng-if="!detailVM.hasProductPrice()") No price plan selected (The offering was free).
+    .alert.alert-info.text-center(ng-if="!detailVM.hasProductPrice()") #{ __("No price plan selected (The offering was free).") }

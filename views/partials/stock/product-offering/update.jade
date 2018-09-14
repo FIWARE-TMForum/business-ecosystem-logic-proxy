@@ -16,19 +16,19 @@
             li(ui-sref-active-eq="active")
               a(ui-sref="stock.offering.update")
                 span.item-icon.fa.fa-newspaper-o
-                span.item-text.hidden-xs About
+                span.item-text.hidden-xs #{ __("About") }
             li(ui-sref-active-eq="active", ng-show="updateVM.item.isBundle")
               a(ui-sref="stock.offering.update.bundled")
                 span.item-icon.fa.fa-cube
-                span.item-text.hidden-xs Bundled
+                span.item-text.hidden-xs #{ __("Bundled") }
             li(ui-sref-active-eq="active")
               a(ui-sref="stock.offering.update.priceplan")
                 span.item-icon.fa.fa-credit-card
-                span.item-text.hidden-xs Price plans
+                span.item-text.hidden-xs #{ __("Price plans") }
             li(ui-sref-active-eq="active")
               a(ui-sref="stock.offering.update.category")
                 span.item-icon.fa.fa-tag
-                span.item-text.hidden-xs Categories
+                span.item-text.hidden-xs #{ __("Categories") }
       .col-xs-12
         ui-view
           .panel.panel-default.z-depth-1

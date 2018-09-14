@@ -82,8 +82,12 @@
             };
         };
 
+        ProductSpec.prototype.getExtraFiles = getExtraFiles;
+        ProductSpec.prototype.getLicense = getLicense;
         ProductSpec.prototype.getPicture = getPicture;
+        ProductSpec.prototype.getCharacteristics = getCharacteristics;
         ProductSpec.prototype.getCharacteristicDefaultValue = getCharacteristicDefaultValue;
+        ProductSpec.prototype.hasCharacteristics = hasCharacteristics;
         ProductSpec.prototype.serialize = serialize;
         ProductSpec.prototype.appendRelationship = appendRelationship;
         ProductSpec.prototype.removeRelationship = removeRelationship;
@@ -334,6 +338,45 @@
             return value;
         }
 
+        function getCharacteristics() {
+            /* jshint validthis: true */
+            if (angular.isArray(this.productSpecCharacteristic)) {
+                return this.productSpecCharacteristic.filter(function (char) {
+                    return char.name.toLowerCase() !== 'license';
+                });
+            }
+
+            return [];
+        }
+
+        function hasCharacteristics() {
+            /* jshint validthis: true */
+            if (angular.isArray(this.productSpecCharacteristic)) {
+                return this.productSpecCharacteristic.length > 0;
+            }
+
+            return false;
+        }
+
+        function getLicense() {
+            /* jshint validthis: true */
+            var i, license = null;
+
+            if (angular.isArray(this.productSpecCharacteristic)) {
+                for (i = 0; i < this.productSpecCharacteristic.length && !license; i++) {
+                    if (this.productSpecCharacteristic[i].name.toLowerCase() === 'license') {
+                        var char = this.productSpecCharacteristic[i];
+                        license = {
+                            title: char.productSpecCharacteristicValue[0].value,
+                            description: char.description,
+                        };
+                    }
+                }
+            }
+
+            return license;
+        }
+
         function getPicture() {
             /* jshint validthis: true */
             var i, src = "";
@@ -347,6 +390,31 @@
             }
 
             return src;
+        }
+
+        function getExtraFiles() {
+            /* jshint validthis: true */
+            var i, extraFiles = [];
+
+            var prefix = this.name.replace(/ /g, '');
+
+            if (prefix.length > 10) {
+                prefix = prefix.substr(0, 10);
+            }
+
+            if (angular.isArray(this.attachment)) {
+                for (i = 0; i < this.attachment.length; i++) {
+                    if (this.attachment[i].type.toLowerCase() !== 'picture') {
+                        extraFiles.push({
+                            href: this.attachment[i].url,
+                            name: this.attachment[i].url.split(prefix + '__')[1],
+                            type: this.attachment[i].type
+                        })
+                    }
+                }
+            }
+
+            return extraFiles;
         }
 
         function serialize() {

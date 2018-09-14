@@ -26,6 +26,12 @@ var defaultConfig = {
         doc: 'https://fiware-tmforum.github.io/Business-API-Ecosystem/',
         userDoc: 'http://business-api-ecosystem.readthedocs.io/en/develop'
     },
+    proxy: {
+	enabled: true,
+	host: 'belp.fiware.org',
+	secured: false,
+	port: 7496
+    },
     proxyPrefix: '',
     oauth2: {
         server: 'https://account.lab.fiware.org',

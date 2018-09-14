@@ -1,14 +1,14 @@
 .panel.panel-default.z-depth-1
   .panel-body
     .h4.text-dark-secondary
-      strong Profile
+      strong #{ __("Profile") }
     hr
     form(name="updateVM.form", novalidate)
-      .alert.alert-info This information is public so it may be viewed by anyone.
+      .alert.alert-info #{ __("This information is public so it may be viewed by anyone.") }
       .row
         .col-sm-6
           .form-group(ng-class="{ 'has-error': updateVM.hasFieldError(updateVM.form.firstName) }")
-            label First name
+            label #{ __("First name") }
             input.form-control(
               type="text"
               name="firstName"
@@ -20,13 +20,13 @@
               ng-messages="updateVM.form.firstName.$error"
               ng-show="updateVM.hasFieldError(updateVM.form.firstName)"
             )
-              span(ng-message="required") This field is required.
-              span(ng-message="maxlength") This field must not exceed 30 chars.
+              span(ng-message="required") #{ __("This field is required.") }
+              span(ng-message="maxlength") #{ __("This field must not exceed %s chars.", "30") }
         .col-sm-6
           .form-group(
             ng-class="{ 'has-error': updateVM.hasFieldError(updateVM.form.lastName) }"
           )
-            label Last name
+            label #{ __("Last name") }
             input.form-control(
               type="text"
               name="lastName"
@@ -38,52 +38,52 @@
               ng-messages="updateVM.form.lastName.$error"
               ng-show="updateVM.hasFieldError(updateVM.form.lastName)"
             )
-              span(ng-message="required") This field is required.
-              span(ng-message="maxlength") This field must not exceed 30 chars.
+              span(ng-message="required") #{ __("This field is required.") }
+              span(ng-message="maxlength") #{ __("This field must not exceed %s chars.", "30") }
       .row
         .col-sm-6
           .form-group(ng-class="{ 'has-error': updateVM.hasFieldError(updateVM.form.title) }")
-            label Title
+            label #{ __("Title") }
             select.form-control(
               name="title"
               ng-model="updateVM.data.title"
             )
-              option(value="") Prefer not to say
+              option(value="") #{ __("Prefer not to say") }
               option(ng-repeat="title in ['Miss', 'Mrs', 'Mr', 'Ms']", value="{{ title }}") {{ title }}
         .col-sm-6
           .form-group(ng-class="{ 'has-error': updateVM.hasFieldError(updateVM.form.maritalStatus) }")
-            label Marital status
+            label #{ __("Marital status") }
             select.form-control(
               name="maritalStatus"
               ng-model="updateVM.data.maritalStatus"
             )
-              option(value="") Prefer not to say
+              option(value="") #{ __("Prefer not to say") }
               option(ng-repeat="status in ['Divorced', 'Married', 'Separated', 'Single', 'Widowed']", value="{{ status }}") {{ status }}
       .row
         .col-sm-6
           .form-group(ng-class="{ 'has-error': updateVM.hasFieldError(updateVM.form.gender) }")
-            label Gender
+            label #{ __("Gender") }
             select.form-control(
               name="gender"
               ng-model="updateVM.data.gender"
             )
-              option(value="") Prefer not to say
+              option(value="") #{ __("Prefer not to say") }
               option(ng-repeat="gender in ['Female', 'Male']", value="{{ gender }}") {{ gender }}
         .col-sm-6
           .form-group(ng-class="{ 'has-error': updateVM.hasFieldError(updateVM.form.nationality) }")
-            label Nationality
+            label #{ __("Nationality") }
             input.form-control(
               type="text"
               name="nationality"
               ng-model="updateVM.data.nationality"
             )
       .h4.text-dark-secondary
-        strong Birth
+        strong #{ __("Birth") }
       hr
       .row
         .col-sm-6
           .form-group(ng-class="{ 'has-error': updateVM.hasFieldError(updateVM.form.birthDate) }")
-            label Date
+            label #{ __("Date") }
             input.form-control(
               type="date"
               name="birthDate"
@@ -94,20 +94,20 @@
               ng-messages="updateVM.form.birthDate.$error"
               ng-show="updateVM.hasFieldError(updateVM.form.birthDate)"
             )
-              span(ng-message="date") This field must be a valid date.
+              span(ng-message="date") #{ __("This field must be a valid date.") }
       .row
         .col-sm-6
           .form-group(ng-class="{ 'has-error': updateVM.hasFieldError(updateVM.form.countryOfBirth) }")
-            label Country
+            label #{ __("Country") }
             select.form-control(
               name="countryOfBirth"
               ng-model="updateVM.data.countryOfBirth"
             )
-              option(value="") Prefer not to say
+              option(value="") #{ __("Prefer not to say") }
               option(ng-repeat="country in updateVM.COUNTRIES", value="{{ country.code }}") {{ country.name }}
         .col-sm-6
           .form-group(ng-class="{ 'has-error': updateVM.hasFieldError(updateVM.form.placeOfBirth) }")
-            label Place
+            label #{ __("Place") }
             input.form-control(
               type="text"
               name="placeOfBirth"
@@ -118,11 +118,11 @@
               ng-messages="updateVM.form.placeOfBirth.$error"
               ng-show="updateVM.hasFieldError(updateVM.form.placeOfBirth)"
             )
-              span(ng-message="maxlength") This field must not exceed 100 chars.
+              span(ng-message="maxlength") #{ __("This field must not exceed %s chars.", "100") }
       .form-group.text-right
         a.btn.btn-success(
           ng-click="updateVM.update()"
           ng-disabled="!updateVM.form.$valid || updateVM.update.status === updateVM.STATUS.PENDING"
         )
           span.item-icon.fa.fa-spin.fa-spinner(ng-if="updateVM.update.status === updateVM.STATUS.PENDING")
-          span.item-text Update
+          span.item-text #{ __("Update") }

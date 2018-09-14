@@ -3,7 +3,7 @@ ui-view
     .col-xs-12(ng-switch="searchVM.list.status")
       div(ng-switch-when="LOADED", ng-switch="searchVM.list.length")
         div(ng-switch-when="0")
-          .alert.alert-info.text-center No reports found.
+          .alert.alert-info.text-center #{ __("No reports found.") }
         div(ng-switch-default)
           .panel-group.panel-group-report
             .panel.panel-default.z-depth-1(ng-repeat="report in searchVM.list")
@@ -16,19 +16,19 @@ ui-view
               .panel-collapse.collapse(id="report-{{ $index }}")
                 .panel-body.dl-responsive
                   dl
-                    dt Provider id
+                    dt #{ __("Provider id") }
                     dd.text-dark-secondary {{ report.ownerProviderId }}
-                    dt Provider amount
+                    dt #{ __("Provider amount") }
                     dd.text-dark-secondary {{ report.ownerValue }} {{ report.currency }}
                   dl
-                    dt Store id
+                    dt #{ __("Store id") }
                     dd.text-dark-secondary {{ report.aggregatorId }}
-                    dt Store amount
+                    dt #{ __("Store amount") }
                     dd.text-dark-secondary {{ report.aggregatorValue }} {{ report.currency }}
                   dl(ng-repeat="stakeholder in report.stakeholders")
                     dt Stakeholder-{{ $index + 1 }} id
                     dd.text-dark-secondary {{ stakeholder.stakeholderId }}
-                    dt Stakeholder-{{ $index + 1 }} amount
+                    dt Stakeholder-{{ $index + 1 }} #{ __("amount") }
                     dd.text-dark-secondary {{ stakeholder.modelValue }} {{ report.currency }}
       div(ng-switch-when="ERROR")
         .alert.alert-danger.text-center {{ searchVM.error }}

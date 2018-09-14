@@ -2,15 +2,18 @@
   table.table.table-bordered
     thead
       tr
-        th Name
-        th Description
-        th Price
-        th Actions
+        th #{ __("Name") }
+        th #{ __("Description") }
+        th #{ __("Price") }
+        th #{ __("Price alteration") }
+        th #{ __("Actions") }
     tbody
       tr(ng-repeat="pricePlan in pricePlans")
         th {{ pricePlan.name }}
         td {{ pricePlan.description }}
         td {{ pricePlan.toString() }}
+        td
+          span(style="white-space: pre-line;") {{ pricePlan.formatPriceAlteration() }}
         td
           a.btn.btn-sm.btn-icon.btn-info(ng-click="vm.updatePricePlan($index)")
             span.item-icon.fa.fa-spin.fa-spinner(ng-if="vm.updatePricePlan.status === vm.STATUS.PENDING")

@@ -46,7 +46,6 @@
         };
 
         function addItem(item) {
-
             var deferred = $q.defer();
 
             resource.save({ action: 'item', id: '' }, item, function () {
@@ -87,6 +86,7 @@
                 if (itemList.length) {
                     Offering.search(params).then(function (productOfferingList) {
                         productOfferingList.forEach(function (productOffering) {
+                            items[productOffering.id].pricePlan = new Offering.PricePlan(items[productOffering.id].options.pricing);
                             items[productOffering.id].productOffering = productOffering;
                         });
                         deferred.resolve(itemList);

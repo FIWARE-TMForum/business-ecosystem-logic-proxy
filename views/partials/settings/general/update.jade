@@ -8,12 +8,12 @@
     .panel.panel-default.z-depth-1
       .panel-body
         .h4.text-dark-secondary
-          strong Account
+          strong #{ __("Account") }
         hr
         .row
           .col-sm-6
             .form-group
-              label Username
+              label #{ __("Username") }
               input.form-control(
                 type="text"
                 name="userName"
@@ -22,7 +22,7 @@
               )
           .col-sm-6
             .form-group
-              label Access token
+              label #{ __("Access token") }
               input.form-control(
                 type="text"
                 name="accessToken"

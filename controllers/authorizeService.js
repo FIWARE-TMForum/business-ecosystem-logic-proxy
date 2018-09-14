@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2018 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -18,8 +18,7 @@
  */
 
 var AccountingService = require('../db/schemas/accountingService'),
-     config = require('../config'),
-     uuid = require('node-uuid');
+     uuidv4 = require('uuid/v4');
 
 var authorizeService = (function () {
 
@@ -27,7 +26,7 @@ var authorizeService = (function () {
      * Generates am aìKey.
      */
     var generateApiKey = function () {
-        var apiKey = uuid.v4();
+        var apiKey = uuidv4();
 
         return apiKey;
     };

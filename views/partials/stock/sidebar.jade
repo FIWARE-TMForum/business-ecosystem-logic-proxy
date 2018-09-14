@@ -3,12 +3,12 @@
     li(ui-sref-active="active")
       a(ui-sref="stock.catalogue", ui-sref-opts="{ reload: true, inherit: false }")
         span.item-icon.fa.fa-book
-        span.item-text.hidden-xs Catalogs
+        span.item-text.hidden-xs #{ __("Catalogs") }
     li(ui-sref-active="active")
       a(ui-sref="stock.product", ui-sref-opts="{ reload: true, inherit: false }")
         span.item-icon.fa.fa-file
-        span.item-text.hidden-xs Product Specifications
+        span.item-text.hidden-xs #{ __("Product Specifications") }
     li(ui-sref-active="active")
       a(ui-sref="stock.offering", ui-sref-opts="{ reload: true, inherit: false }")
         span.item-icon.fa.fa-cube
-        span.item-text.hidden-xs Offerings
+        span.item-text.hidden-xs #{ __("Offerings") }

@@ -5,7 +5,7 @@
     .panel.panel-default.z-depth-1
       .panel-body
         .h4
-          strong New product
+          strong #{ __("New product") }
         hr
         .row(ng-controller="FormWizardCtrl as createForm")
           .col-xs-12.col-md-3
@@ -18,5 +18,5 @@
             .row(ng-repeat="step in createVM.stepList", ng-show="createForm.stepIndex == $index")
               .col-xs-12
                 .h4.text-dark-secondary
-                  strong Step {{ $index + 1}}: {{ step.title }}
+                  strong #{ __("Step") } {{ $index + 1}}: {{ step.title }}
                 ng-include(src="step.templateUrl")

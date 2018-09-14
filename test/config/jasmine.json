@@ -3,7 +3,5 @@
   "spec_files": [
     "**/*.js"
   ],
-  "helpers": [
-    "helpers/**/*.js"
-  ]
+  "helpers": []
 }

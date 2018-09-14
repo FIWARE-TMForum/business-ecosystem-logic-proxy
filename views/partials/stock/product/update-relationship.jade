@@ -3,13 +3,13 @@
     .panel.panel-default.z-depth-1
       .panel-body
         .h4.text-dark-secondary
-          strong Relationships
+          strong #{ __("Relationships") }
         hr
         relationship-delete-form(controller="updateVM" resource="updateVM.item")
   .col-xs-12
     .panel.panel-default.z-depth-1
       .panel-body
         .h4.text-dark-secondary
-          strong New relationship
+          strong #{ __("New relationship") }
         hr
         relationship-create-form(controller="updateVM" resource="updateVM.item")

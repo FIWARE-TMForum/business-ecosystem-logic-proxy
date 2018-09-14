@@ -3,7 +3,7 @@
     .modal-content
       .modal-header
         .h4
-          strong Upgrade Product Spec
+          strong #{ __("Upgrade Product Spec") }
       .modal-body
         div(ng-if="upgradeVM.status == 'LOADED'")
           .row
@@ -13,7 +13,7 @@
                   ng-init="upgradeVM.setVersionForm(versionForm)"
                   ng-class="{ 'has-error': versionForm.version.$touched && !versionForm.version.$valid }"
                 )
-                  label New Version
+                  label #{ __("New Version") }
                   input.form-control(
                     type="text"
                     name="version"
@@ -26,8 +26,8 @@
                     ng-messages="versionForm.version.$error"
                     ng-show="versionForm.version.$touched && !versionForm.version.$valid"
                   )
-                    span(ng-message="required") This field is required
-                    span(ng-message="pattern") Invalid version format
+                    span(ng-message="required") #{ __("This field is required") }
+                    span(ng-message="pattern") #{ __("Invalid version format") }
 
           create-asset-form(controller="upgradeVM")
 
@@ -35,6 +35,6 @@
         a.btn.btn-success.z-depth-1(data-dismiss="modal" ng-click="upgradeVM.upgrade()"
             ng-disabled="!upgradeVM.isValid()")
 
-          span.item-text Upgrade
+          span.item-text #{ __("Upgrade") }
         a.btn.btn-default.z-depth-1(data-dismiss="modal")
-          span.item-text Cancel
+          span.item-text #{ __("Cancel") }

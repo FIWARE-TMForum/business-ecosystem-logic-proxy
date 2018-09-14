@@ -14,12 +14,12 @@
       .panel-body
         p.text-dark-secondary {{ charge.description }}
         p.text-dark-primary
-          strong Concept
+          strong #{ __("Concept") }
         p.text-dark-secondary {{ charge.type }}
 
         div(ng-if="charge.period.length")
           p.text-dark-primary
-            strong Charged period
+            strong #{ __("Charged period") }
           p.text-dark-secondary {{ charge.period[0].startPeriod | amDateFormat: 'dddd, MMMM Do YYYY, h:mm a' }}
             | to {{ charge.period[0].endPeriod | amDateFormat: 'dddd, MMMM Do YYYY, h:mm a' }}
 
@@ -27,7 +27,7 @@
           .btn-group
             a.btn.btn-warning.z-depth-1(ng-click="detailVM.downloadInvoice(charge.invoice)")
               span.item-icon.fa.fa-download
-              span.item-text Download invoice
+              span.item-text #{ __("Download invoice") }
 
-    .alert.alert-info.text-center(ng-if="detailVM.charges.status == 'LOADED' && !detailVM.charges.items.length") No charges included.
+    .alert.alert-info.text-center(ng-if="detailVM.charges.status == 'LOADED' && !detailVM.charges.items.length") #{ __("No charges included.") }
     .alert.alert-danger.text-center(ng-if="detailVM.charges.status == 'ERROR'") {{ detailVM.charges.error }}

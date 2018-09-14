@@ -1,17 +1,15 @@
 var config = {};
 
-// Version of the software
-config.version = {
-    version: '6.4.0',
-    releaseDate: '',
-    gitHash: '',
-    doc: 'https://fiware-tmforum.github.io/Business-API-Ecosystem/',
-    userDoc: 'http://business-api-ecosystem.readthedocs.io/en/v6.4.0'
-};
-
 // The PORT used by 
-config.port = 80;
-config.host = 'localhost';
+config.port = 8000;
+config.host = 'proxy.docker';
+
+config.proxy = {
+    enabled: false,
+    host: '',
+    secured: false,
+    port: 80
+}
 
 // Set this var to undefined if you don't want the server to listen on HTTPS
 config.https = {
@@ -32,15 +30,16 @@ config.theme = '';
 
 // OAuth2 configuration
 config.oauth2 = {
-    'server': 'https://account.lab.fiware.org',
-    'clientID': '--client-id--',
-    'clientSecret': '--client-secret--',
-    'callbackURL': 'http://localhost/auth/fiware/callback',
+    'server': 'http://idm.docker:8000',
+    'clientID': '',
+    'clientSecret': '',
+    'callbackURL': 'http://proxy.docker:8004/auth/fiware/callback',
+    'isLegacy': false,
     'roles': {
         'admin': 'provider',
         'customer': 'customer',
         'seller': 'seller',
-        'orgAdmin': 'orgAdmin'
+        'orgAdmin': 'manager'
     }
 };
 
@@ -49,7 +48,7 @@ config.customerRoleRequired = false;
 
 // MongoDB
 config.mongoDb = {
-    server: 'localhost',
+    server: 'mongo',
     port: 27017,
     user: '',
     password: '',
@@ -66,55 +65,55 @@ config.endpoints = {
     },
     'catalog': {
         'path': 'DSProductCatalog',
-        'host': 'localhost',
+        'host': 'apis.docker',
         'port': '8080',
         'appSsl': false
     },
     'ordering': {
         'path': 'DSProductOrdering',
-        'host': 'localhost',
+        'host': 'apis.docker',
         'port': '8080',
         'appSsl': false
     },
     'inventory': {
         'path': 'DSProductInventory',
-        'host': 'localhost',
+        'host': 'apis.docker',
         'port': '8080',
         'appSsl': false
     },
     'charging': {
         'path': 'charging',
-        'host': 'localhost',
+        'host': 'charging.docker',
         'port': '8006',
         'appSsl': false
     },
     'rss': {
         'path': 'DSRevenueSharing',
-        'host': 'localhost',
+        'host': 'rss.docker',
         'port': '8080',
         'appSsl': false
     },
     'party': {
         'path': 'DSPartyManagement',
-        'host': 'localhost',
+        'host': 'apis.docker',
         'port': '8080',
         'appSsl': false
     },
     'billing':{
         'path': 'DSBillingManagement',
-        'host': 'localhost',
+        'host': 'apis.docker',
         'port': '8080',
         'appSsl': false
     },
     'customer': {
         'path': 'DSCustomerManagement',
-        'host': 'localhost',
+        'host': 'apis.docker',
         'port': '8080',
         'appSsl': false
     },
     'usage':  {
         'path': 'DSUsageManagement',
-        'host': 'localhost',
+        'host': 'apis.docker',
         'port': '8080',
         'appSsl': false
     }
@@ -122,6 +121,9 @@ config.endpoints = {
 
 // Percentage of the generated revenues that belongs to the system
 config.revenueModel = 30;
+
+// Tax rate
+config.taxRate = 50;
 
 // Billing Account owner role
 config.billingAccountOwnerRole = 'bill receiver';
@@ -132,6 +134,6 @@ config.publicPaths = [];
 
 config.magicKey = undefined;
 
-config.usageChartURL = 'https://mashup.lab.fiware.org/fdelavega/UsageChart?mode=embedded&theme=wirecloud.fiwarelabtheme';
+config.usageChartURL = '';
 
 module.exports = config;

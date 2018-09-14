@@ -3,22 +3,22 @@
     price-plan-table(controller="createVM" data="createVM.data.productOfferingPrice")
   .col-xs-12(ng-if="!createVM.data.productOfferingPrice.length")
     .alert.alert-info.text-center
-      | No price plans included.
+      | #{ __("No price plans included.") }
   .col-xs-12(ng-if="createVM.pricePlanEnabled")
     .h4.text-dark-primary
-      strong New price plan
+      strong #{ __("New price plan") }
     hr
     price-plan-form(form="createVM.pricePlanCreateForm" controller="createVM" data="createVM.pricePlan")
     .form-group.text-left
       a.btn.btn-warning.z-depth-1(ng-disabled="!createVM.pricePlanCreateForm.$valid", ng-click="createVM.createPricePlan()")
         span.item-icon.fa.fa-save
-        span.item-text.hidden-xs.hidden-sm Create
+        span.item-text.hidden-xs.hidden-sm #{ __("Create") }
   .col-xs-12(ng-if="!createVM.pricePlanEnabled")
     .form-group.text-left
       a.btn.btn-default.z-depth-1(ng-click="createVM.pricePlanEnabled = true")
-        span.item-text New price plan
+        span.item-text #{ __("New price plan") }
   .col-xs-12
     form(name="step.form" novalidate)
       .form-group.text-right
         a.btn.btn-default.z-depth-1(ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])")
-          span.item-text Next
+          span.item-text #{ __("Next") }
