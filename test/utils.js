@@ -106,12 +106,20 @@ var defaultConfig = {
         }
     },
     billingAccountOwnerRole: 'bill receiver',
-    revenueModel: 30
+    revenueModel: 30,
+    indexes : {
+	'indexFile': 'elastic_indexes.js', // 'elastic_indexes.js' if using elasticsearch
+	'elasticHosts': ['elastic.docker:9200'] // hostname:port
+    }
 };
 
 exports.getDefaultConfig = function() {
     // Return a copy to avoid side effects
     return JSON.parse(JSON.stringify(defaultConfig));
+};
+
+exports.getIndexesPath = function() {
+    return defaultConfig.indexes.indexFile;
 };
 
 var emptyFunction = function() {};
