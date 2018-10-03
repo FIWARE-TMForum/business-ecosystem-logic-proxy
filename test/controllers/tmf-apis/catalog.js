@@ -98,7 +98,7 @@ describe('Catalog API', function() {
             './../../lib/logger': testUtils.emptyLogger,
             './../../lib/store': storeClient,
             './../../lib/rss': rssClient,
-            './../../lib/indexes': indexes,
+            // './../../lib/indexes': indexes,
             [indexesPath]: indexes,
             './../../lib/tmfUtils': tmfUtils,
             './../../lib/utils': utils,
