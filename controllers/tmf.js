@@ -34,7 +34,7 @@ var config = require('./../config'),
     request = require('request'),
     utils = require('./../lib/utils');
 
-var tmf = (function() {
+function tmf () {
 
     var apiControllers = {};
     apiControllers[config.endpoints.catalog.path] = catalog;
@@ -195,6 +195,6 @@ var tmf = (function() {
         checkPermissions: checkPermissions,
         public: public
     };
-})();
+};
 
 exports.tmf = tmf;
