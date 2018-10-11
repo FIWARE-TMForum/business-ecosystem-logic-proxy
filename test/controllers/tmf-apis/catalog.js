@@ -90,14 +90,16 @@ describe('Catalog API', function() {
         if (!async) {
             async = {};
         }
-
+	// load config depending on utils
+	var indexesPath = './../../lib/' + testUtils.getIndexesPath();
+	
         return proxyquire('../../../controllers/tmf-apis/catalog', {
             './../../config': config,
             './../../lib/logger': testUtils.emptyLogger,
             './../../lib/store': storeClient,
             './../../lib/rss': rssClient,
-            './../../lib/indexes': indexes,
-            './../../lib/indexes.js': indexes,
+            // './../../lib/indexes': indexes,
+            [indexesPath]: indexes,
             './../../lib/tmfUtils': tmfUtils,
             './../../lib/utils': utils,
             'async': async
