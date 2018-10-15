@@ -58,6 +58,8 @@ var OAUTH2_CAME_FROM_FIELD = 'came_from_path';
 
 // Get preferences and set up default values
 config.port = process.env.BAE_LP_PORT || config.port || 8004;
+config.endpoints.management.port = config.port;
+
 config.host = process.env.BAE_LP_HOST || config.host || 'localhost';
 
 // Check proxy URL config config
