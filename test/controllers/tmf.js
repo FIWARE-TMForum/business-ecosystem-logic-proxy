@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2018 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -72,7 +72,7 @@ describe('TMF Controller', function() {
             './tmf-apis/inventory': { inventory: inventory },
             './tnf-apis/party': { party: party },
             'search-index': searchIndex
-        }).tmf;
+        }).tmf();
     };
 
     // Clean configuration for every test
