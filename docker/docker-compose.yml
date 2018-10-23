@@ -8,7 +8,7 @@ services:
             - ./proxy-data:/data/db
 
     proxy:
-        image: conwetlab/biz-ecosystem-logic-proxy:develop
+        image: fiware/biz-ecosystem-logic-proxy:develop
         links:
             - mongo
         depends_on:
