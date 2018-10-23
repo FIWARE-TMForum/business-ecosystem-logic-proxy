@@ -17,11 +17,11 @@ var authorizeService = require('./controllers/authorizeService').authorizeServic
     session = require('express-session'),
     shoppingCart = require('./controllers/shoppingCart').shoppingCart,
     management = require('./controllers/management').management,
-    tmf = require('./controllers/tmf').tmf,
+    tmf = require('./controllers/tmf'),
     trycatch = require('trycatch'),
     url = require('url'),
     utils = require('./lib/utils'),
-    auth = require('./lib/auth').auth,
+    auth = require('./lib/auth'),
     uuidv4 = require('uuid/v4');
 
 const debug = !(process.env.NODE_ENV == 'production');
@@ -58,6 +58,8 @@ var OAUTH2_CAME_FROM_FIELD = 'came_from_path';
 
 // Get preferences and set up default values
 config.port = process.env.BAE_LP_PORT || config.port || 8004;
+config.endpoints.management.port = config.port;
+
 config.host = process.env.BAE_LP_HOST || config.host || 'localhost';
 
 // Check proxy URL config config
@@ -213,6 +215,8 @@ config.usageChartURL = process.env.BAE_LP_USAGE_CHART || config.usageChartURL;
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
+auth = auth.auth();
+tmf = tmf.tmf();
 
 /////////////////////////////////////////////////////////////////////
 ////////////////////////// MONGOOSE CONFIG //////////////////////////

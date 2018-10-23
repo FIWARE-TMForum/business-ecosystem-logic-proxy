@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2018 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -34,7 +34,7 @@ var config = require('./../config'),
     request = require('request'),
     utils = require('./../lib/utils');
 
-var tmf = (function() {
+function tmf () {
 
     var apiControllers = {};
     apiControllers[config.endpoints.catalog.path] = catalog;
@@ -195,6 +195,6 @@ var tmf = (function() {
         checkPermissions: checkPermissions,
         public: public
     };
-})();
+};
 
 exports.tmf = tmf;
