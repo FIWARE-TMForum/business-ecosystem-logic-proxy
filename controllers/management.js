@@ -21,7 +21,7 @@ var management = (function() {
 
     var versionInfo = {
         version: '7.4.0',
-        releaseDate: '',
+        releaseDate: '23/10/2018',
         gitHash: '',
         doc: 'https://fiware-tmforum.github.io/Business-API-Ecosystem/v7.4.0/',
         userDoc: 'http://business-api-ecosystem.readthedocs.io/en/v7.4.0/'
