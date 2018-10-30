@@ -49,12 +49,18 @@ describe("Elasticsearch indexes tests", function () {
 	expect(indexes.elasticIndexes.orders).toEqual("orders");
     });
 
-    xit("should not fail when init can connect to elastic host", function() {
+    it("should not fail when init can connect to elastic host", function() {
 	var indexNock = nock('http://elastic.docker:9200/').head('/').reply(200, {});
+
+	var indexes = getIndexLib();
+
+	expect(indexes.init).not.toThrowError();
     });
     
-    fit("should fail when init cannot connect to elastic host", function () {
-	var indexNock = nock('http://elastic.docker:9200/').head('/').reply(404, {});
+    it("should fail when init cannot connect to elastic host", function () {
+	var indexNock = nock('http://elastic.docker:9200/')
+	    .intercept('.*', 'HEAD')
+	    .reply(404, {});
 
 	var indexes = getIndexLib();
 	expect(indexes.init).toThrowError();
