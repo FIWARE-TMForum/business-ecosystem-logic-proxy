@@ -1,0 +1,239 @@
+version: '3'
+services:
+
+    elasticsearch:
+      image: docker.elastic.co/elasticsearch/elasticsearch:6.4.2
+      environment:
+        - discovery.type=single-node
+        # - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      # ulimits:
+      #   memlock:
+      #       soft: -1
+      #       hard: -1
+      ports:
+          - "127.0.0.1:9200:9200"
+      networks:
+        main:
+          aliases:
+            - elastic.docker
+                  
+    mysqlidm:
+      image: mysql:5.7
+      ports:
+        - "127.0.0.1:3306:3306"
+      networks:
+        main:
+      environment:
+        - MYSQL_ROOT_PASSWORD=idm
+
+    fiware-idm:
+      image: fiware/idm
+      ports:
+        - "127.0.0.1:3000:3000"
+        - "127.0.0.1:443:443"
+      networks:
+        main:
+          aliases:
+              - idm.docker
+      environment:
+        - DATABASE_HOST=mysqlidm
+      
+    mongo:
+        image: mongo:3.2
+        restart: always
+        ports:
+            - 127.0.0.1:27017:27017
+        networks:
+            main:
+        volumes:
+            - ./mongo-data:/data/db
+
+    mysql:
+        image: mysql:5.7
+        restart: always
+        ports:
+            - 127.0.0.1:3333:3306
+        volumes:
+            - ./mysql-data:/var/lib/mysql
+        networks:
+            main:
+        environment:
+            - MYSQL_ROOT_PASSWORD=my-secret-pw
+            - MYSQL_DATABASE=RSS
+
+    charging:
+        image: conwetlab/biz-ecosystem-charging-backend:develop
+        links:
+            - mongo
+        depends_on:
+            - mongo
+        networks:
+            main:
+                aliases:
+                    - charging.docker
+        ports:
+            - 127.0.0.1:8006:8006
+        volumes:
+            # - ./charging-settings:/business-ecosystem-charging-backend/src/user_settings  # Used if the settings files are provided through the volume 
+            - ./charging-bills:/business-ecosystem-charging-backend/src/media/bills
+            - ./charging-assets:/business-ecosystem-charging-backend/src/media/assets
+            - ./charging-plugins:/business-ecosystem-charging-backend/src/plugins
+            - ./charging-inst-plugins:/business-ecosystem-charging-backend/src/wstore/asset_manager/resource_plugins/plugins
+        environment:
+          - BAE_CB_PAYMENT_METHOD=None  # Paypal or None (testing mode payment disconected)
+          # - BAE_CB_PAYPAL_CLIENT_ID=client_id
+          # - BAE_CB_PAYPAL_CLIENT_SECRET=client_secret
+
+          # ----- Database configuration ------
+          - BAE_CB_MONGO_SERVER=mongo
+          - BAE_CB_MONGO_PORT=27017
+          - BAE_CB_MONGO_DB=charging_db
+          # - BAE_CB_MONGO_USER=user
+          # - BAE_CB_MONGO_PASS=passwd
+
+          # ----- Roles Configuration -----
+          - BAE_LP_OAUTH2_ADMIN_ROLE=provider
+          - BAE_LP_OAUTH2_SELLER_ROLE=seller
+          - BAE_LP_OAUTH2_CUSTOMER_ROLE=customer
+
+          # ----- Email configuration ------
+          - BAE_CB_EMAIL=charging@email.com
+          # - BAE_CB_EMAIL_USER=user
+          # - BAE_CB_EMAIL_PASS=pass
+          # - BAE_CB_EMAIL_SMTP_SERVER=smtp.server.com
+          # - BAE_CB_EMAIL_SMTP_PORT=587
+
+          - BAE_CB_VERIFY_REQUESTS=True  # Whether or not the BAE validates SSL certificates on requests to external components 
+
+          # ----- Site configuration -----
+          - BAE_SERVICE_HOST=http://proxy.docker:8004/  # External URL used to access the BAE
+          - BAE_CB_LOCAL_SITE=http://charging.docker:8006/  # Local URL of the charging backend
+
+          # ----- APIs Conection config -----
+          - BAE_CB_CATALOG=http://apis.docker:8080/DSProductCatalog
+          - BAE_CB_INVENTORY=http://apis.docker:8080/DSProductInventory
+          - BAE_CB_ORDERING=http://apis.docker:8080/DSProductOrdering
+          - BAE_CB_BILLING=http://apis.docker:8080/DSBillingManagement
+          - BAE_CB_RSS=http://rss.docker:8080/DSRevenueSharing
+          - BAE_CB_USAGE=http://apis.docker:8080/DSUsageManagement
+          - BAE_CB_AUTHORIZE_SERVICE=http://proxy.docker:8004/authorizeService/apiKeys
+
+    proxy:
+#        image: conwetlab/biz-ecosystem-logic-proxy:develop
+        image: proxy-dev
+        links:
+            - mongo
+        depends_on:
+            - mongo
+        networks:
+            main:
+                aliases:
+                    - proxy.docker
+        ports:
+            - 127.0.0.1:8004:7777
+        volumes:
+            # - ./proxy-conf:/business-ecosystem-logic-proxy/etc  # To be used when configuring the system with a config file provided in the volume
+            - ./../../business-ecosystem-logic-proxy:/business-ecosystem-logic-proxy
+            - ./proxy-indexes:/business-ecosystem-logic-proxy/indexes
+            - ./proxy-themes:/business-ecosystem-logic-proxy/themes
+            - ./proxy-static:/business-ecosystem-logic-proxy/static
+            - ./proxy-locales:/business-ecosystem-logic-proxy/locales
+        environment:
+            - NODE_ENV=development  # Deployment in development or in production
+            - COLLECT=True  # Execute the collect static command on startup
+            - BAE_LP_PORT=7777  # Port where the node service is going to run in the container
+            - BAE_LP_HOST=proxy.docker  # Host where the node service if going to run in the container
+            - BAE_SERVICE_HOST=http://proxy.docker:8004  # If provided, this URL specifies the actual URL that is used to access the BAE, when the component is proxied (e.g Apache)
+            # - BAE_LP_HTTPS_ENABLED=true  # If provided specifies whether the service is running in HTTPS, default: false
+            # - BAE_LP_HTTPS_CERT=cert/cert.crt  # Certificate for the SSL configuration (when HTTPS enabled is true)
+            # - BAE_LP_HTTPS_CA=cert/ca.crt  # CA certificate for the SSL configuration (when HTTPS enabled is true)
+            # - BAE_LP_HTTPS_KEY=cert/key.key  # Key sfile for the SSL configuration (when HTTPS enabled is true)
+            # - BAE_LP_HTTPS_PORT=443  # Port where the service runs when SSL is enabled (when HTTPS enabled is true)
+
+            # ------ OAUTH2 Config ------
+            - BAE_LP_OAUTH2_SERVER=http://idm.docker:3000  # URL of the FIWARE IDM used for user authentication
+            - BAE_LP_OAUTH2_CLIENT_ID=34d02204-d650-4419-908b-0f90c6c7e3db  # OAuth2 Client ID of the BAE applicaiton
+            - BAE_LP_OAUTH2_CLIENT_SECRET=d3272a98-0b12-489e-a11f-934b6a87f94e  # OAuth Client Secret of the BAE application
+            - BAE_LP_OAUTH2_CALLBACK=http://proxy.docker:8004/auth/fiware/callback  # Callback URL for receiving the access tokens
+            - BAE_LP_OAUTH2_ADMIN_ROLE=provider  # Role defined in the IDM client app for admins of the BAE 
+            - BAE_LP_OAUTH2_SELLER_ROLE=seller  # Role defined in the IDM client app for sellers of the BAE 
+            - BAE_LP_OAUTH2_CUSTOMER_ROLE=customer  # Role defined in the IDM client app for customers of the BAE 
+            - BAE_LP_OAUTH2_ORG_ADMIN_ROLE=orgAdmin  # Role defined in the IDM client app for organization admins of the BAE 
+            - BAE_LP_OAUTH2_IS_LEGACY=false  # Whether the used FIWARE IDM is version 6 or lower
+
+            # - BAE_LP_THEME=theme  # If provided custom theme to be used by the web site, it must be included in themes volume
+
+            # ----- Mongo Config ------
+            # - BAE_LP_MONGO_USER=user
+            # - BAE_LP_MONGO_PASS=pass
+            - BAE_LP_MONGO_SERVER=mongo
+            - BAE_LP_MONGO_PORT=27017
+            - BAE_LP_MONGO_DB=belp
+
+            - BAE_LP_REVENUE_MODEL=30  # Default market owner precentage for Revenue Sharing models
+
+            # ----- APIs Configuration -----
+            # If provided, it supports configuring the contection to the different APIs managed by the logic proxy, by default
+            # apis.docker, charging.docker and rss.docker domains are configured
+            # - BAE_LP_ENDPOINT_CATALOG_PATH=DSProductCatalog
+            # - BAE_LP_ENDPOINT_CATALOG_PORT=8080
+            # - BAE_LP_ENDPOINT_CATALOG_HOST=apis.docker
+            # - BAE_LP_ENDPOINT_CATALOG_SECURED=false
+            # ...
+
+            # ----- Indexes Configuration ----
+            - BAE_LP_INDEXES_INDEXFILE=elastic_indexes.js # elastic_indexes.js if using elasticsearch, indexes.js if using default local indexes
+            - BAE_LP_INDEXES_ELASTICHOST=elastic.docker:9200 # elastic host, TODO: fit this to use multiple hosts
+    apis:
+        image: conwetlab/biz-ecosystem-apis:develop
+        restart: always
+        ports:
+            - 127.0.0.1:4848:4848
+            - 127.0.0.1:8080:8080
+        links:
+            - mysql
+        depends_on:
+            - mysql
+        networks:
+            main:
+                aliases:
+                    - apis.docker
+        volumes:
+            - ./apis-conf:/etc/default/tmf/
+        environment:
+            - MYSQL_ROOT_PASSWORD=my-secret-pw
+            - MYSQL_HOST=mysql
+
+    rss:
+        #image: conwetlab/biz-ecosystem-rss:develop
+        image: rss-dev
+        restart: always
+        ports:
+            - 127.0.0.1:9999:8080
+            - 127.0.0.1:4444:4848
+            - 127.0.0.1:1111:8181
+        links:
+            - mysql
+        depends_on:
+            - mysql
+        networks:
+            main:
+                aliases:
+                    - rss.docker
+        volumes:
+            - ./../../Business-API-Ecosystem/docker/compose/rss-conf:/etc/default/rss
+            - ./../../Business-API-Ecosystem/business-ecosystem-rss:/business-ecosystem-rss
+        environment:
+            - MYSQL_HOST=mysql
+            - MYSQL_PORT=3306
+            - BAE_RSS_DATABASE_URL=jdbc:mysql://mysql:3306/RSS
+            - BAE_RSS_DATABASE_USERNAME=root
+            - BAE_RSS_DATABASE_PASSWORD=my-secret-pw
+            - BAE_RSS_DATABASE_DRIVERCLASSNAME=com.mysql.jdbc.Driver
+            - BAE_RSS_OAUTH_CONFIG_GRANTEDROLE=provider
+            - BAE_RSS_OAUTH_CONFIG_SELLERROLE=seller
+            - BAE_RSS_OAUTH_CONFIG_AGGREGATORROLE=aggregator
+
+networks:
+    main:
+        external: true
