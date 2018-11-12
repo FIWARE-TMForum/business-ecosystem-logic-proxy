@@ -1,0 +1,76 @@
+form(name="form" novalidate)
+  .row
+    .col-md-8
+      .form-group
+        label #{ __("Choose a metric") }
+        .dropdown
+          a.btn.btn-block.btn-default.dropdown-toggle.z-depth-0(data-toggle="dropdown")
+            span.item-text {{ vm.metric.type | uppercase }}
+            span.item-icon.fa.fa-caret-down
+          .dropdown-menu.dropdown-menu-right.z-depth-2
+            a.dropdown-menu-item(ng-repeat="(key, value) in vm.METRICS" ng-if="vm.metricsUsed.indexOf(value)<0" ng-click="vm.metric.setType(key)")
+              span.item-text{{ value | uppercase }}
+  .row(ng-if="vm.metric.type !== ''")
+    .col-md-12
+      .form-group
+        label
+          span.text-muted {{ vm.metric.description }}
+  .row(ng-if="vm.metric.type === vm.METRICS.UPDATES")
+    .col-md-8
+      .form-group(ng-class="{ 'has-error': vm.hasFieldError(form.threshold) }")
+        label #{ __("Enter guaranteed updates rate") }
+        .input-group
+          input.form-control(
+            type="number"
+            name="threshold"
+            ng-model="vm.metric.threshold"
+            required
+            min="1"
+          )
+          .help-block(ng-messages="form.threshold.$error" ng-show="vm.hasFieldError(form.threshold)")
+            span(ng-message="required") #{ __("This field is required.") }
+          .input-group-btn
+            a.btn.btn-default.dropdown-toggle.z-depth-0(data-toggle="dropdown")
+              span.item-text {{ vm.metric.unitMeasure | uppercase }}
+              span.item-icon.fa.fa-caret-down
+            .dropdown-menu.dropdown-menu-right.z-depth-2
+              a.dropdown-menu-item(ng-repeat="(key, value) in vm.TIMERANGE" ng-click="vm.metric.setUnit(key)")
+                span.item-text {{ value }}
+  .row(ng-if="vm.metric.type === vm.METRICS.RESPTIME")
+    .col-md-8
+      .form-group
+        label #{ __("Enter guaranteed response time") }
+        .input-group
+          input.form-control(
+            type="number"
+            name="threshold"
+            ng-model="vm.metric.threshold"
+            required
+            min="1"
+          )
+          .input-group-btn
+            a.btn.btn-default.dropdown-toggle.z-depth-0(data-toggle="dropdown")
+              span.item-text {{ vm.metric.unitMeasure | uppercase }}
+              span.item-icon.fa.fa-caret-down
+            .dropdown-menu.dropdown-menu-right.z-depth-2
+              a.dropdown-menu-item(ng-repeat="(key, value) in vm.UNITS" ng-click="vm.metric.setUnit(key)")
+                span.item-text {{ value }}
+  .row(ng-if="vm.metric.type === vm.METRICS.DELAY")
+    .col-md-8
+      .form-group
+        label #{ __("Enter guaranteed maximum delay upon event update") }
+        .input-group
+          input.form-control(
+            type="number"
+            name="threshold"
+            ng-model="vm.metric.threshold"
+            required
+            min="1"
+          )
+          .input-group-btn
+            a.btn.btn-default.dropdown-toggle.z-depth-0(data-toggle="dropdown")
+              span.item-text {{ vm.metric.unitMeasure | uppercase }}
+              span.item-icon.fa.fa-caret-down
+            .dropdown-menu.dropdown-menu-right.z-depth-2
+              a.dropdown-menu-item(ng-repeat="(key, value) in vm.UNITS" ng-click="vm.metric.setUnit(key)")
+                span.item-text {{ value }}

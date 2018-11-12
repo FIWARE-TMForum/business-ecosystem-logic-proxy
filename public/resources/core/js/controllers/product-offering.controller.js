@@ -1,6 +1,6 @@
 /* Copyright (c) 2015 - 2018 CoNWeT Lab., Universidad Politécnica de Madrid
  *
- * This file belongs to the business-ecosystem-logic-proxy of the
+ * This file belongs to the bae-logic-proxy-test of the
  * Business API Ecosystem
  *
  * This program is free software: you can redistribute it and/or modify
@@ -131,12 +131,41 @@
 
                 Offering.search(params).then(function (offeringList) {
                     angular.copy(offeringList, vm.list);
-                    vm.list.status = LOADED;
+                    getOverallReputation();
+                    //vm.list.status = LOADED;
                 }, function (response) {
                     vm.error = Utils.parseError(response, 'It was impossible to load the list of offerings');
                     vm.list.status = ERROR;
                 });
+                
             }
+        }
+
+        function getOverallReputation(){
+            Offering.getOverallReputation().then(function (reputationList) {
+                const maxScore = 5;
+                for (let i=0; i < vm.list.length; i++){
+                    vm.list[i].repAvg = 0;
+                    vm.list[i].repCount = 0;
+                    vm.list[i].repAvgStars = [];
+                    let currentScore = 0;
+                    for (let j=0; j < reputationList.length; j++){
+                        if(vm.list[i].id === reputationList[j]._id){
+                            currentScore = reputationList[j].avg;
+                            vm.list[i].repCount = reputationList[j].count;
+                        }
+                    }
+                    for(let k=0; k < maxScore; k++){
+                        vm.list[i].repAvgStars[k] = {};
+                        vm.list[i].repAvgStars[k].value = currentScore > k;
+                        vm.list[i].repAvgStars[k].index = k+1;
+                    }
+                }
+                vm.list.status = LOADED;
+            }, function (response) {
+                vm.error = Utils.parseError(response, 'It was impossible to load the reputation score');
+                vm.list.status = ERROR;
+            });            
         }
 
         $scope.$watch(function () {
@@ -160,9 +189,13 @@
                 templateUrl: 'stock/product-offering/create/bundle'
             },
             {
-                title: 'Product Spec.',
+                title: 'Data source spec.',
                 templateUrl: 'stock/product-offering/create/product'
-            },
+            },/*
+            {
+                title: 'Data source spec.',
+                templateUrl: 'stock/product-offering/create/product-bundle'
+            },*/
             {
                 title: 'Catalogue',
                 templateUrl: 'stock/product-offering/create/catalogue'
@@ -170,6 +203,14 @@
             {
                 title: 'Category',
                 templateUrl: 'stock/product-offering/create/categories'
+            },
+            {
+                title: 'License',
+                templateUrl: 'stock/product-offering/create/terms'
+            },
+            {
+                title: 'SLA',
+                templateUrl: 'stock/product-offering/create/sla'
             },
             {
                 title: 'Price Plans',
@@ -187,9 +228,26 @@
 
         angular.extend(vm, $controller('FormMixinCtrl', {$scope: $scope}));
 
+        vm.exclusivities = Offering.exclusivities;
+        vm.sectors = Offering.sectors;
+        vm.regions = Offering.regions;
+        vm.timeframes = Offering.timeframes;
+        vm.purposes = Offering.purposes;
+        vm.transferabilities = Offering.transferabilities;
+        vm.standards = Offering.standards;
+        vm.terms = {type:'Standard', isFullCustom:false};
+        //vm.sla = {type:'None'};
+
         vm.CHARGE_PERIODS = Offering.TYPES.CHARGE_PERIOD;
         vm.CURRENCY_CODES = Offering.TYPES.CURRENCY_CODE;
         vm.PRICES = Offering.TYPES.PRICE;
+        vm.LICENSES = Offering.TYPES.LICENSE;
+        vm.SLA = Offering.TYPES.SLA;
+        vm.METRICS = Offering.TYPES.METRICS;
+        vm.UNITS = Offering.TYPES.UNITS;
+        vm.TIMERANGE = Offering.TYPES.TIMERANGE;
+        vm.MEASURESDESC = Offering.TYPES.MEASURESDESC
+
         vm.STATUS = PROMISE_STATUS;
         vm.PRICE_ALTERATIONS = Offering.TYPES.PRICE_ALTERATION;
         vm.PRICE_ALTERATIONS_SUPPORTED = Offering.TYPES.PRICE_ALTERATION_SUPPORTED;
@@ -201,6 +259,9 @@
         vm.create = create;
         vm.setProduct = setProduct;
         vm.setCatalogue = setCatalogue;
+
+        vm.toggleProduct = toggleProduct;
+        vm.hasProduct = hasProduct;
 
         vm.setSharingModel = setSharingModel;
         vm.getSharingModel = getSharingModel;
@@ -224,6 +285,29 @@
         vm.updatePricePlan = updatePricePlan;
         vm.removePricePlan = removePricePlan;
         vm.setAlteration = setAlteration;
+
+        /* LICENSE MEMBERS */
+
+        vm.license = new Offering.License();
+        vm.licenseEnabled = false;
+
+        vm.createLicense = createLicense;
+
+        /* SLA MEMBERS */
+        vm.metrics = []
+        vm.metric = new Offering.Metric();
+        vm.metric.type = vm.METRICS.UPDATES;
+        vm.metric.description = vm.MEASURESDESC.UPDATES;
+        vm.createMetric = createMetric;
+        vm.updateMetric = updateMetric;
+        vm.removeMetric = removeMetric;
+        vm.metricsUsed = [];
+
+        vm.sla = new Offering.Sla();
+        vm.slaEnabled = false;
+        vm.createSla = createSla;
+
+        //vm.createSla = createSla;
 
         vm.place = "";
         vm.places = [];
@@ -256,7 +340,7 @@
         });
 
         searchPromise.catch(function (response) {
-            vm.errorMessage = Utils.parseError(response, 'Unexpected error trying to retrieve product specifications and catalogues.');
+            vm.errorMessage = Utils.parseError(response, 'Unexpected error trying to retrieve Data source specifications and catalogues.');
         });
 
         Object.defineProperty(vm, 'status', {
@@ -285,24 +369,125 @@
 
         var createPromise = null;
 
+
+//{
+//    "bundledProductOffering": [],
+//    "category": [],
+//    "description": "Description",
+//    "isBundle": false,
+//    "lifecycleStatus": "Active",
+//    "name": "Name",
+//    "place": [{
+//        "name": "Place"
+//    }],
+//    "productOfferingPrice": [],
+//    "validFor": {
+//        "startDateTime": "2018-03-09T15:23:21+00:00"
+//    },
+//    "version": "0.1",
+//    "serviceCandidate": {
+//        "id": "defaultRevenue",
+//        "name": "Revenue Sharing Service"
+//    },
+//    "productOfferingTerm": [{
+//        "name": "My custom license",
+//        "description": "description",
+//        "type": "Custom",
+//        "isFullCustom": false,
+//        "exclusivity": "Exclusive",
+//        "sector": "All sectors",
+//        "region": "All regions",
+//        "purpose": "All purposes",
+//        "duration": "12",
+//        "transferability": "Sublicensing right",
+//        "validFor": {
+//                "startDateTime": "2018-04-19T16:42:23-04:00",
+//                "endDateTime": "2019-04-18T16:42:23-04:00"
+//        }
+//    }],
+//    "productSpecification": {
+//        "id": "1",
+//        "href": "http://127.0.0.1:8000/DSProductCatalog/api/catalogManagement/v2/productSpecification/4:(0.1)"
+//    }
+//}
         function create() {
             var data = angular.copy(vm.data);
 
             data.category = formatCategory();
             data.place = formatPlaces();
+            var createPromise = [];
+            if(vm.data.isBundle){
+                vm.product = vm.bundledProductSpecification;
+                vm.bundledProductSpecification.forEach(function (prod, index) {
+                    var tmpdata = JSON.parse(JSON.stringify(data));
+                    tmpdata.isBundle = false;
+                    tmpdata.name = data.name+index.toString();
+                    var terms = []; 
+                    terms[0] = vm.license.toJSON();
+                    createPromise.push(Offering.create(tmpdata, prod, vm.catalogue, terms));
 
-            createPromise = Offering.create(data, vm.product, vm.catalogue);
+                    createPromise[index].then(function (offeringCreated) {
+                        $state.go('stock.offering.update', {
+                            offeringId: offeringCreated.id
+                        });
+                        $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'created', {
+                            resource: 'offering',
+                            name: offeringCreated.name
+                        });
+                        vm.data.bundledProductOffering.push(offeringCreated);
+                    }, function (response) {
 
-            createPromise.then(function (offeringCreated) {
-                $state.go('stock.offering.update', {
-                    offeringId: offeringCreated.id
+                        var defaultMessage = 'There was an unexpected error that prevented the ' +
+                            'system from creating a new offering';
+                        var error = Utils.parseError(response, defaultMessage);
+
+                        $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                            error: error
+                        });
+                    });
                 });
-                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'created', {
-                    resource: 'offering',
-                    name: offeringCreated.name
+            }
+            
+            Promise.all(createPromise).then(function(){
+                //var data = angular.copy(vm.data);
+                vm.data.category = formatCategory();
+                vm.data.place = formatPlaces();
+                var terms = []; 
+                terms[0] = vm.license.toJSON();
+                var offerPromise = Offering.create(vm.data, vm.product, vm.catalogue, terms);
+                offerPromise.then(function (offeringCreated) {
+                    //Create SLA
+                    var sla = vm.sla.toJSON();
+                    sla.offerId = offeringCreated.id;
+                    var slaPromise = Offering.setSla(sla);
+                    //Finalise Offering
+                    slaPromise.then(function (slaCreated) {
+                        $state.go('stock.offering.update', {
+                            offeringId: slaCreated.offerId
+                        });
+                        $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'created', {
+                            resource: 'offering',
+                            name: offeringCreated.name
+                        });
+                    }, function (response) {
+                        var defaultMessage = 'There was an unexpected error that prevented the ' +
+                            'system from creating a new SLA';
+                        var error = Utils.parseError(response, defaultMessage);
+
+                        $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                            error: error
+                    });
+                }, function (response) {
+                        var defaultMessage = 'There was an unexpected error that prevented the ' +
+                            'system from creating a new offering';
+                        var error = Utils.parseError(response, defaultMessage);
+
+                        $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                            error: error
+                        });
+                    });
                 });
             }, function (response) {
-
                 var defaultMessage = 'There was an unexpected error that prevented the ' +
                     'system from creating a new offering';
                 var error = Utils.parseError(response, defaultMessage);
@@ -344,11 +529,43 @@
             vm.bundleControl.valid = vm.data.bundledProductOffering.length >= 2;
         }
 
+        function toggleProduct(product) {
+                    var index = filterProduct(product);
+
+                    if (index !== -1) {
+                        vm.bundledProductSpecification.splice(index, 1);
+                        //vm.data.bundledProductOffering.splice(index, 1);
+                    } else {
+                        vm.bundledProductSpecification.push(product);
+                        //vm.data.bundledProductOffering.push(product);
+                    }
+
+                    stepList[1].form.$valid = vm.bundledProductSpecification.length >= 2;
+                }
+
+        function filterProduct(product) {
+                    var i = -1;
+                    vm.bundledProductSpecification.forEach(function (bundledProduct, index) {
+                        if (bundledProduct.id == product.id) {
+                            i = index;
+                        }
+                    });
+                    return i;
+                }
+        function hasProduct(product) {
+            return filterProduct(product) > -1;
+        }
+
+
+
         function toggleBundle() {
             if (!vm.data.isBundle) {
-                vm.data.bundledProductOffering.length = 0;
+                vm.bundledProductSpecification.length = 0;
+                //vm.data.bundledProductOffering.length = 0;
                 vm.bundleControl.valid = true;
             } else {
+                vm.bundledProductSpecification = [];
+                //vm.data.bundledProductOffering = [];
                 vm.bundleControl.valid = false;
                 vm.product = undefined;
             }
@@ -357,6 +574,47 @@
 
         function hasOffering(offering) {
             return filterOffering(offering) > -1;
+        }
+
+        /* LICENSE METHODS */
+
+        function createLicense() {
+            //vm.license = new Offering.License();
+            vm.licenseEnabled = false;
+        }
+
+
+        /* SLA METHODS */
+
+        function createMetric() {
+            //vm.metrics.push(vm.sla);
+            //vm.metric = new Offering.Metric();
+            vm.slaEnabled = false;
+            vm.sla.metrics.push(vm.metric);
+            vm.metricsUsed.push(vm.metric.type);
+            vm.metric = new Offering.Metric();
+        }
+        
+        function createSla() {
+            //vm.metrics.push(vm.sla);
+            vm.sla = new Offering.Sla();
+            vm.sla.metrics = [];
+            vm.slaEnabled = false;
+            //vm.sla.metrics.push(vm.metric);
+        }
+
+        function updateMetric(index) {
+            $rootScope.$broadcast(Offering.EVENTS.METRIC_UPDATE, index, vm.sla.metrics[index]);
+        }
+
+        function removeMetric(index) {
+            var value = vm.sla.metrics[index].type;
+ 
+            var idx = vm.metricsUsed.indexOf(value);
+            if (idx > -1) {
+                vm.metricsUsed.splice(idx, 1);
+            }
+            vm.sla.metrics.splice(index, 1);
         }
 
         /* PRICE PLANS METHODS */
@@ -471,20 +729,34 @@
     function ProductOfferingDetailController($state, Offering, ProductSpec, Utils) {
         /* jshint validthis: true */
         var vm = this;
-
+        var createPromise = [];
+        vm.sla = {};
         vm.item = {};
         vm.$state = $state;
         vm.hasCharacteristics = hasCharacteristics;
         vm.formatCharacteristicValue = formatCharacteristicValue;
 
-        Offering.detail($state.params.offeringId).then(function (offeringRetrieved) {
+        createPromise.push(Offering.detail($state.params.offeringId).then(function (offeringRetrieved) {
             vm.item = offeringRetrieved;
-            vm.item.status = LOADED;
             vm.categories = vm.item.getCategories();
             vm.attachments = vm.item.productSpecification.getExtraFiles();
         }, function (response) {
             vm.error = Utils.parseError(response, 'The requested offering could not be retrieved');
             vm.item.status = ERROR;
+        }));
+        
+        createPromise.push(Offering.getSla($state.params.offeringId).then(function (slaRetrieved) {
+            vm.sla = slaRetrieved;
+        }, function (response){
+            vm.error = Utils.parseError(response, 'The requested SLA could not be retrieved');
+            vm.item.status = ERROR;
+        }));
+    
+        Promise.all(createPromise).then(function(){
+            vm.item.status = LOADED;
+            }, function (response){
+                vm.error = Utils.parseError(response, 'The requested offering could not be retrieved');
+                vm.item.status = ERROR;
         });
 
         function formatCharacteristicValue(characteristic, characteristicValue) {
@@ -530,6 +802,7 @@
         vm.CHARGE_PERIODS = Offering.TYPES.CHARGE_PERIOD;
         vm.CURRENCY_CODES = Offering.TYPES.CURRENCY_CODE;
         vm.PRICES = Offering.TYPES.PRICE;
+
         vm.$state = $state;
         vm.PRICE_ALTERATIONS = Offering.TYPES.PRICE_ALTERATION;
         vm.PRICE_ALTERATIONS_SUPPORTED = Offering.TYPES.PRICE_ALTERATION_SUPPORTED;
@@ -547,6 +820,8 @@
         vm.updatePricePlan = updatePricePlan;
         vm.removePricePlan = removePricePlan;
         vm.setAlteration = setAlteration;
+
+        vm.sla = {};
 
         var updatePricePlanPromise = null;
 
@@ -568,6 +843,14 @@
             vm.categories = productOffering.getCategories();
         }, function (response) {
             vm.error = Utils.parseError(response, 'Unexpected error trying to retrieve the offering.');
+        });
+
+        var slaPromise = Offering.getSla($state.params.offeringId);
+        slaPromise.then(function (slaRetrieved) {
+            vm.sla = slaRetrieved;
+        }, function (response){
+            vm.error = Utils.parseError(response, 'The requested SLA could not be retrieved');
+            vm.item.status = ERROR;
         });
 
         Object.defineProperty(vm, 'status', {

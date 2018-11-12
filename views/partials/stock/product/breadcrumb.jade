@@ -8,3 +8,6 @@
   a.active(ng-if="searchVM.state.includes('stock.product.create')", ui-sref="stock.product.create", ui-sref-opts="{ reload: true }")
     span.item-icon.fa.fa-plus-circle
     span.item-text #{ __("New") }
+  a.active(ng-if="searchVM.state.includes('stock.product.import')", ui-sref="stock.product.import", ui-sref-opts="{ reload: true }")
+    span.item-icon.fa.fa-plus-circle
+    span.item-text #{ __("Import") }

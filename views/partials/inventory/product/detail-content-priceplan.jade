@@ -1,5 +1,36 @@
-.row
-  .col-xs-12
-    .container-flex
-      div(offering-priceplan, ng-repeat="priceplan in detailVM.item.productOffering.productOfferingPrice")
-    .alert.alert-info.text-center(ng-if="!detailVM.hasProductPrice()") #{ __("No price plan selected (The offering was free).") }
+.panel.panel-default.z-depth-1
+  .panel-body
+    .row
+      .col-xs-12(ng-if="detailVM.item.productOffering.productOfferingTerm[0].type !== 'None'")
+        .h4
+          strong #{ __("Data license") }
+        dl(ng-repeat="term in detailVM.item.productOffering.productOfferingTerm")   
+          dd.text-dark-secondary {{ term.name }}  
+          dd.text-dark-secondary(ng-if="term.type == 'Custom'") {{ term.description }}
+          dd(ng-if="term.type == 'Standard'") <a ng-href="{{term.description}}" target="_blank"> {{ term.description }} </a>
+      .col-xs-12(ng-if="detailVM.item.productOffering.productOfferingTerm[0].type === 'None'")
+        .alert.alert-info.text-center #{ __("No License included.") }
+.panel.panel-default.z-depth-1
+  .panel-body
+    .row
+      .col-xs-12(ng-if="detailVM.sla.metrics.length")
+        .h4
+          strong #{ __("Service level agreeements") }
+        dl(ng-repeat="metric in detailVM.sla.metrics")   
+          //- dt #{ __("Type") }
+          //- dt {{ metric.type }}  
+          dd.text-dark-secondary(ng-if="metric.type == 'Updates rate'") {{ metric.type + ": " + metric.threshold + "/" + metric.unitMeasure }}
+          dd.text-dark-secondary(ng-if="metric.type == 'Updates rate'") <i>{{ metric.description }}</i>
+          dd.text-dark-secondary(ng-if="metric.type == 'Response time'") {{ metric.type + ": " + metric.threshold + " " + metric.unitMeasure }}
+          dd.text-dark-secondary(ng-if="metric.type == 'Response time'") <i>{{ metric.description }}</i>
+          dd.text-dark-secondary(ng-if="metric.type == 'Delay'") {{ metric.type + ": " + metric.threshold + " " + metric.unitMeasure }}
+          dd.text-dark-secondary(ng-if="metric.type == 'Delay'") <i>{{ metric.description }}</i>
+      .col-xs-12(ng-if="!detailVM.sla.metrics.length")
+        .alert.alert-info.text-center #{ __("No SLA included.") }
+.panel.panel-default.z-depth-1
+  .panel-body
+    .row
+      .col-xs-12
+        .container-flex
+          div(offering-priceplan, ng-repeat="priceplan in detailVM.item.productOffering.productOfferingPrice")
+        .alert.alert-info.text-center(ng-if="!detailVM.hasProductPrice()") #{ __("No price plan selected (The offering was free).") }

@@ -1,0 +1,19 @@
+.table-responsive(ng-if="vm.sla.metrics.length")
+  table.table.table-bordered
+    thead
+      tr
+        th #{ __("Type") }
+        th #{ __("Description") }
+        th #{ __("Threshold") }
+        th #{ __("Unit Measure") }
+        th #{ __("Remove") }
+    tbody
+      tr(ng-repeat="m in vm.sla.metrics")
+        th {{ m.type }}
+        td {{ m.description }}
+        td {{ m.threshold.toString() }}
+        td {{ m.unitMeasure }}
+        td
+          a.btn.btn-sm.btn-icon.btn-danger(ng-click="vm.removeMetric($index)")
+            span.item-icon.fa.fa-spin.fa-spinner(ng-if="vm.removeMetric.status === vm.STATUS.PENDING")
+            span.item-icon.fa.fa-trash(ng-if="vm.removeMetric.status !== vm.STATUS.PENDING")

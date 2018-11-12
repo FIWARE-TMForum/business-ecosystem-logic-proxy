@@ -31,10 +31,6 @@
               a(ui-sref="stock.product.update.attachment")
                 span.item-icon.fa.fa-paperclip
                 span.item-text.hidden-xs #{ __("Attachments") }
-            li(ui-sref-active-eq="active")
-              a(ui-sref="stock.product.update.relationship")
-                span.item-icon.fa.fa-chain
-                span.item-text.hidden-xs #{ __("Relationships") }
       .col-xs-12
         ui-view
           .panel.panel-default.z-depth-1(ng-controller="FormWizardCtrl as updateForm")

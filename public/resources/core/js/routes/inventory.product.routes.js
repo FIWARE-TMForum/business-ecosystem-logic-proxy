@@ -1,6 +1,6 @@
 /* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
- * This file belongs to the business-ecosystem-logic-proxy of the
+ * This file belongs to the bae-logic-proxy-test of the
  * Business API Ecosystem
  *
  * This program is free software: you can redistribute it and/or modify
@@ -54,6 +54,10 @@
             .state('inventory.product.detail.productCharacteristic', {
                 url: '/characteristic',
                 templateUrl: 'inventory/product/detail/characteristic'
+            })
+            .state('inventory.product.detail.access', {
+                url: '/access',
+                templateUrl: 'inventory/product/detail/access'
             })
             .state('inventory.product.detail.productPrice', {
                 url: '/priceplan',

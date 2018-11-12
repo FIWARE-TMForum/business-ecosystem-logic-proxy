@@ -1,6 +1,6 @@
 /* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
- * This file belongs to the business-ecosystem-logic-proxy of the
+ * This file belongs to the bae-logic-proxy-test of the
  * Business API Ecosystem
  *
  * This program is free software: you can redistribute it and/or modify
@@ -36,7 +36,7 @@
             .state('offering', {
                 url: '/offering?catalogueId&categoryId&type&body&productSpecId&sort',
                 data: {
-                    title: 'Marketplace',
+                    title: 'IoT Data Marketplace',
                     loggingRequired: false,
                     filters: ['type', 'sort']
                 },
@@ -101,11 +101,11 @@
                     }
                 }
             })
-            .state('offering.detail.relationship', {
-                url: '/relationship',
+            .state('offering.detail.licenseSla', {
+                url: '/licensesla',
                 views: {
                     'offering-content': {
-                        templateUrl: 'offering/detail/relationship'
+                        templateUrl: 'offering/detail/licenseSla'
                     }
                 }
             });
