@@ -17,9 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var accessTokenService = require('../db/schemas/accessTokenService'),
-     config = require('../config'),
-     uuid = require('node-uuid');
+var accessTokenService = require('../db/schemas/accessTokenService');
 
 var authorizeService = (function () {
 
