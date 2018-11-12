@@ -1,6 +1,6 @@
 /* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
- * This file belongs to the business-ecosystem-logic-proxy of the
+ * This file belongs to the bae-logic-proxy-test of the
  * Business API Ecosystem
  *
  * This program is free software: you can redistribute it and/or modify
@@ -46,7 +46,7 @@
         vm.RELATIONSHIPS = ProductSpec.TYPES.RELATIONSHIP;
         vm.STATUS = DATA_STATUS;
 
-        vm.data = new ProductSpec.Relationship({}, vm.RELATIONSHIPS.MIGRATION.code);
+        vm.data = ProductSpec.Relationship({}, vm.RELATIONSHIPS.MIGRATION.code);
 
         vm.create = create;
         vm.setProductSpec = setProductSpec;
@@ -100,7 +100,7 @@
                     angular.copy(productList, vm.list);
                     vm.list.status = vm.STATUS.LOADED;
                 }, function (response) {
-                    vm.errorMessage = Utils.parseError(response, 'Unexpected error trying to retrieve product specifications.');
+                    vm.errorMessage = Utils.parseError(response, 'Unexpected error trying to retrieve Data source specifications.');
                     vm.list.status = vm.STATUS.ERROR;
                 });
             }
@@ -111,7 +111,7 @@
         function create($parentController) {
             createPromise = $parentController.createRelationship(vm.data);
             createPromise.then(function (productSpec) {
-                vm.data = new ProductSpec.Relationship({}, vm.RELATIONSHIPS.MIGRATION.code);
+                vm.data = ProductSpec.Relationship({}, vm.RELATIONSHIPS.MIGRATION.code);
             }, function (response) {
                 $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
                     error: Utils.parseError(response, 'Unexpected error trying to create the relationship.')
@@ -130,7 +130,7 @@
         }
 
         function setProductSpec(productSpec) {
-            vm.data = new ProductSpec.Relationship(productSpec, vm.data.type);
+            vm.data = productSpec.Relationship(productSpec, vm.data.type);
         }
     }
 

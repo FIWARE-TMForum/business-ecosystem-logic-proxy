@@ -1,0 +1,14 @@
+.panel-heading
+  .priceplan-selected(ng-if="slaSelected && sla.name === slaSelected.name")
+    span.fa-stack
+      span.fa.fa-circle.fa-stack-2x.text-dark-primary
+      span.fa.fa-check.fa-stack-1x.fa-inverse
+  .h4.text-center {{ sla.name }}
+.panel-body
+  .h3.text-center
+    strong
+      span {{ priceplan.price.taxIncludedAmount }} 
+      span.small {{ priceplan.price.currencyCode | uppercase }}
+    p.small(ng-if="priceplan.recurringChargePeriod") / {{ priceplan.recurringChargePeriod }}
+    p.small(ng-if="priceplan.unitOfMeasure") / {{ priceplan.unitOfMeasure }}
+  .form-group.text-center.text-muted {{ priceplan.description ? priceplan.description : '#{ __("No description provided.") }' }}

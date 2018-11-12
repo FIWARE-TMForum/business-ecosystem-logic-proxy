@@ -3,16 +3,7 @@ form(name="step.form", novalidate)
     .alert.alert-info.text-center #{ __("Product bundles cannot directly include digital assets") }
 
   div(ng-if="!createVM.data.isBundle")
-    .item-toggle
-      label.toggle #{ __("Is a digital product?") }
-        .track
-          input(
-            type="checkbox"
-            ng-model="createVM.isDigital"
-          )
-          i.fa.fa-2x
-
-    div(ng-if="createVM.isDigital")
+    div(ng-init="createVM.isDigital = true")
       create-asset-form(controller="createVM")
 
   .form-group.text-right

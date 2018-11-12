@@ -1,6 +1,6 @@
 /* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
- * This file belongs to the business-ecosystem-logic-proxy of the
+ * This file belongs to the bae-logic-proxy-test of the
  * Business API Ecosystem
  *
  * This program is free software: you can redistribute it and/or modify
@@ -36,6 +36,8 @@
         .directive('shippingAddressForm', shippingAddressFormDirective)
         .directive('pricePlanForm', pricePlanFormDirective)
         .directive('pricePlanTable', pricePlanTableDirective)
+        .directive('slaForm', slaFormDirective)
+        .directive('slaTable', slaTableDirective)
         .directive('pager', ['$window', '$timeout', 'EVENTS', pagerDirective])
         .directive('relationshipCreateForm', relationshipCreateFormDirective)
         .directive('relationshipDeleteForm', relationshipDeleteFormDirective)
@@ -44,7 +46,49 @@
         .directive('fieldArray', fieldArrayDirective)
         .directive('convertToPhoneNumber', convertToPhoneNumberDirective)
         .directive('createAssetForm', createAssetFormDirective)
-        .directive('requiredFile', requiredFile);
+        .directive('requiredFile', requiredFile)
+        .directive('starRating', starRatingDirective);
+
+
+    function starRatingDirective(){
+        return {
+            restrict: 'A',
+            template: '<ul class="rating">' +
+                '<li ng-repeat="star in stars" ng-class="star" ng-click="toggle($index)">' +
+                '\u2605' +
+                '</li>' +
+                '</ul>',
+            scope: {
+                ratingValue: '=',
+                max: '=',
+                onRatingSelected: '&'
+            },
+            link: function (scope, elem, attrs) {
+
+                var updateStars = function () {
+                    scope.stars = [];
+                    for (var i = 0; i < scope.max; i++) {
+                        scope.stars.push({
+                            filled: i < scope.ratingValue
+                        });
+                    }
+                };
+
+                scope.toggle = function (index) {
+                    scope.ratingValue = index + 1;
+                    scope.onRatingSelected({
+                        rating: index + 1
+                    });
+                };
+
+                scope.$watch('ratingValue', function (oldVal, newVal) {
+                    //if (newVal) {
+                        updateStars();
+                    //}
+                });
+            }
+        }
+    }
 
     function bsTooltipDirective() {
         return {
@@ -132,6 +176,18 @@
                 vm: '=controller'
             },
             templateUrl: 'directives/forms/priceplan'
+        };
+    }
+
+    function slaFormDirective() {
+        return {
+            restrict: 'E',
+            scope: {
+                form: '=',
+                sla: '=data',
+                vm: '=controller'
+            },
+            templateUrl: 'directives/forms/sla'
         };
     }
 
@@ -236,6 +292,17 @@
                 vm: '=controller'
             },
             templateUrl: 'directives/tables/priceplan'
+        };
+    }
+
+    function slaTableDirective() {
+        return {
+            restrict: 'E',
+            scope: {
+                sla: '=sla',
+                vm: '=controller'
+            },
+            templateUrl: 'directives/tables/sla'
         };
     }
 

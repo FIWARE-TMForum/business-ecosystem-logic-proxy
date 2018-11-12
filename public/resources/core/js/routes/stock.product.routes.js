@@ -1,6 +1,6 @@
 /* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
- * This file belongs to the business-ecosystem-logic-proxy of the
+ * This file belongs to the bae-logic-proxy-test of the
  * Business API Ecosystem
  *
  * This program is free software: you can redistribute it and/or modify
@@ -50,6 +50,11 @@
                 url: '/create',
                 templateUrl: 'stock/product/create',
                 controller: 'ProductCreateCtrl as createVM'
+            })
+            .state('stock.product.import', {
+                url: '/import',
+                templateUrl: 'stock/product/import',
+                controller: 'ProductImportCtrl as createVM'
             })
             .state('stock.product.update', {
                 url: '/:productId',
