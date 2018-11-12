@@ -732,7 +732,7 @@
                         callback();
                     }, (response) => showAssetError(response), assetId);
             } else if (controller.isDigital && vm.currFormat === 'URL') {
-                if(meta.idPattern !== undefined){
+                if(meta !== null && meta !== undefined && meta.idPattern !== undefined){
                     var entity_id = "<entity_id>"
                     var entity_type = ""
                     var idPattern = meta.idPattern.split(":")
