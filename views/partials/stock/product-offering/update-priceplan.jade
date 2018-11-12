@@ -3,7 +3,7 @@
     .row
       .col-sm-12(ng-if="updateVM.item.productOfferingTerm[0].type !== 'None'")
         .h4
-          strong #{ __("Data license") }
+          strong #{ __("License") }
         dl(ng-repeat="term in updateVM.item.productOfferingTerm")   
           dd.text-dark-secondary {{ term.name }}  
           dd.text-dark-secondary(ng-if="term.type == 'Custom'") {{ term.description }}

@@ -41,10 +41,10 @@
           a(ui-sref="offering.detail.licenseSla")
             span.item-icon.fa.fa-newspaper-o
             span.item-text.hidden-xs #{ __("Agreements") }
-        //- li(ui-sref-active-eq="active")
-        //-   a(ui-sref="offering.detail.pricePlan")
-        //-     span.item-icon.fa.fa-credit-card
-        //-     span.item-text.hidden-xs #{ __("Price plans") }
+        li(ui-sref-active-eq="active", ng-if="!detailVM.item.isBundle")
+          a(ui-sref="offering.detail.relationship")
+            span.item-icon.fa.fa-chain
+            span.item-text.hidden-xs #{ __("Relationships") }
   .col-xs-12
     ui-view(name="offering-content")
       include ./detail-about.jade

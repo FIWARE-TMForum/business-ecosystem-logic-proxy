@@ -1,6 +1,6 @@
-/* Copyright (c) 2018 Digital Catapult
+/* Contributed by Digital Catapult
  *
- * This file belongs to the bae-logic-proxy-test of the
+ * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
  *
  * This program is free software: you can redistribute it and/or modify
@@ -17,9 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var reputationModel = require('../db/schemas/reputationModel'),
-     config = require('../config'),
-     uuid = require('node-uuid');
+var reputationModel = require('../db/schemas/reputationModel');
 
 var reputationService = (function () {
 
@@ -114,28 +112,6 @@ var reputationService = (function () {
             res.status(400).json({ error: e.message + ' Invalid request' });
         }
     };
-
-    // /**
-    //  * Change the apiKey state to "committed".
-    //  *
-    //  * @param  {Object} req      Incoming request.
-    //  * @param  {Object} res      Outgoing response.
-    //  */
-    // var commitApiKey = function (req, res) {
-
-    //     // Update the apiKey state
-    //     var apiKey = req.params.apiKey;
-
-    //     AccountingService.update({appId: appId, userId: userId}, { $set: {authToken: authToken, refreshToken: refreshToken, expire: expire}}, function (err, rawResp) {
-    //         if (err) {
-    //             res.status(500).json({error: err.message});
-    //         } else if (rawResp.n < 1) {
-    //             res.status(404).json({error: 'Invalid API Key'});
-    //         } else {
-    //             res.status(200).send();
-    //         }
-    //     });
-    // };
 
     return {
         saveReputation: saveReputation,

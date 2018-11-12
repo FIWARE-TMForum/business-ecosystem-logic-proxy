@@ -1,6 +1,6 @@
 /* Copyright (c) 2015 - 2018 CoNWeT Lab., Universidad Politécnica de Madrid
  *
- * This file belongs to the bae-logic-proxy-test of the
+ * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
  *
  * This program is free software: you can redistribute it and/or modify
@@ -22,15 +22,6 @@ var accessTokenService = require('../db/schemas/accessTokenService'),
      uuid = require('node-uuid');
 
 var authorizeService = (function () {
-
-    // /**
-    //  * Generates am aìKey.
-    //  */
-    // var generateApiKey = function () {
-    //     var apiKey = uuid.v4();
-
-    //     return apiKey;
-    // };
 
     /**
      * Save an OAuth2 token for the app and user specifed in the request body.
@@ -79,7 +70,7 @@ var authorizeService = (function () {
     };
 
 
-        /**
+    /**
      * Save an OAuth2 token for the app and user specifed in the request body.
      *
      * @param  {Object} req     Incoming request.
@@ -122,28 +113,6 @@ var authorizeService = (function () {
             res.status(400).json({ error: e.message + ' Invalid body' });
         }
     };
-
-    // /**
-    //  * Change the apiKey state to "committed".
-    //  *
-    //  * @param  {Object} req      Incoming request.
-    //  * @param  {Object} res      Outgoing response.
-    //  */
-    // var commitApiKey = function (req, res) {
-
-    //     // Update the apiKey state
-    //     var apiKey = req.params.apiKey;
-
-    //     AccountingService.update({appId: appId, userId: userId}, { $set: {authToken: authToken, refreshToken: refreshToken, expire: expire}}, function (err, rawResp) {
-    //         if (err) {
-    //             res.status(500).json({error: err.message});
-    //         } else if (rawResp.n < 1) {
-    //             res.status(404).json({error: 'Invalid API Key'});
-    //         } else {
-    //             res.status(200).send();
-    //         }
-    //     });
-    // };
 
     return {
         saveAppToken: saveAppToken,

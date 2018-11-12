@@ -1,6 +1,6 @@
 /* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
- * This file belongs to the bae-logic-proxy-test of the
+ * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
  *
  * This program is free software: you can redistribute it and/or modify
@@ -216,6 +216,54 @@
                 });
             }
         });
+        clearFileInput();
+    }
+
+    function buildFileController(vm, $scope, form, Asset) {
+
+        function clearFileInput() {
+            if (!form.extraFile) {
+                form.extraFile = {};
+            } else {
+                // Reset possible previous errors
+                form.extraFile.$invalid = false;
+                form.extraFile.$error = {};
+            }
+        }
+
+        vm.removeExtraFile = function (index) {
+            vm.extraFiles.splice(index, 1);
+        };
+
+        $scope.$watch(function () { return vm.extraFile; }, function () {
+            // Check that the new file is a valid image
+            if (vm.extraFile) {
+                clearFileInput();
+                form.extraFile.$dirty = true;
+
+                var prefix = vm.data.name.replace(/ /g, '');
+
+                if (prefix.length > 10) {
+                    prefix = prefix.substr(0, 10);
+                }
+
+                // Upload the file to the server when it is included in the input
+                Asset.uploadAsset(vm.extraFile, prefix, null, vm.extraFile.type, true, null, function(result) {
+                    vm.extraFiles.push({
+                        name: vm.extraFile.name,
+                        type: vm.extraFile.type,
+                        href: result.content
+                    })
+                }, function() {
+                    // The picture cannot be uploaded set error in input
+                    form.extraFile.$invalid = true;
+                    form.extraFile.$error = {
+                        upload: true
+                    };
+                });
+            }
+        });
+
         clearFileInput();
     }
 
@@ -759,7 +807,7 @@
                 // Initialize digital asset characteristics
                 vm.digitalChars.push(ProductSpec.createCharacteristic({
                     name: "Asset type",
-                    description: "Type of the data source described in this product specification"
+                    description: "Type of the digital asset described in this product specification"
                 }));
                 vm.digitalChars[0].productSpecCharacteristicValue.push(ProductSpec.createCharacteristicValue({
                     default: true,
@@ -767,14 +815,14 @@
                 }));
                 vm.digitalChars.push(ProductSpec.createCharacteristic({
                     name: "Media type",
-                    description: "Media type of the data source described in this product specification"
+                    description: "Media type of the digital asset described in this product specification"
                 }));
                 vm.digitalChars[1].productSpecCharacteristicValue.push(ProductSpec.createCharacteristicValue({
                     default: true
                 }));
                 vm.digitalChars.push(ProductSpec.createCharacteristic({
                     name: "Location",
-                    description: "URL pointing to the data source described in this product specification"
+                    description: "URL pointing to the digital asset described in this product specification"
                 }));
                 vm.digitalChars[2].productSpecCharacteristicValue.push(ProductSpec.createCharacteristicValue({
                     default: true
@@ -799,10 +847,10 @@
                 title: 'General',
                 templateUrl: 'stock/product/create/general'
             },
-           /*{
+           {
                 title: 'Bundle',
                 templateUrl: 'stock/product/create/bundle'
-            },*/
+            },
             {
                 title: 'Assets',
                 templateUrl: 'stock/product/create/assets'
@@ -815,11 +863,11 @@
                 title: 'Attachments',
                 templateUrl: 'stock/product/create/attachments'
             },
-/*            {
+            {
                 title: 'Relationships',
                 templateUrl: 'stock/product/create/relationships'
             },
-            {
+            /*{
                 title: 'Terms & Conditions',
                 templateUrl: 'stock/product/create/terms'
             },*/
@@ -1132,7 +1180,7 @@
             }, function (response) {
 
                 var defaultMessage = 'There was an unexpected error that prevented the ' +
-                    'system from creating a New data source';
+                    'system from creating a new product';
                 var error = Utils.parseError(response, defaultMessage);
 
                 $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
@@ -1343,7 +1391,7 @@
                 });
             }, function (response) {
                 $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
-                    error: Utils.parseError(response, 'Unexpected error trying to update the Data source spec.')
+                    error: Utils.parseError(response, 'Unexpected error trying to update the product spec.')
                 });
             });
         }

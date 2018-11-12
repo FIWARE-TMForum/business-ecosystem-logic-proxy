@@ -1,6 +1,6 @@
-/* Copyright (c) 2018 Digital Catapult
+/* Contributed by Digital Catapult
  *
- * This file belongs to the bae-logic-proxy-test of the
+ * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
  *
  * This program is free software: you can redistribute it and/or modify
@@ -17,9 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var slaModel = require('../db/schemas/slaModel'),
-     config = require('../config'),
-     uuid = require('node-uuid');
+var slaModel = require('../db/schemas/slaModel');
 
 var slaService = (function () {
 

@@ -1,6 +1,6 @@
 /* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
- * This file belongs to the bae-logic-proxy-test of the
+ * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
  *
  * This program is free software: you can redistribute it and/or modify
@@ -198,13 +198,10 @@
                     return productSpec.serialize();
                 })
             });
-//            alert();
             ProductSpec.save(data, function (productSpecCreated) {
                 productSpecCreated.bundledProductSpecification = bundledProductSpecification;
                 deferred.resolve(productSpecCreated);
             }, function (response) {
-                alert(response.responseText);
-                alert(JSON.stringify(data));
                 deferred.reject(response);
             });
 

@@ -17,6 +17,13 @@ ui-view
           form(ng-switch-when="LOADED", name="order.form", novalidate)
             .row
               .col-xs-12
+                .form-group
+                  label
+                    span #{ __("Enter a note") }
+                    small.text-muted (#{ __("optional") })
+                  textarea.form-control(rows="3", name="note", ng-model="orderVM.note.text")
+            .row
+              .col-xs-12
                 .form-group(ng-controller="BillingAccountSearchCtrl as searchVM")
                   label
                     span #{ __("Choose a billing address") }

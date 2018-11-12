@@ -1,6 +1,6 @@
 /* Copyright (c) 2015 - 2018 CoNWeT Lab., Universidad Politécnica de Madrid
  *
- * This file belongs to the bae-logic-proxy-test of the
+ * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
  *
  * This program is free software: you can redistribute it and/or modify
@@ -189,13 +189,9 @@
                 templateUrl: 'stock/product-offering/create/bundle'
             },
             {
-                title: 'Data source spec.',
+                title: 'Product Spec.',
                 templateUrl: 'stock/product-offering/create/product'
-            },/*
-            {
-                title: 'Data source spec.',
-                templateUrl: 'stock/product-offering/create/product-bundle'
-            },*/
+            },
             {
                 title: 'Catalogue',
                 templateUrl: 'stock/product-offering/create/catalogue'
@@ -340,7 +336,7 @@
         });
 
         searchPromise.catch(function (response) {
-            vm.errorMessage = Utils.parseError(response, 'Unexpected error trying to retrieve Data source specifications and catalogues.');
+            vm.errorMessage = Utils.parseError(response, 'Unexpected error trying to retrieve product specifications and catalogues.');
         });
 
         Object.defineProperty(vm, 'status', {

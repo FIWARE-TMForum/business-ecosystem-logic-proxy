@@ -1,6 +1,6 @@
 /* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
- * This file belongs to the bae-logic-proxy-test of the
+ * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
  *
  * This program is free software: you can redistribute it and/or modify
@@ -576,7 +576,7 @@ var catalog = (function() {
                 // Trying to upgrade the product without providing new asset info
                 return callback({
                     status: 422,
-                    message: 'To upgrade digital Data source specifications it is required to provide new asset info'
+                    message: 'To upgrade digital product specifications it is required to provide new asset info'
                 });
             }
 
