@@ -26,6 +26,7 @@ const path = require('path');
 const staticPath = './static';
 
 const debug = !(process.env.NODE_ENV == 'production');
+const theme = process.env.BAE_LP_THEME || config.theme;
 
 const deleteContents = function (path) {
     fs.readdirSync(path).forEach((file) => {
@@ -46,15 +47,15 @@ const deleteDir = function (path) {
 
 const loadTheme = function () {
     // Check if the provided theme exists
-    if (!fs.existsSync('./themes/' + config.theme)) {
-        console.log('The configured theme ' + config.theme + ' has not been provided');
+    if (!fs.existsSync('./themes/' + theme)) {
+        console.log('The configured theme ' + theme + ' has not been provided');
         process.exit(1);
     }
 
-    console.log('Loading Theme ' + config.theme);
+    console.log('Loading Theme ' + theme);
 
     // Merge default files with theme ones
-    mergedirs.default('./themes/' + config.theme, './static', 'overwrite');
+    mergedirs.default('./themes/' + theme, './static', 'overwrite');
 
     console.log('Theme loaded');
 };
@@ -92,7 +93,7 @@ const minimizejs = function () {
 
 const mergeLocales = function() {
     // Check if the plugin includes locales
-    let localesDir = './themes/' + config.theme + '/locales'
+    let localesDir = './themes/' + theme + '/locales'
     if (fs.existsSync(localesDir) && fs.statSync(localesDir).isDirectory()) {
         // Parse and merge files
         fs.readdirSync(localesDir).map(f => {
@@ -121,7 +122,7 @@ const mergeLocales = function() {
 }
 
 // Check if a theme has been provided or the system is in production
-if (!config.theme && debug) {
+if (!theme && debug) {
     console.log('The default theme is configured and debug mode is active, nothing to do');
     process.exit(1);
 }
@@ -137,7 +138,7 @@ if(fs.existsSync(staticPath)) {
 mergedirs.default('./views', './static/views', 'overwrite');
 mergedirs.default('./public', './static/public', 'overwrite');
 
-if (config.theme) {
+if (theme) {
     // If a theme has been provided merge it with default files
     loadTheme();
     mergeLocales();
