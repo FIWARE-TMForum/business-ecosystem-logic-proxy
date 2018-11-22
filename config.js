@@ -132,6 +132,11 @@ config.billingAccountOwnerRole = 'bill receiver';
 // example: ['/public/*', '/static/css/']
 config.publicPaths = [];
 
+config.indexes = {
+    'indexFile': 'elastic_indexes.js',
+    'elasticHost': 'elastic.docker:9200'
+};
+
 config.magicKey = undefined;
 
 config.usageChartURL = '';
