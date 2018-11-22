@@ -36,11 +36,18 @@ describe("Elasticsearch indexes tests", function () {
 	    './../config.js': testUtils.getDefaultConfig()
 	});
 
-	return proxyrequire('../../lib/elastic_indexes.js', {});
+	return proxyrequire('../../lib/elastic_indexes.js', {
+	    '../config': testUtils.getDefaultConfig()
+	});
     };
 
-    it("should have correct tables", function () {
+    var testConfig = testUtils.getDefaultConfig();
+    var elasticHost = testConfig.indexes.elasticHost;
+    
+    fit("should have correct tables", function () {
 	var indexes = getIndexLib();
+
+	console.log("--------------- 1: " + elasticHost);
 
 	expect(indexes.elasticIndexes.offerings).toEqual("offerings");
 	expect(indexes.elasticIndexes.products).toEqual("products");
@@ -49,21 +56,36 @@ describe("Elasticsearch indexes tests", function () {
 	expect(indexes.elasticIndexes.orders).toEqual("orders");
     });
 
-    it("should not fail when init can connect to elastic host", function() {
-	var indexNock = nock('http://elastic.docker:9200/').head('/').reply(200, {});
-
+    fit("should not fail when init can connect to elastic host", function(done) {
 	var indexes = getIndexLib();
-
-	expect(indexes.init).not.toThrowError();
+	console.log("--------------- 2: " + elasticHost);
+	var indexNock = nock(elasticHost)
+	    .persist()
+	    .head(/(.*)?/)
+	    .reply(200);
+	
+	indexes.init().then(function () {
+	    done();
+	}, function (reason) {
+	    done(new Error('Init failed'));
+	});
     });
     
-    it("should fail when init cannot connect to elastic host", function () {
-	var indexNock = nock('http://elastic.docker:9200/')
-	    .intercept('.*', 'HEAD')
-	    .reply(404, {});
-
+    fit("should fail when init cannot connect to elastic host", function (done) {
 	var indexes = getIndexLib();
-	expect(indexes.init).toThrowError();
+
+	var indexNock = nock(elasticHost)
+	    .persist()
+	    .head(/(.*)?/)
+	    .socketDelay(9999)
+	    .reply(503);
+	    
+	
+	indexes.init().then(function () {
+	    done(new Error('Init did not fail'));
+	}, function (reason) {
+	    done();
+	});
     });
     
     xit("should use offering index and search correctly", function (done) {
