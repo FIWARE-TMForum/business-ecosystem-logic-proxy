@@ -3,9 +3,9 @@ FROM ubuntu:16.04
 MAINTAINER CoNWeT Lab. Universidad Politécnica de Madrid
 
 #ENV VERSION Synchronicity-v6.4.0
-ENV VERSION no-cache1
-ENV VERSION multiple-broker
-ENV VERSION SLA
+#ENV VERSION no-cache1
+#ENV VERSION multiple-broker
+#ENV VERSION SLA
 
 RUN apt-get update && apt-get install -y git xinetd python-pip wget && \
     pip install sh requests && \
@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y git xinetd python-pip wget && \
 
 WORKDIR business-ecosystem-logic-proxy
 
-ENV VERSION SLA
+ENV VERSION keyrock7
 
 RUN wget https://nodejs.org/dist/v6.9.1/node-v6.9.1-linux-x64.tar.xz && \
     tar -xvf node-v6.9.1-linux-x64.tar.xz && \
