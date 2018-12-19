@@ -17,17 +17,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var management = (function() {
 
-    var versionInfo = {
-        version: '7.4.0',
-        releaseDate: '23/10/2018',
-        gitHash: '',
-        doc: 'https://fiware-tmforum.github.io/Business-API-Ecosystem/v7.4.0/',
-        userDoc: 'http://business-api-ecosystem.readthedocs.io/en/v7.4.0/'
-    };
+const versionInfo = require('./versionInfo').versionInfo;
 
-    var getCount = function(req, res) {
+const management = (function() {
+
+    const getCount = function(req, res) {
         var size = req.params.size;
         res.statusCode = 200;
         res.json({
@@ -36,7 +31,7 @@ var management = (function() {
         res.end();
     };
 
-    var getVersion = function(req, res) {
+    const getVersion = function(req, res) {
         var uptime = process.uptime();
         var days = Math.floor(uptime / 86400);
         var hours = Math.floor((uptime - (days * 86400)) / 3600);
