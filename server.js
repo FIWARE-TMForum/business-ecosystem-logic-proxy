@@ -215,11 +215,7 @@ config.usageChartURL = process.env.BAE_LP_USAGE_CHART || config.usageChartURL;
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
-<<<<<<< HEAD
-=======
-// Auth execution
 
->>>>>>> f8afe0f935a1da59e224269d9e420a344e13388f
 auth = auth.auth();
 tmf = tmf.tmf();
 
