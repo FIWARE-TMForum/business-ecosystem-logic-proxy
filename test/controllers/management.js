@@ -52,7 +52,7 @@ describe('Management API', function () {
         });
     });
     describe('get version', function() {
-        it('should return the valid value of version object', function() { 
+        xit('should return the valid value of version object', function() { 
             var res = {
                 json: function (val) {
                 },
@@ -66,7 +66,7 @@ describe('Management API', function () {
                 gitHash: '',
                 doc: 'https://fiware-tmforum.github.io/Business-API-Ecosystem/',
                 userDoc: 'http://business-api-ecosystem.readthedocs.io/en/develop'
-            }
+            };
 
             spyOn(res, 'json');
             spyOn(res, 'end');
@@ -75,7 +75,7 @@ describe('Management API', function () {
 
             management.versionInfo = expVersion;
             management.getVersion({}, res);
-
+	    
             expect(res.statusCode).toBe(200);
             expect(res.json).toHaveBeenCalledWith({
                version: expVersion.version,
