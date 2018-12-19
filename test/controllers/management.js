@@ -17,15 +17,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-const management = require('../../controllers/management').management;
-const config = require('../utils.js').getDefaultConfig();
-const proxyquire =  require('proxyquire');
+const proxyquire = require('proxyquire');
 
 describe('Management API', function () {
 
     describe('get count', function () {
 
         it('should return the correct size object when the param is included', function () {
+            const management = require('../../controllers/management').management;
             var req = {
                 params: {
                     size: '10'
@@ -51,8 +50,9 @@ describe('Management API', function () {
             expect(res.end).toHaveBeenCalledWith();
         });
     });
+
     describe('get version', function() {
-        it('should return the valid value of version object', function() { 
+        it('should return the valid value of version object', function() {
             var res = {
                 json: function (val) {
                 },
@@ -61,11 +61,13 @@ describe('Management API', function () {
             };
             var uptime = 90061;
             var expVersion = {
-                version: 'develop',
-                releaseDate: '',
-                gitHash: '',
-                doc: 'https://fiware-tmforum.github.io/Business-API-Ecosystem/',
-                userDoc: 'http://business-api-ecosystem.readthedocs.io/en/develop'
+                versionInfo: {
+                    version: 'develop',
+                    releaseDate: '',
+                    gitHash: '',
+                    doc: 'https://fiware-tmforum.github.io/Business-API-Ecosystem/',
+                    userDoc: 'http://business-api-ecosystem.readthedocs.io/en/develop'
+                }
             }
 
             spyOn(res, 'json');
@@ -73,17 +75,22 @@ describe('Management API', function () {
 
             spyOn(process, 'uptime').and.returnValue(uptime);
 
-            management.versionInfo = expVersion;
+            versionInfo = expVersion;
+
+            let management = proxyquire('../../controllers/management', {
+                './versionInfo': expVersion
+            }).management;
+
             management.getVersion({}, res);
 
             expect(res.statusCode).toBe(200);
             expect(res.json).toHaveBeenCalledWith({
-               version: expVersion.version,
-               release_date: expVersion.releaseDate,
+               version: expVersion.versionInfo.version,
+               release_date: expVersion.versionInfo.releaseDate,
                uptime: '1 d, 1 h, 1 m, 1 s',
-               git_hash: expVersion.gitHash,
-               doc: expVersion.doc,
-               user_doc: expVersion.userDoc
+               git_hash: expVersion.versionInfo.gitHash,
+               doc: expVersion.versionInfo.doc,
+               user_doc: expVersion.versionInfo.userDoc
             });
             expect(res.end).toHaveBeenCalledWith();
         });
