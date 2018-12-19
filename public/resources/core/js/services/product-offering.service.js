@@ -708,8 +708,8 @@
                     this.terms.isFullCustom = false;
                     break;
                 }
-                case TYPES.LICENSE.STANDARD:{
-                    this.terms.type = 'Standard';
+                case TYPES.LICENSE.FREETEXT:{
+                    this.terms.type = 'Custom';
                     this.terms.isFullCustom = true;
                     break;
                 }
