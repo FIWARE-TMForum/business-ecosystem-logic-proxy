@@ -65,8 +65,6 @@ describe("Elasticsearch indexes tests", function () {
     it("should have correct tables", function () {
         var indexes = getIndexLib();
 
-        console.log("--------------- 1: " + elasticHost);
-
         expect(indexes.elasticIndexes.offerings).toEqual("offerings");
         expect(indexes.elasticIndexes.products).toEqual("products");
         expect(indexes.elasticIndexes.catalogs).toEqual("catalogs");
@@ -76,7 +74,7 @@ describe("Elasticsearch indexes tests", function () {
 
     it("should not fail when init can connect to elastic host", function(done) {
         var indexes = getIndexLib();
-        console.log("--------------- 2: " + elasticHost);
+
         var indexNock = nock(elasticHost)
             .persist()
             .head(/(.*)?/)
