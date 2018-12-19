@@ -32,7 +32,7 @@
     .row
       .col-xs-12
         .alert.alert-info(ng-if="!updateVM.item.productOfferingPrice.length")
-          .alert.alert-info.text-center #{ __("No price plans defined.") }
+          .text-center #{ __("No price plans defined.") }
         price-plan-table(controller="updateVM" data="updateVM.item.productOfferingPrice")
       .col-xs-12
         .form-group.text-left(ng-if="!updateVM.pricePlanEnabled")

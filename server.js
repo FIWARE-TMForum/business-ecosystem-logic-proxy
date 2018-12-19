@@ -1,4 +1,5 @@
 var authorizeService = require('./controllers/authorizeService').authorizeService,
+    apiKeyService = require('./controllers/apiKeyService').apiKeyService,
     slaService = require('./controllers/slaService').slaService,
     reputationService = require('./controllers/reputationService').reputationService,
     bodyParser = require('body-parser'),
@@ -108,6 +109,7 @@ config.proxyPrefix = checkPrefix(config.proxyPrefix, '');
 config.portalPrefix = checkPrefix(config.portalPrefix, '');
 config.shoppingCartPath = checkPrefix(config.shoppingCartPath, '/shoppingCart');
 config.authorizeServicePath = checkPrefix(config.authorizeServicePath, '/authorizeService');
+config.authorizeServicePath = checkPrefix(config.apiKeyServicePath, '/apiKeyService');
 config.slaServicePath = checkPrefix(config.slaServicePath, '/SLAManagement');
 config.reputationServicePath = checkPrefix(config.reputationServicePath, '/REPManagement');
 config.logInPath = config.logInPath || '/login';
