@@ -19,7 +19,7 @@
         dl(ng-repeat="metric in updateVM.sla.metrics")   
           //- dt #{ __("Type") }
           //- dt {{ metric.type }}  
-          dd.text-dark-secondary(ng-if="metric.type == 'Updates rate'") {{ metric.type + ": " + metric.threshold + "/" + metric.unitMeasure }}
+          dd.text-dark-secondary(ng-if="metric.type == 'Updates rate'") {{ metric.type + ": " + metric.threshold + " /" + metric.unitMeasure }}
           dd.text-dark-secondary(ng-if="metric.type == 'Updates rate'") <i>{{ metric.description }}</i>
           dd.text-dark-secondary(ng-if="metric.type == 'Response time'") {{ metric.type + ": " + metric.threshold + " " + metric.unitMeasure }}
           dd.text-dark-secondary(ng-if="metric.type == 'Response time'") <i>{{ metric.description }}</i>

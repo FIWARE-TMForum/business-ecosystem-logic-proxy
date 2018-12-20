@@ -431,10 +431,13 @@ app.get('/' + config.endpoints.management.path + '/count/:size', management.getC
 ///////////////////////// AUTHORIZE SERVICE /////////////////////////
 /////////////////////////////////////////////////////////////////////
 
+app.use(config.apiKeyServicePath + '/*', checkMongoUp);
+app.post(config.apiKeyServicePath + '/apiKeys', apiKeyService.getApiKey);
+app.post(config.apiKeyServicePath + '/apiKeys/:apiKey/commit', apiKeyService.commitApiKey);
+
 app.use(config.authorizeServicePath + '/*', checkMongoUp, auth.headerAuthentication, auth.checkOrganizations, auth.setPartyObj, failIfNotAuthenticated);
 app.post(config.authorizeServicePath + '/token', authorizeService.saveAppToken);
 app.post(config.authorizeServicePath + '/read', authorizeService.getAppToken);
-//app.post(config.authorizeServicePath + '/apiKeys/:apiKey/commit', authorizeService.commitApiKey);
 
 /////////////////////////////////////////////////////////////////////
 ///////////////////////// SLA SERVICE ///////////////////////////////
@@ -461,12 +464,7 @@ app.post(config.reputationServicePath + '/reputation/set', reputationService.sav
 var importPath = config.theme || !debug ? './static/public/imports' : './public/imports' ;
 var imports = require(importPath).imports;
 
-
-
-
 var renderTemplate = function(req, res, viewName) {
-
-    // TODO: Maybe an object with extra properties (if required)
     var options = {
         user: req.user,
         contextPath: config.portalPrefix,
@@ -499,7 +497,6 @@ var renderTemplate = function(req, res, viewName) {
     options.jsAppFilesToInject = options.jsAppFilesToInject.concat(imports.jsStockFilesToInject);
 
     res.render(viewName, options);
-
     res.end();
 };
 
