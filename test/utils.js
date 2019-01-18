@@ -103,6 +103,18 @@ var defaultConfig = {
             host: 'usage.com',
             port: 78,
             appSsl: false
+        },
+        sla: {
+            path: 'SLAManagement',
+            host: 'localhost',
+            port: 80,
+            appSsl: false
+        },
+        reputation: {
+            path: 'REPManagement',
+            host: 'localhost',
+            port: 80,
+            appSsl: false
         }
     },
     billingAccountOwnerRole: 'bill receiver',

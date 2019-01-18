@@ -25,10 +25,10 @@ describe('Accounting Service', function () {
     var DEFAULT_APIKEY = 'apiKey';
 
     var getAuthorizeServiceController = function (accServiceSchema, uuidMock) {
-        return proxyquire('../../controllers/authorizeService', {
+        return proxyquire('../../controllers/apiKeyService', {
             '../db/schemas/accountingService': accServiceSchema,
             'uuid/v4': uuidMock
-        }).authorizeService;
+        }).apiKeyService;
     };
 
     var invalidRequest = function (handler, body, statusExpected, bodyExpected, done) {
@@ -58,12 +58,10 @@ describe('Accounting Service', function () {
     describe('Get api-key', function () {
 
         it('should return 400 when the body is empty', function (done) {
-
             invalidRequest('getApiKey', undefined, 400, {error: 'Invalid body'}, done);
         });
 
         it('should return 422 when the "url" is not defined', function (done) {
-
             invalidRequest('getApiKey', '{}', 422, {error: 'Url missing'}, done);
         });
 

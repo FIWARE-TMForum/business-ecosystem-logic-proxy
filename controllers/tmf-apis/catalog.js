@@ -576,7 +576,7 @@ var catalog = (function() {
                 // Trying to upgrade the product without providing new asset info
                 return callback({
                     status: 422,
-                    message: 'To upgrade digital product specifications it is required to provide new asset info'
+                    message: 'To upgrade product specifications it is required to provide new asset info'
                 });
             }
 
