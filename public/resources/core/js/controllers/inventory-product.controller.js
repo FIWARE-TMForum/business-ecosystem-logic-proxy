@@ -160,6 +160,7 @@
                 $scope.ratings.current = 0;
             })
         }
+
         /* jshint validthis: true */
         var vm = this;
         var load = false;
@@ -190,11 +191,17 @@
         vm.downloadInvoice = downloadInvoice;
         vm.generateToken = generateToken;
         vm.retrieveToken = retrieveToken;
+        vm.tokenSupported = tokenSupported;
         vm.password = "";
         vm.refreshToken = "";
         vm.token = retrieveToken();
         vm.sla = "";
     
+        function tokenSupported() {
+            // To be updated when functionality available in Charging backend
+            return false;
+        }
+
         InventoryProduct.detail($state.params.productId).then(function (productRetrieved) {
             locations = [];
             load = false;

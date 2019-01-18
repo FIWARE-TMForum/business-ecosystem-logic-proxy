@@ -212,7 +212,7 @@
             var slaResource = $resource(URLS.SLA_GET);
             slaResource.get(params, function (collection) {
                 sla = collection;
-                sla.metrics = JSON.parse(sla.services) 
+                sla.metrics = sla.services;
                 deferred.resolve(sla);
             }, function (response) {
                 deferred.reject(response);

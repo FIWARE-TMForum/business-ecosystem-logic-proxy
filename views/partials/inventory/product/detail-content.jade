@@ -25,7 +25,7 @@
           a(ui-sref="inventory.product.detail.productCharacteristic")
             span.item-icon.fa.fa-gears
             span.item-text.hidden-xs #{ __("Characteristics") }
-        li(ui-sref-active-eq="active")
+        li(ng-if="detailVM.tokenSupported()" ui-sref-active-eq="active")
           a(ui-sref="inventory.product.detail.access")
             span.item-icon.fa.fa-key
             span.item-text.hidden-xs #{ __("Access") }

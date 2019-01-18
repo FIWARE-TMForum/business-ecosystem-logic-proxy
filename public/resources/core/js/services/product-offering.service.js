@@ -553,7 +553,13 @@
         };
 
         Price.prototype.toString = function toString() {
-            return this.taxIncludedAmount + ' ' + this.currencyCode;
+            let stringVal;
+            if (this.taxIncludedAmount > 0) {
+                stringVal = this.taxIncludedAmount + ' ' + this.currencyCode;
+            } else {
+                stringVal = "Free";
+            }
+            return stringVal;
         };
 
         var PriceAlteration = function PriceAlteration(data) {
@@ -652,27 +658,29 @@
         PricePlan.prototype.formatPriceAlteration = function formatPriceAlteration(extended) {
             return this.productOfferPriceAlteration ? formatAlteration(this.productOfferPriceAlteration, extended) : '';
         };
+
         PricePlan.prototype.resetPriceAlteration = function resetPriceAlteration(priceAlterationType) {
 
             switch (priceAlterationType) {
-            case TYPES.PRICE_ALTERATION_SUPPORTED.PRICE_COMPONENT:
-            case TYPES.PRICE_ALTERATION_SUPPORTED.DISCOUNT_OR_FEE:
-                this.productOfferPriceAlteration = new PriceAlteration({
-                    priceAlterationType: priceAlterationType,
-                    price: {
-                        currencyCode: this.price.currencyCode
-                    }
-                });
-                break;
-            default:
-                delete this.productOfferPriceAlteration;
+                case TYPES.PRICE_ALTERATION_SUPPORTED.PRICE_COMPONENT:
+                case TYPES.PRICE_ALTERATION_SUPPORTED.DISCOUNT_OR_FEE:
+                    this.productOfferPriceAlteration = new PriceAlteration({
+                        priceAlterationType: priceAlterationType,
+                        price: {
+                            currencyCode: this.price.currencyCode
+                        }
+                    });
+                    break;
+                default:
+                    delete this.productOfferPriceAlteration;
             }
-
             return this;
         };
+
         PricePlan.prototype.priceAlteration = function priceAlteration() {
             return this.productOfferPriceAlteration;
         };
+
         PricePlan.prototype.formatCurrencyCode = function formatCurrencyCode() {
             return '(' + this.price.currencyCode + ') ' + TYPES.CURRENCY_CODE[this.price.currencyCode];
         };
