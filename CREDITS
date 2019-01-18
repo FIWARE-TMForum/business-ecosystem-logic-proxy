@@ -1,0 +1,17 @@
+This file includes the list of external contributors
+including its name (N), email (E), organization (O)
+and a description of the contribution (D)
+
+----
+
+N: Angelo Capossele
+E: angelo.capossele@digicatapult.org.uk
+O: Digital Catapult
+D: Support for enriched license information for offerings,
+D: Support for defining offering SLAs
+D: Support for providing rating of acquired products
+
+N: Daniel Puschmann
+E: daniel.puschmann@digicatapult.org.uk
+O: Digital Catapult
+D: New regions and sectors
