@@ -2,7 +2,7 @@ FROM ubuntu:16.04
 
 LABEL Author="CoNWeT Lab. Universidad Politécnica de Madrid"
 
-ENV VERSION master
+ENV VERSION task/syncronicity-integration
 
 RUN apt-get update && apt-get install -y git xinetd python-pip wget && \
     pip install sh requests && \

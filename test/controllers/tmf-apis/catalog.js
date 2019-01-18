@@ -69,7 +69,7 @@ var INVALID_RELATED_PARTY = 'The field "relatedParty" can not be modified';
 var INVALID_CATEGORY_ID = 'Invalid category with id: ';
 var CATEGORY_CANNOT_BE_CHECKED = ['It was impossible to check if the category with id: ', ' already exists'];
 
-var UPGRADE_ASSET_NOT_PROVIDED = 'To upgrade digital product specifications it is required to provide new asset info';
+var UPGRADE_ASSET_NOT_PROVIDED = 'To upgrade product specifications it is required to provide new asset info';
 var UPGRADE_VERSION_NOT_PROVIDED = 'Product specification characteristics only can be updated for upgrading digital products';
 var UPGRADE_CUSTOM_CHAR_MOD = 'It is not allowed to update custom characteristics during a product upgrade';
 var INVALID_NON_DIGITAL_UPGRADE = 'Product spec characteristics cannot be updated';

@@ -17,87 +17,104 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var AccountingService = require('../db/schemas/accountingService'),
-     uuidv4 = require('uuid/v4');
+var accessTokenService = require('../db/schemas/accessTokenService');
 
 var authorizeService = (function () {
 
     /**
-     * Generates am aìKey.
-     */
-    var generateApiKey = function () {
-        var apiKey = uuidv4();
-
-        return apiKey;
-    };
-
-    /**
-     * Generates and send an apiKey for the url service specifed in the request body. The apiKey is saved in "uncommitted" state.
+     * Save an OAuth2 token for the app and user specifed in the request body.
      *
      * @param  {Object} req     Incoming request.
      * @param  {Object} res     Outgoing object.
      */    
-    var getApiKey = function (req, res) {
+    var saveAppToken = function (req, res) {
 
         try{
 
-            // Check the request and extract the url
-            var url = JSON.parse(req.body).url;
+            // Check the request and extract info
+            var appId = JSON.parse(req.body).appId;
+            var userId = JSON.parse(req.body).userId;
+            var authToken = JSON.parse(req.body).authToken;
+            var refreshToken = JSON.parse(req.body).refreshToken;
+            var expire = JSON.parse(req.body).expire;
 
-            if (url) {
+            if (appId) {
 
-                // Generate and save apiKey
-                var apiKey = generateApiKey();
-                var service = new AccountingService();
-                service.url = url;
-                service.apiKey = apiKey;
-                service.state = 'UNCOMMITTED';
+                //Generate and save apiKey
+                var service = new accessTokenService();
+                service.appId = appId;
+                service.userId = userId;
+                service.authToken = authToken;
+                service.refreshToken = refreshToken;
+                service.expire = Date.now() + (parseInt(expire) * 1000); 
 
-                service.save(function(err) {
-
+                accessTokenService.findOneAndUpdate({appId: appId, userId: userId}, { $set: {appId: appId, userId: userId, authToken: authToken, refreshToken: refreshToken, expire: service.expire}}, {upsert: true}, function (err, rawResp) {
                     if (err) {
-                        res.status(500).json({error: err.message});
-
-                    } else {
-
-                        res.status(201).json({apiKey: apiKey});
+                        res.status(500).json({error: err.message}); 
+                    } 
+                    else {
+                        res.status(200).json(rawResp);
                     }
                 });
+                
 
             } else {
-                res.status(422).json({error: 'Url missing'});
+                res.status(422).json({error: 'AppId missing'});
             }
 
         } catch (e) {
-            res.status(400).json({ error: 'Invalid body' });
+            res.status(400).json({ error: e.message + ' Invalid body' });
         }
     };
 
+
     /**
-     * Change the apiKey state to "committed".
+     * Save an OAuth2 token for the app and user specifed in the request body.
      *
-     * @param  {Object} req      Incoming request.
-     * @param  {Object} res      Outgoing response.
-     */
-    var commitApiKey = function (req, res) {
+     * @param  {Object} req     Incoming request.
+     * @param  {Object} res     Outgoing object.
+     */    
+    var getAppToken = function (req, res) {
 
-        // Update the apiKey state
-        var apiKey = req.params.apiKey;
+        try{
 
-        AccountingService.update({apiKey: apiKey}, { $set: {state: 'COMMITTED'}}, function (err, rawResp) {
-            if (err) {
-                res.status(500).json({error: err.message});
-            } else if (rawResp.n < 1) {
-                res.status(404).json({error: 'Invalid API Key'});
+            // Check the request and extract info
+            var appId = JSON.parse(req.body).appId;
+            var userId = JSON.parse(req.body).userId;
+            
+            if (appId) {
+
+                // Generate and save apiKey
+                var service = new accessTokenService();
+                service.appId = appId;
+                service.userId = userId;
+                //service.authToken = authToken;
+                //service.refreshToken = refreshToken;
+                //service.expire = Date.now() + 3600000; //expire; TODO FIX
+
+                accessTokenService.findOne({appId: appId, userId: userId}, function (err, rawResp) {
+                    if (err) {
+                        res.status(500).json({error: err.message});
+                    } 
+                    else {
+                        //res.status(200).json({appId: appId, userId: userId, authToken: JSON.parse(rawResp).authToken, refreshToken: JSON.parse(rawResp).refreshToken, expire: JSON.parse(rawResp).expire});
+                        res.status(200).json(rawResp);
+                    }
+                });
+                
+
             } else {
-                res.status(200).send();
+                res.status(422).json({error: 'AppId missing'});
             }
-        });
+
+        } catch (e) {
+            res.status(400).json({ error: e.message + ' Invalid body' });
+        }
     };
 
     return {
-        getApiKey: getApiKey,
-        commitApiKey: commitApiKey
+        saveAppToken: saveAppToken,
+        getAppToken: getAppToken
     };
 
 })();

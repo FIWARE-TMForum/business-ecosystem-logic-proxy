@@ -40,7 +40,12 @@
             search: search,
             count: count,
             detail: detail,
-            renew: renew
+            renew: renew,
+            getToken: getToken,
+            setToken: setToken,
+            getSla: getSla,
+            setRating : setRating,
+            getOwnRating : getOwnRating
         };
 
         function query(deferred, filters, method, callback) {
@@ -167,6 +172,85 @@
                 deferred.reject(response);
             });
 
+            return deferred.promise;
+        }
+
+        function getToken(data) {
+            var tokenResource = $resource(URLS.TOKEN_GET);
+            var deferred = $q.defer();
+
+            tokenResource.save(data, function(res, getResponseHeaders) {
+                deferred.resolve(res, {headers: getResponseHeaders()});
+            }, function (response) {
+                deferred.reject(response);
+            });
+            
+            return deferred.promise;
+        
+        }
+        
+        function setToken(data) {
+            var tokenResource = $resource(URLS.TOKEN_SET);
+            var deferred = $q.defer();
+
+            tokenResource.save(data, function(res, getResponseHeaders) {
+                deferred.resolve(res, {headers: getResponseHeaders()});
+            }, function (response) {
+                deferred.reject(response);
+            });
+            
+            return deferred.promise;
+        
+        }
+
+        function getSla(id) {
+            var deferred = $q.defer();
+            var params = {
+                id: id
+            };
+            var sla = {};
+            var slaResource = $resource(URLS.SLA_GET);
+            slaResource.get(params, function (collection) {
+                sla = collection;
+                sla.metrics = sla.services;
+                deferred.resolve(sla);
+            }, function (response) {
+                deferred.reject(response);
+            });
+            return deferred.promise;
+        }
+
+        function setRating(data) {
+            var ratingResource = $resource(URLS.REPUTATION_SET);
+            var deferred = $q.defer();
+
+            ratingResource.save(data, function(res, getResponseHeaders) {
+                deferred.resolve(res, {headers: getResponseHeaders()});
+            }, function (response) {
+                deferred.reject(response);
+            });
+            
+            return deferred.promise;
+        
+        }
+
+        function getOwnRating(id, user) {
+            var deferred = $q.defer();
+            var params = {
+                id: id,
+                consumerId: user
+            };
+            //var rating = {};
+            var ratingResource = $resource(URLS.REPUTATION_GET);
+            ratingResource.get(params, function (collection) {
+                var rating = 0;
+                if(collection.rate){
+                    rating = JSON.parse(collection.rate);
+                } 
+                deferred.resolve(rating);
+            }, function (response) {
+                deferred.reject(response);
+            });
             return deferred.promise;
         }
     }

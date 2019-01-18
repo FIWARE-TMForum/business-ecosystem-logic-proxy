@@ -29,6 +29,7 @@ config.sessionSecret = 'keyboard cat';
 config.theme = '';
 
 // OAuth2 configuration
+//'server': 'http://34.213.26.168:8000/',
 config.oauth2 = {
     'server': 'http://idm.docker:8000',
     'clientID': '',
@@ -115,6 +116,18 @@ config.endpoints = {
         'path': 'DSUsageManagement',
         'host': 'apis.docker',
         'port': '8080',
+        'appSsl': false
+    },
+    'sla': {
+        'path': 'SLAManagement',
+        'host': 'localhost',
+        'port': config.port,
+        'appSsl': false
+    },
+    'reputation': {
+        'path': 'REPManagement',
+        'host': 'localhost',
+        'port': config.port,
         'appSsl': false
     }
 };

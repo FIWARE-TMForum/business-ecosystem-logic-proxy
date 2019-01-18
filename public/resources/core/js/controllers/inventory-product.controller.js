@@ -112,11 +112,62 @@
         $rootScope, $scope, $state, InventoryProduct, Utils, ProductSpec, EVENTS, $interval,
         $window, LOGGED_USER, USAGE_CHART_URL, BillingAccount, Download) {
 
+        /* Rating stuff */
+        $scope.rating = 0;
+        $scope.ratings = {
+            current: 0,
+            max: 5
+        };
+
+        $scope.updateSelectedRating = function (rating) {
+            console.log(rating);
+            //update rating via API
+            /*
+            "offerId": "205",
+	        "description": "rep description",
+	        "consumerId" : "mario",
+	        "rate" : 1
+            */
+           var data = {};
+           data.offerId = vm.item.productOffering.id;
+           data.description = "";
+           data.consumerId = LOGGED_USER.id;
+           data.rate = rating;
+           InventoryProduct.setRating(data).then(function (ratingUpdated) {
+               console.log("Rating update OK")
+               //$scope.ratings.current = rating;
+               //$scope.rating = rating;
+           }, function (response){
+                console.log("Rating update FAIL")
+                //vm.error = Utils.parseError(response, 'The requested rating could not be retrieved');
+                //vm.item.status = ERROR;
+                //$scope.ratings.current = 0;
+            });
+        }
+
+        function getCurrentOwnRating(offeringId){
+            InventoryProduct.getOwnRating(offeringId, LOGGED_USER.id).then(function (ratingRetrieved) {
+                if(ratingRetrieved)
+                    $scope.ratings.current = ratingRetrieved;
+                else{
+                    $scope.rating = 0;
+                    $scope.ratings.current = 0;
+                }
+            }, function (response){
+                //vm.error = Utils.parseError(response, 'The requested rating could not be retrieved');
+                //vm.item.status = ERROR;
+                $scope.rating = 0;
+                $scope.ratings.current = 0;
+            })
+        }
+
         /* jshint validthis: true */
         var vm = this;
         var load = false;
         var digital = false;
         var locations = [];
+        var applicationId = [];
+        var hasApplicationId = false;
 
         vm.item = {};
         vm.offerings = [];
@@ -134,9 +185,22 @@
         vm.renewProduct = renewProduct;
         vm.loading = loading;
         vm.isDigital = isDigital;
+        vm.isProtected = isProtected;
         vm.downloadAsset = downloadAsset;
         vm.getUsageURL = getUsageURL;
         vm.downloadInvoice = downloadInvoice;
+        vm.generateToken = generateToken;
+        vm.retrieveToken = retrieveToken;
+        vm.tokenSupported = tokenSupported;
+        vm.password = "";
+        vm.refreshToken = "";
+        vm.token = retrieveToken();
+        vm.sla = "";
+    
+        function tokenSupported() {
+            // To be updated when functionality available in Charging backend
+            return false;
+        }
 
         InventoryProduct.detail($state.params.productId).then(function (productRetrieved) {
             locations = [];
@@ -156,8 +220,11 @@
                 productRetrieved.productOffering.bundledProductOffering.forEach(function(offering) {
                     vm.offerings.push(offering);
                     checkOfferingProduct(offering);
-                })
+                });
             }
+
+            getSla(productRetrieved.productOffering.id);
+            getCurrentOwnRating(productRetrieved.productOffering.id);
 
             // Retrieve existing charges
             BillingAccount.searchCharges(vm.item.id).then(function(charges) {
@@ -169,6 +236,7 @@
                     return charge;
                 });
                 vm.charges.status = LOADED;
+                vm.token = retrieveToken();
 
             }, function(response) {
                 vm.charges.error = Utils.parseError(response, 'It was impossible to load the list of charges');
@@ -204,26 +272,41 @@
             }
         }
 
+        function getSla(offeringId){
+            InventoryProduct.getSla(offeringId).then(function (slaRetrieved) {
+                vm.sla = slaRetrieved;
+            }, function (response){
+                vm.error = Utils.parseError(response, 'The requested SLA could not be retrieved');
+                vm.item.status = ERROR;
+            })
+        }
+
         function checkDigital(characteristics) {
             var hasMedia = false;
             var hasLocation = false;
             var hasAssetType = false;
+            
 
             // Check if the product is digital
             if (characteristics) {
-                for (var i = 0; i < characteristics.length && (!hasMedia || !hasLocation || !hasAssetType); i++) {
+                for (var i = 0; i < characteristics.length ; i++) { //removed && (!hasMedia || !hasLocation || !hasAssetType)
                     var charact = characteristics[i];
                     if (charact.name.toLowerCase() == 'asset type') {
                         hasAssetType = true;
                     }
-
+                    else
                     if (charact.name.toLowerCase() == 'media type') {
                         hasMedia = true;
                     }
-
+                    else
                     if (charact.name.toLowerCase() == 'location') {
                         hasLocation = true;
                         locations.push(charact.productSpecCharacteristicValue[0].value);
+                    }
+                    else
+                    if (charact.name.toLowerCase() == 'appid') {
+                        hasApplicationId = true;
+                        applicationId = charact.productSpecCharacteristicValue[0].value;
                     }
                 }
             }
@@ -261,6 +344,10 @@
             return hasProductPrice() && vm.item.productPrice[0].priceType.toLowerCase() == 'usage';
         }
 
+        function isProtected() {
+            return hasApplicationId;
+        }
+
         function isRenewable() {
             return hasProductPrice() && (vm.item.productPrice[0].priceType.toLowerCase() == 'recurring'
                                          || isUsage());
@@ -289,7 +376,7 @@
                             $rootScope.$emit(EVENTS.MESSAGE_CLOSED);
                         }
                         // Reload inventory page
-                        $state.go($state.current, {}, {reload: true})
+                        $state.go($state.current, {}, {reload: true});
 
                     };
 
@@ -361,7 +448,7 @@
             var result = formatCharacteristicValue(characteristic, characteristicValue);
 
             var productCharacteristic = vm.item.productCharacteristic.filter((prodCharacteristic) => {
-                return characteristicMatches(prodCharacteristic, characteristic, offId, productId)
+                return characteristicMatches(prodCharacteristic, characteristic, offId, productId);
             })[0];
 
             return result === productCharacteristic.value;
@@ -370,7 +457,61 @@
         function downloadInvoice(invoice) {
             Download.download(invoice).then((result) => {
                 let url = $window.URL.createObjectURL(result);
-                $window.open(url, '_blank')
+                $window.open(url, '_blank');
+            });
+        }
+
+        function getApplicationId(){
+            return applicationId;
+        }
+
+        function retrieveToken() {
+            load = true;
+
+            InventoryProduct.getToken({
+                appId: getApplicationId(),
+                userId: LOGGED_USER.id,
+            }).then(function(tokenBody,tokenHeader) {
+                load = false;
+                var now = Date.now();
+                var token_expiration = new Date(tokenBody.expire);
+                if(now > token_expiration)
+                    vm.token = "Token expired";
+                else
+                    vm.token = tokenBody.authToken;
+                vm.refreshToken = tokenBody.refreshToken;    
+                return vm.token;
+            }, function (response) {
+                load = false;
+                var defaultMessage = 'There was an unexpected error that prevented the ' +
+                    'system from renewing your product';
+                var error = Utils.parseError(response, defaultMessage);
+
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                    error: error
+                });
+            });
+        }
+
+        function generateToken() {
+            load = true;
+            InventoryProduct.setToken({
+                username: LOGGED_USER.email,
+                password: vm.password,
+                appId: getApplicationId(),
+            }).then(function(tokenBody,tokenHeader) {
+                load = false;
+                vm.token = retrieveToken();
+                return tokenBody.access_token;
+            }, function (response) {
+                load = false;
+                var defaultMessage = 'There was an unexpected error that prevented the ' +
+                    'system from generating a new token';
+                var error = Utils.parseError(response, defaultMessage);
+
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                    error: error
+                });
             });
         }
 

@@ -1,0 +1,34 @@
+form(name="step.form", novalidate)
+  .row
+    .col-sm-8
+      .form-group
+        label Base URL
+        input.form-control(
+          type="url"
+          name="baseurl"
+          ng-model="createVM.datastore.baseUrl"
+          required
+          readonly
+        )
+  .form-group
+    label Status
+    .status-group
+      .status-item(ng-repeat="status in FILTER_STATUS", class="status-{{ status.value | lowercase }}", ng-class="{ active: createVM.datastore.lifecycleStatus == status.value }")
+        span.item-icon
+        span.item-text {{ status.value }}
+  .form-group
+    label Description
+    textarea.form-control(
+      rows="3"
+      name="description"
+      ng-model="createVM.datastore.description"
+      readonly
+    )
+
+  .form-group.text-right
+    a.btn.btn-warning(
+      ng-click="createVM.create()"
+      ng-disabled="!step.form.$valid || createVM.create.status === createVM.STATUS.PENDING"
+    )
+      span.item-icon.fa.fa-spin.fa-spinner(ng-if="createVM.create.status === createVM.STATUS.PENDING")
+      span.item-text Create

@@ -198,7 +198,6 @@
                     return productSpec.serialize();
                 })
             });
-
             ProductSpec.save(data, function (productSpecCreated) {
                 productSpecCreated.bundledProductSpecification = bundledProductSpecification;
                 deferred.resolve(productSpecCreated);

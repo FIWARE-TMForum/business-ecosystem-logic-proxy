@@ -7,11 +7,11 @@
   .col-xs-12(ng-switch-when="LOADED")
     .alert.alert-info.text-center
         span.fa.fa-info-circle
-        span  #{ __("The shipping addresses will be used in your orders.") }
+        span  #{ __("The billing addresses will be used in your orders.") }
     .panel.panel-default.z-depth-1(ng-if="searchVM.list.length")
       .panel-body
         .h4.text-dark-secondary
-          strong #{ __("My shipping addresses") }
+          strong #{ __("My billing addresses") }
         hr
         .table-responsive
           table.table.table-bordered
@@ -34,7 +34,7 @@
     .panel.panel-default.z-depth-1(ng-show="searchVM.canEditOrAdd()")
       .panel-body(ng-controller="BillingAccountCreateCtrl as createVM")
         .h4.text-dark-secondary
-          strong #{ __("New shipping address") }
+          strong #{ __("New billing address") }
         hr
         shipping-address-form(
           form="createVM.form"

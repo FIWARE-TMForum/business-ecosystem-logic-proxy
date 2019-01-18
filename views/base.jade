@@ -21,6 +21,13 @@ html(ng-app="app")
           IMAGE: '#{ contextPath }/resources/core/images',
           USER: '#{ proxyPath }/#{ chargingPath }/api/userManagement/users/:username',
           ASSET_MANAGEMENT: '#{ proxyPath }/#{ chargingPath }/api/assetManagement',
+          SLA_SET: '#{ proxyPath }/SLAManagement/sla',
+          SLA_GET: '#{ proxyPath }/SLAManagement/sla/:id',
+          REPUTATION_SET: '#{ proxyPath }/REPManagement/reputation/set',
+          REPUTATION_GET: '#{ proxyPath }/REPManagement/reputation/:id/:consumerId',
+          REPUTATION_GET_ALL: '#{ proxyPath }/REPManagement/reputation',
+          TOKEN_SET: '#{ proxyPath }/#{ chargingPath }/api/token',
+          TOKEN_GET: '#{ proxyPath }/authorizeService/read',
           RENEW_JOB: '#{ proxyPath }/#{ chargingPath }/api/orderManagement/products/renewJob',
           CATALOGUE_MANAGEMENT: '#{ proxyPath }/#{ catalogPath }/api/catalogManagement/v2',
           PRODUCTORDER_MANAGEMENT: '#{ proxyPath }/#{ orderingPath }/api/productOrdering/v2',
@@ -75,14 +82,14 @@ html(ng-app="app")
         angular.module('app')
           .constant('LOGGED_USER', {
             id: '#{ user.id }',
-            name: '#{ user.displayName }',
+            name: '#{ user._json.username }',
             href: '#{ contextPath }/#{ partyPath }/api/partyManagement/v2/individual/#{ user.id }',
             email: '#{ user.email }',
             bearerToken: '#{ user.accessToken }',
             organizations: '#{ '{ "organizations":' + JSON.stringify(user.organizations) + '}' }',
             currentUser: {
               id: '#{ user.id }',
-              name: '#{ user.displayName }',
+              name: '#{ user._json.username }',
               email: '#{ user.email }',
               roles: '#{ JSON.stringify(user.roles) }',
               href: '#{ contextPath }/#{ partyPath }/api/partyManagement/v2/individual/#{ user.id }'
@@ -193,7 +200,7 @@ html(ng-app="app")
 
       .col-sm-5
         ul.list-inline
-          li.small © 2015-2017 CoNWeT Lab., Universidad Politécnica de Madrid
+          li.small © 2015-2019 CoNWeT Lab., Universidad Politécnica de Madrid
       .col-sm-6
         ul.list-inline.pull-right
           li.small
@@ -240,6 +247,8 @@ html(ng-app="app")
       include ./partials/offering/detail-bundled.jade
     script(type="text/ng-template", id="offering/detail/pricing")
       include ./partials/offering/detail-pricing.jade
+    script(type="text/ng-template", id="offering/detail/licenseSla")
+      include ./partials/offering/detail-license-sla.jade
     script(type="text/ng-template", id="offering/detail/relationship")
       include ./partials/offering/detail-relationship.jade
 
@@ -266,6 +275,16 @@ html(ng-app="app")
       include ./partials/stock/product/create-form-terms.jade
     script(type="text/ng-template", id="stock/product/create/finish")
       include ./partials/stock/product/create-form-finish.jade
+
+    script(type="text/ng-template", id="stock/product/import")
+      include ./partials/stock/product/import.jade
+    script(type="text/ng-template", id="stock/product/import/general")
+      include ./partials/stock/product/import-form.jade
+    script(type="text/ng-template", id="stock/product/import/datastore")
+      include ./partials/stock/product/import-datastore.jade
+    script(type="text/ng-template", id="stock/product/import/finish")
+      include ./partials/stock/product/import-finish.jade
+
     script(type="text/ng-template", id="stock/product/update")
       include ./partials/stock/product/update.jade
     script(type="text/ng-template", id="stock/product/update/bundled")
@@ -286,10 +305,16 @@ html(ng-app="app")
       include ./partials/stock/product-offering/create.jade
     script(type="text/ng-template", id="stock/product-offering/create/general")
       include ./partials/stock/product-offering/create-form.jade
+    script(type="text/ng-template", id="stock/product-offering/create/terms")
+      include ./partials/stock/product-offering/create-form-terms.jade
+    script(type="text/ng-template", id="stock/product-offering/create/sla")
+      include ./partials/stock/product-offering/create-form-sla2.jade
     script(type="text/ng-template", id="stock/product-offering/create/bundle")
       include ./partials/stock/product-offering/create-form-bundle.jade
     script(type="text/ng-template", id="stock/product-offering/create/priceplan")
       include ./partials/stock/product-offering/create-form-priceplan.jade
+    script(type="text/ng-template", id="stock/product-offering/create/product-bundle")
+      include ./partials/stock/product-offering/create-form-product-bundle.jade
     script(type="text/ng-template", id="stock/product-offering/create/product")
       include ./partials/stock/product-offering/create-form-product.jade
     script(type="text/ng-template", id="stock/product-offering/create/catalogue")
@@ -311,9 +336,13 @@ html(ng-app="app")
 
     script(type="text/ng-template", id="directives/offering-priceplan")
       include ./partials/stock/product-offering/directives/priceplan.jade
+    script(type="text/ng-template", id="directives/offering-sla")
+      include ./partials/stock/product-offering/directives/sla.jade  
 
     script(type="text/ng-template", id="directives/forms/priceplan")
       include ./partials/stock/product-offering/directives/priceplan-form.jade
+    script(type="text/ng-template", id="directives/forms/sla")
+      include ./partials/stock/product-offering/directives/sla-form.jade
     script(type="text/ng-template", id="directives/forms/business-address")
       include ./partials/settings/contact/directives/business-address-form.jade
     script(type="text/ng-template", id="directives/forms/shipping-address")
@@ -325,6 +354,8 @@ html(ng-app="app")
 
     script(type="text/ng-template", id="directives/tables/priceplan")
       include ./partials/stock/product-offering/directives/priceplan-table.jade
+    script(type="text/ng-template", id="directives/tables/sla")
+      include ./partials/stock/product-offering/directives/sla-table.jade
 
     script(type="text/ng-template", id="stock/product-catalogue/search")
       include ./partials/stock/product-catalogue/search.jade
@@ -376,6 +407,8 @@ html(ng-app="app")
       include partials/inventory/product/detail
     script(type="text/ng-template", id="inventory/product/detail/characteristic")
       include ./partials/inventory/product/detail-content-characteristic.jade
+    script(type="text/ng-template", id="inventory/product/detail/access")
+      include ./partials/inventory/product/access.jade
     script(type="text/ng-template", id="inventory/product/detail/priceplan")
       include ./partials/inventory/product/detail-content-priceplan.jade
     script(type="text/ng-template", id="inventory/product/detail/usage")

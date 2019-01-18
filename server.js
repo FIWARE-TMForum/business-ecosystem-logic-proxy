@@ -1,4 +1,7 @@
 var authorizeService = require('./controllers/authorizeService').authorizeService,
+    apiKeyService = require('./controllers/apiKeyService').apiKeyService,
+    slaService = require('./controllers/slaService').slaService,
+    reputationService = require('./controllers/reputationService').reputationService,
     bodyParser = require('body-parser'),
     base64url = require('base64url'),
     config = require('./config'),
@@ -106,6 +109,9 @@ config.proxyPrefix = checkPrefix(config.proxyPrefix, '');
 config.portalPrefix = checkPrefix(config.portalPrefix, '');
 config.shoppingCartPath = checkPrefix(config.shoppingCartPath, '/shoppingCart');
 config.authorizeServicePath = checkPrefix(config.authorizeServicePath, '/authorizeService');
+config.apiKeyServicePath = checkPrefix(config.apiKeyServicePath, '/apiKeyService');
+config.slaServicePath = checkPrefix(config.slaServicePath, '/SLAManagement');
+config.reputationServicePath = checkPrefix(config.reputationServicePath, '/REPManagement');
 config.logInPath = config.logInPath || '/login';
 config.logOutPath = config.logOutPath || '/logout';
 
@@ -425,10 +431,30 @@ app.get('/' + config.endpoints.management.path + '/count/:size', management.getC
 ///////////////////////// AUTHORIZE SERVICE /////////////////////////
 /////////////////////////////////////////////////////////////////////
 
-app.use(config.authorizeServicePath + '/*', checkMongoUp);
-app.post(config.authorizeServicePath + '/apiKeys', authorizeService.getApiKey);
-app.post(config.authorizeServicePath + '/apiKeys/:apiKey/commit', authorizeService.commitApiKey);
+app.use(config.apiKeyServicePath + '/*', checkMongoUp);
+app.post(config.apiKeyServicePath + '/apiKeys', apiKeyService.getApiKey);
+app.post(config.apiKeyServicePath + '/apiKeys/:apiKey/commit', apiKeyService.commitApiKey);
 
+app.use(config.authorizeServicePath + '/*', checkMongoUp, auth.headerAuthentication, auth.checkOrganizations, auth.setPartyObj, failIfNotAuthenticated);
+app.post(config.authorizeServicePath + '/token', authorizeService.saveAppToken);
+app.post(config.authorizeServicePath + '/read', authorizeService.getAppToken);
+
+/////////////////////////////////////////////////////////////////////
+///////////////////////// SLA SERVICE ///////////////////////////////
+/////////////////////////////////////////////////////////////////////
+
+app.use(config.slaServicePath + '/*', checkMongoUp, auth.headerAuthentication, auth.checkOrganizations, auth.setPartyObj, failIfNotAuthenticated);
+app.get(config.slaServicePath + '/sla/:id', slaService.getSla);
+app.post(config.slaServicePath + '/sla', slaService.saveSla);
+
+/////////////////////////////////////////////////////////////////////
+///////////////////////// REPUTAION SERVICE /////////////////////////
+/////////////////////////////////////////////////////////////////////
+app.use(config.reputationServicePath + '/*', checkMongoUp);
+app.use(config.reputationServicePath + '/reputation/set', checkMongoUp, auth.headerAuthentication, auth.checkOrganizations, auth.setPartyObj, failIfNotAuthenticated);
+app.get(config.reputationServicePath + '/reputation', reputationService.getOverallReputation);
+app.get(config.reputationServicePath + '/reputation/:id/:consumerId', reputationService.getReputation);
+app.post(config.reputationServicePath + '/reputation/set', reputationService.saveReputation);
 
 /////////////////////////////////////////////////////////////////////
 /////////////////////////////// PORTAL //////////////////////////////
@@ -439,8 +465,6 @@ var importPath = config.theme || !debug ? './static/public/imports' : './public/
 var imports = require(importPath).imports;
 
 var renderTemplate = function(req, res, viewName) {
-
-    // TODO: Maybe an object with extra properties (if required)
     var options = {
         user: req.user,
         contextPath: config.portalPrefix,
@@ -473,7 +497,6 @@ var renderTemplate = function(req, res, viewName) {
     options.jsAppFilesToInject = options.jsAppFilesToInject.concat(imports.jsStockFilesToInject);
 
     res.render(viewName, options);
-
     res.end();
 };
 
