@@ -22,13 +22,10 @@
  *         Jaime Pajuelo <jpajuelo@conwet.com>
  */
 
-(function () {
-
+(function() {
     'use strict';
 
-    angular
-        .module('app')
-        .factory('Asset', ['$q', '$resource', 'URLS', AssetService]);
+    angular.module('app').factory('Asset', ['$q', '$resource', 'URLS', AssetService]);
 
     function AssetService($q, $resource, URLS) {
         var resource = $resource(URLS.ASSET_MANAGEMENT + '/assets/uploadJob');
@@ -50,13 +47,17 @@
         function searchByProduct(productId) {
             var deferred = $q.defer();
 
-            productAssetResource.query({
-                productId: productId
-            }, (assets) => {
-                deferred.resolve(assets);
-            }, (err) => {
-                deferred.reject(err);
-            });
+            productAssetResource.query(
+                {
+                    productId: productId
+                },
+                (assets) => {
+                    deferred.resolve(assets);
+                },
+                (err) => {
+                    deferred.reject(err);
+                }
+            );
 
             return deferred.promise;
         }
@@ -64,11 +65,15 @@
         function create(data) {
             var deferred = $q.defer();
 
-            resource.save(data, function (response) {
-                deferred.resolve(response);
-            }, function (response) {
-                deferred.reject(response);
-            });
+            resource.save(
+                data,
+                function(response) {
+                    deferred.resolve(response);
+                },
+                function(response) {
+                    deferred.reject(response);
+                }
+            );
 
             return deferred.promise;
         }
@@ -76,13 +81,18 @@
         function upgrade(assetId, data) {
             var deferred = $q.defer();
 
-            upgradeResource.save({
-                assetId: assetId
-            }, data, function (response) {
-                deferred.resolve(response);
-            }, function (response) {
-                deferred.reject(response);
-            });
+            upgradeResource.save(
+                {
+                    assetId: assetId
+                },
+                data,
+                function(response) {
+                    deferred.resolve(response);
+                },
+                function(response) {
+                    deferred.reject(response);
+                }
+            );
 
             return deferred.promise;
         }
@@ -101,11 +111,11 @@
         }
 
         function registerAsset(url, assetType, contentType, meta, callback, errCallback) {
-            register(url, assetType, contentType, meta, create, callback, errCallback)
+            register(url, assetType, contentType, meta, create, callback, errCallback);
         }
 
         function upgradeRegisteredAsset(url, assetType, contentType, meta, callback, errCallback, assetId) {
-            register(url, assetType, contentType, meta, upgrade.bind(this, assetId), callback, errCallback)
+            register(url, assetType, contentType, meta, upgrade.bind(this, assetId), callback, errCallback);
         }
 
         function upload(file, scope, assetType, contentType, publicFile, meta, method, callback, errCallback) {
@@ -138,8 +148,17 @@
         }
 
         function upgradeAsset(file, scope, assetType, contentType, publicFile, meta, callback, errCallback, assetId) {
-            upload(file, scope, assetType, contentType, publicFile, meta, upgrade.bind(this, assetId), callback, errCallback);
+            upload(
+                file,
+                scope,
+                assetType,
+                contentType,
+                publicFile,
+                meta,
+                upgrade.bind(this, assetId),
+                callback,
+                errCallback
+            );
         }
     }
-
 })();

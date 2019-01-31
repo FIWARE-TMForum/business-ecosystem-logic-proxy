@@ -23,26 +23,29 @@
  *         Aitor Magán <amagan@conwet.com>
  */
 
-
-(function () {
-
+(function() {
     'use strict';
 
-    angular
-        .module('app')
-        .factory('Party', ['$q', '$resource', 'URLS', 'COUNTRIES', 'ROLES', 'User', PartyService]);
-    
-    function PartyService($q, $resource, URLS, COUNTRIES, ROLES, User) {
-	
-        var Individual = $resource(URLS.PARTY_MANAGEMENT + '/individual/:id', {}, {
-            update: {method: 'PUT'},
-            updatePartial: {method: 'PATCH'}
-        });
+    angular.module('app').factory('Party', ['$q', '$resource', 'URLS', 'COUNTRIES', 'ROLES', 'User', PartyService]);
 
-        var Organization = $resource(URLS.PARTY_MANAGEMENT + '/organization/:id', {}, {
-            update: {method: 'PUT'},
-            updatePartial: {method: 'PATCH'}
-        });
+    function PartyService($q, $resource, URLS, COUNTRIES, ROLES, User) {
+        var Individual = $resource(
+            URLS.PARTY_MANAGEMENT + '/individual/:id',
+            {},
+            {
+                update: { method: 'PUT' },
+                updatePartial: { method: 'PATCH' }
+            }
+        );
+
+        var Organization = $resource(
+            URLS.PARTY_MANAGEMENT + '/organization/:id',
+            {},
+            {
+                update: { method: 'PUT' },
+                updatePartial: { method: 'PATCH' }
+            }
+        );
 
         Individual.prototype.appendContactMedium = appendContactMedium;
         Individual.prototype.updateContactMedium = updateContactMedium;
@@ -61,9 +64,9 @@
 
         var TYPES = {
             CONTACT_MEDIUM: {
-                EMAIL_ADDRESS: {code: 'Email', name: 'Email address'},
-                TELEPHONE_NUMBER: {code: 'TelephoneNumber', name: 'Telephone number'},
-                POSTAL_ADDRESS: {code: 'PostalAddress', name: 'Postal address'}
+                EMAIL_ADDRESS: { code: 'Email', name: 'Email address' },
+                TELEPHONE_NUMBER: { code: 'TelephoneNumber', name: 'Telephone number' },
+                POSTAL_ADDRESS: { code: 'PostalAddress', name: 'Postal address' }
             }
         };
 
@@ -106,17 +109,16 @@
         };
 
         ContactMedium.prototype.resetMedium = function resetMedium() {
-
             switch (this.type) {
-            case TYPES.CONTACT_MEDIUM.EMAIL_ADDRESS.code:
-                this.medium = angular.copy(TEMPLATES.EMAIL_ADDRESS);
-                break;
-            case TYPES.CONTACT_MEDIUM.POSTAL_ADDRESS.code:
-                this.medium = angular.copy(TEMPLATES.POSTAL_ADDRESS);
-                break;
-            case TYPES.CONTACT_MEDIUM.TELEPHONE_NUMBER.code:
-                this.medium = angular.copy(TEMPLATES.TELEPHONE_NUMBER);
-                break;
+                case TYPES.CONTACT_MEDIUM.EMAIL_ADDRESS.code:
+                    this.medium = angular.copy(TEMPLATES.EMAIL_ADDRESS);
+                    break;
+                case TYPES.CONTACT_MEDIUM.POSTAL_ADDRESS.code:
+                    this.medium = angular.copy(TEMPLATES.POSTAL_ADDRESS);
+                    break;
+                case TYPES.CONTACT_MEDIUM.TELEPHONE_NUMBER.code:
+                    this.medium = angular.copy(TEMPLATES.TELEPHONE_NUMBER);
+                    break;
             }
 
             return this;
@@ -126,18 +128,24 @@
             var result = '';
 
             switch (this.type) {
-            case TYPES.CONTACT_MEDIUM.EMAIL_ADDRESS.code:
-                result = this.medium.emailAddress;
-                break;
-            case TYPES.CONTACT_MEDIUM.POSTAL_ADDRESS.code:
-                result = this.medium.streetOne + '\n' + this.medium.postcode + ' ' + this.medium.city + ' (' + this.medium.stateOrProvince + ')\n' + parseCountry(this.medium.country);
-                break;
-            case TYPES.CONTACT_MEDIUM.TELEPHONE_NUMBER.code:
-                result = [
-                    this.medium.type,
-                    this.medium.number
-                ].join(', ');
-                break;
+                case TYPES.CONTACT_MEDIUM.EMAIL_ADDRESS.code:
+                    result = this.medium.emailAddress;
+                    break;
+                case TYPES.CONTACT_MEDIUM.POSTAL_ADDRESS.code:
+                    result =
+                        this.medium.streetOne +
+                        '\n' +
+                        this.medium.postcode +
+                        ' ' +
+                        this.medium.city +
+                        ' (' +
+                        this.medium.stateOrProvince +
+                        ')\n' +
+                        parseCountry(this.medium.country);
+                    break;
+                case TYPES.CONTACT_MEDIUM.TELEPHONE_NUMBER.code:
+                    result = [this.medium.type, this.medium.number].join(', ');
+                    break;
             }
 
             return result;
@@ -164,26 +172,25 @@
 
         function getCurrentOrg() {
             var org = User.loggedUser.currentUser;
-            return (isOrganization()) ? User.loggedUser.organizations.find( x => x.id === org.id) : {};
+            return isOrganization() ? User.loggedUser.organizations.find((x) => x.id === org.id) : {};
         }
 
         function hasAdminRole() {
-            var org = User.loggedUser.organizations.find(
-                x => x.id === User.loggedUser.currentUser.id);
+            var org = User.loggedUser.organizations.find((x) => x.id === User.loggedUser.currentUser.id);
 
-            return org.roles.findIndex(x => x.name === ROLES.orgAdmin) > -1;
+            return org.roles.findIndex((x) => x.name === ROLES.orgAdmin) > -1;
         }
 
         function process(func, params, deferred, transform) {
             // credits to @RockNeurotiko for this tip.
-            transform = (transform == null) ? x => x : transform;
+            transform = transform == null ? (x) => x : transform;
 
-            var resol = function (partyObj) {
+            var resol = function(partyObj) {
                 partyObj = transform(partyObj);
                 deferred.resolve(partyObj);
             };
 
-            var rejec = function (response) {
+            var rejec = function(response) {
                 deferred.reject(response);
             };
             params.push(resol, rejec);
@@ -194,7 +201,7 @@
         function create(data) {
             var deferred = $q.defer();
 
-            if(!isOrganization()){
+            if (!isOrganization()) {
                 process(Individual.save, [data], deferred);
             } else {
                 process(Organization.save, [data], deferred);
@@ -211,9 +218,11 @@
             let partyType = spPath[spPath.length - 2];
             let id = spPath[spPath.length - 1];
 
-            let method, transform, params = {
-                id: id
-            };
+            let method,
+                transform,
+                params = {
+                    id: id
+                };
 
             // Check if the party is an organization
             if (partyType === 'organization') {
@@ -221,13 +230,13 @@
                 params.fields = 'tradingName';
                 transform = (party) => {
                     return party.tradingName;
-                }
+                };
             } else {
                 method = Individual.get;
                 params.fields = 'givenName,familyName';
                 transform = (party) => {
                     return party.givenName + ' ' + party.familyName;
-                }
+                };
             }
             // Make a requests asking just for the needed attributes
             process(method, [params], deferred, transform);
@@ -241,7 +250,7 @@
                 id: id
             };
 
-            if(!isOrganization()){
+            if (!isOrganization()) {
                 process(Individual.get, [params], deferred, extendContactMedium);
             } else {
                 process(Organization.get, [params], deferred, extendContactMedium);
@@ -255,7 +264,7 @@
                 id: entry.id
             };
 
-            if(!isOrganization()) {
+            if (!isOrganization()) {
                 process(Individual.update, [params, data], deferred);
             } else {
                 process(Organization.update, [params, data], deferred);
@@ -269,7 +278,7 @@
                 id: entry.id
             };
 
-            if (!isOrganization()){
+            if (!isOrganization()) {
                 process(Individual.updatePartial, [params, data], deferred);
             } else {
                 process(Organization.updatePartial, [params, data], deferred);
@@ -279,7 +288,7 @@
         }
 
         function launch() {
-            if(!isOrganization()){
+            if (!isOrganization()) {
                 return new Individual({
                     id: User.loggedUser.currentUser.id,
                     birthDate: '',
@@ -296,16 +305,16 @@
             } else {
                 // TODO: Add proper fields. But this object should never be created like this, so its ok
                 return new Organization({
-                    id: "ThisShouldntBeHappeningEver:ERROR!",
+                    id: 'ThisShouldntBeHappeningEver:ERROR!',
                     contactMedium: [],
-                    description: ""
+                    description: ''
                 });
             }
         }
 
         function extendContactMedium(party) {
             if (angular.isArray(party.contactMedium)) {
-                party.contactMedium = party.contactMedium.map(function (data) {
+                party.contactMedium = party.contactMedium.map(function(data) {
                     return new ContactMedium(data);
                 });
             } else {
@@ -325,20 +334,23 @@
 
             return code;
         }
-	
+
         function appendContactMedium(contactMedium) {
             /* jshint validthis: true */
             var deferred = $q.defer();
             var dataUpdated = {
                 contactMedium: this.contactMedium.concat(contactMedium)
             };
-	    
-            updatePartial(this, dataUpdated, isOrganization()).then(function () {
-                this.contactMedium.push(contactMedium);
-                deferred.resolve(this);
-            }.bind(this), function (response) {
-                deferred.reject(response);
-            });
+
+            updatePartial(this, dataUpdated, isOrganization()).then(
+                function() {
+                    this.contactMedium.push(contactMedium);
+                    deferred.resolve(this);
+                }.bind(this),
+                function(response) {
+                    deferred.reject(response);
+                }
+            );
 
             return deferred.promise;
         }
@@ -351,12 +363,15 @@
             };
 
             dataUpdated.contactMedium[index] = contactMedium;
-            updatePartial(this, dataUpdated, isOrganization()).then(function () {
-                angular.merge(this.contactMedium[index], contactMedium);
-                deferred.resolve(this);
-            }.bind(this), function (response) {
-                deferred.reject(response);
-            });
+            updatePartial(this, dataUpdated, isOrganization()).then(
+                function() {
+                    angular.merge(this.contactMedium[index], contactMedium);
+                    deferred.resolve(this);
+                }.bind(this),
+                function(response) {
+                    deferred.reject(response);
+                }
+            );
 
             return deferred.promise;
         }
@@ -370,15 +385,17 @@
 
             dataUpdated.contactMedium.splice(index, 1);
 
-            updatePartial(this, dataUpdated, isOrganization()).then(function () {
-                this.contactMedium.splice(index, 1);
-                deferred.resolve(this);
-            }.bind(this), function (response) {
-                deferred.reject(response);
-            });
+            updatePartial(this, dataUpdated, isOrganization()).then(
+                function() {
+                    this.contactMedium.splice(index, 1);
+                    deferred.resolve(this);
+                }.bind(this),
+                function(response) {
+                    deferred.reject(response);
+                }
+            );
 
             return deferred.promise;
         }
     }
-
 })();

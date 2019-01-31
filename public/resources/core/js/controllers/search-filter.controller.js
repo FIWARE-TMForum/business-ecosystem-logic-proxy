@@ -21,8 +21,7 @@
  * @author Francisco de la Vega <fdelavega@conwet.com>
  *         Jaime Pajuelo <jpajuelo@conwet.com>
  */
-(function () {
-
+(function() {
     'use strict';
 
     angular
@@ -39,11 +38,11 @@
         vm.getStatusStates = getStatusStates;
         vm.toggleCheckbox = toggleCheckbox;
 
-        $element.on('hidden.bs.modal', function (event) {
+        $element.on('hidden.bs.modal', function(event) {
             $state.go($state.current.name, vm.filters);
         });
 
-        $scope.$on(EVENTS.FILTERS_OPENED, function (event, states) {
+        $scope.$on(EVENTS.FILTERS_OPENED, function(event, states) {
             vm.filters = angular.copy($state.params);
             statusStates = states;
             $element.modal('show');
@@ -67,7 +66,7 @@
         }
 
         function checkboxChecked(name, value) {
-            return exists(name) && (convertToArray(name).indexOf(value) !== -1);
+            return exists(name) && convertToArray(name).indexOf(value) !== -1;
         }
 
         function convertToArray(name) {
@@ -75,8 +74,7 @@
         }
 
         function exists(name) {
-            return ($state.current.data && vm.filters) && ($state.current.data.filters.indexOf(name) !== -1);
+            return $state.current.data && vm.filters && $state.current.data.filters.indexOf(name) !== -1;
         }
     }
-
 })();

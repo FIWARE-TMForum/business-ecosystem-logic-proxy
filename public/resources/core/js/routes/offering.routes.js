@@ -22,16 +22,12 @@
  *         Jaime Pajuelo <jpajuelo@conwet.com>
  *         Aitor Magán <amagan@conwet.com>
  */
-(function () {
-
+(function() {
     'use strict';
 
-    angular
-        .module('app')
-        .config(['$stateProvider', OfferingRouteConfig]);
+    angular.module('app').config(['$stateProvider', OfferingRouteConfig]);
 
     function OfferingRouteConfig($stateProvider) {
-
         $stateProvider
             .state('offering', {
                 url: '/offering?catalogueId&categoryId&type&body&productSpecId&sort',
@@ -45,7 +41,7 @@
                         templateUrl: 'offering/sidebar',
                         controller: 'CatalogueListCtrl as listVM'
                     },
-                    'content': {
+                    content: {
                         templateUrl: 'offering/search',
                         controller: 'OfferingSearchCtrl as searchVM'
                     }
@@ -55,10 +51,10 @@
                 url: '/:offeringId',
                 views: {
                     'sidebar@': {
-                        template:  '<ui-view>'
+                        template: '<ui-view>'
                     },
                     'content@': {
-                        template:  '<ui-view>'
+                        template: '<ui-view>'
                     },
                     'full-content@': {
                         templateUrl: 'offering/detail',
@@ -110,5 +106,4 @@
                 }
             });
     }
-
 })();

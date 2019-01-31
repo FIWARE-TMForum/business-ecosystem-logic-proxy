@@ -22,16 +22,12 @@
  *         Jaime Pajuelo <jpajuelo@conwet.com>
  *         Aitor Magán <amagan@conwet.com>
  */
-(function () {
-
+(function() {
     'use strict';
 
-    angular
-        .module('app')
-        .config(['$stateProvider', CatalogueRouteConfig]);
+    angular.module('app').config(['$stateProvider', CatalogueRouteConfig]);
 
     function CatalogueRouteConfig($stateProvider) {
-
         $stateProvider
             .state('stock.catalogue', {
                 url: '/catalogue?status&role&body&sort',
@@ -68,5 +64,4 @@
                 controller: 'OfferingSearchCtrl as searchVM'
             });
     }
-
 })();

@@ -23,8 +23,7 @@
  *         Aitor Magán <amagan@conwet.com>
  */
 
-(function () {
-
+(function() {
     'use strict';
 
     angular
@@ -32,13 +31,17 @@
         .factory('Catalogue', ['$q', '$resource', 'URLS', 'LIFECYCLE_STATUS', 'User', CatalogueService]);
 
     function CatalogueService($q, $resource, URLS, LIFECYCLE_STATUS, User) {
-        var resource = $resource(URLS.CATALOGUE_MANAGEMENT + '/catalog/:catalogueId', {
-            catalogueId: '@id'
-        }, {
-            update: {
-                method: 'PATCH'
+        var resource = $resource(
+            URLS.CATALOGUE_MANAGEMENT + '/catalog/:catalogueId',
+            {
+                catalogueId: '@id'
+            },
+            {
+                update: {
+                    method: 'PATCH'
+                }
             }
-        });
+        );
 
         var PATCHABLE_ATTRS = ['name', 'description', 'lifecycleStatus'];
 
@@ -94,11 +97,15 @@
                 params['sort'] = filters.sort;
             }
 
-            method(params, function (catalogueResp) {
-                deferred.resolve(catalogueResp);
-            }, function (response) {
-                deferred.reject(response);
-            });
+            method(
+                params,
+                function(catalogueResp) {
+                    deferred.resolve(catalogueResp);
+                },
+                function(response) {
+                    deferred.reject(response);
+                }
+            );
 
             return deferred.promise;
         }
@@ -119,7 +126,7 @@
         function exists(params) {
             var deferred = $q.defer();
 
-            resource.query(params, function (catalogueList) {
+            resource.query(params, function(catalogueList) {
                 deferred.resolve(!!catalogueList.length);
             });
 
@@ -129,11 +136,15 @@
         function create(data) {
             var deferred = $q.defer();
 
-            resource.save(data, function (catalogueCreated) {
-                deferred.resolve(catalogueCreated);
-            }, function (response) {
-                deferred.reject(response);
-            });
+            resource.save(
+                data,
+                function(catalogueCreated) {
+                    deferred.resolve(catalogueCreated);
+                },
+                function(response) {
+                    deferred.reject(response);
+                }
+            );
 
             return deferred.promise;
         }
@@ -144,11 +155,15 @@
                 catalogueId: catalogueId
             };
 
-            resource.get(params, function (catalogueRetrieved) {
-                deferred.resolve(catalogueRetrieved);
-            }, function (response) {
-                deferred.reject(response);
-            });
+            resource.get(
+                params,
+                function(catalogueRetrieved) {
+                    deferred.resolve(catalogueRetrieved);
+                },
+                function(response) {
+                    deferred.reject(response);
+                }
+            );
 
             return deferred.promise;
         }
@@ -159,11 +174,16 @@
                 catalogueId: catalogue.id
             };
 
-            resource.update(params, updatedData, function (catalogueUpdated) {
-                deferred.resolve(catalogueUpdated);
-            }, function (response) {
-                deferred.reject(response);
-            });
+            resource.update(
+                params,
+                updatedData,
+                function(catalogueUpdated) {
+                    deferred.resolve(catalogueUpdated);
+                },
+                function(response) {
+                    deferred.reject(response);
+                }
+            );
 
             return deferred.promise;
         }
@@ -171,9 +191,7 @@
         function buildInitialData() {
             return {
                 lifecycleStatus: LIFECYCLE_STATUS.ACTIVE,
-                relatedParty: [
-                    User.serialize()
-                ]
+                relatedParty: [User.serialize()]
             };
         }
 
@@ -190,5 +208,4 @@
             return role;
         }
     }
-
 })();

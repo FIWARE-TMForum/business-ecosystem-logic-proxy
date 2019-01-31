@@ -21,20 +21,15 @@
  * @author Aitor Magán <amagan@conwet.com>
  */
 
-
-(function () {
-
+(function() {
     'use strict';
 
-    angular
-        .module('app')
-        .factory('Utils', UtilsService);
+    angular.module('app').factory('Utils', UtilsService);
 
     function UtilsService() {
-
         function getGlassfishErrorHtmlProperty(html, property) {
             var regExp = new RegExp('<p><b>' + property + '</b>(.*?)</p>');
-            return regExp.exec(html)[1];    // Exception thrown if not match
+            return regExp.exec(html)[1]; // Exception thrown if not match
         }
 
         return {
@@ -54,7 +49,7 @@
                 return response;
             }
 
-            if (typeof(data) === 'string') {
+            if (typeof data === 'string') {
                 // HTML
 
                 try {
@@ -63,12 +58,10 @@
                     var description = getGlassfishErrorHtmlProperty(data, 'description');
 
                     finalErrorMessage = type + ' - ' + message + ': ' + description;
-
                 } catch (e) {}
-
-            } else if (data !== null && typeof(data) === 'object' && errorField in data) {
+            } else if (data !== null && typeof data === 'object' && errorField in data) {
                 // JSON
-                if (typeof(data[errorField]) === 'object' && 'title' in data[errorField]) {
+                if (typeof data[errorField] === 'object' && 'title' in data[errorField]) {
                     finalErrorMessage = data[errorField]['title'];
                 } else {
                     finalErrorMessage = data[errorField];
@@ -77,7 +70,5 @@
 
             return finalErrorMessage;
         }
-
     }
-
 })();

@@ -23,28 +23,40 @@
  *         Aitor Magán <amagan@conwet.com>
  */
 
-(function () {
-
+(function() {
     'use strict';
 
     angular
         .module('app')
-        .factory('ProductOrder', ['$q', '$resource', 'URLS', 'User', 'Offering', 'BillingAccount', 'Party', ProductOrderService]);
+        .factory('ProductOrder', [
+            '$q',
+            '$resource',
+            'URLS',
+            'User',
+            'Offering',
+            'BillingAccount',
+            'Party',
+            ProductOrderService
+        ]);
 
     function ProductOrderService($q, $resource, URLS, User, Offering, BillingAccount, Party) {
-        var resource = $resource(URLS.PRODUCTORDER_MANAGEMENT + '/productOrder/:productOrderId', {
-            productOrderId: '@id'
-        }, {
-            save: {
-                method: 'POST',
-                headers: {
-                    'X-Terms-Accepted': 'True'
-                },
+        var resource = $resource(
+            URLS.PRODUCTORDER_MANAGEMENT + '/productOrder/:productOrderId',
+            {
+                productOrderId: '@id'
             },
-            updatePartial: {
-                method: 'PATCH'
+            {
+                save: {
+                    method: 'POST',
+                    headers: {
+                        'X-Terms-Accepted': 'True'
+                    }
+                },
+                updatePartial: {
+                    method: 'PATCH'
+                }
             }
-        });
+        );
 
         resource.prototype.getCustomer = getCustomer;
         resource.prototype.getItemSeller = getItemSeller;
@@ -57,11 +69,11 @@
 
         var TYPES = {
             PRIORITY: [
-                /* 0 */{title: '0 (the highest)'},
-                /* 1 */{title: '1'},
-                /* 2 */{title: '2'},
-                /* 3 */{title: '3'},
-                /* 4 */{title: '4 (the lowest)'}
+                /* 0 */ { title: '0 (the highest)' },
+                /* 1 */ { title: '1' },
+                /* 2 */ { title: '2' },
+                /* 3 */ { title: '3' },
+                /* 4 */ { title: '4 (the lowest)' }
             ]
         };
 
@@ -87,7 +99,6 @@
         };
 
         function query(filters, deferred, method, callback) {
-
             var params = {};
 
             if (filters.owner) {
@@ -111,7 +122,7 @@
                 params['relatedParty.role'] = filters.role;
             }
 
-            method(params, callback, function (response) {
+            method(params, callback, function(response) {
                 deferred.reject(response);
             });
         }
@@ -119,13 +130,13 @@
         function search(filters) {
             var deferred = $q.defer();
 
-            query(filters, deferred, resource.query, function (productOrderList) {
+            query(filters, deferred, resource.query, function(productOrderList) {
                 var productOfferingFilters = {};
 
                 if (productOrderList.length) {
                     productOfferingFilters.id = getProductOfferingIds(productOrderList).join();
 
-                    Offering.search(productOfferingFilters).then(function (productOfferingList) {
+                    Offering.search(productOfferingFilters).then(function(productOfferingList) {
                         replaceProductOffering(productOrderList, productOfferingList);
                         deferred.resolve(productOrderList);
                     });
@@ -139,8 +150,8 @@
             function getProductOfferingIds(productOrderList) {
                 var productOfferingIds = {};
 
-                productOrderList.forEach(function (productOrder) {
-                    productOrder.orderItem.forEach(function (orderItem) {
+                productOrderList.forEach(function(productOrder) {
+                    productOrder.orderItem.forEach(function(orderItem) {
                         productOfferingIds[orderItem.productOffering.id] = {};
                     });
                 });
@@ -151,12 +162,12 @@
             function replaceProductOffering(productOrderList, productOfferingList) {
                 var productOfferings = {};
 
-                productOfferingList.forEach(function (productOffering) {
+                productOfferingList.forEach(function(productOffering) {
                     productOfferings[productOffering.id] = productOffering;
                 });
 
-                productOrderList.forEach(function (productOrder) {
-                    productOrder.orderItem.forEach(function (orderItem) {
+                productOrderList.forEach(function(productOrder) {
+                    productOrder.orderItem.forEach(function(orderItem) {
                         orderItem.productOffering = productOfferings[orderItem.productOffering.id];
                     });
                 });
@@ -167,7 +178,7 @@
             filters.action = 'count';
             var deferred = $q.defer();
 
-            query(filters, deferred, resource.get, function (info) {
+            query(filters, deferred, resource.get, function(info) {
                 deferred.resolve(info);
             });
 
@@ -177,14 +188,18 @@
         function create(orderInfo) {
             var deferred = $q.defer();
 
-            resource.save(orderInfo, function (orderCreated, getResponseHeaders) {
-                deferred.resolve({
-                    order: orderCreated,
-                    headers:getResponseHeaders()
-                });
-            }, function (response) {
-                deferred.reject(response);
-            });
+            resource.save(
+                orderInfo,
+                function(orderCreated, getResponseHeaders) {
+                    deferred.resolve({
+                        order: orderCreated,
+                        headers: getResponseHeaders()
+                    });
+                },
+                function(response) {
+                    deferred.reject(response);
+                }
+            );
 
             return deferred.promise;
         }
@@ -195,31 +210,38 @@
                 productOrderId: id
             };
 
-            resource.get(params, function (productOrder) {
+            resource.get(
+                params,
+                function(productOrder) {
+                    // Remove empty characteristics
+                    productOrder.orderItem.forEach(function(item) {
+                        if (
+                            item.product.productCharacteristic.length === 1 &&
+                            Object.keys(item.product.productCharacteristic[0]).length === 0
+                        ) {
+                            item.product.productCharacteristic = [];
+                        }
+                    });
 
-                // Remove empty characteristics
-                productOrder.orderItem.forEach(function(item) {
-                    if (item.product.productCharacteristic.length === 1 &&
-                            Object.keys(item.product.productCharacteristic[0]).length === 0) {
-
-                        item.product.productCharacteristic = [];
-                    }
-                });
-
-                detailBillingAccount(productOrder);
-            }, function (response) {
-                deferred.reject(response);
-            });
+                    detailBillingAccount(productOrder);
+                },
+                function(response) {
+                    deferred.reject(response);
+                }
+            );
 
             return deferred.promise;
 
             function detailBillingAccount(productOrder) {
-                BillingAccount.detail(productOrder.getBillingAccount().id).then(function (billingAccount) {
-                    extendBillingAccount(productOrder, billingAccount);
-                    detailProductOffering(productOrder);
-                }, function (response) {
-                    deferred.reject(response);
-                });
+                BillingAccount.detail(productOrder.getBillingAccount().id).then(
+                    function(billingAccount) {
+                        extendBillingAccount(productOrder, billingAccount);
+                        detailProductOffering(productOrder);
+                    },
+                    function(response) {
+                        deferred.reject(response);
+                    }
+                );
             }
 
             function detailProductOffering(productOrder) {
@@ -227,7 +249,7 @@
                     id: getProductOfferingIds(productOrder)
                 };
 
-                Offering.search(filters).then(function (productOfferings) {
+                Offering.search(filters).then(function(productOfferings) {
                     replaceProductOffering(productOrder, productOfferings);
                     deferred.resolve(productOrder);
                 });
@@ -235,7 +257,7 @@
         }
 
         function extendBillingAccount(productOrder, billingAccount) {
-            productOrder.orderItem.forEach(function (orderItem) {
+            productOrder.orderItem.forEach(function(orderItem) {
                 orderItem.billingAccount = billingAccount;
             });
         }
@@ -246,19 +268,23 @@
                 productOrderId: productOrder.id
             };
 
-            resource.updatePartial(params, dataUpdated, function (productOrderUpdated) {
-                var productOfferingFilters = {
-                    id: getProductOfferingIds(productOrderUpdated).join()
-                };
+            resource.updatePartial(
+                params,
+                dataUpdated,
+                function(productOrderUpdated) {
+                    var productOfferingFilters = {
+                        id: getProductOfferingIds(productOrderUpdated).join()
+                    };
 
-                Offering.search(productOfferingFilters).then(function (productOfferingList) {
-                    replaceProductOffering(productOrderUpdated, productOfferingList);
-                    deferred.resolve(productOrderUpdated);
-                });
-
-            }, function (response) {
-                deferred.reject(response);
-            });
+                    Offering.search(productOfferingFilters).then(function(productOfferingList) {
+                        replaceProductOffering(productOrderUpdated, productOfferingList);
+                        deferred.resolve(productOrderUpdated);
+                    });
+                },
+                function(response) {
+                    deferred.reject(response);
+                }
+            );
 
             return deferred.promise;
         }
@@ -266,7 +292,7 @@
         function getProductOfferingIds(productOrder) {
             var productOfferingIds = {};
 
-            productOrder.orderItem.forEach(function (orderItem) {
+            productOrder.orderItem.forEach(function(orderItem) {
                 productOfferingIds[orderItem.productOffering.id] = {};
             });
 
@@ -276,11 +302,11 @@
         function replaceProductOffering(productOrder, productOfferingList) {
             var productOfferings = {};
 
-            productOfferingList.forEach(function (productOffering) {
+            productOfferingList.forEach(function(productOffering) {
                 productOfferings[productOffering.id] = productOffering;
             });
 
-            productOrder.orderItem.forEach(function (orderItem) {
+            productOrder.orderItem.forEach(function(orderItem) {
                 orderItem.productOffering = productOfferings[orderItem.productOffering.id];
             });
         }
@@ -336,25 +362,26 @@
         }
 
         function formatPriceplanOf(orderIndex) {
-            var result, priceplan, priceplans = this.orderItem[orderIndex].product.productPrice;
+            var result,
+                priceplan,
+                priceplans = this.orderItem[orderIndex].product.productPrice;
 
             if (priceplans.length) {
                 priceplan = priceplans[0];
-                result = priceplan.price.amount + " " + priceplan.price.currency;
+                result = priceplan.price.amount + ' ' + priceplan.price.currency;
                 switch (priceplan.priceType) {
-                case Offering.TYPES.PRICE.RECURRING:
-                    result += " / " + priceplan.recurringChargePeriod;
-                    break;
-                case Offering.TYPES.PRICE.USAGE:
-                    result += " / " + priceplan.unitOfMeasure;
-                    break;
+                    case Offering.TYPES.PRICE.RECURRING:
+                        result += ' / ' + priceplan.recurringChargePeriod;
+                        break;
+                    case Offering.TYPES.PRICE.USAGE:
+                        result += ' / ' + priceplan.unitOfMeasure;
+                        break;
                 }
             } else {
-                result = "Free";
+                result = 'Free';
             }
 
             return result;
         }
     }
-
 })();

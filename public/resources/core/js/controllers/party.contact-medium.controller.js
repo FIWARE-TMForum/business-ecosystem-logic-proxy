@@ -22,20 +22,33 @@
  *         Jaime Pajuelo <jpajuelo@conwet.com>
  *         Aitor Magán <amagan@conwet.com>
  */
-(function () {
-
+(function() {
     'use strict';
 
     angular
         .module('app')
-        .controller('ContactMediumCreateCtrl', ['$scope', '$controller', 'COUNTRIES', 'Party', ContactMediumCreateController])
-        .controller('ContactMediumUpdateCtrl', ['$element', '$scope', '$rootScope', '$controller', 'COUNTRIES', 'Party', ContactMediumUpdateController]);
+        .controller('ContactMediumCreateCtrl', [
+            '$scope',
+            '$controller',
+            'COUNTRIES',
+            'Party',
+            ContactMediumCreateController
+        ])
+        .controller('ContactMediumUpdateCtrl', [
+            '$element',
+            '$scope',
+            '$rootScope',
+            '$controller',
+            'COUNTRIES',
+            'Party',
+            ContactMediumUpdateController
+        ]);
 
     function ContactMediumCreateController($scope, $controller, COUNTRIES, Party) {
         /* jshint validthis: true */
         var vm = this;
 
-        angular.extend(vm, $controller('FormMixinCtrl', {$scope: $scope}));
+        angular.extend(vm, $controller('FormMixinCtrl', { $scope: $scope }));
 
         vm.CONTACT_MEDIUM = Party.TYPES.CONTACT_MEDIUM;
         vm.COUNTRIES = COUNTRIES;
@@ -46,7 +59,7 @@
         vm.create = create;
 
         function create(form, $parentController) {
-            $parentController.createContactMedium(vm.data).then(function () {
+            $parentController.createContactMedium(vm.data).then(function() {
                 vm.data = new Party.ContactMedium();
                 vm.data.resetMedium();
                 vm.resetForm(form);
@@ -59,14 +72,14 @@
         var vm = this;
         var _index;
 
-        angular.extend(vm, $controller('FormMixinCtrl', {$scope: $scope}));
+        angular.extend(vm, $controller('FormMixinCtrl', { $scope: $scope }));
 
         vm.CONTACT_MEDIUM = Party.TYPES.CONTACT_MEDIUM;
         vm.COUNTRIES = COUNTRIES;
 
         vm.update = update;
 
-        $scope.$on(Party.EVENTS.CONTACT_MEDIUM_UPDATE, function (event, index, contactMedium) {
+        $scope.$on(Party.EVENTS.CONTACT_MEDIUM_UPDATE, function(event, index, contactMedium) {
             vm.data = angular.copy(contactMedium);
             _index = index;
             $element.modal('show');
@@ -77,5 +90,4 @@
             vm.resetForm(form);
         }
     }
-
 })();

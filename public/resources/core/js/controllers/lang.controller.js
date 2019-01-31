@@ -17,13 +17,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-(function () {
-
+(function() {
     'use strict';
 
-    angular
-        .module('app')
-        .controller('LangCtrl', ['$cookies', '$window', LangController]);
+    angular.module('app').controller('LangCtrl', ['$cookies', '$window', LangController]);
 
     function LangController($cookies, $window) {
         const vm = this;
@@ -33,7 +30,7 @@
             $cookies.put(cookie, locale);
             // Refresh current view
             $window.location.reload();
-        }
+        };
 
         // Check if the locale cookie is alrady set
         let currCookie = $cookies.get(cookie);
@@ -47,7 +44,6 @@
         vm.locale = currCookie;
         vm.onLocaleChange = function() {
             setlocale(vm.locale);
-        }
+        };
     }
-
 })();

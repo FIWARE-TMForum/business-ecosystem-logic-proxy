@@ -22,21 +22,44 @@
  *         Jaime Pajuelo <jpajuelo@conwet.com>
  *         Aitor Magán <amagan@conwet.com>
  */
-(function () {
-
+(function() {
     'use strict';
 
     angular
         .module('app')
-        .controller('IndividualUpdateCtrl', ['$state', '$scope', '$rootScope', '$controller', 'EVENTS', 'DATA_STATUS',
-            'COUNTRIES', 'PROMISE_STATUS', 'Utils', 'Party', 'User', IndividualUpdateController]);
+        .controller('IndividualUpdateCtrl', [
+            '$state',
+            '$scope',
+            '$rootScope',
+            '$controller',
+            'EVENTS',
+            'DATA_STATUS',
+            'COUNTRIES',
+            'PROMISE_STATUS',
+            'Utils',
+            'Party',
+            'User',
+            IndividualUpdateController
+        ]);
 
-    function IndividualUpdateController($state, $scope, $rootScope, $controller, EVENTS, DATA_STATUS, COUNTRIES, PROMISE_STATUS, Utils, Party, User) {
+    function IndividualUpdateController(
+        $state,
+        $scope,
+        $rootScope,
+        $controller,
+        EVENTS,
+        DATA_STATUS,
+        COUNTRIES,
+        PROMISE_STATUS,
+        Utils,
+        Party,
+        User
+    ) {
         /* jshint validthis: true */
         var vm = this;
 
-        angular.extend(vm, $controller('FormMixinCtrl', {$scope: $scope}));
-	
+        angular.extend(vm, $controller('FormMixinCtrl', { $scope: $scope }));
+
         vm.COUNTRIES = COUNTRIES;
         vm.STATUS = PROMISE_STATUS;
 
@@ -45,136 +68,168 @@
         vm.createContactMedium = createContactMedium;
         vm.updateContactMedium = updateContactMedium;
         vm.removeContactMedium = removeContactMedium;
-	vm.isOrganization = Party.isOrganization;
-	vm.hasAdminRole = hasAdminRole;
-	vm.loggedUser = User.loggedUser;
-	
+        vm.isOrganization = Party.isOrganization;
+        vm.hasAdminRole = hasAdminRole;
+        vm.loggedUser = User.loggedUser;
 
-
-        $scope.$on(Party.EVENTS.CONTACT_MEDIUM_UPDATED, function (event, index, contactMedium) {
-            updateContactMediumPromise = vm.item.updateContactMedium(index, contactMedium).then(function () {
-                angular.merge(vm.data.contactMedium[index], contactMedium);
-                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {
-                    message: 'The contact medium was updated.'
-                });
-            }, function (response) {
-                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
-                    error: Utils.parseError(response, 'Unexpected error trying to update the contact medium.')
-                });
-            });
+        $scope.$on(Party.EVENTS.CONTACT_MEDIUM_UPDATED, function(event, index, contactMedium) {
+            updateContactMediumPromise = vm.item.updateContactMedium(index, contactMedium).then(
+                function() {
+                    angular.merge(vm.data.contactMedium[index], contactMedium);
+                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {
+                        message: 'The contact medium was updated.'
+                    });
+                },
+                function(response) {
+                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                        error: Utils.parseError(response, 'Unexpected error trying to update the contact medium.')
+                    });
+                }
+            );
         });
-	$scope.$on(Party.EVENTS.USER_SESSION_SWITCHED, function (event, message, obj) {
-	    initialiceData();
-	});
-	
-	// Now, this function is called at the beginning of the execution and every switch call this function in order to keep frontend and backend coherence
-	initialiceData();
+        $scope.$on(Party.EVENTS.USER_SESSION_SWITCHED, function(event, message, obj) {
+            initialiceData();
+        });
 
-	function initialiceData() {
-            Party.detail(User.loggedUser.currentUser.id).then(function (infoRetrieved) {
-		retrievePartyInfo(infoRetrieved);
-            }, function (response) {
-		if (response.status === 404) {
-		    retrievePartyInfo();
-		} else {
-                    vm.status = DATA_STATUS.ERROR;
-                    vm.errorMessage = Utils.parseError(response, 'Unexpected error trying to retrieve your personal information.')
-		}
-            });
-	}
+        // Now, this function is called at the beginning of the execution and every switch call this function in order to keep frontend and backend coherence
+        initialiceData();
 
-	function hasAdminRole(){
-	    return Party.hasAdminRole();
-	}
+        function initialiceData() {
+            Party.detail(User.loggedUser.currentUser.id).then(
+                function(infoRetrieved) {
+                    retrievePartyInfo(infoRetrieved);
+                },
+                function(response) {
+                    if (response.status === 404) {
+                        retrievePartyInfo();
+                    } else {
+                        vm.status = DATA_STATUS.ERROR;
+                        vm.errorMessage = Utils.parseError(
+                            response,
+                            'Unexpected error trying to retrieve your personal information.'
+                        );
+                    }
+                }
+            );
+        }
 
-	function retrieveProfile(profile) {
-	    vm.status = DATA_STATUS.LOADED;
-	    vm.item = profile;
+        function hasAdminRole() {
+            return Party.hasAdminRole();
+        }
+
+        function retrieveProfile(profile) {
+            vm.status = DATA_STATUS.LOADED;
+            vm.item = profile;
             vm.data = angular.copy(profile);
-	    unparseDate();
-	}
+            unparseDate();
+        }
 
-	function retrievePartyInfo(party) {
-	    if (party == null) {
-		party = Party.launch();
-		vm.isNotCreated = true;
-	    }
-	    retrieveProfile(party);
-	}
+        function retrievePartyInfo(party) {
+            if (party == null) {
+                party = Party.launch();
+                vm.isNotCreated = true;
+            }
+            retrieveProfile(party);
+        }
 
-	function unparseDate() {
-	    if (Party.isOrganization() && vm.data.organizationIdentification) {
-	    	vm.data.organizationIdentification.issuingDate = new Date(vm.data.organizationIdentification.issuingDate);
-	    }
-	}
+        function unparseDate() {
+            if (Party.isOrganization() && vm.data.organizationIdentification) {
+                vm.data.organizationIdentification.issuingDate = new Date(
+                    vm.data.organizationIdentification.issuingDate
+                );
+            }
+        }
 
-	function parseDate(){
-	    if (Party.isOrganization() && vm.data.organizationIdentification) {
-		vm.data.organizationIdentification.issuingDate = moment(vm.data.organizationIdentification.issuingDate).format()
-	    }
-	}
+        function parseDate() {
+            if (Party.isOrganization() && vm.data.organizationIdentification) {
+                vm.data.organizationIdentification.issuingDate = moment(
+                    vm.data.organizationIdentification.issuingDate
+                ).format();
+            }
+        }
         var updatePromise = null;
 
         function update() {
             if (vm.isNotCreated) {
-		parseDate();
+                parseDate();
                 updatePromise = Party.create(vm.data);
-		unparseDate();
-                updatePromise.then(function () {
-                    $state.go('settings.general', {}, {
-                        reload: true
-                    });
-                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {
-                        message: 'Your profile was created.'
-                    });
-                }, function (response) {
-                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
-                        error: Utils.parseError(response, 'Unexpected error trying to create your profile.')
-                    });
-                });
+                unparseDate();
+                updatePromise.then(
+                    function() {
+                        $state.go(
+                            'settings.general',
+                            {},
+                            {
+                                reload: true
+                            }
+                        );
+                        $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {
+                            message: 'Your profile was created.'
+                        });
+                    },
+                    function(response) {
+                        $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                            error: Utils.parseError(response, 'Unexpected error trying to create your profile.')
+                        });
+                    }
+                );
             } else {
-		parseDate();
+                parseDate();
                 updatePromise = Party.update(vm.item, vm.data);
-		unparseDate();
-                updatePromise.then(function () {
-                    $state.go('settings.general', {}, {
-                        reload: true
-                    });
-                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {
-                        message: 'Your profile was updated.'
-                    });
-                }, function (response) {
-                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
-                        error: Utils.parseError(response, 'Unexpected error trying to update your profile.')
-                    });
-                });
+                unparseDate();
+                updatePromise.then(
+                    function() {
+                        $state.go(
+                            'settings.general',
+                            {},
+                            {
+                                reload: true
+                            }
+                        );
+                        $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {
+                            message: 'Your profile was updated.'
+                        });
+                    },
+                    function(response) {
+                        $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                            error: Utils.parseError(response, 'Unexpected error trying to update your profile.')
+                        });
+                    }
+                );
             }
         }
 
         Object.defineProperty(update, 'status', {
-            get: function () { return updatePromise != null ? updatePromise.$$state.status : -1; }
+            get: function() {
+                return updatePromise != null ? updatePromise.$$state.status : -1;
+            }
         });
 
         var createContactMediumPromise = null;
 
         function createContactMedium(data) {
             createContactMediumPromise = vm.item.appendContactMedium(data);
-            createContactMediumPromise.then(function () {
-                vm.data.contactMedium.push(data);
-                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {
-                    message: 'The contact medium was created.'
-                });
-            }, function (response) {
-                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
-                    error: Utils.parseError(response, 'Unexpected error trying to create the contact medium.')
-                });
-            });
+            createContactMediumPromise.then(
+                function() {
+                    vm.data.contactMedium.push(data);
+                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {
+                        message: 'The contact medium was created.'
+                    });
+                },
+                function(response) {
+                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                        error: Utils.parseError(response, 'Unexpected error trying to create the contact medium.')
+                    });
+                }
+            );
 
             return createContactMediumPromise;
         }
 
         Object.defineProperty(createContactMedium, 'status', {
-            get: function () { return createContactMediumPromise != null ? createContactMediumPromise.$$state.status : -1; }
+            get: function() {
+                return createContactMediumPromise != null ? createContactMediumPromise.$$state.status : -1;
+            }
         });
 
         var updateContactMediumPromise = null;
@@ -184,29 +239,34 @@
         }
 
         Object.defineProperty(updateContactMedium, 'status', {
-            get: function () { return updateContactMediumPromise != null ? updateContactMediumPromise.$$state.status : -1; }
+            get: function() {
+                return updateContactMediumPromise != null ? updateContactMediumPromise.$$state.status : -1;
+            }
         });
 
         var removeContactMediumPromise = null;
 
         function removeContactMedium(index) {
             removeContactMediumPromise = vm.item.removeContactMedium(index);
-            removeContactMediumPromise.then(function () {
-                vm.data.contactMedium.splice(index, 1);
-                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {
-                    message: 'The contact medium was removed.'
-                });
-            }, function (response) {
-                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
-                    error: Utils.parseError(response, 'Unexpected error trying to remove the contact medium.')
-                });
-            });
+            removeContactMediumPromise.then(
+                function() {
+                    vm.data.contactMedium.splice(index, 1);
+                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {
+                        message: 'The contact medium was removed.'
+                    });
+                },
+                function(response) {
+                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                        error: Utils.parseError(response, 'Unexpected error trying to remove the contact medium.')
+                    });
+                }
+            );
         }
 
         Object.defineProperty(removeContactMedium, 'status', {
-            get: function () { return removeContactMediumPromise != null ? removeContactMediumPromise.$$state.status : -1; }
+            get: function() {
+                return removeContactMediumPromise != null ? removeContactMediumPromise.$$state.status : -1;
+            }
         });
-
     }
-
 })();

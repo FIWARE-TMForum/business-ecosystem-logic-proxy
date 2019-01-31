@@ -20,35 +20,29 @@
 /**
  * @author Aitor Magán <amagan@conwet.com>
  */
-(function () {
-
+(function() {
     'use strict';
 
-    angular
-        .module('app')
-        .config(['$stateProvider', UnauthorizedConfig]);
+    angular.module('app').config(['$stateProvider', UnauthorizedConfig]);
 
     function UnauthorizedConfig($stateProvider) {
-
-        $stateProvider
-            .state('unauthorized', {
-                url: '/unauthorized',
-                data: {
-                    title: 'Unauthorized'
+        $stateProvider.state('unauthorized', {
+            url: '/unauthorized',
+            data: {
+                title: 'Unauthorized'
+            },
+            params: {
+                came_from: '/'
+            },
+            views: {
+                sidebar: {
+                    controller: 'UnauthorizedCtrl as ctrl',
+                    templateUrl: 'unauthorized'
                 },
-                params: {
-                    'came_from': '/'
-                },
-                views: {
-                    sidebar: {
-                        controller: 'UnauthorizedCtrl as ctrl',
-                        templateUrl: 'unauthorized'
-                    },
-                    content: {
-                        template: '<ui-view>'
-                    }
+                content: {
+                    template: '<ui-view>'
                 }
-            });
+            }
+        });
     }
-
 })();

@@ -22,16 +22,12 @@
  *         Jaime Pajuelo <jpajuelo@conwet.com>
  *         Aitor Magán <amagan@conwet.com>
  */
-(function () {
-
+(function() {
     'use strict';
 
-    angular
-        .module('app')
-        .config(['$stateProvider', OfferingRouteConfig]);
+    angular.module('app').config(['$stateProvider', OfferingRouteConfig]);
 
     function OfferingRouteConfig($stateProvider) {
-
         $stateProvider
             .state('stock.offering', {
                 url: '/offering?status&type&body&sort',
@@ -72,5 +68,4 @@
                 templateUrl: 'stock/product-offering/update/category'
             });
     }
-
 })();

@@ -23,22 +23,23 @@
  *         Aitor Magán <amagan@conwet.com>
  */
 
-(function () {
-
+(function() {
     'use strict';
 
-    angular
-        .module('app')
-        .factory('Category', ['$q', '$resource', 'URLS', 'LIFECYCLE_STATUS', CategoryService]);
+    angular.module('app').factory('Category', ['$q', '$resource', 'URLS', 'LIFECYCLE_STATUS', CategoryService]);
 
     function CategoryService($q, $resource, URLS, LIFECYCLE_STATUS) {
-        var resource = $resource(URLS.CATALOGUE_MANAGEMENT + '/category/:categoryId', {
-            categoryId: '@id'
-        }, {
-            update: {
-                method: 'PATCH'
+        var resource = $resource(
+            URLS.CATALOGUE_MANAGEMENT + '/category/:categoryId',
+            {
+                categoryId: '@id'
+            },
+            {
+                update: {
+                    method: 'PATCH'
+                }
             }
-        });
+        );
 
         var dataCached = {
             roots: {},
@@ -76,28 +77,32 @@
                 }
             }
 
-            resource.query(params, function (categoryList) {
-                var i = 0;
+            resource.query(
+                params,
+                function(categoryList) {
+                    var i = 0;
 
-                categoryList.forEach(function (category) {
-                    saveCategory(category);
-                });
-
-                if (!filters.all || !categoryList.length) {
-                    deferred.resolve(categoryList);
-                } else {
-                    categoryList.forEach(function (category) {
-                        extendBreadcrumb(category).then(function () {
-                            i++;
-                            if (i === categoryList.length) {
-                                deferred.resolve(categoryList);
-                            }
-                        });
+                    categoryList.forEach(function(category) {
+                        saveCategory(category);
                     });
+
+                    if (!filters.all || !categoryList.length) {
+                        deferred.resolve(categoryList);
+                    } else {
+                        categoryList.forEach(function(category) {
+                            extendBreadcrumb(category).then(function() {
+                                i++;
+                                if (i === categoryList.length) {
+                                    deferred.resolve(categoryList);
+                                }
+                            });
+                        });
+                    }
+                },
+                function(response) {
+                    deferred.reject(response);
                 }
-            }, function (response) {
-                deferred.reject(response);
-            });
+            );
 
             return deferred.promise;
         }
@@ -105,7 +110,7 @@
         function exists(params) {
             var deferred = $q.defer();
 
-            resource.query(params, function (categoryList) {
+            resource.query(params, function(categoryList) {
                 deferred.resolve(!!categoryList.length);
             });
 
@@ -115,11 +120,15 @@
         function create(data) {
             var deferred = $q.defer();
 
-            resource.save(data, function (categoryCreated) {
-                deferred.resolve(categoryCreated);
-            }, function (response) {
-                deferred.reject(response);
-            });
+            resource.save(
+                data,
+                function(categoryCreated) {
+                    deferred.resolve(categoryCreated);
+                },
+                function(response) {
+                    deferred.reject(response);
+                }
+            );
 
             return deferred.promise;
         }
@@ -134,18 +143,22 @@
                 callExtendBreadcrumb = true;
             }
 
-            resource.get(params, function (categoryRetrieved) {
-                saveCategory(categoryRetrieved);
-                if (callExtendBreadcrumb) {
-                    extendBreadcrumb(categoryRetrieved).then(function () {
+            resource.get(
+                params,
+                function(categoryRetrieved) {
+                    saveCategory(categoryRetrieved);
+                    if (callExtendBreadcrumb) {
+                        extendBreadcrumb(categoryRetrieved).then(function() {
+                            deferred.resolve(categoryRetrieved);
+                        });
+                    } else {
                         deferred.resolve(categoryRetrieved);
-                    });
-                } else {
-                    deferred.resolve(categoryRetrieved);
+                    }
+                },
+                function(response) {
+                    deferred.reject(response);
                 }
-            }, function (response) {
-                deferred.reject(response);
-            });
+            );
 
             return deferred.promise;
         }
@@ -156,11 +169,16 @@
                 categoryId: categoryId
             };
 
-            resource.update(params, category, function (categoryUpdated) {
-                deferred.resolve(categoryUpdated);
-            }, function (response) {
-                deferred.reject(response);
-            });
+            resource.update(
+                params,
+                category,
+                function(categoryUpdated) {
+                    deferred.resolve(categoryUpdated);
+                },
+                function(response) {
+                    deferred.reject(response);
+                }
+            );
 
             return deferred.promise;
         }
@@ -181,13 +199,12 @@
             return deferred.promise;
 
             function findParent(categoryId) {
-
                 if (categoryId in dataCached.roots) {
                     deferred.resolve(category);
                 } else if (categoryId in dataCached.subcategories) {
                     findParent(dataCached.subcategories[categoryId].parentId);
                 } else {
-                    detail(categoryId, false).then(function (categoryRetrieved) {
+                    detail(categoryId, false).then(function(categoryRetrieved) {
                         findParent(categoryRetrieved.id);
                     });
                 }
@@ -205,7 +222,6 @@
             return breadcrumb;
 
             function findParent(categoryId) {
-
                 if (categoryId in dataCached.roots) {
                     breadcrumb.unshift(dataCached.roots[categoryId]);
                 } else if (categoryId in dataCached.subcategories) {
@@ -219,7 +235,7 @@
             /* jshint validthis: true */
             return {
                 id: this.id,
-                href: this.href,
+                href: this.href
                 //version: this.version,
                 //name: this.name
             };
@@ -229,11 +245,10 @@
             return {
                 version: '1.0',
                 lifecycleStatus: LIFECYCLE_STATUS.LAUNCHED,
-                name: "",
-                description: "",
+                name: '',
+                description: '',
                 isRoot: true
             };
         }
     }
-
 })();

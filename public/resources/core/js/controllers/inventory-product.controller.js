@@ -22,8 +22,7 @@
  *         Jaime Pajuelo <jpajuelo@conwet.com>
  *         Aitor Magán <amagan@conwet.com>
  */
-(function () {
-
+(function() {
     'use strict';
 
     var LOADING = 'LOADING';
@@ -32,9 +31,32 @@
 
     angular
         .module('app')
-        .controller('InventorySearchCtrl', ['$scope', '$state', '$rootScope', 'EVENTS', 'InventoryProduct', 'INVENTORY_STATUS', 'Utils', InventorySearchController])
-        .controller('InventoryDetailsCtrl', ['$rootScope', '$scope', '$state', 'InventoryProduct', 'Utils', 'ProductSpec', 'EVENTS', '$interval',
-            '$window', 'LOGGED_USER', 'USAGE_CHART_URL', 'BillingAccount', 'Download', ProductDetailController]);
+        .controller('InventorySearchCtrl', [
+            '$scope',
+            '$state',
+            '$rootScope',
+            'EVENTS',
+            'InventoryProduct',
+            'INVENTORY_STATUS',
+            'Utils',
+            InventorySearchController
+        ])
+        .controller('InventoryDetailsCtrl', [
+            '$rootScope',
+            '$scope',
+            '$state',
+            'InventoryProduct',
+            'Utils',
+            'ProductSpec',
+            'EVENTS',
+            '$interval',
+            '$window',
+            'LOGGED_USER',
+            'USAGE_CHART_URL',
+            'BillingAccount',
+            'Download',
+            ProductDetailController
+        ]);
 
     function InventorySearchController($scope, $state, $rootScope, EVENTS, InventoryProduct, INVENTORY_STATUS, Utils) {
         /* jshint validthis: true */
@@ -49,13 +71,12 @@
 
         vm.showFilters = showFilters;
         vm.getElementsLength = getElementsLength;
-        vm.searchInput = "";
+        vm.searchInput = '';
 
         // Initialize the search input content
         vm.initializeInput = initializeInput;
         function initializeInput() {
-            if($state.params.body !== undefined)
-                vm.searchInput = $state.params.body;
+            if ($state.params.body !== undefined) vm.searchInput = $state.params.body;
         }
 
         // Returns the input content
@@ -68,8 +89,7 @@
         // Handle enter press event
         vm.handleEnterKeyUp = handleEnterKeyUp;
         function handleEnterKeyUp(event) {
-            if (event.keyCode == 13)
-                $("#searchbutton").click();
+            if (event.keyCode == 13) $('#searchbutton').click();
         }
 
         function inventorySearch() {
@@ -82,18 +102,20 @@
                 params.offset = vm.offset;
                 params.size = vm.size;
 
-                InventoryProduct.search(params).then(function (productList) {
-                    vm.list.status = LOADED;
-                    angular.copy(productList, vm.list);
-                }, function (response) {
-                    vm.error = Utils.parseError(response, 'It was impossible to load the list of products');
-                    vm.list.status = ERROR;
-                });
+                InventoryProduct.search(params).then(
+                    function(productList) {
+                        vm.list.status = LOADED;
+                        angular.copy(productList, vm.list);
+                    },
+                    function(response) {
+                        vm.error = Utils.parseError(response, 'It was impossible to load the list of products');
+                        vm.list.status = ERROR;
+                    }
+                );
             }
         }
-	
 
-        $scope.$watch(function () {
+        $scope.$watch(function() {
             return vm.offset;
         }, inventorySearch);
 
@@ -109,9 +131,20 @@
     }
 
     function ProductDetailController(
-        $rootScope, $scope, $state, InventoryProduct, Utils, ProductSpec, EVENTS, $interval,
-        $window, LOGGED_USER, USAGE_CHART_URL, BillingAccount, Download) {
-
+        $rootScope,
+        $scope,
+        $state,
+        InventoryProduct,
+        Utils,
+        ProductSpec,
+        EVENTS,
+        $interval,
+        $window,
+        LOGGED_USER,
+        USAGE_CHART_URL,
+        BillingAccount,
+        Download
+    ) {
         /* jshint validthis: true */
         var vm = this;
         var load = false;
@@ -138,47 +171,54 @@
         vm.getUsageURL = getUsageURL;
         vm.downloadInvoice = downloadInvoice;
 
-        InventoryProduct.detail($state.params.productId).then(function (productRetrieved) {
-            locations = [];
-            load = false;
+        InventoryProduct.detail($state.params.productId).then(
+            function(productRetrieved) {
+                locations = [];
+                load = false;
 
-            vm.item = productRetrieved;
-            vm.item.status = LOADED;
-            vm.offerings = [];
+                vm.item = productRetrieved;
+                vm.item.status = LOADED;
+                vm.offerings = [];
 
-            $scope.priceplanSelected = productRetrieved.productPrice[0];
+                $scope.priceplanSelected = productRetrieved.productPrice[0];
 
-            digital = false;
-            if (!productRetrieved.productOffering.isBundle) {
-                vm.offerings.push(productRetrieved.productOffering);
-                checkOfferingProduct(productRetrieved.productOffering);
-            } else {
-                productRetrieved.productOffering.bundledProductOffering.forEach(function(offering) {
-                    vm.offerings.push(offering);
-                    checkOfferingProduct(offering);
-                })
+                digital = false;
+                if (!productRetrieved.productOffering.isBundle) {
+                    vm.offerings.push(productRetrieved.productOffering);
+                    checkOfferingProduct(productRetrieved.productOffering);
+                } else {
+                    productRetrieved.productOffering.bundledProductOffering.forEach(function(offering) {
+                        vm.offerings.push(offering);
+                        checkOfferingProduct(offering);
+                    });
+                }
+
+                // Retrieve existing charges
+                BillingAccount.searchCharges(vm.item.id).then(
+                    function(charges) {
+                        // Extract invoice url
+                        vm.charges.items = charges.map(function(charge) {
+                            var invoiceUrl = charge.description.split(' ').pop();
+                            charge.description = charge.description.substring(
+                                0,
+                                charge.description.indexOf(invoiceUrl) - 1
+                            );
+                            charge.invoice = invoiceUrl;
+                            return charge;
+                        });
+                        vm.charges.status = LOADED;
+                    },
+                    function(response) {
+                        vm.charges.error = Utils.parseError(response, 'It was impossible to load the list of charges');
+                        vm.charges.status = ERROR;
+                    }
+                );
+            },
+            function(response) {
+                vm.error = Utils.parseError(response, 'It was impossible to load product details');
+                vm.item.status = ERROR;
             }
-
-            // Retrieve existing charges
-            BillingAccount.searchCharges(vm.item.id).then(function(charges) {
-                // Extract invoice url
-                vm.charges.items = charges.map(function(charge) {
-                    var invoiceUrl = charge.description.split(' ').pop();
-                    charge.description = charge.description.substring(0, charge.description.indexOf(invoiceUrl) - 1);
-                    charge.invoice = invoiceUrl;
-                    return charge;
-                });
-                vm.charges.status = LOADED;
-
-            }, function(response) {
-                vm.charges.error = Utils.parseError(response, 'It was impossible to load the list of charges');
-                vm.charges.status = ERROR;
-            });
-
-        }, function (response) {
-            vm.error = Utils.parseError(response, 'It was impossible to load product details');
-            vm.item.status = ERROR;
-        });
+        );
 
         function checkOfferingProduct(offering) {
             var characteristics = offering.productSpecification.productSpecCharacteristic;
@@ -187,15 +227,12 @@
             if (!offering.productSpecification.isBundle) {
                 digital = checkDigital(characteristics) || digital;
             } else {
-
                 if (!offering.productSpecification.bundledProductSpecification[0].productSpecCharacteristic) {
-
                     ProductSpec.extendBundledProducts(offering.productSpecification).then(function() {
                         offering.productSpecification.bundledProductSpecification.forEach(function(product) {
                             digital = checkDigital(product.productSpecCharacteristic) || digital;
                         });
                     });
-
                 } else {
                     offering.productSpecification.bundledProductSpecification.forEach(function(product) {
                         digital = checkDigital(product.productSpecCharacteristic) || digital;
@@ -262,8 +299,7 @@
         }
 
         function isRenewable() {
-            return hasProductPrice() && (vm.item.productPrice[0].priceType.toLowerCase() == 'recurring'
-                                         || isUsage());
+            return hasProductPrice() && (vm.item.productPrice[0].priceType.toLowerCase() == 'recurring' || isUsage());
         }
 
         function renewProduct() {
@@ -272,48 +308,53 @@
                 name: vm.item.name,
                 id: vm.item.id,
                 priceType: vm.item.productPrice[0].priceType.toLowerCase()
-            }).then(function(reviewJob) {
-                load = false;
-                if ('x-redirect-url' in reviewJob.headers) {
-                    var ppalWindow = $window.open(reviewJob.headers['x-redirect-url'], '_blank');
-                    var interval;
+            }).then(
+                function(reviewJob) {
+                    load = false;
+                    if ('x-redirect-url' in reviewJob.headers) {
+                        var ppalWindow = $window.open(reviewJob.headers['x-redirect-url'], '_blank');
+                        var interval;
 
-                    // The function to be called when the payment process has ended
-                    var paymentFinished = function(closeModal) {
-
-                        if (interval) {
-                            $interval.cancel(interval);
-                        }
-
-                        if (closeModal) {
-                            $rootScope.$emit(EVENTS.MESSAGE_CLOSED);
-                        }
-                        // Reload inventory page
-                        $state.go($state.current, {}, {reload: true})
-
-                    };
-
-                    // Display a message and wait until the new tab has been closed to redirect the page
-                    $rootScope.$emit(EVENTS.MESSAGE_CREATED, reviewJob.headers['x-redirect-url'], paymentFinished.bind(this, false));
-
-                    if (ppalWindow) {
-                        interval = $interval(function () {
-                            if (ppalWindow.closed) {
-                                paymentFinished(true);
+                        // The function to be called when the payment process has ended
+                        var paymentFinished = function(closeModal) {
+                            if (interval) {
+                                $interval.cancel(interval);
                             }
-                        }, 500);
-                    }
-                }
-            }, function (response) {
-                load = false;
-                var defaultMessage = 'There was an unexpected error that prevented the ' +
-                    'system from renewing your product';
-                var error = Utils.parseError(response, defaultMessage);
 
-                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
-                    error: error
-                });
-            });
+                            if (closeModal) {
+                                $rootScope.$emit(EVENTS.MESSAGE_CLOSED);
+                            }
+                            // Reload inventory page
+                            $state.go($state.current, {}, { reload: true });
+                        };
+
+                        // Display a message and wait until the new tab has been closed to redirect the page
+                        $rootScope.$emit(
+                            EVENTS.MESSAGE_CREATED,
+                            reviewJob.headers['x-redirect-url'],
+                            paymentFinished.bind(this, false)
+                        );
+
+                        if (ppalWindow) {
+                            interval = $interval(function() {
+                                if (ppalWindow.closed) {
+                                    paymentFinished(true);
+                                }
+                            }, 500);
+                        }
+                    }
+                },
+                function(response) {
+                    load = false;
+                    var defaultMessage =
+                        'There was an unexpected error that prevented the ' + 'system from renewing your product';
+                    var error = Utils.parseError(response, defaultMessage);
+
+                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                        error: error
+                    });
+                }
+            );
         }
 
         function getUsageURL() {
@@ -322,8 +363,18 @@
             var orderId = vm.item.name.split('=')[1];
 
             // Get the endpoint of the usage mashup including the access token and the product id
-            return USAGE_CHART_URL + startingChar + 'orderId=' + orderId +
-                '&productId=' + vm.item.id + '&token=' + LOGGED_USER.bearerToken + '&server=' + server;
+            return (
+                USAGE_CHART_URL +
+                startingChar +
+                'orderId=' +
+                orderId +
+                '&productId=' +
+                vm.item.id +
+                '&token=' +
+                LOGGED_USER.bearerToken +
+                '&server=' +
+                server
+            );
         }
 
         function characteristicMatches(productChar, specChar, offId, productId) {
@@ -337,8 +388,7 @@
                 if (parsedName.length > 2 && parsedName[0] === offCharId && parsedName[1] === prodCharId) {
                     name = parsedName.slice(2).join(' ');
                 }
-
-            } else if (vm.offerings.length <= 1 && productId){
+            } else if (vm.offerings.length <= 1 && productId) {
                 var parsedName = productChar.name.split(' ');
 
                 if (parsedName.length > 1 && parsedName[0] === prodCharId) {
@@ -361,7 +411,7 @@
             var result = formatCharacteristicValue(characteristic, characteristicValue);
 
             var productCharacteristic = vm.item.productCharacteristic.filter((prodCharacteristic) => {
-                return characteristicMatches(prodCharacteristic, characteristic, offId, productId)
+                return characteristicMatches(prodCharacteristic, characteristic, offId, productId);
             })[0];
 
             return result === productCharacteristic.value;
@@ -370,7 +420,7 @@
         function downloadInvoice(invoice) {
             Download.download(invoice).then((result) => {
                 let url = $window.URL.createObjectURL(result);
-                $window.open(url, '_blank')
+                $window.open(url, '_blank');
             });
         }
 
@@ -378,21 +428,20 @@
             var result;
 
             switch (characteristic.valueType) {
-            case ProductSpec.VALUE_TYPES.STRING.toLowerCase():
-                result = characteristicValue.value;
-                break;
-            case ProductSpec.VALUE_TYPES.NUMBER.toLowerCase():
-                if (characteristicValue.value && characteristicValue.value.length) {
+                case ProductSpec.VALUE_TYPES.STRING.toLowerCase():
                     result = characteristicValue.value;
-                } else {
-                    result = characteristicValue.valueFrom + " - " + characteristicValue.valueTo;
-                }
-                result += " " + characteristicValue.unitOfMeasure;
-                break;
+                    break;
+                case ProductSpec.VALUE_TYPES.NUMBER.toLowerCase():
+                    if (characteristicValue.value && characteristicValue.value.length) {
+                        result = characteristicValue.value;
+                    } else {
+                        result = characteristicValue.valueFrom + ' - ' + characteristicValue.valueTo;
+                    }
+                    result += ' ' + characteristicValue.unitOfMeasure;
+                    break;
             }
 
             return result;
         }
     }
-
 })();

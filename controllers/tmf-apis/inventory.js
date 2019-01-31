@@ -24,10 +24,9 @@ var async = require('async'),
     tmfUtils = require('./../../lib/tmfUtils');
 
 var inventory = (function() {
-
     var validateRetrieving = function(req, callback) {
         // Check if requesting a list of a single product
-        if(req.path.endsWith('product')) {
+        if (req.path.endsWith('product')) {
             tmfUtils.filterRelatedPartyFields(req, callback);
         } else {
             callback();
@@ -39,19 +38,14 @@ var inventory = (function() {
 
     var inventoryRegex = new RegExp('/product(\\?|$)');
 
-    var createQuery = indexes.genericCreateQuery.bind(
-        null,
-        ["status", "name"],
-        "inventory",
-        function (req, query) {
-            if (req.query["relatedParty.id"]) {
-                indexes.addAndCondition(query, { relatedPartyHash: [indexes.fixUserId(req.query["relatedParty.id"])] });
-            }
-
-            utils.queryAndOrCommas(req.query["body"], "body", query);
-            utils.queryAndOrCommas(req.query["status"], "status", query);
+    var createQuery = indexes.genericCreateQuery.bind(null, ['status', 'name'], 'inventory', function(req, query) {
+        if (req.query['relatedParty.id']) {
+            indexes.addAndCondition(query, { relatedPartyHash: [indexes.fixUserId(req.query['relatedParty.id'])] });
         }
-    );
+
+        utils.queryAndOrCommas(req.query['body'], 'body', query);
+        utils.queryAndOrCommas(req.query['status'], 'status', query);
+    });
 
     var getInventoryRequest = indexes.getMiddleware.bind(null, inventoryRegex, createQuery, indexes.searchInventory);
 
@@ -60,15 +54,14 @@ var inventory = (function() {
     };
 
     var validators = {
-        'GET': [ utils.validateLoggedIn, tmfUtils.ensureRelatedPartyIncluded, validateRetrieving ],
-        'POST': [ utils.methodNotAllowed ],
-        'PATCH': [ utils.methodNotAllowed ],
-        'PUT': [ utils.methodNotAllowed ],
-        'DELETE': [ utils.methodNotAllowed ]
+        GET: [utils.validateLoggedIn, tmfUtils.ensureRelatedPartyIncluded, validateRetrieving],
+        POST: [utils.methodNotAllowed],
+        PATCH: [utils.methodNotAllowed],
+        PUT: [utils.methodNotAllowed],
+        DELETE: [utils.methodNotAllowed]
     };
 
     var checkPermissions = function(req, callback) {
-
         var reqValidators = [];
 
         for (var i in validators[req.method]) {
@@ -77,10 +70,11 @@ var inventory = (function() {
 
         methodIndexed(req)
             .catch(() => Promise.resolve(req))
-            .then(() => { async.series(reqValidators, callback); });
+            .then(() => {
+                async.series(reqValidators, callback);
+            });
 
         // async.series(reqValidators, callback);
-
     };
 
     var executePostValidation = function(req, callback) {

@@ -17,12 +17,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var nock = require('nock'),
-    proxyquire =  require('proxyquire'),
-    testUtils = require('../../utils');
+var nock = require('nock');
+
+var proxyquire = require('proxyquire');
+
+var testUtils = require('../../utils');
 
 describe('RSS API', function() {
-
     var config = testUtils.getDefaultConfig();
 
     var getRSSAPI = function(rssClient, tmfUtils, utils) {
@@ -39,22 +40,19 @@ describe('RSS API', function() {
     });
 
     describe('Get Permissions', function() {
+        /// ///////////////////////////////////////////////////////////////////////////////////////////
+        /// /////////////////////////////////// NOT AUTHENTICATED /////////////////////////////////////
+        /// ///////////////////////////////////////////////////////////////////////////////////////////
 
-        //////////////////////////////////////////////////////////////////////////////////////////////
-        ////////////////////////////////////// NOT AUTHENTICATED /////////////////////////////////////
-        //////////////////////////////////////////////////////////////////////////////////////////////
-
-        describe('Not Authenticated Requests', function () {
-
-            var validateLoggedError = function (req, callback) {
+        describe('Not Authenticated Requests', function() {
+            var validateLoggedError = function(req, callback) {
                 callback({
                     status: 401,
                     message: 'You need to be authenticated to create/update/delete resources'
                 });
             };
 
-            var testNotLoggedIn = function (method, done) {
-
+            var testNotLoggedIn = function(method, done) {
                 var utils = {
                     validateLoggedIn: validateLoggedError
                 };
@@ -68,8 +66,7 @@ describe('RSS API', function() {
                     url: path
                 };
 
-                rssApi.checkPermissions(req, function (err) {
-
+                rssApi.checkPermissions(req, function(err) {
                     expect(err).not.toBe(null);
                     expect(err.status).toBe(401);
                     expect(err.message).toBe('You need to be authenticated to create/update/delete resources');
@@ -78,19 +75,19 @@ describe('RSS API', function() {
                 });
             };
 
-            it('should reject not authenticated GET requests', function (done) {
+            it('should reject not authenticated GET requests', function(done) {
                 testNotLoggedIn('GET', done);
             });
 
-            it('should reject not authenticated POST requests', function (done) {
+            it('should reject not authenticated POST requests', function(done) {
                 testNotLoggedIn('POST', done);
             });
 
-            it('should reject not authenticated PUT requests', function (done) {
+            it('should reject not authenticated PUT requests', function(done) {
                 testNotLoggedIn('PUT', done);
             });
 
-            it('should reject not authenticated DELETE requests', function (done) {
+            it('should reject not authenticated DELETE requests', function(done) {
                 testNotLoggedIn('DELETE', done);
             });
         });
@@ -100,7 +97,7 @@ describe('RSS API', function() {
             var methodNotAllowedMessage = 'This method used is not allowed in the accessed API';
 
             var utils = {
-                methodNotAllowed: function (req, callback) {
+                methodNotAllowed: function(req, callback) {
                     callback({
                         status: methodNotAllowedStatus,
                         message: methodNotAllowedMessage
@@ -117,8 +114,7 @@ describe('RSS API', function() {
                 url: path
             };
 
-            rssApi.checkPermissions(req, function (err) {
-
+            rssApi.checkPermissions(req, function(err) {
                 expect(err).not.toBe(null);
                 expect(err.status).toBe(methodNotAllowedStatus);
                 expect(err.message).toBe(methodNotAllowedMessage);
@@ -133,7 +129,7 @@ describe('RSS API', function() {
             // Ensure that the create provider method has been called with the request user
             expect(user.id).toBe('username');
             callback(response);
-        }
+        };
     };
 
     var testCheckPermissions = function(req, provResponse, validator, done) {
@@ -155,9 +151,9 @@ describe('RSS API', function() {
     };
 
     describe('GET', function() {
-        //////////////////////////////////////////////////////////////////////////////////////////////
-        ///////////////////////////////////////// GET requests ///////////////////////////////////////
-        //////////////////////////////////////////////////////////////////////////////////////////////
+        /// ///////////////////////////////////////////////////////////////////////////////////////////
+        /// ////////////////////////////////////// GET requests ///////////////////////////////////////
+        /// ///////////////////////////////////////////////////////////////////////////////////////////
 
         it('should call the callback without errors when the user is authorized to retrieve models', function(done) {
             var req = {
@@ -165,9 +161,11 @@ describe('RSS API', function() {
                 apiUrl: '/rss/models',
                 user: {
                     id: 'username',
-                    roles: [{
-                        name: 'seller'
-                    }]
+                    roles: [
+                        {
+                            name: 'seller'
+                        }
+                    ]
                 }
             };
             var validator = function(err) {
@@ -214,9 +212,11 @@ describe('RSS API', function() {
                 apiUrl: '/rss/models',
                 user: {
                     id: 'username',
-                    roles: [{
-                        name: 'seller'
-                    }]
+                    roles: [
+                        {
+                            name: 'seller'
+                        }
+                    ]
                 }
             };
             var validator = function(err) {
@@ -229,10 +229,9 @@ describe('RSS API', function() {
     });
 
     describe('Create', function() {
-
-        //////////////////////////////////////////////////////////////////////////////////////////////
-        /////////////////////////////////////// POST requests ////////////////////////////////////////
-        //////////////////////////////////////////////////////////////////////////////////////////////
+        /// ///////////////////////////////////////////////////////////////////////////////////////////
+        /// //////////////////////////////////// POST requests ////////////////////////////////////////
+        /// ///////////////////////////////////////////////////////////////////////////////////////////
 
         it('should call the callback without error after creating a RS model', function(done) {
             var req = {
@@ -240,11 +239,13 @@ describe('RSS API', function() {
                 apiUrl: '/rss/models',
                 user: {
                     id: 'username',
-                    roles: [{
-                        name: 'seller'
-                    }]
+                    roles: [
+                        {
+                            name: 'seller'
+                        }
+                    ]
                 },
-                body: JSON.stringify({aggregatorValue: 0}),
+                body: JSON.stringify({ aggregatorValue: 0 }),
                 headers: {}
             };
             var validator = function(err) {
@@ -261,9 +262,11 @@ describe('RSS API', function() {
                 apiUrl: '/rss/cdrs',
                 user: {
                     id: 'username',
-                        roles: [{
-                        name: 'seller'
-                    }]
+                    roles: [
+                        {
+                            name: 'seller'
+                        }
+                    ]
                 }
             };
             var validator = function(err) {
@@ -280,9 +283,11 @@ describe('RSS API', function() {
                 apiUrl: '/rss/models',
                 user: {
                     id: 'username',
-                    roles: [{
-                        name: 'seller'
-                    }]
+                    roles: [
+                        {
+                            name: 'seller'
+                        }
+                    ]
                 },
                 body: {}
             };
@@ -294,34 +299,41 @@ describe('RSS API', function() {
             testCheckPermissions(req, null, validator, done);
         });
 
-  		it('should add callbackUrl to charging backend if not provided', function (done) {
-			var chargbackUrl = (config.endpoints.charging.appSsl ? 'https' : 'http') + '://' + config.endpoints.charging.host + ':' + config.endpoints.charging.port + "/charging/api/reportManagement/created";
-			var req = {
-				method: 'POST',
-				apiUrl: '/rss/settlement',
-				user: {
+        it('should add callbackUrl to charging backend if not provided', function(done) {
+            var chargbackUrl =
+                (config.endpoints.charging.appSsl ? 'https' : 'http') +
+                '://' +
+                config.endpoints.charging.host +
+                ':' +
+                config.endpoints.charging.port +
+                '/charging/api/reportManagement/created';
+            var req = {
+                method: 'POST',
+                apiUrl: '/rss/settlement',
+                user: {
                     id: 'username',
-                    roles: [{
-                        name: 'seller'
-                    }]
+                    roles: [
+                        {
+                            name: 'seller'
+                        }
+                    ]
                 },
-				body: JSON.stringify({ aggregatorValue: 0 }),
+                body: JSON.stringify({ aggregatorValue: 0 }),
                 headers: {}
-			};
-			var validator = function(err) {
+            };
+            var validator = function(err) {
                 expect(err).toBe(null);
                 var body = JSON.parse(req.body);
                 expect(body.callbackUrl).toEqual(chargbackUrl);
             };
             testCheckPermissions(req, null, validator, done);
-		});
+        });
     });
 
     describe('Post validation', function() {
-
-        //////////////////////////////////////////////////////////////////////////////////////////////
-        ////////////////////////////////////// Post validation ///////////////////////////////////////
-        //////////////////////////////////////////////////////////////////////////////////////////////
+        /// ///////////////////////////////////////////////////////////////////////////////////////////
+        /// /////////////////////////////////// Post validation ///////////////////////////////////////
+        /// ///////////////////////////////////////////////////////////////////////////////////////////
 
         var testRSSPostValidationNotApply = function(req, done) {
             var rssAPI = getRSSAPI({}, {}, {});
@@ -332,7 +344,7 @@ describe('RSS API', function() {
             });
         };
 
-        it('should call the callback if the request was not a model retrieving', function(done){
+        it('should call the callback if the request was not a model retrieving', function(done) {
             var req = {
                 method: 'POST'
             };
@@ -348,8 +360,7 @@ describe('RSS API', function() {
             testRSSPostValidationNotApply(req, done);
         });
 
-
-        it('should call the callback if the server response body is not a valid JSON', function(done){
+        it('should call the callback if the server response body is not a valid JSON', function(done) {
             var req = {
                 method: 'GET',
                 apiUrl: '/rss/models',
@@ -393,7 +404,6 @@ describe('RSS API', function() {
                 expect(body).toEqual([newModel]);
                 done();
             });
-
         });
 
         it('should call the callback with error if the server fails creating the default RS model', function(done) {
@@ -431,7 +441,7 @@ describe('RSS API', function() {
             });
         });
 
-        it('should call the callback and set to 1 the count if the default RS model has not been created', function (done) {
+        it('should call the callback and set to 1 the count if the default RS model has not been created', function(done) {
             var req = {
                 method: 'GET',
                 apiUrl: '/rss/models',

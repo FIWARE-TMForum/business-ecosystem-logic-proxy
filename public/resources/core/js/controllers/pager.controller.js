@@ -21,8 +21,7 @@
  * @author Francisco de la Vega <fdelavega@conwet.com>
  */
 
-(function () {
-
+(function() {
     'use strict';
 
     angular
@@ -57,7 +56,7 @@
                 currPage = currPage + 1;
                 managedCtrl.offset = currPage * pageSize;
 
-                if (currPage > pages[pages.length -1].page) {
+                if (currPage > pages[pages.length - 1].page) {
                     pages.shift();
                     pages.push({
                         page: currPage
@@ -109,37 +108,43 @@
             pages = [];
             nPages = 0;
             currPage = 0;
-            loadPages()
+            loadPages();
         }
 
         function loadPages() {
-            managedCtrl.getElementsLength().then(function (response) {
-                nPages = Math.ceil(response.size/pageSize);
+            managedCtrl.getElementsLength().then(
+                function(response) {
+                    nPages = Math.ceil(response.size / pageSize);
 
-                pages = [];
-                var maxP = nPages < maxPages ? nPages : maxPages;
-                for (var i = 0; i < maxP; i++) {
-                    pages.push({
-                        page: i
-                    })
+                    pages = [];
+                    var maxP = nPages < maxPages ? nPages : maxPages;
+                    for (var i = 0; i < maxP; i++) {
+                        pages.push({
+                            page: i
+                        });
+                    }
+                    // Load initial page
+                    managedCtrl.offset = 0;
+                },
+                function(response) {
+                    managedCtrl.error = Utils.parseError(response, 'It was impossible to load the list of elements');
+                    managedCtrl.list.status = 'ERROR';
                 }
-                // Load initial page
-                managedCtrl.offset = 0;
-            }, function (response) {
-                managedCtrl.error = Utils.parseError(response, 'It was impossible to load the list of elements');
-                managedCtrl.list.status = 'ERROR';
-            });
+            );
         }
 
         // Load initial pages
         loadPages();
 
-        $scope.$watch(() => managedCtrl.sidebarInput, () => {
-            if (typeof managedCtrl.sidebarInput === "undefined") return;
-            loadPages();
-        });
+        $scope.$watch(
+            () => managedCtrl.sidebarInput,
+            () => {
+                if (typeof managedCtrl.sidebarInput === 'undefined') return;
+                loadPages();
+            }
+        );
 
-        $scope.$on(Party.EVENTS.USER_SESSION_SWITCHED, function () {
+        $scope.$on(Party.EVENTS.USER_SESSION_SWITCHED, function() {
             managedCtrl.list.status = 'LOADING';
             managedCtrl.offset = -1;
             reload();

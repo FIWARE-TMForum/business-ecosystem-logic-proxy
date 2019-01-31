@@ -22,8 +22,7 @@
  *         Jaime Pajuelo <jpajuelo@conwet.com>
  */
 
-(function () {
-
+(function() {
     'use strict';
 
     angular
@@ -35,16 +34,16 @@
         .filter('trusted', ['$sce', trustedURL]);
 
     function capitalizeFilter() {
-        return function (input) {
-            return (!!input) ? input.charAt(0).toUpperCase() + input.substr(1).toLowerCase() : '';
-        }
+        return function(input) {
+            return !!input ? input.charAt(0).toUpperCase() + input.substr(1).toLowerCase() : '';
+        };
     }
 
     function statusFilter() {
-        return function (list) {
+        return function(list) {
             var statusList = Array.prototype.slice.call(arguments, 1);
 
-            return list.filter(function (element) {
+            return list.filter(function(element) {
                 return statusList.indexOf(element.lifecycleStatus) !== -1;
             });
         };
@@ -56,12 +55,12 @@
 
             return list.filter(function(element) {
                 return element.isBundle === state;
-            })
-        }
+            });
+        };
     }
 
     function orderByParentId() {
-        return function (list) {
+        return function(list) {
             var unorderedList = list.slice(),
                 orderedList = [];
 
@@ -84,7 +83,7 @@
                     }
                 }
 
-                roots.forEach(function (root) {
+                roots.forEach(function(root) {
                     // Add the root to ordered list.
                     orderedList.push(root);
                     // Next, add the root children.
@@ -99,7 +98,7 @@
             function hasParentId(item, parentId) {
                 return item.parentId === parentId;
             }
-        }
+        };
     }
 
     function trustedURL($sce) {
@@ -107,5 +106,4 @@
             return $sce.trustAsResourceUrl(url);
         };
     }
-
 })();

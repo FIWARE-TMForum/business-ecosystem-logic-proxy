@@ -22,8 +22,7 @@
  *         Jaime Pajuelo <jpajuelo@conwet.com>
  *         Aitor Magán <amagan@conwet.com>
  */
-(function () {
-
+(function() {
     'use strict';
 
     angular
@@ -32,31 +31,27 @@
         .controller('RouteRSSCtl', ['$state', RSSController]);
 
     function RSSRouteConfig($stateProvider) {
-
-        $stateProvider
-            .state('rss', {
-                url: '/rss',
-                data: {
-                    title: 'Revenue Sharing',
-                    loggingRequired: true
+        $stateProvider.state('rss', {
+            url: '/rss',
+            data: {
+                title: 'Revenue Sharing',
+                loggingRequired: true
+            },
+            views: {
+                'sidebar-content': {
+                    templateUrl: 'rss/sidebar',
+                    controller: 'RouteRSSCtl'
                 },
-                views: {
-                    'sidebar-content': {
-                        templateUrl: 'rss/sidebar',
-                        controller: 'RouteRSSCtl'
-                    },
-                    'content': {
-                        template: '<ui-view>'
-                    }
+                content: {
+                    template: '<ui-view>'
                 }
-            });
+            }
+        });
     }
 
     function RSSController($state) {
-
         if ($state.is('rss')) {
             $state.go('rss.models');
         }
     }
-
 })();

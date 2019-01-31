@@ -22,8 +22,7 @@
  *         Jaime Pajuelo <jpajuelo@conwet.com>
  *         Aitor Magán <amagan@conwet.com>
  */
-(function () {
-
+(function() {
     'use strict';
 
     var LOADING = 'LOADING';
@@ -33,12 +32,38 @@
     angular
         .module('app')
         .controller('CatalogueListCtrl', ['$scope', 'Catalogue', 'Utils', CatalogueListController])
-        .controller('CatalogueSearchCtrl', ['$scope', '$state', '$rootScope', '$timeout', 'EVENTS', 'Catalogue',
-            'LIFECYCLE_STATUS', 'DATA_STATUS', 'Utils', CatalogueSearchController])
+        .controller('CatalogueSearchCtrl', [
+            '$scope',
+            '$state',
+            '$rootScope',
+            '$timeout',
+            'EVENTS',
+            'Catalogue',
+            'LIFECYCLE_STATUS',
+            'DATA_STATUS',
+            'Utils',
+            CatalogueSearchController
+        ])
 
-        .controller('CatalogueCreateCtrl', ['$state', '$rootScope', 'EVENTS', 'PROMISE_STATUS', 'Catalogue', 'Utils', CatalogueCreateController])
+        .controller('CatalogueCreateCtrl', [
+            '$state',
+            '$rootScope',
+            'EVENTS',
+            'PROMISE_STATUS',
+            'Catalogue',
+            'Utils',
+            CatalogueCreateController
+        ])
         .controller('CatalogueDetailCtrl', ['$state', 'Catalogue', 'Utils', CatalogueDetailController])
-        .controller('CatalogueUpdateCtrl', ['$state', '$rootScope', 'EVENTS', 'PROMISE_STATUS', 'Catalogue', 'Utils', CatalogueUpdateController]);
+        .controller('CatalogueUpdateCtrl', [
+            '$state',
+            '$rootScope',
+            'EVENTS',
+            'PROMISE_STATUS',
+            'Catalogue',
+            'Utils',
+            CatalogueUpdateController
+        ]);
 
     function CatalogueListController($scope, Catalogue, Utils) {
         /* jshint validthis: true */
@@ -48,13 +73,13 @@
         vm.offset = -1;
         vm.size = -1;
         vm.getElementsLength = getElementsLength;
-        vm.sidebarInput = "";
+        vm.sidebarInput = '';
 
         vm.updateList = updateList;
 
         function updateList() {
             vm.list.status = LOADING;
-	    
+
             if (vm.offset >= 0) {
                 // Create query with body for filtering catalogs
                 var page = {
@@ -64,13 +89,16 @@
                 };
                 // Search query
 
-                Catalogue.search(page).then(function (catalogueList) {
-                    angular.copy(catalogueList, vm.list);
-                    vm.list.status = LOADED;
-                }, function (response) {
-                    vm.error = Utils.parseError(response, 'It was impossible to load the list of catalogs');
-                    vm.list.status = ERROR;
-                });
+                Catalogue.search(page).then(
+                    function(catalogueList) {
+                        angular.copy(catalogueList, vm.list);
+                        vm.list.status = LOADED;
+                    },
+                    function(response) {
+                        vm.error = Utils.parseError(response, 'It was impossible to load the list of catalogs');
+                        vm.list.status = ERROR;
+                    }
+                );
             }
         }
 
@@ -79,12 +107,22 @@
             return Catalogue.count({ body: vm.sidebarInput });
         }
 
-        $scope.$watch(function () {
+        $scope.$watch(function() {
             return vm.offset;
         }, updateList);
     }
 
-    function CatalogueSearchController($scope, $state, $rootScope, $timeout, EVENTS, Catalogue, LIFECYCLE_STATUS, DATA_STATUS, Utils) {
+    function CatalogueSearchController(
+        $scope,
+        $state,
+        $rootScope,
+        $timeout,
+        EVENTS,
+        Catalogue,
+        LIFECYCLE_STATUS,
+        DATA_STATUS,
+        Utils
+    ) {
         /* jshint validthis: true */
         var vm = this;
         var formMode = false;
@@ -100,7 +138,7 @@
         vm.getElementsLength = getElementsLength;
         vm.setFormMode = setFormMode;
         vm.launchSearch = launchSearch;
-        vm.searchInput = "";
+        vm.searchInput = '';
 
         function setFormMode(mode) {
             formMode = mode;
@@ -109,8 +147,7 @@
         // Initialize the search input content
         vm.initializeInput = initializeInput;
         function initializeInput() {
-            if($state.params.body !== undefined)
-                vm.searchInput = $state.params.body;
+            if ($state.params.body !== undefined) vm.searchInput = $state.params.body;
         }
 
         // Returns the input content
@@ -124,8 +161,8 @@
         vm.handleEnterKeyUp = handleEnterKeyUp;
         function handleEnterKeyUp(event) {
             if (event.keyCode == 13) {
-                var selector = formMode ? "#formSearch" : "#searchbutton";
-                $timeout(function () {
+                var selector = formMode ? '#formSearch' : '#searchbutton';
+                $timeout(function() {
                     $(selector).click();
                 });
             }
@@ -164,25 +201,28 @@
 
         function catalogueSearch() {
             vm.list.status = vm.STATUS.LOADING;
-	    
+
             if (vm.offset >= 0) {
                 var params = getParams();
 
                 params.offset = vm.offset;
                 params.size = vm.size;
 
-                Catalogue.search(params).then(function (catalogueList) {
-                    angular.copy(catalogueList, vm.list);
-                    vm.list.status = vm.STATUS.LOADED;
-                }, function (response) {
-                    vm.errorMessage = Utils.parseError(response, 'It was impossible to load the list of catalogs');
-                    vm.list.status = vm.STATUS.ERROR;
-                });
+                Catalogue.search(params).then(
+                    function(catalogueList) {
+                        angular.copy(catalogueList, vm.list);
+                        vm.list.status = vm.STATUS.LOADED;
+                    },
+                    function(response) {
+                        vm.errorMessage = Utils.parseError(response, 'It was impossible to load the list of catalogs');
+                        vm.list.status = vm.STATUS.ERROR;
+                    }
+                );
             }
         }
-	
+
         vm.list.status = vm.STATUS.LOADING;
-        $scope.$watch(function () {
+        $scope.$watch(function() {
             return vm.offset;
         }, catalogueSearch);
     }
@@ -211,23 +251,28 @@
 
         function create() {
             createPromise = Catalogue.create(vm.data);
-            createPromise.then(function (catalogueCreated) {
-                $state.go('stock.catalogue.update', {
-                    catalogueId: catalogueCreated.id
-                });
-                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'created', {
-                    resource: 'catalog',
-                    name: catalogueCreated.name
-                });
-            }, function (response) {
-                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
-                    error: Utils.parseError(response, 'Unexpected error trying to create the product catalog.')
-                });
-            });
+            createPromise.then(
+                function(catalogueCreated) {
+                    $state.go('stock.catalogue.update', {
+                        catalogueId: catalogueCreated.id
+                    });
+                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'created', {
+                        resource: 'catalog',
+                        name: catalogueCreated.name
+                    });
+                },
+                function(response) {
+                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                        error: Utils.parseError(response, 'Unexpected error trying to create the product catalog.')
+                    });
+                }
+            );
         }
 
         Object.defineProperty(create, 'status', {
-            get: function () { return createPromise != null ? createPromise.$$state.status : -1; }
+            get: function() {
+                return createPromise != null ? createPromise.$$state.status : -1;
+            }
         });
     }
 
@@ -240,13 +285,16 @@
         vm.catalogueId = $state.params.catalogueId;
 
         if (vm.catalogueId) {
-            Catalogue.detail(vm.catalogueId).then(function (catalogueRetrieved) {
-                vm.item = catalogueRetrieved;
-                vm.item.status = LOADED;
-            }, function (response) {
-                vm.error = Utils.parseError(response, 'The requested catalog could not be retrieved');
-                vm.item.status = ERROR;
-            });
+            Catalogue.detail(vm.catalogueId).then(
+                function(catalogueRetrieved) {
+                    vm.item = catalogueRetrieved;
+                    vm.item.status = LOADED;
+                },
+                function(response) {
+                    vm.error = Utils.parseError(response, 'The requested catalog could not be retrieved');
+                    vm.item.status = ERROR;
+                }
+            );
         }
     }
 
@@ -264,15 +312,20 @@
         var detailPromise = Catalogue.detail($state.params.catalogueId);
         var updatePromise = null;
 
-        detailPromise.then(function (catalogueRetrieved) {
-            vm.data = angular.copy(catalogueRetrieved);
-            vm.item = catalogueRetrieved;
-        }, function (response) {
-            vm.errorMessage = Utils.parseError(response, 'The requested catalog could not be retrieved');
-        });
+        detailPromise.then(
+            function(catalogueRetrieved) {
+                vm.data = angular.copy(catalogueRetrieved);
+                vm.item = catalogueRetrieved;
+            },
+            function(response) {
+                vm.errorMessage = Utils.parseError(response, 'The requested catalog could not be retrieved');
+            }
+        );
 
         Object.defineProperty(vm, 'status', {
-            get: function () { return detailPromise != null ? detailPromise.$$state.status : -1; }
+            get: function() {
+                return detailPromise != null ? detailPromise.$$state.status : -1;
+            }
         });
 
         function updateStatus(status) {
@@ -282,33 +335,41 @@
 
         function update() {
             var dataUpdated = {};
-            Catalogue.PATCHABLE_ATTRS.forEach(function (attr) {
+            Catalogue.PATCHABLE_ATTRS.forEach(function(attr) {
                 if (!angular.equals(vm.item[attr], vm.data[attr])) {
                     dataUpdated[attr] = vm.data[attr];
                 }
             });
 
             updatePromise = Catalogue.update(vm.data, dataUpdated);
-            updatePromise.then(function (catalogueUpdated) {
-                $state.go('stock.catalogue.update', {
-                    catalogueId: catalogueUpdated.id
-                }, {
-                    reload: true
-                });
-                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'updated', {
-                    resource: 'catalog',
-                    name: catalogueUpdated.name
-                });
-            }, function (response) {
-                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
-                    error: Utils.parseError(response, 'Unexpected error trying to update the product catalog.')
-                });
-            });
+            updatePromise.then(
+                function(catalogueUpdated) {
+                    $state.go(
+                        'stock.catalogue.update',
+                        {
+                            catalogueId: catalogueUpdated.id
+                        },
+                        {
+                            reload: true
+                        }
+                    );
+                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'updated', {
+                        resource: 'catalog',
+                        name: catalogueUpdated.name
+                    });
+                },
+                function(response) {
+                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                        error: Utils.parseError(response, 'Unexpected error trying to update the product catalog.')
+                    });
+                }
+            );
         }
 
         Object.defineProperty(update, 'status', {
-            get: function () { return updatePromise != null ? updatePromise.$$state.status : -1; }
+            get: function() {
+                return updatePromise != null ? updatePromise.$$state.status : -1;
+            }
         });
     }
-
 })();

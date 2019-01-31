@@ -17,9 +17,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-angular.module('app')
-    .controller('PaymentController', ['$scope', '$location', 'Payment', function($scope, $location, Payment) {
-
+angular.module('app').controller('PaymentController', [
+    '$scope',
+    '$location',
+    'Payment',
+    function($scope, $location, Payment) {
         var vm = this;
 
         var LOADING = 'LOADING';
@@ -31,16 +33,14 @@ angular.module('app')
         vm.initPayment = initPayment;
 
         function urlParams() {
-
             var search = window.location.search,
                 params = {};
 
             if (search) {
-
                 search = search.substring(1);
                 var rawParameters = search.split('&');
 
-                rawParameters.forEach(function (queryParam) {
+                rawParameters.forEach(function(queryParam) {
                     queryParam = queryParam.split('=');
                     params[queryParam[0]] = queryParam[1];
                 });
@@ -78,23 +78,28 @@ angular.module('app')
                 }
 
                 // Check if the acquisition has been done by an organization
-                if(!!params.organization) {
+                if (!!params.organization) {
                     userCtl.switchSession(params.organization);
                 }
 
                 // Make request to the backend
-                Payment.create(data, function() {
-                    if (action === 'accept') {
-                        vm.message = 'Your payment has been accepted. You can close this tab.';
-                        vm.state = ACCEPTED;
-                    } else {
-                        vm.accepted = ERROR;
-                        vm.message = 'Your payment has been canceled. You can close this tab.'
+                Payment.create(
+                    data,
+                    function() {
+                        if (action === 'accept') {
+                            vm.message = 'Your payment has been accepted. You can close this tab.';
+                            vm.state = ACCEPTED;
+                        } else {
+                            vm.accepted = ERROR;
+                            vm.message = 'Your payment has been canceled. You can close this tab.';
+                        }
+                    },
+                    function(response) {
+                        vm.state = ERROR;
+                        vm.message = response.data.error;
                     }
-                }, function(response) {
-                    vm.state = ERROR;
-                    vm.message = response.data.error;
-                });
+                );
             }
         }
-    }]);
+    }
+]);

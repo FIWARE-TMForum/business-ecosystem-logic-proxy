@@ -17,12 +17,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var proxyquire =  require('proxyquire'),
-    testUtils = require('../../utils');
+var proxyquire = require('proxyquire');
 
+var testUtils = require('../../utils');
 
-describe('Charging API', function () {
-
+describe('Charging API', function() {
     var getChargingAPI = function() {
         return proxyquire('../../../controllers/tmf-apis/charging', {
             './../../lib/logger': testUtils.emptyLogger
@@ -52,7 +51,6 @@ describe('Charging API', function () {
         };
 
         chargingApi.checkPermissions(req, function(err) {
-
             expect(err).toEqual({
                 status: 403,
                 message: 'This API is private'
@@ -61,5 +59,4 @@ describe('Charging API', function () {
             done();
         });
     });
-
 });

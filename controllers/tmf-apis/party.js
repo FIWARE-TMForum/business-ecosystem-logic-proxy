@@ -24,15 +24,14 @@ var async = require('async'),
     logger = require('./../../lib/logger').logger.getLogger('TMF');
 
 var party = (function() {
-
     var validateAllowed = function(req, callback) {
         callback(null);
     };
 
     var validateUpdate = function(req, callback) {
-
-        var individualsPattern = new RegExp('^/' + config.endpoints.party.path +
-            '/api/partyManagement/v2/(individual|organization)(/([^/]*))?$');
+        var individualsPattern = new RegExp(
+            '^/' + config.endpoints.party.path + '/api/partyManagement/v2/(individual|organization)(/([^/]*))?$'
+        );
         var apiPath = url.parse(req.apiUrl).pathname;
 
         var regexResult = individualsPattern.exec(apiPath);
@@ -42,11 +41,14 @@ var party = (function() {
                 status: 404,
                 message: 'The given path is invalid'
             });
-        } else if (req.user.id !== regexResult[3] || (regexResult[1] == 'individual' && utils.isOrganization(req))
-                || (regexResult[1] == 'organization' && !utils.isOrganization(req))
-                || (regexResult[1] == 'organization' && utils.isOrganization(req)
-                    && !utils.hasRole(req.user, config.oauth2.roles.orgAdmin))) {
-
+        } else if (
+            req.user.id !== regexResult[3] ||
+            (regexResult[1] == 'individual' && utils.isOrganization(req)) ||
+            (regexResult[1] == 'organization' && !utils.isOrganization(req)) ||
+            (regexResult[1] == 'organization' &&
+                utils.isOrganization(req) &&
+                !utils.hasRole(req.user, config.oauth2.roles.orgAdmin))
+        ) {
             callback({
                 status: 403,
                 message: 'You are not allowed to access this resource'
@@ -61,15 +63,14 @@ var party = (function() {
     //////////////////////////////////////////////////////////////////////////////////////////////
 
     var validators = {
-        'GET': [ validateAllowed ],
-        'POST': [ utils.methodNotAllowed ],
-        'PATCH': [ utils.validateLoggedIn, validateUpdate ],
-        'PUT': [ utils.validateLoggedIn, validateUpdate ],
-        'DELETE': [ utils.validateLoggedIn, validateUpdate ]
+        GET: [validateAllowed],
+        POST: [utils.methodNotAllowed],
+        PATCH: [utils.validateLoggedIn, validateUpdate],
+        PUT: [utils.validateLoggedIn, validateUpdate],
+        DELETE: [utils.validateLoggedIn, validateUpdate]
     };
 
-    var checkPermissions = function (req, callback) {
-
+    var checkPermissions = function(req, callback) {
         var reqValidators = [];
 
         if (req.method in validators) {
@@ -78,19 +79,17 @@ var party = (function() {
             }
 
             async.series(reqValidators, callback);
-
         } else {
             callback({
                 status: 405,
                 message: 'Method not allowed'
-            })
+            });
         }
     };
 
     return {
         checkPermissions: checkPermissions
     };
-
 })();
 
 exports.party = party;

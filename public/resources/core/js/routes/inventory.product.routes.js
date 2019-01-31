@@ -22,16 +22,12 @@
  *         Jaime Pajuelo <jpajuelo@conwet.com>
  *         Aitor Magán <amagan@conwet.com>
  */
-(function () {
-
+(function() {
     'use strict';
 
-    angular
-        .module('app')
-        .config(['$stateProvider', RouteConfig]);
+    angular.module('app').config(['$stateProvider', RouteConfig]);
 
     function RouteConfig($stateProvider) {
-
         $stateProvider
             .state('inventory.product', {
                 url: '/product?status&body',
@@ -44,7 +40,6 @@
                 },
                 templateUrl: 'inventory/product/search',
                 controller: 'InventorySearchCtrl as searchVM'
-
             })
             .state('inventory.product.detail', {
                 url: '/:productId',
@@ -68,5 +63,4 @@
                 templateUrl: 'inventory/product/detail/usage'
             });
     }
-
 })();

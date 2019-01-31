@@ -22,13 +22,20 @@
  *         Jaime Pajuelo <jpajuelo@conwet.com>
  *         Aitor Magán <amagan@conwet.com>
  */
-(function () {
-
+(function() {
     'use strict';
 
     angular
         .module('app')
-        .controller('RSTransSearchCtrl', ['$state', '$rootScope', '$scope', 'DATA_STATUS', 'RSS', 'Utils', RSTransSearchController]);
+        .controller('RSTransSearchCtrl', [
+            '$state',
+            '$rootScope',
+            '$scope',
+            'DATA_STATUS',
+            'RSS',
+            'Utils',
+            RSTransSearchController
+        ]);
 
     function RSTransSearchController($state, $rootScope, $scope, DATA_STATUS, RSS, Utils) {
         var vm = this;
@@ -51,23 +58,26 @@
         }
 
         function createReport() {
-            RSS.searchProductClasses().then(function(classes) {
-                $rootScope.$broadcast(RSS.EVENTS.REPORT_CREATE, classes.productClasses);
-            }, function () {
-                vm.error = Utils.parseError(response, 'It was impossible to load the list of product classes');
-                vm.list.status = DATA_STATUS.ERROR;
-            });
+            RSS.searchProductClasses().then(
+                function(classes) {
+                    $rootScope.$broadcast(RSS.EVENTS.REPORT_CREATE, classes.productClasses);
+                },
+                function() {
+                    vm.error = Utils.parseError(response, 'It was impossible to load the list of product classes');
+                    vm.list.status = DATA_STATUS.ERROR;
+                }
+            );
         }
 
         function getTxType(txType) {
             var types = {
-                'C': 'Charge',
-                'R': 'Refund'
+                C: 'Charge',
+                R: 'Refund'
             };
             return types[txType];
         }
 
-        function updateRSTrans () {
+        function updateRSTrans() {
             vm.list.status = DATA_STATUS.LOADING;
 
             if (vm.offset >= 0) {
@@ -76,17 +86,20 @@
                     size: vm.size
                 };
 
-                RSS.searchTransactions(params).then(function (transactions) {
-                    vm.list = angular.copy(transactions);
-                    vm.list.status = DATA_STATUS.LOADED;
-                }, function () {
-                    vm.error = Utils.parseError(response, 'It was impossible to load the list of transactions');
-                    vm.list.status = DATA_STATUS.ERROR;
-                });
+                RSS.searchTransactions(params).then(
+                    function(transactions) {
+                        vm.list = angular.copy(transactions);
+                        vm.list.status = DATA_STATUS.LOADED;
+                    },
+                    function() {
+                        vm.error = Utils.parseError(response, 'It was impossible to load the list of transactions');
+                        vm.list.status = DATA_STATUS.ERROR;
+                    }
+                );
             }
         }
 
-        $scope.$watch(function () {
+        $scope.$watch(function() {
             return vm.offset;
         }, updateRSTrans);
     }

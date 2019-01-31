@@ -23,20 +23,21 @@
  *         Aitor Magán <amagan@conwet.com>
  */
 
-(function () {
-
+(function() {
     'use strict';
 
-    angular
-        .module('app')
-        .factory('RSS', ['$q', '$resource', '$location', 'URLS', 'User', RSSService]);
+    angular.module('app').factory('RSS', ['$q', '$resource', '$location', 'URLS', 'User', RSSService]);
 
     function RSSService($q, $resource, $location, URLS, User) {
-        var modelsResource = $resource(URLS.SHARING_MODELS, {}, {
-            update: {
-                method: 'PUT'
+        var modelsResource = $resource(
+            URLS.SHARING_MODELS,
+            {},
+            {
+                update: {
+                    method: 'PUT'
+                }
             }
-        });
+        );
 
         var providersResource = $resource(URLS.SHARING_PROVIDERS, {}, {});
         var transactionResource = $resource(URLS.SHARING_TRANSACTIONS, {}, {});
@@ -65,43 +66,57 @@
             createReport: createReport
         };
 
-        function createModel (model) {
+        function createModel(model) {
             var deferred = $q.defer();
-            modelsResource.save({}, model, function(modelCreated){
-                deferred.resolve(modelCreated);
-            }, function (response) {
-                deferred.reject(response);
-            });
-
-            return deferred.promise;
-        }
-
-        function updateModel (model) {
-            var deferred = $q.defer();
-            modelsResource.update({}, model, function(modelUpdated){
-                deferred.resolve(modelUpdated);
-            }, function (response) {
-                deferred.reject(response);
-            });
-
-            return deferred.promise;
-        }
-
-        function detailModel (productClass) {
-            var deferred = $q.defer();
-
-            modelsResource.query({
-                providerId: User.loggedUser.currentUser.id,
-                productClass: productClass
-            }, function(models) {
-                if (models.length) {
-                    deferred.resolve(models[0]);
-                } else {
-                    deferred.reject(404);
+            modelsResource.save(
+                {},
+                model,
+                function(modelCreated) {
+                    deferred.resolve(modelCreated);
+                },
+                function(response) {
+                    deferred.reject(response);
                 }
-            }, function (response) {
-                deferred.reject(response);
-            });
+            );
+
+            return deferred.promise;
+        }
+
+        function updateModel(model) {
+            var deferred = $q.defer();
+            modelsResource.update(
+                {},
+                model,
+                function(modelUpdated) {
+                    deferred.resolve(modelUpdated);
+                },
+                function(response) {
+                    deferred.reject(response);
+                }
+            );
+
+            return deferred.promise;
+        }
+
+        function detailModel(productClass) {
+            var deferred = $q.defer();
+
+            modelsResource.query(
+                {
+                    providerId: User.loggedUser.currentUser.id,
+                    productClass: productClass
+                },
+                function(models) {
+                    if (models.length) {
+                        deferred.resolve(models[0]);
+                    } else {
+                        deferred.reject(404);
+                    }
+                },
+                function(response) {
+                    deferred.reject(response);
+                }
+            );
             return deferred.promise;
         }
 
@@ -124,16 +139,20 @@
                 method = resource.query;
             }
 
-            method(qParams, function(list) {
-                deferred.resolve(list);
-            }, function (response) {
-                deferred.reject(response);
-            });
+            method(
+                qParams,
+                function(list) {
+                    deferred.resolve(list);
+                },
+                function(response) {
+                    deferred.reject(response);
+                }
+            );
 
             return deferred.promise;
         }
 
-        function searchModels (params) {
+        function searchModels(params) {
             if (!params) {
                 params = {};
             }
@@ -145,12 +164,12 @@
         function countModels() {
             var params = {
                 providerId: User.loggedUser.currentUser.id,
-                action: "count"
+                action: 'count'
             };
             return search(modelsResource, params, modelsResource.get);
         }
 
-        function searchProviders () {
+        function searchProviders() {
             return search(providersResource, {});
         }
 
@@ -166,7 +185,7 @@
         function countTransactions() {
             var params = {
                 providerId: User.loggedUser.currentUser.id,
-                action: "count"
+                action: 'count'
             };
             return search(transactionResource, params, transactionResource.get);
         }
@@ -190,14 +209,15 @@
         function countReports() {
             var params = {
                 providerId: User.loggedUser.currentUser.id,
-                action: "count"
+                action: 'count'
             };
             return search(reportResource, params, reportResource.get);
         }
 
         function createReport(report) {
             report.providerId = User.loggedUser.currentUser.id;
-            report.callbackUrl = $location.protocol() + '://' + $location.host() + ':' + $location.port() + '/#/rss/reports';
+            report.callbackUrl =
+                $location.protocol() + '://' + $location.host() + ':' + $location.port() + '/#/rss/reports';
 
             return settlementResource.save(report).$promise;
         }

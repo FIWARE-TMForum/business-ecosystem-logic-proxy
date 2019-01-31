@@ -16,4 +16,3 @@ const availableConf = {
 };
 
 console.log(availableConf[process.argv[2]]);
-

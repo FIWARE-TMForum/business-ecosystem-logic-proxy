@@ -22,8 +22,7 @@
  *         Jaime Pajuelo <jpajuelo@conwet.com>
  */
 
-(function () {
-
+(function() {
     'use strict';
 
     angular
@@ -66,8 +65,8 @@
         function link(scope, element, attrs) {
             var fileSetter = $parse(attrs.fileModel).assign;
 
-            element.on('change', function () {
-                scope.$apply(function () {
+            element.on('change', function() {
+                scope.$apply(function() {
                     fileSetter(scope, element[0].files[0]);
                 });
             });
@@ -81,17 +80,18 @@
         };
 
         function link(scope, element, attrs) {
-
-            scope.$watch(function () {
-                return attrs.ngSrc;
-            }, function () {
-
-                if (!attrs.ngSrc) {
-                    setDefaultImage(element);
+            scope.$watch(
+                function() {
+                    return attrs.ngSrc;
+                },
+                function() {
+                    if (!attrs.ngSrc) {
+                        setDefaultImage(element);
+                    }
                 }
-            });
+            );
 
-            element.bind('error', function () {
+            element.bind('error', function() {
                 setDefaultImage(element);
             });
         }
@@ -104,18 +104,20 @@
     function fieldUniqueDirective($injector) {
         return {
             require: 'ngModel',
-            link: function (scope, element, attrs, controller) {
-
-                scope.$watch(attrs.ngModel, function (newValue) {
+            link: function(scope, element, attrs, controller) {
+                scope.$watch(attrs.ngModel, function(newValue) {
                     var params = {};
 
                     if (newValue && $injector.has(attrs.fieldUnique)) {
                         if (attrs.fieldOriginalValue != newValue) {
                             params[attrs.name] = newValue;
 
-                            $injector.get(attrs.fieldUnique).exists(params).then(function (found) {
-                                controller.$setValidity('unique', !found);
-                            });
+                            $injector
+                                .get(attrs.fieldUnique)
+                                .exists(params)
+                                .then(function(found) {
+                                    controller.$setValidity('unique', !found);
+                                });
                         }
                     }
                 });
@@ -152,10 +154,10 @@
                 var nav = element.find('nav');
                 var ul = element.find('ul');
 
-                var margin =  Math.floor((nav.width()/2) - (ul.width()/2));
+                var margin = Math.floor(nav.width() / 2 - ul.width() / 2);
 
                 var prevMargin = ul.attr('style');
-                var marginStr = 'margin-left: ' + margin +'px;';
+                var marginStr = 'margin-left: ' + margin + 'px;';
 
                 if (prevMargin == marginStr && retry) {
                     $timeout(function() {
@@ -182,7 +184,7 @@
                 }
             }
 
-            $scope.$on(EVENTS.PAGER_RELOADED, function () {
+            $scope.$on(EVENTS.PAGER_RELOADED, function() {
                 loadPager();
             });
 
@@ -197,7 +199,7 @@
                 vm: '=controller'
             },
             templateUrl: 'directives/forms/create-asset'
-        }
+        };
     }
 
     function businessAddressFormDirective() {
@@ -264,9 +266,8 @@
     function fieldArrayDirective() {
         return {
             require: 'ngModel',
-            link: function (scope, element, attrs, controller) {
-
-                scope.$watch(attrs.ngModel + ".length", function (arrayLength) {
+            link: function(scope, element, attrs, controller) {
+                scope.$watch(attrs.ngModel + '.length', function(arrayLength) {
                     var params = {};
 
                     if (arrayLength != null) {
@@ -282,11 +283,11 @@
             restrict: 'A',
             require: 'ngModel',
             link: function link(scope, element, attrs, ngModel) {
-                ngModel.$parsers.push(function (value) {
+                ngModel.$parsers.push(function(value) {
                     //View -> Model
                     return value;
                 });
-                ngModel.$formatters.push(function (value) {
+                ngModel.$formatters.push(function(value) {
                     //Model -> View
                     return new Date(value);
                 });
@@ -299,11 +300,11 @@
             restrict: 'A',
             require: 'ngModel',
             link: function link(scope, element, attrs, ngModel) {
-                ngModel.$parsers.push(function (value) {
+                ngModel.$parsers.push(function(value) {
                     //View -> Model
                     return '' + value;
                 });
-                ngModel.$formatters.push(function (value) {
+                ngModel.$formatters.push(function(value) {
                     //Model -> View
                     return Number(value);
                 });
@@ -316,7 +317,7 @@
             restrict: 'A',
             require: 'ngModel',
             link: function link(scope, element, attrs, ngModel) {
-                ngModel.$parsers.push(function (value) {
+                ngModel.$parsers.push(function(value) {
                     //View -> Model
                     return element.intlTelInput('getNumber');
                 });
@@ -335,11 +336,9 @@
                     scope.$apply(() => {
                         ngModel.$setViewValue(element.val());
                         ngModel.$render();
-                    })
+                    });
                 });
             }
-        }
+        };
     }
-
-
 })();

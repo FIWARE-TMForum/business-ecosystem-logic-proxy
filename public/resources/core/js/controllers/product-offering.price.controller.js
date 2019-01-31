@@ -22,20 +22,26 @@
  *         Jaime Pajuelo <jpajuelo@conwet.com>
  *         Aitor Magán <amagan@conwet.com>
  */
-(function () {
-
+(function() {
     'use strict';
 
     angular
         .module('app')
-        .controller('PricePlanUpdateCtrl', ['$element', '$scope', '$rootScope', '$controller', 'Offering', PricePlanUpdateController]);
+        .controller('PricePlanUpdateCtrl', [
+            '$element',
+            '$scope',
+            '$rootScope',
+            '$controller',
+            'Offering',
+            PricePlanUpdateController
+        ]);
 
     function PricePlanUpdateController($element, $scope, $rootScope, $controller, Offering) {
         /* jshint validthis: true */
         var vm = this;
         var _index, _pricePlan;
 
-        angular.extend(vm, $controller('FormMixinCtrl', {$scope: $scope}));
+        angular.extend(vm, $controller('FormMixinCtrl', { $scope: $scope }));
 
         vm.CHARGE_PERIODS = Offering.TYPES.CHARGE_PERIOD;
         vm.CURRENCY_CODES = Offering.TYPES.CURRENCY_CODE;
@@ -48,7 +54,7 @@
         vm.update = update;
         vm.setAlteration = setAlteration;
 
-        $scope.$on(Offering.EVENTS.PRICEPLAN_UPDATE, function (event, index, pricePlan) {
+        $scope.$on(Offering.EVENTS.PRICEPLAN_UPDATE, function(event, index, pricePlan) {
             _index = index;
             _pricePlan = pricePlan;
             vm.data = angular.copy(pricePlan);
@@ -71,5 +77,4 @@
             vm.data.resetPriceAlteration(alterationType);
         }
     }
-
 })();

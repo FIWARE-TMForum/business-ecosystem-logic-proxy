@@ -22,15 +22,29 @@
  *         Jaime Pajuelo <jpajuelo@conwet.com>
  *         Aitor Magán <amagan@conwet.com>
  */
-(function () {
-
+(function() {
     'use strict';
 
     angular
         .module('app')
-        .controller('BillingAccountSearchCtrl', ['DATA_STATUS', 'Utils', 'BillingAccount', BillingAccountSearchController])
-        .controller('BillingAccountCreateCtrl', ['$scope', '$rootScope', '$controller', 'COUNTRIES', 'EVENTS',
-            'PROMISE_STATUS', 'Utils', 'BillingAccount', 'Customer', BillingAccountCreateController]);
+        .controller('BillingAccountSearchCtrl', [
+            'DATA_STATUS',
+            'Utils',
+            'BillingAccount',
+            BillingAccountSearchController
+        ])
+        .controller('BillingAccountCreateCtrl', [
+            '$scope',
+            '$rootScope',
+            '$controller',
+            'COUNTRIES',
+            'EVENTS',
+            'PROMISE_STATUS',
+            'Utils',
+            'BillingAccount',
+            'Customer',
+            BillingAccountCreateController
+        ]);
 
     function BillingAccountSearchController(DATA_STATUS, Utils, BillingAccount) {
         /* jshint validthis: true */
@@ -39,21 +53,38 @@
         vm.list = [];
         vm.status = DATA_STATUS.LOADING;
 
-        BillingAccount.search().then(function (billingAccounts) {
-            vm.list = billingAccounts;
-            vm.status = DATA_STATUS.LOADED;
-        }, function (response) {
-            vm.errorMessage = Utils.parseError(response, 'Unexpected error trying to retrieve the list of billingAccounts.');
-            vm.status = DATA_STATUS.ERROR;
-        });
+        BillingAccount.search().then(
+            function(billingAccounts) {
+                vm.list = billingAccounts;
+                vm.status = DATA_STATUS.LOADED;
+            },
+            function(response) {
+                vm.errorMessage = Utils.parseError(
+                    response,
+                    'Unexpected error trying to retrieve the list of billingAccounts.'
+                );
+                vm.status = DATA_STATUS.ERROR;
+            }
+        );
     }
 
-    function BillingAccountCreateController($scope, $rootScope, $controller, COUNTRIES, EVENTS, PROMISE_STATUS, Utils, BillingAccount, Customer) {
+    function BillingAccountCreateController(
+        $scope,
+        $rootScope,
+        $controller,
+        COUNTRIES,
+        EVENTS,
+        PROMISE_STATUS,
+        Utils,
+        BillingAccount,
+        Customer
+    ) {
         /* jshint validthis: true */
         var vm = this;
-        var billingAccount, createPromise = null;
+        var billingAccount,
+            createPromise = null;
 
-        angular.extend(vm, $controller('FormMixinCtrl', {$scope: $scope}));
+        angular.extend(vm, $controller('FormMixinCtrl', { $scope: $scope }));
 
         vm.CONTACT_MEDIUM = Customer.TYPES.CONTACT_MEDIUM;
         vm.COUNTRIES = COUNTRIES;
@@ -69,19 +100,24 @@
                 vm.telephoneNumber
             ];
 
-            createPromise = BillingAccount.create(billingAccount).then(function (billingAccount) {
-                $rootScope.$broadcast(Customer.EVENTS.CUSTOMER_CREATED, billingAccount.customerAccount.customer);
-                resetData();
-                vm.resetForm(form);
-            }, function (response) {
-                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
-                    error: Utils.parseError(response, 'Unexpected error trying to create a new shipping address.')
-                });
-            });
+            createPromise = BillingAccount.create(billingAccount).then(
+                function(billingAccount) {
+                    $rootScope.$broadcast(Customer.EVENTS.CUSTOMER_CREATED, billingAccount.customerAccount.customer);
+                    resetData();
+                    vm.resetForm(form);
+                },
+                function(response) {
+                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                        error: Utils.parseError(response, 'Unexpected error trying to create a new shipping address.')
+                    });
+                }
+            );
         }
 
         Object.defineProperty(create, 'status', {
-            get: function () { return createPromise != null ? createPromise.$$state.status : -1; }
+            get: function() {
+                return createPromise != null ? createPromise.$$state.status : -1;
+            }
         });
 
         function resetData() {
@@ -97,5 +133,4 @@
             });
         }
     }
-
 })();

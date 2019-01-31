@@ -26,21 +26,23 @@ var async = require('async'),
     utils = require('./../../lib/utils');
 
 var customer = (function() {
-
     var getCustomerPath = function(asset) {
         return url.parse(asset.customer.href).pathname;
     };
 
     var getCustomerAPIUrl = function(path) {
-        return utils.getAPIURL(config.endpoints.customer.appSsl, config.endpoints.customer.host, config.endpoints.customer.port, path);
+        return utils.getAPIURL(
+            config.endpoints.customer.appSsl,
+            config.endpoints.customer.host,
+            config.endpoints.customer.port,
+            path
+        );
     };
 
     var retrieveAsset = function(path, callback) {
-
         var uri = getCustomerAPIUrl(path);
 
         request(uri, function(err, response, body) {
-
             if (err || response.statusCode >= 400) {
                 callback({
                     status: response ? response.statusCode : 500
@@ -55,36 +57,32 @@ var customer = (function() {
     };
 
     var isOwner = function(req, asset, notAuthorizedMessage, callback) {
-
         if ('customer' in asset) {
-
             // Customer Account - The attached customer need to be checked
             var customerPath = getCustomerPath(asset);
 
             retrieveAsset(customerPath, function(err, result) {
-
                 if (err) {
                     callback({
                         status: 500,
                         message: 'The attached customer cannot be retrieved'
                     });
                 } else {
-
                     var customer = JSON.parse(result.body);
 
-                    if (tmfUtils.hasPartyRole(req, [ customer.relatedParty ], 'owner')) {
+                    if (tmfUtils.hasPartyRole(req, [customer.relatedParty], 'owner')) {
                         callback(null);
                     } else {
                         callback({
                             status: 403,
                             message: notAuthorizedMessage
-                        })
+                        });
                     }
                 }
             });
         } else {
             // Customer - Related party is directly included
-            if (tmfUtils.hasPartyRole(req, [ asset.relatedParty ], 'owner')) {
+            if (tmfUtils.hasPartyRole(req, [asset.relatedParty], 'owner')) {
                 callback(null);
             } else {
                 callback({
@@ -96,7 +94,6 @@ var customer = (function() {
     };
 
     var validateRetrieval = function(req, callback) {
-
         if (req.isCollection && req.isAccount) {
             // At this point, it is not worth implementing the functionality to list customer accounts
             callback({
@@ -113,11 +110,8 @@ var customer = (function() {
     };
 
     var validateUpdateOwner = function(req, callback) {
-
         retrieveAsset(req.apiUrl, function(err, response) {
-
             if (err) {
-
                 if (err.status === 404) {
                     callback({
                         status: 404,
@@ -136,29 +130,25 @@ var customer = (function() {
     };
 
     var validateAccount = function(account) {
-
         var message = null;
 
         if (!('customer' in account)) {
-            message = 'Customer Accounts must be associated to a Customer'
+            message = 'Customer Accounts must be associated to a Customer';
         } else {
-
             // HREF will be validated later at the time of checking the ownership
             if (!account.customer.href.endsWith('/' + account.customer.id)) {
-                message = 'Customer ID and Customer HREF mismatch'
+                message = 'Customer ID and Customer HREF mismatch';
             }
         }
 
         return {
             valid: message ? false : true,
             message: message
-        }
+        };
     };
 
     var validateCreation = function(req, callback) {
-
         if (req.isAccount) {
-
             var accountValidation = validateAccount(req.json);
 
             if (accountValidation.valid) {
@@ -169,9 +159,7 @@ var customer = (function() {
                     message: accountValidation.message
                 });
             }
-
         } else {
-
             if ('relatedParty' in req.json) {
                 isOwner(req, req.json, 'Related Party does not match with the user making the request', callback);
             } else {
@@ -180,12 +168,10 @@ var customer = (function() {
                     message: 'Unable to create customer without specifying the related party'
                 });
             }
-
         }
     };
 
     var validateIDNotModified = function(req, callback) {
-
         var error = null;
 
         if ('relatedParty' in req.json) {
@@ -204,7 +190,6 @@ var customer = (function() {
     };
 
     var validateCustomerAccountNotIncluded = function(req, callback) {
-
         if (!req.isAccount && 'customerAccount' in req.json) {
             callback({
                 status: 403,
@@ -216,32 +201,30 @@ var customer = (function() {
     };
 
     var validators = {
-        'GET': [ utils.validateLoggedIn, validateRetrieval ],
-        'POST': [ utils.validateLoggedIn, validateCreation, validateCustomerAccountNotIncluded ],
-        'PATCH': [ utils.validateLoggedIn, validateUpdateOwner, validateIDNotModified, validateCustomerAccountNotIncluded ],
+        GET: [utils.validateLoggedIn, validateRetrieval],
+        POST: [utils.validateLoggedIn, validateCreation, validateCustomerAccountNotIncluded],
+        PATCH: [utils.validateLoggedIn, validateUpdateOwner, validateIDNotModified, validateCustomerAccountNotIncluded],
         // This method is not implemented by this API
         //'PUT': [ utils.validateLoggedIn, validateOwner, validateCreation ],
-        'DELETE': [ utils.validateLoggedIn, validateUpdateOwner ]
+        DELETE: [utils.validateLoggedIn, validateUpdateOwner]
     };
 
     var checkPermissions = function(req, callback) {
-
-        var pathRegExp = new RegExp('^/' + config.endpoints.customer.path + '/api/customerManagement/v2/customer(Account)?(/(.*))?$');
+        var pathRegExp = new RegExp(
+            '^/' + config.endpoints.customer.path + '/api/customerManagement/v2/customer(Account)?(/(.*))?$'
+        );
         var apiPath = url.parse(req.apiUrl).pathname;
         var regExpResult = pathRegExp.exec(apiPath);
 
         if (regExpResult) {
-
             req.isCollection = regExpResult[3] ? false : true;
             req.isAccount = regExpResult[1] ? true : false;
 
             if (req.method in validators) {
-
                 try {
-
                     var reqValidators = [];
 
-                    if (req.body && typeof(req.body) === 'string') {
+                    if (req.body && typeof req.body === 'string') {
                         req.json = JSON.parse(req.body);
                     }
 
@@ -250,7 +233,6 @@ var customer = (function() {
                     }
 
                     async.series(reqValidators, callback);
-
                 } catch (e) {
                     callback({
                         status: 400,
@@ -272,7 +254,6 @@ var customer = (function() {
     };
 
     var attachCustomerAccount = function(proxyRes, callback) {
-
         // This is just to update the customer resource by including the created account in the
         // list of customer accounts. If an error arises, it is ignored as this step is not
         // mandatory so callback is always called with "null".
@@ -281,12 +262,10 @@ var customer = (function() {
         var customerPath = getCustomerPath(createdAccount);
 
         retrieveAsset(customerPath, function(err, result) {
-
             if (err) {
                 utils.log(logger, 'warn', proxyRes, 'Impossible to load attached Customer');
                 return callback(null);
             } else {
-
                 var currentCustomerAccounts = JSON.parse(result.body).customerAccount;
 
                 currentCustomerAccounts.push({
@@ -303,9 +282,7 @@ var customer = (function() {
                 };
 
                 request(options, function(err, response) {
-
                     if (err || response.statusCode >= 400) {
-
                         var message = 'Impossible to update the list of customer accounts: ';
                         message += err ? err : response.statusCode;
 
@@ -313,26 +290,28 @@ var customer = (function() {
                     }
 
                     return callback(null);
-
                 });
-
             }
         });
     };
 
     var checkIsRelatedSeller = function(proxyRes, ids, callback) {
-
         // Ask Billing API for those Billing Accounts related to the customer so we can determine
         // whether a seller is able (or not) to retrieve the billing address of this customer.
 
-        var billingPath = config.endpoints.billing.path + '/api/billingManagement/v2/billingAccount?customerAccount.id=' +
+        var billingPath =
+            config.endpoints.billing.path +
+            '/api/billingManagement/v2/billingAccount?customerAccount.id=' +
             ids.join(',');
-        var billingUrl = utils.getAPIURL(config.endpoints.billing.appSsl, config.endpoints.billing.host, config.endpoints.billing.port, billingPath);
+        var billingUrl = utils.getAPIURL(
+            config.endpoints.billing.appSsl,
+            config.endpoints.billing.host,
+            config.endpoints.billing.port,
+            billingPath
+        );
 
         request(billingUrl, function(err, response, body) {
-
             if (!err && response.statusCode === 200) {
-
                 var billingAccounts = JSON.parse(body);
 
                 var allowed = billingAccounts.some(function(item) {
@@ -347,7 +326,6 @@ var customer = (function() {
                         message: 'Unauthorized to retrieve the information of the given customer'
                     });
                 }
-
             } else {
                 callback({
                     status: 500,
@@ -358,23 +336,19 @@ var customer = (function() {
     };
 
     var executePostValidation = function(proxyRes, callback) {
-
         // This is not supposed to fail since this method is only called when the request to the
         // actual server is OK!
         proxyRes.json = JSON.parse(proxyRes.body);
 
         if (proxyRes.method === 'GET') {
-
             if (!Array.isArray(proxyRes.json)) {
                 isOwner(proxyRes, proxyRes.json, 'Unauthorized to retrieve the given customer profile', function(err) {
-
                     if (err) {
-
                         var customerAccountsIds = null;
 
                         if ('customerAccount' in proxyRes.json) {
                             // Resource: Customer
-                            customerAccountsIds = proxyRes.json.customerAccount.map(function (item) {
+                            customerAccountsIds = proxyRes.json.customerAccount.map(function(item) {
                                 return item.id;
                             });
                         } else if ('customer' in proxyRes.json) {
@@ -388,7 +362,6 @@ var customer = (function() {
                         } else {
                             callback(err);
                         }
-
                     } else {
                         callback(null);
                     }
@@ -399,20 +372,17 @@ var customer = (function() {
                 // of customer they own.
                 callback(null);
             }
-
         } else if (proxyRes.method === 'POST' && 'customer' in proxyRes.json) {
             attachCustomerAccount(proxyRes, callback);
         } else {
             callback(null);
         }
-
     };
 
     return {
         checkPermissions: checkPermissions,
         executePostValidation: executePostValidation
     };
-
 })();
 
 exports.customer = customer;
