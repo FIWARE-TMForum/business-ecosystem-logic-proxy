@@ -4,26 +4,33 @@
   "description": "Logic Layer for the Business API Ecosystem",
   "author": "UPM",
   "license": "AGPL-3.0",
+  "engines": {
+    "node": ">=8"
+  },
   "dependencies": {
     "async": "^1.5.0",
     "async-lock": "^0.3.8",
     "aureooms-js-itertools": "^1.3.0",
     "babel-polyfill": "^6.16.0",
-    "base64url": "1.0.x",
+    "base64url": "^3.0.1",
     "blueimp-md5": "^2.3.1",
-    "body-parser": "1.14.1",
+    "body-parser": "^1.18.3",
     "cookie-parser": "1.4.0",
     "deep-equal": "^1.0.1",
     "deepcopy": "^0.6.3",
     "errorhandler": "1.4.x",
     "express": "4.x",
-    "express-session": "1.12.1",
+    "express-session": "^1.15.6",
+    "i18n-2": "^0.7.2",
     "jade": "^1.11.0",
     "left-pad": "^1.1.1",
+    "leveldown": "^1.5.0",
+    "levelup": "^1.3.3",
     "log4js": "0.6.x",
+    "merge-dirs": "^0.2.1",
     "moment": "^2.13.0",
     "mongoose": "^4.3.6",
-    "uuid": "^3.3.2",
+    "node-minify": "^2.4.1",
     "normalize-url": "^1.8.0",
     "on-finished": "^2.3.0",
     "passport": "0.3.0",
@@ -32,21 +39,29 @@
     "request": "^2.69.0",
     "search-index": "0.15.0",
     "trycatch": "^1.5.21",
-    "leveldown": "^1.5.0",
-    "levelup": "^1.3.3",
-    "merge-dirs": "^0.2.1",
-    "node-minify": "^2.4.1",
-    "i18n-2": "^0.7.2"
+    "uuid": "^3.3.2"
   },
   "devDependencies": {
+    "coveralls": "^3.0.0",
+    "eslint": "^5.8.0",
+    "eslint-config-standard": "^12.0.0",
+    "eslint-plugin-import": "^2.14.0",
+    "eslint-plugin-jasmine": "^2.10.1",
+    "eslint-plugin-mocha": "^5.2.1",
+    "eslint-plugin-node": "^8.0.0",
+    "eslint-plugin-promise": "^4.0.1",
+    "eslint-plugin-standard": "^4.0.0",
     "freeport": "1.0.5",
-    "istanbul": "0.4.x",
+    "husky": "~1.1.0",
+    "istanbul": "^0.4.5",
     "jasmine": "2.9.0",
-    "nock": "3.1.0",
-    "proxyquire": "1.7.3",
-    "coveralls": "^3.0.0"
+    "lint-staged": "~7.3.0",
+    "nock": "^10.0.6",
+    "proxyquire": "1.7.3"
   },
   "scripts": {
+    "lint": "eslint ./lib --ext .js",
+    "prettier": "prettier --config .prettierrc.json --write '**/**/**/*.js' '**/**/*.js' '**/*.js' '*.js'",
     "test": "JASMINE_CONFIG_PATH=test/config/jasmine.json node_modules/.bin/istanbul cover --include-all-sources -x public/**/*.js -x locales/**/*.js -x server.js -x Gruntfile.js -x fill_indexes.js node_modules/.bin/jasmine"
   },
   "repository": {
@@ -70,5 +85,16 @@
       "name": "Miguel Garcia",
       "email": "mgarcia@conwet.com"
     }
-  ]
+  ],
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.js": [
+      "prettier --config .prettierrc.json --write",
+      "git add"
+    ]
+  }
 }
