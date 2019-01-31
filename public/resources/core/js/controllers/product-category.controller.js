@@ -22,8 +22,7 @@
  *         Jaime Pajuelo <jpajuelo@conwet.com>
  *         Aitor Magán <amagan@conwet.com>
  */
-(function () {
-
+(function() {
     'use strict';
 
     var LOADING = 'LOADING';
@@ -32,10 +31,33 @@
 
     angular
         .module('app')
-        .controller('CategoryBreadcrumbCtrl', ['$state', '$rootScope', 'EVENTS', 'Utils', 'Category', CategoryBreadcrumbController])
+        .controller('CategoryBreadcrumbCtrl', [
+            '$state',
+            '$rootScope',
+            'EVENTS',
+            'Utils',
+            'Category',
+            CategoryBreadcrumbController
+        ])
         .controller('CategorySearchCtrl', ['Category', 'PROMISE_STATUS', 'Utils', CategorySearchController])
-        .controller('CategoryCreateCtrl', ['$state', '$rootScope', 'EVENTS', 'PROMISE_STATUS', 'Category', 'Utils', CategoryCreateController])
-        .controller('CategoryUpdateCtrl', ['$state', '$rootScope', 'EVENTS', 'PROMISE_STATUS', 'Category', 'Utils', CategoryUpdateController]);
+        .controller('CategoryCreateCtrl', [
+            '$state',
+            '$rootScope',
+            'EVENTS',
+            'PROMISE_STATUS',
+            'Category',
+            'Utils',
+            CategoryCreateController
+        ])
+        .controller('CategoryUpdateCtrl', [
+            '$state',
+            '$rootScope',
+            'EVENTS',
+            'PROMISE_STATUS',
+            'Category',
+            'Utils',
+            CategoryUpdateController
+        ]);
 
     function CategoryBreadcrumbController($state, $rootScope, EVENTS, Utils, Category) {
         /* jshint validthis: true */
@@ -45,20 +67,23 @@
         vm.list.status = LOADING;
 
         if ($state.params.categoryId != null) {
-            Category.detail($state.params.categoryId).then(function (categoryRetrieved) {
+            Category.detail($state.params.categoryId).then(function(categoryRetrieved) {
                 vm.category = categoryRetrieved;
             });
         }
 
-        Category.search($state.params).then(function (categoryList) {
-            angular.copy(categoryList, vm.list);
-            vm.list.status = LOADED;
-        }, function (response) {
-            vm.list.status = ERROR;
-            $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
-                error: Utils.parseError(response, 'It was impossible to load the list of categories')
-            });
-        });
+        Category.search($state.params).then(
+            function(categoryList) {
+                angular.copy(categoryList, vm.list);
+                vm.list.status = LOADED;
+            },
+            function(response) {
+                vm.list.status = ERROR;
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                    error: Utils.parseError(response, 'It was impossible to load the list of categories')
+                });
+            }
+        );
     }
 
     function CategorySearchController(Category, PROMISE_STATUS, Utils) {
@@ -70,14 +95,19 @@
 
         var searchPromise = Category.search({ all: true });
 
-        searchPromise.then(function (categoryList) {
-            angular.copy(categoryList, vm.list);
-        }, function (response) {
-            vm.errorMessage = Utils.parseError(response, 'Unexpected error trying to collect the categories.')
-        });
+        searchPromise.then(
+            function(categoryList) {
+                angular.copy(categoryList, vm.list);
+            },
+            function(response) {
+                vm.errorMessage = Utils.parseError(response, 'Unexpected error trying to collect the categories.');
+            }
+        );
 
         Object.defineProperty(vm, 'status', {
-            get: function () { return searchPromise != null ? searchPromise.$$state.status : -1; }
+            get: function() {
+                return searchPromise != null ? searchPromise.$$state.status : -1;
+            }
         });
     }
 
@@ -117,28 +147,32 @@
 
         function create() {
             createPromise = Category.create(vm.data);
-            createPromise.then(function (categoryCreated) {
-                $state.go('admin.productCategory.update', {
-                    categoryId: categoryCreated.id
-                });
-                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'created', {
-                    resource: 'category',
-                    name: categoryCreated.name
-                });
-            }, function (response) {
+            createPromise.then(
+                function(categoryCreated) {
+                    $state.go('admin.productCategory.update', {
+                        categoryId: categoryCreated.id
+                    });
+                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'created', {
+                        resource: 'category',
+                        name: categoryCreated.name
+                    });
+                },
+                function(response) {
+                    var defaultMessage =
+                        'There was an unexpected error that prevented the ' + 'system from creating a new category';
+                    var error = Utils.parseError(response, defaultMessage);
 
-                var defaultMessage = 'There was an unexpected error that prevented the ' +
-                    'system from creating a new category';
-                var error = Utils.parseError(response, defaultMessage);
-
-                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
-                    error: error
-                });
-            });
+                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                        error: error
+                    });
+                }
+            );
         }
 
         Object.defineProperty(create, 'status', {
-            get: function () { return createPromise != null ? createPromise.$$state.status : -1; }
+            get: function() {
+                return createPromise != null ? createPromise.$$state.status : -1;
+            }
         });
     }
 
@@ -154,15 +188,20 @@
         var detailPromise = Category.detail($state.params.categoryId);
         var updatePromise = null;
 
-        detailPromise.then(function (categoryRetrieved) {
-            vm.data = angular.copy(categoryRetrieved);
-            vm.item = categoryRetrieved;
-        }, function (response) {
-            vm.errorMessage = Utils.parseError(response, 'The requested category could not be retrieved');
-        });
+        detailPromise.then(
+            function(categoryRetrieved) {
+                vm.data = angular.copy(categoryRetrieved);
+                vm.item = categoryRetrieved;
+            },
+            function(response) {
+                vm.errorMessage = Utils.parseError(response, 'The requested category could not be retrieved');
+            }
+        );
 
         Object.defineProperty(vm, 'status', {
-            get: function () { return detailPromise != null ? detailPromise.$$state.status : -1; }
+            get: function() {
+                return detailPromise != null ? detailPromise.$$state.status : -1;
+            }
         });
 
         function update() {
@@ -175,31 +214,38 @@
             });
 
             updatePromise = Category.update(vm.item.id, updated);
-            updatePromise.then(function (categoryUpdated) {
-                $state.go('admin.productCategory.update', {
-                    categoryId: categoryUpdated.id
-                }, {
-                    reload: true
-                });
-                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'updated', {
-                    resource: 'category',
-                    name: categoryUpdated.name
-                });
-            }, function (response) {
+            updatePromise.then(
+                function(categoryUpdated) {
+                    $state.go(
+                        'admin.productCategory.update',
+                        {
+                            categoryId: categoryUpdated.id
+                        },
+                        {
+                            reload: true
+                        }
+                    );
+                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'updated', {
+                        resource: 'category',
+                        name: categoryUpdated.name
+                    });
+                },
+                function(response) {
+                    var defaultMessage =
+                        'There was an unexpected error that prevented the ' + 'system from updating the given category';
+                    var error = Utils.parseError(response, defaultMessage);
 
-                var defaultMessage = 'There was an unexpected error that prevented the ' +
-                    'system from updating the given category';
-                var error = Utils.parseError(response, defaultMessage);
-
-                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
-                    error: error
-                });
-            });
+                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                        error: error
+                    });
+                }
+            );
         }
 
         Object.defineProperty(update, 'status', {
-            get: function () { return updatePromise != null ? updatePromise.$$state.status : -1; }
+            get: function() {
+                return updatePromise != null ? updatePromise.$$state.status : -1;
+            }
         });
     }
-
 })();

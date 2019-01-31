@@ -17,11 +17,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var proxyquire = require('proxyquire'),
-    testUtils = require('../utils');
+var proxyquire = require('proxyquire');
 
-describe('Auth lib', function () {
+var testUtils = require('../utils');
 
+describe('Auth lib', function() {
     var config = testUtils.getDefaultConfig();
 
     var getAuthLib = function(strategy, tokenService, unauthorized, party) {
@@ -29,23 +29,22 @@ describe('Auth lib', function () {
             '../config': config,
             'passport-fiware-oauth': strategy,
             '../db/schemas/tokenService': tokenService,
-	    './party': party,
-	    './utils': {
-                log: function() {
-                },
+            './party': party,
+            './utils': {
+                log: function() {},
                 sendUnauthorized: unauthorized
             }
         }).auth();
     };
 
-    var strategy =  {
-        OAuth2Strategy: function (options, callback) {
-            this._oauth2 = {}
+    var strategy = {
+        OAuth2Strategy: function(options, callback) {
+            this._oauth2 = {};
         }
     };
 
-    var getUnauthorizedMock = function (resExp, msgExp, done, validator) {
-        return function (res, msg) {
+    var getUnauthorizedMock = function(resExp, msgExp, done, validator) {
+        return function(res, msg) {
             if (validator) {
                 validator();
             }
@@ -56,8 +55,8 @@ describe('Auth lib', function () {
         };
     };
 
-    var mockUserProfile = function (auth, expTokens, err, userProfiles) {
-        auth.FIWARE_STRATEGY._userProfile = function (token, callback) {
+    var mockUserProfile = function(auth, expTokens, err, userProfiles) {
+        auth.FIWARE_STRATEGY._userProfile = function(token, callback) {
             var index = expTokens.indexOf(token);
             expect(token).not.toEqual(-1);
             callback(err, userProfiles[index]);
@@ -65,156 +64,179 @@ describe('Auth lib', function () {
     };
 
     describe('Set req.user object', function() {
-	var auth = getAuthLib(strategy, {}, null, {});
-	var reqInd = {
-	    id: 'test_user',
-	    appId: config.oauth2.clientID,
-	    user: {
-		id: 'rick',
-		nickName: 'theMagician',
-		accessToken: 'accessToken',
-		refreshToken: 'refreshToken',
-		organizations: [{
-		    id: '123456789',
-		    name: 'patty',
-		    roles: [{
-			id: '3',
-			name: 'Seller'
-		    }, {
-			id: '6',
-			name: 'provider'
-		    }]
-		}, {
-		    id: '987654321',
-		    name: 'MntyPythn',
-		    roles: [{
-			id: '6',
-			name: 'provider'
-		    }]
-		}, {
-		    id: '111555999',
-		    name: 'AmaneceQueNoEsPoco',
-		    roles: [{
-			id: '3',
-			name: 'Seller'
-		    }, {
-			id: '1',
-			name: 'purchuaser'
-		    }]
-		}]
-	    }
+        var auth = getAuthLib(strategy, {}, null, {});
+        var reqInd = {
+            id: 'test_user',
+            appId: config.oauth2.clientID,
+            user: {
+                id: 'rick',
+                nickName: 'theMagician',
+                accessToken: 'accessToken',
+                refreshToken: 'refreshToken',
+                organizations: [
+                    {
+                        id: '123456789',
+                        name: 'patty',
+                        roles: [
+                            {
+                                id: '3',
+                                name: 'Seller'
+                            },
+                            {
+                                id: '6',
+                                name: 'provider'
+                            }
+                        ]
+                    },
+                    {
+                        id: '987654321',
+                        name: 'MntyPythn',
+                        roles: [
+                            {
+                                id: '6',
+                                name: 'provider'
+                            }
+                        ]
+                    },
+                    {
+                        id: '111555999',
+                        name: 'AmaneceQueNoEsPoco',
+                        roles: [
+                            {
+                                id: '3',
+                                name: 'Seller'
+                            },
+                            {
+                                id: '1',
+                                name: 'purchuaser'
+                            }
+                        ]
+                    }
+                ]
+            }
         };
 
-	var header =  {
-	    'x-organization': '123456789'
-	};
+        var header = {
+            'x-organization': '123456789'
+        };
 
-	it ('should continue with middleware processing if no user object has been provided', function (done) {
-	    var req = {
-		id: 'test_user',
-		appId: config.oauth2.clientID,
+        it('should continue with middleware processing if no user object has been provided', function(done) {
+            var req = {
+                id: 'test_user',
+                appId: config.oauth2.clientID
             };
-	    auth.checkOrganizations(req, {}, done);
-	});
-	    
-	it('should return unauthorized if header has been set but that org isnt on the organization list', function(done) {
+            auth.checkOrganizations(req, {}, done);
+        });
 
-	    var resExp = {};
-	    var msgExp = 'You are not allowed to act on behalf the provided organization';
-	    
-	    var unauthorized = getUnauthorizedMock(resExp, msgExp, done);
-	    
-	    var auth = getAuthLib(strategy, {}, unauthorized, {});
-	    
-	    var req = {
-		id: 'test_user',
-		appId: config.oauth2.clientID,
-		user: {
-		    id: 'rick',
-		    nickName: 'theMagician',
-		    accessToken: 'accessToken',
-		    refreshToken: 'refreshToken',
-		    organizations: []
-		},
-		headers: {
-		    'x-organization': '111555999'
-		}
-	    };
-	    
-	    auth.setPartyObj(req, resExp, done);
-	});
+        it('should return unauthorized if header has been set but that org isnt on the organization list', function(done) {
+            var resExp = {};
+            var msgExp = 'You are not allowed to act on behalf the provided organization';
 
-	it('Individual object should be selected if x-organization header not present', function(done) {
-	    var expectedUser = {
-		id: 'rick',
-		nickName: 'theMagician',
-		accessToken: 'accessToken',
-		refreshToken: 'refreshToken',
-		organizations: [{
-		    id: '123456789',
-		    name: 'patty',
-		    roles: [{
-			id: '3',
-			name: 'Seller'
-		    }, {
-			id: '6',
-			name: 'provider'
-		    }]
-		}, {
-		    id: '987654321',
-		    name: 'MntyPythn',
-		    roles: [{
-			id: '6',
-			name: 'provider'
-		    }]
-		}, {
-		    id: '111555999',
-		    name: 'AmaneceQueNoEsPoco',
-		    roles: [{
-			id: '3',
-			name: 'Seller'
-		    }, {
-			id: '1',
-			name: 'purchuaser'
-		    }]
-		}]
-	    };
-	    auth.setPartyObj(reqInd, {}, function() {
-		expect(reqInd.user).toEqual(expectedUser);
-		done();
-	    });
-	    
-	});
+            var unauthorized = getUnauthorizedMock(resExp, msgExp, done);
 
-	it('Organization object should be selected if x-organization header is present', function(done) {
-	    var expectedUser = {
-		userNickname: 'rick',
-		id: '123456789',
-		roles: [{
-		    id: '3',
-		    name: 'Seller'
-		}, {
-		    id: '6',
-		    name: 'provider'
-		}],
-		displayName: 'patty',
-		accessToken: 'accessToken',
-		refreshToken: 'refreshToken',
-		email: '123456789' + '@emailnotusable.com'
-	    };
-	    var req = reqInd;
-	    req.headers = header;
+            var auth = getAuthLib(strategy, {}, unauthorized, {});
 
-	    auth.setPartyObj(req, {}, function() {
-		expect(req.user).toEqual(expectedUser);
-		done();
-	    });
-	});
-	
+            var req = {
+                id: 'test_user',
+                appId: config.oauth2.clientID,
+                user: {
+                    id: 'rick',
+                    nickName: 'theMagician',
+                    accessToken: 'accessToken',
+                    refreshToken: 'refreshToken',
+                    organizations: []
+                },
+                headers: {
+                    'x-organization': '111555999'
+                }
+            };
+
+            auth.setPartyObj(req, resExp, done);
+        });
+
+        it('Individual object should be selected if x-organization header not present', function(done) {
+            var expectedUser = {
+                id: 'rick',
+                nickName: 'theMagician',
+                accessToken: 'accessToken',
+                refreshToken: 'refreshToken',
+                organizations: [
+                    {
+                        id: '123456789',
+                        name: 'patty',
+                        roles: [
+                            {
+                                id: '3',
+                                name: 'Seller'
+                            },
+                            {
+                                id: '6',
+                                name: 'provider'
+                            }
+                        ]
+                    },
+                    {
+                        id: '987654321',
+                        name: 'MntyPythn',
+                        roles: [
+                            {
+                                id: '6',
+                                name: 'provider'
+                            }
+                        ]
+                    },
+                    {
+                        id: '111555999',
+                        name: 'AmaneceQueNoEsPoco',
+                        roles: [
+                            {
+                                id: '3',
+                                name: 'Seller'
+                            },
+                            {
+                                id: '1',
+                                name: 'purchuaser'
+                            }
+                        ]
+                    }
+                ]
+            };
+            auth.setPartyObj(reqInd, {}, function() {
+                expect(reqInd.user).toEqual(expectedUser);
+                done();
+            });
+        });
+
+        it('Organization object should be selected if x-organization header is present', function(done) {
+            var expectedUser = {
+                userNickname: 'rick',
+                id: '123456789',
+                roles: [
+                    {
+                        id: '3',
+                        name: 'Seller'
+                    },
+                    {
+                        id: '6',
+                        name: 'provider'
+                    }
+                ],
+                displayName: 'patty',
+                accessToken: 'accessToken',
+                refreshToken: 'refreshToken',
+                email: '123456789' + '@emailnotusable.com'
+            };
+            var req = reqInd;
+            req.headers = header;
+
+            auth.setPartyObj(req, {}, function() {
+                expect(req.user).toEqual(expectedUser);
+                done();
+            });
+        });
     });
 
     describe('Update party API', function() {
-
         var auth = getAuthLib(strategy, {}, null, {});
         var req = {
             id: 'test_user',
@@ -225,40 +247,52 @@ describe('Auth lib', function () {
                 id: 'rick',
                 nickName: 'theMagician',
                 displayName: 'rick name',
-                organizations: [{
-                    id: '123456789',
-                    name: 'patty',
-                    roles: [{
-                        id: '3',
-                        name: 'Seller'
-                    }, {
-                        id: '6',
-                        name: 'provider'
-                    }]
-                }, {
-                    id: '987654321',
-                    name: 'MntyPythn',
-                    roles: [{
-                        id: '6',
-                        name: 'provider'
-                    }]
-                }, {
-                    id: '111555999',
-                    name: 'AmaneceQueNoEsPoco',
-                    roles: [{
-                        id: '3',
-                        name: 'Seller'
-                    }, {
-                        id: '1',
-                        name: 'purchuaser'
-                    }]
-                }]
+                organizations: [
+                    {
+                        id: '123456789',
+                        name: 'patty',
+                        roles: [
+                            {
+                                id: '3',
+                                name: 'Seller'
+                            },
+                            {
+                                id: '6',
+                                name: 'provider'
+                            }
+                        ]
+                    },
+                    {
+                        id: '987654321',
+                        name: 'MntyPythn',
+                        roles: [
+                            {
+                                id: '6',
+                                name: 'provider'
+                            }
+                        ]
+                    },
+                    {
+                        id: '111555999',
+                        name: 'AmaneceQueNoEsPoco',
+                        roles: [
+                            {
+                                id: '3',
+                                name: 'Seller'
+                            },
+                            {
+                                id: '1',
+                                name: 'purchuaser'
+                            }
+                        ]
+                    }
+                ]
             }
         };
         var individual = {
             id: 'rick',
             birthDate: '',
-            contactMedium: [  ],
+            contactMedium: [],
             countryOfBirth: '',
             familyName: 'rick name',
             gender: '',
@@ -270,85 +304,94 @@ describe('Auth lib', function () {
         };
 
         var roles = {
-            'relatedParty': [{
-                'id': '123456789',
-                'name': 'patty',
-                'href': 'www.exampleuri.com/orgs/patty',
-                'role': 'Seller,provider'
-            }, {
-                'id': '987654321',
-                'name': 'MntyPythn',
-                'href': 'www.exampleuri.com/orgs/MntyPythn',
-                'role': 'provider'
-            }, {
-                'id': '111555999',
-                'name': 'AmaneceQueNoEsPoco',
-                'href': 'www.exampleuri.com/orgs/AmaneceQueNoEsPoco',
-                'role': 'Seller,purchuaser'
-            }]};
+            relatedParty: [
+                {
+                    id: '123456789',
+                    name: 'patty',
+                    href: 'www.exampleuri.com/orgs/patty',
+                    role: 'Seller,provider'
+                },
+                {
+                    id: '987654321',
+                    name: 'MntyPythn',
+                    href: 'www.exampleuri.com/orgs/MntyPythn',
+                    role: 'provider'
+                },
+                {
+                    id: '111555999',
+                    name: 'AmaneceQueNoEsPoco',
+                    href: 'www.exampleuri.com/orgs/AmaneceQueNoEsPoco',
+                    role: 'Seller,purchuaser'
+                }
+            ]
+        };
 
-        it ('should continue with middleware processing if no user object has been provided', function (done) {
+        it('should continue with middleware processing if no user object has been provided', function(done) {
             var req = {
                 id: 'test_user',
-                appId: config.oauth2.clientID,
+                appId: config.oauth2.clientID
             };
             auth.checkOrganizations(req, {}, done);
         });
 
-        it ('should continue with middleware processing if the request have been already processed', function (done) {
+        it('should continue with middleware processing if the request have been already processed', function(done) {
             var req = {
                 id: 'test_user',
                 appId: config.oauth2.clientID,
-                user: {accessToken: 'token',
-                    id: 'eugenio'}
+                user: {
+                    accessToken: 'token',
+                    id: 'eugenio'
+                }
             };
 
-            var party = {getOrganization: function (orgId, callback) {}};
+            var party = { getOrganization: function(orgId, callback) {} };
             spyOn(party, 'getOrganization');
 
-            auth.getCache()['token'] = {orgState: 3};
+            auth.getCache()['token'] = { orgState: 3 };
             auth.checkOrganizations(req, {}, function() {
                 expect(party.getOrganization).not.toHaveBeenCalled();
                 done();
             });
         });
 
-        it ('should continue with middleware processing if the request if currently being processed', function (done) {
+        it('should continue with middleware processing if the request if currently being processed', function(done) {
             var req = {
                 id: 'test_user',
                 appId: config.oauth2.clientID,
-                user: { accessToken: 'token',
-                    id: 'eugenio'}
+                user: {
+                    accessToken: 'token',
+                    id: 'eugenio'
+                }
             };
 
-            var party = {getOrganization: function (orgId, callback) {}};
+            var party = { getOrganization: function(orgId, callback) {} };
             spyOn(party, 'getOrganization');
 
-            auth.getCache()['token'] = {orgState: 2};
-            auth.checkOrganizations(req, {}, function () {
+            auth.getCache()['token'] = { orgState: 2 };
+            auth.checkOrganizations(req, {}, function() {
                 expect(party.getOrganization).not.toHaveBeenCalled();
-                done()
+                done();
             });
         });
 
-
-        var testPartyError = function (errMsg, partyMocker, partyValidator, done) {
-            var partyClient = jasmine.createSpyObj('partyClient',
-                ['getIndividual',
-                    'createIndividual',
-                    'getOrganization',
-                    'createOrganization',
-                    'updateIndividual']);
+        var testPartyError = function(errMsg, partyMocker, partyValidator, done) {
+            var partyClient = jasmine.createSpyObj('partyClient', [
+                'getIndividual',
+                'createIndividual',
+                'getOrganization',
+                'createOrganization',
+                'updateIndividual'
+            ]);
 
             partyMocker(partyClient);
 
             var party = {
-                partyClient : partyClient
+                partyClient: partyClient
             };
 
             var auth = getAuthLib(strategy, {}, null, party);
 
-            auth.getCache()['token'] = {orgState: 1};
+            auth.getCache()['token'] = { orgState: 1 };
 
             var res = jasmine.createSpyObj('res', ['status', 'send']);
 
@@ -357,203 +400,227 @@ describe('Auth lib', function () {
 
                 // Check user response
                 expect(res.status).toHaveBeenCalledWith(500);
-                expect(error).toEqual({error: 'Unexpected Error: ' + errMsg});
+                expect(error).toEqual({ error: 'Unexpected Error: ' + errMsg });
                 done();
             });
 
-            auth.checkOrganizations(req, res, function () {
+            auth.checkOrganizations(req, res, function() {
                 // Next method should not bhe called
                 expect('Next method should not be called').toBe(false);
             });
         };
 
-        it ('should not call to createIndividual if getIndividual call fails with an error', function (done) {
-
+        it('should not call to createIndividual if getIndividual call fails with an error', function(done) {
             var errMsg = 'Error reading individual';
 
-            testPartyError(errMsg, (partyClient) => {
-                partyClient.getIndividual.and.callFake(function (indId, callback) {
-                    return callback({status: 500, message: errMsg, body: 'Server error'})
-                });
-            }, (partyClient) => {
-                // Check party calls
-                expect(partyClient.getIndividual).toHaveBeenCalledWith(req.user.id, jasmine.any(Function));
+            testPartyError(
+                errMsg,
+                (partyClient) => {
+                    partyClient.getIndividual.and.callFake(function(indId, callback) {
+                        return callback({ status: 500, message: errMsg, body: 'Server error' });
+                    });
+                },
+                (partyClient) => {
+                    // Check party calls
+                    expect(partyClient.getIndividual).toHaveBeenCalledWith(req.user.id, jasmine.any(Function));
 
-                expect(partyClient.createIndividual).not.toHaveBeenCalled();
-                expect(partyClient.getOrganization).not.toHaveBeenCalled();
-                expect(partyClient.createOrganization).not.toHaveBeenCalled();
-                expect(partyClient.updateIndividual).not.toHaveBeenCalled();
-            }, done);
+                    expect(partyClient.createIndividual).not.toHaveBeenCalled();
+                    expect(partyClient.getOrganization).not.toHaveBeenCalled();
+                    expect(partyClient.createOrganization).not.toHaveBeenCalled();
+                    expect(partyClient.updateIndividual).not.toHaveBeenCalled();
+                },
+                done
+            );
         });
 
-        it('should fail processing organizations if createIndividual call fails', function (done) {
+        it('should fail processing organizations if createIndividual call fails', function(done) {
             var errMsg = 'Error creating individual';
 
-            testPartyError(errMsg, (partyClient) => {
-                partyClient.getIndividual.and.callFake(function (indId, callback) {
-                    return callback({status: 404, message: 'Individual not found', body: 'Server error'})
-                });
+            testPartyError(
+                errMsg,
+                (partyClient) => {
+                    partyClient.getIndividual.and.callFake(function(indId, callback) {
+                        return callback({ status: 404, message: 'Individual not found', body: 'Server error' });
+                    });
 
-                partyClient.createIndividual.and.callFake(function (user, callback) {
-                    callback({status: 500, message: errMsg, body: 'Server error'})
-                });
-            }, (partyClient) => {
-                // Check party calls
-                expect(partyClient.getIndividual).toHaveBeenCalledWith(req.user.id, jasmine.any(Function));
-                expect(partyClient.createIndividual).toHaveBeenCalledWith(individual, jasmine.any(Function));
+                    partyClient.createIndividual.and.callFake(function(user, callback) {
+                        callback({ status: 500, message: errMsg, body: 'Server error' });
+                    });
+                },
+                (partyClient) => {
+                    // Check party calls
+                    expect(partyClient.getIndividual).toHaveBeenCalledWith(req.user.id, jasmine.any(Function));
+                    expect(partyClient.createIndividual).toHaveBeenCalledWith(individual, jasmine.any(Function));
 
-                expect(partyClient.getOrganization).not.toHaveBeenCalled();
-                expect(partyClient.createOrganization).not.toHaveBeenCalled();
-                expect(partyClient.updateIndividual).not.toHaveBeenCalled();
-            }, done);
+                    expect(partyClient.getOrganization).not.toHaveBeenCalled();
+                    expect(partyClient.createOrganization).not.toHaveBeenCalled();
+                    expect(partyClient.updateIndividual).not.toHaveBeenCalled();
+                },
+                done
+            );
         });
 
-        it ('should fail processing organizations if getOrganization call fails', function (done) {
-
+        it('should fail processing organizations if getOrganization call fails', function(done) {
             var errMsg = 'An error occurred getting organization';
-            testPartyError(errMsg, (partyClient) => {
-                partyClient.getIndividual.and.callFake(function (indId, callback) {
-                    return callback({status: 404, message: 'Individual not found', body: 'Server error'})
-                });
+            testPartyError(
+                errMsg,
+                (partyClient) => {
+                    partyClient.getIndividual.and.callFake(function(indId, callback) {
+                        return callback({ status: 404, message: 'Individual not found', body: 'Server error' });
+                    });
 
-                partyClient.createIndividual.and.callFake(function (user, callback) {
-                    return callback(null)
-                });
+                    partyClient.createIndividual.and.callFake(function(user, callback) {
+                        return callback(null);
+                    });
 
-                partyClient.getOrganization.and.callFake(function (orgId, callback) {
-                    callback({status: 500, message: errMsg, body: 'Server error'})
-                });
+                    partyClient.getOrganization.and.callFake(function(orgId, callback) {
+                        callback({ status: 500, message: errMsg, body: 'Server error' });
+                    });
+                },
+                (partyClient) => {
+                    expect(partyClient.getIndividual).toHaveBeenCalledWith(req.user.id, jasmine.any(Function));
+                    expect(partyClient.createIndividual).toHaveBeenCalledWith(individual, jasmine.any(Function));
 
-            }, (partyClient) => {
-                expect(partyClient.getIndividual).toHaveBeenCalledWith(req.user.id, jasmine.any(Function));
-                expect(partyClient.createIndividual).toHaveBeenCalledWith(individual, jasmine.any(Function));
+                    expect(partyClient.getOrganization.calls.count()).toEqual(1);
+                    expect(partyClient.getOrganization).toHaveBeenCalledWith('123456789', jasmine.any(Function));
 
-                expect(partyClient.getOrganization.calls.count()).toEqual(1);
-                expect(partyClient.getOrganization).toHaveBeenCalledWith('123456789', jasmine.any(Function));
-
-                expect(partyClient.createOrganization).not.toHaveBeenCalled();
-                expect(partyClient.updateIndividual).not.toHaveBeenCalled();
-            }, done);
+                    expect(partyClient.createOrganization).not.toHaveBeenCalled();
+                    expect(partyClient.updateIndividual).not.toHaveBeenCalled();
+                },
+                done
+            );
         });
 
-        it ('should fail processing organizations if createOrganization call fails', function (done) {
-
+        it('should fail processing organizations if createOrganization call fails', function(done) {
             var errMsg = 'An error occurred creating organization';
 
-            testPartyError(errMsg, (partyClient) => {
-                partyClient.getIndividual.and.callFake(function (indId, callback) {
-                    return callback(null);
-                });
+            testPartyError(
+                errMsg,
+                (partyClient) => {
+                    partyClient.getIndividual.and.callFake(function(indId, callback) {
+                        return callback(null);
+                    });
 
-                partyClient.getOrganization.and.callFake(function (orgId, callback) {
-                    if (orgId == '123456789') {
-                        return callback(null, {
-                            status: 200,
-                            body: JSON.stringify({
-                                id: '123456789',
-                                name: 'patty',
-                                href: 'www.exampleuri.com/orgs/patty'
-                            })
-                        });
-                    } else {
-                        return callback({status: 404, message: 'Organization not found'});
-                    }
-                });
+                    partyClient.getOrganization.and.callFake(function(orgId, callback) {
+                        if (orgId === '123456789') {
+                            return callback(null, {
+                                status: 200,
+                                body: JSON.stringify({
+                                    id: '123456789',
+                                    name: 'patty',
+                                    href: 'www.exampleuri.com/orgs/patty'
+                                })
+                            });
+                        } else {
+                            return callback({ status: 404, message: 'Organization not found' });
+                        }
+                    });
 
-                partyClient.createOrganization.and.callFake(function (content, callback) {
-                    return callback({status: 500, message: errMsg});
-                });
+                    partyClient.createOrganization.and.callFake(function(content, callback) {
+                        return callback({ status: 500, message: errMsg });
+                    });
+                },
+                (partyClient) => {
+                    expect(partyClient.getIndividual).toHaveBeenCalledWith(req.user.id, jasmine.any(Function));
+                    expect(partyClient.createIndividual).not.toHaveBeenCalled();
 
-            }, (partyClient) => {
-                expect(partyClient.getIndividual).toHaveBeenCalledWith(req.user.id, jasmine.any(Function));
-                expect(partyClient.createIndividual).not.toHaveBeenCalled();
+                    expect(partyClient.getOrganization.calls.count()).toEqual(2);
+                    expect(partyClient.getOrganization).toHaveBeenCalledWith('123456789', jasmine.any(Function));
+                    expect(partyClient.getOrganization).toHaveBeenCalledWith('987654321', jasmine.any(Function));
 
-                expect(partyClient.getOrganization.calls.count()).toEqual(2);
-                expect(partyClient.getOrganization).toHaveBeenCalledWith('123456789', jasmine.any(Function));
-                expect(partyClient.getOrganization).toHaveBeenCalledWith('987654321', jasmine.any(Function));
+                    expect(partyClient.createOrganization).toHaveBeenCalledWith(
+                        {
+                            id: '987654321',
+                            tradingName: 'MntyPythn'
+                        },
+                        jasmine.any(Function)
+                    );
 
-                expect(partyClient.createOrganization).toHaveBeenCalledWith({
-                    'id': '987654321',
-                    'tradingName': 'MntyPythn'
-                }, jasmine.any(Function));
-
-                expect(partyClient.updateIndividual).not.toHaveBeenCalled();
-            }, done);
+                    expect(partyClient.updateIndividual).not.toHaveBeenCalled();
+                },
+                done
+            );
         });
 
-        it('should fail processing organizations if updateIndividual call fails', function (done) {
+        it('should fail processing organizations if updateIndividual call fails', function(done) {
             var errMsg = 'An error occurred updating individual';
 
-            testPartyError(errMsg, (partyClient) => {
-                partyClient.getIndividual.and.callFake(function (indId, callback) {
-                    return callback(null);
-                });
-
-                partyClient.getOrganization.and.callFake(function (orgId, callback) {
-                    var org;
-                    switch (orgId) {
-                        case '123456789':
-                            org = {
-                                id: '123456789',
-                                tradingName: 'patty',
-                                href: 'www.exampleuri.com/orgs/patty'
-                            };
-                            break;
-                        case '987654321':
-                            org = {
-                                id: '987654321',
-                                tradingName: 'MntyPythn',
-                                href: 'www.exampleuri.com/orgs/MntyPythn'
-                            };
-                            break;
-                        case '111555999':
-                            org = {
-                                id: '111555999',
-                                tradingName: 'AmaneceQueNoEsPoco',
-                                href: 'www.exampleuri.com/orgs/AmaneceQueNoEsPoco'
-                            }
-                    }
-                    return callback(null, {
-                        status: 200,
-                        body: JSON.stringify(org)
+            testPartyError(
+                errMsg,
+                (partyClient) => {
+                    partyClient.getIndividual.and.callFake(function(indId, callback) {
+                        return callback(null);
                     });
-                });
 
-                partyClient.updateIndividual.and.callFake(
-                    function (id, finalRoles, callback) {
-                        return callback({status: 500, message: errMsg})
-                    }
-                );
+                    partyClient.getOrganization.and.callFake(function(orgId, callback) {
+                        var org;
+                        switch (orgId) {
+                            case '123456789':
+                                org = {
+                                    id: '123456789',
+                                    tradingName: 'patty',
+                                    href: 'www.exampleuri.com/orgs/patty'
+                                };
+                                break;
+                            case '987654321':
+                                org = {
+                                    id: '987654321',
+                                    tradingName: 'MntyPythn',
+                                    href: 'www.exampleuri.com/orgs/MntyPythn'
+                                };
+                                break;
+                            case '111555999':
+                                org = {
+                                    id: '111555999',
+                                    tradingName: 'AmaneceQueNoEsPoco',
+                                    href: 'www.exampleuri.com/orgs/AmaneceQueNoEsPoco'
+                                };
+                        }
+                        return callback(null, {
+                            status: 200,
+                            body: JSON.stringify(org)
+                        });
+                    });
 
-            }, (partyClient) => {
-                expect(partyClient.getIndividual).toHaveBeenCalledWith(req.user.id, jasmine.any(Function));
-                expect(partyClient.createIndividual).not.toHaveBeenCalled();
+                    partyClient.updateIndividual.and.callFake(function(id, finalRoles, callback) {
+                        return callback({ status: 500, message: errMsg });
+                    });
+                },
+                (partyClient) => {
+                    expect(partyClient.getIndividual).toHaveBeenCalledWith(req.user.id, jasmine.any(Function));
+                    expect(partyClient.createIndividual).not.toHaveBeenCalled();
 
-                expect(partyClient.getOrganization.calls.count()).toEqual(3);
-                expect(partyClient.getOrganization).toHaveBeenCalledWith('123456789', jasmine.any(Function));
-                expect(partyClient.getOrganization).toHaveBeenCalledWith('987654321', jasmine.any(Function));
-                expect(partyClient.getOrganization).toHaveBeenCalledWith('111555999', jasmine.any(Function));
+                    expect(partyClient.getOrganization.calls.count()).toEqual(3);
+                    expect(partyClient.getOrganization).toHaveBeenCalledWith('123456789', jasmine.any(Function));
+                    expect(partyClient.getOrganization).toHaveBeenCalledWith('987654321', jasmine.any(Function));
+                    expect(partyClient.getOrganization).toHaveBeenCalledWith('111555999', jasmine.any(Function));
 
-                expect(partyClient.createOrganization).not.toHaveBeenCalledWith();
+                    expect(partyClient.createOrganization).not.toHaveBeenCalledWith();
 
-                expect(partyClient.updateIndividual).toHaveBeenCalledWith(req.user.id, roles, jasmine.any(Function));
-            }, done);
+                    expect(partyClient.updateIndividual).toHaveBeenCalledWith(
+                        req.user.id,
+                        roles,
+                        jasmine.any(Function)
+                    );
+                },
+                done
+            );
         });
 
-        it('should continue with middleware processing after updating partyAPI backend data', function (done) {
-            var partyClient = jasmine.createSpyObj('partyClient',
-                ['getIndividual',
-                    'createIndividual',
-                    'getOrganization',
-                    'createOrganization',
-                    'updateIndividual']
-            );
+        it('should continue with middleware processing after updating partyAPI backend data', function(done) {
+            var partyClient = jasmine.createSpyObj('partyClient', [
+                'getIndividual',
+                'createIndividual',
+                'getOrganization',
+                'createOrganization',
+                'updateIndividual'
+            ]);
 
-            partyClient.getIndividual.and.callFake(function (indId, callback) {
+            partyClient.getIndividual.and.callFake(function(indId, callback) {
                 return callback(null);
             });
 
-            partyClient.getOrganization.and.callFake(function (orgId, callback) {
+            partyClient.getOrganization.and.callFake(function(orgId, callback) {
                 var org;
                 switch (orgId) {
                     case '123456789':
@@ -575,7 +642,7 @@ describe('Auth lib', function () {
                             id: '111555999',
                             tradingName: 'AmaneceQueNoEsPoco',
                             href: 'www.exampleuri.com/orgs/AmaneceQueNoEsPoco'
-                        }
+                        };
                 }
                 return callback(null, {
                     status: 200,
@@ -583,19 +650,19 @@ describe('Auth lib', function () {
                 });
             });
 
-            partyClient.updateIndividual.and.callFake(function (id, finalRoles, callback) {
+            partyClient.updateIndividual.and.callFake(function(id, finalRoles, callback) {
                 return callback(null);
             });
 
             var party = {
-                partyClient : partyClient
+                partyClient: partyClient
             };
 
             var auth = getAuthLib(strategy, {}, null, party);
 
-            auth.getCache()['token'] = {orgState: 1};
+            auth.getCache()['token'] = { orgState: 1 };
 
-            auth.checkOrganizations(req, {}, function () {
+            auth.checkOrganizations(req, {}, function() {
                 expect(partyClient.getIndividual).toHaveBeenCalledWith(req.user.id, jasmine.any(Function));
                 expect(partyClient.createIndividual).not.toHaveBeenCalled();
 
@@ -611,26 +678,26 @@ describe('Auth lib', function () {
             });
         });
     });
-    
-    describe('Invalid headers', function () {
+
+    describe('Invalid headers', function() {
         // Request without access token
-        it('should continue with middleware processing if not auth header has been provided', function (done) {
+        it('should continue with middleware processing if not auth header has been provided', function(done) {
             var req = {
                 headers: {}
             };
 
             var auth = getAuthLib(strategy, {}, null, {});
 
-            auth.headerAuthentication(req, {}, function () {
+            auth.headerAuthentication(req, {}, function() {
                 done();
             });
         });
 
         // Request invalid token type
-        it('should return a non authorized code when the access token type is invalid', function (done) {
+        it('should return a non authorized code when the access token type is invalid', function(done) {
             var req = {
                 headers: {
-                    'authorization': 'Invalid token'
+                    authorization: 'Invalid token'
                 }
             };
 
@@ -641,17 +708,16 @@ describe('Auth lib', function () {
 
             var auth = getAuthLib(strategy, {}, unauthorized, {});
 
-            auth.headerAuthentication(req, resExp, function () {
-            });
+            auth.headerAuthentication(req, resExp, function() {});
         });
     });
 
-    describe('Platform token', function () {
+    describe('Platform token', function() {
         // Request not cached invalid auth token
-        it ('should return a non authorized code when the access token is not cached and is not valid', function (done) {
+        it('should return a non authorized code when the access token is not cached and is not valid', function(done) {
             var req = {
                 headers: {
-                    'authorization': 'Bearer token'
+                    authorization: 'Bearer token'
                 }
             };
 
@@ -667,15 +733,14 @@ describe('Auth lib', function () {
 
             mockUserProfile(auth, ['token'], err, [null]);
 
-            auth.headerAuthentication(req, resExp, function () {
-            });
+            auth.headerAuthentication(req, resExp, function() {});
         });
 
         // Request not cached valid token
-        it('should continue with middleware processing and inject user info in the request when the token is valid and not cached', function (done) {
+        it('should continue with middleware processing and inject user info in the request when the token is valid and not cached', function(done) {
             var req = {
                 headers: {
-                    'authorization': 'Bearer token'
+                    authorization: 'Bearer token'
                 }
             };
 
@@ -688,17 +753,17 @@ describe('Auth lib', function () {
             var auth = getAuthLib(strategy, {}, null, {});
             mockUserProfile(auth, ['token'], null, [userProfile]);
 
-            auth.headerAuthentication(req, {}, function () {
+            auth.headerAuthentication(req, {}, function() {
                 expect(req.user).toBe(userProfile);
                 done();
             });
         });
 
         // Request cached valid token
-        it('should continue with middleware processing and inject user info in the request when the token is valid and is cached', function (done) {
+        it('should continue with middleware processing and inject user info in the request when the token is valid and is cached', function(done) {
             var req = {
                 headers: {
-                    'authorization': 'Bearer token'
+                    authorization: 'Bearer token'
                 }
             };
 
@@ -714,7 +779,7 @@ describe('Auth lib', function () {
             auth.getCache()['token'] = userProfile;
             auth.FIWARE_STRATEGY._userProfile = jasmine.createSpy('_userProfile');
 
-            auth.headerAuthentication(req, {}, function () {
+            auth.headerAuthentication(req, {}, function() {
                 expect(req.user).toBe(userProfile);
                 expect(auth.FIWARE_STRATEGY._userProfile).not.toHaveBeenCalled();
                 done();
@@ -722,34 +787,33 @@ describe('Auth lib', function () {
         });
     });
 
-    describe('External token', function () {
-
-        var mockTokenService = function (calls, findErr, profile, refresh) {
+    describe('External token', function() {
+        var mockTokenService = function(calls, findErr, profile, refresh) {
             var TokenService = {
-                findOne: function (user, callback) {
+                findOne: function(user, callback) {
                     calls.calledToken = true;
                     expect(user.userId).toEqual('test_user');
                     callback(findErr, profile);
                 }
             };
 
-            if(refresh) {
+            if (refresh) {
                 // Mock Token update
-                TokenService.update = function (query, data, callback) {
+                TokenService.update = function(query, data, callback) {
                     calls.calledUpdated = true;
-                    expect(query).toEqual({userId: 'test_user'});
+                    expect(query).toEqual({ userId: 'test_user' });
                     expect(data.authToken).toEqual(refresh.validToken);
                     expect(data.refreshToken).toEqual(refresh.refreshToken);
                     callback();
-                }
+                };
             }
             return TokenService;
         };
 
-        var testExternalTokenError = function (findErr, profile, sideEffect, done) {
+        var testExternalTokenError = function(findErr, profile, sideEffect, done) {
             var req = {
                 headers: {
-                    'authorization': 'Bearer external'
+                    authorization: 'Bearer external'
                 }
             };
 
@@ -759,14 +823,15 @@ describe('Auth lib', function () {
             };
 
             var resExp = {};
-            var msgExp = 'It has not been possible to obtain your user info. Have you authorized this app to access your info?';
+            var msgExp =
+                'It has not been possible to obtain your user info. Have you authorized this app to access your info?';
             var calls = {
                 calledToken: false
             };
 
             var TokenService = mockTokenService(calls, findErr, profile, null);
 
-            var unauthorized = getUnauthorizedMock(resExp, msgExp, done, function () {
+            var unauthorized = getUnauthorizedMock(resExp, msgExp, done, function() {
                 expect(calls.calledToken).toBe(true);
                 if (sideEffect) {
                     expect(calls.refreshCalled).toBe(true);
@@ -781,17 +846,16 @@ describe('Auth lib', function () {
 
             mockUserProfile(auth, ['external'], null, [userProfile]);
 
-            auth.headerAuthentication(req, resExp, function () {
-            });
+            auth.headerAuthentication(req, resExp, function() {});
         };
 
         // Request not cached external token, never accessed
-        it('should give an unauthorized code when the token is not cached an has not authorized the app to access it info', function (done) {
-            testExternalTokenError({error: 'error'}, null, null, done);
+        it('should give an unauthorized code when the token is not cached an has not authorized the app to access it info', function(done) {
+            testExternalTokenError({ error: 'error' }, null, null, done);
         });
 
         // Request not cached external, error in refresh
-        it('should give an unauthorized error when using an external token and the internal one cannot be refreshed', function (done) {
+        it('should give an unauthorized error when using an external token and the internal one cannot be refreshed', function(done) {
             var savedProfile = {
                 userId: 'test_user',
                 authToken: 'token',
@@ -799,23 +863,27 @@ describe('Auth lib', function () {
                 expire: Date.now() - 100
             };
 
-            testExternalTokenError(null, savedProfile, function(auth, calls) {
-                // Mock refresh method
-                auth.FIWARE_STRATEGY._oauth2.getOAuthAccessToken = function (refreshT, grant, callback) {
-                    calls.refreshCalled = true;
-                    expect(refreshT).toEqual('refresh');
-                    expect(grant).toEqual({ grant_type: "refresh_token" });
-                    callback({error: 'error'}, null, null);
-                };
-            }, done);
-
+            testExternalTokenError(
+                null,
+                savedProfile,
+                function(auth, calls) {
+                    // Mock refresh method
+                    auth.FIWARE_STRATEGY._oauth2.getOAuthAccessToken = function(refreshT, grant, callback) {
+                        calls.refreshCalled = true;
+                        expect(refreshT).toEqual('refresh');
+                        expect(grant).toEqual({ grant_type: 'refresh_token' });
+                        callback({ error: 'error' }, null, null);
+                    };
+                },
+                done
+            );
         });
 
-        var testExternalTokenInternalSaved = function (expire, refresh, sideEffect, done) {
+        var testExternalTokenInternalSaved = function(expire, refresh, sideEffect, done) {
             var validToken = 'token';
             var req = {
                 headers: {
-                    'authorization': 'Bearer external'
+                    authorization: 'Bearer external'
                 }
             };
 
@@ -851,7 +919,7 @@ describe('Auth lib', function () {
                 updateParams = {
                     validToken: validToken,
                     refreshToken: 'new_refresh'
-                }
+                };
             }
 
             var TokenService = mockTokenService(calls, null, savedProfile, updateParams);
@@ -862,11 +930,11 @@ describe('Auth lib', function () {
                 updatedExp = true;
 
                 // Mock refresh method
-                auth.FIWARE_STRATEGY._oauth2.getOAuthAccessToken = function (refreshT, grant, callback) {
+                auth.FIWARE_STRATEGY._oauth2.getOAuthAccessToken = function(refreshT, grant, callback) {
                     refreshCalled = true;
                     expect(refreshT).toEqual('refresh');
-                    expect(grant).toEqual({ grant_type: "refresh_token" });
-                    callback(null, validToken, updateParams.refreshToken)
+                    expect(grant).toEqual({ grant_type: 'refresh_token' });
+                    callback(null, validToken, updateParams.refreshToken);
                 };
             }
 
@@ -876,7 +944,7 @@ describe('Auth lib', function () {
 
             mockUserProfile(auth, ['external', validToken], null, [extProfile, intProfile]);
 
-            auth.headerAuthentication(req, {}, function () {
+            auth.headerAuthentication(req, {}, function() {
                 expect(req.user).toBe(intProfile);
                 expect(calls.calledToken).toBe(true);
                 expect(calls.calledUpdated).toBe(updatedExp);
@@ -885,20 +953,20 @@ describe('Auth lib', function () {
             });
         };
         // Request not cached external, not cached internal
-        it('should continue with the middleware processing and update request when using a valid external token', function (done) {
+        it('should continue with the middleware processing and update request when using a valid external token', function(done) {
             testExternalTokenInternalSaved(Date.now() + 3600000, false, null, done);
         });
 
         // Request not cached external, not cached internal expired
-        it('should continue with the middleware processing and update request when using a valid external token and the save token is expired', function (done) {
+        it('should continue with the middleware processing and update request when using a valid external token and the save token is expired', function(done) {
             testExternalTokenInternalSaved(Date.now() - 100, true, null, done);
         });
 
         // Request not cached external, cached internal
-        it('should continue the middleware processing when using an external token and the internal is cached', function (done) {
+        it('should continue the middleware processing when using an external token and the internal is cached', function(done) {
             var req = {
                 headers: {
-                    'authorization': 'Bearer external'
+                    authorization: 'Bearer external'
                 }
             };
 
@@ -931,7 +999,7 @@ describe('Auth lib', function () {
             mockUserProfile(auth, ['external'], null, [extProfile]);
             auth.getCache()['token'] = intProfile;
 
-            auth.headerAuthentication(req, {}, function () {
+            auth.headerAuthentication(req, {}, function() {
                 expect(req.user).toBe(intProfile);
                 expect(calls.calledToken).toBe(true);
                 done();
@@ -939,15 +1007,20 @@ describe('Auth lib', function () {
         });
 
         // Request external, cached internal expired
-        it('should continue the middleware processing when using an external token and the internal is cached and expired', function (done) {
-            testExternalTokenInternalSaved(Date.now() + 3600000, true, function(auth){
-                auth.getCache()['token'] = {
-                    id: 'test_user',
-                    accessToken: 'token',
-                    appId: config.oauth2.clientID,
-                    expire: Date.now() - 100
-                }
-            }, done);
-        })
+        it('should continue the middleware processing when using an external token and the internal is cached and expired', function(done) {
+            testExternalTokenInternalSaved(
+                Date.now() + 3600000,
+                true,
+                function(auth) {
+                    auth.getCache()['token'] = {
+                        id: 'test_user',
+                        accessToken: 'token',
+                        appId: config.oauth2.clientID,
+                        expire: Date.now() - 100
+                    };
+                },
+                done
+            );
+        });
     });
 });

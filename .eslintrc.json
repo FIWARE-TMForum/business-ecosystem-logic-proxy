@@ -1,0 +1,26 @@
+{
+	"plugins": [
+		"jasmine",
+        "mocha"
+	],
+    "extends": "standard",
+    "rules": {
+        "semi": [2, "always"],
+        "indent": 0,
+        "mocha/no-exclusive-tests": "error",
+        "space-before-function-paren": 0,
+
+        /* These should be removed */
+        "no-throw-literal" : 0,
+        "prefer-promise-reject-errors" : 0,
+        "camelcase" : 0,
+        "standard/no-callback-literal": 0,
+        "node/no-deprecated-api": 0
+
+
+    },
+    "env": {
+    	"node": true,
+    	"jasmine": true
+    }
+}

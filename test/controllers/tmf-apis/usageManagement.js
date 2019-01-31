@@ -19,11 +19,10 @@
 
 var proxyquire = require('proxyquire').noCallThru();
 
-describe('Usage Management API', function () {
-
+describe('Usage Management API', function() {
     var DEFAULT_USER_ID = 'userId';
 
-    var getUsageManagementAPI = function (accountingService, storeClient, utils, tmfUtils) {
+    var getUsageManagementAPI = function(accountingService, storeClient, utils, tmfUtils) {
         return proxyquire('../../../controllers/tmf-apis/usageManagement', {
             './../../db/schemas/accountingService': accountingService,
             './../../lib/store': storeClient,
@@ -32,21 +31,18 @@ describe('Usage Management API', function () {
         }).usageManagement;
     };
 
-    describe('Check Permissions', function () {
+    describe('Check Permissions', function() {
+        /// ///////////////////////////////////////////////////////////////////////////////////////////
+        /// ////////////////////////////////////// NOT ALLOWED ////////////////////////////////////////
+        /// ///////////////////////////////////////////////////////////////////////////////////////////
 
-        //////////////////////////////////////////////////////////////////////////////////////////////
-        ///////////////////////////////////////// NOT ALLOWED ////////////////////////////////////////
-        //////////////////////////////////////////////////////////////////////////////////////////////
-
-        describe('Not allowed methods', function () {
-
+        describe('Not allowed methods', function() {
             var methodNotAllowedStatus = 405;
             var methodNotAllowedMessage = 'This method used is not allowed in the accessed API';
 
-            var testMethodNotAllowed = function (method, done) {
-
+            var testMethodNotAllowed = function(method, done) {
                 var utils = jasmine.createSpyObj('utils', ['methodNotAllowed']);
-                utils.methodNotAllowed.and.callFake(function (req, callback) {
+                utils.methodNotAllowed.and.callFake(function(req, callback) {
                     return callback({
                         status: methodNotAllowedStatus,
                         message: methodNotAllowedMessage
@@ -62,8 +58,7 @@ describe('Usage Management API', function () {
                     url: path
                 };
 
-                usageManagementAPI.checkPermissions(req, function (err) {
-
+                usageManagementAPI.checkPermissions(req, function(err) {
                     expect(err).not.toBe(null);
                     expect(utils.methodNotAllowed).toHaveBeenCalled();
                     expect(err.status).toBe(methodNotAllowedStatus);
@@ -73,33 +68,30 @@ describe('Usage Management API', function () {
                 });
             };
 
-            it('should reject PUT requests', function (done) {
+            it('should reject PUT requests', function(done) {
                 testMethodNotAllowed('PUT', done);
             });
 
-            it('should reject PATCH requests', function (done) {
+            it('should reject PATCH requests', function(done) {
                 testMethodNotAllowed('PATCH', done);
             });
 
-            it('should reject DELETE requests', function (done) {
+            it('should reject DELETE requests', function(done) {
                 testMethodNotAllowed('DELETE', done);
             });
-
         });
 
-        //////////////////////////////////////////////////////////////////////////////////////////////
-        ////////////////////////////////////// NOT AUTHENTICATED /////////////////////////////////////
-        //////////////////////////////////////////////////////////////////////////////////////////////
-        
-        describe('Not Authenticated Requests', function () {
+        /// ///////////////////////////////////////////////////////////////////////////////////////////
+        /// /////////////////////////////////// NOT AUTHENTICATED /////////////////////////////////////
+        /// ///////////////////////////////////////////////////////////////////////////////////////////
 
-            it('should reject not authenticated GET requests', function (done) {
-
+        describe('Not Authenticated Requests', function() {
+            it('should reject not authenticated GET requests', function(done) {
                 var requestNotAuthenticatedStatus = 401;
                 var requestNotAuthenticatedMessage = 'You need to be authenticated to create/update/delete resources';
 
                 var utils = jasmine.createSpyObj('utils', ['validateLoggedIn']);
-                utils.validateLoggedIn.and.callFake(function (req, callback) {
+                utils.validateLoggedIn.and.callFake(function(req, callback) {
                     return callback({
                         status: requestNotAuthenticatedStatus,
                         message: requestNotAuthenticatedMessage
@@ -116,8 +108,7 @@ describe('Usage Management API', function () {
                     url: path
                 };
 
-                usageManagementAPI.checkPermissions(req, function (err) {
-
+                usageManagementAPI.checkPermissions(req, function(err) {
                     expect(err).not.toBe(null);
                     expect(utils.validateLoggedIn).toHaveBeenCalled();
                     expect(tmfUtils.filterRelatedPartyFields).not.toHaveBeenCalled();
@@ -129,16 +120,14 @@ describe('Usage Management API', function () {
             });
         });
 
-        //////////////////////////////////////////////////////////////////////////////////////////////
-        ///////////////////////////////////////// RETRIEVAL //////////////////////////////////////////
-        //////////////////////////////////////////////////////////////////////////////////////////////
-        
-        describe('GET', function () {
+        /// ///////////////////////////////////////////////////////////////////////////////////////////
+        /// ////////////////////////////////////// RETRIEVAL //////////////////////////////////////////
+        /// ///////////////////////////////////////////////////////////////////////////////////////////
 
-            var testGetUsage = function (filterRelatedPartyFields, expectedErr, validator, query, done) {
-
+        describe('GET', function() {
+            var testGetUsage = function(filterRelatedPartyFields, expectedErr, validator, query, done) {
                 var utils = jasmine.createSpyObj('utils', ['validateLoggedIn']);
-                utils.validateLoggedIn.and.callFake(function (req, callback) {
+                utils.validateLoggedIn.and.callFake(function(req, callback) {
                     return callback();
                 });
 
@@ -155,9 +144,9 @@ describe('Usage Management API', function () {
                     query: query
                 };
 
-                var usageManagementAPI = getUsageManagementAPI({}, {storeClient: storeClient}, utils, tmfUtils);
+                var usageManagementAPI = getUsageManagementAPI({}, { storeClient: storeClient }, utils, tmfUtils);
 
-                usageManagementAPI.checkPermissions(req, function (err) {
+                usageManagementAPI.checkPermissions(req, function(err) {
                     expect(err).toBe(expectedErr);
                     expect(utils.validateLoggedIn).toHaveBeenCalled();
                     expect(tmfUtils.filterRelatedPartyFields).toHaveBeenCalled();
@@ -167,35 +156,45 @@ describe('Usage Management API', function () {
                 });
             };
 
-            it('should call callback without errors when user is allowed to retrieve the list of usages', function (done) {
-
-                var filterRelatedPartyFields = function (req, callback) {
+            it('should call callback without errors when user is allowed to retrieve the list of usages', function(done) {
+                var filterRelatedPartyFields = function(req, callback) {
                     return callback();
                 };
 
-                testGetUsage(filterRelatedPartyFields, null, (storeClient) => {
-                    expect(storeClient.refreshUsage).not.toHaveBeenCalled();
-                }, null, done);
+                testGetUsage(
+                    filterRelatedPartyFields,
+                    null,
+                    (storeClient) => {
+                        expect(storeClient.refreshUsage).not.toHaveBeenCalled();
+                    },
+                    null,
+                    done
+                );
             });
 
-            it('should call callback with error when retrieving list of usages and using invalid filters', function (done) {
-
+            it('should call callback with error when retrieving list of usages and using invalid filters', function(done) {
                 var error = {
                     status: 401,
                     message: 'Invalid filters'
                 };
 
-                var filterRelatedPartyFields = function (req, callback) {
+                var filterRelatedPartyFields = function(req, callback) {
                     return callback(error);
                 };
 
-                testGetUsage(filterRelatedPartyFields, error, (storeClient) => {
-                    expect(storeClient.refreshUsage).not.toHaveBeenCalled();
-                }, null, done);
+                testGetUsage(
+                    filterRelatedPartyFields,
+                    error,
+                    (storeClient) => {
+                        expect(storeClient.refreshUsage).not.toHaveBeenCalled();
+                    },
+                    null,
+                    done
+                );
             });
 
-            it('should call refreshAccounting when the orderId and productId filter has been included', function (done) {
-                var filterRelatedPartyFields = function (req, callback) {
+            it('should call refreshAccounting when the orderId and productId filter has been included', function(done) {
+                var filterRelatedPartyFields = function(req, callback) {
                     return callback();
                 };
 
@@ -204,17 +203,23 @@ describe('Usage Management API', function () {
                     'usageCharacteristic.productId': '2'
                 };
 
-                testGetUsage(filterRelatedPartyFields, null, (storeClient) => {
-                    expect(storeClient.refreshUsage)
-                        .toHaveBeenCalledWith(
+                testGetUsage(
+                    filterRelatedPartyFields,
+                    null,
+                    (storeClient) => {
+                        expect(storeClient.refreshUsage).toHaveBeenCalledWith(
                             query['usageCharacteristic.orderId'],
                             query['usageCharacteristic.productId'],
-                            jasmine.any(Function));
-                }, query, done);
+                            jasmine.any(Function)
+                        );
+                    },
+                    query,
+                    done
+                );
             });
 
-            it('should include productId filter when usageCharacteristic.value query string has been included', function (done) {
-                var filterRelatedPartyFields = function (req, callback) {
+            it('should include productId filter when usageCharacteristic.value query string has been included', function(done) {
+                var filterRelatedPartyFields = function(req, callback) {
                     return callback();
                 };
 
@@ -222,23 +227,27 @@ describe('Usage Management API', function () {
                     'usageCharacteristic.value': '2'
                 };
 
-                testGetUsage(filterRelatedPartyFields, null, (storeClient) => {
-                    expect(storeClient.refreshUsage).not.toHaveBeenCalled();
-                    expect(query).toEqual({
-                        'usageCharacteristic.productId': '2'
-                    });
-                }, query, done);
+                testGetUsage(
+                    filterRelatedPartyFields,
+                    null,
+                    (storeClient) => {
+                        expect(storeClient.refreshUsage).not.toHaveBeenCalled();
+                        expect(query).toEqual({
+                            'usageCharacteristic.productId': '2'
+                        });
+                    },
+                    query,
+                    done
+                );
             });
         });
 
-        //////////////////////////////////////////////////////////////////////////////////////////////
-        ////////////////////////////////////////// CREATION //////////////////////////////////////////
-        //////////////////////////////////////////////////////////////////////////////////////////////
-        
-        describe('Creation', function () {
+        /// ///////////////////////////////////////////////////////////////////////////////////////////
+        /// /////////////////////////////////////// CREATION //////////////////////////////////////////
+        /// ///////////////////////////////////////////////////////////////////////////////////////////
 
-            var testValidateApiKey = function (findOne, headers, expectedErr, done) {
-
+        describe('Creation', function() {
+            var testValidateApiKey = function(findOne, headers, expectedErr, done) {
                 var accountingService = jasmine.createSpyObj('accountingService', ['findOne']);
                 accountingService.findOne.and.callFake(findOne);
 
@@ -247,13 +256,12 @@ describe('Usage Management API', function () {
                 var req = {
                     method: 'POST',
                     headers: headers,
-                    get: function (header) {
-                        return this.headers[header]
+                    get: function(header) {
+                        return this.headers[header];
                     }
                 };
 
-                usageManagementAPI.checkPermissions(req, function (err) {
-
+                usageManagementAPI.checkPermissions(req, function(err) {
                     expect(err).toEqual(expectedErr);
 
                     if (typeof findOne === Function) {
@@ -264,54 +272,64 @@ describe('Usage Management API', function () {
                 });
             };
 
-            it('should reject requests without "X-API-KEY" header', function (done) {
-                testValidateApiKey(() => {}, {}, {status: 401, message: 'Missing header "X-API-KEY"'}, done);
+            it('should reject requests without "X-API-KEY" header', function(done) {
+                testValidateApiKey(() => {}, {}, { status: 401, message: 'Missing header "X-API-KEY"' }, done);
             });
 
-            it('should return 500 when db fails', function (done) {
-
-                var findOne = function (select, callback) {
+            it('should return 500 when db fails', function(done) {
+                var findOne = function(select, callback) {
                     return callback('Error', {});
                 };
 
-                testValidateApiKey(findOne, {'X-API-KEY': 'apiKey'}, {status: 500, message: 'Error validating apiKey'}, done);
+                testValidateApiKey(
+                    findOne,
+                    { 'X-API-KEY': 'apiKey' },
+                    { status: 500, message: 'Error validating apiKey' },
+                    done
+                );
             });
 
-            it('should reject request with not valid API Key', function (done) {
-
-                var findOne = function (select, callback) {
+            it('should reject request with not valid API Key', function(done) {
+                var findOne = function(select, callback) {
                     return callback(null, null);
                 };
 
-                testValidateApiKey(findOne, {'X-API-KEY': 'apiKey'}, {status: 401, message: 'Invalid apikey'}, done);
+                testValidateApiKey(
+                    findOne,
+                    { 'X-API-KEY': 'apiKey' },
+                    { status: 401, message: 'Invalid apikey' },
+                    done
+                );
             });
 
-            it('should reject request with an uncommitted API Key', function (done) {
-
-                var findOne = function (select, callback) {
-                    return callback(null, {state: 'UNCOMMITTED'});
+            it('should reject request with an uncommitted API Key', function(done) {
+                var findOne = function(select, callback) {
+                    return callback(null, { state: 'UNCOMMITTED' });
                 };
 
-                testValidateApiKey(findOne, {'X-API-KEY': 'apiKey'}, {status: 401, message: 'Apikey uncommitted'}, done);
+                testValidateApiKey(
+                    findOne,
+                    { 'X-API-KEY': 'apiKey' },
+                    { status: 401, message: 'Apikey uncommitted' },
+                    done
+                );
             });
 
-            it('should admit the request when the API Key is valid', function (done) {
-
-                var findOne = function (select, callback) {
-                    return callback(null, {state: 'COMMITTED'});
+            it('should admit the request when the API Key is valid', function(done) {
+                var findOne = function(select, callback) {
+                    return callback(null, { state: 'COMMITTED' });
                 };
 
-                testValidateApiKey(findOne, {'X-API-KEY': 'apiKey'}, null, done);
+                testValidateApiKey(findOne, { 'X-API-KEY': 'apiKey' }, null, done);
             });
-
         });
 
-        describe('Post Validation', function () {
+        describe('Post Validation', function() {
             var USAGE_URL = '/DSUsageManagement/api/usageManagement/v2/usage';
 
             var mockStoreClient = function() {
                 var storeClient = jasmine.createSpyObj('storeClient', ['validateUsage']);
-                storeClient.validateUsage.and.callFake(function (usageInfo, callback) {
+                storeClient.validateUsage.and.callFake(function(usageInfo, callback) {
                     return callback(null);
                 });
 
@@ -319,9 +337,7 @@ describe('Usage Management API', function () {
             };
 
             describe('POST request', function() {
-
-                var testPostValidation = function (apiUrl, shouldNotify, done) {
-
+                var testPostValidation = function(apiUrl, shouldNotify, done) {
                     var storeClient = mockStoreClient();
                     var store = {
                         storeClient: storeClient
@@ -336,8 +352,7 @@ describe('Usage Management API', function () {
 
                     var usageManagementAPI = getUsageManagementAPI({}, store, {}, {});
 
-                    usageManagementAPI.executePostValidation(req, function (err) {
-
+                    usageManagementAPI.executePostValidation(req, function(err) {
                         expect(err).toBe(null);
 
                         if (shouldNotify) {
@@ -350,18 +365,15 @@ describe('Usage Management API', function () {
                     });
                 };
 
-                it('should not notify when the request is not a POST to ../usage', function (done) {
-
+                it('should not notify when the request is not a POST to ../usage', function(done) {
                     testPostValidation('/DSUsageManagement/api/usageManagement/v2/usageSpecification', false, done);
                 });
 
-                it('should notify the Store if the usage management API notification is successful', function (done) {
-
+                it('should notify the Store if the usage management API notification is successful', function(done) {
                     testPostValidation(USAGE_URL, true, done);
                 });
 
-                it('should notify the Store if the usage management API notification is successful (path end with "/")', function (done) {
-
+                it('should notify the Store if the usage management API notification is successful (path end with "/")', function(done) {
                     testPostValidation(USAGE_URL, true, done);
                 });
             });

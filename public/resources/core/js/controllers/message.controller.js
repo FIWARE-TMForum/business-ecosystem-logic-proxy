@@ -17,16 +17,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-(function () {
-
+(function() {
     'use strict';
 
-    angular
-        .module('app')
-        .controller('MessageCtrl', ['$rootScope', '$element', 'EVENTS', MessageController]);
+    angular.module('app').controller('MessageCtrl', ['$rootScope', '$element', 'EVENTS', MessageController]);
 
     function MessageController($rootScope, $element, EVENTS) {
-
         var vm = this;
 
         $rootScope.$on(EVENTS.MESSAGE_CREATED, function(type, paypalUrl, closeCallback) {
@@ -39,5 +35,4 @@
             $element.modal('hide');
         });
     }
-
 })();

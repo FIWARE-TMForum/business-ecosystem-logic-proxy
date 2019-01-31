@@ -24,51 +24,39 @@ var AccountingService = require('./../../db/schemas/accountingService'),
     utils = require('./../../lib/utils'),
     tmfUtils = require('./../../lib/tmfUtils');
 
-var usageManagement = ( function () {
-
+var usageManagement = (function() {
     /**
      * Check if the API Key passed is a valid API Key
      *
      * @param  {Object}   req      Incoming request.
      */
-    var validateApiKey = function (req, callback) {
-
+    var validateApiKey = function(req, callback) {
         var apiKey = req.get('X-API-KEY');
 
         if (!apiKey) {
-
             return callback({
                 status: 401,
                 message: 'Missing header "X-API-KEY"'
             });
-
         } else {
-
-            AccountingService.findOne( {apiKey: apiKey}, function (err, result) {
-
+            AccountingService.findOne({ apiKey: apiKey }, function(err, result) {
                 var res;
 
                 if (err) {
-
                     res = {
                         status: 500,
                         message: 'Error validating apiKey'
                     };
-
                 } else if (!result) {
-
                     res = {
                         status: 401,
                         message: 'Invalid apikey'
                     };
-
                 } else if (result.state !== 'COMMITTED') {
-
                     res = {
                         status: 401,
                         message: 'Apikey uncommitted'
                     };
-
                 } else {
                     res = null;
                 }
@@ -78,14 +66,18 @@ var usageManagement = ( function () {
         }
     };
 
-    var checkFilters = function (req, callback) {
+    var checkFilters = function(req, callback) {
         // If retrieving the usage of a particular product
         // refresh the accounting info
         if (!!req.query && !!req.query['usageCharacteristic.orderId'] && !!req.query['usageCharacteristic.productId']) {
-            return storeClient.refreshUsage(req.query['usageCharacteristic.orderId'], req.query['usageCharacteristic.productId'], callback);
+            return storeClient.refreshUsage(
+                req.query['usageCharacteristic.orderId'],
+                req.query['usageCharacteristic.productId'],
+                callback
+            );
         }
 
-        if (!!req.query && req.query['usageCharacteristic.value']){
+        if (!!req.query && req.query['usageCharacteristic.value']) {
             // By default productId value
             req.query['usageCharacteristic.productId'] = req.query['usageCharacteristic.value'];
             delete req.query['usageCharacteristic.value'];
@@ -94,10 +86,9 @@ var usageManagement = ( function () {
         return callback(null);
     };
 
-    // If the usage notification to the usage management API is successful, 
+    // If the usage notification to the usage management API is successful,
     // it will notify the the Store with the API response
-    var executePostValidation = function (req, callback) {
-
+    var executePostValidation = function(req, callback) {
         var body = JSON.parse(req.body);
 
         var expr = /usage($|\/)/;
@@ -114,15 +105,14 @@ var usageManagement = ( function () {
     //////////////////////////////////////////////////////////////////////////////////////////////
 
     var validators = {
-        'GET': [ utils.validateLoggedIn, tmfUtils.filterRelatedPartyFields, checkFilters ],
-        'POST': [ validateApiKey ],
-        'PATCH': [ utils.methodNotAllowed ],
-        'PUT': [ utils.methodNotAllowed ],
-        'DELETE': [ utils.methodNotAllowed ]
+        GET: [utils.validateLoggedIn, tmfUtils.filterRelatedPartyFields, checkFilters],
+        POST: [validateApiKey],
+        PATCH: [utils.methodNotAllowed],
+        PUT: [utils.methodNotAllowed],
+        DELETE: [utils.methodNotAllowed]
     };
 
-    var checkPermissions = function (req, callback) {
-
+    var checkPermissions = function(req, callback) {
         var reqValidators = [];
 
         for (var i in validators[req.method]) {
@@ -136,7 +126,6 @@ var usageManagement = ( function () {
         checkPermissions: checkPermissions,
         executePostValidation: executePostValidation
     };
-
 })();
 
 exports.usageManagement = usageManagement;

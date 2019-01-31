@@ -22,16 +22,12 @@
  *         Jaime Pajuelo <jpajuelo@conwet.com>
  *         Aitor Magán <amagan@conwet.com>
  */
-(function () {
-
+(function() {
     'use strict';
 
-    angular
-        .module('app')
-        .config(['$stateProvider', RSModelsRouteConfig]);
+    angular.module('app').config(['$stateProvider', RSModelsRouteConfig]);
 
     function RSModelsRouteConfig($stateProvider) {
-
         $stateProvider
             .state('rss.models', {
                 url: '/models',
@@ -47,7 +43,6 @@
                 url: '/:productClass',
                 templateUrl: 'rss/sharing-models/update',
                 controller: 'RSModelUpdateCtrl as updateVM'
-            })
+            });
     }
-
 })();

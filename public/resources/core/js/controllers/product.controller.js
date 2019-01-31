@@ -22,8 +22,7 @@
  *         Jaime Pajuelo <jpajuelo@conwet.com>
  *         Aitor Magán <amagan@conwet.com>
  */
-(function () {
-
+(function() {
     'use strict';
 
     var LOADING = 'LOADING';
@@ -32,21 +31,77 @@
 
     angular
         .module('app')
-        .controller('ProductSearchCtrl', ['$scope', '$state', '$timeout', '$rootScope', 'EVENTS', 'ProductSpec',
-            'LIFECYCLE_STATUS', 'DATA_STATUS', 'Utils', ProductSearchController])
+        .controller('ProductSearchCtrl', [
+            '$scope',
+            '$state',
+            '$timeout',
+            '$rootScope',
+            'EVENTS',
+            'ProductSpec',
+            'LIFECYCLE_STATUS',
+            'DATA_STATUS',
+            'Utils',
+            ProductSearchController
+        ])
 
-        .controller('ProductCreateCtrl', ['$q', '$scope', '$state', '$rootScope', 'EVENTS', 'PROMISE_STATUS',
-            'ProductSpec', 'Asset', 'AssetType', 'Utils', ProductCreateController])
+        .controller('ProductCreateCtrl', [
+            '$q',
+            '$scope',
+            '$state',
+            '$rootScope',
+            'EVENTS',
+            'PROMISE_STATUS',
+            'ProductSpec',
+            'Asset',
+            'AssetType',
+            'Utils',
+            ProductCreateController
+        ])
 
-        .controller('ProductUpdateCtrl', ['$state', '$scope', '$rootScope', 'EVENTS', 'PROMISE_STATUS', 'ProductSpec',
-            'Utils', 'Asset', ProductUpdateController])
+        .controller('ProductUpdateCtrl', [
+            '$state',
+            '$scope',
+            '$rootScope',
+            'EVENTS',
+            'PROMISE_STATUS',
+            'ProductSpec',
+            'Utils',
+            'Asset',
+            ProductUpdateController
+        ])
 
-        .controller('ProductUpgradeCtrl', ['$state', '$rootScope', '$element', 'AssetType', 'ProductSpec', 'Utils',
-            'EVENTS', ProductUpgradeController])
+        .controller('ProductUpgradeCtrl', [
+            '$state',
+            '$rootScope',
+            '$element',
+            'AssetType',
+            'ProductSpec',
+            'Utils',
+            'EVENTS',
+            ProductUpgradeController
+        ])
 
-        .controller('AssetController', ['$scope', '$rootScope', 'Asset', 'ProductSpec', 'Utils', 'EVENTS', AssetController]);
+        .controller('AssetController', [
+            '$scope',
+            '$rootScope',
+            'Asset',
+            'ProductSpec',
+            'Utils',
+            'EVENTS',
+            AssetController
+        ]);
 
-    function ProductSearchController($scope, $state, $timeout, $rootScope, EVENTS, ProductSpec, LIFECYCLE_STATUS, DATA_STATUS, Utils) {
+    function ProductSearchController(
+        $scope,
+        $state,
+        $timeout,
+        $rootScope,
+        EVENTS,
+        ProductSpec,
+        LIFECYCLE_STATUS,
+        DATA_STATUS,
+        Utils
+    ) {
         /* jshint validthis: true */
         var vm = this;
         var filters = {};
@@ -67,13 +122,12 @@
         vm.setFilters = setFilters;
         vm.launchSearch = launchSearch;
         vm.setFormMode = setFormMode;
-        vm.searchInput = "";
+        vm.searchInput = '';
 
         // Initialize the search input content
         vm.initializeInput = initializeInput;
         function initializeInput() {
-            if($state.params.body !== undefined)
-                vm.searchInput = $state.params.body;
+            if ($state.params.body !== undefined) vm.searchInput = $state.params.body;
         }
 
         // Returns the input content
@@ -87,8 +141,8 @@
         vm.handleEnterKeyUp = handleEnterKeyUp;
         function handleEnterKeyUp(event) {
             if (event.keyCode == 13) {
-                var selector = formMode ? "#formSearch" : "#searchbutton" ;
-                $timeout(function () {
+                var selector = formMode ? '#formSearch' : '#searchbutton';
+                $timeout(function() {
                     $(selector).click();
                 });
             }
@@ -147,17 +201,20 @@
                 params.offset = vm.offset;
                 params.size = vm.size;
 
-                ProductSpec.search(params).then(function (productList) {
-                    angular.copy(productList, vm.list);
-                    vm.list.status = vm.STATUS.LOADED;
-                }, function (response) {
-                    vm.errorMessage = Utils.parseError(response, 'It was impossible to load the list of products');
-                    vm.list.status = vm.STATUS.ERROR;
-                });
+                ProductSpec.search(params).then(
+                    function(productList) {
+                        angular.copy(productList, vm.list);
+                        vm.list.status = vm.STATUS.LOADED;
+                    },
+                    function(response) {
+                        vm.errorMessage = Utils.parseError(response, 'It was impossible to load the list of products');
+                        vm.list.status = vm.STATUS.ERROR;
+                    }
+                );
             }
         }
-	
-        $scope.$watch(function () {
+
+        $scope.$watch(function() {
             return vm.offset;
         }, productSearch);
     }
@@ -175,47 +232,61 @@
             }
         }
 
-        $scope.$watch(function watchFile() {
-            return vm.pictureFile;
-        }, function() {
-            // Check that the new file is a valid image
-            if (vm.pictureFile) {
-                vm.clearFileInput();
-                pictureForm.pictureFile.$dirty = true;
+        $scope.$watch(
+            function watchFile() {
+                return vm.pictureFile;
+            },
+            function() {
+                // Check that the new file is a valid image
+                if (vm.pictureFile) {
+                    vm.clearFileInput();
+                    pictureForm.pictureFile.$dirty = true;
 
-                if (vm.pictureFile.type != 'image/gif' && vm.pictureFile.type != 'image/jpeg' &&
-                    vm.pictureFile.type != 'image/png' && vm.pictureFile.type != 'image/bmp') {
+                    if (
+                        vm.pictureFile.type != 'image/gif' &&
+                        vm.pictureFile.type != 'image/jpeg' &&
+                        vm.pictureFile.type != 'image/png' &&
+                        vm.pictureFile.type != 'image/bmp'
+                    ) {
+                        // Set input error
+                        pictureForm.pictureFile.$invalid = true;
+                        pictureForm.pictureFile.$error = {
+                            format: true
+                        };
+                        return;
+                    }
 
-                    // Set input error
-                    pictureForm.pictureFile.$invalid = true;
-                    pictureForm.pictureFile.$error = {
-                        format: true
-                    };
-                    return;
+                    var scope = vm.data.name.replace(/ /g, '');
+
+                    if (scope.length > 10) {
+                        scope = scope.substr(0, 10);
+                    }
+                    // Upload the file to the server when it is included in the input
+                    Asset.uploadAsset(
+                        vm.pictureFile,
+                        scope,
+                        null,
+                        vm.pictureFile.type,
+                        true,
+                        null,
+                        function(result) {
+                            vm.data.attachment[0].url = result.content;
+                        },
+                        function() {
+                            // The picture cannot be uploaded set error in input
+                            pictureForm.pictureFile.$invalid = true;
+                            pictureForm.pictureFile.$error = {
+                                upload: true
+                            };
+                        }
+                    );
                 }
-
-                var scope = vm.data.name.replace(/ /g, '');
-
-                if (scope.length > 10) {
-                    scope = scope.substr(0, 10);
-                }
-                // Upload the file to the server when it is included in the input
-                Asset.uploadAsset(vm.pictureFile, scope, null, vm.pictureFile.type, true, null, function(result) {
-                    vm.data.attachment[0].url = result.content
-                }, function() {
-                    // The picture cannot be uploaded set error in input
-                    pictureForm.pictureFile.$invalid = true;
-                    pictureForm.pictureFile.$error = {
-                        upload: true
-                    };
-                });
             }
-        });
+        );
         clearFileInput();
     }
 
     function buildFileController(vm, $scope, form, Asset) {
-
         function clearFileInput() {
             if (!form.extraFile) {
                 form.extraFile = {};
@@ -226,38 +297,52 @@
             }
         }
 
-        vm.removeExtraFile = function (index) {
+        vm.removeExtraFile = function(index) {
             vm.extraFiles.splice(index, 1);
         };
 
-        $scope.$watch(function () { return vm.extraFile; }, function () {
-            // Check that the new file is a valid image
-            if (vm.extraFile) {
-                clearFileInput();
-                form.extraFile.$dirty = true;
+        $scope.$watch(
+            function() {
+                return vm.extraFile;
+            },
+            function() {
+                // Check that the new file is a valid image
+                if (vm.extraFile) {
+                    clearFileInput();
+                    form.extraFile.$dirty = true;
 
-                var prefix = vm.data.name.replace(/ /g, '');
+                    var prefix = vm.data.name.replace(/ /g, '');
 
-                if (prefix.length > 10) {
-                    prefix = prefix.substr(0, 10);
+                    if (prefix.length > 10) {
+                        prefix = prefix.substr(0, 10);
+                    }
+
+                    // Upload the file to the server when it is included in the input
+                    Asset.uploadAsset(
+                        vm.extraFile,
+                        prefix,
+                        null,
+                        vm.extraFile.type,
+                        true,
+                        null,
+                        function(result) {
+                            vm.extraFiles.push({
+                                name: vm.extraFile.name,
+                                type: vm.extraFile.type,
+                                href: result.content
+                            });
+                        },
+                        function() {
+                            // The picture cannot be uploaded set error in input
+                            form.extraFile.$invalid = true;
+                            form.extraFile.$error = {
+                                upload: true
+                            };
+                        }
+                    );
                 }
-
-                // Upload the file to the server when it is included in the input
-                Asset.uploadAsset(vm.extraFile, prefix, null, vm.extraFile.type, true, null, function(result) {
-                    vm.extraFiles.push({
-                        name: vm.extraFile.name,
-                        type: vm.extraFile.type,
-                        href: result.content
-                    })
-                }, function() {
-                    // The picture cannot be uploaded set error in input
-                    form.extraFile.$invalid = true;
-                    form.extraFile.$error = {
-                        upload: true
-                    };
-                });
             }
-        });
+        );
 
         clearFileInput();
     }
@@ -300,11 +385,11 @@
         }
 
         function setCurrentType() {
-            var i, found = false;
+            var i,
+                found = false;
             var assetType = vm.digitalChars[0].productSpecCharacteristicValue[0].value;
 
             for (i = 0; i < vm.assetTypes.length && !found; i++) {
-
                 if (assetType === vm.assetTypes[i].name) {
                     found = true;
                     vm.currentType = vm.assetTypes[i];
@@ -316,8 +401,8 @@
         }
 
         function showAssetError(response) {
-            var defaultMessage = 'There was an unexpected error that prevented your ' +
-                'digital asset to be registered';
+            var defaultMessage =
+                'There was an unexpected error that prevented your ' + 'digital asset to be registered';
             var error = Utils.parseError(response, defaultMessage);
 
             $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
@@ -334,13 +419,21 @@
 
             if (vm.currFormat === 'FILE') {
                 // If the format is file, upload it to the asset manager
-                uploadM(vm.assetFile, scope,
+                uploadM(
+                    vm.assetFile,
+                    scope,
                     vm.digitalChars[0].productSpecCharacteristicValue[0].value,
-                    vm.digitalChars[1].productSpecCharacteristicValue[0].value, false, meta, function (result) {
+                    vm.digitalChars[1].productSpecCharacteristicValue[0].value,
+                    false,
+                    meta,
+                    function(result) {
                         // Set file location
                         vm.digitalChars[2].productSpecCharacteristicValue[0].value = result.content;
                         callback();
-                    }, (response) => showAssetError(response), assetId);
+                    },
+                    (response) => showAssetError(response),
+                    assetId
+                );
             } else if (controller.isDigital && vm.currFormat === 'URL') {
                 registerM(
                     vm.digitalChars[2].productSpecCharacteristicValue[0].value,
@@ -356,13 +449,16 @@
 
         var saveAsset = save.bind(this, Asset.uploadAsset, Asset.registerAsset, null);
 
-        function upgradeAsset (scope, callback) {
+        function upgradeAsset(scope, callback) {
             // Get asset id using product id
-            Asset.searchByProduct(controller.data.id).then((assetInfo) => {
-                save(Asset.upgradeAsset, Asset.upgradeRegisteredAsset, assetInfo[0].id, scope, callback);
-            }, (err) => {
-                showAssetError(err);
-            });
+            Asset.searchByProduct(controller.data.id).then(
+                (assetInfo) => {
+                    save(Asset.upgradeAsset, Asset.upgradeRegisteredAsset, assetInfo[0].id, scope, callback);
+                },
+                (err) => {
+                    showAssetError(err);
+                }
+            );
         }
 
         function getDigitalChars() {
@@ -394,45 +490,71 @@
         };
 
         // Get the asset types related to the current scope
-        controller.getAssetTypes().then(function (typeList) {
-            angular.copy(typeList, vm.assetTypes);
+        controller.getAssetTypes().then(
+            function(typeList) {
+                angular.copy(typeList, vm.assetTypes);
 
-            if (typeList.length) {
-                // Initialize digital asset characteristics
-                vm.digitalChars.push(ProductSpec.createCharacteristic({
-                    name: "Asset type",
-                    description: "Type of the digital asset described in this product specification"
-                }));
-                vm.digitalChars[0].productSpecCharacteristicValue.push(ProductSpec.createCharacteristicValue({
-                    default: true,
-                    value: typeList[0].name
-                }));
-                vm.digitalChars.push(ProductSpec.createCharacteristic({
-                    name: "Media type",
-                    description: "Media type of the digital asset described in this product specification"
-                }));
-                vm.digitalChars[1].productSpecCharacteristicValue.push(ProductSpec.createCharacteristicValue({
-                    default: true
-                }));
-                vm.digitalChars.push(ProductSpec.createCharacteristic({
-                    name: "Location",
-                    description: "URL pointing to the digital asset described in this product specification"
-                }));
-                vm.digitalChars[2].productSpecCharacteristicValue.push(ProductSpec.createCharacteristicValue({
-                    default: true
-                }));
-                vm.currentType = typeList[0];
-                vm.currFormat = vm.currentType.formats[0];
+                if (typeList.length) {
+                    // Initialize digital asset characteristics
+                    vm.digitalChars.push(
+                        ProductSpec.createCharacteristic({
+                            name: 'Asset type',
+                            description: 'Type of the digital asset described in this product specification'
+                        })
+                    );
+                    vm.digitalChars[0].productSpecCharacteristicValue.push(
+                        ProductSpec.createCharacteristicValue({
+                            default: true,
+                            value: typeList[0].name
+                        })
+                    );
+                    vm.digitalChars.push(
+                        ProductSpec.createCharacteristic({
+                            name: 'Media type',
+                            description: 'Media type of the digital asset described in this product specification'
+                        })
+                    );
+                    vm.digitalChars[1].productSpecCharacteristicValue.push(
+                        ProductSpec.createCharacteristicValue({
+                            default: true
+                        })
+                    );
+                    vm.digitalChars.push(
+                        ProductSpec.createCharacteristic({
+                            name: 'Location',
+                            description: 'URL pointing to the digital asset described in this product specification'
+                        })
+                    );
+                    vm.digitalChars[2].productSpecCharacteristicValue.push(
+                        ProductSpec.createCharacteristicValue({
+                            default: true
+                        })
+                    );
+                    vm.currentType = typeList[0];
+                    vm.currFormat = vm.currentType.formats[0];
+                }
+
+                vm.status = LOADED;
+            },
+            function() {
+                vm.errMsg = 'There has been an error trying to retrieve asset type info';
+                vm.status = ERROR;
             }
-
-            vm.status = LOADED;
-        }, function() {
-            vm.errMsg = 'There has been an error trying to retrieve asset type info';
-            vm.status = ERROR;
-        })
+        );
     }
 
-    function ProductCreateController($q, $scope, $state, $rootScope, EVENTS, PROMISE_STATUS, ProductSpec, Asset, AssetType, Utils) {
+    function ProductCreateController(
+        $q,
+        $scope,
+        $state,
+        $rootScope,
+        EVENTS,
+        PROMISE_STATUS,
+        ProductSpec,
+        Asset,
+        AssetType,
+        Utils
+    ) {
         /* jshint validthis: true */
         var vm = this;
         var createPromise = null;
@@ -479,10 +601,10 @@
         vm.charList = [];
         vm.isDigital = false;
         vm.terms = {};
-        vm.extraFiles = []
+        vm.extraFiles = [];
 
         vm.characteristicEnabled = false;
-        vm.pictureFormat = "url";
+        vm.pictureFormat = 'url';
 
         vm.create = create;
 
@@ -593,14 +715,19 @@
             var result;
 
             switch (characteristic.valueType) {
-            case ProductSpec.VALUE_TYPES.STRING:
-                result = characteristicValue.value;
-                break;
-            case ProductSpec.VALUE_TYPES.NUMBER:
-                result = characteristicValue.value + " " + characteristicValue.unitOfMeasure;
-                break;
-            case ProductSpec.VALUE_TYPES.NUMBER_RANGE:
-                result = characteristicValue.valueFrom + " - " + characteristicValue.valueTo + " " + characteristicValue.unitOfMeasure;
+                case ProductSpec.VALUE_TYPES.STRING:
+                    result = characteristicValue.value;
+                    break;
+                case ProductSpec.VALUE_TYPES.NUMBER:
+                    result = characteristicValue.value + ' ' + characteristicValue.unitOfMeasure;
+                    break;
+                case ProductSpec.VALUE_TYPES.NUMBER_RANGE:
+                    result =
+                        characteristicValue.valueFrom +
+                        ' - ' +
+                        characteristicValue.valueTo +
+                        ' ' +
+                        characteristicValue.unitOfMeasure;
             }
 
             return result;
@@ -627,7 +754,7 @@
 
         function filterProduct(product) {
             var i = -1;
-            vm.data.bundledProductSpecification.forEach(function (bundledProduct, index) {
+            vm.data.bundledProductSpecification.forEach(function(bundledProduct, index) {
                 if (bundledProduct.id == product.id) {
                     i = index;
                 }
@@ -675,14 +802,16 @@
                     scope = scope.substr(0, 10);
                 }
 
-                vm.assetCtl.saveAsset(scope, saveProduct)
+                vm.assetCtl.saveAsset(scope, saveProduct);
             } else {
                 saveProduct();
             }
         }
 
         Object.defineProperty(create, 'status', {
-            get: function () { return createPromise != null ? createPromise.$$state.status : -1; }
+            get: function() {
+                return createPromise != null ? createPromise.$$state.status : -1;
+            }
         });
 
         function saveProduct() {
@@ -704,40 +833,44 @@
                     description: text
                 });
 
-                legalChar.productSpecCharacteristicValue.push(ProductSpec.createCharacteristicValue({
-                    default: true,
-                    value: title
-                }));
+                legalChar.productSpecCharacteristicValue.push(
+                    ProductSpec.createCharacteristicValue({
+                        default: true,
+                        value: title
+                    })
+                );
 
                 data.productSpecCharacteristic.push(legalChar);
             }
 
-            vm.extraFiles.forEach(function (extraFile) {
+            vm.extraFiles.forEach(function(extraFile) {
                 data.attachment.push({
                     type: extraFile.type,
                     url: extraFile.href
-                })
-            })
-
-            createPromise = ProductSpec.create(data);
-            createPromise.then(function (productCreated) {
-                $state.go('stock.product.update', {
-                    productId: productCreated.id
-                });
-                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'created', {
-                    resource: 'product',
-                    name: productCreated.name
-                });
-            }, function (response) {
-
-                var defaultMessage = 'There was an unexpected error that prevented the ' +
-                    'system from creating a new product';
-                var error = Utils.parseError(response, defaultMessage);
-
-                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
-                    error: error
                 });
             });
+
+            createPromise = ProductSpec.create(data);
+            createPromise.then(
+                function(productCreated) {
+                    $state.go('stock.product.update', {
+                        productId: productCreated.id
+                    });
+                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'created', {
+                        resource: 'product',
+                        name: productCreated.name
+                    });
+                },
+                function(response) {
+                    var defaultMessage =
+                        'There was an unexpected error that prevented the ' + 'system from creating a new product';
+                    var error = Utils.parseError(response, defaultMessage);
+
+                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                        error: error
+                    });
+                }
+            );
         }
 
         function loadPictureController() {
@@ -780,8 +913,13 @@
         }
 
         function isValid() {
-            return vm.assetCtl !== null && form !== null && !!form.version
-                && vm.assetCtl.isValidAsset() && form.version.$valid
+            return (
+                vm.assetCtl !== null &&
+                form !== null &&
+                !!form.version &&
+                vm.assetCtl.isValidAsset() &&
+                form.version.$valid
+            );
         }
 
         function upgrade() {
@@ -810,33 +948,44 @@
             });
 
             // Include new digital characteristics
-            upgradeBody.productSpecCharacteristic = upgradeBody.productSpecCharacteristic.concat(vm.assetCtl.getDigitalChars());
+            upgradeBody.productSpecCharacteristic = upgradeBody.productSpecCharacteristic.concat(
+                vm.assetCtl.getDigitalChars()
+            );
 
             // Call update method
-            ProductSpec.update({
-                id: vm.data.id
-            }, upgradeBody).then((productUpdated) => {
-                $state.go('stock.product.update', {
-                    productId: productUpdated.id
-                }, {
-                    reload: true
-                });
+            ProductSpec.update(
+                {
+                    id: vm.data.id
+                },
+                upgradeBody
+            ).then(
+                (productUpdated) => {
+                    $state.go(
+                        'stock.product.update',
+                        {
+                            productId: productUpdated.id
+                        },
+                        {
+                            reload: true
+                        }
+                    );
 
-                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'upgraded', {
-                    resource: 'product',
-                    name: productUpdated.name
-                });
+                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'upgraded', {
+                        resource: 'product',
+                        name: productUpdated.name
+                    });
+                },
+                (err) => {
+                    var defaultMessage =
+                        'There was an unexpected error that prevented the ' + 'system from upgrading the product spec';
 
-            }, (err) => {
-                var defaultMessage = 'There was an unexpected error that prevented the ' +
-                    'system from upgrading the product spec';
+                    var error = Utils.parseError(err, defaultMessage);
 
-                var error = Utils.parseError(err, defaultMessage);
-
-                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
-                    error: error
-                });
-            });
+                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                        error: error
+                    });
+                }
+            );
         }
 
         $rootScope.$on(ProductSpec.EVENTS.UPGRADE, function(event, data) {
@@ -873,31 +1022,36 @@
         vm.loadPictureController = loadPictureController;
 
         var detailPromise = ProductSpec.detail($state.params.productId);
-        detailPromise.then(function (productRetrieved) {
-            vm.data = angular.copy(productRetrieved);
-            vm.item = productRetrieved;
-            vm.extraFiles = productRetrieved.getExtraFiles();
-            digital = checkDigital();
+        detailPromise.then(
+            function(productRetrieved) {
+                vm.data = angular.copy(productRetrieved);
+                vm.item = productRetrieved;
+                vm.extraFiles = productRetrieved.getExtraFiles();
+                digital = checkDigital();
 
-            vm.item.productSpecCharacteristic = productRetrieved.productSpecCharacteristic.filter(function (char) {
-                if (char.name.toLowerCase() === 'license') {
-                    vm.item.license = {
-                        title: char.productSpecCharacteristicValue[0].value,
-                        description: char.description
-                    };
-                    return false;
-                }
-                return true;
-            });
-        }, function (response) {
-            vm.error = Utils.parseError(response, 'The requested product could not be retrieved');
-        });
+                vm.item.productSpecCharacteristic = productRetrieved.productSpecCharacteristic.filter(function(char) {
+                    if (char.name.toLowerCase() === 'license') {
+                        vm.item.license = {
+                            title: char.productSpecCharacteristicValue[0].value,
+                            description: char.description
+                        };
+                        return false;
+                    }
+                    return true;
+                });
+            },
+            function(response) {
+                vm.error = Utils.parseError(response, 'The requested product could not be retrieved');
+            }
+        );
 
         Object.defineProperty(vm, 'status', {
-            get: function () { return detailPromise != null ? detailPromise.$$state.status : -1; }
+            get: function() {
+                return detailPromise != null ? detailPromise.$$state.status : -1;
+            }
         });
 
-        function isDigital () {
+        function isDigital() {
             return digital;
         }
 
@@ -908,9 +1062,11 @@
             if (vm.data.productSpecCharacteristic) {
                 isDigital = true;
                 ['asset type', 'media type', 'location'].forEach((name) => {
-                    isDigital = isDigital && vm.data.productSpecCharacteristic.some((element) => {
-                        return element.name.toLowerCase() == name;
-                    })
+                    isDigital =
+                        isDigital &&
+                        vm.data.productSpecCharacteristic.some((element) => {
+                            return element.name.toLowerCase() == name;
+                        });
                 });
             }
 
@@ -930,35 +1086,42 @@
 
         function executeUpdate(dataUpdated) {
             updatePromise = ProductSpec.update(vm.item, dataUpdated);
-            updatePromise.then(function (productUpdated) {
-                $state.go('stock.product.update', {
-                    productId: productUpdated.id
-                }, {
-                    reload: true
-                });
-                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'updated', {
-                    resource: 'product',
-                    name: productUpdated.name
-                });
-            }, function (response) {
-                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
-                    error: Utils.parseError(response, 'Unexpected error trying to update the product spec.')
-                });
-            });
+            updatePromise.then(
+                function(productUpdated) {
+                    $state.go(
+                        'stock.product.update',
+                        {
+                            productId: productUpdated.id
+                        },
+                        {
+                            reload: true
+                        }
+                    );
+                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'updated', {
+                        resource: 'product',
+                        name: productUpdated.name
+                    });
+                },
+                function(response) {
+                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                        error: Utils.parseError(response, 'Unexpected error trying to update the product spec.')
+                    });
+                }
+            );
         }
 
         function updateImage() {
             if (!angular.equals(vm.item.attachment[0].url, vm.data.attachment[0].url)) {
                 executeUpdate({
                     attachment: vm.data.attachment
-                })
+                });
             }
         }
 
         function update() {
             var dataUpdated = {};
 
-            ProductSpec.PATCHABLE_ATTRS.forEach(function (attr) {
+            ProductSpec.PATCHABLE_ATTRS.forEach(function(attr) {
                 if (!angular.equals(vm.item[attr], vm.data[attr])) {
                     dataUpdated[attr] = vm.data[attr];
                 }
@@ -968,11 +1131,13 @@
         }
 
         Object.defineProperty(update, 'status', {
-            get: function () { return updatePromise != null ? updatePromise.$$state.status : -1; }
+            get: function() {
+                return updatePromise != null ? updatePromise.$$state.status : -1;
+            }
         });
 
         function createRelationship(relationship) {
-            return vm.item.appendRelationship(relationship).then(function (productSpec) {
+            return vm.item.appendRelationship(relationship).then(function(productSpec) {
                 vm.item = productSpec;
                 vm.data = angular.copy(productSpec);
                 $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {
@@ -983,7 +1148,7 @@
         }
 
         function removeRelationship(index) {
-            return vm.item.removeRelationship(index).then(function (productSpec) {
+            return vm.item.removeRelationship(index).then(function(productSpec) {
                 vm.item = productSpec;
                 vm.data = angular.copy(productSpec);
                 $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {
@@ -997,20 +1162,19 @@
             var result;
 
             switch (characteristic.valueType) {
-            case ProductSpec.VALUE_TYPES.STRING.toLowerCase():
-                result = characteristicValue.value;
-                break;
-            case ProductSpec.VALUE_TYPES.NUMBER.toLowerCase():
-
-                if (characteristicValue.value && characteristicValue.value.length) {
+                case ProductSpec.VALUE_TYPES.STRING.toLowerCase():
                     result = characteristicValue.value;
-                } else {
-                    result = characteristicValue.valueFrom + " - " + characteristicValue.valueTo;
-                }
+                    break;
+                case ProductSpec.VALUE_TYPES.NUMBER.toLowerCase():
+                    if (characteristicValue.value && characteristicValue.value.length) {
+                        result = characteristicValue.value;
+                    } else {
+                        result = characteristicValue.valueFrom + ' - ' + characteristicValue.valueTo;
+                    }
 
-                result += " " + characteristicValue.unitOfMeasure;
+                    result += ' ' + characteristicValue.unitOfMeasure;
 
-                break;
+                    break;
             }
 
             return result;
@@ -1020,5 +1184,4 @@
             buildPictureController(vm, $scope, vm.form, Asset);
         }
     }
-
 })();

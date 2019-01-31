@@ -18,8 +18,7 @@
  */
 
 var config = require('./../config'),
-
-// TMF APIs
+    // TMF APIs
     catalog = require('./tmf-apis/catalog').catalog,
     inventory = require('./tmf-apis/inventory').inventory,
     ordering = require('./tmf-apis/ordering').ordering,
@@ -34,8 +33,7 @@ var config = require('./../config'),
     request = require('request'),
     utils = require('./../lib/utils');
 
-function tmf () {
-
+function tmf() {
     var apiControllers = {};
     apiControllers[config.endpoints.catalog.path] = catalog;
     apiControllers[config.endpoints.ordering.path] = ordering;
@@ -60,8 +58,7 @@ function tmf () {
         res.end();
     };
 
-    var redirectRequest = function (req, res) {
-
+    var redirectRequest = function(req, res) {
         if (req.user) {
             utils.attachUserHeaders(req.headers, req.user);
         }
@@ -77,13 +74,12 @@ function tmf () {
             headers: utils.proxiedRequestHeaders(req)
         };
 
-        if (typeof(req.body) === 'string') {
+        if (typeof req.body === 'string') {
             options.body = req.body;
         }
 
         // PROXY THE REQUEST
         request(options, function(err, response, body) {
-
             var completeRequest = function(result) {
                 res.status(result.status);
 
@@ -98,7 +94,6 @@ function tmf () {
             if (err) {
                 res.status(504).json({ error: 'Service unreachable' });
             } else {
-
                 var result = {
                     status: response.statusCode,
                     headers: response.headers,
@@ -122,58 +117,55 @@ function tmf () {
 
                 // Execute postValidation if status code is lower than 400 and the
                 // function is defined
-                if (response.statusCode < 400 && apiControllers[api] !== undefined
-                    && apiControllers[api].executePostValidation) {
-
-                    apiControllers[api].executePostValidation(result, function (err) {
-
+                if (
+                    response.statusCode < 400 &&
+                    apiControllers[api] !== undefined &&
+                    apiControllers[api].executePostValidation
+                ) {
+                    apiControllers[api].executePostValidation(result, function(err) {
                         var basicLogMessage = 'Post-Validation (' + api + '): ';
 
                         if (err) {
                             utils.log(logger, 'warn', req, basicLogMessage + err.message);
-                            res.status(err.status).json({error: err.message});
+                            res.status(err.status).json({ error: err.message });
                         } else {
                             utils.log(logger, 'info', req, basicLogMessage + 'OK');
                             completeRequest(result);
                         }
                     });
-                } else if (response.statusCode >= 400 && apiControllers[api] !== undefined
-                    && apiControllers[api].handleAPIError){
-
+                } else if (
+                    response.statusCode >= 400 &&
+                    apiControllers[api] !== undefined &&
+                    apiControllers[api].handleAPIError
+                ) {
                     apiControllers[api].handleAPIError(result, (err) => {
                         utils.log(logger, 'warn', req, 'Handling API error (' + api + ')');
 
                         if (err) {
-                            res.status(err.status).json({error: err.message});
+                            res.status(err.status).json({ error: err.message });
                         } else {
                             completeRequest(result);
                         }
-                    })
-
+                    });
                 } else {
                     completeRequest(result);
                 }
             }
-
         });
     };
 
     var checkPermissions = function(req, res) {
-
         var api = getAPIName(req.apiUrl);
 
         if (apiControllers[api] === undefined) {
-
             utils.log(logger, 'warn', req, 'API ' + api + ' not defined');
 
             sendError(res, {
                 status: 404,
                 message: 'Path not found'
             });
-
         } else {
             apiControllers[api].checkPermissions(req, function(err) {
-
                 var basicLogMessage = 'Pre-Validation (' + api + '): ';
 
                 if (err) {
@@ -195,6 +187,6 @@ function tmf () {
         checkPermissions: checkPermissions,
         public: public
     };
-};
+}
 
 exports.tmf = tmf;

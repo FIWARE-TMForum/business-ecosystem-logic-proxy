@@ -17,19 +17,36 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var nock = require('nock'),
-    proxyquire =  require('proxyquire'),
-    testUtils = require('../../utils');
+var nock = require('nock');
+
+var proxyquire = require('proxyquire');
+
+var testUtils = require('../../utils');
 
 describe('Billing API', function() {
-
     var config = testUtils.getDefaultConfig();
-    var BILLING_SERVER = (config.endpoints.billing.appSsl ? 'https' : 'http') + '://' + config.endpoints.billing.host + ':' + config.endpoints.billing.port;
-    var CUSTOMER_SERVER = (config.endpoints.customer.appSsl ? 'https' : 'http') + '://' + config.endpoints.customer.host + ':' + config.endpoints.customer.port;
-    var PRODUCT_SERVER = (config.endpoints.inventory.appSsl ? 'https' : 'http') + '://' + config.endpoints.inventory.host + ':' + config.endpoints.inventory.port;
+    var BILLING_SERVER =
+        (config.endpoints.billing.appSsl ? 'https' : 'http') +
+        '://' +
+        config.endpoints.billing.host +
+        ':' +
+        config.endpoints.billing.port;
+    var CUSTOMER_SERVER =
+        (config.endpoints.customer.appSsl ? 'https' : 'http') +
+        '://' +
+        config.endpoints.customer.host +
+        ':' +
+        config.endpoints.customer.port;
+    var PRODUCT_SERVER =
+        (config.endpoints.inventory.appSsl ? 'https' : 'http') +
+        '://' +
+        config.endpoints.inventory.host +
+        ':' +
+        config.endpoints.inventory.port;
 
     var VALID_BILLING_PATH = '/' + config.endpoints.billing.path + '/api/billingManagement/v2/billingAccount';
-    var VALID_CHARGES_PATH = '/' + config.endpoints.billing.path + '/api/billingManagement/v2/appliedCustomerBillingCharge';
+    var VALID_CHARGES_PATH =
+        '/' + config.endpoints.billing.path + '/api/billingManagement/v2/appliedCustomerBillingCharge';
 
     var UNSUPPORTED_FIELDS_ERROR = {
         status: 422,
@@ -104,16 +121,12 @@ describe('Billing API', function() {
         }).billing;
     };
 
-
     beforeEach(function() {
         nock.cleanAll();
     });
 
-
     describe('Check Permissions', function() {
-
         var failIfNotLoggedIn = function(method, done) {
-
             var returnedError = {
                 status: 401,
                 message: 'User not logged in'
@@ -138,9 +151,7 @@ describe('Billing API', function() {
         };
 
         describe('General', function() {
-
             it('should reject requests to other paths different from billing account', function(done) {
-
                 var billingApi = getBillingAPI({}, {});
                 var req = {
                     method: 'GET',
@@ -148,7 +159,6 @@ describe('Billing API', function() {
                 };
 
                 billingApi.checkPermissions(req, function(err) {
-
                     expect(err).toEqual({
                         status: 403,
                         message: 'This API feature is not supported yet'
@@ -166,7 +176,6 @@ describe('Billing API', function() {
                 };
 
                 billingApi.checkPermissions(req, function(err) {
-
                     expect(err).toEqual({
                         status: 405,
                         message: 'Method not allowed'
@@ -185,7 +194,6 @@ describe('Billing API', function() {
                 };
 
                 billingApi.checkPermissions(req, function(err) {
-
                     expect(err).toEqual({
                         status: 400,
                         message: 'Invalid body'
@@ -194,19 +202,15 @@ describe('Billing API', function() {
                     done();
                 });
             });
-
         });
 
         describe('Billing accounts', function() {
-
             describe('GET', function() {
-
                 it('should not allow to retrieve resources if the user is not logged in', function(done) {
                     failIfNotLoggedIn('GET', done);
                 });
 
                 var testListBillingAccount = function(expectedErr, query, done) {
-
                     var utils = jasmine.createSpyObj('utils', ['validateLoggedIn']);
                     utils.validateLoggedIn.and.callFake(function(req, callback) {
                         callback(null);
@@ -228,38 +232,36 @@ describe('Billing API', function() {
                         expect(err).toBe(expectedErr);
                         done();
                     });
-
                 };
 
-                it('should not allow to retrieve a resource when user is trying to list but invalid relatedParty filter',
-                    function(done) {
-
-                        var returnedError = {
-                            status: 403,
-                            message: 'Invalid Related Party'
-                        };
-
-                        testListBillingAccount(returnedError, '', done);
-                    });
-
-                it('should not allow to retrieve a resource when user is trying to list but invalid relatedParty filter ' +
-                    'even if query included', function(done) {
-
+                it('should not allow to retrieve a resource when user is trying to list but invalid relatedParty filter', function(done) {
                     var returnedError = {
                         status: 403,
                         message: 'Invalid Related Party'
                     };
 
-                    testListBillingAccount(returnedError, '?a=b', done);
+                    testListBillingAccount(returnedError, '', done);
                 });
+
+                it(
+                    'should not allow to retrieve a resource when user is trying to list but invalid relatedParty filter ' +
+                        'even if query included',
+                    function(done) {
+                        var returnedError = {
+                            status: 403,
+                            message: 'Invalid Related Party'
+                        };
+
+                        testListBillingAccount(returnedError, '?a=b', done);
+                    }
+                );
 
                 it('should allow to retrieve resource if user is trying to list and related party filter is valid', function(done) {
                     testListBillingAccount(null, '', done);
                 });
 
                 it('should allow to request a single billing account', function(done) {
-
-                    //Please note, this is done in the post validation...
+                    // Please note, this is done in the post validation...
                     var utils = jasmine.createSpyObj('utils', ['validateLoggedIn']);
                     utils.validateLoggedIn.and.callFake(function(req, callback) {
                         callback(null);
@@ -276,19 +278,15 @@ describe('Billing API', function() {
                         expect(err).toBe(null);
                         done();
                     });
-
                 });
-
             });
 
             describe('POST', function() {
-
                 it('should not allow to create resources if the user is not logged in', function(done) {
                     failIfNotLoggedIn('POST', done);
                 });
 
                 var testCreate = function(body, hasPartyRoleValues, expectedErr, done) {
-
                     var utils = jasmine.createSpyObj('utils', ['validateLoggedIn']);
                     utils.validateLoggedIn.and.callFake(function(req, callback) {
                         callback(null);
@@ -308,8 +306,11 @@ describe('Billing API', function() {
                         expect(err).toEqual(expectedErr);
 
                         if ('relatedParty' in body) {
-                            expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(req, body.relatedParty,
-                                config.billingAccountOwnerRole);
+                            expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(
+                                req,
+                                body.relatedParty,
+                                config.billingAccountOwnerRole
+                            );
                         }
 
                         done();
@@ -317,45 +318,41 @@ describe('Billing API', function() {
                 };
 
                 it('should not allow to create billing account if an unsupported field is included', function(done) {
-                    testCreate({ 'currency': 'EUR' }, [], UNSUPPORTED_FIELDS_ERROR, done);
+                    testCreate({ currency: 'EUR' }, [], UNSUPPORTED_FIELDS_ERROR, done);
                 });
 
                 it('should not allow to create billing account if relatedParty field not included', function(done) {
-
                     var expectedErr = {
                         status: 422,
                         message: 'Billing Accounts cannot be created without related parties'
                     };
 
-                    testCreate({ }, [false], expectedErr, done);
-
+                    testCreate({}, [false], expectedErr, done);
                 });
 
                 it('should not allow to create billing account if relatedParty field is invalid', function(done) {
-                    testCreate({ 'relatedParty': [] }, [false], INVALID_RELATED_PARTY_ERROR, done);
+                    testCreate({ relatedParty: [] }, [false], INVALID_RELATED_PARTY_ERROR, done);
                 });
 
                 it('should fail if customerAccount field not included', function(done) {
-                    testCreate({ 'relatedParty': [] }, [true], CUSTOMER_ACCOUNT_MISSING_ERROR, done);
+                    testCreate({ relatedParty: [] }, [true], CUSTOMER_ACCOUNT_MISSING_ERROR, done);
                 });
 
                 it('should not allow to create billing account if customerAccount included but href missing', function(done) {
-
                     var body = {
-                        'relatedParty': [],
-                        'customerAccount': {}
+                        relatedParty: [],
+                        customerAccount: {}
                     };
 
                     testCreate(body, [true], CUSTOMER_ACCOUNT_MISSING_ERROR, done);
                 });
 
                 it('should not allow to create billing account if customerAccount cannot be retrieved', function(done) {
-
                     var customerAccountPath = '/customerAccount/1';
 
                     var body = {
-                        'relatedParty': [],
-                        'customerAccount': {
+                        relatedParty: [],
+                        customerAccount: {
                             href: CUSTOMER_SERVER + customerAccountPath
                         }
                     };
@@ -368,13 +365,12 @@ describe('Billing API', function() {
                 });
 
                 it('should not allow to create billing account if customer cannot be retrieved', function(done) {
-
                     var customerAccountPath = '/customerAccount/1';
                     var customerPath = '/customer/1';
 
                     var body = {
-                        'relatedParty': [],
-                        'customerAccount': {
+                        relatedParty: [],
+                        customerAccount: {
                             href: CUSTOMER_SERVER + customerAccountPath
                         }
                     };
@@ -388,17 +384,15 @@ describe('Billing API', function() {
                         .reply(500);
 
                     testCreate(body, [true], CUSTOMER_INACCESSIBLE_ERROR, done);
-
                 });
 
                 var customerAPICorrectResponsesTest = function(hasPartyRoleValues, expectedErr, done) {
-
                     var customerAccountPath = '/customerAccount/1';
                     var customerPath = '/customer/1';
 
                     var body = {
-                        'relatedParty': [],
-                        'customerAccount': {
+                        relatedParty: [],
+                        customerAccount: {
                             href: CUSTOMER_SERVER + customerAccountPath
                         }
                     };
@@ -412,7 +406,6 @@ describe('Billing API', function() {
                         .reply(200, { relatedParty: {} });
 
                     testCreate(body, hasPartyRoleValues, expectedErr, done);
-
                 };
 
                 it('should not allow to create billing account if customer does not belong to the user', function(done) {
@@ -425,13 +418,11 @@ describe('Billing API', function() {
             });
 
             describe('PATCH', function() {
-
                 it('should not allow to update resources if the user is not logged in', function(done) {
                     failIfNotLoggedIn('PATCH', done);
                 });
 
                 var testUpdate = function(itemPath, body, hasPartyRoleValues, expectedErr, done) {
-
                     var utils = jasmine.createSpyObj('utils', ['validateLoggedIn']);
                     utils.validateLoggedIn.and.callFake(function(req, callback) {
                         callback(null);
@@ -451,8 +442,11 @@ describe('Billing API', function() {
                         expect(err).toEqual(expectedErr);
 
                         if ('relatedParty' in body) {
-                            expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(req, body.relatedParty,
-                                config.billingAccountOwnerRole);
+                            expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(
+                                req,
+                                body.relatedParty,
+                                config.billingAccountOwnerRole
+                            );
                         }
 
                         done();
@@ -465,32 +459,27 @@ describe('Billing API', function() {
                         .get(billingAccountPath)
                         .reply(500);
 
-                    testUpdate(billingAccountPath, {}, [], BILLING_INACCESSIBLE_ERROR, done)
-
+                    testUpdate(billingAccountPath, {}, [], BILLING_INACCESSIBLE_ERROR, done);
                 });
 
                 it('should not allow to update billing account if it does not exist', function(done) {
-
                     var billingAccountPath = VALID_BILLING_PATH + '/1';
 
                     nock(BILLING_SERVER)
                         .get(billingAccountPath)
                         .reply(404);
 
-                    testUpdate(billingAccountPath, {}, [], BILLING_DOES_NOT_EXIST_ERROR, done)
-
+                    testUpdate(billingAccountPath, {}, [], BILLING_DOES_NOT_EXIST_ERROR, done);
                 });
 
                 var updateExistingAccount = function(body, hasPartyRoleValues, expectedError, done) {
-
                     var billingAccountPath = VALID_BILLING_PATH + '/1';
 
                     nock(BILLING_SERVER)
                         .get(billingAccountPath)
                         .reply(200, { relatedParty: [] });
 
-                    testUpdate(billingAccountPath, body, hasPartyRoleValues, expectedError, done)
-
+                    testUpdate(billingAccountPath, body, hasPartyRoleValues, expectedError, done);
                 };
 
                 it('should not allow to update billing account if user is not the owner', function(done) {
@@ -503,18 +492,17 @@ describe('Billing API', function() {
 
                 // This method checks that the relatedParty field is checked when updating a billing account
                 it('should not allow to update billing account if related party is invalid', function(done) {
-                    updateExistingAccount({ 'relatedParty': [] }, [true, false], INVALID_RELATED_PARTY_ERROR, done);
+                    updateExistingAccount({ relatedParty: [] }, [true, false], INVALID_RELATED_PARTY_ERROR, done);
                 });
 
                 // This method checks that the customerAccount field is checked when updating a billing account
                 // The rest of the functionality is tested at the time of creating a new billing account
                 it('should not allow to update billing account if customer account cannot be checked', function(done) {
-
                     var customerAccountPath = '/customerAccount/1';
 
                     var body = {
-                        'relatedParty': [],
-                        'customerAccount': {
+                        relatedParty: [],
+                        customerAccount: {
                             href: CUSTOMER_SERVER + customerAccountPath
                         }
                     };
@@ -528,9 +516,7 @@ describe('Billing API', function() {
             });
 
             describe('Post Validation', function() {
-
                 var testExecutePostValidation = function(method, body, isRelatedPartyReturnValue, expectedErr, done) {
-
                     var req = {
                         method: method,
                         body: JSON.stringify(body),
@@ -539,7 +525,7 @@ describe('Billing API', function() {
 
                     var tmfUtils = jasmine.createSpyObj('tmfUtils', ['isRelatedParty']);
 
-                    if (typeof(isRelatedPartyReturnValue) === 'boolean') {
+                    if (typeof isRelatedPartyReturnValue === 'boolean') {
                         tmfUtils.isRelatedParty.and.returnValue(isRelatedPartyReturnValue);
                     }
 
@@ -548,7 +534,7 @@ describe('Billing API', function() {
                     billingApi.executePostValidation(req, function(err) {
                         expect(err).toEqual(expectedErr);
 
-                        if (typeof(isRelatedPartyReturnValue) === 'boolean') {
+                        if (typeof isRelatedPartyReturnValue === 'boolean') {
                             expect(tmfUtils.isRelatedParty).toHaveBeenCalledWith(req, body.relatedParty);
                         }
 
@@ -565,26 +551,21 @@ describe('Billing API', function() {
                 });
 
                 it('should not allow to retrieve asset if the user is not the owner', function(done) {
-                    testExecutePostValidation('GET', {relatedParty: []}, false, RETRIEVAL_UNAUTHORIZED_ERROR, done);
+                    testExecutePostValidation('GET', { relatedParty: [] }, false, RETRIEVAL_UNAUTHORIZED_ERROR, done);
                 });
 
                 it('should allow to retrieve resource if the user is the owner', function(done) {
-                    testExecutePostValidation('GET', {relatedParty: []}, true, null, done);
+                    testExecutePostValidation('GET', { relatedParty: [] }, true, null, done);
                 });
-
             });
-
         });
 
         describe('Product charges', function() {
-
             var productId = '1';
             var productPath = '/' + config.endpoints.inventory.path + '/api/productInventory/v2/product/' + productId;
 
             describe('GET', function() {
-
                 var testListCharges = function(expectedErr, isCust, productStatus, query, isOrdCalled, done) {
-
                     var utils = jasmine.createSpyObj('utils', ['validateLoggedIn']);
                     utils.validateLoggedIn.and.callFake(function(req, callback) {
                         callback(null);
@@ -621,32 +602,40 @@ describe('Billing API', function() {
 
                         done();
                     });
-
                 };
 
                 it('should allow to retrieve a list of charges if the user is the owner', function(done) {
-                    testListCharges(null, true, 200, {'serviceId.id': productId}, true, done);
+                    testListCharges(null, true, 200, { 'serviceId.id': productId }, true, done);
                 });
 
                 it('should not allow to retrieve a list of changes when the product id has not been provided', function(done) {
-                    testListCharges(MISSING_PRODUCT_ID_ERROR, true, 200, {},false,  done);
+                    testListCharges(MISSING_PRODUCT_ID_ERROR, true, 200, {}, false, done);
                 });
 
                 it('should return an error when it is not possible to access the ralated product', function(done) {
-                    testListCharges(PRODUCT_INACCESSIBLE_ERROR, true, 500, {'serviceId.id': productId}, false, done);
+                    testListCharges(PRODUCT_INACCESSIBLE_ERROR, true, 500, { 'serviceId.id': productId }, false, done);
                 });
 
                 it('should not allow to retrieve a list of charges when the user is not the customer of the product', function(done) {
-                    testListCharges(CHARGES_RETRIEVAL_UNAUTHORIZED, false, 200, {'serviceId.id': productId}, true, done);
+                    testListCharges(
+                        CHARGES_RETRIEVAL_UNAUTHORIZED,
+                        false,
+                        200,
+                        { 'serviceId.id': productId },
+                        true,
+                        done
+                    );
                 });
             });
 
             describe('Post validation', function() {
                 it('should redirect the request when the user if the owner of the charge', function(done) {
                     var body = {
-                        serviceId: [{
-                            id: productId
-                        }]
+                        serviceId: [
+                            {
+                                id: productId
+                            }
+                        ]
                     };
                     var req = {
                         method: 'GET',
@@ -675,7 +664,6 @@ describe('Billing API', function() {
                         done();
                     });
                 });
-
             });
         });
     });

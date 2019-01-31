@@ -21,13 +21,11 @@ var async = require('async'),
     utils = require('./../../lib/utils'),
     config = require('./../../config'),
     logger = require('./../../lib/logger').logger.getLogger('TMF'),
-
     rssClient = require('./../../lib/rss').rssClient;
 
-var rss = (function () {
-
-    var validateProvider = function (req, callback) {
-        utils.log(logger, 'info', req, "Validating RSS provider");
+var rss = (function() {
+    var validateProvider = function(req, callback) {
+        utils.log(logger, 'info', req, 'Validating RSS provider');
 
         // Hide private APIs
         if (req.apiUrl.indexOf('rss/aggregators') >= 0) {
@@ -90,7 +88,11 @@ var rss = (function () {
         if (/rss\/settlement$/.test(req.apiUrl)) {
             var body = JSON.parse(req.body);
             var url = utils.getAPIURL(
-                config.endpoints.charging.appSsl, config.endpoints.charging.host, config.endpoints.charging.port, "/charging/api/reportManagement/created");
+                config.endpoints.charging.appSsl,
+                config.endpoints.charging.host,
+                config.endpoints.charging.port,
+                '/charging/api/reportManagement/created'
+            );
 
             body.callbackUrl = url;
             utils.updateBody(req, body);
@@ -100,15 +102,14 @@ var rss = (function () {
     };
 
     var validators = {
-        'GET': [utils.validateLoggedIn, validateProvider],
-        'POST': [utils.validateLoggedIn, validateProvider, validateContentRequest, changeCallbackUrl],
-        'PUT': [utils.validateLoggedIn, validateProvider, validateContentRequest],
-        'DELETE': [utils.validateLoggedIn, validateProvider],
-        'PATCH': [utils.methodNotAllowed]
+        GET: [utils.validateLoggedIn, validateProvider],
+        POST: [utils.validateLoggedIn, validateProvider, validateContentRequest, changeCallbackUrl],
+        PUT: [utils.validateLoggedIn, validateProvider, validateContentRequest],
+        DELETE: [utils.validateLoggedIn, validateProvider],
+        PATCH: [utils.methodNotAllowed]
     };
 
-    var checkPermissions = function (req, callback) {
-
+    var checkPermissions = function(req, callback) {
         var reqValidators = [];
 
         for (var i in validators[req.method]) {
@@ -119,7 +120,7 @@ var rss = (function () {
     };
 
     var executePostValidation = function(req, callback) {
-        logger.info("Executing RSS post validation");
+        logger.info('Executing RSS post validation');
         if (req.method == 'GET' && req.apiUrl.indexOf('rss/models') >= 0) {
             var body;
             // Check if the models list is empty
@@ -133,7 +134,7 @@ var rss = (function () {
 
             // If the models list is empty create the default revenue model
             if (Array.isArray(body) && !body.length) {
-                rssClient.createDefaultModel(req.user, function (err, response) {
+                rssClient.createDefaultModel(req.user, function(err, response) {
                     if (err) {
                         return callback(err);
                     }
@@ -142,7 +143,7 @@ var rss = (function () {
                     utils.updateBody(req, body);
                     callback();
                 });
-            // Is a Count request
+                // Is a Count request
             } else if (!Array.isArray(body) && !body.size) {
                 // If the count result is 0 means that the default model is not created yet.
                 // It will be created in the first model request, so the 0 is changed by 1

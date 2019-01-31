@@ -22,22 +22,16 @@
  *         Jaime Pajuelo <jpajuelo@conwet.com>
  *         Aitor Magán <amagan@conwet.com>
  */
-(function () {
-
+(function() {
     'use strict';
 
-    angular
-        .module('app')
-        .config(['$stateProvider', RouteConfig]);
+    angular.module('app').config(['$stateProvider', RouteConfig]);
 
     function RouteConfig($stateProvider) {
-
-        $stateProvider
-            .state('rss.reports', {
-                url: '/reports',
-                templateUrl: 'rss/reports/search',
-                controller: 'RSReportSearchCtrl as searchVM'
-            });
+        $stateProvider.state('rss.reports', {
+            url: '/reports',
+            templateUrl: 'rss/reports/search',
+            controller: 'RSReportSearchCtrl as searchVM'
+        });
     }
-
 })();

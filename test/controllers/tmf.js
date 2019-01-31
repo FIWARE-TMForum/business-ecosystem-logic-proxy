@@ -17,12 +17,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var proxyquire =  require('proxyquire'),
-    testUtils = require('../utils');
+var proxyquire = require('proxyquire');
 
+var testUtils = require('../utils');
 
 describe('TMF Controller', function() {
-
     var INVALID_API_STATUS = 401;
     var INVALID_API_MESSAGE = 'Not authorized to perform this operation';
 
@@ -32,13 +31,13 @@ describe('TMF Controller', function() {
         getAPIPort: function() {
             return 1234;
         },
-        getAPIHost: function () {
-            return 'example.com'
+        getAPIHost: function() {
+            return 'example.com';
         },
         proxiedRequestHeaders: function() {
             return {
-                'Authorization': 'Bearer EXAMPLE',
-                'Accept': 'application/json'
+                Authorization: 'Bearer EXAMPLE',
+                Accept: 'application/json'
             };
         },
         attachUserHeaders: function(headers, userInfo) {
@@ -52,23 +51,30 @@ describe('TMF Controller', function() {
 
     // Function to get a custom tmf.js instance
     var getTmfInstance = function(request, catalog, ordering, inventory, party, searchIndex) {
-
         if (!searchIndex) {
             searchIndex = {
-                add: (a, cb) => {cb();},
-                close: cb => {cb();},
-                del: (key, cb) => {cb();},
-                search: (q, cb) => {cb();}
+                add: (a, cb) => {
+                    cb();
+                },
+                close: (cb) => {
+                    cb();
+                },
+                del: (key, cb) => {
+                    cb();
+                },
+                search: (q, cb) => {
+                    cb();
+                }
             };
         }
 
         return proxyquire('../../controllers/tmf', {
-            'request': request,
+            request: request,
             './../config': config,
             './../lib/utils': utils,
             './../lib/logger': testUtils.emptyLogger,
             './tmf-apis/catalog': { catalog: catalog },
-            './tmf-apis/ordering': {ordering: ordering},
+            './tmf-apis/ordering': { ordering: ordering },
             './tmf-apis/inventory': { inventory: inventory },
             './tnf-apis/party': { party: party },
             'search-index': searchIndex
@@ -81,15 +87,13 @@ describe('TMF Controller', function() {
     });
 
     describe('public paths', function() {
-
         var testPublic = function(protocol, method) {
-
             // TMF API
             var request = getDefaultHttpClient();
             var tmf = getTmfInstance(request);
 
             // Depending on the desired protocol, the config.appSsl var has to be set up
-            utils.getAPIProtocol = function () {
+            utils.getAPIProtocol = function() {
                 return protocol;
             };
 
@@ -115,7 +119,6 @@ describe('TMF Controller', function() {
             };
 
             expect(request).toHaveBeenCalledWith(expectedOptions, jasmine.any(Function));
-
         };
 
         it('should redirect HTTP GET requests', function() {
@@ -160,37 +163,35 @@ describe('TMF Controller', function() {
     });
 
     describe('check permissions', function() {
-
-        var checkPermissionsValid = function (req, callback) {
+        var checkPermissionsValid = function(req, callback) {
             callback();
         };
 
-        var checkPermissionsInvalid = function (req, callback) {
+        var checkPermissionsInvalid = function(req, callback) {
             callback({
                 status: INVALID_API_STATUS,
                 message: INVALID_API_MESSAGE
             });
         };
 
-        it('should return 404 for invalid API', function () {
+        it('should return 404 for invalid API', function() {
             // TMF API
             var httpClient = getDefaultHttpClient();
             var tmf = getTmfInstance(httpClient);
 
-            var req = {'apiUrl': '/nonexistingapi', headers: {}, connection: {remoteAddress: '127.0.0.1'}};
+            var req = { apiUrl: '/nonexistingapi', headers: {}, connection: { remoteAddress: '127.0.0.1' } };
             var res = jasmine.createSpyObj('res', ['status', 'json', 'end']);
 
             tmf.checkPermissions(req, res);
 
             expect(res.status).toHaveBeenCalledWith(404);
-            expect(res.json).toHaveBeenCalledWith({error: 'Path not found'});
+            expect(res.json).toHaveBeenCalledWith({ error: 'Path not found' });
             expect(res.end).toHaveBeenCalledWith();
         });
 
-        var testApiReturnsError = function (api, done) {
-
+        var testApiReturnsError = function(api, done) {
             // Configure the API controller
-            var controller = {checkPermissions: checkPermissionsInvalid};
+            var controller = { checkPermissions: checkPermissionsInvalid };
 
             // TMF API. Only one API is set, the rest are set to null so we are sure the appropriate
             // one has been called
@@ -201,50 +202,48 @@ describe('TMF Controller', function() {
             var tmf = getTmfInstance(request, catalogController, orderingController, inventoryController);
 
             // Actual call
-            var req = {apiUrl: '/' + api, headers: {}, connection: {remoteAddress: '127.0.0.1'}};
+            var req = { apiUrl: '/' + api, headers: {}, connection: { remoteAddress: '127.0.0.1' } };
             var res = jasmine.createSpyObj('res', ['status', 'json', 'end']);
             tmf.checkPermissions(req, res);
 
             // We have to wait some time until the response has been called
-            setTimeout(function () {
+            setTimeout(function() {
                 expect(res.status).toHaveBeenCalledWith(INVALID_API_STATUS);
-                expect(res.json).toHaveBeenCalledWith({error: INVALID_API_MESSAGE});
+                expect(res.json).toHaveBeenCalledWith({ error: INVALID_API_MESSAGE });
                 expect(res.end).toHaveBeenCalledWith();
 
                 expect(request).not.toHaveBeenCalled();
 
                 done();
-
             }, 100);
         };
 
-        it('should not redirect the request to the actual catalog API when controller rejects it', function (done) {
+        it('should not redirect the request to the actual catalog API when controller rejects it', function(done) {
             testApiReturnsError('catalog', done);
         });
 
-        it('should not redirect the request to the actual ordering API when controller rejects it', function (done) {
+        it('should not redirect the request to the actual ordering API when controller rejects it', function(done) {
             testApiReturnsError('ordering', done);
         });
 
-        it('should not redirect the request to the actual inventory API when controller rejects it', function (done) {
+        it('should not redirect the request to the actual inventory API when controller rejects it', function(done) {
             testApiReturnsError('inventory', done);
         });
 
-        var testApiOk = function (api, done) {
-
+        var testApiOk = function(api, done) {
             // 'redirRequest' has been tested by testing the 'public' function. 'checkTmfPermissions'
             // is supposed to use the same function to redirect requests when they are allowed by the
             // API controller. For this reason, we do not check with other protocols or methods
 
             var protocol = 'http';
-            utils.getAPIProtocol = function () {
+            utils.getAPIProtocol = function() {
                 return protocol;
             };
 
             var method = 'GET';
 
             // Configure the API controller
-            var controller = {checkPermissions: checkPermissionsValid};
+            var controller = { checkPermissions: checkPermissionsValid };
 
             // TMF API
             var request = getDefaultHttpClient();
@@ -258,16 +257,15 @@ describe('TMF Controller', function() {
                 apiUrl: '/' + api,
                 body: 'Example',
                 method: method,
-                user: {'id': 'user'},
+                user: { id: 'user' },
                 headers: {},
-                connection: {remoteAddress: '127.0.0.1'}
+                connection: { remoteAddress: '127.0.0.1' }
             };
 
             var res = jasmine.createSpyObj('res', ['status', 'json', 'end']);
             tmf.checkPermissions(req, res);
 
-            setTimeout(function () {
-
+            setTimeout(function() {
                 var expectedOptions = {
                     url: protocol + '://' + utils.getAPIHost() + ':' + utils.getAPIPort() + req.apiUrl,
                     method: method,
@@ -279,38 +277,35 @@ describe('TMF Controller', function() {
                 expect(request).toHaveBeenCalledWith(expectedOptions, jasmine.any(Function));
 
                 done();
-
             }, 100);
         };
 
-        it('should redirect the request to the actual catalog API when controller does not reject it (root)', function (done) {
+        it('should redirect the request to the actual catalog API when controller does not reject it (root)', function(done) {
             testApiOk('catalog', done);
         });
 
-        it('should redirect the request to the actual ordering API when controller does not reject it (root)', function (done) {
+        it('should redirect the request to the actual ordering API when controller does not reject it (root)', function(done) {
             testApiOk('ordering', done);
         });
 
-        it('should redirect the request to the actual inventory API when controller does not reject it (root)', function (done) {
+        it('should redirect the request to the actual inventory API when controller does not reject it (root)', function(done) {
             testApiOk('inventory', done);
         });
 
-        it('should redirect the request to the actual catalog API when controller does not reject it (non root)', function (done) {
+        it('should redirect the request to the actual catalog API when controller does not reject it (non root)', function(done) {
             testApiOk('catalog/complex?a=b', done);
         });
 
-        it('should redirect the request to the actual ordering API when controller does not reject it (non root)', function (done) {
+        it('should redirect the request to the actual ordering API when controller does not reject it (non root)', function(done) {
             testApiOk('ordering/complex?a=b', done);
         });
 
-        it('should redirect the request to the actual inventory API when controller does not reject it (non root)', function (done) {
+        it('should redirect the request to the actual inventory API when controller does not reject it (non root)', function(done) {
             testApiOk('inventory/complex?a=b', done);
         });
-
     });
 
     describe('Proxy', function() {
-
         var reqMethod = 'POST';
         var secure = true;
         var hostname = 'belp.fiware.org';
@@ -334,7 +329,6 @@ describe('TMF Controller', function() {
         };
 
         it('should return 504 when server is not available', function(done) {
-
             // Configure the API controller
             var controller = {
                 checkPermissions: function(req, callback) {
@@ -354,7 +348,7 @@ describe('TMF Controller', function() {
                 apiUrl: '/ordering',
                 body: 'Example',
                 method: 'POST',
-                user: {'id': 'user'},
+                user: { id: 'user' },
                 headers: {},
                 connection: { remoteAddress: '127.0.0.1' }
             };
@@ -365,16 +359,21 @@ describe('TMF Controller', function() {
             tmf.checkPermissions(req, res);
 
             setTimeout(function() {
-
                 expect(res.status).toHaveBeenCalledWith(504);
                 expect(res.json).toHaveBeenCalledWith({ error: 'Service unreachable' });
 
                 done();
-
             }, 100);
         });
 
-        var testPostAction = function(postValidationMethod, postValidator, responseCode, expectedPostValidatorCalled, error, done) {
+        var testPostAction = function(
+            postValidationMethod,
+            postValidator,
+            responseCode,
+            expectedPostValidatorCalled,
+            error,
+            done
+        ) {
             var methods = ['checkPermissions'];
 
             if (postValidator) {
@@ -396,7 +395,7 @@ describe('TMF Controller', function() {
                 statusCode: responseCode,
                 headers: {
                     'content-type': 'application/json',
-                    'accept': 'application/json',
+                    accept: 'application/json',
                     'x-custom': 'custom-value'
                 }
             };
@@ -412,43 +411,46 @@ describe('TMF Controller', function() {
             var res = jasmine.createSpyObj('res', ['status', 'setHeader', 'json', 'write', 'end']);
             res.status.and.returnValue(res);
 
-            var resMethod = error ? 'json': 'end';
+            var resMethod = error ? 'json' : 'end';
 
             res[resMethod].and.callFake(() => {
                 if (postValidator && expectedPostValidatorCalled) {
-                    expect(controller[postValidationMethod]).toHaveBeenCalledWith({
-                        secure: secure,
-                        hostname: hostname,
-                        status: returnedResponse.statusCode,
-                        headers: returnedResponse.headers,
-                        body: returnedBody,
-                        user: { id: userId },
-                        method: reqMethod,
-                        apiUrl: reqPath,
-                        url: url,
-                        connection: connection,
-                        id: reqId,
-                        reqBody: reqBody
-                    }, jasmine.any(Function));
+                    expect(controller[postValidationMethod]).toHaveBeenCalledWith(
+                        {
+                            secure: secure,
+                            hostname: hostname,
+                            status: returnedResponse.statusCode,
+                            headers: returnedResponse.headers,
+                            body: returnedBody,
+                            user: { id: userId },
+                            method: reqMethod,
+                            apiUrl: reqPath,
+                            url: url,
+                            connection: connection,
+                            id: reqId,
+                            reqBody: reqBody
+                        },
+                        jasmine.any(Function)
+                    );
                 } else if (postValidator && !expectedPostValidatorCalled) {
                     expect(controller[postValidationMethod]).not.toHaveBeenCalled();
                 }
 
-                expect(request).toHaveBeenCalledWith({
-                    url: 'http://' + utils.getAPIHost() + ':' + utils.getAPIPort() + reqPath,
-                    method: 'POST',
-                    encoding: null,
-                    headers: utils.proxiedRequestHeaders(),
-                    body: reqBody
-                }, jasmine.any(Function));
+                expect(request).toHaveBeenCalledWith(
+                    {
+                        url: 'http://' + utils.getAPIHost() + ':' + utils.getAPIPort() + reqPath,
+                        method: 'POST',
+                        encoding: null,
+                        headers: utils.proxiedRequestHeaders(),
+                        body: reqBody
+                    },
+                    jasmine.any(Function)
+                );
 
                 if (error) {
-
                     expect(res.status).toHaveBeenCalledWith(INVALID_API_STATUS);
                     expect(res.json).toHaveBeenCalledWith({ error: INVALID_API_MESSAGE });
-
                 } else {
-
                     expect(res.status).toHaveBeenCalledWith(returnedResponse.statusCode);
                     expect(res.write).toHaveBeenCalledWith(returnedBody);
                     expect(res.end).toHaveBeenCalled();
@@ -465,33 +467,40 @@ describe('TMF Controller', function() {
                 id: reqId,
                 url: url,
                 apiUrl: reqPath,
-                //path: reqPath,
+                // path: reqPath,
                 body: reqBody,
                 hostname: hostname,
                 secure: secure,
                 method: reqMethod,
-                user: {'id': userId },
+                user: { id: userId },
                 headers: {},
                 connection: connection,
-                get: jasmine.createSpy('get'),
+                get: jasmine.createSpy('get')
             };
 
             tmf.checkPermissions(req, res);
         };
 
         var testAPIPostValidation = function(postValidator, responseCode, expectedPostValidatorCalled, error, done) {
-            testPostAction('executePostValidation', postValidator, responseCode, expectedPostValidatorCalled, error, done);
+            testPostAction(
+                'executePostValidation',
+                postValidator,
+                responseCode,
+                expectedPostValidatorCalled,
+                error,
+                done
+            );
         };
 
         it('should proxy request when no post validation method defined', function(done) {
-           testAPIPostValidation(null, 200, false, false, done);
+            testAPIPostValidation(null, 200, false, false, done);
         });
 
         it('should not call post validation when return status is higher than 400', function(done) {
             testAPIPostValidation(jasmine.createSpy(), 404, false, false, done);
         });
 
-        it ('should inject extra headers after calling post validation method', function(done) {
+        it('should inject extra headers after calling post validation method', function(done) {
             testAPIPostValidation(executePostValidationOk, 200, true, false, done);
         });
 
@@ -507,13 +516,12 @@ describe('TMF Controller', function() {
             testAPIErrorHandling(null, 500, false, false, done);
         });
 
-        it('should call API error handler when the error code is higher than 400 and is defined', function (done) {
+        it('should call API error handler when the error code is higher than 400 and is defined', function(done) {
             testAPIErrorHandling(executePostValidationOk, 500, true, false, done);
         });
 
-        it('should call API error handler and return an error given in the handler', function (done) {
+        it('should call API error handler and return an error given in the handler', function(done) {
             testAPIErrorHandling(executeValidationError, 500, true, true, done);
         });
     });
-
 });

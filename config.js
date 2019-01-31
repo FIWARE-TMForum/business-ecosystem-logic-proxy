@@ -1,6 +1,6 @@
 var config = {};
 
-// The PORT used by 
+// The PORT used by
 config.port = 8000;
 config.host = 'proxy.docker';
 
@@ -9,7 +9,7 @@ config.proxy = {
     host: '',
     secured: false,
     port: 80
-}
+};
 
 // Set this var to undefined if you don't want the server to listen on HTTPS
 config.https = {
@@ -30,16 +30,16 @@ config.theme = '';
 
 // OAuth2 configuration
 config.oauth2 = {
-    'server': 'http://idm.docker:8000',
-    'clientID': '',
-    'clientSecret': '',
-    'callbackURL': 'http://proxy.docker:8004/auth/fiware/callback',
-    'isLegacy': false,
-    'roles': {
-        'admin': 'provider',
-        'customer': 'customer',
-        'seller': 'seller',
-        'orgAdmin': 'manager'
+    server: 'http://idm.docker:8000',
+    clientID: '',
+    clientSecret: '',
+    callbackURL: 'http://proxy.docker:8004/auth/fiware/callback',
+    isLegacy: false,
+    roles: {
+        admin: 'provider',
+        customer: 'customer',
+        seller: 'seller',
+        orgAdmin: 'manager'
     }
 };
 
@@ -57,65 +57,65 @@ config.mongoDb = {
 
 // Configure endpoints
 config.endpoints = {
-    'management': {
-        'path': 'management',
-        'host': 'localhost',
-        'port': config.port,
-        'appSsl': config.https.enabled
+    management: {
+        path: 'management',
+        host: 'localhost',
+        port: config.port,
+        appSsl: config.https.enabled
     },
-    'catalog': {
-        'path': 'DSProductCatalog',
-        'host': 'apis.docker',
-        'port': '8080',
-        'appSsl': false
+    catalog: {
+        path: 'DSProductCatalog',
+        host: 'apis.docker',
+        port: '8080',
+        appSsl: false
     },
-    'ordering': {
-        'path': 'DSProductOrdering',
-        'host': 'apis.docker',
-        'port': '8080',
-        'appSsl': false
+    ordering: {
+        path: 'DSProductOrdering',
+        host: 'apis.docker',
+        port: '8080',
+        appSsl: false
     },
-    'inventory': {
-        'path': 'DSProductInventory',
-        'host': 'apis.docker',
-        'port': '8080',
-        'appSsl': false
+    inventory: {
+        path: 'DSProductInventory',
+        host: 'apis.docker',
+        port: '8080',
+        appSsl: false
     },
-    'charging': {
-        'path': 'charging',
-        'host': 'charging.docker',
-        'port': '8006',
-        'appSsl': false
+    charging: {
+        path: 'charging',
+        host: 'charging.docker',
+        port: '8006',
+        appSsl: false
     },
-    'rss': {
-        'path': 'DSRevenueSharing',
-        'host': 'rss.docker',
-        'port': '8080',
-        'appSsl': false
+    rss: {
+        path: 'DSRevenueSharing',
+        host: 'rss.docker',
+        port: '8080',
+        appSsl: false
     },
-    'party': {
-        'path': 'DSPartyManagement',
-        'host': 'apis.docker',
-        'port': '8080',
-        'appSsl': false
+    party: {
+        path: 'DSPartyManagement',
+        host: 'apis.docker',
+        port: '8080',
+        appSsl: false
     },
-    'billing':{
-        'path': 'DSBillingManagement',
-        'host': 'apis.docker',
-        'port': '8080',
-        'appSsl': false
+    billing: {
+        path: 'DSBillingManagement',
+        host: 'apis.docker',
+        port: '8080',
+        appSsl: false
     },
-    'customer': {
-        'path': 'DSCustomerManagement',
-        'host': 'apis.docker',
-        'port': '8080',
-        'appSsl': false
+    customer: {
+        path: 'DSCustomerManagement',
+        host: 'apis.docker',
+        port: '8080',
+        appSsl: false
     },
-    'usage':  {
-        'path': 'DSUsageManagement',
-        'host': 'apis.docker',
-        'port': '8080',
-        'appSsl': false
+    usage: {
+        path: 'DSUsageManagement',
+        host: 'apis.docker',
+        port: '8080',
+        appSsl: false
     }
 };
 

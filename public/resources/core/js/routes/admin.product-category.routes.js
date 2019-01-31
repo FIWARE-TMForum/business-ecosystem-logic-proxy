@@ -22,16 +22,12 @@
  *         Jaime Pajuelo <jpajuelo@conwet.com>
  *         Aitor Magán <amagan@conwet.com>
  */
-(function () {
-
+(function() {
     'use strict';
 
-    angular
-        .module('app')
-        .config(['$stateProvider', RouteConfig]);
+    angular.module('app').config(['$stateProvider', RouteConfig]);
 
     function RouteConfig($stateProvider) {
-
         $stateProvider
             .state('admin.productCategory', {
                 url: '/category',
@@ -56,5 +52,4 @@
                 controller: 'CategoryUpdateCtrl as updateVM'
             });
     }
-
 })();

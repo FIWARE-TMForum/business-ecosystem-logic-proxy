@@ -22,8 +22,7 @@
  *         Jaime Pajuelo <jpajuelo@conwet.com>
  *         Aitor Magán <amagan@conwet.com>
  */
-(function () {
-
+(function() {
     'use strict';
 
     angular
@@ -33,7 +32,6 @@
         .controller('RouteRedirectCtl', ['$state', RedirectController]);
 
     function RouteConfig($stateProvider) {
-
         $stateProvider
             .state('settings', {
                 url: '/settings',
@@ -80,7 +78,6 @@
     }
 
     function RedirectController($state) {
-
         if ($state.is('settings')) {
             $state.go('settings.general');
         }

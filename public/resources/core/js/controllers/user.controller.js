@@ -22,8 +22,7 @@
  *         Jaime Pajuelo <jpajuelo@conwet.com>
  *         Aitor Magán <amagan@conwet.com>
  */
-(function () {
-
+(function() {
     'use strict';
 
     var LOADING = 'LOADING';
@@ -35,11 +34,29 @@
 
     angular
         .module('app')
-        .controller('UserCtrl', ['$state', '$scope', '$rootScope', 'EVENTS', 'LIFECYCLE_STATUS', 'FILTER_STATUS',
-            'ROLES', 'User', 'Party', UserController])
+        .controller('UserCtrl', [
+            '$state',
+            '$scope',
+            '$rootScope',
+            'EVENTS',
+            'LIFECYCLE_STATUS',
+            'FILTER_STATUS',
+            'ROLES',
+            'User',
+            'Party',
+            UserController
+        ])
 
         .controller('UserProfileCtrl', ['$scope', '$element', 'EVENTS', 'User', UserProfileController])
-        .controller('UserShoppingCartCtrl', ['$rootScope', '$scope', 'EVENTS', 'ShoppingCart', 'Utils', 'Party', UserShoppingCartController]);
+        .controller('UserShoppingCartCtrl', [
+            '$rootScope',
+            '$scope',
+            'EVENTS',
+            'ShoppingCart',
+            'Utils',
+            'Party',
+            UserShoppingCartController
+        ]);
 
     function UserController($state, $scope, $rootScope, EVENTS, LIFECYCLE_STATUS, FILTER_STATUS, ROLES, User, Party) {
         /* jshint validthis: true */
@@ -75,8 +92,11 @@
         vm.hasAdminRole = hasAdminRole;
 
         function hasAdminRole() {
-            var org = User.loggedUser.organizations.find(x => x.id === vm.currentUser.id);
-            return loggedAsIndividual() || org.roles.findIndex(x => x.name.toLowerCase() === ROLES.orgAdmin.toLowerCase()) > -1;
+            var org = User.loggedUser.organizations.find((x) => x.id === vm.currentUser.id);
+            return (
+                loggedAsIndividual() ||
+                org.roles.findIndex((x) => x.name.toLowerCase() === ROLES.orgAdmin.toLowerCase()) > -1
+            );
         }
 
         function loggedAsIndividual() {
@@ -88,14 +108,13 @@
         }
 
         function switchSession(orgId) {
-            var currUser = User.loggedUser.organizations.find(x => x.id === orgId);
+            var currUser = User.loggedUser.organizations.find((x) => x.id === orgId);
 
             vm.showOrgs = false;
             vm.currentUser.name = currUser.name;
             vm.currentUser.email = currUser.email;
             vm.currentUser.id = currUser.id;
-            vm.currentUser.href = User.loggedUser.href.replace(/(individual)\/(.*)/g,
-							       'organization/' + currUser.id);
+            vm.currentUser.href = User.loggedUser.href.replace(/(individual)\/(.*)/g, 'organization/' + currUser.id);
 
             vm.currentUser.roles = currUser.roles;
 
@@ -117,7 +136,7 @@
 
             propagateSwitch();
         }
-	
+
         function orgsVisible() {
             vm.showOrgs = true;
         }
@@ -126,7 +145,7 @@
             vm.showOrgs = false;
         }
 
-        $scope.$on('$stateChangeSuccess', function (event, toState) {
+        $scope.$on('$stateChangeSuccess', function(event, toState) {
             $scope.title = toState.data.title;
         });
 
@@ -136,7 +155,7 @@
         }
 
         function isSeller() {
-            return vm.currentUser.roles.findIndex(x => x.name.toLowerCase() === ROLES.seller.toLowerCase()) > -1;
+            return vm.currentUser.roles.findIndex((x) => x.name.toLowerCase() === ROLES.seller.toLowerCase()) > -1;
         }
 
         function isAuthenticated() {
@@ -148,7 +167,6 @@
         }
 
         function contains(offering) {
-
             var found = false;
 
             for (var i = 0; i < shoppingCartCache.length && !found; i++) {
@@ -217,30 +235,30 @@
         vm.list = shoppingCartCache;
         vm.remove = remove;
 
-        $scope.$on(EVENTS.OFFERING_CONFIGURED, function (event, offering) {
+        $scope.$on(EVENTS.OFFERING_CONFIGURED, function(event, offering) {
+            ShoppingCart.addItem(offering).then(
+                function() {
+                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {
+                        message: 'The offering <strong>' + offering.name + '</strong> was added to your cart.'
+                    });
 
-            ShoppingCart.addItem(offering).then(function () {
+                    // The list of items in the cart can be updated now!
+                    updateItemsList();
+                },
+                function(response) {
+                    var defaultError =
+                        'There was an error that prevented from adding the offering ' +
+                        offering.name +
+                        ' to your cart.';
 
-                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {
-                    message: 'The offering <strong>' + offering.name + '</strong> was added to your cart.'
-                });
+                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                        error: Utils.parseError(response, defaultError)
+                    });
 
-                // The list of items in the cart can be updated now!
-                updateItemsList();
-
-            }, function (response) {
-
-                var defaultError = 'There was an error that prevented from adding the offering ' +  offering.name +
-                    ' to your cart.';
-
-                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
-                    error: Utils.parseError(response, defaultError)
-                });
-
-                // Update cache - The requests has probably failed because the cache is invalid
-                updateItemsList();
-
-            });
+                    // Update cache - The requests has probably failed because the cache is invalid
+                    updateItemsList();
+                }
+            );
         });
 
         // Once that the order has been created, the items are removed from the cart.
@@ -250,65 +268,63 @@
         });
 
         function remove(offering) {
+            ShoppingCart.removeItem(offering).then(
+                function() {
+                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {
+                        message: 'The offering <strong>' + offering.name + '</strong> was removed to your cart.'
+                    });
 
-            ShoppingCart.removeItem(offering).then(function() {
+                    // Send notification so other views can update its status
+                    $rootScope.$broadcast(EVENTS.OFFERING_REMOVED);
 
-                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {
-                    message: 'The offering <strong>' + offering.name + '</strong> was removed to your cart.'
-                });
-
-                // Send notification so other views can update its status
-                $rootScope.$broadcast(EVENTS.OFFERING_REMOVED);
-
-                // The list of items in the cart can be updated now!
-                updateItemsList();
-
-            }, function (response) {
-
-                var defaultError = 'There was an error that prevented from removing the offering ' + offering.name +
-                    ' to your cart.';
-
-                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
-                    error: Utils.parseError(response, defaultError)
-                });
-
-                // Update cache - The requests has probably failed because the cache is invalid
-                updateItemsList();
-            });
-        }
-
-        function updateItemsList(showLoadError) {
-
-            vm.list.status = LOADING;
-
-            ShoppingCart.getItems().then(function (items) {
-
-                vm.list.splice(0, vm.list.length);  // Empty the list
-                vm.list.push.apply(vm.list, items);
-                vm.list.status = LOADED;
-
-            }, function (response) {
-
-                vm.list.splice(0, vm.list.length);
-                vm.list.status = ERROR;
-
-                if (showLoadError) {
-
-                    var defaultError = 'There was an error while loading your shopping cart.';
+                    // The list of items in the cart can be updated now!
+                    updateItemsList();
+                },
+                function(response) {
+                    var defaultError =
+                        'There was an error that prevented from removing the offering ' +
+                        offering.name +
+                        ' to your cart.';
 
                     $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
                         error: Utils.parseError(response, defaultError)
                     });
+
+                    // Update cache - The requests has probably failed because the cache is invalid
+                    updateItemsList();
                 }
-            });
+            );
+        }
+
+        function updateItemsList(showLoadError) {
+            vm.list.status = LOADING;
+
+            ShoppingCart.getItems().then(
+                function(items) {
+                    vm.list.splice(0, vm.list.length); // Empty the list
+                    vm.list.push.apply(vm.list, items);
+                    vm.list.status = LOADED;
+                },
+                function(response) {
+                    vm.list.splice(0, vm.list.length);
+                    vm.list.status = ERROR;
+
+                    if (showLoadError) {
+                        var defaultError = 'There was an error while loading your shopping cart.';
+
+                        $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                            error: Utils.parseError(response, defaultError)
+                        });
+                    }
+                }
+            );
         }
 
         // Init the list of items
         updateItemsList(true);
 
-        $scope.$on(Party.EVENTS.USER_SESSION_SWITCHED, function () {
+        $scope.$on(Party.EVENTS.USER_SESSION_SWITCHED, function() {
             updateItemsList(true);
         });
     }
-
 })();

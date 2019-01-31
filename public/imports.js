@@ -22,7 +22,7 @@ const cssFilesToInject = [
     'font-awesome-4.5.0/css/font-awesome',
     'intl-tel-input-8.4.7/css/intlTelInput',
     'core/css/default-theme'
-].map(function (path) {
+].map(function(path) {
     return 'resources/' + path + '.css';
 });
 
@@ -40,7 +40,7 @@ const jsDepFilesToInject = [
     'angular-1.4.7/js/angular-resource',
     'angular-1.4.7/js/angular-ui-router',
     'angular-1.4.7/js/international-phone-number'
-].map(function (path) {
+].map(function(path) {
     return 'resources/' + path + '.js';
 });
 
@@ -99,7 +99,7 @@ let jsAppFilesToInject = [
     'routes/inventory.product.routes',
     'routes/shopping-cart.routes',
     'routes/unauthorized.routes'
-].map(function (path) {
+].map(function(path) {
     return 'resources/core/js/' + path + '.js';
 });
 
@@ -113,23 +113,18 @@ let jsStockFilesToInject = [
     'routes/rss.sharing-models.routes',
     'routes/rss.transactions.routes',
     'routes/rss.reports.routes'
-].map(function (path) {
+].map(function(path) {
     return 'resources/core/js/' + path + '.js';
 });
 
 // Admin dependencies
-let jsAdminFilesToInject = [
-    'routes/admin.routes',
-    'routes/admin.product-category.routes'
-].map(function (path) {
+let jsAdminFilesToInject = ['routes/admin.routes', 'routes/admin.product-category.routes'].map(function(path) {
     return 'resources/core/js/' + path + '.js';
 });
 
 if (process.env.NODE_ENV == 'production') {
     // If the software is is production all js files have been minimized into bae.min.js
-    jsAppFilesToInject = [
-        'resources/core/js/bae.min.js'
-    ];
+    jsAppFilesToInject = ['resources/core/js/bae.min.js'];
     jsStockFilesToInject = [];
     jsAdminFilesToInject = [];
 }
@@ -141,4 +136,3 @@ exports.imports = {
     jsStockFilesToInject: jsStockFilesToInject,
     jsAdminFilesToInject: jsAdminFilesToInject
 };
-

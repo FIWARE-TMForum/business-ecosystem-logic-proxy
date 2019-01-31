@@ -22,13 +22,19 @@
  *         Jaime Pajuelo <jpajuelo@conwet.com>
  *         Aitor Magán <amagan@conwet.com>
  */
-(function () {
-
+(function() {
     'use strict';
 
     angular
         .module('app')
-        .controller('AcquireOptionsCtrl', ['$scope', '$rootScope', '$element', 'EVENTS', 'ProductSpec', AcquireOptionsController]);
+        .controller('AcquireOptionsCtrl', [
+            '$scope',
+            '$rootScope',
+            '$element',
+            'EVENTS',
+            'ProductSpec',
+            AcquireOptionsController
+        ]);
 
     function AcquireOptionsController($scope, $rootScope, $element, EVENTS, ProductSpec) {
         /* jshint validthis: true */
@@ -38,13 +44,13 @@
         var priceplan = null;
 
         vm.characteristicsTab = {
-            title: "Characteristics"
+            title: 'Characteristics'
         };
         vm.priceplansTab = {
-            title: "Price plans"
+            title: 'Price plans'
         };
         vm.legalTab = {
-            title: "Terms & Conditions"
+            title: 'Terms & Conditions'
         };
 
         vm.tabs = [];
@@ -62,7 +68,7 @@
         vm.getPriceplan = getPriceplan;
         vm.setPriceplan = setPriceplan;
 
-        $scope.$on(EVENTS.OFFERING_ORDERED, function (event, productOffering) {
+        $scope.$on(EVENTS.OFFERING_ORDERED, function(event, productOffering) {
             data = {
                 id: productOffering.id,
                 href: productOffering.href,
@@ -87,11 +93,15 @@
             $scope.priceplanSelected = null;
 
             if (!productOffering.isBundle) {
-                processProductCharacteristics(productOffering.productSpecification, {offId: productOffering.id}, function() {
-                    loadTerms();
-                    loadPriceplans(productOffering.productOfferingPrice);
-                    showModal();
-                });
+                processProductCharacteristics(
+                    productOffering.productSpecification,
+                    { offId: productOffering.id },
+                    function() {
+                        loadTerms();
+                        loadPriceplans(productOffering.productOfferingPrice);
+                        showModal();
+                    }
+                );
             } else {
                 // When the offering is a bundle products are included in its bundled offerings
                 var processed = 0;
@@ -99,23 +109,27 @@
                 vm.selectedOffering = productOffering.bundledProductOffering[0];
 
                 productOffering.bundledProductOffering.forEach(function(offering) {
-                    processProductCharacteristics(offering.productSpecification, {
-                        offId: offering.id,
-                        offName: offering.name
-                    }, function() {
-                        processed += 1;
+                    processProductCharacteristics(
+                        offering.productSpecification,
+                        {
+                            offId: offering.id,
+                            offName: offering.name
+                        },
+                        function() {
+                            processed += 1;
 
-                        vm.bundledOfferings.push({
-                            name: offering.name,
-                            id: offering.id
-                        });
+                            vm.bundledOfferings.push({
+                                name: offering.name,
+                                id: offering.id
+                            });
 
-                        if (processed === productOffering.bundledProductOffering.length) {
-                            loadTerms();
-                            loadPriceplans(productOffering.productOfferingPrice);
-                            showModal();
+                            if (processed === productOffering.bundledProductOffering.length) {
+                                loadTerms();
+                                loadPriceplans(productOffering.productOfferingPrice);
+                                showModal();
+                            }
                         }
-                    });
+                    );
                 });
             }
         });
@@ -125,13 +139,18 @@
 
             if (product.isBundle) {
                 // Extend bundled product spec to obtain its characteristics
-                ProductSpec.extendBundledProducts(product).then(function () {
-
-                    product.bundledProductSpecification.forEach(function (productSpec) {
-                        loadCharacteristics(productSpec.productSpecCharacteristic, angular.extend({
-                            id: productSpec.id,
-                            name: productSpec.name
-                        }, offInfo));
+                ProductSpec.extendBundledProducts(product).then(function() {
+                    product.bundledProductSpecification.forEach(function(productSpec) {
+                        loadCharacteristics(
+                            productSpec.productSpecCharacteristic,
+                            angular.extend(
+                                {
+                                    id: productSpec.id,
+                                    name: productSpec.name
+                                },
+                                offInfo
+                            )
+                        );
                     });
 
                     callback();
@@ -163,24 +182,27 @@
         }
 
         function isValid() {
-            return (!vm.priceplans.length || priceplan != null) && ((vm.terms.length > 0 && vm.termsAccepted) || (!vm.terms.length));
+            return (
+                (!vm.priceplans.length || priceplan != null) &&
+                ((vm.terms.length > 0 && vm.termsAccepted) || !vm.terms.length)
+            );
         }
 
         function formatCharacteristicValue(characteristic, characteristicValue) {
             var result;
 
             switch (characteristic.valueType) {
-            case ProductSpec.VALUE_TYPES.STRING.toLowerCase():
-                result = characteristicValue.value;
-                break;
-            case ProductSpec.VALUE_TYPES.NUMBER.toLowerCase():
-                if (characteristicValue.value && characteristicValue.value.length) {
+                case ProductSpec.VALUE_TYPES.STRING.toLowerCase():
                     result = characteristicValue.value;
-                } else {
-                    result = characteristicValue.valueFrom + " - " + characteristicValue.valueTo;
-                }
-                result += " " + characteristicValue.unitOfMeasure;
-                break;
+                    break;
+                case ProductSpec.VALUE_TYPES.NUMBER.toLowerCase():
+                    if (characteristicValue.value && characteristicValue.value.length) {
+                        result = characteristicValue.value;
+                    } else {
+                        result = characteristicValue.valueFrom + ' - ' + characteristicValue.valueTo;
+                    }
+                    result += ' ' + characteristicValue.unitOfMeasure;
+                    break;
             }
 
             return result;
@@ -196,27 +218,32 @@
         }
 
         function loadCharacteristics(productSpecCharacteristic, productInfo) {
-
             if (!angular.isArray(productSpecCharacteristic)) {
                 productSpecCharacteristic = [];
             }
 
-            productInfo.characteristics = productSpecCharacteristic.filter(function(characteristic) {
-                var isLicense = characteristic.name.toLowerCase() == 'license';
-                if (isLicense) {
-                    vm.terms.push(angular.extend({
-                        title: characteristic.productSpecCharacteristicValue[0].value,
-                        text: characteristic.description
-                    }, productInfo));
-                }
-                return !isLicense;
-
-            }).map(function (characteristic) {
-                return {
-                    characteristic: characteristic,
-                    value: getDefaultCharacteristicValue(characteristic)
-                };
-            });
+            productInfo.characteristics = productSpecCharacteristic
+                .filter(function(characteristic) {
+                    var isLicense = characteristic.name.toLowerCase() == 'license';
+                    if (isLicense) {
+                        vm.terms.push(
+                            angular.extend(
+                                {
+                                    title: characteristic.productSpecCharacteristicValue[0].value,
+                                    text: characteristic.description
+                                },
+                                productInfo
+                            )
+                        );
+                    }
+                    return !isLicense;
+                })
+                .map(function(characteristic) {
+                    return {
+                        characteristic: characteristic,
+                        value: getDefaultCharacteristicValue(characteristic)
+                    };
+                });
 
             if (productInfo.characteristics.length) {
                 vm.characteristics.push(productInfo);
@@ -229,7 +256,6 @@
         }
 
         function loadPriceplans(productOfferingPrice) {
-
             if (angular.isArray(productOfferingPrice) && productOfferingPrice.length) {
                 if (productOfferingPrice.length === 1) {
                     setPriceplan(productOfferingPrice[0]);
@@ -266,5 +292,4 @@
             }
         }
     }
-
 })();

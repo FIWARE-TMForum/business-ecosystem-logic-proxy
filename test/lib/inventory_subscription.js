@@ -1,4 +1,4 @@
-/*global expect, it, jasmine, describe */
+/* global expect, it, jasmine, describe */
 
 /* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
@@ -19,14 +19,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-"use strict";
+'use strict';
 
-var config = require('./../../config'),
-    utils = require('./../../lib/utils'),
-    Promise = require('promiz'),
-    proxyrequire = require("proxyquire");
+var config = require('./../../config');
 
-describe('Test inventory subscription helper and endpoint', function () {
+var utils = require('./../../lib/utils');
+
+var Promise = require('promiz');
+
+var proxyrequire = require('proxyquire');
+
+describe('Test inventory subscription helper and endpoint', function() {
     var createReq = function createReq(data) {
         return (o, cb) => {
             cb(null, { statusCode: 200 }, JSON.stringify(data));
@@ -36,8 +39,8 @@ describe('Test inventory subscription helper and endpoint', function () {
     var createInd = function createInd(err) {
         var f = err ? () => Promise.reject() : () => Promise.resolve();
         return {
-            saveIndexInventory: jasmine.createSpy("saveIndexInventory").and.callFake(f),
-            removeIndex: jasmine.createSpy("removeIndex").and.callFake(f)
+            saveIndexInventory: jasmine.createSpy('saveIndexInventory').and.callFake(f),
+            removeIndex: jasmine.createSpy('removeIndex').and.callFake(f)
         };
     };
 
@@ -50,74 +53,84 @@ describe('Test inventory subscription helper and endpoint', function () {
             indexes = createInd();
         }
 
-        return proxyrequire("../../lib/inventory_subscription.js", {
+        return proxyrequire('../../lib/inventory_subscription.js', {
             request: request,
-            "./indexes": indexes
+            './indexes': indexes
         });
     };
 
     var createUrl = function createUrl(path) {
         var port = config.https.enabled ? config.https.port || 443 : config.port || 80;
-        return (config.https.enabled ? "https" : "http") + "://" + config.host + ":" + port + path;
+        return (config.https.enabled ? 'https' : 'http') + '://' + config.host + ':' + port + path;
     };
 
     var hubsUrl = function hubsUrl() {
-        return utils.getAPIProtocol("DSProductInventory") + "://" + utils.getAPIHost("DSProductInventory") + ":" + utils.getAPIPort("DSProductInventory") + "/DSProductInventory/api/productInventory/v2/hub";
+        return (
+            utils.getAPIProtocol('DSProductInventory') +
+            '://' +
+            utils.getAPIHost('DSProductInventory') +
+            ':' +
+            utils.getAPIPort('DSProductInventory') +
+            '/DSProductInventory/api/productInventory/v2/hub'
+        );
     };
 
-    it('should not recreate subscription if already subscribed', function (done) {
-        var url = createUrl("/path");
+    it('should not recreate subscription if already subscribed', function(done) {
+        var url = createUrl('/path');
         var req = createReq([{ callback: url }]);
-        var f = jasmine.createSpy("request").and.callFake(req);
+        var f = jasmine.createSpy('request').and.callFake(req);
         var lib = createMock(f);
         var expectedUrl = hubsUrl();
-        lib.createSubscription("/path").then(() => {
+        lib.createSubscription('/path').then(() => {
             expect(f).toHaveBeenCalledWith(expectedUrl, jasmine.any(Function));
             done();
         });
     });
 
-    it('should create subscription if not subscribed', function (done) {
-        var url = createUrl("/path");
+    it('should create subscription if not subscribed', function(done) {
+        var url = createUrl('/path');
         var req = createReq([]);
-        var f = jasmine.createSpy("request").and.callFake(req);
+        var f = jasmine.createSpy('request').and.callFake(req);
         var lib = createMock(f);
         var expectedUrl = hubsUrl();
         var expectedPost = {
-            method: "POST",
+            method: 'POST',
             url: hubsUrl(),
-            headers: { "content-type": "application/json" },
+            headers: { 'content-type': 'application/json' },
             body: JSON.stringify({ callback: url })
         };
-        lib.createSubscription("/path").catch(() => {
+        lib.createSubscription('/path').catch(() => {
             expect(f.calls.count()).toEqual(2);
-            expect(f.calls.allArgs()).toEqual([[expectedUrl, jasmine.any(Function)], [expectedPost, jasmine.any(Function)]]);
+            expect(f.calls.allArgs()).toEqual([
+                [expectedUrl, jasmine.any(Function)],
+                [expectedPost, jasmine.any(Function)]
+            ]);
             done();
         });
     });
 
-    it('should not create subscription if the hubs request gives an error code', function (done) {
+    it('should not create subscription if the hubs request gives an error code', function(done) {
         var req = (url, callback) => {
             callback(null, { statusCode: 500 }, null);
         };
-        var request = jasmine.createSpy("request").and.callFake(req);
+        var request = jasmine.createSpy('request').and.callFake(req);
         var lib = createMock(request);
         var expectedUrl = hubsUrl();
-        lib.createSubscription("/path").catch((err) => {
+        lib.createSubscription('/path').catch((err) => {
             expect(request).toHaveBeenCalledWith(expectedUrl, jasmine.any(Function));
             expect(err).toBe('Error reading inventory hubs: 500');
             done();
         });
     });
 
-    it('should not create subscription if the hubs request gives an error', function (done) {
+    it('should not create subscription if the hubs request gives an error', function(done) {
         var req = (url, callback) => {
             callback('ERROR', null, null);
         };
-        var request = jasmine.createSpy("request").and.callFake(req);
+        var request = jasmine.createSpy('request').and.callFake(req);
         var lib = createMock(request);
         var expectedUrl = hubsUrl();
-        lib.createSubscription("/path").catch((err) => {
+        lib.createSubscription('/path').catch((err) => {
             expect(request).toHaveBeenCalledWith(expectedUrl, jasmine.any(Function));
             expect(err).toBe('ERROR');
             done();
@@ -128,8 +141,8 @@ describe('Test inventory subscription helper and endpoint', function () {
         var inds = createInd();
         var lib = createMock(null, inds);
         var res = { end: () => {} };
-        spyOn(res, "end");
-        lib.postNotification({ body: "{}" }, res).then(() => {
+        spyOn(res, 'end');
+        lib.postNotification({ body: '{}' }, res).then(() => {
             expect(res.end).toHaveBeenCalled();
             expect(inds.saveIndexInventory).not.toHaveBeenCalled();
             expect(inds.removeIndex).not.toHaveBeenCalled();
@@ -137,29 +150,32 @@ describe('Test inventory subscription helper and endpoint', function () {
         });
     });
 
-    it ('should reject the promise with an error if the subscription request fails', function (done) {
+    it('should reject the promise with an error if the subscription request fails', function(done) {
         var req = function(options, callback) {
-            if (options.method == 'POST') {
-                callback(null, {statusCode: 500}, null);
+            if (options.method === 'POST') {
+                callback(null, { statusCode: 500 }, null);
             } else {
                 callback(null, { statusCode: 200 }, JSON.stringify([]));
             }
         };
-        var request = jasmine.createSpy("request").and.callFake(req);
+        var request = jasmine.createSpy('request').and.callFake(req);
         var lib = createMock(request);
         var expectedUrl = hubsUrl();
 
-        var url = createUrl("/path");
+        var url = createUrl('/path');
         var expectedPost = {
-            method: "POST",
+            method: 'POST',
             url: hubsUrl(),
-            headers: { "content-type": "application/json" },
+            headers: { 'content-type': 'application/json' },
             body: JSON.stringify({ callback: url })
         };
 
-        lib.createSubscription("/path").catch((err) => {
+        lib.createSubscription('/path').catch((err) => {
             expect(request.calls.count()).toEqual(2);
-            expect(request.calls.allArgs()).toEqual([[expectedUrl, jasmine.any(Function)], [expectedPost, jasmine.any(Function)]]);
+            expect(request.calls.allArgs()).toEqual([
+                [expectedUrl, jasmine.any(Function)],
+                [expectedPost, jasmine.any(Function)]
+            ]);
             expect(err).toBe("It hasn't been possible to create inventory subscription.");
             done();
         });
@@ -169,41 +185,40 @@ describe('Test inventory subscription helper and endpoint', function () {
         var inds = createInd();
         var lib = createMock(null, inds);
         var res = { end: () => {} };
-        spyOn(res, "end");
+        spyOn(res, 'end');
         var event = {
             eventType: event,
             event: {
-                product: "data"
+                product: 'data'
             }
         };
         lib.postNotification({ body: JSON.stringify(event) }, res).then(() => {
             expect(res.end).toHaveBeenCalled();
-            expect(inds.saveIndexInventory).toHaveBeenCalledWith(["data"]);
+            expect(inds.saveIndexInventory).toHaveBeenCalledWith(['data']);
             expect(inds.removeIndex).not.toHaveBeenCalled();
             done();
         });
     };
 
-
     it('should create inventory with creation notification', function(done) {
-        createInventoryHelper(done, "ProductCreationNotification");
+        createInventoryHelper(done, 'ProductCreationNotification');
     });
 
     it('should re-create inventory with value change notification', function(done) {
-        createInventoryHelper(done, "ProductValueChangeNotification");
+        createInventoryHelper(done, 'ProductValueChangeNotification');
     });
 
     it('should re-create inventory with status change notification', function(done) {
-        createInventoryHelper(done, "ProductStatusChangeNotification");
+        createInventoryHelper(done, 'ProductStatusChangeNotification');
     });
 
     it('should delete inventory', function(done) {
         var inds = createInd();
         var lib = createMock(null, inds);
         var res = { end: () => {} };
-        spyOn(res, "end");
+        spyOn(res, 'end');
         var event = {
-            eventType: "ProductDeletionNotification",
+            eventType: 'ProductDeletionNotification',
             event: {
                 product: {
                     id: 9
@@ -213,7 +228,7 @@ describe('Test inventory subscription helper and endpoint', function () {
         lib.postNotification({ body: JSON.stringify(event) }, res).then(() => {
             expect(res.end).toHaveBeenCalled();
             expect(inds.saveIndexInventory).not.toHaveBeenCalled();
-            expect(inds.removeIndex).toHaveBeenCalledWith("inventory", 9);
+            expect(inds.removeIndex).toHaveBeenCalledWith('inventory', 9);
             done();
         });
     });
@@ -222,27 +237,30 @@ describe('Test inventory subscription helper and endpoint', function () {
         var inds = createInd();
         var lib = createMock(null, inds);
         var res = { end: () => {} };
-        spyOn(res, "end");
+        spyOn(res, 'end');
         var event = {
-            eventType: "ProductTransactionNotification",
-            event: [{
-                eventType: "ProductCreationNotification",
-                event: {
-                    product: "data"
-                }
-            }, {
-                eventType: "ProductDeletionNotification",
-                event: {
-                    product: {
-                        id: 9
+            eventType: 'ProductTransactionNotification',
+            event: [
+                {
+                    eventType: 'ProductCreationNotification',
+                    event: {
+                        product: 'data'
+                    }
+                },
+                {
+                    eventType: 'ProductDeletionNotification',
+                    event: {
+                        product: {
+                            id: 9
+                        }
                     }
                 }
-            }]
+            ]
         };
         lib.postNotification({ body: JSON.stringify(event) }, res).then(() => {
             expect(res.end).toHaveBeenCalled();
-            expect(inds.saveIndexInventory).toHaveBeenCalledWith(["data"]);
-            expect(inds.removeIndex).toHaveBeenCalledWith("inventory", 9);
+            expect(inds.saveIndexInventory).toHaveBeenCalledWith(['data']);
+            expect(inds.removeIndex).toHaveBeenCalledWith('inventory', 9);
             done();
         });
     });
@@ -251,19 +269,18 @@ describe('Test inventory subscription helper and endpoint', function () {
         var inds = createInd(true);
         var lib = createMock(null, inds);
         var res = { end: () => {} };
-        spyOn(res, "end");
+        spyOn(res, 'end');
         var event = {
-            eventType: "ProductCreationNotification",
+            eventType: 'ProductCreationNotification',
             event: {
-                product: "data"
+                product: 'data'
             }
         };
         lib.postNotification({ body: JSON.stringify(event) }, res).then(() => {
             expect(res.end).toHaveBeenCalled();
-            expect(inds.saveIndexInventory).toHaveBeenCalledWith(["data"]);
+            expect(inds.saveIndexInventory).toHaveBeenCalledWith(['data']);
             expect(inds.removeIndex).not.toHaveBeenCalled();
             done();
         });
     });
-
 });

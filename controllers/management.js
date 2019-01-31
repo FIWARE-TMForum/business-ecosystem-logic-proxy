@@ -18,7 +18,6 @@
  */
 
 var management = (function() {
-
     var versionInfo = {
         version: '7.4.0',
         releaseDate: '23/10/2018',
@@ -39,9 +38,9 @@ var management = (function() {
     var getVersion = function(req, res) {
         var uptime = process.uptime();
         var days = Math.floor(uptime / 86400);
-        var hours = Math.floor((uptime - (days * 86400)) / 3600);
-        var minutes = Math.floor((uptime - (days * 86400) - (hours * 3600)) / 60);
-        var seconds = Math.floor(uptime - (days * 86400) - (hours * 3600) - (minutes * 60));
+        var hours = Math.floor((uptime - days * 86400) / 3600);
+        var minutes = Math.floor((uptime - days * 86400 - hours * 3600) / 60);
+        var seconds = Math.floor(uptime - days * 86400 - hours * 3600 - minutes * 60);
 
         var upMsg = days + ' d, ' + hours + ' h, ' + minutes + ' m, ' + seconds + ' s';
 
@@ -61,7 +60,6 @@ var management = (function() {
         getCount: getCount,
         getVersion: getVersion
     };
-
 })();
 
 exports.management = management;

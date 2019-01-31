@@ -25,12 +25,10 @@ var async = require('async'),
     utils = require('./../../lib/utils');
 
 var billing = (function() {
-
     var OWNER_ROLE = config.billingAccountOwnerRole;
 
     var makeRequest = function(url, callback) {
-
-        request(url, function (err, response, body) {
+        request(url, function(err, response, body) {
             if (err || response.statusCode >= 400) {
                 callback({
                     status: response.statusCode ? response.statusCode : 500
@@ -38,15 +36,17 @@ var billing = (function() {
             } else {
                 callback(null, JSON.parse(body));
             }
-
         });
     };
 
     var validateProductCharge = function(req, productId, callback) {
         // Check that the specified product id belongs to the user
         var productUrl = utils.getAPIURL(
-            config.endpoints.inventory.appSsl, config.endpoints.inventory.host, config.endpoints.inventory.port,
-            config.endpoints.inventory.path + '/api/productInventory/v2/product/' + productId);
+            config.endpoints.inventory.appSsl,
+            config.endpoints.inventory.host,
+            config.endpoints.inventory.port,
+            config.endpoints.inventory.path + '/api/productInventory/v2/product/' + productId
+        );
 
         makeRequest(productUrl, function(err, product) {
             if (err) {
@@ -67,7 +67,6 @@ var billing = (function() {
     };
 
     var validateRetrieval = function(req, callback) {
-
         // req.isCollection has been previously sent (checkPermissions)
         if (req.isCollection) {
             if (req.apiUrl.indexOf('billingAccount') > -1) {
@@ -79,7 +78,7 @@ var billing = (function() {
                     return callback({
                         status: 422,
                         message: 'Please specify a concrete product id using the query string serviceId.id'
-                    })
+                    });
                 }
                 validateProductCharge(req, req.query['serviceId.id'], callback);
             }
@@ -89,34 +88,38 @@ var billing = (function() {
     };
 
     var validateCustomerAccount = function(req, callback) {
-
         if ('customerAccount' in req.json && 'href' in req.json.customerAccount) {
-
             var customerAccountPath = url.parse(req.json.customerAccount.href).pathname;
-            var customerAccountUrl = utils.getAPIURL(config.endpoints.customer.appSsl, config.endpoints.customer.host, config.endpoints.customer.port, customerAccountPath);
+            var customerAccountUrl = utils.getAPIURL(
+                config.endpoints.customer.appSsl,
+                config.endpoints.customer.host,
+                config.endpoints.customer.port,
+                customerAccountPath
+            );
 
             makeRequest(customerAccountUrl, function(err, body) {
-
                 if (err) {
                     callback({
                         status: 422,
                         message: 'The given customer account cannot be retrieved'
                     });
                 } else {
-
                     var customerPath = url.parse(body.customer.href).pathname;
-                    var customerUrl = utils.getAPIURL(config.endpoints.customer.appSsl, config.endpoints.customer.host, config.endpoints.customer.port, customerPath);
+                    var customerUrl = utils.getAPIURL(
+                        config.endpoints.customer.appSsl,
+                        config.endpoints.customer.host,
+                        config.endpoints.customer.port,
+                        customerPath
+                    );
 
                     makeRequest(customerUrl, function(err, body) {
-
                         if (err) {
                             callback({
                                 status: 422,
                                 message: 'The customer attached to the customer account given cannot be retrieved'
                             });
                         } else {
-
-                            if (tmfUtils.hasPartyRole(req, [ body.relatedParty ], 'owner')) {
+                            if (tmfUtils.hasPartyRole(req, [body.relatedParty], 'owner')) {
                                 callback(null);
                             } else {
                                 callback({
@@ -128,7 +131,6 @@ var billing = (function() {
                     });
                 }
             });
-
         } else {
             if (req.method === 'POST') {
                 callback({
@@ -143,9 +145,14 @@ var billing = (function() {
     };
 
     var validateNotInvalidFields = function(req, callback) {
-
-        var invalidFields = ['customerBillingCycleSpecification', 'customerBillFormat',
-            'customerBillPresentationMedia', 'currency', 'billingAccountBalance', 'paymentMean'];
+        var invalidFields = [
+            'customerBillingCycleSpecification',
+            'customerBillFormat',
+            'customerBillPresentationMedia',
+            'currency',
+            'billingAccountBalance',
+            'paymentMean'
+        ];
 
         var containInvalidField = invalidFields.some(function(field) {
             return field in req.json;
@@ -162,7 +169,6 @@ var billing = (function() {
     };
 
     var validateRelatedParty = function(req, callback) {
-
         var relatedPartyField = 'relatedParty';
 
         // Creation request must include relatedParty field. Otherwise, an error must be arisen
@@ -171,9 +177,8 @@ var billing = (function() {
             callback({
                 status: 422,
                 message: 'Billing Accounts cannot be created without related parties'
-            })
+            });
         } else {
-
             // This part only be executed for update requests or for creation requests that include
             // the relatedParty field.
 
@@ -185,18 +190,19 @@ var billing = (function() {
                     message: 'The user making the request and the specified owner are not the same user'
                 });
             }
-
         }
     };
 
     var validateOwner = function(req, callback) {
-
-        var internalUrl = utils.getAPIURL(config.endpoints.billing.appSsl, config.endpoints.billing.host, config.endpoints.billing.port, req.apiUrl);
+        var internalUrl = utils.getAPIURL(
+            config.endpoints.billing.appSsl,
+            config.endpoints.billing.host,
+            config.endpoints.billing.port,
+            req.apiUrl
+        );
 
         makeRequest(internalUrl, function(err, body) {
-
             if (err) {
-
                 if (err.status === 404) {
                     callback({
                         status: 404,
@@ -209,11 +215,9 @@ var billing = (function() {
                     });
                 }
             } else {
-
                 if (tmfUtils.hasPartyRole(req, body.relatedParty, OWNER_ROLE)) {
                     callback(null);
                 } else {
-
                     var action = req.method.toUpperCase() === 'DELETE' ? 'delete' : 'update';
 
                     callback({
@@ -226,19 +230,28 @@ var billing = (function() {
     };
 
     var validators = {
-        'GET': [ utils.validateLoggedIn, validateRetrieval ],
-        'POST': [ utils.validateLoggedIn, validateNotInvalidFields, validateRelatedParty, validateCustomerAccount ],
-        'PATCH': [ utils.validateLoggedIn, validateOwner, validateNotInvalidFields, validateRelatedParty, validateCustomerAccount ]
+        GET: [utils.validateLoggedIn, validateRetrieval],
+        POST: [utils.validateLoggedIn, validateNotInvalidFields, validateRelatedParty, validateCustomerAccount],
+        PATCH: [
+            utils.validateLoggedIn,
+            validateOwner,
+            validateNotInvalidFields,
+            validateRelatedParty,
+            validateCustomerAccount
+        ]
         // These methods are not implemented by this API
         //'PUT': [ utils.validateLoggedIn, validateOwner, validateNotInvalidFields, validateAppropriateRelatedParty ],
         //'DELETE': [ utils.validateLoggedIn, validateOwner ]
     };
 
     var checkPermissions = function(req, callback) {
-
         // TODO: To be removed when the rest of features are supported
-        var apiPathRegExp = new RegExp('^/' + config.endpoints.billing.path + '/api/billingManagement/v2/billingAccount(/(.*))?$');
-        var apiChargeRegExp = new RegExp('^/' + config.endpoints.billing.path + '/api/billingManagement/v2/appliedCustomerBillingCharge/?$');
+        var apiPathRegExp = new RegExp(
+            '^/' + config.endpoints.billing.path + '/api/billingManagement/v2/billingAccount(/(.*))?$'
+        );
+        var apiChargeRegExp = new RegExp(
+            '^/' + config.endpoints.billing.path + '/api/billingManagement/v2/appliedCustomerBillingCharge/?$'
+        );
 
         var apiPath = url.parse(req.apiUrl).pathname;
 
@@ -246,17 +259,14 @@ var billing = (function() {
         var chargeRegExpResult = apiChargeRegExp.exec(apiPath);
 
         if (regExpResult || chargeRegExpResult) {
-
             var appliedRegExp = regExpResult ? regExpResult : chargeRegExpResult;
             req.isCollection = appliedRegExp[2] ? false : true;
 
             if (req.method in validators) {
-
                 try {
-
                     var reqValidators = [];
 
-                    if (req.body && typeof(req.body) === 'string') {
+                    if (req.body && typeof req.body === 'string') {
                         req.json = JSON.parse(req.body);
                     }
 
@@ -265,14 +275,12 @@ var billing = (function() {
                     }
 
                     async.series(reqValidators, callback);
-
                 } catch (e) {
                     callback({
                         status: 400,
                         message: 'Invalid body'
                     });
                 }
-
             } else {
                 callback({
                     status: 405,
@@ -288,15 +296,12 @@ var billing = (function() {
     };
 
     var executePostValidation = function(req, callback) {
-
         if (req.method === 'GET') {
-
             var account = JSON.parse(req.body);
 
             if (Array.isArray(account)) {
                 // checkPermissions ensures that only owned billing accounts are retrieved
                 return callback(null);
-
             } else if (req.apiUrl.indexOf('billingAccount') > -1) {
                 // This checks that the user is included in the list of related parties...
                 if (tmfUtils.isRelatedParty(req, account.relatedParty)) {
@@ -307,7 +312,6 @@ var billing = (function() {
                         message: 'Unauthorized to retrieve the specified billing account'
                     });
                 }
-
             } else {
                 // Check that the user can retrieve the specified charge
                 validateProductCharge(req, account.serviceId[0].id, callback);
@@ -321,7 +325,6 @@ var billing = (function() {
         checkPermissions: checkPermissions,
         executePostValidation: executePostValidation
     };
-
 })();
 
 exports.billing = billing;

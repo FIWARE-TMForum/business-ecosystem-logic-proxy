@@ -17,27 +17,35 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var proxyquire =  require('proxyquire'),
-    testUtils = require('../utils');
+var proxyquire = require('proxyquire');
+
+var testUtils = require('../utils');
 
 describe('TMF Utils', function() {
-
     var config = testUtils.getDefaultConfig();
 
     var getTmfUtils = function(utils) {
         return proxyquire('../../lib/tmfUtils', {
-            './../config' : config,
+            './../config': config,
             './utils': utils || {}
         });
     };
 
     var getPartyHref = function(protocol, hostname, userName) {
-        return protocol + '://' + hostname + ':' + config.port + '/' + config.endpoints.party.path +
-            '/api/partyManagement/v2/individual/' + userName;
+        return (
+            protocol +
+            '://' +
+            hostname +
+            ':' +
+            config.port +
+            '/' +
+            config.endpoints.party.path +
+            '/api/partyManagement/v2/individual/' +
+            userName
+        );
     };
 
     describe('Is Owner', function() {
-
         var testIsOwner = function(req, info, expected) {
             var tmfUtils = getTmfUtils();
 
@@ -45,8 +53,7 @@ describe('TMF Utils', function() {
             expect(result).toBe(expected);
         };
 
-        it ('should return true when the user is owner of the given resource', function() {
-
+        it('should return true when the user is owner of the given resource', function() {
             var userName = 'test';
 
             var req = {
@@ -59,18 +66,19 @@ describe('TMF Utils', function() {
             };
 
             var info = {
-                relatedParty: [{
-                    role: 'Owner',
-                    id: userName,
-                    href: getPartyHref('http', req.hostname, userName)
-                }]
+                relatedParty: [
+                    {
+                        role: 'Owner',
+                        id: userName,
+                        href: getPartyHref('http', req.hostname, userName)
+                    }
+                ]
             };
 
             testIsOwner(req, info, true);
         });
 
-        it ('should return false when the user is not owner of the resource', function() {
-
+        it('should return false when the user is not owner of the resource', function() {
             var userName = 'user';
 
             var req = {
@@ -83,18 +91,19 @@ describe('TMF Utils', function() {
             };
 
             var info = {
-                relatedParty: [{
-                    role: 'Owner',
-                    id: userName,
-                    href: getPartyHref('http', req.hostname, userName)
-                }]
+                relatedParty: [
+                    {
+                        role: 'Owner',
+                        id: userName,
+                        href: getPartyHref('http', req.hostname, userName)
+                    }
+                ]
             };
 
             testIsOwner(req, info, false);
         });
 
-        it ('should return false when the href is invalid', function() {
-
+        it('should return false when the href is invalid', function() {
             var userName = 'test';
 
             var req = {
@@ -107,18 +116,19 @@ describe('TMF Utils', function() {
             };
 
             var info = {
-                relatedParty: [{
-                    role: 'Owner',
-                    id: userName,
-                    href: getPartyHref('http', req.hostname, userName + 'ABC')
-                }]
+                relatedParty: [
+                    {
+                        role: 'Owner',
+                        id: userName,
+                        href: getPartyHref('http', req.hostname, userName + 'ABC')
+                    }
+                ]
             };
 
             testIsOwner(req, info, false);
         });
 
-        it ('should return false when the resource does not contain related party field', function() {
-
+        it('should return false when the resource does not contain related party field', function() {
             var req = {
                 secure: false,
                 hostname: 'belp.fiware.org',
@@ -131,15 +141,11 @@ describe('TMF Utils', function() {
             var info = {};
             testIsOwner(req, info, false);
         });
-
     });
 
     describe('Filter Related Party Fields', function() {
-
         var testFilterRelatedPartyFields = function(user, query, expectedErr, newQueryParams, done) {
-
             var buildQueryString = function(query) {
-
                 var queryArray = [];
 
                 for (var key in query) {
@@ -159,12 +165,11 @@ describe('TMF Utils', function() {
             var tmfUtils = getTmfUtils();
             var req = {
                 apiUrl: originalApiUrl,
-                query : query,
+                query: query,
                 user: user
             };
 
             tmfUtils.filterRelatedPartyFields(req, function(err) {
-
                 expect(err).toEqual(expectedErr);
 
                 if (!err) {
@@ -182,11 +187,9 @@ describe('TMF Utils', function() {
 
                 done();
             });
-
         };
 
         it('should call callback with error when Related Party field includes href', function(done) {
-
             var user = {
                 id: 'fiware'
             };
@@ -204,7 +207,6 @@ describe('TMF Utils', function() {
         });
 
         it('should call callback with error when Related Party field includes role', function(done) {
-
             var user = {
                 id: 'fiware'
             };
@@ -222,7 +224,6 @@ describe('TMF Utils', function() {
         });
 
         it('should call callback with error when asking for items from another user', function(done) {
-
             var user = {
                 id: 'fiware'
             };
@@ -240,7 +241,6 @@ describe('TMF Utils', function() {
         });
 
         it('should call callback without error when asking for their own items', function(done) {
-
             var user = {
                 id: 'fiware'
             };
@@ -253,7 +253,6 @@ describe('TMF Utils', function() {
         });
 
         it('should include party id when not included in the original request', function(done) {
-
             var user = {
                 id: 'fiware'
             };
@@ -266,7 +265,6 @@ describe('TMF Utils', function() {
         });
 
         it('should include party id when not included in the original request and extra query params', function(done) {
-
             var user = {
                 id: 'fiware'
             };
@@ -281,11 +279,9 @@ describe('TMF Utils', function() {
 
             testFilterRelatedPartyFields(user, query, null, newQueryParams, done);
         });
-
     });
 
     describe('Ensure Related Party Field', function() {
-
         var testEnsureRelatedParty = function(originalApiUrl, query, expectedApiUrl) {
             var req = {
                 apiUrl: originalApiUrl,
@@ -314,66 +310,65 @@ describe('TMF Utils', function() {
         });
 
         it('should not modify the API URL when query included but fields is not included', function() {
-
             var name = 'fiware';
             urlNotModified('/product?name=' + name, { name: name });
         });
 
         it('should not modify the API URL when fields include related party at the beginning', function() {
-
             var fields = 'relatedParty,name';
             urlNotModifiedFields(fields);
         });
 
         it('should not modify the API URL when fields include related party at the end', function() {
-
             var fields = 'relatedParty,name';
             urlNotModifiedFields(fields);
         });
 
         it('should not modify the API URL when fields include related party in the middle', function() {
-
             var fields = 'name,relatedParty,version';
             urlNotModifiedFields(fields);
         });
 
-        it('should modify the API URL when related party is not included in the fields query param ' +
-                'and there are no more query params', function() {
+        it(
+            'should modify the API URL when related party is not included in the fields query param ' +
+                'and there are no more query params',
+            function() {
+                var fields = 'name';
+                var originalApiUrl = '/product?fields=' + fields;
+                var expectedApiUrl = originalApiUrl + ',relatedParty';
 
-            var fields = 'name';
-            var originalApiUrl = '/product?fields=' + fields;
-            var expectedApiUrl = originalApiUrl + ',relatedParty';
+                testEnsureRelatedParty(originalApiUrl, { fields: fields }, expectedApiUrl);
+            }
+        );
 
-            testEnsureRelatedParty(originalApiUrl, { fields: fields }, expectedApiUrl);
-        });
+        it(
+            'should modify the API URL when related party is not included in the fields query param ' +
+                'and there are more query params',
+            function() {
+                var version = '1';
+                var fields = 'name';
 
+                var urlPattern = '/product?fields=FIELDS&version=' + version;
+                var originalApiUrl = urlPattern.replace('FIELDS', fields);
+                var expectedApiUrl = urlPattern.replace('FIELDS', fields + ',relatedParty');
 
-        it('should modify the API URL when related party is not included in the fields query param ' +
-                'and there are more query params', function() {
-
-            var version = '1';
-            var fields = 'name';
-
-            var urlPattern = '/product?fields=FIELDS&version=' + version;
-            var originalApiUrl = urlPattern.replace('FIELDS', fields);
-            var expectedApiUrl = urlPattern.replace('FIELDS', fields + ',relatedParty');
-
-            testEnsureRelatedParty(originalApiUrl, { fields: fields, version: version }, expectedApiUrl);
-        });
-
+                testEnsureRelatedParty(originalApiUrl, { fields: fields, version: version }, expectedApiUrl);
+            }
+        );
     });
 
     describe('Has Party Role', function() {
-
         it('should return false when related Party is empty', function() {
             var tmfUtils = getTmfUtils();
-            var result = tmfUtils.hasPartyRole({ hostname: 'belp.fiware.org', secure: false, user: { id: 'fiware' } },
-                [], 'seller');
+            var result = tmfUtils.hasPartyRole(
+                { hostname: 'belp.fiware.org', secure: false, user: { id: 'fiware' } },
+                [],
+                'seller'
+            );
             expect(result).toBe(false);
         });
 
         it('should return true when related Party contains one element and user and role matches', function() {
-
             var tmfUtils = getTmfUtils();
             var role = 'seller';
             var userName = 'fiware';
@@ -386,19 +381,19 @@ describe('TMF Utils', function() {
                 }
             };
 
-            var relatedParties = [{
-                role: role,
-                id: userName,
-                href: getPartyHref('http', req.hostname, userName)
-            }];
+            var relatedParties = [
+                {
+                    role: role,
+                    id: userName,
+                    href: getPartyHref('http', req.hostname, userName)
+                }
+            ];
 
             var result = tmfUtils.hasPartyRole(req, relatedParties, role);
             expect(result).toBe(true);
-
         });
 
         it('should return true when related Party contains one element and user and role (ignore case) matches', function() {
-
             var tmfUtils = getTmfUtils();
             var role = 'seller';
             var userName = 'fiware';
@@ -411,19 +406,19 @@ describe('TMF Utils', function() {
                 }
             };
 
-            var relatedParties = [{
-                role: role.toUpperCase(),
-                id: userName,
-                href: getPartyHref('http', req.hostname, userName)
-            }];
+            var relatedParties = [
+                {
+                    role: role.toUpperCase(),
+                    id: userName,
+                    href: getPartyHref('http', req.hostname, userName)
+                }
+            ];
 
             var result = tmfUtils.hasPartyRole(req, relatedParties, role.toLowerCase());
             expect(result).toBe(true);
-
         });
 
         it('should return false when related Party contains one element and user matches but role does not', function() {
-
             var tmfUtils = getTmfUtils();
             var role = 'seller';
             var userName = 'fiware';
@@ -436,19 +431,19 @@ describe('TMF Utils', function() {
                 }
             };
 
-            var relatedParties = [ {
-                role: role,
-                id: userName,
-                href: getPartyHref('http', req.hostname, userName)
-            } ];
+            var relatedParties = [
+                {
+                    role: role,
+                    id: userName,
+                    href: getPartyHref('http', req.hostname, userName)
+                }
+            ];
 
             var result = tmfUtils.hasPartyRole(req, relatedParties, role + 'a');
             expect(result).toBe(false);
-
         });
 
         it('should return false when related Party href does not match', function() {
-
             var tmfUtils = getTmfUtils();
             var role = 'seller';
             var userName = 'fiware';
@@ -461,20 +456,19 @@ describe('TMF Utils', function() {
                 }
             };
 
-            var relatedParties = [{
-                role: role,
-                id: userName,
-                href: getPartyHref('http', req.hostname, userName + 'ABC')
-            }];
+            var relatedParties = [
+                {
+                    role: role,
+                    id: userName,
+                    href: getPartyHref('http', req.hostname, userName + 'ABC')
+                }
+            ];
 
             var result = tmfUtils.hasPartyRole(req, relatedParties, role);
             expect(result).toBe(false);
-
         });
 
-
         it('should return false when related Party contains one element and role matches but user does not', function() {
-
             var tmfUtils = getTmfUtils();
             var role = 'seller';
             var userName = 'fiware';
@@ -487,15 +481,16 @@ describe('TMF Utils', function() {
                 }
             };
 
-            var relatedParties = [{
-                role: role,
-                id: userName,
-                href: getPartyHref('http', req.hostname, userName)
-            }];
+            var relatedParties = [
+                {
+                    role: role,
+                    id: userName,
+                    href: getPartyHref('http', req.hostname, userName)
+                }
+            ];
 
             var result = tmfUtils.hasPartyRole(req, relatedParties, role);
             expect(result).toBe(false);
-
         });
 
         it('should return true when related Party contains two element and one matches', function() {
@@ -511,11 +506,12 @@ describe('TMF Utils', function() {
                 }
             };
 
-            var relatedParties = [ {
+            var relatedParties = [
+                {
                     role: role,
                     id: userName,
                     href: getPartyHref('http', req.hostname, userName)
-            },
+                },
                 {
                     role: role + 'a',
                     id: userName + 'a',
@@ -525,7 +521,6 @@ describe('TMF Utils', function() {
 
             var result = tmfUtils.hasPartyRole(req, relatedParties, role);
             expect(result).toBe(true);
-
         });
 
         it('should return false when related Party contains two element and none matches', function() {
@@ -541,11 +536,12 @@ describe('TMF Utils', function() {
                 }
             };
 
-            var relatedParties = [ {
+            var relatedParties = [
+                {
                     role: role + 'b',
                     id: userName + 'b',
                     href: getPartyHref('http', req.hostname, userName + 'b')
-            },
+                },
                 {
                     role: role + 'a',
                     id: userName + 'a',
@@ -555,14 +551,11 @@ describe('TMF Utils', function() {
 
             var result = tmfUtils.hasPartyRole(req, relatedParties, role);
             expect(result).toBe(false);
-
         });
     });
 
     describe('Get Party Individuals Collection URL', function() {
-
         var testGetIndividualsCollectionURL = function(req, user) {
-
             var utils = jasmine.createSpyObj('utils', ['getAPIURL']);
 
             var tmfUtils = getTmfUtils(utils);
@@ -575,11 +568,9 @@ describe('TMF Utils', function() {
             }
 
             expect(utils.getAPIURL).toHaveBeenCalledWith(req.secure, req.hostname, config.port, expectedPath);
-
         };
 
         it('should call utils with http', function() {
-
             var req = {
                 secure: false,
                 hostname: 'belp.fiware.org'
@@ -589,8 +580,7 @@ describe('TMF Utils', function() {
         });
 
         it('should call utils with https', function() {
-
-	    config.proxy.secured = true;
+            config.proxy.secured = true;
             var req = {
                 secure: true,
                 hostname: 'belp.fiware.org'
@@ -599,27 +589,26 @@ describe('TMF Utils', function() {
             testGetIndividualsCollectionURL(req);
         });
 
-	it('should call utils with http and without proxy', function() {
-	    config.proxy.enabled = false;
+        it('should call utils with http and without proxy', function() {
+            config.proxy.enabled = false;
 
-	    var req = {
+            var req = {
                 secure: false,
-                hostname: 'anotherHost.com',
+                hostname: 'anotherHost.com'
             };
 
-	    testGetIndividualsCollectionURL(req);
-	});
+            testGetIndividualsCollectionURL(req);
+        });
 
-	it('should call utils with https and without proxy', function() {
-	    config.proxy.enabled = false;
+        it('should call utils with https and without proxy', function() {
+            config.proxy.enabled = false;
 
-	    var req = {
+            var req = {
                 secure: true,
-                hostname: 'anotherHost.com',
+                hostname: 'anotherHost.com'
             };
 
-	    testGetIndividualsCollectionURL(req);
-	});
+            testGetIndividualsCollectionURL(req);
+        });
     });
-
 });

@@ -22,8 +22,7 @@
  *         Jaime Pajuelo <jpajuelo@conwet.com>
  *         Aitor Magán <amagan@conwet.com>
  */
-(function () {
-
+(function() {
     'use strict';
 
     angular
@@ -32,31 +31,27 @@
         .controller('RouteAdminCtl', ['$state', AdminController]);
 
     function RouteConfig($stateProvider) {
-
-        $stateProvider
-            .state('admin', {
-                url: '/admin',
-                data: {
-                    title: 'Administration',
-                    loggingRequired: true
+        $stateProvider.state('admin', {
+            url: '/admin',
+            data: {
+                title: 'Administration',
+                loggingRequired: true
+            },
+            views: {
+                sidebar: {
+                    templateUrl: 'admin/sidebar',
+                    controller: 'RouteAdminCtl'
                 },
-                views: {
-                    sidebar: {
-                        templateUrl: 'admin/sidebar',
-                        controller: 'RouteAdminCtl'
-                    },
-                    content: {
-                        template: '<ui-view name="admin-content">'
-                    }
+                content: {
+                    template: '<ui-view name="admin-content">'
                 }
-            });
+            }
+        });
     }
 
     function AdminController($state) {
-
         if ($state.is('admin')) {
             $state.go('admin.productCategory');
         }
     }
-
 })();

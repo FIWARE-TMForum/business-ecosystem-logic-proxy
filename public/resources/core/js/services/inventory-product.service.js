@@ -23,8 +23,7 @@
  *         Aitor Magán <amagan@conwet.com>
  */
 
-(function () {
-
+(function() {
     'use strict';
 
     angular
@@ -50,7 +49,7 @@
                 filters = {};
             }
 
-            if(filters.customer) {
+            if (filters.customer) {
                 params['relatedParty.id'] = User.loggedUser.currentUser.id;
             }
 
@@ -71,7 +70,7 @@
                 params['body'] = filters.body.replace(/\s/g, ',');
             }
 
-            method(params, callback, function (response) {
+            method(params, callback, function(response) {
                 deferred.reject(response);
             });
         }
@@ -79,7 +78,7 @@
         function search(filters) {
             var deferred = $q.defer();
 
-            query(deferred, filters, resource.query, function (productList) {
+            query(deferred, filters, resource.query, function(productList) {
                 if (productList.length) {
                     // Include offering with the product
                     var completeList = angular.copy(productList);
@@ -96,20 +95,23 @@
                 var item = productList.shift();
 
                 // Get offering info
-                Offering.detail(item.productOffering.id).then(function(offeringInfo){
-                    // Append offering information
-                    completeList[completeList.length - productList.length - 1].productOffering = offeringInfo;
+                Offering.detail(item.productOffering.id).then(
+                    function(offeringInfo) {
+                        // Append offering information
+                        completeList[completeList.length - productList.length - 1].productOffering = offeringInfo;
 
-                    // If there are not more elements to process, return the product list
-                    if (!productList.length) {
-                        deferred.resolve(completeList);
-                    } else {
-                        // Process the rest of the list
-                        attachOfferingInfo(deferred, productList, completeList);
+                        // If there are not more elements to process, return the product list
+                        if (!productList.length) {
+                            deferred.resolve(completeList);
+                        } else {
+                            // Process the rest of the list
+                            attachOfferingInfo(deferred, productList, completeList);
+                        }
+                    },
+                    function(response) {
+                        deferred.reject(response);
                     }
-                }, function(response){
-                    deferred.reject(response);
-                });
+                );
             }
         }
 
@@ -117,7 +119,7 @@
             var deferred = $q.defer();
 
             filters.action = 'count';
-            query(deferred, filters, resource.get, function (info) {
+            query(deferred, filters, resource.get, function(info) {
                 deferred.resolve(info);
             });
 
@@ -130,28 +132,35 @@
                 productId: productId
             };
 
-            resource.get(params, function (productRetrieved) {
+            resource.get(
+                params,
+                function(productRetrieved) {
+                    if (
+                        productRetrieved.productCharacteristic.length === 1 &&
+                        Object.keys(productRetrieved.productCharacteristic[0]).length === 0
+                    ) {
+                        productRetrieved.productCharacteristic = [];
+                    }
 
-                if (productRetrieved.productCharacteristic.length === 1 &&
-                        Object.keys(productRetrieved.productCharacteristic[0]).length === 0) {
-
-                    productRetrieved.productCharacteristic = [];
+                    extendProductOffering(productRetrieved);
+                },
+                function(response) {
+                    deferred.reject(response);
                 }
-
-                extendProductOffering(productRetrieved);
-            }, function (response) {
-                deferred.reject(response);
-            });
+            );
 
             return deferred.promise;
 
             function extendProductOffering(productRetrieved) {
-                Offering.detail(productRetrieved.productOffering.id).then(function (productOfferingRetrieved) {
-                    productRetrieved.productOffering = productOfferingRetrieved;
-                    deferred.resolve(productRetrieved);
-                }, function (response) {
-                    deferred.reject(response);
-                });
+                Offering.detail(productRetrieved.productOffering.id).then(
+                    function(productOfferingRetrieved) {
+                        productRetrieved.productOffering = productOfferingRetrieved;
+                        deferred.resolve(productRetrieved);
+                    },
+                    function(response) {
+                        deferred.reject(response);
+                    }
+                );
             }
         }
 
@@ -159,13 +168,17 @@
             var renewResource = $resource(URLS.RENEW_JOB);
             var deferred = $q.defer();
 
-            renewResource.save(data, function (renewJob, getResponseHeaders) {
-                deferred.resolve({
-                    headers: getResponseHeaders()
-                });
-            }, function (response) {
-                deferred.reject(response);
-            });
+            renewResource.save(
+                data,
+                function(renewJob, getResponseHeaders) {
+                    deferred.resolve({
+                        headers: getResponseHeaders()
+                    });
+                },
+                function(response) {
+                    deferred.reject(response);
+                }
+            );
 
             return deferred.promise;
         }
