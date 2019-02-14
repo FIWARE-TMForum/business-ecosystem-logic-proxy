@@ -11,7 +11,7 @@ var authorizeService = require('./controllers/authorizeService').authorizeServic
     fs = require('fs'),
     https = require('https'),
     i18n = require('i18n-2'),
-    indexes = require('./lib/indexes'),
+    indexes = require('./lib/' + config.indexes.indexFile),
     inventorySubscription = require('./lib/inventory_subscription'),
     logger = require('./lib/logger').logger.getLogger("Server"),
     mongoose = require('mongoose'),
@@ -220,6 +220,7 @@ var PORT = config.https.enabled ?
 config.usageChartURL = process.env.BAE_LP_USAGE_CHART || config.usageChartURL;
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+
 
 auth = auth.auth();
 tmf = tmf.tmf();
@@ -636,7 +637,7 @@ indexes.init().then(function() {
         app.listen(app.get('port'), onlistening);
     }
 }).catch(function() {
-    logger.error('CRITICAL: The indexes could not be created, the server is not starting')
+    logger.error('CRITICAL: The indexes could not be created, the server is not starting');
 });
 
 

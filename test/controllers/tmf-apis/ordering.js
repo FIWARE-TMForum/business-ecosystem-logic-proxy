@@ -61,7 +61,6 @@ describe('Ordering API', function() {
             './../../lib/store': storeClient,
             './../../lib/tmfUtils': tmfUtils,
             './../../lib/indexes': indexes,
-            './../../lib/indexes.js': indexes,
             './../../lib/utils': utils
         }).ordering;
     };
