@@ -146,7 +146,7 @@ config.billingAccountOwnerRole = 'bill receiver';
 config.publicPaths = [];
 
 config.indexes = {
-    'indexFile': 'elastic_indexes.js',
+    'engine': 'local', // local or elasticsearch
     'elasticHost': 'elastic.docker:9200'
 };
 

@@ -737,8 +737,6 @@ var ordering = (function(){
                    currentUsers.push(party.id);
                 });
 
-                //var modified = false;
-
                 ordering.relatedParty.forEach(function(party) {
 
                     if (currentUsers.indexOf(party.id) < 0) {
@@ -748,12 +746,8 @@ var ordering = (function(){
                             href: party.href,
                             role: 'bill responsible'
                         });
-
-                        //modified = true;
                     }
                 });
-
-                // if (modified) {
 
                 request(billingAccountUrl, {
                     method: 'PATCH',
@@ -768,12 +762,7 @@ var ordering = (function(){
                     } else {
                         callback(null);
                     }
-
                 });
-
-                // } else {
-                //     callback(null);
-                // }
 
             } else {
                 callback({

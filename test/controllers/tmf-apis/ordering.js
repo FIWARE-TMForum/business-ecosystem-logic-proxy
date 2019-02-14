@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2019 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -1746,7 +1746,7 @@ describe('Ordering API', function() {
         });
 
         it('should not insert repeated users in the billing account', function(done) {
-            testPostValidationStoreNotifyOk(true, false, false, false, null, done);
+            testPostValidationStoreNotifyOk(true, false, false, true, null, done);
         });
 
         it('should fail when the billing account cannot be retrieved', function(done) {

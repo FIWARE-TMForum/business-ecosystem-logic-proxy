@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2019 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -21,7 +21,7 @@ var async = require('async'),
     config = require('./../../config'),
     deepcopy = require("deepcopy"),
     equal = require('deep-equal'),
-    indexes = require('./../../lib/' + config.indexes.indexFile),
+    indexes = require('./../../lib/indexes'),
     leftPad = require("left-pad"),
     logger = require('./../../lib/logger').logger.getLogger('TMF'),
     md5 = require("blueimp-md5"),

@@ -1,6 +1,6 @@
 /*global expect, it, jasmine, describe */
 
-/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2019 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -154,7 +154,7 @@ describe("Test index helper library", function () {
             './../config.js': testUtils.getDefaultConfig()
         });
         
-        return proxyrequire("../../lib/indexes.js", {
+        return proxyrequire("../../lib/local_indexes.js", {
             "search-index": method,
             "request": request,
             "./utils": mockUtils,
