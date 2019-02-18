@@ -120,8 +120,8 @@ var defaultConfig = {
     billingAccountOwnerRole: 'bill receiver',
     revenueModel: 30,
     indexes : {
-	'indexFile': 'indexes.js', // 'elastic_indexes.js' if using elasticsearch
-	'elasticHost': 'http://imaginary-elastic.docker:9200/' // hostname:port
+	    'engine': 'local', // 'elastic_indexes.js' if using elasticsearch
+	    'elasticHost': 'http://imaginary-elastic.docker:9200/' // hostname:port
     }
 };
 

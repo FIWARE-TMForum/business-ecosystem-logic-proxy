@@ -90,9 +90,8 @@ describe('Catalog API', function() {
         if (!async) {
             async = {};
         }
-	// load config depending on utils
-	var indexesPath = './../../lib/' + testUtils.getIndexesPath();
-	
+
+	    // load config depending on utils
         return proxyquire('../../../controllers/tmf-apis/catalog', {
             './../../config': config,
             './../../lib/logger': testUtils.emptyLogger,

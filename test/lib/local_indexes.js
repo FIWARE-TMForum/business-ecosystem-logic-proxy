@@ -23,12 +23,9 @@
 
 var proxyrequire = require("proxyquire"),
     md5 = require("blueimp-md5"),
-    config = require("../../config"),
-    utils = require("../../lib/utils"),
     testUtils = require("../utils.js"),
     Readable = require('stream').Readable,
-    Transform = require('stream').Transform,
-    nock = require('nock');
+    Transform = require('stream').Transform;
 
 describe("Test index helper library", function () {
 
@@ -153,12 +150,16 @@ describe("Test index helper library", function () {
         var mockUtils = proxyrequire('../../lib/utils.js', {
             './../config.js': testUtils.getDefaultConfig()
         });
-        
-        return proxyrequire("../../lib/local_indexes.js", {
+
+        let localIndexes = proxyrequire("../../lib/local_indexes.js", {
             "search-index": method,
+            "levelup": level
+        });
+
+        return proxyrequire("../../lib/indexes.js", {
             "request": request,
             "./utils": mockUtils,
-            "levelup": level,
+            './local_indexes': localIndexes,
             '../config': testUtils.getDefaultConfig()
         });
     };
