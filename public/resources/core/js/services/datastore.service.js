@@ -26,7 +26,7 @@
 
     angular
         .module('app')
-        .factory('DatastoreSer', DatastoreService);
+        .factory('DatastoreSer', ['$q', '$resource', 'URLS', 'LIFECYCLE_STATUS', 'User', DatastoreService]);
 
     function DatastoreService($q, $resource, URLS, LIFECYCLE_STATUS, User) {
 
