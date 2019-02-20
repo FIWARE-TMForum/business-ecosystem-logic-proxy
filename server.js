@@ -73,7 +73,7 @@ if (!!process.env.BAE_SERVICE_HOST) {
         enabled: true,
         host: parsedUrl.hostname,
         port: parsedUrl.port,
-        secured: parsedUrl.protocol == 'https'
+        secured: parsedUrl.protocol == 'https:'
     };
 }
 
