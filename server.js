@@ -444,9 +444,9 @@ app.post(config.authorizeServicePath + '/read', authorizeService.getAppToken);
 ///////////////////////// SLA SERVICE ///////////////////////////////
 /////////////////////////////////////////////////////////////////////
 
-app.use(config.slaServicePath + '/*', checkMongoUp, auth.headerAuthentication, auth.checkOrganizations, auth.setPartyObj, failIfNotAuthenticated);
+app.use(config.slaServicePath + '/*', checkMongoUp, auth.headerAuthentication, auth.checkOrganizations, auth.setPartyObj);
 app.get(config.slaServicePath + '/sla/:id', slaService.getSla);
-app.post(config.slaServicePath + '/sla', slaService.saveSla);
+app.post(config.slaServicePath + '/sla', failIfNotAuthenticated, slaService.saveSla);
 
 /////////////////////////////////////////////////////////////////////
 ///////////////////////// REPUTAION SERVICE /////////////////////////
