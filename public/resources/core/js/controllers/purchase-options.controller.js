@@ -76,13 +76,19 @@
             vm.tabActive = null;
             vm.priceplans = [];
             vm.characteristics = [];
-            vm.terms = productOffering.productOfferingTerm;
             vm.isBundle = productOffering.isBundle;
             vm.bundledOfferings = [];
             vm.selectedOffering = {
                 id: productOffering.id
             };
             vm.termsAccepted = false;
+
+            // Load terms if provided
+            if (productOffering.productOfferingTerm) {
+                vm.terms = productOffering.productOfferingTerm;
+            } else {
+                vm.terms = [];
+            }
 
             $scope.priceplanSelected = null;
 
