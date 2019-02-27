@@ -9,7 +9,7 @@ form(name="form" novalidate)
             span.item-icon.fa.fa-caret-down
           .dropdown-menu.dropdown-menu-right.z-depth-2
             a.dropdown-menu-item(ng-repeat="(key, value) in vm.METRICS" ng-if="vm.metricsUsed.indexOf(value)<0" ng-click="vm.metric.setType(key)")
-              span.item-text{{ value | uppercase }}
+              span.item-text {{ value | uppercase }}
   .row(ng-if="vm.metric.type !== ''")
     .col-md-12
       .form-group

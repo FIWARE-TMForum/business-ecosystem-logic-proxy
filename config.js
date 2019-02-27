@@ -1,7 +1,7 @@
 var config = {};
 
 // The PORT used by 
-config.port = 8000;
+config.port = 8004;
 config.host = 'proxy.docker';
 
 config.proxy = {
@@ -144,6 +144,11 @@ config.billingAccountOwnerRole = 'bill receiver';
 // list of paths that will not check authentication/authorization
 // example: ['/public/*', '/static/css/']
 config.publicPaths = [];
+
+config.indexes = {
+    'engine': 'local', // local or elasticsearch
+    'elasticHost': 'elastic.docker:9200'
+};
 
 config.magicKey = undefined;
 

@@ -725,34 +725,27 @@
     function ProductOfferingDetailController($state, Offering, ProductSpec, Utils) {
         /* jshint validthis: true */
         var vm = this;
-        var createPromise = [];
         vm.sla = {};
         vm.item = {};
         vm.$state = $state;
         vm.hasCharacteristics = hasCharacteristics;
         vm.formatCharacteristicValue = formatCharacteristicValue;
 
-        createPromise.push(Offering.detail($state.params.offeringId).then(function (offeringRetrieved) {
+        Offering.detail($state.params.offeringId).then(function (offeringRetrieved) {
             vm.item = offeringRetrieved;
             vm.categories = vm.item.getCategories();
             vm.attachments = vm.item.productSpecification.getExtraFiles();
+            vm.item.status = LOADED;
         }, function (response) {
             vm.error = Utils.parseError(response, 'The requested offering could not be retrieved');
             vm.item.status = ERROR;
-        }));
+        });
         
-        createPromise.push(Offering.getSla($state.params.offeringId).then(function (slaRetrieved) {
+        Offering.getSla($state.params.offeringId).then(function (slaRetrieved) {
             vm.sla = slaRetrieved;
         }, function (response){
             vm.error = Utils.parseError(response, 'The requested SLA could not be retrieved');
             vm.item.status = ERROR;
-        }));
-    
-        Promise.all(createPromise).then(function(){
-            vm.item.status = LOADED;
-            }, function (response){
-                vm.error = Utils.parseError(response, 'The requested offering could not be retrieved');
-                vm.item.status = ERROR;
         });
 
         function formatCharacteristicValue(characteristic, characteristicValue) {

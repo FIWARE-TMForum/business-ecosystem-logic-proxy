@@ -73,7 +73,7 @@ if (!!process.env.BAE_SERVICE_HOST) {
         enabled: true,
         host: parsedUrl.hostname,
         port: parsedUrl.port,
-        secured: parsedUrl.protocol == 'https'
+        secured: parsedUrl.protocol == 'https:'
     };
 }
 
@@ -220,6 +220,7 @@ var PORT = config.https.enabled ?
 config.usageChartURL = process.env.BAE_LP_USAGE_CHART || config.usageChartURL;
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+
 
 auth = auth.auth();
 tmf = tmf.tmf();
@@ -443,9 +444,9 @@ app.post(config.authorizeServicePath + '/read', authorizeService.getAppToken);
 ///////////////////////// SLA SERVICE ///////////////////////////////
 /////////////////////////////////////////////////////////////////////
 
-app.use(config.slaServicePath + '/*', checkMongoUp, auth.headerAuthentication, auth.checkOrganizations, auth.setPartyObj, failIfNotAuthenticated);
+app.use(config.slaServicePath + '/*', checkMongoUp, auth.headerAuthentication, auth.checkOrganizations, auth.setPartyObj);
 app.get(config.slaServicePath + '/sla/:id', slaService.getSla);
-app.post(config.slaServicePath + '/sla', slaService.saveSla);
+app.post(config.slaServicePath + '/sla', failIfNotAuthenticated, slaService.saveSla);
 
 /////////////////////////////////////////////////////////////////////
 ///////////////////////// REPUTAION SERVICE /////////////////////////
@@ -636,7 +637,7 @@ indexes.init().then(function() {
         app.listen(app.get('port'), onlistening);
     }
 }).catch(function() {
-    logger.error('CRITICAL: The indexes could not be created, the server is not starting')
+    logger.error('CRITICAL: The indexes could not be created, the server is not starting');
 });
 
 

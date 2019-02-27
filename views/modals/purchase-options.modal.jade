@@ -46,7 +46,7 @@
             .terms-container
               div(ng-repeat="term in createVM.terms")
                 .h3(style="margin-top: 20px;")
-                  strong #{ __("Terms and condition") }
+                  strong #{ __("Terms and conditions") }
                 .h4.text-dark-secondary
                   strong {{ term.name }}
                 pre(ng-if="term.type == 'Custom'") {{ term.description }}

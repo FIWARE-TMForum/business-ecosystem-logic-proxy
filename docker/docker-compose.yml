@@ -1,5 +1,17 @@
 version: '3'
 services:
+    elasticsearch:
+        image: docker.elastic.co/elasticsearch/elasticsearch:6.4.2
+        environment:
+            - discovery.type=single-node
+            # - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+            # ulimits:
+            #   memlock:
+            #       soft: -1
+            #       hard: -1
+        ports:
+            - "127.0.0.1:9200:9200"
+
     mongo:
         image: mongo:3.2
         ports:
@@ -11,13 +23,15 @@ services:
         image: fiware/biz-ecosystem-logic-proxy:develop
         links:
             - mongo
+            - elasticsearch
         depends_on:
             - mongo
+            - elasticsearch
         ports:
             - 8000:8000
         volumes:
             # - ./proxy-conf:/business-ecosystem-logic-proxy/etc  # To be used when congiguring the system with a config file provided in the volume
-            - ./proxy-indexes:/business-ecosystem-logic-proxy/indexes
+            # - ./proxy-indexes:/business-ecosystem-logic-proxy/indexes  # To be used only for locan indexes
             - ./proxy-themes:/business-ecosystem-logic-proxy/themes
             - ./proxy-static:/business-ecosystem-logic-proxy/static
             - ./proxy-locales:/business-ecosystem-logic-proxy/locales
