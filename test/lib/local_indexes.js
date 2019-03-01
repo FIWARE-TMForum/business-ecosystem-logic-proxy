@@ -1,6 +1,6 @@
 /* global expect, it, jasmine, describe */
 
-/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2019 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -21,7 +21,11 @@
 
 'use strict';
 
-var proxyrequire = require('proxyquire');
+var proxyrequire = require("proxyquire"),
+    md5 = require("blueimp-md5"),
+    testUtils = require("../utils.js"),
+    Readable = require('stream').Readable,
+    Transform = require('stream').Transform;
 
 var md5 = require('blueimp-md5');
 
@@ -159,11 +163,15 @@ describe('Test index helper library', function() {
             './../config.js': testUtils.getDefaultConfig()
         });
 
-        return proxyrequire('../../lib/indexes.js', {
-            'search-index': method,
-            request: request,
-            './utils': mockUtils,
-            levelup: level,
+        let localIndexes = proxyrequire("../../lib/local_indexes.js", {
+            "search-index": method,
+            "levelup": level
+        });
+
+        return proxyrequire("../../lib/indexes.js", {
+            "request": request,
+            "./utils": mockUtils,
+            './local_indexes': localIndexes,
             '../config': testUtils.getDefaultConfig()
         });
     };

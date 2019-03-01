@@ -103,15 +103,35 @@ var defaultConfig = {
             host: 'usage.com',
             port: 78,
             appSsl: false
+        },
+        sla: {
+            path: 'SLAManagement',
+            host: 'localhost',
+            port: 80,
+            appSsl: false
+        },
+        reputation: {
+            path: 'REPManagement',
+            host: 'localhost',
+            port: 80,
+            appSsl: false
         }
     },
     billingAccountOwnerRole: 'bill receiver',
-    revenueModel: 30
+    revenueModel: 30,
+    indexes : {
+	    'engine': 'local', // 'elastic_indexes.js' if using elasticsearch
+	    'elasticHost': 'http://imaginary-elastic.docker:9200/' // hostname:port
+    }
 };
 
 exports.getDefaultConfig = function() {
     // Return a copy to avoid side effects
     return JSON.parse(JSON.stringify(defaultConfig));
+};
+
+exports.getIndexesPath = function() {
+    return defaultConfig.indexes.indexFile;
 };
 
 var emptyFunction = function() {};

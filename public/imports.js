@@ -58,6 +58,7 @@ let jsAppFilesToInject = [
     'services/sharing-models.service',
     'services/asset.service',
     'services/asset-type.service',
+    'services/datastore.service',
     'services/product-order.service',
     'services/shopping-cart.service',
     'services/inventory-product.service',

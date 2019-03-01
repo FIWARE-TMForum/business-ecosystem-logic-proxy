@@ -747,7 +747,10 @@ describe('Auth lib', function() {
             var userProfile = {
                 id: 'test_user',
                 appId: config.oauth2.clientID,
-                accessToken: 'token'
+                accessToken: 'token',
+                _json: {
+                    username: 'test_user'
+                }
             };
 
             var auth = getAuthLib(strategy, {}, null, {});
@@ -771,7 +774,10 @@ describe('Auth lib', function() {
                 id: 'test_user',
                 appId: config.oauth2.clientID,
                 accessToken: 'token',
-                expire: Date.now() + 3600000
+                expire: Date.now() + 3600000,
+                _json: {
+                    username: 'test_user'
+                }
             };
 
             var auth = getAuthLib(strategy, {}, null, {});
@@ -819,7 +825,10 @@ describe('Auth lib', function() {
 
             var userProfile = {
                 id: 'test_user',
-                appId: 'extApp'
+                appId: 'extApp',
+                _json: {
+                    username: 'test_user'
+                }
             };
 
             var resExp = {};
@@ -889,7 +898,10 @@ describe('Auth lib', function() {
 
             var extProfile = {
                 id: 'test_user',
-                appId: 'extApp'
+                appId: 'extApp',
+                _json: {
+                    username: 'test_user'
+                }
             };
 
             var savedProfile = {
@@ -902,7 +914,10 @@ describe('Auth lib', function() {
             var intProfile = {
                 id: 'test_user',
                 accessToken: validToken,
-                appId: config.oauth2.clientID
+                appId: config.oauth2.clientID,
+                _json: {
+                    username: 'test_user'
+                }
             };
 
             var calls = {
@@ -972,14 +987,20 @@ describe('Auth lib', function() {
 
             var extProfile = {
                 id: 'test_user',
-                appId: 'extApp'
+                appId: 'extApp',
+                _json: {
+                    username: 'test_user'
+                }
             };
 
             var intProfile = {
                 id: 'test_user',
                 accessToken: 'token',
                 appId: config.oauth2.clientID,
-                expire: Date.now() + 3600000
+                expire: Date.now() + 3600000,
+                _json: {
+                    username: 'test_user'
+                }
             };
 
             var savedProfile = {

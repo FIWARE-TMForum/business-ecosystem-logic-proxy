@@ -696,8 +696,6 @@ var ordering = (function() {
                     currentUsers.push(party.id);
                 });
 
-                //var modified = false;
-
                 ordering.relatedParty.forEach(function(party) {
                     if (currentUsers.indexOf(party.id) < 0) {
                         billingAccountRelatedParties.push({
@@ -705,34 +703,24 @@ var ordering = (function() {
                             href: party.href,
                             role: 'bill responsible'
                         });
-
-                        //modified = true;
                     }
                 });
 
-                // if (modified) {
+                request(billingAccountUrl, {
+                    method: 'PATCH',
+                    json: { relatedParty: billingAccountRelatedParties }
+                }, function(err, response) {
 
-                request(
-                    billingAccountUrl,
-                    {
-                        method: 'PATCH',
-                        json: { relatedParty: billingAccountRelatedParties }
-                    },
-                    function(err, response) {
-                        if (err || response.statusCode >= 400) {
-                            callback({
-                                status: 500,
-                                message: 'Unexpected error when updating the given billing account'
-                            });
-                        } else {
-                            callback(null);
-                        }
+                    if (err || response.statusCode >= 400) {
+                        callback({
+                            status: 500,
+                            message: 'Unexpected error when updating the given billing account'
+                        })
+                    } else {
+                        callback(null);
                     }
-                );
+                });
 
-                // } else {
-                //     callback(null);
-                // }
             } else {
                 callback({
                     status: 500,

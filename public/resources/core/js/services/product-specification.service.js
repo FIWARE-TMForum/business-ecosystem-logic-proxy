@@ -203,17 +203,12 @@
                     return productSpec.serialize();
                 })
             });
-
-            ProductSpec.save(
-                data,
-                function(productSpecCreated) {
-                    productSpecCreated.bundledProductSpecification = bundledProductSpecification;
-                    deferred.resolve(productSpecCreated);
-                },
-                function(response) {
-                    deferred.reject(response);
-                }
-            );
+            ProductSpec.save(data, function (productSpecCreated) {
+                productSpecCreated.bundledProductSpecification = bundledProductSpecification;
+                deferred.resolve(productSpecCreated);
+            }, function (response) {
+                deferred.reject(response);
+            });
 
             return deferred.promise;
         }

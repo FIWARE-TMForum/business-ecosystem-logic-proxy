@@ -26,7 +26,7 @@
               .h3(style="margin-top: 20px;")
                 strong {{ product.name }}
 
-              .form-group(ng-repeat="charObject in product.characteristics")
+              .form-group(ng-repeat="charObject in product.characteristics" ng-show="charObject.characteristic.name != 'appId'")
                 .h4.text-dark-secondary
                   strong {{ charObject.characteristic.name }}
                 hr
@@ -44,12 +44,13 @@
                 ng-model="createVM.selectedOffering")
 
             .terms-container
-              div(ng-repeat="term in createVM.terms" ng-show="term.offId == createVM.selectedOffering.id")
+              div(ng-repeat="term in createVM.terms")
                 .h3(style="margin-top: 20px;")
-                  strong {{ term.name }}
+                  strong #{ __("Terms and conditions") }
                 .h4.text-dark-secondary
-                  strong {{ term.title }}
-                pre {{ term.text }}
+                  strong {{ term.name }}
+                pre(ng-if="term.type == 'Custom'") {{ term.description }}
+                pre(ng-if="term.type == 'Standard'") <a ng-href="{{term.description}}" target="_blank"> {{ term.description }} </a>
 
             hr
             input(type="checkbox" ng-model="createVM.termsAccepted")

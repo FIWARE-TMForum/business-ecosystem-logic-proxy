@@ -1,4 +1,7 @@
 var authorizeService = require('./controllers/authorizeService').authorizeService,
+    apiKeyService = require('./controllers/apiKeyService').apiKeyService,
+    slaService = require('./controllers/slaService').slaService,
+    reputationService = require('./controllers/reputationService').reputationService,
     bodyParser = require('body-parser'),
     base64url = require('base64url'),
     config = require('./config'),
@@ -70,7 +73,7 @@ if (!!process.env.BAE_SERVICE_HOST) {
         enabled: true,
         host: parsedUrl.hostname,
         port: parsedUrl.port,
-        secured: parsedUrl.protocol == 'https'
+        secured: parsedUrl.protocol == 'https:'
     };
 }
 
@@ -106,6 +109,9 @@ config.proxyPrefix = checkPrefix(config.proxyPrefix, '');
 config.portalPrefix = checkPrefix(config.portalPrefix, '');
 config.shoppingCartPath = checkPrefix(config.shoppingCartPath, '/shoppingCart');
 config.authorizeServicePath = checkPrefix(config.authorizeServicePath, '/authorizeService');
+config.apiKeyServicePath = checkPrefix(config.apiKeyServicePath, '/apiKeyService');
+config.slaServicePath = checkPrefix(config.slaServicePath, '/SLAManagement');
+config.reputationServicePath = checkPrefix(config.reputationServicePath, '/REPManagement');
 config.logInPath = config.logInPath || '/login';
 config.logOutPath = config.logOutPath || '/logout';
 
@@ -218,6 +224,7 @@ var PORT = config.https.enabled
 config.usageChartURL = process.env.BAE_LP_USAGE_CHART || config.usageChartURL;
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+
 
 auth = auth.auth();
 tmf = tmf.tmf();
@@ -436,9 +443,30 @@ app.get('/' + config.endpoints.management.path + '/count/:size', management.getC
 ///////////////////////// AUTHORIZE SERVICE /////////////////////////
 /////////////////////////////////////////////////////////////////////
 
-app.use(config.authorizeServicePath + '/*', checkMongoUp);
-app.post(config.authorizeServicePath + '/apiKeys', authorizeService.getApiKey);
-app.post(config.authorizeServicePath + '/apiKeys/:apiKey/commit', authorizeService.commitApiKey);
+app.use(config.apiKeyServicePath + '/*', checkMongoUp);
+app.post(config.apiKeyServicePath + '/apiKeys', apiKeyService.getApiKey);
+app.post(config.apiKeyServicePath + '/apiKeys/:apiKey/commit', apiKeyService.commitApiKey);
+
+app.use(config.authorizeServicePath + '/*', checkMongoUp, auth.headerAuthentication, auth.checkOrganizations, auth.setPartyObj, failIfNotAuthenticated);
+app.post(config.authorizeServicePath + '/token', authorizeService.saveAppToken);
+app.post(config.authorizeServicePath + '/read', authorizeService.getAppToken);
+
+/////////////////////////////////////////////////////////////////////
+///////////////////////// SLA SERVICE ///////////////////////////////
+/////////////////////////////////////////////////////////////////////
+
+app.use(config.slaServicePath + '/*', checkMongoUp, auth.headerAuthentication, auth.checkOrganizations, auth.setPartyObj);
+app.get(config.slaServicePath + '/sla/:id', slaService.getSla);
+app.post(config.slaServicePath + '/sla', failIfNotAuthenticated, slaService.saveSla);
+
+/////////////////////////////////////////////////////////////////////
+///////////////////////// REPUTAION SERVICE /////////////////////////
+/////////////////////////////////////////////////////////////////////
+app.use(config.reputationServicePath + '/*', checkMongoUp);
+app.use(config.reputationServicePath + '/reputation/set', checkMongoUp, auth.headerAuthentication, auth.checkOrganizations, auth.setPartyObj, failIfNotAuthenticated);
+app.get(config.reputationServicePath + '/reputation', reputationService.getOverallReputation);
+app.get(config.reputationServicePath + '/reputation/:id/:consumerId', reputationService.getReputation);
+app.post(config.reputationServicePath + '/reputation/set', reputationService.saveReputation);
 
 /////////////////////////////////////////////////////////////////////
 /////////////////////////////// PORTAL //////////////////////////////
@@ -449,7 +477,6 @@ var importPath = config.theme || !debug ? './static/public/imports' : './public/
 var imports = require(importPath).imports;
 
 var renderTemplate = function(req, res, viewName) {
-    // TODO: Maybe an object with extra properties (if required)
     var options = {
         user: req.user,
         contextPath: config.portalPrefix,
@@ -482,7 +509,6 @@ var renderTemplate = function(req, res, viewName) {
     options.jsAppFilesToInject = options.jsAppFilesToInject.concat(imports.jsStockFilesToInject);
 
     res.render(viewName, options);
-
     res.end();
 };
 
@@ -589,49 +615,46 @@ app.use(function(err, req, res, next) {
 /////////////////////////////////////////////////////////////////////
 
 // Initialize indexes
-indexes
-    .init()
-    .then(function() {
-        logger.info('Business Ecosystem Logic Proxy starting on port ' + PORT);
-        if (config.https.enabled === true) {
-            var options = {
-                secureOptions: constants.SSL_OP_NO_SSLv3 | constants.SSL_OP_NO_SSLv2,
-                ciphers: [
-                    'ECDHE-RSA-AES256-SHA384',
-                    'DHE-RSA-AES256-SHA384',
-                    'ECDHE-RSA-AES256-SHA256',
-                    'DHE-RSA-AES256-SHA256',
-                    'ECDHE-RSA-AES128-SHA256',
-                    'DHE-RSA-AES128-SHA256',
-                    'HIGH',
-                    '!aNULL',
-                    '!eNULL',
-                    '!EXPORT',
-                    '!DES',
-                    '!RC4',
-                    '!MD5',
-                    '!PSK',
-                    '!SRP',
-                    '!CAMELLIA'
-                ].join(':'),
-                honorCipherOrder: true,
-                key: fs.readFileSync(config.https.keyFile),
-                cert: fs.readFileSync(config.https.certFile),
-                ca: fs.readFileSync(config.https.caFile)
-            };
+indexes.init().then(function() {
+    logger.info('Business Ecosystem Logic Proxy starting on port ' + PORT);
+    if (config.https.enabled === true) {
 
-            https
-                .createServer(options, function(req, res) {
-                    app.handle(req, res);
-                })
-                .listen(app.get('port'), onlistening);
-        } else {
-            app.listen(app.get('port'), onlistening);
-        }
-    })
-    .catch(function() {
-        logger.error('CRITICAL: The indexes could not be created, the server is not starting');
-    });
+        var options = {
+            secureOptions: constants.SSL_OP_NO_SSLv3 | constants.SSL_OP_NO_SSLv2,
+            ciphers: [
+                "ECDHE-RSA-AES256-SHA384",
+                "DHE-RSA-AES256-SHA384",
+                "ECDHE-RSA-AES256-SHA256",
+                "DHE-RSA-AES256-SHA256",
+                "ECDHE-RSA-AES128-SHA256",
+                "DHE-RSA-AES128-SHA256",
+                "HIGH",
+                "!aNULL",
+                "!eNULL",
+                "!EXPORT",
+                "!DES",
+                "!RC4",
+                "!MD5",
+                "!PSK",
+                "!SRP",
+                "!CAMELLIA"
+            ].join(':'),
+            honorCipherOrder: true,
+            key: fs.readFileSync(config.https.keyFile),
+            cert: fs.readFileSync(config.https.certFile),
+            ca: fs.readFileSync(config.https.caFile)
+        };
+
+        https.createServer(options, function(req,res) {
+            app.handle(req, res);
+        }).listen(app.get('port'), onlistening);
+    } else {
+        app.listen(app.get('port'), onlistening);
+    }
+}).catch(function() {
+    logger.error('CRITICAL: The indexes could not be created, the server is not starting');
+});
+
 
 function onlistening() {
     var request = require('request');

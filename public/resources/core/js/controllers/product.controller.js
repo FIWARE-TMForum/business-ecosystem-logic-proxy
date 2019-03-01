@@ -31,77 +31,26 @@
 
     angular
         .module('app')
-        .controller('ProductSearchCtrl', [
-            '$scope',
-            '$state',
-            '$timeout',
-            '$rootScope',
-            'EVENTS',
-            'ProductSpec',
-            'LIFECYCLE_STATUS',
-            'DATA_STATUS',
-            'Utils',
-            ProductSearchController
-        ])
+        .controller('ProductSearchCtrl', ['$scope', '$state', '$timeout', '$rootScope', 'EVENTS', 'ProductSpec',
+            'LIFECYCLE_STATUS', 'DATA_STATUS', 'Utils', ProductSearchController])
 
-        .controller('ProductCreateCtrl', [
-            '$q',
-            '$scope',
-            '$state',
-            '$rootScope',
-            'EVENTS',
-            'PROMISE_STATUS',
-            'ProductSpec',
-            'Asset',
-            'AssetType',
-            'Utils',
-            ProductCreateController
-        ])
+        .controller('ProductCreateCtrl', ['$q', '$scope', '$state', '$rootScope', 'EVENTS', 'PROMISE_STATUS',
+            'ProductSpec', 'Asset', 'AssetType', 'Utils', ProductCreateController])
 
-        .controller('ProductUpdateCtrl', [
-            '$state',
-            '$scope',
-            '$rootScope',
-            'EVENTS',
-            'PROMISE_STATUS',
-            'ProductSpec',
-            'Utils',
-            'Asset',
-            ProductUpdateController
-        ])
+        .controller('ProductImportCtrl', ['$q', '$scope', '$state', '$rootScope', '$http', 'EVENTS', 'PROMISE_STATUS',
+            'ProductSpec', 'Asset', 'AssetType', 'Utils', ProductImportController])
 
-        .controller('ProductUpgradeCtrl', [
-            '$state',
-            '$rootScope',
-            '$element',
-            'AssetType',
-            'ProductSpec',
-            'Utils',
-            'EVENTS',
-            ProductUpgradeController
-        ])
+        .controller('ProductUpdateCtrl', ['$state', '$scope', '$rootScope', 'EVENTS', 'PROMISE_STATUS', 'ProductSpec',
+            'Utils', 'Asset', ProductUpdateController])
 
-        .controller('AssetController', [
-            '$scope',
-            '$rootScope',
-            'Asset',
-            'ProductSpec',
-            'Utils',
-            'EVENTS',
-            AssetController
-        ]);
+        .controller('ProductUpgradeCtrl', ['$state', '$rootScope', '$element', 'AssetType', 'ProductSpec', 'Utils',
+            'EVENTS', ProductUpgradeController])
 
-    function ProductSearchController(
-        $scope,
-        $state,
-        $timeout,
-        $rootScope,
-        EVENTS,
-        ProductSpec,
-        LIFECYCLE_STATUS,
-        DATA_STATUS,
-        Utils
-    ) {
+        .controller('AssetController', ['$scope', '$rootScope', 'Asset', 'ProductSpec', 'Utils', 'EVENTS', AssetController]);
+
+
+
+    function ProductSearchController($scope, $state, $timeout, $rootScope, EVENTS, ProductSpec, LIFECYCLE_STATUS, DATA_STATUS, Utils) {
         /* jshint validthis: true */
         var vm = this;
         var filters = {};
@@ -347,6 +296,391 @@
         clearFileInput();
     }
 
+    function ProductImportController($q, $scope, $state, $rootScope, $http, EVENTS, PROMISE_STATUS, ProductSpec, Asset, AssetType, Utils){
+        var vm =this;
+        var createPromise = null;
+        var stepList = [
+            {
+                title: 'Datastore',
+                templateUrl: 'stock/product/import/datastore'
+            },
+            {
+                title: 'Finish',
+                templateUrl: 'stock/product/import/finish'
+            }
+        ];
+
+        vm.STATUS = PROMISE_STATUS;
+        vm.stepList = stepList;
+        vm.assetTypes = [];
+        vm.charList = [];
+        vm.isDigital = false;
+        vm.digitalChars = [];
+        vm.terms = {};
+        vm.characteristicEnabled = false;
+        vm.pictureFormat = "url";
+
+        vm.create = create;
+        vm.setCurrentType = setCurrentType;
+
+        vm.toggleBundle = toggleBundle;
+
+        vm.hasProduct = hasProduct;
+        vm.toggleProduct = toggleProduct;
+
+        vm.isSelected = isSelected;
+
+        vm.createRelationship = createRelationship;
+        vm.removeRelationship = removeRelationship;
+
+        /* CHARACTERISTICS MEMBERS */
+
+        var characteristic = ProductSpec.createCharacteristic();
+        var characteristicValue = ProductSpec.createCharacteristicValue();
+
+        vm.VALUE_TYPES = ProductSpec.VALUE_TYPES;
+
+        vm.characteristic = angular.copy(characteristic);
+        vm.characteristicValue = angular.copy(characteristicValue);
+        vm.characteristics = [];
+
+        vm.createCharacteristic = createCharacteristic;
+        vm.removeCharacteristic = removeCharacteristic;
+        vm.createCharacteristicValue = createCharacteristicValue;
+        vm.removeCharacteristicValue = removeCharacteristicValue;
+
+        vm.setDefaultValue = setDefaultValue;
+        vm.getDefaultValueOf = getDefaultValueOf;
+
+        vm.resetCharacteristicValue = resetCharacteristicValue;
+        vm.getFormattedValueOf = getFormattedValueOf;
+        vm.clearFileInput = clearFileInput;
+
+        function createRelationship(data) {
+            var deferred = $q.defer();
+
+            vm.data.productSpecificationRelationship.push(data);
+            deferred.resolve(vm.data);
+
+            return deferred.promise;
+        }
+
+        function removeRelationship(index) {
+            var deferred = $q.defer();
+
+            vm.data.productSpecificationRelationship.splice(index, 1);
+            deferred.resolve(vm.data);
+
+            return deferred.promise;
+        }
+
+        /* CHARACTERISTICS METHODS */
+
+        function createCharacteristic() {
+            vm.characteristics.push(vm.characteristic);
+            vm.characteristic = angular.copy(characteristic);
+            vm.characteristicValue = angular.copy(characteristicValue);
+            vm.characteristicEnabled = false;
+            return true;
+        }
+
+        function removeCharacteristic(index) {
+            vm.characteristics.splice(index, 1);
+        }
+
+        function createCharacteristicValue() {
+            vm.characteristicValue.default = getDefaultValueOf(vm.characteristic) == null;
+            vm.characteristic.productSpecCharacteristicValue.push(vm.characteristicValue);
+            vm.characteristicValue = angular.copy(characteristicValue);
+
+            if (vm.characteristic.productSpecCharacteristicValue.length > 1) {
+                vm.characteristic.configurable = true;
+            }
+
+            return true;
+        }
+
+        function removeCharacteristicValue(index) {
+            var value = vm.characteristic.productSpecCharacteristicValue[index];
+            vm.characteristic.productSpecCharacteristicValue.splice(index, 1);
+
+            if (value.default && vm.characteristic.productSpecCharacteristicValue.length) {
+                vm.characteristic.productSpecCharacteristicValue[0].default = true;
+            }
+
+            if (vm.characteristic.productSpecCharacteristicValue.length <= 1) {
+                vm.characteristic.configurable = false;
+            }
+        }
+
+        function getDefaultValueOf(characteristic) {
+            var i, defaultValue;
+
+            for (i = 0; i < characteristic.productSpecCharacteristicValue.length; i++) {
+                if (characteristic.productSpecCharacteristicValue[i].default) {
+                    defaultValue = characteristic.productSpecCharacteristicValue[i];
+                }
+            }
+
+            return defaultValue;
+        }
+
+        function getFormattedValueOf(characteristic, characteristicValue) {
+            var result;
+
+            switch (characteristic.valueType) {
+            case ProductSpec.VALUE_TYPES.STRING:
+                result = characteristicValue.value;
+                break;
+            case ProductSpec.VALUE_TYPES.NUMBER:
+                result = characteristicValue.value + " " + characteristicValue.unitOfMeasure;
+                break;
+            case ProductSpec.VALUE_TYPES.NUMBER_RANGE:
+                result = characteristicValue.valueFrom + " - " + characteristicValue.valueTo + " " + characteristicValue.unitOfMeasure;
+            }
+
+            return result;
+        }
+
+        function resetCharacteristicValue() {
+            vm.characteristicValue = angular.copy(characteristicValue);
+            vm.characteristic.productSpecCharacteristicValue.length = 0;
+        }
+
+        function setDefaultValue(index) {
+            var value = getDefaultValueOf(vm.characteristic);
+
+            if (value != null) {
+                value.default = false;
+            }
+
+            vm.characteristic.productSpecCharacteristicValue[index].default = true;
+        }
+
+        AssetType.search().then(function (typeList) {
+            angular.copy(typeList, vm.assetTypes);
+
+            if (typeList.length) {
+                // Initialize digital asset characteristics
+                vm.digitalChars.push(ProductSpec.createCharacteristic({
+                    name: "Asset type",
+                    description: "Type of the digital asset described in this product specification"
+                }));
+                vm.digitalChars[0].productSpecCharacteristicValue.push(ProductSpec.createCharacteristicValue({
+                    default: true,
+                    value: typeList[0].name
+                }));
+                vm.digitalChars.push(ProductSpec.createCharacteristic({
+                    name: "Media type",
+                    description: "Media type of the digital asset described in this product specification"
+                }));
+                vm.digitalChars[1].productSpecCharacteristicValue.push(ProductSpec.createCharacteristicValue({
+                    default: true
+                }));
+                vm.digitalChars.push(ProductSpec.createCharacteristic({
+                    name: "Location",
+                    description: "URL pointing to the digital asset described in this product specification"
+                }));
+                vm.digitalChars[2].productSpecCharacteristicValue.push(ProductSpec.createCharacteristicValue({
+                    default: true
+                }));
+                vm.currentType = typeList[0];
+                vm.currFormat = vm.currentType.formats[0];
+            }
+        });
+
+        function isSelected(format) {
+            return vm.currFormat === format;
+        }
+
+        function filterProduct(product) {
+            var i = -1;
+            vm.data.bundledProductSpecification.forEach(function (bundledProduct, index) {
+                if (bundledProduct.id == product.id) {
+                    i = index;
+                }
+            });
+            return i;
+        }
+
+        function toggleProduct(product) {
+            var index = filterProduct(product);
+
+            if (index !== -1) {
+                vm.data.bundledProductSpecification.splice(index, 1);
+            } else {
+                vm.data.bundledProductSpecification.push(product);
+            }
+
+            stepList[1].form.$valid = vm.data.bundledProductSpecification.length >= 2;
+        }
+
+        function toggleBundle() {
+            if (!vm.data.isBundle) {
+                vm.data.bundledProductSpecification.length = 0;
+                stepList[1].form.$valid = true;
+            } else {
+                stepList[1].form.$valid = false;
+            }
+        }
+
+        function hasProduct(product) {
+            return filterProduct(product) > -1;
+        }
+
+        function uploadAsset(file, contentType, publicFile, callback, errCallback) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var data = {
+                    content: {
+                        name: file.name,
+                        data: btoa(e.target.result)
+                    },
+                    contentType: contentType
+                };
+
+                if (publicFile) {
+                    data.isPublic = true;
+                }
+
+                Asset.create(data).then(callback, errCallback);
+            };
+            reader.readAsBinaryString(file);
+        }
+
+        function create() {
+            importCkanPackages();
+        }
+
+        function importCkanPackages(){
+            var proxyServerUrl = 'http://127.0.0.1:5000/ckan/packages'
+            var postData = {'url': vm.datastore.baseUrl}
+            $http.post(proxyServerUrl, postData).then(function successCallback(response){
+                var testing = true;
+                var l = testing?10:response.data.result.length;
+                if(vm.datastore.baseUrl.endsWith("/")){
+                                vm.datastore.baseUrl = vm.datastore.baseUrl.slice(0, -1);
+                            }
+                for(var i=0; i<l;i++){
+                            registerCkanPackage(response.data.result[i], i+1);
+                        }
+            });
+        }
+
+        function initializeCharacteristic(){
+            // Initialize digital asset characteristics
+            vm.isDigital = true;
+            vm.digitalChars.push(ProductSpec.createCharacteristic({
+                name: "Asset type",
+                description: "Type of the digital asset described in this product specification"
+            }));
+            vm.digitalChars[0].productSpecCharacteristicValue = [];
+            vm.digitalChars[0].productSpecCharacteristicValue.push(ProductSpec.createCharacteristicValue({
+                default: true,
+                value: "Basic Service"
+            }));
+            vm.digitalChars.push(ProductSpec.createCharacteristic({
+                name: "Media type",
+                description: "Media type of the digital asset described in this product specification"
+            }));
+            vm.digitalChars[1].productSpecCharacteristicValue.push(ProductSpec.createCharacteristicValue({
+                default: true
+            }));
+            vm.digitalChars.push(ProductSpec.createCharacteristic({
+                name: "Location",
+                description: "URL pointing to the digital asset described in this product specification"
+            }));
+        }
+
+        function resetData(){
+            vm.data = null;
+            vm.digitalChars = [];
+            vm.characteristics = [];
+            vm.data = ProductSpec.buildInitialData();
+            initializeCharacteristic();
+        }
+
+
+        function registerCkanPackage(packageName, productNumber){
+            var proxyServerUrl = 'http://127.0.0.1:5000/ckan/package/description'
+            var postData = {'url': vm.datastore.baseUrl, 'id':packageName}
+            $http.post(proxyServerUrl, postData).then(function successCallback(response){
+                resetData();
+                vm.data.name = packageName;
+                vm.data.productNumber = productNumber;
+                vm.data.description = response.data;
+                vm.digitalChars[2].productSpecCharacteristicValue.push(ProductSpec.createCharacteristicValue({
+                    default: true,
+                    value: vm.datastore.baseUrl + "/dataset/" + packageName
+                }));
+                saveProduct(vm, createPromise, ProductSpec, $state, $rootScope, Utils, EVENTS);
+            });
+        }
+
+        Object.defineProperty(create, 'status', {
+            get: function () { return createPromise != null ? createPromise.$$state.status : -1; }
+        });
+
+        function setCurrentType() {
+            var i, found = false;
+            var assetType = vm.digitalChars[0].productSpecCharacteristicValue[0].value;
+
+            for (i = 0; i < vm.assetTypes.length && !found; i++) {
+
+                if (assetType === vm.assetTypes[i].name) {
+                    found = true;
+                    vm.currentType = vm.assetTypes[i];
+                }
+            }
+            vm.currFormat = vm.currentType.formats[0];
+        }
+
+
+        function clearFileInput() {
+            if (!vm.stepList[4].form.pictureFile) {
+                vm.stepList[4].form.pictureFile = {};
+            } else {
+                // Reset possible previous errors
+                vm.stepList[4].form.pictureFile.$invalid = false;
+                vm.stepList[4].form.pictureFile.$error = {};
+            }
+        }
+
+        $scope.$watch(function watchFile(scope) {
+            return vm.pictureFile;
+        }, function() {
+            // Check that the new file is a valid image
+            if (vm.pictureFile) {
+                vm.clearFileInput();
+                vm.stepList[4].form.pictureFile.$dirty = true;
+
+                if (vm.pictureFile.type != 'image/gif' && vm.pictureFile.type != 'image/jpeg' &&
+                vm.pictureFile.type != 'image/png' && vm.pictureFile.type != 'image/bmp') {
+
+                    // Set input error
+                    vm.stepList[4].form.pictureFile.$invalid = true;
+                    vm.stepList[4].form.pictureFile.$error = {
+                        format: true
+                    };
+                    return;
+                }
+
+                // Upload the file to the server when it is included in the input
+                uploadAsset(vm.pictureFile, vm.pictureFile.type, true, function(result) {
+                    vm.data.attachment[0].url = result.content
+                }, function() {
+                    // The picture cannot be uploaded set error in input
+                    vm.stepList[4].form.pictureFile.$invalid = true;
+                    vm.stepList[4].form.pictureFile.$error = {
+                        upload: true
+                    };
+                });
+            }
+        });
+
+    }
+
+
     function AssetController($scope, $rootScope, Asset, ProductSpec, Utils, EVENTS) {
         var controller = $scope.vm;
         var form = null;
@@ -435,6 +769,17 @@
                     assetId
                 );
             } else if (controller.isDigital && vm.currFormat === 'URL') {
+                if(meta !== null && meta !== undefined && meta.idPattern !== undefined){
+                    var entity_id = "<entity_id>"
+                    var entity_type = ""
+                    var idPattern = meta.idPattern.split(":")
+                    if (idPattern.length > 6){
+                        entity_id = idPattern[6]
+                    }
+                    entity_type = idPattern[2]
+                    var end_point = vm.digitalChars[2].productSpecCharacteristicValue[0].value + "/v2/entities/" + entity_id + "/attrs/" + "<attribute>?type=" + entity_type
+                    vm.digitalChars[2].productSpecCharacteristicValue[0].value = end_point
+                }
                 registerM(
                     vm.digitalChars[2].productSpecCharacteristicValue[0].value,
                     vm.digitalChars[0].productSpecCharacteristicValue[0].value,
@@ -465,6 +810,10 @@
             return vm.digitalChars;
         }
 
+        function getMetaInfo() {
+            return vm.meta;
+        }
+
         function initMediaType() {
             if (vm.currentType.mediaTypes.length > 0) {
                 vm.digitalChars[1].productSpecCharacteristicValue[0].value = vm.currentType.mediaTypes[0];
@@ -486,6 +835,7 @@
             saveAsset: saveAsset,
             upgradeAsset: upgradeAsset,
             getDigitalChars: getDigitalChars,
+            getMetaInfo: getMetaInfo,
             isValidAsset: isValidAsset
         };
 
@@ -563,7 +913,7 @@
                 title: 'General',
                 templateUrl: 'stock/product/create/general'
             },
-            {
+           {
                 title: 'Bundle',
                 templateUrl: 'stock/product/create/bundle'
             },
@@ -583,10 +933,10 @@
                 title: 'Relationships',
                 templateUrl: 'stock/product/create/relationships'
             },
-            {
+            /*{
                 title: 'Terms & Conditions',
                 templateUrl: 'stock/product/create/terms'
-            },
+            },*/
             {
                 title: 'Finish',
                 templateUrl: 'stock/product/create/finish'
@@ -821,6 +1171,49 @@
 
             if (vm.isDigital) {
                 data.productSpecCharacteristic = data.productSpecCharacteristic.concat(vm.assetCtl.getDigitalChars());
+                
+                var metaInfo = vm.assetCtl.getMetaInfo();
+                if (metaInfo.application_id !== undefined) {
+                    // Include the application ID
+                    var appId = metaInfo.application_id;
+                    var appIdChar = ProductSpec.createCharacteristic({
+                        name: 'appId',
+                        description: 'Application ID of the data source described in this product specification'
+                    });
+    
+                    appIdChar.productSpecCharacteristicValue.push(ProductSpec.createCharacteristicValue({
+                        default: true,
+                        value: appId
+                    }));
+    
+                    data.productSpecCharacteristic.push(appIdChar);
+                }
+
+                if (metaInfo.service !== undefined) {
+                    // Include the Fiware-Service
+                    var fiware_service = metaInfo.service;
+                    
+                    if (fiware_service != "") {
+                        var fiware_serviceChar = ProductSpec.createCharacteristic({
+                            name: 'Fiware-Service',
+                            description: 'Fiware-Service of the data source described in this product specification'
+                        });
+                    }
+                    else{
+                        var fiware_serviceChar = ProductSpec.createCharacteristic({
+                            name: 'Fiware-Service',
+                            description: 'Fiware-Service not required for the data source described in this product specification'
+                        });
+                    }
+
+                    fiware_serviceChar.productSpecCharacteristicValue.push(ProductSpec.createCharacteristicValue({
+                        default: true,
+                        value: fiware_service
+                    }));
+    
+                    data.productSpecCharacteristic.push(fiware_serviceChar);
+                }
+                
             }
 
             if (vm.terms.title || vm.terms.text) {

@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2019 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -21,8 +21,8 @@ var async = require('async'),
     config = require('./../../config'),
     deepcopy = require('deepcopy'),
     equal = require('deep-equal'),
-    indexes = require('./../../lib/indexes.js'),
-    leftPad = require('left-pad'),
+    indexes = require('./../../lib/indexes'),
+    leftPad = require("left-pad"),
     logger = require('./../../lib/logger').logger.getLogger('TMF'),
     md5 = require('blueimp-md5'),
     Promise = require('promiz'),
@@ -610,7 +610,7 @@ var catalog = (function() {
                 // Trying to upgrade the product without providing new asset info
                 return callback({
                     status: 422,
-                    message: 'To upgrade digital product specifications it is required to provide new asset info'
+                    message: 'To upgrade product specifications it is required to provide new asset info'
                 });
             }
 

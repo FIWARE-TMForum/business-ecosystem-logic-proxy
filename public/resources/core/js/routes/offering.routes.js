@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 - 2018 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -102,6 +102,14 @@
                 views: {
                     'offering-content': {
                         templateUrl: 'offering/detail/relationship'
+                    }
+                }
+            })
+            .state('offering.detail.licenseSla', {
+                url: '/licensesla',
+                views: {
+                    'offering-content': {
+                        templateUrl: 'offering/detail/licenseSla'
                     }
                 }
             });

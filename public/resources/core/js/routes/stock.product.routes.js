@@ -47,6 +47,11 @@
                 templateUrl: 'stock/product/create',
                 controller: 'ProductCreateCtrl as createVM'
             })
+            .state('stock.product.import', {
+                url: '/import',
+                templateUrl: 'stock/product/import',
+                controller: 'ProductImportCtrl as createVM'
+            })
             .state('stock.product.update', {
                 url: '/:productId',
                 templateUrl: 'stock/product/update',

@@ -50,6 +50,10 @@
                 url: '/characteristic',
                 templateUrl: 'inventory/product/detail/characteristic'
             })
+            .state('inventory.product.detail.access', {
+                url: '/access',
+                templateUrl: 'inventory/product/detail/access'
+            })
             .state('inventory.product.detail.productPrice', {
                 url: '/priceplan',
                 templateUrl: 'inventory/product/detail/priceplan'

@@ -82,13 +82,19 @@
             vm.tabActive = null;
             vm.priceplans = [];
             vm.characteristics = [];
-            vm.terms = [];
             vm.isBundle = productOffering.isBundle;
             vm.bundledOfferings = [];
             vm.selectedOffering = {
                 id: productOffering.id
             };
             vm.termsAccepted = false;
+
+            // Load terms if provided
+            if (productOffering.productOfferingTerm) {
+                vm.terms = productOffering.productOfferingTerm;
+            } else {
+                vm.terms = [];
+            }
 
             $scope.priceplanSelected = null;
 
@@ -182,10 +188,14 @@
         }
 
         function isValid() {
-            return (
-                (!vm.priceplans.length || priceplan != null) &&
-                ((vm.terms.length > 0 && vm.termsAccepted) || !vm.terms.length)
-            );
+            if (vm.terms.length > 0){
+                if (vm.terms[0].type != 'None')
+                    return (!vm.priceplans.length || priceplan != null) && ((vm.terms.length > 0 && vm.termsAccepted) || (!vm.terms.length));
+                else
+                    return (!vm.priceplans.length || priceplan != null);
+            }
+            return false;
+                
         }
 
         function formatCharacteristicValue(characteristic, characteristicValue) {
@@ -284,7 +294,7 @@
         }
 
         function loadTerms() {
-            if (vm.terms.length && vm.tabs.indexOf(vm.legalTab) === -1) {
+            if (vm.terms[0].type != 'None' && vm.tabs.indexOf(vm.legalTab) === -1) {
                 vm.tabs.push(vm.legalTab);
                 if (vm.tabActive == null) {
                     vm.tabActive = vm.legalTab;

@@ -71,7 +71,7 @@
         vm.RELATIONSHIPS = ProductSpec.TYPES.RELATIONSHIP;
         vm.STATUS = DATA_STATUS;
 
-        vm.data = new ProductSpec.Relationship({}, vm.RELATIONSHIPS.MIGRATION.code);
+        vm.data = ProductSpec.Relationship({}, vm.RELATIONSHIPS.MIGRATION.code);
 
         vm.create = create;
         vm.setProductSpec = setProductSpec;
@@ -144,16 +144,13 @@
 
         function create($parentController) {
             createPromise = $parentController.createRelationship(vm.data);
-            createPromise.then(
-                function(productSpec) {
-                    vm.data = new ProductSpec.Relationship({}, vm.RELATIONSHIPS.MIGRATION.code);
-                },
-                function(response) {
-                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
-                        error: Utils.parseError(response, 'Unexpected error trying to create the relationship.')
-                    });
-                }
-            );
+            createPromise.then(function (productSpec) {
+                vm.data = ProductSpec.Relationship({}, vm.RELATIONSHIPS.MIGRATION.code);
+            }, function (response) {
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                    error: Utils.parseError(response, 'Unexpected error trying to create the relationship.')
+                });
+            });
         }
 
         Object.defineProperty(create, 'status', {
@@ -172,7 +169,7 @@
         }
 
         function setProductSpec(productSpec) {
-            vm.data = new ProductSpec.Relationship(productSpec, vm.data.type);
+            vm.data = productSpec.Relationship(productSpec, vm.data.type);
         }
     }
 
