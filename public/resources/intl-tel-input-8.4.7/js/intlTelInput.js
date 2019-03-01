@@ -5,61 +5,63 @@
  */
 // wrap in UMD - see https://github.com/umdjs/umd/blob/master/jqueryPluginCommonjs.js
 (function(factory) {
-    if (typeof define === "function" && define.amd) {
-        define([ "jquery" ], function($) {
+    if (typeof define === 'function' && define.amd) {
+        define(['jquery'], function($) {
             factory($, window, document);
         });
-    } else if (typeof module === "object" && module.exports) {
-        module.exports = factory(require("jquery"), window, document);
+    } else if (typeof module === 'object' && module.exports) {
+        module.exports = factory(require('jquery'), window, document);
     } else {
         factory(jQuery, window, document);
     }
 })(function($, window, document, undefined) {
-    "use strict";
+    'use strict';
     // these vars persist through all instances of the plugin
-    var pluginName = "intlTelInput", id = 1, // give each instance it's own id for namespaced event handling
-    defaults = {
-        // whether or not to allow the dropdown
-        allowDropdown: true,
-        // if there is just a dial code in the input: remove it on blur, and re-add it on focus
-        autoHideDialCode: true,
-        // add or remove input placeholder with an example number for the selected country
-        autoPlaceholder: true,
-        // modify the auto placeholder
-        customPlaceholder: null,
-        // append menu to a specific element
-        dropdownContainer: "",
-        // don't display these countries
-        excludeCountries: [],
-        // format the input value during initialisation
-        formatOnInit: true,
-        // geoIp lookup function
-        geoIpLookup: null,
-        // initial country
-        initialCountry: "",
-        // don't insert international dial codes
-        nationalMode: true,
-        // number type to use for placeholders
-        numberType: "MOBILE",
-        // display only these countries
-        onlyCountries: [],
-        // the countries at the top of the list. defaults to united states and united kingdom
-        preferredCountries: [ "us", "gb" ],
-        // display the country dial code next to the selected flag so it's not part of the typed number
-        separateDialCode: false,
-        // specify the path to the libphonenumber script to enable validation/formatting
-        utilsScript: ""
-    }, keys = {
-        UP: 38,
-        DOWN: 40,
-        ENTER: 13,
-        ESC: 27,
-        PLUS: 43,
-        A: 65,
-        Z: 90,
-        SPACE: 32,
-        TAB: 9
-    };
+    var pluginName = 'intlTelInput',
+        id = 1, // give each instance it's own id for namespaced event handling
+        defaults = {
+            // whether or not to allow the dropdown
+            allowDropdown: true,
+            // if there is just a dial code in the input: remove it on blur, and re-add it on focus
+            autoHideDialCode: true,
+            // add or remove input placeholder with an example number for the selected country
+            autoPlaceholder: true,
+            // modify the auto placeholder
+            customPlaceholder: null,
+            // append menu to a specific element
+            dropdownContainer: '',
+            // don't display these countries
+            excludeCountries: [],
+            // format the input value during initialisation
+            formatOnInit: true,
+            // geoIp lookup function
+            geoIpLookup: null,
+            // initial country
+            initialCountry: '',
+            // don't insert international dial codes
+            nationalMode: true,
+            // number type to use for placeholders
+            numberType: 'MOBILE',
+            // display only these countries
+            onlyCountries: [],
+            // the countries at the top of the list. defaults to united states and united kingdom
+            preferredCountries: ['us', 'gb'],
+            // display the country dial code next to the selected flag so it's not part of the typed number
+            separateDialCode: false,
+            // specify the path to the libphonenumber script to enable validation/formatting
+            utilsScript: ''
+        },
+        keys = {
+            UP: 38,
+            DOWN: 40,
+            ENTER: 13,
+            ESC: 27,
+            PLUS: 43,
+            A: 65,
+            Z: 90,
+            SPACE: 32,
+            TAB: 9
+        };
     // keep track of if the window.load event has fired as impossible to check after the fact
     $(window).load(function() {
         // UPDATE: use a public static field so we can fudge it in the tests
@@ -69,10 +71,10 @@
         this.telInput = $(element);
         this.options = $.extend({}, defaults, options);
         // event namespace
-        this.ns = "." + pluginName + id++;
+        this.ns = '.' + pluginName + id++;
         // Chrome, FF, Safari, IE9+
         this.isGoodBrowser = Boolean(element.setSelectionRange);
-        this.hadInitialPlaceholder = Boolean($(element).attr("placeholder"));
+        this.hadInitialPlaceholder = Boolean($(element).attr('placeholder'));
     }
     Plugin.prototype = {
         _init: function() {
@@ -89,13 +91,15 @@
             // we cannot just test screen size as some smartphones/website meta tags will report desktop resolutions
             // Note: for some reason jasmine breaks if you put this in the main Plugin function with the rest of these declarations
             // Note: to target Android Mobiles (and not Tablets), we must find "Android" and "Mobile"
-            this.isMobile = /Android.+Mobile|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            this.isMobile = /Android.+Mobile|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+                navigator.userAgent
+            );
             if (this.isMobile) {
                 // trigger the mobile dropdown css
-                $("body").addClass("iti-mobile");
+                $('body').addClass('iti-mobile');
                 // on mobile, we want a full screen dropdown, so we must append it to the body
                 if (!this.options.dropdownContainer) {
-                    this.options.dropdownContainer = "body";
+                    this.options.dropdownContainer = 'body';
                 }
             }
             // we return these deferred objects from the _init() call so they can be watched, and then we resolve them when each specific request returns
@@ -113,11 +117,11 @@
             // utils script, and auto country
             this._initRequests();
             // return the deferreds
-            return [ this.autoCountryDeferred, this.utilsScriptDeferred ];
+            return [this.autoCountryDeferred, this.utilsScriptDeferred];
         },
         /********************
-   *  PRIVATE METHODS
-   ********************/
+         *  PRIVATE METHODS
+         ********************/
         // prepare all of the country data, including onlyCountries, excludeCountries and preferredCountries options
         _processCountryData: function() {
             // process onlyCountries or excludeCountries array if present
@@ -187,7 +191,8 @@
         _processPreferredCountries: function() {
             this.preferredCountries = [];
             for (var i = 0; i < this.options.preferredCountries.length; i++) {
-                var countryCode = this.options.preferredCountries[i].toLowerCase(), countryData = this._getCountryData(countryCode, false, true);
+                var countryCode = this.options.preferredCountries[i].toLowerCase(),
+                    countryData = this._getCountryData(countryCode, false, true);
                 if (countryData) {
                     this.preferredCountries.push(countryData);
                 }
@@ -196,58 +201,60 @@
         // generate all of the markup for the plugin: the selected flag overlay, and the dropdown
         _generateMarkup: function() {
             // prevent autocomplete as there's no safe, cross-browser event we can react to, so it can easily put the plugin in an inconsistent state e.g. the wrong flag selected for the autocompleted number, which on submit could mean the wrong number is saved (esp in nationalMode)
-            this.telInput.attr("autocomplete", "off");
+            this.telInput.attr('autocomplete', 'off');
             // containers (mostly for positioning)
-            var parentClass = "intl-tel-input";
+            var parentClass = 'intl-tel-input';
             if (this.options.allowDropdown) {
-                parentClass += " allow-dropdown";
+                parentClass += ' allow-dropdown';
             }
             if (this.options.separateDialCode) {
-                parentClass += " separate-dial-code";
+                parentClass += ' separate-dial-code';
             }
-            this.telInput.wrap($("<div>", {
-                "class": parentClass
-            }));
-            this.flagsContainer = $("<div>", {
-                "class": "flag-container"
+            this.telInput.wrap(
+                $('<div>', {
+                    class: parentClass
+                })
+            );
+            this.flagsContainer = $('<div>', {
+                class: 'flag-container'
             }).insertBefore(this.telInput);
             // currently selected flag (displayed to left of input)
-            var selectedFlag = $("<div>", {
-                "class": "selected-flag"
+            var selectedFlag = $('<div>', {
+                class: 'selected-flag'
             });
             selectedFlag.appendTo(this.flagsContainer);
-            this.selectedFlagInner = $("<div>", {
-                "class": "iti-flag"
+            this.selectedFlagInner = $('<div>', {
+                class: 'iti-flag'
             }).appendTo(selectedFlag);
             if (this.options.separateDialCode) {
-                this.selectedDialCode = $("<div>", {
-                    "class": "selected-dial-code"
+                this.selectedDialCode = $('<div>', {
+                    class: 'selected-dial-code'
                 }).appendTo(selectedFlag);
             }
             if (this.options.allowDropdown) {
                 // make element focusable and tab naviagable
-                selectedFlag.attr("tabindex", "0");
+                selectedFlag.attr('tabindex', '0');
                 // CSS triangle
-                $("<div>", {
-                    "class": "iti-arrow"
+                $('<div>', {
+                    class: 'iti-arrow'
                 }).appendTo(selectedFlag);
                 // country dropdown: preferred countries, then divider, then all countries
-                this.countryList = $("<ul>", {
-                    "class": "country-list hide"
+                this.countryList = $('<ul>', {
+                    class: 'country-list hide'
                 });
                 if (this.preferredCountries.length) {
-                    this._appendListItems(this.preferredCountries, "preferred");
-                    $("<li>", {
-                        "class": "divider"
+                    this._appendListItems(this.preferredCountries, 'preferred');
+                    $('<li>', {
+                        class: 'divider'
                     }).appendTo(this.countryList);
                 }
-                this._appendListItems(this.countries, "");
+                this._appendListItems(this.countries, '');
                 // this is useful in lots of places
-                this.countryListItems = this.countryList.children(".country");
+                this.countryListItems = this.countryList.children('.country');
                 // create dropdownContainer markup
                 if (this.options.dropdownContainer) {
-                    this.dropdown = $("<div>", {
-                        "class": "intl-tel-input iti-container"
+                    this.dropdown = $('<div>', {
+                        class: 'intl-tel-input iti-container'
                     }).append(this.countryList);
                 } else {
                     this.countryList.appendTo(this.flagsContainer);
@@ -261,19 +268,26 @@
         _appendListItems: function(countries, className) {
             // we create so many DOM elements, it is faster to build a temp string
             // and then add everything to the DOM in one go at the end
-            var tmp = "";
+            var tmp = '';
             // for each country
             for (var i = 0; i < countries.length; i++) {
                 var c = countries[i];
                 // open the list item
-                tmp += "<li class='country " + className + "' data-dial-code='" + c.dialCode + "' data-country-code='" + c.iso2 + "'>";
+                tmp +=
+                    "<li class='country " +
+                    className +
+                    "' data-dial-code='" +
+                    c.dialCode +
+                    "' data-country-code='" +
+                    c.iso2 +
+                    "'>";
                 // add the flag
                 tmp += "<div class='flag-box'><div class='iti-flag " + c.iso2 + "'></div></div>";
                 // and the country name and dial code
-                tmp += "<span class='country-name'>" + c.name + "</span>";
-                tmp += "<span class='dial-code'>+" + c.dialCode + "</span>";
+                tmp += "<span class='country-name'>" + c.name + '</span>';
+                tmp += "<span class='dial-code'>+" + c.dialCode + '</span>';
                 // close the list item
-                tmp += "</li>";
+                tmp += '</li>';
             }
             this.countryList.append(tmp);
         },
@@ -287,20 +301,27 @@
             // if we already have a dial code we can go ahead and set the flag, else fall back to default
             if (this._getDialCode(val)) {
                 this._updateFlagFromNumber(val, true);
-            } else if (this.options.initialCountry !== "auto") {
+            } else if (this.options.initialCountry !== 'auto') {
                 // see if we should select a flag
                 if (this.options.initialCountry) {
                     this._setFlag(this.options.initialCountry, true);
                 } else {
                     // no dial code and no initialCountry, so default to first in list
-                    this.defaultCountry = this.preferredCountries.length ? this.preferredCountries[0].iso2 : this.countries[0].iso2;
+                    this.defaultCountry = this.preferredCountries.length
+                        ? this.preferredCountries[0].iso2
+                        : this.countries[0].iso2;
                     if (!val) {
                         this._setFlag(this.defaultCountry, true);
                     }
                 }
                 // if empty and no nationalMode and no autoHideDialCode then insert the default dial code
-                if (!val && !this.options.nationalMode && !this.options.autoHideDialCode && !this.options.separateDialCode) {
-                    this.telInput.val("+" + this.selectedCountryData.dialCode);
+                if (
+                    !val &&
+                    !this.options.nationalMode &&
+                    !this.options.autoHideDialCode &&
+                    !this.options.separateDialCode
+                ) {
+                    this.telInput.val('+' + this.selectedCountryData.dialCode);
                 }
             }
             // NOTE: if initialCountry is set to auto, that will be handled separately
@@ -324,11 +345,11 @@
         _initDropdownListeners: function() {
             var that = this;
             // hack for input nested inside label: clicking the selected-flag to open the dropdown would then automatically trigger a 2nd click on the input which would close it again
-            var label = this.telInput.closest("label");
+            var label = this.telInput.closest('label');
             if (label.length) {
-                label.on("click" + this.ns, function(e) {
+                label.on('click' + this.ns, function(e) {
                     // if the dropdown is closed, then focus the input, else ignore the click
-                    if (that.countryList.hasClass("hide")) {
+                    if (that.countryList.hasClass('hide')) {
                         that.telInput.focus();
                     } else {
                         e.preventDefault();
@@ -337,18 +358,25 @@
             }
             // toggle country dropdown on click
             var selectedFlag = this.selectedFlagInner.parent();
-            selectedFlag.on("click" + this.ns, function(e) {
+            selectedFlag.on('click' + this.ns, function(e) {
                 // only intercept this event if we're opening the dropdown
                 // else let it bubble up to the top ("click-off-to-close" listener)
                 // we cannot just stopPropagation as it may be needed to close another instance
-                if (that.countryList.hasClass("hide") && !that.telInput.prop("disabled") && !that.telInput.prop("readonly")) {
+                if (
+                    that.countryList.hasClass('hide') &&
+                    !that.telInput.prop('disabled') &&
+                    !that.telInput.prop('readonly')
+                ) {
                     that._showDropdown();
                 }
             });
             // open dropdown list if currently focused
-            this.flagsContainer.on("keydown" + that.ns, function(e) {
-                var isDropdownHidden = that.countryList.hasClass("hide");
-                if (isDropdownHidden && (e.which == keys.UP || e.which == keys.DOWN || e.which == keys.SPACE || e.which == keys.ENTER)) {
+            this.flagsContainer.on('keydown' + that.ns, function(e) {
+                var isDropdownHidden = that.countryList.hasClass('hide');
+                if (
+                    isDropdownHidden &&
+                    (e.which == keys.UP || e.which == keys.DOWN || e.which == keys.SPACE || e.which == keys.ENTER)
+                ) {
                     // prevent form from being submitted if "ENTER" was pressed
                     e.preventDefault();
                     // prevent event from being handled again by document
@@ -378,7 +406,7 @@
             } else {
                 this.utilsScriptDeferred.resolve();
             }
-            if (this.options.initialCountry === "auto") {
+            if (this.options.initialCountry === 'auto') {
                 this._loadAutoCountry();
             } else {
                 this.autoCountryDeferred.resolve();
@@ -388,7 +416,7 @@
         _loadAutoCountry: function() {
             var that = this;
             // check for cookie
-            var cookieAutoCountry = window.Cookies ? Cookies.get("itiAutoCountry") : "";
+            var cookieAutoCountry = window.Cookies ? Cookies.get('itiAutoCountry') : '';
             if (cookieAutoCountry) {
                 $.fn[pluginName].autoCountry = cookieAutoCountry;
             }
@@ -401,19 +429,19 @@
             } else if (!$.fn[pluginName].startedLoadingAutoCountry) {
                 // don't do this twice!
                 $.fn[pluginName].startedLoadingAutoCountry = true;
-                if (typeof this.options.geoIpLookup === "function") {
+                if (typeof this.options.geoIpLookup === 'function') {
                     this.options.geoIpLookup(function(countryCode) {
                         $.fn[pluginName].autoCountry = countryCode.toLowerCase();
                         if (window.Cookies) {
-                            Cookies.set("itiAutoCountry", $.fn[pluginName].autoCountry, {
-                                path: "/"
+                            Cookies.set('itiAutoCountry', $.fn[pluginName].autoCountry, {
+                                path: '/'
                             });
                         }
                         // tell all instances the auto country is ready
                         // TODO: this should just be the current instances
                         // UPDATE: use setTimeout in case their geoIpLookup function calls this callback straight away (e.g. if they have already done the geo ip lookup somewhere else). Using setTimeout means that the current thread of execution will finish before executing this, which allows the plugin to finish initialising.
                         setTimeout(function() {
-                            $(".intl-tel-input input").intlTelInput("handleAutoCountry");
+                            $('.intl-tel-input input').intlTelInput('handleAutoCountry');
                         });
                     });
                 }
@@ -424,11 +452,11 @@
             var that = this;
             // update flag on keyup
             // (keep this listener separate otherwise the setTimeout breaks all the tests)
-            this.telInput.on("keyup" + this.ns, function() {
+            this.telInput.on('keyup' + this.ns, function() {
                 that._updateFlagFromNumber(that.telInput.val());
             });
             // update flag on cut/paste events (now supported in all major browsers)
-            this.telInput.on("cut" + this.ns + " paste" + this.ns + " keyup" + this.ns, function() {
+            this.telInput.on('cut' + this.ns + ' paste' + this.ns + ' keyup' + this.ns, function() {
                 // hack because "paste" event is fired before input is updated
                 setTimeout(function() {
                     that._updateFlagFromNumber(that.telInput.val());
@@ -437,29 +465,29 @@
         },
         // adhere to the input's maxlength attr
         _cap: function(number) {
-            var max = this.telInput.attr("maxlength");
+            var max = this.telInput.attr('maxlength');
             return max && number.length > max ? number.substr(0, max) : number;
         },
         // listen for mousedown, focus and blur
         _initFocusListeners: function() {
             var that = this;
             // mousedown decides where the cursor goes, so if we're focusing we must preventDefault as we'll be inserting the dial code, and we want the cursor to be at the end no matter where they click
-            this.telInput.on("mousedown" + this.ns, function(e) {
-                if (!that.telInput.is(":focus") && !that.telInput.val()) {
+            this.telInput.on('mousedown' + this.ns, function(e) {
+                if (!that.telInput.is(':focus') && !that.telInput.val()) {
                     e.preventDefault();
                     // but this also cancels the focus, so we must trigger that manually
                     that.telInput.focus();
                 }
             });
             // on focus: if empty, insert the dial code for the currently selected flag
-            this.telInput.on("focus" + this.ns, function(e) {
-                if (!that.telInput.val() && !that.telInput.prop("readonly") && that.selectedCountryData.dialCode) {
+            this.telInput.on('focus' + this.ns, function(e) {
+                if (!that.telInput.val() && !that.telInput.prop('readonly') && that.selectedCountryData.dialCode) {
                     // insert the dial code
-                    that.telInput.val("+" + that.selectedCountryData.dialCode);
+                    that.telInput.val('+' + that.selectedCountryData.dialCode);
                     // after auto-inserting a dial code, if the first key they hit is '+' then assume they are entering a new number, so remove the dial code. use keypress instead of keydown because keydown gets triggered for the shift key (required to hit the + key), and instead of keyup because that shows the new '+' before removing the old one
-                    that.telInput.one("keypress.plus" + that.ns, function(e) {
+                    that.telInput.one('keypress.plus' + that.ns, function(e) {
                         if (e.which == keys.PLUS) {
-                            that.telInput.val("");
+                            that.telInput.val('');
                         }
                     });
                     // after tabbing in, make sure the cursor is at the end we must use setTimeout to get outside of the focus handler as it seems the selection happens after that
@@ -473,28 +501,29 @@
                 }
             });
             // on blur: if just a dial code then remove it
-            this.telInput.on("blur" + this.ns, function() {
-                var value = that.telInput.val(), startsPlus = value.charAt(0) == "+";
+            this.telInput.on('blur' + this.ns, function() {
+                var value = that.telInput.val(),
+                    startsPlus = value.charAt(0) == '+';
                 if (startsPlus) {
                     var numeric = that._getNumeric(value);
                     // if just a plus, or if just a dial code
                     if (!numeric || that.selectedCountryData.dialCode == numeric) {
-                        that.telInput.val("");
+                        that.telInput.val('');
                     }
                 }
                 // remove the keypress listener we added on focus
-                that.telInput.off("keypress.plus" + that.ns);
+                that.telInput.off('keypress.plus' + that.ns);
             });
         },
         // extract the numeric digits from the given string
         _getNumeric: function(s) {
-            return s.replace(/\D/g, "");
+            return s.replace(/\D/g, '');
         },
         // show the dropdown
         _showDropdown: function() {
             this._setDropdownPosition();
             // update highlighting and scroll to active list item
-            var activeListItem = this.countryList.children(".active");
+            var activeListItem = this.countryList.children('.active');
             if (activeListItem.length) {
                 this._highlightListItem(activeListItem);
                 this._scrollTo(activeListItem);
@@ -502,7 +531,7 @@
             // bind all the dropdown-related listeners: mouseover, click, click-off, keydown
             this._bindDropdownListeners();
             // update the arrow
-            this.selectedFlagInner.children(".iti-arrow").addClass("up");
+            this.selectedFlagInner.children('.iti-arrow').addClass('up');
         },
         // decide where to position dropdown (depends on position within viewport, and scroll)
         _setDropdownPosition: function() {
@@ -511,12 +540,16 @@
                 this.dropdown.appendTo(this.options.dropdownContainer);
             }
             // show the menu and grab the dropdown height
-            this.dropdownHeight = this.countryList.removeClass("hide").outerHeight();
+            this.dropdownHeight = this.countryList.removeClass('hide').outerHeight();
             if (!this.isMobile) {
-                var pos = this.telInput.offset(), inputTop = pos.top, windowTop = $(window).scrollTop(), // dropdownFitsBelow = (dropdownBottom < windowBottom)
-                dropdownFitsBelow = inputTop + this.telInput.outerHeight() + this.dropdownHeight < windowTop + $(window).height(), dropdownFitsAbove = inputTop - this.dropdownHeight > windowTop;
+                var pos = this.telInput.offset(),
+                    inputTop = pos.top,
+                    windowTop = $(window).scrollTop(), // dropdownFitsBelow = (dropdownBottom < windowBottom)
+                    dropdownFitsBelow =
+                        inputTop + this.telInput.outerHeight() + this.dropdownHeight < windowTop + $(window).height(),
+                    dropdownFitsAbove = inputTop - this.dropdownHeight > windowTop;
                 // by default, the dropdown will be below the input. If we want to position it above the input, we add the dropup class.
-                this.countryList.toggleClass("dropup", !dropdownFitsBelow && dropdownFitsAbove);
+                this.countryList.toggleClass('dropup', !dropdownFitsBelow && dropdownFitsAbove);
                 // if dropdownContainer is enabled, calculate postion
                 if (this.options.dropdownContainer) {
                     // by default the dropdown will be directly over the input because it's not in the flow. If we want to position it below, we need to add some extra top value.
@@ -527,7 +560,7 @@
                         left: pos.left
                     });
                     // close menu on window scroll
-                    $(window).on("scroll" + this.ns, function() {
+                    $(window).on('scroll' + this.ns, function() {
                         that._closeDropdown();
                     });
                 }
@@ -538,18 +571,18 @@
             var that = this;
             // when mouse over a list item, just highlight that one
             // we add the class "highlight", so if they hit "enter" we know which one to select
-            this.countryList.on("mouseover" + this.ns, ".country", function(e) {
+            this.countryList.on('mouseover' + this.ns, '.country', function(e) {
                 that._highlightListItem($(this));
             });
             // listen for country selection
-            this.countryList.on("click" + this.ns, ".country", function(e) {
+            this.countryList.on('click' + this.ns, '.country', function(e) {
                 that._selectListItem($(this));
             });
             // click off to close
             // (except when this initial opening click is bubbling up)
             // we cannot just stopPropagation as it may be needed to close another instance
             var isOpening = true;
-            $("html").on("click" + this.ns, function(e) {
+            $('html').on('click' + this.ns, function(e) {
                 if (!isOpening) {
                     that._closeDropdown();
                 }
@@ -559,8 +592,9 @@
             // use keydown as keypress doesn't fire for non-char keys and we want to catch if they
             // just hit down and hold it to scroll down (no keyup event).
             // listen on the document because that's where key events are triggered if no input has focus
-            var query = "", queryTimer = null;
-            $(document).on("keydown" + this.ns, function(e) {
+            var query = '',
+                queryTimer = null;
+            $(document).on('keydown' + this.ns, function(e) {
                 // prevent down key from scrolling the whole page,
                 // and enter key from submitting a form etc
                 e.preventDefault();
@@ -573,7 +607,7 @@
                 } else if (e.which == keys.ESC) {
                     // esc to close
                     that._closeDropdown();
-                } else if (e.which >= keys.A && e.which <= keys.Z || e.which == keys.SPACE) {
+                } else if ((e.which >= keys.A && e.which <= keys.Z) || e.which == keys.SPACE) {
                     // upper case letters (note: keyup/keydown only return upper case letters)
                     // jump to countries that start with the query string
                     if (queryTimer) {
@@ -583,18 +617,18 @@
                     that._searchForCountry(query);
                     // if the timer hits 1 second, reset the query
                     queryTimer = setTimeout(function() {
-                        query = "";
+                        query = '';
                     }, 1e3);
                 }
             });
         },
         // highlight the next/prev item in the list (and ensure it is visible)
         _handleUpDownKey: function(key) {
-            var current = this.countryList.children(".highlight").first();
+            var current = this.countryList.children('.highlight').first();
             var next = key == keys.UP ? current.prev() : current.next();
             if (next.length) {
                 // skip the divider
-                if (next.hasClass("divider")) {
+                if (next.hasClass('divider')) {
                     next = key == keys.UP ? next.prev() : next.next();
                 }
                 this._highlightListItem(next);
@@ -603,7 +637,7 @@
         },
         // select the currently highlighted item
         _handleEnterKey: function() {
-            var currentCountry = this.countryList.children(".highlight").first();
+            var currentCountry = this.countryList.children('.highlight').first();
             if (currentCountry.length) {
                 this._selectListItem(currentCountry);
             }
@@ -612,7 +646,9 @@
         _searchForCountry: function(query) {
             for (var i = 0; i < this.countries.length; i++) {
                 if (this._startsWith(this.countries[i].name, query)) {
-                    var listItem = this.countryList.children("[data-country-code=" + this.countries[i].iso2 + "]").not(".preferred");
+                    var listItem = this.countryList
+                        .children('[data-country-code=' + this.countries[i].iso2 + ']')
+                        .not('.preferred');
                     // update highlighting and scroll
                     this._highlightListItem(listItem);
                     this._scrollTo(listItem, true);
@@ -629,7 +665,10 @@
         _updateValFromNumber: function(number, doFormat, format) {
             if (doFormat && window.intlTelInputUtils && this.selectedCountryData) {
                 if (!$.isNumeric(format)) {
-                    format = this.options.nationalMode || number.charAt(0) != "+" ? intlTelInputUtils.numberFormat.NATIONAL : intlTelInputUtils.numberFormat.INTERNATIONAL;
+                    format =
+                        this.options.nationalMode || number.charAt(0) != '+'
+                            ? intlTelInputUtils.numberFormat.NATIONAL
+                            : intlTelInputUtils.numberFormat.INTERNATIONAL;
                 }
                 number = intlTelInputUtils.formatNumber(number, this.selectedCountryData.iso2, format);
             }
@@ -641,17 +680,26 @@
         _updateFlagFromNumber: function(number, isInit) {
             // if we're in nationalMode and we already have US/Canada selected, make sure the number starts with a +1 so _getDialCode will be able to extract the area code
             // update: if we dont yet have selectedCountryData, but we're here (trying to update the flag from the number), that means we're initialising the plugin with a number that already has a dial code, so fine to ignore this bit
-            if (number && this.options.nationalMode && this.selectedCountryData && this.selectedCountryData.dialCode == "1" && number.charAt(0) != "+") {
-                if (number.charAt(0) != "1") {
-                    number = "1" + number;
+            if (
+                number &&
+                this.options.nationalMode &&
+                this.selectedCountryData &&
+                this.selectedCountryData.dialCode == '1' &&
+                number.charAt(0) != '+'
+            ) {
+                if (number.charAt(0) != '1') {
+                    number = '1' + number;
                 }
-                number = "+" + number;
+                number = '+' + number;
             }
             // try and extract valid dial code from input
-            var dialCode = this._getDialCode(number), countryCode = null;
+            var dialCode = this._getDialCode(number),
+                countryCode = null;
             if (dialCode) {
                 // check if one of the matching countries is already selected
-                var countryCodes = this.countryCodes[this._getNumeric(dialCode)], alreadySelected = this.selectedCountryData && $.inArray(this.selectedCountryData.iso2, countryCodes) != -1;
+                var countryCodes = this.countryCodes[this._getNumeric(dialCode)],
+                    alreadySelected =
+                        this.selectedCountryData && $.inArray(this.selectedCountryData.iso2, countryCodes) != -1;
                 // if a matching country is not already selected (or this is an unknown NANP area code): choose the first in the list
                 if (!alreadySelected || this._isUnknownNanp(number, dialCode)) {
                     // if using onlyCountries option, countryCodes[0] may be empty, so we must find the first non-empty index
@@ -662,11 +710,11 @@
                         }
                     }
                 }
-            } else if (number.charAt(0) == "+" && this._getNumeric(number).length) {
+            } else if (number.charAt(0) == '+' && this._getNumeric(number).length) {
                 // invalid dial code, so empty
                 // Note: use getNumeric here because the number has not been formatted yet, so could contain bad chars
-                countryCode = "";
-            } else if (!number || number == "+") {
+                countryCode = '';
+            } else if (!number || number == '+') {
                 // empty, or just a plus, so default
                 countryCode = this.defaultCountry;
             }
@@ -676,12 +724,12 @@
         },
         // check if the given number contains an unknown area code from the North American Numbering Plan i.e. the only dialCode that could be extracted was +1 (instead of say +1 702) and the actual number's length is >=4
         _isUnknownNanp: function(number, dialCode) {
-            return dialCode == "+1" && this._getNumeric(number).length >= 4;
+            return dialCode == '+1' && this._getNumeric(number).length >= 4;
         },
         // remove highlighting from other list items and highlight the given item
         _highlightListItem: function(listItem) {
-            this.countryListItems.removeClass("highlight");
-            listItem.addClass("highlight");
+            this.countryListItems.removeClass('highlight');
+            listItem.addClass('highlight');
         },
         // find the country data for the given country code
         // the ignoreOnlyCountriesOption is only used during init() while parsing the onlyCountries array
@@ -708,49 +756,68 @@
             if (this.selectedCountryData.iso2) {
                 this.defaultCountry = this.selectedCountryData.iso2;
             }
-            this.selectedFlagInner.attr("class", "iti-flag " + countryCode);
+            this.selectedFlagInner.attr('class', 'iti-flag ' + countryCode);
             // update the selected country's title attribute
-            var title = countryCode ? this.selectedCountryData.name + ": +" + this.selectedCountryData.dialCode : "Unknown";
-            this.selectedFlagInner.parent().attr("title", title);
+            var title = countryCode
+                ? this.selectedCountryData.name + ': +' + this.selectedCountryData.dialCode
+                : 'Unknown';
+            this.selectedFlagInner.parent().attr('title', title);
             if (this.options.separateDialCode) {
-                var dialCode = this.selectedCountryData.dialCode ? "+" + this.selectedCountryData.dialCode : "", parent = this.telInput.parent();
+                var dialCode = this.selectedCountryData.dialCode ? '+' + this.selectedCountryData.dialCode : '',
+                    parent = this.telInput.parent();
                 if (prevCountry.dialCode) {
-                    parent.removeClass("iti-sdc-" + (prevCountry.dialCode.length + 1));
+                    parent.removeClass('iti-sdc-' + (prevCountry.dialCode.length + 1));
                 }
                 if (dialCode) {
-                    parent.addClass("iti-sdc-" + dialCode.length);
+                    parent.addClass('iti-sdc-' + dialCode.length);
                 }
                 this.selectedDialCode.text(dialCode);
             }
             // and the input's placeholder
             this._updatePlaceholder();
             // update the active list item
-            this.countryListItems.removeClass("active");
+            this.countryListItems.removeClass('active');
             if (countryCode) {
-                this.countryListItems.find(".iti-flag." + countryCode).first().closest(".country").addClass("active");
+                this.countryListItems
+                    .find('.iti-flag.' + countryCode)
+                    .first()
+                    .closest('.country')
+                    .addClass('active');
             }
             // on change flag, trigger a custom event
             if (!isInit && prevCountry.iso2 !== countryCode) {
-                this.telInput.trigger("countrychange", this.selectedCountryData);
+                this.telInput.trigger('countrychange', this.selectedCountryData);
             }
         },
         // update the input placeholder to an example number from the currently selected country
         _updatePlaceholder: function() {
-            if (window.intlTelInputUtils && !this.hadInitialPlaceholder && this.options.autoPlaceholder && this.selectedCountryData) {
-                var numberType = intlTelInputUtils.numberType[this.options.numberType], placeholder = this.selectedCountryData.iso2 ? intlTelInputUtils.getExampleNumber(this.selectedCountryData.iso2, this.options.nationalMode, numberType) : "";
+            if (
+                window.intlTelInputUtils &&
+                !this.hadInitialPlaceholder &&
+                this.options.autoPlaceholder &&
+                this.selectedCountryData
+            ) {
+                var numberType = intlTelInputUtils.numberType[this.options.numberType],
+                    placeholder = this.selectedCountryData.iso2
+                        ? intlTelInputUtils.getExampleNumber(
+                              this.selectedCountryData.iso2,
+                              this.options.nationalMode,
+                              numberType
+                          )
+                        : '';
                 placeholder = this._beforeSetNumber(placeholder);
-                if (typeof this.options.customPlaceholder === "function") {
+                if (typeof this.options.customPlaceholder === 'function') {
                     placeholder = this.options.customPlaceholder(placeholder, this.selectedCountryData);
                 }
-                this.telInput.attr("placeholder", placeholder);
+                this.telInput.attr('placeholder', placeholder);
             }
         },
         // called when the user selects a list item from the dropdown
         _selectListItem: function(listItem) {
             // update selected flag and active list item
-            this._setFlag(listItem.attr("data-country-code"));
+            this._setFlag(listItem.attr('data-country-code'));
             this._closeDropdown();
-            this._updateDialCode(listItem.attr("data-dial-code"), true);
+            this._updateDialCode(listItem.attr('data-dial-code'), true);
             // focus the input
             this.telInput.focus();
             // fix for FF and IE11 (with nationalMode=false i.e. auto inserting dial code), who try to put the cursor at the beginning the first time
@@ -761,26 +828,34 @@
         },
         // close the dropdown and unbind any listeners
         _closeDropdown: function() {
-            this.countryList.addClass("hide");
+            this.countryList.addClass('hide');
             // update the arrow
-            this.selectedFlagInner.children(".iti-arrow").removeClass("up");
+            this.selectedFlagInner.children('.iti-arrow').removeClass('up');
             // unbind key events
             $(document).off(this.ns);
             // unbind click-off-to-close
-            $("html").off(this.ns);
+            $('html').off(this.ns);
             // unbind hover and click listeners
             this.countryList.off(this.ns);
             // remove menu from container
             if (this.options.dropdownContainer) {
                 if (!this.isMobile) {
-                    $(window).off("scroll" + this.ns);
+                    $(window).off('scroll' + this.ns);
                 }
                 this.dropdown.detach();
             }
         },
         // check if an element is visible within it's container, else scroll until it is
         _scrollTo: function(element, middle) {
-            var container = this.countryList, containerHeight = container.height(), containerTop = container.offset().top, containerBottom = containerTop + containerHeight, elementHeight = element.outerHeight(), elementTop = element.offset().top, elementBottom = elementTop + elementHeight, newScrollTop = elementTop - containerTop + container.scrollTop(), middleOffset = containerHeight / 2 - elementHeight / 2;
+            var container = this.countryList,
+                containerHeight = container.height(),
+                containerTop = container.offset().top,
+                containerBottom = containerTop + containerHeight,
+                elementHeight = element.outerHeight(),
+                elementTop = element.offset().top,
+                elementBottom = elementTop + elementHeight,
+                newScrollTop = elementTop - containerTop + container.scrollTop(),
+                middleOffset = containerHeight / 2 - elementHeight / 2;
             if (elementTop < containerTop) {
                 // scroll up
                 if (middle) {
@@ -799,10 +874,11 @@
         // replace any existing dial code with the new one
         // Note: called from _selectListItem and setCountry
         _updateDialCode: function(newDialCode, hasSelectedListItem) {
-            var inputVal = this.telInput.val(), newNumber;
+            var inputVal = this.telInput.val(),
+                newNumber;
             // save having to pass this every time
-            newDialCode = "+" + newDialCode;
-            if (inputVal.charAt(0) == "+") {
+            newDialCode = '+' + newDialCode;
+            if (inputVal.charAt(0) == '+') {
                 // there's a plus so we're dealing with a replacement (doesn't matter if nationalMode or not)
                 var prevDialCode = this._getDialCode(inputVal);
                 if (prevDialCode) {
@@ -833,10 +909,10 @@
         // try and extract a valid international dial code from a full telephone number
         // Note: returns the raw string inc plus character and any whitespace/dots etc
         _getDialCode: function(number) {
-            var dialCode = "";
+            var dialCode = '';
             // only interested in international numbers (starting with a plus)
-            if (number.charAt(0) == "+") {
-                var numericChars = "";
+            if (number.charAt(0) == '+') {
+                var numericChars = '';
                 // iterate over chars
                 for (var i = 0; i < number.length; i++) {
                     var c = number.charAt(i);
@@ -859,7 +935,7 @@
         },
         // get the input val, adding the dial code if separateDialCode is enabled
         _getFullNumber: function() {
-            var prefix = this.options.separateDialCode ? "+" + this.selectedCountryData.dialCode : "";
+            var prefix = this.options.separateDialCode ? '+' + this.selectedCountryData.dialCode : '';
             return prefix + this.telInput.val();
         },
         // remove the dial code if separateDialCode is enabled
@@ -872,22 +948,25 @@
                     // AS dialCode is "+1 684", which is what we want
                     // Solution: if the country has area codes, then revert to just the dial code
                     if (this.selectedCountryData.areaCodes !== null) {
-                        dialCode = "+" + this.selectedCountryData.dialCode;
+                        dialCode = '+' + this.selectedCountryData.dialCode;
                     }
                     // a lot of numbers will have a space separating the dial code and the main number, and some NANP numbers will have a hyphen e.g. +1 684-733-1234 - in both cases we want to get rid of it
                     // NOTE: don't just trim all non-numerics as may want to preserve an open parenthesis etc
-                    var start = number[dialCode.length] === " " || number[dialCode.length] === "-" ? dialCode.length + 1 : dialCode.length;
+                    var start =
+                        number[dialCode.length] === ' ' || number[dialCode.length] === '-'
+                            ? dialCode.length + 1
+                            : dialCode.length;
                     number = number.substr(start);
                 }
             }
             return this._cap(number);
         },
         /********************
-   *  PUBLIC METHODS
-   ********************/
+         *  PUBLIC METHODS
+         ********************/
         // this is called when the geoip call returns
         handleAutoCountry: function() {
-            if (this.options.initialCountry === "auto") {
+            if (this.options.initialCountry === 'auto') {
                 // we must set this even if there is an initial val in the input: in case the initial val is invalid and they delete it - they should see their auto country
                 this.defaultCountry = $.fn[pluginName].autoCountry;
                 // if there's no initial value in the input, then update the flag
@@ -905,7 +984,7 @@
                 // click event to open dropdown
                 this.selectedFlagInner.parent().off(this.ns);
                 // label click hack
-                this.telInput.closest("label").off(this.ns);
+                this.telInput.closest('label').off(this.ns);
             }
             // unbind all events: key events, and focus/blur events if autoHideDialCode=true
             this.telInput.off(this.ns);
@@ -918,14 +997,14 @@
             if (window.intlTelInputUtils) {
                 return intlTelInputUtils.getExtension(this._getFullNumber(), this.selectedCountryData.iso2);
             }
-            return "";
+            return '';
         },
         // format the number to the given format
         getNumber: function(format) {
             if (window.intlTelInputUtils) {
                 return intlTelInputUtils.formatNumber(this._getFullNumber(), this.selectedCountryData.iso2, format);
             }
-            return "";
+            return '';
         },
         // get the type of the entered number e.g. landline/mobile
         getNumberType: function() {
@@ -948,7 +1027,8 @@
         },
         // validate the input val - assumes the global function isValidNumber (from utilsScript)
         isValidNumber: function() {
-            var val = $.trim(this._getFullNumber()), countryCode = this.options.nationalMode ? this.selectedCountryData.iso2 : "";
+            var val = $.trim(this._getFullNumber()),
+                countryCode = this.options.nationalMode ? this.selectedCountryData.iso2 : '';
             return window.intlTelInputUtils ? intlTelInputUtils.isValidNumber(val, countryCode) : null;
         },
         // update the selected flag, and update the input val accordingly
@@ -986,39 +1066,39 @@
         var args = arguments;
         // Is the first parameter an object (options), or was omitted,
         // instantiate a new instance of the plugin.
-        if (options === undefined || typeof options === "object") {
+        if (options === undefined || typeof options === 'object') {
             // collect all of the deferred objects for all instances created with this selector
             var deferreds = [];
             this.each(function() {
-                if (!$.data(this, "plugin_" + pluginName)) {
+                if (!$.data(this, 'plugin_' + pluginName)) {
                     var instance = new Plugin(this, options);
                     var instanceDeferreds = instance._init();
                     // we now have 2 deffereds: 1 for auto country, 1 for utils script
                     deferreds.push(instanceDeferreds[0]);
                     deferreds.push(instanceDeferreds[1]);
-                    $.data(this, "plugin_" + pluginName, instance);
+                    $.data(this, 'plugin_' + pluginName, instance);
                 }
             });
             // return the promise from the "master" deferred object that tracks all the others
             return $.when.apply(null, deferreds);
-        } else if (typeof options === "string" && options[0] !== "_") {
+        } else if (typeof options === 'string' && options[0] !== '_') {
             // If the first parameter is a string and it doesn't start
             // with an underscore or "contains" the `init`-function,
             // treat this as a call to a public method.
             // Cache the method call to make it possible to return a value
             var returns;
             this.each(function() {
-                var instance = $.data(this, "plugin_" + pluginName);
+                var instance = $.data(this, 'plugin_' + pluginName);
                 // Tests that there's already a plugin-instance
                 // and checks that the requested public method exists
-                if (instance instanceof Plugin && typeof instance[options] === "function") {
+                if (instance instanceof Plugin && typeof instance[options] === 'function') {
                     // Call the method of our plugin instance,
                     // and pass it the supplied arguments.
                     returns = instance[options].apply(instance, Array.prototype.slice.call(args, 1));
                 }
                 // Allow instances to be destroyed via the 'destroy' method
-                if (options === "destroy") {
-                    $.data(this, "plugin_" + pluginName, null);
+                if (options === 'destroy') {
+                    $.data(this, 'plugin_' + pluginName, null);
                 }
             });
             // If the earlier cached method gives a value back return the value,
@@ -1027,8 +1107,8 @@
         }
     };
     /********************
- *  STATIC METHODS
- ********************/
+     *  STATIC METHODS
+     ********************/
     // get the country data object
     $.fn[pluginName].getCountryData = function() {
         return allCountries;
@@ -1043,9 +1123,9 @@
                 url: path,
                 complete: function() {
                     // tell all instances that the utils request is complete
-                    $(".intl-tel-input input").intlTelInput("handleUtils");
+                    $('.intl-tel-input input').intlTelInput('handleUtils');
                 },
-                dataType: "script",
+                dataType: 'script',
                 cache: true
             });
         } else if (utilsScriptDeferred) {
@@ -1053,7 +1133,7 @@
         }
     };
     // version
-    $.fn[pluginName].version = "8.4.7";
+    $.fn[pluginName].version = '8.4.7';
     // Tell JSHint to ignore this warning: "character may get silently deleted by one or more browsers"
     // jshint -W100
     // Array of country objects for the flag dropdown.
@@ -1091,7 +1171,299 @@
     //    Order (if >1 country with same dial code),
     //    Area codes (if >1 country with same dial code)
     // ]
-    var allCountries = [ [ "Afghanistan (‫افغانستان‬‎)", "af", "93" ], [ "Albania (Shqipëri)", "al", "355" ], [ "Algeria (‫الجزائر‬‎)", "dz", "213" ], [ "American Samoa", "as", "1684" ], [ "Andorra", "ad", "376" ], [ "Angola", "ao", "244" ], [ "Anguilla", "ai", "1264" ], [ "Antigua and Barbuda", "ag", "1268" ], [ "Argentina", "ar", "54" ], [ "Armenia (Հայաստան)", "am", "374" ], [ "Aruba", "aw", "297" ], [ "Australia", "au", "61", 0 ], [ "Austria (Österreich)", "at", "43" ], [ "Azerbaijan (Azərbaycan)", "az", "994" ], [ "Bahamas", "bs", "1242" ], [ "Bahrain (‫البحرين‬‎)", "bh", "973" ], [ "Bangladesh (বাংলাদেশ)", "bd", "880" ], [ "Barbados", "bb", "1246" ], [ "Belarus (Беларусь)", "by", "375" ], [ "Belgium (België)", "be", "32" ], [ "Belize", "bz", "501" ], [ "Benin (Bénin)", "bj", "229" ], [ "Bermuda", "bm", "1441" ], [ "Bhutan (འབྲུག)", "bt", "975" ], [ "Bolivia", "bo", "591" ], [ "Bosnia and Herzegovina (Босна и Херцеговина)", "ba", "387" ], [ "Botswana", "bw", "267" ], [ "Brazil (Brasil)", "br", "55" ], [ "British Indian Ocean Territory", "io", "246" ], [ "British Virgin Islands", "vg", "1284" ], [ "Brunei", "bn", "673" ], [ "Bulgaria (България)", "bg", "359" ], [ "Burkina Faso", "bf", "226" ], [ "Burundi (Uburundi)", "bi", "257" ], [ "Cambodia (កម្ពុជា)", "kh", "855" ], [ "Cameroon (Cameroun)", "cm", "237" ], [ "Canada", "ca", "1", 1, [ "204", "226", "236", "249", "250", "289", "306", "343", "365", "387", "403", "416", "418", "431", "437", "438", "450", "506", "514", "519", "548", "579", "581", "587", "604", "613", "639", "647", "672", "705", "709", "742", "778", "780", "782", "807", "819", "825", "867", "873", "902", "905" ] ], [ "Cape Verde (Kabu Verdi)", "cv", "238" ], [ "Caribbean Netherlands", "bq", "599", 1 ], [ "Cayman Islands", "ky", "1345" ], [ "Central African Republic (République centrafricaine)", "cf", "236" ], [ "Chad (Tchad)", "td", "235" ], [ "Chile", "cl", "56" ], [ "China (中国)", "cn", "86" ], [ "Christmas Island", "cx", "61", 2 ], [ "Cocos (Keeling) Islands", "cc", "61", 1 ], [ "Colombia", "co", "57" ], [ "Comoros (‫جزر القمر‬‎)", "km", "269" ], [ "Congo (DRC) (Jamhuri ya Kidemokrasia ya Kongo)", "cd", "243" ], [ "Congo (Republic) (Congo-Brazzaville)", "cg", "242" ], [ "Cook Islands", "ck", "682" ], [ "Costa Rica", "cr", "506" ], [ "Côte d’Ivoire", "ci", "225" ], [ "Croatia (Hrvatska)", "hr", "385" ], [ "Cuba", "cu", "53" ], [ "Curaçao", "cw", "599", 0 ], [ "Cyprus (Κύπρος)", "cy", "357" ], [ "Czech Republic (Česká republika)", "cz", "420" ], [ "Denmark (Danmark)", "dk", "45" ], [ "Djibouti", "dj", "253" ], [ "Dominica", "dm", "1767" ], [ "Dominican Republic (República Dominicana)", "do", "1", 2, [ "809", "829", "849" ] ], [ "Ecuador", "ec", "593" ], [ "Egypt (‫مصر‬‎)", "eg", "20" ], [ "El Salvador", "sv", "503" ], [ "Equatorial Guinea (Guinea Ecuatorial)", "gq", "240" ], [ "Eritrea", "er", "291" ], [ "Estonia (Eesti)", "ee", "372" ], [ "Ethiopia", "et", "251" ], [ "Falkland Islands (Islas Malvinas)", "fk", "500" ], [ "Faroe Islands (Føroyar)", "fo", "298" ], [ "Fiji", "fj", "679" ], [ "Finland (Suomi)", "fi", "358", 0 ], [ "France", "fr", "33" ], [ "French Guiana (Guyane française)", "gf", "594" ], [ "French Polynesia (Polynésie française)", "pf", "689" ], [ "Gabon", "ga", "241" ], [ "Gambia", "gm", "220" ], [ "Georgia (საქართველო)", "ge", "995" ], [ "Germany (Deutschland)", "de", "49" ], [ "Ghana (Gaana)", "gh", "233" ], [ "Gibraltar", "gi", "350" ], [ "Greece (Ελλάδα)", "gr", "30" ], [ "Greenland (Kalaallit Nunaat)", "gl", "299" ], [ "Grenada", "gd", "1473" ], [ "Guadeloupe", "gp", "590", 0 ], [ "Guam", "gu", "1671" ], [ "Guatemala", "gt", "502" ], [ "Guernsey", "gg", "44", 1 ], [ "Guinea (Guinée)", "gn", "224" ], [ "Guinea-Bissau (Guiné Bissau)", "gw", "245" ], [ "Guyana", "gy", "592" ], [ "Haiti", "ht", "509" ], [ "Honduras", "hn", "504" ], [ "Hong Kong (香港)", "hk", "852" ], [ "Hungary (Magyarország)", "hu", "36" ], [ "Iceland (Ísland)", "is", "354" ], [ "India (भारत)", "in", "91" ], [ "Indonesia", "id", "62" ], [ "Iran (‫ایران‬‎)", "ir", "98" ], [ "Iraq (‫العراق‬‎)", "iq", "964" ], [ "Ireland", "ie", "353" ], [ "Isle of Man", "im", "44", 2 ], [ "Israel (‫ישראל‬‎)", "il", "972" ], [ "Italy (Italia)", "it", "39", 0 ], [ "Jamaica", "jm", "1876" ], [ "Japan (日本)", "jp", "81" ], [ "Jersey", "je", "44", 3 ], [ "Jordan (‫الأردن‬‎)", "jo", "962" ], [ "Kazakhstan (Казахстан)", "kz", "7", 1 ], [ "Kenya", "ke", "254" ], [ "Kiribati", "ki", "686" ], [ "Kuwait (‫الكويت‬‎)", "kw", "965" ], [ "Kyrgyzstan (Кыргызстан)", "kg", "996" ], [ "Laos (ລາວ)", "la", "856" ], [ "Latvia (Latvija)", "lv", "371" ], [ "Lebanon (‫لبنان‬‎)", "lb", "961" ], [ "Lesotho", "ls", "266" ], [ "Liberia", "lr", "231" ], [ "Libya (‫ليبيا‬‎)", "ly", "218" ], [ "Liechtenstein", "li", "423" ], [ "Lithuania (Lietuva)", "lt", "370" ], [ "Luxembourg", "lu", "352" ], [ "Macau (澳門)", "mo", "853" ], [ "Macedonia (FYROM) (Македонија)", "mk", "389" ], [ "Madagascar (Madagasikara)", "mg", "261" ], [ "Malawi", "mw", "265" ], [ "Malaysia", "my", "60" ], [ "Maldives", "mv", "960" ], [ "Mali", "ml", "223" ], [ "Malta", "mt", "356" ], [ "Marshall Islands", "mh", "692" ], [ "Martinique", "mq", "596" ], [ "Mauritania (‫موريتانيا‬‎)", "mr", "222" ], [ "Mauritius (Moris)", "mu", "230" ], [ "Mayotte", "yt", "262", 1 ], [ "Mexico (México)", "mx", "52" ], [ "Micronesia", "fm", "691" ], [ "Moldova (Republica Moldova)", "md", "373" ], [ "Monaco", "mc", "377" ], [ "Mongolia (Монгол)", "mn", "976" ], [ "Montenegro (Crna Gora)", "me", "382" ], [ "Montserrat", "ms", "1664" ], [ "Morocco (‫المغرب‬‎)", "ma", "212", 0 ], [ "Mozambique (Moçambique)", "mz", "258" ], [ "Myanmar (Burma) (မြန်မာ)", "mm", "95" ], [ "Namibia (Namibië)", "na", "264" ], [ "Nauru", "nr", "674" ], [ "Nepal (नेपाल)", "np", "977" ], [ "Netherlands (Nederland)", "nl", "31" ], [ "New Caledonia (Nouvelle-Calédonie)", "nc", "687" ], [ "New Zealand", "nz", "64" ], [ "Nicaragua", "ni", "505" ], [ "Niger (Nijar)", "ne", "227" ], [ "Nigeria", "ng", "234" ], [ "Niue", "nu", "683" ], [ "Norfolk Island", "nf", "672" ], [ "North Korea (조선 민주주의 인민 공화국)", "kp", "850" ], [ "Northern Mariana Islands", "mp", "1670" ], [ "Norway (Norge)", "no", "47", 0 ], [ "Oman (‫عُمان‬‎)", "om", "968" ], [ "Pakistan (‫پاکستان‬‎)", "pk", "92" ], [ "Palau", "pw", "680" ], [ "Palestine (‫فلسطين‬‎)", "ps", "970" ], [ "Panama (Panamá)", "pa", "507" ], [ "Papua New Guinea", "pg", "675" ], [ "Paraguay", "py", "595" ], [ "Peru (Perú)", "pe", "51" ], [ "Philippines", "ph", "63" ], [ "Poland (Polska)", "pl", "48" ], [ "Portugal", "pt", "351" ], [ "Puerto Rico", "pr", "1", 3, [ "787", "939" ] ], [ "Qatar (‫قطر‬‎)", "qa", "974" ], [ "Réunion (La Réunion)", "re", "262", 0 ], [ "Romania (România)", "ro", "40" ], [ "Russia (Россия)", "ru", "7", 0 ], [ "Rwanda", "rw", "250" ], [ "Saint Barthélemy (Saint-Barthélemy)", "bl", "590", 1 ], [ "Saint Helena", "sh", "290" ], [ "Saint Kitts and Nevis", "kn", "1869" ], [ "Saint Lucia", "lc", "1758" ], [ "Saint Martin (Saint-Martin (partie française))", "mf", "590", 2 ], [ "Saint Pierre and Miquelon (Saint-Pierre-et-Miquelon)", "pm", "508" ], [ "Saint Vincent and the Grenadines", "vc", "1784" ], [ "Samoa", "ws", "685" ], [ "San Marino", "sm", "378" ], [ "São Tomé and Príncipe (São Tomé e Príncipe)", "st", "239" ], [ "Saudi Arabia (‫المملكة العربية السعودية‬‎)", "sa", "966" ], [ "Senegal (Sénégal)", "sn", "221" ], [ "Serbia (Србија)", "rs", "381" ], [ "Seychelles", "sc", "248" ], [ "Sierra Leone", "sl", "232" ], [ "Singapore", "sg", "65" ], [ "Sint Maarten", "sx", "1721" ], [ "Slovakia (Slovensko)", "sk", "421" ], [ "Slovenia (Slovenija)", "si", "386" ], [ "Solomon Islands", "sb", "677" ], [ "Somalia (Soomaaliya)", "so", "252" ], [ "South Africa", "za", "27" ], [ "South Korea (대한민국)", "kr", "82" ], [ "South Sudan (‫جنوب السودان‬‎)", "ss", "211" ], [ "Spain (España)", "es", "34" ], [ "Sri Lanka (ශ්‍රී ලංකාව)", "lk", "94" ], [ "Sudan (‫السودان‬‎)", "sd", "249" ], [ "Suriname", "sr", "597" ], [ "Svalbard and Jan Mayen", "sj", "47", 1 ], [ "Swaziland", "sz", "268" ], [ "Sweden (Sverige)", "se", "46" ], [ "Switzerland (Schweiz)", "ch", "41" ], [ "Syria (‫سوريا‬‎)", "sy", "963" ], [ "Taiwan (台灣)", "tw", "886" ], [ "Tajikistan", "tj", "992" ], [ "Tanzania", "tz", "255" ], [ "Thailand (ไทย)", "th", "66" ], [ "Timor-Leste", "tl", "670" ], [ "Togo", "tg", "228" ], [ "Tokelau", "tk", "690" ], [ "Tonga", "to", "676" ], [ "Trinidad and Tobago", "tt", "1868" ], [ "Tunisia (‫تونس‬‎)", "tn", "216" ], [ "Turkey (Türkiye)", "tr", "90" ], [ "Turkmenistan", "tm", "993" ], [ "Turks and Caicos Islands", "tc", "1649" ], [ "Tuvalu", "tv", "688" ], [ "U.S. Virgin Islands", "vi", "1340" ], [ "Uganda", "ug", "256" ], [ "Ukraine (Україна)", "ua", "380" ], [ "United Arab Emirates (‫الإمارات العربية المتحدة‬‎)", "ae", "971" ], [ "United Kingdom", "gb", "44", 0 ], [ "United States", "us", "1", 0 ], [ "Uruguay", "uy", "598" ], [ "Uzbekistan (Oʻzbekiston)", "uz", "998" ], [ "Vanuatu", "vu", "678" ], [ "Vatican City (Città del Vaticano)", "va", "39", 1 ], [ "Venezuela", "ve", "58" ], [ "Vietnam (Việt Nam)", "vn", "84" ], [ "Wallis and Futuna", "wf", "681" ], [ "Western Sahara (‫الصحراء الغربية‬‎)", "eh", "212", 1 ], [ "Yemen (‫اليمن‬‎)", "ye", "967" ], [ "Zambia", "zm", "260" ], [ "Zimbabwe", "zw", "263" ], [ "Åland Islands", "ax", "358", 1 ] ];
+    var allCountries = [
+        ['Afghanistan (‫افغانستان‬‎)', 'af', '93'],
+        ['Albania (Shqipëri)', 'al', '355'],
+        ['Algeria (‫الجزائر‬‎)', 'dz', '213'],
+        ['American Samoa', 'as', '1684'],
+        ['Andorra', 'ad', '376'],
+        ['Angola', 'ao', '244'],
+        ['Anguilla', 'ai', '1264'],
+        ['Antigua and Barbuda', 'ag', '1268'],
+        ['Argentina', 'ar', '54'],
+        ['Armenia (Հայաստան)', 'am', '374'],
+        ['Aruba', 'aw', '297'],
+        ['Australia', 'au', '61', 0],
+        ['Austria (Österreich)', 'at', '43'],
+        ['Azerbaijan (Azərbaycan)', 'az', '994'],
+        ['Bahamas', 'bs', '1242'],
+        ['Bahrain (‫البحرين‬‎)', 'bh', '973'],
+        ['Bangladesh (বাংলাদেশ)', 'bd', '880'],
+        ['Barbados', 'bb', '1246'],
+        ['Belarus (Беларусь)', 'by', '375'],
+        ['Belgium (België)', 'be', '32'],
+        ['Belize', 'bz', '501'],
+        ['Benin (Bénin)', 'bj', '229'],
+        ['Bermuda', 'bm', '1441'],
+        ['Bhutan (འབྲུག)', 'bt', '975'],
+        ['Bolivia', 'bo', '591'],
+        ['Bosnia and Herzegovina (Босна и Херцеговина)', 'ba', '387'],
+        ['Botswana', 'bw', '267'],
+        ['Brazil (Brasil)', 'br', '55'],
+        ['British Indian Ocean Territory', 'io', '246'],
+        ['British Virgin Islands', 'vg', '1284'],
+        ['Brunei', 'bn', '673'],
+        ['Bulgaria (България)', 'bg', '359'],
+        ['Burkina Faso', 'bf', '226'],
+        ['Burundi (Uburundi)', 'bi', '257'],
+        ['Cambodia (កម្ពុជា)', 'kh', '855'],
+        ['Cameroon (Cameroun)', 'cm', '237'],
+        [
+            'Canada',
+            'ca',
+            '1',
+            1,
+            [
+                '204',
+                '226',
+                '236',
+                '249',
+                '250',
+                '289',
+                '306',
+                '343',
+                '365',
+                '387',
+                '403',
+                '416',
+                '418',
+                '431',
+                '437',
+                '438',
+                '450',
+                '506',
+                '514',
+                '519',
+                '548',
+                '579',
+                '581',
+                '587',
+                '604',
+                '613',
+                '639',
+                '647',
+                '672',
+                '705',
+                '709',
+                '742',
+                '778',
+                '780',
+                '782',
+                '807',
+                '819',
+                '825',
+                '867',
+                '873',
+                '902',
+                '905'
+            ]
+        ],
+        ['Cape Verde (Kabu Verdi)', 'cv', '238'],
+        ['Caribbean Netherlands', 'bq', '599', 1],
+        ['Cayman Islands', 'ky', '1345'],
+        ['Central African Republic (République centrafricaine)', 'cf', '236'],
+        ['Chad (Tchad)', 'td', '235'],
+        ['Chile', 'cl', '56'],
+        ['China (中国)', 'cn', '86'],
+        ['Christmas Island', 'cx', '61', 2],
+        ['Cocos (Keeling) Islands', 'cc', '61', 1],
+        ['Colombia', 'co', '57'],
+        ['Comoros (‫جزر القمر‬‎)', 'km', '269'],
+        ['Congo (DRC) (Jamhuri ya Kidemokrasia ya Kongo)', 'cd', '243'],
+        ['Congo (Republic) (Congo-Brazzaville)', 'cg', '242'],
+        ['Cook Islands', 'ck', '682'],
+        ['Costa Rica', 'cr', '506'],
+        ['Côte d’Ivoire', 'ci', '225'],
+        ['Croatia (Hrvatska)', 'hr', '385'],
+        ['Cuba', 'cu', '53'],
+        ['Curaçao', 'cw', '599', 0],
+        ['Cyprus (Κύπρος)', 'cy', '357'],
+        ['Czech Republic (Česká republika)', 'cz', '420'],
+        ['Denmark (Danmark)', 'dk', '45'],
+        ['Djibouti', 'dj', '253'],
+        ['Dominica', 'dm', '1767'],
+        ['Dominican Republic (República Dominicana)', 'do', '1', 2, ['809', '829', '849']],
+        ['Ecuador', 'ec', '593'],
+        ['Egypt (‫مصر‬‎)', 'eg', '20'],
+        ['El Salvador', 'sv', '503'],
+        ['Equatorial Guinea (Guinea Ecuatorial)', 'gq', '240'],
+        ['Eritrea', 'er', '291'],
+        ['Estonia (Eesti)', 'ee', '372'],
+        ['Ethiopia', 'et', '251'],
+        ['Falkland Islands (Islas Malvinas)', 'fk', '500'],
+        ['Faroe Islands (Føroyar)', 'fo', '298'],
+        ['Fiji', 'fj', '679'],
+        ['Finland (Suomi)', 'fi', '358', 0],
+        ['France', 'fr', '33'],
+        ['French Guiana (Guyane française)', 'gf', '594'],
+        ['French Polynesia (Polynésie française)', 'pf', '689'],
+        ['Gabon', 'ga', '241'],
+        ['Gambia', 'gm', '220'],
+        ['Georgia (საქართველო)', 'ge', '995'],
+        ['Germany (Deutschland)', 'de', '49'],
+        ['Ghana (Gaana)', 'gh', '233'],
+        ['Gibraltar', 'gi', '350'],
+        ['Greece (Ελλάδα)', 'gr', '30'],
+        ['Greenland (Kalaallit Nunaat)', 'gl', '299'],
+        ['Grenada', 'gd', '1473'],
+        ['Guadeloupe', 'gp', '590', 0],
+        ['Guam', 'gu', '1671'],
+        ['Guatemala', 'gt', '502'],
+        ['Guernsey', 'gg', '44', 1],
+        ['Guinea (Guinée)', 'gn', '224'],
+        ['Guinea-Bissau (Guiné Bissau)', 'gw', '245'],
+        ['Guyana', 'gy', '592'],
+        ['Haiti', 'ht', '509'],
+        ['Honduras', 'hn', '504'],
+        ['Hong Kong (香港)', 'hk', '852'],
+        ['Hungary (Magyarország)', 'hu', '36'],
+        ['Iceland (Ísland)', 'is', '354'],
+        ['India (भारत)', 'in', '91'],
+        ['Indonesia', 'id', '62'],
+        ['Iran (‫ایران‬‎)', 'ir', '98'],
+        ['Iraq (‫العراق‬‎)', 'iq', '964'],
+        ['Ireland', 'ie', '353'],
+        ['Isle of Man', 'im', '44', 2],
+        ['Israel (‫ישראל‬‎)', 'il', '972'],
+        ['Italy (Italia)', 'it', '39', 0],
+        ['Jamaica', 'jm', '1876'],
+        ['Japan (日本)', 'jp', '81'],
+        ['Jersey', 'je', '44', 3],
+        ['Jordan (‫الأردن‬‎)', 'jo', '962'],
+        ['Kazakhstan (Казахстан)', 'kz', '7', 1],
+        ['Kenya', 'ke', '254'],
+        ['Kiribati', 'ki', '686'],
+        ['Kuwait (‫الكويت‬‎)', 'kw', '965'],
+        ['Kyrgyzstan (Кыргызстан)', 'kg', '996'],
+        ['Laos (ລາວ)', 'la', '856'],
+        ['Latvia (Latvija)', 'lv', '371'],
+        ['Lebanon (‫لبنان‬‎)', 'lb', '961'],
+        ['Lesotho', 'ls', '266'],
+        ['Liberia', 'lr', '231'],
+        ['Libya (‫ليبيا‬‎)', 'ly', '218'],
+        ['Liechtenstein', 'li', '423'],
+        ['Lithuania (Lietuva)', 'lt', '370'],
+        ['Luxembourg', 'lu', '352'],
+        ['Macau (澳門)', 'mo', '853'],
+        ['Macedonia (FYROM) (Македонија)', 'mk', '389'],
+        ['Madagascar (Madagasikara)', 'mg', '261'],
+        ['Malawi', 'mw', '265'],
+        ['Malaysia', 'my', '60'],
+        ['Maldives', 'mv', '960'],
+        ['Mali', 'ml', '223'],
+        ['Malta', 'mt', '356'],
+        ['Marshall Islands', 'mh', '692'],
+        ['Martinique', 'mq', '596'],
+        ['Mauritania (‫موريتانيا‬‎)', 'mr', '222'],
+        ['Mauritius (Moris)', 'mu', '230'],
+        ['Mayotte', 'yt', '262', 1],
+        ['Mexico (México)', 'mx', '52'],
+        ['Micronesia', 'fm', '691'],
+        ['Moldova (Republica Moldova)', 'md', '373'],
+        ['Monaco', 'mc', '377'],
+        ['Mongolia (Монгол)', 'mn', '976'],
+        ['Montenegro (Crna Gora)', 'me', '382'],
+        ['Montserrat', 'ms', '1664'],
+        ['Morocco (‫المغرب‬‎)', 'ma', '212', 0],
+        ['Mozambique (Moçambique)', 'mz', '258'],
+        ['Myanmar (Burma) (မြန်မာ)', 'mm', '95'],
+        ['Namibia (Namibië)', 'na', '264'],
+        ['Nauru', 'nr', '674'],
+        ['Nepal (नेपाल)', 'np', '977'],
+        ['Netherlands (Nederland)', 'nl', '31'],
+        ['New Caledonia (Nouvelle-Calédonie)', 'nc', '687'],
+        ['New Zealand', 'nz', '64'],
+        ['Nicaragua', 'ni', '505'],
+        ['Niger (Nijar)', 'ne', '227'],
+        ['Nigeria', 'ng', '234'],
+        ['Niue', 'nu', '683'],
+        ['Norfolk Island', 'nf', '672'],
+        ['North Korea (조선 민주주의 인민 공화국)', 'kp', '850'],
+        ['Northern Mariana Islands', 'mp', '1670'],
+        ['Norway (Norge)', 'no', '47', 0],
+        ['Oman (‫عُمان‬‎)', 'om', '968'],
+        ['Pakistan (‫پاکستان‬‎)', 'pk', '92'],
+        ['Palau', 'pw', '680'],
+        ['Palestine (‫فلسطين‬‎)', 'ps', '970'],
+        ['Panama (Panamá)', 'pa', '507'],
+        ['Papua New Guinea', 'pg', '675'],
+        ['Paraguay', 'py', '595'],
+        ['Peru (Perú)', 'pe', '51'],
+        ['Philippines', 'ph', '63'],
+        ['Poland (Polska)', 'pl', '48'],
+        ['Portugal', 'pt', '351'],
+        ['Puerto Rico', 'pr', '1', 3, ['787', '939']],
+        ['Qatar (‫قطر‬‎)', 'qa', '974'],
+        ['Réunion (La Réunion)', 're', '262', 0],
+        ['Romania (România)', 'ro', '40'],
+        ['Russia (Россия)', 'ru', '7', 0],
+        ['Rwanda', 'rw', '250'],
+        ['Saint Barthélemy (Saint-Barthélemy)', 'bl', '590', 1],
+        ['Saint Helena', 'sh', '290'],
+        ['Saint Kitts and Nevis', 'kn', '1869'],
+        ['Saint Lucia', 'lc', '1758'],
+        ['Saint Martin (Saint-Martin (partie française))', 'mf', '590', 2],
+        ['Saint Pierre and Miquelon (Saint-Pierre-et-Miquelon)', 'pm', '508'],
+        ['Saint Vincent and the Grenadines', 'vc', '1784'],
+        ['Samoa', 'ws', '685'],
+        ['San Marino', 'sm', '378'],
+        ['São Tomé and Príncipe (São Tomé e Príncipe)', 'st', '239'],
+        ['Saudi Arabia (‫المملكة العربية السعودية‬‎)', 'sa', '966'],
+        ['Senegal (Sénégal)', 'sn', '221'],
+        ['Serbia (Србија)', 'rs', '381'],
+        ['Seychelles', 'sc', '248'],
+        ['Sierra Leone', 'sl', '232'],
+        ['Singapore', 'sg', '65'],
+        ['Sint Maarten', 'sx', '1721'],
+        ['Slovakia (Slovensko)', 'sk', '421'],
+        ['Slovenia (Slovenija)', 'si', '386'],
+        ['Solomon Islands', 'sb', '677'],
+        ['Somalia (Soomaaliya)', 'so', '252'],
+        ['South Africa', 'za', '27'],
+        ['South Korea (대한민국)', 'kr', '82'],
+        ['South Sudan (‫جنوب السودان‬‎)', 'ss', '211'],
+        ['Spain (España)', 'es', '34'],
+        ['Sri Lanka (ශ්‍රී ලංකාව)', 'lk', '94'],
+        ['Sudan (‫السودان‬‎)', 'sd', '249'],
+        ['Suriname', 'sr', '597'],
+        ['Svalbard and Jan Mayen', 'sj', '47', 1],
+        ['Swaziland', 'sz', '268'],
+        ['Sweden (Sverige)', 'se', '46'],
+        ['Switzerland (Schweiz)', 'ch', '41'],
+        ['Syria (‫سوريا‬‎)', 'sy', '963'],
+        ['Taiwan (台灣)', 'tw', '886'],
+        ['Tajikistan', 'tj', '992'],
+        ['Tanzania', 'tz', '255'],
+        ['Thailand (ไทย)', 'th', '66'],
+        ['Timor-Leste', 'tl', '670'],
+        ['Togo', 'tg', '228'],
+        ['Tokelau', 'tk', '690'],
+        ['Tonga', 'to', '676'],
+        ['Trinidad and Tobago', 'tt', '1868'],
+        ['Tunisia (‫تونس‬‎)', 'tn', '216'],
+        ['Turkey (Türkiye)', 'tr', '90'],
+        ['Turkmenistan', 'tm', '993'],
+        ['Turks and Caicos Islands', 'tc', '1649'],
+        ['Tuvalu', 'tv', '688'],
+        ['U.S. Virgin Islands', 'vi', '1340'],
+        ['Uganda', 'ug', '256'],
+        ['Ukraine (Україна)', 'ua', '380'],
+        ['United Arab Emirates (‫الإمارات العربية المتحدة‬‎)', 'ae', '971'],
+        ['United Kingdom', 'gb', '44', 0],
+        ['United States', 'us', '1', 0],
+        ['Uruguay', 'uy', '598'],
+        ['Uzbekistan (Oʻzbekiston)', 'uz', '998'],
+        ['Vanuatu', 'vu', '678'],
+        ['Vatican City (Città del Vaticano)', 'va', '39', 1],
+        ['Venezuela', 've', '58'],
+        ['Vietnam (Việt Nam)', 'vn', '84'],
+        ['Wallis and Futuna', 'wf', '681'],
+        ['Western Sahara (‫الصحراء الغربية‬‎)', 'eh', '212', 1],
+        ['Yemen (‫اليمن‬‎)', 'ye', '967'],
+        ['Zambia', 'zm', '260'],
+        ['Zimbabwe', 'zw', '263'],
+        ['Åland Islands', 'ax', '358', 1]
+    ];
     // loop over all of the countries above
     for (var i = 0; i < allCountries.length; i++) {
         var c = allCountries[i];

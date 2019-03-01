@@ -19,8 +19,7 @@
 
 var proxyquire = require('proxyquire').noCallThru();
 
-describe('Accounting Service', function () {
-
+describe('Accounting Service', function() {
     var DEFAULT_URL = 'http://example/path';
     var DEFAULT_APIKEY = 'apiKey';
 
@@ -31,8 +30,7 @@ describe('Accounting Service', function () {
         }).apiKeyService;
     };
 
-    var invalidRequest = function (handler, body, statusExpected, bodyExpected, done) {
-
+    var invalidRequest = function(handler, body, statusExpected, bodyExpected, done) {
         var req = {
             body: body
         };
@@ -45,13 +43,11 @@ describe('Accounting Service', function () {
 
         accSerivceController[handler](req, res);
 
-        setTimeout(function () {
-
+        setTimeout(function() {
             expect(res.status).toHaveBeenCalledWith(statusExpected);
             expect(res.json).toHaveBeenCalledWith(bodyExpected);
 
             done();
-
         }, 100);
     };
 
@@ -65,9 +61,8 @@ describe('Accounting Service', function () {
             invalidRequest('getApiKey', '{}', 422, {error: 'Url missing'}, done);
         });
 
-        var saveAccountingService = function (saveReturn, sendMessage, statusExpected, done) {
-
-            var uuidMock = function () {
+        var saveAccountingService = function(saveReturn, sendMessage, statusExpected, done) {
+            var uuidMock = function() {
                 return DEFAULT_APIKEY;
             };
 
@@ -77,7 +72,7 @@ describe('Accounting Service', function () {
 
             var res = jasmine.createSpyObj('res', ['status', 'json']);
             res.status.and.returnValue(res);
-            res.json.and.callFake(function () {
+            res.json.and.callFake(function() {
                 expect(serviceInstance.url).toBe('http://example/path');
                 expect(serviceInstance.state).toBe('UNCOMMITTED');
 
@@ -89,7 +84,7 @@ describe('Accounting Service', function () {
             });
 
             var serviceInstance = jasmine.createSpyObj('service', ['save']);
-            serviceInstance.save.and.callFake( function (callback) {
+            serviceInstance.save.and.callFake(function(callback) {
                 return callback(saveReturn);
             });
             var accServiceSchema = jasmine.createSpy();
@@ -100,27 +95,25 @@ describe('Accounting Service', function () {
             accSerivceController.getApiKey(req, res);
         };
 
-        it('should return 500 when db fails', function (done) {
-            saveAccountingService({message: 'Error'}, {error: 'Error'}, 500, done);
+        it('should return 500 when db fails', function(done) {
+            saveAccountingService({ message: 'Error' }, { error: 'Error' }, 500, done);
         });
 
-        it('should generate and save a new apiKey with "UNCOMMITTED" state', function (done) {
-            saveAccountingService(null, {apiKey: DEFAULT_APIKEY}, 201, done);
+        it('should generate and save a new apiKey with "UNCOMMITTED" state', function(done) {
+            saveAccountingService(null, { apiKey: DEFAULT_APIKEY }, 201, done);
         });
     });
 
-    describe('Commit api-key', function () {
-
+    describe('Commit api-key', function() {
         var updateApikeyState = function(updateErr, updateRes, statusExpected, errExpected, done) {
-
             var req = {
                 params: {
                     apiKey: DEFAULT_APIKEY
                 }
             };
 
-            var  accServiceSchema = jasmine.createSpyObj('accServiceSchema', ['update']);
-            accServiceSchema.update.and.callFake( function (conditions, update, callback) {
+            var accServiceSchema = jasmine.createSpyObj('accServiceSchema', ['update']);
+            accServiceSchema.update.and.callFake(function(conditions, update, callback) {
                 return callback(updateErr, updateRes, {});
             });
 
@@ -129,42 +122,46 @@ describe('Accounting Service', function () {
             var res = jasmine.createSpyObj('res', ['status', 'send', 'json']);
 
             if (errExpected) {
-
-                res.json.and.callFake(function () {
-                    expect(accServiceSchema.update).toHaveBeenCalledWith({ apiKey: DEFAULT_APIKEY }, { $set: {state: 'COMMITTED'}}, jasmine.any(Function));
+                res.json.and.callFake(function() {
+                    expect(accServiceSchema.update).toHaveBeenCalledWith(
+                        { apiKey: DEFAULT_APIKEY },
+                        { $set: { state: 'COMMITTED' } },
+                        jasmine.any(Function)
+                    );
                     expect(res.status).toHaveBeenCalledWith(statusExpected);
                     expect(res.json).toHaveBeenCalledWith(errExpected);
                     done();
                 });
-
             } else {
-
-                res.send.and.callFake(function () {
-                    expect(accServiceSchema.update).toHaveBeenCalledWith({ apiKey: DEFAULT_APIKEY }, { $set: {state: 'COMMITTED'}}, jasmine.any(Function));
+                res.send.and.callFake(function() {
+                    expect(accServiceSchema.update).toHaveBeenCalledWith(
+                        { apiKey: DEFAULT_APIKEY },
+                        { $set: { state: 'COMMITTED' } },
+                        jasmine.any(Function)
+                    );
                     expect(res.status).toHaveBeenCalledWith(statusExpected);
                     expect(res.send).toHaveBeenCalled();
                     done();
                 });
-
             }
 
-            res.status.and.callFake(function () {
+            res.status.and.callFake(function() {
                 return res;
             });
 
             accSerivceController.commitApiKey(req, res);
         };
 
-        it('should return 500 when db fails', function (done) {
-            updateApikeyState({message: 'Error'}, null, 500, {error: 'Error'}, done);
+        it('should return 500 when db fails', function(done) {
+            updateApikeyState({ message: 'Error' }, null, 500, { error: 'Error' }, done);
         });
 
-        it('should return 404 when the API Key is invalid', function (done) {
-           updateApikeyState(null, {n: 0}, 404, {error: 'Invalid API Key'}, done);
+        it('should return 404 when the API Key is invalid', function(done) {
+            updateApikeyState(null, { n: 0 }, 404, { error: 'Invalid API Key' }, done);
         });
 
-        it('should update to "COMMITTED" the state of apiKey received', function (done) {
-           updateApikeyState(null, {nModified: 1}, 200, null, done);
+        it('should update to "COMMITTED" the state of apiKey received', function(done) {
+            updateApikeyState(null, { nModified: 1 }, 200, null, done);
         });
     });
 });

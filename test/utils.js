@@ -27,10 +27,10 @@ var defaultConfig = {
         userDoc: 'http://business-api-ecosystem.readthedocs.io/en/develop'
     },
     proxy: {
-	enabled: true,
-	host: 'belp.fiware.org',
-	secured: false,
-	port: 7496
+        enabled: true,
+        host: 'belp.fiware.org',
+        secured: false,
+        port: 7496
     },
     proxyPrefix: '',
     oauth2: {
@@ -139,10 +139,10 @@ exports.emptyLogger = {
     logger: {
         getLogger: function() {
             return {
-                'info': emptyFunction,
-                'warn': emptyFunction,
-                'error': emptyFunction
-            }
+                info: emptyFunction,
+                warn: emptyFunction,
+                error: emptyFunction
+            };
         }
     }
 };

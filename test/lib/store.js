@@ -17,13 +17,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var nock = require('nock'),
-    proxyquire = require('proxyquire'),
-    testUtils = require('../utils');
+var nock = require('nock');
 
+var proxyquire = require('proxyquire');
+
+var testUtils = require('../utils');
 
 describe('Store Client', function() {
-
     var OFFERING_ASSET = 'offering';
     var PRODUCT_ASSET = 'product';
 
@@ -35,9 +35,8 @@ describe('Store Client', function() {
     ASSETS_FUNCTION_MAPPING[OFFERING_ASSET] = 'validateOffering';
     ASSETS_FUNCTION_MAPPING[PRODUCT_ASSET] = 'validateProduct';
 
-
     var config = testUtils.getDefaultConfig();
-    
+
     var storeClient = proxyquire('../../lib/store', {
         './../config': config,
         './utils': {
@@ -45,11 +44,9 @@ describe('Store Client', function() {
         }
     }).storeClient;
 
-
     var testValidateAssetOk = function(assetType, method, action, protocol, done) {
-
         // Mock the server
-        config.endpoints.charging.appSsl = protocol === 'https' ? true : false;
+        config.endpoints.charging.appSsl = protocol === 'https';
         var serverUrl = protocol + '://' + config.endpoints.charging.host + ':' + config.endpoints.charging.port;
         var receivedBody;
 
@@ -57,15 +54,16 @@ describe('Store Client', function() {
             reqheaders: {
                 'content-type': 'application/json'
             }
-        }).post(ASSETS_URL_MAPPING[assetType], function(body) {
-            receivedBody = body;
-            return true;
-        }).reply(200);
+        })
+            .post(ASSETS_URL_MAPPING[assetType], function(body) {
+                receivedBody = body;
+                return true;
+            })
+            .reply(200);
 
         // Call the validator
-        var assetInfo = { 'a': 'b', 'example': 'c' };
-        storeClient[method](assetInfo, {id: 'test'}, function(err) {
-
+        var assetInfo = { a: 'b', example: 'c' };
+        storeClient[method](assetInfo, { id: 'test' }, function(err) {
             var expectedBody = {
                 action: action
             };
@@ -77,7 +75,6 @@ describe('Store Client', function() {
 
             done();
         });
-
     };
 
     // Products
@@ -90,26 +87,25 @@ describe('Store Client', function() {
         testValidateAssetOk(PRODUCT_ASSET, 'validateProduct', 'create', 'https', done);
     });
 
-    it('should attach product', function (done) {
+    it('should attach product', function(done) {
         testValidateAssetOk(PRODUCT_ASSET, 'attachProduct', 'attach', 'http', done);
     });
 
-    it('should rollback product creation', function (done) {
+    it('should rollback product creation', function(done) {
         testValidateAssetOk(PRODUCT_ASSET, 'rollbackProduct', 'rollback_create', 'http', done);
     });
 
-    it('should validate product upgrade', function (done) {
+    it('should validate product upgrade', function(done) {
         testValidateAssetOk(PRODUCT_ASSET, 'upgradeProduct', 'upgrade', 'http', done);
     });
 
-    it('should notify product upgraded', function (done) {
+    it('should notify product upgraded', function(done) {
         testValidateAssetOk(PRODUCT_ASSET, 'attachUpgradedProduct', 'attach_upgrade', 'http', done);
     });
 
-    it('should rollback product upgrade', function (done) {
+    it('should rollback product upgrade', function(done) {
         testValidateAssetOk(PRODUCT_ASSET, 'rollbackProductUpgrade', 'rollback_upgrade', 'http', done);
     });
-
 
     // Offerings
 
@@ -121,11 +117,11 @@ describe('Store Client', function() {
         testValidateAssetOk(OFFERING_ASSET, 'validateOffering', 'create', 'https', done);
     });
 
-    it('should attach offering info', function (done) {
+    it('should attach offering info', function(done) {
         testValidateAssetOk(OFFERING_ASSET, 'attachOffering', 'attach', 'https', done);
     });
 
-    it('should notify offering update', function (done) {
+    it('should notify offering update', function(done) {
         testValidateAssetOk(OFFERING_ASSET, 'updateOffering', 'update', 'https', done);
     });
 
@@ -140,16 +136,17 @@ describe('Store Client', function() {
                 reqheaders: {
                     'content-type': 'application/json'
                 }
-            }).post(ASSETS_URL_MAPPING[assetType], function (body) {
-                receivedBody = body;
-                return true;
-            }).reply(errorStatus, response);
+            })
+                .post(ASSETS_URL_MAPPING[assetType], function(body) {
+                    receivedBody = body;
+                    return true;
+                })
+                .reply(errorStatus, response);
         }
 
         // Call the validator
-        var assetInfo = { 'a': 'b', 'example': 'c' };
-        storeClient[ASSETS_FUNCTION_MAPPING[assetType]](assetInfo, {id: 'test'}, function(err) {
-
+        var assetInfo = { a: 'b', example: 'c' };
+        storeClient[ASSETS_FUNCTION_MAPPING[assetType]](assetInfo, { id: 'test' }, function(err) {
             var expectedBody = {
                 action: 'create'
             };
@@ -160,55 +157,72 @@ describe('Store Client', function() {
                 // Check the body received by the server
                 expect(receivedBody).toEqual(expectedBody);
             }
- 
+
             // Check the parameters used to call this callback
-            expect(err.status).toBe(errorStatus ? errorStatus : 504);
+            expect(err.status).toBe(errorStatus || 504);
             expect(err.message).toBe(expectedErrMsg);
 
             done();
         });
-
     };
 
     // Products
 
     it('should not validate product when store returns 400', function(done) {
         var message = 'Invalid field X';
-        testValidateProductError(PRODUCT_ASSET, 400, { error: message}, message, done);
+        testValidateProductError(PRODUCT_ASSET, 400, { error: message }, message, done);
     });
 
     it('should not validate product when store returns 403', function(done) {
         var message = 'Forbidden';
-        testValidateProductError(PRODUCT_ASSET, 403, { error: message}, message, done);
+        testValidateProductError(PRODUCT_ASSET, 403, { error: message }, message, done);
     });
 
     it('should not validate product when store returns 409', function(done) {
         var message = 'Confict';
-        testValidateProductError(PRODUCT_ASSET, 409, { error: message}, message, done);
+        testValidateProductError(PRODUCT_ASSET, 409, { error: message }, message, done);
     });
 
     it('should not validate product when store cannot validate the product', function(done) {
-        testValidateProductError(PRODUCT_ASSET, 500, 'Internal Server Error', 'The server has failed validating the product specification', done);
+        testValidateProductError(
+            PRODUCT_ASSET,
+            500,
+            'Internal Server Error',
+            'The server has failed validating the product specification',
+            done
+        );
     });
 
     it('should not validate product when store cannot be accessed', function(done) {
-        testValidateProductError(PRODUCT_ASSET, null, null, 'The server has failed validating the product specification', done);
+        testValidateProductError(
+            PRODUCT_ASSET,
+            null,
+            null,
+            'The server has failed validating the product specification',
+            done
+        );
     });
 
     // Offerings
 
     it('should not validate offering when store returns 400', function(done) {
         var message = 'Invalid field X';
-        testValidateProductError(OFFERING_ASSET, 400, { error: message}, message, done);
+        testValidateProductError(OFFERING_ASSET, 400, { error: message }, message, done);
     });
 
     it('should not validate offering when store returns 403', function(done) {
         var message = 'Forbidden';
-        testValidateProductError(OFFERING_ASSET, 403, { error: message}, message, done);
+        testValidateProductError(OFFERING_ASSET, 403, { error: message }, message, done);
     });
 
     it('should not validate offering when store cannot validate the product', function(done) {
-        testValidateProductError(OFFERING_ASSET, 500, 'Internal Server Error', 'The server has failed validating the offering', done);
+        testValidateProductError(
+            OFFERING_ASSET,
+            500,
+            'Internal Server Error',
+            'The server has failed validating the offering',
+            done
+        );
     });
 
     it('should not validate offering when store cannot be accessed', function(done) {
@@ -225,21 +239,23 @@ describe('Store Client', function() {
         var serverUrl = 'http' + '://' + config.endpoints.charging.host + ':' + config.endpoints.charging.port;
         var receivedBody;
         var response = {
-            'redirectUrl': redirectUrl
+            redirectUrl: redirectUrl
         };
 
         nock(serverUrl, {
             reqheaders: {
                 'content-type': 'application/json'
             }
-        }).post('/charging/api/orderManagement/orders', function(body) {
-            receivedBody = body;
-            return true;
-        }).reply(200, response);
+        })
+            .post('/charging/api/orderManagement/orders', function(body) {
+                receivedBody = body;
+                return true;
+            })
+            .reply(200, response);
 
         // Call the validator
-        var orderInfo = { 'a': 'b', 'example': 'c' };
-        storeClient.notifyOrder(orderInfo, {id: 'test'}, function(err, res) {
+        var orderInfo = { a: 'b', example: 'c' };
+        storeClient.notifyOrder(orderInfo, { id: 'test' }, function(err, res) {
             expect(receivedBody).toEqual(orderInfo);
             expect(err).toBe(null);
 
@@ -257,7 +273,6 @@ describe('Store Client', function() {
     });
 
     it('should call callback without errors when refund works', function(done) {
-
         // Mock the server
         config.endpoints.charging.appSsl = false;
         var serverUrl = 'http://' + config.endpoints.charging.host + ':' + config.endpoints.charging.port;
@@ -267,15 +282,16 @@ describe('Store Client', function() {
             reqheaders: {
                 'content-type': 'application/json'
             }
-        }).post('/charging/api/orderManagement/orders/refund', function(body) {
-            receivedBody = body;
-            return true;
-        }).reply(200);
+        })
+            .post('/charging/api/orderManagement/orders/refund', function(body) {
+                receivedBody = body;
+                return true;
+            })
+            .reply(200);
 
         // Call the validator
         var orderId = 7;
-        storeClient.refund(orderId, {id: 'test'}, function(err) {
-
+        storeClient.refund(orderId, { id: 'test' }, function(err) {
             var expectedBody = {
                 orderId: orderId
             };
@@ -285,11 +301,9 @@ describe('Store Client', function() {
 
             done();
         });
-
     });
 
     it('should call callback with errors when refund fails', function(done) {
-
         var errorStatus = 500;
 
         // Mock the server
@@ -301,15 +315,16 @@ describe('Store Client', function() {
             reqheaders: {
                 'content-type': 'application/json'
             }
-        }).post('/charging/api/orderManagement/orders/refund', function(body) {
-            receivedBody = body;
-            return true;
-        }).reply(errorStatus);
+        })
+            .post('/charging/api/orderManagement/orders/refund', function(body) {
+                receivedBody = body;
+                return true;
+            })
+            .reply(errorStatus);
 
         // Call the validator
         var orderId = 7;
-        storeClient.refund(orderId, {id: 'test'}, function(err) {
-
+        storeClient.refund(orderId, { id: 'test' }, function(err) {
             var expectedBody = {
                 orderId: orderId
             };
@@ -322,10 +337,9 @@ describe('Store Client', function() {
 
             done();
         });
-
     });
 
-    var mockUsageNotification = function testUsageNotification (status, path) {
+    var mockUsageNotification = function testUsageNotification(status, path) {
         // Mock the server
         config.endpoints.charging.appSsl = false;
         var serverUrl = 'http://' + config.endpoints.charging.host + ':' + config.endpoints.charging.port;
@@ -334,23 +348,25 @@ describe('Store Client', function() {
             reqheaders: {
                 'content-type': 'application/json'
             }
-        }).post(path, function (body) {
-            return true;
-        }).reply(status);
+        })
+            .post(path, function(body) {
+                return true;
+            })
+            .reply(status);
     };
 
-    it('should call callback without errors when usage notification works', function (done) {
+    it('should call callback without errors when usage notification works', function(done) {
         mockUsageNotification(200, '/charging/api/orderManagement/accounting/');
-        storeClient.validateUsage({}, function (err) {
+        storeClient.validateUsage({}, function(err) {
             expect(err).toBe(null);
             done();
         });
     });
 
-    it('should call callback with errors when usage notification fails', function (done) {
+    it('should call callback with errors when usage notification fails', function(done) {
         var errorStatus = 500;
         mockUsageNotification(errorStatus, '/charging/api/orderManagement/accounting/');
-        storeClient.validateUsage({}, function (err) {
+        storeClient.validateUsage({}, function(err) {
             expect(err).toEqual({
                 status: errorStatus,
                 message: 'The server has failed validating the usage'
@@ -361,16 +377,16 @@ describe('Store Client', function() {
 
     it('should call callback without error when refresh usage notification works', function(done) {
         mockUsageNotification(200, '/charging/api/orderManagement/accounting/refresh/');
-        storeClient.refreshUsage('1', '2', function (err) {
+        storeClient.refreshUsage('1', '2', function(err) {
             expect(err).toBe(null);
             done();
         });
     });
 
-    it('should call callback with errors when refresh usage notification fails', function (done) {
+    it('should call callback with errors when refresh usage notification fails', function(done) {
         var errorStatus = 500;
         mockUsageNotification(errorStatus, '/charging/api/orderManagement/accounting/refresh/');
-        storeClient.refreshUsage('1', '2', function (err) {
+        storeClient.refreshUsage('1', '2', function(err) {
             expect(err).toEqual({
                 status: errorStatus,
                 message: 'The server has failed loading usage info'

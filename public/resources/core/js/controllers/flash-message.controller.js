@@ -22,13 +22,19 @@
  *         Jaime Pajuelo <jpajuelo@conwet.com>
  *         Aitor Magán <amagan@conwet.com>
  */
-(function () {
-
+(function() {
     'use strict';
 
     angular
         .module('app')
-        .controller('FlashMessageListCtrl', ['$scope', '$sce', '$interpolate', '$timeout', 'EVENTS', FlashMessageListController]);
+        .controller('FlashMessageListCtrl', [
+            '$scope',
+            '$sce',
+            '$interpolate',
+            '$timeout',
+            'EVENTS',
+            FlashMessageListController
+        ]);
 
     function FlashMessageListController($scope, $sce, $interpolate, $timeout, EVENTS) {
         /* jshint validthis: true */
@@ -46,7 +52,7 @@
 
         vm.hideAlert = hideAlert;
 
-        $scope.$on(EVENTS.MESSAGE_ADDED, function (event, action, context) {
+        $scope.$on(EVENTS.MESSAGE_ADDED, function(event, action, context) {
             showAlert(action, interpolateMessage(action, context));
         });
 
@@ -60,7 +66,7 @@
                 message: message
             });
 
-            vm.list[length - 1].hideTrigger = $timeout(function () {
+            vm.list[length - 1].hideTrigger = $timeout(function() {
                 hideAlert(0);
             }, 2500);
         }
@@ -91,5 +97,4 @@
             $timeout.cancel(item.hideTrigger);
         }
     }
-
 })();

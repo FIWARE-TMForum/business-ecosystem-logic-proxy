@@ -23,20 +23,20 @@
  *         Aitor Magán <amagan@conwet.com>
  */
 
-
-(function () {
-
+(function() {
     'use strict';
 
-    angular
-        .module('app')
-        .factory('Customer', ['$q', '$resource', 'URLS', 'User', 'Party', CustomerService]);
+    angular.module('app').factory('Customer', ['$q', '$resource', 'URLS', 'User', 'Party', CustomerService]);
 
     function CustomerService($q, $resource, URLS, User, Party) {
-        var Customer = $resource(URLS.CUSTOMER_MANAGEMENT + '/customer/:id', {}, {
-            update: {method: 'PUT'},
-            updatePartial: {method: 'PATCH'}
-        });
+        var Customer = $resource(
+            URLS.CUSTOMER_MANAGEMENT + '/customer/:id',
+            {},
+            {
+                update: { method: 'PUT' },
+                updatePartial: { method: 'PATCH' }
+            }
+        );
         Customer.prototype.getEmailAddress = function getEmailAddress() {
             return findContactMedium(this.contactMedium, Party.TYPES.CONTACT_MEDIUM.EMAIL_ADDRESS.code);
         };
@@ -85,37 +85,39 @@
             launch: launch
         };
 
-	function process(func, params, deferred, transform) {
-	    transform = (transform == null) ? x => x : transform;
+        function process(func, params, deferred, transform) {
+            transform = transform == null ? (x) => x : transform;
 
-	    var resol = function (partyObj) {
-		transform(partyObj);
-		deferred.resolve(partyObj);
-	    };
+            var resol = function(partyObj) {
+                transform(partyObj);
+                deferred.resolve(partyObj);
+            };
 
-	    var rejec = function (response) {
-		deferred.reject(response);
-	    };
-	    params.push(resol, rejec);
-	    
-	    func.apply(null, params);
-	};
+            var rejec = function(response) {
+                deferred.reject(response);
+            };
+            params.push(resol, rejec);
+
+            func.apply(null, params);
+        }
 
         function search(filters) {
             var deferred = $q.defer();
-            var params = (filters == null) ? {} : filters;
+            var params = filters == null ? {} : filters;
 
-            Customer.query(params, function (customers) {
-                customers.forEach(extendContactMedium);
-                deferred.resolve(customers);
-            }, function (response) {
-                deferred.reject(response);
-            });
+            Customer.query(
+                params,
+                function(customers) {
+                    customers.forEach(extendContactMedium);
+                    deferred.resolve(customers);
+                },
+                function(response) {
+                    deferred.reject(response);
+                }
+            );
 
             return deferred.promise;
-        };
-
-	
+        }
 
         function create(data) {
             var deferred = $q.defer();
@@ -123,7 +125,7 @@
             data.name = User.loggedUser.currentUser.id;
             data.relatedParty = User.serialize();
 
-	    process(Customer.save, [data], deferred, extendContactMedium);
+            process(Customer.save, [data], deferred, extendContactMedium);
 
             // Customer.save(data, function (customer) {
             //     extendContactMedium(customer);
@@ -141,7 +143,7 @@
                 id: id
             };
 
-	    process(Customer.get, [params], deferred, extendContactMedium);
+            process(Customer.get, [params], deferred, extendContactMedium);
 
             // Customer.get(params, function (customer) {
             //     extendContactMedium(customer);
@@ -159,7 +161,7 @@
                 id: resource.id
             };
 
-	    process(Customer.updatePartial, [params, dataUpdated], deferred, extendContactMedium);
+            process(Customer.updatePartial, [params, dataUpdated], deferred, extendContactMedium);
 
             // Customer.updatePartial(params, dataUpdated, function (customer) {
             //     extendContactMedium(customer);
@@ -177,7 +179,7 @@
 
         function extendContactMedium(customer) {
             if (angular.isArray(customer.contactMedium)) {
-                customer.contactMedium.forEach(function (data, index) {
+                customer.contactMedium.forEach(function(data, index) {
                     customer.contactMedium[index] = new Party.ContactMedium(data);
                 });
             } else {
@@ -197,5 +199,4 @@
             return null;
         }
     }
-
 })();

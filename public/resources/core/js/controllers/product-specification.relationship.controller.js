@@ -22,26 +22,51 @@
  *         Jaime Pajuelo <jpajuelo@conwet.com>
  *         Aitor Magán <amagan@conwet.com>
  */
-(function () {
-
+(function() {
     'use strict';
 
     angular
         .module('app')
-        .controller('RelationshipCreateCtrl', ['$controller', '$rootScope', '$scope', '$timeout', 'EVENTS',
-            'DATA_STATUS', 'LIFECYCLE_STATUS', 'Utils', 'ProductSpec', RelationshipCreateController])
+        .controller('RelationshipCreateCtrl', [
+            '$controller',
+            '$rootScope',
+            '$scope',
+            '$timeout',
+            'EVENTS',
+            'DATA_STATUS',
+            'LIFECYCLE_STATUS',
+            'Utils',
+            'ProductSpec',
+            RelationshipCreateController
+        ])
 
-        .controller('RelationshipDeleteCtrl', ['$rootScope', 'EVENTS', 'PROMISE_STATUS', 'Utils', RelationshipDeleteController]);
+        .controller('RelationshipDeleteCtrl', [
+            '$rootScope',
+            'EVENTS',
+            'PROMISE_STATUS',
+            'Utils',
+            RelationshipDeleteController
+        ]);
 
-    function RelationshipCreateController($controller, $rootScope, $scope, $timeout, EVENTS, DATA_STATUS, LIFECYCLE_STATUS, Utils, ProductSpec) {
+    function RelationshipCreateController(
+        $controller,
+        $rootScope,
+        $scope,
+        $timeout,
+        EVENTS,
+        DATA_STATUS,
+        LIFECYCLE_STATUS,
+        Utils,
+        ProductSpec
+    ) {
         /* jshint validthis: true */
         var vm = this;
         vm.offset = -1;
         vm.size = 0;
         vm.list = [];
-        vm.searchInput = "";
+        vm.searchInput = '';
 
-        angular.extend(vm, $controller('FormMixinCtrl', {$scope: $scope}));
+        angular.extend(vm, $controller('FormMixinCtrl', { $scope: $scope }));
 
         vm.RELATIONSHIPS = ProductSpec.TYPES.RELATIONSHIP;
         vm.STATUS = DATA_STATUS;
@@ -57,8 +82,8 @@
 
         function handleEnterKeyUp(event) {
             if (event.keyCode == 13) {
-                $timeout(function () {
-                    $("#relSearch").click();
+                $timeout(function() {
+                    $('#relSearch').click();
                 });
             }
         }
@@ -86,25 +111,34 @@
         }
 
         vm.list.status = vm.STATUS.LOADING;
-        $scope.$watch(function () {
-            return vm.offset;
-        }, function () {
-            vm.list.status = vm.STATUS.LOADING;
+        $scope.$watch(
+            function() {
+                return vm.offset;
+            },
+            function() {
+                vm.list.status = vm.STATUS.LOADING;
 
-            if (vm.offset >= 0) {
-                var params = getParams();
-                params.offset = vm.offset;
-                params.size = vm.size;
+                if (vm.offset >= 0) {
+                    var params = getParams();
+                    params.offset = vm.offset;
+                    params.size = vm.size;
 
-                ProductSpec.search(params).then(function (productList) {
-                    angular.copy(productList, vm.list);
-                    vm.list.status = vm.STATUS.LOADED;
-                }, function (response) {
-                    vm.errorMessage = Utils.parseError(response, 'Unexpected error trying to retrieve product specifications.');
-                    vm.list.status = vm.STATUS.ERROR;
-                });
+                    ProductSpec.search(params).then(
+                        function(productList) {
+                            angular.copy(productList, vm.list);
+                            vm.list.status = vm.STATUS.LOADED;
+                        },
+                        function(response) {
+                            vm.errorMessage = Utils.parseError(
+                                response,
+                                'Unexpected error trying to retrieve product specifications.'
+                            );
+                            vm.list.status = vm.STATUS.ERROR;
+                        }
+                    );
+                }
             }
-        });
+        );
 
         var createPromise = null;
 
@@ -120,13 +154,18 @@
         }
 
         Object.defineProperty(create, 'status', {
-            get: function () { return createPromise != null ? createPromise.$$state.status : -1; }
+            get: function() {
+                return createPromise != null ? createPromise.$$state.status : -1;
+            }
         });
 
         function hasRelationship(productSpec, relationshipProductSpec) {
-            return productSpec.id === relationshipProductSpec.id || productSpec.productSpecificationRelationship.some(function (relationship) {
-                return relationship.productSpec.id === relationshipProductSpec.id;
-            });
+            return (
+                productSpec.id === relationshipProductSpec.id ||
+                productSpec.productSpecificationRelationship.some(function(relationship) {
+                    return relationship.productSpec.id === relationshipProductSpec.id;
+                })
+            );
         }
 
         function setProductSpec(productSpec) {
@@ -145,17 +184,20 @@
 
         function remove($parentController, index) {
             removePromise = $parentController.removeRelationship(index);
-            removePromise.then(function (productSpec) {
-            }, function (response) {
-                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
-                    error: Utils.parseError(response, 'Unexpected error trying to remove the relationship.')
-                });
-            });
+            removePromise.then(
+                function(productSpec) {},
+                function(response) {
+                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                        error: Utils.parseError(response, 'Unexpected error trying to remove the relationship.')
+                    });
+                }
+            );
         }
 
         Object.defineProperty(remove, 'status', {
-            get: function () { return removePromise != null ? removePromise.$$state.status : -1; }
+            get: function() {
+                return removePromise != null ? removePromise.$$state.status : -1;
+            }
         });
     }
-
 })();

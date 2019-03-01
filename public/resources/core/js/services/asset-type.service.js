@@ -21,13 +21,10 @@
  * @author Francisco de la Vega <fdelavega@conwet.com>
  *         Jaime Pajuelo <jpajuelo@conwet.com>
  */
-(function () {
-
+(function() {
     'use strict';
 
-    angular
-        .module('app')
-        .factory('AssetType', ['$q', '$resource', 'URLS', AssetTypeService]);
+    angular.module('app').factory('AssetType', ['$q', '$resource', 'URLS', AssetTypeService]);
 
     function AssetTypeService($q, $resource, URLS) {
         var resource = $resource(URLS.ASSET_MANAGEMENT + '/assetTypes/:typeId', {
@@ -43,7 +40,7 @@
             var deferred = $q.defer();
             var params = {};
 
-            resource.query(params, function (typeList) {
+            resource.query(params, function(typeList) {
                 deferred.resolve(typeList);
             });
 
@@ -57,13 +54,11 @@
                 typeId: id
             };
 
-            resource.get(params, function (typeIt) {
+            resource.get(params, function(typeIt) {
                 deferred.resolve([typeIt]);
             });
 
             return deferred.promise;
-
         }
     }
-
 })();

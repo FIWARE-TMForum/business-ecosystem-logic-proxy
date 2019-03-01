@@ -22,36 +22,30 @@
  *         Jaime Pajuelo <jpajuelo@conwet.com>
  *         Aitor Magán <amagan@conwet.com>
  */
-(function () {
-
+(function() {
     'use strict';
 
-    angular
-        .module('app')
-        .config(['$stateProvider', ShoppingCartRouteConfig]);
+    angular.module('app').config(['$stateProvider', ShoppingCartRouteConfig]);
 
     function ShoppingCartRouteConfig($stateProvider) {
-
-        $stateProvider
-            .state('shopping-cart', {
-                url: '/shopping-cart',
-                data: {
-                    title: 'My Shopping Cart',
-                    loggingRequired: true
+        $stateProvider.state('shopping-cart', {
+            url: '/shopping-cart',
+            data: {
+                title: 'My Shopping Cart',
+                loggingRequired: true
+            },
+            views: {
+                'sidebar@': {
+                    template: '<ui-view>'
                 },
-                views: {
-                    'sidebar@': {
-                        template: '<ui-view>'
-                    },
-                    'content@': {
-                        template: '<ui-view>'
-                    },
-                    'full-content@': {
-                        templateUrl: 'shopping-cart/list',
-                        controller: 'ProductOrderCreateCtrl as orderVM'
-                    }
+                'content@': {
+                    template: '<ui-view>'
+                },
+                'full-content@': {
+                    templateUrl: 'shopping-cart/list',
+                    controller: 'ProductOrderCreateCtrl as orderVM'
                 }
-            });
+            }
+        });
     }
-
 })();

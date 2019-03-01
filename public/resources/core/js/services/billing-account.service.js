@@ -23,20 +23,30 @@
  *         Aitor Magán <amagan@conwet.com>
  */
 
-
-(function () {
-
+(function() {
     'use strict';
 
     angular
         .module('app')
-        .factory('BillingAccount', ['$q', '$resource', 'URLS', 'User', 'CustomerAccount', 'Customer', BillingAccountService]);
+        .factory('BillingAccount', [
+            '$q',
+            '$resource',
+            'URLS',
+            'User',
+            'CustomerAccount',
+            'Customer',
+            BillingAccountService
+        ]);
 
     function BillingAccountService($q, $resource, URLS, User, CustomerAccount, Customer) {
-        var BillingAccount = $resource(URLS.BILLING_MANAGEMENT + '/billingAccount/:id', {}, {
-            update: {method: 'PUT'},
-            updatePartial: {method: 'PATCH'}
-        });
+        var BillingAccount = $resource(
+            URLS.BILLING_MANAGEMENT + '/billingAccount/:id',
+            {},
+            {
+                update: { method: 'PUT' },
+                updatePartial: { method: 'PATCH' }
+            }
+        );
 
         var CustomerCharges = $resource(URLS.BILLING_MANAGEMENT + '/appliedCustomerBillingCharge', {}, {});
 
@@ -56,11 +66,9 @@
             };
         };
 
-        var EVENTS = {
-        };
+        var EVENTS = {};
 
-        var TYPES = {
-        };
+        var TYPES = {};
 
         var TEMPLATES = {
             BILLING_ACCOUNT: {
@@ -86,27 +94,31 @@
             var deferred = $q.defer();
             var params = {};
 
-            BillingAccount.query(params, function (billingAccounts) {
-
-                billingAccounts = billingAccounts.filter(function(account) {
-
-                    // TODO: Billing Accounts are filtered and only those where the logged user
-                    // has the 'bill received' role are returned. Modify this function in case
-                    // another filter is required. At this point, other filters are not expected.
-                    return account.relatedParty.some(function(party) {
-                        return party.role === 'bill receiver' && party.id === User.loggedUser.currentUser.id;
+            BillingAccount.query(
+                params,
+                function(billingAccounts) {
+                    billingAccounts = billingAccounts.filter(function(account) {
+                        // TODO: Billing Accounts are filtered and only those where the logged user
+                        // has the 'bill received' role are returned. Modify this function in case
+                        // another filter is required. At this point, other filters are not expected.
+                        return account.relatedParty.some(function(party) {
+                            return party.role === 'bill receiver' && party.id === User.loggedUser.currentUser.id;
+                        });
                     });
 
-                });
-
-                detailCustomerAccount(billingAccounts).then(function () {
-                    deferred.resolve(billingAccounts);
-                }, function (response) {
+                    detailCustomerAccount(billingAccounts).then(
+                        function() {
+                            deferred.resolve(billingAccounts);
+                        },
+                        function(response) {
+                            deferred.reject(response);
+                        }
+                    );
+                },
+                function(response) {
                     deferred.reject(response);
-                });
-            }, function (response) {
-                deferred.reject(response);
-            });
+                }
+            );
 
             return deferred.promise;
         }
@@ -114,29 +126,39 @@
         function create(data) {
             var deferred = $q.defer();
 
-            Customer.create(data.customerAccount.customer).then(function (customer) {
-                data.customerAccount.customer = customer;
-                CustomerAccount.create(data.customerAccount).then(function (customerAccount) {
-                    var user = User.serializeBasic();
-                    user.role = 'bill receiver';
-                    var resource = angular.extend({}, data, {
-                        name: customerAccount.name,
-                        customerAccount: customerAccount.serialize(),
-                        relatedParty: [user]
-                    });
+            Customer.create(data.customerAccount.customer).then(
+                function(customer) {
+                    data.customerAccount.customer = customer;
+                    CustomerAccount.create(data.customerAccount).then(
+                        function(customerAccount) {
+                            var user = User.serializeBasic();
+                            user.role = 'bill receiver';
+                            var resource = angular.extend({}, data, {
+                                name: customerAccount.name,
+                                customerAccount: customerAccount.serialize(),
+                                relatedParty: [user]
+                            });
 
-                    BillingAccount.save(resource, function (billingAccount) {
-                        billingAccount.customerAccount = customerAccount;
-                        deferred.resolve(billingAccount);
-                    }, function (response) {
-                        deferred.reject(response);
-                    });
-                }, function (response) {
+                            BillingAccount.save(
+                                resource,
+                                function(billingAccount) {
+                                    billingAccount.customerAccount = customerAccount;
+                                    deferred.resolve(billingAccount);
+                                },
+                                function(response) {
+                                    deferred.reject(response);
+                                }
+                            );
+                        },
+                        function(response) {
+                            deferred.reject(response);
+                        }
+                    );
+                },
+                function(response) {
                     deferred.reject(response);
-                });
-            }, function (response) {
-                deferred.reject(response);
-            });
+                }
+            );
 
             return deferred.promise;
         }
@@ -147,16 +169,23 @@
                 id: id
             };
 
-            BillingAccount.get(params, function (billingAccount) {
-                CustomerAccount.detail(billingAccount.customerAccount.id).then(function (customerAccount) {
-                    billingAccount.customerAccount = customerAccount;
-                    deferred.resolve(billingAccount);
-                }, function (response) {
+            BillingAccount.get(
+                params,
+                function(billingAccount) {
+                    CustomerAccount.detail(billingAccount.customerAccount.id).then(
+                        function(customerAccount) {
+                            billingAccount.customerAccount = customerAccount;
+                            deferred.resolve(billingAccount);
+                        },
+                        function(response) {
+                            deferred.reject(response);
+                        }
+                    );
+                },
+                function(response) {
                     deferred.reject(response);
-                });
-            }, function (response) {
-                deferred.reject(response);
-            });
+                }
+            );
 
             return deferred.promise;
         }
@@ -166,17 +195,20 @@
             var keepWaiting = collection.length;
 
             if (collection.length) {
-                collection.forEach(function (billingAccount) {
-                    CustomerAccount.detail(billingAccount.customerAccount.id).then(function (customerAccount) {
-                        billingAccount.customerAccount = customerAccount;
-                        keepWaiting -= 1;
+                collection.forEach(function(billingAccount) {
+                    CustomerAccount.detail(billingAccount.customerAccount.id).then(
+                        function(customerAccount) {
+                            billingAccount.customerAccount = customerAccount;
+                            keepWaiting -= 1;
 
-                        if (!keepWaiting) {
-                            deferred.resolve(collection);
+                            if (!keepWaiting) {
+                                deferred.resolve(collection);
+                            }
+                        },
+                        function(response) {
+                            deferred.reject(response);
                         }
-                    }, function (response) {
-                        deferred.reject(response);
-                    });
+                    );
                 });
             } else {
                 deferred.resolve(collection);
@@ -199,14 +231,17 @@
                 'serviceId.id': productId
             };
 
-            CustomerCharges.query(params, function (charges) {
-                deferred.resolve(charges);
-            }, function (response) {
-                deferred.reject(response);
-            });
+            CustomerCharges.query(
+                params,
+                function(charges) {
+                    deferred.resolve(charges);
+                },
+                function(response) {
+                    deferred.reject(response);
+                }
+            );
 
             return deferred.promise;
         }
     }
-
 })();

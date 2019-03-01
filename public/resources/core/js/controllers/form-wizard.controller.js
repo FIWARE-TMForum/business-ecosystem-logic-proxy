@@ -21,8 +21,7 @@
  * @author Francisco de la Vega <fdelavega@conwet.com>
  *         Jaime Pajuelo <jpajuelo@conwet.com>
  */
-(function () {
-
+(function() {
     'use strict';
 
     angular
@@ -58,7 +57,6 @@
         vm.resetFormField = resetFormField;
 
         function isDisabled(index, step) {
-
             if (vm.stepIndex == null && index == 0) {
                 nextStep(index, step);
             }
@@ -90,5 +88,4 @@
             return true;
         }
     }
-
 })();

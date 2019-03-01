@@ -32,10 +32,8 @@ describe('Management API', function () {
             };
 
             var res = {
-                json: function (val) {
-                },
-                end: function () {
-                }
+                json: function(val) {},
+                end: function() {}
             };
 
             spyOn(res, 'json');
@@ -54,10 +52,8 @@ describe('Management API', function () {
     describe('get version', function() {
         it('should return the valid value of version object', function() {
             var res = {
-                json: function (val) {
-                },
-                end: function () {
-                }
+                json: function(val) {},
+                end: function() {}
             };
             var uptime = 90061;
             var expVersion = {

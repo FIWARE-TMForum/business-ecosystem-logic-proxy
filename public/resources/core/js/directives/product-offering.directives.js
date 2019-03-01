@@ -22,19 +22,16 @@
  *         Jaime Pajuelo <jpajuelo@conwet.com>
  *         Aitor Magán <amagan@conwet.com>
  */
-(function () {
-
+(function() {
     'use strict';
 
-    angular
-        .module('app')
-        .directive('offeringPriceplan', OfferingPriceplanDirective);
+    angular.module('app').directive('offeringPriceplan', OfferingPriceplanDirective);
 
     function OfferingPriceplanDirective() {
         var types = {
-            'recurring': 'success',
+            recurring: 'success',
             'one time': 'info',
-            'usage': 'warning'
+            usage: 'warning'
         };
 
         return {
@@ -57,5 +54,4 @@
             return 'directives/offering-priceplan';
         }
     }
-
 })();

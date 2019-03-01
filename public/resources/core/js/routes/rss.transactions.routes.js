@@ -22,25 +22,19 @@
  *         Jaime Pajuelo <jpajuelo@conwet.com>
  *         Aitor Magán <amagan@conwet.com>
  */
-(function () {
-
+(function() {
     'use strict';
 
-    angular
-        .module('app')
-        .config(['$stateProvider', RSTransRouteConfig]);
+    angular.module('app').config(['$stateProvider', RSTransRouteConfig]);
 
     function RSTransRouteConfig($stateProvider) {
-
-        $stateProvider
-            .state('rss.transactions', {
-                url: '/transactions',
-                params: {
-                    flow: 1
-                },
-                templateUrl: 'rss/transactions/search',
-                controller: 'RSTransSearchCtrl as searchVM'
-            })
+        $stateProvider.state('rss.transactions', {
+            url: '/transactions',
+            params: {
+                flow: 1
+            },
+            templateUrl: 'rss/transactions/search',
+            controller: 'RSTransSearchCtrl as searchVM'
+        });
     }
-
 })();

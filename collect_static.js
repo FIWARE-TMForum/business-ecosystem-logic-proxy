@@ -28,24 +28,26 @@ const staticPath = './static';
 const debug = !(process.env.NODE_ENV == 'production');
 const theme = process.env.BAE_LP_THEME || config.theme;
 
-const deleteContents = function (path) {
+const deleteContents = function(path) {
     fs.readdirSync(path).forEach((file) => {
-        let curPath = path + "/" + file;
+        let curPath = path + '/' + file;
 
-        if (fs.lstatSync(curPath).isDirectory()) { // recurse
+        if (fs.lstatSync(curPath).isDirectory()) {
+            // recurse
             deleteDir(curPath);
-        } else { // delete file
+        } else {
+            // delete file
             fs.unlinkSync(curPath);
         }
     });
 };
 
-const deleteDir = function (path) {
+const deleteDir = function(path) {
     deleteContents(path);
     fs.rmdirSync(path);
 };
 
-const loadTheme = function () {
+const loadTheme = function() {
     // Check if the provided theme exists
     if (!fs.existsSync('./themes/' + theme)) {
         console.log('The configured theme ' + theme + ' has not been provided');
@@ -60,7 +62,7 @@ const loadTheme = function () {
     console.log('Theme loaded');
 };
 
-const minimizejs = function () {
+const minimizejs = function() {
     let files = [];
     let output = staticPath + '/public/resources/core/js/bae.min.js';
 
@@ -71,7 +73,8 @@ const minimizejs = function () {
         }
     };
 
-    let compileFiles = (d) => fs.statSync(d).isDirectory() ? fs.readdirSync(d).map(f => compileFiles(path.join(d, f))) : compileJs(d);
+    let compileFiles = (d) =>
+        fs.statSync(d).isDirectory() ? fs.readdirSync(d).map((f) => compileFiles(path.join(d, f))) : compileJs(d);
     compileFiles(staticPath + '/public/resources/core/js');
 
     console.log('Generating ' + output);
@@ -79,7 +82,7 @@ const minimizejs = function () {
         compressor: 'gcc',
         input: files,
         output: output,
-        callback: function (err, min) {
+        callback: function(err, min) {
             files.forEach((f) => {
                 fs.unlinkSync(f);
             });
@@ -96,7 +99,7 @@ const mergeLocales = function() {
     let localesDir = './themes/' + theme + '/locales'
     if (fs.existsSync(localesDir) && fs.statSync(localesDir).isDirectory()) {
         // Parse and merge files
-        fs.readdirSync(localesDir).map(f => {
+        fs.readdirSync(localesDir).map((f) => {
             let locale = path.join('./default_locales', f);
             let destLocale = path.join('./locales', f).replace('json', 'js');
             let localeJson;
@@ -107,7 +110,6 @@ const mergeLocales = function() {
                 localeJson = require('./' + locale);
 
                 Object.assign(localeJson, themeLocaleJson);
-
             } else {
                 // There is not a locale, save it
                 localeJson = require('./' + path.join(localesDir, f));
@@ -119,7 +121,7 @@ const mergeLocales = function() {
             });
         });
     }
-}
+};
 
 // Check if a theme has been provided or the system is in production
 if (!theme && debug) {
@@ -128,7 +130,7 @@ if (!theme && debug) {
 }
 
 // Delete prev static files
-if(fs.existsSync(staticPath)) {
+if (fs.existsSync(staticPath)) {
     deleteContents(staticPath);
 } else {
     fs.mkdirSync(staticPath);

@@ -23,8 +23,7 @@
  *         Aitor Magán <amagan@conwet.com>
  */
 
-(function () {
-
+(function() {
     'use strict';
 
     angular
@@ -32,13 +31,17 @@
         .factory('ProductSpec', ['$q', '$resource', 'URLS', 'LIFECYCLE_STATUS', 'User', ProductSpecificationService]);
 
     function ProductSpecificationService($q, $resource, URLS, LIFECYCLE_STATUS, User) {
-        var ProductSpec = $resource(URLS.CATALOGUE_MANAGEMENT + '/productSpecification/:productSpecId', {
-            productId: '@id'
-        }, {
-            update: {
-                method:'PATCH'
+        var ProductSpec = $resource(
+            URLS.CATALOGUE_MANAGEMENT + '/productSpecification/:productSpecId',
+            {
+                productId: '@id'
+            },
+            {
+                update: {
+                    method: 'PATCH'
+                }
             }
-        });
+        );
 
         var VALUE_TYPES = {
             STRING: 'string',
@@ -53,10 +56,10 @@
 
         var TYPES = {
             RELATIONSHIP: {
-                DEPENDENCY: {code: 'dependency', name: 'Dependency'},
-                EXCLUSIVITY: {code: 'exclusivity', name: 'Exclusivity'},
-                MIGRATION: {code: 'migration', name: 'Migration'},
-                SUBSTITUTION: {code: 'substitution', name: 'Substitution'}
+                DEPENDENCY: { code: 'dependency', name: 'Dependency' },
+                EXCLUSIVITY: { code: 'exclusivity', name: 'Exclusivity' },
+                MIGRATION: { code: 'migration', name: 'Migration' },
+                SUBSTITUTION: { code: 'substitution', name: 'Substitution' }
             }
         };
 
@@ -72,7 +75,7 @@
                     return TYPES.RELATIONSHIP[key].name;
                 }
             }
-            return "";
+            return '';
         };
         Relationship.prototype.toJSON = function toJSON() {
             return {
@@ -151,11 +154,15 @@
                 params['sort'] = filters.sort;
             }
 
-            method(params, function (productSpecList) {
-                deferred.resolve(productSpecList);
-            }, function (response) {
-                deferred.reject(response);
-            });
+            method(
+                params,
+                function(productSpecList) {
+                    deferred.resolve(productSpecList);
+                },
+                function(response) {
+                    deferred.reject(response);
+                }
+            );
 
             return deferred.promise;
         }
@@ -172,7 +179,7 @@
         function exists(params) {
             var deferred = $q.defer();
 
-            ProductSpec.query(params, function (productSpecList) {
+            ProductSpec.query(params, function(productSpecList) {
                 deferred.resolve(!!productSpecList.length);
             });
 
@@ -183,8 +190,7 @@
             var deferred = $q.defer();
             var bundledProductSpecification = data.bundledProductSpecification;
 
-            data.productSpecCharacteristic.forEach(function (characteristic) {
-
+            data.productSpecCharacteristic.forEach(function(characteristic) {
                 if (characteristic.valueType === VALUE_TYPES.NUMBER_RANGE) {
                     characteristic.valueType = VALUE_TYPES.NUMBER;
                 }
@@ -192,9 +198,8 @@
                 characteristic.valueType = characteristic.valueType.toLowerCase();
             });
 
-
             angular.extend(data, {
-                bundledProductSpecification: data.bundledProductSpecification.map(function (productSpec) {
+                bundledProductSpecification: data.bundledProductSpecification.map(function(productSpec) {
                     return productSpec.serialize();
                 })
             });
@@ -214,8 +219,7 @@
             };
 
             return ProductSpec.get(params)
-                .$promise
-                .then(detailBundled)
+                .$promise.then(detailBundled)
                 .then(detailRelationship);
         }
 
@@ -225,28 +229,26 @@
             };
 
             return ProductSpec.update(params, dataUpdated)
-                .$promise
-                .then(detailBundled)
+                .$promise.then(detailBundled)
                 .then(detailRelationship);
         }
 
         function extendBundledProducts(product) {
             var params = {
-                id: product.bundledProductSpecification.map(function (data) {
-                    return data.id;
-                }).join()
+                id: product.bundledProductSpecification
+                    .map(function(data) {
+                        return data.id;
+                    })
+                    .join()
             };
 
-            return ProductSpec.query(params)
-                .$promise
-                .then(function (collection) {
-                    product.bundledProductSpecification = collection;
-                    return product;
-                });
+            return ProductSpec.query(params).$promise.then(function(collection) {
+                product.bundledProductSpecification = collection;
+                return product;
+            });
         }
 
         function detailBundled(resource) {
-
             if (!angular.isArray(resource.bundledProductSpecification)) {
                 resource.bundledProductSpecification = [];
             }
@@ -255,7 +257,6 @@
         }
 
         function detailRelationship(resource) {
-
             if (!angular.isArray(resource.productSpecificationRelationship)) {
                 resource.productSpecificationRelationship = [];
             }
@@ -264,25 +265,28 @@
 
             function extendRelationship() {
                 var params = {
-                    id: resource.productSpecificationRelationship.map(function (data) {
-                        return data.id;
-                    }).join()
+                    id: resource.productSpecificationRelationship
+                        .map(function(data) {
+                            return data.id;
+                        })
+                        .join()
                 };
 
-                return ProductSpec.query(params)
-                    .$promise
-                    .then(function (collection) {
-                        var collectionById = {};
+                return ProductSpec.query(params).$promise.then(function(collection) {
+                    var collectionById = {};
 
-                        collection.forEach(function (data) {
-                            collectionById[data.id] = data;
-                        });
-
-                        resource.productSpecificationRelationship.forEach(function (data, index) {
-                            resource.productSpecificationRelationship[index] = new Relationship(collectionById[data.id], data.type);
-                        });
-                        return resource;
+                    collection.forEach(function(data) {
+                        collectionById[data.id] = data;
                     });
+
+                    resource.productSpecificationRelationship.forEach(function(data, index) {
+                        resource.productSpecificationRelationship[index] = new Relationship(
+                            collectionById[data.id],
+                            data.type
+                        );
+                    });
+                    return resource;
+                });
             }
         }
 
@@ -319,9 +323,7 @@
                         type: 'Picture'
                     }
                 ],
-                relatedParty: [
-                    User.serialize()
-                ]
+                relatedParty: [User.serialize()]
             };
         }
 
@@ -340,7 +342,7 @@
         function getCharacteristics() {
             /* jshint validthis: true */
             if (angular.isArray(this.productSpecCharacteristic)) {
-                return this.productSpecCharacteristic.filter(function (char) {
+                return this.productSpecCharacteristic.filter(function(char) {
                     return char.name.toLowerCase() !== 'license';
                 });
             }
@@ -359,7 +361,8 @@
 
         function getLicense() {
             /* jshint validthis: true */
-            var i, license = null;
+            var i,
+                license = null;
 
             if (angular.isArray(this.productSpecCharacteristic)) {
                 for (i = 0; i < this.productSpecCharacteristic.length && !license; i++) {
@@ -367,7 +370,7 @@
                         var char = this.productSpecCharacteristic[i];
                         license = {
                             title: char.productSpecCharacteristicValue[0].value,
-                            description: char.description,
+                            description: char.description
                         };
                     }
                 }
@@ -378,7 +381,8 @@
 
         function getPicture() {
             /* jshint validthis: true */
-            var i, src = "";
+            var i,
+                src = '';
 
             if (angular.isArray(this.attachment)) {
                 for (i = 0; i < this.attachment.length && !src; i++) {
@@ -393,7 +397,8 @@
 
         function getExtraFiles() {
             /* jshint validthis: true */
-            var i, extraFiles = [];
+            var i,
+                extraFiles = [];
 
             var prefix = this.name.replace(/ /g, '');
 
@@ -408,7 +413,7 @@
                             href: this.attachment[i].url,
                             name: this.attachment[i].url.split(prefix + '__')[1],
                             type: this.attachment[i].type
-                        })
+                        });
                     }
                 }
             }
@@ -425,24 +430,29 @@
         }
 
         function createCharacteristic(initialInfo) {
-            return angular.extend({
-                name: "",
-                description: "",
-                valueType: VALUE_TYPES.STRING,
-                configurable: false,
-                productSpecCharacteristicValue: []
-            }, initialInfo || {});
+            return angular.extend(
+                {
+                    name: '',
+                    description: '',
+                    valueType: VALUE_TYPES.STRING,
+                    configurable: false,
+                    productSpecCharacteristicValue: []
+                },
+                initialInfo || {}
+            );
         }
 
         function createCharacteristicValue(data) {
-            return angular.extend({
-                default: false,
-                unitOfMeasure: "",
-                value: "",
-                valueFrom: "",
-                valueTo: ""
-            }, data);
+            return angular.extend(
+                {
+                    default: false,
+                    unitOfMeasure: '',
+                    value: '',
+                    valueFrom: '',
+                    valueTo: ''
+                },
+                data
+            );
         }
     }
-
 })();

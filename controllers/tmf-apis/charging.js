@@ -18,13 +18,12 @@
  */
 
 var charging = (function() {
-
-    var checkPermissions = function (req, callback) {
+    var checkPermissions = function(req, callback) {
         if (req.apiUrl.indexOf('api/orderManagement/orders/refund') >= 0) {
             callback({
                 status: 403,
                 message: 'This API is private'
-            })
+            });
         } else {
             callback(null);
         }
@@ -33,7 +32,6 @@ var charging = (function() {
     return {
         checkPermissions: checkPermissions
     };
-
 })();
 
 exports.charging = charging;

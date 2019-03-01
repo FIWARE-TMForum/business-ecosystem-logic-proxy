@@ -22,13 +22,21 @@
  *         Jaime Pajuelo <jpajuelo@conwet.com>
  *         Aitor Magán <amagan@conwet.com>
  */
-(function () {
-
+(function() {
     'use strict';
 
     angular
         .module('app')
-        .controller('RSReportCreateCtrl', ['$state', '$scope', '$rootScope', '$element', 'RSS', 'EVENTS', 'Utils', RSReportCreateController])
+        .controller('RSReportCreateCtrl', [
+            '$state',
+            '$scope',
+            '$rootScope',
+            '$element',
+            'RSS',
+            'EVENTS',
+            'Utils',
+            RSReportCreateController
+        ])
         .controller('RSReportSearchCtrl', ['DATA_STATUS', 'RSS', 'Utils', '$scope', RSReportSearchController]);
 
     function RSReportSearchController(DATA_STATUS, RSS, Utils, $scope) {
@@ -45,7 +53,7 @@
             return RSS.countReports();
         }
 
-        function updateRSReports () {
+        function updateRSReports() {
             vm.list.status = DATA_STATUS.LOADING;
 
             if (vm.offset >= 0) {
@@ -53,17 +61,20 @@
                     offset: vm.offset,
                     size: vm.size
                 };
-                RSS.searchReports(params).then(function(reports) {
-                    vm.list = angular.copy(reports);
-                    vm.list.status = DATA_STATUS.LOADED;
-                }, function (response) {
-                    vm.error = Utils.parseError(response, 'Unexpected error trying to retrieve the reports.');
-                    vm.list.status = DATA_STATUS.ERROR;
-                });
+                RSS.searchReports(params).then(
+                    function(reports) {
+                        vm.list = angular.copy(reports);
+                        vm.list.status = DATA_STATUS.LOADED;
+                    },
+                    function(response) {
+                        vm.error = Utils.parseError(response, 'Unexpected error trying to retrieve the reports.');
+                        vm.list.status = DATA_STATUS.ERROR;
+                    }
+                );
             }
         }
 
-        $scope.$watch(function () {
+        $scope.$watch(function() {
             return vm.offset;
         }, updateRSReports);
     }
@@ -78,7 +89,7 @@
         vm.setProductClass = setProductClass;
         vm.create = create;
 
-        $scope.$on(RSS.EVENTS.REPORT_CREATE, function (event, sharingModels) {
+        $scope.$on(RSS.EVENTS.REPORT_CREATE, function(event, sharingModels) {
             vm.sharingModels = sharingModels;
             $element.modal('show');
         });
@@ -88,21 +99,23 @@
         }
 
         function create() {
-            RSS.createReport(vm.data).then(function () {
-                $state.go('rss.reports');
-                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {
-                    message: 'This operation could take up to several minutes.'
-                });
-            }, function (response) {
-                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
-                    error: Utils.parseError(response, 'Unexpected error trying to create the report.')
-                });
-            });
+            RSS.createReport(vm.data).then(
+                function() {
+                    $state.go('rss.reports');
+                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {
+                        message: 'This operation could take up to several minutes.'
+                    });
+                },
+                function(response) {
+                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                        error: Utils.parseError(response, 'Unexpected error trying to create the report.')
+                    });
+                }
+            );
             $rootScope.$broadcast(RSS.EVENTS.REPORT_CREATED, vm.data);
             vm.data = {
                 productClass: null
             };
         }
     }
-
 })();

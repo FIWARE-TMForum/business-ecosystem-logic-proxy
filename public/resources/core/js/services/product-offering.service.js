@@ -23,20 +23,46 @@
  *         Aitor Magán <amagan@conwet.com>
  */
 
-(function () {
-
+(function() {
     'use strict';
 
     angular
         .module('app')
-        .factory('Offering', ['$q', '$resource', 'URLS', 'CHARGE_PERIODS', 'CURRENCY_CODES', 'TAX_RATE', 'LIFECYCLE_STATUS', 'User', 'ProductSpec', 'Category', ProductOfferingService]);
+        .factory('Offering', [
+            '$q',
+            '$resource',
+            'URLS',
+            'CHARGE_PERIODS',
+            'CURRENCY_CODES',
+            'TAX_RATE',
+            'LIFECYCLE_STATUS',
+            'User',
+            'ProductSpec',
+            'Category',
+            ProductOfferingService
+        ]);
 
-    function ProductOfferingService($q, $resource, URLS, CHARGE_PERIODS, CURRENCY_CODES, TAX_RATE, LIFECYCLE_STATUS, User, ProductSpec, Category) {
-        var resource = $resource(URLS.CATALOGUE_MANAGEMENT + '/:catalogue/:catalogueId/productOffering/:offeringId', {
-            offeringId: '@id'
-        }, {
-            update: {method: 'PATCH'}
-        });
+    function ProductOfferingService(
+        $q,
+        $resource,
+        URLS,
+        CHARGE_PERIODS,
+        CURRENCY_CODES,
+        TAX_RATE,
+        LIFECYCLE_STATUS,
+        User,
+        ProductSpec,
+        Category
+    ) {
+        var resource = $resource(
+            URLS.CATALOGUE_MANAGEMENT + '/:catalogue/:catalogueId/productOffering/:offeringId',
+            {
+                offeringId: '@id'
+            },
+            {
+                update: { method: 'PATCH' }
+            }
+        );
 
         resource.prototype.formatCheapestPricePlan = formatCheapestPricePlan;
         resource.prototype.getCategories = getCategories;
@@ -59,13 +85,13 @@
 
         var CHARGE_PERIOD = {};
 
-        CHARGE_PERIODS.forEach(function (period) {
+        CHARGE_PERIODS.forEach(function(period) {
             CHARGE_PERIOD[period.title.toUpperCase()] = period.title.toLowerCase();
         });
 
         var CURRENCY_CODE = {};
 
-        CURRENCY_CODES.forEach(function (code) {
+        CURRENCY_CODES.forEach(function(code) {
             CURRENCY_CODE[code.value] = code.title;
         });
 
@@ -78,8 +104,8 @@
                 USAGE: 'usage'
             },
             PRICE_ALTERATION: {
-                DISCOUNT: {code: 'discount', name: 'Discount'},
-                FEE: {code: 'fee', name: 'Fee'}
+                DISCOUNT: { code: 'discount', name: 'Discount' },
+                FEE: { code: 'fee', name: 'Fee' }
             },
             PRICE_ALTERATION_SUPPORTED: {
                 PRICE_COMPONENT: 'Price component',
@@ -399,7 +425,7 @@
                 dutyFreeAmount: 0,
                 percentage: 0,
                 taxIncludedAmount: 0,
-                taxRate: TAX_RATE,
+                taxRate: TAX_RATE
             },
             PRICE_ALTERATION: {
                 description: '',
@@ -469,17 +495,21 @@
             var result = '';
 
             switch (priceAlteration.priceAlterationType) {
-            case TYPES.PRICE_ALTERATION_SUPPORTED.PRICE_CONDITION:
-                result += '+ ' + PricePlan.prototype.toString.call(priceAlteration);
-                break;
-            case TYPES.PRICE_ALTERATION_SUPPORTED.DISCOUNT_OR_FEE:
-                result += (priceAlteration.name === TYPES.PRICE_ALTERATION.FEE.code ? '+' : '-');
-                result += '' + (priceAlteration.isPercentage ? priceAlteration.price.percentage + '%' : priceAlteration.price.taxIncludedAmount + ' ' + priceAlteration.price.currencyCode);
-                break;
+                case TYPES.PRICE_ALTERATION_SUPPORTED.PRICE_CONDITION:
+                    result += '+ ' + PricePlan.prototype.toString.call(priceAlteration);
+                    break;
+                case TYPES.PRICE_ALTERATION_SUPPORTED.DISCOUNT_OR_FEE:
+                    result += priceAlteration.name === TYPES.PRICE_ALTERATION.FEE.code ? '+' : '-';
+                    result +=
+                        '' +
+                        (priceAlteration.isPercentage
+                            ? priceAlteration.price.percentage + '%'
+                            : priceAlteration.price.taxIncludedAmount + ' ' + priceAlteration.price.currencyCode);
+                    break;
             }
 
             return result;
-        }
+        };
 
         const builtAterationJSON = function(priceAlteration) {
             var data = {
@@ -492,21 +522,29 @@
             };
 
             switch (priceAlteration.priceAlterationType) {
-            case TYPES.PRICE_ALTERATION_SUPPORTED.PRICE_CONDITION:
-                data.priceCondition = '';
-                break;
-            case TYPES.PRICE_ALTERATION_SUPPORTED.DISCOUNT_OR_FEE:
-                data.priceCondition = priceAlteration.priceConditionOperator + ' ' + priceAlteration.priceCondition;
-                break;
+                case TYPES.PRICE_ALTERATION_SUPPORTED.PRICE_CONDITION:
+                    data.priceCondition = '';
+                    break;
+                case TYPES.PRICE_ALTERATION_SUPPORTED.DISCOUNT_OR_FEE:
+                    data.priceCondition = priceAlteration.priceConditionOperator + ' ' + priceAlteration.priceCondition;
+                    break;
             }
 
             return data;
-        }
+        };
 
         const formatCondition = function(priceAlteration) {
-            return 'if ' + angular.lowercase(TYPES.PRICE_CONDITION[angular.uppercase(priceAlteration.priceConditionOperator)].name)
-                + ' ' + priceAlteration.priceCondition + ' ' + priceAlteration.price.currencyCode;
-        }
+            return (
+                'if ' +
+                angular.lowercase(
+                    TYPES.PRICE_CONDITION[angular.uppercase(priceAlteration.priceConditionOperator)].name
+                ) +
+                ' ' +
+                priceAlteration.priceCondition +
+                ' ' +
+                priceAlteration.price.currencyCode
+            );
+        };
 
         const formatAlteration = function(priceAlteration, extended) {
             let result = '';
@@ -520,7 +558,7 @@
             }
 
             return serializeAlteration(priceAlteration) + result;
-        }
+        };
 
         const buildPriceJSON = function(price) {
             var data = {
@@ -531,8 +569,8 @@
                 taxRate: price.taxRate
             };
 
-            if (typeof price.arrayExcluded !== "undefined") {
-                price.arrayExcluded.forEach(function (name) {
+            if (typeof price.arrayExcluded !== 'undefined') {
+                price.arrayExcluded.forEach(function(name) {
                     if (name in data) {
                         delete data[name];
                     }
@@ -540,7 +578,7 @@
             }
 
             return data;
-        }
+        };
 
         var Price = function Price(data, arrayExcluded) {
             angular.extend(this, angular.copy(TEMPLATES.PRICE), angular.copy(data));
@@ -605,7 +643,6 @@
             }
         };
         PricePlan.prototype.setCurrencyCode = function setCurrencyCode(currencyCode) {
-
             if (this.productOfferPriceAlteration) {
                 this.productOfferPriceAlteration.price.currencyCode = currencyCode;
             }
@@ -615,16 +652,15 @@
             return this;
         };
         PricePlan.prototype.setType = function setType(priceType) {
-
             if (!angular.equals(this.priceType, priceType)) {
                 this.priceType = TYPES.PRICE[priceType];
                 this.unitOfMeasure = '';
                 this.recurringChargePeriod = '';
 
                 switch (this.priceType) {
-                case TYPES.PRICE.RECURRING:
-                    this.recurringChargePeriod = TYPES.CHARGE_PERIOD.WEEKLY;
-                    break;
+                    case TYPES.PRICE.RECURRING:
+                        this.recurringChargePeriod = TYPES.CHARGE_PERIOD.WEEKLY;
+                        break;
                 }
             }
 
@@ -634,12 +670,12 @@
             var result = '';
 
             switch (this.priceType) {
-            case TYPES.PRICE.RECURRING:
-                result = ' / ' + this.recurringChargePeriod;
-                break;
-            case TYPES.PRICE.USAGE:
-                result = ' / ' + this.unitOfMeasure;
-                break;
+                case TYPES.PRICE.RECURRING:
+                    result = ' / ' + this.recurringChargePeriod;
+                    break;
+                case TYPES.PRICE.USAGE:
+                    result = ' / ' + this.unitOfMeasure;
+                    break;
             }
 
             return this.price + result;
@@ -650,7 +686,7 @@
 
             if (angular.isObject(this.productOfferPriceAlteration)) {
                 plan.productOfferPriceAlteration = builtAterationJSON(this.productOfferPriceAlteration);
-                plan.productOfferPriceAlteration.price = buildPriceJSON(this.productOfferPriceAlteration.price)
+                plan.productOfferPriceAlteration.price = buildPriceJSON(this.productOfferPriceAlteration.price);
             }
             return plan;
         };
@@ -660,7 +696,6 @@
         };
 
         PricePlan.prototype.resetPriceAlteration = function resetPriceAlteration(priceAlterationType) {
-
             switch (priceAlterationType) {
                 case TYPES.PRICE_ALTERATION_SUPPORTED.PRICE_COMPONENT:
                 case TYPES.PRICE_ALTERATION_SUPPORTED.DISCOUNT_OR_FEE:
@@ -925,7 +960,7 @@
                 params['lifecycleStatus'] = filters.status;
             }
 
-            if (filters.type  !== undefined) {
+            if (filters.type !== undefined) {
                 params['isBundle'] = filters.type == 'Bundle';
             }
 
@@ -960,11 +995,15 @@
                 params['productSpecification.id'] = filters.productSpecId;
             }
 
-            method(params, function (offeringList) {
-                callback(offeringList);
-            }, function (response) {
-                deferred.reject(response);
-            });
+            method(
+                params,
+                function(offeringList) {
+                    callback(offeringList);
+                },
+                function(response) {
+                    deferred.reject(response);
+                }
+            );
 
             return deferred.promise;
         }
@@ -973,7 +1012,7 @@
             var deferred = $q.defer();
 
             function searchOfferingProducts(productFilters, offeringList) {
-                ProductSpec.search(productFilters).then(function (productList) {
+                ProductSpec.search(productFilters).then(function(productList) {
                     offeringList.forEach(function(offering) {
                         productList.some(function(product) {
                             if (offering.productSpecification && offering.productSpecification.id == product.id) {
@@ -990,17 +1029,19 @@
                 if (offeringList.length) {
                     var bundleOfferings = [];
                     var productFilters = {
-                        id: offeringList.map(function (offering) {
-                            var offId = '';
-                            extendPricePlans(offering);
+                        id: offeringList
+                            .map(function(offering) {
+                                var offId = '';
+                                extendPricePlans(offering);
 
-                            if (!offering.isBundle) {
-                                offId = offering.productSpecification.id;
-                            } else {
-                                bundleOfferings.push(offering);
-                            }
-                            return offId;
-                        }).join()
+                                if (!offering.isBundle) {
+                                    offId = offering.productSpecification.id;
+                                } else {
+                                    bundleOfferings.push(offering);
+                                }
+                                return offId;
+                            })
+                            .join()
                     };
 
                     if (!bundleOfferings.length) {
@@ -1019,7 +1060,6 @@
                             });
                         });
                     }
-
                 } else {
                     deferred.resolve(offeringList);
                 }
@@ -1030,7 +1070,7 @@
             var deferred = $q.defer();
             filters.action = 'count';
 
-            return query(deferred, filters, resource.get, function (countRes) {
+            return query(deferred, filters, resource.get, function(countRes) {
                 deferred.resolve(countRes);
             });
         }
@@ -1038,7 +1078,7 @@
         function exists(params) {
             var deferred = $q.defer();
 
-            resource.query(params, function (offeringList) {
+            resource.query(params, function(offeringList) {
                 deferred.resolve(!!offeringList.length);
             });
 
@@ -1094,15 +1134,15 @@
             var bundledProductOffering = data.bundledProductOffering;
 
             angular.extend(data, {
-                category: data.category.map(function (category) {
+                category: data.category.map(function(category) {
                     return category.serialize();
                 }),
-                bundledProductOffering: data.bundledProductOffering.map(function (offering) {
+                bundledProductOffering: data.bundledProductOffering.map(function(offering) {
                     return offering.serialize();
                 })
             });
 
-            if(!data.isBundle) {
+            if (!data.isBundle) {
                 angular.extend(data, {
                     productSpecification: product.serialize()
                 });
@@ -1118,13 +1158,18 @@
                 startDateTime: moment().format()
             };
 
-            resource.save(params, data, function (offeringCreated) {
-                offeringCreated.productSpecification = product;
-                offeringCreated.bundledProductOffering = bundledProductOffering;
-                deferred.resolve(offeringCreated);
-            }, function (response) {
-                deferred.reject(response);
-            });
+            resource.save(
+                params,
+                data,
+                function(offeringCreated) {
+                    offeringCreated.productSpecification = product;
+                    offeringCreated.bundledProductOffering = bundledProductOffering;
+                    deferred.resolve(offeringCreated);
+                },
+                function(response) {
+                    deferred.reject(response);
+                }
+            );
 
             return deferred.promise;
         }
@@ -1187,7 +1232,7 @@
         }
 
         function parseNumber(context, names) {
-            names.forEach(function (name) {
+            names.forEach(function(name) {
                 if (angular.isString(context[name])) {
                     context[name] = Number(context[name]);
                 }
@@ -1200,34 +1245,47 @@
             }
 
             var params = {
-                id: offering.bundledProductOffering.map(function (data) {
-                    return data.id;
-                }).join()
+                id: offering.bundledProductOffering
+                    .map(function(data) {
+                        return data.id;
+                    })
+                    .join()
             };
 
-            resource.query(params, function (offeringList) {
-                offering.bundledProductOffering = offeringList;
-                var bundleIndexes = {};
-                var productParams = {
-                    id: offeringList.map(function (data, index) {
-                        extendPricePlans(data);
-                        bundleIndexes[data.productSpecification.id] = index;
-                        return data.productSpecification.id
-                    }).join()
-                };
+            resource.query(
+                params,
+                function(offeringList) {
+                    offering.bundledProductOffering = offeringList;
+                    var bundleIndexes = {};
+                    var productParams = {
+                        id: offeringList
+                            .map(function(data, index) {
+                                extendPricePlans(data);
+                                bundleIndexes[data.productSpecification.id] = index;
+                                return data.productSpecification.id;
+                            })
+                            .join()
+                    };
 
-                ProductSpec.search(productParams).then(function (productList) {
-                    // Include product spec info in bundled offering
-                    productList.forEach(function (product) {
-                        offering.bundledProductOffering[bundleIndexes[product.id]].productSpecification = product;
-                    });
-                    callback();
-                }, function (response) {
+                    ProductSpec.search(productParams).then(
+                        function(productList) {
+                            // Include product spec info in bundled offering
+                            productList.forEach(function(product) {
+                                offering.bundledProductOffering[
+                                    bundleIndexes[product.id]
+                                ].productSpecification = product;
+                            });
+                            callback();
+                        },
+                        function(response) {
+                            callback(response);
+                        }
+                    );
+                },
+                function(response) {
                     callback(response);
-                });
-            }, function (response) {
-                callback(response);
-            });
+                }
+            );
         }
 
         function detail(id) {
@@ -1236,61 +1294,76 @@
                 id: id
             };
 
-            resource.query(params, function (collection) {
+            resource.query(
+                params,
+                function(collection) {
+                    if (collection.length) {
+                        var productOffering = collection[0];
 
-                if (collection.length) {
-                    var productOffering = collection[0];
-
-                    extendPricePlans(productOffering);
-                    if (productOffering.productSpecification) {
-                        ProductSpec.detail(productOffering.productSpecification.id).then(function (productRetrieved) {
-                            productOffering.productSpecification = productRetrieved;
-                            detailRelationship(productOffering);
-                        });
+                        extendPricePlans(productOffering);
+                        if (productOffering.productSpecification) {
+                            ProductSpec.detail(productOffering.productSpecification.id).then(function(
+                                productRetrieved
+                            ) {
+                                productOffering.productSpecification = productRetrieved;
+                                detailRelationship(productOffering);
+                            });
+                        } else {
+                            extendBundledProductOffering(productOffering);
+                        }
                     } else {
-                        extendBundledProductOffering(productOffering);
+                        deferred.reject(404);
                     }
-                } else {
-                    deferred.reject(404);
+                },
+                function(response) {
+                    deferred.reject(response);
                 }
-            }, function (response) {
-                deferred.reject(response);
-            });
+            );
 
             return deferred.promise;
 
             function detailRelationship(productOffering) {
                 if (productOffering.productSpecification.productSpecificationRelationship.length) {
                     var params = {
-                        'productSpecification.id': productOffering.productSpecification.productSpecificationRelationship.map(function (relationship) {
-                            relationship.productOffering = [];
-                            return relationship.productSpec.id;
-                        }).join()
+                        'productSpecification.id': productOffering.productSpecification.productSpecificationRelationship
+                            .map(function(relationship) {
+                                relationship.productOffering = [];
+                                return relationship.productSpec.id;
+                            })
+                            .join()
                     };
 
-                    resource.query(params, function (collection) {
-                        if (collection.length) {
-                            collection.forEach(function (productOfferingRelated) {
-                                extendPricePlans(productOfferingRelated);
-                                productOffering.productSpecification.productSpecificationRelationship.forEach(function (relationship) {
-                                    if (productOfferingRelated.productSpecification.id === relationship.productSpec.id) {
-                                        productOfferingRelated.productSpecification = relationship.productSpec;
-                                        relationship.productOffering.push(productOfferingRelated);
-                                    }
+                    resource.query(
+                        params,
+                        function(collection) {
+                            if (collection.length) {
+                                collection.forEach(function(productOfferingRelated) {
+                                    extendPricePlans(productOfferingRelated);
+                                    productOffering.productSpecification.productSpecificationRelationship.forEach(
+                                        function(relationship) {
+                                            if (
+                                                productOfferingRelated.productSpecification.id ===
+                                                relationship.productSpec.id
+                                            ) {
+                                                productOfferingRelated.productSpecification = relationship.productSpec;
+                                                relationship.productOffering.push(productOfferingRelated);
+                                            }
+                                        }
+                                    );
                                 });
-                            });
+                            }
+                            extendCategory(productOffering);
+                        },
+                        function(response) {
+                            deferred.reject(response);
                         }
-                        extendCategory(productOffering);
-                    }, function (response) {
-                        deferred.reject(response);
-                    });
+                    );
                 } else {
                     extendCategory(productOffering);
                 }
             }
 
             function extendBundledProductOffering(offering) {
-
                 if (offering.isBundle) {
                     attachOfferingBundleProducts(offering, function(res) {
                         if (res) {
@@ -1312,8 +1385,8 @@
                 }
 
                 if (offering.category.length) {
-                    offering.category.forEach(function (data, index) {
-                        Category.detail(data.id, false).then(function (categoryRetrieved) {
+                    offering.category.forEach(function(data, index) {
+                        Category.detail(data.id, false).then(function(categoryRetrieved) {
                             offering.category[index] = categoryRetrieved;
                             categories++;
 
@@ -1332,7 +1405,7 @@
             if (!angular.isArray(productOffering.productOfferingPrice)) {
                 productOffering.productOfferingPrice = [];
             } else {
-                productOffering.productOfferingPrice = productOffering.productOfferingPrice.map(function (pricePlan) {
+                productOffering.productOfferingPrice = productOffering.productOfferingPrice.map(function(pricePlan) {
                     return new PricePlan(pricePlan);
                 });
             }
@@ -1346,11 +1419,16 @@
                 offeringId: offering.id
             };
 
-            resource.update(params, data, function (offeringUpdated) {
-                deferred.resolve(offeringUpdated);
-            }, function (response) {
-                deferred.reject(response);
-            });
+            resource.update(
+                params,
+                data,
+                function(offeringUpdated) {
+                    deferred.resolve(offeringUpdated);
+                },
+                function(response) {
+                    deferred.reject(response);
+                }
+            );
 
             return deferred.promise;
         }
@@ -1372,7 +1450,7 @@
             /* jshint validthis: true */
             var ids = this.category.filter(hasParentId).map(getParentId);
 
-            return this.category.filter(function (category) {
+            return this.category.filter(function(category) {
                 return ids.indexOf(category.id) === -1;
             });
 
@@ -1392,7 +1470,7 @@
                 picture = this.productSpecification.getPicture();
             } else {
                 // The offering is a bundle, get a random image from its bundled offerings
-                var imageIndex = Math.floor(Math.random() * (this.bundledProductOffering.length));
+                var imageIndex = Math.floor(Math.random() * this.bundledProductOffering.length);
                 picture = this.bundledProductOffering[imageIndex].productSpecification.getPicture();
             }
             return picture;
@@ -1400,23 +1478,32 @@
 
         function formatCheapestPricePlan(extended) {
             /* jshint validthis: true */
-            var result = "", pricePlan = null, pricePlans = [];
+            var result = '',
+                pricePlan = null,
+                pricePlans = [];
 
             if (this.productOfferingPrice.length) {
-                pricePlans = this.productOfferingPrice.filter(function (pricePlan) {
+                pricePlans = this.productOfferingPrice.filter(function(pricePlan) {
                     return angular.lowercase(pricePlan.priceType) === TYPES.PRICE.ONE_TIME;
                 });
 
                 if (pricePlans.length) {
                     for (var i = 0; i < pricePlans.length; i++) {
-                        if (pricePlan == null || Number(pricePlan.price.taxIncludedAmount) > Number(pricePlans[i].price.taxIncludedAmount)) {
+                        if (
+                            pricePlan == null ||
+                            Number(pricePlan.price.taxIncludedAmount) > Number(pricePlans[i].price.taxIncludedAmount)
+                        ) {
                             pricePlan = this.productOfferingPrice[i];
                         }
                     }
                     result = 'From ' + pricePlan.toString() + '\n' + pricePlan.formatPriceAlteration(extended);
                 } else {
-                    pricePlans = this.productOfferingPrice.filter(function (pricePlan) {
-                        return [TYPES.PRICE.RECURRING, TYPES.PRICE.USAGE].indexOf(angular.lowercase(pricePlan.priceType)) !== -1;
+                    pricePlans = this.productOfferingPrice.filter(function(pricePlan) {
+                        return (
+                            [TYPES.PRICE.RECURRING, TYPES.PRICE.USAGE].indexOf(
+                                angular.lowercase(pricePlan.priceType)
+                            ) !== -1
+                        );
                     });
                     result = 'From ' + pricePlans[0].toString() + '\n' + pricePlans[0].formatPriceAlteration(extended);
                 }
@@ -1434,12 +1521,15 @@
                 productOfferingPrice: this.productOfferingPrice.concat(pricePlan)
             };
 
-            update(this, dataUpdated).then(function () {
-                this.productOfferingPrice.push(pricePlan);
-                deferred.resolve(this);
-            }.bind(this), function (response) {
-                deferred.reject(response);
-            });
+            update(this, dataUpdated).then(
+                function() {
+                    this.productOfferingPrice.push(pricePlan);
+                    deferred.resolve(this);
+                }.bind(this),
+                function(response) {
+                    deferred.reject(response);
+                }
+            );
 
             return deferred.promise;
         }
@@ -1453,12 +1543,15 @@
 
             dataUpdated.productOfferingPrice[index] = pricePlan;
 
-            update(this, dataUpdated).then(function () {
-                angular.merge(this.productOfferingPrice[index], pricePlan);
-                deferred.resolve(this);
-            }.bind(this), function (response) {
-                deferred.reject(response);
-            });
+            update(this, dataUpdated).then(
+                function() {
+                    angular.merge(this.productOfferingPrice[index], pricePlan);
+                    deferred.resolve(this);
+                }.bind(this),
+                function(response) {
+                    deferred.reject(response);
+                }
+            );
 
             return deferred.promise;
         }
@@ -1472,12 +1565,15 @@
 
             dataUpdated.productOfferingPrice.splice(index, 1);
 
-            update(this, dataUpdated).then(function () {
-                this.productOfferingPrice.splice(index, 1);
-                deferred.resolve(this);
-            }.bind(this), function (response) {
-                deferred.reject(response);
-            });
+            update(this, dataUpdated).then(
+                function() {
+                    this.productOfferingPrice.splice(index, 1);
+                    deferred.resolve(this);
+                }.bind(this),
+                function(response) {
+                    deferred.reject(response);
+                }
+            );
 
             return deferred.promise;
         }
@@ -1500,7 +1596,7 @@
             /* jshint validthis: true */
             var results = [];
 
-            this.productSpecification.productSpecificationRelationship.forEach(function (relationship) {
+            this.productSpecification.productSpecificationRelationship.forEach(function(relationship) {
                 results = results.concat(relationship.productOffering);
             });
 
@@ -1508,7 +1604,6 @@
         }
 
         function extendPriceAlteration(pricePlan, priceAlteration) {
-
             if (angular.isString(priceAlteration.priceCondition) && priceAlteration.priceCondition.length) {
                 var priceCondition = getPriceCondition(priceAlteration);
                 priceAlteration.priceCondition = priceCondition.value;
@@ -1526,10 +1621,9 @@
 
         function getPriceCondition(priceAlteration) {
             return {
-                operator: priceAlteration.priceCondition.split(" ")[0],
-                value: Number(priceAlteration.priceCondition.split(" ")[1])
+                operator: priceAlteration.priceCondition.split(' ')[0],
+                value: Number(priceAlteration.priceCondition.split(' ')[1])
             };
         }
     }
-
 })();

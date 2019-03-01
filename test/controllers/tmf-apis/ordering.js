@@ -17,19 +17,37 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var nock = require('nock'),
-    proxyquire =  require('proxyquire'),
-    Promise = require('promiz'),
-    md5 = require("blueimp-md5"),
-    testUtils = require('../../utils');
+var nock = require('nock');
+
+var proxyquire = require('proxyquire');
+
+var Promise = require('promiz');
+
+var md5 = require('blueimp-md5');
+
+var testUtils = require('../../utils');
 
 describe('Ordering API', function() {
-
     var config = testUtils.getDefaultConfig();
 
-    var SERVER = (config.endpoints.ordering.appSsl ? 'https' : 'http') + '://' + config.endpoints.ordering.host + ':' + config.endpoints.ordering.port;
-    var CATALOG_SERVER = (config.endpoints.catalog.appSsl ? 'https' : 'http') + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
-    var BILLING_SERVER = (config.endpoints.billing.appSsl ? 'https' : 'http') + '://' + config.endpoints.billing.host + ':' + config.endpoints.billing.port;
+    var SERVER =
+        (config.endpoints.ordering.appSsl ? 'https' : 'http') +
+        '://' +
+        config.endpoints.ordering.host +
+        ':' +
+        config.endpoints.ordering.port;
+    var CATALOG_SERVER =
+        (config.endpoints.catalog.appSsl ? 'https' : 'http') +
+        '://' +
+        config.endpoints.catalog.host +
+        ':' +
+        config.endpoints.catalog.port;
+    var BILLING_SERVER =
+        (config.endpoints.billing.appSsl ? 'https' : 'http') +
+        '://' +
+        config.endpoints.billing.host +
+        ':' +
+        config.endpoints.billing.port;
 
     // Errors
     var BILLING_ACCOUNT_REQUIRED = {
@@ -42,14 +60,13 @@ describe('Ordering API', function() {
         message: 'Billing Accounts must be the same for all the order items contained in the ordering'
     };
 
-
     var getOrderingAPI = function(storeClient, tmfUtils, utils, indexes) {
         if (!indexes) {
             indexes = {
-                safeIndexExecute: function () {
+                safeIndexExecute: function() {
                     return Promise.resolve();
                 },
-                queryIndexExecute: function () {
+                queryIndexExecute: function() {
                     return Promise.resolve();
                 }
             };
@@ -65,12 +82,12 @@ describe('Ordering API', function() {
         }).ordering;
     };
 
-    var validateLoggedOk = function (req, callback) {
+    var validateLoggedOk = function(req, callback) {
         callback();
     };
 
     var getIndividualURL = function(user) {
-        return 'http://belp.fiware.org:7891/party/api/partyManagement/v2/individual/' + (user ? user : '');
+        return 'http://belp.fiware.org:7891/party/api/partyManagement/v2/individual/' + (user || '');
     };
 
     beforeEach(function() {
@@ -78,22 +95,19 @@ describe('Ordering API', function() {
     });
 
     describe('Get Permissions', function() {
-
-        //////////////////////////////////////////////////////////////////////////////////////////////
-        ////////////////////////////////////// NOT AUTHENTICATED /////////////////////////////////////
-        //////////////////////////////////////////////////////////////////////////////////////////////
+        /// ///////////////////////////////////////////////////////////////////////////////////////////
+        /// /////////////////////////////////// NOT AUTHENTICATED /////////////////////////////////////
+        /// ///////////////////////////////////////////////////////////////////////////////////////////
 
         describe('Not Authenticated Requests', function() {
-
-            var validateLoggedError = function (req, callback) {
+            var validateLoggedError = function(req, callback) {
                 callback({
                     status: 401,
                     message: 'You need to be authenticated to create/update/delete resources'
                 });
             };
 
-            var testNotLoggedIn = function (method, done) {
-
+            var testNotLoggedIn = function(method, done) {
                 var utils = {
                     validateLoggedIn: validateLoggedError
                 };
@@ -107,8 +121,7 @@ describe('Ordering API', function() {
                     url: path
                 };
 
-                orderingApi.checkPermissions(req, function (err) {
-
+                orderingApi.checkPermissions(req, function(err) {
                     expect(err).not.toBe(null);
                     expect(err.status).toBe(401);
                     expect(err.message).toBe('You need to be authenticated to create/update/delete resources');
@@ -117,39 +130,35 @@ describe('Ordering API', function() {
                 });
             };
 
-            it('should reject not authenticated GET requests', function (done) {
+            it('should reject not authenticated GET requests', function(done) {
                 testNotLoggedIn('GET', done);
             });
 
-            it('should reject not authenticated POST requests', function (done) {
+            it('should reject not authenticated POST requests', function(done) {
                 testNotLoggedIn('POST', done);
             });
 
-            it('should reject not authenticated PATCH requests', function (done) {
+            it('should reject not authenticated PATCH requests', function(done) {
                 testNotLoggedIn('PATCH', done);
             });
-
         });
 
-
-        //////////////////////////////////////////////////////////////////////////////////////////////
-        ///////////////////////////////////////// NOT ALLOWED ////////////////////////////////////////
-        //////////////////////////////////////////////////////////////////////////////////////////////
+        /// ///////////////////////////////////////////////////////////////////////////////////////////
+        /// ////////////////////////////////////// NOT ALLOWED ////////////////////////////////////////
+        /// ///////////////////////////////////////////////////////////////////////////////////////////
 
         describe('Not allowed methods', function() {
-
             var methodNotAllowedStatus = 405;
             var methodNotAllowedMessage = 'This method used is not allowed in the accessed API';
 
-            var methodNotAllowed = function (req, callback) {
+            var methodNotAllowed = function(req, callback) {
                 callback({
                     status: methodNotAllowedStatus,
                     message: methodNotAllowedMessage
                 });
             };
 
-            var testMethodNotAllowed = function (method, done) {
-
+            var testMethodNotAllowed = function(method, done) {
                 var utils = {
                     methodNotAllowed: methodNotAllowed
                 };
@@ -163,8 +172,7 @@ describe('Ordering API', function() {
                     url: path
                 };
 
-                orderingApi.checkPermissions(req, function (err) {
-
+                orderingApi.checkPermissions(req, function(err) {
                     expect(err).not.toBe(null);
                     expect(err.status).toBe(methodNotAllowedStatus);
                     expect(err.message).toBe(methodNotAllowedMessage);
@@ -173,28 +181,24 @@ describe('Ordering API', function() {
                 });
             };
 
-            it('should reject not authenticated PUT requests', function (done) {
+            it('should reject not authenticated PUT requests', function(done) {
                 testMethodNotAllowed('PUT', done);
             });
 
-            it('should reject not authenticated DELETE requests', function (done) {
+            it('should reject not authenticated DELETE requests', function(done) {
                 testMethodNotAllowed('DELETE', done);
             });
-
         });
 
-        //////////////////////////////////////////////////////////////////////////////////////////////
-        ///////////////////////////////////////// RETRIEVAL //////////////////////////////////////////
-        //////////////////////////////////////////////////////////////////////////////////////////////
+        /// ///////////////////////////////////////////////////////////////////////////////////////////
+        /// ////////////////////////////////////// RETRIEVAL //////////////////////////////////////////
+        /// ///////////////////////////////////////////////////////////////////////////////////////////
 
         describe('GET', function() {
-
-            var testRetrieval = function (filterRelatedPartyFields, expectedErr, done) {
-
+            var testRetrieval = function(filterRelatedPartyFields, expectedErr, done) {
                 var ensureRelatedPartyIncludedCalled = false;
 
                 var tmfUtils = {
-
                     filterRelatedPartyWithRole: filterRelatedPartyFields,
 
                     ensureRelatedPartyIncluded: function(req, callback) {
@@ -204,7 +208,7 @@ describe('Ordering API', function() {
                 };
 
                 var utils = {
-                    validateLoggedIn: function (req, callback) {
+                    validateLoggedIn: function(req, callback) {
                         callback(null);
                     }
                 };
@@ -215,65 +219,58 @@ describe('Ordering API', function() {
 
                 var orderingApi = getOrderingAPI({}, tmfUtils, utils);
 
-                orderingApi.checkPermissions(req, function (err) {
-
+                orderingApi.checkPermissions(req, function(err) {
                     expect(ensureRelatedPartyIncludedCalled).toBe(true);
                     expect(err).toEqual(expectedErr);
 
                     done();
                 });
-
             };
 
-            it('should call callback with error when retrieving list of orderings and using invalid filters', function (done) {
-
+            it('should call callback with error when retrieving list of orderings and using invalid filters', function(done) {
                 var error = {
                     status: 401,
                     message: 'Invalid filters'
                 };
 
-                var filterRelatedPartyFields = function (req, allowedRoles,callback) {
+                var filterRelatedPartyFields = function(req, allowedRoles, callback) {
                     callback(error);
                 };
 
                 testRetrieval(filterRelatedPartyFields, error, done);
-
             });
 
-            it('should call callback without errors when user is allowed to retrieve the list of orderings', function (done) {
-
-                var filterRelatedPartyFields = function (req, allowedRoles, callback) {
+            it('should call callback without errors when user is allowed to retrieve the list of orderings', function(done) {
+                var filterRelatedPartyFields = function(req, allowedRoles, callback) {
                     callback();
                 };
 
                 testRetrieval(filterRelatedPartyFields, null, done);
-
             });
 
-            //////////////////////////////////////////////////////////////////////////////////////////////
-            ///////////////////////////////////////// INDEXES / //////////////////////////////////////////
-            //////////////////////////////////////////////////////////////////////////////////////////////
+            /// ///////////////////////////////////////////////////////////////////////////////////////////
+            /// ////////////////////////////////////// INDEXES / //////////////////////////////////////////
+            /// ///////////////////////////////////////////////////////////////////////////////////////////
 
             describe('Test index in checkPermissions middleware', function() {
-
                 var requestHelper = function requestHelper(done, results, url, query, expectedUrl, expectedQuery) {
-                    var pathname = "/productOrder";
-                    url = pathname + "?" + url;
-                    expectedUrl = pathname + "?" + expectedUrl;
+                    var pathname = '/productOrder';
+                    url = pathname + '?' + url;
+                    expectedUrl = pathname + '?' + expectedUrl;
 
                     var indexes = {
-                        searchOrders: q => {
+                        searchOrders: (q) => {
                             if (expectedQuery) {
                                 expect(q).toEqual(expectedQuery);
                             }
 
-                            return Promise.resolve(results.map(x => ({document: {originalId: x}})));
+                            return Promise.resolve(results.map((x) => ({ document: { originalId: x } })));
                         }
                     };
 
                     var orderApi = getOrderingAPI({}, {}, {}, indexes);
                     var req = {
-                        method: "GET",
+                        method: 'GET',
                         apiUrl: url,
                         _parsedUrl: {
                             pathname: pathname
@@ -289,18 +286,18 @@ describe('Ordering API', function() {
 
                 it('should not change request URL when order index fails', function(done) {
                     var indexes = {
-                        searchOrders: () => Promise.reject("Error")
+                        searchOrders: () => Promise.reject('Error')
                     };
                     var orderApi = getOrderingAPI({}, {}, {}, indexes);
-                    var url = "/productOrder?relatedParty.id=rock";
+                    var url = '/productOrder?relatedParty.id=rock';
                     var req = {
-                        method: "GET",
+                        method: 'GET',
                         apiUrl: url,
                         _parsedUrl: {
-                            pathname: "/productOrder"
+                            pathname: '/productOrder'
                         },
                         query: {
-                            "relatedParty.id": "rock"
+                            'relatedParty.id': 'rock'
                         }
                     };
 
@@ -311,16 +308,21 @@ describe('Ordering API', function() {
                 });
 
                 it('should change request URL to include order IDs when relatedParty.id is provided', function(done) {
-                    requestHelper(done,
-                        [3, 4], "relatedParty.id=rock", {
-                            "relatedParty.id": "rock"
-                        }, "id=3,4", {
+                    requestHelper(
+                        done,
+                        [3, 4],
+                        'relatedParty.id=rock',
+                        {
+                            'relatedParty.id': 'rock'
+                        },
+                        'id=3,4',
+                        {
                             sort: {
-                                field: "lastUpdate",
-                                direction: "desc"
+                                field: 'lastUpdate',
+                                direction: 'desc'
                             },
                             query: {
-                                AND: {relatedPartyHash: [md5("rock")]}
+                                AND: { relatedPartyHash: [md5('rock')] }
                             }
                         }
                     );
@@ -328,105 +330,110 @@ describe('Ordering API', function() {
 
                 var testQueryParameters = function testQueryParameters(done, params) {
                     // Transform object to param=value&param2=value2
-                    var paramUrl = Object.keys(params).map(key => key + "=" + params[key]).join("&");
+                    var paramUrl = Object.keys(params)
+                        .map((key) => key + '=' + params[key])
+                        .join('&');
                     // Transform object to index AND query (String keys must be lower case to perform index search correctly)
                     var ANDs = {};
-                    Object.keys(params)
-                            .forEach(key => (
-                                ANDs[key] = [ (typeof params[key] === "string") ? params[key].toLowerCase() : params[key]]
-                            ));
-
-                    requestHelper(done,
-                        [7, 9, 11], paramUrl, params, "id=7,9,11", {
-                            sort: {
-                                field: "lastUpdate",
-                                direction: "desc"
-                            },
-                            query: {AND: ANDs}
-                        }
+                    Object.keys(params).forEach(
+                        (key) =>
+                            (ANDs[key] = [typeof params[key] === 'string' ? params[key].toLowerCase() : params[key]])
                     );
+
+                    requestHelper(done, [7, 9, 11], paramUrl, params, 'id=7,9,11', {
+                        sort: {
+                            field: 'lastUpdate',
+                            direction: 'desc'
+                        },
+                        query: { AND: ANDs }
+                    });
                 };
 
                 it('should should change URL to include order IDs when no parameter are provided', function(done) {
-                    requestHelper(done,
-                        [1, 2], "", {}, "id=1,2", {
-                            sort: {
-                                field: "lastUpdate",
-                                direction: "desc"
-                            },
-                            query: {AND: {"*": ["*"]}}
-                        }
-                    );
+                    requestHelper(done, [1, 2], '', {}, 'id=1,2', {
+                        sort: {
+                            field: 'lastUpdate',
+                            direction: 'desc'
+                        },
+                        query: { AND: { '*': ['*'] } }
+                    });
                 });
 
                 it('should change request URL to not add any id if no order results', function(done) {
-                    requestHelper(done,
-                        [], "relatedParty.id=someother", {"relatedParty.id": "someother"},
-                        "id=", {
-                            sort: {
-                                field: "lastUpdate",
-                                direction: "desc"
-                            },
-                            query: {
-                                AND: {relatedPartyHash: [md5("someother")]}
-                            }
+                    requestHelper(done, [], 'relatedParty.id=someother', { 'relatedParty.id': 'someother' }, 'id=', {
+                        sort: {
+                            field: 'lastUpdate',
+                            direction: 'desc'
+                        },
+                        query: {
+                            AND: { relatedPartyHash: [md5('someother')] }
                         }
-                    );
+                    });
                 });
 
                 it('should change request URL adding extra params and ids', function(done) {
-                    requestHelper(done,
-                        [1, 2], "depth=2&fields=name", {
-                            depth: "2",
-                            fields: "name"
-                        }, "id=1,2&depth=2&fields=name", {
+                    requestHelper(
+                        done,
+                        [1, 2],
+                        'depth=2&fields=name',
+                        {
+                            depth: '2',
+                            fields: 'name'
+                        },
+                        'id=1,2&depth=2&fields=name',
+                        {
                             sort: {
-                                field: "lastUpdate",
-                                direction: "desc"
+                                field: 'lastUpdate',
+                                direction: 'desc'
                             },
-                            query: {AND: {"*": ["*"]}}
+                            query: { AND: { '*': ['*'] } }
                         }
                     );
-
                 });
 
                 it('should change request URL to include order IDs when priority is provided', function(done) {
-                    testQueryParameters(done, { priority: "prior"});
+                    testQueryParameters(done, { priority: 'prior' });
                 });
 
                 it('should change request URL to include order IDs when category is provided', function(done) {
-                    testQueryParameters(done, { category: "category1" });
+                    testQueryParameters(done, { category: 'category1' });
                 });
 
                 it('should change request URL to include order IDs when state is provided', function(done) {
-                    testQueryParameters(done, { state: "OK" });
+                    testQueryParameters(done, { state: 'OK' });
                 });
 
                 it('should change request URL to include order IDs when notification contact is provided', function(done) {
-                    testQueryParameters(done, { notificationContact: "a@b.c" });
+                    testQueryParameters(done, { notificationContact: 'a@b.c' });
                 });
 
                 it('should change request URL to include order IDs when note is provided', function(done) {
-                    testQueryParameters(done, { note: "some note" });
+                    testQueryParameters(done, { note: 'some note' });
                 });
             });
         });
 
-
-        //////////////////////////////////////////////////////////////////////////////////////////////
-        ////////////////////////////////////////// CREATION //////////////////////////////////////////
-        //////////////////////////////////////////////////////////////////////////////////////////////
+        /// ///////////////////////////////////////////////////////////////////////////////////////////
+        /// /////////////////////////////////////// CREATION //////////////////////////////////////////
+        /// ///////////////////////////////////////////////////////////////////////////////////////////
 
         describe('Creation', function() {
-
-            var testOrderCreation = function (userInfo, body, customerRoleRequired, isCustomer, hasPartyRole, expectedRes, done, checkReq) {
-
+            var testOrderCreation = function(
+                userInfo,
+                body,
+                customerRoleRequired,
+                isCustomer,
+                hasPartyRole,
+                expectedRes,
+                done,
+                checkReq
+            ) {
                 config.customerRoleRequired = customerRoleRequired;
 
                 var utils = {
                     validateLoggedIn: validateLoggedOk,
                     hasRole: function() {
-                        return isCustomer
+                        return isCustomer;
                     }
                 };
 
@@ -443,7 +450,7 @@ describe('Ordering API', function() {
                     headers: {}
                 };
 
-                orderingApi.checkPermissions(req, function (err) {
+                orderingApi.checkPermissions(req, function(err) {
                     expect(err).toEqual(expectedRes);
 
                     if (checkReq) {
@@ -452,14 +459,12 @@ describe('Ordering API', function() {
 
                     done();
                 });
-
             };
 
-            var testValidOrdering = function (nOrderItems, isCustomer, customerRoleRequired, isBundle, done) {
-
+            var testValidOrdering = function(nOrderItems, isCustomer, customerRoleRequired, isBundle, done) {
                 var userName = 'example';
                 var billingAccountPath = '/billingAccount/7';
-                var productOfferingBundlePath ='/productOffering/2';
+                var productOfferingBundlePath = '/productOffering/2';
                 var productOfferingPath = '/productOffering/1';
                 var productSpecPath = '/product/2';
                 var ownerName = 'ownerUser';
@@ -471,7 +476,7 @@ describe('Ordering API', function() {
                 var orderItems = [];
 
                 for (var i = 0; i < nOrderItems; i++) {
-                    var offeringPath = !isBundle  ? productOfferingPath : productOfferingBundlePath;
+                    var offeringPath = !isBundle ? productOfferingPath : productOfferingBundlePath;
                     orderItems.push({
                         product: {},
                         productOffering: {
@@ -487,59 +492,70 @@ describe('Ordering API', function() {
                 }
 
                 var body = {
-                    relatedParty: [{
-                        id: userName,
-                        role: 'customer'
-                    }],
+                    relatedParty: [
+                        {
+                            id: userName,
+                            role: 'customer'
+                        }
+                    ],
                     orderItem: orderItems
                 };
 
                 nock(CATALOG_SERVER)
                     .get(productOfferingBundlePath)
                     .times(nOrderItems)
-                    .reply(200, {isBundle: true, bundledProductOffering: [{href: SERVER + productOfferingPath}]});
+                    .reply(200, { isBundle: true, bundledProductOffering: [{ href: SERVER + productOfferingPath }] });
 
                 nock(CATALOG_SERVER)
                     .get(productOfferingPath)
                     .times(nOrderItems)
-                    .reply(200, {productSpecification: {href: SERVER + productSpecPath}});
+                    .reply(200, { productSpecification: { href: SERVER + productSpecPath } });
 
                 nock(CATALOG_SERVER)
                     .get(productSpecPath)
                     .times(nOrderItems)
-                    .reply(200, {relatedParty: [{id: ownerName, role: 'owner'}]});
+                    .reply(200, { relatedParty: [{ id: ownerName, role: 'owner' }] });
 
                 nock(BILLING_SERVER)
                     .get(billingAccountPath)
-                    .reply(200, {relatedParty: [{id: ownerName, role: config.billingAccountOwnerRole}]});
+                    .reply(200, { relatedParty: [{ id: ownerName, role: config.billingAccountOwnerRole }] });
 
-                testOrderCreation(user, JSON.stringify(body), customerRoleRequired, isCustomer, true, null, done, function (req) {
+                testOrderCreation(
+                    user,
+                    JSON.stringify(body),
+                    customerRoleRequired,
+                    isCustomer,
+                    true,
+                    null,
+                    done,
+                    function(req) {
+                        var newBody = JSON.parse(req.body);
+                        // expect(req.headers['content-length']).toBe(newBody.length);
 
-                    var newBody = JSON.parse(req.body);
-                    //expect(req.headers['content-length']).toBe(newBody.length);
-
-                    expect(newBody.orderItem[0].product.relatedParty).toEqual([
-                        {
-                            id: userName,
-                            role: 'Customer',
-                            href: getIndividualURL(userName)
-                        },
-                        {
-                            id: ownerName,
-                            role: 'Seller'
-                        }]);
-                });
+                        expect(newBody.orderItem[0].product.relatedParty).toEqual([
+                            {
+                                id: userName,
+                                role: 'Customer',
+                                href: getIndividualURL(userName)
+                            },
+                            {
+                                id: ownerName,
+                                role: 'Seller'
+                            }
+                        ]);
+                    }
+                );
             };
 
-            it('should call the callback after validating the request when the user is not customer but customer role not required', function (done) {
+            it('should call the callback after validating the request when the user is not customer but customer role not required', function(done) {
                 testValidOrdering(1, false, false, false, done);
             });
 
-            it('should call the callback after validating the request when the user is customer (1 order item)', function (done) {
+            it('should call the callback after validating the request when the user is customer (1 order item)', function(done) {
                 testValidOrdering(1, true, true, false, done);
             });
 
-            it('should call the callback after validating the request when the user is customer (2 order items)', function (done) {
+            it('should call the callback after validating the request when the user is customer (2 order items)', function(done) {
                 testValidOrdering(2, true, true, false, done);
             });
 
@@ -560,74 +576,80 @@ describe('Ordering API', function() {
                 var orderItems = itemsGenerator(productOfferingPath);
 
                 var body = {
-                    relatedParty: [{
-                        id: userName,
-                        role: 'customer'
-                    }],
+                    relatedParty: [
+                        {
+                            id: userName,
+                            role: 'customer'
+                        }
+                    ],
                     orderItem: orderItems
                 };
 
                 nock(CATALOG_SERVER)
                     .get(productOfferingPath)
                     .times(orderItems.length)
-                    .reply(200, {productSpecification: {href: SERVER + productSpecPath}});
+                    .reply(200, { productSpecification: { href: SERVER + productSpecPath } });
 
                 nock(CATALOG_SERVER)
                     .get(productSpecPath)
                     .times(orderItems.length)
-                    .reply(200, {relatedParty: [{id: ownerName, role: 'owner'}]});
+                    .reply(200, { relatedParty: [{ id: ownerName, role: 'owner' }] });
 
                 testOrderCreation(user, JSON.stringify(body), true, true, hasPartyRole, expectedError, done);
             };
 
             it('should fail when items does not contain billing account key', function(done) {
-
                 var itemsGenerator = function(productOfferingPath) {
-                    return [{
-                        product: {},
-                        productOffering: {
-                            href: 'http://extexample.com' + productOfferingPath
+                    return [
+                        {
+                            product: {},
+                            productOffering: {
+                                href: 'http://extexample.com' + productOfferingPath
+                            }
                         }
-                    }];
+                    ];
                 };
 
                 billingAccountError(itemsGenerator, BILLING_ACCOUNT_REQUIRED, true, done);
             });
 
             it('should fail when items contains billing account key but it is empty', function(done) {
-
                 var itemsGenerator = function(productOfferingPath) {
-                    return [{
-                        product: {},
-                        productOffering: {
-                            href: 'http://extexample.com' + productOfferingPath
-                        },
-                        billingAccount: []
-                    }];
+                    return [
+                        {
+                            product: {},
+                            productOffering: {
+                                href: 'http://extexample.com' + productOfferingPath
+                            },
+                            billingAccount: []
+                        }
+                    ];
                 };
 
                 billingAccountError(itemsGenerator, BILLING_ACCOUNT_REQUIRED, true, done);
             });
 
             it('should fail when items contains billing account but href is not included', function(done) {
-
                 var itemsGenerator = function(productOfferingPath) {
-                    return [{
-                        product: {},
-                        productOffering: {
-                            href: 'http://extexample.com' + productOfferingPath
-                        },
-                        billingAccount: [{
-                            id: 7
-                        }]
-                    }];
+                    return [
+                        {
+                            product: {},
+                            productOffering: {
+                                href: 'http://extexample.com' + productOfferingPath
+                            },
+                            billingAccount: [
+                                {
+                                    id: 7
+                                }
+                            ]
+                        }
+                    ];
                 };
 
                 billingAccountError(itemsGenerator, BILLING_ACCOUNT_REQUIRED, true, done);
             });
 
             it('should fail when the second item does not contain a billing account', function(done) {
-
                 var itemsGenerator = function(productOfferingPath) {
                     return [
                         {
@@ -635,25 +657,26 @@ describe('Ordering API', function() {
                             productOffering: {
                                 href: 'http://extexample.com' + productOfferingPath
                             },
-                            billingAccount: [{
-                                id: 7,
-                                href: 'http://example.com/billingAccount/7'
-                            }]
+                            billingAccount: [
+                                {
+                                    id: 7,
+                                    href: 'http://example.com/billingAccount/7'
+                                }
+                            ]
                         },
                         {
                             product: {},
                             productOffering: {
                                 href: 'http://extexample.com' + productOfferingPath
                             }
-                        }];
+                        }
+                    ];
                 };
 
                 billingAccountError(itemsGenerator, BILLING_ACCOUNTS_MISMATCH, true, done);
-
             });
 
             it('should fail when the second item contains a different billing account', function(done) {
-
                 var itemsGenerator = function(productOfferingPath) {
                     return [
                         {
@@ -661,28 +684,32 @@ describe('Ordering API', function() {
                             productOffering: {
                                 href: 'http://extexample.com' + productOfferingPath
                             },
-                            billingAccount: [{
-                                id: 7,
-                                href: 'http://example.com/billingAccount/7'
-                            }]
+                            billingAccount: [
+                                {
+                                    id: 7,
+                                    href: 'http://example.com/billingAccount/7'
+                                }
+                            ]
                         },
                         {
                             product: {},
                             productOffering: {
                                 href: 'http://extexample.com' + productOfferingPath
                             },
-                            billingAccount: [{
-                                id: 8,
-                                href: 'http://example.com/billingAccount/8'
-                            }]
-                        }];
+                            billingAccount: [
+                                {
+                                    id: 8,
+                                    href: 'http://example.com/billingAccount/8'
+                                }
+                            ]
+                        }
+                    ];
                 };
 
                 billingAccountError(itemsGenerator, BILLING_ACCOUNTS_MISMATCH, true, done);
             });
 
             it('should fail when the billing account does not exist', function(done) {
-
                 var billingAccountPath = '/billingAccount/7';
 
                 var itemsGenerator = function(productOfferingPath) {
@@ -692,11 +719,14 @@ describe('Ordering API', function() {
                             productOffering: {
                                 href: 'http://extexample.com' + productOfferingPath
                             },
-                            billingAccount: [{
-                                id: 7,
-                                href: 'http://example.com' + billingAccountPath
-                            }]
-                        }];
+                            billingAccount: [
+                                {
+                                    id: 7,
+                                    href: 'http://example.com' + billingAccountPath
+                                }
+                            ]
+                        }
+                    ];
                 };
 
                 nock(BILLING_SERVER)
@@ -712,7 +742,6 @@ describe('Ordering API', function() {
             });
 
             it('should fail when the billing API fails to return the billing account', function(done) {
-
                 var billingAccountPath = '/billingAccount/7';
 
                 var itemsGenerator = function(productOfferingPath) {
@@ -722,11 +751,14 @@ describe('Ordering API', function() {
                             productOffering: {
                                 href: 'http://extexample.com' + productOfferingPath
                             },
-                            billingAccount: [{
-                                id: 7,
-                                href: 'http://example.com' + billingAccountPath
-                            }]
-                        }];
+                            billingAccount: [
+                                {
+                                    id: 7,
+                                    href: 'http://example.com' + billingAccountPath
+                                }
+                            ]
+                        }
+                    ];
                 };
 
                 nock(BILLING_SERVER)
@@ -742,7 +774,6 @@ describe('Ordering API', function() {
             });
 
             it('should fail when the billing account is not owned by the user', function(done) {
-
                 var billingAccountPath = '/billingAccount/7';
 
                 var itemsGenerator = function(productOfferingPath) {
@@ -752,11 +783,14 @@ describe('Ordering API', function() {
                             productOffering: {
                                 href: 'http://extexample.com' + productOfferingPath
                             },
-                            billingAccount: [{
-                                id: 7,
-                                href: 'http://example.com' + billingAccountPath
-                            }]
-                        }];
+                            billingAccount: [
+                                {
+                                    id: 7,
+                                    href: 'http://example.com' + billingAccountPath
+                                }
+                            ]
+                        }
+                    ];
                 };
 
                 nock(BILLING_SERVER)
@@ -771,8 +805,7 @@ describe('Ordering API', function() {
                 billingAccountError(itemsGenerator, expectedError, false, done);
             });
 
-            it('should fail if the product has not owners', function (done) {
-
+            it('should fail if the product has not owners', function(done) {
                 var productOfferingPath = '/productOffering/1';
                 var productSpecPath = '/product/2';
                 var ownerName = 'example';
@@ -782,25 +815,29 @@ describe('Ordering API', function() {
                 };
 
                 var body = {
-                    relatedParty: [{
-                        id: 'cust',
-                        role: 'customer'
-                    }],
-                    orderItem: [{
-                        product: {},
-                        productOffering: {
-                            href: SERVER + productOfferingPath
+                    relatedParty: [
+                        {
+                            id: 'cust',
+                            role: 'customer'
                         }
-                    }]
+                    ],
+                    orderItem: [
+                        {
+                            product: {},
+                            productOffering: {
+                                href: SERVER + productOfferingPath
+                            }
+                        }
+                    ]
                 };
 
                 nock(CATALOG_SERVER)
                     .get(productOfferingPath)
-                    .reply(200, {productSpecification: {href: SERVER + productSpecPath}});
+                    .reply(200, { productSpecification: { href: SERVER + productSpecPath } });
 
                 nock(CATALOG_SERVER)
                     .get(productSpecPath)
-                    .reply(200, {relatedParty: [{id: ownerName, role: 'other_role'}]});
+                    .reply(200, { relatedParty: [{ id: ownerName, role: 'other_role' }] });
 
                 var expected = {
                     status: 400,
@@ -808,11 +845,9 @@ describe('Ordering API', function() {
                 };
 
                 testOrderCreation(user, JSON.stringify(body), true, true, true, expected, done);
-
             });
 
-            it('should fail if the offering attached to the order cannot be retrieved', function (done) {
-
+            it('should fail if the offering attached to the order cannot be retrieved', function(done) {
                 var SERVER = 'http://example.com';
                 var productOfferingPath = '/productOffering/1';
 
@@ -823,17 +858,21 @@ describe('Ordering API', function() {
                 };
 
                 var body = {
-                    relatedParty: [{
-                        id: 'cust',
-                        role: 'customer'
-                    }],
-                    orderItem: [{
-                        id: orderItemId,
-                        product: {},
-                        productOffering: {
-                            href: SERVER + productOfferingPath
+                    relatedParty: [
+                        {
+                            id: 'cust',
+                            role: 'customer'
                         }
-                    }]
+                    ],
+                    orderItem: [
+                        {
+                            id: orderItemId,
+                            product: {},
+                            productOffering: {
+                                href: SERVER + productOfferingPath
+                            }
+                        }
+                    ]
                 };
 
                 nock(CATALOG_SERVER)
@@ -848,8 +887,7 @@ describe('Ordering API', function() {
                 testOrderCreation(user, JSON.stringify(body), true, true, true, expected, done);
             });
 
-            it('should fail if the product attached to the order cannot be retrieved', function (done) {
-
+            it('should fail if the product attached to the order cannot be retrieved', function(done) {
                 var SERVER = 'http://example.com';
                 var productOfferingPath = '/productOffering/1';
                 var productSpecPath = '/product/2';
@@ -861,22 +899,26 @@ describe('Ordering API', function() {
                 };
 
                 var body = {
-                    relatedParty: [{
-                        id: 'cust',
-                        role: 'customer'
-                    }],
-                    orderItem: [{
-                        id: orderItemId,
-                        product: {},
-                        productOffering: {
-                            href: SERVER + productOfferingPath
+                    relatedParty: [
+                        {
+                            id: 'cust',
+                            role: 'customer'
                         }
-                    }]
+                    ],
+                    orderItem: [
+                        {
+                            id: orderItemId,
+                            product: {},
+                            productOffering: {
+                                href: SERVER + productOfferingPath
+                            }
+                        }
+                    ]
                 };
 
                 nock(CATALOG_SERVER)
                     .get(productOfferingPath)
-                    .reply(200, {productSpecification: {href: SERVER + productSpecPath}});
+                    .reply(200, { productSpecification: { href: SERVER + productSpecPath } });
 
                 nock(CATALOG_SERVER)
                     .get(productSpecPath)
@@ -888,10 +930,9 @@ describe('Ordering API', function() {
                 };
 
                 testOrderCreation(user, JSON.stringify(body), true, true, true, expected, done);
-
             });
 
-            it('should fail when the order is not well formed JSON', function (done) {
+            it('should fail when the order is not well formed JSON', function(done) {
                 var user = {
                     id: 'customer'
                 };
@@ -904,7 +945,7 @@ describe('Ordering API', function() {
                 testOrderCreation(user, 'invalid', true, true, true, expected, done);
             });
 
-            it('should fail when the user does not have the customer role', function (done) {
+            it('should fail when the user does not have the customer role', function(done) {
                 var user = {
                     id: 'test'
                 };
@@ -915,15 +956,17 @@ describe('Ordering API', function() {
                 };
 
                 var body = {
-                    relatedParty: [{
-                        id: 'test',
-                        role: 'customer'
-                    }]
+                    relatedParty: [
+                        {
+                            id: 'test',
+                            role: 'customer'
+                        }
+                    ]
                 };
                 testOrderCreation(user, JSON.stringify(body), true, false, true, expected, done);
             });
 
-            it('should fail when the relatedParty field has not been included', function (done) {
+            it('should fail when the relatedParty field has not been included', function(done) {
                 var user = {
                     id: 'cust'
                 };
@@ -936,7 +979,7 @@ describe('Ordering API', function() {
                 testOrderCreation(user, JSON.stringify({}), true, true, true, expected, done);
             });
 
-            it('should fail when a customer has not been specified', function (done) {
+            it('should fail when a customer has not been specified', function(done) {
                 var user = {
                     id: 'cust'
                 };
@@ -947,15 +990,17 @@ describe('Ordering API', function() {
                 };
 
                 var body = {
-                    relatedParty: [{
-                        id: 'cust',
-                        role: 'seller'
-                    }]
+                    relatedParty: [
+                        {
+                            id: 'cust',
+                            role: 'seller'
+                        }
+                    ]
                 };
                 testOrderCreation(user, JSON.stringify(body), true, true, true, expected, done);
             });
 
-            it('should fail when the specified customer is not the user making the request', function (done) {
+            it('should fail when the specified customer is not the user making the request', function(done) {
                 var user = {
                     id: 'cust'
                 };
@@ -966,15 +1011,17 @@ describe('Ordering API', function() {
                 };
 
                 var body = {
-                    relatedParty: [{
-                        id: 'test',
-                        role: 'customer'
-                    }]
+                    relatedParty: [
+                        {
+                            id: 'test',
+                            role: 'customer'
+                        }
+                    ]
                 };
                 testOrderCreation(user, JSON.stringify(body), true, true, true, expected, done);
             });
 
-            it('should fail when the request does not include an orderItem field', function (done) {
+            it('should fail when the request does not include an orderItem field', function(done) {
                 var user = {
                     id: 'cust'
                 };
@@ -985,16 +1032,18 @@ describe('Ordering API', function() {
                 };
 
                 var body = {
-                    relatedParty: [{
-                        id: 'cust',
-                        role: 'customer'
-                    }]
+                    relatedParty: [
+                        {
+                            id: 'cust',
+                            role: 'customer'
+                        }
+                    ]
                 };
 
                 testOrderCreation(user, JSON.stringify(body), true, true, true, expected, done);
             });
 
-            it('should fail when the request does not include a product in an orderItem', function (done) {
+            it('should fail when the request does not include a product in an orderItem', function(done) {
                 var user = {
                     id: 'cust'
                 };
@@ -1005,19 +1054,23 @@ describe('Ordering API', function() {
                 };
 
                 var body = {
-                    relatedParty: [{
-                        id: 'cust',
-                        role: 'customer'
-                    }],
-                    orderItem: [{
-                        id: '1'
-                    }]
+                    relatedParty: [
+                        {
+                            id: 'cust',
+                            role: 'customer'
+                        }
+                    ],
+                    orderItem: [
+                        {
+                            id: '1'
+                        }
+                    ]
                 };
 
                 testOrderCreation(user, JSON.stringify(body), true, true, true, expected, done);
             });
 
-            it('should fail when the request does not include a productOffering in an orderItem', function (done) {
+            it('should fail when the request does not include a productOffering in an orderItem', function(done) {
                 var user = {
                     id: 'cust'
                 };
@@ -1028,20 +1081,24 @@ describe('Ordering API', function() {
                 };
 
                 var body = {
-                    relatedParty: [{
-                        id: 'cust',
-                        role: 'customer'
-                    }],
-                    orderItem: [{
-                        id: '1',
-                        product: {}
-                    }]
+                    relatedParty: [
+                        {
+                            id: 'cust',
+                            role: 'customer'
+                        }
+                    ],
+                    orderItem: [
+                        {
+                            id: '1',
+                            product: {}
+                        }
+                    ]
                 };
 
                 testOrderCreation(user, JSON.stringify(body), true, true, true, expected, done);
             });
 
-            it('should fail when an invalid customer has been specified in a product of an orderItem', function (done) {
+            it('should fail when an invalid customer has been specified in a product of an orderItem', function(done) {
                 var user = {
                     id: 'cust'
                 };
@@ -1052,28 +1109,34 @@ describe('Ordering API', function() {
                 };
 
                 var body = {
-                    relatedParty: [{
-                        id: 'cust',
-                        role: 'customer'
-                    }],
-                    orderItem: [{
-                        id: '1',
-                        product: {
-                            relatedParty: [{
-                                id: 'test',
-                                role: 'Customer'
-                            }]
-                        },
-                        productOffering: {
-                            href: ''
+                    relatedParty: [
+                        {
+                            id: 'cust',
+                            role: 'customer'
                         }
-                    }]
+                    ],
+                    orderItem: [
+                        {
+                            id: '1',
+                            product: {
+                                relatedParty: [
+                                    {
+                                        id: 'test',
+                                        role: 'Customer'
+                                    }
+                                ]
+                            },
+                            productOffering: {
+                                href: ''
+                            }
+                        }
+                    ]
                 };
 
                 testOrderCreation(user, JSON.stringify(body), true, true, true, expected, done);
             });
 
-            it('should fail when the customer is trying to acquire one of his offerings', function (done) {
+            it('should fail when the customer is trying to acquire one of his offerings', function(done) {
                 var SERVER = 'http://example.com';
                 var productOfferingPath = '/productOffering/1';
                 var productSpecPath = '/product/2';
@@ -1088,46 +1151,50 @@ describe('Ordering API', function() {
                 };
 
                 var body = {
-                    relatedParty: [{
-                        id: 'example',
-                        role: 'customer'
-                    }],
-                    orderItem: [{
-                        id: '1',
-                        product: {
-                            relatedParty: [{
-                                id: 'example',
-                                role: 'Customer'
-                            }]
-                        },
-                        productOffering: {
-                            href: SERVER + productOfferingPath
+                    relatedParty: [
+                        {
+                            id: 'example',
+                            role: 'customer'
                         }
-                    }]
+                    ],
+                    orderItem: [
+                        {
+                            id: '1',
+                            product: {
+                                relatedParty: [
+                                    {
+                                        id: 'example',
+                                        role: 'Customer'
+                                    }
+                                ]
+                            },
+                            productOffering: {
+                                href: SERVER + productOfferingPath
+                            }
+                        }
+                    ]
                 };
 
                 nock(CATALOG_SERVER)
                     .get(productOfferingPath)
-                    .reply(200, {productSpecification: {href: SERVER + productSpecPath}});
+                    .reply(200, { productSpecification: { href: SERVER + productSpecPath } });
 
                 nock(CATALOG_SERVER)
                     .get(productSpecPath)
-                    .reply(200, {relatedParty: [{role: 'owner', id: 'example'}]});
+                    .reply(200, { relatedParty: [{ role: 'owner', id: 'example' }] });
 
                 testOrderCreation(user, JSON.stringify(body), true, true, true, expected, done);
             });
         });
 
-
-        //////////////////////////////////////////////////////////////////////////////////////////////
-        /////////////////////////////////////////// UPDATE ///////////////////////////////////////////
-        //////////////////////////////////////////////////////////////////////////////////////////////
+        /// ///////////////////////////////////////////////////////////////////////////////////////////
+        /// //////////////////////////////////////// UPDATE ///////////////////////////////////////////
+        /// ///////////////////////////////////////////////////////////////////////////////////////////
 
         describe('Update (PATCH)', function() {
             var SERVER = 'http://ordering.com:189';
 
-            it('should fail when the body is invalid', function (done) {
-
+            it('should fail when the body is invalid', function(done) {
                 var utils = {
                     validateLoggedIn: validateLoggedOk
                 };
@@ -1139,7 +1206,7 @@ describe('Ordering API', function() {
                     body: '{ invalid JSON'
                 };
 
-                orderingApi.checkPermissions(req, function (err) {
+                orderingApi.checkPermissions(req, function(err) {
                     expect(err).toEqual({
                         status: 400,
                         message: 'The resource is not a valid JSON document'
@@ -1147,11 +1214,9 @@ describe('Ordering API', function() {
 
                     done();
                 });
-
             });
 
-            it('should fail when the ordering cannot be retrieved', function (done) {
-
+            it('should fail when the ordering cannot be retrieved', function(done) {
                 var productOfferingPath = '/productOrdering/ordering/7';
 
                 var orderingApi = getOrderingAPI({}, {}, {});
@@ -1172,8 +1237,7 @@ describe('Ordering API', function() {
                     .get(productOfferingPath)
                     .reply(500, {});
 
-                orderingApi.checkPermissions(req, function (err) {
-
+                orderingApi.checkPermissions(req, function(err) {
                     expect(err).toEqual({
                         status: 400,
                         message: 'The requested ordering cannot be retrieved'
@@ -1183,9 +1247,17 @@ describe('Ordering API', function() {
                 });
             });
 
-            var testUpdate = function (hasRoleResponses, body, previousState, previousOrderItems, previousNotes,
-                                       refundError, expectedError, expectedBody, done) {
-
+            var testUpdate = function(
+                hasRoleResponses,
+                body,
+                previousState,
+                previousOrderItems,
+                previousNotes,
+                refundError,
+                expectedError,
+                expectedBody,
+                done
+            ) {
                 var user = {
                     id: 'fiware',
                     href: 'http://www.fiware.org/user/fiware'
@@ -1202,7 +1274,7 @@ describe('Ordering API', function() {
 
                 var storeClient = {
                     storeClient: {
-                        refund: function (receivedOrderId, receivedUser, callback) {
+                        refund: function(receivedOrderId, receivedUser, callback) {
                             expect(receivedOrderId).toBe(orderId);
                             expect(receivedUser).toBe(user);
                             callback(refundError);
@@ -1231,12 +1303,19 @@ describe('Ordering API', function() {
                         note: previousNotes
                     });
 
-                orderingApi.checkPermissions(req, function (err) {
-
+                orderingApi.checkPermissions(req, function(err) {
                     expect(err).toEqual(expectedError);
 
-                    expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(req, jasmine.arrayContaining(orderingRelatedParties), 'Customer');
-                    expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(req, jasmine.arrayContaining(orderingRelatedParties), 'Seller');
+                    expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(
+                        req,
+                        jasmine.arrayContaining(orderingRelatedParties),
+                        'Customer'
+                    );
+                    expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(
+                        req,
+                        jasmine.arrayContaining(orderingRelatedParties),
+                        'Seller'
+                    );
 
                     if (expectedBody) {
                         expect(utils.updateBody).toHaveBeenCalledWith(req, expectedBody);
@@ -1244,11 +1323,9 @@ describe('Ordering API', function() {
 
                     done();
                 });
-
             };
 
             it('should fail when seller tries to update a non in progress ordering', function(done) {
-
                 var previousState = 'Acknowledged';
 
                 var expectedError = {
@@ -1256,17 +1333,25 @@ describe('Ordering API', function() {
                     message: previousState + ' orders cannot be manually modified'
                 };
 
-                testUpdate([false, true], {orderItem: []}, previousState, [], [], null, expectedError, null, done);
-
+                testUpdate([false, true], { orderItem: [] }, previousState, [], [], null, expectedError, null, done);
             });
 
             it('should not fail when customer tries to update a non in progress ordering', function(done) {
                 var previousState = 'Acknowledged';
-                testUpdate([true, false], {description: 'New Description'}, previousState, [], [], null, null, null, done);
+                testUpdate(
+                    [true, false],
+                    { description: 'New Description' },
+                    previousState,
+                    [],
+                    [],
+                    null,
+                    null,
+                    null,
+                    done
+                );
             });
 
-            it('should fail when the user is not consumer or seller in the ordering', function (done) {
-
+            it('should fail when the user is not consumer or seller in the ordering', function(done) {
                 var expectedError = {
                     status: 403,
                     message: 'You are not authorized to modify this ordering'
@@ -1275,91 +1360,135 @@ describe('Ordering API', function() {
                 testUpdate([false, false], {}, 'InProgress', [], [], null, expectedError, null, done);
             });
 
-            it('should fail when a customer tries to modify the orderItem field', function (done) {
-
+            it('should fail when a customer tries to modify the orderItem field', function(done) {
                 var expectedError = {
                     status: 403,
                     message: 'Order items can only be modified by sellers'
                 };
 
-                testUpdate([true, false], {orderItem: []}, 'InProgress', [], [], null, expectedError, null, done);
+                testUpdate([true, false], { orderItem: [] }, 'InProgress', [], [], null, expectedError, null, done);
             });
 
-            it('should fail when a customer tries to modify the relatedParty field', function (done) {
-
+            it('should fail when a customer tries to modify the relatedParty field', function(done) {
                 var expectedError = {
                     status: 403,
                     message: 'Related parties cannot be modified'
                 };
 
-                testUpdate([true, false], {relatedParty: []}, 'InProgress', [], [], null, expectedError, null, done);
+                testUpdate([true, false], { relatedParty: [] }, 'InProgress', [], [], null, expectedError, null, done);
             });
 
-            it('should not fail when a customer tries to modify the description', function (done) {
-                testUpdate([true, false], {description: 'New description'}, 'InProgress', [], [], null, null, null, done);
+            it('should not fail when a customer tries to modify the description', function(done) {
+                testUpdate(
+                    [true, false],
+                    { description: 'New description' },
+                    'InProgress',
+                    [],
+                    [],
+                    null,
+                    null,
+                    null,
+                    done
+                );
             });
 
-            it('should fail when a customer tries to modify the order state to an invalid state', function (done) {
-
+            it('should fail when a customer tries to modify the order state to an invalid state', function(done) {
                 var expectedError = {
                     status: 403,
                     message: 'Invalid order state. Valid states for customers are: "Cancelled"'
                 };
 
-                testUpdate([true, false], {state: 'Completed'}, 'InProgress', [{state: 'Completed'}], [],
-                    null, expectedError, null, done);
+                testUpdate(
+                    [true, false],
+                    { state: 'Completed' },
+                    'InProgress',
+                    [{ state: 'Completed' }],
+                    [],
+                    null,
+                    expectedError,
+                    null,
+                    done
+                );
             });
 
-            it('should fail when a customer tries to cancel an ordering with completed items', function (done) {
-
+            it('should fail when a customer tries to cancel an ordering with completed items', function(done) {
                 var expectedError = {
                     status: 403,
                     message: 'Orderings can only be cancelled when all Order items are in Acknowledged state'
                 };
 
-                testUpdate([true, false], {state: 'Cancelled'}, 'InProgress', [{state: 'Completed'}], [],
-                    null, expectedError, null, done);
+                testUpdate(
+                    [true, false],
+                    { state: 'Cancelled' },
+                    'InProgress',
+                    [{ state: 'Completed' }],
+                    [],
+                    null,
+                    expectedError,
+                    null,
+                    done
+                );
             });
 
-            it('should fail when a customer tries to cancel an ordering with failed items', function (done) {
-
+            it('should fail when a customer tries to cancel an ordering with failed items', function(done) {
                 var expectedError = {
                     status: 403,
                     message: 'Orderings can only be cancelled when all Order items are in Acknowledged state'
                 };
 
-                testUpdate([true, false], {state: 'Cancelled'}, 'InProgress', [{state: 'Failed'}], [],
-                    null, expectedError, null, done);
+                testUpdate(
+                    [true, false],
+                    { state: 'Cancelled' },
+                    'InProgress',
+                    [{ state: 'Failed' }],
+                    [],
+                    null,
+                    expectedError,
+                    null,
+                    done
+                );
             });
 
-            it('should fail when a customer tries to cancel an ordering with cancelled items', function (done) {
-
+            it('should fail when a customer tries to cancel an ordering with cancelled items', function(done) {
                 var expectedError = {
                     status: 403,
                     message: 'Orderings can only be cancelled when all Order items are in Acknowledged state'
                 };
 
-                testUpdate([true, false], {state: 'Cancelled'}, 'InProgress', [{state: 'Cancelled'}], [],
-                    null, expectedError, null, done);
+                testUpdate(
+                    [true, false],
+                    { state: 'Cancelled' },
+                    'InProgress',
+                    [{ state: 'Cancelled' }],
+                    [],
+                    null,
+                    expectedError,
+                    null,
+                    done
+                );
             });
 
-            it('should fail when refund cannot be completed', function (done) {
-
+            it('should fail when refund cannot be completed', function(done) {
                 var expectedError = {
                     status: 403,
                     message: 'You cannot cancel orders with completed items'
                 };
 
-                testUpdate([true, false], {state: 'Cancelled'}, 'InProgress', [], [], expectedError,
-                    expectedError, null, done);
+                testUpdate(
+                    [true, false],
+                    { state: 'Cancelled' },
+                    'InProgress',
+                    [],
+                    [],
+                    expectedError,
+                    expectedError,
+                    null,
+                    done
+                );
             });
 
-            it('should not fail when refund can be completed', function (done) {
-
-                var previousItems = [
-                    {state: 'Acknowledged', id: 7},
-                    {state: 'Acknowledged', id: 9}
-                ];
+            it('should not fail when refund can be completed', function(done) {
+                var previousItems = [{ state: 'Acknowledged', id: 7 }, { state: 'Acknowledged', id: 9 }];
 
                 var requestBody = {
                     state: 'Cancelled',
@@ -1367,7 +1496,7 @@ describe('Ordering API', function() {
                 };
 
                 var expectedItems = JSON.parse(JSON.stringify(previousItems));
-                expectedItems.forEach(function (item) {
+                expectedItems.forEach(function(item) {
                     item.state = 'Cancelled';
                 });
 
@@ -1377,31 +1506,47 @@ describe('Ordering API', function() {
                 testUpdate([true, false], requestBody, 'InProgress', previousItems, [], null, null, expectedBody, done);
             });
 
-            it('should fail when a seller tries to modify the description', function (done) {
-
+            it('should fail when a seller tries to modify the description', function(done) {
                 var expectedError = {
                     status: 403,
                     message: 'Sellers can only modify order items or include notes'
                 };
 
-                testUpdate([false, true], {
-                    description: 'New description',
-                    orderItem: []
-                }, 'InProgress', [], [], null, expectedError, null, done);
+                testUpdate(
+                    [false, true],
+                    {
+                        description: 'New description',
+                        orderItem: []
+                    },
+                    'InProgress',
+                    [],
+                    [],
+                    null,
+                    expectedError,
+                    null,
+                    done
+                );
             });
 
-            it('should not fail when seller does not include any order item', function (done) {
-
-                var previousOrderItems = [{id: 1, state: 'InProgress'}];
-                testUpdate([false, true], {orderItem: []}, 'InProgress', previousOrderItems, [], null, null,
-                    {orderItem: previousOrderItems}, done);
+            it('should not fail when seller does not include any order item', function(done) {
+                var previousOrderItems = [{ id: 1, state: 'InProgress' }];
+                testUpdate(
+                    [false, true],
+                    { orderItem: [] },
+                    'InProgress',
+                    previousOrderItems,
+                    [],
+                    null,
+                    null,
+                    { orderItem: previousOrderItems },
+                    done
+                );
             });
 
-            it('should fail when the seller tries to edit a non existing item', function (done) {
-
-                var previousOrderItems = [{id: 1, state: 'InProgress'}];
+            it('should fail when the seller tries to edit a non existing item', function(done) {
+                var previousOrderItems = [{ id: 1, state: 'InProgress' }];
                 var updatedOrderings = {
-                    orderItem: [{id: 2}]
+                    orderItem: [{ id: 2 }]
                 };
 
                 var expectedError = {
@@ -1409,15 +1554,23 @@ describe('Ordering API', function() {
                     message: 'You are trying to edit an non-existing item'
                 };
 
-                testUpdate([false, true], updatedOrderings, 'InProgress', previousOrderItems, [],
-                    null, expectedError, null, done);
+                testUpdate(
+                    [false, true],
+                    updatedOrderings,
+                    'InProgress',
+                    previousOrderItems,
+                    [],
+                    null,
+                    expectedError,
+                    null,
+                    done
+                );
             });
 
-            it('should fail when the seller tries to edit a non owned item', function (done) {
-
-                var previousOrderItems = [{id: 1, state: 'InProgress', product: {relatedParty: []}}];
+            it('should fail when the seller tries to edit a non owned item', function(done) {
+                var previousOrderItems = [{ id: 1, state: 'InProgress', product: { relatedParty: [] } }];
                 var updatedOrderings = {
-                    orderItem: [{id: 1, state: 'Completed', product: {relatedParty: []}}]
+                    orderItem: [{ id: 1, state: 'Completed', product: { relatedParty: [] } }]
                 };
 
                 var expectedError = {
@@ -1425,15 +1578,23 @@ describe('Ordering API', function() {
                     message: 'You cannot modify an order item if you are not seller'
                 };
 
-                testUpdate([false, true, false], updatedOrderings, 'InProgress', previousOrderItems, [],
-                    null, expectedError, null, done);
+                testUpdate(
+                    [false, true, false],
+                    updatedOrderings,
+                    'InProgress',
+                    previousOrderItems,
+                    [],
+                    null,
+                    expectedError,
+                    null,
+                    done
+                );
             });
 
-            it('should fail when the seller tries to add a new field to the item', function (done) {
-
-                var previousOrderItems = [{id: 1, state: 'InProgress', product: {relatedParty: []}}];
+            it('should fail when the seller tries to add a new field to the item', function(done) {
+                var previousOrderItems = [{ id: 1, state: 'InProgress', product: { relatedParty: [] } }];
                 var updatedOrderings = {
-                    orderItem: [{id: 1, name: 'Order Item', state: 'InProgress', product: {relatedParty: []}}]
+                    orderItem: [{ id: 1, name: 'Order Item', state: 'InProgress', product: { relatedParty: [] } }]
                 };
 
                 var expectedError = {
@@ -1441,20 +1602,30 @@ describe('Ordering API', function() {
                     message: 'The fields of an order item cannot be modified'
                 };
 
-                testUpdate([false, true, true], updatedOrderings, 'InProgress', previousOrderItems, [],
-                    null, expectedError, null, done);
+                testUpdate(
+                    [false, true, true],
+                    updatedOrderings,
+                    'InProgress',
+                    previousOrderItems,
+                    [],
+                    null,
+                    expectedError,
+                    null,
+                    done
+                );
             });
 
-            it('should fail when the seller tries to remove a field from the item', function (done) {
-
-                var previousOrderItems = [{
-                    id: 1,
-                    name: 'Order Item',
-                    state: 'InProgress',
-                    product: {relatedParty: []}
-                }];
+            it('should fail when the seller tries to remove a field from the item', function(done) {
+                var previousOrderItems = [
+                    {
+                        id: 1,
+                        name: 'Order Item',
+                        state: 'InProgress',
+                        product: { relatedParty: [] }
+                    }
+                ];
                 var updatedOrderings = {
-                    orderItem: [{id: 1, state: 'InProgress', product: {relatedParty: []}}]
+                    orderItem: [{ id: 1, state: 'InProgress', product: { relatedParty: [] } }]
                 };
 
                 var expectedError = {
@@ -1462,20 +1633,30 @@ describe('Ordering API', function() {
                     message: 'The fields of an order item cannot be modified'
                 };
 
-                testUpdate([false, true, true], updatedOrderings, 'InProgress', previousOrderItems, [],
-                    null, expectedError, null, done);
+                testUpdate(
+                    [false, true, true],
+                    updatedOrderings,
+                    'InProgress',
+                    previousOrderItems,
+                    [],
+                    null,
+                    expectedError,
+                    null,
+                    done
+                );
             });
 
-            it('should fail when the seller tries to modify the value of a field in the item', function (done) {
-
-                var previousOrderItems = [{
-                    id: 1,
-                    name: 'Order Item',
-                    state: 'InProgress',
-                    product: {relatedParty: []}
-                }];
+            it('should fail when the seller tries to modify the value of a field in the item', function(done) {
+                var previousOrderItems = [
+                    {
+                        id: 1,
+                        name: 'Order Item',
+                        state: 'InProgress',
+                        product: { relatedParty: [] }
+                    }
+                ];
                 var updatedOrderings = {
-                    orderItem: [{id: 1, name: 'Order Item #2', state: 'InProgress', product: {relatedParty: []}}]
+                    orderItem: [{ id: 1, name: 'Order Item #2', state: 'InProgress', product: { relatedParty: [] } }]
                 };
 
                 var expectedError = {
@@ -1483,31 +1664,47 @@ describe('Ordering API', function() {
                     message: 'The value of the field name cannot be changed'
                 };
 
-                testUpdate([false, true, true], updatedOrderings, 'InProgress', previousOrderItems, [],
-                    null, expectedError, null, done);
+                testUpdate(
+                    [false, true, true],
+                    updatedOrderings,
+                    'InProgress',
+                    previousOrderItems,
+                    [],
+                    null,
+                    expectedError,
+                    null,
+                    done
+                );
             });
 
-            it('should not fail when the user tries to modify the state of an item appropriately', function (done) {
-
-                var previousOrderItems = [{id: 1, state: 'InProgress', product: {relatedParty: []}}];
+            it('should not fail when the user tries to modify the state of an item appropriately', function(done) {
+                var previousOrderItems = [{ id: 1, state: 'InProgress', product: { relatedParty: [] } }];
                 var updatedOrderings = {
-                    orderItem: [{id: 1, state: 'Completed', product: {relatedParty: []}}]
+                    orderItem: [{ id: 1, state: 'Completed', product: { relatedParty: [] } }]
                 };
 
                 var expectedBody = {
                     orderItem: updatedOrderings.orderItem
                 };
 
-                testUpdate([false, true, true], updatedOrderings, 'InProgress', previousOrderItems, [],
-                    null, null, expectedBody, done);
+                testUpdate(
+                    [false, true, true],
+                    updatedOrderings,
+                    'InProgress',
+                    previousOrderItems,
+                    [],
+                    null,
+                    null,
+                    expectedBody,
+                    done
+                );
             });
 
             // FIXME: Maybe this test can be skipped
-            it('should fail when the seller tries to edit a non existing item when there are more than one item', function (done) {
-
-                var previousOrderItems = [{id: 1, state: 'InProgress'}, {id: 3, state: 'InProgress'}];
+            it('should fail when the seller tries to edit a non existing item when there are more than one item', function(done) {
+                var previousOrderItems = [{ id: 1, state: 'InProgress' }, { id: 3, state: 'InProgress' }];
                 var updatedOrderings = {
-                    orderItem: [{id: 2}]
+                    orderItem: [{ id: 2 }]
                 };
 
                 var expectedError = {
@@ -1515,27 +1712,32 @@ describe('Ordering API', function() {
                     message: 'You are trying to edit an non-existing item'
                 };
 
-                testUpdate([false, true], updatedOrderings, 'InProgress', previousOrderItems, [],
-                    null, expectedError, null, done);
+                testUpdate(
+                    [false, true],
+                    updatedOrderings,
+                    'InProgress',
+                    previousOrderItems,
+                    [],
+                    null,
+                    expectedError,
+                    null,
+                    done
+                );
             });
 
-            it('should include the items that belong to another sellers', function (done) {
-
+            it('should include the items that belong to another sellers', function(done) {
                 var previousOrderItems = [
-                    {id: 1, state: 'InProgress', name: 'Product1', product: {relatedParty: []}},
-                    {id: 2, state: 'InProgress', name: 'Product2', product: {relatedParty: []}}
+                    { id: 1, state: 'InProgress', name: 'Product1', product: { relatedParty: [] } },
+                    { id: 2, state: 'InProgress', name: 'Product2', product: { relatedParty: [] } }
                 ];
                 var updatedOrderings = {
-                    orderItem: [
-                        {id: 1, state: 'Completed', name: 'Product1', product: {relatedParty: []}}
-                    ]
+                    orderItem: [{ id: 1, state: 'Completed', name: 'Product1', product: { relatedParty: [] } }]
                 };
 
                 var expectedOrderItems = JSON.parse(JSON.stringify(previousOrderItems));
-                expectedOrderItems.forEach(function (item) {
-
-                    var updateOrderItem = updatedOrderings.orderItem.filter(function (updatedItem) {
-                        return item.id == updatedItem.id;
+                expectedOrderItems.forEach(function(item) {
+                    var updateOrderItem = updatedOrderings.orderItem.filter(function(updatedItem) {
+                        return item.id === updatedItem.id;
                     })[0];
 
                     if (updateOrderItem) {
@@ -1547,78 +1749,107 @@ describe('Ordering API', function() {
                     orderItem: expectedOrderItems
                 };
 
-                testUpdate([false, true, true], updatedOrderings, 'InProgress', previousOrderItems, [],
-                    null, null, expectedBody, done);
-
+                testUpdate(
+                    [false, true, true],
+                    updatedOrderings,
+                    'InProgress',
+                    previousOrderItems,
+                    [],
+                    null,
+                    null,
+                    expectedBody,
+                    done
+                );
             });
 
-            it('should allow a customer to include a new note when none previously included', function (done) {
+            it('should allow a customer to include a new note when none previously included', function(done) {
                 var notesBody = {
-                    note: [{
-                        text: 'Some text'
-                    }]
+                    note: [
+                        {
+                            text: 'Some text'
+                        }
+                    ]
                 };
                 testUpdate([true, false], notesBody, 'InProgress', [], [], null, null, null, done);
             });
 
             it('should allow a customer to include a new note to the existing ones', function(done) {
                 var notesBody = {
-                    note: [{
-                        text: 'Some text',
-                        author: 'testuser'
-                    }, {
-                        text: 'New note',
-                        author: 'testuser'
-                    }]
+                    note: [
+                        {
+                            text: 'Some text',
+                            author: 'testuser'
+                        },
+                        {
+                            text: 'New note',
+                            author: 'testuser'
+                        }
+                    ]
                 };
 
-                var prevNotes = [{
-                    text: 'Some text',
-                    author: 'testuser'
-                }];
+                var prevNotes = [
+                    {
+                        text: 'Some text',
+                        author: 'testuser'
+                    }
+                ];
 
                 testUpdate([true, false], notesBody, 'InProgress', [], prevNotes, null, null, null, done);
             });
 
             it('should fail when the customer tries to modify already existing notes', function(done) {
                 var notesBody = {
-                    note: [{
-                        text: 'New note',
-                        author: 'testuser'
-                    }]
+                    note: [
+                        {
+                            text: 'New note',
+                            author: 'testuser'
+                        }
+                    ]
                 };
 
-                var prevNotes = [{
-                    text: 'Some text',
-                    author: 'testuser'
-                }];
+                var prevNotes = [
+                    {
+                        text: 'Some text',
+                        author: 'testuser'
+                    }
+                ];
 
-                testUpdate([true, false], notesBody, 'InProgress', [], prevNotes, null, {
-                    status: 403,
-                    message: 'You are not allowed to modify the existing notes of an ordering'
-                }, null, done);
+                testUpdate(
+                    [true, false],
+                    notesBody,
+                    'InProgress',
+                    [],
+                    prevNotes,
+                    null,
+                    {
+                        status: 403,
+                        message: 'You are not allowed to modify the existing notes of an ordering'
+                    },
+                    null,
+                    done
+                );
             });
 
             it('should allow a seller to include a new note', function(done) {
                 var notesBody = {
-                    note: [{
-                        text: 'Some text'
-                    }]
+                    note: [
+                        {
+                            text: 'Some text'
+                        }
+                    ]
                 };
                 testUpdate([false, true], notesBody, 'InProgress', [], [], null, null, null, done);
             });
         });
     });
 
-
     describe('Post Validation', function() {
-
-        //////////////////////////////////////////////////////////////////////////////////////////////
-        //////////////////////////////////////// NOTIFY STORE ////////////////////////////////////////
-        //////////////////////////////////////////////////////////////////////////////////////////////
+        /// ///////////////////////////////////////////////////////////////////////////////////////////
+        /// ///////////////////////////////////// NOTIFY STORE ////////////////////////////////////////
+        /// ///////////////////////////////////////////////////////////////////////////////////////////
 
         var getBaseUser = function() {
-            return { id: 'test' }
+            return { id: 'test' };
         };
 
         var getBaseOrdering = function(billingAccountPath) {
@@ -1626,17 +1857,27 @@ describe('Ordering API', function() {
                 a: 'a',
                 orderItem: [
                     {
-                        billingAccount: [{
-                            id: 7,
-                            href: BILLING_SERVER + billingAccountPath
-                        }]
+                        billingAccount: [
+                            {
+                                id: 7,
+                                href: BILLING_SERVER + billingAccountPath
+                            }
+                        ]
                     }
                 ]
             };
         };
 
-        var testPostValidation = function (ordering, userInfo, storeClient, headers, getBillingReq, updateBillingReq, indexes, checker) {
-
+        var testPostValidation = function(
+            ordering,
+            userInfo,
+            storeClient,
+            headers,
+            getBillingReq,
+            updateBillingReq,
+            indexes,
+            checker
+        ) {
             var orderingApi = getOrderingAPI({ storeClient: storeClient }, {}, {}, indexes);
 
             var req = {
@@ -1661,8 +1902,14 @@ describe('Ordering API', function() {
             orderingApi.executePostValidation(req, checker);
         };
 
-        var testPostValidationStoreNotifyOk = function(repeatedUser, getBillingFails, updateBillingFails, indexCalled, err, done) {
-
+        var testPostValidationStoreNotifyOk = function(
+            repeatedUser,
+            getBillingFails,
+            updateBillingFails,
+            indexCalled,
+            err,
+            done
+        ) {
             var buildUser = function(userName, role) {
                 var user = {
                     id: userName,
@@ -1682,7 +1929,7 @@ describe('Ordering API', function() {
 
             var user1 = buildUser('user1', 'customer');
             var user2 = buildUser('user2', 'seller');
-            ordering.relatedParty = [ user1, user2 ];
+            ordering.relatedParty = [user1, user2];
 
             var getBillingReq = {
                 status: getBillingFails ? 500 : 200,
@@ -1718,8 +1965,8 @@ describe('Ordering API', function() {
             var storeClient = jasmine.createSpyObj('storeClient', ['notifyOrder']);
             storeClient.notifyOrder.and.callFake(function(orderInfo, userInfo, callback) {
                 callback(null, {
-                    body: JSON.stringify({redirectUrl: redirectUrl })
-                })
+                    body: JSON.stringify({ redirectUrl: redirectUrl })
+                });
             });
 
             var indexes = jasmine.createSpyObj('indexes', ['saveIndexOrder']);
@@ -1727,9 +1974,11 @@ describe('Ordering API', function() {
                 return Promise.resolve();
             });
 
-            testPostValidation(ordering, user, storeClient, headers, getBillingReq, updateBillingReq, indexes, function (err) {
+            testPostValidation(ordering, user, storeClient, headers, getBillingReq, updateBillingReq, indexes, function(
+                err
+            ) {
                 expect(err).toEqual(err);
-                expect(headers).toEqual({'X-Redirect-URL': redirectUrl});
+                expect(headers).toEqual({ 'X-Redirect-URL': redirectUrl });
                 expect(storeClient.notifyOrder).toHaveBeenCalledWith(ordering, user, jasmine.any(Function));
 
                 if (indexCalled) {
@@ -1741,7 +1990,7 @@ describe('Ordering API', function() {
             });
         };
 
-        it('should return extra headers and push all users into the billing account', function (done) {
+        it('should return extra headers and push all users into the billing account', function(done) {
             testPostValidationStoreNotifyOk(false, false, false, true, null, done);
         });
 
@@ -1750,34 +1999,45 @@ describe('Ordering API', function() {
         });
 
         it('should fail when the billing account cannot be retrieved', function(done) {
-            testPostValidationStoreNotifyOk(false, true, false, false, {
-                status: 500,
-                message: 'Unexpected error when checking the given billing account'
-            }, done);
+            testPostValidationStoreNotifyOk(
+                false,
+                true,
+                false,
+                false,
+                {
+                    status: 500,
+                    message: 'Unexpected error when checking the given billing account'
+                },
+                done
+            );
         });
 
         it('should fail when the billing account cannot be updated', function(done) {
-
-            testPostValidationStoreNotifyOk(false, false, true, false, {
-                status: 500,
-                message: 'Unexpected error when updating the given billing account'
-            }, done);
+            testPostValidationStoreNotifyOk(
+                false,
+                false,
+                true,
+                false,
+                {
+                    status: 500,
+                    message: 'Unexpected error when updating the given billing account'
+                },
+                done
+            );
         });
 
-        it('should fail when store fails at the time of registering the ordering', function (done) {
-
+        it('should fail when store fails at the time of registering the ordering', function(done) {
             var headers = {};
             var ordering = getBaseOrdering('/billing/9');
             var user = getBaseUser();
 
             var storeClient = jasmine.createSpyObj('storeClient', ['notifyOrder']);
             storeClient.notifyOrder.and.callFake(function(orderInfo, userInfo, callback) {
-                callback({status: 500});
+                callback({ status: 500 });
             });
 
-            testPostValidation(ordering, user, storeClient, {}, null, null, null, function (err) {
-
-                expect(err).toEqual({status: 500});
+            testPostValidation(ordering, user, storeClient, {}, null, null, null, function(err) {
+                expect(err).toEqual({ status: 500 });
                 expect(headers).toEqual({});
                 expect(storeClient.notifyOrder).toHaveBeenCalledWith(ordering, user, jasmine.any(Function));
 
@@ -1785,26 +2045,24 @@ describe('Ordering API', function() {
             });
         });
 
-        it('should directly call the callback when the request method is not GET or POST', function (done) {
-
+        it('should directly call the callback when the request method is not GET or POST', function(done) {
             var req = {
                 method: 'DELETE'
             };
 
             var orderingApi = getOrderingAPI({}, {}, {});
 
-            orderingApi.executePostValidation(req, function (err) {
+            orderingApi.executePostValidation(req, function(err) {
                 expect(err).toBe(null);
                 done();
             });
         });
 
-        //////////////////////////////////////////////////////////////////////////////////////////////
-        ////////////////////////////////////// FILTER ORDERINGS //////////////////////////////////////
-        //////////////////////////////////////////////////////////////////////////////////////////////
+        /// ///////////////////////////////////////////////////////////////////////////////////////////
+        /// /////////////////////////////////// FILTER ORDERINGS //////////////////////////////////////
+        /// ///////////////////////////////////////////////////////////////////////////////////////////
 
         it('should fail if the ordering does not belong to the user', function(done) {
-
             var tmfUtils = {
                 hasPartyRole: function() {
                     return false;
@@ -1829,11 +2087,10 @@ describe('Ordering API', function() {
         });
 
         var testFilterOrders = function(orders, done) {
-
             var user = { id: 'fiware' };
 
             // Not consumer but seller
-            var hasRolesReturnValues =  [];
+            var hasRolesReturnValues = [];
             orders.map(function(order) {
                 hasRolesReturnValues.push(order.isInvolved);
                 hasRolesReturnValues.push(order.isInvolved);
@@ -1844,7 +2101,6 @@ describe('Ordering API', function() {
 
             var utils = {};
             utils.updateBody = function(req, newBody) {
-
                 var expectedOrderItem = [];
 
                 orders.forEach(function(order) {
@@ -1869,7 +2125,6 @@ describe('Ordering API', function() {
             var orderingApi = getOrderingAPI({}, tmfUtils, utils);
 
             orderingApi.executePostValidation(req, function(err) {
-
                 expect(err).toBe(null);
 
                 orders.forEach(function(order) {
@@ -1884,46 +2139,40 @@ describe('Ordering API', function() {
         };
 
         it('should not filter the ordering as the user is involved in', function(done) {
-
-            var order = { item: { orderItems: [ {}, {}, {} ], note: [] }, isInvolved: true };
+            var order = { item: { orderItems: [{}, {}, {}], note: [] }, isInvolved: true };
             testFilterOrders([order], done);
         });
 
         it('should filter the ordering as the user is not involved in', function(done) {
-
-            var order = { item: { orderItems: [ {}, {}, {} ] }, isInvolved: false };
+            var order = { item: { orderItems: [{}, {}, {}] }, isInvolved: false };
             testFilterOrders([order], done);
         });
 
         it('should filter just one ordering as the user is involved in the other one', function(done) {
-
-            var order1 = { item: { orderItems: [ {}, {}, {} ] }, isInvolved: false };
-            var order2 = { item: { orderItems: [ {}, {}, {} ], note: [] }, isInvolved: true };
-            testFilterOrders([ order1, order2 ], done);
+            var order1 = { item: { orderItems: [{}, {}, {}] }, isInvolved: false };
+            var order2 = { item: { orderItems: [{}, {}, {}], note: [] }, isInvolved: true };
+            testFilterOrders([order1, order2], done);
         });
 
         it('should not filter orderings as the user is involved in both', function(done) {
-
-            var order1 = { item: { orderItems: [ {}, {}, {} ], note: [] }, isInvolved: true };
-            var order2 = { item: { orderItems: [ {}, {}, {} ], note: [] }, isInvolved: true };
-            testFilterOrders([ order1, order2 ], done);
+            var order1 = { item: { orderItems: [{}, {}, {}], note: [] }, isInvolved: true };
+            var order2 = { item: { orderItems: [{}, {}, {}], note: [] }, isInvolved: true };
+            testFilterOrders([order1, order2], done);
         });
 
-
         it('should filter all the orderings as the user is not involved in either of them', function(done) {
-
-            var order1 = { item: { orderItems: [ {}, {}, {} ] }, isInvolved: false };
-            var order2 = { item: { orderItems: [ {}, {}, {} ] }, isInvolved: false };
-            testFilterOrders([ order1, order2 ], done);
+            var order1 = { item: { orderItems: [{}, {}, {}] }, isInvolved: false };
+            var order2 = { item: { orderItems: [{}, {}, {}] }, isInvolved: false };
+            testFilterOrders([order1, order2], done);
         });
 
         var notFilterItemsUserIsCustomer = function(method, done) {
             var user = { id: 'fiware' };
-            var orderingRelatedParties =  [ {id: 'fiware'} ];
+            var orderingRelatedParties = [{ id: 'fiware' }];
             var originalBody = {
                 relatedParty: orderingRelatedParties,
                 note: [],
-                orderItem: [ { product: { relatedParty: [{ id: 'fiware', role: 'customer' }], id: 7 } } ]
+                orderItem: [{ product: { relatedParty: [{ id: 'fiware', role: 'customer' }], id: 7 } }]
             };
             var expectedBody = JSON.parse(JSON.stringify(originalBody));
 
@@ -1966,7 +2215,6 @@ describe('Ordering API', function() {
         });
 
         var testSeller = function(orderItems, method, done) {
-
             var user = { id: 'fiware' };
             var orderingRelatedParties = [];
             var originalBody = { relatedParty: orderingRelatedParties, orderItem: [], note: [] };
@@ -1978,7 +2226,7 @@ describe('Ordering API', function() {
             // Not consumer but seller
             var hasRolesReturnValues = [false, true];
             orderItems.forEach(function(item) {
-               hasRolesReturnValues.push(item.isSeller);
+                hasRolesReturnValues.push(item.isSeller);
             });
 
             var tmfUtils = jasmine.createSpyObj('tmfUtils', ['hasPartyRole']);
@@ -1986,16 +2234,19 @@ describe('Ordering API', function() {
 
             var utils = {};
             utils.updateBody = function(req, newBody) {
-
                 var expectedOrderItem = [];
 
                 orderItems.forEach(function(item) {
                     if (item.isSeller) {
-                       expectedOrderItem.push(item.item);
+                        expectedOrderItem.push(item.item);
                     }
                 });
 
-                expect(newBody).toEqual({ relatedParty: orderingRelatedParties, orderItem: expectedOrderItem, note: [] });
+                expect(newBody).toEqual({
+                    relatedParty: orderingRelatedParties,
+                    orderItem: expectedOrderItem,
+                    note: []
+                });
             };
 
             var req = {
@@ -2008,7 +2259,6 @@ describe('Ordering API', function() {
             var orderingApi = getOrderingAPI({}, tmfUtils, utils);
 
             orderingApi.executePostValidation(req, function(err) {
-
                 expect(err).toEqual(null);
 
                 expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(req, orderingRelatedParties, 'Customer');
@@ -2024,7 +2274,7 @@ describe('Ordering API', function() {
 
         var notFilterSingleItem = function(method, done) {
             var orderItemRelatedParties = [{ id: 'fiware', role: 'seller' }];
-            var orderItem =  { item: { product: { relatedParty: orderItemRelatedParties, id: 7 } }, isSeller: true };
+            var orderItem = { item: { product: { relatedParty: orderItemRelatedParties, id: 7 } }, isSeller: true };
 
             testSeller([orderItem], method, done);
         };
@@ -2043,7 +2293,7 @@ describe('Ordering API', function() {
 
         var filterSingleElement = function(method, done) {
             var orderItemRelatedParties = [{ id: 'other-seller', role: 'seller' }];
-            var orderItem =  { item: { product: { relatedParty: orderItemRelatedParties, id: 7 } }, isSeller: false };
+            var orderItem = { item: { product: { relatedParty: orderItemRelatedParties, id: 7 } }, isSeller: false };
 
             testSeller([orderItem], method, done);
         };
@@ -2061,12 +2311,10 @@ describe('Ordering API', function() {
         });
 
         var filterOneItem = function(method, done) {
-
             var orderItem1RelatedParties = [{ id: 'other-seller', role: 'seller' }];
             var orderItem2RelatedParties = [{ id: 'fiware', role: 'seller' }];
             var orderItem1 = { item: { product: { relatedParty: orderItem1RelatedParties, id: 7 } }, isSeller: false };
             var orderItem2 = { item: { product: { relatedParty: orderItem2RelatedParties, id: 8 } }, isSeller: true };
-
 
             testSeller([orderItem1, orderItem2], method, done);
         };
@@ -2087,7 +2335,6 @@ describe('Ordering API', function() {
             var orderItemRelatedParties = [{ id: 'fiware', role: 'seller' }];
             var orderItem1 = { item: { product: { relatedParty: orderItemRelatedParties, id: 7 } }, isSeller: true };
             var orderItem2 = { item: { product: { relatedParty: orderItemRelatedParties, id: 8 } }, isSeller: true };
-
 
             testSeller([orderItem1, orderItem2], method, done);
         };
@@ -2110,7 +2357,6 @@ describe('Ordering API', function() {
             var orderItem1 = { item: { product: { relatedParty: nowOwnerRelatedParties, id: 7 } }, isSeller: false };
             var orderItem2 = { item: { product: { relatedParty: ownerRelatedParties, id: 8 } }, isSeller: false };
             var orderItem3 = { item: { product: { relatedParty: ownerRelatedParties, id: 9 } }, isSeller: true };
-
 
             testSeller([orderItem1, orderItem2, orderItem3], method, done);
         };

@@ -61,7 +61,6 @@ var authorizeService = (function () {
             } else {
                 res.status(422).json({error: 'AppId missing'});
             }
-
         } catch (e) {
             res.status(400).json({ error: e.message + ' Invalid body' });
         }
@@ -116,7 +115,6 @@ var authorizeService = (function () {
         saveAppToken: saveAppToken,
         getAppToken: getAppToken
     };
-
 })();
 
 exports.authorizeService = authorizeService;

@@ -22,8 +22,7 @@
  *         Jaime Pajuelo <jpajuelo@conwet.com>
  *         Aitor Magán <amagan@conwet.com>
  */
-(function () {
-
+(function() {
     'use strict';
 
     angular
@@ -32,31 +31,27 @@
         .controller('RouteStockCtl', ['$state', StockController]);
 
     function StockRouteConfig($stateProvider) {
-
-        $stateProvider
-            .state('stock', {
-                url: '/stock',
-                data: {
-                    title: 'My Stock',
-                    loggingRequired: true
+        $stateProvider.state('stock', {
+            url: '/stock',
+            data: {
+                title: 'My Stock',
+                loggingRequired: true
+            },
+            views: {
+                'sidebar-content': {
+                    templateUrl: 'stock/sidebar',
+                    controller: 'RouteStockCtl'
                 },
-                views: {
-                    'sidebar-content': {
-                        templateUrl: 'stock/sidebar',
-                        controller: 'RouteStockCtl'
-                    },
-                    'content': {
-                        template: '<ui-view>'
-                    }
+                content: {
+                    template: '<ui-view>'
                 }
-            });
+            }
+        });
     }
 
     function StockController($state) {
-
         if ($state.is('stock')) {
             $state.go('stock.catalogue');
         }
     }
-
 })();

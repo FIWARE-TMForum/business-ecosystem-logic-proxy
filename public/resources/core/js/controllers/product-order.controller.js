@@ -22,8 +22,7 @@
  *         Jaime Pajuelo <jpajuelo@conwet.com>
  *         Aitor Magán <amagan@conwet.com>
  */
-(function () {
-
+(function() {
     'use strict';
 
     // Status for process that takes a while to load (load orders & create order)
@@ -35,16 +34,55 @@
 
     angular
         .module('app')
-        .controller('ProductOrderSearchCtrl', ['$scope', '$state', '$rootScope', 'EVENTS', 'PRODUCTORDER_STATUS',
-            'PRODUCTORDER_LIFECYCLE', 'ProductOrder', 'Utils', ProductOrderSearchController])
+        .controller('ProductOrderSearchCtrl', [
+            '$scope',
+            '$state',
+            '$rootScope',
+            'EVENTS',
+            'PRODUCTORDER_STATUS',
+            'PRODUCTORDER_LIFECYCLE',
+            'ProductOrder',
+            'Utils',
+            ProductOrderSearchController
+        ])
 
-        .controller('ProductOrderCreateCtrl', ['$state', '$rootScope', '$scope', '$window', '$interval', 'User',
-            'ProductOrder', 'Offering', 'ShoppingCart', 'Utils', 'EVENTS', ProductOrderCreateController])
+        .controller('ProductOrderCreateCtrl', [
+            '$state',
+            '$rootScope',
+            '$scope',
+            '$window',
+            '$interval',
+            'User',
+            'ProductOrder',
+            'Offering',
+            'ShoppingCart',
+            'Utils',
+            'EVENTS',
+            ProductOrderCreateController
+        ])
 
-        .controller('ProductOrderDetailCtrl', ['$rootScope', '$state', 'EVENTS', 'PROMISE_STATUS', 'PRODUCTORDER_STATUS',
-            'Utils', 'User', 'ProductOrder', ProductOrderDetailController]);
+        .controller('ProductOrderDetailCtrl', [
+            '$rootScope',
+            '$state',
+            'EVENTS',
+            'PROMISE_STATUS',
+            'PRODUCTORDER_STATUS',
+            'Utils',
+            'User',
+            'ProductOrder',
+            ProductOrderDetailController
+        ]);
 
-    function ProductOrderSearchController($scope, $state, $rootScope, EVENTS, PRODUCTORDER_STATUS, PRODUCTORDER_LIFECYCLE, ProductOrder, Utils) {
+    function ProductOrderSearchController(
+        $scope,
+        $state,
+        $rootScope,
+        EVENTS,
+        PRODUCTORDER_STATUS,
+        PRODUCTORDER_LIFECYCLE,
+        ProductOrder,
+        Utils
+    ) {
         /* jshint validthis: true */
         var vm = this;
 
@@ -76,17 +114,20 @@
                 params.offset = vm.offset;
                 params.size = vm.size;
 
-                ProductOrder.search(params).then(function (productOrderList) {
-                    angular.copy(productOrderList, vm.list);
-                    vm.list.status = LOADED;
-                }, function (response) {
-                    vm.error = Utils.parseError(response, 'It was impossible to load the list of orders');
-                    vm.list.status = ERROR;
-                });
+                ProductOrder.search(params).then(
+                    function(productOrderList) {
+                        angular.copy(productOrderList, vm.list);
+                        vm.list.status = LOADED;
+                    },
+                    function(response) {
+                        vm.error = Utils.parseError(response, 'It was impossible to load the list of orders');
+                        vm.list.status = ERROR;
+                    }
+                );
             }
         }
 
-        $scope.$watch(function () {
+        $scope.$watch(function() {
             return vm.offset;
         }, productOrderSearch);
 
@@ -101,19 +142,26 @@
         }
 
         function isTransitable(orderItem) {
-
-            return orderItem.state === PRODUCTORDER_STATUS.ACKNOWLEDGED || orderItem.state === PRODUCTORDER_STATUS.INPROGRESS;
+            return (
+                orderItem.state === PRODUCTORDER_STATUS.ACKNOWLEDGED ||
+                orderItem.state === PRODUCTORDER_STATUS.INPROGRESS
+            );
         }
 
         function getNextStatus(orderItem) {
             var index = PRODUCTORDER_LIFECYCLE.indexOf(orderItem.state);
-            return index !== -1 && (index + 1) !== PRODUCTORDER_LIFECYCLE.length ? PRODUCTORDER_LIFECYCLE[index + 1] : null;
+            return index !== -1 && index + 1 !== PRODUCTORDER_LIFECYCLE.length
+                ? PRODUCTORDER_LIFECYCLE[index + 1]
+                : null;
         }
 
         function canCancel(productOrder) {
-            return productOrder.state === PRODUCTORDER_STATUS.INPROGRESS && productOrder.orderItem.every(function (orderItem) {
-                return orderItem.state === PRODUCTORDER_STATUS.ACKNOWLEDGED;
-            });
+            return (
+                productOrder.state === PRODUCTORDER_STATUS.INPROGRESS &&
+                productOrder.orderItem.every(function(orderItem) {
+                    return orderItem.state === PRODUCTORDER_STATUS.ACKNOWLEDGED;
+                })
+            );
         }
 
         function cancelOrder(productOrder) {
@@ -123,24 +171,27 @@
 
             vm.cancellingOrder = true;
 
-            ProductOrder.update(productOrder, dataUpdated).then(function (productOrderUpdated) {
-                angular.copy(productOrderUpdated, productOrder);
-                vm.cancellingOrder = false;
+            ProductOrder.update(productOrder, dataUpdated).then(
+                function(productOrderUpdated) {
+                    angular.copy(productOrderUpdated, productOrder);
+                    vm.cancellingOrder = false;
 
-                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {
-                    message: 'Your order has been cancelled'
-                });
+                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {
+                        message: 'Your order has been cancelled'
+                    });
+                },
+                function(response) {
+                    var defaultMessage =
+                        'There was an unexpected error that prevented the ' +
+                        'system from updating the status of the given product order';
+                    var error = Utils.parseError(response, defaultMessage);
 
-            }, function (response) {
-                var defaultMessage = 'There was an unexpected error that prevented the ' +
-                    'system from updating the status of the given product order';
-                var error = Utils.parseError(response, defaultMessage);
-
-                vm.cancellingOrder = false;
-                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
-                    error: error
-                });
-            });
+                    vm.cancellingOrder = false;
+                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                        error: error
+                    });
+                }
+            );
         }
 
         function updateStatus(productOrder, index, status) {
@@ -149,24 +200,40 @@
             };
 
             dataUpdated.orderItem[index].state = status;
-            dataUpdated.orderItem.forEach(function (orderItem) {
+            dataUpdated.orderItem.forEach(function(orderItem) {
                 orderItem.productOffering = orderItem.productOffering.serialize();
             });
-            ProductOrder.update(productOrder, dataUpdated).then(function (productOrderUpdated) {
-                angular.copy(productOrderUpdated, productOrder);
-            }, function (response) {
-                var defaultMessage = 'There was an unexpected error that prevented the ' +
-                    'system from updating the given product order';
-                var error = Utils.parseError(response, defaultMessage);
+            ProductOrder.update(productOrder, dataUpdated).then(
+                function(productOrderUpdated) {
+                    angular.copy(productOrderUpdated, productOrder);
+                },
+                function(response) {
+                    var defaultMessage =
+                        'There was an unexpected error that prevented the ' +
+                        'system from updating the given product order';
+                    var error = Utils.parseError(response, defaultMessage);
 
-                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
-                    error: error
-                });
-            });
+                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                        error: error
+                    });
+                }
+            );
         }
     }
 
-    function ProductOrderCreateController($state, $rootScope, $scope, $window, $interval, User, ProductOrder, Offering, ShoppingCart, Utils, EVENTS) {
+    function ProductOrderCreateController(
+        $state,
+        $rootScope,
+        $scope,
+        $window,
+        $interval,
+        User,
+        ProductOrder,
+        Offering,
+        ShoppingCart,
+        Utils,
+        EVENTS
+    ) {
         /* jshint validthis: true */
         var vm = this;
 
@@ -181,7 +248,7 @@
         vm.PRIORITIES = ProductOrder.TYPES.PRIORITY;
 
         vm.note = {
-            text: ""
+            text: ''
         };
 
         vm.makeOrder = makeOrder;
@@ -203,99 +270,101 @@
         });
 
         var initOrder = function initOrder() {
-
             vm.loadingStatus = LOADING;
             vm.billingAccount = null;
 
-            ShoppingCart.getItems().then(function(orderItems) {
+            ShoppingCart.getItems().then(
+                function(orderItems) {
+                    vm.loadingStatus = LOADED;
+                    vm.orderItems = orderItems;
 
-                vm.loadingStatus = LOADED;
-                vm.orderItems = orderItems;
+                    if (orderItems.length) {
+                        vm.orderInfo.relatedParty[0].role = 'Customer';
 
-                if (orderItems.length) {
+                        // Remove old order items
+                        vm.orderInfo.orderItem = [];
 
-                    vm.orderInfo.relatedParty[0].role = 'Customer';
+                        // Build order items. This information is created using the shopping card and is not editable in this view
+                        for (var i = 0; i < orderItems.length; i++) {
+                            var item = {
+                                id: i.toString(),
+                                action: 'add',
+                                state: 'Acknowledged',
+                                productOffering: {
+                                    id: orderItems[i].id,
+                                    name: orderItems[i].name,
+                                    href: orderItems[i].href
+                                },
+                                product: {
+                                    productCharacteristic: []
+                                },
+                                billingAccount: [User.serializeBasic()]
+                            };
 
-                    // Remove old order items
-                    vm.orderInfo.orderItem = [];
+                            // Use pricing and characteristics to build the product property
+                            if (orderItems[i].options.characteristics) {
+                                for (var j = 0; j < orderItems[i].options.characteristics.length; j++) {
+                                    var productChars = orderItems[i].options.characteristics[j];
 
-                    // Build order items. This information is created using the shopping card and is not editable in this view
-                    for (var i = 0; i < orderItems.length; i++) {
-                        var item = {
-                            id: i.toString(),
-                            action: 'add',
-                            state: 'Acknowledged',
-                            productOffering: {
-                                id: orderItems[i].id,
-                                name: orderItems[i].name,
-                                href: orderItems[i].href
-                            },
-                            product: {
-                                productCharacteristic: []
-                            },
-                            billingAccount: [User.serializeBasic()]
-                        };
+                                    for (var k = 0; k < productChars.characteristics.length; k++) {
+                                        var char = productChars.characteristics[k].characteristic;
+                                        var selectedValue = productChars.characteristics[k].value;
+                                        var value;
 
-                        // Use pricing and characteristics to build the product property
-                        if (orderItems[i].options.characteristics) {
-                            for (var j = 0; j < orderItems[i].options.characteristics.length; j++) {
-                                var productChars = orderItems[i].options.characteristics[j];
+                                        if (
+                                            char.valueType.toLowerCase() === 'string' ||
+                                            (char.valueType.toLowerCase() === 'number' && selectedValue.value)
+                                        ) {
+                                            value = selectedValue.value;
+                                        } else {
+                                            value = selectedValue.valueFrom + '-' + selectedValue.valueTo;
+                                        }
 
-                                for (var k = 0; k < productChars.characteristics.length; k++) {
-                                    var char = productChars.characteristics[k].characteristic;
-                                    var selectedValue = productChars.characteristics[k].value;
-                                    var value;
+                                        var charIdName = '';
+                                        if (productChars.offName) {
+                                            charIdName = 'offering:' + productChars.offId + ' ';
+                                        }
+                                        if (productChars.id) {
+                                            charIdName += 'product:' + productChars.id + ' ';
+                                        }
 
-                                    if (char.valueType.toLowerCase() === 'string' ||
-                                        (char.valueType.toLowerCase() === 'number' && selectedValue.value)) {
-                                        value = selectedValue.value;
-                                    } else {
-                                        value = selectedValue.valueFrom + '-' + selectedValue.valueTo;
+                                        item.product.productCharacteristic.push({
+                                            name: charIdName + char.name,
+                                            value: value
+                                        });
                                     }
-
-                                    var charIdName = '';
-                                    if (productChars.offName) {
-                                        charIdName = 'offering:' + productChars.offId + ' ';
-                                    }
-                                    if (productChars.id) {
-                                        charIdName += 'product:' + productChars.id + ' ';
-                                    }
-
-                                    item.product.productCharacteristic.push({
-                                        name: charIdName + char.name,
-                                        value: value
-                                    });
                                 }
                             }
-                        }
 
-                        if (orderItems[i].options.pricing) {
-                            var price = orderItems[i].options.pricing;
-                            price.price = {
-                                amount: orderItems[i].options.pricing.price.taxIncludedAmount,
-                                currency: orderItems[i].options.pricing.price.currencyCode
-                            };
-                            if (angular.isObject(orderItems[i].pricePlan.priceAlteration())) {
-                                price.description = price.description + '\n' + orderItems[i].pricePlan.priceAlteration().format();
+                            if (orderItems[i].options.pricing) {
+                                var price = orderItems[i].options.pricing;
+                                price.price = {
+                                    amount: orderItems[i].options.pricing.price.taxIncludedAmount,
+                                    currency: orderItems[i].options.pricing.price.currencyCode
+                                };
+                                if (angular.isObject(orderItems[i].pricePlan.priceAlteration())) {
+                                    price.description =
+                                        price.description + '\n' + orderItems[i].pricePlan.priceAlteration().format();
+                                }
+                                delete price.productOfferPriceAlteration;
+                                item.product.productPrice = [price];
                             }
-                            delete price.productOfferPriceAlteration;
-                            item.product.productPrice = [price];
+
+                            // Include the item to the order
+                            vm.orderInfo.orderItem.push(item);
                         }
-
-                        // Include the item to the order
-                        vm.orderInfo.orderItem.push(item);
+                    } else {
+                        $state.go('offering');
+                        $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'info', {
+                            message: 'No items found on your shopping cart!'
+                        });
                     }
-                } else {
-                    $state.go('offering');
-                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'info', {
-                        message: 'No items found on your shopping cart!'
-                    });
+                },
+                function(response) {
+                    vm.error = Utils.parseError(response, 'It was impossible to load your shopping cart');
+                    vm.loadingStatus = ERROR;
                 }
-
-            }, function (response) {
-                vm.error = Utils.parseError(response, 'It was impossible to load your shopping cart');
-                vm.loadingStatus = ERROR;
-            });
+            );
         };
 
         function formatPriceplan(orderItem) {
@@ -303,24 +372,23 @@
 
             if (angular.isArray(orderItem.product.productPrice) && orderItem.product.productPrice.length) {
                 priceplan = orderItem.product.productPrice[0];
-                result = priceplan.price.amount + " " + priceplan.price.currency;
+                result = priceplan.price.amount + ' ' + priceplan.price.currency;
                 switch (priceplan.priceType) {
-                case Offering.TYPES.PRICE.RECURRING:
-                    result += " / " + priceplan.recurringChargePeriod;
-                    break;
-                case Offering.TYPES.PRICE.USAGE:
-                    result += " / " + priceplan.unitOfMeasure;
-                    break;
+                    case Offering.TYPES.PRICE.RECURRING:
+                        result += ' / ' + priceplan.recurringChargePeriod;
+                        break;
+                    case Offering.TYPES.PRICE.USAGE:
+                        result += ' / ' + priceplan.unitOfMeasure;
+                        break;
                 }
             } else {
-                result = "Free";
+                result = 'Free';
             }
 
             return result;
         }
 
         function makeOrder() {
-
             vm.createOrderStatus = LOADING;
 
             var cleanCartItems = function() {
@@ -340,7 +408,7 @@
                         date: new Date()
                     }
                 ];
-                vm.note.text = "";
+                vm.note.text = '';
             }
 
             for (var i = 0; i < apiInfo.orderItem.length; i++) {
@@ -354,63 +422,74 @@
             apiInfo.orderDate = new Date();
             apiInfo.notificationContact = vm.billingAccount.getEmailAddress().toString();
 
-            ProductOrder.create(apiInfo).then(function(orderCreated) {
-                if ('x-redirect-url' in orderCreated.headers) {
+            ProductOrder.create(apiInfo).then(
+                function(orderCreated) {
+                    if ('x-redirect-url' in orderCreated.headers) {
+                        var ppalWindow = $window.open(orderCreated.headers['x-redirect-url'], '_blank');
+                        var interval;
 
-                    var ppalWindow = $window.open(orderCreated.headers['x-redirect-url'], '_blank');
-                    var interval;
+                        // The function to be called when the payment process has ended
+                        var paymentFinished = function(closeModal) {
+                            if (interval) {
+                                $interval.cancel(interval);
+                            }
 
-                    // The function to be called when the payment process has ended
-                    var paymentFinished = function(closeModal) {
+                            if (closeModal) {
+                                $rootScope.$emit(EVENTS.MESSAGE_CLOSED);
+                            }
 
-                        if (interval) {
-                            $interval.cancel(interval);
+                            vm.createOrderStatus = FINISHED;
+                            cleanCartItems();
+                            $state.go('inventory');
+                        };
+
+                        // Display a message and wait until the new tab has been closed to redirect the page
+                        $rootScope.$emit(
+                            EVENTS.MESSAGE_CREATED,
+                            orderCreated.headers['x-redirect-url'],
+                            paymentFinished.bind(this, false)
+                        );
+
+                        if (ppalWindow) {
+                            interval = $interval(function() {
+                                if (ppalWindow.closed) {
+                                    paymentFinished(true);
+                                }
+                            }, 500);
                         }
-
-                        if (closeModal) {
-                            $rootScope.$emit(EVENTS.MESSAGE_CLOSED);
-                        }
-
+                    } else {
                         vm.createOrderStatus = FINISHED;
                         cleanCartItems();
                         $state.go('inventory');
-
-                    };
-
-                    // Display a message and wait until the new tab has been closed to redirect the page
-                    $rootScope.$emit(EVENTS.MESSAGE_CREATED, orderCreated.headers['x-redirect-url'], paymentFinished.bind(this, false));
-
-                    if (ppalWindow) {
-                        interval = $interval(function () {
-                            if (ppalWindow.closed) {
-                                paymentFinished(true);
-                            }
-                        }, 500);
                     }
+                },
+                function(response) {
+                    vm.createOrderStatus = ERROR;
 
-                } else {
-                    vm.createOrderStatus = FINISHED;
-                    cleanCartItems();
-                    $state.go('inventory');
+                    var defaultMessage =
+                        'There was an unexpected error that prevented the ' + 'system from creating a new order';
+                    var error = Utils.parseError(response, defaultMessage);
+
+                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                        error: error
+                    });
                 }
-            }, function (response) {
-
-                vm.createOrderStatus = ERROR;
-
-                var defaultMessage = 'There was an unexpected error that prevented the ' +
-                    'system from creating a new order';
-                var error = Utils.parseError(response, defaultMessage);
-
-                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
-                    error: error
-                });
-            });
+            );
         }
 
         initOrder();
     }
 
-    function ProductOrderDetailController($rootScope, $state, EVENTS, PROMISE_STATUS, PRODUCTORDER_STATUS, Utils, User, ProductOrder) {
+    function ProductOrderDetailController(
+        $rootScope,
+        $state,
+        EVENTS,
+        PROMISE_STATUS,
+        PRODUCTORDER_STATUS,
+        Utils,
+        User,
+        ProductOrder
+    ) {
         /* jshint validthis: true */
         var vm = this;
 
@@ -430,18 +509,21 @@
         vm.deliverProduct = deliverProduct;
         vm.cancel = cancel;
 
-        ProductOrder.detail($state.params.productOrderId).then(function (productOrderRetrieved) {
-            vm.item = productOrderRetrieved;
-            vm.item.status = LOADED;
-            vm.comments = createComments(vm.item.note);
-            notes = vm.item.note;
-        }, function (response) {
-            vm.error = Utils.parseError(response, 'The requested product order could not be retrieved');
-            vm.item.status = ERROR;
-        });
+        ProductOrder.detail($state.params.productOrderId).then(
+            function(productOrderRetrieved) {
+                vm.item = productOrderRetrieved;
+                vm.item.status = LOADED;
+                vm.comments = createComments(vm.item.note);
+                notes = vm.item.note;
+            },
+            function(response) {
+                vm.error = Utils.parseError(response, 'The requested product order could not be retrieved');
+                vm.item.status = ERROR;
+            }
+        );
 
         vm.note = {
-            text: ""
+            text: ''
         };
 
         var promises = {
@@ -451,23 +533,33 @@
         };
 
         Object.defineProperty(cancel, 'status', {
-            get: function () { return promises.cancel ? promises.cancel.$$state.status : -1; }
+            get: function() {
+                return promises.cancel ? promises.cancel.$$state.status : -1;
+            }
         });
 
         Object.defineProperty(createNote, 'status', {
-            get: function () { return promises.createNote ? promises.createNote.$$state.status : -1; }
+            get: function() {
+                return promises.createNote ? promises.createNote.$$state.status : -1;
+            }
         });
 
         Object.defineProperty(sendProduct, 'status', {
-            get: function () { return promises.updateOrderItemStatus ? promises.updateOrderItemStatus.$$state.status : -1; }
+            get: function() {
+                return promises.updateOrderItemStatus ? promises.updateOrderItemStatus.$$state.status : -1;
+            }
         });
 
         Object.defineProperty(rejectProduct, 'status', {
-            get: function () { return promises.updateOrderItemStatus ? promises.updateOrderItemStatus.$$state.status : -1; }
+            get: function() {
+                return promises.updateOrderItemStatus ? promises.updateOrderItemStatus.$$state.status : -1;
+            }
         });
 
         Object.defineProperty(deliverProduct, 'status', {
-            get: function () { return promises.updateOrderItemStatus ? promises.updateOrderItemStatus.$$state.status : -1; }
+            get: function() {
+                return promises.updateOrderItemStatus ? promises.updateOrderItemStatus.$$state.status : -1;
+            }
         });
 
         function cancel() {
@@ -475,20 +567,27 @@
                 state: PRODUCTORDER_STATUS.CANCELLED
             };
 
-            promises.cancel = ProductOrder.update(vm.item, dataUpdated).then(function (productOrderUpdated) {
-                $state.go('inventory.productOrder.detail', {
-                    catalogueId: productOrderUpdated.id
-                }, {
-                    reload: true
-                });
-            }, function (response) {
-                var defaultMessage = "Unexpected error trying to update the order's status";
-                var error = Utils.parseError(response, defaultMessage);
+            promises.cancel = ProductOrder.update(vm.item, dataUpdated).then(
+                function(productOrderUpdated) {
+                    $state.go(
+                        'inventory.productOrder.detail',
+                        {
+                            catalogueId: productOrderUpdated.id
+                        },
+                        {
+                            reload: true
+                        }
+                    );
+                },
+                function(response) {
+                    var defaultMessage = "Unexpected error trying to update the order's status";
+                    var error = Utils.parseError(response, defaultMessage);
 
-                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
-                    error: error
-                });
-            });
+                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                        error: error
+                    });
+                }
+            );
         }
 
         function sendProduct(index) {
@@ -508,7 +607,7 @@
                 orderItem: []
             };
 
-            dataUpdated.orderItem = vm.item.orderItem.map(function (orderItem, index) {
+            dataUpdated.orderItem = vm.item.orderItem.map(function(orderItem, index) {
                 var data = angular.copy(orderItem);
                 data.productOffering = orderItem.productOffering.serialize();
                 data.billingAccount = [orderItem.billingAccount.serialize()];
@@ -522,34 +621,59 @@
                 }
                 return data;
             });
-            promises.updateOrderItemStatus = ProductOrder.update(vm.item, dataUpdated).then(function (productOrderUpdated) {
-                $state.go('inventory.productOrder.detail', {
-                    catalogueId: productOrderUpdated.id
-                }, {
-                    reload: true
-                });
-            }, function (response) {
-                var defaultMessage = "Unexpected error trying to update the order item's status";
-                var error = Utils.parseError(response, defaultMessage);
+            promises.updateOrderItemStatus = ProductOrder.update(vm.item, dataUpdated).then(
+                function(productOrderUpdated) {
+                    $state.go(
+                        'inventory.productOrder.detail',
+                        {
+                            catalogueId: productOrderUpdated.id
+                        },
+                        {
+                            reload: true
+                        }
+                    );
+                },
+                function(response) {
+                    var defaultMessage = "Unexpected error trying to update the order item's status";
+                    var error = Utils.parseError(response, defaultMessage);
 
-                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
-                    error: error
-                });
-            });
+                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                        error: error
+                    });
+                }
+            );
         }
 
         function can(permission, orderItem) {
             switch (permission) {
-            case 'cancel':
-                return isCustomer() && vm.item.state === PRODUCTORDER_STATUS.INPROGRESS && vm.item.orderItem.every(function (orderItem) {
-                    return orderItem.state === PRODUCTORDER_STATUS.ACKNOWLEDGED;
-                });
-            case 'reject':
-                return isVendor(orderItem) && vm.item.state === PRODUCTORDER_STATUS.INPROGRESS && isTransitable(orderItem);
-            case 'send':
-                return isVendor(orderItem) && vm.item.state === PRODUCTORDER_STATUS.INPROGRESS && isTransitable(orderItem) && orderItem.state === PRODUCTORDER_STATUS.ACKNOWLEDGED;
-            case 'deliver':
-                return isVendor(orderItem) && vm.item.state === PRODUCTORDER_STATUS.INPROGRESS && isTransitable(orderItem) && orderItem.state === PRODUCTORDER_STATUS.INPROGRESS;
+                case 'cancel':
+                    return (
+                        isCustomer() &&
+                        vm.item.state === PRODUCTORDER_STATUS.INPROGRESS &&
+                        vm.item.orderItem.every(function(orderItem) {
+                            return orderItem.state === PRODUCTORDER_STATUS.ACKNOWLEDGED;
+                        })
+                    );
+                case 'reject':
+                    return (
+                        isVendor(orderItem) &&
+                        vm.item.state === PRODUCTORDER_STATUS.INPROGRESS &&
+                        isTransitable(orderItem)
+                    );
+                case 'send':
+                    return (
+                        isVendor(orderItem) &&
+                        vm.item.state === PRODUCTORDER_STATUS.INPROGRESS &&
+                        isTransitable(orderItem) &&
+                        orderItem.state === PRODUCTORDER_STATUS.ACKNOWLEDGED
+                    );
+                case 'deliver':
+                    return (
+                        isVendor(orderItem) &&
+                        vm.item.state === PRODUCTORDER_STATUS.INPROGRESS &&
+                        isTransitable(orderItem) &&
+                        orderItem.state === PRODUCTORDER_STATUS.INPROGRESS
+                    );
             }
         }
 
@@ -562,7 +686,10 @@
         }
 
         function isTransitable(orderItem) {
-            return orderItem.state === PRODUCTORDER_STATUS.ACKNOWLEDGED || orderItem.state === PRODUCTORDER_STATUS.INPROGRESS;
+            return (
+                orderItem.state === PRODUCTORDER_STATUS.ACKNOWLEDGED ||
+                orderItem.state === PRODUCTORDER_STATUS.INPROGRESS
+            );
         }
 
         function getCustomerName() {
@@ -597,7 +724,7 @@
             var comments = [];
 
             if (angular.isArray(notes) && notes.length) {
-                notes.forEach(function (note) {
+                notes.forEach(function(note) {
                     var comment;
 
                     if (!comments.length || comments[comments.length - 1].author !== note.author) {
@@ -616,20 +743,23 @@
 
         function createNote() {
             var dataUpdated = {
-                note: [{
-                    author: User.loggedUser.currentUser.id,
-                    date: new Date(),
-                    text: vm.note.text
-                }].concat(notes)
+                note: [
+                    {
+                        author: User.loggedUser.currentUser.id,
+                        date: new Date(),
+                        text: vm.note.text
+                    }
+                ].concat(notes)
             };
 
-            promises.createNote = ProductOrder.update(vm.item, dataUpdated).then(function (productOrder) {
-                vm.note.text = "";
-                notes = productOrder.note;
-                vm.comments = createComments(productOrder.note);
-            }, function (response) {
-            });
+            promises.createNote = ProductOrder.update(vm.item, dataUpdated).then(
+                function(productOrder) {
+                    vm.note.text = '';
+                    notes = productOrder.note;
+                    vm.comments = createComments(productOrder.note);
+                },
+                function(response) {}
+            );
         }
     }
-
 })();

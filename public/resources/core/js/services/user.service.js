@@ -17,25 +17,26 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-(function () {
-
+(function() {
     'use strict';
 
-    angular
-        .module('app')
-        .factory('User', ['$resource', '$injector', '$location', 'URLS', 'PARTY_ROLES', UserService]);
+    angular.module('app').factory('User', ['$resource', '$injector', '$location', 'URLS', 'PARTY_ROLES', UserService]);
 
     function UserService($resource, $injector, $location, URLS, PARTY_ROLES) {
-        var resource = $resource(URLS.USER, {
-            username: '@id'
-        }, {
-            updatePartial: {
-                method: 'PATCH'
+        var resource = $resource(
+            URLS.USER,
+            {
+                username: '@id'
+            },
+            {
+                updatePartial: {
+                    method: 'PATCH'
+                }
             }
-        });
+        );
 
         var loggedUser = $injector.has('LOGGED_USER') ? $injector.get('LOGGED_USER') : null;
-	
+
         return {
             detail: detail,
             updatePartial: updatePartial,
@@ -44,10 +45,9 @@
             serialize: serialize,
             serializeBasic: serializeBasic
         };
-	
 
         function detail(next) {
-            resource.get({username: loggedUser.id}, next);
+            resource.get({ username: loggedUser.id }, next);
         }
 
         function updatePartial(data, next) {
@@ -65,13 +65,17 @@
             return userInfo;
         }
 
-
         function serializeBasic() {
             return {
                 id: loggedUser.currentUser.id,
-                href: $location.protocol() + '://' + $location.host() + ':' + $location.port() + loggedUser.currentUser.href
+                href:
+                    $location.protocol() +
+                    '://' +
+                    $location.host() +
+                    ':' +
+                    $location.port() +
+                    loggedUser.currentUser.href
             };
         }
     }
-
 })();

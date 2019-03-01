@@ -23,20 +23,20 @@
  *         Aitor Magán <amagan@conwet.com>
  */
 
-
-(function () {
-
+(function() {
     'use strict';
 
-    angular
-        .module('app')
-        .factory('CustomerAccount', ['$q', '$resource', 'URLS', 'Customer', CustomerAccountService]);
+    angular.module('app').factory('CustomerAccount', ['$q', '$resource', 'URLS', 'Customer', CustomerAccountService]);
 
     function CustomerAccountService($q, $resource, URLS, Customer) {
-        var CustomerAccount = $resource(URLS.CUSTOMER_MANAGEMENT + '/customerAccount/:id', {}, {
-            update: {method: 'PUT'},
-            updatePartial: {method: 'PATCH'}
-        });
+        var CustomerAccount = $resource(
+            URLS.CUSTOMER_MANAGEMENT + '/customerAccount/:id',
+            {},
+            {
+                update: { method: 'PUT' },
+                updatePartial: { method: 'PATCH' }
+            }
+        );
         CustomerAccount.prototype.serialize = function serialize() {
             return {
                 id: this.id,
@@ -45,11 +45,9 @@
             };
         };
 
-        var EVENTS = {
-        };
+        var EVENTS = {};
 
-        var TYPES = {
-        };
+        var TYPES = {};
 
         var TEMPLATES = {
             CUSTOMER_ACCOUNT: {
@@ -75,12 +73,16 @@
                 customer: data.customer.serialize()
             });
 
-            CustomerAccount.save(resource, function (customerAccount) {
-                customerAccount.customer = data.customer;
-                deferred.resolve(customerAccount);
-            }, function (response) {
-                deferred.reject(response);
-            });
+            CustomerAccount.save(
+                resource,
+                function(customerAccount) {
+                    customerAccount.customer = data.customer;
+                    deferred.resolve(customerAccount);
+                },
+                function(response) {
+                    deferred.reject(response);
+                }
+            );
 
             return deferred.promise;
         }
@@ -91,16 +93,23 @@
                 id: id
             };
 
-            CustomerAccount.get(params, function (customerAccount) {
-                Customer.detail(customerAccount.customer.id).then(function (customer) {
-                    customerAccount.customer = customer;
-                    deferred.resolve(customerAccount);
-                }, function (response) {
+            CustomerAccount.get(
+                params,
+                function(customerAccount) {
+                    Customer.detail(customerAccount.customer.id).then(
+                        function(customer) {
+                            customerAccount.customer = customer;
+                            deferred.resolve(customerAccount);
+                        },
+                        function(response) {
+                            deferred.reject(response);
+                        }
+                    );
+                },
+                function(response) {
                     deferred.reject(response);
-                });
-            }, function (response) {
-                deferred.reject(response);
-            });
+                }
+            );
 
             return deferred.promise;
         }
@@ -113,5 +122,4 @@
             return customerAccount;
         }
     }
-
 })();

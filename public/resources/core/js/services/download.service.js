@@ -17,23 +17,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-(function () {
-
+(function() {
     'use strict';
 
-    angular
-        .module('app')
-        .factory('Download', ['$http', function ($http) {
+    angular.module('app').factory('Download', [
+        '$http',
+        function($http) {
             return {
                 download: (url) => {
                     let options = {
                         responseType: 'blob'
                     };
 
-                    return $http.get(url, options).then(function (response) {
+                    return $http.get(url, options).then(function(response) {
                         return response.data;
                     });
                 }
-            }
-        }]);
+            };
+        }
+    ]);
 })();

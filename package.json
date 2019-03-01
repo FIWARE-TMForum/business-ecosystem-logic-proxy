@@ -4,6 +4,9 @@
   "description": "Logic Layer for the Business API Ecosystem",
   "author": "UPM",
   "license": "AGPL-3.0",
+  "engines": {
+    "node": ">=8"
+  },
   "dependencies": {
     "async": "^1.5.0",
     "async-lock": "^0.3.8",
@@ -48,6 +51,8 @@
     "proxyquire": "1.7.3"
   },
   "scripts": {
+    "lint": "eslint ./lib --ext .js",
+    "prettier": "prettier --config .prettierrc.json --write '**/**/**/*.js' '**/**/*.js' '**/*.js' '*.js'",
     "test": "JASMINE_CONFIG_PATH=test/config/jasmine.json node_modules/.bin/istanbul cover --include-all-sources -x public/**/*.js -x locales/**/*.js -x server.js -x Gruntfile.js -x fill_indexes.js node_modules/.bin/jasmine"
   },
   "repository": {
@@ -71,5 +76,16 @@
       "name": "Miguel Garcia",
       "email": "mgarcia@conwet.com"
     }
-  ]
+  ],
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.js": [
+      "prettier --config .prettierrc.json --write",
+      "git add"
+    ]
+  }
 }

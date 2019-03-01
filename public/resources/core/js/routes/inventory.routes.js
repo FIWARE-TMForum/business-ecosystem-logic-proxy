@@ -22,8 +22,7 @@
  *         Jaime Pajuelo <jpajuelo@conwet.com>
  *         Aitor Magán <amagan@conwet.com>
  */
-(function () {
-
+(function() {
     'use strict';
 
     angular
@@ -32,31 +31,27 @@
         .controller('RouteInventoryCtl', ['$state', InventoryController]);
 
     function RouteConfig($stateProvider) {
-
-        $stateProvider
-            .state('inventory', {
-                url: '/inventory',
-                data: {
-                    title: 'My Inventory',
-                    loggingRequired: true
+        $stateProvider.state('inventory', {
+            url: '/inventory',
+            data: {
+                title: 'My Inventory',
+                loggingRequired: true
+            },
+            views: {
+                'sidebar-content': {
+                    templateUrl: 'inventory/sidebar',
+                    controller: 'RouteInventoryCtl'
                 },
-                views: {
-                    'sidebar-content': {
-                        templateUrl: 'inventory/sidebar',
-                        controller: 'RouteInventoryCtl'
-                    },
-                    'content': {
-                        template: '<ui-view>'
-                    }
+                content: {
+                    template: '<ui-view>'
                 }
-            });
+            }
+        });
     }
 
     function InventoryController($state) {
-
         if ($state.is('inventory')) {
             $state.go('inventory.product');
         }
     }
-
 })();
