@@ -49,6 +49,7 @@ var rss = (function () {
         rssClient.createProvider(req.user, function(err) {
             var status = null;
             if (err) {
+                utils.log(logger, 'warn', req, err.message);
                 status = {
                     status: 500,
                     message: 'An unexpected error in the RSS API prevented your request to be processed'
