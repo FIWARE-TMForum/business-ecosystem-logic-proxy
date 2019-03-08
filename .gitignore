@@ -1,4 +1,5 @@
 *.DS_Store
+*.pyc
 node_modules
 config.js
 cert
@@ -6,3 +7,9 @@ cert
 coverage
 xunit.xml
 /indexes
+mongo-data
+mysql-data
+proxy-indexes
+proxy-locales
+proxy-static
+proxy-themes
