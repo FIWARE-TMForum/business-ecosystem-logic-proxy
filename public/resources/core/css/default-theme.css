@@ -73,6 +73,9 @@ hr.fiware-line {
     background-color: rgb(240, 230, 040);
     border-top: 1px solid rgb(070, 185, 200);
     border-bottom: 1px solid rgb(025, 060, 105);
+    width: 100%;
+    position: fixed;
+    bottom: 25px;
 }
 
 p {
@@ -2211,4 +2214,56 @@ a.thumbnail:focus {
 .home-catalog-pager ul {
     margin-bottom: 5px;
     margin-top: 5px;
+}
+
+img.contrib-img {
+    height: 20px;
+    padding-right: 7px;
+}
+
+#language {
+    position: fixed;
+    bottom: 43px;
+    left: -11px;
+}
+
+.footer-main {
+    position: fixed;
+    height: 35px;
+    bottom: 0px;
+    left: 0px;
+    right: 0px;
+    margin-bottom: 0px;
+    background-color: #ECEFF1;
+}
+
+.d-flex {
+    display: flex;
+}
+
+.justify-content-between {
+    justify-content: space-between;
+}
+
+.contributors {
+    margin-top: 5px;
+    margin-left: 5px;
+}
+
+.copyright {
+    margin-top: 5px;
+}
+
+.footer-logo {
+    margin-top: 7px;
+    margin-right: 5px;
+}
+
+#contrib-menu {
+    position: fixed;
+    top: 80%;
+}
+
+.main-container {
+    padding-bottom: 50px;
 }

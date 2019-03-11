@@ -127,9 +127,24 @@ describe("Elasticsearch indexes tests", function () {
                     originalId: '3'
                 },
                 _score: 1
-            }]
+            }],
+            total: 1
         }
-    }
+    };
+
+    let productResponse = {
+        hits: {
+            hits: [{
+                _source: {
+                    id: 'product:1',
+                    originalId: '1',
+                    relatedParty: [{id: 'testUser'}]
+                },
+                _score: 1
+            }],
+            total: 1
+        }
+    };
 
     const testOfferingSearch = function(query, expQuery, done) {
         let clientSpy = jasmine.createSpyObj('Client', ['search']);
@@ -211,5 +226,126 @@ describe("Elasticsearch indexes tests", function () {
                 fields: [ 'relatedPartyHash', 'lifecycleStatus' ],
                 query: '(21232f297a57a5a743894a0e4a801fc3 AND active) (21232f297a57a5a743894a0e4a801fc3 AND launched)' } } } },
                 done);
+    });
+
+    it('should count when providing the flag in a query', function(done) {
+        let query = {
+            query: {},
+            sort: {
+                field: "lastUpdate",
+                direction: "desc"
+            }
+        };
+        let expQuery = {
+            index: 'offerings',
+            type: 'offerings',
+            sort: [ '{"lastUpdate":{"order":"desc"}}' ],
+            from: undefined,
+            size: undefined,
+            body: { query: { query_string: { fields: [  ], query: '' } } } 
+        };
+
+        let clientSpy = jasmine.createSpyObj('Client', ['search']);
+        clientSpy.search.and.returnValue(offeringResponse);
+
+        let indexes = getIndexLib();
+
+        indexes.setClient(clientSpy);
+        indexes.searchOfferings(query, true).then((r) => {
+            // Validate stuff
+            expect(r).toEqual(1);
+
+            expect(clientSpy.search).toHaveBeenCalledWith(expQuery);
+            done();
+        });
+    });
+
+    const testOfferingIndex = function(exists, done) {
+        let offering = [{
+            id: '3',
+            lifecycleStatus: 'Active',
+            productSpecification: {
+                id: '1'
+            },
+            name: 'offer',
+            description: 'description',
+            catalog: '2',
+            lastUpdate: '2019-02-01T10:00:00'
+        }];
+    
+        let clientSpy = jasmine.createSpyObj('Client', ['search', 'exists', 'create', 'update']);
+
+        clientSpy.search.and.returnValue(productResponse)
+        clientSpy.exists.and.returnValue(Promise.resolve(exists));
+        clientSpy.create.and.returnValue(Promise.resolve('body'));
+        clientSpy.update.and.returnValue(Promise.resolve('body'));
+
+        let indexes = getIndexLib();
+        indexes.setClient(clientSpy);
+
+        let expQuery = {
+            index: 'products',
+            type: 'products',
+            sort: [ '{"lastUpdate":{"order":"desc"}}' ],
+            from: undefined,
+            size: undefined,
+            body: { query: { "query_string": {"fields":["sortedId"],"query":"(000000000001)" } } } 
+        };
+
+        indexes.saveIndexOffering(offering).then((r) => {
+            // Validate product retrieval
+            expect(clientSpy.search).toHaveBeenCalledWith(expQuery);
+            expect(clientSpy.exists).toHaveBeenCalledWith({
+                index: 'offerings',
+                type: 'offerings',
+                id: '3'
+            });
+            if (!exists) {
+                expect(clientSpy.create).toHaveBeenCalledWith({
+                    index: 'offerings',
+                    type: 'offerings',
+                    id: '3',
+                    body: {
+                        id: 'offering:3',
+                        originalId: '3',
+                        sortedId: '000000000003',
+                        catalog: '000000000002', body: [ 'offer', 'description' ],
+                        userId: '1441a7909c087dbbe7ce59881b9df8b9',
+                        lastUpdate: 1549015200000,
+                        productSpecification: '000000000001',
+                        name: 'offer',
+                        lifecycleStatus: 'active' 
+                    }
+                });
+            } else {
+                expect(clientSpy.update).toHaveBeenCalledWith({
+                    index: 'offerings',
+                    type: 'offerings',
+                    id: '3',
+                    body: {
+                        doc: {
+                            id: 'offering:3',
+                            originalId: '3',
+                            sortedId: '000000000003',
+                            catalog: '000000000002', body: [ 'offer', 'description' ],
+                            userId: '1441a7909c087dbbe7ce59881b9df8b9',
+                            lastUpdate: 1549015200000,
+                            productSpecification: '000000000001',
+                            name: 'offer',
+                            lifecycleStatus: 'active' 
+                        }
+                    }
+                });
+            }
+            done();
+        });
+    }
+
+    it('should create offering indexes', function(done) {
+        testOfferingIndex(false, done);
+    });
+
+    it('should update offering indexes', function(done) {
+        testOfferingIndex(true, done);
     });
 });

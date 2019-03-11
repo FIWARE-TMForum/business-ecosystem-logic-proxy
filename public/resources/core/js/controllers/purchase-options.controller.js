@@ -233,21 +233,6 @@
             }
 
             productInfo.characteristics = productSpecCharacteristic
-                .filter(function(characteristic) {
-                    var isLicense = characteristic.name.toLowerCase() == 'license';
-                    if (isLicense) {
-                        vm.terms.push(
-                            angular.extend(
-                                {
-                                    title: characteristic.productSpecCharacteristicValue[0].value,
-                                    text: characteristic.description
-                                },
-                                productInfo
-                            )
-                        );
-                    }
-                    return !isLicense;
-                })
                 .map(function(characteristic) {
                     return {
                         characteristic: characteristic,

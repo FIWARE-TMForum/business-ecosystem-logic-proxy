@@ -5,3 +5,6 @@ cert
 coverage
 xunit.xml
 /indexes
+.DS_Store
+package-lock.json
+
