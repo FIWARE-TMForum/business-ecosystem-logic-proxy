@@ -50,6 +50,14 @@
                 .h4.text-dark-secondary
                   strong {{ term.name }}
                 pre(ng-if="term.type == 'Custom'") {{ term.description }}
+                .col-sm-6(ng-if="term.type == 'Custom' && !term.isFullCustom", style="margin-bottom: 10px;")
+                  dd.text-dark-secondary <b>Excusivity: </b> {{ term.exclusivity }}
+                  dd.text-dark-secondary <b>Region: </b> {{ term.region }}
+                  dd.text-dark-secondary <b>Purpose: </b> {{ term.purpose }}
+                .col-sm-6(ng-if="term.type == 'Custom' && !term.isFullCustom")
+                  dd.text-dark-secondary <b>Sector: </b> {{ term.sector }}
+                  dd.text-dark-secondary <b>Duration: </b> {{ term.duration }} Months
+                  dd.text-dark-secondary <b>Transferability: </b> {{ term.transferability }}
                 pre(ng-if="term.type == 'Standard'") <a ng-href="{{term.description}}" target="_blank"> {{ term.description }} </a>
 
             hr
