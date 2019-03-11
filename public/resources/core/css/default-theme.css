@@ -2263,3 +2263,7 @@ img.contrib-img {
     position: fixed;
     top: 80%;
 }
+
+.main-container {
+    padding-bottom: 50px;
+}
