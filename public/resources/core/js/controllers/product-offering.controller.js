@@ -810,7 +810,9 @@
         Offering.detail($state.params.offeringId).then(function (offeringRetrieved) {
             vm.item = offeringRetrieved;
             vm.categories = vm.item.getCategories();
-            vm.attachments = vm.item.productSpecification.getExtraFiles();
+            if (!vm.item.isBundle) {
+                vm.attachments = vm.item.productSpecification.getExtraFiles();
+            }
             vm.item.status = LOADED;
         }, function (response) {
             vm.error = Utils.parseError(response, 'The requested offering could not be retrieved');
