@@ -4,7 +4,7 @@ LABEL Author="CoNWeT Lab. Universidad Politécnica de Madrid"
 
 ENV VERSION develop
 
-RUN apt-get update && apt-get install -y git xinetd python-pip wget && \
+RUN apt-get update && apt-get install -y git xinetd python-pip wget curl && \
     pip install sh requests && \
     git clone https://github.com/FIWARE-TMForum/business-ecosystem-logic-proxy
 
@@ -35,5 +35,7 @@ COPY ./getConfig.js /business-ecosystem-logic-proxy
 COPY ./serviceIndexes /etc/xinetd.d/
 
 EXPOSE 8000
+
+HEALTHCHECK CMD curl --fail http://localhost:8000/version || exit 1
 
 ENTRYPOINT ["/entrypoint.sh"]
