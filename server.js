@@ -75,6 +75,10 @@ if (!!process.env.BAE_SERVICE_HOST) {
         port: parsedUrl.port,
         secured: parsedUrl.protocol == 'https:'
     };
+
+    if (config.proxy.port == null) {
+        config.proxy.port = config.proxy.secured ? 443 : 80;
+    }
 }
 
 // HTTPS Configuration
