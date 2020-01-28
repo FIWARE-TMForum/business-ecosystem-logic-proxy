@@ -499,7 +499,8 @@ var renderTemplate = function(req, res, viewName) {
         usageChartURL: config.usageChartURL,
         orgAdmin: config.oauth2.roles.orgAdmin,
         seller: config.oauth2.roles.seller,
-        customer: config.oauth2.customer
+        customer: config.oauth2.customer,
+        admin: config.oauth2.admin
     };
 
     if (utils.isAdmin(req.user)) {
