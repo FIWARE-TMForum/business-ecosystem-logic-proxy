@@ -61,8 +61,9 @@ form(name="step.form", novalidate)
       .form-group(
         ng-class="{ 'has-error' : createForm.hasError(step.form.productNumber) }"
       )
-        label #{ __("Enter an ID Number") }
-        small.text-muted (#{ __("optional") })
+        label
+          span #{ __("Enter an ID Number") }
+          small.text-muted (#{ __("optional") })
         input.form-control(
           type="text"
           name="productNumber"

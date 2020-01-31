@@ -159,7 +159,7 @@ indexes
     .then(downloadOrdering)
     .then(indexes.close)
     .then(() => console.log('All saved!'))
-    .catch((e) => console.log('Error: ', e.stack));
+    .catch((e) => console.log('Error: ', e));
 
 // logAllIndexes(indexes.siTables.catalogs);
 // logAllIndexes(indexes.siTables.products);
