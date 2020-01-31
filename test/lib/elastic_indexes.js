@@ -223,8 +223,8 @@ describe("Elasticsearch indexes tests", function () {
             from: 10,
             size: 5,
             body: { query: { query_string: {
-                fields: [ 'relatedPartyHash', 'lifecycleStatus' ],
-                query: '(21232f297a57a5a743894a0e4a801fc3 AND active) (21232f297a57a5a743894a0e4a801fc3 AND launched)' } } } },
+                fields: [ 'lifecycleStatus', 'relatedPartyHash' ],
+                query: '(active AND 21232f297a57a5a743894a0e4a801fc3) (launched AND 21232f297a57a5a743894a0e4a801fc3)' } } } },
                 done);
     });
 
@@ -314,7 +314,8 @@ describe("Elasticsearch indexes tests", function () {
                         lastUpdate: 1549015200000,
                         productSpecification: '000000000001',
                         name: 'offer',
-                        lifecycleStatus: 'active' 
+                        lifecycleStatus: 'active' ,
+                        isBundle: 'F'
                     }
                 });
             } else {
@@ -332,7 +333,8 @@ describe("Elasticsearch indexes tests", function () {
                             lastUpdate: 1549015200000,
                             productSpecification: '000000000001',
                             name: 'offer',
-                            lifecycleStatus: 'active' 
+                            lifecycleStatus: 'active' ,
+                            isBundle: 'F'
                         }
                     }
                 });

@@ -773,7 +773,7 @@ describe('Test index helper library', function() {
         productSpecification: undefined,
         href: 'http://3',
         lifecycleStatus: 'Active',
-        isBundle: true,
+        isBundle: 'T',
         catalog: '000000000002',
         lastUpdate: 1496275200000
     };
@@ -785,7 +785,7 @@ describe('Test index helper library', function() {
         sortedId: '000000000002',
         productSpecification: '000000000001',
         href: 'http://2',
-        isBundle: false,
+        isBundle: 'F',
         catalog: '000000000002'
     });
 
