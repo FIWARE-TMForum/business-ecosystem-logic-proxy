@@ -69,11 +69,18 @@ config.host = process.env.BAE_LP_HOST || config.host || 'localhost';
 if (!!process.env.BAE_SERVICE_HOST) {
     // If this var is enabled, the service is accessible in a different URL
     let parsedUrl = url.parse(process.env.BAE_SERVICE_HOST);
+    let secured = parsedUrl.protocol == 'https:';
+    let port = parsedUrl.port
+
+    if (port == null) {
+        port = 443 ? secured : 80;
+    }
+
     config.proxy = {
         enabled: true,
         host: parsedUrl.hostname,
         port: parsedUrl.port,
-        secured: parsedUrl.protocol == 'https:'
+        secured: secured
     };
 }
 
