@@ -9,6 +9,7 @@ after_success: "cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coverall
 branches:
   only:
     - develop
+    - master
 
 install:
  - npm install

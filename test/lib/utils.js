@@ -44,7 +44,10 @@ describe('Utils', function() {
                         id: '100',
                         name: 'Purchaser'
                     }
-                ]
+                ],
+                _json: {
+                    username: 'username'
+                }
             };
 
             // This function should modify headers
@@ -55,6 +58,7 @@ describe('Utils', function() {
             expect(headers['X-Display-Name']).toBe(userInfo.displayName);
             expect(headers['X-Roles']).toBe('provider,seller,');
             expect(headers['X-Actor']).toBe(userInfo.id);
+            expect(headers['X-Ext-Name']).toBe('username');
         });
     });
 

@@ -12,8 +12,7 @@ form(name="updateVM.form", novalidate)
           name="name"
           ng-model="updateVM.data.name"
           required
-          ng-maxlength="30"
-          field-unique="Offering"
+          ng-maxlength="100"
           field-original-value="{{ updateVM.item.name }}"
         )
         .help-block(
