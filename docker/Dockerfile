@@ -34,8 +34,8 @@ COPY ./getConfig.js /business-ecosystem-logic-proxy
      
 COPY ./serviceIndexes /etc/xinetd.d/
 
-EXPOSE 8000
+EXPOSE 8004
 
-HEALTHCHECK CMD curl --fail http://localhost:8000/version || exit 1
+HEALTHCHECK CMD curl --fail http://localhost:8004/version || exit 1
 
 ENTRYPOINT ["/entrypoint.sh"]

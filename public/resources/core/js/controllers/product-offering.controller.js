@@ -40,6 +40,8 @@
             'Offering',
             'LIFECYCLE_STATUS',
             'Utils',
+            'Download',
+            '$window',
             ProductOfferingSearchController
         ])
 
@@ -64,6 +66,8 @@
             'Offering',
             'ProductSpec',
             'Utils',
+            'Download',
+            '$window',
             ProductOfferingDetailController
         ])
         .controller('OfferingUpdateCtrl', [
@@ -86,7 +90,9 @@
         EVENTS,
         Offering,
         LIFECYCLE_STATUS,
-        Utils
+        Utils,
+        Download,
+        $window
     ) {
         /* jshint validthis: true */
         var vm = this;
@@ -103,6 +109,41 @@
         vm.setFormMode = setFormMode;
         vm.launchSearch = launchSearch;
         vm.searchInput = '';
+        vm.downloadAsset = downloadAsset;
+
+        function getProductLocation(productSpec) {
+            let location;
+
+            productSpec.productSpecCharacteristic.forEach((charact) => {
+                if (charact.name.toLowerCase() == 'location') {
+                    location = charact.productSpecCharacteristicValue[0].value;
+                }
+            })
+            return location;
+        }
+        function downloadAsset(offering) {
+            let locations = []
+
+            if (offering.isBundle) {
+                offering.bundledProductOffering.forEach((bundledOffering) => {
+                    locations.push(getProductLocation(bundledOffering.productSpecification));
+                });
+            } else {
+                locations.push(getProductLocation(offering.productSpecification));
+            }
+
+            // Download all the locations
+            locations.forEach((location) => {
+                if (location.startsWith($window.location.origin)) {
+                    Download.download(location).then((result) => {
+                        let url = $window.URL.createObjectURL(result);
+                        $window.open(url, '_blank');
+                    });
+                } else {
+                    $window.open(location, '_blank');
+                }
+            });
+        }
 
         function setFormMode(mode) {
             formMode = mode;
@@ -331,12 +372,16 @@
         /* PRICE PLANS MEMBERS */
 
         vm.pricePlan = new Offering.PricePlan();
+        vm.isOpen = true;
         vm.pricePlanEnabled = false;
         vm.priceAlterationType = vm.PRICE_ALTERATIONS_SUPPORTED.NOTHING;
 
         vm.createPricePlan = createPricePlan;
         vm.updatePricePlan = updatePricePlan;
         vm.removePricePlan = removePricePlan;
+        vm.isFreeOffering = isFreeOffering;
+        vm.isOpenOffering = isOpenOffering;
+
         vm.setAlteration = setAlteration;
 
         /* LICENSE MEMBERS */
@@ -359,8 +404,6 @@
         vm.sla = new Offering.Sla();
         vm.slaEnabled = false;
         vm.createSla = createSla;
-
-        //vm.createSla = createSla;
 
         vm.place = "";
         vm.places = [];
@@ -513,6 +556,16 @@
                 //var data = angular.copy(vm.data);
                 vm.data.category = formatCategory();
                 vm.data.place = formatPlaces();
+
+                // Check if the offering is a free one
+                if ((vm.data.productOfferingPrice == null || vm.data.productOfferingPrice == undefined || vm.data.productOfferingPrice.length == 0) && vm.isOpen) {
+                    // The offering is free, so a free plan needs to be included
+                    vm.data.productOfferingPrice = [{
+                        'name': 'Open',
+                        'description': 'The offering is open, so it can be directly accessed'
+                    }]
+                }
+
                 var terms = []; 
                 terms[0] = vm.license.toJSON();
                 var offerPromise = Offering.create(vm.data, vm.product, vm.catalogue, terms);
@@ -682,6 +735,16 @@
 
         /* PRICE PLANS METHODS */
 
+        function isOpenOffering() {
+            return vm.data.productOfferingPrice.length == 1 &&
+                vm.data.productOfferingPrice[0].name.toLowerCase() == 'open';
+        }
+
+        function isFreeOffering() {
+            // Return true if the offering is free or open
+            return !vm.data.productOfferingPrice.length || isOpenOffering();
+        }
+
         function createPricePlan() {
             vm.data.productOfferingPrice.push(vm.pricePlan);
             vm.pricePlan = new Offering.PricePlan();
@@ -798,7 +861,7 @@
         );
     }
 
-    function ProductOfferingDetailController($state, Offering, ProductSpec, Utils) {
+    function ProductOfferingDetailController($state, Offering, ProductSpec, Utils, Download, $window) {
         /* jshint validthis: true */
         var vm = this;
         vm.sla = {};
@@ -806,6 +869,7 @@
         vm.$state = $state;
         vm.hasCharacteristics = hasCharacteristics;
         vm.formatCharacteristicValue = formatCharacteristicValue;
+        vm.downloadAsset = downloadAsset;
 
         Offering.detail($state.params.offeringId).then(function (offeringRetrieved) {
             vm.item = offeringRetrieved;
@@ -818,13 +882,49 @@
             vm.error = Utils.parseError(response, 'The requested offering could not be retrieved');
             vm.item.status = ERROR;
         });
-        
+
         Offering.getSla($state.params.offeringId).then(function (slaRetrieved) {
             vm.sla = slaRetrieved;
         }, function (response){
             vm.error = Utils.parseError(response, 'The requested SLA could not be retrieved');
             vm.item.status = ERROR;
         });
+
+        function getProductLocation(productSpec) {
+            let location;
+
+            productSpec.productSpecCharacteristic.forEach((charact) => {
+                if (charact.name.toLowerCase() == 'location') {
+                    location = charact.productSpecCharacteristicValue[0].value;
+                }
+            })
+            return location;
+        }
+
+        function downloadAsset() {
+            let locations = []
+            let offering = vm.item;
+
+            if (offering.isBundle) {
+                offering.bundledProductOffering.forEach((bundledOffering) => {
+                    locations.push(getProductLocation(bundledOffering.productSpecification));
+                });
+            } else {
+                locations.push(getProductLocation(offering.productSpecification));
+            }
+
+            // Download all the locations
+            locations.forEach((location) => {
+                if (location.startsWith($window.location.origin)) {
+                    Download.download(location).then((result) => {
+                        let url = $window.URL.createObjectURL(result);
+                        $window.open(url, '_blank');
+                    });
+                } else {
+                    $window.open(location, '_blank');
+                }
+            });
+        }
 
         function formatCharacteristicValue(characteristic, characteristicValue) {
             var result;
@@ -898,6 +998,10 @@
         vm.removePricePlan = removePricePlan;
         vm.setAlteration = setAlteration;
 
+        vm.isFreeOffering = isFreeOffering;
+        vm.isOpenOffering = isOpenOffering;
+        vm.switchOpenStatus = switchOpenStatus;
+
         vm.sla = {};
 
         var updatePricePlanPromise = null;
@@ -905,7 +1009,7 @@
         $scope.$on(Offering.EVENTS.PRICEPLAN_UPDATED, function(event, index, pricePlan) {
             updatePricePlanPromise = vm.item.updatePricePlan(index, pricePlan);
             updatePricePlanPromise.then(
-                function(productOffering) {
+                function() {
                     $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {
                         message: 'The offering price plan was updated.'
                     });
@@ -924,6 +1028,7 @@
                 vm.item = productOffering;
                 vm.data = angular.copy(productOffering);
                 vm.categories = productOffering.getCategories();
+                vm.isOpen = isOpenOffering();
             },
             function(response) {
                 vm.error = Utils.parseError(response, 'Unexpected error trying to retrieve the offering.');
@@ -946,10 +1051,39 @@
 
         var createPricePlanPromise = null;
 
-        function createPricePlan() {
-            createPricePlanPromise = vm.item.appendPricePlan(vm.pricePlan);
+        function switchOpenStatus() {
+            // Change between free and open offering when no price plan
+            // has been provided
+            if (!isFreeOffering()) {
+                return;
+            }
+
+            if (isOpenOffering()) {
+                // Make the offering free
+                removePricePlan(0);
+            } else {
+                // Make the offering open
+                appendPricePlan({
+                    'name': 'Open',
+                    'description': 'The offering is open, so it can be directly accessed'
+                })
+            }
+        }
+
+        function isOpenOffering() {
+            return vm.item.productOfferingPrice.length == 1 &&
+                vm.item.productOfferingPrice[0].name.toLowerCase() == 'open';
+        }
+
+        function isFreeOffering() {
+            // Return true if the offering is free or open
+            return !vm.item.productOfferingPrice.length || isOpenOffering();
+        }
+
+        function appendPricePlan(plan) {
+            createPricePlanPromise = vm.item.appendPricePlan(plan);
             createPricePlanPromise.then(
-                function(productOffering) {
+                function() {
                     vm.pricePlan = new Offering.PricePlan();
                     vm.pricePlanEnabled = false;
                     vm.priceAlterationType = vm.PRICE_ALTERATIONS_SUPPORTED.NOTHING;
@@ -963,6 +1097,15 @@
                     });
                 }
             );
+        }
+
+        function createPricePlan() {
+            // Check if the offering was open
+            if (isOpenOffering()) {
+                vm.item.productOfferingPrice = [];
+                vm.isOpen = false;
+            }
+            appendPricePlan(vm.pricePlan);
         }
 
         Object.defineProperty(createPricePlan, 'status', {
@@ -987,7 +1130,7 @@
         function removePricePlan(index) {
             removePricePlanPromise = vm.item.removePricePlan(index);
             removePricePlanPromise.then(
-                function(productOffering) {
+                function() {
                     $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {
                         message: 'The offering price plan was removed.'
                     });

@@ -22,7 +22,11 @@
           span(ng-if="!star.value" class="fa fa-star rating" )
         span #{ __(" ") }
         span ({{ offering.repCount }})
-    .btn-group.btn-group-justified(ng-show="user.isAuthenticated()")
-      a.btn.btn-success.z-depth-1(ng-click="user.order(offering)", ng-disabled="user.contains(offering)")
+    .btn-group.btn-group-justified(ng-show="user.isAuthenticated() || offering.isOpenOffering()")
+      a.btn.btn-success.z-depth-1(ng-if="!offering.isOpenOffering()", ng-click="user.order(offering)", ng-disabled="user.contains(offering)")
         span.item-icon.fa(class="fa-{{ user.contains(offering) ? 'check-circle' : 'shopping-cart' }}")
         span.item-text {{ user.contains(offering) ? '#{ __("Added") }' : '#{ __("Add to cart") }' }}
+
+      a.btn.btn-success.z-depth-1(ng-if="offering.isOpenOffering()", ng-click="searchVM.downloadAsset(offering)")
+        span.item-icon.fa(class="fa-download")
+        span.item-text #{ __("Download") }
