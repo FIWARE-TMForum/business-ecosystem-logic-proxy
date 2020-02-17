@@ -216,7 +216,8 @@ config.mongoDb.port = process.env.BAE_LP_MONGO_PORT || config.mongoDb.port || 27
 config.mongoDb.db = process.env.BAE_LP_MONGO_DB || config.mongoDb.db || 'belp';
 
 config.revenueModel =
-    config.revenueModel && config.revenueModel >= 0 && config.revenueModel <= 100 ? config.revenueModel : 30;
+    (config.revenueModel !== undefined && config.revenueModel !== null && config.revenueModel >= 0 && config.revenueModel <= 100) ? config.revenueModel : 30;
+
 config.revenueModel =
     !!process.env.BAE_LP_REVENUE_MODEL &&
     Number(process.env.BAE_LP_REVENUE_MODEL) >= 0 &&
@@ -509,8 +510,8 @@ var renderTemplate = function(req, res, viewName) {
         usageChartURL: config.usageChartURL,
         orgAdmin: config.oauth2.roles.orgAdmin,
         seller: config.oauth2.roles.seller,
-        customer: config.oauth2.customer,
-        admin: config.oauth2.admin
+        customer: config.oauth2.roles.customer,
+        admin: config.oauth2.roles.admin
     };
 
     if (utils.isAdmin(req.user)) {
