@@ -134,14 +134,7 @@
 
             // Download all the locations
             locations.forEach((location) => {
-                if (location.startsWith($window.location.origin)) {
-                    Download.download(location).then((result) => {
-                        let url = $window.URL.createObjectURL(result);
-                        $window.open(url, '_blank');
-                    });
-                } else {
-                    $window.open(location, '_blank');
-                }
+                $window.open(location, '_blank');
             });
         }
 
@@ -915,14 +908,7 @@
 
             // Download all the locations
             locations.forEach((location) => {
-                if (location.startsWith($window.location.origin)) {
-                    Download.download(location).then((result) => {
-                        let url = $window.URL.createObjectURL(result);
-                        $window.open(url, '_blank');
-                    });
-                } else {
-                    $window.open(location, '_blank');
-                }
+                $window.open(location, '_blank');
             });
         }
 
