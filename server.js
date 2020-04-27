@@ -233,6 +233,7 @@ config.usageChartURL = process.env.BAE_LP_USAGE_CHART || config.usageChartURL;
 
 config.indexes.engine = process.env.BAE_LP_INDEX_ENGINE || config.indexes.engine;
 config.indexes.elasticHost = process.env.BAE_LP_INDEX_URL || config.indexes.elasticHost;
+config.indexes.apiVersion = process.env.BAE_LP_INDEX_API_VERSION || config.indexes.apiVersion;
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 

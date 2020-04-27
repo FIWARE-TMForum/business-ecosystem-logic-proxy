@@ -68,7 +68,7 @@ services:
             - BAE_LP_MONGO_PORT=27017
             - BAE_LP_MONGO_DB=belp
 
-            - BAE_LP_REVENUE_MODEL=30  # Default market owner precentage for Revenue Sharing models
+            - BAE_LP_REVENUE_MODEL=0  # Default market owner precentage for Revenue Sharing models
 
             # ----- APIs Configuration -----
             # If provided, it supports configuring the contection to the different APIs managed by the logic proxy, by default
