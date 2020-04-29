@@ -23,11 +23,6 @@ RUN wget https://nodejs.org/dist/v8.12.0/node-v8.12.0-linux-x64.tar.xz && \
     cp config.js etc/config.js && \
     echo "module.exports = require('./etc/config');" > config.js
 
-VOLUME /business-ecosystem-logic-proxy/indexes
-VOLUME /business-ecosystem-logic-proxy/themes
-VOLUME /business-ecosystem-logic-proxy/static
-VOLUME /business-ecosystem-logic-proxy/locales
-
 COPY ./entrypoint.sh /
 COPY ./cleanIndex.sh /
 COPY ./getConfig.js /business-ecosystem-logic-proxy

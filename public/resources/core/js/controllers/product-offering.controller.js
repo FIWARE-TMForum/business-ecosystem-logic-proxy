@@ -251,6 +251,43 @@
         }, offeringSearch);
     }
 
+    function categoryHandler(vm) {
+        vm.setCategory = setCategory;
+        vm.categoryIsDisabled = categoryIsDisabled;
+        vm.removeChildCategory = removeChildCategory;
+        vm.isIncluded = isIncluded;
+
+        function setCategory(category) {
+            if (category.id in vm.categories) {
+                delete vm.categories[category.id];
+            } else {
+                removeChildCategory(category);
+                vm.categories[category.id] = category;
+            }
+        }
+
+        function categoryIsDisabled(category) {
+            return Object.keys(vm.categories).some(function(id) {
+                return isIncluded(vm.categories[id], category);
+            });
+        }
+
+        function removeChildCategory(parentCategory) {
+            return parentCategory.getBreadcrumb().some(function(category) {
+                if (category.id in vm.categories) {
+                    delete vm.categories[category.id];
+                    return true;
+                }
+            });
+        }
+
+        function isIncluded(parentCategory, targetCategory) {
+            return parentCategory.getBreadcrumb().some(function(category) {
+                return targetCategory.id === category.id;
+            });
+        }
+    }
+
     function ProductOfferingCreateController(
         $q,
         $scope,
@@ -358,8 +395,10 @@
         vm.toggleOffering = toggleOffering;
 
         vm.categories = {};
-        vm.setCategory = setCategory;
-        vm.categoryIsDisabled = categoryIsDisabled;
+
+        // Load category management methods
+        categoryHandler(vm);
+
         vm.hasCategories = hasCategories;
 
         /* PRICE PLANS MEMBERS */
@@ -778,38 +817,8 @@
             return sharingModel;
         }
 
-        function setCategory(category) {
-            if (category.id in vm.categories) {
-                delete vm.categories[category.id];
-            } else {
-                removeChildCategory(category);
-                vm.categories[category.id] = category;
-            }
-        }
-
         function hasCategories() {
             return Object.keys(vm.categories).length !== 0;
-        }
-
-        function categoryIsDisabled(category) {
-            return Object.keys(vm.categories).some(function(id) {
-                return isIncluded(vm.categories[id], category);
-            });
-        }
-
-        function removeChildCategory(parentCategory) {
-            return parentCategory.getBreadcrumb().some(function(category) {
-                if (category.id in vm.categories) {
-                    delete vm.categories[category.id];
-                    return true;
-                }
-            });
-        }
-
-        function isIncluded(parentCategory, targetCategory) {
-            return parentCategory.getBreadcrumb().some(function(category) {
-                return targetCategory.id === category.id;
-            });
         }
 
         function formatCategory() {
@@ -973,7 +982,13 @@
 
         vm.update = update;
         vm.updateStatus = updateStatus;
-        vm.hasCategory = hasCategory;
+
+        vm.categories = {};
+
+        // Load category management methods
+        categoryHandler(vm);
+
+        vm.updateCategories = updateCategories;
 
         vm.pricePlan = new Offering.PricePlan();
         vm.pricePlanEnabled = false;
@@ -1013,7 +1028,11 @@
             function(productOffering) {
                 vm.item = productOffering;
                 vm.data = angular.copy(productOffering);
-                vm.categories = productOffering.getCategories();
+
+                vm.categories = {};
+                vm.data.category.forEach((category) => {
+                    vm.categories[category.id] = category;
+                });
                 vm.isOpen = isOpenOffering();
             },
             function(response) {
@@ -1145,9 +1164,36 @@
             vm.statusUpdated = true;
         }
 
-        function hasCategory(category) {
-            return vm.categories.some(function(c) {
-                return c.id === category.id;
+        function updateCategories() {
+            let name, category = [];
+            let updatedData = {
+                category: []
+            }
+
+            // Add parent categories to update list
+            for (name in vm.categories) {
+                category = category.concat(vm.categories[name].getBreadcrumb(), vm.categories[name]);
+            }
+
+            category.forEach((cat) => {
+                updatedData.category.push({
+                    id: cat.id,
+                    href: cat.href
+                })
+            });
+
+            vm.catStatus = vm.STATUS.PENDING;
+            Offering.update(vm.item, updatedData).then((offering) => {
+                vm.catStatus = vm.STATUS.LOADED;
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'updated', {
+                    resource: 'offering',
+                    name: offering.name
+                });
+            }, (response) => {
+                vm.catStatus = vm.STATUS.LOADED;
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                    error: Utils.parseError(response, 'Unexpected error trying to update the offering.')
+                });
             });
         }
 
