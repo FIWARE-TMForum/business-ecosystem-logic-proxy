@@ -10,7 +10,7 @@ form(name="step.form", novalidate)
               name="prefix"
               ng-model="createVM.datastore.prefix"
               required
-              ng-maxlength="30"
+              ng-maxlength="100"
               field-unique="Product"
             )
             .help-block(
@@ -18,7 +18,7 @@ form(name="step.form", novalidate)
               ng-show="createForm.hasError(step.form.name)"
             )
               span(ng-message="required") This field is required.
-              span(ng-message="maxlength") This field must not exceed 30 chars.
+              span(ng-message="maxlength") This field must not exceed 100 chars.
               span(ng-message="unique") This name is already taken.
             .form-group
             label

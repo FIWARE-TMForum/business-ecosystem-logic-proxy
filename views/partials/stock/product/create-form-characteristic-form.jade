@@ -10,14 +10,14 @@
               name="name"
               ng-model="createVM.characteristic.name"
               required
-              ng-maxlength="30"
+              ng-maxlength="100"
             )
             .help-block(
               ng-messages="step.characteristicForm.name.$error"
               ng-show="createForm.hasError(step.characteristicForm.name)"
             )
               span(ng-message="required") #{ __("This field is required.") }
-              span(ng-message="maxlength") #{ __("This field must not exceed %s chars.", "30") }
+              span(ng-message="maxlength") #{ __("This field must not exceed %s chars.", "100") }
         .col-sm-4
           .form-group
             label #{ __("Choose a type") }

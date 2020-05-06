@@ -6,7 +6,7 @@ form(name="step.form", novalidate)
       name="name"
       ng-model="createVM.data.name"
       required
-      ng-maxlength="30"
+      ng-maxlength="100"
       field-unique="Category"
     )
     .help-block(
@@ -14,7 +14,7 @@ form(name="step.form", novalidate)
       ng-show="createForm.hasError(step.form.name)"
     )
       span(ng-message="required") #{ __("This field is required.") }
-      span(ng-message="maxlength") #{ __("This field must not exceed 30 chars.") }
+      span(ng-message="maxlength") #{ __("This field must not exceed 100 chars.") }
       span(ng-message="unique") #{ __("This name is already taken.") }
   .form-group
     label

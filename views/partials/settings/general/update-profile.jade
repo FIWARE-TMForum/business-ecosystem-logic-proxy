@@ -14,14 +14,14 @@
               name="firstName"
               ng-model="updateVM.data.givenName"
               required
-              ng-maxlength="30"
+              ng-maxlength="100"
             )
             .help-block(
               ng-messages="updateVM.form.firstName.$error"
               ng-show="updateVM.hasFieldError(updateVM.form.firstName)"
             )
               span(ng-message="required") #{ __("This field is required.") }
-              span(ng-message="maxlength") #{ __("This field must not exceed %s chars.", "30") }
+              span(ng-message="maxlength") #{ __("This field must not exceed %s chars.", "100") }
         .col-sm-6
           .form-group(
             ng-class="{ 'has-error': updateVM.hasFieldError(updateVM.form.lastName) }"
@@ -32,14 +32,14 @@
               name="lastName"
               ng-model="updateVM.data.familyName"
               required
-              ng-maxlength="30"
+              ng-maxlength="100"
             )
             .help-block(
               ng-messages="updateVM.form.lastName.$error"
               ng-show="updateVM.hasFieldError(updateVM.form.lastName)"
             )
               span(ng-message="required") #{ __("This field is required.") }
-              span(ng-message="maxlength") #{ __("This field must not exceed %s chars.", "30") }
+              span(ng-message="maxlength") #{ __("This field must not exceed %s chars.", "100") }
       .row
         .col-sm-6
           .form-group(ng-class="{ 'has-error': updateVM.hasFieldError(updateVM.form.title) }")
