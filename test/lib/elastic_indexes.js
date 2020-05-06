@@ -128,7 +128,10 @@ describe("Elasticsearch indexes tests", function () {
                 },
                 _score: 1
             }],
-            total: 1
+            total: {
+                value: 1,
+                relation: 'eq'
+            }
         }
     };
 
