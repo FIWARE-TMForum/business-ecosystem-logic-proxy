@@ -17,7 +17,7 @@ form(name="step.form", novalidate)
           ng-show="createVM.hasFieldError(step.form.name)"
         )
           span(ng-message="required") #{ __("This field is required.") }
-          span(ng-message="maxlength") #{ __("This field must not exceed %s chars.", "30") }
+          span(ng-message="maxlength") #{ __("This field must not exceed %s chars.", "100") }
           span(ng-message="unique") #{ __("This name is already taken.") }
     .col-sm-4
       .form-group(

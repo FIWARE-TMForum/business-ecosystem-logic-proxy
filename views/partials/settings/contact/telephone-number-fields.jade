@@ -7,14 +7,14 @@
         name="type"
         ng-model="telephoneNumber.medium.type"
         required
-        ng-maxlength="30"
+        ng-maxlength="100"
       )
       .help-block(
         ng-messages="form.type.$error"
         ng-show="vm.hasFieldError(form.type)"
       )
         span(ng-message="required") #{ __("This field is required.") }
-        span(ng-message="maxlength") #{ __("This field must not exceed %s chars.", "30") }
+        span(ng-message="maxlength") #{ __("This field must not exceed %s chars.", "100") }
   .col-sm-6
     .form-group(ng-class="{ 'has-error': vm.hasFieldError(form.number) }")
       label #{ __("Number") }

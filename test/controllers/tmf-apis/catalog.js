@@ -4342,9 +4342,13 @@ describe('Catalog API', function() {
                 .join('&');
             // Transform object to index AND query (String keys must be lower case to perform index search correctly)
             var ANDs = {};
-            Object.keys(params).forEach(
-                (key) => (ANDs[key] = [typeof params[key] === 'string' ? params[key].toLowerCase() : params[key]])
-            );
+            Object.keys(params).forEach((key) => {
+                if (key != 'isBundle') {
+                    ANDs[key] = [typeof params[key] === 'string' ? params[key].toLowerCase() : params[key]]
+                } else {
+                    ANDs[key] = params[key] == 'true' ? ['t'] : ['f'];
+                }
+            });
 
             requestHelper(done, base, [7, 9, 11], paramUrl, params, 'id=7,9,11', {
                 sort: {

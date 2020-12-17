@@ -1,17 +1,27 @@
-.row(ng-controller="CategorySearchCtrl as categorySearchVM")
-  .col-xs-12(ng-if="!categorySearchVM.list.length")
-    .alert.alert-info #{ __("No categories found.") }
-  .col-xs-12(ng-if="categorySearchVM.list.length")
-    .table-responsive
-      table.table.table-bordered
-        thead
-          tr
-            th #{ __("Name") }
-            th #{ __("Last Updated") }
-        tbody
-          tr(ng-repeat="category in categorySearchVM.list | orderByParentId", ng-class="{ active: updateVM.hasCategory(category) }")
-            td
-              span(ng-repeat="parentCategory in category.getBreadcrumb()") {{ parentCategory.name }} / 
-              strong {{ category.name }}
-            td
-              time(am-time-ago="category.lastUpdate")
+.panel.panel-default.z-depth-1
+  .panel-body
+    .row(ng-controller="CategorySearchCtrl as categorySearchVM")
+      .col-xs-12(ng-if="!categorySearchVM.list.length")
+        .alert.alert-info #{ __("No categories found.") }
+      .col-xs-12(ng-if="categorySearchVM.list.length")
+        .table-responsive(ng-init="updateVM.initCategories(categorySearchVM.list)")
+          table.table.table-bordered.table-hover.table-selectable
+            thead
+              tr
+                th #{ __("Name") }
+                th #{ __("Last Updated") }
+            tbody
+              tr(ng-repeat="category in categorySearchVM.list | orderByParentId", ng-class="{ active: updateVM.categories[category.id] != null, disabled: updateVM.categoryIsDisabled(category) }", ng-click="updateVM.setCategory(category)")
+                td
+                  span(ng-repeat="parentCategory in category.getBreadcrumb()") {{ parentCategory.name }} / 
+                  strong {{ category.name }}
+                td
+                  time(am-time-ago="category.lastUpdate")
+
+        .form-group.text-right
+          a.btn.btn-success(
+            ng-click="updateVM.updateCategories()"
+            ng-disabled="updateVM.catStatus === updateVM.STATUS.PENDING"
+          )
+            span.item-icon.fa.fa-spin.fa-spinner(ng-if="updateVM.catStatus === updateVM.STATUS.PENDING")
+            span.item-text #{ __("Update") }

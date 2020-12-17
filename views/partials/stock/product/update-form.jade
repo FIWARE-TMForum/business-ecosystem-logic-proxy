@@ -12,8 +12,7 @@ form(name="updateVM.form", novalidate)
           name="name"
           ng-model="updateVM.data.name"
           required
-          ng-maxlength="30"
-          field-unique="Product"
+          ng-maxlength="100"
           field-original-value="{{ updateVM.item.name }}"
         )
         .help-block(
@@ -21,8 +20,7 @@ form(name="updateVM.form", novalidate)
           ng-show="updateForm.hasError(updateVM.form.name)"
         )
           span(ng-message="required") #{ __("This field is required.") }
-          span(ng-message="maxlength") #{ __("This field must not exceed %s chars.", "30") }
-          span(ng-message="unique") #{ __("This name is already taken") }
+          span(ng-message="maxlength") #{ __("This field must not exceed %s chars.", "100") }
     .col-sm-4
       .form-group(
         ng-class="{ 'has-error': updateForm.hasError(updateVM.form.version) }"
@@ -59,30 +57,30 @@ form(name="updateVM.form", novalidate)
           name="brand"
           ng-model="updateVM.data.brand"
           required
-          ng-maxlength="30"
+          ng-maxlength="100"
         )
         .help-block(
           ng-messages="updateVM.form.brand.$error"
           ng-show="updateForm.hasError(updateVM.form.brand)"
         )
           span(ng-message="required") #{ __("This field is required.") }
-          span(ng-message="maxlength") #{ __("This field must not exceed %s chars.", "30") }
+          span(ng-message="maxlength") #{ __("This field must not exceed %s chars.", "100") }
     .col-sm-4
       .form-group(
         ng-class="{ 'has-error' : updateForm.hasError(updateVM.form.productNumber) }"
       )
-        label #{ __("ID Number") }
+        label
+          span #{ __("ID Number") }
+          small.text-muted (#{ __("optional") })
         input.form-control(
           type="text"
           name="productNumber"
           ng-model="updateVM.data.productNumber"
-          required
         )
         .help-block(
           ng-messages="updateVM.form.productNumber.$error"
           ng-show="updateForm.hasError(updateVM.form.productNumber)"
         )
-          span(ng-message="required") #{ __("This field is required.") }
   .form-group
     label
       span #{ __("Description") }

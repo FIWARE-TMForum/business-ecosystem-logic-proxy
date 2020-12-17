@@ -151,7 +151,7 @@
 
         function isAdmin() {
             // If admin route is loaded, the user is an admin
-            return $state.get('admin') != null;
+            return vm.currentUser.roles.findIndex((x) => x.name.toLowerCase() === ROLES.admin.toLowerCase()) > -1;
         }
 
         function isSeller() {

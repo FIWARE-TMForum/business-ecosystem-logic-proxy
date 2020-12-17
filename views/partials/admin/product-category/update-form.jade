@@ -11,7 +11,7 @@
           name="name"
           ng-model="updateVM.data.name"
           required
-          ng-maxlength="30"
+          ng-maxlength="100"
           field-unique="Category"
           field-original-value="{{ updateVM.item.name }}"
         )
@@ -20,7 +20,7 @@
           ng-show="updateForm.hasError(updateVM.form.name)"
         )
           span(ng-message="required") #{ __("This field is required.") }
-          span(ng-message="maxlength") #{ __("This field must not exceed 30 chars.") }
+          span(ng-message="maxlength") #{ __("This field must not exceed 100 chars.") }
           span(ng-message="unique") #{ __("This name is already taken.") }
       .form-group
         label Status

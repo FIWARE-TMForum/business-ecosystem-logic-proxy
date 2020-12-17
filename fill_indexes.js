@@ -21,14 +21,14 @@ var config = require('./config'),
     indexes = require('./lib/indexes.js'),
     request = require('request'),
     utils = require('./lib/utils'),
-    Promise = require('promiz');
+    Promiz = require('promiz');
 
 var createUrl = function createUrl(api, extra) {
     return utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + extra;
 };
 
 var genericRequest = function genericRequest(options, extra) {
-    var p = new Promise();
+    var p = new Promiz();
 
     request(options, function(err, response, body) {
         if (err) {
@@ -106,7 +106,7 @@ var downloadOfferings = function downloadOfferings(catalog, qstring) {
 };
 
 var downloadCatalogOfferings = function downloadCatalogOfferings(catalogs) {
-    var promise = Promise.resolve();
+    var promise = Promiz.resolve();
     if (catalogs.length) {
         catalogs.forEach(function(catalog) {
             promise = promise.then(function() {
@@ -151,16 +151,26 @@ var logAllIndexes = function logAllIndexes(path) {
         });
 };
 
-indexes
-    .init()
-    .then(downloadProducts)
-    .then(downloadCatalogs)
-    .then(downloadInventory)
-    .then(downloadOrdering)
-    .then(indexes.close)
-    .then(() => console.log('All saved!'))
-    .catch((e) => console.log('Error: ', e.stack));
+function load() {
+    indexes
+        .init()
+        .then(downloadProducts)
+        .then(downloadCatalogs)
+        .then(downloadInventory)
+        .then(downloadOrdering)
+        .then(indexes.close)
+        .then(() => console.log('All saved!'))
+        .catch((e) => console.log('Error: ', e));
+}
 
+async function loadAll() {
+    for (let i = 0; i < 3; i ++) {
+        load();
+        await new Promise(r => setTimeout(r, 20000));;
+    }
+}
+
+loadAll();
 // logAllIndexes(indexes.siTables.catalogs);
 // logAllIndexes(indexes.siTables.products);
 // logAllIndexes(indexes.siTables.offerings);

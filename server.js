@@ -69,16 +69,19 @@ config.host = process.env.BAE_LP_HOST || config.host || 'localhost';
 if (!!process.env.BAE_SERVICE_HOST) {
     // If this var is enabled, the service is accessible in a different URL
     let parsedUrl = url.parse(process.env.BAE_SERVICE_HOST);
+    let secured = parsedUrl.protocol == 'https:';
+    let port = parsedUrl.port
+
+    if (port == null) {
+        port = secured ? 443 : 80;
+    }
+
     config.proxy = {
         enabled: true,
         host: parsedUrl.hostname,
-        port: parsedUrl.port,
-        secured: parsedUrl.protocol == 'https:'
+        port: port,
+        secured: secured
     };
-
-    if (config.proxy.port == null) {
-        config.proxy.port = config.proxy.secured ? 443 : 80;
-    }
 }
 
 // HTTPS Configuration
@@ -213,7 +216,8 @@ config.mongoDb.port = process.env.BAE_LP_MONGO_PORT || config.mongoDb.port || 27
 config.mongoDb.db = process.env.BAE_LP_MONGO_DB || config.mongoDb.db || 'belp';
 
 config.revenueModel =
-    config.revenueModel && config.revenueModel >= 0 && config.revenueModel <= 100 ? config.revenueModel : 30;
+    (config.revenueModel !== undefined && config.revenueModel !== null && config.revenueModel >= 0 && config.revenueModel <= 100) ? config.revenueModel : 30;
+
 config.revenueModel =
     !!process.env.BAE_LP_REVENUE_MODEL &&
     Number(process.env.BAE_LP_REVENUE_MODEL) >= 0 &&
@@ -226,6 +230,10 @@ var PORT = config.https.enabled
     : config.port || 80; // HTTP
 
 config.usageChartURL = process.env.BAE_LP_USAGE_CHART || config.usageChartURL;
+
+config.indexes.engine = process.env.BAE_LP_INDEX_ENGINE || config.indexes.engine;
+config.indexes.elasticHost = process.env.BAE_LP_INDEX_URL || config.indexes.elasticHost;
+config.indexes.apiVersion = process.env.BAE_LP_INDEX_API_VERSION || config.indexes.apiVersion;
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
@@ -503,7 +511,8 @@ var renderTemplate = function(req, res, viewName) {
         usageChartURL: config.usageChartURL,
         orgAdmin: config.oauth2.roles.orgAdmin,
         seller: config.oauth2.roles.seller,
-        customer: config.oauth2.customer
+        customer: config.oauth2.roles.customer,
+        admin: config.oauth2.roles.admin
     };
 
     if (utils.isAdmin(req.user)) {

@@ -64,6 +64,7 @@
             }
         );
 
+        resource.prototype.isOpenOffering = isOpenOffering;
         resource.prototype.formatCheapestPricePlan = formatCheapestPricePlan;
         resource.prototype.getCategories = getCategories;
         resource.prototype.getPicture = getPicture;
@@ -1476,13 +1477,21 @@
             return picture;
         }
 
+        function isOpenOffering() {
+            return this.productOfferingPrice.length == 1
+                && this.productOfferingPrice[0].name.toLowerCase() == 'open'
+                && this.productOfferingPrice[0].price.taxIncludedAmount == 0;
+        }
+
         function formatCheapestPricePlan(extended) {
             /* jshint validthis: true */
             var result = '',
                 pricePlan = null,
                 pricePlans = [];
 
-            if (this.productOfferingPrice.length) {
+            if (this.isOpenOffering()) {
+                result = 'Open';
+            } else if (this.productOfferingPrice.length) {
                 pricePlans = this.productOfferingPrice.filter(function(pricePlan) {
                     return angular.lowercase(pricePlan.priceType) === TYPES.PRICE.ONE_TIME;
                 });

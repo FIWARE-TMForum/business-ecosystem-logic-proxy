@@ -146,8 +146,9 @@ config.billingAccountOwnerRole = 'bill receiver';
 config.publicPaths = [];
 
 config.indexes = {
-    'engine': 'local', // local or elasticsearch
-    'elasticHost': 'elastic.docker:9200'
+    'engine': 'elasticsearch', // local or elasticsearch
+    'elasticHost': 'elastic.docker:9200',
+    'apiVersion': '7.5'
 };
 
 config.magicKey = undefined;
