@@ -17,8 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var config = require('./config'),
-    indexes = require('./lib/indexes.js'),
+var indexes = require('./lib/indexes.js'),
     request = require('request'),
     utils = require('./lib/utils'),
     Promiz = require('promiz');
