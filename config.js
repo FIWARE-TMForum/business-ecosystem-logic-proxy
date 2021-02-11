@@ -148,7 +148,6 @@ config.billingAccountOwnerRole = 'bill receiver';
 config.publicPaths = [];
 
 config.indexes = {
-    'engine': 'elasticsearch', // local or elasticsearch
     'elasticHost': 'elastic.docker:9200',
     'apiVersion': '7.5'
 };
@@ -358,7 +357,6 @@ config.taxRate =
 config.usageChartURL = process.env.BAE_LP_USAGE_CHART || config.usageChartURL;
 
 // Index engine
-config.indexes.engine = process.env.BAE_LP_INDEX_ENGINE || config.indexes.engine;
 config.indexes.elasticHost = process.env.BAE_LP_INDEX_URL || config.indexes.elasticHost;
 config.indexes.apiVersion = process.env.BAE_LP_INDEX_API_VERSION || config.indexes.apiVersion;
 
