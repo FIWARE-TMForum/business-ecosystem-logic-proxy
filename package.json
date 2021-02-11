@@ -36,7 +36,6 @@
     "passport-fiware-oauth": "^0.2.0",
     "promiz": "^1.0.5",
     "request": "^2.88.0",
-    "search-index": "0.15.0",
     "trycatch": "^1.5.21",
     "uuid": "^3.3.2"
   },
