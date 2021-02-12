@@ -1,9 +1,13 @@
-name: test
+name: Tests
+
 on:
   push:
-    branches: [ $default-branch, github-actions ]
+    branches:
+      - master
+
   pull_request:
-    branches: [ $default-branch ]
+    branches:
+      - master
 
 jobs:
   test:
