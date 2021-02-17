@@ -1,13 +1,11 @@
-FROM ubuntu:16.04
+FROM ubuntu:20.04
 
-MAINTAINER CoNWeT Lab. Universidad Politécnica de Madrid
+LABEL Maintainer="Future Internet Consulting and Development Solutions S.L."
 
-RUN apt-get update && apt-get install -y git vim xinetd python-pip wget && \
-    pip install sh requests && \
-    wget https://nodejs.org/dist/v8.12.0/node-v8.12.0-linux-x64.tar.xz && \
-    tar -xvf node-v8.12.0-linux-x64.tar.xz && \
-    echo 'export PATH=$PATH:/node-v8.12.0-linux-x64/bin' >> ~/.bashrc && \
-    export PATH=$PATH:/node-v8.12.0-linux-x64/bin && \
+RUN apt-get update && apt-get install -y git vim xinetd wget && \
+    apt -y install curl dirmngr apt-transport-https lsb-release ca-certificates && \
+    curl -sL https://deb.nodesource.com/setup_12.x | bash - && \
+    apt -y install nodejs && \
     mkdir business-ecosystem-logic-proxy
 
 VOLUME /business-ecosystem-logic-proxy
