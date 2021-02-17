@@ -20,11 +20,11 @@ const passport = require('passport');
 const session = require('express-session');
 const shoppingCart = require('./controllers/shoppingCart').shoppingCart;
 const management = require('./controllers/management').management;
-const tmf = require('./controllers/tmf');
+const tmf = require('./controllers/tmf').tmf();
 const trycatch = require('trycatch');
 const url = require('url');
 const utils = require('./lib/utils');
-const auth = require('./lib/auth');
+const auth = require('./lib/auth').auth();
 const uuidv4 = require('uuid/v4');
 
 const debug = !(process.env.NODE_ENV == 'production');
@@ -39,20 +39,17 @@ const PORT = config.https.enabled
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 
-auth = auth.auth();
-tmf = tmf.tmf();
-
 /////////////////////////////////////////////////////////////////////
 ////////////////////////// MONGOOSE CONFIG //////////////////////////
 /////////////////////////////////////////////////////////////////////
 
-var mongoCredentials = '';
+let mongoCredentials = '';
 
 if (config.mongoDb.user && config.mongoDb.password) {
     mongoCredentials = config.mongoDb.user + ':' + config.mongoDb.password + '@';
 }
 
-var mongoUrl =
+const mongoUrl =
     'mongodb://' + mongoCredentials + config.mongoDb.server + ':' + config.mongoDb.port + '/' + config.mongoDb.db;
 
 mongoose.connect(
