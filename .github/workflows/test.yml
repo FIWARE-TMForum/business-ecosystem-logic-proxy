@@ -4,10 +4,12 @@ on:
   push:
     branches:
       - master
+      - github-actions
 
   pull_request:
     branches:
       - master
+      - github-actions
 
 jobs:
   test:
@@ -25,3 +27,13 @@ jobs:
       - run: npm ci
       - run: npm run build --if-present
       - run: npm test
+      - name: Coveralls Parallel
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.github_token }}
+          base-path: .
+          path-to-lcov: ./coverage/lcov.info
+          parallel: true
+
+
+#after_success: "cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js"
