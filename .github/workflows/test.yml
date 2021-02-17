@@ -36,6 +36,7 @@ jobs:
           base-path: .
           path-to-lcov: ./coverage/lcov.info
           parallel: true
+          flag-name: run-${{ matrix.node-version }}
 
 
 #after_success: "cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js"
