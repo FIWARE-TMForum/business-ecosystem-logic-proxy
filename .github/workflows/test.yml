@@ -4,14 +4,10 @@ on:
   push:
     branches:
       - master
-      - github-actions
-      - deprecate-local-index
 
   pull_request:
     branches:
       - master
-      - github-actions
-      - deprecate-local-index
 
 jobs:
   test:
@@ -33,10 +29,5 @@ jobs:
         uses: coverallsapp/github-action@master
         with:
           github-token: ${{ secrets.github_token }}
-          #base-path: .
-          #path-to-lcov: ./coverage/lcov.info
           parallel: true
           flag-name: run-${{ matrix.node-version }}
-
-
-#after_success: "cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js"
