@@ -1,9 +1,13 @@
-name: test
+name: Tests
+
 on:
   push:
-    branches: [ $default-branch, github-actions ]
+    branches:
+      - master
+
   pull_request:
-    branches: [ $default-branch ]
+    branches:
+      - master
 
 jobs:
   test:
@@ -21,3 +25,9 @@ jobs:
       - run: npm ci
       - run: npm run build --if-present
       - run: npm test
+      - name: Coveralls Parallel
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.github_token }}
+          parallel: true
+          flag-name: run-${{ matrix.node-version }}
