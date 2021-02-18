@@ -193,7 +193,10 @@ app.use(passport.session());
 // Handler for logging in...
 app.all(config.logInPath, function(req, res) {
     var encodedState = getOAuth2State(utils.getCameFrom(req));
-    passport.authenticate('fiware', { scope: ['all_info'], state: encodedState })(req, res);
+
+    // Select scope depending on protocol
+    let scope = config.oauth2.oidc ? ['jwt,openid'] : ['all_info']
+    passport.authenticate('fiware', { scope: scope, state: encodedState })(req, res);
 });
 
 // Handler for the callback

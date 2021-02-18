@@ -33,13 +33,14 @@ config.theme = '';
 // OAuth2 configuration
 //'server': 'http://34.213.26.168:8000/',
 config.oauth2 = {
-    server: 'http://idm.docker:8000',
-    clientID: '',
-    clientSecret: '',
+    server: 'http://idm.docker:3000',
+    clientID: '19dd858c-328c-4642-93ab-da45e4d253ae',
+    clientSecret: '09ffe023-a242-46a3-bd83-9277d36e2379',
     callbackURL: 'http://proxy.docker:8004/auth/fiware/callback',
-    isLegacy: false,
+    oidc: true,
+    key: '281e126aa35c80f2',
     roles: {
-        admin: 'provider',
+        admin: 'admin',
         customer: 'customer',
         seller: 'seller',
         orgAdmin: 'manager'
@@ -214,6 +215,12 @@ config.oauth2.server = process.env.BAE_LP_OAUTH2_SERVER || config.oauth2.server;
 config.oauth2.clientID = process.env.BAE_LP_OAUTH2_CLIENT_ID || config.oauth2.clientID;
 config.oauth2.clientSecret = process.env.BAE_LP_OAUTH2_CLIENT_SECRET || config.oauth2.clientSecret;
 config.oauth2.callbackURL = process.env.BAE_LP_OAUTH2_CALLBACK || config.oauth2.callbackURL;
+
+if (!!process.env.BAE_LP_OIDC_ENABLED) {
+    config.oauth2.oidc = process.env.BAE_LP_OIDC_ENABLED == 'true';
+}
+
+config.oauth2.key = process.env.BAE_LP_OIDC_KEY || config.oauth2.key;
 
 config.oauth2.roles.admin = process.env.BAE_LP_OAUTH2_ADMIN_ROLE || config.oauth2.roles.admin;
 config.oauth2.roles.seller = process.env.BAE_LP_OAUTH2_SELLER_ROLE || config.oauth2.roles.seller;

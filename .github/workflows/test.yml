@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - feature/oidc
 
   pull_request:
     branches:
