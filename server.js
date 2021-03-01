@@ -194,9 +194,7 @@ app.use(passport.session());
 app.all(config.logInPath, function(req, res) {
     var encodedState = getOAuth2State(utils.getCameFrom(req));
 
-    // Select scope depending on protocol
-    let scope = config.oauth2.oidc ? ['jwt,openid'] : ['all_info']
-    passport.authenticate(config.oauth2.provider, { scope: scope, state: encodedState })(req, res);
+    passport.authenticate(config.oauth2.provider, { scope: auth.getScope(), state: encodedState })(req, res);
 });
 
 // Handler for the callback

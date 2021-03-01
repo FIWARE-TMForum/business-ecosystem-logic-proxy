@@ -35,6 +35,7 @@
     "on-finished": "^2.3.0",
     "passport": "^0.4.1",
     "passport-fiware-oauth": "^0.2.0",
+    "passport-keycloak-oauth2-oidc": "^1.0.5",
     "promiz": "^1.0.5",
     "request": "^2.88.0",
     "trycatch": "^1.5.21",

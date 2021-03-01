@@ -32,7 +32,7 @@ config.theme = '';
 
 // OAuth2 configuration
 //'server': 'http://34.213.26.168:8000/',
-config.oauth2 = {
+/*config.oauth2 = {
     provider: 'fiware',
     server: 'http://idm.docker:3000',
     clientID: '19dd858c-328c-4642-93ab-da45e4d253ae',
@@ -46,7 +46,24 @@ config.oauth2 = {
         seller: 'seller',
         orgAdmin: 'manager'
     }
-};
+};*/
+
+config.oauth2 = {
+    provider: 'keycloak',
+    server: 'http://keycloak.docker:8080',
+    clientID: 'bae',
+    clientSecret: 'df68d1b9-f85f-4b5e-807c-c8be3ba27388',
+    callbackURL: 'http://proxy.docker:8004/auth/fiware/callback',
+    realm: 'bae',
+    oidc: true,
+    key: '281e126aa35c80f2',
+    roles: {
+        admin: 'admin',
+        customer: 'customer',
+        seller: 'seller',
+        orgAdmin: 'manager'
+    }
+}
 
 // Customer Role Required to buy items
 config.customerRoleRequired = false;
