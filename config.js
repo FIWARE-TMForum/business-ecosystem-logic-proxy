@@ -33,6 +33,7 @@ config.theme = '';
 // OAuth2 configuration
 //'server': 'http://34.213.26.168:8000/',
 config.oauth2 = {
+    provider: 'fiware',
     server: 'http://idm.docker:3000',
     clientID: '19dd858c-328c-4642-93ab-da45e4d253ae',
     clientSecret: '09ffe023-a242-46a3-bd83-9277d36e2379',

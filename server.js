@@ -184,7 +184,7 @@ passport.deserializeUser(function(obj, done) {
     done(null, obj);
 });
 
-passport.use(auth.FIWARE_STRATEGY);
+passport.use(auth.STRATEGY);
 
 // Passport middlewares
 app.use(passport.initialize());
@@ -196,11 +196,11 @@ app.all(config.logInPath, function(req, res) {
 
     // Select scope depending on protocol
     let scope = config.oauth2.oidc ? ['jwt,openid'] : ['all_info']
-    passport.authenticate('fiware', { scope: scope, state: encodedState })(req, res);
+    passport.authenticate(config.oauth2.provider, { scope: scope, state: encodedState })(req, res);
 });
 
 // Handler for the callback
-app.get('/auth/fiware/callback', passport.authenticate('fiware', { failureRedirect: '/error' }), function(req, res) {
+app.get('/auth/fiware/callback', passport.authenticate(config.oauth2.provider, { failureRedirect: '/error' }), function(req, res) {
     var state = JSON.parse(base64url.decode(req.query.state));
     var redirectPath = state[OAUTH2_CAME_FROM_FIELD] !== undefined ? state[OAUTH2_CAME_FROM_FIELD] : '/';
 
