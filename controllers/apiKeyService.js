@@ -18,7 +18,7 @@
  */
 
 var AccountingService = require('../db/schemas/accountingService'),
-     uuidv4 = require('uuid/v4');
+     uuid = require('uuid');
 
 var apiKeyService = (function () {
 
@@ -26,7 +26,7 @@ var apiKeyService = (function () {
      * Generates an apiKey.
      */
     var generateApiKey = function () {
-        var apiKey = uuidv4();
+        var apiKey = uuid.v4();
 
         return apiKey;
     };

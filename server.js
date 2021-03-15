@@ -25,7 +25,7 @@ const trycatch = require('trycatch');
 const url = require('url');
 const utils = require('./lib/utils');
 const auth = require('./lib/auth').auth();
-const uuidv4 = require('uuid/v4');
+const uuidv4 = require('uuid').v4;
 
 const debug = !(process.env.NODE_ENV == 'production');
 
@@ -158,7 +158,8 @@ var ensureAuthenticated = function(req, res, next) {
         var encodedState = getOAuth2State(req.url);
         // This action will redirect the user the FIWARE Account portal,
         // so the next callback is not required to be called
-        passport.authenticate('fiware', { scope: ['all_info'], state: encodedState })(req, res);
+
+        passport.authenticate(config.oauth2.provider, { scope: auth.getScope(), state: encodedState })(req, res);
     } else {
         next();
     }
