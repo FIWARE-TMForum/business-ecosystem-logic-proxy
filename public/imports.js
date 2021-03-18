@@ -71,6 +71,7 @@ let jsAppFilesToInject = [
     'controllers/form-wizard.controller',
     'controllers/flash-message.controller',
     'controllers/user.controller',
+    'controllers/login.controller',
     'controllers/search-filter.controller',
     'controllers/payment.controller',
     'controllers/product.controller',

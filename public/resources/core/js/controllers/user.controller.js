@@ -76,6 +76,7 @@
 
         vm.order = order;
         vm.contains = contains;
+        vm.signIn = signIn;
         vm.signOut = signOut;
         vm.showProfile = showProfile;
         vm.isAdmin = isAdmin;
@@ -179,6 +180,10 @@
         function order(offering) {
             // Open options modal
             $rootScope.$broadcast(EVENTS.OFFERING_ORDERED, offering);
+        }
+
+        function signIn() {
+            $rootScope.$broadcast(EVENTS.SIGN_IN);
         }
 
         function showProfile() {

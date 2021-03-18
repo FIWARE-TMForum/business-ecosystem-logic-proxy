@@ -17,36 +17,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-const FIWAREStrategy = require('passport-fiware-oauth').OAuth2Strategy;
+(function() {
+    'use strict';
 
+    angular
+        .module('app')
+        .controller('LoginCtrl', [
+            '$scope',
+            '$element',
+            'EVENTS',
+            LoginController
+        ]);
 
-function strategy (config) {
-    function buildStrategy(callback) {
-        let params  = {
-            clientID: config.clientID,
-            clientSecret: config.clientSecret,
-            callbackURL: config.callbackURL,
-            serverURL: config.server
-        };
-
-        if (config.oidc) {
-            params.key = config.key;
-        }
-
-        return new FIWAREStrategy(params, callback);
+    function LoginController($scope, $element, EVENTS) {
+        $scope.$on(EVENTS.SIGN_IN, (event) => {
+            $element.modal('show');
+        });
     }
-
-    function getScope() {
-        if (config.oidc) {
-            return ['jwt,openid'];
-        } else {
-            return ['all_info']
-        }
-    }
-    return {
-        buildStrategy: buildStrategy,
-        getScope: getScope
-    }
-}
-
-exports.strategy = strategy;
+})();

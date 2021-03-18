@@ -1,0 +1,15 @@
+.modal.fade(ng-controller="LoginCtrl")
+  .modal-dialog
+    .modal-content
+      .modal-header
+        .h4
+          strong #{ __("Login options") }
+      .modal-body(style="display: flex; flex-direction:column;")
+        a.btn.btn-warning.navbar-btn.z-depth-1(href="#{ contextPath }/login")
+          span.item-text #{ __("Sign in") } #{ __("Local IDP") }
+        each val in externalIdps
+          a.btn.btn-default.navbar-btn.z-depth-1(href="#{ contextPath }/login/#{ val.idpId }")
+            span.item-text #{ __("Sign in") } #{ val.name }
+      .modal-footer
+        a.btn.btn-default.z-depth-1(data-dismiss="modal")
+          span.item-text #{ __("Cancel") }

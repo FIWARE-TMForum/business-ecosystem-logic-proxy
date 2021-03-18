@@ -176,11 +176,13 @@ html(ng-app="app")
                   span.item-text #{ __("Sign out") }
           form(name="signOutForm", method="post", action="#{ contextPath }/logout")
         else
-          a.btn.btn-warning.navbar-btn.navbar-right.z-depth-1(href="#{ contextPath }/login")
-            span.item-text #{ __("Sign in") }
-    .row      
-          
-
+          if extLogin
+            a.btn.btn-warning.navbar-btn.navbar-right.z-depth-1(ng-click="user.signIn()")
+              span.item-text #{ __("Sign in") }
+          else
+            a.btn.btn-warning.navbar-btn.navbar-right.z-depth-1(href="#{ contextPath }/login")
+              span.item-text #{ __("Sign in") }
+    .row
     .container(ng-controller="FlashMessageListCtrl as listVM")
       .alert-group(ng-show="listVM.list.length")
         .alert-item(ng-repeat="alert in listVM.list")
@@ -219,6 +221,8 @@ html(ng-app="app")
       include ./modals/priceplan.modal.jade
       include ./modals/sharing-report.modal.jade
       include ./modals/upgrade-product.modal.jade
+
+    include ./modals/login.modal.jade
 
     script(type="text/ng-template", id="settings/sidebar")
       include ./partials/settings/sidebar.jade

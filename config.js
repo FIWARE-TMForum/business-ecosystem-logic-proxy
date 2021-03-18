@@ -32,7 +32,7 @@ config.theme = '';
 
 // OAuth2 configuration
 //'server': 'http://34.213.26.168:8000/',
-/*config.oauth2 = {
+config.oauth2 = {
     provider: 'fiware',
     server: 'http://idm.docker:3000',
     clientID: '19dd858c-328c-4642-93ab-da45e4d253ae',
@@ -46,9 +46,9 @@ config.theme = '';
         seller: 'seller',
         orgAdmin: 'manager'
     }
-};*/
+};
 
-config.oauth2 = {
+/*config.oauth2 = {
     provider: 'keycloak',
     server: 'http://keycloak.docker:8080',
     clientID: 'bae',
@@ -229,6 +229,11 @@ config.https.keyFile = process.env.BAE_LP_HTTPS_KEY || config.https.keyFile;
 config.https.port = process.env.BAE_LP_HTTPS_PORT || config.https.port;
 
 // OAuth2 Configuration
+if (!!process.env.BAE_LP_EXT_LOGIN) {
+    config.extLogin = process.env.BAE_LP_EXT_LOGIN == 'true';
+}
+
+config.oauth2.provider = process.env.BAE_LP_OAUTH2_PROVIDER || config.oauth2.provider;
 config.oauth2.server = process.env.BAE_LP_OAUTH2_SERVER || config.oauth2.server;
 config.oauth2.clientID = process.env.BAE_LP_OAUTH2_CLIENT_ID || config.oauth2.clientID;
 config.oauth2.clientSecret = process.env.BAE_LP_OAUTH2_CLIENT_SECRET || config.oauth2.clientSecret;
@@ -239,6 +244,10 @@ if (!!process.env.BAE_LP_OIDC_ENABLED) {
 }
 
 config.oauth2.key = process.env.BAE_LP_OIDC_KEY || config.oauth2.key;
+config.oauth2.realm = process.env.BAE_LP_OIDC_REALM || config.oauth2.realm;
+
+config.oauth2.tokenCrt = process.env.BAE_LP_OIDC_TOKEN_CRT || config.oauth2.tokenCrt;
+config.oauth2.tokenKey = process.env.BAE_LP_OIDC_TOKEN_KEY || config.oauth2.tokenKey;
 
 config.oauth2.roles.admin = process.env.BAE_LP_OAUTH2_ADMIN_ROLE || config.oauth2.roles.admin;
 config.oauth2.roles.seller = process.env.BAE_LP_OAUTH2_SELLER_ROLE || config.oauth2.roles.seller;

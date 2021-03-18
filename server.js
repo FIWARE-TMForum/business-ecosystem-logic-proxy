@@ -24,7 +24,7 @@ const tmf = require('./controllers/tmf').tmf();
 const trycatch = require('trycatch');
 const url = require('url');
 const utils = require('./lib/utils');
-const auth = require('./lib/auth').auth();
+const authModule = require('./lib/auth');
 const uuidv4 = require('uuid').v4;
 
 const debug = !(process.env.NODE_ENV == 'production');
@@ -38,6 +38,11 @@ const PORT = config.https.enabled
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
+// External login enabled
+const extLogin = config.extLogin == true;
+
+// Local auth method
+const auth = authModule.auth(config.oauth2);
 
 /////////////////////////////////////////////////////////////////////
 ////////////////////////// MONGOOSE CONFIG //////////////////////////
@@ -184,14 +189,14 @@ passport.serializeUser(function(user, done) {
 passport.deserializeUser(function(obj, done) {
     done(null, obj);
 });
-
-passport.use(auth.STRATEGY);
-
 // Passport middlewares
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Handler for logging in...
+// Load local strategy
+passport.use(config.oauth2.provider, auth.STRATEGY);
+
+// Handler for default logging
 app.all(config.logInPath, function(req, res) {
     var encodedState = getOAuth2State(utils.getCameFrom(req));
 
@@ -199,12 +204,35 @@ app.all(config.logInPath, function(req, res) {
 });
 
 // Handler for the callback
-app.get('/auth/fiware/callback', passport.authenticate(config.oauth2.provider, { failureRedirect: '/error' }), function(req, res) {
+app.get('/auth/' + config.oauth2.provider + '/callback', passport.authenticate(config.oauth2.provider, { failureRedirect: '/error' }), function(req, res) {
     var state = JSON.parse(base64url.decode(req.query.state));
     var redirectPath = state[OAUTH2_CAME_FROM_FIELD] !== undefined ? state[OAUTH2_CAME_FROM_FIELD] : '/';
 
     res.redirect(redirectPath);
 });
+
+// Load other stragies if external IDPs are enabled
+if (extLogin) {
+    config.externalIdps.forEach((idp) => {
+        let extAuth = authModule.auth(idp);
+        passport.use(idp.idpId, extAuth.STRATEGY);
+
+        // Handler for default logging
+        app.all(`/login/${idp.idpId}`, function(req, res) {
+            const encodedState = getOAuth2State(utils.getCameFrom(req));
+
+            passport.authenticate(idp.idpId, { scope: extAuth.getScope(), state: encodedState })(req, res);
+        });
+
+        // Handler for the callback
+        app.get(`/auth/${idp.idpId}/callback`, passport.authenticate(idp.idpId, { failureRedirect: '/error' }), function(req, res) {
+            const state = JSON.parse(base64url.decode(req.query.state));
+            const redirectPath = state[OAUTH2_CAME_FROM_FIELD] !== undefined ? state[OAUTH2_CAME_FROM_FIELD] : '/';
+
+            res.redirect(redirectPath);
+        });
+    });
+}
 
 // Handler to destroy sessions
 app.all(config.logOutPath, function(req, res) {
@@ -312,8 +340,13 @@ var renderTemplate = function(req, res, viewName) {
         orgAdmin: config.oauth2.roles.orgAdmin,
         seller: config.oauth2.roles.seller,
         customer: config.oauth2.roles.customer,
-        admin: config.oauth2.roles.admin
+        admin: config.oauth2.roles.admin,
+        extLogin: extLogin
     };
+
+    if (extLogin) {
+        options.externalIdps = config.externalIdps;
+    }
 
     if (utils.isAdmin(req.user)) {
         options.jsAppFilesToInject = options.jsAppFilesToInject.concat(imports.jsAdminFilesToInject);
