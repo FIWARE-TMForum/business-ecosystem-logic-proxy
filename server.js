@@ -211,6 +211,10 @@ app.get('/auth/' + config.oauth2.provider + '/callback', passport.authenticate(c
     res.redirect(redirectPath);
 });
 
+let idps = {
+    'local': auth
+};
+
 // Load other stragies if external IDPs are enabled
 if (extLogin) {
     config.externalIdps.forEach((idp) => {
@@ -231,8 +235,12 @@ if (extLogin) {
 
             res.redirect(redirectPath);
         });
+
+        idps[idp.idpId] = extAuth;
     });
 }
+
+const authMiddleware = authModule.authMiddleware(idps);
 
 // Handler to destroy sessions
 app.all(config.logOutPath, function(req, res) {
@@ -261,9 +269,9 @@ var checkMongoUp = function(req, res, next) {
 app.use(
     config.shoppingCartPath + '/*',
     checkMongoUp,
-    auth.headerAuthentication,
-    auth.checkOrganizations,
-    auth.setPartyObj,
+    authMiddleware.headerAuthentication,
+    authMiddleware.checkOrganizations,
+    authMiddleware.setPartyObj,
     failIfNotAuthenticated
 );
 app.get(config.shoppingCartPath + '/item/', shoppingCart.getCart);
@@ -287,7 +295,7 @@ app.use(config.apiKeyServicePath + '/*', checkMongoUp);
 app.post(config.apiKeyServicePath + '/apiKeys', apiKeyService.getApiKey);
 app.post(config.apiKeyServicePath + '/apiKeys/:apiKey/commit', apiKeyService.commitApiKey);
 
-app.use(config.authorizeServicePath + '/*', checkMongoUp, auth.headerAuthentication, auth.checkOrganizations, auth.setPartyObj, failIfNotAuthenticated);
+app.use(config.authorizeServicePath + '/*', checkMongoUp, authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, failIfNotAuthenticated);
 app.post(config.authorizeServicePath + '/token', authorizeService.saveAppToken);
 app.post(config.authorizeServicePath + '/read', authorizeService.getAppToken);
 
@@ -295,7 +303,7 @@ app.post(config.authorizeServicePath + '/read', authorizeService.getAppToken);
 ///////////////////////// SLA SERVICE ///////////////////////////////
 /////////////////////////////////////////////////////////////////////
 
-app.use(config.slaServicePath + '/*', checkMongoUp, auth.headerAuthentication, auth.checkOrganizations, auth.setPartyObj);
+app.use(config.slaServicePath + '/*', checkMongoUp, authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj);
 app.get(config.slaServicePath + '/sla/:id', slaService.getSla);
 app.post(config.slaServicePath + '/sla', failIfNotAuthenticated, slaService.saveSla);
 
@@ -303,7 +311,7 @@ app.post(config.slaServicePath + '/sla', failIfNotAuthenticated, slaService.save
 ///////////////////////// REPUTAION SERVICE /////////////////////////
 /////////////////////////////////////////////////////////////////////
 app.use(config.reputationServicePath + '/*', checkMongoUp);
-app.use(config.reputationServicePath + '/reputation/set', checkMongoUp, auth.headerAuthentication, auth.checkOrganizations, auth.setPartyObj, failIfNotAuthenticated);
+app.use(config.reputationServicePath + '/reputation/set', checkMongoUp, authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, failIfNotAuthenticated);
 app.get(config.reputationServicePath + '/reputation', reputationService.getOverallReputation);
 app.get(config.reputationServicePath + '/reputation/:id/:consumerId', reputationService.getReputation);
 app.post(config.reputationServicePath + '/reputation/set', reputationService.saveReputation);
@@ -410,7 +418,7 @@ for (var p in config.publicPaths) {
     app.all(config.proxyPrefix + '/' + config.publicPaths[p], tmf.public);
 }
 
-app.all(config.proxyPrefix + '/*', auth.headerAuthentication, auth.checkOrganizations, auth.setPartyObj, function(
+app.all(config.proxyPrefix + '/*', authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, function(
     req,
     res,
     next

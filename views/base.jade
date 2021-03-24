@@ -82,14 +82,14 @@ html(ng-app="app")
         angular.module('app')
           .constant('LOGGED_USER', {
             id: '#{ user.id }',
-            name: '#{ user._json.username }',
+            name: '#{ user.username }',
             href: '#{ contextPath }/#{ partyPath }/api/partyManagement/v2/individual/#{ user.id }',
             email: '#{ user.email }',
             bearerToken: '#{ user.accessToken }',
             organizations: '#{ '{ "organizations":' + JSON.stringify(user.organizations) + '}' }',
             currentUser: {
               id: '#{ user.id }',
-              name: '#{ user._json.username }',
+              name: '#{ user.username }',
               email: '#{ user.email }',
               roles: '#{ JSON.stringify(user.roles) }',
               href: '#{ contextPath }/#{ partyPath }/api/partyManagement/v2/individual/#{ user.id }'
