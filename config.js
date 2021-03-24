@@ -53,7 +53,7 @@ config.oauth2 = {
     server: 'http://keycloak.docker:8080',
     clientID: 'bae',
     clientSecret: 'df68d1b9-f85f-4b5e-807c-c8be3ba27388',
-    callbackURL: 'http://proxy.docker:8004/auth/fiware/callback',
+    callbackURL: 'http://proxy.docker:8004/auth/keycloak/callback',
     realm: 'bae',
     oidc: true,
     key: '281e126aa35c80f2',
@@ -63,7 +63,23 @@ config.oauth2 = {
         seller: 'seller',
         orgAdmin: 'manager'
     }
-}
+}*/
+
+/*config.oauth2 = {
+    provider: 'github',
+    clientID: '',
+    clientSecret: '',
+    callbackURL: 'http://proxy.docker:8004/auth/github/callback',
+    roles: {
+        admin: 'admin',
+        customer: 'customer',
+        seller: 'seller',
+        orgAdmin: 'manager'
+    }
+}*/
+
+config.extLogin = true;
+config.externalIdps = []
 
 // Customer Role Required to buy items
 config.customerRoleRequired = false;
@@ -394,4 +410,25 @@ config.usageChartURL = process.env.BAE_LP_USAGE_CHART || config.usageChartURL;
 config.indexes.elasticHost = process.env.BAE_LP_INDEX_URL || config.indexes.elasticHost;
 config.indexes.apiVersion = process.env.BAE_LP_INDEX_API_VERSION || config.indexes.apiVersion;
 
+// External IDPs configs
+if (config.extLogin && process.env.BAE_EXT_IDPS_CONF != null) {
+
+    const localEORI = process.env.BAE_EORI;
+    const key = process.env.BAE_TOKEN_KEY;
+    const cert = process.env.BAE_TOKEN_CRT;
+    const idpsConfig = JSON.parse(process.env.BAE_EXT_IDPS_CONF);
+
+    config.externalIdps = idpsConfig.map((idp) =>{
+        return {
+            provider: 'i4trust',
+            name: idp.name,
+            server: idp.server,
+            clientID: localEORI,
+            callbackURL: `${idp.server}/auth/${idp.idpId}/callback`,
+            idpId: idp.idpId,
+            tokenKey: key,
+            tokenCrt: cert,
+        }
+    });
+}
 module.exports = config;
