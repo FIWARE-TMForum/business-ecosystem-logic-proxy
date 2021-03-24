@@ -2,22 +2,22 @@ FROM ubuntu:16.04
 
 LABEL Author="CoNWeT Lab. Universidad Politécnica de Madrid"
 
-ENV VERSION master
+ENV VERSION feature/oidc
 
 RUN apt-get update && apt-get install -y git xinetd python-pip wget curl && \
     pip install sh requests && \
-    git clone https://github.com/FIWARE-TMForum/business-ecosystem-logic-proxy
+    git clone https://github.com/fdelavega/business-ecosystem-logic-proxy
 
 WORKDIR business-ecosystem-logic-proxy
 
-RUN wget https://nodejs.org/dist/v8.12.0/node-v8.12.0-linux-x64.tar.xz && \
-    tar -xvf node-v8.12.0-linux-x64.tar.xz && \
-    echo 'export PATH=$PATH:/business-ecosystem-logic-proxy/node-v8.12.0-linux-x64/bin' >> ~/.bashrc && \
+RUN wget https://nodejs.org/dist/v14.16.0/node-v14.16.0-linux-x64.tar.xz && \
+    tar -xvf node-v14.16.0-linux-x64.tar.xz && \
+    echo 'export PATH=$PATH:/business-ecosystem-logic-proxy/node-v14.16.0-linux-x64/bin' >> ~/.bashrc && \
     git checkout $VERSION && \
     mkdir indexes && \
     mkdir themes && \
     export USER=root && \
-    export PATH=$PATH:/business-ecosystem-logic-proxy/node-v8.12.0-linux-x64/bin && \
+    export PATH=$PATH:/business-ecosystem-logic-proxy/node-v14.16.0-linux-x64/bin && \
     npm install --unsafe && \
     mkdir etc && \
     cp config.js etc/config.js && \
