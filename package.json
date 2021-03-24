@@ -37,6 +37,7 @@
     "passport-fiware-oauth": "^0.3.0",
     "passport-keycloak-oauth2-oidc": "^1.0.5",
     "passport-github": "^1.1.0",
+    "passport-i4trust": "^0.1.0-rc1",
     "promiz": "^1.0.5",
     "request": "^2.88.0",
     "trycatch": "^1.5.21",
