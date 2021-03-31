@@ -418,13 +418,22 @@ if (config.extLogin && process.env.BAE_EXT_IDPS_CONF != null) {
     const cert = process.env.BAE_TOKEN_CRT;
     const idpsConfig = JSON.parse(process.env.BAE_EXT_IDPS_CONF);
 
+    let marketUrl;
+    if (config.proxy.enabled) {
+        const proto = config.proxy.secured ? 'https' : 'http';
+        const port = config.proxy.port != 443 && config.proxy.port != 80 ? ':' + config.proxy.port : '';
+        marketUrl = `${proto}://${config.proxy.host}${port}`;
+    } else {
+        marketUrl = `http://${config.host}:${config.port}`;
+    }
+
     config.externalIdps = idpsConfig.map((idp) =>{
         return {
             provider: 'i4trust',
             name: idp.name,
             server: idp.server,
             clientID: localEORI,
-            callbackURL: `${idp.server}/auth/${idp.idpId}/callback`,
+            callbackURL: `${marketUrl}/auth/${idp.idpId}/callback`,
             idpId: idp.idpId,
             tokenKey: key,
             tokenCrt: cert,
