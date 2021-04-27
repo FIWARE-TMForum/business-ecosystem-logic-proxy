@@ -25,11 +25,38 @@
         .controller('LoginCtrl', [
             '$scope',
             '$element',
+            '$window',
             'EVENTS',
             LoginController
         ]);
 
-    function LoginController($scope, $element, EVENTS) {
+    function LoginController($scope, $element, $window, EVENTS) {
+        var vm = this;
+
+        vm.searchInput = '';
+        vm.idpId = null;
+        vm.handleEnterKeyUp = handleEnterKeyUp;
+        vm.launchSearch = launchSearch;
+        vm.setIdp = setIdp;
+        vm.login = login;
+        vm.isValid = isValid;
+
+        function handleEnterKeyUp(event) {}
+
+        function launchSearch() {}
+
+        function setIdp(idp) {
+            vm.idpId = idp;
+        }
+
+        function login(context) {
+            $window.open(context + vm.idpId, "_top");
+        }
+
+        function isValid() {
+            return vm.idpId != null;
+        }
+
         $scope.$on(EVENTS.SIGN_IN, (event) => {
             $element.modal('show');
         });

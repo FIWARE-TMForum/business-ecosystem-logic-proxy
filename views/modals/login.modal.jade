@@ -1,15 +1,41 @@
-.modal.fade(ng-controller="LoginCtrl")
+.modal.fade(ng-controller="LoginCtrl as loginCtl")
   .modal-dialog
     .modal-content
       .modal-header
         .h4
           strong #{ __("Login options") }
       .modal-body(style="display: flex; flex-direction:column;")
-        a.btn.btn-warning.navbar-btn.z-depth-1(href="#{ contextPath }/login" style="margin-right: 70px;margin-left: 70px;")
-          span.item-text #{ __("Sign in") } #{ __("Local IDP") }
-        each val in externalIdps
-          a.btn.btn-default.navbar-btn.z-depth-1(href="#{ contextPath }/login/#{ val.idpId }" style="margin-right: 70px;margin-left: 70px;")
-            span.item-text #{ __("Sign in") } #{ val.name }
+        .form-group()
+          .row(style="margin-bottom: 25px")
+            .col-sm-12
+              .input-group
+                input.form-control(ng-keyup="loginCtl.handleEnterKeyUp($event)",
+                ng-model="loginCtl.searchInput", type="text", placeholder="#{ __('Search') }...")
+
+                .input-group-btn
+                  a.btn.btn-default.z-depth-0(ng-click="loginCtl.launchSearch()", id="formSearch")
+                    span.item-icon.fa.fa-search
+                    span.item-text.hidden-xs #{ __("Search") }
+
+        input(type="hidden", ng-model="loginCtl.idpId", required)
+        .row
+          .col-xs-12
+            .table-responsive
+              table.table.table-bordered.table-hover.table-selectable
+                thead
+                  tr
+                    th #{ __("Name") }
+                    th #{ __("ID") }
+                tbody
+                  each val in externalIdps
+                    tr(ng-class="{ active: loginCtl.idpId == '#{ val.idpId }' }", ng-click="loginCtl.setIdp('#{ val.idpId }')")
+                      td #{ val.name }
+                      td #{ val.idpId }
+
+                      //a.btn.btn-default.navbar-btn.z-depth-1(href="#{ contextPath }/login/#{ val.idpId }" style="margin-right: 70px;margin-left: 70px;")
+                      //span.item-text #{ __("Sign in") } #{ val.name }
       .modal-footer
+        a.btn.btn-success.z-depth-1(data-dismiss="modal", ng-click="loginCtl.login('#{ contextPath }/login/')", ng-disabled="!loginCtl.isValid()")
+          span.item-text #{ __("Sign in") }
         a.btn.btn-default.z-depth-1(data-dismiss="modal")
           span.item-text #{ __("Cancel") }
