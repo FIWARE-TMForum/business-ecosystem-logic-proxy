@@ -694,6 +694,7 @@
 
         vm.isSelected = isSelected;
         vm.setCurrentType = setCurrentType;
+        vm.getCurrentForm = getCurrentForm;
         vm.initMediaType = initMediaType;
         vm.setForm = setForm;
         /* Meta info management */
@@ -734,6 +735,22 @@
             vm.currFormat = vm.currentType.formats[0];
         }
 
+        function getCurrentForm() {
+            let formFields = [];
+            if (vm.currentType.formOrder.length > 0) {
+                vm.currentType.formOrder.forEach((key) => {
+                    vm.currentType.form[key].id = key;
+                    formFields.push(vm.currentType.form[key]);
+                })
+            } else {
+                for (key in vm.currentType.form) {
+                    vm.currentType.form[key].id = key;
+                    formFields.push(vm.currentType.form[key]);
+                }
+            }
+            return formFields;
+        }
+
         function showAssetError(response) {
             var defaultMessage =
                 'There was an unexpected error that prevented your ' + 'digital asset to be registered';
@@ -763,6 +780,7 @@
                     function(result) {
                         // Set file location
                         vm.digitalChars[2].productSpecCharacteristicValue[0].value = result.content;
+                        vm.digitalChars[3].productSpecCharacteristicValue[0].value = result.id;
                         callback();
                     },
                     (response) => showAssetError(response),
@@ -785,7 +803,10 @@
                     vm.digitalChars[0].productSpecCharacteristicValue[0].value,
                     vm.digitalChars[1].productSpecCharacteristicValue[0].value,
                     meta,
-                    () => callback(),
+                    (result) => {
+                        vm.digitalChars[3].productSpecCharacteristicValue[0].value = result.id;
+                        callback();
+                    },
                     (response) => showAssetError(response),
                     assetId
                 );
@@ -876,6 +897,17 @@
                         })
                     );
                     vm.digitalChars[2].productSpecCharacteristicValue.push(
+                        ProductSpec.createCharacteristicValue({
+                            default: true
+                        })
+                    );
+                    vm.digitalChars.push(
+                        ProductSpec.createCharacteristic({
+                            name: 'Asset',
+                            description: 'ID of the asset being offered as registered in the BAE'
+                        })
+                    );
+                    vm.digitalChars[3].productSpecCharacteristicValue.push(
                         ProductSpec.createCharacteristicValue({
                             default: true
                         })
