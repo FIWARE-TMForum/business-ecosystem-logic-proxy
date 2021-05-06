@@ -69,35 +69,35 @@ div(ng-controller="AssetController as assetVM")
               select.form-control(ng-model="assetVM.digitalChars[1].productSpecCharacteristicValue[0].value"
                 ng-options="media for media in assetVM.currentType.mediaTypes track by media")
 
-          div(ng-repeat="(id, value) in assetVM.currentType.form")
+          div(ng-repeat="element in assetVM.getCurrentForm()")
             .form-group
-              label(ng-if="value.type != 'checkbox'") {{ assetVM.getMetaLabel(id) }}
-              div(ng-if="value.type == 'text'")
+              label(ng-if="element.type != 'checkbox'") {{ assetVM.getMetaLabel(element.id) }}
+              div(ng-if="element.type == 'text'")
                 .form-group(
-                  ng-class="{ 'has-error': assetFormCtl.hasError(assetForm[id]) }"
+                  ng-class="{ 'has-error': assetFormCtl.hasError(assetForm[element.id]) }"
                 )
                   input.form-control(
                     type="text",
-                    name="{{ id }}",
-                    ng-model="assetVM.meta[id]",
-                    placeholder="{{ value.placeholder }}"
-                    ng-required="value.mandatory"
+                    name="{{ element.id }}",
+                    ng-model="assetVM.meta[element.id]",
+                    placeholder="{{ element.placeholder }}"
+                    ng-required="element.mandatory"
                   )
                   .help-block(
-                    ng-messages="assetForm[id].$error"
-                    ng-show="assetFormCtl.hasError(assetForm[id])"
+                    ng-messages="assetForm[element.id].$error"
+                    ng-show="assetFormCtl.hasError(assetForm[element.id])"
                   )
                     span(ng-message="required") #{ __("This field is required.") }
 
-              div(ng-if="value.type == 'textarea'")
-                textarea.form-control(name="{{ id }}", ng-model="assetVM.meta[id]", placeholder="{{ value.placeholder }}")
-              div(ng-if="value.type == 'select'")
+              div(ng-if="element.type == 'textarea'")
+                textarea.form-control(name="{{ element.id }}", ng-model="assetVM.meta[element.id]", placeholder="{{ element.placeholder }}")
+              div(ng-if="element.type == 'select'")
                 select.form-control(
-                  type="text", name="{{ id }}", ng-model="assetVM.meta[id]", ng-options="opt.value as opt.text for opt in value.options track by opt.value")
-              .item-toggle(ng-if="value.type == 'checkbox'")
-                label.toggle {{ assetVM.getMetaLabel(id) }}
+                  type="text", name="{{ element.id }}", ng-model="assetVM.meta[element.id]", ng-options="opt.value as opt.text for opt in element.options track by opt.value")
+              .item-toggle(ng-if="element.type == 'checkbox'")
+                label.toggle {{ assetVM.getMetaLabel(element.id) }}
                   .track
-                    input(type="checkbox", ng-model="assetVM.meta[id]")
+                    input(type="checkbox", ng-model="assetVM.meta[element.id]")
                     i.fa.fa-2x
 
       div(ng-show="!assetVM.assetTypes.length")
