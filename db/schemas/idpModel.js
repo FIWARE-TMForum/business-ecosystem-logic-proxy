@@ -27,7 +27,9 @@ const idpSchema = new Schema({
     clientID: { type: String, required: true },
     callbackURL: { type: String, required: true },
     idpId: { type: String, required: true },
-    description: { type: String, required: false }
+    description: { type: String, required: false },
+    tokenKey: { type: String, required: true },
+    tokenCrt: { type: String, required: true }
 });
 
 idpSchema.index({ idpId: 1 }, { unique: true });

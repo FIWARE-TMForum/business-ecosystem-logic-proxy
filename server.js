@@ -45,6 +45,7 @@ const extLogin = config.extLogin == true;
 // Local auth method
 const auth = authModule.auth(config.oauth2);
 
+(async () => {
 /////////////////////////////////////////////////////////////////////
 ////////////////////////// MONGOOSE CONFIG //////////////////////////
 /////////////////////////////////////////////////////////////////////
@@ -216,36 +217,49 @@ let idps = {
     'local': auth
 };
 
+const addIdpStrategy = (idp) => {
+    let extAuth = authModule.auth(idp);
+    passport.use(idp.idpId, extAuth.STRATEGY);
+
+    // Handler for default logging
+    console.log(`/login/${idp.idpId}`);
+    app.all(`/login/${idp.idpId}`, function(req, res) {
+        console.log("--------------------------- Loggin");
+        console.log(idp);
+        console.log(extAuth);
+        const encodedState = getOAuth2State(utils.getCameFrom(req));
+
+        passport.authenticate(idp.idpId, { scope: extAuth.getScope(), state: encodedState })(req, res);
+    });
+
+    // Handler for the callback
+    console.log(`/auth/${idp.idpId}/callback`);
+    app.get(`/auth/${idp.idpId}/callback`, passport.authenticate(idp.idpId, { failureRedirect: '/error' }), function(req, res) {
+        const state = JSON.parse(base64url.decode(req.query.state));
+        const redirectPath = state[OAUTH2_CAME_FROM_FIELD] !== undefined ? state[OAUTH2_CAME_FROM_FIELD] : '/';
+
+        res.redirect(redirectPath);
+    });
+
+    return extAuth;
+}
+
 // Load other stragies if external IDPs are enabled
 if (extLogin) {
     // Load IDPs from database
-    idpService.getDBIdps().then((externalIdps) => {
-        externalIdps.forEach((idp) => {
-            let extAuth = authModule.auth(idp);
-            passport.use(idp.idpId, extAuth.STRATEGY);
+    const externalIdps = await idpService.getDBIdps();
 
-            // Handler for default logging
-            app.all(`/login/${idp.idpId}`, function(req, res) {
-                const encodedState = getOAuth2State(utils.getCameFrom(req));
+    externalIdps.forEach((idp) => {
+        console.log("===========================");
+        console.log(idp);
 
-                passport.authenticate(idp.idpId, { scope: extAuth.getScope(), state: encodedState })(req, res);
-            });
-
-            // Handler for the callback
-            app.get(`/auth/${idp.idpId}/callback`, passport.authenticate(idp.idpId, { failureRedirect: '/error' }), function(req, res) {
-                const state = JSON.parse(base64url.decode(req.query.state));
-                const redirectPath = state[OAUTH2_CAME_FROM_FIELD] !== undefined ? state[OAUTH2_CAME_FROM_FIELD] : '/';
-
-                res.redirect(redirectPath);
-            });
-
-            idps[idp.idpId] = extAuth;
-        });
+        const extAuth = addIdpStrategy(idp);
+        //authMiddleware.addIdp(idp, extAuth);
+        idps[idp.idpId] = extAuth;
     });
 }
 
 const authMiddleware = authModule.authMiddleware(idps);
-
 // Handler to destroy sessions
 app.all(config.logOutPath, function(req, res) {
     // Destroy the session and redirect the user to the main page
@@ -324,12 +338,26 @@ app.post(config.reputationServicePath + '/reputation/set', reputationService.sav
 //////////////////////////// IDP SERVICE ////////////////////////////
 /////////////////////////////////////////////////////////////////////
 
-app.use(config.idpServicePath + '/*', checkMongoUp, authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, failIfNotAuthenticated);
-app.get(config.idpServicePath + '/', idpService.getIdps);
-app.post(config.idpServicePath + '/', idpService.createIdp);
-app.get(config.idpServicePath + '/:idpId', idpService.getIdp);
-app.delete(config.idpServicePath + '/:idpId', idpService.deleteIdp);
-app.put(config.idpServicePath + '/:idpId', idpService.updateIdp);
+if (extLogin) {
+    const setNewIdp = function(idp) {
+        const extAuth = addIdpStrategy(idp);
+        authMiddleware.addIdp(idp.idpId, extAuth);
+    }
+
+    const removeIdp = function(idp) {
+        authMiddleware.removeIdp(idp.idpId);
+    }
+
+    idpService.setNewIdpProcessor(setNewIdp);
+    idpService.setRemoveIdpProcessor(removeIdp);
+
+    app.use(config.idpServicePath + '/*', checkMongoUp, authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, failIfNotAuthenticated);
+    app.get(config.idpServicePath + '/', idpService.getIdps);
+    app.post(config.idpServicePath + '/', idpService.createIdp);
+    app.get(config.idpServicePath + '/:idpId', idpService.getIdp);
+    app.delete(config.idpServicePath + '/:idpId', idpService.deleteIdp);
+    app.put(config.idpServicePath + '/:idpId', idpService.updateIdp);
+}
 
 /////////////////////////////////////////////////////////////////////
 /////////////////////////////// PORTAL //////////////////////////////
@@ -433,7 +461,8 @@ for (var p in config.publicPaths) {
     app.all(config.proxyPrefix + '/' + config.publicPaths[p], tmf.public);
 }
 
-app.all(config.proxyPrefix + '/*', authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, function(
+console.log('Now the paths ==== ');
+app.all(/^\/(?!(login|auth))(.*)\/?$/, authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, function(
     req,
     res,
     next
@@ -576,3 +605,4 @@ function onlistening() {
         }
     );
 }
+})();

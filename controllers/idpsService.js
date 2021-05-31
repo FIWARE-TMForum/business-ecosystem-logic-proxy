@@ -22,6 +22,9 @@ const config = require('../config');
 
 const idpService = (function() {
 
+    let addProcessor = null;
+    let removeProcessor = null;
+
     const getIdp = function(req, res) {
         const idpId = req.params.idpId;
         try {
@@ -113,6 +116,8 @@ const idpService = (function() {
             // Add generated fields
             idp.provider = 'i4trust';
             idp.clientID = config.localEORI;
+            idp.tokenKey = config.ishareKey;
+            idp.tokenCrt = config.ishareCrt;
             idp.callbackURL = `${marketUrl}/auth/${idp.idpId}/callback`
 
             idp.save((err) => {
@@ -120,6 +125,8 @@ const idpService = (function() {
                     console.log(err);
                     res.status(500).json({ error: 'Unexpected error' });
                 } else {
+                    addProcessor(idp);
+
                     let slash = req.url.slice(-1) === '/' ? '' : '/';
                     res.statusCode = 200;
                     res.setHeader('location', req.url + slash + idp.idpId);
@@ -139,6 +146,7 @@ const idpService = (function() {
                 if (err) {
                     res.status(500).json({ error: 'Unexpected error' });
                 } else {
+                    removeProcessor({idpId: idpId});
                     res.status(204).end();
                 }
             });
@@ -165,6 +173,7 @@ const idpService = (function() {
                                 console.log(err);
                                 res.status(500).json({ error: 'Unexpected error' });
                             } else {
+                                addProcessor(result);
                                 res.statusCode = 200;
                                 res.end();
                             }
@@ -180,13 +189,23 @@ const idpService = (function() {
         }
     }
 
+    const setNewIdpProcessor = function setNewIdpProcessor(processor) {
+        addProcessor = processor;
+    }
+
+    const setRemoveIdpProcessor = function setRemoveIdpProcessor(processor) {
+        removeProcessor = processor;
+    }
+
     return {
         getIdp: getIdp,
         getIdps: getIdps,
         getDBIdps, getDBIdps,
         createIdp: createIdp,
         deleteIdp: deleteIdp,
-        updateIdp: updateIdp
+        updateIdp: updateIdp,
+        setNewIdpProcessor: setNewIdpProcessor,
+        setRemoveIdpProcessor: setRemoveIdpProcessor
     }
 })();
 
