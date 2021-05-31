@@ -1,0 +1,44 @@
+form(name="step.form", novalidate)
+  .form-group
+    label #{ __("IDP EORI") }
+    input.form-control(
+      type="text"
+      name="idpId"
+      ng-model="createVM.data.idpId"
+      required
+      readonly
+    )
+  .row
+    .col-sm-6
+      .form-group
+        label #{ __("Name") }
+        input.form-control(
+          type="text"
+          name="name"
+          ng-model="createVM.data.name"
+          required
+          readonly
+        )
+    .col-sm-6
+      .form-group
+        label #{ __("Server") }
+        input.form-control(
+          type="url"
+          name="server"
+          ng-model="createVM.data.server"
+          required
+          readonly
+        )
+  .form-group
+    label
+      span #{ __("Description") }
+      small.text-muted (optional)
+    textarea.form-control(rows="3", name="description", ng-model="createVM.data.description", readonly)
+
+  .form-group.text-right
+    a.btn.btn-warning(
+      ng-click="createVM.create()"
+      ng-disabled="!step.form.$valid || createVM.status === createVM.STATUS.PENDING"
+    )
+      span.item-icon.fa.fa-spin.fa-spinner(ng-if="createVM.status === createVM.STATUS.PENDING")
+      span.item-text #{ __("Create") }

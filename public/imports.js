@@ -53,6 +53,7 @@ let jsAppFilesToInject = [
     'services/payment.service',
     'services/product-specification.service',
     'services/product-category.service',
+    'services/idp.service',
     'services/product-offering.service',
     'services/product-catalogue.service',
     'services/sharing-models.service',
@@ -77,6 +78,7 @@ let jsAppFilesToInject = [
     'controllers/product.controller',
     'controllers/product-specification.relationship.controller',
     'controllers/product-category.controller',
+    'controllers/idps.controller',
     'controllers/product-offering.controller',
     'controllers/product-offering.price.controller',
     'controllers/product-catalogue.controller',
@@ -120,7 +122,7 @@ let jsStockFilesToInject = [
 });
 
 // Admin dependencies
-let jsAdminFilesToInject = ['routes/admin.routes', 'routes/admin.product-category.routes'].map(function(path) {
+let jsAdminFilesToInject = ['routes/admin.routes', 'routes/admin.product-category.routes', 'routes/admin.idps.routes'].map(function(path) {
     return 'resources/core/js/' + path + '.js';
 });
 

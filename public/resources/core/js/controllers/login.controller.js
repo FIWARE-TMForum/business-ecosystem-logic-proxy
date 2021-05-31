@@ -27,10 +27,12 @@
             '$element',
             '$window',
             'EVENTS',
+            'PROMISE_STATUS',
+            'IdpsService',
             LoginController
         ]);
 
-    function LoginController($scope, $element, $window, EVENTS) {
+    function LoginController($scope, $element, $window, EVENTS, PROMISE_STATUS, IdpsService) {
         var vm = this;
 
         vm.searchInput = '';
@@ -40,13 +42,32 @@
         vm.setIdp = setIdp;
         vm.login = login;
         vm.isValid = isValid;
+        vm.load = load;
+
+        vm.STATUS = PROMISE_STATUS;
+        vm.status = this.STATUS.PENDING;
+        vm.idps = [];
+
+        function load() {
+            vm.status = this.STATUS.PENDING;
+            IdpsService.getIdps().then(
+                (items) => {
+                    vm.idps = items;
+                    vm.status = vm.STATUS.RESOLVED;
+                },
+                (err) => {
+                    vm.errorMessage = err;
+                    vm.status = vm.STATUS.REJECTED;
+                }
+            );
+        }
 
         function handleEnterKeyUp(event) {}
 
         function launchSearch() {}
 
-        function setIdp(idp) {
-            vm.idpId = idp;
+        function setIdp(index) {
+            vm.idpId = vm.idps[index].idpId;
         }
 
         function login(context) {
@@ -59,6 +80,7 @@
 
         $scope.$on(EVENTS.SIGN_IN, (event) => {
             $element.modal('show');
+            vm.load();
         });
     }
 })();

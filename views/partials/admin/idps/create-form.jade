@@ -1,0 +1,59 @@
+form(name="step.form", novalidate)
+  .form-group(ng-class="{ 'has-error': createForm.hasError(step.form.idpId) }")
+    label #{ __("IDP EORI") }
+    input.form-control(
+      type="text"
+      name="idpId"
+      ng-model="createVM.data.idpId"
+      required
+      ng-maxlength="100"
+      field-unique="IdpsService"
+    )
+    .help-block(
+      ng-messages="step.form.idpId.$error"
+      ng-show="createForm.hasError(step.form.idpId)"
+    )
+      span(ng-message="required") #{ __("This field is required.") }
+      span(ng-message="maxlength") #{ __("This field must not exceed 100 chars.") }
+      span(ng-message="unique") #{ __("This EORI is already taken.") }
+  .row
+    .col-sm-6
+      .form-group(ng-class="{ 'has-error': createForm.hasError(step.form.name) }")
+        label #{ __("Name") }
+        input.form-control(
+          type="text"
+          name="name"
+          ng-model="createVM.data.name"
+          required
+          ng-maxlength="100"
+        )
+        .help-block(
+          ng-messages="step.form.name.$error"
+          ng-show="createForm.hasError(step.form.name)"
+        )
+          span(ng-message="required") #{ __("This field is required.") }
+          span(ng-message="maxlength") #{ __("This field must not exceed 100 chars.") }
+    .col-sm-6
+      .form-group(ng-class="{ 'has-error': createForm.hasError(step.form.server) }")
+        label #{ __("Server") }
+        input.form-control(
+          type="url"
+          name="server"
+          ng-model="createVM.data.server"
+          required
+        )
+        .help-block(
+          ng-messages="step.form.server.$error"
+          ng-show="createForm.hasError(step.form.server)"
+        )
+          span(ng-message="required") #{ __("This field is required.") }
+          span(ng-message="url") #{ __("This field must be a valid URL.") }
+  .form-group
+    label
+      span #{ __("Description") }
+      small.text-muted (optional)
+    textarea.form-control(rows="3", name="description", ng-model="createVM.data.description")
+
+  .form-group.text-right
+    a.btn.btn-default.z-depth-1(ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])", ng-disabled="!step.form.$valid")
+      span.item-text #{ __("Next") }

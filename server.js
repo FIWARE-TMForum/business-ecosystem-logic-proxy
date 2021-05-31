@@ -2,6 +2,7 @@ const authorizeService = require('./controllers/authorizeService').authorizeServ
 const apiKeyService = require('./controllers/apiKeyService').apiKeyService;
 const slaService = require('./controllers/slaService').slaService;
 const reputationService = require('./controllers/reputationService').reputationService;
+const idpService = require('./controllers/idpsService').idpService;
 const bodyParser = require('body-parser');
 const base64url = require('base64url');
 const config = require('./config');
@@ -217,26 +218,29 @@ let idps = {
 
 // Load other stragies if external IDPs are enabled
 if (extLogin) {
-    config.externalIdps.forEach((idp) => {
-        let extAuth = authModule.auth(idp);
-        passport.use(idp.idpId, extAuth.STRATEGY);
+    // Load IDPs from database
+    idpService.getDBIdps().then((externalIdps) => {
+        externalIdps.forEach((idp) => {
+            let extAuth = authModule.auth(idp);
+            passport.use(idp.idpId, extAuth.STRATEGY);
 
-        // Handler for default logging
-        app.all(`/login/${idp.idpId}`, function(req, res) {
-            const encodedState = getOAuth2State(utils.getCameFrom(req));
+            // Handler for default logging
+            app.all(`/login/${idp.idpId}`, function(req, res) {
+                const encodedState = getOAuth2State(utils.getCameFrom(req));
 
-            passport.authenticate(idp.idpId, { scope: extAuth.getScope(), state: encodedState })(req, res);
+                passport.authenticate(idp.idpId, { scope: extAuth.getScope(), state: encodedState })(req, res);
+            });
+
+            // Handler for the callback
+            app.get(`/auth/${idp.idpId}/callback`, passport.authenticate(idp.idpId, { failureRedirect: '/error' }), function(req, res) {
+                const state = JSON.parse(base64url.decode(req.query.state));
+                const redirectPath = state[OAUTH2_CAME_FROM_FIELD] !== undefined ? state[OAUTH2_CAME_FROM_FIELD] : '/';
+
+                res.redirect(redirectPath);
+            });
+
+            idps[idp.idpId] = extAuth;
         });
-
-        // Handler for the callback
-        app.get(`/auth/${idp.idpId}/callback`, passport.authenticate(idp.idpId, { failureRedirect: '/error' }), function(req, res) {
-            const state = JSON.parse(base64url.decode(req.query.state));
-            const redirectPath = state[OAUTH2_CAME_FROM_FIELD] !== undefined ? state[OAUTH2_CAME_FROM_FIELD] : '/';
-
-            res.redirect(redirectPath);
-        });
-
-        idps[idp.idpId] = extAuth;
     });
 }
 
@@ -315,6 +319,17 @@ app.use(config.reputationServicePath + '/reputation/set', checkMongoUp, authMidd
 app.get(config.reputationServicePath + '/reputation', reputationService.getOverallReputation);
 app.get(config.reputationServicePath + '/reputation/:id/:consumerId', reputationService.getReputation);
 app.post(config.reputationServicePath + '/reputation/set', reputationService.saveReputation);
+
+/////////////////////////////////////////////////////////////////////
+//////////////////////////// IDP SERVICE ////////////////////////////
+/////////////////////////////////////////////////////////////////////
+
+app.use(config.idpServicePath + '/*', checkMongoUp, authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, failIfNotAuthenticated);
+app.get(config.idpServicePath + '/', idpService.getIdps);
+app.post(config.idpServicePath + '/', idpService.createIdp);
+app.get(config.idpServicePath + '/:idpId', idpService.getIdp);
+app.delete(config.idpServicePath + '/:idpId', idpService.deleteIdp);
+app.put(config.idpServicePath + '/:idpId', idpService.updateIdp);
 
 /////////////////////////////////////////////////////////////////////
 /////////////////////////////// PORTAL //////////////////////////////

@@ -42,7 +42,9 @@ html(ng-app="app")
           SHARING_CLASSES: '#{ proxyPath }/#{ rssPath }/rss/cdrs/classes',
           SHARING_SETTLEMENT: '#{ proxyPath }/#{ rssPath }/rss/settlement',
           SHARING_REPORTS: '#{ proxyPath }/#{ rssPath }/rss/settlement/reports',
-          SHOPPING_CART: '#{ shoppingCartPath }/:action/:id'
+          SHOPPING_CART: '#{ shoppingCartPath }/:action/:id',
+          IDPS: '#{ proxyPath }/IDP',
+          IDP: '#{ proxyPath }/IDP/:idpId'
         })
         .constant('CHARGE_PERIODS', '#{ chargePeriods }'.split(',').map(function (value) {
           var cp = value.split(':');
@@ -436,6 +438,17 @@ html(ng-app="app")
       include ./partials/admin/product-category/create-form-finish.jade
     script(type="text/ng-template", id="admin/product-category/update")
       include ./partials/admin/product-category/update.jade
+
+    script(type="text/ng-template", id="admin/idps/search")
+      include ./partials/admin/idps/search.jade
+    script(type="text/ng-template", id="admin/idps/create")
+      include ./partials/admin/idps/create.jade
+    script(type="text/ng-template", id="admin/idps/create/general")
+      include ./partials/admin/idps/create-form.jade
+    script(type="text/ng-template", id="admin/idps/create/finish")
+      include ./partials/admin/idps/create-form-finish.jade
+    script(type="text/ng-template", id="admin/idps/update")
+      include ./partials/admin/idps/update.jade
 
     script(type="text/ng-template", id="unauthorized")
       include partials/unauthorized
