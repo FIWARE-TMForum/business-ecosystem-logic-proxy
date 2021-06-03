@@ -40,6 +40,7 @@
             count: count,
             detail: detail,
             renew: renew,
+            remove: remove,
             getToken: getToken,
             setToken: setToken,
             getSla: getSla,
@@ -169,8 +170,8 @@
             }
         }
 
-        function renew(data) {
-            var renewResource = $resource(URLS.RENEW_JOB);
+        function processProductJob(url, data) {
+            var renewResource = $resource(url);
             var deferred = $q.defer();
 
             renewResource.save(
@@ -186,6 +187,14 @@
             );
 
             return deferred.promise;
+        }
+
+        function remove(data) {
+            return processProductJob(URLS.UNSUBSCRIBE_JOB, data)
+        }
+
+        function renew(data) {
+            return processProductJob(URLS.RENEW_JOB, data)
         }
 
         function getToken(data) {

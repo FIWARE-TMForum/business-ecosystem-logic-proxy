@@ -1,5 +1,33 @@
 
 .row
+  .modal.fade(id="confirm-prod-modal")
+    .modal-dialog
+      .modal-content
+        .modal-header
+          .h4
+            strong #{ __("Are you sure?") }
+        .modal-body
+          span(ng-if="!detailVM.isUsage()") #{ __("Are you sure that you want to unsubscribe the service? You will lost the remaining time until the next payment period. If you want to consume the remaining service time you can wait until the next renewal period") }
+          span(ng-if="detailVM.isUsage()") #{ __("Are you sure that you want to delete the IDP? You will need to pay the pending usage") }
+        .modal-footer
+          a.btn.btn-danger.z-depth-1(data-dismiss="modal", ng-click="detailVM.removeProduct()")
+            span.item-text #{ __("Unsubscribe") }
+          a.btn.btn-default.z-depth-1(data-dismiss="modal")
+            span.item-text #{ __("Cancel") }
+
+  .modal.fade(id="confirm-renew")
+    .modal-dialog
+      .modal-content
+        .modal-header
+          .h4
+            strong #{ __("Are you sure?") }
+        .modal-body
+          span #{ __("Are you sure that you want to renew the service? If you have remainig time until the service expiration time you won't be charged") }
+        .modal-footer
+          a.btn.btn-success.z-depth-1(data-dismiss="modal", ng-click="detailVM.renewProduct()")
+            span.item-text #{ __("Renew") }
+          a.btn.btn-default.z-depth-1(data-dismiss="modal")
+            span.item-text #{ __("Cancel") }
   .col-xs-12
     .panel.panel-default.z-depth-1.header-product
       .thumbnail
@@ -13,9 +41,12 @@
           a.btn.btn-success.z-depth-1(ng-if="detailVM.isDigital()" ng-click="detailVM.downloadAsset()")
             span.item-icon.fa.fa-download
             span.item-text #{ __("Download") }
-          a.btn.btn-success.z-depth-1(ng-if="detailVM.isRenewable()" ng-click="detailVM.renewProduct()")
+          a.btn.btn-success.z-depth-1(ng-if="detailVM.isRenewable()" ng-click="detailVM.renewProductModal()")
             span.item-icon.fa(ng-class="detailVM.loading() ? ['fa-spinner', 'fa-spin'] : 'fa-refresh'")
             span.item-text #{ __("Renew") }
+          a.btn.btn-success.z-depth-1(ng-if="detailVM.isRenewable() && !detailVM.isSuspended()" ng-click="detailVM.removeProductModal()")
+            span.item-icon.fa(ng-class="detailVM.loading() ? ['fa-spinner', 'fa-spin'] : 'fa-remove'")
+            span.item-text #{ __("Unsubscribe") }
       ul.nav.nav-justified.nav-pills
         li(ui-sref-active-eq="active")
           a(ui-sref="inventory.product.detail")

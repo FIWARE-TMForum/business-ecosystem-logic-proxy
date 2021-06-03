@@ -93,7 +93,7 @@
         }
 
         function inventorySearch() {
-            vm.list.status = LOADING;
+            vm.list.loadStatus = LOADING;
 
             if (vm.offset >= 0) {
                 var params = {};
@@ -104,12 +104,12 @@
 
                 InventoryProduct.search(params).then(
                     function(productList) {
-                        vm.list.status = LOADED;
+                        vm.list.loadStatus = LOADED;
                         angular.copy(productList, vm.list);
                     },
                     function(response) {
                         vm.error = Utils.parseError(response, 'It was impossible to load the list of products');
-                        vm.list.status = ERROR;
+                        vm.list.loadStatus = ERROR;
                     }
                 );
             }
@@ -194,7 +194,7 @@
         vm.item = {};
         vm.offerings = [];
         vm.charges = {
-            status: LOADING,
+            loadStatus: LOADING,
             items: []
         };
 
@@ -203,8 +203,12 @@
         vm.characteristicValueSelected = characteristicValueSelected;
         vm.hasProductPrice = hasProductPrice;
         vm.isRenewable = isRenewable;
+        vm.isSuspended = isSuspended;
         vm.isUsage = isUsage;
         vm.renewProduct = renewProduct;
+        vm.renewProductModal = renewProductModal;
+        vm.removeProduct = removeProduct;
+        vm.removeProductModal = removeProductModal;
         vm.loading = loading;
         vm.isDigital = isDigital;
         vm.isProtected = isProtected;
@@ -230,7 +234,7 @@
                 load = false;
 
                 vm.item = productRetrieved;
-                vm.item.status = LOADED;
+                vm.item.loadStatus = LOADED;
                 vm.offerings = [];
 
                 $scope.priceplanSelected = productRetrieved.productPrice[0];
@@ -258,18 +262,18 @@
                     charge.invoice = invoiceUrl;
                     return charge;
                 });
-                vm.charges.status = LOADED;
+                vm.charges.loadStatus = LOADED;
                 vm.token = retrieveToken();
 
             }, function(response) {
                 vm.charges.error = Utils.parseError(response, 'It was impossible to load the list of charges');
-                vm.charges.status = ERROR;
+                vm.charges.loadStatus = ERROR;
             });
 
             },
             function(response) {
                 vm.error = Utils.parseError(response, 'It was impossible to load product details');
-                vm.item.status = ERROR;
+                vm.item.loadStatus = ERROR;
             }
         );
 
@@ -299,7 +303,7 @@
                 vm.sla = slaRetrieved;
             }, function (response){
                 vm.error = Utils.parseError(response, 'The requested SLA could not be retrieved');
-                vm.item.status = ERROR;
+                vm.item.loadStatus = ERROR;
             })
         }
 
@@ -374,42 +378,94 @@
             return hasProductPrice() && (vm.item.productPrice[0].priceType.toLowerCase() == 'recurring' || isUsage());
         }
 
+        function isSuspended() {
+            return vm.item.status.toLowerCase() == 'suspended' || vm.item.status.toLowerCase() == 'terminated';
+        }
+
+        function processPayment(reviewJob) {
+            var ppalWindow = $window.open(reviewJob.headers['x-redirect-url'], '_blank');
+            var interval;
+
+            // The function to be called when the payment process has ended
+            var paymentFinished = function(closeModal) {
+                if (interval) {
+                    $interval.cancel(interval);
+                }
+
+                if (closeModal) {
+                    $rootScope.$emit(EVENTS.MESSAGE_CLOSED);
+                }
+                // Reload inventory page
+                $state.go($state.current, {}, {reload: true});
+
+            };
+
+            // Display a message and wait until the new tab has been closed to redirect the page
+            $rootScope.$emit(EVENTS.MESSAGE_CREATED, reviewJob.headers['x-redirect-url'], paymentFinished.bind(this, false));
+
+            if (ppalWindow) {
+                interval = $interval(function() {
+                    if (ppalWindow.closed) {
+                        paymentFinished(true);
+                    }
+                }, 500);
+            }
+        }
+
+        function removeProductModal() {
+            $('#confirm-prod-modal').modal('show');
+        }
+
+        function removeProduct() {
+            $('#confirm-prod-modal').modal('hide');
+            $('.modal-backdrop').remove();
+            load = true;
+            InventoryProduct.remove({
+                name: vm.item.name,
+                id: vm.item.id,
+                priceType: vm.item.productPrice[0].priceType.toLowerCase()
+            }).then(
+                function(reviewJob) {
+                    if ('x-redirect-url' in reviewJob.headers) {
+                        processPayment(reviewJob);
+                    } else {
+                        // Reload inventory page
+                        $state.go($state.current, {}, {reload: true});
+                    }
+                },
+                function(response) {
+                    load = false;
+                    var defaultMessage =
+                        'There was an unexpected error that prevented the ' + 'system from unsubscribing your product';
+                    var error = Utils.parseError(response, defaultMessage);
+
+                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                        error: error
+                    });
+                }
+            );
+        }
+
+        function renewProductModal() {
+            $('#confirm-renew').modal('show');
+        }
+
         function renewProduct() {
+            $('#confirm-renew').modal('hide');
+            $('.modal-backdrop').remove();
             load = true;
             InventoryProduct.renew({
                 name: vm.item.name,
                 id: vm.item.id,
                 priceType: vm.item.productPrice[0].priceType.toLowerCase()
-            }).then(function(reviewJob) {
-                load = false;
-                if ('x-redirect-url' in reviewJob.headers) {
-                    var ppalWindow = $window.open(reviewJob.headers['x-redirect-url'], '_blank');
-                    var interval;
-
-                    // The function to be called when the payment process has ended
-                    var paymentFinished = function(closeModal) {
-
-                        if (interval) {
-                            $interval.cancel(interval);
-                        }
-
-                        if (closeModal) {
-                            $rootScope.$emit(EVENTS.MESSAGE_CLOSED);
-                        }
+            }).then(
+                function(reviewJob) {
+                    load = false;
+                    if ('x-redirect-url' in reviewJob.headers) {
+                        processPayment(reviewJob);
+                    } else {
                         // Reload inventory page
                         $state.go($state.current, {}, {reload: true});
-
-                    };
-
-                    // Display a message and wait until the new tab has been closed to redirect the page
-                    $rootScope.$emit(EVENTS.MESSAGE_CREATED, reviewJob.headers['x-redirect-url'], paymentFinished.bind(this, false));
-                        if (ppalWindow) {
-                            interval = $interval(function() {
-                                if (ppalWindow.closed) {
-                                    paymentFinished(true);
-                                }
-                            }, 500);
-                        }
                     }
                 },
                 function(response) {
