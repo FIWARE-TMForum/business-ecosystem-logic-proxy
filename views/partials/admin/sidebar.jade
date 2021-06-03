@@ -14,7 +14,8 @@
         a(ui-sref="admin.productCategory", ui-sref-opts="{ reload: true, inherit: false }")
           span.item-icon.fa.fa-tag
           span.item-text #{ __("Categories") }
-      li(ui-sref-active="active")
-        a(ui-sref="admin.idps", ui-sref-opts="{ reload: true, inherit: false }")
-          span.item-icon.fa.fa-tag
-          span.item-text #{ __("IDPs") }
+      if extLogin
+        li(ui-sref-active="active")
+          a(ui-sref="admin.idps", ui-sref-opts="{ reload: true, inherit: false }")
+            span.item-icon.fa.fa-tag
+            span.item-text #{ __("IDPs") }
