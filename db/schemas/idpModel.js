@@ -33,5 +33,7 @@ const idpSchema = new Schema({
 });
 
 idpSchema.index({ idpId: 1 }, { unique: true });
+idpSchema.index({ name: "text" });
+idpSchema.index({ description: "text" });
 
 module.exports = mongoose.model('Idp', idpSchema);

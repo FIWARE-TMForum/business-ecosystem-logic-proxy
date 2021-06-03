@@ -54,8 +54,14 @@ const idpService = (function() {
     }
 
     const getIdps = function(req, res) {
+        let query = {}
+
+        if (req.query.search != null) {
+            query = { $text: { $search: req.query.search } }
+        }
+
         try {
-            idpModel.find({}, (err, result) => {
+            idpModel.find(query, (err, result) => {
                 if (err) {
                     res.status(500).json({ error: 'Unexpected error' });
                 } else {

@@ -20,7 +20,7 @@
         input(type="hidden", ng-model="loginCtl.idpId", required)
         .row
           .col-xs-12(ng-if="loginCtl.status === loginCtl.STATUS.RESOLVED")
-            .table-responsive
+            .table-responsive(ng-if="loginCtl.idps.length")
               table.table.table-bordered.table-hover.table-selectable
                 thead
                   tr
@@ -30,7 +30,7 @@
                   tr(ng-repeat="idp in loginCtl.idps", ng-class="{ active: loginCtl.idpId == '{{ idp.idpId }}' }", ng-click="loginCtl.setIdp($index)")
                     td {{ idp.name }}
                     td {{ idp.idpId }}
-
+            .alert.alert-info.text-center(ng-if="!loginCtl.idps.length") #{ __("No IDPs found.") }
           .col-xs-12(ng-if="loginCtl.status === loginCtl.STATUS.REJECTED")
             .alert.alert-danger.text-center {{ searchVM.errorMessage }}
           .col-xs-12(ng-if="loginCtl.status === loginCtl.STATUS.PENDING")

@@ -48,9 +48,9 @@
         vm.status = this.STATUS.PENDING;
         vm.idps = [];
 
-        function load() {
-            vm.status = this.STATUS.PENDING;
-            IdpsService.getIdps().then(
+        function load(search) {
+            vm.status = vm.STATUS.PENDING;
+            IdpsService.getIdps(search).then(
                 (items) => {
                     vm.idps = items;
                     vm.status = vm.STATUS.RESOLVED;
@@ -62,9 +62,15 @@
             );
         }
 
-        function handleEnterKeyUp(event) {}
+        function handleEnterKeyUp(event) {
+            if (event.keyCode == 13) {
+                load(vm.searchInput);
+            }
+        }
 
-        function launchSearch() {}
+        function launchSearch() {
+            load(vm.searchInput);
+        }
 
         function setIdp(index) {
             vm.idpId = vm.idps[index].idpId;

@@ -31,10 +31,18 @@
 
         const listResource = $resource(URLS.IDPS, {});
 
-        function getIdps () {
+        function getIdps (search) {
             const deferred = $q.defer();
-    
+            let params = {}
+
+            if (search != null && search != '') {
+                params = {
+                    search: search
+                };
+            }
+
             listResource.query(
+                params,
                 (itemList) => {
                     deferred.resolve(itemList);
                 },
