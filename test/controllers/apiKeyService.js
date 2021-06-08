@@ -26,7 +26,7 @@ describe('Accounting Service', function() {
     var getAuthorizeServiceController = function (accServiceSchema, uuidMock) {
         return proxyquire('../../controllers/apiKeyService', {
             '../db/schemas/accountingService': accServiceSchema,
-            'uuid/v4': uuidMock
+            'uuid': uuidMock
         }).apiKeyService;
     };
 
@@ -62,8 +62,10 @@ describe('Accounting Service', function() {
         });
 
         var saveAccountingService = function(saveReturn, sendMessage, statusExpected, done) {
-            var uuidMock = function() {
-                return DEFAULT_APIKEY;
+            var uuidMock = {
+                v4: function() {
+                    return DEFAULT_APIKEY;
+                }
             };
 
             var req = {

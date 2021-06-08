@@ -31,6 +31,8 @@ describe('Utils', function() {
             var userInfo = {
                 id: 'user-1',
                 displayName: 'User 1',
+                idp: 'local',
+                username: 'username',
                 roles: [
                     {
                         id: '106',
@@ -59,6 +61,7 @@ describe('Utils', function() {
             expect(headers['X-Roles']).toBe('provider,seller,');
             expect(headers['X-Actor']).toBe(userInfo.id);
             expect(headers['X-Ext-Name']).toBe('username');
+            expect(headers['X-IDP-ID']).toBe('local');
         });
     });
 

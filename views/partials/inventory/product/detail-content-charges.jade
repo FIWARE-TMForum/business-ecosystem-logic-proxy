@@ -1,9 +1,9 @@
 .row
   .col-xs-12
-    .container-spinner(ng-if="detailVM.charges.status == 'LOADING'")
+    .container-spinner(ng-if="detailVM.charges.loadStatus == 'LOADING'")
       span.fa.fa-spinner.fa-spin.fa-2x
 
-    .panel.panel-default.z-depth-1(ng-if="detailVM.charges.status == 'LOADED'", ng-repeat="charge in detailVM.charges.items")
+    .panel.panel-default.z-depth-1(ng-if="detailVM.charges.loadStatus == 'LOADED'", ng-repeat="charge in detailVM.charges.items")
       .panel-heading
         .h4
           strong
@@ -29,5 +29,5 @@
               span.item-icon.fa.fa-download
               span.item-text #{ __("Download invoice") }
 
-    .alert.alert-info.text-center(ng-if="detailVM.charges.status == 'LOADED' && !detailVM.charges.items.length") #{ __("No charges included.") }
-    .alert.alert-danger.text-center(ng-if="detailVM.charges.status == 'ERROR'") {{ detailVM.charges.error }}
+    .alert.alert-info.text-center(ng-if="detailVM.charges.loadStatus == 'LOADED' && !detailVM.charges.items.length") #{ __("No charges included.") }
+    .alert.alert-danger.text-center(ng-if="detailVM.charges.loadStatus == 'ERROR'") {{ detailVM.charges.error }}

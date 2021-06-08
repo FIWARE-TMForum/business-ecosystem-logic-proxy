@@ -2,6 +2,7 @@ const authorizeService = require('./controllers/authorizeService').authorizeServ
 const apiKeyService = require('./controllers/apiKeyService').apiKeyService;
 const slaService = require('./controllers/slaService').slaService;
 const reputationService = require('./controllers/reputationService').reputationService;
+const idpService = require('./controllers/idpsService').idpService;
 const bodyParser = require('body-parser');
 const base64url = require('base64url');
 const config = require('./config');
@@ -24,8 +25,8 @@ const tmf = require('./controllers/tmf').tmf();
 const trycatch = require('trycatch');
 const url = require('url');
 const utils = require('./lib/utils');
-const auth = require('./lib/auth').auth();
-const uuidv4 = require('uuid/v4');
+const authModule = require('./lib/auth');
+const uuidv4 = require('uuid').v4;
 
 const debug = !(process.env.NODE_ENV == 'production');
 
@@ -38,7 +39,13 @@ const PORT = config.https.enabled
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
+// External login enabled
+const extLogin = config.extLogin == true;
 
+// Local auth method
+const auth = authModule.auth(config.oauth2);
+
+(async () => {
 /////////////////////////////////////////////////////////////////////
 ////////////////////////// MONGOOSE CONFIG //////////////////////////
 /////////////////////////////////////////////////////////////////////
@@ -158,7 +165,8 @@ var ensureAuthenticated = function(req, res, next) {
         var encodedState = getOAuth2State(req.url);
         // This action will redirect the user the FIWARE Account portal,
         // so the next callback is not required to be called
-        passport.authenticate('fiware', { scope: ['all_info'], state: encodedState })(req, res);
+
+        passport.authenticate(config.oauth2.provider, { scope: auth.getScope(), state: encodedState })(req, res);
     } else {
         next();
     }
@@ -183,27 +191,75 @@ passport.serializeUser(function(user, done) {
 passport.deserializeUser(function(obj, done) {
     done(null, obj);
 });
-
-passport.use(auth.FIWARE_STRATEGY);
-
 // Passport middlewares
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Handler for logging in...
+// Load local strategy
+passport.use(config.oauth2.provider, auth.STRATEGY);
+
+// Handler for default logging
 app.all(config.logInPath, function(req, res) {
     var encodedState = getOAuth2State(utils.getCameFrom(req));
-    passport.authenticate('fiware', { scope: ['all_info'], state: encodedState })(req, res);
+
+    passport.authenticate(config.oauth2.provider, { scope: auth.getScope(), state: encodedState })(req, res);
 });
 
 // Handler for the callback
-app.get('/auth/fiware/callback', passport.authenticate('fiware', { failureRedirect: '/error' }), function(req, res) {
+app.get('/auth/' + config.oauth2.provider + '/callback', passport.authenticate(config.oauth2.provider, { failureRedirect: '/error' }), function(req, res) {
     var state = JSON.parse(base64url.decode(req.query.state));
     var redirectPath = state[OAUTH2_CAME_FROM_FIELD] !== undefined ? state[OAUTH2_CAME_FROM_FIELD] : '/';
 
     res.redirect(redirectPath);
 });
 
+let idps = {
+    'local': auth
+};
+
+const addIdpStrategy = (idp) => {
+    let extAuth = authModule.auth(idp);
+    passport.use(idp.idpId, extAuth.STRATEGY);
+
+    // Handler for default logging
+    console.log(`/login/${idp.idpId}`);
+    app.all(`/login/${idp.idpId}`, function(req, res) {
+        console.log("--------------------------- Loggin");
+        console.log(idp);
+        console.log(extAuth);
+        const encodedState = getOAuth2State(utils.getCameFrom(req));
+
+        passport.authenticate(idp.idpId, { scope: extAuth.getScope(), state: encodedState })(req, res);
+    });
+
+    // Handler for the callback
+    console.log(`/auth/${idp.idpId}/callback`);
+    app.get(`/auth/${idp.idpId}/callback`, passport.authenticate(idp.idpId, { failureRedirect: '/error' }), function(req, res) {
+        const state = JSON.parse(base64url.decode(req.query.state));
+        const redirectPath = state[OAUTH2_CAME_FROM_FIELD] !== undefined ? state[OAUTH2_CAME_FROM_FIELD] : '/';
+
+        res.redirect(redirectPath);
+    });
+
+    return extAuth;
+}
+
+// Load other stragies if external IDPs are enabled
+if (extLogin) {
+    // Load IDPs from database
+    const externalIdps = await idpService.getDBIdps();
+
+    externalIdps.forEach((idp) => {
+        console.log("===========================");
+        console.log(idp);
+
+        const extAuth = addIdpStrategy(idp);
+        //authMiddleware.addIdp(idp, extAuth);
+        idps[idp.idpId] = extAuth;
+    });
+}
+
+const authMiddleware = authModule.authMiddleware(idps);
 // Handler to destroy sessions
 app.all(config.logOutPath, function(req, res) {
     // Destroy the session and redirect the user to the main page
@@ -231,9 +287,9 @@ var checkMongoUp = function(req, res, next) {
 app.use(
     config.shoppingCartPath + '/*',
     checkMongoUp,
-    auth.headerAuthentication,
-    auth.checkOrganizations,
-    auth.setPartyObj,
+    authMiddleware.headerAuthentication,
+    authMiddleware.checkOrganizations,
+    authMiddleware.setPartyObj,
     failIfNotAuthenticated
 );
 app.get(config.shoppingCartPath + '/item/', shoppingCart.getCart);
@@ -257,7 +313,7 @@ app.use(config.apiKeyServicePath + '/*', checkMongoUp);
 app.post(config.apiKeyServicePath + '/apiKeys', apiKeyService.getApiKey);
 app.post(config.apiKeyServicePath + '/apiKeys/:apiKey/commit', apiKeyService.commitApiKey);
 
-app.use(config.authorizeServicePath + '/*', checkMongoUp, auth.headerAuthentication, auth.checkOrganizations, auth.setPartyObj, failIfNotAuthenticated);
+app.use(config.authorizeServicePath + '/*', checkMongoUp, authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, failIfNotAuthenticated);
 app.post(config.authorizeServicePath + '/token', authorizeService.saveAppToken);
 app.post(config.authorizeServicePath + '/read', authorizeService.getAppToken);
 
@@ -265,7 +321,7 @@ app.post(config.authorizeServicePath + '/read', authorizeService.getAppToken);
 ///////////////////////// SLA SERVICE ///////////////////////////////
 /////////////////////////////////////////////////////////////////////
 
-app.use(config.slaServicePath + '/*', checkMongoUp, auth.headerAuthentication, auth.checkOrganizations, auth.setPartyObj);
+app.use(config.slaServicePath + '/*', checkMongoUp, authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj);
 app.get(config.slaServicePath + '/sla/:id', slaService.getSla);
 app.post(config.slaServicePath + '/sla', failIfNotAuthenticated, slaService.saveSla);
 
@@ -273,10 +329,35 @@ app.post(config.slaServicePath + '/sla', failIfNotAuthenticated, slaService.save
 ///////////////////////// REPUTAION SERVICE /////////////////////////
 /////////////////////////////////////////////////////////////////////
 app.use(config.reputationServicePath + '/*', checkMongoUp);
-app.use(config.reputationServicePath + '/reputation/set', checkMongoUp, auth.headerAuthentication, auth.checkOrganizations, auth.setPartyObj, failIfNotAuthenticated);
+app.use(config.reputationServicePath + '/reputation/set', checkMongoUp, authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, failIfNotAuthenticated);
 app.get(config.reputationServicePath + '/reputation', reputationService.getOverallReputation);
 app.get(config.reputationServicePath + '/reputation/:id/:consumerId', reputationService.getReputation);
 app.post(config.reputationServicePath + '/reputation/set', reputationService.saveReputation);
+
+/////////////////////////////////////////////////////////////////////
+//////////////////////////// IDP SERVICE ////////////////////////////
+/////////////////////////////////////////////////////////////////////
+
+if (extLogin) {
+    const setNewIdp = function(idp) {
+        const extAuth = addIdpStrategy(idp);
+        authMiddleware.addIdp(idp.idpId, extAuth);
+    }
+
+    const removeIdp = function(idp) {
+        authMiddleware.removeIdp(idp.idpId);
+    }
+
+    idpService.setNewIdpProcessor(setNewIdp);
+    idpService.setRemoveIdpProcessor(removeIdp);
+
+    app.use(config.idpServicePath + '/*', checkMongoUp, authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, failIfNotAuthenticated);
+    app.get(config.idpServicePath + '/', idpService.getIdps);
+    app.post(config.idpServicePath + '/', idpService.createIdp);
+    app.get(config.idpServicePath + '/:idpId', idpService.getIdp);
+    app.delete(config.idpServicePath + '/:idpId', idpService.deleteIdp);
+    app.put(config.idpServicePath + '/:idpId', idpService.updateIdp);
+}
 
 /////////////////////////////////////////////////////////////////////
 /////////////////////////////// PORTAL //////////////////////////////
@@ -310,8 +391,13 @@ var renderTemplate = function(req, res, viewName) {
         orgAdmin: config.oauth2.roles.orgAdmin,
         seller: config.oauth2.roles.seller,
         customer: config.oauth2.roles.customer,
-        admin: config.oauth2.roles.admin
+        admin: config.oauth2.roles.admin,
+        extLogin: extLogin
     };
+
+    if (extLogin) {
+        options.externalIdps = config.externalIdps;
+    }
 
     if (utils.isAdmin(req.user)) {
         options.jsAppFilesToInject = options.jsAppFilesToInject.concat(imports.jsAdminFilesToInject);
@@ -375,7 +461,8 @@ for (var p in config.publicPaths) {
     app.all(config.proxyPrefix + '/' + config.publicPaths[p], tmf.public);
 }
 
-app.all(config.proxyPrefix + '/*', auth.headerAuthentication, auth.checkOrganizations, auth.setPartyObj, function(
+console.log('Now the paths ==== ');
+app.all(/^\/(?!(login|auth))(.*)\/?$/, authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, function(
     req,
     res,
     next
@@ -518,3 +605,4 @@ function onlistening() {
         }
     );
 }
+})();

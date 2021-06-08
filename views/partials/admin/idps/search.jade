@@ -1,0 +1,49 @@
+ui-view
+  .row
+    .col-xs-12
+      .row
+        .col-xs-12.col-sm-6
+          include ./breadcrumb.jade
+        .col-xs-12.col-sm-6
+          include ./search-toolbar.jade
+    .col-xs-12(ng-if="searchVM.status === searchVM.STATUS.RESOLVED")
+      .alert.alert-info.text-center(ng-if="!searchVM.list.length") #{ __("No idps found.") }
+      .table-responsive(ng-if="searchVM.list.length")
+        table.table.table-bordered.table-hover
+          thead
+            tr
+              th #{ __("ID") }
+              th #{ __("Name") }
+              th #{ __("Server") }
+              th #{ __("Manage") }
+          tbody
+            tr(ng-repeat="idp in searchVM.list")
+              td
+                span {{ idp.idpId }}
+              td
+                span {{ idp.name }}
+              td
+                span {{ idp.server }}
+              td
+                a.btn.btn-sm.btn-icon.btn-info(ng-click="searchVM.edit($index)")
+                  span.item-icon.fa.fa-pencil
+                a.btn.btn-sm.btn-icon.btn-danger(ng-click="searchVM.delete($index)")
+                  span.item-icon.fa.fa-trash
+    .col-xs-12(ng-if="searchVM.status === searchVM.STATUS.REJECTED")
+      .alert.alert-danger.text-center {{ searchVM.errorMessage }}
+    .col-xs-12(ng-if="searchVM.status === searchVM.STATUS.PENDING")
+      .container-spinner
+        span.fa.fa-spinner.fa-spin.fa-2x
+  .modal.fade(id="idp-modal")
+    .modal-dialog
+      .modal-content
+        .modal-header
+          .h4
+            strong #{ __("Are you sure?") }
+        .modal-body
+          span #{ __("Are you sure that you want to delete the IDP?") }
+        .modal-footer
+          a.btn.btn-danger.z-depth-1(data-dismiss="modal", ng-click="searchVM.deleteIdp()")
+            span.item-text #{ __("Delete") }
+          a.btn.btn-default.z-depth-1(data-dismiss="modal")
+            span.item-text #{ __("Cancel") }

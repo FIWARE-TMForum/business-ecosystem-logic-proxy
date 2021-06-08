@@ -33,18 +33,53 @@ config.theme = '';
 // OAuth2 configuration
 //'server': 'http://34.213.26.168:8000/',
 config.oauth2 = {
-    server: 'http://idm.docker:8000',
-    clientID: '',
-    clientSecret: '',
+    provider: 'fiware',
+    server: 'http://idm.docker:3000',
+    clientID: '19dd858c-328c-4642-93ab-da45e4d253ae',
+    clientSecret: '09ffe023-a242-46a3-bd83-9277d36e2379',
     callbackURL: 'http://proxy.docker:8004/auth/fiware/callback',
-    isLegacy: false,
+    oidc: true,
+    key: '281e126aa35c80f2',
     roles: {
-        admin: 'provider',
+        admin: 'admin',
         customer: 'customer',
         seller: 'seller',
         orgAdmin: 'manager'
     }
 };
+
+/*config.oauth2 = {
+    provider: 'keycloak',
+    server: 'http://keycloak.docker:8080',
+    clientID: 'bae',
+    clientSecret: 'df68d1b9-f85f-4b5e-807c-c8be3ba27388',
+    callbackURL: 'http://proxy.docker:8004/auth/keycloak/callback',
+    realm: 'bae',
+    oidc: true,
+    key: '281e126aa35c80f2',
+    roles: {
+        admin: 'admin',
+        customer: 'customer',
+        seller: 'seller',
+        orgAdmin: 'manager'
+    }
+}*/
+
+/*config.oauth2 = {
+    provider: 'github',
+    clientID: '',
+    clientSecret: '',
+    callbackURL: 'http://proxy.docker:8004/auth/github/callback',
+    roles: {
+        admin: 'admin',
+        customer: 'customer',
+        seller: 'seller',
+        orgAdmin: 'manager'
+    }
+}*/
+
+config.extLogin = true;
+config.externalIdps = []
 
 // Customer Role Required to buy items
 config.customerRoleRequired = false;
@@ -131,6 +166,12 @@ config.endpoints = {
         host: 'localhost',
         port: config.port,
         appSsl: false
+    },
+    idp: {
+        path: 'IDP',
+        host: 'localhost',
+        port: config.port,
+        appSsl: false
     }
 };
 
@@ -210,10 +251,25 @@ config.https.keyFile = process.env.BAE_LP_HTTPS_KEY || config.https.keyFile;
 config.https.port = process.env.BAE_LP_HTTPS_PORT || config.https.port;
 
 // OAuth2 Configuration
+if (!!process.env.BAE_LP_EXT_LOGIN) {
+    config.extLogin = process.env.BAE_LP_EXT_LOGIN == 'true';
+}
+
+config.oauth2.provider = process.env.BAE_LP_OAUTH2_PROVIDER || config.oauth2.provider;
 config.oauth2.server = process.env.BAE_LP_OAUTH2_SERVER || config.oauth2.server;
 config.oauth2.clientID = process.env.BAE_LP_OAUTH2_CLIENT_ID || config.oauth2.clientID;
 config.oauth2.clientSecret = process.env.BAE_LP_OAUTH2_CLIENT_SECRET || config.oauth2.clientSecret;
 config.oauth2.callbackURL = process.env.BAE_LP_OAUTH2_CALLBACK || config.oauth2.callbackURL;
+
+if (!!process.env.BAE_LP_OIDC_ENABLED) {
+    config.oauth2.oidc = process.env.BAE_LP_OIDC_ENABLED == 'true';
+}
+
+config.oauth2.key = process.env.BAE_LP_OIDC_KEY || config.oauth2.key;
+config.oauth2.realm = process.env.BAE_LP_OIDC_REALM || config.oauth2.realm;
+
+config.oauth2.tokenCrt = process.env.BAE_LP_OIDC_TOKEN_CRT || config.oauth2.tokenCrt;
+config.oauth2.tokenKey = process.env.BAE_LP_OIDC_TOKEN_KEY || config.oauth2.tokenKey;
 
 config.oauth2.roles.admin = process.env.BAE_LP_OAUTH2_ADMIN_ROLE || config.oauth2.roles.admin;
 config.oauth2.roles.seller = process.env.BAE_LP_OAUTH2_SELLER_ROLE || config.oauth2.roles.seller;
@@ -236,6 +292,7 @@ config.authorizeServicePath = checkPrefix(config.authorizeServicePath, '/authori
 config.apiKeyServicePath = checkPrefix(config.apiKeyServicePath, '/apiKeyService');
 config.slaServicePath = checkPrefix(config.slaServicePath, '/SLAManagement');
 config.reputationServicePath = checkPrefix(config.reputationServicePath, '/REPManagement');
+config.idpServicePath = checkPrefix(config.idpServicePath, '/IDP');
 config.logInPath = config.logInPath || '/login';
 config.logOutPath = config.logOutPath || '/logout';
 
@@ -360,4 +417,10 @@ config.usageChartURL = process.env.BAE_LP_USAGE_CHART || config.usageChartURL;
 config.indexes.elasticHost = process.env.BAE_LP_INDEX_URL || config.indexes.elasticHost;
 config.indexes.apiVersion = process.env.BAE_LP_INDEX_API_VERSION || config.indexes.apiVersion;
 
+// External IDPs configs
+if (config.extLogin && process.env.BAE_EXT_IDPS_CONF != null) {
+    config.localEORI = process.env.BAE_EORI;
+    config.ishareKey = process.env.BAE_TOKEN_KEY;
+    config.ishareCrt = process.env.BAE_TOKEN_CRT;
+}
 module.exports = config;
