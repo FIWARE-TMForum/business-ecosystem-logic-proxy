@@ -1,12 +1,12 @@
 FROM ubuntu:16.04
 
-LABEL Author="CoNWeT Lab. Universidad Politécnica de Madrid"
+LABEL MAINTAINER="Future Internet Consulting and Development Solutions S.L."
 
-ENV VERSION feature/oidc
+ENV VERSION master
 
 RUN apt-get update && apt-get install -y git xinetd python-pip wget curl && \
     pip install sh requests && \
-    git clone https://github.com/fdelavega/business-ecosystem-logic-proxy
+    git clone https://github.com/FIWARE-TMForum/business-ecosystem-logic-proxy
 
 WORKDIR business-ecosystem-logic-proxy
 

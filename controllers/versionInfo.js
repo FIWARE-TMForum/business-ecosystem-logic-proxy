@@ -18,9 +18,9 @@
  */
 
 exports.versionInfo = {
-    version: '7.8.0',
-    releaseDate: '06/05/2020',
+    version: '8.0.0',
+    releaseDate: '08/06/2021',
     gitHash: '',
-    doc: 'https://fiware-tmforum.github.io/Business-API-Ecosystem/v7.8.0/',
-    userDoc: 'http://business-api-ecosystem.readthedocs.io/en/v7.8.0/'
+    doc: 'https://fiware-tmforum.github.io/Business-API-Ecosystem/v8.0.0/',
+    userDoc: 'http://business-api-ecosystem.readthedocs.io/en/v8.0.0/'
 };

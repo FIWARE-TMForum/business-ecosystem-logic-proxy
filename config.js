@@ -80,6 +80,7 @@ config.oauth2 = {
 
 config.extLogin = true;
 config.externalIdps = []
+config.propagateToken = true;
 
 // Customer Role Required to buy items
 config.customerRoleRequired = false;
@@ -253,6 +254,10 @@ config.https.port = process.env.BAE_LP_HTTPS_PORT || config.https.port;
 // OAuth2 Configuration
 if (!!process.env.BAE_LP_EXT_LOGIN) {
     config.extLogin = process.env.BAE_LP_EXT_LOGIN == 'true';
+}
+
+if (!!process.env.BAE_LP_PROPAGATE_TOKEN) {
+    config.propagateToken = process.env.BAE_LP_PROPAGATE_TOKEN == 'true';
 }
 
 config.oauth2.provider = process.env.BAE_LP_OAUTH2_PROVIDER || config.oauth2.provider;
