@@ -19,6 +19,7 @@
 
 var defaultConfig = {
     port: 7496,
+    propagateToken: true,
     version: {
         version: '6.3.0',
         releaseDate: '2017-07-01',
