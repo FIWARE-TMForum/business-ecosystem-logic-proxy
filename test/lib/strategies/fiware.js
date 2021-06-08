@@ -21,12 +21,6 @@ const proxyquire = require('proxyquire');
 
 describe('Keyrock Strategy', () => {
 
-    const buildStrategyMock = function buildStrategyMock(passport) {
-        return proxyquire('../../../lib/strategies/fiware', {
-            'passport-fiware-oauth': passport,
-        }).strategy;
-    }
-
     const MockStrategy = function MockStrategy(params, cb) {
         this.params = params;
         this.cb = cb;
@@ -46,6 +40,12 @@ describe('Keyrock Strategy', () => {
     }
     MockStrategy.prototype.getParams = function () {
         return this.params;
+    }
+
+    const buildStrategyMock = function buildStrategyMock(passport) {
+        return proxyquire('../../../lib/strategies/fiware', {
+            'passport-fiware-oauth': passport,
+        }).strategy;
     }
 
     describe('Build Strategy', () => {
