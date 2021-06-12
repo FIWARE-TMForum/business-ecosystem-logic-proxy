@@ -31,7 +31,7 @@
     "moment": "^2.29.1",
     "mongoose": "^5.11.17",
     "node-minify": "^2.4.1",
-    "normalize-url": "^1.8.0",
+    "normalize-url": "^4.5.1",
     "on-finished": "^2.3.0",
     "passport": "^0.4.1",
     "passport-fiware-oauth": "^0.3.0",
