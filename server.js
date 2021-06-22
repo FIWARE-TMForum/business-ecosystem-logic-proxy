@@ -42,10 +42,11 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 // External login enabled
 const extLogin = config.extLogin == true;
 
-// Local auth method
-const auth = authModule.auth(config.oauth2);
-
 (async () => {
+
+// Local auth method
+const auth = await authModule.auth(config.oauth2);
+    
 /////////////////////////////////////////////////////////////////////
 ////////////////////////// MONGOOSE CONFIG //////////////////////////
 /////////////////////////////////////////////////////////////////////
