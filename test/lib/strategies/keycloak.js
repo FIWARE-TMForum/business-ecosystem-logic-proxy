@@ -49,7 +49,7 @@ describe('Keycloak Strategy', () => {
     }
 
     describe('Build Strategy', () => {
-        it('Should build passport strategy', (done) => {
+        it('Should build passport strategy', async (done) => {
             const passportMock = {
                 Strategy: MockStrategy
             }
@@ -65,7 +65,7 @@ describe('Keycloak Strategy', () => {
                 server: 'http://keycloak.com'
             }
             const builderToTest = toTest(config);
-            const userStrategy = builderToTest.buildStrategy((accessToken, refreshToken, profile, cbDone) => {
+            const userStrategy = await builderToTest.buildStrategy((accessToken, refreshToken, profile, cbDone) => {
                 expect(accessToken).toEqual('token');
                 expect(refreshToken).toEqual('refresh');
                 expect(profile).toEqual({

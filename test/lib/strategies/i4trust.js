@@ -50,7 +50,7 @@ describe('i4trust Strategy', () => {
     }
 
     describe('Build Strategy', () => {
-        it('Should build passport strategy', (done) => {
+        it('Should build passport strategy', async (done) => {
             const passportMock = {
                 Strategy: MockStrategy
             }
@@ -77,7 +77,7 @@ describe('i4trust Strategy', () => {
                 tokenCrt: './ca.crt'
             }
             const builderToTest = toTest(config);
-            const userStrategy = builderToTest.buildStrategy((accessToken, refreshToken, profile, cbDone) => {
+            const userStrategy = await builderToTest.buildStrategy((accessToken, refreshToken, profile, cbDone) => {
                 // Callback configured to be called when the strategy succeeds in the login
                 // Check that the callback is properly configured
                 expect(accessToken).toEqual('token');

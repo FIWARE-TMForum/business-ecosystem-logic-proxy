@@ -50,7 +50,7 @@ describe('Keyrock Strategy', () => {
 
     describe('Build Strategy', () => {
 
-        it('should create FIWARE strategy with OIDC disabled', (done) => {
+        it('should create FIWARE strategy with OIDC disabled', async (done) => {
             const passportMock = {
                 OAuth2Strategy: MockStrategy
             }
@@ -67,7 +67,7 @@ describe('Keyrock Strategy', () => {
                 key: 'key'
             }
             const builderToTest = toTest(config);
-            const userStrategy = builderToTest.buildStrategy((accessToken, refreshToken, profile, cbDone) => {
+            const userStrategy = await builderToTest.buildStrategy((accessToken, refreshToken, profile, cbDone) => {
                 // Callback configured to be called when the strategy succeeds in the login
                 // Check that the callback is properly configured
                 expect(accessToken).toEqual('token');
@@ -127,7 +127,7 @@ describe('Keyrock Strategy', () => {
             userStrategy.loginComplete();
         });
 
-        it('should create FIWARE strategy with OIDC enabled and user info missing', (done) => {
+        it('should create FIWARE strategy with OIDC enabled and user info missing', async (done) => {
             const passportMock = {
                 OAuth2Strategy: MockStrategy
             }
@@ -141,7 +141,7 @@ describe('Keyrock Strategy', () => {
                 oidc: false,
             }
             const builderToTest = toTest(config);
-            const userStrategy = builderToTest.buildStrategy((accessToken, refreshToken, profile, cbDone) => {
+            const userStrategy = await builderToTest.buildStrategy((accessToken, refreshToken, profile, cbDone) => {
                 let params = userStrategy.getParams();
                 expect(params).toEqual({
                     clientID: 'client_id',

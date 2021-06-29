@@ -39,6 +39,10 @@ config.oauth2 = {
     clientSecret: '09ffe023-a242-46a3-bd83-9277d36e2379',
     callbackURL: 'http://proxy.docker:8004/auth/fiware/callback',
     oidc: true,
+    oidcScopes: "openid",
+    oidcDiscoveryURI: null,
+    oidcDefaultRole: null,
+    oidcTokenEndpointAuthMethod: "client_secret_basic",
     key: '281e126aa35c80f2',
     roles: {
         admin: 'admin',
@@ -268,6 +272,15 @@ config.oauth2.callbackURL = process.env.BAE_LP_OAUTH2_CALLBACK || config.oauth2.
 
 if (!!process.env.BAE_LP_OIDC_ENABLED) {
     config.oauth2.oidc = process.env.BAE_LP_OIDC_ENABLED == 'true';
+}
+
+config.oauth2.oidcScopes = process.env.BAE_LP_OIDC_SCOPES || config.oauth2.oidcScopes;
+config.oauth2.oidcTokenEndpointAuthMethod = process.env.BAE_LP_OIDC_TOKEN_AUTH_METHOD || config.oauth2.oidcTokenEndpointAuthMethod;
+if (process.env.BAE_LP_OIDC_DISCOVERY_URI) {
+    config.oauth2.oidcDiscoveryURI = process.env.BAE_LP_OIDC_DISCOVERY_URI;
+}
+if (process.env.BAE_LP_OIDC_DEFAULT_ROLE) {
+    config.oauth2.oidcDefaultRole = process.env.BAE_LP_OIDC_DEFAULT_ROLE;
 }
 
 config.oauth2.key = process.env.BAE_LP_OIDC_KEY || config.oauth2.key;
