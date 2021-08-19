@@ -41,9 +41,9 @@ config.oauth2 = {
     oidc: true,
     oidcScopes: "openid",
     oidcDiscoveryURI: null,
-    oidcDefaultRole: null,
     oidcTokenEndpointAuthMethod: "client_secret_basic",
     key: '281e126aa35c80f2',
+    defaultRole: null,
     roles: {
         admin: 'admin',
         customer: 'customer',
@@ -270,6 +270,10 @@ config.oauth2.clientID = process.env.BAE_LP_OAUTH2_CLIENT_ID || config.oauth2.cl
 config.oauth2.clientSecret = process.env.BAE_LP_OAUTH2_CLIENT_SECRET || config.oauth2.clientSecret;
 config.oauth2.callbackURL = process.env.BAE_LP_OAUTH2_CALLBACK || config.oauth2.callbackURL;
 
+if (process.env.BAE_LP_OAUTH2_DEFAULT_ROLE) {
+    config.oauth2.defaultRole = process.env.BAE_LP_OAUTH2_DEFAULT_ROLE;
+}
+
 if (!!process.env.BAE_LP_OIDC_ENABLED) {
     config.oauth2.oidc = process.env.BAE_LP_OIDC_ENABLED == 'true';
 }
@@ -278,9 +282,6 @@ config.oauth2.oidcScopes = process.env.BAE_LP_OIDC_SCOPES || config.oauth2.oidcS
 config.oauth2.oidcTokenEndpointAuthMethod = process.env.BAE_LP_OIDC_TOKEN_AUTH_METHOD || config.oauth2.oidcTokenEndpointAuthMethod;
 if (process.env.BAE_LP_OIDC_DISCOVERY_URI) {
     config.oauth2.oidcDiscoveryURI = process.env.BAE_LP_OIDC_DISCOVERY_URI;
-}
-if (process.env.BAE_LP_OIDC_DEFAULT_ROLE) {
-    config.oauth2.oidcDefaultRole = process.env.BAE_LP_OIDC_DEFAULT_ROLE;
 }
 
 config.oauth2.key = process.env.BAE_LP_OIDC_KEY || config.oauth2.key;
