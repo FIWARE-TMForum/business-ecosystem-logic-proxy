@@ -116,7 +116,7 @@ var shoppingCart = (function() {
             if (err) {
                 endRequest(res, 500, null, { error: err.message });
             } else {
-                if (dbRes.result['n'] > 0) {
+                if (dbRes['n'] > 0) {
                     endRequest(res, 204, null, null);
                 } else {
                     endRequest(res, 404, null, {

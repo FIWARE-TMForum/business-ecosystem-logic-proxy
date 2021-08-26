@@ -330,7 +330,7 @@ describe('Shopping Cart', function() {
             var cartItemSchema = {
                 remove: function(conditions, callback) {
                     dbQueryConditions = conditions;
-                    callback(null, { result: { n: 1 } });
+                    callback(null, { n: 1 } );
                 }
             };
 
