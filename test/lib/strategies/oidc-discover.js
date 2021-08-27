@@ -21,8 +21,9 @@ const proxyquire = require('proxyquire');
 
 describe('OIDC-Discover Strategy', () => {
 
-    const MockStrategy = function MockStrategy(params, cb) {
-        this.params = params;
+    const MockStrategy = function MockStrategy(client, cb) {
+	this.client = client;
+        //this.params = opt.params;
         this.cb = cb;
     }
     MockStrategy.prototype.setProfileParams = function(err, profile, token, refreshToken) {
@@ -36,28 +37,47 @@ describe('OIDC-Discover Strategy', () => {
         done(this.userErr, this.profile);
     }
     MockStrategy.prototype.loginComplete = function() {
-        this.cb(this.token, this.refreshToken, this.profile, 'cb');
+        this.cb({access_token: this.token, refresh_token: this.refreshToken}, this.profile, 'cb');
     }
-    MockStrategy.prototype.getParams = function () {
-        return this.params;
+    MockStrategy.prototype.getClient = function () {
+        return this.client;
     }
 
+    const discover = async function discover(uri) {
+	const client = function(opts) {
+	    return {
+		discovery_uri: uri,
+		client_id: opts.client_id,
+		client_secret: opts.client_secret,
+		redirect_uris: opts.redirect_uris,
+		token_endpoint_auth_method: opts.token_endpoint_auth_method
+	    };
+	}
+	return {
+	    Client: client
+	};
+    }
+    const MockIssuer = {
+	discover: discover
+    };
+
     const buildStrategyMock = function buildStrategyMock(passport) {
-        return proxyquire('../../../lib/strategies/oidc-discover', {
+	return proxyquire('../../../lib/strategies/oidc-discover', {
             'openid-client': passport,
         }).strategy;
     }
-
+    
     describe('Build Strategy', () => {
 	
-	it('should create strategy', async (done) => {
+	it('should create strategy with default role', async () => {
 	    
             const passportMock = {
-                OAuth2Strategy: MockStrategy
-            }
-
+		Issuer: MockIssuer,
+		Strategy: MockStrategy
+            };
+	    
             const toTest = buildStrategyMock(passportMock);
-
+	    
             // Test the strategy builder
             const config = {
                 clientID: 'client_id',
@@ -71,10 +91,59 @@ describe('OIDC-Discover Strategy', () => {
 		key: "key"
             }
             const builderToTest = toTest(config);
+	    //done();
+	    const userStrategy = await builderToTest.buildStrategy((accessToken, refreshToken, profile, cbDone) => {
+                // Callback configured to be called when the strategy succeeds in the login
+                // Check that the callback is properly configured
+		expect(accessToken).toEqual('token');
+                expect(refreshToken).toEqual('refresh');
+                expect(profile).toEqual({
+                    username: 'username',
+		    preferred_username: 'username',
+		    id: 'username',
+                    displayName: 'username',
+		    organizations: [],
+                    roles: [{
+			name: "seller",
+			id: "seller"
+		    }]
+                });
+		
+		let params = userStrategy.getClient();
+                expect(params.client).toEqual({
+		    discovery_uri: 'http://ipd.com/.well-known/openid-configuration',
+                    client_id: 'client_id',
+                    client_secret: 'client_secret',
+                    redirect_uris: ['http://maket.com/callback'],
+		    token_endpoint_auth_method: 'client_secret_basic'
+                });
+		
+            });
 
+	    userStrategy.setProfileParams(null, {
+		preferred_username: 'username',
+            }, 'token', 'refresh');
+
+            userStrategy.loginComplete();
+	    
 	});
 
-	
+	it('should return specified scope', () => {
+            const passportMock = {
+		Issuer: MockIssuer,
+                Strategy: MockStrategy
+            }
+
+            const toTest = buildStrategyMock(passportMock);
+
+            const config = {
+		oidcScopes: ["openid", "profile", "email"]
+	    }
+            const builderToTest = toTest(config);
+            const scope = builderToTest.getScope();
+
+            expect(scope).toEqual(['openid', 'profile', 'email']);
+        });
     });
     
 });
