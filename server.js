@@ -218,8 +218,8 @@ let idps = {
     'local': auth
 };
 
-const addIdpStrategy = (idp) => {
-    let extAuth = authModule.auth(idp);
+const addIdpStrategy = async (idp) => {
+    let extAuth = await authModule.auth(idp);
     passport.use(idp.idpId, extAuth.STRATEGY);
 
     // Handler for default logging
@@ -250,11 +250,11 @@ if (extLogin) {
     // Load IDPs from database
     const externalIdps = await idpService.getDBIdps();
 
-    externalIdps.forEach((idp) => {
+    externalIdps.forEach(async (idp) => {
         console.log("===========================");
         console.log(idp);
 
-        const extAuth = addIdpStrategy(idp);
+        const extAuth = await addIdpStrategy(idp);
         //authMiddleware.addIdp(idp, extAuth);
         idps[idp.idpId] = extAuth;
     });
@@ -340,8 +340,8 @@ app.post(config.reputationServicePath + '/reputation/set', reputationService.sav
 /////////////////////////////////////////////////////////////////////
 
 if (extLogin) {
-    const setNewIdp = function(idp) {
-        const extAuth = addIdpStrategy(idp);
+    const setNewIdp = async function(idp) {
+        const extAuth = await addIdpStrategy(idp);
         authMiddleware.addIdp(idp.idpId, extAuth);
     }
 

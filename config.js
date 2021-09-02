@@ -437,7 +437,7 @@ config.indexes.elasticHost = process.env.BAE_LP_INDEX_URL || config.indexes.elas
 config.indexes.apiVersion = process.env.BAE_LP_INDEX_API_VERSION || config.indexes.apiVersion;
 
 // External IDPs configs
-if (config.extLogin && process.env.BAE_EXT_IDPS_CONF != null) {
+if (config.extLogin) {
     config.localEORI = process.env.BAE_EORI;
     config.ishareKey = process.env.BAE_TOKEN_KEY;
     config.ishareCrt = process.env.BAE_TOKEN_CRT;
