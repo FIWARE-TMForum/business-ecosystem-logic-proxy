@@ -162,6 +162,65 @@ describe('Keyrock Strategy', () => {
 
             userStrategy.loginComplete();
         });
+
+	it('should create FIWARE strategy with default role set and without OIDC', async (done) => {
+	    const passportMock = {
+                OAuth2Strategy: MockStrategy
+            }
+
+            const toTest = buildStrategyMock(passportMock);
+	    
+	    // Test the strategy builder
+            const config = {
+                clientID: 'client_id',
+                clientSecret: 'client_secret',
+                callbackURL: 'http://maket.com/callback',
+                server: 'http://ipd.com',
+                oidc: false,
+                defaultRole: "seller"
+            }
+            const builderToTest = toTest(config);
+	    const userStrategy = await builderToTest.buildStrategy((accessToken, refreshToken, profile, cbDone) => {
+                // Callback configured to be called when the strategy succeeds in the login
+                // Check that the callback is properly configured
+                expect(accessToken).toEqual('token');
+                expect(refreshToken).toEqual('refresh');
+                expect(profile).toEqual({
+                    expire: 12345678,
+                    username: 'username',
+                    displayName: 'display name',
+                    _json: {
+                        exp: 12345678,
+                        username: 'username',
+                        displayName: 'display name',
+                    },
+		    roles: [{
+			name: "seller",
+			id: "seller"
+		    }]
+                });
+
+		let params = userStrategy.getParams();
+                expect(params).toEqual({
+                    clientID: 'client_id',
+                    clientSecret: 'client_secret',
+                    callbackURL: 'http://maket.com/callback',
+                    serverURL: 'http://ipd.com'
+                });
+                done();
+            });
+
+	    userStrategy.setProfileParams(null, {
+                _json: {
+                    exp: 12345678,
+                    username: 'username',
+                    displayName: 'display name',
+                }
+            }, 'token', 'refresh');
+
+            userStrategy.loginComplete();
+	    
+	});
     });
 
     describe('Get Scope', () => {
