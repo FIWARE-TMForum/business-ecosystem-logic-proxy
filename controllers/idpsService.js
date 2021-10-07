@@ -70,7 +70,7 @@ const idpService = (function() {
                             name: item.name,
                             server: item.server,
                             idpId: item.idpId,
-                            description: result.description
+                            description: item.description
                         }
                     })
                     res.statusCode = 200;
@@ -128,8 +128,11 @@ const idpService = (function() {
 
             idp.save((err) => {
                 if (err) {
-                    console.log(err);
-                    res.status(500).json({ error: 'Unexpected error' });
+                    if (err.message && err.message.startsWith('E11000')) {
+                        res.status(409).json({ error: 'The provided IDP ID is already registered' });
+                    } else {
+                        res.status(500).json({ error: 'Unexpected error' });
+                    }
                 } else {
                     addProcessor(idp);
 
