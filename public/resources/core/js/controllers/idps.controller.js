@@ -27,7 +27,7 @@
             '$state', '$rootScope', 'PROMISE_STATUS', 'EVENTS', 'IdpsService', 'Utils', IdpsSearchController
         ])
         .controller('IdpsCreateCtrl', [
-            '$state', '$rootScope', 'PROMISE_STATUS', 'EVENTS', 'IdpsService', IdpsCreateController
+            '$state', '$rootScope', 'PROMISE_STATUS', 'EVENTS', 'IdpsService', 'Utils', IdpsCreateController
         ])
         .controller('IdpsUpdateCtrl', [
             '$state', '$rootScope', 'PROMISE_STATUS', 'DATA_STATUS', 'EVENTS', 'IdpsService', 'Utils', IdpsUpdateController
@@ -78,7 +78,7 @@
         }
     }
 
-    function IdpsCreateController($state, $rootScope, PROMISE_STATUS, EVENTS, IdpsService) {
+    function IdpsCreateController($state, $rootScope, PROMISE_STATUS, EVENTS, IdpsService, Utils) {
         const vm = this;
         this.stepList = [
             {
