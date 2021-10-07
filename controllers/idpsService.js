@@ -70,7 +70,7 @@ const idpService = (function() {
                             name: item.name,
                             server: item.server,
                             idpId: item.idpId,
-                            description: result.description
+                            description: item.description
                         }
                     })
                     res.statusCode = 200;
