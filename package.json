@@ -41,7 +41,7 @@
     "passport-github": "^1.1.0",
     "passport-i4trust": "^0.1.0-rc1",
     "passport-keycloak-oauth2-oidc": "^1.0.5",
-    "passport-oauth2": "^1.5.0",
+    "passport-oauth2": "^1.6.1",
     "promiz": "^1.0.5",
     "request": "^2.88.0",
     "trycatch": "^1.5.21",
