@@ -81,7 +81,15 @@
             });
         }
 
-        Category.search($state.params).then(
+        const params = {
+            status: 'Launched'
+        };
+
+        if ($state.params.categoryId) {
+            params.categoryId = $state.params.categoryId;
+        }
+
+        Category.search(params).then(
             function(categoryList) {
                 angular.copy(categoryList, vm.list);
                 vm.list.status = LOADED;
