@@ -183,7 +183,9 @@
         vm.STATUS = PROMISE_STATUS;
 
         vm.item = {};
+        vm.updateStatus = updateStatus;
         vm.update = update;
+        vm.statusUpdated = false;
 
         var detailPromise = Category.detail($state.params.categoryId);
         var updatePromise = null;
@@ -203,6 +205,11 @@
                 return detailPromise != null ? detailPromise.$$state.status : -1;
             }
         });
+
+        function updateStatus(status) {
+            vm.data.lifecycleStatus = status;
+            vm.statusUpdated = true;
+        }
 
         function update() {
             var updated = {};

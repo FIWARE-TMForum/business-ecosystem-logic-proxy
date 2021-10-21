@@ -23,9 +23,9 @@
           span(ng-message="maxlength") #{ __("This field must not exceed 100 chars.") }
           span(ng-message="unique") #{ __("This name is already taken.") }
       .form-group
-        label Status
+        label #{ __("Status") }
         .status-group
-          .status-item(ng-repeat="status in FILTER_STATUS", class="status-{{ status.value | lowercase }}", ng-class="{ active: updateVM.data.lifecycleStatus == status.value }")
+          .status-item(ng-repeat="status in FILTER_STATUS", class="status-{{ status.value | lowercase }}", ng-click="updateVM.updateStatus(status.value)", ng-class="{ active: updateVM.data.lifecycleStatus == status.value, enabled: updateVM.data.lifecycleStatus == status.value && !updateVM.statusUpdated }")
             span.item-icon
             span.item-text {{ status.value }}
       .form-group
