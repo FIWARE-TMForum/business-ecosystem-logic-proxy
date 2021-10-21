@@ -476,7 +476,7 @@ var catalog = (function() {
         var categoryCollectionPath = '/category';
         var categoryPath = apiUrl.substring(0, apiUrl.indexOf(categoryCollectionPath) + categoryCollectionPath.length);
 
-        var queryParams = '?name=' + categoryName;
+        var queryParams = '?lifecycleStatus=Launched&name=' + categoryName;
 
         if (isRoot) {
             queryParams += '&isRoot=true';

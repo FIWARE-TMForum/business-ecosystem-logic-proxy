@@ -156,6 +156,10 @@
                         if (attrs.fieldOriginalValue != newValue) {
                             params[attrs.name] = newValue;
 
+                            if (attrs.fieldUniqueStatus != null) {
+                                params['lifecycleStatus'] = attrs.fieldUniqueStatus;
+                            }
+
                             $injector
                                 .get(attrs.fieldUnique)
                                 .exists(params)

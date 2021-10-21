@@ -1487,7 +1487,7 @@ describe('Catalog API', function() {
         var categoryName = 'example';
 
         var categoriesRequest = {
-            query: '?name=' + categoryName + '&isRoot=true',
+            query: '?lifecycleStatus=Launched&name=' + categoryName + '&isRoot=true',
             status: 200,
             body: []
         };
@@ -1499,7 +1499,7 @@ describe('Catalog API', function() {
         var categoryName = 'example';
 
         var categoriesRequest = {
-            query: '?name=' + categoryName + '&isRoot=true',
+            query: '?lifecycleStatus=Launched&name=' + categoryName + '&isRoot=true',
             status: 500,
             body: 'ERROR'
         };
@@ -1519,7 +1519,7 @@ describe('Catalog API', function() {
         var categoryName = 'example';
 
         var categoriesRequest = {
-            query: '?name=' + categoryName + '&isRoot=true',
+            query: '?lifecycleStatus=Launched&name=' + categoryName + '&isRoot=true',
             status: 200,
             body: [{}]
         };
@@ -1532,7 +1532,7 @@ describe('Catalog API', function() {
         var parentId = 7;
 
         var categoriesRequest = {
-            query: '?name=' + categoryName + '&parentId=' + parentId,
+            query: '?lifecycleStatus=Launched&name=' + categoryName + '&parentId=' + parentId,
             status: 200,
             body: [{}]
         };
@@ -3523,7 +3523,7 @@ describe('Catalog API', function() {
         var categoryName = 'valid';
 
         var categoriesRequest = {
-            query: '?name=' + categoryName + '&isRoot=true',
+            query: '?lifecycleStatus=Launched&name=' + categoryName + '&isRoot=true',
             status: 200,
             body: []
         };
@@ -3565,7 +3565,7 @@ describe('Catalog API', function() {
             var categoryName = 'valid';
 
             var categoriesRequest = {
-                query: '?name=' + categoryName + '&isRoot=true',
+                query: '?lifecycleStatus=Launched&name=' + categoryName + '&isRoot=true',
                 status: 200,
                 body: [{}]
             };
@@ -3611,7 +3611,7 @@ describe('Catalog API', function() {
         var parentId = 7;
 
         var categoriesRequest = {
-            query: '?name=' + categoryName + '&parentId=' + parentId,
+            query: '?lifecycleStatus=Launched&name=' + categoryName + '&parentId=' + parentId,
             status: 200,
             body: []
         };
@@ -3638,7 +3638,7 @@ describe('Catalog API', function() {
             var parentId = 7;
 
             var categoriesRequest = {
-                query: '?name=' + categoryName + '&parentId=' + parentId,
+                query: '?lifecycleStatus=Launched&name=' + categoryName + '&parentId=' + parentId,
                 status: 200,
                 body: [{}]
             };
@@ -3666,7 +3666,7 @@ describe('Catalog API', function() {
             var parentId = 7;
 
             var categoriesRequest = {
-                query: '?name=' + categoryName + '&parentId=' + parentId,
+                query: '?lifecycleStatus=Launched&name=' + categoryName + '&parentId=' + parentId,
                 status: 500,
                 body: []
             };
@@ -3747,7 +3747,7 @@ describe('Catalog API', function() {
         var parentId = 7;
 
         var categoriesRequest = {
-            query: '?name=' + categoryName + '&parentId=' + parentId,
+            query: '?lifecycleStatus=Launched&name=' + categoryName + '&parentId=' + parentId,
             status: 200,
             body: []
         };
@@ -3774,7 +3774,7 @@ describe('Catalog API', function() {
             var parentId = 7;
 
             var categoriesRequest = {
-                query: '?name=' + categoryName + '&parentId=' + parentId,
+                query: '?lifecycleStatus=Launched&name=' + categoryName + '&parentId=' + parentId,
                 status: 200,
                 body: [{}]
             };
@@ -3802,7 +3802,7 @@ describe('Catalog API', function() {
             var parentId = 7;
 
             var categoriesRequest = {
-                query: '?name=' + categoryName + '&parentId=' + parentId,
+                query: '?lifecycleStatus=Launched&name=' + categoryName + '&parentId=' + parentId,
                 status: 500,
                 body: []
             };
@@ -3854,7 +3854,7 @@ describe('Catalog API', function() {
         var categoryName = 'correct';
 
         var categoriesRequest = {
-            query: '?name=' + categoryName + '&isRoot=true',
+            query: '?lifecycleStatus=Launched&name=' + categoryName + '&isRoot=true',
             status: 200,
             body: []
         };
@@ -3879,7 +3879,7 @@ describe('Catalog API', function() {
             var categoryName = 'correct';
 
             var categoriesRequest = {
-                query: '?name=' + categoryName + '&isRoot=true',
+                query: '?lifecycleStatus=Launched&name=' + categoryName + '&isRoot=true',
                 status: 200,
                 body: [{}]
             };
@@ -3905,7 +3905,7 @@ describe('Catalog API', function() {
             var categoryName = 'correct';
 
             var categoriesRequest = {
-                query: '?name=' + categoryName + '&isRoot=true',
+                query: '?lifecycleStatus=Launched&name=' + categoryName + '&isRoot=true',
                 status: 500,
                 body: []
             };
@@ -3943,7 +3943,7 @@ describe('Catalog API', function() {
         var parentId = 7;
 
         var categoriesRequest = {
-            query: '?name=' + categoryName + '&parentId=' + parentId,
+            query: '?lifecycleStatus=Launched&name=' + categoryName + '&parentId=' + parentId,
             status: 200,
             body: []
         };
@@ -3970,7 +3970,7 @@ describe('Catalog API', function() {
             var parentId = 7;
 
             var categoriesRequest = {
-                query: '?name=' + categoryName + '&parentId=' + parentId,
+                query: '?lifecycleStatus=Launched&name=' + categoryName + '&parentId=' + parentId,
                 status: 200,
                 body: [{}]
             };
@@ -3998,7 +3998,7 @@ describe('Catalog API', function() {
             var parentId = 7;
 
             var categoriesRequest = {
-                query: '?name=' + categoryName + '&parentId=' + parentId,
+                query: '?lifecycleStatus=Launched&name=' + categoryName + '&parentId=' + parentId,
                 status: 500,
                 body: []
             };
@@ -4023,7 +4023,7 @@ describe('Catalog API', function() {
         var parentId = 7;
 
         var categoriesRequest = {
-            query: '?name=' + categoryName + '&parentId=' + parentId,
+            query: '?lifecycleStatus=Launched&name=' + categoryName + '&parentId=' + parentId,
             status: 200,
             body: [{}]
         };
@@ -4047,7 +4047,7 @@ describe('Catalog API', function() {
         var parentId = 7;
 
         var categoriesRequest = {
-            query: '?name=' + categoryName + '&parentId=' + parentId,
+            query: '?lifecycleStatus=Launched&name=' + categoryName + '&parentId=' + parentId,
             status: 200,
             body: [{}]
         };
