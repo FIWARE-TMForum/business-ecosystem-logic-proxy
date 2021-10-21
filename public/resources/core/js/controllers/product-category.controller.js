@@ -39,7 +39,16 @@
             'Category',
             CategoryBreadcrumbController
         ])
-        .controller('CategorySearchCtrl', ['Category', 'PROMISE_STATUS', 'Utils', CategorySearchController])
+        .controller('CategorySearchCtrl', [
+            '$state',
+            '$rootScope',
+            'EVENTS',
+            'Category',
+            'PROMISE_STATUS',
+            'LIFECYCLE_STATUS',
+            'Utils',
+            CategorySearchController
+        ])
         .controller('CategoryCreateCtrl', [
             '$state',
             '$rootScope',
@@ -72,7 +81,15 @@
             });
         }
 
-        Category.search($state.params).then(
+        const params = {
+            status: 'Launched'
+        };
+
+        if ($state.params.categoryId) {
+            params.categoryId = $state.params.categoryId;
+        }
+
+        Category.search(params).then(
             function(categoryList) {
                 angular.copy(categoryList, vm.list);
                 vm.list.status = LOADED;
@@ -86,14 +103,22 @@
         );
     }
 
-    function CategorySearchController(Category, PROMISE_STATUS, Utils) {
+    function CategorySearchController($state, $rootScope, EVENTS, Category, PROMISE_STATUS, LIFECYCLE_STATUS, Utils) {
         /* jshint validthis: true */
         var vm = this;
+
+        const filters = {};
 
         vm.STATUS = PROMISE_STATUS;
         vm.list = [];
 
-        var searchPromise = Category.search({ all: true });
+        vm.showFilters = showFilters;
+
+        var searchPromise = Category.search({ all: true, status: $state.params.status });
+
+        function showFilters() {
+            $rootScope.$broadcast(EVENTS.FILTERS_OPENED, LIFECYCLE_STATUS);
+        }
 
         searchPromise.then(
             function(categoryList) {
@@ -183,7 +208,9 @@
         vm.STATUS = PROMISE_STATUS;
 
         vm.item = {};
+        vm.updateStatus = updateStatus;
         vm.update = update;
+        vm.statusUpdated = false;
 
         var detailPromise = Category.detail($state.params.categoryId);
         var updatePromise = null;
@@ -203,6 +230,11 @@
                 return detailPromise != null ? detailPromise.$$state.status : -1;
             }
         });
+
+        function updateStatus(status) {
+            vm.data.lifecycleStatus = status;
+            vm.statusUpdated = true;
+        }
 
         function update() {
             var updated = {};

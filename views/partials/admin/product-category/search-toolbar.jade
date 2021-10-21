@@ -3,3 +3,7 @@
       a.btn.btn-success(ui-sref="admin.productCategory.create", ui-sref-opts="{ inherit: false }")
         span.item-icon.fa.fa-plus-circle
         span.item-text #{ __("New") }
+    .btn-group.z-depth-1
+        a.btn.btn-default(ng-click="searchVM.showFilters()")
+          span.item-icon.fa.fa-sliders
+          span.item-text.hidden-xs #{ __("Filters") }

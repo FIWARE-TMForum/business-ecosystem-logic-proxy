@@ -46,7 +46,7 @@
             subcategories: {}
         };
 
-        var PATCHEABLE_ATTRS = ['name', 'description'];
+        var PATCHEABLE_ATTRS = ['name', 'description', 'lifecycleStatus'];
 
         resource.prototype.getBreadcrumb = getBreadcrumb;
         resource.prototype.serialize = serialize;
@@ -75,6 +75,10 @@
                 } else {
                     params['isRoot'] = true;
                 }
+            }
+
+            if (filters.status) {
+                params['lifecycleStatus'] = filters.status;
             }
 
             resource.query(

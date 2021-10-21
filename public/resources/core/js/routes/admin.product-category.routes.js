@@ -32,7 +32,11 @@
             .state('admin.productCategory', {
                 url: '/category',
                 params: {
-                    admin: true
+                    admin: true,
+                    status: 'Active,Launched'
+                },
+                data: {
+                    filters: ['status']
                 },
                 views: {
                     'admin-content': {
