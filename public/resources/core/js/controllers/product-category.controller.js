@@ -39,7 +39,16 @@
             'Category',
             CategoryBreadcrumbController
         ])
-        .controller('CategorySearchCtrl', ['Category', 'PROMISE_STATUS', 'Utils', CategorySearchController])
+        .controller('CategorySearchCtrl', [
+            '$state',
+            '$rootScope',
+            'EVENTS',
+            'Category',
+            'PROMISE_STATUS',
+            'LIFECYCLE_STATUS',
+            'Utils',
+            CategorySearchController
+        ])
         .controller('CategoryCreateCtrl', [
             '$state',
             '$rootScope',
@@ -86,14 +95,22 @@
         );
     }
 
-    function CategorySearchController(Category, PROMISE_STATUS, Utils) {
+    function CategorySearchController($state, $rootScope, EVENTS, Category, PROMISE_STATUS, LIFECYCLE_STATUS, Utils) {
         /* jshint validthis: true */
         var vm = this;
+
+        const filters = {};
 
         vm.STATUS = PROMISE_STATUS;
         vm.list = [];
 
-        var searchPromise = Category.search({ all: true });
+        vm.showFilters = showFilters;
+
+        var searchPromise = Category.search({ all: true, status: $state.params.status });
+
+        function showFilters() {
+            $rootScope.$broadcast(EVENTS.FILTERS_OPENED, LIFECYCLE_STATUS);
+        }
 
         searchPromise.then(
             function(categoryList) {

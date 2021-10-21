@@ -77,6 +77,10 @@
                 }
             }
 
+            if (filters.status) {
+                params['lifecycleStatus'] = filters.status;
+            }
+
             resource.query(
                 params,
                 function(categoryList) {
