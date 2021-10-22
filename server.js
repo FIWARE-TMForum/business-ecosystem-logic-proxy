@@ -86,7 +86,7 @@ app.set('port', PORT);
 
 // Attach i18n to express
 i18n.expressBind(app, {
-    locales: ['en', 'es']
+    locales: ['en', 'es', 'de']
 });
 
 app.use(function(req, res, next) {

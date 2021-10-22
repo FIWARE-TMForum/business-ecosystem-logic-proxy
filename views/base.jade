@@ -199,9 +199,9 @@ html(ng-app="app")
     .bottom-div
       .col-sm-1(id="language", ng-controller="LangCtrl as langVM")
         select(ng-model="langVM.locale" ng-change="langVM.onLocaleChange()")
-          option(value="en") English
+          option(value="en" selected) English
           option(value="es") Español
-
+          option(value="de") German
     hr.fiware-line
     footer.footer-main.d-flex.justify-content-between
       include ./contributors.jade
