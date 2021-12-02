@@ -18,6 +18,16 @@
                     span.item-text.hidden-xs #{ __("Search") }
 
         input(type="hidden", ng-model="loginCtl.idpId", required)
+        .row(ng-if="loginCtl.showLocal")
+          .col-xs-12
+            .table-responsive
+              table.table.table-bordered.table-hover.table-selectable
+                thead
+                  tr
+                    th #{ __("Name") }
+                tbody
+                  tr(ng-class="{ active: loginCtl.idpId == 'local' }", ng-click="loginCtl.setIdp(-1)")
+                    td #{ __("Local IDP") }
         .row
           .col-xs-12(ng-if="loginCtl.status === loginCtl.STATUS.RESOLVED")
             .table-responsive(ng-if="loginCtl.idps.length")
