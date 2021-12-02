@@ -28,15 +28,17 @@
             '$window',
             'EVENTS',
             'PROMISE_STATUS',
+            'SHOW_LOCAL_LOGIN',
             'IdpsService',
             LoginController
         ]);
 
-    function LoginController($scope, $element, $window, EVENTS, PROMISE_STATUS, IdpsService) {
+    function LoginController($scope, $element, $window, EVENTS, PROMISE_STATUS, SHOW_LOCAL_LOGIN, IdpsService) {
         var vm = this;
 
         vm.searchInput = '';
         vm.idpId = null;
+        vm.showLocal = SHOW_LOCAL_LOGIN;
         vm.handleEnterKeyUp = handleEnterKeyUp;
         vm.launchSearch = launchSearch;
         vm.setIdp = setIdp;
@@ -73,11 +75,20 @@
         }
 
         function setIdp(index) {
-            vm.idpId = vm.idps[index].idpId;
+            if (index < 0) {
+                vm.idpId = 'local';
+            } else {
+                vm.idpId = vm.idps[index].idpId;
+            }
         }
 
         function login(context) {
-            $window.open(context + vm.idpId, "_top");
+            let id = vm.idpId;
+
+            if (id == 'local') {
+                id = '';
+            }
+            $window.open(context + id, "_top");
         }
 
         function isValid() {

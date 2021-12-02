@@ -82,9 +82,10 @@ config.oauth2 = {
     }
 }*/
 
-config.extLogin = true;
+config.extLogin = false;
+config.showLocalLogin = false;
 config.externalIdps = []
-config.propagateToken = true;
+config.propagateToken = false;
 
 // Customer Role Required to buy items
 config.customerRoleRequired = false;
@@ -258,6 +259,10 @@ config.https.port = process.env.BAE_LP_HTTPS_PORT || config.https.port;
 // OAuth2 Configuration
 if (!!process.env.BAE_LP_EXT_LOGIN) {
     config.extLogin = process.env.BAE_LP_EXT_LOGIN == 'true';
+}
+
+if (!!process.env.BAE_LP_SHOW_LOCAL_LOGIN) {
+    config.showLocalLogin = process.env.BAE_LP_SHOW_LOCAL_LOGIN == 'true';
 }
 
 if (!!process.env.BAE_LP_PROPAGATE_TOKEN) {

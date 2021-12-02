@@ -63,6 +63,7 @@ html(ng-app="app")
         }))
         .constant('TAX_RATE', #{ taxRate })
         .constant('PLATFORM_REVENUE', #{ platformRevenue })
+        .constant('SHOW_LOCAL_LOGIN', #{ showLocal })
         .constant('USAGE_CHART_URL', '#{ usageChartURL }')
         .constant('ROLES', { seller: '#{ seller }', customer: '#{ customer }', orgAdmin: '#{ orgAdmin }', admin: '#{ admin }'})
         .run(function($rootScope, $state, $injector) {
