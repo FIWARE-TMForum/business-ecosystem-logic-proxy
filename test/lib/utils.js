@@ -22,11 +22,12 @@ var proxyquire = require('proxyquire');
 var testUtils = require('../utils');
 
 describe('Utils', function() {
-    var config = testUtils.getDefaultConfig();
-    var utils = proxyquire('../../lib/utils', { './../config.js': config });
 
     describe('Attach User Headers', function() {
         it('should include Nick Name, Display Name and X Actor', function() {
+            const config = testUtils.getDefaultConfig();
+            const utils = proxyquire('../../lib/utils', { './../config.js': config });
+
             var headers = {};
             var userInfo = {
                 id: 'user-1',
@@ -63,6 +64,34 @@ describe('Utils', function() {
             expect(headers['X-Ext-Name']).toBe('username');
             expect(headers['X-IDP-ID']).toBe('local');
         });
+
+        it('should replace local EORI in headers', () => {
+            const config = testUtils.getDefaultConfig();
+            config.allowLocalEORI = true;
+
+            const utils = proxyquire('../../lib/utils', { './../config.js': config });
+
+            const headers = {};
+            const userInfo = {
+                id: 'org-1',
+                displayName: 'EORI.PARTICIPANT',
+                userNickname: 'user-1',
+                idp: 'local',
+                username: 'username',
+                roles: []
+            };
+
+            // This function should modify headers
+            utils.attachUserHeaders(headers, userInfo);
+
+            // Check that heacers has been modified appropriately
+            expect(headers['X-Nick-Name']).toBe(userInfo.id);
+            expect(headers['X-Display-Name']).toBe(userInfo.displayName);
+            expect(headers['X-Roles']).toBe('');
+            expect(headers['X-Actor']).toBe(userInfo.userNickname);
+            expect(headers['X-Ext-Name']).toBe('');
+            expect(headers['X-IDP-ID']).toBe(userInfo.displayName);
+        })
     });
 
     describe('Check Roles', function() {
