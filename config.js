@@ -86,6 +86,7 @@ config.extLogin = false;
 config.showLocalLogin = false;
 config.externalIdps = []
 config.propagateToken = false;
+config.allowLocalEORI = false;
 
 // Customer Role Required to buy items
 config.customerRoleRequired = false;
@@ -267,6 +268,10 @@ if (!!process.env.BAE_LP_SHOW_LOCAL_LOGIN) {
 
 if (!!process.env.BAE_LP_PROPAGATE_TOKEN) {
     config.propagateToken = process.env.BAE_LP_PROPAGATE_TOKEN == 'true';
+}
+
+if (!!process.env.BAE_LP_ALLOW_LOCAL_EORI) {
+    config.allowLocalEORI = process.env.BAE_LP_ALLOW_LOCAL_EORI == 'true';
 }
 
 config.oauth2.provider = process.env.BAE_LP_OAUTH2_PROVIDER || config.oauth2.provider;
