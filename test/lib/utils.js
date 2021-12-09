@@ -23,11 +23,11 @@ var testUtils = require('../utils');
 
 describe('Utils', function() {
 
+    let config = testUtils.getDefaultConfig();
+    let utils = proxyquire('../../lib/utils', { './../config.js': config });
+
     describe('Attach User Headers', function() {
         it('should include Nick Name, Display Name and X Actor', function() {
-            const config = testUtils.getDefaultConfig();
-            const utils = proxyquire('../../lib/utils', { './../config.js': config });
-
             var headers = {};
             var userInfo = {
                 id: 'user-1',
@@ -66,10 +66,10 @@ describe('Utils', function() {
         });
 
         it('should replace local EORI in headers', () => {
-            const config = testUtils.getDefaultConfig();
+            let config = testUtils.getDefaultConfig();
             config.allowLocalEORI = true;
 
-            const utils = proxyquire('../../lib/utils', { './../config.js': config });
+            let utils = proxyquire('../../lib/utils', { './../config.js': config });
 
             const headers = {};
             const userInfo = {
