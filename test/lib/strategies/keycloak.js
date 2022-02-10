@@ -18,6 +18,7 @@
  */
 
 const proxyquire = require('proxyquire');
+const jwt = require('jsonwebtoken');
 
 describe('Keycloak Strategy', () => {
 
@@ -54,6 +55,16 @@ describe('Keycloak Strategy', () => {
                 Strategy: MockStrategy
             }
 
+            const tokenInfo = {
+                resource_access: {
+                    bae: {
+                        roles: ['role1', 'role2']
+                    }
+                }
+            };
+
+            const token = jwt.sign(tokenInfo, '123456');
+
             const toTest = buildStrategyMock(passportMock);
 
             // Test the strategy builder
@@ -66,7 +77,7 @@ describe('Keycloak Strategy', () => {
             }
             const builderToTest = toTest(config);
             const userStrategy = await builderToTest.buildStrategy((accessToken, refreshToken, profile, cbDone) => {
-                expect(accessToken).toEqual('token');
+                expect(accessToken).toEqual(token);
                 expect(refreshToken).toEqual('refresh');
                 expect(profile).toEqual({
                     username: 'user',
@@ -114,7 +125,7 @@ describe('Keycloak Strategy', () => {
                         }
                     }
                 }
-            }, 'token', 'refresh');
+            }, token, 'refresh');
 
             userStrategy.loginComplete();
         });
