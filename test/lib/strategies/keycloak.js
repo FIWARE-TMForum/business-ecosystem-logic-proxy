@@ -18,6 +18,7 @@
  */
 
 const proxyquire = require('proxyquire');
+const jwt = require('jsonwebtoken');
 
 describe('Keycloak Strategy', () => {
 
@@ -43,17 +44,27 @@ describe('Keycloak Strategy', () => {
     }
 
     const buildStrategyMock = function buildStrategyMock(passport) {
+        const partyClient = {
+            partyClient: {
+                getOrganization: function(group, callback) {
+                    callback('error', null);
+                }
+            }
+        };
+
         return proxyquire('../../../lib/strategies/keycloak', {
             'passport-keycloak-oauth2-oidc': passport,
+            '../party': partyClient
         }).strategy;
     }
 
     describe('Build Strategy', () => {
-        it('Should build passport strategy', async (done) => {
+        const testBuildStrategy = async function testBuildStrategy(tokenInfo, expProfile, done) {
             const passportMock = {
                 Strategy: MockStrategy
-            }
+            };
 
+            const token = jwt.sign(tokenInfo, '123456');
             const toTest = buildStrategyMock(passportMock);
 
             // Test the strategy builder
@@ -66,30 +77,10 @@ describe('Keycloak Strategy', () => {
             }
             const builderToTest = toTest(config);
             const userStrategy = await builderToTest.buildStrategy((accessToken, refreshToken, profile, cbDone) => {
-                expect(accessToken).toEqual('token');
+                expect(accessToken).toEqual(token);
                 expect(refreshToken).toEqual('refresh');
-                expect(profile).toEqual({
-                    username: 'user',
-                    name: 'display name',
-                    displayName: 'display name',
-                    organizations: [],
-                    roles: [{
-                        id: 'role1',
-                        name: 'role1'
-                    }, {
-                        id: 'role2',
-                        name: 'role2'
-                    }],
-                    _json: {
-                        username: 'user',
-                        displayName: 'display name',
-                        resource_access: {
-                            bae: {
-                                roles: ['role1', 'role2']
-                            }
-                        }
-                    }
-                });
+
+                expect(profile).toEqual(expProfile);
 
                 let params = userStrategy.getParams();
                 expect(params).toEqual({
@@ -114,9 +105,83 @@ describe('Keycloak Strategy', () => {
                         }
                     }
                 }
-            }, 'token', 'refresh');
+            }, token, 'refresh');
 
             userStrategy.loginComplete();
+        }
+
+        it('Should build passport strategy', async (done) => {
+            const tokenInfo = {
+                resource_access: {
+                    bae: {
+                        roles: ['role1', 'role2']
+                    }
+                }
+            };
+            testBuildStrategy(tokenInfo, {
+                username: 'user',
+                name: 'display name',
+                displayName: 'display name',
+                organizations: [],
+                roles: [{
+                    id: 'role1',
+                    name: 'role1'
+                }, {
+                    id: 'role2',
+                    name: 'role2'
+                }],
+                _json: {
+                    username: 'user',
+                    displayName: 'display name',
+                    resource_access: {
+                        bae: {
+                            roles: ['role1', 'role2']
+                        }
+                    }
+                }
+            }, done);
+        });
+
+        it ('should build passport strategy with organizations', (done) => {
+            const tokenInfo = {
+                groups: ['group1', 'group2']
+            };
+            testBuildStrategy(tokenInfo, {
+                username: 'user',
+                name: 'display name',
+                displayName: 'display name',
+                roles: [],
+                organizations: [{
+                    id: 'group1',
+                    name: 'group1',
+                    roles: [{
+                        name: 'seller'
+                    }, {
+                        name: 'customer'
+                    }, {
+                        name: 'manager'
+                    }]
+                }, {
+                    id: 'group2',
+                    name: 'group2',
+                    roles: [{
+                        name: 'seller'
+                    }, {
+                        name: 'customer'
+                    }, {
+                        name: 'manager'
+                    }]
+                }],
+                _json: {
+                    username: 'user',
+                    displayName: 'display name',
+                    resource_access: {
+                        bae: {
+                            roles: ['role1', 'role2']
+                        }
+                    }
+                }
+            }, done);
         });
 
         it ('should return scope', () => {

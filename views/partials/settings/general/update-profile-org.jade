@@ -86,6 +86,19 @@
                 .help-block(
                   ng-show="updateVM.hasFieldError(updateVM.formOrg.organizationIdentification.issuingDate)"
                 )
+        .row(ng-if="updateVM.data.characteristic.length")
+          .col-sm-12
+            table.table.table-bordered.table-hover
+              thead
+                tr
+                  th #{ __("Name") }
+                  th #{ __("Value") }
+              tbody
+                tr(ng-repeat="charact in updateVM.data.characteristic")
+                  td
+                    span {{ charact.name }}
+                  td
+                    span {{ charact.value }}
 
         .form-group.text-right
           a.btn.btn-success(
