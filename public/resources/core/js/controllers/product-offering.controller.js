@@ -877,7 +877,13 @@
             vm.item = offeringRetrieved;
             vm.categories = vm.item.getCategories();
             if (!vm.item.isBundle) {
-                vm.attachments = vm.item.productSpecification.getExtraFiles();
+                vm.attachments = vm.item.productSpecification.getExtraFiles().map((att) => {
+                    if (att.name == null) {
+                        let sp = att.href.split('/');
+                        att.name = sp[sp.length - 1];
+                    }
+                    return att
+                });
             }
             vm.item.status = LOADED;
         }, function (response) {
