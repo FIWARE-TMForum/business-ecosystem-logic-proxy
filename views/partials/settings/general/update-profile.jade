@@ -15,6 +15,7 @@
               ng-model="updateVM.data.givenName"
               required
               ng-maxlength="100"
+              ng-disabled="!updateVM.ALLOW_EDIT_PARTY"
             )
             .help-block(
               ng-messages="updateVM.form.firstName.$error"
@@ -33,6 +34,7 @@
               ng-model="updateVM.data.familyName"
               required
               ng-maxlength="100"
+              ng-disabled="!updateVM.ALLOW_EDIT_PARTY"
             )
             .help-block(
               ng-messages="updateVM.form.lastName.$error"
@@ -47,6 +49,7 @@
             select.form-control(
               name="title"
               ng-model="updateVM.data.title"
+              ng-disabled="!updateVM.ALLOW_EDIT_PARTY"
             )
               option(value="") #{ __("Prefer not to say") }
               option(ng-repeat="title in ['Miss', 'Mrs', 'Mr', 'Ms']", value="{{ title }}") {{ title }}
@@ -56,6 +59,7 @@
             select.form-control(
               name="maritalStatus"
               ng-model="updateVM.data.maritalStatus"
+              ng-disabled="!updateVM.ALLOW_EDIT_PARTY"
             )
               option(value="") #{ __("Prefer not to say") }
               option(ng-repeat="status in ['Divorced', 'Married', 'Separated', 'Single', 'Widowed']", value="{{ status }}") {{ status }}
@@ -66,6 +70,7 @@
             select.form-control(
               name="gender"
               ng-model="updateVM.data.gender"
+              ng-disabled="!updateVM.ALLOW_EDIT_PARTY"
             )
               option(value="") #{ __("Prefer not to say") }
               option(ng-repeat="gender in ['Female', 'Male']", value="{{ gender }}") {{ gender }}
@@ -76,6 +81,7 @@
               type="text"
               name="nationality"
               ng-model="updateVM.data.nationality"
+              ng-disabled="!updateVM.ALLOW_EDIT_PARTY"
             )
       .h4.text-dark-secondary
         strong #{ __("Birth") }
@@ -88,6 +94,7 @@
               type="date"
               name="birthDate"
               ng-model="updateVM.data.birthDate"
+              ng-disabled="!updateVM.ALLOW_EDIT_PARTY"
               convert-to-date
             )
             .help-block(
@@ -102,6 +109,7 @@
             select.form-control(
               name="countryOfBirth"
               ng-model="updateVM.data.countryOfBirth"
+              ng-disabled="!updateVM.ALLOW_EDIT_PARTY"
             )
               option(value="") #{ __("Prefer not to say") }
               option(ng-repeat="country in updateVM.COUNTRIES", value="{{ country.code }}") {{ country.name }}
@@ -113,6 +121,7 @@
               name="placeOfBirth"
               ng-model="updateVM.data.placeOfBirth"
               ng-maxlength="100"
+              ng-disabled="!updateVM.ALLOW_EDIT_PARTY"
             )
             .help-block(
               ng-messages="updateVM.form.placeOfBirth.$error"
@@ -122,7 +131,7 @@
       .form-group.text-right
         a.btn.btn-success(
           ng-click="updateVM.update()"
-          ng-disabled="!updateVM.form.$valid || updateVM.update.status === updateVM.STATUS.PENDING"
+          ng-disabled="!updateVM.ALLOW_EDIT_PARTY || !updateVM.form.$valid || updateVM.update.status === updateVM.STATUS.PENDING"
         )
           span.item-icon.fa.fa-spin.fa-spinner(ng-if="updateVM.update.status === updateVM.STATUS.PENDING")
           span.item-text #{ __("Update") }
