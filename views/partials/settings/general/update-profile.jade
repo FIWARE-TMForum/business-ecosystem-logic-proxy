@@ -73,7 +73,7 @@
               ng-disabled="!updateVM.ALLOW_EDIT_PARTY"
             )
               option(value="") #{ __("Prefer not to say") }
-              option(ng-repeat="gender in ['Female', 'Male']", value="{{ gender }}") {{ gender }}
+              option(ng-repeat="gender in ['Female', 'Male', 'Other']", value="{{ gender }}") {{ gender }}
         .col-sm-6
           .form-group(ng-class="{ 'has-error': updateVM.hasFieldError(updateVM.form.nationality) }")
             label #{ __("Nationality") }
@@ -128,6 +128,22 @@
               ng-show="updateVM.hasFieldError(updateVM.form.placeOfBirth)"
             )
               span(ng-message="maxlength") #{ __("This field must not exceed %s chars.", "100") }
+      .h4.text-dark-secondary(ng-if="updateVM.data.characteristic.length")
+        strong #{ __("Other") }
+      hr(ng-if="updateVM.data.characteristic.length")
+      .row(ng-if="updateVM.data.characteristic.length")
+          .col-sm-12
+            table.table.table-bordered.table-hover
+              thead
+                tr
+                  th #{ __("Name") }
+                  th #{ __("Value") }
+              tbody
+                tr(ng-repeat="charact in updateVM.data.characteristic")
+                  td
+                    span {{ charact.name }}
+                  td
+                    span {{ charact.value }}
       .form-group.text-right
         a.btn.btn-success(
           ng-click="updateVM.update()"
