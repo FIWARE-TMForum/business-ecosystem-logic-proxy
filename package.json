@@ -58,7 +58,7 @@
   "scripts": {
     "lint": "eslint ./lib --ext .js",
     "prettier": "prettier --config .prettierrc.json --write '**/**/**/*.js' '**/**/*.js' '**/*.js' '*.js'",
-    "test": "JASMINE_CONFIG_PATH=test/config/jasmine.json node_modules/.bin/istanbul cover --include-all-sources -x public/**/*.js -x locales/**/*.js -x server.js -x Gruntfile.js -x fill_indexes.js node_modules/.bin/jasmine"
+    "test": "JASMINE_CONFIG_PATH=test/config/jasmine.json node_modules/.bin/istanbul cover --include-all-sources -x public/**/*.js -x locales/**/*.js -x server.js -x Gruntfile.js -x fill_indexes.js -x config.js node_modules/.bin/jasmine"
   },
   "repository": {
     "type": "git",
