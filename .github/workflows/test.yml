@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - feature/improve-docker
 
   pull_request:
     branches:
@@ -14,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [10.x, 12.x, 14.x, 15.x]
+        node-version: [12.x, 14.x, 15.x, 16.x]
 
     steps:
       - uses: actions/checkout@v2
