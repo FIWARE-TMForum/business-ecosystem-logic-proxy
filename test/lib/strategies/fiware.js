@@ -18,29 +18,10 @@
  */
 
 const proxyquire = require('proxyquire');
+const MockStrategy = require('../../utils').MockStrategy;
 
 describe('Keyrock Strategy', () => {
 
-    const MockStrategy = function MockStrategy(params, cb) {
-        this.params = params;
-        this.cb = cb;
-    }
-    MockStrategy.prototype.setProfileParams = function(err, profile, token, refreshToken) {
-        this.userErr = err;
-        this.profile = profile;
-        this.token = token;
-        this.refreshToken = refreshToken;
-    }
-    MockStrategy.prototype.userProfile = function(token, done) {
-        this.token = token;
-        done(this.userErr, this.profile);
-    }
-    MockStrategy.prototype.loginComplete = function() {
-        this.cb(this.token, this.refreshToken, this.profile, 'cb');
-    }
-    MockStrategy.prototype.getParams = function () {
-        return this.params;
-    }
 
     const buildStrategyMock = function buildStrategyMock(passport) {
         return proxyquire('../../../lib/strategies/fiware', {
@@ -245,5 +226,5 @@ describe('Keyrock Strategy', () => {
         it('should return valid scope with OIDC enabled', () => {
             testScope(false, ['all_info']);
         });
-    })
+    });
 });
