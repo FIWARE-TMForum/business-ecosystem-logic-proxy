@@ -42,6 +42,7 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 // External login enabled
 const extLogin = config.extLogin == true;
 const showLocal = config.showLocalLogin == true;
+const editParty = config.editParty == true;
 
 (async () => {
 
@@ -395,7 +396,8 @@ var renderTemplate = function(req, res, viewName) {
         customer: config.oauth2.roles.customer,
         admin: config.oauth2.roles.admin,
         extLogin: extLogin,
-        showLocal: showLocal
+        showLocal: showLocal,
+        editParty: editParty
     };
 
     if (extLogin) {

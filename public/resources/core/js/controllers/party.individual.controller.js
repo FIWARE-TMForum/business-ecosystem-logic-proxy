@@ -39,6 +39,7 @@
             'Utils',
             'Party',
             'User',
+            'ALLOW_EDIT_PARTY',
             IndividualUpdateController
         ]);
 
@@ -53,7 +54,8 @@
         PROMISE_STATUS,
         Utils,
         Party,
-        User
+        User,
+        ALLOW_EDIT_PARTY
     ) {
         /* jshint validthis: true */
         var vm = this;
@@ -62,6 +64,7 @@
 
         vm.COUNTRIES = COUNTRIES;
         vm.STATUS = PROMISE_STATUS;
+        vm.ALLOW_EDIT_PARTY = ALLOW_EDIT_PARTY;
 
         vm.status = DATA_STATUS.LOADING;
         vm.update = update;

@@ -29,6 +29,14 @@ var party = (function() {
     };
 
     var validateUpdate = function(req, callback) {
+        if (!config.editParty) {
+            // Edit parties is dissabled
+            return callback({
+                status: 403,
+                message: 'Editing party info is dissabled in this instance'
+            });
+        }
+
         var individualsPattern = new RegExp(
             '^/' + config.endpoints.party.path + '/api/partyManagement/v2/(individual|organization)(/([^/]*))?$'
         );

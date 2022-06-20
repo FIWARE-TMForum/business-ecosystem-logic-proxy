@@ -147,3 +147,27 @@ exports.emptyLogger = {
         }
     }
 };
+
+
+const MockStrategy = function MockStrategy(params, cb) {
+    this.params = params;
+    this.cb = cb;
+}
+MockStrategy.prototype.setProfileParams = function(err, profile, token, refreshToken) {
+    this.userErr = err;
+    this.profile = profile;
+    this.token = token;
+    this.refreshToken = refreshToken;
+}
+MockStrategy.prototype.userProfile = function(token, done) {
+    this.token = token;
+    done(this.userErr, this.profile);
+}
+MockStrategy.prototype.loginComplete = function() {
+    this.cb(this.token, this.refreshToken, this.profile, 'cb');
+}
+MockStrategy.prototype.getParams = function () {
+    return this.params;
+}
+
+exports.MockStrategy = MockStrategy;
