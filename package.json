@@ -31,7 +31,7 @@
     "merge-dirs": "^0.2.1",
     "moment": "^2.29.1",
     "mongoose": "^5.11.17",
-    "node-fetch": "^2.6.1",
+    "node-fetch": "^2.6.7",
     "node-minify": "^2.4.1",
     "normalize-url": "^1.8.0",
     "on-finished": "^2.3.0",
