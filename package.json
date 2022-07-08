@@ -29,7 +29,7 @@
     "log4js": "0.6.x",
     "lru-cache": "^6.0.0",
     "merge-dirs": "^0.2.1",
-    "moment": "^2.29.1",
+    "moment": "^2.29.4",
     "mongoose": "^5.11.17",
     "node-fetch": "^2.6.1",
     "node-minify": "^2.4.1",
