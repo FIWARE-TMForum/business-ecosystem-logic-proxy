@@ -14,7 +14,7 @@ services:
             - elastic.docker
 
     mongo:
-        image: mongo:3.2
+        image: mongo:4.4
         ports:
             - 27017:27017
         networks:

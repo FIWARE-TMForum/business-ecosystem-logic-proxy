@@ -1,33 +1,32 @@
-FROM ubuntu:16.04
+FROM node:16 as build
 
-LABEL MAINTAINER="Future Internet Consulting and Development Solutions S.L."
+WORKDIR /opt/business-ecosystem-logic-proxy
 
-ENV VERSION master
+COPY ./ .
 
-RUN apt-get update && apt-get install -y git xinetd python-pip wget curl && \
-    pip install sh requests && \
-    git clone https://github.com/FIWARE-TMForum/business-ecosystem-logic-proxy
-
-WORKDIR business-ecosystem-logic-proxy
-
-RUN wget https://nodejs.org/dist/v14.16.0/node-v14.16.0-linux-x64.tar.xz && \
-    tar -xvf node-v14.16.0-linux-x64.tar.xz && \
-    echo 'export PATH=$PATH:/business-ecosystem-logic-proxy/node-v14.16.0-linux-x64/bin' >> ~/.bashrc && \
-    git checkout $VERSION && \
-    mkdir indexes && \
-    mkdir themes && \
+RUN mkdir -p indexes && \
+    mkdir -p themes && \
     export USER=root && \
-    export PATH=$PATH:/business-ecosystem-logic-proxy/node-v14.16.0-linux-x64/bin && \
     npm install --unsafe && \
     mkdir etc && \
     cp config.js etc/config.js && \
     echo "module.exports = require('./etc/config');" > config.js
 
-COPY ./entrypoint.sh /
-COPY ./cleanIndex.sh /
-COPY ./getConfig.js /business-ecosystem-logic-proxy
+FROM node:16 as main
+
+LABEL MAINTAINER="Future Internet Consulting and Development Solutions S.L."
+
+COPY --from=build /opt/business-ecosystem-logic-proxy /opt/business-ecosystem-logic-proxy
+
+WORKDIR /opt/business-ecosystem-logic-proxy
+
+RUN apt-get update && apt-get install -y xinetd wget curl
+
+COPY ./docker/entrypoint.sh /
+COPY ./docker/cleanIndex.sh /
+COPY ./docker/getConfig.js /opt/business-ecosystem-logic-proxy
      
-COPY ./serviceIndexes /etc/xinetd.d/
+COPY ./docker/serviceIndexes /etc/xinetd.d/
 
 EXPOSE 8004
 
