@@ -73,7 +73,7 @@ describe('Keycloak Strategy', () => {
                 clientSecret: 'client_secret',
                 callbackURL: 'http://maket.com/callback',
                 realm: 'realm',
-                server: 'http://keycloak.com'
+                server: 'http://keycloak.com/auth'
             }
             const builderToTest = toTest(config);
             const userStrategy = await builderToTest.buildStrategy((accessToken, refreshToken, profile, cbDone) => {
@@ -89,7 +89,7 @@ describe('Keycloak Strategy', () => {
                     callbackURL: 'http://maket.com/callback',
                     publicClient: 'false',
                     sslRequired: 'none',
-                    authServerURL: 'http://keycloak.com/auth',
+                    authServerURL: 'http://keycloak.com/auth/',
                     realm: 'realm'
                 });
                 done();
