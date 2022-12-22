@@ -24,7 +24,7 @@
     "express-session": "1.12.1",
     "i18n-2": "^0.7.2",
     "jade": "^1.11.0",
-    "jsonwebtoken": "^8.5.1",
+    "jsonwebtoken": "^9.0.0",
     "left-pad": "^1.1.1",
     "log4js": "0.6.x",
     "lru-cache": "^6.0.0",
