@@ -22,6 +22,19 @@
           span(ng-message="required") #{ __("This field is required.") }
           span(ng-message="maxlength") #{ __("This field must not exceed 100 chars.") }
           span(ng-message="unique") #{ __("This EORI is already taken.") }
+      .form-group(ng-class="{ 'has-error': createForm.hasError(updateVM.form.issuerDid) }")
+        label #{ __("Issuer DID") }
+        input.form-control(
+          type="text"
+          name="issuerDid"
+          ng-model="updateVM.data.issuerDid"
+          ng-maxlength="100"
+        )
+        .help-block(
+          ng-messages="updateVM.form.issuerDid.$error"
+          ng-show="updateForm.hasError(updateVM.form.issuerDid)"
+        )
+          span(ng-message="maxlength") #{ __("This field must not exceed 100 chars.") }
       .row
         .col-sm-6
           .form-group(ng-class="{ 'has-error': updateForm.hasError(updateVM.form.name) }")
