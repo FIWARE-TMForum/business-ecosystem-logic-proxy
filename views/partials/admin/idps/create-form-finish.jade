@@ -8,6 +8,14 @@ form(name="step.form", novalidate)
       required
       readonly
     )
+  .form-group
+    label #{ __("Issuer DID") }
+    input.form-control(
+      type="text"
+      name="issuerDid"
+      ng-model="createVM.data.issuerDid"
+      readonly
+    )
   .row
     .col-sm-6
       .form-group
