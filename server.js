@@ -2,6 +2,7 @@ const authorizeService = require('./controllers/authorizeService').authorizeServ
 const apiKeyService = require('./controllers/apiKeyService').apiKeyService;
 const slaService = require('./controllers/slaService').slaService;
 const reputationService = require('./controllers/reputationService').reputationService;
+const recommendationService = require('./controllers/recommendationService').recommendationService;
 const idpService = require('./controllers/idpsService').idpService;
 const bodyParser = require('body-parser');
 const base64url = require('base64url');
@@ -327,6 +328,14 @@ app.post(config.authorizeServicePath + '/read', authorizeService.getAppToken);
 app.use(config.slaServicePath + '/*', checkMongoUp, authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj);
 app.get(config.slaServicePath + '/sla/:id', slaService.getSla);
 app.post(config.slaServicePath + '/sla', failIfNotAuthenticated, slaService.saveSla);
+
+/////////////////////////////////////////////////////////////////////
+///////////////////////// RECOMMENDATIONS ///////////////////////////
+/////////////////////////////////////////////////////////////////////
+
+app.use(config.recommendationServicePath + "/*", checkMongoUp, authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj);
+app.get(config.recommendationServicePath + '/recommendations/:id', recommendationService.getRecomList);
+app.post(config.recommendationServicePath + '/recommendations', failIfNotAuthenticated, recommendationService.setRecomList);
 
 /////////////////////////////////////////////////////////////////////
 ///////////////////////// REPUTAION SERVICE /////////////////////////
