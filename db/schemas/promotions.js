@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2023 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -17,15 +17,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const recommendationSchema = new Schema({
-	userId: { type: String, required: true },
-	categories: { type: Array, required: true },
-	promotions: { type: Array, default: [] }
+const promotionSchema = new Schema({
+	offeringId: { type: String, required: true },
+	offeringName: { type: String, required: true },
+	imageURL: { type: String, required: true },
+	imageName: { type: String, required: true },
+	termsURL: { type: String, required: true }
 });
 
-recommendationSchema.index({ userId: 1 }, { unique: true })
-
-module.exports = mongoose.model('recommendations', recommendationSchema);
+module.exports = mongoose.model('promotion', promotionSchema);
