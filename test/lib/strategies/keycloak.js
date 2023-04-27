@@ -100,7 +100,7 @@ describe('Keycloak Strategy', () => {
                 name: 'display name',
                 _json: {
                     resource_access: {
-                        bae: {
+                        client_id: {
                             roles: ['role1', 'role2']
                         }
                     }
@@ -113,7 +113,7 @@ describe('Keycloak Strategy', () => {
         it('Should build passport strategy', async (done) => {
             const tokenInfo = {
                 resource_access: {
-                    bae: {
+                    client_id: {
                         roles: ['role1', 'role2']
                     }
                 }
@@ -134,7 +134,7 @@ describe('Keycloak Strategy', () => {
                     username: 'user',
                     displayName: 'display name',
                     resource_access: {
-                        bae: {
+                        client_id: {
                             roles: ['role1', 'role2']
                         }
                     }
@@ -176,7 +176,7 @@ describe('Keycloak Strategy', () => {
                     username: 'user',
                     displayName: 'display name',
                     resource_access: {
-                        bae: {
+                        client_id: {
                             roles: ['role1', 'role2']
                         }
                     }
