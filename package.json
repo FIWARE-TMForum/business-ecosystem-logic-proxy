@@ -31,6 +31,7 @@
     "merge-dirs": "^0.2.1",
     "moment": "^2.29.1",
     "mongoose": "^5.11.17",
+    "node-cache": "^5.1.2",
     "node-fetch": "^2.6.1",
     "node-minify": "^2.4.1",
     "normalize-url": "^1.8.0",
@@ -45,6 +46,7 @@
     "promiz": "^1.0.5",
     "request": "^2.88.0",
     "trycatch": "^1.5.21",
+    "url": "^0.11.0",
     "uuid": "^8.3.2"
   },
   "devDependencies": {

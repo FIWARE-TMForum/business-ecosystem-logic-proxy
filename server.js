@@ -248,6 +248,26 @@ const addIdpStrategy = async (idp) => {
     return extAuth;
 }
 
+if (config.oauth2.provider === 'vc') {
+    app.get('/siop', (req, res) => {
+        const encodedState = getOAuth2State(utils.getCameFrom(req));
+        res.render("siop.jade",  {
+            title: 'Login Q',
+            qr: "src",
+            state: encodedState,
+            siop_login: config.oauth2.server + config.oauth2.verifierQRCodePath,
+            siop_callback: config.oauth2.callbackURL,
+            pollURL: config.oauth2.pollURLPath
+        });
+    });
+
+    app.get(config.oauth2.pollURLPath, (req, res, next) => {
+        const encodedState = getOAuth2State(utils.getCameFrom(req));
+        passport.authenticate(config.oauth2.provider, { poll: true, state: encodedState })(req, res, next);
+    });
+}
+
+
 // Load other stragies if external IDPs are enabled
 if (extLogin) {
     // Load IDPs from database

@@ -1,0 +1,43 @@
+doctype html
+html
+    head
+        title #{title}
+        meta(name="viewport" content="width=device-width, initial-scale=1")
+    body
+        main
+            block header
+                header.header
+                    a.title(href='/')
+                        h1 #{title}
+
+            div.container-siop
+                div.content-row
+                    h2 Please authenticate using the QR in the popup.
+                    button(onclick='onClick()') 'Open QR'
+    script.
+                function openWindow() {
+                    return window.open('#{siop_login}?state=#{state}&client_callback=#{siop_callback}', '_blank', 'popup,width=500,height=500');
+                }
+                let thePopup;
+                function onClick() {
+                    thePopup = openWindow();
+                    setInterval(pollServer, 1000, 'nonce');
+                }
+                async function pollServer() {
+                    try {
+                        const response = await fetch('#{pollURL}')
+                        if (response.status === 400 || response.status === 500) {
+                            location.replace('/')
+                            return
+                        } else if (response.status === 401) {
+                            return
+                        }
+
+                        console.log('beka try siop')
+                        thePopup.close()
+                    } catch (error) {
+                        console.log('beka error siop')
+                        console.log(error)
+                    }
+                    location.replace('/')
+                }
