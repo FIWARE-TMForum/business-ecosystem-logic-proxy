@@ -253,7 +253,6 @@ if (config.oauth2.provider === 'vc') {
         const encodedState = getOAuth2State(utils.getCameFrom(req));
         res.render("siop.jade",  {
             title: 'Login Q',
-            qr: "src",
             state: encodedState,
             siop_login: config.oauth2.server + config.oauth2.verifierQRCodePath,
             siop_callback: config.oauth2.callbackURL,

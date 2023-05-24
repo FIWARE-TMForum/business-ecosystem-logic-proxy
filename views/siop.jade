@@ -32,11 +32,8 @@ html
                         } else if (response.status === 401) {
                             return
                         }
-
-                        console.log('beka try siop')
                         thePopup.close()
                     } catch (error) {
-                        console.log('beka error siop')
                         console.log(error)
                     }
                     location.replace('/')
