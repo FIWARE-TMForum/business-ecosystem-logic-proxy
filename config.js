@@ -89,6 +89,7 @@ config.oauth2 = {
     server: 'https://verifier.apps.fiware.fiware.dev',
     verifierQRCodePath: '/api/v1/loginQR',
     verifierTokenPath: '/token',
+    credentialType: ['VerifiableCredential', 'MarketplaceUserCredential'],
     roles: {
         admin: 'admin',
         customer: 'customer',
