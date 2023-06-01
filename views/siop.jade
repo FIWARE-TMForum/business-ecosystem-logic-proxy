@@ -13,16 +13,12 @@ html
             div.container-siop
                 div.content-row
                     h2 Please authenticate using the QR in the popup.
-                    button(onclick='onClick()') 'Open QR'
     script.
                 function openWindow() {
                     return window.open('#{siop_login}?state=#{state}&client_callback=#{siop_callback}', '_blank', 'popup,width=500,height=500');
                 }
-                let thePopup;
-                function onClick() {
-                    thePopup = openWindow();
-                    setInterval(pollServer, 1000, 'nonce');
-                }
+                let thePopup = openWindow();
+                setInterval(pollServer, 1000, 'nonce');
                 async function pollServer() {
                     try {
                         const response = await fetch('#{pollURL}')

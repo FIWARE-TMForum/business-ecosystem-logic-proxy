@@ -85,7 +85,6 @@ config.oauth2 = {
 config.oauth2 = {
     provider: 'vc',
     callbackURL: 'http://proxy.docker:8004/auth/vc/callback',
-    pollURLPath: '/poll',
     server: 'https://verifier.apps.fiware.fiware.dev',
     verifierQRCodePath: '/api/v1/loginQR',
     verifierTokenPath: '/token',
