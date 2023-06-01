@@ -231,11 +231,13 @@ const addIdpStrategy = async (idp) => {
     if (idp.idpId === VC_LOGIN_TYPE) {
         app.get(`/login/${idp.idpId}`, (req, res) => {
             const encodedState = getOAuth2State(utils.getCameFrom(req));
+            const siopRequestURL = `${config.oauth2.server + config.oauth2.verifierQRCodePath}?` +
+                `state=${encodedState}&` +
+                `client_callback=${config.oauth2.callbackURL}&` +
+                `client_id=${config.oauth2.clientID}`;
             res.render("siop.jade",  {
                 title: 'Login Q',
-                state: encodedState,
-                siop_login: config.oauth2.server + config.oauth2.verifierQRCodePath,
-                siop_callback: config.oauth2.callbackURL,
+                siopRequestURL: siopRequestURL,
                 pollURL: VC_POLL_URL
             });
         });
