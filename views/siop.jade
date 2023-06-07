@@ -15,7 +15,7 @@ html
                     h2 Please authenticate using the QR in the popup.
     script.
                 function openWindow() {
-                    return window.open('#{siopRequestURL}', '_blank', 'popup,width=500,height=500');
+                    return window.open('#{verifierQRCodeURL}?#{statePair}&#{callbackURLPair}&#{clientIDPair}', '_blank', 'popup,width=500,height=500');
                 }
                 let thePopup = openWindow();
                 setInterval(pollServer, 1000, 'nonce');

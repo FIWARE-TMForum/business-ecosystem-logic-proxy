@@ -99,6 +99,10 @@ config.oauth2 = {
     }
 };
 
+config.siop = {
+    clientID: process.env.BAE_LP_CCS_CLIENT_ID || 'some_id'
+};
+
 config.extLogin = false;
 config.showLocalLogin = false;
 config.externalIdps = []
