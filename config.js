@@ -82,23 +82,6 @@ config.oauth2 = {
     }
 }*/
 
-config.oauth2 = {
-    provider: 'vc',
-    callbackURL: 'http://proxy.docker:8004/auth/vc/callback',
-    clientID: 'some_id',
-    server: 'https://verifier.apps.fiware.fiware.dev',
-    verifierQRCodePath: '/api/v1/loginQR',
-    verifierTokenPath: '/token',
-    verifierJWKSPath: '/.well-known/jwks',
-    credentialType: ['VerifiableCredential', 'MarketplaceUserCredential'],
-    roles: {
-        admin: 'admin',
-        customer: 'customer',
-        seller: 'seller',
-        orgAdmin: 'orgAdmin'
-    }
-};
-
 config.siop = {
     enabled: process.env.BAE_LP_SIOP_ENABLED === 'true',
     provider: 'vc',
