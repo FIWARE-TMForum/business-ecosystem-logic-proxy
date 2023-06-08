@@ -1,6 +1,7 @@
 
 const proxyquire = require('proxyquire');
 const passport = require('passport');
+const jwt = require('jsonwebtoken');
 const MockStrategy = require('../../utils').MockStrategy;
 
 describe('VC Strategy', () => {
@@ -12,15 +13,12 @@ describe('VC Strategy', () => {
 
     const config = {
         provider: 'vc',
-        server: 'some_url',
+        verifierHost: 'some_url',
         verifierTokenPath: '/path',
         verifierJWKSPath: '/jwksPath',
         callbackURL: 'some_uri',
-        roles: {
-            seller: 'seller',
-            customer: 'customer',
-            orgAdmin: 'orgAdmin'
-        }
+        allowedRoles: ['seller', 'customer'],
+        credentialTypes: ['VerifiableCredential', 'MarketplaceUserCredential']
     };
 
     describe('Build Strategy', () => {
@@ -51,11 +49,11 @@ describe('VC Strategy', () => {
 
                 let params = userStrategy.getParams();
                 expect(params).toEqual({
-                    verifierTokenURL: config.server + config.verifierTokenPath,
-                    verifierJWKSURL: config.server + config.verifierJWKSPath,
+                    verifierTokenURL: config.verifierHost + config.verifierTokenPath,
+                    verifierJWKSURL: config.verifierHost + config.verifierJWKSPath,
                     redirectURI: config.callbackURL,
-                    allowedCredentialType: config.credentialType,
-                    allowedRoles: [config.roles.seller, config.roles.customer]
+                    allowedCredentialTypes: config.credentialTypes,
+                    allowedRoles: config.allowedRoles
                 });
 
                 done();
@@ -101,13 +99,8 @@ describe('VC Strategy', () => {
             end: () => {}
         };
         const VALID_CONFIG = {
-            credentialType: ['VerifiableCredential', 'MarketplaceUserCredential'],
-            roles: {
-                admin: 'admin',
-                customer: 'customer',
-                seller: 'seller',
-                orgAdmin: 'orgAdmin'
-            }
+            credentialTypes: ['VerifiableCredential', 'MarketplaceUserCredential'],
+            allowedRoles: ['customer', 'seller']
         };
         let nextFunctionFor200;
         let nextFunctionFor401;
@@ -136,6 +129,14 @@ describe('VC Strategy', () => {
                                 });
                             }
                         };
+                    },
+                    'jsonwebtoken': {
+                        decode: (token) => {
+                            return jwt.decode(token);
+                        },
+                        verify: (token, key, cb) => {
+                            cb(null, jwt.decode(accessToken));
+                        }
                     }
                 })
             }).strategy;
