@@ -265,7 +265,7 @@ if (config.siop.enabled) {
     });
 
     app.get('/auth/' + config.siop.provider + '/callback', passport.authenticate(config.siop.provider), function(req, res) {
-        return res.redirect('/');
+        res.send('ok');
     });
 
     app.get(config.siop.pollPath, (req, res, next) => {

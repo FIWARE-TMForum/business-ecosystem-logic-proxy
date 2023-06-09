@@ -92,9 +92,7 @@ config.siop = {
     verifierQRCodePath: process.env.BAE_LP_SIOP_VERIFIER_QRCODE_PATH || '/api/v1/loginQR',
     verifierTokenPath: process.env.BAE_LP_SIOP_VERIFIER_TOKEN_PATH || '/token',
     verifierJWKSPath: process.env.BAE_LP_SIOP_VERIFIER_JWKS_PATH || '/.well-known/jwks',
-    credentialTypes: process.env.BAE_LP_SIOP_CREDENTIAL_TYPES.split(',') ||
-        ['VerifiableCredential', 'MarketplaceUserCredential'],
-    allowedRoles: process.env.BAE_LP_SIOP_ALLOWED_ROLES.split(',') || {
+    allowedRoles: process.env.BAE_LP_SIOP_ALLOWED_ROLES ? process.env.BAE_LP_SIOP_ALLOWED_ROLES.split(',') : {
         customer: 'customer',
         seller: 'seller'
     }

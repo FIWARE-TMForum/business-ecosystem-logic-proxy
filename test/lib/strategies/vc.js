@@ -17,9 +17,9 @@ describe('VC Strategy', () => {
         verifierTokenPath: '/path',
         verifierJWKSPath: '/jwksPath',
         callbackURL: 'some_uri',
-        allowedRoles: ['seller', 'customer'],
-        credentialTypes: ['VerifiableCredential', 'MarketplaceUserCredential']
+        allowedRoles: ['seller', 'customer']
     };
+    const idpId = 'some_id';
 
     describe('Build Strategy', () => {
         it ('Should build passport strategy', (done) => {
@@ -35,11 +35,12 @@ describe('VC Strategy', () => {
                 expect(refreshToken).toEqual('refresh');
                 expect(profile).toEqual({
                     organizations: [
-                        { id: 'vc', name: 'vc', roles: [
+                        { id: idpId, name: idpId, roles: [
                             { id: 'seller', name: 'seller' },
                             { id: 'customer', name: 'customer' }
                         ] }
                     ],
+                    idpId: idpId,
                     _json: {
                         email: 'user@email.com',
                         username: 'username',
@@ -52,7 +53,6 @@ describe('VC Strategy', () => {
                     verifierTokenURL: config.verifierHost + config.verifierTokenPath,
                     verifierJWKSURL: config.verifierHost + config.verifierJWKSPath,
                     redirectURI: config.callbackURL,
-                    allowedCredentialTypes: config.credentialTypes,
                     allowedRoles: config.allowedRoles
                 });
 
@@ -60,6 +60,7 @@ describe('VC Strategy', () => {
             });
 
             userStrategy.setProfileParams(null, {
+                idpId: idpId,
                 _json: {
                     email: 'user@email.com',
                     username: 'username',
@@ -99,7 +100,6 @@ describe('VC Strategy', () => {
             end: () => {}
         };
         const VALID_CONFIG = {
-            credentialTypes: ['VerifiableCredential', 'MarketplaceUserCredential'],
             allowedRoles: ['customer', 'seller']
         };
         let nextFunctionFor200;
