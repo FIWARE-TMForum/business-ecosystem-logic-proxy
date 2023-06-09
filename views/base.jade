@@ -64,6 +64,7 @@ html(ng-app="app")
         .constant('TAX_RATE', #{ taxRate })
         .constant('PLATFORM_REVENUE', #{ platformRevenue })
         .constant('SHOW_LOCAL_LOGIN', #{ showLocal })
+        .constant('SHOW_VC_LOGIN', #{ showVC })
         .constant('ALLOW_EDIT_PARTY', #{ editParty })
         .constant('USAGE_CHART_URL', '#{ usageChartURL }')
         .constant('ROLES', { seller: '#{ seller }', customer: '#{ customer }', orgAdmin: '#{ orgAdmin }', admin: '#{ admin }'})
@@ -181,7 +182,7 @@ html(ng-app="app")
                   span.item-text #{ __("Sign out") }
           form(name="signOutForm", method="post", action="#{ contextPath }/logout")
         else
-          if extLogin
+          if extLogin || showVC
             a.btn.btn-warning.navbar-btn.navbar-right.z-depth-1(ng-click="user.signIn()")
               span.item-text #{ __("Sign in") }
           else

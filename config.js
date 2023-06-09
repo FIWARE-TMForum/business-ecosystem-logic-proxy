@@ -100,6 +100,7 @@ config.siop = {
 
 config.extLogin = false;
 config.showLocalLogin = false;
+config.showVCLogin = process.env.BAE_LP_SIOP_ENABLED === 'true';
 config.externalIdps = []
 config.propagateToken = true;
 config.allowLocalEORI = false;
