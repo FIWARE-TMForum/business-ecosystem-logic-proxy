@@ -154,6 +154,11 @@ app.set('view engine', 'jade');
 
 app.locals.taxRate = config.taxRate || 20;
 
+
+// Load active file imports
+var importPath = config.theme || !debug ? './static/public/imports' : './public/imports';
+var imports = require(importPath).imports;
+
 /////////////////////////////////////////////////////////////////////
 ////////////////////////////// PASSPORT /////////////////////////////
 /////////////////////////////////////////////////////////////////////
@@ -256,7 +261,8 @@ if (config.siop.enabled) {
     app.get(`/login/${config.siop.provider}`, (req, res) => {
         const encodedState = getOAuth2State(utils.getCameFrom(req));
         res.render("siop.jade",  {
-            title: 'Login Q',
+            cssFilesToInject: imports.cssFilesToInject,
+            title: 'VC Login',
             verifierQRCodeURL: config.siop.verifierHost + config.siop.verifierQRCodePath,
             statePair: `state=${encodedState}`,
             callbackURLPair: `client_callback=${config.siop.callbackURL}`,
@@ -401,10 +407,6 @@ if (extLogin) {
 /////////////////////////////////////////////////////////////////////
 /////////////////////////////// PORTAL //////////////////////////////
 /////////////////////////////////////////////////////////////////////
-
-// Load active file imports
-var importPath = config.theme || !debug ? './static/public/imports' : './public/imports';
-var imports = require(importPath).imports;
 
 var renderTemplate = function(req, res, viewName) {
     var options = {

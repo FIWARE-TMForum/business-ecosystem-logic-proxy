@@ -2,35 +2,72 @@ doctype html
 html
     head
         title #{title}
-        meta(name="viewport" content="width=device-width, initial-scale=1")
-    body
-        main
-            block header
-                header.header
-                    a.title(href='/')
-                        h1 #{title}
 
-            div.container-siop
-                div.content-row
-                    h2 Please authenticate using the QR in the popup.
+        meta(charset="utf-8")
+        meta(name="viewport" content="width=device-width, initial-scale=1")
+
+        each cssFilePath in cssFilesToInject
+            link(rel="stylesheet", href="/#{ cssFilePath }")
+    body
+        .navbar.navbar-default.navbar-fixed-top.z-depth-2
+            .container
+                .navbar-header
+                    a.navbar-brand.hidden-xs(href="/")
+                        img(src="/resources/core/images/fiware-tmforum-logo.png")
+                .navbar-text #{title}
+
+                a.btn.btn-warning.navbar-btn.navbar-right.z-depth-1(href="/")
+                    span.item-text Back
+        .container.main-container
+            .row
+                h2 Please authenticate using the QR in the popup
+
+        hr.fiware-line
     script.
-                function openWindow() {
-                    return window.open('#{verifierQRCodeURL}?#{statePair}&#{callbackURLPair}&#{clientIDPair}', '_blank', 'popup,width=500,height=500');
-                }
-                let thePopup = openWindow();
-                setInterval(pollServer, 1000, 'nonce');
-                async function pollServer() {
-                    try {
-                        const response = await fetch('#{pollURL}')
-                        if (response.status === 400 || response.status === 500) {
-                            location.replace('/')
-                            return
-                        } else if (response.status === 401) {
-                            return
-                        }
-                        thePopup.close()
-                    } catch (error) {
-                        console.log(error)
-                    }
+        const popupCenter = ({url, title, w, h}) => {
+            // Fixes dual-screen position                             Most browsers      Firefox
+            const dualScreenLeft = window.screenLeft !== undefined ? window.screenLeft : window.screenX;
+            const dualScreenTop = window.screenTop !== undefined ? window.screenTop : window.screenY;
+
+            const width = window.innerWidth ? window.innerWidth : document.documentElement.clientWidth ? document.documentElement.clientWidth : screen.width;
+            const height = window.innerHeight ? window.innerHeight : document.documentElement.clientHeight ? document.documentElement.clientHeight : screen.height;
+
+            const systemZoom = width / window.screen.availWidth;
+            const left = (width - w) / 2 / systemZoom + dualScreenLeft
+            const top = (height - h) / 2 / systemZoom + dualScreenTop
+            const newWindow = window.open(url, title,
+                `
+              scrollbars=yes,
+              width=${w / systemZoom},
+              height=${h / systemZoom},
+              top=${top},
+              left=${left}
+              `
+            )
+
+            if (window && window.focus) {
+                newWindow.focus();
+            }
+            return newWindow;
+        }
+
+        function openWindow() {
+            return popupCenter({url: '#{verifierQRCodeURL}?#{statePair}&#{callbackURLPair}&#{clientIDPair}', title: 'Scan QR code', w: 500, h: 500});
+        }
+        let thePopup = openWindow();
+        setInterval(pollServer, 1000, 'nonce');
+        async function pollServer() {
+            try {
+                const response = await fetch('#{pollURL}')
+                if (response.status === 400 || response.status === 500) {
                     location.replace('/')
+                    return
+                } else if (response.status === 401) {
+                    return
                 }
+                thePopup.close()
+            } catch (error) {
+                console.log(error)
+            }
+            location.replace('/')
+        }
