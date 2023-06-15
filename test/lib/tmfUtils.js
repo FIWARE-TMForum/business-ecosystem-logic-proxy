@@ -40,7 +40,7 @@ describe('TMF Utils', function() {
             config.port +
             '/' +
             config.endpoints.party.path +
-            '/api/partyManagement/v2/individual/' +
+            '/individual/' +
             userName
         );
     };
@@ -561,7 +561,7 @@ describe('TMF Utils', function() {
             var tmfUtils = getTmfUtils(utils);
             tmfUtils.getIndividualURL(req);
 
-            var expectedPath = '/' + config.endpoints.party.path + '/api/partyManagement/v2/individual/';
+            var expectedPath = '/' + config.endpoints.party.path + '/individual/';
 
             if (user) {
                 expectedPath += user;

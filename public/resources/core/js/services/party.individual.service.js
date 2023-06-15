@@ -75,12 +75,12 @@
                 emailAddress: ''
             },
             TELEPHONE_NUMBER: {
-                type: '',
-                number: ''
+                contactType: '',
+                phoneNumber: ''
             },
             POSTAL_ADDRESS: {
-                streetOne: '',
-                postcode: '',
+                street1: '',
+                postCode: '',
                 city: '',
                 country: '',
                 stateOrProvince: ''
@@ -88,7 +88,7 @@
             CONTACT_MEDIUM: {
                 preferred: false,
                 type: TYPES.CONTACT_MEDIUM.EMAIL_ADDRESS.code,
-                medium: {}
+                characteristics: {}
             }
         };
 
@@ -111,13 +111,13 @@
         ContactMedium.prototype.resetMedium = function resetMedium() {
             switch (this.type) {
                 case TYPES.CONTACT_MEDIUM.EMAIL_ADDRESS.code:
-                    this.medium = angular.copy(TEMPLATES.EMAIL_ADDRESS);
+                    this.characteristics = angular.copy(TEMPLATES.EMAIL_ADDRESS);
                     break;
                 case TYPES.CONTACT_MEDIUM.POSTAL_ADDRESS.code:
-                    this.medium = angular.copy(TEMPLATES.POSTAL_ADDRESS);
+                    this.characteristics = angular.copy(TEMPLATES.POSTAL_ADDRESS);
                     break;
                 case TYPES.CONTACT_MEDIUM.TELEPHONE_NUMBER.code:
-                    this.medium = angular.copy(TEMPLATES.TELEPHONE_NUMBER);
+                    this.characteristics = angular.copy(TEMPLATES.TELEPHONE_NUMBER);
                     break;
             }
 
@@ -129,22 +129,22 @@
 
             switch (this.type) {
                 case TYPES.CONTACT_MEDIUM.EMAIL_ADDRESS.code:
-                    result = this.medium.emailAddress;
+                    result = this.characteristics.emailAddress;
                     break;
                 case TYPES.CONTACT_MEDIUM.POSTAL_ADDRESS.code:
                     result =
-                        this.medium.streetOne +
+                        this.characteristics.street1 +
                         '\n' +
-                        this.medium.postcode +
+                        this.characteristics.postCode +
                         ' ' +
-                        this.medium.city +
+                        this.characteristics.city +
                         ' (' +
-                        this.medium.stateOrProvince +
+                        this.characteristics.stateOrProvince +
                         ')\n' +
-                        parseCountry(this.medium.country);
+                        parseCountry(this.characteristics.country);
                     break;
                 case TYPES.CONTACT_MEDIUM.TELEPHONE_NUMBER.code:
-                    result = [this.medium.type, this.medium.number].join(', ');
+                    result = [this.characteristics.contactType, this.characteristics.phoneNumber].join(', ');
                     break;
             }
 

@@ -51,9 +51,9 @@ describe('Party lib', function() {
     FUNCTION_MAPPING['getInd'] = 'getIndividual';
     FUNCTION_MAPPING['updInd'] = 'updateIndividual';
 
-    var orgPath = '/DSPartyManagement/api/partyManagement/v2/organization/';
+    var orgPath = '/organization/';
     var orgId = '111555999';
-    var indPath = '/DSPartyManagement/api/partyManagement/v2/individual/';
+    var indPath = '/individual/';
     var indId = 'eugenio';
 
     var orgPartyClient = partyClient(orgPath);
