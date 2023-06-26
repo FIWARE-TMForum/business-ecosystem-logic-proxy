@@ -43,6 +43,7 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 // External login enabled
 const extLogin = config.extLogin == true;
 const showLocal = config.showLocalLogin == true;
+const showVC = config.showVCLogin == true;
 const editParty = config.editParty == true;
 
 (async () => {
@@ -153,6 +154,11 @@ app.set('view engine', 'jade');
 
 app.locals.taxRate = config.taxRate || 20;
 
+
+// Load active file imports
+var importPath = config.theme || !debug ? './static/public/imports' : './public/imports';
+var imports = require(importPath).imports;
+
 /////////////////////////////////////////////////////////////////////
 ////////////////////////////// PASSPORT /////////////////////////////
 /////////////////////////////////////////////////////////////////////
@@ -246,6 +252,33 @@ const addIdpStrategy = async (idp) => {
     });
 
     return extAuth;
+}
+
+if (config.siop.enabled) {
+    let siopAuth = await authModule.auth(config.siop);
+    passport.use(config.siop.provider, siopAuth.STRATEGY);
+
+    app.get(`/login/${config.siop.provider}`, (req, res) => {
+        const encodedState = getOAuth2State(utils.getCameFrom(req));
+        res.render("siop.jade",  {
+            cssFilesToInject: imports.cssFilesToInject,
+            title: 'VC Login',
+            verifierQRCodeURL: config.siop.verifierHost + config.siop.verifierQRCodePath,
+            statePair: `state=${encodedState}`,
+            callbackURLPair: `client_callback=${config.siop.callbackURL}`,
+            clientIDPair: `client_id=${config.siop.clientID}`,
+            pollURL: config.siop.pollPath
+        });
+    });
+
+    app.get('/auth/' + config.siop.provider + '/callback', passport.authenticate(config.siop.provider), function(req, res) {
+        res.send('ok');
+    });
+
+    app.get(config.siop.pollPath, (req, res, next) => {
+        const encodedState = getOAuth2State(utils.getCameFrom(req));
+        passport.authenticate(config.siop.provider, { poll: true, state: encodedState })(req, res, next);
+    });
 }
 
 // Load other stragies if external IDPs are enabled
@@ -375,10 +408,6 @@ if (extLogin) {
 /////////////////////////////// PORTAL //////////////////////////////
 /////////////////////////////////////////////////////////////////////
 
-// Load active file imports
-var importPath = config.theme || !debug ? './static/public/imports' : './public/imports';
-var imports = require(importPath).imports;
-
 var renderTemplate = function(req, res, viewName) {
     var options = {
         user: req.user,
@@ -406,6 +435,7 @@ var renderTemplate = function(req, res, viewName) {
         admin: config.oauth2.roles.admin,
         extLogin: extLogin,
         showLocal: showLocal,
+        showVC: showVC,
         editParty: editParty
     };
 

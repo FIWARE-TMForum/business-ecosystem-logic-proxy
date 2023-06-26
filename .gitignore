@@ -6,4 +6,4 @@ coverage
 xunit.xml
 /indexes
 .DS_Store
-
+.idea

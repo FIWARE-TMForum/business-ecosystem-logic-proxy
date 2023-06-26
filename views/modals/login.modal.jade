@@ -18,7 +18,7 @@
                     span.item-text.hidden-xs #{ __("Search") }
 
         input(type="hidden", ng-model="loginCtl.idpId", required)
-        .row(ng-if="loginCtl.showLocal")
+        .row(ng-if="loginCtl.showLocal || loginCtl.showVC")
           .col-xs-12
             .table-responsive
               table.table.table-bordered.table-hover.table-selectable
@@ -26,8 +26,10 @@
                   tr
                     th #{ __("Name") }
                 tbody
-                  tr(ng-class="{ active: loginCtl.idpId == 'local' }", ng-click="loginCtl.setIdp(-1)")
+                  tr(ng-if="loginCtl.showLocal", ng-class="{ active: loginCtl.idpId == 'local' }", ng-click="loginCtl.setIdp(-1)")
                     td #{ __("Local IDP") }
+                  tr(ng-if="loginCtl.showVC", ng-class="{ active: loginCtl.idpId == 'vc' }", ng-click="loginCtl.setIdp(-2)")
+                    td #{ __("VC Login") }
         .row
           .col-xs-12(ng-if="loginCtl.status === loginCtl.STATUS.RESOLVED")
             .table-responsive(ng-if="loginCtl.idps.length")
