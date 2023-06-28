@@ -49,6 +49,7 @@ describe('Party lib', function() {
     FUNCTION_MAPPING['mkOrg'] = 'createOrganization';
     FUNCTION_MAPPING['updOrg'] = 'updateOrganization';
     FUNCTION_MAPPING['getInd'] = 'getIndividual';
+    FUNCTION_MAPPING['getInds'] = 'getIndividuals';
     FUNCTION_MAPPING['updInd'] = 'updateIndividual';
 
     var orgPath = '/organization/';
@@ -198,6 +199,26 @@ describe('Party lib', function() {
             });
         });
 
+	it('getIndividuals should return error fields if req fails', function(done) {
+	    var errObj = {
+		status: 500,
+		message: 'The connection has failed getting all users info'
+	    };
+
+	    nock(url, { reqheaders: headers}).get(indPath).reply(500, errObj);
+
+	    errObj['body'] = JSON.stringify({
+		status: 500,
+		message: 'The connection has failed getting all users info'
+	    });
+
+	    indPartyClient[FUNCTION_MAPPING['getInds']]((err, res) => {
+		expect(err).toEqual(errObj);
+		expect(res).toBe(undefined);
+		done();
+	    });
+	});
+
         it('updateIndividual should return error fields if req fails', function(done) {
             var indP = indPath + indId;
             var indPartyClient = partyClient(indP);
@@ -328,6 +349,30 @@ describe('Party lib', function() {
                 done();
             });
         });
+
+	it('getIndividuals should return the required individuals', function(done) {
+            expectedValue = [
+                {
+                    id: '111555999',
+                    href: 'Vercingetorix'
+                },
+                {
+                    id: '123456789',
+                    href: 'Celtilo'
+                }
+            ];
+            nock(url, {
+                reqheaders: headers
+            })
+                .get(orgPath)
+                .reply(200, expectedValue);
+
+            orgPartyClient[FUNCTION_MAPPING['getInds']]((err, res) => {
+                expect(err).toBeNull();
+                expect(JSON.parse(res.body)).toEqual(expectedValue);
+                done();
+            });
+	});
 
         it('getIndividual should return the required Individual', function(done) {
             var indP = indPath + indId;
