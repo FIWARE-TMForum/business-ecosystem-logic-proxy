@@ -50,6 +50,7 @@ describe('Party lib', function() {
     FUNCTION_MAPPING['updOrg'] = 'updateOrganization';
     FUNCTION_MAPPING['getInd'] = 'getIndividual';
     FUNCTION_MAPPING['getInds'] = 'getIndividuals';
+    FUNCTION_MAPPING['mkInd'] = 'createIndividual';
     FUNCTION_MAPPING['updInd'] = 'updateIndividual';
 
     var orgPath = '/organization/';
@@ -218,6 +219,35 @@ describe('Party lib', function() {
 		done();
 	    });
 	});
+
+        it('createIndividual should return error fields if req fails', function(done) {
+            var errObj = {
+                status: 500,
+                message: 'The connection has failed while creating the individual'
+            };
+
+            nock(url, {
+                reqheaders: headers
+            })
+                .post(indPath)
+                .reply(500, errObj);
+
+            errObj['body'] = JSON.stringify({
+                status: 500,
+                message: 'The connection has failed while creating the individual'
+            });
+
+            var content = {
+                id: '111555999',
+                name: 'Vercingetorix',
+            };
+
+            indPartyClient[FUNCTION_MAPPING['mkInd']](content, (err, res) => {
+                expect(err).toEqual(errObj);
+                expect(res).toBe(undefined);
+                done();
+            });
+        });
 
         it('updateIndividual should return error fields if req fails', function(done) {
             var indP = indPath + indId;
@@ -392,6 +422,31 @@ describe('Party lib', function() {
             indPartyClient[FUNCTION_MAPPING['getInd']](indId, (err, res) => {
                 expect(err).toBeNull();
                 expect(JSON.parse(res.body)).toEqual(ind);
+                done();
+            });
+        });
+
+        it('createIndividual should return the created individual', function(done) {
+            var content = {
+                id: '111555999',
+                name: 'Vercigentorix'
+            };
+
+            nock(url, {
+                reqheaders: headers
+            })
+                .post(indPath)
+                .reply(200, content);
+
+            var expectedResult = {
+                id: '111555999',
+                name: 'Vercigentorix'
+            };
+
+            indPartyClient[FUNCTION_MAPPING['mkInd']](content, (err, res) => {
+                expect(err).toBeNull();
+		console.log(res);
+                expect(JSON.parse(res.body)).toEqual(expectedResult);
                 done();
             });
         });
