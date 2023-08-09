@@ -23,6 +23,13 @@ var indexes = require('./lib/indexes.js'),
 	Promiz = require('promiz');
 
 var createUrl = function createUrl(api, extra) {
+	console.log('-------------------------------------------------------------------------------------------------')
+	console.log(api)
+	console.log(extra)
+	console.log('-------------------------------------------------------------------------------------------------')
+	if (api === 'DSProductCatalog') {
+		return (config.endpoints.catalog.appSsl == true ? 'https://' : 'http://') + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port + extra
+	}
 	return utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + extra;
 };
 
@@ -55,14 +62,14 @@ var genericRequest = function genericRequest(options, extra) {
 };
 
 var getProducts = function getProducts() {
-	// var url = createUrl('DSProductCatalog', '/DSProductCatalog/api/catalogManagement/v2/productSpecification');
-	var url = 'http://' + config.endpoints.catalog.host + config.endpoints.catalog.path + ':' + config.endpoints.catalog.port + '/productSpecification'
+	var url = createUrl('DSProductCatalog', '/productSpecification');
+	// var url = 'http://' + config.endpoints.catalog.host + config.endpoints.catalog.path + ':' + config.endpoints.catalog.port + '/productSpecification'
 	return genericRequest(url);
 };
 
 var getOfferings = function getOfferings(catalog, qstring) {
 	// For every catalog!
-	var url = createUrl('DSProductCatalog', '/productOffering');
+	var url = createUrl('DSProductCatalog', 'productOffering');
 
 	if (qstring) {
 		url += qstring;
@@ -75,7 +82,7 @@ var getOfferings = function getOfferings(catalog, qstring) {
 };
 
 var getCatalogs = function getCatalogs() {
-	var url = createUrl('DSProductCatalog', '/catalog');
+	var url = createUrl('DSProductCatalog', 'catalog');
 	return genericRequest(url);
 };
 
