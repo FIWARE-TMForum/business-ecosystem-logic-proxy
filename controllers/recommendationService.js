@@ -31,7 +31,6 @@ var recommendationService = (function() {
 	}
 
 	const getRecomList = function(req, res) {
-		console.log('GET RECOM LIST')
 		try {
 			var userName = req.params.id;
 			console.log(userName);
@@ -40,8 +39,6 @@ var recommendationService = (function() {
 					if (err) {
 						res.status(500).json({ error: err.message });
 					} else {
-						console.log('THE RECOM')
-						console.log()
 						if (result.length == 0) {
 							res.status(404).end();
 						} else {
@@ -67,11 +64,11 @@ var recommendationService = (function() {
 		let set = { userId: userId}
 
 		if (categories != null) {
-			set[categories] = categories
+			set.categories = categories
 		}
 
 		if (promotions != null) {
-			set[promotions] = promotions
+			set.promotions = promotions
 		}
 
 		try {
