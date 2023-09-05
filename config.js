@@ -345,6 +345,7 @@ config.apiKeyServicePath = checkPrefix(config.apiKeyServicePath, '/apiKeyService
 config.slaServicePath = checkPrefix(config.slaServicePath, '/SLAManagement');
 config.reputationServicePath = checkPrefix(config.reputationServicePath, '/REPManagement');
 config.recommendationServicePath = checkPrefix(config.recommendationServicePath, '/RECManagement');
+config.promotionServicePath = checkPrefix(config.promotionServicePath, '/PromManagement');
 config.idpServicePath = checkPrefix(config.idpServicePath, '/IDP');
 config.logInPath = config.logInPath || '/login';
 config.logOutPath = config.logOutPath || '/logout';

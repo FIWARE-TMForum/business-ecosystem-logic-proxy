@@ -3,6 +3,7 @@ const apiKeyService = require('./controllers/apiKeyService').apiKeyService;
 const slaService = require('./controllers/slaService').slaService;
 const reputationService = require('./controllers/reputationService').reputationService;
 const recommendationService = require('./controllers/recommendationService').recommendationService;
+const promotionService = require('./controllers/promotionService').promotionService;
 const idpService = require('./controllers/idpsService').idpService;
 const bodyParser = require('body-parser');
 const base64url = require('base64url');
@@ -367,8 +368,20 @@ app.post(config.slaServicePath + '/sla', failIfNotAuthenticated, slaService.save
 /////////////////////////////////////////////////////////////////////
 
 app.use(config.recommendationServicePath + "/*", checkMongoUp, authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj);
-app.get(config.recommendationServicePath + '/recommendations/:id', recommendationService.getRecomList);
+app.get(config.recommendationServicePath + '/recommendations/:id', failIfNotAuthenticated, recommendationService.getRecomList);
+app.get(config.recommendationServicePath + '/recommendations', failIfNotAuthenticated, recommendationService.getAllRecomList);
 app.post(config.recommendationServicePath + '/recommendations', failIfNotAuthenticated, recommendationService.setRecomList);
+
+/////////////////////////////////////////////////////////////////////
+///////////////////////// RECOMMENDATIONS ///////////////////////////
+/////////////////////////////////////////////////////////////////////
+
+app.use(config.promotionServicePath + "/*", checkMongoUp, authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj);
+app.get(config.promotionServicePath + '/promotions/:id', failIfNotAuthenticated, promotionService.getPromotion);
+app.put(config.promotionServicePath + '/promotions/:id', failIfNotAuthenticated, promotionService.updatePromotion);
+app.delete(config.promotionServicePath + '/promotions/:id', failIfNotAuthenticated, promotionService.deletePromotion);
+app.get(config.promotionServicePath + '/promotions', failIfNotAuthenticated, promotionService.getPromotions);
+app.post(config.promotionServicePath + '/promotions', failIfNotAuthenticated, promotionService.createPromotion);
 
 /////////////////////////////////////////////////////////////////////
 ///////////////////////// REPUTAION SERVICE /////////////////////////
@@ -422,6 +435,8 @@ var renderTemplate = function(req, res, viewName) {
         customerPath: config.endpoints.customer.path,
         shoppingCartPath: config.shoppingCartPath,
         authorizeServicePath: config.authorizeServicePath,
+        recommendationPath: config.recommendationServicePath,
+        promotionPath: config.promotionServicePath,
         rssPath: config.endpoints.rss.path,
         platformRevenue: config.revenueModel,
         cssFilesToInject: imports.cssFilesToInject,

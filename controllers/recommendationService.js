@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2023 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -17,18 +17,33 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var recommendationModel = require('../db/schemas/recommendations')
+const recommendationModel = require('../db/schemas/recommendations')
 
 var recommendationService = (function() {
-	var getRecomList = function(req, res) {
+	const getAllRecomList = function(req, res) {
+		recommendationModel.find({}, (err, result) => {
+			if (err) {
+				res.status(500).json({ error: err.message });
+			} else {
+				res.status(200).json(result);
+			}
+		});
+	}
+
+	const getRecomList = function(req, res) {
 		try {
 			var userName = req.params.id;
+			console.log(userName);
 			if (userName) {
 				recommendationModel.find({ userId: userName }, function(err, result) {
 					if (err) {
 						res.status(500).json({ error: err.message });
 					} else {
-						res.status(200).json(result[0]);
+						if (result.length == 0) {
+							res.status(404).end();
+						} else {
+							res.status(200).json(result[0]);	
+						}
 					}
 				})
 			} else {
@@ -39,19 +54,36 @@ var recommendationService = (function() {
 		}
 	};
 
-	var setRecomList = function(req, res) {
-		var body = JSON.parse(req.body);
-		var userId = body.userId;
-		var categories = body.categories;
+	const setRecomList = function(req, res) {
+		const body = JSON.parse(req.body);
+		const userId = body.userId;
+
+		let categories = body.categories;
+		let promotions = body.promotions;
+
+		let set = { userId: userId}
+
+		if (categories != null) {
+			set.categories = categories
+		}
+
+		if (promotions != null) {
+			set.promotions = promotions
+		}
 
 		try {
 			if (userId) {
-				recommendationModel.findOneAndUpdate({ userId: userId }, { $set: { userId: userId, categories: categories } }, { new: true, upsert: true }, function(err, rawResp) {
-					if (err) {
-						res.status(500).json({ error: err.message });
-					} else {
-						res.status(200).json(rawResp);
-					}
+				recommendationModel.findOneAndUpdate(
+					{ userId: userId },
+					{ $set:  set},
+					{ new: true, upsert: true },
+ 
+					(err, rawResp) => {
+						if (err) {
+							res.status(500).json({ error: err.message });
+						} else {
+							res.status(200).json(rawResp);
+						}
 				});
 			} else {
 				res.status(422).json({ error: 'userId missing' });
@@ -62,7 +94,8 @@ var recommendationService = (function() {
 	}
 	return {
 		getRecomList: getRecomList,
-		setRecomList: setRecomList
+		setRecomList: setRecomList,
+		getAllRecomList: getAllRecomList
 	};
 })();
 
