@@ -82,8 +82,25 @@ config.oauth2 = {
     }
 }*/
 
+config.siop = {
+    enabled: process.env.BAE_LP_SIOP_ENABLED === 'true',
+    provider: 'vc',
+    pollPath: '/poll',
+    clientID: process.env.BAE_LP_SIOP_CLIENT_ID || 'some_id',
+    callbackURL: process.env.BAE_LP_SIOP_CALLBACK_PATH || 'http://proxy.docker:8004/auth/vc/callback',
+    verifierHost: process.env.BAE_LP_SIOP_VERIFIER_HOST || 'https://verifier.apps.fiware.fiware.dev',
+    verifierQRCodePath: process.env.BAE_LP_SIOP_VERIFIER_QRCODE_PATH || '/api/v1/loginQR',
+    verifierTokenPath: process.env.BAE_LP_SIOP_VERIFIER_TOKEN_PATH || '/token',
+    verifierJWKSPath: process.env.BAE_LP_SIOP_VERIFIER_JWKS_PATH || '/.well-known/jwks',
+    allowedRoles: process.env.BAE_LP_SIOP_ALLOWED_ROLES ? process.env.BAE_LP_SIOP_ALLOWED_ROLES.split(',') : {
+        customer: 'customer',
+        seller: 'seller'
+    }
+};
+
 config.extLogin = false;
 config.showLocalLogin = false;
+config.showVCLogin = process.env.BAE_LP_SIOP_ENABLED === 'true';
 config.externalIdps = []
 config.propagateToken = true;
 config.allowLocalEORI = false;
@@ -327,6 +344,8 @@ config.authorizeServicePath = checkPrefix(config.authorizeServicePath, '/authori
 config.apiKeyServicePath = checkPrefix(config.apiKeyServicePath, '/apiKeyService');
 config.slaServicePath = checkPrefix(config.slaServicePath, '/SLAManagement');
 config.reputationServicePath = checkPrefix(config.reputationServicePath, '/REPManagement');
+config.recommendationServicePath = checkPrefix(config.recommendationServicePath, '/RECManagement');
+config.promotionServicePath = checkPrefix(config.promotionServicePath, '/PromManagement');
 config.idpServicePath = checkPrefix(config.idpServicePath, '/IDP');
 config.logInPath = config.logInPath || '/login';
 config.logOutPath = config.logOutPath || '/logout';

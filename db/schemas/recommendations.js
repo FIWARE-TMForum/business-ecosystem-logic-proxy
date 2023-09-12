@@ -1,4 +1,4 @@
-/* Copyright (c) 2021 Future Internet Consulting and Development Solutions S.L.
+/* Copyright (c) 2015 - 2023 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -20,21 +20,12 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const idpSchema = new Schema({
-    provider: { type: String, required: true },
-    name: { type: String, required: true },
-    server: { type: String, required: true },
-    clientID: { type: String, required: true },
-    callbackURL: { type: String, required: true },
-    idpId: { type: String, required: true },
-    issuerDid: { type: String, required: false },
-    description: { type: String, required: false },
-    tokenKey: { type: String, required: true },
-    tokenCrt: { type: String, required: true }
+const recommendationSchema = new Schema({
+	userId: { type: String, required: true },
+	categories: { type: Array, required: true },
+	promotions: { type: Array, default: [] }
 });
 
-idpSchema.index({ idpId: 1 }, { unique: true });
-idpSchema.index({ name: "text" });
-idpSchema.index({ description: "text" });
+recommendationSchema.index({ userId: 1 }, { unique: true })
 
-module.exports = mongoose.model('Idp', idpSchema);
+module.exports = mongoose.model('recommendations', recommendationSchema);

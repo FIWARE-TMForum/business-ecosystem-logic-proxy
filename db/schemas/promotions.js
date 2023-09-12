@@ -1,4 +1,4 @@
-/* Copyright (c) 2021 Future Internet Consulting and Development Solutions S.L.
+/* Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -17,24 +17,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const idpSchema = new Schema({
-    provider: { type: String, required: true },
-    name: { type: String, required: true },
-    server: { type: String, required: true },
-    clientID: { type: String, required: true },
-    callbackURL: { type: String, required: true },
-    idpId: { type: String, required: true },
-    issuerDid: { type: String, required: false },
-    description: { type: String, required: false },
-    tokenKey: { type: String, required: true },
-    tokenCrt: { type: String, required: true }
+const promotionSchema = new Schema({
+	offeringId: { type: String, required: true },
+	offeringName: { type: String, required: true },
+	imageURL: { type: String, required: true },
+	imageName: { type: String, required: true },
+	termsURL: { type: String, required: true }
 });
 
-idpSchema.index({ idpId: 1 }, { unique: true });
-idpSchema.index({ name: "text" });
-idpSchema.index({ description: "text" });
-
-module.exports = mongoose.model('Idp', idpSchema);
+module.exports = mongoose.model('promotion', promotionSchema);

@@ -2,6 +2,8 @@ const authorizeService = require('./controllers/authorizeService').authorizeServ
 const apiKeyService = require('./controllers/apiKeyService').apiKeyService;
 const slaService = require('./controllers/slaService').slaService;
 const reputationService = require('./controllers/reputationService').reputationService;
+const recommendationService = require('./controllers/recommendationService').recommendationService;
+const promotionService = require('./controllers/promotionService').promotionService;
 const idpService = require('./controllers/idpsService').idpService;
 const bodyParser = require('body-parser');
 const base64url = require('base64url');
@@ -42,6 +44,7 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 // External login enabled
 const extLogin = config.extLogin == true;
 const showLocal = config.showLocalLogin == true;
+const showVC = config.showVCLogin == true;
 const editParty = config.editParty == true;
 
 (async () => {
@@ -152,6 +155,11 @@ app.set('view engine', 'jade');
 
 app.locals.taxRate = config.taxRate || 20;
 
+
+// Load active file imports
+var importPath = config.theme || !debug ? './static/public/imports' : './public/imports';
+var imports = require(importPath).imports;
+
 /////////////////////////////////////////////////////////////////////
 ////////////////////////////// PASSPORT /////////////////////////////
 /////////////////////////////////////////////////////////////////////
@@ -247,6 +255,33 @@ const addIdpStrategy = async (idp) => {
     return extAuth;
 }
 
+if (config.siop.enabled) {
+    let siopAuth = await authModule.auth(config.siop);
+    passport.use(config.siop.provider, siopAuth.STRATEGY);
+
+    app.get(`/login/${config.siop.provider}`, (req, res) => {
+        const encodedState = getOAuth2State(utils.getCameFrom(req));
+        res.render("siop.jade",  {
+            cssFilesToInject: imports.cssFilesToInject,
+            title: 'VC Login',
+            verifierQRCodeURL: config.siop.verifierHost + config.siop.verifierQRCodePath,
+            statePair: `state=${encodedState}`,
+            callbackURLPair: `client_callback=${config.siop.callbackURL}`,
+            clientIDPair: `client_id=${config.siop.clientID}`,
+            pollURL: config.siop.pollPath
+        });
+    });
+
+    app.get('/auth/' + config.siop.provider + '/callback', passport.authenticate(config.siop.provider), function(req, res) {
+        res.send('ok');
+    });
+
+    app.get(config.siop.pollPath, (req, res, next) => {
+        const encodedState = getOAuth2State(utils.getCameFrom(req));
+        passport.authenticate(config.siop.provider, { poll: true, state: encodedState })(req, res, next);
+    });
+}
+
 // Load other stragies if external IDPs are enabled
 if (extLogin) {
     // Load IDPs from database
@@ -329,6 +364,26 @@ app.get(config.slaServicePath + '/sla/:id', slaService.getSla);
 app.post(config.slaServicePath + '/sla', failIfNotAuthenticated, slaService.saveSla);
 
 /////////////////////////////////////////////////////////////////////
+///////////////////////// RECOMMENDATIONS ///////////////////////////
+/////////////////////////////////////////////////////////////////////
+
+app.use(config.recommendationServicePath + "/*", checkMongoUp, authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj);
+app.get(config.recommendationServicePath + '/recommendations/:id', failIfNotAuthenticated, recommendationService.getRecomList);
+app.get(config.recommendationServicePath + '/recommendations', failIfNotAuthenticated, recommendationService.getAllRecomList);
+app.post(config.recommendationServicePath + '/recommendations', failIfNotAuthenticated, recommendationService.setRecomList);
+
+/////////////////////////////////////////////////////////////////////
+///////////////////////// RECOMMENDATIONS ///////////////////////////
+/////////////////////////////////////////////////////////////////////
+
+app.use(config.promotionServicePath + "/*", checkMongoUp, authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj);
+app.get(config.promotionServicePath + '/promotions/:id', failIfNotAuthenticated, promotionService.getPromotion);
+app.put(config.promotionServicePath + '/promotions/:id', failIfNotAuthenticated, promotionService.updatePromotion);
+app.delete(config.promotionServicePath + '/promotions/:id', failIfNotAuthenticated, promotionService.deletePromotion);
+app.get(config.promotionServicePath + '/promotions', failIfNotAuthenticated, promotionService.getPromotions);
+app.post(config.promotionServicePath + '/promotions', failIfNotAuthenticated, promotionService.createPromotion);
+
+/////////////////////////////////////////////////////////////////////
 ///////////////////////// REPUTAION SERVICE /////////////////////////
 /////////////////////////////////////////////////////////////////////
 app.use(config.reputationServicePath + '/*', checkMongoUp);
@@ -366,10 +421,6 @@ if (extLogin) {
 /////////////////////////////// PORTAL //////////////////////////////
 /////////////////////////////////////////////////////////////////////
 
-// Load active file imports
-var importPath = config.theme || !debug ? './static/public/imports' : './public/imports';
-var imports = require(importPath).imports;
-
 var renderTemplate = function(req, res, viewName) {
     var options = {
         user: req.user,
@@ -384,6 +435,8 @@ var renderTemplate = function(req, res, viewName) {
         customerPath: config.endpoints.customer.path,
         shoppingCartPath: config.shoppingCartPath,
         authorizeServicePath: config.authorizeServicePath,
+        recommendationPath: config.recommendationServicePath,
+        promotionPath: config.promotionServicePath,
         rssPath: config.endpoints.rss.path,
         platformRevenue: config.revenueModel,
         cssFilesToInject: imports.cssFilesToInject,
@@ -397,6 +450,7 @@ var renderTemplate = function(req, res, viewName) {
         admin: config.oauth2.roles.admin,
         extLogin: extLogin,
         showLocal: showLocal,
+        showVC: showVC,
         editParty: editParty
     };
 

@@ -16,6 +16,19 @@ form(name="step.form", novalidate)
       span(ng-message="required") #{ __("This field is required.") }
       span(ng-message="maxlength") #{ __("This field must not exceed 100 chars.") }
       span(ng-message="unique") #{ __("This EORI is already taken.") }
+  .form-group(ng-class="{ 'has-error': createForm.hasError(step.form.iissuerDid) }")
+    label #{ __("Issuer DID") }
+    input.form-control(
+      type="text"
+      name="issuerDid"
+      ng-model="createVM.data.issuerDid"
+      ng-maxlength="100"
+    )
+    .help-block(
+      ng-messages="step.form.issuerDid.$error"
+      ng-show="createForm.hasError(step.form.issuerDid)"
+    )
+      span(ng-message="maxlength") #{ __("This field must not exceed 100 chars.") }
   .row
     .col-sm-6
       .form-group(ng-class="{ 'has-error': createForm.hasError(step.form.name) }")

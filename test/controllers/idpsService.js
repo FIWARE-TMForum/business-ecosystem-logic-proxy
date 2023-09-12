@@ -44,7 +44,8 @@ describe('IDPs API', () => {
                 name: 'Test IDP',
                 server: 'http://testidp.com',
                 idpId: 'IDP',
-                description: 'Test desciption'
+                description: 'Test desciption',
+                issuerDid: null
             };
 
             const schema = {
@@ -137,12 +138,14 @@ describe('IDPs API', () => {
                 name: 'Test IDP',
                 server: 'http://testidp.com',
                 idpId: 'IDP',
-                description: 'Test desciption'
+                description: 'Test desciption',
+                issuerDid: null
             }, {
                 name: 'Test IDP 2',
                 server: 'http://testidp2.com',
                 idpId: 'IDP2',
-                description: 'Test desciption'
+                description: 'Test desciption',
+                issuerDid: 'idp:did:1234'
             }];
 
             const schema = {
