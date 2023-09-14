@@ -1,4 +1,4 @@
-FROM node:16 as build
+FROM node:18 as build
 
 WORKDIR /opt/business-ecosystem-logic-proxy
 
@@ -12,7 +12,7 @@ RUN mkdir -p indexes && \
     cp config.js etc/config.js && \
     echo "module.exports = require('./etc/config');" > config.js
 
-FROM node:16 as main
+FROM node:18 as main
 
 LABEL MAINTAINER="Future Internet Consulting and Development Solutions S.L."
 
