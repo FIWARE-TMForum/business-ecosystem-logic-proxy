@@ -1,26 +1,23 @@
 version: '3'
 services:
     elasticsearch:
-        image: docker.elastic.co/elasticsearch/elasticsearch:6.4.2
+        image: docker.elastic.co/elasticsearch/elasticsearch:7.5.0
         environment:
-            - discovery.type=single-node
-            # - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-            # ulimits:
-            #   memlock:
-            #       soft: -1
-            #       hard: -1
+            - 'node.name=BAE'
+            - 'discovery.type=single-node'
+            - 'ES_JAVA_OPTS=-Xms256m -Xmx256m'
         ports:
             - "127.0.0.1:9200:9200"
 
     mongo:
-        image: mongo:3.2
+        image: mongo:4.4
         ports:
             - 27017:27017
         volumes:
             - ./proxy-data:/data/db
 
     proxy:
-        image: fiware/biz-ecosystem-logic-proxy:develop
+        image: fiware/biz-ecosystem-logic-proxy:master
         links:
             - mongo
             - elasticsearch
