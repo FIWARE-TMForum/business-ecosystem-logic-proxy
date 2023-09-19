@@ -159,7 +159,6 @@ config.endpoints = {
     },
     party: {
         path: 'party',
-        remotePath: '',
         host: 'host.docker.internal',
         port: '8633',
         appSsl: false
