@@ -158,9 +158,10 @@ config.endpoints = {
         appSsl: false
     },
     party: {
-        path: 'DSPartyManagement',
-        host: 'apis.docker',
-        port: '8080',
+        path: 'party',
+        remotePath: '',
+        host: 'host.docker.internal',
+        port: '8633',
         appSsl: false
     },
     billing: {

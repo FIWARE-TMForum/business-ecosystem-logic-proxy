@@ -88,17 +88,19 @@ html(ng-app="app")
         angular.module('app')
           .constant('LOGGED_USER', {
             id: '#{ user.id }',
+            partyId: '#{ user.partyId }',
             name: '#{ user.username }',
-            href: '#{ contextPath }/#{ partyPath }/individual/#{ user.id }',
+            href: '#{ contextPath }/#{ partyPath }/individual/#{ user.partyId }',
             email: '#{ user.email }',
             bearerToken: '#{ user.accessToken }',
             organizations: '#{ '{ "organizations":' + JSON.stringify(user.organizations) + '}' }',
             currentUser: {
               id: '#{ user.id }',
+              partyId: '#{ user.partyId }',
               name: '#{ user.username }',
               email: '#{ user.email }',
               roles: '#{ JSON.stringify(user.roles) }',
-              href: '#{ contextPath }/#{ partyPath }/individual/#{ user.id }'
+              href: '#{ contextPath }/#{ partyPath }/individual/#{ user.partyId }'
             }
           })
           .run(function ($http, LOGGED_USER) {
