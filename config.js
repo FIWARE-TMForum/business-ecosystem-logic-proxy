@@ -128,9 +128,9 @@ config.endpoints = {
         appSsl: config.https.enabled
     },
     catalog: {
-        path: 'DSProductCatalog',
-        host: 'apis.docker',
-        port: '8080',
+        path: 'catalog',
+        host: 'host.docker.internal',
+        port: '8632',
         appSsl: false
     },
     ordering: {

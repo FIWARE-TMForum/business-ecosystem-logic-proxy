@@ -734,11 +734,9 @@ var catalog = (function() {
         );
     };
 
-    var checkExistingCatalog = function(apiUrl, catalogName, callback) {
-        var catalogCollectionPath = '/catalog';
-        var catalogPath = apiUrl.substring(0, apiUrl.lastIndexOf(catalogCollectionPath) + catalogCollectionPath.length);
-
-        var queryParams = '?name=' + catalogName;
+    const checkExistingCatalog = function(catalogName, callback) {
+        const catalogPath = '/catalog';
+        const queryParams = '?name=' + catalogName;
 
         retrieveAsset(catalogPath + queryParams, function(err, result) {
             if (err) {
@@ -764,7 +762,7 @@ var catalog = (function() {
     var validateCatalog = function(req, prevCatalog, catalog, callback) {
         // Check that the catalog name is not already taken
         if (catalog && (!prevCatalog || !!catalog.name)) {
-            checkExistingCatalog(req.apiUrl, catalog.name, callback);
+            checkExistingCatalog(catalog.name, callback);
         } else {
             callback(null);
         }
@@ -922,16 +920,19 @@ var catalog = (function() {
     };
 
     // Validate the modification of a resource
-    var validateUpdate = function(req, callback) {
-        var catalogsPattern = new RegExp('/catalog/[^/]+/?$');
-        var offeringsPattern = new RegExp('/catalog/[^/]+/productOffering/[^/]+/?$');
-        var productsPattern = new RegExp('/productSpecification/[^/]+/?$');
+    const validateUpdate = function(req, callback) {
+        const catalogsPattern = new RegExp('/catalog/[^/]+/?$');
+        const offeringsPattern = new RegExp('/catalog/[^/]+/productOffering/[^/]+/?$');
+        const productsPattern = new RegExp('/productSpecification/[^/]+/?$');
 
         try {
-            var parsedBody = utils.emptyObject(req.body) ? null : JSON.parse(req.body);
+            const parsedBody = utils.emptyObject(req.body) ? null : JSON.parse(req.body);
 
             // Retrieve the resource to be updated or removed
-            retrieveAsset(req.apiUrl, function(err, result) {
+            const url = req.apiUrl.replace(`/${config.endpoints.catalog.path}`, '')
+
+            console.log(url)
+            retrieveAsset(url, function(err, result) {
                 if (err) {
                     if (err.status === 404) {
                         callback({
