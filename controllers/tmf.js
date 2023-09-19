@@ -1,5 +1,7 @@
 /* Copyright (c) 2015 - 2018 CoNWeT Lab., Universidad Politécnica de Madrid
  *
+ * Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
+ *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
  *
@@ -17,24 +19,26 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var config = require('./../config'),
-	// TMF APIs
-	catalog = require('./tmf-apis/catalog').catalog,
-	inventory = require('./tmf-apis/inventory').inventory,
-	ordering = require('./tmf-apis/ordering').ordering,
-	charging = require('./tmf-apis/charging').charging,
-	rss = require('./tmf-apis/rss').rss,
-	party = require('./tmf-apis/party').party,
-	usageManagement = require('./tmf-apis/usageManagement').usageManagement,
-	billing = require('./tmf-apis/billing').billing,
-	customer = require('./tmf-apis/customer').customer,
-	// Other dependencies
-	logger = require('./../lib/logger').logger.getLogger('TMF'),
-	request = require('request'),
-	utils = require('./../lib/utils');
+const config = require('./../config')
+
+// TMF APIs
+const catalog = require('./tmf-apis/catalog').catalog
+const inventory = require('./tmf-apis/inventory').inventory
+const ordering = require('./tmf-apis/ordering').ordering
+const charging = require('./tmf-apis/charging').charging
+const rss = require('./tmf-apis/rss').rss
+const party = require('./tmf-apis/party').party
+const usageManagement = require('./tmf-apis/usageManagement').usageManagement
+const billing = require('./tmf-apis/billing').billing
+const customer = require('./tmf-apis/customer').customer
+
+// Other dependencies
+const logger = require('./../lib/logger').logger.getLogger('TMF')
+const request = require('request')
+const utils = require('./../lib/utils')
 
 function tmf() {
-	var apiControllers = {};
+	const apiControllers = {};
 	apiControllers[config.endpoints.catalog.path] = catalog;
 	apiControllers[config.endpoints.ordering.path] = ordering;
 	apiControllers[config.endpoints.inventory.path] = inventory;
@@ -44,6 +48,8 @@ function tmf() {
 	apiControllers[config.endpoints.usage.path] = usageManagement;
 	apiControllers[config.endpoints.billing.path] = billing;
 	apiControllers[config.endpoints.customer.path] = customer;
+
+	const newApis = ['party']
 
 	var getAPIName = function(apiUrl) {
 		return apiUrl.split('/')[1];
@@ -62,18 +68,20 @@ function tmf() {
 		if (req.user) {
 			utils.attachUserHeaders(req.headers, req.user);
 		}
-		var url;
-		var api = getAPIName(req.apiUrl);
+		let url;
+		const api = getAPIName(req.apiUrl);
 		console.log("-----------------------------------")
 		console.log("-----------------------------------")
-		if (api === 'DSProductCatalog') {
-			console.log("BIEN")
-			url = (config.endpoints.catalog.appSsl == true ? 'https://' : 'http://') + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port + '/' + req.apiUrl.split('/')[2];
-			console.log(url)
+
+		if (newApis.indexOf(api) >= 0) {
+			console.log("New API")
+			url = utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + req.apiUrl.replace(`/${api}`, '');
 		} else {
+			console.log("OLD API")
 			url = utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + req.apiUrl;
 		}
 
+		console.log(url)
 
 		var options = {
 			url: url,
