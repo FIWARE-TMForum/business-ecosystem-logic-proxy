@@ -73,7 +73,7 @@
 
         vm.list = [];
         vm.offset = -1;
-        vm.size = -1;
+        vm.limit = -1;
         vm.getElementsLength = getElementsLength;
         vm.sidebarInput = '';
 
@@ -86,7 +86,7 @@
                 // Create query with body for filtering catalogs
                 var page = {
                     offset: vm.offset,
-                    size: vm.size,
+                    size: vm.limit,
                     body: vm.sidebarInput
                 };
                 // Search query
@@ -106,7 +106,8 @@
 
         function getElementsLength() {
             // Count apllies filters such as body
-            return Catalogue.count({ body: vm.sidebarInput });
+            //return Catalogue.count({ body: vm.sidebarInput });
+            return Promise.resolve(10)
         }
 
         $scope.$watch(function() {
@@ -133,7 +134,7 @@
         vm.STATUS = DATA_STATUS;
 
         vm.offset = -1;
-        vm.size = -1;
+        vm.limit = -1;
         vm.list = [];
 
         vm.showFilters = showFilters;
@@ -192,8 +193,9 @@
         }
 
         function getElementsLength() {
-            var params = getParams();
-            return Catalogue.count(params);
+            //var params = getParams();
+            //return Catalogue.count(params);
+            return Promise.resolve(10)
         }
 
         function launchSearch() {
@@ -208,7 +210,7 @@
                 var params = getParams();
 
                 params.offset = vm.offset;
-                params.size = vm.size;
+                params.limit = vm.limit;
 
                 Catalogue.search(params).then(
                     function(catalogueList) {

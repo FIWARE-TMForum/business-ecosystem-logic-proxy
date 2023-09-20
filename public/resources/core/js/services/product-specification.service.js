@@ -130,12 +130,12 @@
             }
 
             if (filters.owner) {
-                params['relatedParty.id'] = User.loggedUser.currentUser.id;
+                params['relatedParty.id'] = User.loggedUser.currentUser.partyId;
             }
 
             if (filters.offset !== undefined) {
                 params['offset'] = filters.offset;
-                params['size'] = filters.size;
+                params['limit'] = filters.limit;
             }
 
             if (filters.action) {

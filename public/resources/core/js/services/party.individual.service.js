@@ -290,7 +290,7 @@
         function launch() {
             if (!isOrganization()) {
                 return new Individual({
-                    id: User.loggedUser.currentUser.id,
+                    id: User.loggedUser.currentUser.partyId,
                     birthDate: '',
                     contactMedium: [],
                     countryOfBirth: '',

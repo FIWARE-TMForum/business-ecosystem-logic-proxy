@@ -57,7 +57,7 @@
         vm.STATUS = DATA_STATUS;
 
         vm.offset = -1;
-        vm.size = -1;
+        vm.limit = -1;
 
         vm.list = [];
         vm.state = $state;
@@ -73,7 +73,7 @@
             if (vm.offset >= 0) {
                 var params = {
                     offset: vm.offset,
-                    size: vm.size
+                    size: vm.limit
                 };
 
                 RSS.searchModels(params).then(

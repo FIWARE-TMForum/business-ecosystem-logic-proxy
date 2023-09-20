@@ -38,7 +38,7 @@
         var pages = [];
         var nPages = 0;
 
-        managedCtrl.size = pageSize;
+        managedCtrl.limit = pageSize;
         managedCtrl.reloadPager = reload;
 
         this.nextPage = nextPage;

@@ -67,7 +67,7 @@
         vm.list = [];
         vm.list.flow = $state.params.flow;
         vm.offset = -1;
-        vm.size = -1;
+        vm.limit = -1;
 
         vm.showFilters = showFilters;
         vm.getElementsLength = getElementsLength;
@@ -100,7 +100,7 @@
                 angular.copy($state.params, params);
 
                 params.offset = vm.offset;
-                params.size = vm.size;
+                params.limit = vm.limit;
 
                 InventoryProduct.search(params).then(
                     function(productList) {
@@ -124,9 +124,10 @@
         }
 
         function getElementsLength() {
-            var params = {};
-            angular.copy($state.params, params);
-            return InventoryProduct.count(params);
+            //var params = {};
+            //angular.copy($state.params, params);
+            //return InventoryProduct.count(params);
+            return Promise.resolve(10)
         }
     }
 

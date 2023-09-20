@@ -1225,11 +1225,13 @@ var catalog = (function() {
             reqValidators.push(validators[req.method][i].bind(this, req));
         }
 
-        methodIndexed(req)
-            .catch(() => Promise.resolve(req))
-            .then(() => {
-                async.series(reqValidators, callback);
-            });
+        // We can now execute the queries in the API
+        // methodIndexed(req)
+        //     .catch(() => Promise.resolve(req))
+        //     .then(() => {
+        //         async.series(reqValidators, callback);
+        //     });
+        async.series(reqValidators, callback);
     };
 
     var handleUpgradePostAction = function(req, body, storeMethod, callback) {

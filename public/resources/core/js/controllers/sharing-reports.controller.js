@@ -44,7 +44,7 @@
 
         vm.list = [];
         vm.offset = -1;
-        vm.size = -1;
+        vm.limit = -1;
         vm.list.status = DATA_STATUS.LOADING;
 
         vm.getElementsLength = getElementsLength;
@@ -59,7 +59,7 @@
             if (vm.offset >= 0) {
                 var params = {
                     offset: vm.offset,
-                    size: vm.size
+                    size: vm.limit
                 };
                 RSS.searchReports(params).then(
                     function(reports) {

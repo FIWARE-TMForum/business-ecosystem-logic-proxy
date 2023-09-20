@@ -103,7 +103,7 @@
         vm.list = [];
         vm.list.flow = $state.params.flow;
         vm.offset = -1;
-        vm.size = -1;
+        vm.limit = -1;
         vm.showFilters = showFilters;
         vm.getElementsLength = getElementsLength;
         vm.setFormMode = setFormMode;
@@ -171,8 +171,9 @@
         }
 
         function getElementsLength() {
-            var params = getParams();
-            return Offering.count(params);
+            //var params = getParams();
+            //return Offering.count(params);
+            return Promise.resolve(10)
         }
 
         function getParams() {
@@ -205,7 +206,7 @@
                 var params = getParams();
 
                 params.offset = vm.offset;
-                params.size = vm.size;
+                params.limit = vm.limit;
 
                 Offering.search(params).then(function (offeringList) {
                     angular.copy(offeringList, vm.list);

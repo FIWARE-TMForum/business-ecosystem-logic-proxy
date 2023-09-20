@@ -62,7 +62,7 @@
         /* jshint validthis: true */
         var vm = this;
         vm.offset = -1;
-        vm.size = 0;
+        vm.limit = 0;
         vm.list = [];
         vm.searchInput = '';
 
@@ -121,7 +121,7 @@
                 if (vm.offset >= 0) {
                     var params = getParams();
                     params.offset = vm.offset;
-                    params.size = vm.size;
+                    params.limit = vm.limit;
 
                     ProductSpec.search(params).then(
                         function(productList) {

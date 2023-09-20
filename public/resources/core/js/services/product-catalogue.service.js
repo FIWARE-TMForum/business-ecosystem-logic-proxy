@@ -81,17 +81,17 @@
             }
 
             if (filters.owner) {
-                params['relatedParty.id'] = User.loggedUser.currentUser.id;
+                params['relatedParty.id'] = User.loggedUser.currentUser.partyId;
             } else {
                 params['lifecycleStatus'] = LIFECYCLE_STATUS.LAUNCHED;
             }
 
             if (filters.offset !== undefined) {
                 params['offset'] = filters.offset;
-                params['size'] = filters.size;
+                params['limit'] = filters.limit;
             }
 
-            if (filters.body !== undefined) {
+            if (filters.body !== undefined && filters.body !== "") {
                 params['body'] = filters.body.replace(/\s/g, ',');
             }
 

@@ -974,7 +974,7 @@
             }
 
             if (filters.owner) {
-                params['relatedParty'] = User.loggedUser.currentUser.id;
+                params['relatedParty'] = User.loggedUser.currentUser.partyId;
             } else {
                 params['lifecycleStatus'] = LIFECYCLE_STATUS.LAUNCHED;
             }
@@ -985,7 +985,7 @@
 
             if (filters.offset !== undefined) {
                 params['offset'] = filters.offset;
-                params['size'] = filters.size;
+                params['limit'] = filters.limit;
             }
 
             if (filters.body !== undefined) {

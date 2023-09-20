@@ -60,7 +60,7 @@
         vm.STATUS = DATA_STATUS;
 
         vm.offset = -1;
-        vm.size = -1;
+        vm.limit = -1;
         vm.list = [];
 
         vm.list = [];
@@ -148,7 +148,7 @@
                 var params = getParams();
 
                 params.offset = vm.offset;
-                params.size = vm.size;
+                params.limit = vm.limit;
 
                 ProductSpec.search(params).then(
                     function(productList) {
