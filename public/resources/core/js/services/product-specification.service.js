@@ -1,5 +1,7 @@
 /* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
+ * Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
+ * 
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
  *
@@ -432,6 +434,7 @@
         function createCharacteristic(initialInfo) {
             return angular.extend(
                 {
+                    id: uuid.v4(),
                     name: '',
                     description: '',
                     valueType: VALUE_TYPES.STRING,
@@ -445,7 +448,7 @@
         function createCharacteristicValue(data) {
             return angular.extend(
                 {
-                    default: false,
+                    isDefault: false,
                     unitOfMeasure: '',
                     value: '',
                     valueFrom: '',

@@ -1,5 +1,7 @@
-/* Copyright (c) 2015 - 2019 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 CoNWeT Lab., Universidad Politécnica de Madrid
  *
+ * Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
+ * 
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
  *
@@ -17,21 +19,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var async = require('async'),
-    config = require('./../../config'),
-    deepcopy = require('deepcopy'),
-    equal = require('deep-equal'),
-    indexes = require('./../../lib/indexes'),
-    leftPad = require("left-pad"),
-    logger = require('./../../lib/logger').logger.getLogger('TMF'),
-    md5 = require('blueimp-md5'),
-    Promise = require('promiz'),
-    request = require('request'),
-    rssClient = require('./../../lib/rss').rssClient,
-    storeClient = require('./../../lib/store').storeClient,
-    tmfUtils = require('./../../lib/tmfUtils'),
-    url = require('url'),
-    utils = require('./../../lib/utils');
+const async = require('async')
+const config = require('./../../config')
+const deepcopy = require('deepcopy')
+const equal = require('deep-equal')
+const indexes = require('./../../lib/indexes')
+const leftPad = require("left-pad")
+const logger = require('./../../lib/logger').logger.getLogger('TMF')
+const md5 = require('blueimp-md5')
+const request = require('request')
+const rssClient = require('./../../lib/rss').rssClient
+const storeClient = require('./../../lib/store').storeClient
+const tmfUtils = require('./../../lib/tmfUtils')
+const url = require('url')
+const utils = require('./../../lib/utils')
+const uuid = require('uuid')
 
 var LIFE_CYCLE = 'lifecycleStatus';
 
@@ -588,7 +590,7 @@ var catalog = (function() {
         }
     };
 
-    var validateProductUpdate = function(req, prevBody, newBody, callback) {
+    const validateProductUpdate = function(req, prevBody, newBody, callback) {
         if (
             (!!newBody.isBundle || !!newBody.bundledProductSpecification) &&
             prevBody.lifecycleStatus.toLowerCase() != 'active'
@@ -665,7 +667,7 @@ var catalog = (function() {
         return callback(null);
     };
 
-    var validateProduct = function(req, productSpec, callback) {
+    const validateProduct = function(req, productSpec, callback) {
         // Check if the product is a bundle
         if (!productSpec.isBundle) {
             return callback(null);
@@ -694,7 +696,7 @@ var catalog = (function() {
                     if (err) {
                         taskCallback(err);
                     } else {
-                        var product = JSON.parse(result.body);
+                        const product = JSON.parse(result.body);
 
                         // Validate that the bundle products belong to the same owner
                         if (!tmfUtils.isOwner(req, product)) {
@@ -745,7 +747,7 @@ var catalog = (function() {
                     message: 'It was impossible to check if there is another catalog with the same name'
                 });
             } else {
-                var existingCatalog = JSON.parse(result.body);
+                const existingCatalog = JSON.parse(result.body);
 
                 if (!existingCatalog.length) {
                     callback();
@@ -759,7 +761,7 @@ var catalog = (function() {
         });
     };
 
-    var validateCatalog = function(req, prevCatalog, catalog, callback) {
+    const validateCatalog = function(req, prevCatalog, catalog, callback) {
         // Check that the catalog name is not already taken
         if (catalog && (!prevCatalog || !!catalog.name)) {
             checkExistingCatalog(catalog.name, callback);
@@ -772,7 +774,7 @@ var catalog = (function() {
     ////////////////////////////////////////// CREATION //////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
 
-    var createHandler = function(req, resp, callback) {
+    const createHandler = function(req, resp, callback) {
         if (tmfUtils.isOwner(req, resp)) {
             callback(null);
         } else {
@@ -784,9 +786,8 @@ var catalog = (function() {
     };
 
     // Validate the creation of a resource
-    var validateCreation = function(req, callback) {
-        var body;
-
+    const validateCreation = function(req, callback) {
+        let body;
         // The request body may not be well formed
         try {
             body = JSON.parse(req.body);
@@ -868,11 +869,11 @@ var catalog = (function() {
     /////////////////////////////////////////// UPDATE ///////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
 
-    var validateInvolvedOfferingsState = function(assertType, assetBody, offeringsPath, callback) {
+    const validateInvolvedOfferingsState = function(assertType, assetBody, offeringsPath, callback) {
         // For each state to be validated, this map contains the list of valid states of the offerings
         // attached to the asset whose state is going to be changed and the message to be returned
         // in case the asset cannot be updated
-        var validatedStates = {};
+        let validatedStates = {};
 
         validatedStates[RETIRED_STATE] = {
             offeringsValidStates: [RETIRED_STATE, OBSOLETE_STATE],
@@ -884,7 +885,7 @@ var catalog = (function() {
             errorMsg: 'All the attached offerings must be obsolete to make a ' + assertType + ' obsolete'
         };
 
-        var newLifeCycle = assetBody && LIFE_CYCLE in assetBody ? assetBody[LIFE_CYCLE].toLowerCase() : null;
+        let newLifeCycle = assetBody && LIFE_CYCLE in assetBody ? assetBody[LIFE_CYCLE].toLowerCase() : null;
 
         if (newLifeCycle in validatedStates) {
             retrieveAsset(offeringsPath, function(err, result) {
@@ -894,10 +895,10 @@ var catalog = (function() {
                         message: 'Attached offerings cannot be retrieved'
                     });
                 } else {
-                    var offerings = JSON.parse(result.body);
-                    var offeringsValid = true;
+                    const offerings = JSON.parse(result.body);
+                    const offeringsValid = true;
 
-                    for (var i = 0; i < offerings.length && offeringsValid; i++) {
+                    for (let i = 0; i < offerings.length && offeringsValid; i++) {
                         offeringsValid =
                             validatedStates[newLifeCycle]['offeringsValidStates'].indexOf(
                                 offerings[i][LIFE_CYCLE].toLowerCase()
@@ -946,7 +947,7 @@ var catalog = (function() {
                         });
                     }
                 } else {
-                    var previousBody = JSON.parse(result.body);
+                    const previousBody = JSON.parse(result.body);
 
                     // Catalog stuff should include a validFor field
                     if (parsedBody && !previousBody.validFor && !parsedBody.validFor) {

@@ -123,8 +123,9 @@
         }
 
         function getElementsLength() {
-            var params = getParams();
-            return ProductSpec.count(params);
+            //var params = getParams();
+            //return ProductSpec.count(params);
+            return Promise.resolve(10)
         }
 
         function setFilters(newFilters) {
@@ -389,7 +390,7 @@
         }
 
         function createCharacteristicValue() {
-            vm.characteristicValue.default = getDefaultValueOf(vm.characteristic) == null;
+            vm.characteristicValue.isDefault = getDefaultValueOf(vm.characteristic) == null;
             vm.characteristic.productSpecCharacteristicValue.push(vm.characteristicValue);
             vm.characteristicValue = angular.copy(characteristicValue);
 
@@ -404,8 +405,8 @@
             var value = vm.characteristic.productSpecCharacteristicValue[index];
             vm.characteristic.productSpecCharacteristicValue.splice(index, 1);
 
-            if (value.default && vm.characteristic.productSpecCharacteristicValue.length) {
-                vm.characteristic.productSpecCharacteristicValue[0].default = true;
+            if (value.isDefault && vm.characteristic.productSpecCharacteristicValue.length) {
+                vm.characteristic.productSpecCharacteristicValue[0].isDefault = true;
             }
 
             if (vm.characteristic.productSpecCharacteristicValue.length <= 1) {
@@ -417,7 +418,7 @@
             var i, defaultValue;
 
             for (i = 0; i < characteristic.productSpecCharacteristicValue.length; i++) {
-                if (characteristic.productSpecCharacteristicValue[i].default) {
+                if (characteristic.productSpecCharacteristicValue[i].isDefault) {
                     defaultValue = characteristic.productSpecCharacteristicValue[i];
                 }
             }
@@ -451,10 +452,10 @@
             var value = getDefaultValueOf(vm.characteristic);
 
             if (value != null) {
-                value.default = false;
+                value.isDefault = false;
             }
 
-            vm.characteristic.productSpecCharacteristicValue[index].default = true;
+            vm.characteristic.productSpecCharacteristicValue[index].isDefault = true;
         }
 
         AssetType.search().then(function (typeList) {
@@ -467,7 +468,7 @@
                     description: "Type of the digital asset described in this product specification"
                 }));
                 vm.digitalChars[0].productSpecCharacteristicValue.push(ProductSpec.createCharacteristicValue({
-                    default: true,
+                    isDefault: true,
                     value: typeList[0].name
                 }));
                 vm.digitalChars.push(ProductSpec.createCharacteristic({
@@ -475,14 +476,14 @@
                     description: "Media type of the digital asset described in this product specification"
                 }));
                 vm.digitalChars[1].productSpecCharacteristicValue.push(ProductSpec.createCharacteristicValue({
-                    default: true
+                    isDefault: true
                 }));
                 vm.digitalChars.push(ProductSpec.createCharacteristic({
                     name: "Location",
                     description: "URL pointing to the digital asset described in this product specification"
                 }));
                 vm.digitalChars[2].productSpecCharacteristicValue.push(ProductSpec.createCharacteristicValue({
-                    default: true
+                    isDefault: true
                 }));
                 vm.currentType = typeList[0];
                 vm.currFormat = vm.currentType.formats[0];
@@ -576,7 +577,7 @@
             }));
             vm.digitalChars[0].productSpecCharacteristicValue = [];
             vm.digitalChars[0].productSpecCharacteristicValue.push(ProductSpec.createCharacteristicValue({
-                default: true,
+                isDefault: true,
                 value: "Basic Service"
             }));
             vm.digitalChars.push(ProductSpec.createCharacteristic({
@@ -584,7 +585,7 @@
                 description: "Media type of the digital asset described in this product specification"
             }));
             vm.digitalChars[1].productSpecCharacteristicValue.push(ProductSpec.createCharacteristicValue({
-                default: true
+                isDefault: true
             }));
             vm.digitalChars.push(ProductSpec.createCharacteristic({
                 name: "Location",
@@ -610,7 +611,7 @@
                 vm.data.productNumber = productNumber;
                 vm.data.description = response.data;
                 vm.digitalChars[2].productSpecCharacteristicValue.push(ProductSpec.createCharacteristicValue({
-                    default: true,
+                    isDefault: true,
                     value: vm.datastore.baseUrl + "/dataset/" + packageName
                 }));
                 saveProduct(vm, createPromise, ProductSpec, $state, $rootScope, Utils, EVENTS);
@@ -875,7 +876,7 @@
                     );
                     vm.digitalChars[0].productSpecCharacteristicValue.push(
                         ProductSpec.createCharacteristicValue({
-                            default: true,
+                            isDefault: true,
                             value: typeList[0].name
                         })
                     );
@@ -887,7 +888,7 @@
                     );
                     vm.digitalChars[1].productSpecCharacteristicValue.push(
                         ProductSpec.createCharacteristicValue({
-                            default: true
+                            isDefault: true
                         })
                     );
                     vm.digitalChars.push(
@@ -898,7 +899,7 @@
                     );
                     vm.digitalChars[2].productSpecCharacteristicValue.push(
                         ProductSpec.createCharacteristicValue({
-                            default: true
+                            isDefault: true
                         })
                     );
                     vm.digitalChars.push(
@@ -909,7 +910,7 @@
                     );
                     vm.digitalChars[3].productSpecCharacteristicValue.push(
                         ProductSpec.createCharacteristicValue({
-                            default: true
+                            isDefault: true
                         })
                     );
                     vm.currentType = typeList[0];
@@ -1045,6 +1046,7 @@
         /* CHARACTERISTICS METHODS */
 
         function createCharacteristic() {
+            vm.characteristic.id = `urn:ngsi-ld:characteristic:${uuid.v4()}`;
             vm.characteristics.push(vm.characteristic);
             vm.characteristic = angular.copy(characteristic);
             vm.characteristicValue = angular.copy(characteristicValue);
@@ -1057,7 +1059,7 @@
         }
 
         function createCharacteristicValue() {
-            vm.characteristicValue.default = getDefaultValueOf(vm.characteristic) == null;
+            vm.characteristicValue.isDefault = getDefaultValueOf(vm.characteristic) == null;
             vm.characteristic.productSpecCharacteristicValue.push(vm.characteristicValue);
             vm.characteristicValue = angular.copy(characteristicValue);
 
@@ -1072,8 +1074,8 @@
             var value = vm.characteristic.productSpecCharacteristicValue[index];
             vm.characteristic.productSpecCharacteristicValue.splice(index, 1);
 
-            if (value.default && vm.characteristic.productSpecCharacteristicValue.length) {
-                vm.characteristic.productSpecCharacteristicValue[0].default = true;
+            if (value.isDefault && vm.characteristic.productSpecCharacteristicValue.length) {
+                vm.characteristic.productSpecCharacteristicValue[0].isDefault = true;
             }
 
             if (vm.characteristic.productSpecCharacteristicValue.length <= 1) {
@@ -1085,7 +1087,7 @@
             var i, defaultValue;
 
             for (i = 0; i < characteristic.productSpecCharacteristicValue.length; i++) {
-                if (characteristic.productSpecCharacteristicValue[i].default) {
+                if (characteristic.productSpecCharacteristicValue[i].isDefault) {
                     defaultValue = characteristic.productSpecCharacteristicValue[i];
                 }
             }
@@ -1124,10 +1126,10 @@
             var value = getDefaultValueOf(vm.characteristic);
 
             if (value != null) {
-                value.default = false;
+                value.isDefault = false;
             }
 
-            vm.characteristic.productSpecCharacteristicValue[index].default = true;
+            vm.characteristic.productSpecCharacteristicValue[index].isDefault = true;
         }
 
         function getAssetTypes() {
@@ -1214,7 +1216,7 @@
                     });
     
                     appIdChar.productSpecCharacteristicValue.push(ProductSpec.createCharacteristicValue({
-                        default: true,
+                        isDefault: true,
                         value: appId
                     }));
     
@@ -1239,7 +1241,7 @@
                     }
 
                     fiware_serviceChar.productSpecCharacteristicValue.push(ProductSpec.createCharacteristicValue({
-                        default: true,
+                        isDefault: true,
                         value: fiware_service
                     }));
     
@@ -1260,7 +1262,7 @@
 
                 legalChar.productSpecCharacteristicValue.push(
                     ProductSpec.createCharacteristicValue({
-                        default: true,
+                        isDefault: true,
                         value: title
                     })
                 );
@@ -1274,6 +1276,10 @@
                     url: extraFile.href
                 });
             });
+
+            // REMOVE
+            data.attachment = []
+            // ------
 
             createPromise = ProductSpec.create(data);
             createPromise.then(
