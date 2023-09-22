@@ -1,5 +1,7 @@
-/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 CoNWeT Lab., Universidad Politécnica de Madrid
  *
+ * Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
+ * 
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
  *
@@ -17,11 +19,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var async = require('async'),
-    config = require('./../../config'),
-    utils = require('./../../lib/utils'),
-    indexes = require('./../../lib/indexes'),
-    tmfUtils = require('./../../lib/tmfUtils');
+const async = require('async')
+const config = require('./../../config')
+const utils = require('./../../lib/utils')
+const tmfUtils = require('./../../lib/tmfUtils')
 
 var inventory = (function() {
     var validateRetrieving = function(req, callback) {
@@ -33,24 +34,7 @@ var inventory = (function() {
         }
 
         // For validating the retrieving of a single product it is necessary to read the product first
-        // so it is done is postvalidation method
-    };
-
-    var inventoryRegex = new RegExp('/product(\\?|$)');
-
-    var createQuery = indexes.genericCreateQuery.bind(null, ['status', 'name'], 'inventory', function(req, query) {
-        if (req.query['relatedParty.id']) {
-            indexes.addAndCondition(query, { relatedPartyHash: [indexes.fixUserId(req.query['relatedParty.id'])] });
-        }
-
-        utils.queryAndOrCommas(req.query['body'], 'body', query);
-        utils.queryAndOrCommas(req.query['status'], 'status', query);
-    });
-
-    var getInventoryRequest = indexes.getMiddleware.bind(null, inventoryRegex, createQuery, indexes.searchInventory);
-
-    var methodIndexed = function methodIndexed(req) {
-        return getInventoryRequest(req);
+        // so it is done in postvalidation method
     };
 
     var validators = {
@@ -68,13 +52,7 @@ var inventory = (function() {
             reqValidators.push(validators[req.method][i].bind(this, req));
         }
 
-        methodIndexed(req)
-            .catch(() => Promise.resolve(req))
-            .then(() => {
-                async.series(reqValidators, callback);
-            });
-
-        // async.series(reqValidators, callback);
+        async.series(reqValidators, callback);
     };
 
     var executePostValidation = function(req, callback) {

@@ -23,7 +23,6 @@ const async = require('async')
 const config = require('./../../config')
 const deepcopy = require('deepcopy')
 const equal = require('deep-equal')
-const indexes = require('./../../lib/indexes')
 const leftPad = require("left-pad")
 const logger = require('./../../lib/logger').logger.getLogger('TMF')
 const md5 = require('blueimp-md5')
@@ -1080,134 +1079,6 @@ var catalog = (function() {
     };
 
     //////////////////////////////////////////////////////////////////////////////////////////////
-    ////////////////////////////////////////// INDEXES ///////////////////////////////////////////
-    //////////////////////////////////////////////////////////////////////////////////////////////
-
-    var middlewareSave = function middlewareSave(f, body, user, cb) {
-        return function(err, data) {
-            f(body, user)
-                .then(() => cb(err, data))
-                .catch(() => cb(err, data));
-        };
-    };
-
-    var handleIndexes = function handleIndexes(req, callback) {
-        // Handle PUT and PATCH data
-        var offeringsPattern = new RegExp('/productOffering/?');
-        var productsPattern = new RegExp('/productSpecification/?');
-        var catalogPattern = new RegExp('/v2/catalog/?');
-
-        var genericSave = function genericSave(f) {
-            f([JSON.parse(req.body)], req.user)
-                .then(() => callback(null))
-                .catch(() => callback(null));
-        };
-
-        var patternsF = [
-            [offeringsPattern, indexes.saveIndexOffering],
-            [productsPattern, indexes.saveIndexProduct],
-            [catalogPattern, indexes.saveIndexCatalog]
-        ];
-
-        for (var ind in patternsF) {
-            var pattern = patternsF[ind][0];
-            var f = patternsF[ind][1];
-            if (pattern.test(req.apiUrl) && (req.method == 'PATCH' || req.method == 'PUT')) {
-                genericSave(f);
-                return;
-            }
-        }
-
-        callback(null);
-    };
-
-    var lifecycleQuery = function lifecycleQuery(req, query) {
-        utils.queryAndOrCommas(req.query.lifecycleStatus, 'lifecycleStatus', query);
-    };
-
-    var createProductQuery = indexes.genericCreateQuery.bind(null, ['isBundle', 'productNumber'], 'product', function(
-        req,
-        query
-    ) {
-        if (req.query['relatedParty.id']) {
-            indexes.addAndCondition(query, { relatedPartyHash: [indexes.fixUserId(req.query['relatedParty.id'])] });
-        }
-
-        utils.queryAndOrCommas(req.query['body'], 'body', query);
-        lifecycleQuery(req, query);
-    });
-
-    var createOfferQuery = indexes.genericCreateQuery.bind(null, ['isBundle', 'name'], 'offering', function(
-        req,
-        query
-    ) {
-        if (catalogOfferingsPattern.test(req.apiUrl)) {
-            var catalog = req.apiUrl.split('/')[6];
-            indexes.addAndCondition(query, { catalog: [leftPad(catalog, 12, 0)] });
-        }
-        if (req.query.relatedParty) {
-            indexes.addAndCondition(query, { userId: [indexes.fixUserId(req.query.relatedParty)] });
-        }
-        if (req.query['category.id']) {
-            indexes.addAndCondition(query, { categoriesId: [leftPad(req.query['category.id'], 12, 0)] });
-        }
-        if (req.query['category.name']) {
-            indexes.addAndCondition(query, { categoriesName: [md5(req.query['category.name'].toLowerCase())] });
-        }
-
-        utils.queryAndOrCommas(req.query['productSpecification.id'], 'productSpecification', query, (x) =>
-            leftPad(x, 12, 0)
-        );
-        utils.queryAndOrCommas(req.query['bundledProductOffering.id'], 'bundledProductOffering', query, (x) =>
-            leftPad(x, 12, 0)
-        );
-        utils.queryAndOrCommas(req.query['body'], 'body', query);
-        lifecycleQuery(req, query);
-    });
-
-    var createCatalogQuery = indexes.genericCreateQuery.bind(null, ['name'], 'catalog', function(req, query) {
-        if (req.query['relatedParty.id']) {
-            indexes.addAndCondition(query, { relatedPartyHash: [indexes.fixUserId(req.query['relatedParty.id'])] });
-        }
-
-        utils.queryAndOrCommas(req.query['body'], 'body', query);
-        lifecycleQuery(req, query);
-    });
-
-    var offeringGetParams = new RegExp('/productOffering(\\?|$)');
-    var productGetParams = new RegExp('/productSpecification(\\?|$)');
-    var catalogGetParams = new RegExp('/catalog(\\?|$)');
-
-    var getCatalogRequest = indexes.getMiddleware.bind(
-        null,
-        catalogGetParams,
-        createCatalogQuery,
-        indexes.searchCatalogs
-    );
-
-    var getProductRequest = indexes.getMiddleware.bind(
-        null,
-        productGetParams,
-        createProductQuery,
-        indexes.searchProducts
-    );
-
-    var getOfferRequest = indexes.getMiddleware.bind(
-        null,
-        offeringGetParams,
-        createOfferQuery,
-        indexes.searchOfferings
-    );
-
-    var methodIndexed = function methodIndexed(req) {
-        // I'm gonna feel so bad with this... but I have to use mutability on an input parameter :(
-        // The methods change req.apiUrl as needed... Sorry
-        return getOfferRequest(req)
-            .then(() => getProductRequest(req))
-            .then(() => getCatalogRequest(req));
-    };
-
-    //////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////////// COMMON ///////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1269,7 +1140,7 @@ var catalog = (function() {
             storeClient.attachProduct(
                 body,
                 req.user,
-                middlewareSave(indexes.saveIndexProduct, [body], req.user, callback)
+                callback
             );
         } else if (req.method == 'POST' && offeringsPattern.test(req.apiUrl)) {
             var catalog = '';
@@ -1286,7 +1157,7 @@ var catalog = (function() {
             storeClient.attachOffering(
                 body,
                 req.user,
-                middlewareSave(indexes.saveIndexOffering, [indexBody], req.user, callback)
+                callback
             );
         } else if ((req.method == 'PATCH' || req.method == 'PUT') && offeringPattern.test(req.apiUrl)) {
             var catalog = req.apiUrl.split('/')[6];
@@ -1300,7 +1171,7 @@ var catalog = (function() {
             storeClient.updateOffering(
                 body,
                 req.user,
-                middlewareSave(indexes.saveIndexOffering, [indexBody], req.user, callback)
+                callback
             );
         } else if (req.method == 'PATCH' && productPattern.test(req.apiUrl)) {
             var body = JSON.parse(req.reqBody);
@@ -1310,16 +1181,13 @@ var catalog = (function() {
                 req,
                 body,
                 storeClient.attachUpgradedProduct,
-                middlewareSave(indexes.saveIndexProduct, [respBody], req.user, callback)
+                callback
             );
         } else if (req.method == 'POST' && catalogsPattern.test(req.apiUrl)) {
             body = JSON.parse(req.body);
-            indexes
-                .saveIndexCatalog([body])
-                .then(() => callback(null))
-                .catch(() => callback(null));
+            callback(null)
         } else {
-            handleIndexes(req, callback);
+            callback(null)
         }
     };
 

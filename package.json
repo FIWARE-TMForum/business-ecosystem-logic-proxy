@@ -44,7 +44,6 @@
     "passport-i4trust": "^0.1.0-rc1",
     "passport-keycloak-oauth2-oidc": "^1.0.5",
     "passport-oauth2": "^1.5.0",
-    "promiz": "^1.0.5",
     "request": "^2.88.0",
     "trycatch": "^1.5.21",
     "url": "^0.11.0",

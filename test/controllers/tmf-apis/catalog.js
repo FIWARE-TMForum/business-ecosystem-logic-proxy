@@ -1,4 +1,6 @@
-/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 CoNWeT Lab., Universidad Politécnica de Madrid
+ *
+ * Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -17,68 +19,62 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var deepcopy = require('deepcopy');
-
-var nock = require('nock');
-
-var proxyquire = require('proxyquire');
-
-var Promise = require('promiz');
-
-var md5 = require('blueimp-md5');
-
-var testUtils = require('../../utils');
+const deepcopy = require('deepcopy');
+const nock = require('nock');
+const proxyquire = require('proxyquire');
+const md5 = require('blueimp-md5');
+const testUtils = require('../../utils');
 
 // ERRORS
-var INVALID_METHOD = 'The HTTP method DELETE is not allowed in the accessed API';
-var INVALID_METHOD_PUT = 'The HTTP method PUT is not allowed in the accessed API';
-var PARENT_ID_INCLUDED = 'Parent ID cannot be included when the category is root';
-var MISSING_PARENT_ID = 'Non-root categories must contain a parent category';
-var FAILED_TO_RETRIEVE = 'The TMForum APIs fails to retrieve the object you are trying to update/delete';
-var NEED_AUTHENTICATION = 'You need to be authenticated to create/update/delete resources';
-var INVALID_JSON = 'The provided body is not a valid JSON';
-var CREATE_OFFERING_FOR_NON_OWNED_PRODUCT = 'You are not allowed to create offerings for products you do not own';
-var UPDATE_OFFERING_WITH_NON_OWNED_PRODUCT = 'You are not allowed to update offerings for products you do not own';
-var INVALID_PRODUCT = 'The attached product cannot be read or does not exist';
-var INVALID_USER_CREATE = 'The user making the request and the specified owner are not the same user';
-var INVALID_USER_UPDATE = 'The user making the request is not the owner of the accessed resource';
-var OFFERS_NOT_RETIRED_PRODUCT = 'All the attached offerings must be retired or obsolete to retire a product';
-var OFFERS_NOT_RETIRED_CATALOG = 'All the attached offerings must be retired or obsolete to retire a catalog';
-var OFFERS_NOT_OBSOLETE_PRODUCT = 'All the attached offerings must be obsolete to make a product obsolete';
-var OFFERS_NOT_OBSOLETE_CATALOG = 'All the attached offerings must be obsolete to make a catalog obsolete';
-var ONLY_ADMINS_MODIFY_CATEGORIES = 'Only administrators can modify categories';
-var OFFERINGS_NOT_RETRIEVED = 'Attached offerings cannot be retrieved';
-var CATEGORY_EXISTS = 'This category already exists';
-var CATEGORIES_CANNOT_BE_CHECKED = 'It was impossible to check if the provided category already exists';
-var CATEGORY_NAME_MISSING = 'Category name is mandatory';
-var CATALOG_CANNOT_BE_CHECKED = 'It was impossible to check if there is another catalog with the same name';
-var CATALOG_EXISTS = 'This catalog name is already taken';
-var RSS_CANNOT_BE_ACCESSED = 'An unexpected error in the RSS API prevented your request to be processed';
-var INVALID_PRODUCT_CLASS = 'The provided productClass does not specify a valid revenue sharing model';
-var MISSING_PRODUCT_SPEC = 'Product offerings must contain a productSpecification';
-var MISSING_HREF_PRODUCT_SPEC = 'Missing required field href in product specification';
-var BUNDLED_OFFERING_NOT_BUNDLE = 'Product offerings which are not a bundle cannot contain a bundled product offering';
-var INVALID_BUNDLE_WITH_PRODUCT = 'Product offering bundles cannot contain a product specification';
-var INVALID_BUNDLE_MISSING_OFF = 'Product offering bundles must contain at least two bundled offerings';
-var INVALID_BUNDLE_STATUS =
+const INVALID_METHOD = 'The HTTP method DELETE is not allowed in the accessed API';
+const INVALID_METHOD_PUT = 'The HTTP method PUT is not allowed in the accessed API';
+const PARENT_ID_INCLUDED = 'Parent ID cannot be included when the category is root';
+const MISSING_PARENT_ID = 'Non-root categories must contain a parent category';
+const FAILED_TO_RETRIEVE = 'The TMForum APIs fails to retrieve the object you are trying to update/delete';
+const NEED_AUTHENTICATION = 'You need to be authenticated to create/update/delete resources';
+const INVALID_JSON = 'The provided body is not a valid JSON';
+const CREATE_OFFERING_FOR_NON_OWNED_PRODUCT = 'You are not allowed to create offerings for products you do not own';
+const UPDATE_OFFERING_WITH_NON_OWNED_PRODUCT = 'You are not allowed to update offerings for products you do not own';
+const INVALID_PRODUCT = 'The attached product cannot be read or does not exist';
+const INVALID_USER_CREATE = 'The user making the request and the specified owner are not the same user';
+const INVALID_USER_UPDATE = 'The user making the request is not the owner of the accessed resource';
+const OFFERS_NOT_RETIRED_PRODUCT = 'All the attached offerings must be retired or obsolete to retire a product';
+const OFFERS_NOT_RETIRED_CATALOG = 'All the attached offerings must be retired or obsolete to retire a catalog';
+const OFFERS_NOT_OBSOLETE_PRODUCT = 'All the attached offerings must be obsolete to make a product obsolete';
+const OFFERS_NOT_OBSOLETE_CATALOG = 'All the attached offerings must be obsolete to make a catalog obsolete';
+const ONLY_ADMINS_MODIFY_CATEGORIES = 'Only administrators can modify categories';
+const OFFERINGS_NOT_RETRIEVED = 'Attached offerings cannot be retrieved';
+const CATEGORY_EXISTS = 'This category already exists';
+const CATEGORIES_CANNOT_BE_CHECKED = 'It was impossible to check if the provided category already exists';
+const CATEGORY_NAME_MISSING = 'Category name is mandatory';
+const CATALOG_CANNOT_BE_CHECKED = 'It was impossible to check if there is another catalog with the same name';
+const CATALOG_EXISTS = 'This catalog name is already taken';
+const RSS_CANNOT_BE_ACCESSED = 'An unexpected error in the RSS API prevented your request to be processed';
+const INVALID_PRODUCT_CLASS = 'The provided productClass does not specify a valid revenue sharing model';
+const MISSING_PRODUCT_SPEC = 'Product offerings must contain a productSpecification';
+const MISSING_HREF_PRODUCT_SPEC = 'Missing required field href in product specification';
+const BUNDLED_OFFERING_NOT_BUNDLE = 'Product offerings which are not a bundle cannot contain a bundled product offering';
+const INVALID_BUNDLE_WITH_PRODUCT = 'Product offering bundles cannot contain a product specification';
+const INVALID_BUNDLE_MISSING_OFF = 'Product offering bundles must contain at least two bundled offerings';
+const INVALID_BUNDLE_STATUS =
 	'It is not allowed to update bundle related attributes (isBundle, bundledProductSpecification) in launched products';
-var INVALID_BUNDLE_MISSING_OFF_HREF = 'Missing required field href in bundled offering';
-var OFF_BUNDLE_FAILED_TO_RETRIEVE = 'The bundled offering 2 cannot be accessed or does not exists';
-var OFF_BUNDLE_IN_BUNDLE = 'Product offering bundles cannot include another bundle';
-var UNAUTHORIZED_OFF_BUNDLE = 'You are not allowed to bundle offerings you do not own';
-var MISSING_BUNDLE_PRODUCTS = 'Product spec bundles must contain at least two bundled product specs';
-var MISSING_HREF_BUNDLE_INFO = 'Missing required field href in bundleProductSpecification';
-var UNAUTHORIZED_BUNDLE = 'You are not authorized to include the product spec 3 in a product spec bundle';
-var BUNDLE_INSIDE_BUNDLE = 'It is not possible to include a product spec bundle in another product spec bundle';
-var INVALID_BUNDLED_PRODUCT_STATUS = 'Only Active or Launched product specs can be included in a bundle';
-var INVALID_RELATED_PARTY = 'The field "relatedParty" can not be modified';
-var INVALID_CATEGORY_ID = 'Invalid category with id: ';
-var CATEGORY_CANNOT_BE_CHECKED = ['It was impossible to check if the category with id: ', ' already exists'];
+const INVALID_BUNDLE_MISSING_OFF_HREF = 'Missing required field href in bundled offering';
+const OFF_BUNDLE_FAILED_TO_RETRIEVE = 'The bundled offering 2 cannot be accessed or does not exists';
+const OFF_BUNDLE_IN_BUNDLE = 'Product offering bundles cannot include another bundle';
+const UNAUTHORIZED_OFF_BUNDLE = 'You are not allowed to bundle offerings you do not own';
+const MISSING_BUNDLE_PRODUCTS = 'Product spec bundles must contain at least two bundled product specs';
+const MISSING_HREF_BUNDLE_INFO = 'Missing required field href in bundleProductSpecification';
+const UNAUTHORIZED_BUNDLE = 'You are not authorized to include the product spec 3 in a product spec bundle';
+const BUNDLE_INSIDE_BUNDLE = 'It is not possible to include a product spec bundle in another product spec bundle';
+const INVALID_BUNDLED_PRODUCT_STATUS = 'Only Active or Launched product specs can be included in a bundle';
+const INVALID_RELATED_PARTY = 'The field "relatedParty" can not be modified';
+const INVALID_CATEGORY_ID = 'Invalid category with id: ';
+const CATEGORY_CANNOT_BE_CHECKED = ['It was impossible to check if the category with id: ', ' already exists'];
 
-var UPGRADE_ASSET_NOT_PROVIDED = 'To upgrade product specifications it is required to provide new asset info';
-var UPGRADE_VERSION_NOT_PROVIDED = 'Product specification characteristics only can be updated for upgrading digital products';
-var UPGRADE_CUSTOM_CHAR_MOD = 'It is not allowed to update custom characteristics during a product upgrade';
-var INVALID_NON_DIGITAL_UPGRADE = 'Product spec characteristics cannot be updated';
+const UPGRADE_ASSET_NOT_PROVIDED = 'To upgrade product specifications it is required to provide new asset info';
+const UPGRADE_VERSION_NOT_PROVIDED = 'Product specification characteristics only can be updated for upgrading digital products';
+const UPGRADE_CUSTOM_CHAR_MOD = 'It is not allowed to update custom characteristics during a product upgrade';
+const INVALID_NON_DIGITAL_UPGRADE = 'Product spec characteristics cannot be updated';
 
 describe('Catalog API', function() {
 	var config = testUtils.getDefaultConfig();
@@ -102,7 +98,6 @@ describe('Catalog API', function() {
 			'./../../lib/logger': testUtils.emptyLogger,
 			'./../../lib/store': storeClient,
 			'./../../lib/rss': rssClient,
-			'./../../lib/indexes': indexes,
 			'./../../lib/tmfUtils': tmfUtils,
 			'./../../lib/utils': utils,
 			async: async

@@ -1,5 +1,7 @@
-/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 CoNWeT Lab., Universidad Politécnica de Madrid
  *
+ * Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
+ * 
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
  *
@@ -17,16 +19,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var async = require('async'),
-    config = require('./../../config'),
-    equal = require('deep-equal'),
-    indexes = require('./../../lib/indexes'),
-    moment = require('moment'),
-    request = require('request'),
-    storeClient = require('./../../lib/store').storeClient,
-    tmfUtils = require('./../../lib/tmfUtils'),
-    url = require('url'),
-    utils = require('./../../lib/utils');
+const async = require('async')
+const config = require('./../../config')
+const equal = require('deep-equal')
+const moment = require('moment')
+const request = require('request')
+const storeClient = require('./../../lib/store').storeClient
+const tmfUtils = require('./../../lib/tmfUtils')
+const url = require('url')
+const utils = require('./../../lib/utils')
 
 var ordering = (function() {
     var CUSTOMER = 'Customer';
@@ -548,38 +549,6 @@ var ordering = (function() {
         }
     };
 
-    var orderRegex = new RegExp('/productOrder(\\?|$)');
-
-    var createQuery = indexes.genericCreateQuery.bind(
-        null,
-        ['priority', 'category', 'state', 'notificationContact', 'note'],
-        'order',
-        function(req, query) {
-            if (
-                req.query['relatedParty.id'] &&
-                (!req.query['relatedParty.role'] || req.query['relatedParty.role'].toLowerCase() == 'customer')
-            ) {
-                indexes.addAndCondition(query, { relatedPartyHash: [indexes.fixUserId(req.query['relatedParty.id'])] });
-            }
-
-            if (
-                req.query['relatedParty.id'] &&
-                req.query['relatedParty.role'] &&
-                req.query['relatedParty.role'].toLowerCase() == 'seller'
-            ) {
-                indexes.addAndCondition(query, { sellerHash: [indexes.fixUserId(req.query['relatedParty.id'])] });
-            }
-
-            utils.queryAndOrCommas(req.query.state, 'state', query);
-        }
-    );
-
-    var getOrderRequest = indexes.getMiddleware.bind(null, orderRegex, createQuery, indexes.searchOrders);
-
-    var methodIndexed = function methodIndexed(req) {
-        return getOrderRequest(req);
-    };
-
     //////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////// PRE-VALIDATION ///////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
@@ -599,11 +568,7 @@ var ordering = (function() {
             reqValidators.push(validators[req.method][i].bind(this, req));
         }
 
-        methodIndexed(req)
-            .catch(() => Promise.resolve(req))
-            .then(() => {
-                async.series(reqValidators, callback);
-            });
+        async.series(reqValidators, callback);
     };
 
     //////////////////////////////////////////////////////////////////////////////////////////////
@@ -749,15 +714,6 @@ var ordering = (function() {
         });
     };
 
-    var saveOrderIndex = function saveOrderIndex(req, callback) {
-        var body = JSON.parse(req.body);
-
-        indexes
-            .saveIndexOrder([body])
-            .then(() => callback(null))
-            .catch(() => callback(null));
-    };
-
     var executePostValidation = function(req, callback) {
         if (['GET', 'PUT', 'PATCH'].indexOf(req.method.toUpperCase()) >= 0) {
             filterOrderItems(req, callback);
@@ -765,7 +721,6 @@ var ordering = (function() {
             var tasks = [];
             tasks.push(notifyOrder.bind(this, req));
             tasks.push(includeSellersInBillingAccount.bind(this, req));
-            tasks.push(saveOrderIndex.bind(this, req));
             async.series(tasks, callback);
         } else {
             callback(null);
