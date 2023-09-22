@@ -1,4 +1,6 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 CoNWeT Lab., Universidad Politécnica de Madrid
+ *
+ * Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -17,25 +19,29 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var async = require('async'),
-    config = require('./../../config'),
-    request = require('request'),
-    tmfUtils = require('./../../lib/tmfUtils'),
-    url = require('url'),
-    utils = require('./../../lib/utils');
+const async = require('async')
+const config = require('./../../config')
+const axios = require('axios')
+const tmfUtils = require('./../../lib/tmfUtils')
+const url = require('url')
+const utils = require('./../../lib/utils')
 
-var billing = (function() {
+const billing = (function() {
     var OWNER_ROLE = config.billingAccountOwnerRole;
 
     var makeRequest = function(url, callback) {
-        request(url, function(err, response, body) {
-            if (err || response.statusCode >= 400) {
+        axios.get(url).then((response) => {
+            if (response.status >= 400) {
                 callback({
-                    status: response.statusCode ? response.statusCode : 500
+                    status: response.status ? response.status : 500
                 });
             } else {
-                callback(null, JSON.parse(body));
+                callback(null, response.data);
             }
+        }).catch((err) => {
+            callback({
+                status:  500
+            });
         });
     };
 

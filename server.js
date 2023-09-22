@@ -607,48 +607,24 @@ if (config.https.enabled === true) {
 }
 
 function onlistening() {
-    var request = require('request');
-    var urldata = config.endpoints.charging;
+    const axios = require('axios');
+    const urldata = config.endpoints.charging;
+    const expectedData = ['chargePeriods', 'currencyCodes']
 
-    Promise.all([
-        new Promise(function(resolve, reject) {
-            var uri = url.format({
-                protocol: urldata.appSsl ? 'https' : 'http',
-                hostname: urldata.host,
-                port: urldata.port,
-                pathname: '/' + urldata.path + '/api/assetManagement/chargePeriods/'
-            });
-
-            request(uri, function(err, res, body) {
-                if (err || res.statusCode != 200) {
-                    reject('Failed to retrieve charge periods');
-                } else {
-                    resolve(JSON.parse(body));
-                }
-            });
-        }),
-        new Promise(function(resolve, reject) {
-            var uri = url.format({
-                protocol: urldata.appSsl ? 'https' : 'http',
-                hostname: urldata.host,
-                port: urldata.port,
-                pathname: '/' + urldata.path + '/api/assetManagement/currencyCodes/'
-            });
-
-            request(uri, function(err, res, body) {
-                if (err || res.statusCode != 200) {
-                    reject('Failed to retrieve currency codes');
-                } else {
-                    resolve(JSON.parse(body));
-                }
-            });
-        })
-    ]).then(
+    Promise.all(expectedData.map((data) => {
+        const uri = url.format({
+            protocol: urldata.appSsl ? 'https' : 'http',
+            hostname: urldata.host,
+            port: urldata.port,
+            pathname: `/${urldata.path}/api/assetManagement/${data}/`
+        });
+        return axios.get(uri)
+    })).then(
         function(result) {
-            app.locals.chargePeriods = result[0].map(function(cp) {
+            app.locals.chargePeriods = result[0].data.map(function(cp) {
                 return cp.title + ':' + cp.value;
             });
-            app.locals.currencyCodes = result[1].map(function(cc) {
+            app.locals.currencyCodes = result[1].data.map(function(cc) {
                 return cc.value + ':' + cc.title;
             });
         },

@@ -34,7 +34,7 @@ const customer = require('./tmf-apis/customer').customer
 
 // Other dependencies
 const logger = require('./../lib/logger').logger.getLogger('TMF')
-const request = require('request')
+const axios = require('axios')
 const utils = require('./../lib/utils')
 
 function tmf() {
@@ -65,11 +65,12 @@ function tmf() {
 	};
 
 	const redirectRequest = function(req, res) {
+		let url;
+		const api = getAPIName(req.apiUrl);
+
 		if (req.user) {
 			utils.attachUserHeaders(req.headers, req.user);
 		}
-		let url;
-		const api = getAPIName(req.apiUrl);
 
 		if (newApis.indexOf(api) >= 0) {
 			url = utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + req.apiUrl.replace(`/${api}`, '');
@@ -80,92 +81,77 @@ function tmf() {
 		const options = {
 			url: url,
 			method: req.method,
-			encoding: null,
 			headers: utils.proxiedRequestHeaders(req)
 		};
 
 		if (typeof req.body === 'string') {
-			options.body = req.body;
+			options.data = req.body;
 		}
 
 		// PROXY THE REQUEST
-		request(options, function(err, response, body) {
+		axios.request(options).then((response) => {
 			const completeRequest = function(resp) {
 				res.status(resp.status);
 
-				for (var header in resp.headers) {
+				for (let header in resp.headers) {
 					res.setHeader(header, resp.headers[header]);
 				}
 
-				res.write(resp.body);
+				res.write(JSON.stringify(resp.body));
 				res.end();
 			};
 
-			if (err) {
-				res.status(504).json({ error: 'Service unreachable' });
-			} else {
-				const result = {
-					status: response.statusCode,
-					headers: response.headers,
-					hostname: req.hostname,
-					secure: req.secure,
-					body: body,
-					user: req.user,
-					method: req.method,
-					url: req.url,
-					id: req.id,
-					apiUrl: req.apiUrl,
-					connection: req.connection,
-					reqBody: req.body
-				};
+			const result = {
+				status: response.status,
+				headers: response.headers,
+				hostname: req.hostname,
+				secure: req.secure,
+				body: response.data,
+				user: req.user,
+				method: req.method,
+				url: req.url,
+				id: req.id,
+				apiUrl: req.apiUrl,
+				connection: req.connection,
+				reqBody: req.body
+			};
 
-				const header = req.get('X-Terms-Accepted');
+			const header = req.get('X-Terms-Accepted');
 
-				if (result.user != null && header != null) {
-					result.user.agreedOnTerms = header.toLowerCase() === 'true';
-				}
+			if (result.user != null && header != null) {
+				result.user.agreedOnTerms = header.toLowerCase() === 'true';
+			}
 
-				// Execute postValidation if status code is lower than 400 and the
-				// function is defined
-				if (
-					response.statusCode < 400 &&
-					apiControllers[api] !== undefined &&
-					apiControllers[api].executePostValidation
-				) {
+			const handleValidation = (err) => {
+				const basicLogMessage = 'Post-Validation (' + api + '): ';
 
-					console.log(response)
-					console.log(body.toString())
-
-					apiControllers[api].executePostValidation(result, function(err) {
-						var basicLogMessage = 'Post-Validation (' + api + '): ';
-
-						if (err) {
-							utils.log(logger, 'warn', req, basicLogMessage + err.message);
-							res.status(err.status).json({ error: err.message });
-						} else {
-							utils.log(logger, 'info', req, basicLogMessage + 'OK');
-							completeRequest(result);
-						}
-					});
-				} else if (
-					response.statusCode >= 400 &&
-					apiControllers[api] !== undefined &&
-					apiControllers[api].handleAPIError
-				) {
-					apiControllers[api].handleAPIError(result, (err) => {
-						utils.log(logger, 'warn', req, 'Handling API error (' + api + ')');
-
-						if (err) {
-							res.status(err.status).json({ error: err.message });
-						} else {
-							completeRequest(result);
-						}
-					});
+				if (err) {
+					utils.log(logger, 'warn', req, basicLogMessage + err.message);
+					res.status(err.status).json({ error: err.message });
 				} else {
+					utils.log(logger, 'info', req, basicLogMessage + 'OK');
 					completeRequest(result);
 				}
 			}
-		});
+
+			if (response.statusCode < 400 && apiControllers[api] !== undefined
+					&& apiControllers[api].executePostValidation) {
+
+				apiControllers[api].executePostValidation(result, handleValidation)
+
+			} else if (response.statusCode >= 400 && apiControllers[api] !== undefined
+					&& apiControllers[api].handleAPIError) {
+
+				utils.log(logger, 'warn', req, 'Handling API error (' + api + ')');
+				apiControllers[api].handleAPIError(result, handleValidation)
+			} else {
+				completeRequest(result);
+			}
+		}).catch((err) => {
+			console.log(err)
+			utils.log(logger, 'error', req, 'Proxy error: ' + err.message);
+			res.status(504).json({ error: 'Service unreachable' });
+		})
 	};
 
 	var checkPermissions = function(req, res) {

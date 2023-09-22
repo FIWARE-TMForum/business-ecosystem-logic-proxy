@@ -1,7 +1,7 @@
 /* Copyright (c) 2015 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
- * 
+ *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
  *
@@ -20,19 +20,16 @@
  */
 
 const async = require('async')
+const axios = require('axios')
 const config = require('./../../config')
 const deepcopy = require('deepcopy')
 const equal = require('deep-equal')
-const leftPad = require("left-pad")
 const logger = require('./../../lib/logger').logger.getLogger('TMF')
-const md5 = require('blueimp-md5')
-const request = require('request')
 const rssClient = require('./../../lib/rss').rssClient
 const storeClient = require('./../../lib/store').storeClient
 const tmfUtils = require('./../../lib/tmfUtils')
 const url = require('url')
 const utils = require('./../../lib/utils')
-const uuid = require('uuid')
 
 var LIFE_CYCLE = 'lifecycleStatus';
 
@@ -42,40 +39,44 @@ var RETIRED_STATE = 'retired';
 var OBSOLETE_STATE = 'obsolete';
 
 // Validator to check user permissions for accessing TMForum resources
-var catalog = (function() {
+const catalog = (function() {
     //////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////////// COMMON ///////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
 
-    var offeringsPattern = new RegExp('/productOffering/?$');
-    var catalogOfferingsPattern = new RegExp('/catalog/[^/]+/productOffering/?');
-    var offeringPattern = new RegExp('/catalog/[^/]+/productOffering/[^/]+/?$');
-    var productsPattern = new RegExp('/productSpecification/?$');
-    var productPattern = new RegExp('/productSpecification/[^/]+/?$');
-    var categoryPattern = new RegExp('/category/[^/]+/?$');
-    var categoriesPattern = new RegExp('/category/?$');
-    var catalogsPattern = new RegExp('/catalog/?$');
+    const offeringsPattern = new RegExp('/productOffering/?$');
+    const catalogOfferingsPattern = new RegExp('/catalog/[^/]+/productOffering/?');
+    const offeringPattern = new RegExp('/catalog/[^/]+/productOffering/[^/]+/?$');
+    const productsPattern = new RegExp('/productSpecification/?$');
+    const productPattern = new RegExp('/productSpecification/[^/]+/?$');
+    const categoryPattern = new RegExp('/category/[^/]+/?$');
+    const categoriesPattern = new RegExp('/category/?$');
+    const catalogsPattern = new RegExp('/catalog/?$');
 
-    var retrieveAsset = function(assetPath, callback) {
-        var uri = utils.getAPIURL(
+    const retrieveAsset = function(assetPath, callback) {
+        const uri = utils.getAPIURL(
             config.endpoints.catalog.appSsl,
             config.endpoints.catalog.host,
             config.endpoints.catalog.port,
             assetPath
         );
 
-        request(uri, function(err, response, body) {
-            if (err || response.statusCode >= 400) {
+        axios.get(uri).then((response) => {
+            if (response.status >= 400) {
                 callback({
-                    status: response ? response.statusCode : 500
+                    status: response.status
                 });
             } else {
                 callback(null, {
-                    status: response.statusCode,
-                    body: body
+                    status: response.status,
+                    body: response.data
                 });
             }
-        });
+        }).catch((err) => {
+            callback({
+                status: 500
+            });
+        })
     };
 
     // Retrieves the product belonging to a given offering
@@ -183,7 +184,7 @@ var catalog = (function() {
                     message: 'The catalog attached to the offering cannot be read'
                 });
             } else {
-                var catalog = JSON.parse(result.body);
+                var catalog = result.body;
 
                 // Check that tht catalog is in an appropriate state
                 if (checkAssetStatus(catalog, validStates)) {
@@ -376,7 +377,7 @@ var catalog = (function() {
                                     }
 
                                     // Check that the included offering is not also a bundle
-                                    var bundledOffering = JSON.parse(result.body);
+                                    var bundledOffering = result.body;
                                     if (bundledOffering.isBundle) {
                                         return taskCallback({
                                             status: 422,
@@ -493,7 +494,7 @@ var catalog = (function() {
                     message: 'It was impossible to check if the provided category already exists'
                 });
             } else {
-                var existingCategories = JSON.parse(result.body);
+                var existingCategories = result.body;
 
                 if (!existingCategories.length) {
                     callback(null);
@@ -747,7 +748,7 @@ var catalog = (function() {
                     message: 'It was impossible to check if there is another catalog with the same name'
                 });
             } else {
-                const existingCatalog = JSON.parse(result.body);
+                const existingCatalog = result.body;
 
                 if (!existingCatalog.length) {
                     callback();
@@ -895,7 +896,7 @@ var catalog = (function() {
                         message: 'Attached offerings cannot be retrieved'
                     });
                 } else {
-                    const offerings = JSON.parse(result.body);
+                    const offerings = result.body;
                     const offeringsValid = true;
 
                     for (let i = 0; i < offerings.length && offeringsValid; i++) {
@@ -947,7 +948,7 @@ var catalog = (function() {
                         });
                     }
                 } else {
-                    const previousBody = JSON.parse(result.body);
+                    const previousBody = result.body;
 
                     // Catalog stuff should include a validFor field
                     if (parsedBody && !previousBody.validFor && !parsedBody.validFor) {
