@@ -79,11 +79,12 @@ var catalog = (function() {
     };
 
     // Retrieves the product belonging to a given offering
-    var retrieveProduct = function(productUrl, callback) {
-        var productPath = url.parse(productUrl).pathname;
+    var retrieveProduct = function(productId, callback) {
+        const productPath = `/productSpecification/${productId}`
 
         retrieveAsset(productPath, function(err, response) {
             if (err) {
+                console.log(err)
                 callback({
                     status: 422,
                     message: 'The attached product cannot be read or does not exist'
@@ -209,7 +210,7 @@ var catalog = (function() {
         // Offerings don't include a relatedParty field, so for bundles it is needed to retrieve the product
         var ownerHandler = function(req, asset, hdlrCallback) {
             if (!asset.relatedParty) {
-                retrieveProduct(asset.productSpecification.href, function(err, result) {
+                retrieveProduct(asset.productSpecification.id, function(err, result) {
                     var isOwner = false;
                     if (!err) {
                         var product = JSON.parse(result.body);
@@ -425,7 +426,7 @@ var catalog = (function() {
                         }
 
                         // Check that the product attached to the offering is owned by the same user
-                        retrieveProduct(offeringBody.productSpecification.href, function(err, result) {
+                        retrieveProduct(offeringBody.productSpecification.id, function(err, result) {
                             if (err) {
                                 callback(err);
                             } else {
@@ -691,7 +692,7 @@ var catalog = (function() {
                     });
                 }
 
-                retrieveProduct(spec.href, function(err, result) {
+                retrieveProduct(spec.id, function(err, result) {
                     if (err) {
                         taskCallback(err);
                     } else {
