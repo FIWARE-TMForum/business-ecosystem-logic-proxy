@@ -322,7 +322,7 @@
                 productSpecificationRelationship: [],
                 attachment: [
                     {
-                        type: 'Picture'
+                        attachmentType: 'Picture'
                     }
                 ],
                 relatedParty: [User.serialize()]
@@ -388,7 +388,7 @@
 
             if (angular.isArray(this.attachment)) {
                 for (i = 0; i < this.attachment.length && !src; i++) {
-                    if (this.attachment[i].type == 'Picture') {
+                    if (this.attachment[i].attachmentType == 'Picture') {
                         src = this.attachment[i].url;
                     }
                 }

@@ -139,7 +139,7 @@ form(name="step.form", novalidate)
               th #{ __("Last Updated") }
           tbody
             tr(ng-repeat="relationship in createVM.data.productSpecificationRelationship")
-              td {{ relationship.parseType() }}
+              td {{ relationship.relationshipType }}
               th {{ relationship.productSpec.name }}
               td
                 span.label(ng-class="relationship.productSpec.isBundle ? 'label-bundle' : 'label-single'")

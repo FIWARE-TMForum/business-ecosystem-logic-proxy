@@ -1270,16 +1270,19 @@
                 data.productSpecCharacteristic.push(legalChar);
             }
 
+            if (data.attachment[0].url == null || data.attachment[0].url == '') {
+                data.attachment.shift()
+            } else {
+                data.attachment[0].id = `urn:ngsi-ld:attachment:${uuid.v4()}`
+            }
+
             vm.extraFiles.forEach(function(extraFile) {
                 data.attachment.push({
-                    type: extraFile.type,
+                    id: `urn:ngsi-ld:attachment:${uuid.v4()}`,
+                    attachmentType: extraFile.type,
                     url: extraFile.href
                 });
             });
-
-            // REMOVE
-            data.attachment = []
-            // ------
 
             createPromise = ProductSpec.create(data);
             createPromise.then(

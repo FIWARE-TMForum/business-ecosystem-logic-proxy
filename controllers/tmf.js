@@ -51,39 +51,33 @@ function tmf() {
 
 	const newApis = ['party', 'catalog']
 
-	var getAPIName = function(apiUrl) {
+	const getAPIName = function(apiUrl) {
 		return apiUrl.split('/')[1];
 	};
 
-	var sendError = function(res, err) {
-		var status = err.status;
-		var errMsg = err.message;
+	const sendError = function(res, err) {
+		const status = err.status;
+		const errMsg = err.message;
 
 		res.status(status);
 		res.json({ error: errMsg });
 		res.end();
 	};
 
-	var redirectRequest = function(req, res) {
+	const redirectRequest = function(req, res) {
 		if (req.user) {
 			utils.attachUserHeaders(req.headers, req.user);
 		}
 		let url;
 		const api = getAPIName(req.apiUrl);
-		console.log("-----------------------------------")
-		console.log("-----------------------------------")
 
 		if (newApis.indexOf(api) >= 0) {
-			console.log("New API")
 			url = utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + req.apiUrl.replace(`/${api}`, '');
 		} else {
-			console.log("OLD API")
 			url = utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + req.apiUrl;
 		}
 
-		console.log(url)
-
-		var options = {
+		const options = {
 			url: url,
 			method: req.method,
 			encoding: null,
@@ -96,21 +90,21 @@ function tmf() {
 
 		// PROXY THE REQUEST
 		request(options, function(err, response, body) {
-			var completeRequest = function(result) {
-				res.status(result.status);
+			const completeRequest = function(resp) {
+				res.status(resp.status);
 
-				for (var header in result.headers) {
-					res.setHeader(header, result.headers[header]);
+				for (var header in resp.headers) {
+					res.setHeader(header, resp.headers[header]);
 				}
 
-				res.write(result.body);
+				res.write(resp.body);
 				res.end();
 			};
 
 			if (err) {
 				res.status(504).json({ error: 'Service unreachable' });
 			} else {
-				var result = {
+				const result = {
 					status: response.statusCode,
 					headers: response.headers,
 					hostname: req.hostname,
@@ -125,7 +119,7 @@ function tmf() {
 					reqBody: req.body
 				};
 
-				var header = req.get('X-Terms-Accepted');
+				const header = req.get('X-Terms-Accepted');
 
 				if (result.user != null && header != null) {
 					result.user.agreedOnTerms = header.toLowerCase() === 'true';
@@ -138,6 +132,10 @@ function tmf() {
 					apiControllers[api] !== undefined &&
 					apiControllers[api].executePostValidation
 				) {
+
+					console.log(response)
+					console.log(body.toString())
+
 					apiControllers[api].executePostValidation(result, function(err) {
 						var basicLogMessage = 'Post-Validation (' + api + '): ';
 
