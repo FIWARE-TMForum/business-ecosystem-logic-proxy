@@ -78,6 +78,8 @@ function tmf() {
 			url = utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + req.apiUrl;
 		}
 
+		console.log('========================')
+		console.log(url)
 		const options = {
 			url: url,
 			method: req.method,
@@ -98,7 +100,7 @@ function tmf() {
 				}
 
 				console.log(resp.headers)
-				if (resp.headers['content-type'] == 'application/json' || resp.headers['content-type'] == 'application/ld+json') {
+				if (resp.headers['content-type'].indexOf('application/json') >= 0 || resp.headers['content-type'].indexOf('application/ld+json') >= 0) {
 					res.json(resp.body)
 				} else {
 					res.write(resp.body);

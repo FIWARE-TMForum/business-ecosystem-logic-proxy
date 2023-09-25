@@ -304,9 +304,7 @@ const catalog = (function() {
                     async.eachSeries(
                         categories,
                         function(category, taskCallback) {
-                            var categoryApiUrl = url.parse(category.href).pathname;
-
-                            checkExistingCategoryById(categoryApiUrl, category.id, taskCallback);
+                            checkExistingCategoryById(category.id, taskCallback);
                         },
                         callback
                     );
@@ -452,11 +450,10 @@ const catalog = (function() {
         );
     };
 
-    var checkExistingCategoryById = function(apiUrl, categoryId, callback) {
-        var categoryCollectionPath = '/category';
-        var categoryPath = apiUrl.substring(0, apiUrl.indexOf(categoryCollectionPath) + categoryCollectionPath.length);
+    const checkExistingCategoryById = function(categoryId, callback) {
+        const categoryPath = '/category';
 
-        retrieveAsset(categoryPath + '/' + categoryId, function(err, result) {
+        retrieveAsset(`${categoryPath}/${categoryId}`, function(err, result) {
             if (err) {
                 if (err.status == 404) {
                     callback({
@@ -475,11 +472,9 @@ const catalog = (function() {
         });
     };
 
-    var checkExistingCategory = function(apiUrl, categoryName, isRoot, parentId, callback) {
-        var categoryCollectionPath = '/category';
-        var categoryPath = apiUrl.substring(0, apiUrl.indexOf(categoryCollectionPath) + categoryCollectionPath.length);
-
-        var queryParams = '?lifecycleStatus=Launched&name=' + categoryName;
+    const checkExistingCategory = function(categoryName, isRoot, parentId, callback) {
+        const categoryPath = '/category';
+        let queryParams = '?lifecycleStatus=Launched&name=' + categoryName;
 
         if (isRoot) {
             queryParams += '&isRoot=true';
@@ -494,7 +489,7 @@ const catalog = (function() {
                     message: 'It was impossible to check if the provided category already exists'
                 });
             } else {
-                var existingCategories = result.body;
+                const existingCategories = result.body;
 
                 if (!existingCategories.length) {
                     callback(null);
@@ -508,7 +503,7 @@ const catalog = (function() {
         });
     };
 
-    var validateCategory = function(req, updatedCategory, oldCategory, action, callback) {
+    const validateCategory = function(req, updatedCategory, oldCategory, action, callback) {
         // Categories can only be created by administrators
         if (!utils.hasRole(req.user, config.oauth2.roles.admin)) {
             callback({
@@ -518,9 +513,9 @@ const catalog = (function() {
         } else {
             if (updatedCategory && ['POST', 'PATCH', 'PUT'].indexOf(req.method.toUpperCase()) >= 0) {
                 // Categories are created as root when isRoot is not included
-                var isRoot =
+                const isRoot =
                     'isRoot' in updatedCategory ? updatedCategory.isRoot : oldCategory ? oldCategory.isRoot : true;
-                var parentId =
+                const parentId =
                     'parentId' in updatedCategory
                         ? updatedCategory.parentId
                         : oldCategory
@@ -538,7 +533,7 @@ const catalog = (function() {
                         message: 'Non-root categories must contain a parent category'
                     });
                 } else {
-                    var categoryName =
+                    const categoryName =
                         'name' in updatedCategory ? updatedCategory.name : oldCategory ? oldCategory.name : null;
 
                     if (!categoryName) {
@@ -547,16 +542,16 @@ const catalog = (function() {
                             message: 'Category name is mandatory'
                         });
                     } else {
-                        var fieldUpdated = function(oldCategory, updatedCategory, field) {
+                        const fieldUpdated = (oldCategory, updatedCategory, field) => {
                             return (
                                 oldCategory && updatedCategory[field] && updatedCategory[field] != oldCategory[field]
                             );
                         };
 
-                        var newCategory = updatedCategory && !oldCategory;
-                        var nameUpdated = fieldUpdated(oldCategory, updatedCategory, 'name');
-                        var isRootUpdated = fieldUpdated(oldCategory, updatedCategory, 'isRoot');
-                        var parentIdUpdated = fieldUpdated(oldCategory, updatedCategory, 'parentId');
+                        const newCategory = updatedCategory && !oldCategory;
+                        const nameUpdated = fieldUpdated(oldCategory, updatedCategory, 'name');
+                        const isRootUpdated = fieldUpdated(oldCategory, updatedCategory, 'isRoot');
+                        const parentIdUpdated = fieldUpdated(oldCategory, updatedCategory, 'parentId');
 
                         // We should check for other categories with the same properties (name, isRoot, parentId) when:
                         //   1.- The category is new (updatedCategory is not null && oldCategory is null)
@@ -569,13 +564,13 @@ const catalog = (function() {
                                     function(callback) {
                                         if (!isRoot) {
                                             // Check parent category
-                                            checkExistingCategoryById(req.apiUrl, parentId, callback);
+                                            checkExistingCategoryById(parentId, callback);
                                         } else {
                                             callback(null);
                                         }
                                     },
                                     function(callback) {
-                                        checkExistingCategory(req.apiUrl, categoryName, isRoot, parentId, callback);
+                                        checkExistingCategory(categoryName, isRoot, parentId, callback);
                                     }
                                 ],
                                 callback
