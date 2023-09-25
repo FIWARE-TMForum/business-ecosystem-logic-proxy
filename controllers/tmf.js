@@ -97,8 +97,13 @@ function tmf() {
 					res.setHeader(header, resp.headers[header]);
 				}
 
-				res.write(JSON.stringify(resp.body));
-				res.end();
+				console.log(resp.headers)
+				if (resp.headers['content-type'] == 'application/json' || resp.headers['content-type'] == 'application/ld+json') {
+					res.json(resp.body)
+				} else {
+					res.write(resp.body);
+					res.end();
+				}
 			};
 
 			const result = {
