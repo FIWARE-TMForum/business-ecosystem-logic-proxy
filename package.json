@@ -19,7 +19,7 @@
     "cookie-parser": "1.4.0",
     "deep-equal": "^1.0.1",
     "deepcopy": "^0.6.3",
-    "elasticsearch": "^16.7.1",
+    "@elastic/elasticsearch": "8.9.0",
     "errorhandler": "1.4.x",
     "express": "^4.x",
     "express-session": "1.12.1",

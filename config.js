@@ -215,8 +215,7 @@ config.billingAccountOwnerRole = 'bill receiver';
 config.publicPaths = [];
 
 config.indexes = {
-    'elasticHost': 'elastic.docker:9200',
-    'apiVersion': '7.5'
+    'elasticHost': 'https://elastic.docker:9200'
 };
 
 config.magicKey = undefined;

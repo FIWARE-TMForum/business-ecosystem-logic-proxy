@@ -24,6 +24,7 @@ const axios = require('axios')
 const config = require('./../../config')
 const deepcopy = require('deepcopy')
 const equal = require('deep-equal')
+const { indexes } = require('./../../lib/indexes')
 const logger = require('./../../lib/logger').logger.getLogger('TMF')
 const rssClient = require('./../../lib/rss').rssClient
 const storeClient = require('./../../lib/store').storeClient
@@ -1065,7 +1066,7 @@ const catalog = (function() {
         }
     };
 
-    var isCategory = function(req, callback) {
+    const isCategory = function(req, callback) {
         if (!categoryPattern.test(req.apiUrl)) {
             return callback({
                 status: 405,
@@ -1075,22 +1076,60 @@ const catalog = (function() {
         callback(null);
     };
 
+    const processQuery = async (req, callback) => {
+
+        console.log(indexes)
+
+        if (offeringsPattern.test(req.path) && req.query.relatedParty != null) {
+            console.log('Executing local query')
+
+            let query = {
+                relatedParty: req.query.relatedParty
+            }
+
+            if (req.query.lifecycleStatus != null) {
+                query.lifecycleStatus = req.query.lifecycleStatus
+            }
+
+            indexes.search('offering', query).then((result) => {
+                let newUrl = `${req.path}?href=`
+
+                if (result.hits.hits.length > 0) {
+                    let ids = result.hits.hits.map((hit) => {
+                        return hit.id
+                    })
+
+                    newUrl += ids.join(',')
+                } else {
+                    newUrl += 'null'
+                }
+
+                req.apiUrl = newUrl
+
+                // TODO: Check how to avoid the call if the result is 0
+                callback(null)
+            })
+        } else {
+            callback(null)
+        }
+    }
+
     //////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////////// COMMON ///////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
 
-    var validators = {
-        GET: [validateAllowed],
+    const validators = {
+        GET: [validateAllowed, processQuery],
         POST: [utils.validateLoggedIn, validateCreation],
         PATCH: [utils.validateLoggedIn, validateUpdate],
         PUT: [utils.methodNotAllowed],
         DELETE: [utils.validateLoggedIn, isCategory, validateUpdate]
     };
 
-    var checkPermissions = function(req, callback) {
-        var reqValidators = [];
+    const checkPermissions = function(req, callback) {
+        const reqValidators = [];
 
-        for (var i in validators[req.method]) {
+        for (let i in validators[req.method]) {
             reqValidators.push(validators[req.method][i].bind(this, req));
         }
 
@@ -1103,7 +1142,7 @@ const catalog = (function() {
         async.series(reqValidators, callback);
     };
 
-    var handleUpgradePostAction = function(req, body, storeMethod, callback) {
+    const handleUpgradePostAction = function(req, body, storeMethod, callback) {
         var getURLId = function(apiUrl) {
             return apiUrl.split('/')[6];
         };

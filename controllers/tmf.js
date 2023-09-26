@@ -155,7 +155,6 @@ function tmf() {
 				completeRequest(result);
 			}
 		}).catch((err) => {
-			console.log(err)
 			utils.log(logger, 'error', req, 'Proxy error: ' + err.message);
 			res.status(504).json({ error: 'Service unreachable' });
 		})
