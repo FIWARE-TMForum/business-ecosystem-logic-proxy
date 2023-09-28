@@ -141,12 +141,12 @@ function tmf() {
 				}
 			}
 
-			if (response.statusCode < 400 && apiControllers[api] !== undefined
+			if (response.status < 400 && apiControllers[api] !== undefined
 					&& apiControllers[api].executePostValidation) {
 
 				apiControllers[api].executePostValidation(result, handleValidation)
 
-			} else if (response.statusCode >= 400 && apiControllers[api] !== undefined
+			} else if (response.status >= 400 && apiControllers[api] !== undefined
 					&& apiControllers[api].handleAPIError) {
 
 				utils.log(logger, 'warn', req, 'Handling API error (' + api + ')');
