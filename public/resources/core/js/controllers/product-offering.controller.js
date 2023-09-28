@@ -1,4 +1,6 @@
-/* Copyright (c) 2015 - 2018 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 CoNWeT Lab., Universidad Politécnica de Madrid
+ *
+ * Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -103,7 +105,7 @@
         vm.list = [];
         vm.list.flow = $state.params.flow;
         vm.offset = -1;
-        vm.size = -1;
+        vm.limit = -1;
         vm.showFilters = showFilters;
         vm.getElementsLength = getElementsLength;
         vm.setFormMode = setFormMode;
@@ -171,8 +173,9 @@
         }
 
         function getElementsLength() {
-            var params = getParams();
-            return Offering.count(params);
+            //var params = getParams();
+            //return Offering.count(params);
+            return Promise.resolve(10)
         }
 
         function getParams() {
@@ -205,7 +208,7 @@
                 var params = getParams();
 
                 params.offset = vm.offset;
-                params.size = vm.size;
+                params.limit = vm.limit;
 
                 Offering.search(params).then(function (offeringList) {
                     angular.copy(offeringList, vm.list);
@@ -340,10 +343,10 @@
                 title: 'Price Plans',
                 templateUrl: 'stock/product-offering/create/priceplan'
             },
-            {
+            /*{
                 title: 'RS Model',
                 templateUrl: 'stock/product-offering/create/sharing'
-            },
+            },*/
             {
                 title: 'Finish',
                 templateUrl: 'stock/product-offering/create/finish'
@@ -402,9 +405,9 @@
         vm.hasCategories = hasCategories;
 
         /* PRICE PLANS MEMBERS */
-
+        vm.pricingModels = []
         vm.pricePlan = new Offering.PricePlan();
-        vm.isOpen = true;
+        vm.isOpen = false;
         vm.pricePlanEnabled = false;
         vm.priceAlterationType = vm.PRICE_ALTERATIONS_SUPPORTED.NOTHING;
 
@@ -546,7 +549,7 @@
 //        "href": "http://127.0.0.1:8000/DSProductCatalog/api/catalogManagement/v2/productSpecification/4:(0.1)"
 //    }
 //}
-        function create() {
+        async function create() {
             var data = angular.copy(vm.data);
 
             data.category = formatCategory();
@@ -583,7 +586,19 @@
                     });
                 });
             }
-            
+
+            if (vm.pricingModels.length > 0) {
+                 vm.data.productOfferingPrice = await Promise.all(vm.pricingModels.map(async (model) => {
+                    let priceObj = await Offering.createPricing(model)
+                    let offModel = Offering.buildTMFPricing(model)
+
+                    offModel.id = priceObj.id
+                    offModel.href = priceObj.href
+
+                    return offModel
+                }))
+            }
+
             Promise.all(createPromise).then(function(){
                 //var data = angular.copy(vm.data);
                 vm.data.category = formatCategory();
@@ -774,22 +789,23 @@
 
         function isFreeOffering() {
             // Return true if the offering is free or open
-            return !vm.data.productOfferingPrice.length || isOpenOffering();
+            return !vm.pricingModels.length || isOpenOffering();
         }
 
         function createPricePlan() {
-            vm.data.productOfferingPrice.push(vm.pricePlan);
+            vm.pricingModels.push(vm.pricePlan);
+
             vm.pricePlan = new Offering.PricePlan();
             vm.pricePlanEnabled = false;
             vm.priceAlterationType = vm.PRICE_ALTERATIONS_SUPPORTED.NOTHING;
         }
 
         function updatePricePlan(index) {
-            $rootScope.$broadcast(Offering.EVENTS.PRICEPLAN_UPDATE, index, vm.data.productOfferingPrice[index]);
+            $rootScope.$broadcast(Offering.EVENTS.PRICEPLAN_UPDATE, index, vm.pricingModels[index]);
         }
 
         function removePricePlan(index) {
-            vm.data.productOfferingPrice.splice(index, 1);
+            vm.pricingModels.splice(index, 1);
         }
 
         function setAlteration(alterationType) {
@@ -1088,7 +1104,7 @@
 
         function isFreeOffering() {
             // Return true if the offering is free or open
-            return !vm.item.productOfferingPrice.length || isOpenOffering();
+            return !vm.pricingModels.length || isOpenOffering();
         }
 
         function appendPricePlan(plan) {

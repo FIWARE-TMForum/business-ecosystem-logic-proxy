@@ -92,7 +92,7 @@
         vm.list = [];
         vm.list.status = LOADING;
         vm.offset = -1;
-        vm.size = -1;
+        vm.limit = -1;
 
         vm.isTransitable = isTransitable;
         vm.getNextStatus = getNextStatus;
@@ -112,7 +112,7 @@
                 angular.copy($state.params, params);
 
                 params.offset = vm.offset;
-                params.size = vm.size;
+                params.limit = vm.limit;
 
                 ProductOrder.search(params).then(
                     function(productOrderList) {
@@ -745,7 +745,7 @@
             var dataUpdated = {
                 note: [
                     {
-                        author: User.loggedUser.currentUser.id,
+                        author: User.loggedUser.currentUser.partyId,
                         date: new Date(),
                         text: vm.note.text
                     }

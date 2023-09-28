@@ -1,4 +1,6 @@
-/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 CoNWeT Lab., Universidad Politécnica de Madrid
+ *
+ * Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -17,15 +19,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var async = require('async'),
-    config = require('./../../config'),
-    logger = require('./../../lib/logger').logger.getLogger('TMF'),
-    request = require('request'),
-    tmfUtils = require('./../../lib/tmfUtils'),
-    url = require('url'),
-    utils = require('./../../lib/utils');
+const async = require('async')
+const axios = require('axios')
+const config = require('./../../config')
+const logger = require('./../../lib/logger').logger.getLogger('TMF')
+const tmfUtils = require('./../../lib/tmfUtils')
+const url = require('url')
+const utils = require('./../../lib/utils')
 
-var customer = (function() {
+const customer = (function() {
     var getCustomerPath = function(asset) {
         return url.parse(asset.customer.href).pathname;
     };
@@ -39,21 +41,25 @@ var customer = (function() {
         );
     };
 
-    var retrieveAsset = function(path, callback) {
-        var uri = getCustomerAPIUrl(path);
+    const retrieveAsset = function(path, callback) {
+        const uri = getCustomerAPIUrl(path);
 
-        request(uri, function(err, response, body) {
-            if (err || response.statusCode >= 400) {
+        axios.get(uri).then((response) => {
+            if (response.status >= 400) {
                 callback({
-                    status: response ? response.statusCode : 500
+                    status: response.status
                 });
             } else {
                 callback(null, {
-                    status: response.statusCode,
-                    body: body
+                    status: response.status,
+                    body: response.data
                 });
             }
-        });
+        }).catch((err) => {
+            callback({
+                status: 500
+            });
+        })
     };
 
     var isOwner = function(req, asset, notAuthorizedMessage, callback) {
@@ -68,7 +74,7 @@ var customer = (function() {
                         message: 'The attached customer cannot be retrieved'
                     });
                 } else {
-                    var customer = JSON.parse(result.body);
+                    const customer = result.body;
 
                     if (tmfUtils.hasPartyRole(req, [customer.relatedParty], 'owner')) {
                         callback(null);
@@ -124,7 +130,7 @@ var customer = (function() {
                     });
                 }
             } else {
-                isOwner(req, JSON.parse(response.body), 'Unauthorized to update/delete non-owned resources', callback);
+                isOwner(req, response.body, 'Unauthorized to update/delete non-owned resources', callback);
             }
         });
     };
@@ -266,7 +272,7 @@ var customer = (function() {
                 utils.log(logger, 'warn', proxyRes, 'Impossible to load attached Customer');
                 return callback(null);
             } else {
-                var currentCustomerAccounts = JSON.parse(result.body).customerAccount;
+                var currentCustomerAccounts = result.body.customerAccount;
 
                 currentCustomerAccounts.push({
                     id: createdAccount.id,
@@ -275,22 +281,23 @@ var customer = (function() {
                     status: 'Active'
                 });
 
-                var options = {
-                    url: getCustomerAPIUrl(customerPath),
-                    method: 'PATCH',
-                    json: { customerAccount: currentCustomerAccounts }
-                };
 
-                request(options, function(err, response) {
-                    if (err || response.statusCode >= 400) {
-                        var message = 'Impossible to update the list of customer accounts: ';
-                        message += err ? err : response.statusCode;
+                axios.patch(getCustomerAPIUrl(customerPath), { customerAccount: currentCustomerAccounts }).then((response) => {
+                    if (response.status >= 400) {
+                        let message = 'Impossible to update the list of customer accounts: ';
+                        message += response.status;
 
                         utils.log(logger, 'warn', proxyRes, message);
                     }
 
                     return callback(null);
-                });
+                }).catch((err) =>{
+                    let message = 'Impossible to update the list of customer accounts: ';
+                    message += err.message;
+
+                    utils.log(logger, 'warn', proxyRes, message);
+                    return callback(null);
+                })
             }
         });
     };
@@ -299,22 +306,23 @@ var customer = (function() {
         // Ask Billing API for those Billing Accounts related to the customer so we can determine
         // whether a seller is able (or not) to retrieve the billing address of this customer.
 
-        var billingPath =
+        const billingPath =
             config.endpoints.billing.path +
             '/api/billingManagement/v2/billingAccount?customerAccount.id=' +
             ids.join(',');
-        var billingUrl = utils.getAPIURL(
+
+        const billingUrl = utils.getAPIURL(
             config.endpoints.billing.appSsl,
             config.endpoints.billing.host,
             config.endpoints.billing.port,
             billingPath
         );
 
-        request(billingUrl, function(err, response, body) {
-            if (!err && response.statusCode === 200) {
-                var billingAccounts = JSON.parse(body);
+        axios.get(billingUrl).then((response) => {
+            if (response.status == 200) {
+                const billingAccounts = response.data;
 
-                var allowed = billingAccounts.some(function(item) {
+                const allowed = billingAccounts.some(function(item) {
                     return tmfUtils.isRelatedParty(proxyRes, item.relatedParty);
                 });
 
@@ -326,13 +334,18 @@ var customer = (function() {
                         message: 'Unauthorized to retrieve the information of the given customer'
                     });
                 }
-            } else {
+            }  else {
                 callback({
                     status: 500,
                     message: 'An error arises at the time of retrieving associated billing accounts'
                 });
             }
-        });
+        }).catch((err) => {
+            callback({
+                status: 500,
+                message: 'An error arises at the time of retrieving associated billing accounts'
+            });
+        })
     };
 
     var executePostValidation = function(proxyRes, callback) {

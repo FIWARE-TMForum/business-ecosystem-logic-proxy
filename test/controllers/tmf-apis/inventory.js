@@ -38,9 +38,7 @@ describe('Inventory API', function() {
         return proxyquire('../../../controllers/tmf-apis/inventory', {
             './../../lib/logger': testUtils.emptyLogger,
             './../../lib/tmfUtils': tmfUtils,
-            './../../lib/utils': utils,
-            './../../lib/indexes': indexes,
-            './../../lib/indexes.js': indexes
+            './../../lib/utils': utils
         }).inventory;
     };
 

@@ -1,4 +1,6 @@
-/* Copyright (c) 2015 - 2019 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 CoNWeT Lab., Universidad Politécnica de Madrid
+ *
+ * Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -17,15 +19,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var nock = require('nock');
-
-var proxyquire = require('proxyquire');
-
-var Promise = require('promiz');
-
-var md5 = require('blueimp-md5');
-
-var testUtils = require('../../utils');
+const nock = require('nock');
+const proxyquire = require('proxyquire');
+const md5 = require('blueimp-md5');
+const testUtils = require('../../utils');
 
 describe('Ordering API', function() {
     var config = testUtils.getDefaultConfig();
@@ -77,7 +74,6 @@ describe('Ordering API', function() {
             './../../lib/logger': testUtils.emptyLogger,
             './../../lib/store': storeClient,
             './../../lib/tmfUtils': tmfUtils,
-            './../../lib/indexes': indexes,
             './../../lib/utils': utils
         }).ordering;
     };

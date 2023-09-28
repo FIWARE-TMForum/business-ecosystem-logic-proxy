@@ -1,4 +1,6 @@
-/* Copyright (c) 2015 - 2019 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 CoNWeT Lab., Universidad Politécnica de Madrid
+ *
+ * Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -17,21 +19,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var async = require('async'),
-    config = require('./../../config'),
-    deepcopy = require('deepcopy'),
-    equal = require('deep-equal'),
-    indexes = require('./../../lib/indexes'),
-    leftPad = require("left-pad"),
-    logger = require('./../../lib/logger').logger.getLogger('TMF'),
-    md5 = require('blueimp-md5'),
-    Promise = require('promiz'),
-    request = require('request'),
-    rssClient = require('./../../lib/rss').rssClient,
-    storeClient = require('./../../lib/store').storeClient,
-    tmfUtils = require('./../../lib/tmfUtils'),
-    url = require('url'),
-    utils = require('./../../lib/utils');
+const async = require('async')
+const axios = require('axios')
+const config = require('./../../config')
+const deepcopy = require('deepcopy')
+const equal = require('deep-equal')
+const { indexes } = require('./../../lib/indexes')
+const logger = require('./../../lib/logger').logger.getLogger('TMF')
+const rssClient = require('./../../lib/rss').rssClient
+const storeClient = require('./../../lib/store').storeClient
+const tmfUtils = require('./../../lib/tmfUtils')
+const url = require('url')
+const utils = require('./../../lib/utils')
 
 var LIFE_CYCLE = 'lifecycleStatus';
 
@@ -41,48 +40,54 @@ var RETIRED_STATE = 'retired';
 var OBSOLETE_STATE = 'obsolete';
 
 // Validator to check user permissions for accessing TMForum resources
-var catalog = (function() {
+const catalog = (function() {
     //////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////////// COMMON ///////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
 
-    var offeringsPattern = new RegExp('/productOffering/?$');
-    var catalogOfferingsPattern = new RegExp('/catalog/[^/]+/productOffering/?');
-    var offeringPattern = new RegExp('/catalog/[^/]+/productOffering/[^/]+/?$');
-    var productsPattern = new RegExp('/productSpecification/?$');
-    var productPattern = new RegExp('/productSpecification/[^/]+/?$');
-    var categoryPattern = new RegExp('/category/[^/]+/?$');
-    var categoriesPattern = new RegExp('/category/?$');
-    var catalogsPattern = new RegExp('/catalog/?$');
+    const offeringsPattern = new RegExp('/productOffering/?$');
+    const catalogOfferingsPattern = new RegExp('/catalog/[^/]+/productOffering/?');
+    const offeringPattern = new RegExp('/catalog/[^/]+/productOffering/[^/]+/?$');
+    const productsPattern = new RegExp('/productSpecification/?$');
+    const productPattern = new RegExp('/productSpecification/[^/]+/?$');
+    const categoryPattern = new RegExp('/category/[^/]+/?$');
+    const categoriesPattern = new RegExp('/category/?$');
+    const catalogsPattern = new RegExp('/catalog/?$');
 
-    var retrieveAsset = function(assetPath, callback) {
-        var uri = utils.getAPIURL(
+    const retrieveAsset = function(assetPath, callback) {
+        const uri = utils.getAPIURL(
             config.endpoints.catalog.appSsl,
             config.endpoints.catalog.host,
             config.endpoints.catalog.port,
             assetPath
         );
 
-        request(uri, function(err, response, body) {
-            if (err || response.statusCode >= 400) {
+        axios.get(uri).then((response) => {
+            if (response.status >= 400) {
                 callback({
-                    status: response ? response.statusCode : 500
+                    status: response.status
                 });
             } else {
                 callback(null, {
-                    status: response.statusCode,
-                    body: body
+                    status: response.status,
+                    body: response.data
                 });
             }
-        });
+        }).catch((err) => {
+            callback({
+                status: 500
+            });
+        })
     };
 
     // Retrieves the product belonging to a given offering
-    var retrieveProduct = function(productUrl, callback) {
-        var productPath = url.parse(productUrl).pathname;
+    const retrieveProduct = function(productId, callback) {
+        console.log('Getting product ' + productId)
+        const productPath = `/productSpecification/${productId}`
 
         retrieveAsset(productPath, function(err, response) {
             if (err) {
+                console.log(err)
                 callback({
                     status: 422,
                     message: 'The attached product cannot be read or does not exist'
@@ -93,7 +98,7 @@ var catalog = (function() {
         });
     };
 
-    var checkAssetStatus = function(assetBody, validStates) {
+    const checkAssetStatus = function(assetBody, validStates) {
         return LIFE_CYCLE in assetBody && validStates.indexOf(assetBody[LIFE_CYCLE].toLowerCase()) >= 0;
     };
 
@@ -102,9 +107,13 @@ var catalog = (function() {
         callback(null);
     };
 
-    var catalogPathFromOfferingUrl = function(offeringUrl) {
-        var productOfferingPos = offeringUrl.indexOf('/productOffering');
-        return url.parse(offeringUrl.substring(0, productOfferingPos)).pathname;
+    const catalogPathFromOfferingUrl = function(offeringUrl) {
+        console.log('==== >' + offeringUrl)
+
+        const result = offeringUrl.split('/')
+        console.log(result)
+
+        return `/catalog/${result[3]}`
     };
 
     var validateRSModel = function(req, body, callback) {
@@ -151,7 +160,7 @@ var catalog = (function() {
         });
     };
 
-    var validateOfferingFields = function(previousBody, newBody) {
+    const validateOfferingFields = function(previousBody, newBody) {
         var fixedFields = ['isBundle', 'productSpecification', 'bundledProductOffering'];
         var modified = null;
 
@@ -164,7 +173,7 @@ var catalog = (function() {
         return modified;
     };
 
-    var validateOfferingCatalog = function(
+    const validateOfferingCatalog = function(
         req,
         offeringPath,
         validStates,
@@ -181,7 +190,7 @@ var catalog = (function() {
                     message: 'The catalog attached to the offering cannot be read'
                 });
             } else {
-                var catalog = JSON.parse(result.body);
+                const catalog = result.body;
 
                 // Check that tht catalog is in an appropriate state
                 if (checkAssetStatus(catalog, validStates)) {
@@ -208,7 +217,7 @@ var catalog = (function() {
         // Offerings don't include a relatedParty field, so for bundles it is needed to retrieve the product
         var ownerHandler = function(req, asset, hdlrCallback) {
             if (!asset.relatedParty) {
-                retrieveProduct(asset.productSpecification.href, function(err, result) {
+                retrieveProduct(asset.productSpecification.id, function(err, result) {
                     var isOwner = false;
                     if (!err) {
                         var product = JSON.parse(result.body);
@@ -251,10 +260,11 @@ var catalog = (function() {
         });
     };
 
-    var validateOffering = function(req, offeringPath, previousBody, newBody, callback) {
-        var validStates = null;
-        var errorMessageStateProduct = null;
-        var errorMessageStateCatalog = null;
+    const validateOffering = function(req, offeringPath, previousBody, newBody, callback) {
+        console.log('------------ > Validate offering')
+        let validStates = null;
+        let errorMessageStateProduct = null;
+        let errorMessageStateCatalog = null;
 
         if (previousBody === null) {
             // Offering creation
@@ -274,7 +284,7 @@ var catalog = (function() {
         }
 
         if (newBody && previousBody) {
-            var modifiedField = validateOfferingFields(previousBody, newBody);
+            const modifiedField = validateOfferingFields(previousBody, newBody);
 
             if (modifiedField !== null) {
                 return callback({
@@ -286,28 +296,26 @@ var catalog = (function() {
 
         async.series(
             [
-                function(callback) {
+                /*function(callback) {
                     // Check the RS model
                     if ((newBody && !previousBody) || (previousBody && newBody && newBody.serviceCandidate)) {
                         validateRSModel(req, newBody, callback);
                     } else {
                         callback(null);
                     }
-                },
-                function(callback) {
+                },*/
+                /*function(callback) {
                     // Check the offering categories
                     var categories = newBody ? newBody.category : [];
 
                     async.eachSeries(
                         categories,
                         function(category, taskCallback) {
-                            var categoryApiUrl = url.parse(category.href).pathname;
-
-                            checkExistingCategoryById(categoryApiUrl, category.id, taskCallback);
+                            checkExistingCategoryById(category.id, taskCallback);
                         },
                         callback
                     );
-                }
+                }*/
             ],
             function(err) {
                 if (err) {
@@ -319,7 +327,7 @@ var catalog = (function() {
                     var lifecycleHandler = function(err) {
                         if (err) {
                             callback(err);
-                        } else if (validStates != null) {
+                        } else if (validStates != null && catalogOfferingsPattern.test(req.apiUrl)) {
                             // This validation only need to be executed once
                             validateOfferingCatalog(
                                 req,
@@ -374,7 +382,7 @@ var catalog = (function() {
                                     }
 
                                     // Check that the included offering is not also a bundle
-                                    var bundledOffering = JSON.parse(result.body);
+                                    var bundledOffering = result.body;
                                     if (bundledOffering.isBundle) {
                                         return taskCallback({
                                             status: 422,
@@ -416,22 +424,22 @@ var catalog = (function() {
                             });
                         }
 
-                        if (!offeringBody.productSpecification.href) {
+                        /*if (!offeringBody.productSpecification.href) {
                             return callback({
                                 status: 422,
                                 message: 'Missing required field href in product specification'
                             });
-                        }
+                        }*/
 
                         // Check that the product attached to the offering is owned by the same user
-                        retrieveProduct(offeringBody.productSpecification.href, function(err, result) {
+                        retrieveProduct(offeringBody.productSpecification.id, function(err, result) {
                             if (err) {
                                 callback(err);
                             } else {
                                 var operation = previousBody != null ? 'update' : 'create';
                                 var userNotAllowedMsg =
                                     'You are not allowed to ' + operation + ' offerings for products you do not own';
-                                var product = JSON.parse(result.body);
+                                var product = result.body;
 
                                 validateAssetPermissions(
                                     req,
@@ -449,11 +457,10 @@ var catalog = (function() {
         );
     };
 
-    var checkExistingCategoryById = function(apiUrl, categoryId, callback) {
-        var categoryCollectionPath = '/category';
-        var categoryPath = apiUrl.substring(0, apiUrl.indexOf(categoryCollectionPath) + categoryCollectionPath.length);
+    const checkExistingCategoryById = function(categoryId, callback) {
+        const categoryPath = '/category';
 
-        retrieveAsset(categoryPath + '/' + categoryId, function(err, result) {
+        retrieveAsset(`${categoryPath}/${categoryId}`, function(err, result) {
             if (err) {
                 if (err.status == 404) {
                     callback({
@@ -472,11 +479,9 @@ var catalog = (function() {
         });
     };
 
-    var checkExistingCategory = function(apiUrl, categoryName, isRoot, parentId, callback) {
-        var categoryCollectionPath = '/category';
-        var categoryPath = apiUrl.substring(0, apiUrl.indexOf(categoryCollectionPath) + categoryCollectionPath.length);
-
-        var queryParams = '?lifecycleStatus=Launched&name=' + categoryName;
+    const checkExistingCategory = function(categoryName, isRoot, parentId, callback) {
+        const categoryPath = '/category';
+        let queryParams = '?lifecycleStatus=Launched&name=' + categoryName;
 
         if (isRoot) {
             queryParams += '&isRoot=true';
@@ -491,7 +496,7 @@ var catalog = (function() {
                     message: 'It was impossible to check if the provided category already exists'
                 });
             } else {
-                var existingCategories = JSON.parse(result.body);
+                const existingCategories = result.body;
 
                 if (!existingCategories.length) {
                     callback(null);
@@ -505,7 +510,7 @@ var catalog = (function() {
         });
     };
 
-    var validateCategory = function(req, updatedCategory, oldCategory, action, callback) {
+    const validateCategory = function(req, updatedCategory, oldCategory, action, callback) {
         // Categories can only be created by administrators
         if (!utils.hasRole(req.user, config.oauth2.roles.admin)) {
             callback({
@@ -515,9 +520,9 @@ var catalog = (function() {
         } else {
             if (updatedCategory && ['POST', 'PATCH', 'PUT'].indexOf(req.method.toUpperCase()) >= 0) {
                 // Categories are created as root when isRoot is not included
-                var isRoot =
+                const isRoot =
                     'isRoot' in updatedCategory ? updatedCategory.isRoot : oldCategory ? oldCategory.isRoot : true;
-                var parentId =
+                const parentId =
                     'parentId' in updatedCategory
                         ? updatedCategory.parentId
                         : oldCategory
@@ -535,7 +540,7 @@ var catalog = (function() {
                         message: 'Non-root categories must contain a parent category'
                     });
                 } else {
-                    var categoryName =
+                    const categoryName =
                         'name' in updatedCategory ? updatedCategory.name : oldCategory ? oldCategory.name : null;
 
                     if (!categoryName) {
@@ -544,16 +549,16 @@ var catalog = (function() {
                             message: 'Category name is mandatory'
                         });
                     } else {
-                        var fieldUpdated = function(oldCategory, updatedCategory, field) {
+                        const fieldUpdated = (oldCategory, updatedCategory, field) => {
                             return (
                                 oldCategory && updatedCategory[field] && updatedCategory[field] != oldCategory[field]
                             );
                         };
 
-                        var newCategory = updatedCategory && !oldCategory;
-                        var nameUpdated = fieldUpdated(oldCategory, updatedCategory, 'name');
-                        var isRootUpdated = fieldUpdated(oldCategory, updatedCategory, 'isRoot');
-                        var parentIdUpdated = fieldUpdated(oldCategory, updatedCategory, 'parentId');
+                        const newCategory = updatedCategory && !oldCategory;
+                        const nameUpdated = fieldUpdated(oldCategory, updatedCategory, 'name');
+                        const isRootUpdated = fieldUpdated(oldCategory, updatedCategory, 'isRoot');
+                        const parentIdUpdated = fieldUpdated(oldCategory, updatedCategory, 'parentId');
 
                         // We should check for other categories with the same properties (name, isRoot, parentId) when:
                         //   1.- The category is new (updatedCategory is not null && oldCategory is null)
@@ -566,13 +571,13 @@ var catalog = (function() {
                                     function(callback) {
                                         if (!isRoot) {
                                             // Check parent category
-                                            checkExistingCategoryById(req.apiUrl, parentId, callback);
+                                            checkExistingCategoryById(parentId, callback);
                                         } else {
                                             callback(null);
                                         }
                                     },
                                     function(callback) {
-                                        checkExistingCategory(req.apiUrl, categoryName, isRoot, parentId, callback);
+                                        checkExistingCategory(categoryName, isRoot, parentId, callback);
                                     }
                                 ],
                                 callback
@@ -588,7 +593,7 @@ var catalog = (function() {
         }
     };
 
-    var validateProductUpdate = function(req, prevBody, newBody, callback) {
+    const validateProductUpdate = function(req, prevBody, newBody, callback) {
         if (
             (!!newBody.isBundle || !!newBody.bundledProductSpecification) &&
             prevBody.lifecycleStatus.toLowerCase() != 'active'
@@ -665,7 +670,7 @@ var catalog = (function() {
         return callback(null);
     };
 
-    var validateProduct = function(req, productSpec, callback) {
+    const validateProduct = function(req, productSpec, callback) {
         // Check if the product is a bundle
         if (!productSpec.isBundle) {
             return callback(null);
@@ -690,11 +695,11 @@ var catalog = (function() {
                     });
                 }
 
-                retrieveProduct(spec.href, function(err, result) {
+                retrieveProduct(spec.id, function(err, result) {
                     if (err) {
                         taskCallback(err);
                     } else {
-                        var product = JSON.parse(result.body);
+                        const product = JSON.parse(result.body);
 
                         // Validate that the bundle products belong to the same owner
                         if (!tmfUtils.isOwner(req, product)) {
@@ -734,11 +739,9 @@ var catalog = (function() {
         );
     };
 
-    var checkExistingCatalog = function(apiUrl, catalogName, callback) {
-        var catalogCollectionPath = '/catalog';
-        var catalogPath = apiUrl.substring(0, apiUrl.lastIndexOf(catalogCollectionPath) + catalogCollectionPath.length);
-
-        var queryParams = '?name=' + catalogName;
+    const checkExistingCatalog = function(catalogName, callback) {
+        const catalogPath = '/catalog';
+        const queryParams = '?name=' + catalogName;
 
         retrieveAsset(catalogPath + queryParams, function(err, result) {
             if (err) {
@@ -747,7 +750,7 @@ var catalog = (function() {
                     message: 'It was impossible to check if there is another catalog with the same name'
                 });
             } else {
-                var existingCatalog = JSON.parse(result.body);
+                const existingCatalog = result.body;
 
                 if (!existingCatalog.length) {
                     callback();
@@ -761,10 +764,10 @@ var catalog = (function() {
         });
     };
 
-    var validateCatalog = function(req, prevCatalog, catalog, callback) {
+    const validateCatalog = function(req, prevCatalog, catalog, callback) {
         // Check that the catalog name is not already taken
         if (catalog && (!prevCatalog || !!catalog.name)) {
-            checkExistingCatalog(req.apiUrl, catalog.name, callback);
+            checkExistingCatalog(catalog.name, callback);
         } else {
             callback(null);
         }
@@ -774,7 +777,7 @@ var catalog = (function() {
     ////////////////////////////////////////// CREATION //////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
 
-    var createHandler = function(req, resp, callback) {
+    const createHandler = function(req, resp, callback) {
         if (tmfUtils.isOwner(req, resp)) {
             callback(null);
         } else {
@@ -786,9 +789,8 @@ var catalog = (function() {
     };
 
     // Validate the creation of a resource
-    var validateCreation = function(req, callback) {
-        var body;
-
+    const validateCreation = function(req, callback) {
+        let body;
         // The request body may not be well formed
         try {
             body = JSON.parse(req.body);
@@ -831,6 +833,9 @@ var catalog = (function() {
                             if (err) {
                                 callback(err);
                             } else {
+                                // The current implementation of the APIs does not support the
+                                // catalog ID in offering URL
+                                req.apiUrl = '/catalog/productOffering'
                                 callback(null);
                             }
                         });
@@ -861,7 +866,8 @@ var catalog = (function() {
                     }
                 });
             } else {
-                createHandler(req, body, callback);
+                callback(null);
+                //createHandler(req, body, callback);
             }
         }
     };
@@ -870,11 +876,11 @@ var catalog = (function() {
     /////////////////////////////////////////// UPDATE ///////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
 
-    var validateInvolvedOfferingsState = function(assertType, assetBody, offeringsPath, callback) {
+    const validateInvolvedOfferingsState = function(assertType, assetBody, offeringsPath, callback) {
         // For each state to be validated, this map contains the list of valid states of the offerings
         // attached to the asset whose state is going to be changed and the message to be returned
         // in case the asset cannot be updated
-        var validatedStates = {};
+        let validatedStates = {};
 
         validatedStates[RETIRED_STATE] = {
             offeringsValidStates: [RETIRED_STATE, OBSOLETE_STATE],
@@ -886,7 +892,7 @@ var catalog = (function() {
             errorMsg: 'All the attached offerings must be obsolete to make a ' + assertType + ' obsolete'
         };
 
-        var newLifeCycle = assetBody && LIFE_CYCLE in assetBody ? assetBody[LIFE_CYCLE].toLowerCase() : null;
+        let newLifeCycle = assetBody && LIFE_CYCLE in assetBody ? assetBody[LIFE_CYCLE].toLowerCase() : null;
 
         if (newLifeCycle in validatedStates) {
             retrieveAsset(offeringsPath, function(err, result) {
@@ -896,10 +902,10 @@ var catalog = (function() {
                         message: 'Attached offerings cannot be retrieved'
                     });
                 } else {
-                    var offerings = JSON.parse(result.body);
-                    var offeringsValid = true;
+                    const offerings = result.body;
+                    const offeringsValid = true;
 
-                    for (var i = 0; i < offerings.length && offeringsValid; i++) {
+                    for (let i = 0; i < offerings.length && offeringsValid; i++) {
                         offeringsValid =
                             validatedStates[newLifeCycle]['offeringsValidStates'].indexOf(
                                 offerings[i][LIFE_CYCLE].toLowerCase()
@@ -922,16 +928,28 @@ var catalog = (function() {
     };
 
     // Validate the modification of a resource
-    var validateUpdate = function(req, callback) {
-        var catalogsPattern = new RegExp('/catalog/[^/]+/?$');
-        var offeringsPattern = new RegExp('/catalog/[^/]+/productOffering/[^/]+/?$');
-        var productsPattern = new RegExp('/productSpecification/[^/]+/?$');
+    const validateUpdate = function(req, callback) {
+        const catalogsPattern = new RegExp('/catalog/[^/]+/?$');
+        //const offeringsPattern = new RegExp('/catalog/[^/]+/productOffering/[^/]+/?$');
+        const offeringsPattern = new RegExp('/productOffering/[^/]+/?$');
+        const productsPattern = new RegExp('/productSpecification/[^/]+/?$');
 
         try {
-            var parsedBody = utils.emptyObject(req.body) ? null : JSON.parse(req.body);
+            const parsedBody = utils.emptyObject(req.body) ? null : JSON.parse(req.body);
 
             // Retrieve the resource to be updated or removed
-            retrieveAsset(req.apiUrl, function(err, result) {
+            let url = req.apiUrl.replace(`/${config.endpoints.catalog.path}`, '')
+
+            // THE URL for Offersa include a catalog
+            if (offeringsPattern.test(req.apiUrl)) {
+                let parts = req.apiUrl.split('/')
+                url = `/productOffering/${parts[parts.length - 1]}`
+            }
+
+            console.log('----------------------------------------------------------------------')
+            console.log('----------------------------------------------------------------------')
+            console.log(url)
+            retrieveAsset(url, function(err, result) {
                 if (err) {
                     if (err.status === 404) {
                         callback({
@@ -945,7 +963,7 @@ var catalog = (function() {
                         });
                     }
                 } else {
-                    var previousBody = JSON.parse(result.body);
+                    const previousBody = result.body;
 
                     // Catalog stuff should include a validFor field
                     if (parsedBody && !previousBody.validFor && !parsedBody.validFor) {
@@ -958,7 +976,15 @@ var catalog = (function() {
                     if (categoryPattern.test(req.apiUrl)) {
                         validateCategory(req, parsedBody, previousBody, 'modify', callback);
                     } else if (offeringsPattern.test(req.apiUrl)) {
-                        validateOffering(req, req.apiUrl, previousBody, parsedBody, callback);
+                        console.log('Offering ---')
+                        validateOffering(req, req.apiUrl, previousBody, parsedBody, (err) => {
+                            if (err) {
+                                callback(err)
+                            } else {
+                                req.apiUrl = `/catalog${url}`
+                                callback(null)
+                            }
+                        });
                     } else {
                         if (tmfUtils.isOwner(req, previousBody)) {
                             // The related party field is sorted, since the order is not important
@@ -1067,7 +1093,7 @@ var catalog = (function() {
         }
     };
 
-    var isCategory = function(req, callback) {
+    const isCategory = function(req, callback) {
         if (!categoryPattern.test(req.apiUrl)) {
             return callback({
                 status: 405,
@@ -1077,161 +1103,79 @@ var catalog = (function() {
         callback(null);
     };
 
-    //////////////////////////////////////////////////////////////////////////////////////////////
-    ////////////////////////////////////////// INDEXES ///////////////////////////////////////////
-    //////////////////////////////////////////////////////////////////////////////////////////////
+    const processQuery = async (req, callback) => {
+        if (offeringsPattern.test(req.path) && req.query.relatedParty != null) {
+            console.log('Executing local query')
 
-    var middlewareSave = function middlewareSave(f, body, user, cb) {
-        return function(err, data) {
-            f(body, user)
-                .then(() => cb(err, data))
-                .catch(() => cb(err, data));
-        };
-    };
-
-    var handleIndexes = function handleIndexes(req, callback) {
-        // Handle PUT and PATCH data
-        var offeringsPattern = new RegExp('/productOffering/?');
-        var productsPattern = new RegExp('/productSpecification/?');
-        var catalogPattern = new RegExp('/v2/catalog/?');
-
-        var genericSave = function genericSave(f) {
-            f([JSON.parse(req.body)], req.user)
-                .then(() => callback(null))
-                .catch(() => callback(null));
-        };
-
-        var patternsF = [
-            [offeringsPattern, indexes.saveIndexOffering],
-            [productsPattern, indexes.saveIndexProduct],
-            [catalogPattern, indexes.saveIndexCatalog]
-        ];
-
-        for (var ind in patternsF) {
-            var pattern = patternsF[ind][0];
-            var f = patternsF[ind][1];
-            if (pattern.test(req.apiUrl) && (req.method == 'PATCH' || req.method == 'PUT')) {
-                genericSave(f);
-                return;
+            let query = {
+                relatedParty: req.query.relatedParty
             }
+
+            if (req.query.lifecycleStatus != null) {
+                query.lifecycleStatus = req.query.lifecycleStatus
+            }
+
+            indexes.search('offering', query).then((result) => {
+                let newUrl = `${req.path}?href=`
+
+                console.log(JSON.stringify(result))
+                if (result.hits.hits.length > 0) {
+                    let ids = result.hits.hits.map((hit) => {
+                        return hit._id
+                    })
+
+                    newUrl += ids.join(',')
+                } else {
+                    newUrl += 'null'
+                }
+
+                req.apiUrl = newUrl
+
+                // TODO: Check how to avoid the call if the result is 0
+                callback(null)
+            })
+        } else {
+            callback(null)
         }
+    }
 
-        callback(null);
-    };
-
-    var lifecycleQuery = function lifecycleQuery(req, query) {
-        utils.queryAndOrCommas(req.query.lifecycleStatus, 'lifecycleStatus', query);
-    };
-
-    var createProductQuery = indexes.genericCreateQuery.bind(null, ['isBundle', 'productNumber'], 'product', function(
-        req,
-        query
-    ) {
-        if (req.query['relatedParty.id']) {
-            indexes.addAndCondition(query, { relatedPartyHash: [indexes.fixUserId(req.query['relatedParty.id'])] });
-        }
-
-        utils.queryAndOrCommas(req.query['body'], 'body', query);
-        lifecycleQuery(req, query);
-    });
-
-    var createOfferQuery = indexes.genericCreateQuery.bind(null, ['isBundle', 'name'], 'offering', function(
-        req,
-        query
-    ) {
-        if (catalogOfferingsPattern.test(req.apiUrl)) {
-            var catalog = req.apiUrl.split('/')[6];
-            indexes.addAndCondition(query, { catalog: [leftPad(catalog, 12, 0)] });
-        }
-        if (req.query.relatedParty) {
-            indexes.addAndCondition(query, { userId: [indexes.fixUserId(req.query.relatedParty)] });
-        }
-        if (req.query['category.id']) {
-            indexes.addAndCondition(query, { categoriesId: [leftPad(req.query['category.id'], 12, 0)] });
-        }
-        if (req.query['category.name']) {
-            indexes.addAndCondition(query, { categoriesName: [md5(req.query['category.name'].toLowerCase())] });
-        }
-
-        utils.queryAndOrCommas(req.query['productSpecification.id'], 'productSpecification', query, (x) =>
-            leftPad(x, 12, 0)
-        );
-        utils.queryAndOrCommas(req.query['bundledProductOffering.id'], 'bundledProductOffering', query, (x) =>
-            leftPad(x, 12, 0)
-        );
-        utils.queryAndOrCommas(req.query['body'], 'body', query);
-        lifecycleQuery(req, query);
-    });
-
-    var createCatalogQuery = indexes.genericCreateQuery.bind(null, ['name'], 'catalog', function(req, query) {
-        if (req.query['relatedParty.id']) {
-            indexes.addAndCondition(query, { relatedPartyHash: [indexes.fixUserId(req.query['relatedParty.id'])] });
-        }
-
-        utils.queryAndOrCommas(req.query['body'], 'body', query);
-        lifecycleQuery(req, query);
-    });
-
-    var offeringGetParams = new RegExp('/productOffering(\\?|$)');
-    var productGetParams = new RegExp('/productSpecification(\\?|$)');
-    var catalogGetParams = new RegExp('/catalog(\\?|$)');
-
-    var getCatalogRequest = indexes.getMiddleware.bind(
-        null,
-        catalogGetParams,
-        createCatalogQuery,
-        indexes.searchCatalogs
-    );
-
-    var getProductRequest = indexes.getMiddleware.bind(
-        null,
-        productGetParams,
-        createProductQuery,
-        indexes.searchProducts
-    );
-
-    var getOfferRequest = indexes.getMiddleware.bind(
-        null,
-        offeringGetParams,
-        createOfferQuery,
-        indexes.searchOfferings
-    );
-
-    var methodIndexed = function methodIndexed(req) {
-        // I'm gonna feel so bad with this... but I have to use mutability on an input parameter :(
-        // The methods change req.apiUrl as needed... Sorry
-        return getOfferRequest(req)
-            .then(() => getProductRequest(req))
-            .then(() => getCatalogRequest(req));
-    };
+    const indexObject = (party, body, catalog) => {
+        return indexes.indexDocument('offering', body.id, {
+            relatedParty: party,
+            catalog: catalog,
+            lifecycleStatus: body.lifecycleStatus
+        })
+    }
 
     //////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////////// COMMON ///////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
 
-    var validators = {
-        GET: [validateAllowed],
+    const validators = {
+        GET: [validateAllowed, processQuery],
         POST: [utils.validateLoggedIn, validateCreation],
         PATCH: [utils.validateLoggedIn, validateUpdate],
         PUT: [utils.methodNotAllowed],
         DELETE: [utils.validateLoggedIn, isCategory, validateUpdate]
     };
 
-    var checkPermissions = function(req, callback) {
-        var reqValidators = [];
+    const checkPermissions = function(req, callback) {
+        const reqValidators = [];
 
-        for (var i in validators[req.method]) {
+        for (let i in validators[req.method]) {
             reqValidators.push(validators[req.method][i].bind(this, req));
         }
 
-        methodIndexed(req)
-            .catch(() => Promise.resolve(req))
-            .then(() => {
-                async.series(reqValidators, callback);
-            });
+        // We can now execute the queries in the API
+        // methodIndexed(req)
+        //     .catch(() => Promise.resolve(req))
+        //     .then(() => {
+        //         async.series(reqValidators, callback);
+        //     });
+        async.series(reqValidators, callback);
     };
 
-    var handleUpgradePostAction = function(req, body, storeMethod, callback) {
+    const handleUpgradePostAction = function(req, body, storeMethod, callback) {
         var getURLId = function(apiUrl) {
             return apiUrl.split('/')[6];
         };
@@ -1256,34 +1200,37 @@ var catalog = (function() {
         callback(null);
     };
 
-    var executePostValidation = function(req, callback) {
+    const executePostValidation = function(req, callback) {
         // Attach product spec info for product creation request
-        var body;
+        let body;
 
         if (req.method == 'POST' && productsPattern.test(req.apiUrl)) {
-            body = JSON.parse(req.body);
+            body = req.body;
             storeClient.attachProduct(
                 body,
                 req.user,
-                middlewareSave(indexes.saveIndexProduct, [body], req.user, callback)
+                callback
             );
         } else if (req.method == 'POST' && offeringsPattern.test(req.apiUrl)) {
-            var catalog = '';
-            var indexBody;
+            let catalog = '';
+            body = req.body
 
-            body = JSON.parse(req.body);
-
-            if (req.apiUrl.indexOf('/catalog/') > -1) {
-                catalog = req.apiUrl.split('/')[6];
+            if (req.url.indexOf('/catalog/catalog/') > -1) {
+                catalog = req.url.split('/')[3];
             }
 
-            indexBody = deepcopy(body);
-            indexBody.catalog = catalog;
-            storeClient.attachOffering(
-                body,
-                req.user,
-                middlewareSave(indexes.saveIndexOffering, [indexBody], req.user, callback)
-            );
+            indexObject(req.user.partyId, body, catalog).then(()=>{
+                console.log('Offering indexed')
+            }).catch((err)=>{
+                console.log('Indexing error')
+                console.log(err)
+            }).finally(() => {
+                storeClient.attachOffering(
+                    body,
+                    req.user,
+                    callback
+                );
+            })
         } else if ((req.method == 'PATCH' || req.method == 'PUT') && offeringPattern.test(req.apiUrl)) {
             var catalog = req.apiUrl.split('/')[6];
             var indexBody;
@@ -1296,26 +1243,23 @@ var catalog = (function() {
             storeClient.updateOffering(
                 body,
                 req.user,
-                middlewareSave(indexes.saveIndexOffering, [indexBody], req.user, callback)
+                callback
             );
         } else if (req.method == 'PATCH' && productPattern.test(req.apiUrl)) {
-            var body = JSON.parse(req.reqBody);
+            body = JSON.parse(req.reqBody);
             var respBody = JSON.parse(req.body);
 
             handleUpgradePostAction(
                 req,
                 body,
                 storeClient.attachUpgradedProduct,
-                middlewareSave(indexes.saveIndexProduct, [respBody], req.user, callback)
+                callback
             );
         } else if (req.method == 'POST' && catalogsPattern.test(req.apiUrl)) {
             body = JSON.parse(req.body);
-            indexes
-                .saveIndexCatalog([body])
-                .then(() => callback(null))
-                .catch(() => callback(null));
+            callback(null)
         } else {
-            handleIndexes(req, callback);
+            callback(null)
         }
     };
 

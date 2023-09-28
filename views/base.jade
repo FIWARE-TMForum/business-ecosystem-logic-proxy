@@ -30,10 +30,10 @@ html(ng-app="app")
           TOKEN_GET: '#{ proxyPath }/authorizeService/read',
           RENEW_JOB: '#{ proxyPath }/#{ chargingPath }/api/orderManagement/products/renewJob',
           UNSUBSCRIBE_JOB: '#{ proxyPath }/#{ chargingPath }/api/orderManagement/products/unsubscribeJob',
-          CATALOGUE_MANAGEMENT: '#{ proxyPath }/#{ catalogPath }/api/catalogManagement/v2',
+          CATALOGUE_MANAGEMENT: '#{ proxyPath }/#{ catalogPath }',
           PRODUCTORDER_MANAGEMENT: '#{ proxyPath }/#{ orderingPath }/api/productOrdering/v2',
           INVENTORY: '#{ proxyPath }/#{ inventoryPath }/api/productInventory/v2',
-          PARTY_MANAGEMENT: '#{ proxyPath }/#{ partyPath }/api/partyManagement/v2',
+          PARTY_MANAGEMENT: '#{ proxyPath }/#{ partyPath }',
           BILLING_MANAGEMENT: '#{ proxyPath }/#{ billingPath }/api/billingManagement/v2',
           CUSTOMER_MANAGEMENT: '#{ proxyPath }/#{ customerPath }/api/customerManagement/v2',
           PAYMENT: '#{ proxyPath }/#{ chargingPath }/api/orderManagement/orders/:action',
@@ -88,17 +88,19 @@ html(ng-app="app")
         angular.module('app')
           .constant('LOGGED_USER', {
             id: '#{ user.id }',
+            partyId: '#{ user.partyId }',
             name: '#{ user.username }',
-            href: '#{ contextPath }/#{ partyPath }/api/partyManagement/v2/individual/#{ user.id }',
+            href: '#{ contextPath }/#{ partyPath }/individual/#{ user.partyId }',
             email: '#{ user.email }',
             bearerToken: '#{ user.accessToken }',
             organizations: '#{ '{ "organizations":' + JSON.stringify(user.organizations) + '}' }',
             currentUser: {
               id: '#{ user.id }',
+              partyId: '#{ user.partyId }',
               name: '#{ user.username }',
               email: '#{ user.email }',
               roles: '#{ JSON.stringify(user.roles) }',
-              href: '#{ contextPath }/#{ partyPath }/api/partyManagement/v2/individual/#{ user.id }'
+              href: '#{ contextPath }/#{ partyPath }/individual/#{ user.partyId }'
             }
           })
           .run(function ($http, LOGGED_USER) {
@@ -170,7 +172,7 @@ html(ng-app="app")
                       a.dropdown-menu-item(ng-click="user.switchSession(" + "'#{ organization.id }'" + ")", ng-if="user.showOrgList(" + "'#{ organization.id }'" + ")")
                         span.item-icon.fa.fa-users
                         span.item-text #{ organization.name }
-                        
+
                 a.dropdown-menu-item(ng-if="user.isAdmin()", ui-sref="admin", ui-sref-opts="{ reload: true, inherit: false }")
                   span.item-icon.fa.fa-dashboard
                   span.item-text #{ __("Administration") }
@@ -348,7 +350,7 @@ html(ng-app="app")
     script(type="text/ng-template", id="directives/offering-priceplan")
       include ./partials/stock/product-offering/directives/priceplan.jade
     script(type="text/ng-template", id="directives/offering-sla")
-      include ./partials/stock/product-offering/directives/sla.jade  
+      include ./partials/stock/product-offering/directives/sla.jade
 
     script(type="text/ng-template", id="directives/forms/priceplan")
       include ./partials/stock/product-offering/directives/priceplan-form.jade

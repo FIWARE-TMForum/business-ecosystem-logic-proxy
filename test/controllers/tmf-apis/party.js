@@ -115,7 +115,7 @@ describe('Party API', function() {
                 loggedIn = true;
 
                 var req = {
-                    apiUrl: '/' + config.endpoints.party.path + '/api/partyManagement/v2/' + path + party,
+                    apiUrl: '/' + config.endpoints.party.path + '/' + path + party,
                     method: 'PATCH',
                     user: user
                 };
@@ -203,7 +203,7 @@ describe('Party API', function() {
 
                 var req = {
                     // OLD // Individual has been replaced by BAD_PATH in this path
-                    apiUrl: '/' + config.endpoints.party.path + '/api/partyManagement/v2/BAD_PATH/' + user,
+                    apiUrl: '/' + config.endpoints.party.path + '/' + user,
                     method: 'PATCH',
                     user: user
                 };

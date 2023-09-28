@@ -128,9 +128,9 @@ config.endpoints = {
         appSsl: config.https.enabled
     },
     catalog: {
-        path: 'DSProductCatalog',
-        host: 'apis.docker',
-        port: '8080',
+        path: 'catalog',
+        host: 'host.docker.internal',
+        port: '8632',
         appSsl: false
     },
     ordering: {
@@ -158,9 +158,9 @@ config.endpoints = {
         appSsl: false
     },
     party: {
-        path: 'DSPartyManagement',
-        host: 'apis.docker',
-        port: '8080',
+        path: 'party',
+        host: 'host.docker.internal',
+        port: '8633',
         appSsl: false
     },
     billing: {
@@ -215,8 +215,7 @@ config.billingAccountOwnerRole = 'bill receiver';
 config.publicPaths = [];
 
 config.indexes = {
-    'elasticHost': 'elastic.docker:9200',
-    'apiVersion': '7.5'
+    'elasticHost': 'https://elastic.docker:9200'
 };
 
 config.magicKey = undefined;

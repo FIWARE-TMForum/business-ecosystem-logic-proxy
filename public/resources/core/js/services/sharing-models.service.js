@@ -132,7 +132,7 @@
                 qParams.action = params.action;
             } else if (params.offset >= 0) {
                 qParams.offset = params.offset;
-                qParams.size = params.size;
+                qParams.limit = params.limit;
             }
 
             if (!method) {

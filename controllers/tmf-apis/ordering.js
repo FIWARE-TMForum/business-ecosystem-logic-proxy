@@ -1,5 +1,7 @@
-/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 CoNWeT Lab., Universidad Politécnica de Madrid
  *
+ * Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
+ * 
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
  *
@@ -17,36 +19,40 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var async = require('async'),
-    config = require('./../../config'),
-    equal = require('deep-equal'),
-    indexes = require('./../../lib/indexes'),
-    moment = require('moment'),
-    request = require('request'),
-    storeClient = require('./../../lib/store').storeClient,
-    tmfUtils = require('./../../lib/tmfUtils'),
-    url = require('url'),
-    utils = require('./../../lib/utils');
+const async = require('async')
+const axios = require('axios')
+const config = require('./../../config')
+const equal = require('deep-equal')
+const moment = require('moment')
+const storeClient = require('./../../lib/store').storeClient
+const tmfUtils = require('./../../lib/tmfUtils')
+const url = require('url')
+const utils = require('./../../lib/utils')
 
-var ordering = (function() {
-    var CUSTOMER = 'Customer';
-    var SELLER = 'Seller';
+const ordering = (function() {
+    const CUSTOMER = 'Customer';
+    const SELLER = 'Seller';
 
     //////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////////// COMMON ///////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
 
-    var makeRequest = function(url, errMsg, callback) {
-        request(url, function(err, response, body) {
-            if (err || response.statusCode >= 400) {
+    const makeRequest = function(url, errMsg, callback) {
+        axios.get(url).then((response) => {
+            if (response.status >= 400) {
                 callback({
                     status: 400,
                     message: errMsg
                 });
             } else {
-                callback(null, JSON.parse(body));
+                callback(null, response.data);
             }
-        });
+        }).catch((err) => {
+            callback({
+                status: 400,
+                message: errMsg
+            });
+        })
     };
 
     var getBillingAccountUrl = function(billingAccount) {
@@ -312,11 +318,11 @@ var ordering = (function() {
         }
 
         // Verify that the billing account exists and that the user is the owner of that billing account
-        var billingAccountUrl = getBillingAccountUrl(initialBillingAccount);
+        const billingAccountUrl = getBillingAccountUrl(initialBillingAccount);
 
-        request(billingAccountUrl, function(err, response, body) {
-            if (!err && response.statusCode === 200) {
-                var billingAccount = JSON.parse(body);
+        axios.get(billingAccountUrl).then((response) => {
+            if (response.status === 200) {
+                const billingAccount = response.data;
 
                 if (tmfUtils.hasPartyRole(req, billingAccount.relatedParty, config.billingAccountOwnerRole)) {
                     callback(null);
@@ -326,20 +332,23 @@ var ordering = (function() {
                         message: 'Unauthorized to use non-owned billing accounts'
                     });
                 }
+            } else if (response.statusCode === 404) {
+                callback({
+                    status: 422,
+                    message: 'The given billing account does not exist'
+                });
             } else {
-                if (response && response.statusCode === 404) {
-                    callback({
-                        status: 422,
-                        message: 'The given billing account does not exist'
-                    });
-                } else {
-                    callback({
-                        status: 500,
-                        message: 'There was an unexpected error at the time of retrieving the provided billing account'
-                    });
-                }
+                callback({
+                    status: 500,
+                    message: 'There was an unexpected error at the time of retrieving the provided billing account'
+                });
             }
-        });
+        }).catch((err) => {
+            callback({
+                status: 500,
+                message: 'There was an unexpected error at the time of retrieving the provided billing account'
+            });
+        })
     };
 
     //////////////////////////////////////////////////////////////////////////////////////////////
@@ -548,38 +557,6 @@ var ordering = (function() {
         }
     };
 
-    var orderRegex = new RegExp('/productOrder(\\?|$)');
-
-    var createQuery = indexes.genericCreateQuery.bind(
-        null,
-        ['priority', 'category', 'state', 'notificationContact', 'note'],
-        'order',
-        function(req, query) {
-            if (
-                req.query['relatedParty.id'] &&
-                (!req.query['relatedParty.role'] || req.query['relatedParty.role'].toLowerCase() == 'customer')
-            ) {
-                indexes.addAndCondition(query, { relatedPartyHash: [indexes.fixUserId(req.query['relatedParty.id'])] });
-            }
-
-            if (
-                req.query['relatedParty.id'] &&
-                req.query['relatedParty.role'] &&
-                req.query['relatedParty.role'].toLowerCase() == 'seller'
-            ) {
-                indexes.addAndCondition(query, { sellerHash: [indexes.fixUserId(req.query['relatedParty.id'])] });
-            }
-
-            utils.queryAndOrCommas(req.query.state, 'state', query);
-        }
-    );
-
-    var getOrderRequest = indexes.getMiddleware.bind(null, orderRegex, createQuery, indexes.searchOrders);
-
-    var methodIndexed = function methodIndexed(req) {
-        return getOrderRequest(req);
-    };
-
     //////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////// PRE-VALIDATION ///////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
@@ -599,11 +576,7 @@ var ordering = (function() {
             reqValidators.push(validators[req.method][i].bind(this, req));
         }
 
-        methodIndexed(req)
-            .catch(() => Promise.resolve(req))
-            .then(() => {
-                async.series(reqValidators, callback);
-            });
+        async.series(reqValidators, callback);
     };
 
     //////////////////////////////////////////////////////////////////////////////////////////////
@@ -679,18 +652,17 @@ var ordering = (function() {
         }
     };
 
-    var includeSellersInBillingAccount = function(req, callback) {
+    const includeSellersInBillingAccount = function(req, callback) {
         // PLEASE NOTE: Billing Accounts have been checked in the checkPermissions step.
 
-        var ordering = JSON.parse(req.body);
+        const ordering = JSON.parse(req.body);
+        const billingAccountUrl = getBillingAccountUrl(ordering.orderItem[0].billingAccount[0]);
 
-        var billingAccountUrl = getBillingAccountUrl(ordering.orderItem[0].billingAccount[0]);
-
-        request(billingAccountUrl, function(err, response, rawBillingAccount) {
-            if (!err && response.statusCode === 200) {
-                var billingAccount = JSON.parse(rawBillingAccount);
-                var billingAccountRelatedParties = billingAccount.relatedParty;
-                var currentUsers = [];
+        axios.get(billingAccountUrl).then((response) => {
+            if (response.statusCode === 200) {
+                const billingAccount = response.data;
+                const billingAccountRelatedParties = billingAccount.relatedParty;
+                const currentUsers = [];
 
                 billingAccountRelatedParties.forEach(function(party) {
                     currentUsers.push(party.id);
@@ -706,28 +678,28 @@ var ordering = (function() {
                     }
                 });
 
-                request(billingAccountUrl, {
-                    method: 'PATCH',
-                    json: { relatedParty: billingAccountRelatedParties }
-                }, function(err, response) {
-
-                    if (err || response.statusCode >= 400) {
-                        callback({
-                            status: 500,
-                            message: 'Unexpected error when updating the given billing account'
-                        })
-                    } else {
-                        callback(null);
-                    }
-                });
-
+                return axios.patch(billingAccountUrl, { relatedParty: billingAccountRelatedParties })
             } else {
                 callback({
                     status: 500,
                     message: 'Unexpected error when checking the given billing account'
                 });
             }
-        });
+        }).then((response) => {
+            if (response.status >= 400) {
+                callback({
+                    status: 500,
+                    message: 'Unexpected error when updating the given billing account'
+                })
+            } else {
+                callback(null);
+            }
+        }).catch((err) => {
+            callback({
+                status: 500,
+                message: 'Unexpected error when checking the given billing account'
+            });
+        })
     };
 
     var notifyOrder = function(req, callback) {
@@ -749,15 +721,6 @@ var ordering = (function() {
         });
     };
 
-    var saveOrderIndex = function saveOrderIndex(req, callback) {
-        var body = JSON.parse(req.body);
-
-        indexes
-            .saveIndexOrder([body])
-            .then(() => callback(null))
-            .catch(() => callback(null));
-    };
-
     var executePostValidation = function(req, callback) {
         if (['GET', 'PUT', 'PATCH'].indexOf(req.method.toUpperCase()) >= 0) {
             filterOrderItems(req, callback);
@@ -765,7 +728,6 @@ var ordering = (function() {
             var tasks = [];
             tasks.push(notifyOrder.bind(this, req));
             tasks.push(includeSellersInBillingAccount.bind(this, req));
-            tasks.push(saveOrderIndex.bind(this, req));
             async.series(tasks, callback);
         } else {
             callback(null);

@@ -23,7 +23,7 @@ const versionInfo = require('./versionInfo').versionInfo;
 const management = (function() {
 
     const getCount = function(req, res) {
-        var size = req.params.size;
+        var size = req.params.limit;
         res.statusCode = 200;
         res.json({
             size: size

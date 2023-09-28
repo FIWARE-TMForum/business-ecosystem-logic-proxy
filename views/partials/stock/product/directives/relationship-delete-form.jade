@@ -14,7 +14,7 @@
             th #{ __("Actions") }
         tbody
           tr(ng-repeat="relationship in resource.productSpecificationRelationship")
-            td {{ relationship.parseType() }}
+            td {{ relationship.relationshipType }}
             th {{ relationship.productSpec.name }}
             td
               span.label(ng-class="relationship.productSpec.isBundle ? 'label-bundle' : 'label-single'")

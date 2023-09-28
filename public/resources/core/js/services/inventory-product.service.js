@@ -56,7 +56,7 @@
             }
 
             if (filters.customer) {
-                params['relatedParty.id'] = User.loggedUser.currentUser.id;
+                params['relatedParty.id'] = User.loggedUser.currentUser.partyId;
             }
 
             if (filters.status) {
@@ -69,7 +69,7 @@
 
             if (filters.offset !== undefined) {
                 params['offset'] = filters.offset;
-                params['size'] = filters.size;
+                params['limit'] = filters.limit;
             }
 
             if (filters.body !== undefined) {

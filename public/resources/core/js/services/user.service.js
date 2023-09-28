@@ -67,7 +67,7 @@
 
         function serializeBasic() {
             return {
-                id: loggedUser.currentUser.id,
+                id: loggedUser.currentUser.partyId,
                 href:
                     $location.protocol() +
                     '://' +

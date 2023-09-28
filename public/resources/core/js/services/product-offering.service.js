@@ -1,4 +1,6 @@
-/* Copyright (c) 2015 - 2018 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 CoNWeT Lab., Universidad Politécnica de Madrid
+ *
+ * Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -54,7 +56,7 @@
         ProductSpec,
         Category
     ) {
-        var resource = $resource(
+        const resource = $resource(
             URLS.CATALOGUE_MANAGEMENT + '/:catalogue/:catalogueId/productOffering/:offeringId',
             {
                 offeringId: '@id'
@@ -74,6 +76,16 @@
         resource.prototype.removePricePlan = removePricePlan;
         resource.prototype.relationshipOf = relationshipOf;
         resource.prototype.relationships = relationships;
+
+        const priceResource = $resource(
+            URLS.CATALOGUE_MANAGEMENT + '/productOfferingPrice/:priceId',
+            {
+                priceId: '@id'
+            },
+            {
+                update: { method: 'PATCH' }
+            }
+        );
 
         var PATCHABLE_ATTRS = ['description', 'lifecycleStatus', 'name', 'version'];
 
@@ -721,6 +733,98 @@
             return '(' + this.price.currencyCode + ') ' + TYPES.CURRENCY_CODE[this.price.currencyCode];
         };
 
+        const buildTMFPricingObject = (plan) => {
+            const newPricing = {
+                "description": plan.description,
+                "lifecycleStatus": "Active",
+                "name": plan.name,
+                "percentage": 0,
+                "priceType": plan.priceType,
+                "price": {
+                    "unit": plan.price.currencyCode,
+                    "value": plan.price.taxIncludedAmount
+                }
+            }
+
+            // Recurring units
+            if (plan.recurringChargePeriod != null && plan.recurringChargePeriod.length > 0) {
+                newPricing.recurringChargePeriodType = plan.recurringChargePeriod
+            }
+
+            // Usage units
+            if (plan.unitOfMeasure != null && plan.unitOfMeasure.length > 0) {
+                newPricing.unitOfMeasure = {
+                    "amount": 1,
+                    "units": plan.unitOfMeasure
+                }
+            }
+
+            return newPricing
+        }
+
+        const buildTMFPricing = (plan) => {
+            const newPricing = {
+                "description": plan.description,
+                "lifecycleStatus": "Active",
+                "name": plan.name,
+                "percentage": 0,
+                "priceType": plan.priceType,
+                "price": {
+                    "percentage": 0,
+                    "taxRate": plan.price.taxRate,
+                    "dutyFreeAmount": {
+                      "unit": plan.price.currencyCode,
+                      "value": plan.price.dutyFreeAmount
+                    },
+                    "taxIncludedAmount": {
+                      "unit": plan.price.currencyCode,
+                      "value": plan.price.taxIncludedAmount
+                    },
+                }
+            }
+
+            // Recurring units
+            if (plan.recurringChargePeriod != null && plan.recurringChargePeriod.length > 0) {
+                newPricing.recurringChargePeriodType = plan.recurringChargePeriod
+            }
+
+            // Usage units
+            if (plan.unitOfMeasure != null && plan.unitOfMeasure.length > 0) {
+                newPricing.unitOfMeasure = {
+                    "amount": 1,
+                    "units": plan.unitOfMeasure
+                }
+            }
+
+            // Price alterations
+            if (plan.productOfferPriceAlteration != null) {
+                newPricing.priceAlteration = [{
+                    "description": `${plan.productOfferPriceAlteration.description} : ${plan.productOfferPriceAlteration.priceAlterationType} - ${plan.productOfferPriceAlteration.priceConditionOperator} - ${plan.productOfferPriceAlteration.priceCondition}`,
+                    "name": plan.productOfferPriceAlteration.name,
+                    "priceType": plan.productOfferPriceAlteration.priceType,
+                    "priority": 0,
+                    "recurringChargePeriod": plan.productOfferPriceAlteration.recurringChargePeriod,
+                    "price": {
+                        "percentage": plan.productOfferPriceAlteration.price.percentage,
+                        "dutyFreeAmount": {
+                            "unit": plan.productOfferPriceAlteration.price.currencyCode,
+                            "value": 0
+                        },
+                        "taxIncludedAmount": {
+                            "unit": plan.productOfferPriceAlteration.price.currencyCode,
+                            "value": 0
+                        },
+                    },
+                    "unitOfMeasure": {
+                        "amount": 1,
+                        "units": plan.productOfferPriceAlteration.unitOfMeasure
+                    }
+                }]
+            }
+
+            return newPricing
+        }
+
         var Terms = function Terms(data) {
             angular.extend(this, TEMPLATES.TERMS, data);
         };
@@ -926,6 +1030,8 @@
             count: count,
             exists: exists,
             create: create,
+            buildTMFPricing: buildTMFPricing,
+            createPricing: createPricing,
             setSla: setSla,
             getSla: getSla,
             getReputation: getReputation,
@@ -974,7 +1080,7 @@
             }
 
             if (filters.owner) {
-                params['relatedParty'] = User.loggedUser.currentUser.id;
+                params['relatedParty'] = User.loggedUser.currentUser.partyId;
             } else {
                 params['lifecycleStatus'] = LIFECYCLE_STATUS.LAUNCHED;
             }
@@ -985,7 +1091,7 @@
 
             if (filters.offset !== undefined) {
                 params['offset'] = filters.offset;
-                params['size'] = filters.size;
+                params['limit'] = filters.limit;
             }
 
             if (filters.body !== undefined) {
@@ -1030,7 +1136,7 @@
                 if (offeringList.length) {
                     var bundleOfferings = [];
                     var productFilters = {
-                        id: offeringList
+                        href: offeringList
                             .map(function(offering) {
                                 var offId = '';
                                 extendPricePlans(offering);
@@ -1126,6 +1232,20 @@
 //        "href": "http://127.0.0.1:8000/DSProductCatalog/api/catalogManagement/v2/productSpecification/4:(0.1)"
 //    }
 //}
+
+        function createPricing(priceModel) {
+            const newModel = buildTMFPricingObject(priceModel)
+
+            return new Promise((resolve, reject) => {
+                priceResource.save(newModel,
+                    (pricingCreated) => {
+                        resolve(pricingCreated)
+                    }, (error) => {
+                        reject(error)
+                    })
+            })
+        }
+
         function create(data, product, catalogue, terms) {
             var deferred = $q.defer();
             var params = {
@@ -1292,15 +1412,12 @@
         function detail(id) {
             var deferred = $q.defer();
             var params = {
-                id: id
+                offeringId: id
             };
 
-            resource.query(
+            resource.get(
                 params,
-                function(collection) {
-                    if (collection.length) {
-                        var productOffering = collection[0];
-
+                function(productOffering) {
                         extendPricePlans(productOffering);
                         if (productOffering.productSpecification) {
                             ProductSpec.detail(productOffering.productSpecification.id).then(function(
@@ -1312,9 +1429,6 @@
                         } else {
                             extendBundledProductOffering(productOffering);
                         }
-                    } else {
-                        deferred.reject(404);
-                    }
                 },
                 function(response) {
                     deferred.reject(response);
@@ -1415,8 +1529,8 @@
         function update(offering, data) {
             var deferred = $q.defer();
             var params = {
-                catalogue: 'catalog',
-                catalogueId: getCatalogueId(offering),
+                //catalogue: 'catalog',
+                //catalogueId: getCatalogueId(offering),
                 offeringId: offering.id
             };
 

@@ -33,6 +33,7 @@ const jsDepFilesToInject = [
     'moment-2.10.6/js/moment',
     'intl-tel-input-8.4.7/js/intlTelInput',
     'angular-1.4.7/js/angular',
+    'uuid/js/uuid',
     // Angular Dependencies:
     'angular-1.4.7/js/angular-messages',
     'angular-1.4.7/js/angular-cookies',

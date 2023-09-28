@@ -14,7 +14,6 @@ const express = require('express');
 const fs = require('fs');
 const https = require('https');
 const i18n = require('i18n-2');
-const indexes = require('./lib/indexes');
 const inventorySubscription = require('./lib/inventory_subscription');
 const logger = require('./lib/logger').logger.getLogger('Server');
 const mongoose = require('mongoose');
@@ -571,91 +570,61 @@ app.use(function(err, req, res, next) {
 //////////////////////////// START SERVER ///////////////////////////
 /////////////////////////////////////////////////////////////////////
 
-// Initialize indexes
-indexes.init().then(function() {
-    logger.info('Business Ecosystem Logic Proxy starting on port ' + PORT);
-    if (config.https.enabled === true) {
+logger.info('Business Ecosystem Logic Proxy starting on port ' + PORT);
+if (config.https.enabled === true) {
 
-        var options = {
-            secureOptions: constants.SSL_OP_NO_SSLv3 | constants.SSL_OP_NO_SSLv2,
-            ciphers: [
-                "ECDHE-RSA-AES256-SHA384",
-                "DHE-RSA-AES256-SHA384",
-                "ECDHE-RSA-AES256-SHA256",
-                "DHE-RSA-AES256-SHA256",
-                "ECDHE-RSA-AES128-SHA256",
-                "DHE-RSA-AES128-SHA256",
-                "HIGH",
-                "!aNULL",
-                "!eNULL",
-                "!EXPORT",
-                "!DES",
-                "!RC4",
-                "!MD5",
-                "!PSK",
-                "!SRP",
-                "!CAMELLIA"
-            ].join(':'),
-            honorCipherOrder: true,
-            key: fs.readFileSync(config.https.keyFile),
-            cert: fs.readFileSync(config.https.certFile),
-            ca: fs.readFileSync(config.https.caFile)
-        };
+    var options = {
+        secureOptions: constants.SSL_OP_NO_SSLv3 | constants.SSL_OP_NO_SSLv2,
+        ciphers: [
+            "ECDHE-RSA-AES256-SHA384",
+            "DHE-RSA-AES256-SHA384",
+            "ECDHE-RSA-AES256-SHA256",
+            "DHE-RSA-AES256-SHA256",
+            "ECDHE-RSA-AES128-SHA256",
+            "DHE-RSA-AES128-SHA256",
+            "HIGH",
+            "!aNULL",
+            "!eNULL",
+            "!EXPORT",
+            "!DES",
+            "!RC4",
+            "!MD5",
+            "!PSK",
+            "!SRP",
+            "!CAMELLIA"
+        ].join(':'),
+        honorCipherOrder: true,
+        key: fs.readFileSync(config.https.keyFile),
+        cert: fs.readFileSync(config.https.certFile),
+        ca: fs.readFileSync(config.https.caFile)
+    };
 
-        https.createServer(options, function(req,res) {
-            app.handle(req, res);
-        }).listen(app.get('port'), onlistening);
-    } else {
-        app.listen(app.get('port'), onlistening);
-    }
-}).catch(function() {
-    logger.error('CRITICAL: The indexes could not be created, the server is not starting');
-});
-
+    https.createServer(options, function(req,res) {
+        app.handle(req, res);
+    }).listen(app.get('port'), onlistening);
+} else {
+    app.listen(app.get('port'), onlistening);
+}
 
 function onlistening() {
-    var request = require('request');
-    var urldata = config.endpoints.charging;
+    const axios = require('axios');
+    const urldata = config.endpoints.charging;
+    const expectedData = ['chargePeriods', 'currencyCodes']
 
-    Promise.all([
-        new Promise(function(resolve, reject) {
-            var uri = url.format({
-                protocol: urldata.appSsl ? 'https' : 'http',
-                hostname: urldata.host,
-                port: urldata.port,
-                pathname: '/' + urldata.path + '/api/assetManagement/chargePeriods/'
-            });
-
-            request(uri, function(err, res, body) {
-                if (err || res.statusCode != 200) {
-                    reject('Failed to retrieve charge periods');
-                } else {
-                    resolve(JSON.parse(body));
-                }
-            });
-        }),
-        new Promise(function(resolve, reject) {
-            var uri = url.format({
-                protocol: urldata.appSsl ? 'https' : 'http',
-                hostname: urldata.host,
-                port: urldata.port,
-                pathname: '/' + urldata.path + '/api/assetManagement/currencyCodes/'
-            });
-
-            request(uri, function(err, res, body) {
-                if (err || res.statusCode != 200) {
-                    reject('Failed to retrieve currency codes');
-                } else {
-                    resolve(JSON.parse(body));
-                }
-            });
-        })
-    ]).then(
+    Promise.all(expectedData.map((data) => {
+        const uri = url.format({
+            protocol: urldata.appSsl ? 'https' : 'http',
+            hostname: urldata.host,
+            port: urldata.port,
+            pathname: `/${urldata.path}/api/assetManagement/${data}/`
+        });
+        return axios.get(uri)
+    })).then(
         function(result) {
-            app.locals.chargePeriods = result[0].map(function(cp) {
+            app.locals.chargePeriods = result[0].data.map(function(cp) {
                 return cp.title + ':' + cp.value;
             });
-            app.locals.currencyCodes = result[1].map(function(cc) {
+            app.locals.currencyCodes = result[1].data.map(function(cc) {
                 return cc.value + ':' + cc.title;
             });
         },

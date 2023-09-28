@@ -49,11 +49,14 @@ describe('Party lib', function() {
     FUNCTION_MAPPING['mkOrg'] = 'createOrganization';
     FUNCTION_MAPPING['updOrg'] = 'updateOrganization';
     FUNCTION_MAPPING['getInd'] = 'getIndividual';
+    FUNCTION_MAPPING['getInds'] = 'getIndividuals';
+    FUNCTION_MAPPING['mkInd'] = 'createIndividual';
     FUNCTION_MAPPING['updInd'] = 'updateIndividual';
+    FUNCTION_MAPPING['convertID'] = 'convertID';
 
-    var orgPath = '/DSPartyManagement/api/partyManagement/v2/organization/';
+    var orgPath = '/organization/';
     var orgId = '111555999';
-    var indPath = '/DSPartyManagement/api/partyManagement/v2/individual/';
+    var indPath = '/individual/';
     var indId = 'eugenio';
 
     var orgPartyClient = partyClient(orgPath);
@@ -198,6 +201,55 @@ describe('Party lib', function() {
             });
         });
 
+        it('getIndividuals should return error fields if req fails', function(done) {
+            var errObj = {
+                status: 500,
+                message: 'The connection has failed getting all users info'
+            };
+
+            nock(url, { reqheaders: headers}).get(indPath).reply(500, errObj);
+
+            errObj['body'] = JSON.stringify({
+                status: 500,
+                message: 'The connection has failed getting all users info'
+            });
+
+            indPartyClient[FUNCTION_MAPPING['getInds']]((err, res) => {
+                expect(err).toEqual(errObj);
+                expect(res).toBe(undefined);
+                done();
+            });
+        });
+
+        it('createIndividual should return error fields if req fails', function(done) {
+            var errObj = {
+                status: 500,
+                message: 'The connection has failed while creating the individual'
+            };
+
+            nock(url, {
+                reqheaders: headers
+            })
+                .post(indPath)
+                .reply(500, errObj);
+
+            errObj['body'] = JSON.stringify({
+                status: 500,
+                message: 'The connection has failed while creating the individual'
+            });
+
+            var content = {
+                id: '111555999',
+                name: 'Vercingetorix',
+            };
+
+            indPartyClient[FUNCTION_MAPPING['mkInd']](content, (err, res) => {
+                expect(err).toEqual(errObj);
+                expect(res).toBe(undefined);
+                done();
+            });
+        });
+
         it('updateIndividual should return error fields if req fails', function(done) {
             var indP = indPath + indId;
             var indPartyClient = partyClient(indP);
@@ -228,6 +280,18 @@ describe('Party lib', function() {
                 done();
             });
         });
+    });
+
+    it('convertID private function must return error when no old id is found in externalReference', function(done) {
+        new_format = [{
+            'id': 'urn:individuals:1234567AbCd'
+        }];
+        old_format = {
+            'id': 'caraculo'
+        }
+        var res = indPartyClient[FUNCTION_MAPPING['convertID']](new_format, old_format);
+        expect(res).toBe(false);
+        done();
     });
 
     describe('Party API success cases', function() {
@@ -329,6 +393,30 @@ describe('Party lib', function() {
             });
         });
 
+        it('getIndividuals should return the required individuals', function(done) {
+            expectedValue = [
+                {
+                    id: '111555999',
+                    href: 'Vercingetorix'
+                },
+                {
+                    id: '123456789',
+                    href: 'Celtilo'
+                }
+            ];
+            nock(url, {
+                reqheaders: headers
+            })
+                .get(orgPath)
+                .reply(200, expectedValue);
+
+            orgPartyClient[FUNCTION_MAPPING['getInds']]((err, res) => {
+                expect(err).toBeNull();
+                expect(JSON.parse(res.body)).toEqual(expectedValue);
+                done();
+            });
+        });
+
         it('getIndividual should return the required Individual', function(done) {
             var indP = indPath + indId;
             var indPartyClient = partyClient(indP);
@@ -347,6 +435,30 @@ describe('Party lib', function() {
             indPartyClient[FUNCTION_MAPPING['getInd']](indId, (err, res) => {
                 expect(err).toBeNull();
                 expect(JSON.parse(res.body)).toEqual(ind);
+                done();
+            });
+        });
+
+        it('createIndividual should return the created individual', function(done) {
+            var content = {
+                id: '111555999',
+                name: 'Vercigentorix'
+            };
+
+            nock(url, {
+                reqheaders: headers
+            })
+                .post(indPath)
+                .reply(200, content);
+
+            var expectedResult = {
+                id: '111555999',
+                name: 'Vercigentorix'
+            };
+
+            indPartyClient[FUNCTION_MAPPING['mkInd']](content, (err, res) => {
+                expect(err).toBeNull();
+                expect(JSON.parse(res.body)).toEqual(expectedResult);
                 done();
             });
         });
@@ -370,6 +482,23 @@ describe('Party lib', function() {
                 expect(JSON.parse(res.body)).toEqual(content);
                 done();
             });
+        });
+
+        it('convertID private function must return new ID', function(done) {
+            expectedValue = 'urn:individuals:1234567AbCd';
+            new_format = [{
+                'id': 'urn:individuals:1234567AbCd',
+                'externalReference': [{
+                    'externalReferenceType': 'idm_id',
+                    'name': 'caraculo'
+                }]
+            }];
+            old_format = {
+                'id': 'caraculo'
+            }
+            var res = indPartyClient[FUNCTION_MAPPING['convertID']](new_format, old_format);
+            expect(res).toEqual(expectedValue);
+            done();
         });
     });
 });
