@@ -134,9 +134,9 @@ config.endpoints = {
         appSsl: false
     },
     ordering: {
-        path: 'DSProductOrdering',
-        host: 'apis.docker',
-        port: '8080',
+        path: 'ordering',
+        host: 'host.docker.internal',
+        port: '8634',
         appSsl: false
     },
     inventory: {

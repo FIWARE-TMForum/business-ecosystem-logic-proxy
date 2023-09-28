@@ -38,6 +38,8 @@ const ordering = (function() {
     //////////////////////////////////////////////////////////////////////////////////////////////
 
     const makeRequest = function(url, errMsg, callback) {
+        console.log('------------------------------------------')
+        console.log(url)
         axios.get(url).then((response) => {
             if (response.status >= 400) {
                 callback({
@@ -84,7 +86,7 @@ const ordering = (function() {
             config.endpoints.catalog.appSsl,
             config.endpoints.catalog.host,
             config.endpoints.catalog.port,
-            url.parse(offering.productSpecification.href).path
+            `/productSpecification/${offering.productSpecification.id}`
         );
 
         makeRequest(productUrl, errorMessageProduct, function(err, product) {
@@ -115,8 +117,8 @@ const ordering = (function() {
         });
     };
 
-    var includeOfferingParty = function(offeringUrl, item, callback) {
-        var errorMessageOffer = 'The system fails to retrieve the offering attached to the ordering item ' + item.id;
+    const includeOfferingParty = function(offeringUrl, item, callback) {
+        const errorMessageOffer = 'The system fails to retrieve the offering attached to the ordering item ' + item.id;
 
         makeRequest(offeringUrl, errorMessageOffer, function(err, offering) {
             if (err) {
@@ -125,11 +127,11 @@ const ordering = (function() {
                 if (!offering.isBundle) {
                     includeProductParty(offering, item, callback);
                 } else {
-                    var offeringUrl = utils.getAPIURL(
+                    const offeringUrl = utils.getAPIURL(
                         config.endpoints.catalog.appSsl,
                         config.endpoints.catalog.host,
                         config.endpoints.catalog.port,
-                        url.parse(offering.bundledProductOffering[0].href).path
+                        `/productOffering/${offering.bundledProductOffering[0].id}`
                     );
                     includeOfferingParty(offeringUrl, item, callback);
                 }
@@ -171,7 +173,7 @@ const ordering = (function() {
 
         if (!itemCustCheck[0]) {
             item.product.relatedParty.push({
-                id: user.id,
+                id: user.partyId,
                 role: CUSTOMER,
                 href: tmfUtils.getIndividualURL(req, user.id)
             });
@@ -179,19 +181,18 @@ const ordering = (function() {
 
         // Inject customer and seller related parties in the order items in order to make this info
         // available thought the inventory API
-
-        var offeringUrl = utils.getAPIURL(
+        const offeringUrl = utils.getAPIURL(
             config.endpoints.catalog.appSsl,
             config.endpoints.catalog.host,
             config.endpoints.catalog.port,
-            url.parse(item.productOffering.href).path
+            `/productOffering/${item.productOffering.id}`
         );
 
         includeOfferingParty(offeringUrl, item, callback);
     };
 
-    var validateCreation = function(req, callback) {
-        var body;
+    const validateCreation = function(req, callback) {
+        let body;
 
         // The request body may not be well formed
         try {
@@ -220,7 +221,7 @@ const ordering = (function() {
         }
 
         // Check that the user is the specified customer
-        var customerCheck = tmfUtils.isOrderingCustomer(req.user, body);
+        const customerCheck = tmfUtils.isOrderingCustomer(req.user, body);
         if (!customerCheck[0]) {
             return callback({
                 status: 403,
@@ -235,16 +236,16 @@ const ordering = (function() {
             });
         }
 
-        if (!body.orderItem || !body.orderItem.length) {
+        if (!body.productOrderItem || !body.productOrderItem.length) {
             return callback({
                 status: 400,
-                message: 'A product order must contain an orderItem field'
+                message: 'A product order must contain an productOrderItem field'
             });
         }
 
         var asyncTasks = [];
 
-        body.orderItem.forEach(function(item) {
+        body.productOrderItem.forEach(function(item) {
             asyncTasks.push(completeRelatedPartyInfo.bind(this, req, item, req.user));
         });
 
@@ -253,16 +254,16 @@ const ordering = (function() {
                 callback(err);
             } else {
                 // Include sellers as related party in the ordering
-                var pushedSellers = [];
-                var customerItem = false;
+                const pushedSellers = [];
+                let customerItem = false;
 
-                body.orderItem.forEach(function(item) {
-                    var sellers = item.product.relatedParty.filter(function(party) {
+                body.productOrderItem.forEach(function(item) {
+                    const sellers = item.product.relatedParty.filter(function(party) {
                         return party.role.toLowerCase() === SELLER.toLowerCase();
                     });
 
                     sellers.forEach(function(seller) {
-                        if (seller.id === req.user.id) {
+                        if (seller.id === req.user.partyId) {
                             customerItem = true;
                         } else if (pushedSellers.indexOf(seller.id) < 0) {
                             body.relatedParty.push(seller);
@@ -273,7 +274,8 @@ const ordering = (function() {
 
                 if (!customerItem) {
                     utils.updateBody(req, body);
-                    checkBillingAccounts(req, body, callback);
+                    callback(null)
+                    //checkBillingAccounts(req, body, callback);
                 } else {
                     callback({
                         status: 403,
@@ -284,14 +286,14 @@ const ordering = (function() {
         });
     };
 
-    var checkBillingAccounts = function(req, ordering, callback) {
+    const checkBillingAccounts = function(req, ordering, callback) {
         // PLEASE NOTE: Billing account cannot be updated till the ordering has been created
 
         // Check that all the billing accounts for all the items are the same
         var initialBillingAccount;
 
-        if (ordering.orderItem[0].billingAccount && ordering.orderItem[0].billingAccount.length) {
-            initialBillingAccount = ordering.orderItem[0].billingAccount[0];
+        if (ordering.productOrderItem[0].billingAccount && ordering.productOrderItem[0].billingAccount.length) {
+            initialBillingAccount = ordering.productOrderItem[0].billingAccount[0];
         }
 
         if (!initialBillingAccount || !initialBillingAccount.href) {
@@ -303,11 +305,11 @@ const ordering = (function() {
 
         var error = false;
 
-        for (var i = 1; i < ordering.orderItem.length && !error; i++) {
+        for (var i = 1; i < ordering.productOrderItem.length && !error; i++) {
             error =
-                !ordering.orderItem[i].billingAccount ||
-                !ordering.orderItem[i].billingAccount.length ||
-                !equal(initialBillingAccount, ordering.orderItem[i].billingAccount[0]);
+                !ordering.productOrderItem[i].billingAccount ||
+                !ordering.productOrderItem[i].billingAccount.length ||
+                !equal(initialBillingAccount, ordering.productOrderItem[i].billingAccount[0]);
         }
 
         if (error) {
@@ -365,9 +367,9 @@ const ordering = (function() {
             };
         }
 
-        for (var i = 0; i < updatedOrdering.orderItem.length && !error; i++) {
-            var updatedItem = updatedOrdering.orderItem[i];
-            var previousOrderItem = previousOrdering.orderItem.filter(function(item) {
+        for (var i = 0; i < updatedOrdering.productOrderItem.length && !error; i++) {
+            var updatedItem = updatedOrdering.productOrderItem[i];
+            var previousOrderItem = previousOrdering.productOrderItem.filter(function(item) {
                 // id is supposed to be unique
                 return item.id === updatedItem.id;
             })[0];
@@ -415,10 +417,10 @@ const ordering = (function() {
         }
 
         if (!error) {
-            // Sellers can only modify the 'orderItem' field...
+            // Sellers can only modify the 'productOrderItem' field...
             // State is automatically calculated
             var finalBody = includeOtherFields ? updatedOrdering : {};
-            finalBody['orderItem'] = previousOrdering.orderItem;
+            finalBody['productOrderItem'] = previousOrdering.productOrderItem;
 
             utils.updateBody(req, finalBody);
 
@@ -479,7 +481,7 @@ const ordering = (function() {
                                 status: 403,
                                 message: 'Related parties cannot be modified'
                             });
-                        } else if ('orderItem' in ordering) {
+                        } else if ('productOrderItem' in ordering) {
                             callback({
                                 status: 403,
                                 message: 'Order items can only be modified by sellers'
@@ -492,11 +494,11 @@ const ordering = (function() {
                                 });
                             } else {
                                 // Orderings can only be cancelled when all items are marked as Acknowledged
-                                var productsInAckState = previousOrdering.orderItem.filter(function(item) {
+                                var productsInAckState = previousOrdering.productOrderItem.filter(function(item) {
                                     return 'acknowledged' === item.state.toLowerCase();
                                 });
 
-                                if (productsInAckState.length != previousOrdering.orderItem.length) {
+                                if (productsInAckState.length != previousOrdering.productOrderItem.length) {
                                     callback({
                                         status: 403,
                                         message:
@@ -512,12 +514,12 @@ const ordering = (function() {
                                             callback(err);
                                         } else {
                                             // Cancel all order items
-                                            previousOrdering.orderItem.forEach(function(item) {
+                                            previousOrdering.productOrderItem.forEach(function(item) {
                                                 item.state = 'Cancelled';
                                             });
 
                                             // Included order items will be ignored
-                                            ordering.orderItem = previousOrdering.orderItem;
+                                            ordering.productOrderItem = previousOrdering.productOrderItem;
                                             utils.updateBody(req, ordering);
 
                                             callback(null);
@@ -531,7 +533,7 @@ const ordering = (function() {
                             callback(null);
                         }
                     } else if (isSeller) {
-                        if (Object.keys(ordering).length == 1 && 'orderItem' in ordering) {
+                        if (Object.keys(ordering).length == 1 && 'productOrderItem' in ordering) {
                             updateItemsState(req, ordering, previousOrdering, false, callback);
                         } else if (Object.keys(ordering).length == 1 && 'note' in ordering) {
                             validateNotes(ordering.note, previousOrdering.note, callback);
@@ -621,7 +623,7 @@ const ordering = (function() {
             } else if (!customer && seller) {
                 // When a user is involved only as a seller in an ordering, only the order items
                 // where the user is a seller have to be returned
-                ordering.orderItem = ordering.orderItem.filter(function(item) {
+                ordering.productOrderItem = ordering.productOrderItem.filter(function(item) {
                     return tmfUtils.hasPartyRole(req, item.product.relatedParty, SELLER);
                 });
             }
@@ -656,7 +658,7 @@ const ordering = (function() {
         // PLEASE NOTE: Billing Accounts have been checked in the checkPermissions step.
 
         const ordering = JSON.parse(req.body);
-        const billingAccountUrl = getBillingAccountUrl(ordering.orderItem[0].billingAccount[0]);
+        const billingAccountUrl = getBillingAccountUrl(ordering.productOrderItem[0].billingAccount[0]);
 
         axios.get(billingAccountUrl).then((response) => {
             if (response.statusCode === 200) {
@@ -703,7 +705,7 @@ const ordering = (function() {
     };
 
     var notifyOrder = function(req, callback) {
-        var body = JSON.parse(req.body);
+        const body = req.body;
 
         // Send ordering notification to the store
         storeClient.notifyOrder(body, req.user, function(err, res) {
@@ -727,7 +729,7 @@ const ordering = (function() {
         } else if (req.method === 'POST') {
             var tasks = [];
             tasks.push(notifyOrder.bind(this, req));
-            tasks.push(includeSellersInBillingAccount.bind(this, req));
+            //tasks.push(includeSellersInBillingAccount.bind(this, req));
             async.series(tasks, callback);
         } else {
             callback(null);

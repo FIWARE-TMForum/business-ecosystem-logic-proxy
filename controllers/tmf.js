@@ -49,7 +49,7 @@ function tmf() {
 	apiControllers[config.endpoints.billing.path] = billing;
 	apiControllers[config.endpoints.customer.path] = customer;
 
-	const newApis = ['party', 'catalog']
+	const newApis = ['party', 'catalog', 'ordering']
 
 	const getAPIName = function(apiUrl) {
 		return apiUrl.split('/')[1];
@@ -155,6 +155,7 @@ function tmf() {
 				completeRequest(result);
 			}
 		}).catch((err) => {
+			console.log(err)
 			utils.log(logger, 'error', req, 'Proxy error: ' + err.message);
 			res.status(504).json({ error: 'Service unreachable' });
 		})
