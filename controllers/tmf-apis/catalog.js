@@ -1232,14 +1232,7 @@ const catalog = (function() {
                 );
             })
         } else if ((req.method == 'PATCH' || req.method == 'PUT') && offeringPattern.test(req.apiUrl)) {
-            var catalog = req.apiUrl.split('/')[6];
-            var indexBody;
-
-            body = JSON.parse(req.body);
-
-            indexBody = deepcopy(body);
-            indexBody.catalog = catalog;
-
+            body = req.body;
             storeClient.updateOffering(
                 body,
                 req.user,
@@ -1247,8 +1240,6 @@ const catalog = (function() {
             );
         } else if (req.method == 'PATCH' && productPattern.test(req.apiUrl)) {
             body = JSON.parse(req.reqBody);
-            var respBody = JSON.parse(req.body);
-
             handleUpgradePostAction(
                 req,
                 body,
@@ -1256,7 +1247,7 @@ const catalog = (function() {
                 callback
             );
         } else if (req.method == 'POST' && catalogsPattern.test(req.apiUrl)) {
-            body = JSON.parse(req.body);
+            body = req.body;
             callback(null)
         } else {
             callback(null)

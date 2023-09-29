@@ -288,7 +288,8 @@
 
                         // Build order items. This information is created using the shopping card and is not editable in this view
                         for (let i = 0; i < productOrderItems.length; i++) {
-                            var item = {
+                            const pid = `urn:ngsi-ld:product:${uuid.v4()}`
+                            const item = {
                                 id: `urn:ngsi-ld:product-order-item:${uuid.v4()}`,
                                 action: 'add',
                                 state: 'acknowledged',
@@ -298,6 +299,8 @@
                                     href: productOrderItems[i].href
                                 },
                                 product: {
+                                    id: pid,
+                                    href: pid,
                                     productCharacteristic: []
                                 },
                                 //billingAccount: [User.serializeBasic()]
