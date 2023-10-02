@@ -3,11 +3,11 @@ name: Tests
 on:
   push:
     branches:
-      - master
+      - new-apis
 
   pull_request:
     branches:
-      - master
+      - new-apis
 
 jobs:
   # test:
