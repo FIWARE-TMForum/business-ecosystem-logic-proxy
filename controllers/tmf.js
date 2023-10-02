@@ -90,6 +90,10 @@ function tmf() {
 			options.data = req.body;
 		}
 
+		if (url.indexOf('/media/') >= 0) {
+			options.responseType = 'arraybuffer'
+		}
+
 		// PROXY THE REQUEST
 		axios.request(options).then((response) => {
 			const completeRequest = function(resp) {

@@ -410,11 +410,11 @@
 
             if (angular.isArray(this.attachment)) {
                 for (i = 0; i < this.attachment.length; i++) {
-                    if (this.attachment[i].type.toLowerCase() !== 'picture') {
+                    if (this.attachment[i].attachmentType.toLowerCase() !== 'picture') {
                         extraFiles.push({
                             href: this.attachment[i].url,
                             name: this.attachment[i].url.split(prefix + '__')[1],
-                            type: this.attachment[i].type
+                            attachmentType: this.attachment[i].attachmentType
                         });
                     }
                 }
