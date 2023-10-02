@@ -134,9 +134,9 @@ config.endpoints = {
         appSsl: false
     },
     ordering: {
-        path: 'DSProductOrdering',
-        host: 'apis.docker',
-        port: '8080',
+        path: 'ordering',
+        host: 'host.docker.internal',
+        port: '8634',
         appSsl: false
     },
     inventory: {
@@ -215,7 +215,9 @@ config.billingAccountOwnerRole = 'bill receiver';
 config.publicPaths = [];
 
 config.indexes = {
-    'elasticHost': 'https://elastic.docker:9200'
+    elasticHost: 'https://elastic.docker:9200',
+    user: 'elastic',
+    password: '+S284gwQI+U1THU--C29'
 };
 
 config.magicKey = undefined;

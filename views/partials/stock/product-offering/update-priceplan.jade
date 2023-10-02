@@ -46,7 +46,7 @@
             .track
               input(type="checkbox", ng-model="updateVM.isOpen", ng-click="updateVM.switchOpenStatus()")
               i.fa.fa-2x
-        price-plan-table(controller="updateVM" data="updateVM.item.productOfferingPrice")
+        price-plan-table(controller="updateVM" data="updateVM.pricingModels")
       .col-xs-12
         .form-group.text-left(ng-if="!updateVM.pricePlanEnabled")
           a.btn.btn-default.z-depth-1(ng-click="updateVM.pricePlanEnabled = true")

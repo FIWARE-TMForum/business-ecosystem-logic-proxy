@@ -1,4 +1,6 @@
-/* Copyright (c) 2015 - 2018 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 CoNWeT Lab., Universidad Politécnica de Madrid
+ *
+ * Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -141,15 +143,15 @@
             $rootScope.$broadcast(EVENTS.FILTERS_OPENED, PRODUCTORDER_STATUS);
         }
 
-        function isTransitable(orderItem) {
+        function isTransitable(productOrderItem) {
             return (
-                orderItem.state === PRODUCTORDER_STATUS.ACKNOWLEDGED ||
-                orderItem.state === PRODUCTORDER_STATUS.INPROGRESS
+                productOrderItem.state === PRODUCTORDER_STATUS.ACKNOWLEDGED ||
+                productOrderItem.state === PRODUCTORDER_STATUS.INPROGRESS
             );
         }
 
-        function getNextStatus(orderItem) {
-            var index = PRODUCTORDER_LIFECYCLE.indexOf(orderItem.state);
+        function getNextStatus(productOrderItem) {
+            var index = PRODUCTORDER_LIFECYCLE.indexOf(productOrderItem.state);
             return index !== -1 && index + 1 !== PRODUCTORDER_LIFECYCLE.length
                 ? PRODUCTORDER_LIFECYCLE[index + 1]
                 : null;
@@ -158,8 +160,8 @@
         function canCancel(productOrder) {
             return (
                 productOrder.state === PRODUCTORDER_STATUS.INPROGRESS &&
-                productOrder.orderItem.every(function(orderItem) {
-                    return orderItem.state === PRODUCTORDER_STATUS.ACKNOWLEDGED;
+                productOrder.productOrderItem.every(function(productOrderItem) {
+                    return productOrderItem.state === PRODUCTORDER_STATUS.ACKNOWLEDGED;
                 })
             );
         }
@@ -196,12 +198,12 @@
 
         function updateStatus(productOrder, index, status) {
             var dataUpdated = {
-                orderItem: angular.copy(productOrder.orderItem)
+                productOrderItem: angular.copy(productOrder.productOrderItem)
             };
 
-            dataUpdated.orderItem[index].state = status;
-            dataUpdated.orderItem.forEach(function(orderItem) {
-                orderItem.productOffering = orderItem.productOffering.serialize();
+            dataUpdated.productOrderItem[index].state = status;
+            dataUpdated.productOrderItem.forEach(function(productOrderItem) {
+                productOrderItem.productOffering = productOrderItem.productOffering.serialize();
             });
             ProductOrder.update(productOrder, dataUpdated).then(
                 function(productOrderUpdated) {
@@ -240,7 +242,7 @@
         // Initialize order
         vm.orderInfo = {
             state: 'Acknowledged',
-            orderItem: [],
+            productOrderItem: [],
             relatedParty: [User.serializeBasic()],
             priority: '4'
         };
@@ -269,44 +271,47 @@
             initOrder();
         });
 
-        var initOrder = function initOrder() {
+        const initOrder = function initOrder() {
             vm.loadingStatus = LOADING;
             vm.billingAccount = null;
 
             ShoppingCart.getItems().then(
-                function(orderItems) {
+                function(productOrderItems) {
                     vm.loadingStatus = LOADED;
-                    vm.orderItems = orderItems;
+                    vm.productOrderItems = productOrderItems;
 
-                    if (orderItems.length) {
+                    if (productOrderItems.length) {
                         vm.orderInfo.relatedParty[0].role = 'Customer';
 
                         // Remove old order items
-                        vm.orderInfo.orderItem = [];
+                        vm.orderInfo.productOrderItem = [];
 
                         // Build order items. This information is created using the shopping card and is not editable in this view
-                        for (var i = 0; i < orderItems.length; i++) {
-                            var item = {
-                                id: i.toString(),
+                        for (let i = 0; i < productOrderItems.length; i++) {
+                            const pid = `urn:ngsi-ld:product:${uuid.v4()}`
+                            const item = {
+                                id: `urn:ngsi-ld:product-order-item:${uuid.v4()}`,
                                 action: 'add',
-                                state: 'Acknowledged',
+                                state: 'acknowledged',
                                 productOffering: {
-                                    id: orderItems[i].id,
-                                    name: orderItems[i].name,
-                                    href: orderItems[i].href
+                                    id: productOrderItems[i].id,
+                                    name: productOrderItems[i].name,
+                                    href: productOrderItems[i].href
                                 },
                                 product: {
+                                    id: pid,
+                                    href: pid,
                                     productCharacteristic: []
                                 },
-                                billingAccount: [User.serializeBasic()]
+                                //billingAccount: [User.serializeBasic()]
                             };
 
                             // Use pricing and characteristics to build the product property
-                            if (orderItems[i].options.characteristics) {
-                                for (var j = 0; j < orderItems[i].options.characteristics.length; j++) {
-                                    var productChars = orderItems[i].options.characteristics[j];
+                            if (productOrderItems[i].options.characteristics) {
+                                for (let j = 0; j < productOrderItems[i].options.characteristics.length; j++) {
+                                    var productChars = productOrderItems[i].options.characteristics[j];
 
-                                    for (var k = 0; k < productChars.characteristics.length; k++) {
+                                    for (let k = 0; k < productChars.characteristics.length; k++) {
                                         var char = productChars.characteristics[k].characteristic;
                                         var selectedValue = productChars.characteristics[k].value;
                                         var value;
@@ -330,28 +335,29 @@
 
                                         item.product.productCharacteristic.push({
                                             name: charIdName + char.name,
-                                            value: value
+                                            value: value,
+                                            valueType: char.valueType
                                         });
                                     }
                                 }
                             }
 
-                            if (orderItems[i].options.pricing) {
-                                var price = orderItems[i].options.pricing;
+                            if (productOrderItems[i].options.pricing) {
+                                var price = productOrderItems[i].options.pricing;
                                 price.price = {
-                                    amount: orderItems[i].options.pricing.price.taxIncludedAmount,
-                                    currency: orderItems[i].options.pricing.price.currencyCode
+                                    value: productOrderItems[i].options.pricing.price.taxIncludedAmount,
+                                    unit: productOrderItems[i].options.pricing.price.currencyCode
                                 };
-                                if (angular.isObject(orderItems[i].pricePlan.priceAlteration())) {
+                                if (angular.isObject(productOrderItems[i].pricePlan.priceAlteration())) {
                                     price.description =
-                                        price.description + '\n' + orderItems[i].pricePlan.priceAlteration().format();
+                                        price.description + '\n' + productOrderItems[i].pricePlan.priceAlteration().format();
                                 }
                                 delete price.productOfferPriceAlteration;
                                 item.product.productPrice = [price];
                             }
 
                             // Include the item to the order
-                            vm.orderInfo.orderItem.push(item);
+                            vm.orderInfo.productOrderItem.push(item);
                         }
                     } else {
                         $state.go('offering');
@@ -367,11 +373,11 @@
             );
         };
 
-        function formatPriceplan(orderItem) {
+        function formatPriceplan(productOrderItem) {
             var result, priceplan;
 
-            if (angular.isArray(orderItem.product.productPrice) && orderItem.product.productPrice.length) {
-                priceplan = orderItem.product.productPrice[0];
+            if (angular.isArray(productOrderItem.product.productPrice) && productOrderItem.product.productPrice.length) {
+                priceplan = productOrderItem.product.productPrice[0];
                 result = priceplan.price.amount + ' ' + priceplan.price.currency;
                 switch (priceplan.priceType) {
                     case Offering.TYPES.PRICE.RECURRING:
@@ -411,16 +417,16 @@
                 vm.note.text = '';
             }
 
-            for (var i = 0; i < apiInfo.orderItem.length; i++) {
-                delete apiInfo.orderItem[i].productOffering.name;
-                if (!apiInfo.orderItem[i].product.productCharacteristic.length) {
-                    apiInfo.orderItem[i].product.productCharacteristic.push({});
-                }
-                apiInfo.orderItem[i].billingAccount = [vm.billingAccount.serialize()];
+            for (var i = 0; i < apiInfo.productOrderItem.length; i++) {
+                delete apiInfo.productOrderItem[i].productOffering.name;
+                //if (!apiInfo.productOrderItem[i].product.productCharacteristic.length) {
+                //    apiInfo.productOrderItem[i].product.productCharacteristic.push({});
+                //}
+                //apiInfo.productOrderItem[i].billingAccount = [vm.billingAccount.serialize()];
             }
 
             apiInfo.orderDate = new Date();
-            apiInfo.notificationContact = vm.billingAccount.getEmailAddress().toString();
+            //apiInfo.notificationContact = vm.billingAccount.getEmailAddress().toString();
 
             ProductOrder.create(apiInfo).then(
                 function(orderCreated) {
@@ -604,15 +610,15 @@
 
         function updateStatus(index, status) {
             var dataUpdated = {
-                orderItem: []
+                productOrderItem: []
             };
 
-            dataUpdated.orderItem = vm.item.orderItem.map(function(orderItem, index) {
-                var data = angular.copy(orderItem);
-                data.productOffering = orderItem.productOffering.serialize();
-                data.billingAccount = [orderItem.billingAccount.serialize()];
+            dataUpdated.productOrderItem = vm.item.productOrderItem.map(function(productOrderItem, index) {
+                var data = angular.copy(productOrderItem);
+                data.productOffering = productOrderItem.productOffering.serialize();
+                data.billingAccount = [productOrderItem.billingAccount.serialize()];
 
-                if (!orderItem.product.productCharacteristic.length) {
+                if (!productOrderItem.product.productCharacteristic.length) {
                     data.product.productCharacteristic = [{}];
                 }
 
@@ -644,35 +650,35 @@
             );
         }
 
-        function can(permission, orderItem) {
+        function can(permission, productOrderItem) {
             switch (permission) {
                 case 'cancel':
                     return (
                         isCustomer() &&
                         vm.item.state === PRODUCTORDER_STATUS.INPROGRESS &&
-                        vm.item.orderItem.every(function(orderItem) {
-                            return orderItem.state === PRODUCTORDER_STATUS.ACKNOWLEDGED;
+                        vm.item.productOrderItem.every(function(productOrderItem) {
+                            return productOrderItem.state === PRODUCTORDER_STATUS.ACKNOWLEDGED;
                         })
                     );
                 case 'reject':
                     return (
-                        isVendor(orderItem) &&
+                        isVendor(productOrderItem) &&
                         vm.item.state === PRODUCTORDER_STATUS.INPROGRESS &&
-                        isTransitable(orderItem)
+                        isTransitable(productOrderItem)
                     );
                 case 'send':
                     return (
-                        isVendor(orderItem) &&
+                        isVendor(productOrderItem) &&
                         vm.item.state === PRODUCTORDER_STATUS.INPROGRESS &&
-                        isTransitable(orderItem) &&
-                        orderItem.state === PRODUCTORDER_STATUS.ACKNOWLEDGED
+                        isTransitable(productOrderItem) &&
+                        productOrderItem.state === PRODUCTORDER_STATUS.ACKNOWLEDGED
                     );
                 case 'deliver':
                     return (
-                        isVendor(orderItem) &&
+                        isVendor(productOrderItem) &&
                         vm.item.state === PRODUCTORDER_STATUS.INPROGRESS &&
-                        isTransitable(orderItem) &&
-                        orderItem.state === PRODUCTORDER_STATUS.INPROGRESS
+                        isTransitable(productOrderItem) &&
+                        productOrderItem.state === PRODUCTORDER_STATUS.INPROGRESS
                     );
             }
         }
@@ -681,14 +687,14 @@
             return getCustomerName() === User.loggedUser.currentUser.id;
         }
 
-        function isVendor(orderItem) {
-            return getVendorName(orderItem) === User.loggedUser.currentUser.id;
+        function isVendor(productOrderItem) {
+            return getVendorName(productOrderItem) === User.loggedUser.currentUser.id;
         }
 
-        function isTransitable(orderItem) {
+        function isTransitable(productOrderItem) {
             return (
-                orderItem.state === PRODUCTORDER_STATUS.ACKNOWLEDGED ||
-                orderItem.state === PRODUCTORDER_STATUS.INPROGRESS
+                productOrderItem.state === PRODUCTORDER_STATUS.ACKNOWLEDGED ||
+                productOrderItem.state === PRODUCTORDER_STATUS.INPROGRESS
             );
         }
 
@@ -704,12 +710,12 @@
             return null;
         }
 
-        function getVendorName(orderItem) {
+        function getVendorName(productOrderItem) {
             var i;
 
-            for (i = 0; i < orderItem.product.relatedParty.length; i++) {
-                if (orderItem.product.relatedParty[i].role.toLowerCase() === 'seller') {
-                    return orderItem.product.relatedParty[i].id;
+            for (i = 0; i < productOrderItem.product.relatedParty.length; i++) {
+                if (productOrderItem.product.relatedParty[i].role.toLowerCase() === 'seller') {
+                    return productOrderItem.product.relatedParty[i].id;
                 }
             }
 
@@ -717,7 +723,7 @@
         }
 
         function getShippingAddress() {
-            return vm.item.orderItem[0].billingAccount.getPostalAddress().toString();
+            return vm.item.productOrderItem[0].billingAccount.getPostalAddress().toString();
         }
 
         function createComments(notes) {
