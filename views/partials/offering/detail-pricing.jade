@@ -1,6 +1,6 @@
 .row
   .col-sm-12
     .container-flex
-      div(offering-priceplan, ng-repeat="priceplan in detailVM.item.productOfferingPrice")
-  .col-sm-12(ng-if="!detailVM.item.productOfferingPrice.length")
+      div(offering-priceplan, ng-repeat="priceplan in detailVM.pricingModels")
+  .col-sm-12(ng-if="!detailVM.pricingModels.length")
     .alert.alert-info.text-center #{ __("No price plans included.") }

@@ -447,7 +447,7 @@
         vm.removePlace = removePlace;
 
         $scope.$on(Offering.EVENTS.PRICEPLAN_UPDATED, function(event, index, pricePlan) {
-            angular.merge(vm.data.productOfferingPrice[index], pricePlan);
+            angular.merge(vm.pricingModels[index], pricePlan);
         });
 
         var searchParams = {
@@ -884,6 +884,7 @@
         var vm = this;
         vm.sla = {};
         vm.item = {};
+        vm.pricingModels = []
         vm.$state = $state;
         vm.hasCharacteristics = hasCharacteristics;
         vm.formatCharacteristicValue = formatCharacteristicValue;
@@ -902,6 +903,13 @@
                 });
             }
             vm.item.status = LOADED;
+
+            Promise.all(vm.item.productOfferingPrice.map((pricing) => {
+                return Offering.getPricing(pricing.id)
+            })).then((pricingModels) => {
+                vm.pricingModels = pricingModels
+            })
+
         }, function (response) {
             vm.error = Utils.parseError(response, 'The requested offering could not be retrieved');
             vm.item.status = ERROR;
@@ -1013,6 +1021,7 @@
         vm.updateCategories = updateCategories;
 
         vm.pricePlan = new Offering.PricePlan();
+        vm.pricingModels = []
         vm.pricePlanEnabled = false;
         vm.priceAlterationType = vm.PRICE_ALTERATIONS_SUPPORTED.NOTHING;
 
@@ -1056,6 +1065,12 @@
                     vm.categories[category.id] = category;
                 });
                 vm.isOpen = isOpenOffering();
+
+                Promise.all(productOffering.productOfferingPrice.map((priceRef) => {
+                    return Offering.getPricing(priceRef.id)
+                })).then((pricings) => {
+                    vm.pricingModels = pricings
+                })
             },
             function(response) {
                 vm.error = Utils.parseError(response, 'Unexpected error trying to retrieve the offering.');

@@ -733,6 +733,29 @@
             return '(' + this.price.currencyCode + ') ' + TYPES.CURRENCY_CODE[this.price.currencyCode];
         };
 
+        const buildInternalPricingObject = (plan) => {
+            const pricing = {
+                "id": plan.id,
+                "description": plan.description,
+                "name": plan.name,
+                "priceType": plan.priceType,
+                "price": {
+                    "currencyCode": plan.price.unit,
+                    "taxIncludedAmount": plan.price.value
+                }
+            }
+
+            if (plan.recurringChargePeriodType != null && plan.recurringChargePeriodType.length > 0) {
+                pricing.recurringChargePeriod = plan.recurringChargePeriodType
+            }
+
+            if (plan.unitOfMeasure != null && plan.unitOfMeasure.units.length > 0) {
+                pricing.unitOfMeasure = plan.unitOfMeasure.units
+            }
+
+            return new PricePlan(pricing)
+        }
+
         const buildTMFPricingObject = (plan) => {
             const newPricing = {
                 "description": plan.description,
@@ -1032,6 +1055,7 @@
             create: create,
             buildTMFPricing: buildTMFPricing,
             createPricing: createPricing,
+            getPricing: getPricing,
             setSla: setSla,
             getSla: getSla,
             getReputation: getReputation,
@@ -1244,6 +1268,22 @@
                         reject(error)
                     })
             })
+        }
+
+        function getPricing(priceId) {
+            return new Promise((resolve, reject) => {
+                priceResource.get({
+                    priceId: priceId
+                }, (priceModel) => {
+                    const internalModel = buildInternalPricingObject(priceModel)
+                    resolve(internalModel)
+                }, (error) => {
+                    reject(error)
+                })
+            })
+        }
+
+        function updatePricing(priceId, priceModel) {
         }
 
         function create(data, product, catalogue, terms) {

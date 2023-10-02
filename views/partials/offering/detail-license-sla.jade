@@ -38,10 +38,10 @@
 .panel.panel-default.z-depth-1
   .panel-body
     .row
-      .col-sm-12(ng-if="detailVM.item.productOfferingPrice.length && !detailVM.item.isOpenOffering()")
+      .col-sm-12(ng-if="detailVM.pricingModels.length && !detailVM.item.isOpenOffering()")
         .container-flex
-          div(offering-priceplan, ng-repeat="priceplan in detailVM.item.productOfferingPrice")
-      .col-sm-12(ng-if="!detailVM.item.productOfferingPrice.length")
+          div(offering-priceplan, ng-repeat="priceplan in detailVM.pricingModels")
+      .col-sm-12(ng-if="!detailVM.pricingModels.length")
         .alert.alert-info.text-center #{ __("No price plans included.") } #{ __("The offering is free") }
-      .col-sm-12(ng-if="detailVM.item.productOfferingPrice.length && detailVM.item.isOpenOffering()")
+      .col-sm-12(ng-if="detailVM.pricingModels.length && detailVM.item.isOpenOffering()")
         .alert.alert-info.text-center #{ __("No price plans included.") } #{ __("The offering is open") }
