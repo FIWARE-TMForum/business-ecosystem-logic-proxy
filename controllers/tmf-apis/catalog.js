@@ -47,7 +47,7 @@ const catalog = (function() {
 
     const offeringsPattern = new RegExp('/productOffering/?$');
     const catalogOfferingsPattern = new RegExp('/catalog/[^/]+/productOffering/?');
-    const offeringPattern = new RegExp('/catalog/[^/]+/productOffering/[^/]+/?$');
+    const offeringPattern = new RegExp('/productOffering/[^/]+/?$');
     const productsPattern = new RegExp('/productSpecification/?$');
     const productPattern = new RegExp('/productSpecification/[^/]+/?$');
     const categoryPattern = new RegExp('/category/[^/]+/?$');
@@ -1119,9 +1119,9 @@ const catalog = (function() {
                 let newUrl = `${req.path}?href=`
 
                 console.log(JSON.stringify(result))
-                if (result.hits.hits.length > 0) {
-                    let ids = result.hits.hits.map((hit) => {
-                        return hit._id
+                if (result.length > 0) {
+                    let ids = result.map((hit) => {
+                        return hit.id
                     })
 
                     newUrl += ids.join(',')
@@ -1147,6 +1147,11 @@ const catalog = (function() {
         })
     }
 
+    const updateindex = (body) => {
+        return indexes.updateDocument('offering', body.id, {
+            lifecycleStatus: body.lifecycleStatus
+        })
+    }
     //////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////////// COMMON ///////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
@@ -1233,11 +1238,18 @@ const catalog = (function() {
             })
         } else if ((req.method == 'PATCH' || req.method == 'PUT') && offeringPattern.test(req.apiUrl)) {
             body = req.body;
-            storeClient.updateOffering(
-                body,
-                req.user,
-                callback
-            );
+            updateindex(body).then(() => {
+                console.log('Offering indexed')
+            }).catch((err) => {
+                console.log('Indexing error')
+                console.log(err)
+            }).finally(() => {
+                storeClient.updateOffering(
+                    body,
+                    req.user,
+                    callback
+                );
+            })
         } else if (req.method == 'PATCH' && productPattern.test(req.apiUrl)) {
             body = JSON.parse(req.reqBody);
             handleUpgradePostAction(

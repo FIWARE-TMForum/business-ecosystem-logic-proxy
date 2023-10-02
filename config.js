@@ -215,7 +215,9 @@ config.billingAccountOwnerRole = 'bill receiver';
 config.publicPaths = [];
 
 config.indexes = {
-    'elasticHost': 'https://elastic.docker:9200'
+    elasticHost: 'https://elastic.docker:9200',
+    user: 'elastic',
+    password: '+S284gwQI+U1THU--C29'
 };
 
 config.magicKey = undefined;
