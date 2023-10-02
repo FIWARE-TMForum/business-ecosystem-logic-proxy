@@ -47,6 +47,7 @@ const catalog = (function() {
 
     const offeringsPattern = new RegExp('/productOffering/?$');
     const catalogOfferingsPattern = new RegExp('/catalog/[^/]+/productOffering/?');
+    const catalogOfferingPattern = new RegExp('/catalog/[^/]+/productOffering/[^/]+/?');
     const offeringPattern = new RegExp('/productOffering/[^/]+/?$');
     const productsPattern = new RegExp('/productSpecification/?$');
     const productPattern = new RegExp('/productSpecification/[^/]+/?$');
@@ -1104,6 +1105,26 @@ const catalog = (function() {
     };
 
     const processQuery = async (req, callback) => {
+        const returnQueryRes = (result) => {
+            let newUrl = '/catalog/productOffering?href='
+
+            console.log(JSON.stringify(result))
+            if (result.length > 0) {
+                let ids = result.map((hit) => {
+                    return hit.id
+                })
+
+                newUrl += ids.join(',')
+            } else {
+                newUrl += 'null'
+            }
+
+            req.apiUrl = newUrl
+
+            // TODO: Check how to avoid the call if the result is 0
+            callback(null)
+        }
+
         if (offeringsPattern.test(req.path) && req.query.relatedParty != null) {
             console.log('Executing local query')
 
@@ -1115,25 +1136,18 @@ const catalog = (function() {
                 query.lifecycleStatus = req.query.lifecycleStatus
             }
 
-            indexes.search('offering', query).then((result) => {
-                let newUrl = `${req.path}?href=`
+            indexes.search('offering', query)
+                .then(returnQueryRes)
 
-                console.log(JSON.stringify(result))
-                if (result.length > 0) {
-                    let ids = result.map((hit) => {
-                        return hit.id
-                    })
+        } else if (catalogOfferingsPattern.test(req.path)){
+            console.log('Executing catalog search')
+            const catalogId = req.path.split('/')[3]
+            const query = {
+                catalog: catalogId
+            }
+            indexes.search('offering', query)
+                .then(returnQueryRes)
 
-                    newUrl += ids.join(',')
-                } else {
-                    newUrl += 'null'
-                }
-
-                req.apiUrl = newUrl
-
-                // TODO: Check how to avoid the call if the result is 0
-                callback(null)
-            })
         } else {
             callback(null)
         }
