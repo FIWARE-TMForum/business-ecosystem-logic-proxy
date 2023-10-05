@@ -1037,6 +1037,8 @@
         vm.sla = {};
 
         vm.updateStatus = null;
+        vm.deleteStatus = null;
+
         $scope.$on(Offering.EVENTS.PRICEPLAN_UPDATED, function(event, index, pricePlan) {
             vm.updateStatus = vm.STATUS.PENDING;
             Offering.updatePricing(pricePlan.id, pricePlan).then(
@@ -1164,34 +1166,28 @@
             $rootScope.$broadcast(Offering.EVENTS.PRICEPLAN_UPDATE, index, pricePlan);
         }
 
-        var removePricePlanPromise = null;
-
         function removePricePlan(index) {
-            removePricePlanPromise = vm.item.removePricePlan(index);
-            removePricePlanPromise.then(
-                function() {
-                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {
-                        message: 'The offering price plan was removed.'
-                    });
-                },
-                function(response) {
-                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
-                        error: Utils.parseError(response, 'Unexpected error trying to remove the offering price plan.')
-                    });
-                }
-            );
+            vm.deleteStatus = vm.STATUS.PENDING;
+            Offering.deletePricing(vm.pricingModels[index].id).then(() => {
+                return vm.item.removePricePlan(index)
+            }).then(() => {
+                vm.pricingModels.splice(index, 1)
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {
+                    message: 'The offering price plan was removed.'
+                });
+            }).catch((response) => {
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                    error: Utils.parseError(response, 'Unexpected error trying to remove the offering price plan.')
+                });
+            }).finally(() => {
+                vm.deleteStatus = null;
+            })
         }
 
         function setAlteration(alterationType) {
             vm.priceAlterationType = alterationType;
             vm.pricePlan.resetPriceAlteration(alterationType);
         }
-
-        Object.defineProperty(removePricePlan, 'status', {
-            get: function() {
-                return removePricePlanPromise != null ? removePricePlanPromise.$$state.status : -1;
-            }
-        });
 
         function updateStatus(status) {
             vm.data.lifecycleStatus = status;

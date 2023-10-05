@@ -19,5 +19,5 @@
             span.item-icon.fa.fa-spin.fa-spinner(ng-if="vm.updateStatus === vm.STATUS.PENDING")
             span.item-icon.fa.fa-pencil(ng-if="vm.updateStatus !== vm.STATUS.PENDING")
           a.btn.btn-sm.btn-icon.btn-danger(ng-click="vm.removePricePlan($index)")
-            span.item-icon.fa.fa-spin.fa-spinner(ng-if="vm.removePricePlan.status === vm.STATUS.PENDING")
-            span.item-icon.fa.fa-trash(ng-if="vm.removePricePlan.status !== vm.STATUS.PENDING")
+            span.item-icon.fa.fa-spin.fa-spinner(ng-if="vm.deleteStatus === vm.STATUS.PENDING")
+            span.item-icon.fa.fa-trash(ng-if="vm.deleteStatus !== vm.STATUS.PENDING")

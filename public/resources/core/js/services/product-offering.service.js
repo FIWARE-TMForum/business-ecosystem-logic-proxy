@@ -1057,6 +1057,7 @@
             createPricing: createPricing,
             getPricing: getPricing,
             updatePricing: updatePricing,
+            deletePricing: deletePricing,
             setSla: setSla,
             getSla: getSla,
             getReputation: getReputation,
@@ -1290,6 +1291,16 @@
             return new Promise((resolve, reject) => {
                 priceResource.update({ priceId: priceId }, tmfModel, (pricing) => {
                     resolve(pricing)
+                }, (error) => {
+                    reject(error)
+                })
+            })
+        }
+
+        function deletePricing(priceId) {
+            return new Promise((resolve, reject) => {
+                priceResource.update({ priceId: priceId }, {lifecycleStatus: "Retired"}, () => {
+                    resolve()
                 }, (error) => {
                     reject(error)
                 })
@@ -1731,24 +1742,28 @@
 
         function removePricePlan(index) {
             /* jshint validthis: true */
-            var deferred = $q.defer();
-            var dataUpdated = {
-                productOfferingPrice: this.productOfferingPrice.slice(0)
-            };
+            return new Promise((resolve, reject) => {
+                const dataUpdated = {
+                    productOfferingPrice: this.productOfferingPrice.slice(0).map((model) => {
+                        const tmfModel = buildTMFPricing(model)
+                        tmfModel.id = model.id
+                        tmfModel.herf = model.href
+                        return tmfModel
+                    })
+                };
 
-            dataUpdated.productOfferingPrice.splice(index, 1);
+                dataUpdated.productOfferingPrice.splice(index, 1);
 
-            update(this, dataUpdated).then(
-                function() {
-                    this.productOfferingPrice.splice(index, 1);
-                    deferred.resolve(this);
-                }.bind(this),
-                function(response) {
-                    deferred.reject(response);
-                }
-            );
-
-            return deferred.promise;
+                update(this, dataUpdated).then(
+                    function() {
+                        this.productOfferingPrice.splice(index, 1);
+                        resolve(this);
+                    }.bind(this),
+                    function(response) {
+                        reject(response);
+                    }
+                );
+            })
         }
 
         function relationshipOf(productOffering) {
