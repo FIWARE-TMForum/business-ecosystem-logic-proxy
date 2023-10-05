@@ -1036,22 +1036,25 @@
 
         vm.sla = {};
 
-        var updatePricePlanPromise = null;
-
+        vm.updateStatus = null;
         $scope.$on(Offering.EVENTS.PRICEPLAN_UPDATED, function(event, index, pricePlan) {
-            updatePricePlanPromise = vm.item.updatePricePlan(index, pricePlan);
-            updatePricePlanPromise.then(
-                function() {
+            vm.updateStatus = vm.STATUS.PENDING;
+            Offering.updatePricing(pricePlan.id, pricePlan).then(
+                () => {
+                    vm.pricingModels[index] = pricePlan;
                     $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {
                         message: 'The offering price plan was updated.'
                     });
-                },
-                function(response) {
+                })
+            .catch(
+                (response) => {
                     $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
                         error: Utils.parseError(response, 'Unexpected error trying to update the offering price plan.')
                     });
                 }
-            );
+            ).finally(() => {
+                vm.updateStatus = null
+            });
         });
 
         var detailPromise = Offering.detail($state.params.offeringId);
@@ -1157,15 +1160,9 @@
         });
 
         function updatePricePlan(index) {
-            var pricePlan = angular.copy(vm.item.productOfferingPrice[index]);
+            const pricePlan = angular.copy(vm.pricingModels[index]);
             $rootScope.$broadcast(Offering.EVENTS.PRICEPLAN_UPDATE, index, pricePlan);
         }
-
-        Object.defineProperty(updatePricePlan, 'status', {
-            get: function() {
-                return updatePricePlanPromise != null ? updatePricePlanPromise.$$state.status : -1;
-            }
-        });
 
         var removePricePlanPromise = null;
 

@@ -1056,6 +1056,7 @@
             buildTMFPricing: buildTMFPricing,
             createPricing: createPricing,
             getPricing: getPricing,
+            updatePricing: updatePricing,
             setSla: setSla,
             getSla: getSla,
             getReputation: getReputation,
@@ -1284,6 +1285,15 @@
         }
 
         function updatePricing(priceId, priceModel) {
+            const tmfModel = buildTMFPricingObject(priceModel)
+
+            return new Promise((resolve, reject) => {
+                priceResource.update({ priceId: priceId }, tmfModel, (pricing) => {
+                    resolve(pricing)
+                }, (error) => {
+                    reject(error)
+                })
+            })
         }
 
         function create(data, product, catalogue, terms) {
