@@ -72,7 +72,6 @@
         resource.prototype.getPicture = getPicture;
         resource.prototype.serialize = serialize;
         resource.prototype.appendPricePlan = appendPricePlan;
-        resource.prototype.updatePricePlan = updatePricePlan;
         resource.prototype.removePricePlan = removePricePlan;
         resource.prototype.relationshipOf = relationshipOf;
         resource.prototype.relationships = relationships;
@@ -1698,53 +1697,10 @@
             return result;
         }
 
-        function appendPricePlan(pricePlan) {
-            /* jshint validthis: true */
-            var deferred = $q.defer();
-            var dataUpdated = {
-                productOfferingPrice: this.productOfferingPrice.concat(pricePlan)
-            };
-
-            update(this, dataUpdated).then(
-                function() {
-                    this.productOfferingPrice.push(pricePlan);
-                    deferred.resolve(this);
-                }.bind(this),
-                function(response) {
-                    deferred.reject(response);
-                }
-            );
-
-            return deferred.promise;
-        }
-
-        function updatePricePlan(index, pricePlan) {
-            /* jshint validthis: true */
-            var deferred = $q.defer();
-            var dataUpdated = {
-                productOfferingPrice: this.productOfferingPrice.slice(0)
-            };
-
-            dataUpdated.productOfferingPrice[index] = pricePlan;
-
-            update(this, dataUpdated).then(
-                function() {
-                    angular.merge(this.productOfferingPrice[index], pricePlan);
-                    deferred.resolve(this);
-                }.bind(this),
-                function(response) {
-                    deferred.reject(response);
-                }
-            );
-
-            return deferred.promise;
-        }
-
-        function removePricePlan(index) {
-            /* jshint validthis: true */
+        function updateOfferingPlan(self) {
             return new Promise((resolve, reject) => {
                 const dataUpdated = {
-                    productOfferingPrice: this.productOfferingPrice.slice(0).map((model) => {
+                    productOfferingPrice: self.productOfferingPrice.slice(0).map((model) => {
                         const tmfModel = buildTMFPricing(model)
                         tmfModel.id = model.id
                         tmfModel.herf = model.href
@@ -1752,18 +1708,27 @@
                     })
                 };
 
-                dataUpdated.productOfferingPrice.splice(index, 1);
-
-                update(this, dataUpdated).then(
+                update(self, dataUpdated).then(
                     function() {
-                        this.productOfferingPrice.splice(index, 1);
-                        resolve(this);
-                    }.bind(this),
+                        resolve(self);
+                    }.bind(self),
                     function(response) {
                         reject(response);
                     }
                 );
             })
+        }
+
+        function appendPricePlan(pricePlan) {
+            /* jshint validthis: true */
+            this.productOfferingPrice = this.productOfferingPrice.concat(pricePlan)
+            return updateOfferingPlan(this)
+        }
+
+        function removePricePlan(index) {
+            /* jshint validthis: true */
+            this.productOfferingPrice.splice(index, 1)
+            return updateOfferingPlan(this)
         }
 
         function relationshipOf(productOffering) {

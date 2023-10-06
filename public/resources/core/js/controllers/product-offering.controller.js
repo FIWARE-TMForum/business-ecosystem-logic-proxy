@@ -1038,6 +1038,7 @@
 
         vm.updateStatus = null;
         vm.deleteStatus = null;
+        vm.appendStatus = null;
 
         $scope.$on(Offering.EVENTS.PRICEPLAN_UPDATED, function(event, index, pricePlan) {
             vm.updateStatus = vm.STATUS.PENDING;
@@ -1096,8 +1097,6 @@
             }
         });
 
-        var createPricePlanPromise = null;
-
         function switchOpenStatus() {
             // Change between free and open offering when no price plan
             // has been provided
@@ -1128,22 +1127,28 @@
         }
 
         function appendPricePlan(plan) {
-            createPricePlanPromise = vm.item.appendPricePlan(plan);
-            createPricePlanPromise.then(
-                function() {
-                    vm.pricePlan = new Offering.PricePlan();
-                    vm.pricePlanEnabled = false;
-                    vm.priceAlterationType = vm.PRICE_ALTERATIONS_SUPPORTED.NOTHING;
-                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {
-                        message: 'The offering price plan was created.'
-                    });
-                },
-                function(response) {
-                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
-                        error: Utils.parseError(response, 'Unexpected error trying to create the offering price plan.')
-                    });
-                }
-            );
+            vm.appendStatus = vm.STATUS.PENDING;
+            Offering.createPricing(plan)
+            .then((pricing) => {
+                plan.id = pricing.id
+                plan.href = pricing.href
+                return vm.item.appendPricePlan(plan)
+            }).then(() => {
+                vm.pricingModels.push(plan)
+
+                vm.pricePlan = new Offering.PricePlan();
+                vm.pricePlanEnabled = false;
+                vm.priceAlterationType = vm.PRICE_ALTERATIONS_SUPPORTED.NOTHING;
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {
+                    message: 'The offering price plan was created.'
+                });
+            }).catch((response) => {
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                    error: Utils.parseError(response, 'Unexpected error trying to create the offering price plan.')
+                });
+            }).finally(() => {
+                vm.appendStatus = null;
+            })
         }
 
         function createPricePlan() {
@@ -1154,12 +1159,6 @@
             }
             appendPricePlan(vm.pricePlan);
         }
-
-        Object.defineProperty(createPricePlan, 'status', {
-            get: function() {
-                return createPricePlanPromise != null ? createPricePlanPromise.$$state.status : -1;
-            }
-        });
 
         function updatePricePlan(index) {
             const pricePlan = angular.copy(vm.pricingModels[index]);
