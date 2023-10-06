@@ -24,9 +24,9 @@
       .col-sm-12(ng-if="detailVM.sla.metrics.length")
         .h4
           strong #{ __("Service level agreeements") }
-        dl(ng-repeat="metric in detailVM.sla.metrics")   
+        dl(ng-repeat="metric in detailVM.sla.metrics")
           //- dt #{ __("Type") }
-          //- dt {{ metric.type }}  
+          //- dt {{ metric.type }}
           dd.text-dark-secondary(ng-if="metric.type == 'Updates rate'") {{ metric.type + ": " + metric.threshold + "/" + metric.unitMeasure }}
           dd.text-dark-secondary(ng-if="metric.type == 'Updates rate'") <i>{{ metric.description }}</i>
           dd.text-dark-secondary(ng-if="metric.type == 'Response time'") {{ metric.type + ": " + metric.threshold + " " + metric.unitMeasure }}

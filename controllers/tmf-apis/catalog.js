@@ -934,6 +934,7 @@ const catalog = (function() {
         //const offeringsPattern = new RegExp('/catalog/[^/]+/productOffering/[^/]+/?$');
         const offeringsPattern = new RegExp('/productOffering/[^/]+/?$');
         const productsPattern = new RegExp('/productSpecification/[^/]+/?$');
+        const pricePattern = new RegExp('/productOfferingPrice/[^/]+/?$');
 
         try {
             const parsedBody = utils.emptyObject(req.body) ? null : JSON.parse(req.body);
@@ -986,6 +987,9 @@ const catalog = (function() {
                                 callback(null)
                             }
                         });
+                    } else if (pricePattern.test(req.apiUrl)) {
+                        // TODO: Check if extra validation if needed
+                        callback(null)
                     } else {
                         if (tmfUtils.isOwner(req, previousBody)) {
                             // The related party field is sorted, since the order is not important

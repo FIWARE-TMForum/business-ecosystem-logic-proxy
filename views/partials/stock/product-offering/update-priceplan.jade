@@ -60,7 +60,7 @@
             .form-group.text-right
               a.btn.btn-warning(
                 ng-click="updateVM.createPricePlan()"
-                ng-disabled="!updateVM.pricePlanCreateForm.$valid || updateVM.createPricePlan.status === updateVM.STATUS.PENDING"
+                ng-disabled="!updateVM.pricePlanCreateForm.$valid || updateVM.appendStatus === updateVM.STATUS.PENDING"
               )
-                span.item-icon.fa.fa-spin.fa-spinner(ng-if="updateVM.createPricePlan.status === updateVM.STATUS.PENDING")
+                span.item-icon.fa.fa-spin.fa-spinner(ng-if="updateVM.appendStatus === updateVM.STATUS.PENDING")
                 span.item-text #{ __("Create") }

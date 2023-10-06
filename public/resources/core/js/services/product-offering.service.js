@@ -72,7 +72,6 @@
         resource.prototype.getPicture = getPicture;
         resource.prototype.serialize = serialize;
         resource.prototype.appendPricePlan = appendPricePlan;
-        resource.prototype.updatePricePlan = updatePricePlan;
         resource.prototype.removePricePlan = removePricePlan;
         resource.prototype.relationshipOf = relationshipOf;
         resource.prototype.relationships = relationships;
@@ -1056,6 +1055,8 @@
             buildTMFPricing: buildTMFPricing,
             createPricing: createPricing,
             getPricing: getPricing,
+            updatePricing: updatePricing,
+            deletePricing: deletePricing,
             setSla: setSla,
             getSla: getSla,
             getReputation: getReputation,
@@ -1284,6 +1285,25 @@
         }
 
         function updatePricing(priceId, priceModel) {
+            const tmfModel = buildTMFPricingObject(priceModel)
+
+            return new Promise((resolve, reject) => {
+                priceResource.update({ priceId: priceId }, tmfModel, (pricing) => {
+                    resolve(pricing)
+                }, (error) => {
+                    reject(error)
+                })
+            })
+        }
+
+        function deletePricing(priceId) {
+            return new Promise((resolve, reject) => {
+                priceResource.update({ priceId: priceId }, {lifecycleStatus: "Retired"}, () => {
+                    resolve()
+                }, (error) => {
+                    reject(error)
+                })
+            })
         }
 
         function create(data, product, catalogue, terms) {
@@ -1677,68 +1697,38 @@
             return result;
         }
 
-        function appendPricePlan(pricePlan) {
-            /* jshint validthis: true */
-            var deferred = $q.defer();
-            var dataUpdated = {
-                productOfferingPrice: this.productOfferingPrice.concat(pricePlan)
-            };
+        function updateOfferingPlan(self) {
+            return new Promise((resolve, reject) => {
+                const dataUpdated = {
+                    productOfferingPrice: self.productOfferingPrice.slice(0).map((model) => {
+                        const tmfModel = buildTMFPricing(model)
+                        tmfModel.id = model.id
+                        tmfModel.herf = model.href
+                        return tmfModel
+                    })
+                };
 
-            update(this, dataUpdated).then(
-                function() {
-                    this.productOfferingPrice.push(pricePlan);
-                    deferred.resolve(this);
-                }.bind(this),
-                function(response) {
-                    deferred.reject(response);
-                }
-            );
-
-            return deferred.promise;
+                update(self, dataUpdated).then(
+                    function() {
+                        resolve(self);
+                    }.bind(self),
+                    function(response) {
+                        reject(response);
+                    }
+                );
+            })
         }
 
-        function updatePricePlan(index, pricePlan) {
+        function appendPricePlan(pricePlan) {
             /* jshint validthis: true */
-            var deferred = $q.defer();
-            var dataUpdated = {
-                productOfferingPrice: this.productOfferingPrice.slice(0)
-            };
-
-            dataUpdated.productOfferingPrice[index] = pricePlan;
-
-            update(this, dataUpdated).then(
-                function() {
-                    angular.merge(this.productOfferingPrice[index], pricePlan);
-                    deferred.resolve(this);
-                }.bind(this),
-                function(response) {
-                    deferred.reject(response);
-                }
-            );
-
-            return deferred.promise;
+            this.productOfferingPrice = this.productOfferingPrice.concat(pricePlan)
+            return updateOfferingPlan(this)
         }
 
         function removePricePlan(index) {
             /* jshint validthis: true */
-            var deferred = $q.defer();
-            var dataUpdated = {
-                productOfferingPrice: this.productOfferingPrice.slice(0)
-            };
-
-            dataUpdated.productOfferingPrice.splice(index, 1);
-
-            update(this, dataUpdated).then(
-                function() {
-                    this.productOfferingPrice.splice(index, 1);
-                    deferred.resolve(this);
-                }.bind(this),
-                function(response) {
-                    deferred.reject(response);
-                }
-            );
-
-            return deferred.promise;
+            this.productOfferingPrice.splice(index, 1)
+            return updateOfferingPlan(this)
         }
 
         function relationshipOf(productOffering) {

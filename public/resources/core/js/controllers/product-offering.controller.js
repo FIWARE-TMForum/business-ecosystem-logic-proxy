@@ -1036,22 +1036,28 @@
 
         vm.sla = {};
 
-        var updatePricePlanPromise = null;
+        vm.updateStatus = null;
+        vm.deleteStatus = null;
+        vm.appendStatus = null;
 
         $scope.$on(Offering.EVENTS.PRICEPLAN_UPDATED, function(event, index, pricePlan) {
-            updatePricePlanPromise = vm.item.updatePricePlan(index, pricePlan);
-            updatePricePlanPromise.then(
-                function() {
+            vm.updateStatus = vm.STATUS.PENDING;
+            Offering.updatePricing(pricePlan.id, pricePlan).then(
+                () => {
+                    vm.pricingModels[index] = pricePlan;
                     $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {
                         message: 'The offering price plan was updated.'
                     });
-                },
-                function(response) {
+                })
+            .catch(
+                (response) => {
                     $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
                         error: Utils.parseError(response, 'Unexpected error trying to update the offering price plan.')
                     });
                 }
-            );
+            ).finally(() => {
+                vm.updateStatus = null
+            });
         });
 
         var detailPromise = Offering.detail($state.params.offeringId);
@@ -1091,8 +1097,6 @@
             }
         });
 
-        var createPricePlanPromise = null;
-
         function switchOpenStatus() {
             // Change between free and open offering when no price plan
             // has been provided
@@ -1123,22 +1127,28 @@
         }
 
         function appendPricePlan(plan) {
-            createPricePlanPromise = vm.item.appendPricePlan(plan);
-            createPricePlanPromise.then(
-                function() {
-                    vm.pricePlan = new Offering.PricePlan();
-                    vm.pricePlanEnabled = false;
-                    vm.priceAlterationType = vm.PRICE_ALTERATIONS_SUPPORTED.NOTHING;
-                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {
-                        message: 'The offering price plan was created.'
-                    });
-                },
-                function(response) {
-                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
-                        error: Utils.parseError(response, 'Unexpected error trying to create the offering price plan.')
-                    });
-                }
-            );
+            vm.appendStatus = vm.STATUS.PENDING;
+            Offering.createPricing(plan)
+            .then((pricing) => {
+                plan.id = pricing.id
+                plan.href = pricing.href
+                return vm.item.appendPricePlan(plan)
+            }).then(() => {
+                vm.pricingModels.push(plan)
+
+                vm.pricePlan = new Offering.PricePlan();
+                vm.pricePlanEnabled = false;
+                vm.priceAlterationType = vm.PRICE_ALTERATIONS_SUPPORTED.NOTHING;
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {
+                    message: 'The offering price plan was created.'
+                });
+            }).catch((response) => {
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                    error: Utils.parseError(response, 'Unexpected error trying to create the offering price plan.')
+                });
+            }).finally(() => {
+                vm.appendStatus = null;
+            })
         }
 
         function createPricePlan() {
@@ -1150,51 +1160,33 @@
             appendPricePlan(vm.pricePlan);
         }
 
-        Object.defineProperty(createPricePlan, 'status', {
-            get: function() {
-                return createPricePlanPromise != null ? createPricePlanPromise.$$state.status : -1;
-            }
-        });
-
         function updatePricePlan(index) {
-            var pricePlan = angular.copy(vm.item.productOfferingPrice[index]);
+            const pricePlan = angular.copy(vm.pricingModels[index]);
             $rootScope.$broadcast(Offering.EVENTS.PRICEPLAN_UPDATE, index, pricePlan);
         }
 
-        Object.defineProperty(updatePricePlan, 'status', {
-            get: function() {
-                return updatePricePlanPromise != null ? updatePricePlanPromise.$$state.status : -1;
-            }
-        });
-
-        var removePricePlanPromise = null;
-
         function removePricePlan(index) {
-            removePricePlanPromise = vm.item.removePricePlan(index);
-            removePricePlanPromise.then(
-                function() {
-                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {
-                        message: 'The offering price plan was removed.'
-                    });
-                },
-                function(response) {
-                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
-                        error: Utils.parseError(response, 'Unexpected error trying to remove the offering price plan.')
-                    });
-                }
-            );
+            vm.deleteStatus = vm.STATUS.PENDING;
+            Offering.deletePricing(vm.pricingModels[index].id).then(() => {
+                return vm.item.removePricePlan(index)
+            }).then(() => {
+                vm.pricingModels.splice(index, 1)
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {
+                    message: 'The offering price plan was removed.'
+                });
+            }).catch((response) => {
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                    error: Utils.parseError(response, 'Unexpected error trying to remove the offering price plan.')
+                });
+            }).finally(() => {
+                vm.deleteStatus = null;
+            })
         }
 
         function setAlteration(alterationType) {
             vm.priceAlterationType = alterationType;
             vm.pricePlan.resetPriceAlteration(alterationType);
         }
-
-        Object.defineProperty(removePricePlan, 'status', {
-            get: function() {
-                return removePricePlanPromise != null ? removePricePlanPromise.$$state.status : -1;
-            }
-        });
 
         function updateStatus(status) {
             vm.data.lifecycleStatus = status;
