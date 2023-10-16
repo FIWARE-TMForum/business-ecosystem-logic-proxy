@@ -49,7 +49,7 @@ function tmf() {
 	apiControllers[config.endpoints.billing.path] = billing;
 	apiControllers[config.endpoints.customer.path] = customer;
 
-	const newApis = ['party', 'catalog', 'ordering']
+	const newApis = ['party', 'catalog', 'ordering', 'inventory']
 
 	const getAPIName = function(apiUrl) {
 		return apiUrl.split('/')[1];

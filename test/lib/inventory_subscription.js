@@ -67,11 +67,11 @@ describe('Test inventory subscription helper and endpoint', function() {
     var hubsUrl = function hubsUrl() {
         return (
             utils.getAPIProtocol('DSProductInventory') +
-            '://' +
-            utils.getAPIHost('DSProductInventory') +
-            ':' +
-            utils.getAPIPort('DSProductInventory') +
-            '/DSProductInventory/api/productInventory/v2/hub'
+                '://' +
+                utils.getAPIHost('DSProductInventory') +
+                ':' +
+                utils.getAPIPort('DSProductInventory') +
+                '/hub'
         );
     };
 
@@ -140,7 +140,7 @@ describe('Test inventory subscription helper and endpoint', function() {
     it('should not do anything in an empty notification', function(done) {
         var inds = createInd();
         var lib = createMock(null, inds);
-        var res = { end: () => {} };
+        var res = { end: () => { } };
         spyOn(res, 'end');
         lib.postNotification({ body: '{}' }, res).then(() => {
             expect(res.end).toHaveBeenCalled();
@@ -184,7 +184,7 @@ describe('Test inventory subscription helper and endpoint', function() {
     var createInventoryHelper = function createInventoryHelper(done, event) {
         var inds = createInd();
         var lib = createMock(null, inds);
-        var res = { end: () => {} };
+        var res = { end: () => { } };
         spyOn(res, 'end');
         var event = {
             eventType: event,
@@ -215,7 +215,7 @@ describe('Test inventory subscription helper and endpoint', function() {
     it('should delete inventory', function(done) {
         var inds = createInd();
         var lib = createMock(null, inds);
-        var res = { end: () => {} };
+        var res = { end: () => { } };
         spyOn(res, 'end');
         var event = {
             eventType: 'ProductDeletionNotification',
@@ -236,7 +236,7 @@ describe('Test inventory subscription helper and endpoint', function() {
     it('should do transactions correctly', function(done) {
         var inds = createInd();
         var lib = createMock(null, inds);
-        var res = { end: () => {} };
+        var res = { end: () => { } };
         spyOn(res, 'end');
         var event = {
             eventType: 'ProductTransactionNotification',
@@ -268,7 +268,7 @@ describe('Test inventory subscription helper and endpoint', function() {
     it('should end response on error', function(done) {
         var inds = createInd(true);
         var lib = createMock(null, inds);
-        var res = { end: () => {} };
+        var res = { end: () => { } };
         spyOn(res, 'end');
         var event = {
             eventType: 'ProductCreationNotification',
