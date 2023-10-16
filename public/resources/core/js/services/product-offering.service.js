@@ -1088,6 +1088,10 @@
                 params['id'] = filters.id;
             }
 
+            if (filters.href) {
+                params['href'] = filters.href;
+            }
+
             if (filters.status) {
                 params['lifecycleStatus'] = filters.status;
             }

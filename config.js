@@ -140,9 +140,9 @@ config.endpoints = {
         appSsl: false
     },
     inventory: {
-        path: 'DSProductInventory',
-        host: 'apis.docker',
-        port: '8080',
+        path: 'inventory',
+        host: 'host.docker.internal',
+        port: '8635',
         appSsl: false
     },
     charging: {

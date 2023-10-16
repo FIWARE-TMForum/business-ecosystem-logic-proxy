@@ -24,8 +24,8 @@ const config = require('./../../config')
 const utils = require('./../../lib/utils')
 const tmfUtils = require('./../../lib/tmfUtils')
 
-var inventory = (function() {
-    var validateRetrieving = function(req, callback) {
+const inventory = (function() {
+    const validateRetrieving = function(req, callback) {
         // Check if requesting a list of a single product
         if (req.path.endsWith('product')) {
             tmfUtils.filterRelatedPartyFields(req, callback);
@@ -37,7 +37,7 @@ var inventory = (function() {
         // so it is done in postvalidation method
     };
 
-    var validators = {
+    const validators = {
         GET: [utils.validateLoggedIn, tmfUtils.ensureRelatedPartyIncluded, validateRetrieving],
         POST: [utils.methodNotAllowed],
         PATCH: [utils.methodNotAllowed],
@@ -45,18 +45,18 @@ var inventory = (function() {
         DELETE: [utils.methodNotAllowed]
     };
 
-    var checkPermissions = function(req, callback) {
-        var reqValidators = [];
+    const checkPermissions = function(req, callback) {
+        const reqValidators = [];
 
-        for (var i in validators[req.method]) {
+        for (let i in validators[req.method]) {
             reqValidators.push(validators[req.method][i].bind(this, req));
         }
 
         async.series(reqValidators, callback);
     };
 
-    var executePostValidation = function(req, callback) {
-        var body = JSON.parse(req.body);
+    const executePostValidation = function(req, callback) {
+        const body = req.body;
 
         // Check if the user is allowed to retrieve the requested product
         if (!Array.isArray(body) && !tmfUtils.hasPartyRole(req, body.relatedParty, 'customer')) {

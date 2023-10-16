@@ -479,16 +479,17 @@ app.get(config.portalPrefix + '/payment', ensureAuthenticated, function(req, res
 //////////////////////////////// APIs ///////////////////////////////
 /////////////////////////////////////////////////////////////////////
 
-var inventorySubscriptionPath = config.proxyPrefix + '/create/inventory';
-app.post(config.proxyPrefix + inventorySubscriptionPath, inventorySubscription.postNotification);
-inventorySubscription
-    .createSubscription(inventorySubscriptionPath)
-    .then(() => {
-        console.log('Subscribed to inventory hub!');
-    })
-    .catch((e) => {
-        console.log(e);
-    });
+// var inventorySubscriptionPath = config.proxyPrefix + '/create/inventory';
+// app.post(config.proxyPrefix + inventorySubscriptionPath, inventorySubscription.postNotification);
+
+// inventorySubscription
+//     .createSubscription(inventorySubscriptionPath)
+//     .then(() => {
+//         console.log('Subscribed to inventory hub!');
+//     })
+//     .catch((e) => {
+//         console.log(e);
+//     });
 
 /////////////////////////////////////////////////////////////////////
 //////////////////////////////// APIs ///////////////////////////////
