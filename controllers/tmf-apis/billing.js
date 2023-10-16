@@ -51,7 +51,7 @@ const billing = (function() {
             config.endpoints.inventory.appSsl,
             config.endpoints.inventory.host,
             config.endpoints.inventory.port,
-            config.endpoints.inventory.path + '/api/productInventory/v2/product/' + productId
+            config.endpoints.inventory.path + '/product/' + productId
         );
 
         makeRequest(productUrl, function(err, product) {

@@ -562,7 +562,7 @@ describe('Billing API', function() {
 
         describe('Product charges', function() {
             var productId = '1';
-            var productPath = '/' + config.endpoints.inventory.path + '/api/productInventory/v2/product/' + productId;
+            var productPath = '/' + config.endpoints.inventory.path + '/product/' + productId;
 
             describe('GET', function() {
                 var testListCharges = function(expectedErr, isCust, productStatus, query, isOrdCalled, done) {
