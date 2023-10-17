@@ -64,14 +64,11 @@ if (config.mongoDb.user && config.mongoDb.password) {
 const mongoUrl =
     'mongodb://' + mongoCredentials + config.mongoDb.server + ':' + config.mongoDb.port + '/' + config.mongoDb.db;
 
-mongoose.connect(
-    mongoUrl,
-    function(err) {
-        if (err) {
-            logger.error('Cannot connect to MongoDB - ' + err.name + ' (' + err.code + '): ' + err.message);
-        }
-    }
-);
+mongoose.connect(mongoUrl).then(() => {
+    logger.info('Connection with MongoDB created');
+}).catch((err) => {
+    logger.error('Cannot connect to MongoDB - ' + err.name + ' (' + err.code + '): ' + err.message);
+})
 
 mongoose.connection.on('disconnected', function() {
     logger.error('Connection with MongoDB lost');
@@ -520,7 +517,6 @@ for (var p in config.publicPaths) {
     app.all(config.proxyPrefix + '/' + config.publicPaths[p], tmf.public);
 }
 
-console.log('Now the paths ==== ');
 app.all(/^\/(?!(login|auth))(.*)\/?$/, authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, function(
     req,
     res,

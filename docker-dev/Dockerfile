@@ -1,4 +1,4 @@
-FROM node:16
+FROM node:18
 
 LABEL Maintainer="Future Internet Consulting and Development Solutions S.L."
 
