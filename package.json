@@ -38,7 +38,7 @@
     "normalize-url": "^1.8.0",
     "on-finished": "^2.3.0",
     "openid-client": "^4.7.4",
-    "passport": "^0.4.1",
+    "passport": "^0.6.0",
     "passport-fiware-oauth": "^0.3.0",
     "passport-github": "^1.1.0",
     "passport-i4trust": "0.1.0",
