@@ -275,7 +275,8 @@ const ordering = (function() {
         });
 
         if (!customerItem) {
-            utils.updateBody(req, body);
+            utils.updateBody(req, body)
+            callback(null)
             //checkBillingAccounts(req, body, callback);
         } else {
             return callback({
@@ -283,29 +284,6 @@ const ordering = (function() {
                 message: 'You cannot acquire your own offering'
             });
         }
-
-        // Current implementation of the ordering API requires product to be a reference
-        // so we need to create the product in the inventory before creating the order
-        Promise.all(body.productOrderItem.map((item) => {
-            return inventory.createProduct(item).then((result) => {
-                item.product = {
-                    id: result.data.id,
-                    href: result.data.href
-                }
-
-                return item
-            })
-        })).then((items) => {
-            body.productOrderItem = items
-            utils.updateBody(req, body)
-            callback(null)
-        }).catch((e) => {
-            console.log(e)
-            callback({
-                status: 400,
-                message: 'The given product info is not correct'
-            })
-        })
     };
 
     const checkBillingAccounts = function(req, ordering, callback) {

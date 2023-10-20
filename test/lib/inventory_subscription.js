@@ -1,6 +1,8 @@
 /* global expect, it, jasmine, describe */
 
-/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 CoNWeT Lab., Universidad Politécnica de Madrid
+ *
+ * Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -21,13 +23,9 @@
 
 'use strict';
 
-var config = require('./../../config');
-
-var utils = require('./../../lib/utils');
-
-var Promise = require('promiz');
-
-var proxyrequire = require('proxyquire');
+const config = require('./../../config');
+const utils = require('./../../lib/utils');
+const proxyrequire = require('proxyquire');
 
 describe('Test inventory subscription helper and endpoint', function() {
     var createReq = function createReq(data) {
