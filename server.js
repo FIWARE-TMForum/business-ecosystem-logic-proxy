@@ -14,7 +14,6 @@ const express = require('express');
 const fs = require('fs');
 const https = require('https');
 const i18n = require('i18n-2');
-const inventorySubscription = require('./lib/inventory_subscription');
 const logger = require('./lib/logger').logger.getLogger('Server');
 const mongoose = require('mongoose');
 const onFinished = require('on-finished');
@@ -474,21 +473,6 @@ app.get(config.portalPrefix + '/', function(req, res) {
 app.get(config.portalPrefix + '/payment', ensureAuthenticated, function(req, res) {
     renderTemplate(req, res, 'app-payment');
 });
-
-/////////////////////////////////////////////////////////////////////
-//////////////////////////////// APIs ///////////////////////////////
-/////////////////////////////////////////////////////////////////////
-
-var inventorySubscriptionPath = config.proxyPrefix + '/create/inventory';
-app.post(config.proxyPrefix + inventorySubscriptionPath, inventorySubscription.postNotification);
-inventorySubscription
-    .createSubscription(inventorySubscriptionPath)
-    .then(() => {
-        console.log('Subscribed to inventory hub!');
-    })
-    .catch((e) => {
-        console.log(e);
-    });
 
 /////////////////////////////////////////////////////////////////////
 //////////////////////////////// APIs ///////////////////////////////
