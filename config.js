@@ -164,21 +164,21 @@ config.endpoints = {
         appSsl: false
     },
     billing: {
-        path: 'DSBillingManagement',
-        host: 'apis.docker',
-        port: '8080',
+        path: 'account',
+        host: 'host.docker.internal',
+        port: '8636',
         appSsl: false
     },
     customer: {
-        path: 'DSCustomerManagement',
-        host: 'apis.docker',
-        port: '8080',
+        path: 'customer',
+        host: 'host.docker.internal',
+        port: '8637',
         appSsl: false
     },
     usage:  {
-        path: 'DSUsageManagement',
-        host: 'apis.docker',
-        port: '8080',
+        path: 'usage',
+        host: 'host.docker.internal',
+        port: '8638',
         appSsl: false
     },
     sla: {
