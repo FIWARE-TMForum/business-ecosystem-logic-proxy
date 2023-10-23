@@ -104,7 +104,8 @@ function tmf() {
 				}
 
 				console.log(resp.headers)
-				if (resp.headers['content-type'].indexOf('application/json') >= 0 || resp.headers['content-type'].indexOf('application/ld+json') >= 0) {
+				console.log(resp.headers['content-type'])
+				if (resp.headers['content-type'].toLowerCase().indexOf('application/json') >= 0 || resp.headers['content-type'].toLowerCase().indexOf('application/ld+json') >= 0) {
 					res.json(resp.body)
 				} else {
 					res.write(resp.body);
