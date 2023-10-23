@@ -108,8 +108,9 @@ const shoppingCart = (function() {
         const itemId = req.params.id;
         const userName = req.user.id;
 
-        CartItem.remove({ user: userName, itemId: itemId }).then((dbRes) => {
-            if (dbRes['n'] > 0) {
+        CartItem.deleteOne({ user: userName, itemId: itemId }).then((dbRes) => {
+            console.log(dbRes)
+            if (dbRes.deletedCount > 0) {
                 endRequest(res, 204, null, null);
             } else {
                 endRequest(res, 404, null, {
@@ -124,7 +125,7 @@ const shoppingCart = (function() {
     const empty = function(req, res) {
         const userName = req.user.id;
 
-        CartItem.remove({ user: userName }).then(() => {
+        CartItem.deleteMany({ user: userName }).then(() => {
             endRequest(res, 204, null, null);
         }).catch((err) => {
             endRequest(res, 500, null, { error: err.message });

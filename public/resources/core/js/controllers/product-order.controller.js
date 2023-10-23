@@ -241,7 +241,7 @@
 
         // Initialize order
         vm.orderInfo = {
-            state: 'Acknowledged',
+            state: 'acknowledged',
             productOrderItem: [],
             relatedParty: [User.serializeBasic()],
             priority: '4'
