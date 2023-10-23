@@ -1011,7 +1011,7 @@
         vm.PRICE_CONDITIONS = Offering.TYPES.PRICE_CONDITION;
 
         vm.update = update;
-        vm.updateStatus = updateStatus;
+        vm.updateOfferingStatus = updateOfferingStatus;
 
         vm.categories = {};
 
@@ -1188,7 +1188,7 @@
             vm.pricePlan.resetPriceAlteration(alterationType);
         }
 
-        function updateStatus(status) {
+        function updateOfferingStatus(status) {
             vm.data.lifecycleStatus = status;
             vm.statusUpdated = true;
         }
