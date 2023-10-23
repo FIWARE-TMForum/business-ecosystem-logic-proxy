@@ -87,7 +87,7 @@ var getCatalogs = function getCatalogs() {
 };
 
 var getInventory = function getInventory() {
-	var url = createUrl('DSProductInventory', '/DSProductInventory/api/productInventory/v2/product');
+	var url = createUrl('inventory', 'product');
 	return genericRequest(url);
 };
 

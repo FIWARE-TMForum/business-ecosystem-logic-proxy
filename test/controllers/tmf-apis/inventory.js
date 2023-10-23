@@ -1,4 +1,6 @@
-/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 CoNWeT Lab., Universidad Politécnica de Madrid
+ *
+ * Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -17,16 +19,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var proxyquire = require('proxyquire');
-
-var Promise = require('promiz');
-
-var md5 = require('blueimp-md5');
-
-var testUtils = require('../../utils');
+const proxyquire = require('proxyquire')
+const md5 = require('blueimp-md5')
+const testUtils = require('../../utils')
 
 describe('Inventory API', function() {
-    var getInventoryAPI = function(tmfUtils, utils, indexes) {
+    const getInventoryAPI = function(tmfUtils, utils, indexes) {
         if (!indexes) {
             indexes = {
                 safeIndexExecute: function() {

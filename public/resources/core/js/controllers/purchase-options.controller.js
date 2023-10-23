@@ -270,7 +270,7 @@
             var i, characteristicValue;
 
             for (i = 0; i < characteristic.productSpecCharacteristicValue.length; i++) {
-                if (characteristic.productSpecCharacteristicValue[i].default) {
+                if (characteristic.productSpecCharacteristicValue[i].isDefault) {
                     characteristicValue = characteristic.productSpecCharacteristicValue[i];
                 }
             }

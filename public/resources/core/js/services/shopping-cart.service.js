@@ -77,13 +77,13 @@
         }
 
         function getItems() {
-            var deferred = $q.defer();
+            const deferred = $q.defer();
 
             resource.query(
                 { action: 'item' },
                 function(itemList) {
-                    var items = {};
-                    var params = {
+                    const items = {};
+                    const params = {
                         href: itemList
                             .map(function(item) {
                                 items[item.id] = item;

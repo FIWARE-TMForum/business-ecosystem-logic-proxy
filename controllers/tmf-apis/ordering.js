@@ -28,6 +28,7 @@ const storeClient = require('./../../lib/store').storeClient
 const tmfUtils = require('./../../lib/tmfUtils')
 const url = require('url')
 const utils = require('./../../lib/utils')
+const inventory = require('./../../lib/inventory_subscription')
 
 const ordering = (function() {
     const CUSTOMER = 'Customer';
@@ -79,10 +80,10 @@ const ordering = (function() {
     ////////////////////////////////////////// CREATION //////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
 
-    var includeProductParty = function(offering, item, callback) {
-        var errorMessageProduct = 'The system fails to retrieve the product attached to the ordering item ' + item.id;
+    const includeProductParty = function(offering, item, resolve, reject) {
+        const errorMessageProduct = 'The system fails to retrieve the product attached to the ordering item ' + item.id;
 
-        var productUrl = utils.getAPIURL(
+        const productUrl = utils.getAPIURL(
             config.endpoints.catalog.appSsl,
             config.endpoints.catalog.host,
             config.endpoints.catalog.port,
@@ -91,14 +92,14 @@ const ordering = (function() {
 
         makeRequest(productUrl, errorMessageProduct, function(err, product) {
             if (err) {
-                callback(err);
+                reject(err);
             } else {
                 var owners = product.relatedParty.filter(function(relatedParty) {
                     return relatedParty['role'].toLowerCase() === 'owner';
                 });
 
                 if (!owners.length) {
-                    callback({
+                    reject({
                         status: 400,
                         message: 'You cannot order a product without owners'
                     });
@@ -111,21 +112,21 @@ const ordering = (function() {
                         });
                     });
 
-                    callback(null, item);
+                    resolve();
                 }
             }
         });
     };
 
-    const includeOfferingParty = function(offeringUrl, item, callback) {
+    const includeOfferingParty = function(offeringUrl, item, resolve, reject) {
         const errorMessageOffer = 'The system fails to retrieve the offering attached to the ordering item ' + item.id;
 
         makeRequest(offeringUrl, errorMessageOffer, function(err, offering) {
             if (err) {
-                callback(err);
+                reject(err);
             } else {
                 if (!offering.isBundle) {
-                    includeProductParty(offering, item, callback);
+                    includeProductParty(offering, item, resolve, reject);
                 } else {
                     const offeringUrl = utils.getAPIURL(
                         config.endpoints.catalog.appSsl,
@@ -133,65 +134,67 @@ const ordering = (function() {
                         config.endpoints.catalog.port,
                         `/productOffering/${offering.bundledProductOffering[0].id}`
                     );
-                    includeOfferingParty(offeringUrl, item, callback);
+                    includeOfferingParty(offeringUrl, item, resolve, reject);
                 }
             }
         });
     };
 
-    var completeRelatedPartyInfo = function(req, item, user, callback) {
-        if (!item.product) {
-            callback({
-                status: 400,
-                message: 'The product order item ' + item.id + ' must contain a product field'
-            });
+    const completeRelatedPartyInfo = async function(req, item, user) {
+        return new Promise((resolve, reject) => {
+            if (!item.product) {
+                reject({
+                    status: 400,
+                    message: 'The product order item ' + item.id + ' must contain a product field'
+                });
 
-            return;
-        }
+                return;
+            }
 
-        if (!item.productOffering) {
-            callback({
-                status: 400,
-                message: 'The product order item ' + item.id + ' must contain a productOffering field'
-            });
+            if (!item.productOffering) {
+                reject({
+                    status: 400,
+                    message: 'The product order item ' + item.id + ' must contain a productOffering field'
+                });
 
-            return;
-        }
+                return;
+            }
+    
+            if (!item.product.relatedParty) {
+                item.product.relatedParty = [];
+            }
 
-        if (!item.product.relatedParty) {
-            item.product.relatedParty = [];
-        }
-        var itemCustCheck = tmfUtils.isOrderingCustomer(user, item.product);
+            const itemCustCheck = tmfUtils.isOrderingCustomer(user, item.product);
+            if (itemCustCheck[0] && !itemCustCheck[1]) {
+                reject({
+                    status: 403,
+                    message: 'The customer specified in the order item ' + item.id + ' is not the user making the request'
+                });
+                return;
+            }
 
-        if (itemCustCheck[0] && !itemCustCheck[1]) {
-            callback({
-                status: 403,
-                message: 'The customer specified in the order item ' + item.id + ' is not the user making the request'
-            });
-            return;
-        }
+            if (!itemCustCheck[0]) {
+                item.product.relatedParty.push({
+                    id: user.partyId,
+                    role: CUSTOMER,
+                    href: tmfUtils.getIndividualURL(req, user.partyId)
+                });
+            }
 
-        if (!itemCustCheck[0]) {
-            item.product.relatedParty.push({
-                id: user.partyId,
-                role: CUSTOMER,
-                href: tmfUtils.getIndividualURL(req, user.id)
-            });
-        }
+            // Inject customer and seller related parties in the order items in order to make this info
+            // available thought the inventory API
+            const offeringUrl = utils.getAPIURL(
+                config.endpoints.catalog.appSsl,
+                config.endpoints.catalog.host,
+                config.endpoints.catalog.port,
+                `/productOffering/${item.productOffering.id}`
+            );
 
-        // Inject customer and seller related parties in the order items in order to make this info
-        // available thought the inventory API
-        const offeringUrl = utils.getAPIURL(
-            config.endpoints.catalog.appSsl,
-            config.endpoints.catalog.host,
-            config.endpoints.catalog.port,
-            `/productOffering/${item.productOffering.id}`
-        );
-
-        includeOfferingParty(offeringUrl, item, callback);
+            includeOfferingParty(offeringUrl, item, resolve, reject);
+        })
     };
 
-    const validateCreation = function(req, callback) {
+    const validateCreation = async function(req, callback) {
         let body;
 
         // The request body may not be well formed
@@ -243,47 +246,44 @@ const ordering = (function() {
             });
         }
 
-        var asyncTasks = [];
+        try {
+            await Promise.all(body.productOrderItem.map((item) => {
+                return completeRelatedPartyInfo(req, item, req.user)
+            }))
+        } catch (e) {
+            console.log(e)
+            return callback(e)
+        }
+
+        // Include sellers as related party in the ordering
+        const pushedSellers = [];
+        let customerItem = false;
 
         body.productOrderItem.forEach(function(item) {
-            asyncTasks.push(completeRelatedPartyInfo.bind(this, req, item, req.user));
-        });
+            const sellers = item.product.relatedParty.filter(function(party) {
+                return party.role.toLowerCase() === SELLER.toLowerCase();
+            });
 
-        async.series(asyncTasks, function(err /*, results*/) {
-            if (err) {
-                callback(err);
-            } else {
-                // Include sellers as related party in the ordering
-                const pushedSellers = [];
-                let customerItem = false;
-
-                body.productOrderItem.forEach(function(item) {
-                    const sellers = item.product.relatedParty.filter(function(party) {
-                        return party.role.toLowerCase() === SELLER.toLowerCase();
-                    });
-
-                    sellers.forEach(function(seller) {
-                        if (seller.id === req.user.partyId) {
-                            customerItem = true;
-                        } else if (pushedSellers.indexOf(seller.id) < 0) {
-                            body.relatedParty.push(seller);
-                            pushedSellers.push(seller.id);
-                        }
-                    });
-                });
-
-                if (!customerItem) {
-                    utils.updateBody(req, body);
-                    callback(null)
-                    //checkBillingAccounts(req, body, callback);
-                } else {
-                    callback({
-                        status: 403,
-                        message: 'You cannot acquire your own offering'
-                    });
+            sellers.forEach(function(seller) {
+                if (seller.id === req.user.partyId) {
+                    customerItem = true;
+                } else if (pushedSellers.indexOf(seller.id) < 0) {
+                    body.relatedParty.push(seller);
+                    pushedSellers.push(seller.id);
                 }
-            }
+            });
         });
+
+        if (!customerItem) {
+            utils.updateBody(req, body)
+            callback(null)
+            //checkBillingAccounts(req, body, callback);
+        } else {
+            return callback({
+                status: 403,
+                message: 'You cannot acquire your own offering'
+            });
+        }
     };
 
     const checkBillingAccounts = function(req, ordering, callback) {
@@ -563,7 +563,7 @@ const ordering = (function() {
     /////////////////////////////////////// PRE-VALIDATION ///////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
 
-    var validators = {
+    const validators = {
         GET: [utils.validateLoggedIn, tmfUtils.ensureRelatedPartyIncluded, validateRetrieving],
         POST: [utils.validateLoggedIn, validateCreation],
         PATCH: [utils.validateLoggedIn, validateUpdate],
@@ -571,10 +571,10 @@ const ordering = (function() {
         DELETE: [utils.methodNotAllowed]
     };
 
-    var checkPermissions = function(req, callback) {
-        var reqValidators = [];
+    const checkPermissions = function(req, callback) {
+        const reqValidators = [];
 
-        for (var i in validators[req.method]) {
+        for (let i in validators[req.method]) {
             reqValidators.push(validators[req.method][i].bind(this, req));
         }
 
@@ -585,7 +585,7 @@ const ordering = (function() {
     /////////////////////////////////////// POST-VALIDATION //////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
 
-    var sortByDate = function sortByDate(list) {
+    const sortByDate = function sortByDate(list) {
         if (!Array.isArray(list)) {
             return [];
         }
@@ -599,10 +599,10 @@ const ordering = (function() {
         });
     };
 
-    var filterOrderItems = function(req, callback) {
-        var body = JSON.parse(req.body);
-        var orderings = [];
-        var isArray = true;
+    const filterOrderItems = function(req, callback) {
+        const body = req.body;
+        let orderings = [];
+        let isArray = true;
 
         if (!Array.isArray(body)) {
             orderings = [body];
@@ -612,10 +612,10 @@ const ordering = (function() {
         }
 
         // This array is needed as the length of the array cannot be modified while it's being iterated
-        var orderingsToRemove = [];
+        const orderingsToRemove = [];
         orderings.forEach(function(ordering) {
-            var customer = tmfUtils.hasPartyRole(req, ordering.relatedParty, CUSTOMER);
-            var seller = tmfUtils.hasPartyRole(req, ordering.relatedParty, SELLER);
+            const customer = tmfUtils.hasPartyRole(req, ordering.relatedParty, CUSTOMER);
+            const seller = tmfUtils.hasPartyRole(req, ordering.relatedParty, SELLER);
 
             if (!customer && !seller) {
                 // This can happen when a user ask for a specific ordering.
@@ -628,7 +628,6 @@ const ordering = (function() {
                 });
             }
             // ELSE: If the user is the customer, order items don't have to be filtered
-
             if (req.method.toUpperCase() === 'GET') {
                 ordering.note = sortByDate(ordering.note);
             }
@@ -645,11 +644,11 @@ const ordering = (function() {
                     message: 'You are not authorized to retrieve the specified ordering'
                 });
             } else {
-                utils.updateBody(req, orderings[0]);
+                utils.updateResponseBody(req, orderings[0]);
                 callback(null);
             }
         } else {
-            utils.updateBody(req, orderings);
+            utils.updateResponseBody(req, orderings);
             callback(null);
         }
     };
@@ -704,13 +703,13 @@ const ordering = (function() {
         })
     };
 
-    var notifyOrder = function(req, callback) {
+    const notifyOrder = function(req, callback) {
         const body = req.body;
 
         // Send ordering notification to the store
         storeClient.notifyOrder(body, req.user, function(err, res) {
             if (res) {
-                var parsedResp = JSON.parse(res.body);
+                const parsedResp = res.body;
 
                 if (parsedResp.redirectUrl) {
                     req.headers['X-Redirect-URL'] = parsedResp.redirectUrl;
@@ -723,11 +722,11 @@ const ordering = (function() {
         });
     };
 
-    var executePostValidation = function(req, callback) {
+    const executePostValidation = function(req, callback) {
         if (['GET', 'PUT', 'PATCH'].indexOf(req.method.toUpperCase()) >= 0) {
             filterOrderItems(req, callback);
         } else if (req.method === 'POST') {
-            var tasks = [];
+            const tasks = [];
             tasks.push(notifyOrder.bind(this, req));
             //tasks.push(includeSellersInBillingAccount.bind(this, req));
             async.series(tasks, callback);
