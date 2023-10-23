@@ -134,9 +134,10 @@
         }, productOrderSearch);
 
         function getElementsLength() {
-            var params = {};
-            angular.copy($state.params, params);
-            return ProductOrder.count(params);
+            //var params = {};
+            //angular.copy($state.params, params);
+            //return ProductOrder.count(params);
+            return Promise.resolve(10)
         }
 
         function showFilters() {

@@ -600,9 +600,9 @@ const ordering = (function() {
     };
 
     const filterOrderItems = function(req, callback) {
-        var body = JSON.parse(req.body);
-        var orderings = [];
-        var isArray = true;
+        const body = req.body;
+        let orderings = [];
+        let isArray = true;
 
         if (!Array.isArray(body)) {
             orderings = [body];
@@ -612,10 +612,10 @@ const ordering = (function() {
         }
 
         // This array is needed as the length of the array cannot be modified while it's being iterated
-        var orderingsToRemove = [];
+        const orderingsToRemove = [];
         orderings.forEach(function(ordering) {
-            var customer = tmfUtils.hasPartyRole(req, ordering.relatedParty, CUSTOMER);
-            var seller = tmfUtils.hasPartyRole(req, ordering.relatedParty, SELLER);
+            const customer = tmfUtils.hasPartyRole(req, ordering.relatedParty, CUSTOMER);
+            const seller = tmfUtils.hasPartyRole(req, ordering.relatedParty, SELLER);
 
             if (!customer && !seller) {
                 // This can happen when a user ask for a specific ordering.
@@ -628,7 +628,6 @@ const ordering = (function() {
                 });
             }
             // ELSE: If the user is the customer, order items don't have to be filtered
-
             if (req.method.toUpperCase() === 'GET') {
                 ordering.note = sortByDate(ordering.note);
             }
@@ -645,11 +644,11 @@ const ordering = (function() {
                     message: 'You are not authorized to retrieve the specified ordering'
                 });
             } else {
-                utils.updateBody(req, orderings[0]);
+                utils.updateResponseBody(req, orderings[0]);
                 callback(null);
             }
         } else {
-            utils.updateBody(req, orderings);
+            utils.updateResponseBody(req, orderings);
             callback(null);
         }
     };

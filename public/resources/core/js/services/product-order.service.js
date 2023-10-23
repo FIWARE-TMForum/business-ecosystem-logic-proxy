@@ -1,4 +1,6 @@
-/* Copyright (c) 2015 - 2018 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 CoNWeT Lab., Universidad Politécnica de Madrid
+ *
+ * Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -63,9 +65,9 @@
         resource.prototype.getRoleOf = getRoleOf;
         resource.prototype.getPriceplanOf = getPriceplanOf;
         resource.prototype.formatPriceplanOf = formatPriceplanOf;
-        resource.prototype.getBillingAccount = function getBillingAccount() {
-            return this.orderItem[0].billingAccount[0];
-        };
+        /*resource.prototype.getBillingAccount = function getBillingAccount() {
+            return this.productOrderItem[0].billingAccount[0];
+        };*/
 
         var TYPES = {
             PRIORITY: [
@@ -134,7 +136,7 @@
                 var productOfferingFilters = {};
 
                 if (productOrderList.length) {
-                    productOfferingFilters.id = getProductOfferingIds(productOrderList).join();
+                    productOfferingFilters.href = getProductOfferingIds(productOrderList).join();
 
                     Offering.search(productOfferingFilters).then(function(productOfferingList) {
                         replaceProductOffering(productOrderList, productOfferingList);
@@ -151,8 +153,8 @@
                 var productOfferingIds = {};
 
                 productOrderList.forEach(function(productOrder) {
-                    productOrder.orderItem.forEach(function(orderItem) {
-                        productOfferingIds[orderItem.productOffering.id] = {};
+                    productOrder.productOrderItem.forEach(function(productOrderItem) {
+                        productOfferingIds[productOrderItem.productOffering.id] = {};
                     });
                 });
 
@@ -167,8 +169,8 @@
                 });
 
                 productOrderList.forEach(function(productOrder) {
-                    productOrder.orderItem.forEach(function(orderItem) {
-                        orderItem.productOffering = productOfferings[orderItem.productOffering.id];
+                    productOrder.productOrderItem.forEach(function(productOrderItem) {
+                        productOrderItem.productOffering = productOfferings[productOrderItem.productOffering.id];
                     });
                 });
             }
@@ -214,7 +216,7 @@
                 params,
                 function(productOrder) {
                     // Remove empty characteristics
-                    productOrder.orderItem.forEach(function(item) {
+                    productOrder.productOrderItem.forEach(function(item) {
                         if (
                             item.product.productCharacteristic.length === 1 &&
                             Object.keys(item.product.productCharacteristic[0]).length === 0
@@ -223,7 +225,9 @@
                         }
                     });
 
-                    detailBillingAccount(productOrder);
+                    //detailBillingAccount(productOrder);
+                    detailProductOffering(productOrder);
+                    // -----
                 },
                 function(response) {
                     deferred.reject(response);
@@ -245,8 +249,8 @@
             }
 
             function detailProductOffering(productOrder) {
-                var filters = {
-                    id: getProductOfferingIds(productOrder)
+                const filters = {
+                    href: getProductOfferingIds(productOrder)
                 };
 
                 Offering.search(filters).then(function(productOfferings) {
@@ -257,8 +261,8 @@
         }
 
         function extendBillingAccount(productOrder, billingAccount) {
-            productOrder.orderItem.forEach(function(orderItem) {
-                orderItem.billingAccount = billingAccount;
+            productOrder.productOrderItem.forEach(function(productOrderItem) {
+                productOrderItem.billingAccount = billingAccount;
             });
         }
 
@@ -292,8 +296,8 @@
         function getProductOfferingIds(productOrder) {
             var productOfferingIds = {};
 
-            productOrder.orderItem.forEach(function(orderItem) {
-                productOfferingIds[orderItem.productOffering.id] = {};
+            productOrder.productOrderItem.forEach(function(productOrderItem) {
+                productOfferingIds[productOrderItem.productOffering.id] = {};
             });
 
             return Object.keys(productOfferingIds);
@@ -306,8 +310,8 @@
                 productOfferings[productOffering.id] = productOffering;
             });
 
-            productOrder.orderItem.forEach(function(orderItem) {
-                orderItem.productOffering = productOfferings[orderItem.productOffering.id];
+            productOrder.productOrderItem.forEach(function(productOrderItem) {
+                productOrderItem.productOffering = productOfferings[productOrderItem.productOffering.id];
             });
         }
 
@@ -358,15 +362,15 @@
 
         function getPriceplanOf(orderIndex) {
             /* jshint validthis: true */
-            return this.orderItem[orderIndex].product.productPrice[0];
+            return this.productOrderItem[orderIndex].product.productPrice[0];
         }
 
         function formatPriceplanOf(orderIndex) {
             var result,
                 priceplan,
-                priceplans = this.orderItem[orderIndex].product.productPrice;
+                priceplans = this.productOrderItem[orderIndex].product.productPrice;
 
-            if (priceplans.length) {
+            if (priceplans && priceplans.length) {
                 priceplan = priceplans[0];
                 result = priceplan.price.amount + ' ' + priceplan.price.currency;
                 switch (priceplan.priceType) {
