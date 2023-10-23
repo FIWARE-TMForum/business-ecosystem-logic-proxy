@@ -1,16 +1,7 @@
 version: '3'
 services:
-    elasticsearch:
-        image: docker.elastic.co/elasticsearch/elasticsearch:7.5.0
-        environment:
-            - 'node.name=BAE'
-            - 'discovery.type=single-node'
-            - 'ES_JAVA_OPTS=-Xms256m -Xmx256m'
-        ports:
-            - "127.0.0.1:9200:9200"
-
     mongo:
-        image: mongo:4.4
+        image: mongo:6.0
         ports:
             - 27017:27017
         volumes:
@@ -20,10 +11,8 @@ services:
         image: fiware/biz-ecosystem-logic-proxy:master
         links:
             - mongo
-            - elasticsearch
         depends_on:
             - mongo
-            - elasticsearch
         ports:
             - 8000:8000
         volumes:
@@ -61,7 +50,7 @@ services:
             # ----- Mongo Config ------
             # - BAE_LP_MONGO_USER=user
             # - BAE_LP_MONGO_PASS=pass
-            - BAE_LP_MONGO_SERVER=localhost
+            - BAE_LP_MONGO_SERVER=mongo
             - BAE_LP_MONGO_PORT=27017
             - BAE_LP_MONGO_DB=belp
 
