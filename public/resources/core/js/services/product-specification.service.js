@@ -434,7 +434,7 @@
         function createCharacteristic(initialInfo) {
             return angular.extend(
                 {
-                    id: uuid.v4(),
+                    id: `urn:ngsi-ld:characteristic:${uuid.v4()}`,
                     name: '',
                     description: '',
                     valueType: VALUE_TYPES.STRING,
