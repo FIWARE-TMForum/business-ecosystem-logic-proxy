@@ -27,7 +27,7 @@ var reputationService = (function () {
      * @param  {Object} req     Incoming request.
      * @param  {Object} res     Outgoing object.
      */    
-    var saveReputation = function (req, res) {
+    const saveReputation = function (req, res) {
 
         try{
             // Check the request and extract info
@@ -61,16 +61,12 @@ var reputationService = (function () {
      * @param  {Object} req     Incoming request.
      * @param  {Object} res     Outgoing object.
      */    
-    var getOverallReputation = function (req, res) {
+    const getOverallReputation = function (req, res) {
         try{   
-            reputationModel.aggregate([{$group:{_id:"$offerId",avg:{$avg: "$rate"}, count:{$sum:1}}}], function (err, resp) {
-                if (err) {
-                    res.status(500).json({error: err.message});
-                } 
-                else {
-                    //calculate and return overall score
-                    res.status(200).json(resp);
-                }
+            reputationModel.aggregate([{$group:{_id:"$offerId",avg:{$avg: "$rate"}, count:{$sum:1}}}]).then((resp) => {
+                res.status(200).json(resp);
+            }).catch((err) => {
+                res.status(500).json({error: err.message});
             });
         } catch (e) {
             res.status(400).json({ error: e.message + ' Invalid request' });
@@ -83,7 +79,7 @@ var reputationService = (function () {
      * @param  {Object} req     Incoming request.
      * @param  {Object} res     Outgoing object.
      */    
-    var getReputation = function (req, res) {
+    const getReputation = function (req, res) {
 
         try{
 
