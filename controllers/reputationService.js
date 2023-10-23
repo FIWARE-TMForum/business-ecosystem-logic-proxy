@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var reputationModel = require('../db/schemas/reputationModel');
+const reputationModel = require('../db/schemas/reputationModel');
 
-var reputationService = (function () {
+const reputationService = (function () {
 
     /**
      * Save a rate for the offering specifed in the request body.
@@ -31,20 +31,21 @@ var reputationService = (function () {
 
         try{
             // Check the request and extract info
-            var offerId = JSON.parse(req.body).offerId;
-            var consumerId = JSON.parse(req.body).consumerId;
-            var rate = JSON.parse(req.body).rate;
-            var description = JSON.parse(req.body).description;
+            const offerId = JSON.parse(req.body).offerId;
+            const consumerId = JSON.parse(req.body).consumerId;
+            const rate = JSON.parse(req.body).rate;
+            const description = JSON.parse(req.body).description;
 
             if (offerId && consumerId && rate) {
-                reputationModel.findOneAndUpdate({offerId: offerId, consumerId : consumerId}, { $set: {offerId: offerId, consumerId: consumerId, rate: rate, description : description}}, {new: true, upsert: true}, function (err, rawResp) {
-                    if (err) {
-                        res.status(500).json({error: err.message}); 
-                    } 
-                    else {
-                        res.status(200).json(rawResp);
-                    }
-                }); 
+                reputationModel.findOneAndUpdate(
+                    {offerId: offerId, consumerId : consumerId},
+                    { $set: {offerId: offerId, consumerId: consumerId, rate: rate, description : description}},
+                    {new: true, upsert: true})
+                .then((rawResp) => {
+                    res.status(200).json(rawResp);
+                }).catch((err) => {
+                    res.status(500).json({error: err.message});
+                });
             } else {
                 res.status(422).json({error: 'Some fields missing'});
             }
@@ -82,23 +83,19 @@ var reputationService = (function () {
     const getReputation = function (req, res) {
 
         try{
-
             // Check the request and extract info
-            var offerId = req.params.id;
-            var consumerId = req.params.consumerId;
+            const offerId = req.params.id;
+            const consumerId = req.params.consumerId;
             
             if (offerId && consumerId) {
-                reputationModel.find({offerId:offerId, consumerId:consumerId}, function (err, resp) {
-                    if (err) {
-                        res.status(500).json({error: err.message});
-                    } 
-                    else {
-                        if(resp[0] === undefined)
+                reputationModel.find({offerId:offerId, consumerId:consumerId}).then((resp) => {
+                    if(resp[0] === undefined)
                         //calculate and return overall score
-                            res.status(200).json({});
-                        else
-                            res.status(200).json(resp[0]);
-                    }
+                        res.status(200).json({});
+                    else
+                        res.status(200).json(resp[0]);
+                }).catch((err) => {
+                    res.status(500).json({error: err.message});
                 });
             } else {
                 res.status(422).json({error: 'Some fields missing'});

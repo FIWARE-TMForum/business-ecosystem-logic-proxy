@@ -177,7 +177,7 @@ const ordering = (function() {
                 item.product.relatedParty.push({
                     id: user.partyId,
                     role: CUSTOMER,
-                    href: tmfUtils.getIndividualURL(req, user.id)
+                    href: tmfUtils.getIndividualURL(req, user.partyId)
                 });
             }
 

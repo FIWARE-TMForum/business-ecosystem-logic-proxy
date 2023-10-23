@@ -189,7 +189,6 @@
         var load = false;
         var digital = false;
         var locations = [];
-        var applicationId = [];
         var hasApplicationId = false;
 
         vm.item = {};
@@ -216,12 +215,9 @@
         vm.downloadAsset = downloadAsset;
         vm.getUsageURL = getUsageURL;
         vm.downloadInvoice = downloadInvoice;
-        vm.generateToken = generateToken;
-        vm.retrieveToken = retrieveToken;
         vm.tokenSupported = tokenSupported;
         vm.password = "";
         vm.refreshToken = "";
-        vm.token = retrieveToken();
         vm.sla = "";
     
         function tokenSupported() {
@@ -238,7 +234,9 @@
                 vm.item.loadStatus = LOADED;
                 vm.offerings = [];
 
-                $scope.priceplanSelected = productRetrieved.productPrice[0];
+                if (productRetrieved.productPrice && productRetrieved.productPrice.length > 0) {
+                    $scope.priceplanSelected = productRetrieved.productPrice[0];
+                }
 
             digital = false;
             if (!productRetrieved.productOffering.isBundle) {
@@ -264,7 +262,6 @@
                     return charge;
                 });
                 vm.charges.loadStatus = LOADED;
-                vm.token = retrieveToken();
 
             }, function(response) {
                 vm.charges.error = Utils.parseError(response, 'It was impossible to load the list of charges');
@@ -546,60 +543,6 @@
             Download.download(invoice).then((result) => {
                 let url = $window.URL.createObjectURL(result);
                 $window.open(url, '_blank');
-            });
-        }
-
-        function getApplicationId(){
-            return applicationId;
-        }
-
-        function retrieveToken() {
-            load = true;
-
-            InventoryProduct.getToken({
-                appId: getApplicationId(),
-                userId: LOGGED_USER.id,
-            }).then(function(tokenBody,tokenHeader) {
-                load = false;
-                var now = Date.now();
-                var token_expiration = new Date(tokenBody.expire);
-                if(now > token_expiration)
-                    vm.token = "Token expired";
-                else
-                    vm.token = tokenBody.authToken;
-                vm.refreshToken = tokenBody.refreshToken;    
-                return vm.token;
-            }, function (response) {
-                load = false;
-                var defaultMessage = 'There was an unexpected error that prevented the ' +
-                    'system from renewing your product';
-                var error = Utils.parseError(response, defaultMessage);
-
-                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
-                    error: error
-                });
-            });
-        }
-
-        function generateToken() {
-            load = true;
-            InventoryProduct.setToken({
-                username: LOGGED_USER.email,
-                password: vm.password,
-                appId: getApplicationId(),
-            }).then(function(tokenBody,tokenHeader) {
-                load = false;
-                vm.token = retrieveToken();
-                return tokenBody.access_token;
-            }, function (response) {
-                load = false;
-                var defaultMessage = 'There was an unexpected error that prevented the ' +
-                    'system from generating a new token';
-                var error = Utils.parseError(response, defaultMessage);
-
-                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
-                    error: error
-                });
             });
         }
 
