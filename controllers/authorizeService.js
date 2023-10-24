@@ -1,5 +1,7 @@
 /* Copyright (c) 2015 - 2018 CoNWeT Lab., Universidad Politécnica de Madrid
  *
+ * Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
+ *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
  *
@@ -48,16 +50,14 @@ var authorizeService = (function () {
                 service.refreshToken = refreshToken;
                 service.expire = Date.now() + (parseInt(expire) * 1000); 
 
-                accessTokenService.findOneAndUpdate({appId: appId, userId: userId}, { $set: {appId: appId, userId: userId, authToken: authToken, refreshToken: refreshToken, expire: service.expire}}, {upsert: true}, function (err, rawResp) {
-                    if (err) {
-                        res.status(500).json({error: err.message}); 
-                    } 
-                    else {
-                        res.status(200).json(rawResp);
-                    }
+                accessTokenService.findOneAndUpdate({appId: appId, userId: userId},
+                    { $set: {appId: appId, userId: userId, authToken: authToken, refreshToken: refreshToken, expire: service.expire}},
+                    {upsert: true})
+                .then((rawResp) => {
+                    res.status(200).json(rawResp);
+                }).catch((err) => {
+                    res.status(500).json({error: err.message});
                 });
-                
-
             } else {
                 res.status(422).json({error: 'AppId missing'});
             }
@@ -91,17 +91,11 @@ var authorizeService = (function () {
                 //service.refreshToken = refreshToken;
                 //service.expire = Date.now() + 3600000; //expire; TODO FIX
 
-                accessTokenService.findOne({appId: appId, userId: userId}, function (err, rawResp) {
-                    if (err) {
-                        res.status(500).json({error: err.message});
-                    } 
-                    else {
-                        //res.status(200).json({appId: appId, userId: userId, authToken: JSON.parse(rawResp).authToken, refreshToken: JSON.parse(rawResp).refreshToken, expire: JSON.parse(rawResp).expire});
-                        res.status(200).json(rawResp);
-                    }
+                accessTokenService.findOne({appId: appId, userId: userId}).then((err, rawResp) => {
+                    res.status(200).json(rawResp);
+                }).catch((err) => {
+                    res.status(500).json({error: err.message});
                 });
-                
-
             } else {
                 res.status(422).json({error: 'AppId missing'});
             }
