@@ -133,6 +133,12 @@ config.endpoints = {
         port: '8632',
         appSsl: false
     },
+    resource: {
+        path: 'resourceSpecification',
+        host: 'host.docker.internal',
+        port: '8635',
+        appSsl: false
+    },
     ordering: {
         path: 'ordering',
         host: 'host.docker.internal',

@@ -31,7 +31,7 @@ const party = require('./tmf-apis/party').party
 const usageManagement = require('./tmf-apis/usageManagement').usageManagement
 const billing = require('./tmf-apis/billing').billing
 const customer = require('./tmf-apis/customer').customer
-
+const resource = require('./tmf-apis/resource').resource
 // Other dependencies
 const logger = require('./../lib/logger').logger.getLogger('TMF')
 const axios = require('axios')
@@ -48,8 +48,9 @@ function tmf() {
 	apiControllers[config.endpoints.usage.path] = usageManagement;
 	apiControllers[config.endpoints.billing.path] = billing;
 	apiControllers[config.endpoints.customer.path] = customer;
+	apiControllers[config.endpoints.resource.path] = resource;
 
-	const newApis = ['party', 'catalog', 'ordering', 'inventory']
+	const newApis = ['party', 'catalog', 'ordering', 'inventory', 'resource']
 
 	const getAPIName = function(apiUrl) {
 		return apiUrl.split('/')[1];
