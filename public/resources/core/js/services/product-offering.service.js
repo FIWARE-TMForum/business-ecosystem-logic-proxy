@@ -1161,14 +1161,17 @@
                 });
             }
 
-            return query(deferred, filters, resource.query, function(offeringList) {
+            return query(deferred, filters, resource.query, async function(offeringList) {
                 if (offeringList.length) {
-                    var bundleOfferings = [];
-                    var productFilters = {
+                    await Promise.all(offeringList.map((offering) => {
+                        return extendPricePlans(offering);
+                    }))
+
+                    const bundleOfferings = [];
+                    const productFilters = {
                         href: offeringList
                             .map(function(offering) {
-                                var offId = '';
-                                extendPricePlans(offering);
+                                let offId = '';
 
                                 if (!offering.isBundle) {
                                     offId = offering.productSpecification.id;
@@ -1183,7 +1186,7 @@
                     if (!bundleOfferings.length) {
                         searchOfferingProducts(productFilters, offeringList);
                     } else {
-                        var processed = 0;
+                        let processed = 0;
                         bundleOfferings.forEach(function(offering) {
                             attachOfferingBundleProducts(offering, function(res) {
                                 processed += 1;
@@ -1439,13 +1442,16 @@
 
             resource.query(
                 params,
-                function(offeringList) {
+                async function(offeringList) {
+                    await Promise.all(offeringList.map((offering) => {
+                        return extendPricePlans(offering);
+                    }))
+
                     offering.bundledProductOffering = offeringList;
-                    var bundleIndexes = {};
-                    var productParams = {
+                    const bundleIndexes = {};
+                    const productParams = {
                         id: offeringList
                             .map(function(data, index) {
-                                extendPricePlans(data);
                                 bundleIndexes[data.productSpecification.id] = index;
                                 return data.productSpecification.id;
                             })
@@ -1481,8 +1487,8 @@
 
             resource.get(
                 params,
-                function(productOffering) {
-                        extendPricePlans(productOffering);
+                async function(productOffering) {
+                        await extendPricePlans(productOffering);
                         if (productOffering.productSpecification) {
                             ProductSpec.detail(productOffering.productSpecification.id).then(function(
                                 productRetrieved
@@ -1514,10 +1520,13 @@
 
                     resource.query(
                         params,
-                        function(collection) {
+                        async function(collection) {
                             if (collection.length) {
+                                await Promise.all(collection.map((productOfferingRelated) => {
+                                    return extendPricePlans(productOfferingRelated);
+                                }))
+
                                 collection.forEach(function(productOfferingRelated) {
-                                    extendPricePlans(productOfferingRelated);
                                     productOffering.productSpecification.productSpecificationRelationship.forEach(
                                         function(relationship) {
                                             if (
@@ -1580,13 +1589,13 @@
             }
         }
 
-        function extendPricePlans(productOffering) {
+        async function extendPricePlans(productOffering) {
             if (!angular.isArray(productOffering.productOfferingPrice)) {
                 productOffering.productOfferingPrice = [];
             } else {
-                productOffering.productOfferingPrice = productOffering.productOfferingPrice.map(function(pricePlan) {
-                    return new PricePlan(pricePlan);
-                });
+                productOffering.productOfferingPrice = await Promise.all(productOffering.productOfferingPrice.map(function(pricePlan) {
+                    return getPricing(pricePlan["id"]);
+                }));
             }
         }
 
