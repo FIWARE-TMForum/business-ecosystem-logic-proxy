@@ -79,6 +79,11 @@ function tmf() {
 			url = utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + req.apiUrl;
 		}
 
+		// TODO: provide a general feature for rewriting paths
+		if (api == 'rss') {
+			url = url.replace('rss', 'charging')
+		}
+
 		console.log('========================')
 		console.log(url)
 		const options = {
