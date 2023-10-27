@@ -1,5 +1,7 @@
-/* Copyright (c) 2015 - 2018 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 CoNWeT Lab., Universidad Politécnica de Madrid
  *
+ * Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
+ * 
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
  *
@@ -64,7 +66,8 @@
         vm.getElementsLength = getElementsLength;
 
         function getElementsLength() {
-            return RSS.countModels();
+            return Promise.resolve(10)
+            //return RSS.countModels();
         }
 
         function updateRSModels() {

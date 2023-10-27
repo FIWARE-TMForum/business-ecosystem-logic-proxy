@@ -152,9 +152,9 @@ config.endpoints = {
         appSsl: false
     },
     rss: {
-        path: 'DSRevenueSharing',
-        host: 'rss.docker',
-        port: '8080',
+        path: 'rss',
+        host: 'charging.docker',
+        port: '8006',
         appSsl: false
     },
     party: {

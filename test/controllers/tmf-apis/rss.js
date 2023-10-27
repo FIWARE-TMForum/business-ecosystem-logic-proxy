@@ -381,7 +381,7 @@ describe('RSS API', function() {
             };
 
             var newModel = {
-                ownerProviderId: 'provider'
+                providerId: 'provider'
             };
 
             var rssClient = {
