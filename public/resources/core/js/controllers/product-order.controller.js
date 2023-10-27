@@ -289,7 +289,6 @@
 
                         // Build order items. This information is created using the shopping card and is not editable in this view
                         for (let i = 0; i < productOrderItems.length; i++) {
-                            const pid = `urn:ngsi-ld:product:${uuid.v4()}`
                             const item = {
                                 id: `urn:ngsi-ld:product-order-item:${uuid.v4()}`,
                                 action: 'add',
@@ -300,8 +299,6 @@
                                     href: productOrderItems[i].href
                                 },
                                 product: {
-                                    id: pid,
-                                    href: pid,
                                     productCharacteristic: []
                                 },
                                 //billingAccount: [User.serializeBasic()]
@@ -344,16 +341,25 @@
                             }
 
                             if (productOrderItems[i].options.pricing) {
-                                var price = productOrderItems[i].options.pricing;
+                                const price = productOrderItems[i].options.pricing;
                                 price.price = {
-                                    value: productOrderItems[i].options.pricing.price.taxIncludedAmount,
-                                    unit: productOrderItems[i].options.pricing.price.currencyCode
+                                    taxIncludedAmount: {
+                                        value: productOrderItems[i].options.pricing.price.taxIncludedAmount,
+                                        unit: productOrderItems[i].options.pricing.price.currencyCode
+                                    },
+                                    taxRate: productOrderItems[i].options.pricing.price.taxRate
                                 };
+
                                 if (angular.isObject(productOrderItems[i].pricePlan.priceAlteration())) {
                                     price.description =
                                         price.description + '\n' + productOrderItems[i].pricePlan.priceAlteration().format();
                                 }
-                                delete price.productOfferPriceAlteration;
+
+                                price.productOfferingPrice = {
+                                    id: price.id,
+                                    href: price.id
+                                }
+
                                 item.product.productPrice = [price];
                             }
 
