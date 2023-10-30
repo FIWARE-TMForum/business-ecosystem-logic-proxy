@@ -20,10 +20,6 @@
 (function() {
     'use strict';
 
-    var LOADING = 'LOADING';
-    var LOADED = 'LOADED';
-    var ERROR = 'ERROR';
-
     angular
         .module('app')
         .controller('ResourceSpecSearchCtrl', [
@@ -31,6 +27,9 @@
             '$state',
             '$rootScope',
             'LIFECYCLE_STATUS',
+            'DATA_STATUS',
+            'ResourceSpec',
+            'Utils',
             ResourceSpecSearchController
         ])
 
@@ -49,7 +48,26 @@
             ResourceSpecUpdateController
         ]);
 
-    function ResourceSpecSearchController($scope, $state, $rootScope, LIFECYCLE_STATUS) {
+    function ResourceSpecSearchController($scope, $state, $rootScope, LIFECYCLE_STATUS, DATA_STATUS, ResourceSpec, Utils) {
+        this.STATUS = DATA_STATUS
+        this.status = DATA_STATUS.LOADING
+
+        this.list = []
+
+        this.getElementsLength = getElementsLength;
+
+        function getElementsLength() {
+            return Promise.resolve(10)
+        }
+
+        // Get resource specifications
+        ResourceSpec.getResouceSpecs().then((resources) => {
+            this.list = resources
+            this.status = this.STATUS.LOADED
+        }).catch((response) => {
+            this.errorMessage = Utils.parseError(response, 'It was impossible to load the list of resource specs')
+            this.status = this.STATUS.ERROR
+        })
     }
 
     function ResourceSpecCreateController($scope, $state, $rootScope, LIFECYCLE_STATUS) {

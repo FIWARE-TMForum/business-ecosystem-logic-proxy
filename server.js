@@ -422,6 +422,7 @@ var renderTemplate = function(req, res, viewName) {
         contextPath: config.portalPrefix,
         proxyPath: config.proxyPrefix,
         catalogPath: config.endpoints.catalog.path,
+        resourcePath: config.endpoints.resource.path, 
         orderingPath: config.endpoints.ordering.path,
         inventoryPath: config.endpoints.inventory.path,
         chargingPath: config.endpoints.charging.path,
