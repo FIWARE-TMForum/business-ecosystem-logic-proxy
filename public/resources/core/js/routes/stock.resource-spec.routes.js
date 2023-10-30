@@ -17,11 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/**
- * @author Francisco de la Vega <fdelavega@conwet.com>
- *         Jaime Pajuelo <jpajuelo@conwet.com>
- *         Aitor Magán <amagan@conwet.com>
- */
+
 (function() {
     'use strict';
 

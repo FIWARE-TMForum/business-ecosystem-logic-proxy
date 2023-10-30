@@ -20,9 +20,9 @@
 (function() {
     'use strict';
 
-    angular.module('app').factory('ResourceSpec', ['$q', '$resource', 'URLS', ResourceSpecService]);
+    angular.module('app').factory('ResourceSpec', ['$q', '$resource', 'URLS', 'LIFECYCLE_STATUS', 'User', ResourceSpecService]);
 
-    function ResourceSpecService($q, $resource, URLS) {
+    function ResourceSpecService($q, $resource, URLS, LIFECYCLE_STATUS, User) {
         const resource = $resource(URLS.RESOURCE_MANAGEMENT + '/resourceSpecification', {
             resourceId: '@resourceId',
         }, {
@@ -45,8 +45,32 @@
             })
         }
 
+        function buildInitialData() {
+            return {
+                lifecycleStatus: LIFECYCLE_STATUS.ACTIVE,
+                relatedParty: [User.serialize()]
+            };
+        }
+
+        function createResourceSpec(spec) {
+            return new Promise((resolve, reject) => {
+                resource.save(
+                    spec,
+                    (itemList) => {
+                        resolve(itemList);
+                    },
+                    (response) => {
+                        reject(response);
+                    }
+                );
+            })
+        }
+
         return {
-            getResouceSpecs: getResouceSpecs
+            getResouceSpecs: getResouceSpecs,
+            createResourceSpec: createResourceSpec,
+            buildInitialData: buildInitialData
         }
     }
+
 })();

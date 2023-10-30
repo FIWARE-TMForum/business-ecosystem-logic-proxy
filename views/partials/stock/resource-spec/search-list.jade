@@ -4,7 +4,6 @@
       tr
         th #{ __("Status") }
         th #{ __("Name") }
-        th #{ __("Role") }
         th #{ __("Last Updated") }
     tbody
       tr(ng-repeat="resource in searchVM.list")
@@ -13,7 +12,6 @@
             span.item-icon
             span.item-text {{ resource.lifecycleStatus }}
         th
-          a(ui-sref="stock.resource.update({ catalogueId: catalogue.id })", ui-sref-opts="{ inherit: false }") {{ resource.name }}
-        td {{ catalogue.getRoleOf(user.id) }}
+          a(ui-sref="stock.resource.update({ resourceId: resource.id })", ui-sref-opts="{ inherit: false }") {{ resource.name }}
         td
           time(am-time-ago="resource.lastUpdate")

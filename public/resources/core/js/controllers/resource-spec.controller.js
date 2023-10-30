@@ -38,6 +38,10 @@
             '$state',
             '$rootScope',
             'LIFECYCLE_STATUS',
+            'DATA_STATUS',
+            'ResourceSpec',
+            'Utils',
+            'EVENTS',
             ResourceSpecCreateController
         ])
         .controller('ResourceSpecUpdateCtrl', [
@@ -70,7 +74,43 @@
         })
     }
 
-    function ResourceSpecCreateController($scope, $state, $rootScope, LIFECYCLE_STATUS) {
+    function ResourceSpecCreateController($scope, $state, $rootScope, LIFECYCLE_STATUS, DATA_STATUS, ResourceSpec, Utils, EVENTS) {
+        this.STATUS = DATA_STATUS
+        this.status = this.STATUS.LOADED
+
+        this.stepList = [
+            {
+                title: 'General',
+                templateUrl: 'stock/resource-spec/create/general'
+            },
+            {
+                title: 'Finish',
+                templateUrl: 'stock/resource-spec/create/finish'
+            }
+        ];
+
+        this.data = ResourceSpec.buildInitialData()
+
+        this.create = () => {
+            // Create resource specifications
+            this.status = DATA_STATUS.PENDING
+            ResourceSpec.createResourceSpec(this.data).then((spec) => {
+                this.status = this.STATUS.LOADED
+
+                $state.go('stock.resource.update', {
+                    resourceId: spec.id
+                });
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'created', {
+                    resource: 'resource spec',
+                    name: spec.name
+                });
+            }).catch((response) => {
+                this.status = this.STATUS.LOADED
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                    error: Utils.parseError(response, 'Unexpected error trying to create the resource specification.')
+                });
+            })
+        }
     }
 
     function ResourceSpecUpdateController($scope, $state, $rootScope, LIFECYCLE_STATUS) {
