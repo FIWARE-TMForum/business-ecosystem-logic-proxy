@@ -45,19 +45,14 @@ const customer = (function() {
         const uri = getCustomerAPIUrl(path);
 
         axios.get(uri).then((response) => {
-            if (response.status >= 400) {
-                callback({
-                    status: response.status
-                });
-            } else {
-                callback(null, {
-                    status: response.status,
-                    body: response.data
-                });
-            }
+            callback(null, {
+                status: response.status,
+                body: response.data
+            });
+            
         }).catch((err) => {
             callback({
-                status: 500
+                status: err.response.status
             });
         })
     };
@@ -283,13 +278,6 @@ const customer = (function() {
 
 
                 axios.patch(getCustomerAPIUrl(customerPath), { customerAccount: currentCustomerAccounts }).then((response) => {
-                    if (response.status >= 400) {
-                        let message = 'Impossible to update the list of customer accounts: ';
-                        message += response.status;
-
-                        utils.log(logger, 'warn', proxyRes, message);
-                    }
-
                     return callback(null);
                 }).catch((err) =>{
                     let message = 'Impossible to update the list of customer accounts: ';

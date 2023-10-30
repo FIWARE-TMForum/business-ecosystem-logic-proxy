@@ -1076,7 +1076,7 @@ describe('Customer API', function() {
                             jasmine.any(Object),
                             'warn',
                             req,
-                            'Impossible to update the list of customer accounts: ' + responseStatus
+                            'Impossible to update the list of customer accounts: Request failed with status code ' + responseStatus
                         );
                     } else {
                         expect(utils.log).not.toHaveBeenCalled();
