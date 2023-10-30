@@ -36,13 +36,16 @@ var resource = (function (){
     };
 
     var getResourceAPIUrl = function(path) {
+        const resPath = path.replace(`/${config.endpoints.resource.path}/`, '')
+
         return utils.getAPIURL(
             config.endpoints.resource.appSsl,
             config.endpoints.resource.host,
             config.endpoints.resource.port,
-            path
+            resPath
         );
     };
+
     const retrieveAsset = function(path, callback) {
         const uri = getResourceAPIUrl(path);
 

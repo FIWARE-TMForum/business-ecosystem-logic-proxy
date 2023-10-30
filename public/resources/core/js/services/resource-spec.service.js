@@ -23,7 +23,7 @@
     angular.module('app').factory('ResourceSpec', ['$q', '$resource', 'URLS', 'LIFECYCLE_STATUS', 'User', ResourceSpecService]);
 
     function ResourceSpecService($q, $resource, URLS, LIFECYCLE_STATUS, User) {
-        const resource = $resource(URLS.RESOURCE_MANAGEMENT + '/resourceSpecification', {
+        const resource = $resource(URLS.RESOURCE_MANAGEMENT + '/resourceSpecification/:resourceId', {
             resourceId: '@resourceId',
         }, {
             update: { method: 'PATCH' }
@@ -45,11 +45,22 @@
             })
         }
 
-        function buildInitialData() {
-            return {
-                lifecycleStatus: LIFECYCLE_STATUS.ACTIVE,
-                relatedParty: [User.serialize()]
-            };
+        function getResourceSpec(resourceId) {
+            const params = {
+                resourceId: resourceId
+            }
+
+            return new Promise((resolve, reject) => {
+                resource.get(
+                    params,
+                    (item) => {
+                        resolve(item);
+                    },
+                    (response) => {
+                        reject(response);
+                    }
+                );
+            })
         }
 
         function createResourceSpec(spec) {
@@ -66,9 +77,37 @@
             })
         }
 
+        function updateResourceSpec(resourceId, data) {
+            const params = {
+                resourceId: resourceId
+            }
+
+            return new Promise((resolve, reject) => {
+                resource.update(
+                    params,
+                    data,
+                    function(updated) {
+                        resolve(updated);
+                    },
+                    function(response) {
+                        reject(response);
+                    }
+                );
+            })
+        }
+
+        function buildInitialData() {
+            return {
+                lifecycleStatus: LIFECYCLE_STATUS.ACTIVE,
+                relatedParty: [User.serialize()]
+            };
+        }
+
         return {
             getResouceSpecs: getResouceSpecs,
+            getResourceSpec: getResourceSpec,
             createResourceSpec: createResourceSpec,
+            updateResourceSpec: updateResourceSpec,
             buildInitialData: buildInitialData
         }
     }

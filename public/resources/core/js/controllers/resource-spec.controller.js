@@ -49,6 +49,9 @@
             '$state',
             '$rootScope',
             'LIFECYCLE_STATUS',
+            'DATA_STATUS',
+            'ResourceSpec',
+            'EVENTS',
             ResourceSpecUpdateController
         ]);
 
@@ -113,6 +116,59 @@
         }
     }
 
-    function ResourceSpecUpdateController($scope, $state, $rootScope, LIFECYCLE_STATUS) {
+    function ResourceSpecUpdateController($scope, $state, $rootScope, LIFECYCLE_STATUS, DATA_STATUS, ResourceSpec, Utils, EVENTS) {
+        this.STATUS = DATA_STATUS
+        this.status = DATA_STATUS.LOADING
+
+        this.updateStatus = DATA_STATUS.LOADED
+
+        this.data = {}
+        this.item = {}
+
+        ResourceSpec.getResourceSpec($state.params.resourceId).then((spec) => {
+            this.data = angular.copy(spec);
+
+            this.item = spec
+            this.status = this.STATUS.LOADED
+        }).catch((response) => {
+            this.errorMessage = Utils.parseError(response, 'It was impossible to load the resource specification')
+            this.status = this.STATUS.ERROR
+        })
+
+        this.updateStatus = (status) => {
+            this.data.lifecycleStatus = status
+        }
+
+        this.update = () => {
+            const dataUpdated = {};
+            ["name", "description", "lifecycleStatus"].forEach((attr) => {
+                if (!angular.equals(this.item[attr], this.data[attr])) {
+                    dataUpdated[attr] = this.data[attr];
+                }
+            });
+
+            this.updateStatus = DATA_STATUS.PENDING
+            ResourceSpec.updateResourceSpec(this.data.id, dataUpdated).then((updated) => {
+                this.updateStatus = DATA_STATUS.LOADED
+                $state.go(
+                    'stock.resource.update',
+                    {
+                        resourceId: updated.id
+                    },
+                    {
+                        reload: true
+                    }
+                );
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'updated', {
+                    resource: 'resource spec',
+                    name: updated.name
+                });
+            }).catch((response) => {
+                this.updateStatus = DATA_STATUS.LOADED
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                    error: Utils.parseError(response, 'Unexpected error trying to update the resource spec.')
+                });
+            });
+        }
     }
 })();
