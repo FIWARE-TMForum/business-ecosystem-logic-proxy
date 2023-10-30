@@ -1,4 +1,6 @@
-/* Copyright (c) 2017 - 2018 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2017 CoNWeT Lab., Universidad Politécnica de Madrid
+ *
+ * Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -57,6 +59,7 @@ let jsAppFilesToInject = [
     'services/idp.service',
     'services/product-offering.service',
     'services/product-catalogue.service',
+    'services/resource-spec.service',
     'services/sharing-models.service',
     'services/asset.service',
     'services/asset-type.service',
@@ -83,6 +86,7 @@ let jsAppFilesToInject = [
     'controllers/product-offering.controller',
     'controllers/product-offering.price.controller',
     'controllers/product-catalogue.controller',
+    'controllers/resource-spec.controller',
     'controllers/sharing-models.controller',
     'controllers/transactions.controller',
     'controllers/sharing-reports.controller',
@@ -114,6 +118,7 @@ let jsStockFilesToInject = [
     'routes/stock.product.routes',
     'routes/stock.product-offering.routes',
     'routes/stock.product-catalogue.routes',
+    'routes/stock.resource-spec.routes',
     'routes/rss.routes',
     'routes/rss.sharing-models.routes',
     'routes/rss.transactions.routes',

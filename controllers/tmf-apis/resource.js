@@ -1,7 +1,5 @@
-/* Copyright (c) 2015 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
  *
- * Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
- * 
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
  *
@@ -38,13 +36,16 @@ var resource = (function (){
     };
 
     var getResourceAPIUrl = function(path) {
+        const resPath = path.replace(`/${config.endpoints.resource.path}/`, '')
+
         return utils.getAPIURL(
             config.endpoints.resource.appSsl,
             config.endpoints.resource.host,
             config.endpoints.resource.port,
-            path
+            resPath
         );
     };
+
     const retrieveAsset = function(path, callback) {
         const uri = getResourceAPIUrl(path);
 
@@ -96,7 +97,19 @@ var resource = (function (){
     };
 
     var validateOwnerSellerPost = function(req, callback) {
-        if (!tmfUtils.hasPartyRole(req, req.body.relatedParty, 'owner') || !utils.hasRole(req.user, config.oauth2.roles.seller)) {
+        let body;
+        try {
+            body = JSON.parse(req.body);
+        } catch (e) {
+            callback({
+                status: 400,
+                message: 'The provided body is not a valid JSON'
+            });
+
+            return; // EXIT
+        }
+
+        if (!tmfUtils.hasPartyRole(req, body.relatedParty, 'owner') || !utils.hasRole(req.user, config.oauth2.roles.seller)) {
             callback({
                 status: 403,
                 message: 'Unauthorized to create non-owned/non-seller resources'

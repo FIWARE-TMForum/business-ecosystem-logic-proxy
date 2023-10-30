@@ -1,4 +1,6 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 CoNWeT Lab., Universidad Politécnica de Madrid
+ *
+ * Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -206,19 +208,19 @@ describe('ResourceSpecification API', function() {
                 var req = {
                     user: userInfo,
                     method: method,
-                    body: body,
+                    body: JSON.stringify(body),
                     apiUrl: path,
                     url: path,
                     hostname: config.endpoints.resource.host,
                     headers: {}
                 };
-            
+
                 resourceApi.checkPermissions(req, function(err) {
                     if(checkRole){
                         if(method === 'PATCH')
                             expect(checkOwnerMethod).toHaveBeenCalledWith(req, nockBody.relatedParty, 'owner')
                         else
-                            expect(checkOwnerMethod).toHaveBeenCalledWith(req, req.body.relatedParty, 'owner')
+                            expect(checkOwnerMethod).toHaveBeenCalledWith(req, body.relatedParty, 'owner')
 
                         if(isOwner){
                             expect(checkRoleMethod).toHaveBeenCalledWith(req.user, config.oauth2.roles.seller)
@@ -235,7 +237,7 @@ describe('ResourceSpecification API', function() {
                 done();
             }
             it('should create a resource specification successfully', function(done){
-                var basicBody = {
+                const basicBody = {
                     id: 'resourceSpec',
                     validFor: {
                         startDateTime: '2016-07-12T10:56:00'
@@ -249,7 +251,7 @@ describe('ResourceSpecification API', function() {
             })
 
             it('should raise a 404 not found error', function(done){
-                var basicBody = {
+                const basicBody = {
                     id: 'resourceSpecNotFound',
                 };
                 nock(url).get(path).reply(404, {})
@@ -257,7 +259,7 @@ describe('ResourceSpecification API', function() {
             })
 
             it('should raise a 500 internal error', function(done){
-                var basicBody = {
+                const basicBody = {
                     id: 'resourceSpecNotFound',
                 };
                 // returning other status different from 500 and 404
@@ -266,7 +268,7 @@ describe('ResourceSpecification API', function() {
             })
 
             it('should raise a 403 unauthorized error', function(done){
-                var basicBody = {
+                const basicBody = {
                     id: 'resourceSpecNotFound',
                 };
                 testCreationUpdation(seller, basicBody, true, 403, 'Unauthorized to create non-owned/non-seller resources', false, true, true, 'POST', {}, done)

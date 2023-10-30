@@ -31,6 +31,7 @@ html(ng-app="app")
           RENEW_JOB: '#{ proxyPath }/#{ chargingPath }/api/orderManagement/products/renewJob',
           UNSUBSCRIBE_JOB: '#{ proxyPath }/#{ chargingPath }/api/orderManagement/products/unsubscribeJob',
           CATALOGUE_MANAGEMENT: '#{ proxyPath }/#{ catalogPath }',
+          RESOURCE_MANAGEMENT: '#{ proxyPath }/#{ resourcePath }',
           INVENTORY: '#{ proxyPath }/#{ inventoryPath }',
           PRODUCTORDER_MANAGEMENT: '#{ proxyPath }/#{ orderingPath }',
           PARTY_MANAGEMENT: '#{ proxyPath }/#{ partyPath }',
@@ -384,6 +385,17 @@ html(ng-app="app")
       include ./partials/stock/product-catalogue/update-party.jade
     script(type="text/ng-template", id="stock/product-catalogue/update/offering")
       include ./partials/stock/product-catalogue/update-offering.jade
+
+    script(type="text/ng-template", id="stock/resource-spec/search")
+      include ./partials/stock/resource-spec/search.jade
+    script(type="text/ng-template", id="stock/resource-spec/create")
+      include ./partials/stock/resource-spec/create.jade
+    script(type="text/ng-template", id="stock/resource-spec/create/general")
+      include ./partials/stock/resource-spec/create-form.jade
+    script(type="text/ng-template", id="stock/resource-spec/create/finish")
+      include ./partials/stock/resource-spec/create-form-finish.jade
+    script(type="text/ng-template", id="stock/resource-spec/update")
+      include ./partials/stock/resource-spec/update.jade
 
     script(type="text/ng-template", id="rss/sidebar")
       include ./partials/rss/sidebar.jade
