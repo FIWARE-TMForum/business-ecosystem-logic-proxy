@@ -139,6 +139,12 @@ config.endpoints = {
         port: '8636',
         appSsl: false
     },
+    service: {
+        path: 'service',
+        host: 'host.docker.internal',
+        port: '8636',
+        appSsl: false
+    },
     ordering: {
         path: 'ordering',
         host: 'host.docker.internal',
