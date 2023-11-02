@@ -260,6 +260,25 @@
             this.status = this.STATUS.ERROR
         })
 
+        this.formatCharacteristicValue = (characteristic, characteristicValue) => {
+            let result;
+
+            switch (characteristic.valueType) {
+                case "string":
+                    result = characteristicValue.value;
+                    break;
+                case "number":
+                    result = characteristicValue.value + ' ' + characteristicValue.unitOfMeasure;
+                    break;
+                case "number range":
+                    result = characteristicValue.valueFrom + ' - ' + characteristicValue.valueTo;
+                    result += ' ' + characteristicValue.unitOfMeasure;
+                    break;
+            }
+
+            return result;
+        }
+
         this.updateStatus = (status) => {
             this.data.lifecycleStatus = status
         }

@@ -47,5 +47,9 @@
                 templateUrl: 'stock/resource-spec/update',
                 controller: 'ResourceSpecUpdateCtrl as updateVM'
             })
+            .state('stock.resource.update.characteristic', {
+                url: '/characteristic',
+                templateUrl: 'stock/resource-spec/update/characteristic'
+            });
     }
 })();
