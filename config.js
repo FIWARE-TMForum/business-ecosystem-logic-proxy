@@ -370,6 +370,24 @@ if (!!process.env.BAE_LP_ENDPOINT_CATALOG_SECURED) {
     config.endpoints.catalog.appSsl = process.env.BAE_LP_ENDPOINT_CATALOG_SECURED == 'true';
 }
 
+// Resource Catalog
+config.endpoints.resource.path = process.env.BAE_LP_ENDPOINT_RESOURCE_PATH || config.endpoints.resource.path;
+config.endpoints.resource.port = process.env.BAE_LP_ENDPOINT_RESOURCE_PORT || config.endpoints.resource.port;
+config.endpoints.resource.host = process.env.BAE_LP_ENDPOINT_RESOURCE_HOST || config.endpoints.resource.host;
+
+if (!!process.env.BAE_LP_ENDPOINT_RESOURCE_SECURED) {
+    config.endpoints.resource.appSsl = process.env.BAE_LP_ENDPOINT_RESOURCE_SECURED == 'true';
+}
+
+// Service Catalog
+config.endpoints.service.path = process.env.BAE_LP_ENDPOINT_SERVICE_PATH || config.endpoints.service.path;
+config.endpoints.service.port = process.env.BAE_LP_ENDPOINT_SERVICE_PORT || config.endpoints.service.port;
+config.endpoints.service.host = process.env.BAE_LP_ENDPOINT_SERVICE_HOST || config.endpoints.service.host;
+
+if (!!process.env.BAE_LP_ENDPOINT_SERVICE_SECURED) {
+    config.endpoints.service.appSsl = process.env.BAE_LP_ENDPOINT_SERVICE_SECURED == 'true';
+}
+
 // Ordering
 config.endpoints.ordering.path = process.env.BAE_LP_ENDPOINT_ORDERING_PATH || config.endpoints.ordering.path;
 config.endpoints.ordering.port = process.env.BAE_LP_ENDPOINT_ORDERING_PORT || config.endpoints.ordering.port;
