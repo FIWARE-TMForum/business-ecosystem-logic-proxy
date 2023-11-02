@@ -1,4 +1,6 @@
-/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 CoNWeT Lab., Universidad Politécnica de Madrid
+ *
+ * Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -959,6 +961,10 @@
                 templateUrl: 'stock/product/create/characteristics'
             },
             {
+                title: 'Resource Specs.',
+                templateUrl: 'stock/product/create/resources'
+            },
+            {
                 title: 'Attachments',
                 templateUrl: 'stock/product/create/attachments'
             },
@@ -1024,6 +1030,12 @@
 
         vm.loadPictureController = loadPictureController;
         vm.loadFileController = loadFileController;
+
+        vm.isActiveResource = isActiveResource;
+        vm.handleResource = handleResource;
+
+        const resources = []
+        this.dataRes = []
 
         function createRelationship(data) {
             var deferred = $q.defer();
@@ -1203,6 +1215,14 @@
             var data = angular.copy(vm.data);
             data.productSpecCharacteristic = angular.copy(vm.characteristics);
 
+            // Append resources
+            data.resourceSpecification = resources.map((resource) => {
+                return {
+                    id: resource,
+                    href: resource
+                }
+            })
+
             if (vm.isDigital) {
                 data.productSpecCharacteristic = data.productSpecCharacteristic.concat(vm.assetCtl.getDigitalChars());
                 
@@ -1313,6 +1333,20 @@
 
         function loadFileController() {
             buildFileController(vm, $scope, vm.stepList[4].form, Asset);
+        }
+
+        function isActiveResource(resourceId) {
+            return resources.indexOf(resourceId) >= 0
+        }
+
+        function handleResource(resource) {
+            if (isActiveResource(resource.id)) {
+                resources.splice(resources.indexOf(resource.id), 1)
+                this.dataRes.splice(resources.indexOf(resource.id), 1)
+            } else {
+                resources.push(resource.id)
+                this.dataRes.push(resource)
+            }
         }
     }
 
