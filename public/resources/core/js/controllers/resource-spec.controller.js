@@ -77,7 +77,124 @@
         })
     }
 
+    function characteristicsController(ResourceSpec) {
+        const buildCharTemplate = () => {
+            return angular.copy({
+                id: `urn:ngsi-ld:characteristic:${uuid.v4()}`,
+                name: '',
+                description: '',
+                valueType: this.VALUE_TYPES.STRING,
+                configurable: false,
+                resourceSpecCharacteristicValue: []
+            })
+        }
+
+        const characteristicValue = {
+            isDefault: false,
+            unitOfMeasure: '',
+            value: '',
+            valueFrom: '',
+            valueTo: ''
+        }
+
+        this.VALUE_TYPES = ResourceSpec.VALUE_TYPES
+
+        this.characteristicEnabled = false
+        this.characteristic = buildCharTemplate()
+
+        this.characteristics = []
+
+        this.createCharacteristic = () => {
+            this.characteristics.push(this.characteristic);
+            this.characteristic = buildCharTemplate()
+
+            this.characteristicValue = angular.copy(characteristicValue);
+            this.characteristicEnabled = false;
+            return true;
+        }
+
+        this.createCharacteristicValue = () => {
+            this.characteristicValue.isDefault = this.getDefaultValueOf(this.characteristic) == null;
+            this.characteristic.resourceSpecCharacteristicValue.push(this.characteristicValue);
+            this.characteristicValue = angular.copy(characteristicValue);
+
+            if (this.characteristic.resourceSpecCharacteristicValue.length > 1) {
+                this.characteristic.configurable = true;
+            }
+
+            return true;
+        }
+
+        this.getFormattedValueOf = (characteristic, characteristicValue) => {
+            let result;
+
+            switch (characteristic.valueType) {
+                case ResourceSpec.VALUE_TYPES.STRING:
+                    result = characteristicValue.value;
+                    break;
+                case ResourceSpec.VALUE_TYPES.NUMBER:
+                    result = characteristicValue.value + ' ' + characteristicValue.unitOfMeasure;
+                    break;
+                case ResourceSpec.VALUE_TYPES.NUMBER_RANGE:
+                    result =
+                        characteristicValue.valueFrom +
+                        ' - ' +
+                        characteristicValue.valueTo +
+                        ' ' +
+                        characteristicValue.unitOfMeasure;
+            }
+
+            return result;
+        }
+
+        this.getDefaultValueOf = (characteristic) => {
+            let i, defaultValue;
+
+            for (i = 0; i < characteristic.resourceSpecCharacteristicValue.length; i++) {
+                if (characteristic.resourceSpecCharacteristicValue[i].isDefault) {
+                    defaultValue = characteristic.resourceSpecCharacteristicValue[i];
+                }
+            }
+
+            return defaultValue;
+        }
+
+        this.setDefaultValue = (index) => {
+            let value = this.getDefaultValueOf(this.characteristic);
+
+            if (value != null) {
+                value.isDefault = false;
+            }
+
+            this.characteristic.resourceSpecCharacteristicValue[index].isDefault = true;
+        }
+
+        this.removeCharacteristic = (index) => {
+            this.characteristics.splice(index, 1);
+        }
+
+        this.resetCharacteristicValue = () => {
+            this.characteristicValue = angular.copy(characteristicValue);
+            this.characteristic.resourceSpecCharacteristicValue.length = 0;
+        }
+
+        this.removeCharacteristicValue = (index) => {
+            let value = this.characteristic.resourceSpecCharacteristicValue[index];
+            this.characteristic.resourceSpecCharacteristicValue.splice(index, 1);
+
+            if (value.isDefault && this.characteristic.resourceSpecCharacteristicValue.length) {
+                this.characteristic.resourceSpecCharacteristicValue[0].isDefault = true;
+            }
+
+            if (this.characteristic.resourceSpecCharacteristicValue.length <= 1) {
+                this.characteristic.configurable = false;
+            }
+        }
+    }
+
     function ResourceSpecCreateController($scope, $state, $rootScope, LIFECYCLE_STATUS, DATA_STATUS, ResourceSpec, Utils, EVENTS) {
+        const charCtl = characteristicsController.bind(this);
+
         this.STATUS = DATA_STATUS
         this.status = this.STATUS.LOADED
 
@@ -85,6 +202,10 @@
             {
                 title: 'General',
                 templateUrl: 'stock/resource-spec/create/general'
+            },
+            {
+                title: 'Characteristics',
+                templateUrl: 'stock/resource-spec/create/characteristics'
             },
             {
                 title: 'Finish',
@@ -97,6 +218,8 @@
         this.create = () => {
             // Create resource specifications
             this.status = DATA_STATUS.PENDING
+            this.data.resourceSpecCharacteristic = this.characteristics
+
             ResourceSpec.createResourceSpec(this.data).then((spec) => {
                 this.status = this.STATUS.LOADED
 
@@ -114,6 +237,8 @@
                 });
             })
         }
+
+        charCtl(ResourceSpec)
     }
 
     function ResourceSpecUpdateController($scope, $state, $rootScope, LIFECYCLE_STATUS, DATA_STATUS, ResourceSpec, Utils, EVENTS) {
@@ -134,6 +259,25 @@
             this.errorMessage = Utils.parseError(response, 'It was impossible to load the resource specification')
             this.status = this.STATUS.ERROR
         })
+
+        this.formatCharacteristicValue = (characteristic, characteristicValue) => {
+            let result;
+
+            switch (characteristic.valueType) {
+                case "string":
+                    result = characteristicValue.value;
+                    break;
+                case "number":
+                    result = characteristicValue.value + ' ' + characteristicValue.unitOfMeasure;
+                    break;
+                case "number range":
+                    result = characteristicValue.valueFrom + ' - ' + characteristicValue.valueTo;
+                    result += ' ' + characteristicValue.unitOfMeasure;
+                    break;
+            }
+
+            return result;
+        }
 
         this.updateStatus = (status) => {
             this.data.lifecycleStatus = status

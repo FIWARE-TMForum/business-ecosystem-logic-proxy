@@ -13,6 +13,10 @@
               a(ui-sref="stock.resource.update")
                 span.item-icon.fa.fa-newspaper-o
                 span.item-text.hidden-xs #{ __("About") }
+            li(ui-sref-active-eq="active")
+              a(ui-sref="stock.resource.update.characteristic")
+                span.item-icon.fa.fa-gears
+                span.item-text.hidden-xs #{ __("Characteristics") }
       .col-xs-12
         ui-view
           .panel.panel-default.z-depth-1(ng-controller="FormWizardCtrl as updateForm")

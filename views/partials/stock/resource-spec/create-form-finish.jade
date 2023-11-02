@@ -22,6 +22,29 @@ form(name="step.form", novalidate)
       ng-model="createVM.data.description"
       readonly
     )
+  .row(ng-if="createVM.characteristics.length")
+    .col-sm-12
+      .h4.text-dark-secondary
+        strong #{ __("Characteristics") }
+      table.table.table-bordered
+        thead
+          tr
+            th #
+            th #{ __("Name") }
+            th #{ __("Type") }
+            th #{ __("Values") }
+            th #{ __("Default") }
+        tbody
+          tr(ng-repeat="characteristic in createVM.characteristics")
+            th {{ $index + 1 }}
+            td {{ characteristic.name }}
+            td {{ characteristic.valueType }}
+            td
+              span(ng-repeat="value in characteristic.resourceSpecCharacteristicValue")
+                span(ng-if="!$first") ,
+                span {{ createVM.getFormattedValueOf(characteristic, value) }}
+            td {{ createVM.getFormattedValueOf(characteristic, createVM.getDefaultValueOf(characteristic)) }}
+
   .form-group.text-right
     a.btn.btn-warning(
       ng-click="createVM.create()"

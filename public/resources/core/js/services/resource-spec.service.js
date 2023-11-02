@@ -23,6 +23,12 @@
     angular.module('app').factory('ResourceSpec', ['$q', '$resource', 'URLS', 'LIFECYCLE_STATUS', 'User', ResourceSpecService]);
 
     function ResourceSpecService($q, $resource, URLS, LIFECYCLE_STATUS, User) {
+        const VALUE_TYPES = {
+            STRING: 'string',
+            NUMBER: 'number',
+            NUMBER_RANGE: 'number range'
+        };
+
         const resource = $resource(URLS.RESOURCE_MANAGEMENT + '/resourceSpecification/:resourceId', {
             resourceId: '@resourceId',
         }, {
@@ -108,8 +114,8 @@
             getResourceSpec: getResourceSpec,
             createResourceSpec: createResourceSpec,
             updateResourceSpec: updateResourceSpec,
-            buildInitialData: buildInitialData
+            buildInitialData: buildInitialData,
+            VALUE_TYPES: VALUE_TYPES
         }
     }
-
 })();

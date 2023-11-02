@@ -281,6 +281,8 @@ html(ng-app="app")
       include ./partials/stock/product/create-form-characteristics.jade
     script(type="text/ng-template", id="stock/product/create/attachments")
       include ./partials/stock/product/create-form-attachments.jade
+    script(type="text/ng-template", id="stock/product/create/resources")
+      include ./partials/stock/product/create-form-resource.jade
     script(type="text/ng-template", id="stock/product/create/assets")
       include ./partials/stock/product/create-form-assets.jade
     script(type="text/ng-template", id="stock/product/create/relationships")
@@ -392,10 +394,14 @@ html(ng-app="app")
       include ./partials/stock/resource-spec/create.jade
     script(type="text/ng-template", id="stock/resource-spec/create/general")
       include ./partials/stock/resource-spec/create-form.jade
+    script(type="text/ng-template", id="stock/resource-spec/create/characteristics")
+      include ./partials/stock/resource-spec/create-form-characteristics.jade
     script(type="text/ng-template", id="stock/resource-spec/create/finish")
       include ./partials/stock/resource-spec/create-form-finish.jade
     script(type="text/ng-template", id="stock/resource-spec/update")
       include ./partials/stock/resource-spec/update.jade
+    script(type="text/ng-template", id="stock/resource-spec/update/characteristic")
+      include ./partials/stock/resource-spec/update-form-characteristic.jade
 
     script(type="text/ng-template", id="rss/sidebar")
       include ./partials/rss/sidebar.jade

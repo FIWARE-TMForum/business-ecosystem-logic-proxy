@@ -163,6 +163,23 @@ form(name="step.form", novalidate)
         span #{ __("Agreement text") }
       textarea.form-control(rows="6", name="text", ng-model="createVM.license.terms.description", readonly)
 
+  .row(ng-if="createVM.dataRes.length > 0")
+    .table-responsive
+      table.table.table-bordered.table-hover.table-selectable
+        thead
+          tr
+            th #{ __("Status") }
+            th #{ __("Name") }
+            th #{ __("Last Updated") }
+        tbody
+          tr(ng-repeat="resource in createVM.dataRes")
+            td
+              .status-item.text-nowrap(class="status-{{ resource.lifecycleStatus | lowercase }}")
+                span.item-icon
+                span.item-text {{ resource.lifecycleStatus }}
+            th {{ resource.name }}
+            td
+              time(am-time-ago="resource.lastUpdate")
   .form-group.text-right
     a.btn.btn-warning(
       ng-click="createVM.create()"
