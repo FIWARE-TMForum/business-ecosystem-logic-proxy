@@ -18,6 +18,7 @@
  */
 
 const async = require('async')
+const axios = require('axios')
 const config = require('./../../config')
 const utils = require('./../../lib/utils')
 const tmfUtils = require('./../../lib/tmfUtils')
@@ -32,6 +33,65 @@ const serviceCatalog = (function() {
             callback(null);
         }
         // validate if a service specification is returned only by the owner
+    };
+
+    var getResourceAPIUrl = function(path) {
+        const resPath = path.replace(`/${config.endpoints.service.path}/`, '')
+
+        return utils.getAPIURL(
+            config.endpoints.service.appSsl,
+            config.endpoints.service.host,
+            config.endpoints.service.port,
+            resPath
+        );
+    };
+
+    const retrieveAsset = function(path, callback) {
+        const uri = getResourceAPIUrl(path);
+
+        axios.get(uri).then((response) => {
+            if (response.status >= 400) {
+                callback({
+                    status: response.status
+                });
+            } else {
+                callback(null, {
+                    status: response.status,
+                    body: response.data
+                });
+            }
+        }).catch((err) => {
+            callback({
+                status: err.response.status
+            });
+        })
+    };
+
+    const validateOwnerSeller = function(req, callback) {
+        retrieveAsset(req.apiUrl, function(err, response) {
+            if (err) {
+                if (err.status === 404) {
+                    callback({
+                        status: 404,
+                        message: 'The required service does not exist'
+                    });
+                } else {
+                    callback({
+                        status: 500,
+                        message: 'The required service cannot be created/updated'
+                    });
+                }
+            } else {
+                if (!tmfUtils.hasPartyRole(req, response.body.relatedParty, 'owner') || !utils.hasRole(req.user, config.oauth2.roles.seller)) {
+                    callback({
+                        status: 403,
+                        message: 'Unauthorized to update non-owned/non-seller services'
+                    });
+                } else {
+                    callback(null)
+                }
+            }
+        });
     };
 
 	const validateOwnerSellerPost = function(req, callback) {
@@ -60,7 +120,7 @@ const serviceCatalog = (function() {
 	const validators = {
 		GET: [utils.validateLoggedIn, validateRetrieving],
 		POST: [utils.validateLoggedIn, validateOwnerSellerPost],
-		PATCH: [utils.validateLoggedIn],
+		PATCH: [utils.validateLoggedIn, validateOwnerSeller],
 		PUT: [utils.validateLoggedIn],
 		DELETE: [utils.validateLoggedIn]
 	};

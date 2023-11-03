@@ -12,6 +12,6 @@
             span.item-icon
             span.item-text {{ serviceSpecification.lifecycleStatus }}
         th
-          a(ui-sref="stock.resource.update({ serviceSpecificationId: serviceSpecification.id })", ui-sref-opts="{ inherit: false }") {{ serviceSpecification.name }}
+          a(ui-sref="stock.service.update({ serviceId: serviceSpecification.id })", ui-sref-opts="{ inherit: false }") {{ serviceSpecification.name }}
         td
           time(am-time-ago="serviceSpecification.lastUpdate")

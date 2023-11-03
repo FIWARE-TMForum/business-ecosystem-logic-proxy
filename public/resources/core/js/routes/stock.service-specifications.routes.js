@@ -43,9 +43,13 @@
 				controller: 'ServiceSpecificationCreateCtrl as createVM'
 			})
 			.state('stock.service.update', {
-				url: '/update',
+				url: '/:serviceId',
 				templateUrl: 'stock/service-specification/update',
-				controller: 'ServiceSpecificationUpdateCtrl'
-			});
+				controller: 'ServiceSpecificationUpdateCtrl as updateVM'
+			})
+			.state('stock.service.update.characteristic', {
+                url: '/characteristic',
+                templateUrl: 'stock/service-specification/update/characteristic'
+            });
 	}
 })();

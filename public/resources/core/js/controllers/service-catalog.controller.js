@@ -43,7 +43,16 @@
 			ServiceSpecificationCreateController
 		])
 		.controller('ServiceSpecificationUpdateCtrl', [
-			'$state', '$rootScope', 'PROMISE_STATUS', 'EVENTS', 'ServiceSpecification', 'Utils', ServiceSpecificationUpdateController])
+			'$scope',
+            '$state',
+            '$rootScope',
+            'LIFECYCLE_STATUS',
+            'DATA_STATUS',
+            'ServiceSpecification',
+			'Utils',
+            'EVENTS',
+			ServiceSpecificationUpdateController
+		])
 
 	function ServiceSpecificationListController($scope, ServiceSpecification, DATA_STATUS, Utils) {
 		var vm = this;
@@ -259,47 +268,78 @@
 		charCtl();
 	}
 
-	function ServiceSpecificationUpdateController($state, $rootScope, PROMISE_STATUS, DATA_STATUS, EVENTS, ServiceSpecification, Utils) {
-		var vm = this;
-		this.STATUS = PROMISE_STATUS;
-		this.DATA_STATUS = DATA_STATUS;
+	function ServiceSpecificationUpdateController($scope, $state, $rootScope, LIFECYCLE_STATUS, DATA_STATUS, ServiceSpecification, Utils, EVENTS) {
+		this.STATUS = DATA_STATUS
+        this.status = DATA_STATUS.LOADING
 
-		this.status = this.STATUS.PENDING;
-		this.dataStatus = this.DATA_STATUS.LOADED;
-		this.data = {};
+        this.updateStatus = DATA_STATUS.LOADED
 
-		ServiceSpecification.getServiceSpecification($state.params.serviceSpecId).then(
-			(serviceSpecification) => {
-				this.status = this.STATUS.REJECTED;
-				this.data = serviceSpecification;
-			},
-			(response) => {
-				this.status = this.STATUS.RESOLVED;
-				this.errorMessage = Utils.parseError(response, 'The requested Service Specification could not be retrieved');
-			});
+        this.data = {}
+        this.item = {}
 
-		this.update = update;
+        ServiceSpecification.getServiceSpecficiation($state.params.serviceId).then((spec) => {
+            this.data = angular.copy(spec);
 
-		function update() {
-			vm.dataStatus = vm.DATA_STATUS.LOADING;
-			ServiceSpecification.updateServiceSpecification(vm.data.serviceSpecId, vm.data).then(
-				() => {
-					vm.dataStatus = vm.DATA_STATUS.LOADED;
-					$rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'updated', {
-						resource: 'IDP',
-						name: vm.data.serviceSpecId
-					});
-				},
-				(response) => {
-					vm.dataStatus = vm.DATA_STATUS.ERROR;
-					const defaultMessage =
-						'There was an unexpected error that prevented the system from updated a new service specification';
-					const error = Utils.parseError(response, defaultMessage);
+            this.item = spec
+            this.status = this.STATUS.LOADED
+        }).catch((response) => {
+            this.errorMessage = Utils.parseError(response, 'It was impossible to load the service specification')
+            this.status = this.STATUS.ERROR
+        })
 
-					$rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
-						error: error
-					});
-				});
+        this.formatCharacteristicValue = (characteristic, characteristicValue) => {
+            let result;
+
+            switch (characteristic.valueType) {
+                case "string":
+                    result = characteristicValue.value;
+                    break;
+                case "number":
+                    result = characteristicValue.value + ' ' + characteristicValue.unitOfMeasure;
+                    break;
+                case "number range":
+                    result = characteristicValue.valueFrom + ' - ' + characteristicValue.valueTo;
+                    result += ' ' + characteristicValue.unitOfMeasure;
+                    break;
+            }
+
+            return result;
+        }
+
+        this.updateStatus = (status) => {
+            this.data.lifecycleStatus = status
+        }
+
+        this.update = () => {
+            const dataUpdated = {};
+            ["name", "description", "lifecycleStatus"].forEach((attr) => {
+                if (!angular.equals(this.item[attr], this.data[attr])) {
+                    dataUpdated[attr] = this.data[attr];
+                }
+            });
+
+            this.updateStatus = DATA_STATUS.PENDING
+            ServiceSpecification.udpateServiceSpecification(this.data.id, dataUpdated).then((updated) => {
+                this.updateStatus = DATA_STATUS.LOADED
+                $state.go(
+                    'stock.service.update',
+                    {
+                        serviceId: updated.id
+                    },
+                    {
+                        reload: true
+                    }
+                );
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'updated', {
+                    resource: 'service spec',
+                    name: updated.name
+                });
+            }).catch((response) => {
+                this.updateStatus = DATA_STATUS.LOADED
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                    error: Utils.parseError(response, 'Unexpected error trying to update the service spec.')
+                });
+            });
 		}
 	}
 

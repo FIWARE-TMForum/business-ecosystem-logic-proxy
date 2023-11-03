@@ -29,7 +29,11 @@
 	]);
 
 	function ServiceSpecService($resource, URLS, LIFECYCLE_STATUS, User) {
-		const resource = $resource(URLS.SERVICE_CATALOG + '/serviceSpecification', { serviceSpecificationId: '@serviceSpecificationId' })
+		const resource = $resource(URLS.SERVICE_CATALOG + '/serviceSpecification/:serviceSpecificationId', {
+			serviceSpecificationId: '@serviceSpecificationId'
+		}, {
+            update: { method: 'PATCH' }
+        })
 
 		function getServiceSpecifications(search) {
 			let params = {}
@@ -73,8 +77,8 @@
 			let promise = new Promise(function(resolve, reject) {
 				resource.update({ serviceSpecificationId: serviceSpecificationId },
 					data,
-					() => {
-						resolve()
+					(updated) => {
+						resolve(updated)
 					},
 					(response) => {
 						reject(response)
