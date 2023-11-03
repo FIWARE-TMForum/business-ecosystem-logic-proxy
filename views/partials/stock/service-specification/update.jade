@@ -1,0 +1,27 @@
+.row
+  .col-xs-12
+    include ./breadcrumb.jade
+  .col-xs-12(ng-if="updateVM.status === updateVM.STATUS.RESOLVED")
+    .row
+      .col-xs-12
+        .panel.panel-default.z-depth-1
+          .panel-body
+            .h4.text-center.test-dark-secondary
+              strong {{ updateVM.item.name }}
+          ul.nav.nav-justified.nav-pills
+            li(ui-sref-active-eq="active")
+              a(ui-sref="stock.service-specfication.update")
+                span.item-icon.fa.fa-newspaper-o
+                span.item-text.hidden-xs #{ __("About") }
+            li(ui-sref-active-eq="active")
+              a(ui-sref="stock.service-specification.up")
+      .col-xs-12
+        ui-view
+          .panel.panel-default.z-depth-1(ng-controller="FormWizardctrl as updateForm")
+            .panel-body
+              include ./update-form.jade
+  .col-xs-12(ng-if="updateVM.status === updateVM.STATUS.REJECTED")
+    .alert.alert-danger.text-center {{ updateVM.errorMessage }}
+  .col-xs-12(ng-if="updateVM.status === updateVM.STATUS.PENDING")
+    .container-spinner
+      span.fa.fa-spinner.fa-spin.fa-2x

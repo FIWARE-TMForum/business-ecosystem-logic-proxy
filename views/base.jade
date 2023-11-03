@@ -46,7 +46,8 @@ html(ng-app="app")
           SHARING_REPORTS: '#{ proxyPath }/#{ rssPath }/rss/settlement/reports',
           SHOPPING_CART: '#{ shoppingCartPath }/:action/:id',
           IDPS: '#{ proxyPath }/IDP',
-          IDP: '#{ proxyPath }/IDP/:idpId'
+          IDP: '#{ proxyPath }/IDP/:idpId',
+          SERVICE_CATALOG: '#{ proxyPath }/#{ serviceCatalogPath }'
         })
         .constant('CHARGE_PERIODS', '#{ chargePeriods }'.split(',').map(function (value) {
           var cp = value.split(':');
@@ -387,6 +388,9 @@ html(ng-app="app")
       include ./partials/stock/product-catalogue/update-party.jade
     script(type="text/ng-template", id="stock/product-catalogue/update/offering")
       include ./partials/stock/product-catalogue/update-offering.jade
+      
+    script(type="text/ng-template", id="stock/service-specification/search")
+      include ./partials/stock/service-specification/search.jade
 
     script(type="text/ng-template", id="stock/resource-spec/search")
       include ./partials/stock/resource-spec/search.jade
