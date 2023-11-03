@@ -7,7 +7,7 @@
           input.form-control(
             type="text"
             name="street"
-            ng-model="postalAddress.medium.streetOne"
+            ng-model="postalAddress.characteristic.street1"
             required
           )
           .help-block(
@@ -22,7 +22,7 @@
           input.form-control(
             type="text"
             name="postcode"
-            ng-model="postalAddress.medium.postcode"
+            ng-model="postalAddress.characteristic.postCode"
             required
           )
           .help-block(
@@ -36,7 +36,7 @@
           input.form-control(
             type="text"
             name="city"
-            ng-model="postalAddress.medium.city"
+            ng-model="postalAddress.characteristic.city"
             required
             ng-maxlength="100"
           )
@@ -53,7 +53,7 @@
           input.form-control(
             type="text"
             name="stateOrProvince"
-            ng-model="postalAddress.medium.stateOrProvince"
+            ng-model="postalAddress.characteristic.stateOrProvince"
             required
             ng-maxlength="100"
           )
@@ -68,7 +68,7 @@
           label #{ __("Country") }
           select.form-control(
             name="country"
-            ng-model="postalAddress.medium.country"
+            ng-model="postalAddress.characteristic.country"
             required
           )
             option(value="") #{ __("Choose country") }
