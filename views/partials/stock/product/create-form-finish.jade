@@ -180,6 +180,24 @@ form(name="step.form", novalidate)
             th {{ resource.name }}
             td
               time(am-time-ago="resource.lastUpdate")
+  .row(ng-if="createVM.dataServ.length > 0")
+    .table-responsive
+      table.table.table-bordered.table-hover.table-selectable
+        thead
+          tr
+            th #{ __("Status") }
+            th #{ __("Name") }
+            th #{ __("Last Updated") }
+        tbody
+          tr(ng-repeat="service in createVM.dataServ")
+            td
+              .status-item.text-nowrap(class="status-{{ service.lifecycleStatus | lowercase }}")
+                span.item-icon
+                span.item-text {{ service.lifecycleStatus }}
+            th {{ service.name }}
+            td
+              time(am-time-ago="service.lastUpdate")
+
   .form-group.text-right
     a.btn.btn-warning(
       ng-click="createVM.create()"

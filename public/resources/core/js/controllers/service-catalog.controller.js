@@ -89,9 +89,12 @@
 			}
 		}
 
-		$scope.$watch(function() {
+        // -
+        vm.offset = 0;
+        updateList();
+		/*$scope.$watch(function() {
 			return vm.offset;
-		}, updateList);
+		}, updateList);*/
 	}
 
 	function characteristicsController() {
@@ -244,10 +247,10 @@
 			vm.status = vm.STATUS.PENDING;
 			this.data.specCharacteristic = this.characteristics
 	
-			ServiceSpecification.createServiceSpecification(this.data).then(() => {
+			ServiceSpecification.createServiceSpecification(this.data).then((spec) => {
 				vm.status = vm.STATUS.LOADED;
 				$state.go('stock.service.update', {
-					serviceSpecId: vm.data.serviceSpecId
+					serviceId: spec.id
 				});
 				$rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'created', {
 					resource: 'service specification',
