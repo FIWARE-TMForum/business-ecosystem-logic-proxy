@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2018 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 CoNWeT Lab., Universidad Politécnica de Madrid
  *
  * Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
  *

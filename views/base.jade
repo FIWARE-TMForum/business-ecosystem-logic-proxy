@@ -391,6 +391,18 @@ html(ng-app="app")
       
     script(type="text/ng-template", id="stock/service-specification/search")
       include ./partials/stock/service-specification/search.jade
+    script(type="text/ng-template", id="stock/service-specification/create")
+      include ./partials/stock/service-specification/create.jade
+    script(type="text/ng-template", id="stock/service-specification/create/general")
+      include ./partials/stock/service-specification/create-form.jade
+    //script(type="text/ng-template", id="stock/service-specification/create/characteristics")
+    //  include ./partials/stock/service-specification/create-form-characteristics.jade
+    script(type="text/ng-template", id="stock/service-specification/create/finish")
+      include ./partials/stock/service-specification/create-form-finish.jade
+    script(type="text/ng-template", id="stock/service-specification/update")
+      include ./partials/stock/service-specification/update.jade
+    //script(type="text/ng-template", id="stock/service-specification/update/characteristic")
+    //  include ./partials/stock/service-specification/update-form-characteristic.jade
 
     script(type="text/ng-template", id="stock/resource-spec/search")
       include ./partials/stock/resource-spec/search.jade
