@@ -163,7 +163,8 @@
             launch: launch,
             getCurrentOrg: getCurrentOrg,
             hasAdminRole: hasAdminRole,
-            isOrganization: isOrganization
+            isOrganization: isOrganization,
+            parseCountry: parseCountry
         };
 
         function isOrganization() {
