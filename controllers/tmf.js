@@ -30,6 +30,7 @@ const rss = require('./tmf-apis/rss').rss
 const party = require('./tmf-apis/party').party
 const usageManagement = require('./tmf-apis/usageManagement').usageManagement
 const billing = require('./tmf-apis/billing').billing
+const account = require('./tmf-apis/account').account
 const customer = require('./tmf-apis/customer').customer
 const serviceCatalog = require('./tmf-apis/serviceCatalog').serviceCatalog
 const resource = require('./tmf-apis/resource').resource
@@ -49,6 +50,7 @@ function tmf() {
 	apiControllers[config.endpoints.party.path] = party;
 	apiControllers[config.endpoints.usage.path] = usageManagement;
 	apiControllers[config.endpoints.billing.path] = billing;
+	apiControllers[config.endpoints.billing.path] = account;
 	apiControllers[config.endpoints.customer.path] = customer;
 	apiControllers[config.endpoints.service.path] = serviceCatalog;
 	apiControllers[config.endpoints.resource.path] = resource;

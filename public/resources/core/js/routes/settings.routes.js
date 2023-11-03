@@ -62,7 +62,7 @@
             .state('settings.contact.shipping', {
                 url: '/shipping',
                 templateUrl: 'settings/contact/shipping/update',
-                controller: 'CustomerSearchCtrl as searchVM'
+                controller: 'AccountSearchCtrl as searchVM'
             })
             .state('settings.contact.business', {
                 url: '/business',

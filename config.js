@@ -176,7 +176,7 @@ config.endpoints = {
         appSsl: false
     },
     billing: {
-        path: 'account',
+        path: 'billingAccount',
         host: 'host.docker.internal',
         port: '8636',
         appSsl: false
