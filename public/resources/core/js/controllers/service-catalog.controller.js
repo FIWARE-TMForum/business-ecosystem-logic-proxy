@@ -36,7 +36,7 @@
 		.controller('ServiceSpecificationCreateCtrl', [
 			'$state',
 			'$rootScope',
-			'PROMISE_STATUS',
+			'DATA_STATUS',
 			'EVENTS',
 			'ServiceSpecification',
 			'Utils',
@@ -85,41 +85,180 @@
 		}, updateList);
 	}
 
-	function ServiceSpecificationCreateController($state, $rootScope, PROMISE_STATUS, EVENTS, ServiceSpecification, Utils) {
+	function characteristicsController() {
+        const buildCharTemplate = () => {
+            return angular.copy({
+                id: `urn:ngsi-ld:characteristic:${uuid.v4()}`,
+                name: '',
+                description: '',
+                valueType: this.VALUE_TYPES.STRING,
+                configurable: false,
+                characteristicValueSpecification: []
+            })
+        }
+
+        const characteristicValue = {
+            isDefault: false,
+            unitOfMeasure: '',
+            value: '',
+            valueFrom: '',
+            valueTo: ''
+        }
+
+        this.VALUE_TYPES = {
+            STRING: 'string',
+            NUMBER: 'number',
+            NUMBER_RANGE: 'number range'
+        }
+
+        this.characteristicEnabled = false
+        this.characteristic = buildCharTemplate()
+
+        this.characteristics = []
+
+        this.createCharacteristic = () => {
+            this.characteristics.push(this.characteristic);
+            this.characteristic = buildCharTemplate()
+
+            this.characteristicValue = angular.copy(characteristicValue);
+            this.characteristicEnabled = false;
+            return true;
+        }
+
+        this.createCharacteristicValue = () => {
+            this.characteristicValue.isDefault = this.getDefaultValueOf(this.characteristic) == null;
+            this.characteristic.characteristicValueSpecification.push(this.characteristicValue);
+            this.characteristicValue = angular.copy(characteristicValue);
+
+            if (this.characteristic.characteristicValueSpecification.length > 1) {
+                this.characteristic.configurable = true;
+            }
+
+            return true;
+        }
+
+        this.getFormattedValueOf = (characteristic, characteristicValue) => {
+            let result;
+
+            switch (characteristic.valueType) {
+                case this.VALUE_TYPES.STRING:
+                    result = characteristicValue.value;
+                    break;
+                case this.VALUE_TYPES.NUMBER:
+                    result = characteristicValue.value + ' ' + characteristicValue.unitOfMeasure;
+                    break;
+                case this.VALUE_TYPES.NUMBER_RANGE:
+                    result =
+                        characteristicValue.valueFrom +
+                        ' - ' +
+                        characteristicValue.valueTo +
+                        ' ' +
+                        characteristicValue.unitOfMeasure;
+            }
+
+            return result;
+        }
+
+        this.getDefaultValueOf = (characteristic) => {
+            let i, defaultValue;
+
+            for (i = 0; i < characteristic.characteristicValueSpecification.length; i++) {
+                if (characteristic.characteristicValueSpecification[i].isDefault) {
+                    defaultValue = characteristic.characteristicValueSpecification[i];
+                }
+            }
+
+            return defaultValue;
+        }
+
+        this.setDefaultValue = (index) => {
+            let value = this.getDefaultValueOf(this.characteristic);
+
+            if (value != null) {
+                value.isDefault = false;
+            }
+
+            this.characteristic.characteristicValueSpecification[index].isDefault = true;
+        }
+
+        this.removeCharacteristic = (index) => {
+            this.characteristics.splice(index, 1);
+        }
+
+        this.resetCharacteristicValue = () => {
+            this.characteristicValue = angular.copy(characteristicValue);
+            this.characteristic.characteristicValueSpecification.length = 0;
+        }
+
+        this.removeCharacteristicValue = (index) => {
+            let value = this.characteristic.characteristicValueSpecification[index];
+            this.characteristic.characteristicValueSpecification.splice(index, 1);
+
+            if (value.isDefault && this.characteristic.characteristicValueSpecification.length) {
+                this.characteristic.characteristicValueSpecification[0].isDefault = true;
+            }
+
+            if (this.characteristic.characteristicValueSpecification.length <= 1) {
+                this.characteristic.configurable = false;
+            }
+        }
+    }
+
+	function ServiceSpecificationCreateController($state, $rootScope, DATA_STATUS, EVENTS, ServiceSpecification, Utils) {
 		var vm = this;
-		this.STATUS = PROMISE_STATUS;
+
+		const charCtl = characteristicsController.bind(this)
+
+		this.stepList = [
+            {
+                title: 'General',
+                templateUrl: 'stock/service-specification/create/general'
+            },
+            {
+                title: 'Characteristics',
+                templateUrl: 'stock/service-specification/create/characteristics'
+            },
+            {
+                title: 'Finish',
+                templateUrl: 'stock/service-specification/create/finish'
+            }
+        ];
+
+		this.STATUS = DATA_STATUS;
 		this.status = null;
 
-		this.data = {};
+		this.data = ServiceSpecification.buildInitialData();
 
 		this.create = create;
 
 		function create() {
 			vm.status = vm.STATUS.PENDING;
-			ServiceSpecification.createServiceSpecification(vm.data).then(
-				() => {
-					vm.status = vm.STATUS.RESOLVED;
-					$state.go('stock.serviceSpecification.update', {
-						serviceSpecId: vm.data.serviceSpecId
-					});
-					$rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'created', {
-						resource: 'serviceSpecification',
-						name: vm.data.name
-					});
-				},
-				(response) => {
-					vm.status = vm.STATUS.REJECTED;
-					const defaultMessage =
-						'There was an unexpected error that prevented the system from creating a new IDP';
-					const error = Utils.parseError(response, defaultMessage);
+			this.data.specCharacteristic = this.characteristics
+	
+			ServiceSpecification.createServiceSpecification(this.data).then(() => {
+				vm.status = vm.STATUS.LOADED;
+				$state.go('stock.service.update', {
+					serviceSpecId: vm.data.serviceSpecId
+				});
+				$rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'created', {
+					resource: 'service specification',
+					name: vm.data.name
+				});
+			}).catch((response) => {
+				vm.status = vm.STATUS.ERROR;
+				const defaultMessage =
+					'There was an unexpected error that prevented the system from creating a new IDP';
+				const error = Utils.parseError(response, defaultMessage);
 
-					$rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
-						error: error
-					});
-				}
-			);
+				$rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+					error: error
+				});
+			});
 		}
+
+		charCtl();
 	}
+
 	function ServiceSpecificationUpdateController($state, $rootScope, PROMISE_STATUS, DATA_STATUS, EVENTS, ServiceSpecification, Utils) {
 		var vm = this;
 		this.STATUS = PROMISE_STATUS;

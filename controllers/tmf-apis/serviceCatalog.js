@@ -18,6 +18,7 @@
  */
 
 const async = require('async')
+const config = require('./../../config')
 const utils = require('./../../lib/utils')
 const tmfUtils = require('./../../lib/tmfUtils')
 
@@ -33,9 +34,32 @@ const serviceCatalog = (function() {
         // validate if a service specification is returned only by the owner
     };
 
+	const validateOwnerSellerPost = function(req, callback) {
+        let body;
+        try {
+            body = JSON.parse(req.body);
+        } catch (e) {
+            callback({
+                status: 400,
+                message: 'The provided body is not a valid JSON'
+            });
+
+            return; // EXIT
+        }
+
+        if (!tmfUtils.hasPartyRole(req, body.relatedParty, 'owner') || !utils.hasRole(req.user, config.oauth2.roles.seller)) {
+            callback({
+                status: 403,
+                message: 'Unauthorized to create non-owned/non-seller service specs'
+            });
+        } else {
+            callback(null)
+        }
+    };
+
 	const validators = {
 		GET: [utils.validateLoggedIn, validateRetrieving],
-		POST: [utils.validateLoggedIn],
+		POST: [utils.validateLoggedIn, validateOwnerSellerPost],
 		PATCH: [utils.validateLoggedIn],
 		PUT: [utils.validateLoggedIn],
 		DELETE: [utils.validateLoggedIn]
@@ -51,8 +75,18 @@ const serviceCatalog = (function() {
 		async.series(reqValidators, callback);
 	};
 
-	const executePostValidation = function(res, callback) {
-		callback(null);
+	const executePostValidation = function(response, callback) {
+		const body = response.body
+
+        // Check if the user is allowed to retrieve the requested resource specification
+        if (!Array.isArray(body) && !tmfUtils.hasPartyRole(response, body.relatedParty, 'owner')) {
+            callback({
+                status: 403,
+                message: 'You are not authorized to retrieve the specified service specification from the catalog'
+            });
+        } else {
+            callback(null);
+        }
 	};
 
 	const handleAPIError = function(res, callback) {

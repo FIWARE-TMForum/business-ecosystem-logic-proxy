@@ -23,10 +23,12 @@
 	angular.module('app').factory('ServiceSpecification', [
 		'$resource',
 		'URLS',
+		'LIFECYCLE_STATUS',
+		'User',
 		ServiceSpecService
 	]);
 
-	function ServiceSpecService($resource, URLS) {
+	function ServiceSpecService($resource, URLS, LIFECYCLE_STATUS, User) {
 		const resource = $resource(URLS.SERVICE_CATALOG + '/serviceSpecification', { serviceSpecificationId: '@serviceSpecificationId' })
 
 		function getServiceSpecifications(search) {
@@ -84,7 +86,7 @@
 
 		function createServiceSpecification(data) {
 			let promise = new Promise(function(resolve, reject) {
-				listResource.save(
+				resource.save(
 					data,
 					(created) => {
 						resolve(created);
@@ -122,13 +124,21 @@
 			return promise;
 		}
 
+		function buildInitialData() {
+            return {
+                lifecycleStatus: LIFECYCLE_STATUS.ACTIVE,
+                relatedParty: [User.serialize()]
+            };
+        }
+
 		return {
 			getServiceSpecifications: getServiceSpecifications,
 			getServiceSpecficiation: getServiceSpecficiation,
 			udpateServiceSpecification: updateServiceSpecification,
 			createServiceSpecification: createServiceSpecification,
 			deleteServiceSpecification: deleteServiceSpecification,
-			exists: exists
+			exists: exists,
+			buildInitialData: buildInitialData
 		};
 	}
 })();

@@ -40,7 +40,7 @@
 			.state('stock.service.create', {
 				url: '/create',
 				templateUrl: 'stock/service-specification/create',
-				controller: 'ServiceSpecificationCreationCtrl'
+				controller: 'ServiceSpecificationCreateCtrl as createVM'
 			})
 			.state('stock.service.update', {
 				url: '/update',
