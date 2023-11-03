@@ -46,7 +46,8 @@ html(ng-app="app")
           SHARING_REPORTS: '#{ proxyPath }/#{ rssPath }/rss/settlement/reports',
           SHOPPING_CART: '#{ shoppingCartPath }/:action/:id',
           IDPS: '#{ proxyPath }/IDP',
-          IDP: '#{ proxyPath }/IDP/:idpId'
+          IDP: '#{ proxyPath }/IDP/:idpId',
+          SERVICE_CATALOG: '#{ proxyPath }/#{ serviceCatalogPath }'
         })
         .constant('CHARGE_PERIODS', '#{ chargePeriods }'.split(',').map(function (value) {
           var cp = value.split(':');
@@ -283,6 +284,8 @@ html(ng-app="app")
       include ./partials/stock/product/create-form-attachments.jade
     script(type="text/ng-template", id="stock/product/create/resources")
       include ./partials/stock/product/create-form-resource.jade
+    script(type="text/ng-template", id="stock/product/create/services")
+      include ./partials/stock/product/create-form-service.jade
     script(type="text/ng-template", id="stock/product/create/assets")
       include ./partials/stock/product/create-form-assets.jade
     script(type="text/ng-template", id="stock/product/create/relationships")
@@ -387,6 +390,21 @@ html(ng-app="app")
       include ./partials/stock/product-catalogue/update-party.jade
     script(type="text/ng-template", id="stock/product-catalogue/update/offering")
       include ./partials/stock/product-catalogue/update-offering.jade
+      
+    script(type="text/ng-template", id="stock/service-specification/search")
+      include ./partials/stock/service-specification/search.jade
+    script(type="text/ng-template", id="stock/service-specification/create")
+      include ./partials/stock/service-specification/create.jade
+    script(type="text/ng-template", id="stock/service-specification/create/general")
+      include ./partials/stock/service-specification/create-form.jade
+    script(type="text/ng-template", id="stock/service-specification/create/characteristics")
+      include ./partials/stock/service-specification/create-form-characteristics.jade
+    script(type="text/ng-template", id="stock/service-specification/create/finish")
+      include ./partials/stock/service-specification/create-form-finish.jade
+    script(type="text/ng-template", id="stock/service-specification/update")
+      include ./partials/stock/service-specification/update.jade
+    script(type="text/ng-template", id="stock/service-specification/update/characteristic")
+      include ./partials/stock/service-specification/update-form-characteristic.jade
 
     script(type="text/ng-template", id="stock/resource-spec/search")
       include ./partials/stock/resource-spec/search.jade

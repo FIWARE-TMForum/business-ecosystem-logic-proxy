@@ -147,8 +147,8 @@ const rss = (function() {
                         return callback(err);
                     }
 
-                    body.push(JSON.parse(response.body));
-                    utils.updateBody(req, body);
+                    body.push(response.body);
+                    utils.updateResponseBody(req, body);
                     callback();
                 });
                 // Is a Count request
@@ -159,7 +159,7 @@ const rss = (function() {
                     size: 1
                 };
 
-                utils.updateBody(req, body);
+                utils.updateResponseBody(req, body);
                 callback();
             } else {
                 callback();

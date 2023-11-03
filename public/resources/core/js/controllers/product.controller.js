@@ -965,6 +965,10 @@
                 templateUrl: 'stock/product/create/resources'
             },
             {
+                title: 'Service Specs.',
+                templateUrl: 'stock/product/create/services'
+            },
+            {
                 title: 'Attachments',
                 templateUrl: 'stock/product/create/attachments'
             },
@@ -1034,8 +1038,14 @@
         vm.isActiveResource = isActiveResource;
         vm.handleResource = handleResource;
 
+        vm.isActiveService = isActiveService;
+        vm.handleService = handleService;
+
         const resources = []
+        const services = []
+
         this.dataRes = []
+        this.dataServ = []
 
         function createRelationship(data) {
             var deferred = $q.defer();
@@ -1223,6 +1233,14 @@
                 }
             })
 
+            // Append services
+            data.serviceSpecification = services.map((service) => {
+                return {
+                    id: service,
+                    href: service
+                }
+            })
+
             if (vm.isDigital) {
                 data.productSpecCharacteristic = data.productSpecCharacteristic.concat(vm.assetCtl.getDigitalChars());
                 
@@ -1346,6 +1364,20 @@
             } else {
                 resources.push(resource.id)
                 this.dataRes.push(resource)
+            }
+        }
+
+        function isActiveService(serviceId) {
+            return services.indexOf(serviceId) >= 0
+        }
+
+        function handleService(service) {
+            if (isActiveService(service.id)) {
+                services.splice(services.indexOf(service.id), 1)
+                this.dataServ.splice(services.indexOf(service.id), 1)
+            } else {
+                services.push(service.id)
+                this.dataServ.push(service)
             }
         }
     }

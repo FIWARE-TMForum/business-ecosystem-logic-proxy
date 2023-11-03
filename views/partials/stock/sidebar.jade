@@ -12,8 +12,11 @@
       a(ui-sref="stock.offering", ui-sref-opts="{ reload: true, inherit: false }")
         span.item-icon.fa.fa-cube
         span.item-text.hidden-xs #{ __("Offerings") }
-
   ul.nav.nav-responsive.nav-pills
+    li(ui-sref-active="active")
+      a(ui-sref="stock.service" ui-sref-opts="{ reload: true, inherit: alse }")
+        span.item-icon.fa.fa-book
+        span.item-text.hidden-xs #{ __("Service Specifications") }
     li(ui-sref-active="active")
       a(ui-sref="stock.resource", ui-sref-opts="{ reload: true, inherit: false }")
         span.item-icon.fa.fa-book
