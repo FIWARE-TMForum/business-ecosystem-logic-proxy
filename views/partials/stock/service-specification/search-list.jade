@@ -1,0 +1,15 @@
+.table-responsive
+  table.table.table-bordered.table-hover
+    thead
+      tr
+        th #{ __("Status") }
+        th #{ __("Name") }
+        th #{ __("Role") }
+        th #{ __("Last Updated") }
+    tbody
+      tr(ng-repeat="serviceSpecification in searchVM.list")
+        td
+          .status-item(class="status-{{ serviceSpecification.lifecycleStatus | lowercase }}")
+            span.item-icon
+            span.item-text {{ serviceSpecification.lifecycleStatus }}
+        th

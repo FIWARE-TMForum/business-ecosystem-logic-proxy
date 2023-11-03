@@ -31,7 +31,9 @@ const party = require('./tmf-apis/party').party
 const usageManagement = require('./tmf-apis/usageManagement').usageManagement
 const billing = require('./tmf-apis/billing').billing
 const customer = require('./tmf-apis/customer').customer
+const serviceCatalog = require('./tmf-apis/serviceCatalog').serviceCatalog
 const resource = require('./tmf-apis/resource').resource
+
 // Other dependencies
 const logger = require('./../lib/logger').logger.getLogger('TMF')
 const axios = require('axios')
@@ -48,9 +50,10 @@ function tmf() {
 	apiControllers[config.endpoints.usage.path] = usageManagement;
 	apiControllers[config.endpoints.billing.path] = billing;
 	apiControllers[config.endpoints.customer.path] = customer;
+	apiControllers[config.endpoints.service.path] = serviceCatalog;
 	apiControllers[config.endpoints.resource.path] = resource;
 
-	const newApis = ['party', 'catalog', 'ordering', 'inventory', 'resource']
+	const newApis = ['party', 'catalog', 'ordering', 'inventory', 'service', 'resource']
 
 	const getAPIName = function(apiUrl) {
 		return apiUrl.split('/')[1];
@@ -153,12 +156,12 @@ function tmf() {
 			}
 
 			if (response.status < 400 && apiControllers[api] !== undefined
-					&& apiControllers[api].executePostValidation) {
+				&& apiControllers[api].executePostValidation) {
 
 				apiControllers[api].executePostValidation(result, handleValidation)
 
 			} else if (response.status >= 400 && apiControllers[api] !== undefined
-					&& apiControllers[api].handleAPIError) {
+				&& apiControllers[api].handleAPIError) {
 
 				utils.log(logger, 'warn', req, 'Handling API error (' + api + ')');
 				apiControllers[api].handleAPIError(result, handleValidation)

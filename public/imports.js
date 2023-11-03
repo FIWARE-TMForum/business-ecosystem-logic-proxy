@@ -20,31 +20,31 @@
  */
 
 const cssFilesToInject = [
-    'bootstrap-3.3.5/css/bootstrap',
-    'font-awesome-4.5.0/css/font-awesome',
-    'intl-tel-input-8.4.7/css/intlTelInput',
-    'core/css/default-theme'
+	'bootstrap-3.3.5/css/bootstrap',
+	'font-awesome-4.5.0/css/font-awesome',
+	'intl-tel-input-8.4.7/css/intlTelInput',
+	'core/css/default-theme'
 ].map(function(path) {
-    return 'resources/' + path + '.css';
+	return 'resources/' + path + '.css';
 });
 
 const jsDepFilesToInject = [
-    // Dependencies:
-    'jquery-1.11.3/js/jquery',
-    'bootstrap-3.3.5/js/bootstrap',
-    'moment-2.10.6/js/moment',
-    'intl-tel-input-8.4.7/js/intlTelInput',
-    'angular-1.4.7/js/angular',
-    'uuid/js/uuid',
-    // Angular Dependencies:
-    'angular-1.4.7/js/angular-messages',
-    'angular-1.4.7/js/angular-cookies',
-    'angular-1.4.7/js/angular-moment',
-    'angular-1.4.7/js/angular-resource',
-    'angular-1.4.7/js/angular-ui-router',
-    'angular-1.4.7/js/international-phone-number'
+	// Dependencies:
+	'jquery-1.11.3/js/jquery',
+	'bootstrap-3.3.5/js/bootstrap',
+	'moment-2.10.6/js/moment',
+	'intl-tel-input-8.4.7/js/intlTelInput',
+	'angular-1.4.7/js/angular',
+	'uuid/js/uuid',
+	// Angular Dependencies:
+	'angular-1.4.7/js/angular-messages',
+	'angular-1.4.7/js/angular-cookies',
+	'angular-1.4.7/js/angular-moment',
+	'angular-1.4.7/js/angular-resource',
+	'angular-1.4.7/js/angular-ui-router',
+	'angular-1.4.7/js/international-phone-number'
 ].map(function(path) {
-    return 'resources/' + path + '.js';
+	return 'resources/' + path + '.js';
 });
 
 let jsAppFilesToInject = [
@@ -87,6 +87,7 @@ let jsAppFilesToInject = [
     'controllers/product-offering.price.controller',
     'controllers/product-catalogue.controller',
     'controllers/resource-spec.controller',
+	'controllers/service-catalog.controller',
     'controllers/sharing-models.controller',
     'controllers/transactions.controller',
     'controllers/sharing-reports.controller',
@@ -109,7 +110,7 @@ let jsAppFilesToInject = [
     'routes/shopping-cart.routes',
     'routes/unauthorized.routes'
 ].map(function(path) {
-    return 'resources/core/js/' + path + '.js';
+	return 'resources/core/js/' + path + '.js';
 });
 
 // Stock dependencies
@@ -119,30 +120,31 @@ let jsStockFilesToInject = [
     'routes/stock.product-offering.routes',
     'routes/stock.product-catalogue.routes',
     'routes/stock.resource-spec.routes',
+	'routes/stock.service-specifications.routes',
     'routes/rss.routes',
     'routes/rss.sharing-models.routes',
     'routes/rss.transactions.routes',
     'routes/rss.reports.routes'
 ].map(function(path) {
-    return 'resources/core/js/' + path + '.js';
+	return 'resources/core/js/' + path + '.js';
 });
 
 // Admin dependencies
 let jsAdminFilesToInject = ['routes/admin.routes', 'routes/admin.product-category.routes', 'routes/admin.idps.routes'].map(function(path) {
-    return 'resources/core/js/' + path + '.js';
+	return 'resources/core/js/' + path + '.js';
 });
 
 if (process.env.NODE_ENV == 'production') {
-    // If the software is is production all js files have been minimized into bae.min.js
-    jsAppFilesToInject = ['resources/core/js/bae.min.js'];
-    jsStockFilesToInject = [];
-    jsAdminFilesToInject = [];
+	// If the software is is production all js files have been minimized into bae.min.js
+	jsAppFilesToInject = ['resources/core/js/bae.min.js'];
+	jsStockFilesToInject = [];
+	jsAdminFilesToInject = [];
 }
 
 exports.imports = {
-    cssFilesToInject: cssFilesToInject,
-    jsDepFilesToInject: jsDepFilesToInject,
-    jsAppFilesToInject: jsAppFilesToInject,
-    jsStockFilesToInject: jsStockFilesToInject,
-    jsAdminFilesToInject: jsAdminFilesToInject
+	cssFilesToInject: cssFilesToInject,
+	jsDepFilesToInject: jsDepFilesToInject,
+	jsAppFilesToInject: jsAppFilesToInject,
+	jsStockFilesToInject: jsStockFilesToInject,
+	jsAdminFilesToInject: jsAdminFilesToInject
 };

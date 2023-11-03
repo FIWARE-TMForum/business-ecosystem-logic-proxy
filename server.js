@@ -34,8 +34,8 @@ const debug = !(process.env.NODE_ENV == 'production');
 const OAUTH2_CAME_FROM_FIELD = 'came_from_path';
 
 const PORT = config.https.enabled
-    ? config.https.port || 443 // HTTPS
-    : config.port || 80; // HTTP
+	? config.https.port || 443 // HTTPS
+	: config.port || 80; // HTTP
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
