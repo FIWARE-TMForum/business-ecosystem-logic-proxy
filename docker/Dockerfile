@@ -1,18 +1,20 @@
-FROM node:16 as build
+FROM node:18 as build
+
+ARG THEME
 
 WORKDIR /opt/business-ecosystem-logic-proxy
 
 COPY ./ .
 
-RUN mkdir -p indexes && \
-    mkdir -p themes && \
+RUN mkdir -p themes && \
     export USER=root && \
     npm install --unsafe && \
     mkdir etc && \
     cp config.js etc/config.js && \
-    echo "module.exports = require('./etc/config');" > config.js
+    echo "module.exports = require('./etc/config');" > config.js && \
+    if [[ ! -z "$THEME" ]] ; then cd themes && git clone ${THEME} ; fi
 
-FROM node:16 as main
+FROM node:18 as main
 
 LABEL MAINTAINER="Future Internet Consulting and Development Solutions S.L."
 
@@ -20,13 +22,10 @@ COPY --from=build /opt/business-ecosystem-logic-proxy /opt/business-ecosystem-lo
 
 WORKDIR /opt/business-ecosystem-logic-proxy
 
-RUN apt-get update && apt-get install -y xinetd wget curl
+RUN apt-get update && apt-get install -y xinetd wget curl git
 
 COPY ./docker/entrypoint.sh /
-COPY ./docker/cleanIndex.sh /
 COPY ./docker/getConfig.js /opt/business-ecosystem-logic-proxy
-     
-COPY ./docker/serviceIndexes /etc/xinetd.d/
 
 EXPOSE 8004
 
