@@ -52,6 +52,8 @@ jobs:
         with:
           context: .
           file: ./docker/Dockerfile
+          build-args: |
+            THEME=https://github.com/Ficodes/bae-dome-theme
           tags: |
             fiware/biz-ecosystem-logic-proxy:dome-dev
           push: ${{ github.ref == 'refs/heads/new-apis' }}
