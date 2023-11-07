@@ -175,10 +175,10 @@ config.endpoints = {
         port: '8633',
         appSsl: false
     },
-    billing: {
-        path: 'billingAccount',
+    account: {
+        path: 'account',
         host: 'host.docker.internal',
-        port: '8636',
+        port: '8639',
         appSsl: false
     },
     customer: {
@@ -440,12 +440,12 @@ if (!!process.env.BAE_LP_ENDPOINT_PARTY_SECURED) {
 }
 
 // Billing
-config.endpoints.billing.path = process.env.BAE_LP_ENDPOINT_BILLING_PATH || config.endpoints.billing.path;
-config.endpoints.billing.port = process.env.BAE_LP_ENDPOINT_BILLING_PORT || config.endpoints.billing.port;
-config.endpoints.billing.host = process.env.BAE_LP_ENDPOINT_BILLING_HOST || config.endpoints.billing.host;
+config.endpoints.account.path = process.env.BAE_LP_ENDPOINT_BILLING_PATH || config.endpoints.account.path;
+config.endpoints.account.port = process.env.BAE_LP_ENDPOINT_BILLING_PORT || config.endpoints.account.port;
+config.endpoints.account.host = process.env.BAE_LP_ENDPOINT_BILLING_HOST || config.endpoints.account.host;
 
 if (!!process.env.BAE_LP_ENDPOINT_BILLING_SECURED) {
-	config.endpoints.billing.appSsl = process.env.BAE_LP_ENDPOINT_BILLING_SECURED == 'true';
+	config.endpoints.account.appSsl = process.env.BAE_LP_ENDPOINT_BILLING_SECURED == 'true';
 }
 
 // Customer

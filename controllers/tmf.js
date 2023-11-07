@@ -29,7 +29,6 @@ const charging = require('./tmf-apis/charging').charging
 const rss = require('./tmf-apis/rss').rss
 const party = require('./tmf-apis/party').party
 const usageManagement = require('./tmf-apis/usageManagement').usageManagement
-const billing = require('./tmf-apis/billing').billing
 const account = require('./tmf-apis/account').account
 const customer = require('./tmf-apis/customer').customer
 const serviceCatalog = require('./tmf-apis/serviceCatalog').serviceCatalog
@@ -49,13 +48,12 @@ function tmf() {
 	apiControllers[config.endpoints.rss.path] = rss;
 	apiControllers[config.endpoints.party.path] = party;
 	apiControllers[config.endpoints.usage.path] = usageManagement;
-	apiControllers[config.endpoints.billing.path] = billing;
-	apiControllers[config.endpoints.billing.path] = account;
+	apiControllers[config.endpoints.account.path] = account;
 	apiControllers[config.endpoints.customer.path] = customer;
 	apiControllers[config.endpoints.service.path] = serviceCatalog;
 	apiControllers[config.endpoints.resource.path] = resource;
 
-	const newApis = ['party', 'catalog', 'ordering', 'inventory', 'service', 'resource']
+	const newApis = ['party', 'catalog', 'ordering', 'inventory', 'service', 'resource', 'account']
 
 	const getAPIName = function(apiUrl) {
 		return apiUrl.split('/')[1];

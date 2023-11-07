@@ -1,6 +1,4 @@
-/* Copyright (c) 2015 CoNWeT Lab., Universidad Politécnica de Madrid
- *
- * Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
+/* Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -100,7 +98,7 @@ const account = (function() {
         }
     };
 
-    var validators = {
+    const validators = {
         //GET: [utils.validateLoggedIn, validateRetrieval],
         GET: [utils.validateLoggedIn],
         //POST: [utils.validateLoggedIn, validateCreation, validateAccountAccountNotIncluded],
@@ -112,18 +110,18 @@ const account = (function() {
         DELETE: [utils.validateLoggedIn]
     };
 
-    var checkPermissions = function(req, callback) {
-        var pathRegExp = new RegExp(
-            '^/' + config.endpoints.billing.path + '?(/(.*))?$'
+    const checkPermissions = function(req, callback) {
+        const pathRegExp = new RegExp(
+            '^/' + config.endpoints.account.path + '?(/(.*))?$'
         );
 
         //req.apiUrl = "/account";
 
-        var apiPath = url.parse(req.apiUrl).pathname;
-        var regExpResult = pathRegExp.exec(apiPath);
+        const apiPath = url.parse(req.apiUrl).pathname;
+        const regExpResult = pathRegExp.exec(apiPath);
 
         console.log("Inicio checkPermissions");
-        console.log(config.endpoints.billing.path);
+        console.log(config.endpoints.account.path);
         console.log("req.apiUrl");
         console.log(req.apiUrl);
         console.log("apiPath");
