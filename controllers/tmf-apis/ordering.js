@@ -39,17 +39,12 @@ const ordering = (function() {
     //////////////////////////////////////////////////////////////////////////////////////////////
 
     const makeRequest = function(url, errMsg, callback) {
-        console.log('------------------------------------------')
-        console.log(url)
+        //console.log('------------------------------------------')
+        //console.log(url)
         axios.get(url).then((response) => {
-            if (response.status >= 400) {
-                callback({
-                    status: 400,
-                    message: errMsg
-                });
-            } else {
-                callback(null, response.data);
-            }
+
+            callback(null, response.data);
+            
         }).catch((err) => {
             callback({
                 status: 400,
@@ -286,72 +281,72 @@ const ordering = (function() {
         }
     };
 
-    const checkBillingAccounts = function(req, ordering, callback) {
-        // PLEASE NOTE: Billing account cannot be updated till the ordering has been created
+    // const checkBillingAccounts = function(req, ordering, callback) {
+    //     // PLEASE NOTE: Billing account cannot be updated till the ordering has been created
 
-        // Check that all the billing accounts for all the items are the same
-        var initialBillingAccount;
+    //     // Check that all the billing accounts for all the items are the same
+    //     var initialBillingAccount;
 
-        if (ordering.productOrderItem[0].billingAccount && ordering.productOrderItem[0].billingAccount.length) {
-            initialBillingAccount = ordering.productOrderItem[0].billingAccount[0];
-        }
+    //     if (ordering.productOrderItem[0].billingAccount && ordering.productOrderItem[0].billingAccount.length) {
+    //         initialBillingAccount = ordering.productOrderItem[0].billingAccount[0];
+    //     }
+        
+    //     if (!initialBillingAccount || !initialBillingAccount.href) {
+    //         return callback({
+    //             status: 422,
+    //             message: 'Billing Account is required'
+    //         });
+    //     }
 
-        if (!initialBillingAccount || !initialBillingAccount.href) {
-            return callback({
-                status: 422,
-                message: 'Billing Account is required'
-            });
-        }
+    //     var error = false;
 
-        var error = false;
+    //     for (var i = 1; i < ordering.productOrderItem.length && !error; i++) {
+    //         error =
+    //             !ordering.productOrderItem[i].billingAccount ||
+    //             !ordering.productOrderItem[i].billingAccount.length ||
+    //             !equal(initialBillingAccount, ordering.productOrderItem[i].billingAccount[0]);
+    //     }
 
-        for (var i = 1; i < ordering.productOrderItem.length && !error; i++) {
-            error =
-                !ordering.productOrderItem[i].billingAccount ||
-                !ordering.productOrderItem[i].billingAccount.length ||
-                !equal(initialBillingAccount, ordering.productOrderItem[i].billingAccount[0]);
-        }
+    //     if (error) {
+    //         return callback({
+    //             status: 422,
+    //             message: 'Billing Accounts must be the same for all the order items contained in the ordering'
+    //         });
+    //     }
 
-        if (error) {
-            return callback({
-                status: 422,
-                message: 'Billing Accounts must be the same for all the order items contained in the ordering'
-            });
-        }
+    //     // Verify that the billing account exists and that the user is the owner of that billing account
+    //     const billingAccountUrl = getBillingAccountUrl(initialBillingAccount);
 
-        // Verify that the billing account exists and that the user is the owner of that billing account
-        const billingAccountUrl = getBillingAccountUrl(initialBillingAccount);
+    //     axios.get(billingAccountUrl).then((response) => {
+    //         if (response.status === 200) {
+    //             const billingAccount = response.data;
 
-        axios.get(billingAccountUrl).then((response) => {
-            if (response.status === 200) {
-                const billingAccount = response.data;
-
-                if (tmfUtils.hasPartyRole(req, billingAccount.relatedParty, config.billingAccountOwnerRole)) {
-                    callback(null);
-                } else {
-                    callback({
-                        status: 403,
-                        message: 'Unauthorized to use non-owned billing accounts'
-                    });
-                }
-            } else if (response.statusCode === 404) {
-                callback({
-                    status: 422,
-                    message: 'The given billing account does not exist'
-                });
-            } else {
-                callback({
-                    status: 500,
-                    message: 'There was an unexpected error at the time of retrieving the provided billing account'
-                });
-            }
-        }).catch((err) => {
-            callback({
-                status: 500,
-                message: 'There was an unexpected error at the time of retrieving the provided billing account'
-            });
-        })
-    };
+    //             if (tmfUtils.hasPartyRole(req, billingAccount.relatedParty, config.billingAccountOwnerRole)) {
+    //                 callback(null);
+    //             } else {
+    //                 callback({
+    //                     status: 403,
+    //                     message: 'Unauthorized to use non-owned billing accounts'
+    //                 });
+    //             }
+    //         } else if (response.statusCode === 404) {
+    //             callback({
+    //                 status: 422,
+    //                 message: 'The given billing account does not exist'
+    //             });
+    //         } else {
+    //             callback({
+    //                 status: 500,
+    //                 message: 'There was an unexpected error at the time of retrieving the provided billing account'
+    //             });
+    //         }
+    //     }).catch((err) => {
+    //         callback({
+    //             status: 500,
+    //             message: 'There was an unexpected error at the time of retrieving the provided billing account'
+    //         });
+    //     })
+    // };
 
     //////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////////// UPDATE ///////////////////////////////////////////
@@ -603,13 +598,14 @@ const ordering = (function() {
         const body = req.body;
         let orderings = [];
         let isArray = true;
-
+        
         if (!Array.isArray(body)) {
             orderings = [body];
             isArray = false;
         } else {
             orderings = body;
         }
+        
 
         // This array is needed as the length of the array cannot be modified while it's being iterated
         const orderingsToRemove = [];
@@ -653,55 +649,55 @@ const ordering = (function() {
         }
     };
 
-    const includeSellersInBillingAccount = function(req, callback) {
-        // PLEASE NOTE: Billing Accounts have been checked in the checkPermissions step.
+    // const includeSellersInBillingAccount = function(req, callback) {
+    //     // PLEASE NOTE: Billing Accounts have been checked in the checkPermissions step.
 
-        const ordering = JSON.parse(req.body);
-        const billingAccountUrl = getBillingAccountUrl(ordering.productOrderItem[0].billingAccount[0]);
+    //     const ordering = JSON.parse(req.body);
+    //     const billingAccountUrl = getBillingAccountUrl(ordering.productOrderItem[0].billingAccount[0]);
 
-        axios.get(billingAccountUrl).then((response) => {
-            if (response.statusCode === 200) {
-                const billingAccount = response.data;
-                const billingAccountRelatedParties = billingAccount.relatedParty;
-                const currentUsers = [];
+    //     axios.get(billingAccountUrl).then((response) => {
+    //         if (response.statusCode === 200) {
+    //             const billingAccount = response.data;
+    //             const billingAccountRelatedParties = billingAccount.relatedParty;
+    //             const currentUsers = [];
 
-                billingAccountRelatedParties.forEach(function(party) {
-                    currentUsers.push(party.id);
-                });
+    //             billingAccountRelatedParties.forEach(function(party) {
+    //                 currentUsers.push(party.id);
+    //             });
 
-                ordering.relatedParty.forEach(function(party) {
-                    if (currentUsers.indexOf(party.id) < 0) {
-                        billingAccountRelatedParties.push({
-                            id: party.id,
-                            href: party.href,
-                            role: 'bill responsible'
-                        });
-                    }
-                });
+    //             ordering.relatedParty.forEach(function(party) {
+    //                 if (currentUsers.indexOf(party.id) < 0) {
+    //                     billingAccountRelatedParties.push({
+    //                         id: party.id,
+    //                         href: party.href,
+    //                         role: 'bill responsible'
+    //                     });
+    //                 }
+    //             });
 
-                return axios.patch(billingAccountUrl, { relatedParty: billingAccountRelatedParties })
-            } else {
-                callback({
-                    status: 500,
-                    message: 'Unexpected error when checking the given billing account'
-                });
-            }
-        }).then((response) => {
-            if (response.status >= 400) {
-                callback({
-                    status: 500,
-                    message: 'Unexpected error when updating the given billing account'
-                })
-            } else {
-                callback(null);
-            }
-        }).catch((err) => {
-            callback({
-                status: 500,
-                message: 'Unexpected error when checking the given billing account'
-            });
-        })
-    };
+    //             return axios.patch(billingAccountUrl, { relatedParty: billingAccountRelatedParties })
+    //         } else {
+    //             callback({
+    //                 status: 500,
+    //                 message: 'Unexpected error when checking the given billing account'
+    //             });
+    //         }
+    //     }).then((response) => {
+    //         if (response.status >= 400) {
+    //             callback({
+    //                 status: 500,
+    //                 message: 'Unexpected error when updating the given billing account'
+    //             })
+    //         } else {
+    //             callback(null);
+    //         }
+    //     }).catch((err) => {
+    //         callback({
+    //             status: 500,
+    //             message: 'Unexpected error when checking the given billing account'
+    //         });
+    //     })
+    // };
 
     const notifyOrder = function(req, callback) {
         const body = req.body;
@@ -710,7 +706,7 @@ const ordering = (function() {
         storeClient.notifyOrder(body, req.user, function(err, res) {
             if (res) {
                 const parsedResp = res.body;
-
+            
                 if (parsedResp.redirectUrl) {
                     req.headers['X-Redirect-URL'] = parsedResp.redirectUrl;
                 }
