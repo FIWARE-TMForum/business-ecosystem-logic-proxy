@@ -43,7 +43,7 @@
             'ProductSpec', 'Asset', 'AssetType', 'Utils', ProductImportController])
 
         .controller('ProductUpdateCtrl', ['$state', '$scope', '$rootScope', 'EVENTS', 'PROMISE_STATUS', 'ProductSpec',
-            'Utils', 'Asset', ProductUpdateController])
+            'Utils', 'Asset', 'ResourceSpec', 'ServiceSpecification', ProductUpdateController])
 
         .controller('ProductUpgradeCtrl', ['$state', '$rootScope', '$element', 'AssetType', 'ProductSpec', 'Utils',
             'EVENTS', ProductUpgradeController])
@@ -1498,7 +1498,7 @@
         });
     }
 
-    function ProductUpdateController($state, $scope, $rootScope, EVENTS, PROMISE_STATUS, ProductSpec, Utils, Asset) {
+    function ProductUpdateController($state, $scope, $rootScope, EVENTS, PROMISE_STATUS, ProductSpec, Utils, Asset, ResourceSpec, ServiceSpecification) {
         /* jshint validthis: true */
         var digital = false;
         var vm = this;
@@ -1521,6 +1521,9 @@
         vm.removeRelationship = removeRelationship;
         vm.loadPictureController = loadPictureController;
 
+        vm.dataRes = []
+        vm.dataServ = []
+
         var detailPromise = ProductSpec.detail($state.params.productId);
         detailPromise.then(
             function(productRetrieved) {
@@ -1539,6 +1542,19 @@
                     }
                     return true;
                 });
+
+                // Load service and resource spec info
+                Promise.all(vm.item.resourceSpecification.map((res) => {
+                    return ResourceSpec.getResourceSpec(res.id)
+                })).then((resources) => {
+                    vm.dataRes = resources
+                })
+
+                Promise.all(vm.item.serviceSpecification.map((serv) => {
+                    return ServiceSpecification.getServiceSpecficiation(serv.id)
+                })).then((services) => {
+                    vm.dataServ = services
+                })
             },
             function(response) {
                 vm.error = Utils.parseError(response, 'The requested product could not be retrieved');
