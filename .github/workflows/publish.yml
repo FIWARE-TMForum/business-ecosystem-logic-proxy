@@ -28,6 +28,8 @@ jobs:
         with:
           context: .
           file: ./docker/Dockerfile
+          build-args: |
+            THEME=https://github.com/Ficodes/bae-dome-theme
           tags: |
             fiware/biz-ecosystem-logic-proxy:${{ steps.get_release.outputs.RELEASE_TAG }}
           push: true
