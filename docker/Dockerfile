@@ -12,7 +12,7 @@ RUN mkdir -p themes && \
     mkdir etc && \
     cp config.js etc/config.js && \
     echo "module.exports = require('./etc/config');" > config.js && \
-    if [[ ! -z "$THEME" ]] ; then cd themes && git clone ${THEME} ; fi
+    if [ ! -z "$THEME" ] ; then cd themes && git clone ${THEME} ; fi
 
 FROM node:18 as main
 
