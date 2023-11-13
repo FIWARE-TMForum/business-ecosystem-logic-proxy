@@ -33,7 +33,6 @@
             'EVENTS',
             ResourceSpecSearchController
         ])
-
         .controller('ResourceSpecCreateCtrl', [
             '$scope',
             '$state',
