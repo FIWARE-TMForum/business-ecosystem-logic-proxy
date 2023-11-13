@@ -33,7 +33,7 @@
 
     function AccountService($q, $resource, URLS, User, Party) {
         var Account = $resource(
-            URLS.BILLING_MANAGEMENT + '/:accountId',
+            URLS.BILLING_MANAGEMENT + 'billingAcount/:accountId',
             {
                 accountId: '@accountId'
             },
