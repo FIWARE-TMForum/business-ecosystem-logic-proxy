@@ -138,8 +138,6 @@
         }
 
 
-        //Está habendo un problema cos datos, hai referencias a algo que non existe
-        //polo tanto da error ao facer get
         function create(data) {
             const deferred = $q.defer();
 
