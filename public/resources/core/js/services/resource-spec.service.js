@@ -35,8 +35,12 @@
             update: { method: 'PATCH' }
         });
 
-        function getResouceSpecs() {
+        function getResouceSpecs(state) {
             const params = {}
+
+            if (state.status) {
+                params.lifecycleStatus = state.status
+            }
 
             return new Promise((resolve, reject) => {
                 resource.query(
