@@ -262,7 +262,6 @@ const catalog = (function() {
     };
 
     const validateOffering = function(req, offeringPath, previousBody, newBody, callback) {
-        console.log('------------ > Validate offering')
         let validStates = null;
         let errorMessageStateProduct = null;
         let errorMessageStateCatalog = null;
@@ -896,33 +895,56 @@ const catalog = (function() {
         let newLifeCycle = assetBody && LIFE_CYCLE in assetBody ? assetBody[LIFE_CYCLE].toLowerCase() : null;
 
         if (newLifeCycle in validatedStates) {
-            retrieveAsset(offeringsPath, function(err, result) {
-                if (err) {
-                    callback({
-                        status: 500,
-                        message: 'Attached offerings cannot be retrieved'
+            // Get catalog offerings from the database
+            const catalogId = offeringsPath.split('/')[3]
+            const query = {
+                catalog: catalogId
+            }
+
+            indexes.search('offering', query)
+                .then((result) => {
+                    let newUrl = '/productOffering?href='
+
+                    if (result.length == 0) {
+                        return callback(null)
+                    }
+
+                    let ids = result.map((hit) => {
+                        return hit.id
+                    })
+
+                    newUrl += ids.join(',')
+
+                    console.log(newUrl)
+                    retrieveAsset(newUrl, function(err, result) {
+                        if (err) {
+                            callback({
+                                status: 500,
+                                message: 'Attached offerings cannot be retrieved'
+                            });
+                        } else {
+                            const offerings = result.body;
+                            let offeringsValid = true;
+
+                            for (let i = 0; i < offerings.length && offeringsValid; i++) {
+                                offeringsValid =
+                                    validatedStates[newLifeCycle]['offeringsValidStates'].indexOf(
+                                        offerings[i][LIFE_CYCLE].toLowerCase()
+                                    ) >= 0;
+                            }
+
+                            if (offeringsValid) {
+                                callback(null);
+                            } else {
+                                callback({
+                                    status: 400,
+                                    message: validatedStates[newLifeCycle]['errorMsg']
+                                });
+                            }
+                        }
                     });
-                } else {
-                    const offerings = result.body;
-                    const offeringsValid = true;
+                })
 
-                    for (let i = 0; i < offerings.length && offeringsValid; i++) {
-                        offeringsValid =
-                            validatedStates[newLifeCycle]['offeringsValidStates'].indexOf(
-                                offerings[i][LIFE_CYCLE].toLowerCase()
-                            ) >= 0;
-                    }
-
-                    if (offeringsValid) {
-                        callback(null);
-                    } else {
-                        callback({
-                            status: 400,
-                            message: validatedStates[newLifeCycle]['errorMsg']
-                        });
-                    }
-                }
-            });
         } else {
             callback(null);
         }
@@ -948,9 +970,6 @@ const catalog = (function() {
                 url = `/productOffering/${parts[parts.length - 1]}`
             }
 
-            console.log('----------------------------------------------------------------------')
-            console.log('----------------------------------------------------------------------')
-            console.log(url)
             retrieveAsset(url, function(err, result) {
                 if (err) {
                     if (err.status === 404) {
@@ -978,7 +997,6 @@ const catalog = (function() {
                     if (categoryPattern.test(req.apiUrl)) {
                         validateCategory(req, parsedBody, previousBody, 'modify', callback);
                     } else if (offeringsPattern.test(req.apiUrl)) {
-                        console.log('Offering ---')
                         validateOffering(req, req.apiUrl, previousBody, parsedBody, (err) => {
                             if (err) {
                                 callback(err)
@@ -1112,7 +1130,6 @@ const catalog = (function() {
         const returnQueryRes = (result) => {
             let newUrl = '/catalog/productOffering?href='
 
-            console.log(JSON.stringify(result))
             if (result.length > 0) {
                 let ids = result.map((hit) => {
                     return hit.id
@@ -1130,8 +1147,6 @@ const catalog = (function() {
         }
 
         if (offeringsPattern.test(req.path) && req.query.relatedParty != null) {
-            console.log('Executing local query')
-
             let query = {
                 relatedParty: req.query.relatedParty
             }
