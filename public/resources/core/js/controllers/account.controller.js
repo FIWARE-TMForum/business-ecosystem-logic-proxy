@@ -251,8 +251,8 @@
                 mediumType: vm.CONTACT_MEDIUM.TELEPHONE_NUMBER.code,
                 preferred: false,
                 characteristic: {
-                    contactType: vm.CONTACT_MEDIUM.TELEPHONE_NUMBER.code,
-                    phoneNumber: '',
+                    contactType: '',
+                    phoneNumber: ''
                 }
             }
             

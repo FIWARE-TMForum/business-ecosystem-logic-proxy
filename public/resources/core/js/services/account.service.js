@@ -33,7 +33,7 @@
 
     function AccountService($q, $resource, URLS, User, Party) {
         var Account = $resource(
-            URLS.BILLING_MANAGEMENT + '/billingAccount/:accountId',
+            URLS.BILLING_MANAGEMENT + '/:accountId',
             {
                 accountId: '@accountId'
             },
@@ -138,8 +138,6 @@
         }
 
 
-        //Está habendo un problema cos datos, hai referencias a algo que non existe
-        //polo tanto da error ao facer get
         function create(data) {
             const deferred = $q.defer();
 
