@@ -46,6 +46,10 @@
 				params.size = search.size
 			}
 
+			if (search.lifecycleStatus) {
+				params.lifecycleStatus = search.lifecycleStatus
+			}
+
 			let promise = new Promise(function(resolve, reject) {
 				resource.query(
 					params,

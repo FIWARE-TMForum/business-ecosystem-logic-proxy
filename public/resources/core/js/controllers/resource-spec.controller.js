@@ -30,9 +30,9 @@
             'DATA_STATUS',
             'ResourceSpec',
             'Utils',
+            'EVENTS',
             ResourceSpecSearchController
         ])
-
         .controller('ResourceSpecCreateCtrl', [
             '$scope',
             '$state',
@@ -51,30 +51,40 @@
             'LIFECYCLE_STATUS',
             'DATA_STATUS',
             'ResourceSpec',
+            'Utils',
             'EVENTS',
             ResourceSpecUpdateController
         ]);
 
-    function ResourceSpecSearchController($scope, $state, $rootScope, LIFECYCLE_STATUS, DATA_STATUS, ResourceSpec, Utils) {
+    function ResourceSpecSearchController($scope, $state, $rootScope, LIFECYCLE_STATUS, DATA_STATUS, ResourceSpec, Utils, EVENTS) {
         this.STATUS = DATA_STATUS
         this.status = DATA_STATUS.LOADING
 
         this.list = []
 
         this.getElementsLength = getElementsLength;
+        this.showFilters = showFilters;
 
         function getElementsLength() {
             return Promise.resolve(10)
         }
 
-        // Get resource specifications
-        ResourceSpec.getResouceSpecs().then((resources) => {
-            this.list = resources
-            this.status = this.STATUS.LOADED
-        }).catch((response) => {
-            this.errorMessage = Utils.parseError(response, 'It was impossible to load the list of resource specs')
-            this.status = this.STATUS.ERROR
-        })
+        function showFilters() {
+            $rootScope.$broadcast(EVENTS.FILTERS_OPENED, LIFECYCLE_STATUS);
+        }
+
+        this.update = () => {
+            // Get resource specifications
+            ResourceSpec.getResouceSpecs($state.params).then((resources) => {
+                this.list = resources
+                this.status = this.STATUS.LOADED
+            }).catch((response) => {
+                this.errorMessage = Utils.parseError(response, 'It was impossible to load the list of resource specs')
+                this.status = this.STATUS.ERROR
+            })
+        }
+
+        this.update();
     }
 
     function characteristicsController(ResourceSpec) {

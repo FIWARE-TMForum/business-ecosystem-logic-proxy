@@ -14,6 +14,6 @@
             span.item-text {{ catalogue.lifecycleStatus }}
         th
           a(ui-sref="stock.catalogue.update({ catalogueId: catalogue.id })", ui-sref-opts="{ inherit: false }") {{ catalogue.name }}
-        td {{ catalogue.getRoleOf(user.id) }}
+        td {{ catalogue.getRoleOf(user.currentUser.partyId) }}
         td
           time(am-time-ago="catalogue.lastUpdate")

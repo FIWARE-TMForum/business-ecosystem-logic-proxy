@@ -27,10 +27,13 @@
 	angular
 		.module('app')
 		.controller('ServiceSpecificationListCtrl', [
-			'$scope',
+			'$state',
+            '$rootScope',
 			'ServiceSpecification',
 			'DATA_STATUS',
 			'Utils',
+            'EVENTS',
+            'LIFECYCLE_STATUS',
 			ServiceSpecificationListController
 		])
 		.controller('ServiceSpecificationCreateCtrl', [
@@ -54,7 +57,7 @@
 			ServiceSpecificationUpdateController
 		])
 
-	function ServiceSpecificationListController($scope, ServiceSpecification, DATA_STATUS, Utils) {
+	function ServiceSpecificationListController($state, $rootScope, ServiceSpecification, DATA_STATUS, Utils, EVENTS, LIFECYCLE_STATUS) {
 		var vm = this;
 
 		vm.STATUS = DATA_STATUS
@@ -64,6 +67,7 @@
 		vm.sidebarInput = '';
 		vm.updateList = updateList;
 		vm.getElementsLength = getElementsLength;
+        vm.showFilters = showFilters;
 
 		function getElementsLength() {
 			return Promise.resolve(10)
@@ -73,11 +77,16 @@
 			vm.list.status = LOADING;
 
 			if (vm.offset >= 0) {
+                const params = $state.params;
 				const page = {
 					offset: vm.offset,
 					size: vm.size,
 					body: vm.sidebarInput
 				};
+
+                if (params.status) {
+                    page.lifecycleStatus = params.status
+                }
 
 				ServiceSpecification.getServiceSpecifications(page).then((itemList) => {
 					angular.copy(itemList, vm.list);
@@ -88,6 +97,10 @@
 				})
 			}
 		}
+
+        function showFilters() {
+            $rootScope.$broadcast(EVENTS.FILTERS_OPENED, LIFECYCLE_STATUS);
+        }
 
         // -
         vm.offset = 0;
