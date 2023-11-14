@@ -64,16 +64,11 @@ const catalog = (function() {
         );
 
         axios.get(uri).then((response) => {
-            if (response.status >= 400) {
-                callback({
-                    status: response.status
-                });
-            } else {
-                callback(null, {
-                    status: response.status,
-                    body: response.data
-                });
-            }
+            callback(null, {
+                status: response.status,
+                body: response.data
+            });
+
         }).catch((err) => {
             callback({
                 status: 500
@@ -83,7 +78,7 @@ const catalog = (function() {
 
     // Retrieves the product belonging to a given offering
     const retrieveProduct = function(productId, callback) {
-        console.log('Getting product ' + productId)
+
         const productPath = `/productSpecification/${productId}`
 
         retrieveAsset(productPath, function(err, response) {
@@ -109,57 +104,55 @@ const catalog = (function() {
     };
 
     const catalogPathFromOfferingUrl = function(offeringUrl) {
-        console.log('==== >' + offeringUrl)
+
 
         const result = offeringUrl.split('/')
-        console.log(result)
-
         return `/catalog/${result[3]}`
     };
 
-    var validateRSModel = function(req, body, callback) {
-        // Someone may have made a PATCH request without body
-        if (body == null) {
-            return callback(null);
-        }
+    // var validateRSModel = function(req, body, callback) {
+    //     // Someone may have made a PATCH request without body
+    //     if (body == null) {
+    //         return callback(null);
+    //     }
 
-        // Check if the provider has been included in the RSS
-        rssClient.createProvider(req.user, function(err) {
-            if (err) {
-                return callback({
-                    status: 500,
-                    message: 'An unexpected error in the RSS API prevented your request to be processed'
-                });
-            }
+    //     // Check if the provider has been included in the RSS
+    //     rssClient.createProvider(req.user, function(err) {
+    //         if (err) {
+    //             return callback({
+    //                 status: 500,
+    //                 message: 'An unexpected error in the RSS API prevented your request to be processed'
+    //             });
+    //         }
 
-            // Check if the productClass has been provided
-            if (body.serviceCandidate && body.serviceCandidate.id) {
-                rssClient.retrieveRSModel(req.user, body.serviceCandidate.id, function(err, res) {
-                    if (err) {
-                        return callback(err);
-                    } else {
-                        // Check if there is a model for the specified product class
-                        var models = JSON.parse(res.body);
-                        if (!models.length) {
-                            return callback({
-                                status: 422,
-                                message: 'The provided productClass does not specify a valid revenue sharing model'
-                            });
-                        }
-                        callback(null);
-                    }
-                });
-            } else {
-                // Include the default product class
-                body.serviceCandidate = {
-                    id: 'defaultRevenue',
-                    name: 'Revenue Sharing Service'
-                };
-                utils.updateBody(req, body);
-                callback(null);
-            }
-        });
-    };
+    //         // Check if the productClass has been provided
+    //         if (body.serviceCandidate && body.serviceCandidate.id) {
+    //             rssClient.retrieveRSModel(req.user, body.serviceCandidate.id, function(err, res) {
+    //                 if (err) {
+    //                     return callback(err);
+    //                 } else {
+    //                     // Check if there is a model for the specified product class
+    //                     var models = JSON.parse(res.body);
+    //                     if (!models.length) {
+    //                         return callback({
+    //                             status: 422,
+    //                             message: 'The provided productClass does not specify a valid revenue sharing model'
+    //                         });
+    //                     }
+    //                     callback(null);
+    //                 }
+    //             });
+    //         } else {
+    //             // Include the default product class
+    //             body.serviceCandidate = {
+    //                 id: 'defaultRevenue',
+    //                 name: 'Revenue Sharing Service'
+    //             };
+    //             utils.updateBody(req, body);
+    //             callback(null);
+    //         }
+    //     });
+    // };
 
     const validateOfferingFields = function(previousBody, newBody) {
         var fixedFields = ['isBundle', 'productSpecification', 'bundledProductOffering'];
@@ -221,9 +214,10 @@ const catalog = (function() {
                 retrieveProduct(asset.productSpecification.id, function(err, result) {
                     var isOwner = false;
                     if (!err) {
-                        var product = JSON.parse(result.body);
+                        const product = result.body;
                         isOwner = tmfUtils.isOwner(req, product);
                     }
+                 
                     hdlrCallback(isOwner);
                 });
             } else {
@@ -262,6 +256,7 @@ const catalog = (function() {
     };
 
     const validateOffering = function(req, offeringPath, previousBody, newBody, callback) {
+
         let validStates = null;
         let errorMessageStateProduct = null;
         let errorMessageStateCatalog = null;
@@ -1005,6 +1000,7 @@ const catalog = (function() {
                     if (categoryPattern.test(req.apiUrl)) {
                         validateCategory(req, parsedBody, previousBody, 'modify', callback);
                     } else if (offeringsPattern.test(req.apiUrl)) {
+
                         validateOffering(req, req.apiUrl, previousBody, parsedBody, (err) => {
                             if (err) {
                                 callback(err)
@@ -1155,6 +1151,7 @@ const catalog = (function() {
         }
 
         if (offeringsPattern.test(req.path) && req.query.relatedParty != null) {
+
             let query = {
                 relatedParty: req.query.relatedParty
             }
@@ -1175,7 +1172,6 @@ const catalog = (function() {
                 .then(returnQueryRes)
 
         } else if (catalogOfferingsPattern.test(req.path)){
-            console.log('Executing catalog search')
             const catalogId = req.path.split('/')[3]
             const query = {
                 catalog: catalogId
@@ -1274,9 +1270,7 @@ const catalog = (function() {
             }
 
             indexObject(req.user.partyId, body, catalog).then(()=>{
-                console.log('Offering indexed')
             }).catch((err)=>{
-                console.log('Indexing error')
                 console.log(err)
             }).finally(() => {
                 storeClient.attachOffering(
@@ -1288,9 +1282,7 @@ const catalog = (function() {
         } else if ((req.method == 'PATCH' || req.method == 'PUT') && offeringPattern.test(req.apiUrl)) {
             body = req.body;
             updateindex(body).then(() => {
-                console.log('Offering indexed')
             }).catch((err) => {
-                console.log('Indexing error')
                 console.log(err)
             }).finally(() => {
                 storeClient.updateOffering(

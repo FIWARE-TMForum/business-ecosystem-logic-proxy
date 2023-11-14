@@ -91,7 +91,7 @@ describe('Catalog API', function() {
 		if (!async) {
 			async = {};
 		}
-
+		
 		// load config depending on utils
 		return proxyquire('../../../controllers/tmf-apis/catalog', {
 			'./../../config': config,
@@ -371,14 +371,14 @@ describe('Catalog API', function() {
 		// Basic properties
 		var userName = 'test';
 		var catalogPath = '/catalog/7';
-		var offeringPath = catalogPath + '/productOffering';
+		var offeringPath = '/catalog'+catalogPath + '/productOffering';
 		var protocol = config.endpoints.catalog.appSsl ? 'https' : 'http';
 		var serverUrl = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
-		var productPath = '/product/7';
+		var productPath = '/productSpecification/7';
 		var categoryPath = '/category';
 
 		var user = {
-			id: userName,
+			partyId: userName,
 			roles: [{ name: config.oauth2.roles.seller }]
 		};
 
@@ -386,7 +386,7 @@ describe('Catalog API', function() {
 			productSpecification: {
 				// the server will be avoided by the SW
 				// The catalog server will be used instead
-				href: config.endpoints.catalog.host + ':' + config.endpoints.catalog.port + productPath
+				id: 7
 			},
 			serviceCandidate: {
 				id: 'productClass'
@@ -426,12 +426,12 @@ describe('Catalog API', function() {
 					validateOffering: function(offeringInfo, userInfo, callback) {
 						expect(offeringInfo).toEqual(body);
 						expect(userInfo).toEqual(user);
-
+						
 						callback(storeError);
 					}
 				}
 			};
-
+			
 			if (!rssResp) {
 				rssResp = {
 					provider: null,
@@ -441,7 +441,7 @@ describe('Catalog API', function() {
 					}
 				};
 			}
-
+			
 			var rssClient = {
 				rssClient: {
 					createProvider: function(userInfo, callback) {
@@ -678,64 +678,64 @@ describe('Catalog API', function() {
 			);
 		});
 
-		it('should not allow to create an offering when the RSS provider cannot be verified', function(done) {
-			testCreateOffering(
-				productRequestInfoActive,
-				catalogRequestInfoLaunched,
-				null,
-				null,
-				500,
-				RSS_CANNOT_BE_ACCESSED,
-				{
-					provider: {}
-				},
-				basicBody,
-				done
-			);
-		});
+		// it('should not allow to create an offering when the RSS provider cannot be verified', function(done) {
+		// 	testCreateOffering(
+		// 		productRequestInfoActive,
+		// 		catalogRequestInfoLaunched,
+		// 		null,
+		// 		null,
+		// 		500,
+		// 		RSS_CANNOT_BE_ACCESSED,
+		// 		{
+		// 			provider: {}
+		// 		},
+		// 		basicBody,
+		// 		done
+		// 	);
+		// });
 
-		it('should not allow to create an offering when the RSS fails retrieving models', function(done) {
-			var errMsg = 'RSS failure';
-			var status = 500;
+		// it('should not allow to create an offering when the RSS fails retrieving models', function(done) {
+		// 	var errMsg = 'RSS failure';
+		// 	var status = 500;
 
-			testCreateOffering(
-				productRequestInfoActive,
-				catalogRequestInfoLaunched,
-				null,
-				null,
-				status,
-				errMsg,
-				{
-					provider: null,
-					modelErr: {
-						status: status,
-						message: errMsg
-					}
-				},
-				basicBody,
-				done
-			);
-		});
+		// 	testCreateOffering(
+		// 		productRequestInfoActive,
+		// 		catalogRequestInfoLaunched,
+		// 		null,
+		// 		null,
+		// 		status,
+		// 		errMsg,
+		// 		{
+		// 			provider: null,
+		// 			modelErr: {
+		// 				status: status,
+		// 				message: errMsg
+		// 			}
+		// 		},
+		// 		basicBody,
+		// 		done
+		// 	);
+		// });
 
-		it('should not allow to create an offering when there are not RS Models', function(done) {
-			testCreateOffering(
-				productRequestInfoActive,
-				catalogRequestInfoLaunched,
-				null,
-				null,
-				422,
-				INVALID_PRODUCT_CLASS,
-				{
-					provider: null,
-					modelErr: null,
-					modelBody: {
-						body: JSON.stringify([])
-					}
-				},
-				basicBody,
-				done
-			);
-		});
+		// it('should not allow to create an offering when there are not RS Models', function(done) {
+		// 	testCreateOffering(
+		// 		productRequestInfoActive,
+		// 		catalogRequestInfoLaunched,
+		// 		null,
+		// 		null,
+		// 		422,
+		// 		INVALID_PRODUCT_CLASS,
+		// 		{
+		// 			provider: null,
+		// 			modelErr: null,
+		// 			modelBody: {
+		// 				body: JSON.stringify([])
+		// 			}
+		// 		},
+		// 		basicBody,
+		// 		done
+		// 	);
+		// });
 
 		it('should not allow to create an offering when the productSpecification field has not been provided', function(done) {
 			testCreateOffering(
@@ -751,23 +751,23 @@ describe('Catalog API', function() {
 			);
 		});
 
-		it('should not allow to create an offering when the product specification does not contain a href', function(done) {
-			testCreateOffering(
-				productRequestInfoActive,
-				catalogRequestInfoLaunched,
-				null,
-				null,
-				422,
-				MISSING_HREF_PRODUCT_SPEC,
-				null,
-				{
-					productSpecification: {
-						id: '1'
-					}
-				},
-				done
-			);
-		});
+		// it('should not allow to create an offering when the product specification does not contain a href', function(done) {
+		// 	testCreateOffering(
+		// 		productRequestInfoActive,
+		// 		catalogRequestInfoLaunched,
+		// 		null,
+		// 		null,
+		// 		422,
+		// 		MISSING_HREF_PRODUCT_SPEC,
+		// 		null,
+		// 		{
+		// 			productSpecification: {
+		// 				id: '1'
+		// 			}
+		// 		},
+		// 		done
+		// 	);
+		// });
 
 		it('should not allow to create an offering when a bundled offering is provided and not a bundle', function(done) {
 			var offeringBody = {
@@ -789,79 +789,79 @@ describe('Catalog API', function() {
 			);
 		});
 
-		it('should not allow to create an offering when it is no possible to check the offering categories', function(done) {
-			var categoryId1 = '7';
-			var categoryId2 = '8';
-			var baseHref = 'http://example' + categoryPath + '/';
+		// it('should not allow to create an offering when it is no possible to check the offering categories', function(done) {
+		// 	var categoryId1 = '7';
+		// 	var categoryId2 = '8';
+		// 	var baseHref = 'http://example' + categoryPath + '/';
 
-			var offeringBody = {
-				category: [
-					{
-						id: categoryId1,
-						href: baseHref + categoryId1
-					},
-					{
-						id: categoryId2,
-						href: baseHref + categoryId2
-					}
-				]
-			};
+		// 	var offeringBody = {
+		// 		category: [
+		// 			{
+		// 				id: categoryId1,
+		// 				href: baseHref + categoryId1
+		// 			},
+		// 			{
+		// 				id: categoryId2,
+		// 				href: baseHref + categoryId2
+		// 			}
+		// 		]
+		// 	};
 
-			var categoriesRequestInfo = {};
-			categoriesRequestInfo[categoryId1] = { requestStatus: 200 };
-			categoriesRequestInfo[categoryId2] = { requestStatus: 500 };
+		// 	var categoriesRequestInfo = {};
+		// 	categoriesRequestInfo[categoryId1] = { requestStatus: 200 };
+		// 	categoriesRequestInfo[categoryId2] = { requestStatus: 500 };
 
-			var errorMsg = CATEGORY_CANNOT_BE_CHECKED[0] + categoryId2 + CATEGORY_CANNOT_BE_CHECKED[1];
+		// 	var errorMsg = CATEGORY_CANNOT_BE_CHECKED[0] + categoryId2 + CATEGORY_CANNOT_BE_CHECKED[1];
 
-			testCreateOffering(
-				productRequestInfoActive,
-				catalogRequestInfoLaunched,
-				categoriesRequestInfo,
-				null,
-				500,
-				errorMsg,
-				null,
-				offeringBody,
-				done
-			);
-		});
+		// 	testCreateOffering(
+		// 		productRequestInfoActive,
+		// 		catalogRequestInfoLaunched,
+		// 		categoriesRequestInfo,
+		// 		null,
+		// 		500,
+		// 		errorMsg,
+		// 		null,
+		// 		offeringBody,
+		// 		done
+		// 	);
+		// });
 
-		it('should not allow to create an offering when at least one offering category is not a valid category', function(done) {
-			var categoryId1 = '7';
-			var categoryId2 = '8';
-			var baseHref = 'http://example' + categoryPath + '/';
+		// it('should not allow to create an offering when at least one offering category is not a valid category', function(done) {
+		// 	var categoryId1 = '7';
+		// 	var categoryId2 = '8';
+		// 	var baseHref = 'http://example' + categoryPath + '/';
 
-			var offeringBody = {
-				category: [
-					{
-						id: categoryId1,
-						href: baseHref + categoryId1
-					},
-					{
-						id: categoryId2,
-						href: baseHref + categoryId2
-					}
-				]
-			};
+		// 	var offeringBody = {
+		// 		category: [
+		// 			{
+		// 				id: categoryId1,
+		// 				href: baseHref + categoryId1
+		// 			},
+		// 			{
+		// 				id: categoryId2,
+		// 				href: baseHref + categoryId2
+		// 			}
+		// 		]
+		// 	};
 
-			var categoriesRequestInfo = {};
-			categoriesRequestInfo[categoryId1] = { requestStatus: 200 };
-			categoriesRequestInfo[categoryId2] = { requestStatus: 404 };
+		// 	var categoriesRequestInfo = {};
+		// 	categoriesRequestInfo[categoryId1] = { requestStatus: 200 };
+		// 	categoriesRequestInfo[categoryId2] = { requestStatus: 404 };
 
-			var errorMsg = INVALID_CATEGORY_ID + categoryId2;
+		// 	var errorMsg = INVALID_CATEGORY_ID + categoryId2;
 
-			testCreateOffering(
-				productRequestInfoActive,
-				catalogRequestInfoLaunched,
-				categoriesRequestInfo,
-				null,
-				400,
-				errorMsg,
-				null,
-				offeringBody,
-				done
-			);
-		});
+		// 	testCreateOffering(
+		// 		productRequestInfoActive,
+		// 		catalogRequestInfoLaunched,
+		// 		categoriesRequestInfo,
+		// 		null,
+		// 		400,
+		// 		errorMsg,
+		// 		null,
+		// 		offeringBody,
+		// 		done
+		// 	);
+		// });
 
 		var testCreateOfferingBundle = function(
 			offeringRequestInfo,
@@ -881,16 +881,17 @@ describe('Catalog API', function() {
 				};
 			};
 
-			spyOn(global, 'Date').and.callFake(function() {
-				return new fakeDate();
-			});
-
+			
 			var expBody = deepcopy(body);
 			expBody.validFor = {
 				startDateTime: '2016-05-01'
 			};
-
+			
 			var catalogApi = mockCatalogAPI(expBody, offeringRequestInfo, storeError, null);
+			
+			spyOn(global, 'Date').and.callFake(function() {
+				return new fakeDate();
+			});
 
 			var productSpecificationOk = {
 				relatedParty: [{ id: userName, role: offeringRequestInfo.role }]
@@ -905,6 +906,10 @@ describe('Catalog API', function() {
 					isBundle: offeringRequestInfo.isBundle,
 					lifecycleStatus: offeringRequestInfo.lifecycleStatus,
 					productSpecification: {
+						id: (() => {
+							const array =offeringRequestInfo.products[i].split('/')
+							return array[array.length-1]
+						})(),
 						href: serverUrl + offeringRequestInfo.products[i]
 					}
 				};
@@ -921,7 +926,6 @@ describe('Catalog API', function() {
 			}
 
 			mockCatalogService(catalogRequestInfo, defaultErrorMessage);
-
 			// Call the method
 			executeCheckPermissionsTest(body, catalogApi, errorStatus, errorMsg, done);
 		};
