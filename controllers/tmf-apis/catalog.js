@@ -876,6 +876,36 @@ const catalog = (function() {
     /////////////////////////////////////////// UPDATE ///////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
 
+    const validateElemOfferings = function(newUrl, newLifeCycle, validatedStates, callback) {
+        retrieveAsset(newUrl, function(err, result) {
+            if (err) {
+                callback({
+                    status: 500,
+                    message: 'Attached offerings cannot be retrieved'
+                });
+            } else {
+                const offerings = result.body;
+                let offeringsValid = true;
+
+                for (let i = 0; i < offerings.length && offeringsValid; i++) {
+                    offeringsValid =
+                        validatedStates[newLifeCycle]['offeringsValidStates'].indexOf(
+                            offerings[i][LIFE_CYCLE].toLowerCase()
+                        ) >= 0;
+                }
+
+                if (offeringsValid) {
+                    callback(null);
+                } else {
+                    callback({
+                        status: 400,
+                        message: validatedStates[newLifeCycle]['errorMsg']
+                    });
+                }
+            }
+        });
+    }
+
     const validateInvolvedOfferingsState = function(assertType, assetBody, offeringsPath, callback) {
         // For each state to be validated, this map contains the list of valid states of the offerings
         // attached to the asset whose state is going to be changed and the message to be returned
@@ -894,8 +924,10 @@ const catalog = (function() {
 
         let newLifeCycle = assetBody && LIFE_CYCLE in assetBody ? assetBody[LIFE_CYCLE].toLowerCase() : null;
 
-        if (newLifeCycle in validatedStates) {
+        if (newLifeCycle in validatedStates && assertType == 'catalog') {
             // Get catalog offerings from the database
+            console.log(offeringsPath)
+
             const catalogId = offeringsPath.split('/')[3]
             const query = {
                 catalog: catalogId
@@ -914,37 +946,13 @@ const catalog = (function() {
                     })
 
                     newUrl += ids.join(',')
-
-                    console.log(newUrl)
-                    retrieveAsset(newUrl, function(err, result) {
-                        if (err) {
-                            callback({
-                                status: 500,
-                                message: 'Attached offerings cannot be retrieved'
-                            });
-                        } else {
-                            const offerings = result.body;
-                            let offeringsValid = true;
-
-                            for (let i = 0; i < offerings.length && offeringsValid; i++) {
-                                offeringsValid =
-                                    validatedStates[newLifeCycle]['offeringsValidStates'].indexOf(
-                                        offerings[i][LIFE_CYCLE].toLowerCase()
-                                    ) >= 0;
-                            }
-
-                            if (offeringsValid) {
-                                callback(null);
-                            } else {
-                                callback({
-                                    status: 400,
-                                    message: validatedStates[newLifeCycle]['errorMsg']
-                                });
-                            }
-                        }
-                    });
+                    validateElemOfferings(newUrl, newLifeCycle, validatedStates, callback)
                 })
 
+        } else if (newLifeCycle in validatedStates && assertType == 'product') {
+            let newUrl = offeringsPath.replace('/catalog/', '')
+            console.log(newUrl);
+            validateElemOfferings(newUrl, newLifeCycle, validatedStates, callback)
         } else {
             callback(null);
         }
