@@ -269,84 +269,22 @@ const ordering = (function() {
             });
         });
 
-        if (!customerItem) {
-            utils.updateBody(req, body)
-            callback(null)
-            //checkBillingAccounts(req, body, callback);
-        } else {
+        if (customerItem) {
             return callback({
                 status: 403,
                 message: 'You cannot acquire your own offering'
             });
         }
+
+        if (!body.billingAccount || !body.billingAccount.id) {
+            return callback({
+                status: 422,
+                message: 'Billing Account is required'
+            });
+        }
+
+        callback(null)
     };
-
-    // const checkBillingAccounts = function(req, ordering, callback) {
-    //     // PLEASE NOTE: Billing account cannot be updated till the ordering has been created
-
-    //     // Check that all the billing accounts for all the items are the same
-    //     var initialBillingAccount;
-
-    //     if (ordering.productOrderItem[0].billingAccount && ordering.productOrderItem[0].billingAccount.length) {
-    //         initialBillingAccount = ordering.productOrderItem[0].billingAccount[0];
-    //     }
-        
-    //     if (!initialBillingAccount || !initialBillingAccount.href) {
-    //         return callback({
-    //             status: 422,
-    //             message: 'Billing Account is required'
-    //         });
-    //     }
-
-    //     var error = false;
-
-    //     for (var i = 1; i < ordering.productOrderItem.length && !error; i++) {
-    //         error =
-    //             !ordering.productOrderItem[i].billingAccount ||
-    //             !ordering.productOrderItem[i].billingAccount.length ||
-    //             !equal(initialBillingAccount, ordering.productOrderItem[i].billingAccount[0]);
-    //     }
-
-    //     if (error) {
-    //         return callback({
-    //             status: 422,
-    //             message: 'Billing Accounts must be the same for all the order items contained in the ordering'
-    //         });
-    //     }
-
-    //     // Verify that the billing account exists and that the user is the owner of that billing account
-    //     const billingAccountUrl = getBillingAccountUrl(initialBillingAccount);
-
-    //     axios.get(billingAccountUrl).then((response) => {
-    //         if (response.status === 200) {
-    //             const billingAccount = response.data;
-
-    //             if (tmfUtils.hasPartyRole(req, billingAccount.relatedParty, config.billingAccountOwnerRole)) {
-    //                 callback(null);
-    //             } else {
-    //                 callback({
-    //                     status: 403,
-    //                     message: 'Unauthorized to use non-owned billing accounts'
-    //                 });
-    //             }
-    //         } else if (response.statusCode === 404) {
-    //             callback({
-    //                 status: 422,
-    //                 message: 'The given billing account does not exist'
-    //             });
-    //         } else {
-    //             callback({
-    //                 status: 500,
-    //                 message: 'There was an unexpected error at the time of retrieving the provided billing account'
-    //             });
-    //         }
-    //     }).catch((err) => {
-    //         callback({
-    //             status: 500,
-    //             message: 'There was an unexpected error at the time of retrieving the provided billing account'
-    //         });
-    //     })
-    // };
 
     //////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////////// UPDATE ///////////////////////////////////////////

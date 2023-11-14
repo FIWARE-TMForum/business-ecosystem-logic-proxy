@@ -22,32 +22,32 @@ ui-view
                     span #{ __("Enter a note") }
                     small.text-muted (#{ __("optional") })
                   textarea.form-control(rows="3", name="note", ng-model="orderVM.note.text")
-            //- .row
-            //-   .col-xs-12
-            //-     .form-group(ng-controller="BillingAccountSearchCtrl as searchVM")
-            //-       label
-            //-         span #{ __("Choose a billing address") }
-            //-       input(type="hidden" ng-model="orderVM.billingAccount.id" required)
-            //-       .alert.alert-danger.text-center(ng-if="searchVM.status === 'ERROR'")
-            //-         span {{ searchVM.errorMessage }}
-            //-       .alert.alert-warning.text-center(ng-if="searchVM.status === 'LOADED' && !searchVM.list.length")
-            //-         span #{ __("You should first create at least a billing address in order to checkout an order.  ") }
-            //-         a(ui-sref="settings.contact.shipping") #{ __("Click here.") }
-            //-       .container-spinner(ng-if="searchVM.status === 'LOADING'")
-            //-         span.fa.fa-spinner.fa-spin.fa-2x
-            //-       .table-responsive(ng-if="searchVM.status === 'LOADED' && searchVM.list.length")
-            //-         table.table.table-bordered.table-hover.table-selectable(ng-init="orderVM.setBillingAccount(searchVM.list[0])")
-            //-           thead
-            //-             tr
-            //-               th #{ __("Email address") }
-            //-               th #{ __("Postal address") }
-            //-               th #{ __("Telephone number") }
-            //-           tbody
-            //-             tr(ng-repeat="billingAccount in searchVM.list" ng-click="orderVM.setBillingAccount(billingAccount)" ng-class="{ 'active': orderVM.billingAccount.id == billingAccount.id }")
-            //-               td {{ billingAccount.getEmailAddress().toString() }}
-            //-               td
-            //-                 span(style="white-space: pre-line;") {{ billingAccount.getPostalAddress().toString() }}
-            //-               td {{ billingAccount.getTelephoneNumber().toString() }}
+            .row
+              .col-xs-12
+                .form-group(ng-controller="AccountSearchCtrl as searchVM")
+                  label
+                    span #{ __("Choose a billing address") }
+                  input(type="hidden" ng-model="orderVM.billingAccount.id" required)
+                  .alert.alert-danger.text-center(ng-if="searchVM.status === 'ERROR'")
+                    span {{ searchVM.errorMessage }}
+                  .alert.alert-warning.text-center(ng-if="searchVM.status === 'LOADED' && !searchVM.list.length")
+                    span #{ __("You should first create at least a billing address in order to checkout an order.  ") }
+                    a(ui-sref="settings.contact.shipping") #{ __("Click here.") }
+                  .container-spinner(ng-if="searchVM.status === 'LOADING'")
+                    span.fa.fa-spinner.fa-spin.fa-2x
+                  .table-responsive(ng-if="searchVM.status === 'LOADED' && searchVM.list.length")
+                    table.table.table-bordered.table-hover.table-selectable(ng-init="orderVM.setBillingAccount(searchVM.list[0])")
+                      thead
+                        tr
+                          th #{ __("Email address") }
+                          th #{ __("Postal address") }
+                          th #{ __("Telephone number") }
+                      tbody
+                        tr(ng-repeat="billingAccount in searchVM.list" ng-click="orderVM.setBillingAccount(billingAccount)" ng-class="{ 'active': orderVM.billingAccount.id == billingAccount.id }")
+                          td {{ billingAccount.serializeEmailAddress() }}
+                          td
+                            span(style="white-space: pre-line;") {{ billingAccount.serializePostalAddress() }}
+                          td {{ billingAccount.serializeTelephoneNumber() }}
             .row
               .col-xs-12
                 .h4.text-dark-secondary
