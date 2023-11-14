@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 - 2018 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -17,13 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-//const { relativeTimeRounding } = require("moment/moment");
-
-/**
- * @author Francisco de la Vega <fdelavega@conwet.com>
- *         Jaime Pajuelo <jpajuelo@conwet.com>
- *         Aitor Magán <amagan@conwet.com>
- */
 (function() {
     'use strict';
 

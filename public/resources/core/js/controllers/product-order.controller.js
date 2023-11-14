@@ -424,16 +424,14 @@
                 vm.note.text = '';
             }
 
+            apiInfo.billingAccount = vm.billingAccount.serialize()
+
             for (var i = 0; i < apiInfo.productOrderItem.length; i++) {
                 delete apiInfo.productOrderItem[i].productOffering.name;
-                //if (!apiInfo.productOrderItem[i].product.productCharacteristic.length) {
-                //    apiInfo.productOrderItem[i].product.productCharacteristic.push({});
-                //}
-                //apiInfo.productOrderItem[i].billingAccount = [vm.billingAccount.serialize()];
             }
 
             apiInfo.orderDate = new Date();
-            //apiInfo.notificationContact = vm.billingAccount.getEmailAddress().toString();
+            apiInfo.notificationContact = vm.billingAccount.serializeEmailAddress();
 
             ProductOrder.create(apiInfo).then(
                 function(orderCreated) {
