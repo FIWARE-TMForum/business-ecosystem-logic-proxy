@@ -283,6 +283,7 @@ const ordering = (function() {
             });
         }
 
+        utils.updateBody(req, body)
         callback(null)
     };
 
