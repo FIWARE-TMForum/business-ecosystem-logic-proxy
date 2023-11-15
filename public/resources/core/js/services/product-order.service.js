@@ -218,8 +218,9 @@
                     // Remove empty characteristics
                     productOrder.productOrderItem.forEach(function(item) {
                         if (
-                            item.product.productCharacteristic.length === 1 &&
-                            Object.keys(item.product.productCharacteristic[0]).length === 0
+                            item.product.productCharacteristic == null ||
+                            (item.product.productCharacteristic.length === 1 &&
+                            Object.keys(item.product.productCharacteristic[0]).length === 0)
                         ) {
                             item.product.productCharacteristic = [];
                         }

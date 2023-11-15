@@ -65,6 +65,13 @@ const inventory = (function() {
                 status: 403,
                 message: 'You are not authorized to retrieve the specified product from the inventory'
             });
+        } else if (Array.isArray(body)) {
+            // TODO: This filter should be done by API itself
+            const newBody = body.filter((product) => {
+                return tmfUtils.hasPartyRole(req, product.relatedParty, 'customer')
+            })
+            utils.updateResponseBody(req, newBody)
+            callback(null)
         } else {
             callback(null);
         }
