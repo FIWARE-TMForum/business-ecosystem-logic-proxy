@@ -373,7 +373,7 @@
 
             if (priceplans && priceplans.length) {
                 priceplan = priceplans[0];
-                result = priceplan.price.amount + ' ' + priceplan.price.currency;
+                result = priceplan.price.taxIncludedAmount.value + ' ' + priceplan.price.taxIncludedAmount.unit;
                 switch (priceplan.priceType) {
                     case Offering.TYPES.PRICE.RECURRING:
                         result += ' / ' + priceplan.recurringChargePeriod;
