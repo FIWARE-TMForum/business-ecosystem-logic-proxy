@@ -157,6 +157,18 @@ config.endpoints = {
         port: '8635',
         appSsl: false
     },
+    serviceInventory: {
+        path: 'serviceInventory',
+        host: 'charging.docker',
+        port: '8006',
+        appSsl: false
+    },
+    resourceInventory: {
+        path: 'resourceInventory',
+        host: 'host.docker.internal',
+        port: '8641',
+        appSsl: false
+    },
     charging: {
         path: 'charging',
         host: 'charging.docker',
@@ -410,6 +422,24 @@ config.endpoints.inventory.host = process.env.BAE_LP_ENDPOINT_INVENTORY_HOST || 
 
 if (!!process.env.BAE_LP_ENDPOINT_INVENTORY_SECURED) {
 	config.endpoints.inventory.appSsl = process.env.BAE_LP_ENDPOINT_INVENTORY_SECURED == 'true';
+}
+
+// Service Inventory
+config.endpoints.inventory.path = process.env.BAE_LP_ENDPOINT_SERVICE_INVENTORY_PATH || config.endpoints.inventory.path;
+config.endpoints.inventory.port = process.env.BAE_LP_ENDPOINT_SERVICE_INVENTORY_PORT || config.endpoints.inventory.port;
+config.endpoints.inventory.host = process.env.BAE_LP_ENDPOINT_SERVICE_INVENTORY_HOST || config.endpoints.inventory.host;
+
+if (!!process.env.BAE_LP_ENDPOINT_SERVICE_INVENTORY_SECURED) {
+	config.endpoints.inventory.appSsl = process.env.BAE_LP_ENDPOINT_SERVICE_INVENTORY_SECURED == 'true';
+}
+
+// Resource Intentory
+config.endpoints.inventory.path = process.env.BAE_LP_ENDPOINT_RESOURCE_INVENTORY_PATH || config.endpoints.inventory.path;
+config.endpoints.inventory.port = process.env.BAE_LP_ENDPOINT_RESOURCE_INVENTORY_PORT || config.endpoints.inventory.port;
+config.endpoints.inventory.host = process.env.BAE_LP_ENDPOINT_RESOURCE_INVENTORY_HOST || config.endpoints.inventory.host;
+
+if (!!process.env.BAE_LP_ENDPOINT_RESOURCE_INVENTORY_SECURED) {
+	config.endpoints.inventory.appSsl = process.env.BAE_LP_ENDPOINT_RESOURCE_INVENTORY_SECURED == 'true';
 }
 
 // Charging

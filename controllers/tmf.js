@@ -24,6 +24,8 @@ const config = require('./../config')
 // TMF APIs
 const catalog = require('./tmf-apis/catalog').catalog
 const inventory = require('./tmf-apis/inventory').inventory
+const serviceInventory = require('./tmf-apis/serviceInventory').serviceInventory
+const resourceInventory = require('./tmf-apis/resourceInventory').resourceInventory
 const ordering = require('./tmf-apis/ordering').ordering
 const charging = require('./tmf-apis/charging').charging
 const rss = require('./tmf-apis/rss').rss
@@ -44,6 +46,8 @@ function tmf() {
 	apiControllers[config.endpoints.catalog.path] = catalog;
 	apiControllers[config.endpoints.ordering.path] = ordering;
 	apiControllers[config.endpoints.inventory.path] = inventory;
+	apiControllers[config.endpoints.serviceInventory.path] = serviceInventory;
+	apiControllers[config.endpoints.resourceInventory.path] = resourceInventory;
 	apiControllers[config.endpoints.charging.path] = charging;
 	apiControllers[config.endpoints.rss.path] = rss;
 	apiControllers[config.endpoints.party.path] = party;
@@ -53,7 +57,7 @@ function tmf() {
 	apiControllers[config.endpoints.service.path] = serviceCatalog;
 	apiControllers[config.endpoints.resource.path] = resource;
 
-	const newApis = ['party', 'catalog', 'ordering', 'inventory', 'service', 'resource', 'account']
+	const newApis = ['party', 'catalog', 'ordering', 'inventory', 'service', 'resource', 'account', 'serviceInventory', 'resourceInventory']
 
 	const getAPIName = function(apiUrl) {
 		return apiUrl.split('/')[1];

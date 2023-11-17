@@ -68,6 +68,8 @@ let jsAppFilesToInject = [
     'services/product-order.service',
     'services/shopping-cart.service',
     'services/inventory-product.service',
+    'services/inventory-resource.service',
+    'services/inventory-service.service',
     'services/utils.service',
     'services/party.individual.service',
     'services/billing-account.service',
@@ -97,6 +99,8 @@ let jsAppFilesToInject = [
     'controllers/product-order.controller',
     'controllers/message.controller',
     'controllers/inventory-product.controller',
+    'controllers/inventory-resource.controller',
+    'controllers/inventory-service.controller',
     'controllers/unauthorized.controller',
     'controllers/party.individual.controller',
     'controllers/party.contact-medium.controller',
@@ -110,6 +114,8 @@ let jsAppFilesToInject = [
     'routes/inventory.routes',
     'routes/inventory.product-order.routes',
     'routes/inventory.product.routes',
+    'routes/inventory.resource.routes',
+    'routes/inventory.service.routes',
     'routes/shopping-cart.routes',
     'routes/unauthorized.routes'
 ].map(function(path) {
