@@ -1,5 +1,7 @@
-/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 CoNWeT Lab., Universidad Politécnica de Madrid
  *
+ * Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
+ * 
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
  *
@@ -55,6 +57,8 @@
             'USAGE_CHART_URL',
             'BillingAccount',
             'Download',
+            'ResourceInventory',
+            'ServiceInventory',
             ProductDetailController
         ]);
 
@@ -133,7 +137,7 @@
 
     function ProductDetailController(
         $rootScope, $scope, $state, InventoryProduct, Utils, ProductSpec, EVENTS, $interval,
-        $window, LOGGED_USER, USAGE_CHART_URL, BillingAccount, Download) {
+        $window, LOGGED_USER, USAGE_CHART_URL, BillingAccount, Download, ResourceInventory, ServiceInventory) {
 
         /* Rating stuff */
         $scope.rating = 0;
@@ -219,6 +223,9 @@
         vm.password = "";
         vm.refreshToken = "";
         vm.sla = "";
+
+        vm.resources = []
+        vm.services = []
     
         function tokenSupported() {
             // To be updated when functionality available in Charging backend
@@ -251,6 +258,8 @@
 
             getSla(productRetrieved.productOffering.id);
             getCurrentOwnRating(productRetrieved.productOffering.id);
+            getResources(productRetrieved);
+            getServices(productRetrieved);
 
             // Retrieve existing charges
             BillingAccount.searchCharges(vm.item.id).then(function(charges) {
@@ -274,6 +283,30 @@
                 vm.item.loadStatus = ERROR;
             }
         );
+
+        function getResources(product) {
+            if (product.realizingResource) {
+                Promise.all(product.realizingResource.map((res) => {
+                    return ResourceInventory.detail(res.id)
+                })).then((resources) => {
+                    vm.resources = resources
+                })
+            }
+        }
+
+        function getServices(product) {
+            if (product.productCharacteristic) {
+                const service_chars = product.productCharacteristic.filter((serv) => {
+                    return serv.name.toLowerCase() == 'service'
+                })
+
+                Promise.all(service_chars.map((serv) => {
+                    return ServiceInventory.detail(serv.value)
+                })).then((services) => {
+                    vm.services = services
+                })
+            }
+        }
 
         function checkOfferingProduct(offering) {
             var characteristics = offering.productSpecification.productSpecCharacteristic;
