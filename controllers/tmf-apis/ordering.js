@@ -544,7 +544,6 @@ const ordering = (function() {
         } else {
             orderings = body;
         }
-        
 
         // This array is needed as the length of the array cannot be modified while it's being iterated
         const orderingsToRemove = [];
@@ -588,55 +587,26 @@ const ordering = (function() {
         }
     };
 
-    // const includeSellersInBillingAccount = function(req, callback) {
-    //     // PLEASE NOTE: Billing Accounts have been checked in the checkPermissions step.
+    const filterOrders = function(req, callback) {
+        const body = req.body
 
-    //     const ordering = JSON.parse(req.body);
-    //     const billingAccountUrl = getBillingAccountUrl(ordering.productOrderItem[0].billingAccount[0]);
+        if (!Array.isArray(body)) {
+            return callback(null)
+        }
 
-    //     axios.get(billingAccountUrl).then((response) => {
-    //         if (response.statusCode === 200) {
-    //             const billingAccount = response.data;
-    //             const billingAccountRelatedParties = billingAccount.relatedParty;
-    //             const currentUsers = [];
+        let role = CUSTOMER
 
-    //             billingAccountRelatedParties.forEach(function(party) {
-    //                 currentUsers.push(party.id);
-    //             });
+        if (req.query['relatedParty.role'] != null && req.query['relatedParty.role'] == SELLER) {
+            role = SELLER
+        }
 
-    //             ordering.relatedParty.forEach(function(party) {
-    //                 if (currentUsers.indexOf(party.id) < 0) {
-    //                     billingAccountRelatedParties.push({
-    //                         id: party.id,
-    //                         href: party.href,
-    //                         role: 'bill responsible'
-    //                     });
-    //                 }
-    //             });
+        const orders = body.filter((order) => {
+            return tmfUtils.hasPartyRole(req, order.relatedParty, role);
+        })
 
-    //             return axios.patch(billingAccountUrl, { relatedParty: billingAccountRelatedParties })
-    //         } else {
-    //             callback({
-    //                 status: 500,
-    //                 message: 'Unexpected error when checking the given billing account'
-    //             });
-    //         }
-    //     }).then((response) => {
-    //         if (response.status >= 400) {
-    //             callback({
-    //                 status: 500,
-    //                 message: 'Unexpected error when updating the given billing account'
-    //             })
-    //         } else {
-    //             callback(null);
-    //         }
-    //     }).catch((err) => {
-    //         callback({
-    //             status: 500,
-    //             message: 'Unexpected error when checking the given billing account'
-    //         });
-    //     })
-    // };
+        utils.updateResponseBody(req, orders)
+        callback(null)
+    }
 
     const notifyOrder = function(req, callback) {
         const body = req.body;
@@ -659,7 +629,14 @@ const ordering = (function() {
 
     const executePostValidation = function(req, callback) {
         if (['GET', 'PUT', 'PATCH'].indexOf(req.method.toUpperCase()) >= 0) {
-            filterOrderItems(req, callback);
+            filterOrderItems(req, (err) => {
+                if (req.method.toUpperCase() != 'GET' || err != null) {
+                    callback(err)
+                } else {
+                    // Filter results
+                    filterOrders(req, callback)
+                }
+            });
         } else if (req.method === 'POST') {
             const tasks = [];
             tasks.push(notifyOrder.bind(this, req));

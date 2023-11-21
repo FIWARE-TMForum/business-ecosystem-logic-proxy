@@ -62,6 +62,9 @@
 
         this.list = []
 
+        this.offset = 0
+        this.limit = -1
+
         this.getElementsLength = getElementsLength;
         this.showFilters = showFilters;
 
@@ -75,6 +78,12 @@
 
         this.update = () => {
             // Get resource specifications
+            this.status = DATA_STATUS.LOADING
+            const params = $state.params
+
+            params.offset = this.offset
+            params.limit = this.limit
+
             ResourceSpec.getResouceSpecs($state.params).then((resources) => {
                 this.list = resources
                 this.status = this.STATUS.LOADED
@@ -84,7 +93,9 @@
             })
         }
 
-        this.update();
+        $scope.$watch(() => {
+            return this.offset;
+        }, this.update.bind(this));
     }
 
     function characteristicsController(ResourceSpec) {

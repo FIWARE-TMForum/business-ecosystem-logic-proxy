@@ -426,6 +426,8 @@ var renderTemplate = function(req, res, viewName) {
         serviceCatalogPath: config.endpoints.service.path,
         orderingPath: config.endpoints.ordering.path,
         inventoryPath: config.endpoints.inventory.path,
+        resourceInventoryPath: config.endpoints.resourceInventory.path,
+        serviceInventoryPath: config.endpoints.serviceInventory.path,
         chargingPath: config.endpoints.charging.path,
         partyPath: config.endpoints.party.path,
         billingPath: config.endpoints.account.path,

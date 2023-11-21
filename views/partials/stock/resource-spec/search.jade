@@ -13,6 +13,6 @@ ui-view
         .alert.alert-info.text-center
           span #{ __("No resource specifications found.") }
       div(ng-switch-default)
-          include ./search-list.jade
+        include ./search-list.jade
     .col-xs-12
-      pager(controller="searchVM", size="12", max="12")
+      pager(controller="searchVM", size="15", max="12")

@@ -107,7 +107,7 @@
         function getElementsLength() {
             // Count apllies filters such as body
             //return Catalogue.count({ body: vm.sidebarInput });
-            return Promise.resolve(10)
+            return Promise.resolve(1000)
         }
 
         $scope.$watch(function() {
@@ -195,7 +195,7 @@
         function getElementsLength() {
             //var params = getParams();
             //return Catalogue.count(params);
-            return Promise.resolve(10)
+            return Promise.resolve(1000)
         }
 
         function launchSearch() {

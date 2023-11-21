@@ -1163,6 +1163,14 @@ const catalog = (function() {
                 query.lifecycleStatus = req.query.lifecycleStatus
             }
 
+            if (req.query.offset != null) {
+                query.offset = req.query.offset
+            }
+
+            if (req.query.limit != null) {
+                query.limit = req.query.limit
+            }
+
             indexes.search('offering', query)
                 .then(returnQueryRes)
 

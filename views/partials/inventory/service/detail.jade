@@ -1,0 +1,11 @@
+.row
+  .col-xs-12
+    include ./breadcrumb.jade
+.row(ng-switch="detailVM.item.loadStatus")
+  .col-xs-12(ng-switch-when="LOADED")
+    include ./detail-content.jade
+  .col-xs-12(ng-switch-when="ERROR")
+    .alert.alert-danger.text-center {{ detailVM.error }}
+  .col-xs-12(ng-switch-default)
+    .container-spinner
+      span.fa.fa-spinner.fa-spin.fa-2x

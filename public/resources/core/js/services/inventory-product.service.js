@@ -1,5 +1,7 @@
-/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 CoNWeT Lab., Universidad Politécnica de Madrid
  *
+ * Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
+ * 
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
  *
@@ -142,8 +144,9 @@
                 params,
                 function(productRetrieved) {
                     if (
-                        productRetrieved.productCharacteristic.length === 1 &&
-                        Object.keys(productRetrieved.productCharacteristic[0]).length === 0
+                        productRetrieved.productCharacteristic == null ||
+                        (productRetrieved.productCharacteristic.length === 1 &&
+                        Object.keys(productRetrieved.productCharacteristic[0]).length === 0)
                     ) {
                         productRetrieved.productCharacteristic = [];
                     }

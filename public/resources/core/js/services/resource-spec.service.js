@@ -42,6 +42,14 @@
                 params.lifecycleStatus = state.status
             }
 
+            if (state.offset) {
+                params.offset = state.offset
+            }
+
+            if (state.limit) {
+                params.limit = state.limit
+            }
+
             return new Promise((resolve, reject) => {
                 resource.query(
                     params,

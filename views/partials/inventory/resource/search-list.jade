@@ -1,0 +1,17 @@
+.table-responsive
+  table.table.table-bordered.table-hover
+    thead
+      tr
+        th #{ __("Status") }
+        th #{ __("Name") }
+        th #{ __("Start Date") }
+    tbody
+      tr(ng-repeat="resource in searchVM.list")
+        td
+          .status-item.active(class="status-{{ resource.resourceStatus | lowercase }}")
+            span.item-icon
+            span.item-text {{ resource.resourceStatus }}
+        th
+          a(ui-sref="inventory.resource.detail({ resourceId: resource.id })", ui-sref-opts="{ inherit: false }") {{ resource.name }}
+        td
+          time(am-time-ago="resource.startOperatingDate")
