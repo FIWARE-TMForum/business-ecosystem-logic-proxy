@@ -425,21 +425,21 @@ if (!!process.env.BAE_LP_ENDPOINT_INVENTORY_SECURED) {
 }
 
 // Service Inventory
-config.endpoints.inventory.path = process.env.BAE_LP_ENDPOINT_SERVICE_INVENTORY_PATH || config.endpoints.inventory.path;
-config.endpoints.inventory.port = process.env.BAE_LP_ENDPOINT_SERVICE_INVENTORY_PORT || config.endpoints.inventory.port;
-config.endpoints.inventory.host = process.env.BAE_LP_ENDPOINT_SERVICE_INVENTORY_HOST || config.endpoints.inventory.host;
+config.endpoints.serviceInventory.path = process.env.BAE_LP_ENDPOINT_SERVICE_INVENTORY_PATH || config.endpoints.serviceInventory.path;
+config.endpoints.serviceInventory.port = process.env.BAE_LP_ENDPOINT_SERVICE_INVENTORY_PORT || config.endpoints.serviceInventory.port;
+config.endpoints.serviceInventory.host = process.env.BAE_LP_ENDPOINT_SERVICE_INVENTORY_HOST || config.endpoints.serviceInventory.host;
 
 if (!!process.env.BAE_LP_ENDPOINT_SERVICE_INVENTORY_SECURED) {
-	config.endpoints.inventory.appSsl = process.env.BAE_LP_ENDPOINT_SERVICE_INVENTORY_SECURED == 'true';
+	config.endpoints.serviceInventory.appSsl = process.env.BAE_LP_ENDPOINT_SERVICE_INVENTORY_SECURED == 'true';
 }
 
 // Resource Intentory
-config.endpoints.inventory.path = process.env.BAE_LP_ENDPOINT_RESOURCE_INVENTORY_PATH || config.endpoints.inventory.path;
-config.endpoints.inventory.port = process.env.BAE_LP_ENDPOINT_RESOURCE_INVENTORY_PORT || config.endpoints.inventory.port;
-config.endpoints.inventory.host = process.env.BAE_LP_ENDPOINT_RESOURCE_INVENTORY_HOST || config.endpoints.inventory.host;
+config.endpoints.resourceInventory.path = process.env.BAE_LP_ENDPOINT_RESOURCE_INVENTORY_PATH || config.endpoints.resourceInventory.path;
+config.endpoints.resourceInventory.port = process.env.BAE_LP_ENDPOINT_RESOURCE_INVENTORY_PORT || config.endpoints.resourceInventory.port;
+config.endpoints.resourceInventory.host = process.env.BAE_LP_ENDPOINT_RESOURCE_INVENTORY_HOST || config.endpoints.resourceInventory.host;
 
 if (!!process.env.BAE_LP_ENDPOINT_RESOURCE_INVENTORY_SECURED) {
-	config.endpoints.inventory.appSsl = process.env.BAE_LP_ENDPOINT_RESOURCE_INVENTORY_SECURED == 'true';
+	config.endpoints.resourceInventory.appSsl = process.env.BAE_LP_ENDPOINT_RESOURCE_INVENTORY_SECURED == 'true';
 }
 
 // Charging
