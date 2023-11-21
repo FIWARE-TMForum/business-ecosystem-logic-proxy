@@ -1,5 +1,7 @@
-/* Copyright (c) 2016 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2016 CoNWeT Lab., Universidad Politécnica de Madrid
  *
+ * Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
+ * 
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
  *
@@ -37,6 +39,7 @@
         var maxPages = $scope.max;
         var pages = [];
         var nPages = 0;
+        let enabled = true;
 
         managedCtrl.limit = pageSize;
         managedCtrl.reloadPager = reload;
@@ -49,6 +52,16 @@
         this.isSelected = isSelected;
         this.prevDisabled = prevDisabled;
         this.nextDisabled = nextDisabled;
+        this.isEnabled = isEnabled;
+        this.setEnabled = setEnabled;
+
+        function isEnabled() {
+            return enabled
+        }
+
+        function setEnabled(enab) {
+            enabled = enab;
+        }
 
         // Create pager event handlers
         function nextPage() {
@@ -56,12 +69,12 @@
                 currPage = currPage + 1;
                 managedCtrl.offset = currPage * pageSize;
 
-                if (currPage > pages[pages.length - 1].page) {
-                    pages.shift();
-                    pages.push({
-                        page: currPage
-                    });
-                }
+                // if (currPage > pages[pages.length - 1].page) {
+                //     pages.shift();
+                //     pages.push({
+                //         page: currPage
+                //     });
+                // }
             }
         }
 
@@ -70,12 +83,12 @@
                 currPage = currPage - 1;
                 managedCtrl.offset = currPage * pageSize;
 
-                if (currPage < pages[0].page) {
-                    pages.pop();
-                    pages.unshift({
-                        page: currPage
-                    });
-                }
+                // if (currPage < pages[0].page) {
+                //     pages.pop();
+                //     pages.unshift({
+                //         page: currPage
+                //     });
+                // }
             }
         }
 
@@ -114,16 +127,17 @@
         function loadPages() {
             managedCtrl.getElementsLength().then(
                 function(response) {
-                    nPages = Math.ceil(response.size / pageSize);
+                    // nPages = Math.ceil(response.size / pageSize);
 
-                    pages = [];
-                    var maxP = nPages < maxPages ? nPages : maxPages;
-                    for (var i = 0; i < maxP; i++) {
-                        pages.push({
-                            page: i
-                        });
-                    }
+                    // pages = [];
+                    // var maxP = nPages < maxPages ? nPages : maxPages;
+                    // for (var i = 0; i < maxP; i++) {
+                    //     pages.push({
+                    //         page: i
+                    //     });
+                    // }
                     // Load initial page
+                    nPages = 1000
                     managedCtrl.offset = 0;
                 },
                 function(response) {

@@ -39,7 +39,7 @@ form(name="step.form", novalidate)
                 th {{ service.name }}
                 td
                   time(am-time-ago="service.lastUpdate")
-        //pager(controller="searchVM", size="12", max="12" ng-init="searchVM.setFilters({status: STATUS.ACTIVE + ',' + STATUS.LAUNCHED})")
+    pager(controller="searchVM", size="12", max="12" ng-init="searchVM.setFilters({status: STATUS.ACTIVE + ',' + STATUS.LAUNCHED})")
 
   .form-group.text-right
     a.btn.btn-default.z-depth-1(ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])")

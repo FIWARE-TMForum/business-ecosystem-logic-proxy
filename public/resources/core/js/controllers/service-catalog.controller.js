@@ -27,6 +27,7 @@
 	angular
 		.module('app')
 		.controller('ServiceSpecificationListCtrl', [
+            '$scope',
 			'$state',
             '$rootScope',
 			'ServiceSpecification',
@@ -57,13 +58,13 @@
 			ServiceSpecificationUpdateController
 		])
 
-	function ServiceSpecificationListController($state, $rootScope, ServiceSpecification, DATA_STATUS, Utils, EVENTS, LIFECYCLE_STATUS) {
+	function ServiceSpecificationListController($scope, $state, $rootScope, ServiceSpecification, DATA_STATUS, Utils, EVENTS, LIFECYCLE_STATUS) {
 		var vm = this;
 
 		vm.STATUS = DATA_STATUS
 		vm.list = [];
 		vm.offset = -1;
-		vm.size = -1;
+		vm.limit = -1;
 		vm.sidebarInput = '';
 		vm.updateList = updateList;
 		vm.getElementsLength = getElementsLength;
@@ -80,7 +81,7 @@
                 const params = $state.params;
 				const page = {
 					offset: vm.offset,
-					size: vm.size,
+					limit: vm.limit,
 					body: vm.sidebarInput
 				};
 
@@ -103,11 +104,9 @@
         }
 
         // -
-        vm.offset = 0;
-        updateList();
-		/*$scope.$watch(function() {
-			return vm.offset;
-		}, updateList);*/
+		$scope.$watch(() => {
+            return vm.offset;
+        }, updateList);
 	}
 
 	function characteristicsController() {

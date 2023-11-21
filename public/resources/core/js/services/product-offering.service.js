@@ -1655,7 +1655,9 @@
             /* jshint validthis: true */
             var picture = null;
             if (this.productSpecification) {
-                picture = this.productSpecification.getPicture();
+                if (this.productSpecification.getPicture != null) {
+                    picture = this.productSpecification.getPicture();
+                }
             } else {
                 // The offering is a bundle, get a random image from its bundled offerings
                 var imageIndex = Math.floor(Math.random() * this.bundledProductOffering.length);

@@ -42,8 +42,8 @@
 				params.offset = search.offset
 			}
 
-			if (search.size >= 0) {
-				params.size = search.size
+			if (search.limit >= 0) {
+				params.limit = search.limit
 			}
 
 			if (search.lifecycleStatus) {

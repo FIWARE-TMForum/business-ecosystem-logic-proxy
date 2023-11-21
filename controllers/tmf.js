@@ -138,7 +138,8 @@ function tmf() {
 				id: req.id,
 				apiUrl: req.apiUrl,
 				connection: req.connection,
-				reqBody: req.body
+				reqBody: req.body,
+				query: req.query
 			};
 
 			const header = req.get('X-Terms-Accepted');
