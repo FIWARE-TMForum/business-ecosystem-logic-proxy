@@ -144,8 +144,9 @@
                 params,
                 function(productRetrieved) {
                     if (
-                        productRetrieved.productCharacteristic.length === 1 &&
-                        Object.keys(productRetrieved.productCharacteristic[0]).length === 0
+                        productRetrieved.productCharacteristic == null ||
+                        (productRetrieved.productCharacteristic.length === 1 &&
+                        Object.keys(productRetrieved.productCharacteristic[0]).length === 0)
                     ) {
                         productRetrieved.productCharacteristic = [];
                     }
