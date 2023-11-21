@@ -93,10 +93,10 @@ ui-view
                                 th #{ __("Price alteration") }
                             tbody
                               tr
-                                th.text-dark-secondary {{ orderVM.productOrderItem[$index].pricePlan.name }}
-                                td.text-dark-secondary {{ orderVM.productOrderItem[$index].pricePlan.description }}
-                                td.text-dark-secondary {{ orderVM.productOrderItem[$index].pricePlan.toString() }}
-                                td.text-dark-secondary {{ orderVM.productOrderItem[$index].pricePlan.formatPriceAlteration() }}
+                                th.text-dark-secondary {{ orderVM.productOrderItems[$index].pricePlan.name }}
+                                td.text-dark-secondary {{ orderVM.productOrderItems[$index].pricePlan.description }}
+                                td.text-dark-secondary {{ orderVM.productOrderItems[$index].pricePlan.toString() }}
+                                td.text-dark-secondary {{ orderVM.productOrderItems[$index].pricePlan.formatPriceAlteration() }}
                         .h4.text-dark-secondary(ng-if="item.product.productCharacteristic.length")
                           strong #{ __("Characteristics") }
                         .table-responsive(ng-if="item.product.productCharacteristic.length")
