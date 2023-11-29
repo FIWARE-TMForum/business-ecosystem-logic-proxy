@@ -71,7 +71,7 @@ const catalog = (function() {
 
         }).catch((err) => {
             callback({
-                status: 500
+                status: err.response.status
             });
         })
     };
@@ -83,7 +83,7 @@ const catalog = (function() {
 
         retrieveAsset(productPath, function(err, response) {
             if (err) {
-                console.log(err)
+
                 callback({
                     status: 422,
                     message: 'The attached product cannot be read or does not exist'
@@ -302,22 +302,22 @@ const catalog = (function() {
                 /*function(callback) {
                     // Check the offering categories
                     var categories = newBody ? newBody.category : [];
-
+                    
                     async.eachSeries(
                         categories,
                         function(category, taskCallback) {
                             checkExistingCategoryById(category.id, taskCallback);
                         },
                         callback
-                    );
-                }*/
-            ],
-            function(err) {
-                if (err) {
-                    callback(err);
-                } else {
-                    // Check if the offering is a bundle.
-                    var offeringBody = previousBody || newBody;
+                        );
+                    }*/
+                ],
+                function(err) {
+                    if (err) {
+                        callback(err);
+                    } else {
+                        // Check if the offering is a bundle.
+                        var offeringBody = previousBody || newBody;
 
                     var lifecycleHandler = function(err) {
                         if (err) {
@@ -454,7 +454,7 @@ const catalog = (function() {
 
     const checkExistingCategoryById = function(categoryId, callback) {
         const categoryPath = '/category';
-
+        
         retrieveAsset(`${categoryPath}/${categoryId}`, function(err, result) {
             if (err) {
                 if (err.status == 404) {
@@ -694,7 +694,7 @@ const catalog = (function() {
                     if (err) {
                         taskCallback(err);
                     } else {
-                        const product = JSON.parse(result.body);
+                        const product = result.body;
 
                         // Validate that the bundle products belong to the same owner
                         if (!tmfUtils.isOwner(req, product)) {
@@ -921,7 +921,6 @@ const catalog = (function() {
 
         if (newLifeCycle in validatedStates && assertType == 'catalog') {
             // Get catalog offerings from the database
-            console.log(offeringsPath)
 
             const catalogId = offeringsPath.split('/')[3]
             const query = {
@@ -935,7 +934,6 @@ const catalog = (function() {
                     if (result.length == 0) {
                         return callback(null)
                     }
-
                     let ids = result.map((hit) => {
                         return hit.id
                     })
@@ -946,7 +944,7 @@ const catalog = (function() {
 
         } else if (newLifeCycle in validatedStates && assertType == 'product') {
             let newUrl = offeringsPath.replace('/catalog/', '')
-            console.log(newUrl);
+
             validateElemOfferings(newUrl, newLifeCycle, validatedStates, callback)
         } else {
             callback(null);
@@ -1133,23 +1131,23 @@ const catalog = (function() {
     const processQuery = async (req, callback) => {
         const returnQueryRes = (result) => {
             let newUrl = '/catalog/productOffering?href='
-
+            
             if (result.length > 0) {
                 let ids = result.map((hit) => {
                     return hit.id
                 })
-
+                
                 newUrl += ids.join(',')
             } else {
                 newUrl += 'null'
             }
-
+            
             req.apiUrl = newUrl
-
+            
             // TODO: Check how to avoid the call if the result is 0
             callback(null)
         }
-
+        
         if (offeringsPattern.test(req.path) && req.query.relatedParty != null) {
 
             let query = {
@@ -1271,7 +1269,6 @@ const catalog = (function() {
 
             indexObject(req.user.partyId, body, catalog).then(()=>{
             }).catch((err)=>{
-                console.log(err)
             }).finally(() => {
                 storeClient.attachOffering(
                     body,
@@ -1283,7 +1280,6 @@ const catalog = (function() {
             body = req.body;
             updateindex(body).then(() => {
             }).catch((err) => {
-                console.log(err)
             }).finally(() => {
                 storeClient.updateOffering(
                     body,
@@ -1292,7 +1288,8 @@ const catalog = (function() {
                 );
             })
         } else if (req.method == 'PATCH' && productPattern.test(req.apiUrl)) {
-            body = JSON.parse(req.reqBody);
+            body = req.reqBody;
+
             handleUpgradePostAction(
                 req,
                 body,
