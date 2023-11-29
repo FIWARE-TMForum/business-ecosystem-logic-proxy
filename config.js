@@ -159,7 +159,8 @@ config.endpoints = {
     },
     serviceInventory: {
         path: 'serviceInventory',
-        host: 'charging.docker',
+        //host: 'charging.docker',
+        host: 'bae-marketplace-biz-ecosystem-charging-backend.marketplace.svc.cluster.local',
         port: '8006',
         appSsl: false
     },
@@ -425,13 +426,13 @@ if (!!process.env.BAE_LP_ENDPOINT_INVENTORY_SECURED) {
 }
 
 // Service Inventory
-config.endpoints.serviceInventory.path = process.env.BAE_LP_ENDPOINT_SERVICE_INVENTORY_PATH || config.endpoints.serviceInventory.path;
-config.endpoints.serviceInventory.port = process.env.BAE_LP_ENDPOINT_SERVICE_INVENTORY_PORT || config.endpoints.serviceInventory.port;
-config.endpoints.serviceInventory.host = process.env.BAE_LP_ENDPOINT_SERVICE_INVENTORY_HOST || config.endpoints.serviceInventory.host;
+//config.endpoints.serviceInventory.path = process.env.BAE_LP_ENDPOINT_SERVICE_INVENTORY_PATH || config.endpoints.serviceInventory.path;
+//config.endpoints.serviceInventory.port = process.env.BAE_LP_ENDPOINT_SERVICE_INVENTORY_PORT || config.endpoints.serviceInventory.port;
+//config.endpoints.serviceInventory.host = process.env.BAE_LP_ENDPOINT_SERVICE_INVENTORY_HOST || config.endpoints.serviceInventory.host;
 
-if (!!process.env.BAE_LP_ENDPOINT_SERVICE_INVENTORY_SECURED) {
-	config.endpoints.serviceInventory.appSsl = process.env.BAE_LP_ENDPOINT_SERVICE_INVENTORY_SECURED == 'true';
-}
+//if (!!process.env.BAE_LP_ENDPOINT_SERVICE_INVENTORY_SECURED) {
+//	config.endpoints.serviceInventory.appSsl = process.env.BAE_LP_ENDPOINT_SERVICE_INVENTORY_SECURED == 'true';
+//}
 
 // Resource Intentory
 config.endpoints.resourceInventory.path = process.env.BAE_LP_ENDPOINT_RESOURCE_INVENTORY_PATH || config.endpoints.resourceInventory.path;
