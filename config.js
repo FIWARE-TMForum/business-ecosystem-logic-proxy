@@ -166,8 +166,10 @@ config.endpoints = {
     },
     resourceInventory: {
         path: 'resourceInventory',
-        host: 'host.docker.internal',
-        port: '8641',
+        //host: 'host.docker.internal',
+        //port: '8641',
+        host: 'tmforum-tm-forum-api-resource-inventory',
+        port: '8080',
         appSsl: false
     },
     charging: {
