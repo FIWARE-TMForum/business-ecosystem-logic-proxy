@@ -38,6 +38,7 @@ MONGO_PORT=`node getConfig mongoport`
 # Wait for mongodb to be running
 test_connection 'MongoDB' ${MONGO_HOST} ${MONGO_PORT}
 
+export NODE_ENV=develop
 if [ ${COLLECT} = "True" ]; then
     node collect_static.js
 fi
