@@ -896,6 +896,14 @@
         vm.services = []
         vm.resources = []
 
+        const supportedCerts = ["cloudsecurity", "cloudrulebook", "iso27001", "iso27017"]
+        vm.certs = {
+            cloudsecurity: null,
+            cloudrulebook: null,
+            iso27001: null,
+            iso27017: null
+        }
+
         Offering.detail($state.params.offeringId).then(function (offeringRetrieved) {
             vm.item = offeringRetrieved;
             vm.categories = vm.item.getCategories();
@@ -931,6 +939,14 @@
                 })).then((resModel) => {
                     vm.resources = resModel
                     $scope.$apply()
+                })
+            }
+
+            if (vm.item.productSpecification.productSpecCharacteristic != null) {
+                vm.item.productSpecification.productSpecCharacteristic.forEach((charact) => {
+                    if (supportedCerts.indexOf(charact.name.toLowerCase()) > -1) {
+                        vm.certs[charact.name.toLowerCase()] = charact.productSpecCharacteristicValue[0].value
+                    }
                 })
             }
         }, function (response) {

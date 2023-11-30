@@ -33,6 +33,35 @@
     .row
       .col-md-12
         .h4.text-dark-secondary
+          strong #{ __("Compliance profile") }
+    .row
+      .col-md-12
+        dl
+          dt
+            span #{ __("EU Cloud Security: ") }
+            span.cert-span.text-dark-secondary(ng-if="detailVM.certs.cloudsecurity == null") {{ '#{ __("Not achieved yet") }' }}
+            a.cert-span(href="{{ detailVM.certs.cloudsecurity }}" ng-if="detailVM.certs.cloudsecurity != null" target="_blank") {{ '#{ __("Yes") }' }}
+        dl
+          dt
+            span #{ __("EU Cloud Rulebook: ") }
+            span.cert-span.text-dark-secondary(ng-if="detailVM.certs.cloudrulebook == null") {{ '#{ __("Not achieved yet") }' }}
+            a.cert-span(href="{{ detailVM.certs.cloudrulebook }}" ng-if="detailVM.certs.cloudrulebook != null" target="_blank") {{ '#{ __("Yes") }' }}
+        dl
+          dt
+            span #{ __("ISO 27001: ") }
+            span.cert-span.text-dark-secondary(ng-if="detailVM.certs.iso27001 == null") {{ '#{ __("Not achieved yet") }' }}
+            a.cert-span(href="{{ detailVM.certs.iso27001 }}" ng-if="detailVM.certs.iso27001 != null" target="_blank") {{ '#{ __("Yes") }' }}
+        dl
+          dt
+            span #{ __("ISO 27017: ") }
+            span.cert-span.text-dark-secondary(ng-if="detailVM.certs.iso27017 == null") {{ '#{ __("Not achieved yet") }' }}
+            a.cert-span(href="{{ detailVM.certs.iso27017 }}" ng-if="detailVM.certs.iso27017 != null" target="_blank") {{ '#{ __("Yes") }' }}
+
+.panel.panel-default.z-depth-1
+  .panel-body
+    .row
+      .col-md-12
+        .h4.text-dark-secondary
           strong #{ __("Extra Info") }
     .row
       .col-md-6
