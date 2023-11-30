@@ -8,6 +8,8 @@
         .form-group
           p
             span.fa.fa-fw.fa-check-circle
-            span  {{ characteristic.value }}
+            span(ng-if="!detailVM.isUrl(characteristic.value)")  {{ characteristic.value }}
+            a(href="{{ characteristic.value }}" ng-if="detailVM.isUrl(characteristic.value)" target="_blank")  {{ characteristic.value }}
+
   .col-xs-12(ng-if="!detailVM.item.serviceCharacteristic.length")
     .alert.alert-info.text-center #{ __("No characteristics included.") }

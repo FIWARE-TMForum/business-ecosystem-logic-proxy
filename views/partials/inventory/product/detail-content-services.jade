@@ -11,7 +11,7 @@ div(ng-if="detailVM.services.length > 0")
       tbody
         tr(ng-repeat="service in detailVM.services")
           td
-            .status-item.active(class="status-{{ service.state | lowercase }}")
+            .status-item.active(class="status-obsolete")
               span.item-icon
               span.item-text {{ service.state }}
           th

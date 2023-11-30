@@ -93,6 +93,10 @@
     function ServiceInventoryDetailController($rootScope, $scope, $state, ServiceInventory, Utils, EVENTS, $interval, $window, LOGGED_USER) {
         this.item = null
 
+        this.isUrl = (value) => {
+            return value.startsWith("http")
+        }
+
         ServiceInventory.detail($state.params.serviceId).then((service) => {
             this.item = service
             this.item.loadStatus = LOADED;

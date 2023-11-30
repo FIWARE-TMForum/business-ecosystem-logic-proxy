@@ -11,7 +11,7 @@ div(ng-if="detailVM.resources.length > 0")
       tbody
         tr(ng-repeat="resource in detailVM.resources")
           td
-            .status-item.active(class="status-{{ resource.resourceStatus | lowercase }}")
+            .status-item.active(class="status-obsolete")
               span.item-icon
               span.item-text {{ resource.resourceStatus }}
           th
