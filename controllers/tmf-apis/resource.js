@@ -27,7 +27,7 @@ var resource = (function (){
 
     var validateRetrieving = function(req, callback) {
         // Check if the request is a list of resources specifications
-        if (req.path.endsWith('resourceSpecification')) {
+        if (req.path.endsWith('resourceSpecification') && req.user != null) {
             return tmfUtils.filterRelatedPartyFields(req, () => tmfUtils.ensureRelatedPartyIncluded(req, callback));
         } else {
             callback(null);
@@ -121,7 +121,7 @@ var resource = (function (){
     };
 
     var validators = {
-        GET: [utils.validateLoggedIn,  validateRetrieving],
+        GET: [validateRetrieving],
         POST: [utils.validateLoggedIn, validateOwnerSellerPost],
         PATCH: [utils.validateLoggedIn, validateOwnerSeller],
         PUT: [utils.methodNotAllowed],
@@ -142,14 +142,15 @@ var resource = (function (){
         var body = response.body
 
         // Check if the user is allowed to retrieve the requested resource specification
-        if (!Array.isArray(body) && !tmfUtils.hasPartyRole(response, body.relatedParty, 'owner')) {
+        /*if (!Array.isArray(body) && !tmfUtils.hasPartyRole(response, body.relatedParty, 'owner')) {
             callback({
                 status: 403,
                 message: 'You are not authorized to retrieve the specified resource specification from the catalog'
             });
         } else {
             callback(null);
-        }
+        }*/
+        callback(null)
     };
     return {
         checkPermissions: checkPermissions,

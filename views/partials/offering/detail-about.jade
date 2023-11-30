@@ -12,6 +12,24 @@
         dl
           dd.text-dark-secondary.text-preline {{ detailVM.item.description ? detailVM.item.description : '#{ __("No description provided.") }' }}
 
+    .row(ng-if="detailVM.services.length > 0")
+      .col-md-12
+        dl
+          dd.text-dark-secondary.text-preline {{ '#{ __("This offering includes the following service specifications: ") }' }}
+        dl(ng-repeat="service in detailVM.services")
+          dt {{ service.name }}
+          dd.text-dark-secondary {{ service.description }}
+
+    .row(ng-if="detailVM.resources.length > 0")
+      .col-md-12
+        dl
+          dd.text-dark-secondary.text-preline {{ '#{ __("This offering includes the following resource specifications: ") }' }}
+        dl(ng-repeat="resource in detailVM.resources")
+          dt {{ resource.name }}
+          dd.text-dark-secondary {{ resource.description }}
+
+.panel.panel-default.z-depth-1
+  .panel-body
     .row
       .col-md-12
         .h4.text-dark-secondary

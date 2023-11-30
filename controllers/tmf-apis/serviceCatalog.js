@@ -27,7 +27,7 @@ const serviceCatalog = (function() {
 
 	const validateRetrieving = function(req, callback) {
         // Check if the request is a list of service specifications
-        if (req.path.endsWith('serviceSpecification')) {
+        if (req.path.endsWith('serviceSpecification') && req.user != null) {
             return tmfUtils.filterRelatedPartyFields(req, () => tmfUtils.ensureRelatedPartyIncluded(req, callback));
         } else {
             callback(null);
@@ -118,7 +118,7 @@ const serviceCatalog = (function() {
     };
 
 	const validators = {
-		GET: [utils.validateLoggedIn, validateRetrieving],
+		GET: [validateRetrieving],
 		POST: [utils.validateLoggedIn, validateOwnerSellerPost],
 		PATCH: [utils.validateLoggedIn, validateOwnerSeller],
 		PUT: [utils.validateLoggedIn],
@@ -139,14 +139,15 @@ const serviceCatalog = (function() {
 		const body = response.body
 
         // Check if the user is allowed to retrieve the requested resource specification
-        if (!Array.isArray(body) && !tmfUtils.hasPartyRole(response, body.relatedParty, 'owner')) {
+        /*if (!Array.isArray(body) && !tmfUtils.hasPartyRole(response, body.relatedParty, 'owner')) {
             callback({
                 status: 403,
                 message: 'You are not authorized to retrieve the specified service specification from the catalog'
             });
         } else {
             callback(null);
-        }
+        }*/
+        callback(null);
 	};
 
 	const handleAPIError = function(res, callback) {

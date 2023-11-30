@@ -65,11 +65,14 @@
 
         .controller('OfferingDetailCtrl', [
             '$state',
+            '$scope',
             'Offering',
             'ProductSpec',
             'Utils',
             'Download',
             '$window',
+            'ServiceSpecification',
+            'ResourceSpec',
             ProductOfferingDetailController
         ])
         .controller('OfferingUpdateCtrl', [
@@ -879,7 +882,7 @@
         );
     }
 
-    function ProductOfferingDetailController($state, Offering, ProductSpec, Utils, Download, $window) {
+    function ProductOfferingDetailController($state, $scope, Offering, ProductSpec, Utils, Download, $window, ServiceSpecification, ResourceSpec) {
         /* jshint validthis: true */
         var vm = this;
         vm.sla = {};
@@ -889,6 +892,9 @@
         vm.hasCharacteristics = hasCharacteristics;
         vm.formatCharacteristicValue = formatCharacteristicValue;
         vm.downloadAsset = downloadAsset;
+
+        vm.services = []
+        vm.resources = []
 
         Offering.detail($state.params.offeringId).then(function (offeringRetrieved) {
             vm.item = offeringRetrieved;
@@ -910,6 +916,23 @@
                 vm.pricingModels = pricingModels
             })
 
+            if (vm.item.productSpecification.serviceSpecification != null) {
+                Promise.all(vm.item.productSpecification.serviceSpecification.map((serv) => {
+                    return ServiceSpecification.getServiceSpecficiation(serv.id)
+                })).then((servModel) => {
+                    vm.services = servModel
+                    $scope.$apply()
+                })
+            }
+
+            if (vm.item.productSpecification.resourceSpecification != null) {
+                Promise.all(vm.item.productSpecification.resourceSpecification.map((res) => {
+                    return ResourceSpec.getResourceSpec(res.id)
+                })).then((resModel) => {
+                    vm.resources = resModel
+                    $scope.$apply()
+                })
+            }
         }, function (response) {
             vm.error = Utils.parseError(response, 'The requested offering could not be retrieved');
             vm.item.status = ERROR;
