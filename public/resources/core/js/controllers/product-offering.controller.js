@@ -62,7 +62,6 @@
             'Utils',
             ProductOfferingCreateController
         ])
-
         .controller('OfferingDetailCtrl', [
             '$state',
             '$scope',

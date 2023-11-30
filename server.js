@@ -611,10 +611,11 @@ function onlistening() {
             app.locals.currencyCodes = result[1].data.map(function(cc) {
                 return cc.value + ':' + cc.title;
             });
-        },
-        function(reason) {
-            logger.error(reason);
+            logger.info("Charging info loaded")
         }
-    );
+    ).catch((reason) => {
+        logger.error("Cannot connect to the charging backend");
+        setTimeout(onlistening, 5000);
+    });
 }
 })();

@@ -148,6 +148,6 @@ if (theme) {
 
 if (!debug) {
     // If the system is in production compile jades and minimize js files
-    minimizejs();
+    //minimizejs();
     console.log('JavaScript files minimized');
 }
