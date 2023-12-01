@@ -1169,6 +1169,7 @@
 
                     const bundleOfferings = [];
                     const productFilters = {
+                        limit: 12,
                         href: offeringList
                             .map(function(offering) {
                                 let offId = '';

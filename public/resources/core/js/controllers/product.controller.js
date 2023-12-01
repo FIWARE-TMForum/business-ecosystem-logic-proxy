@@ -1544,17 +1544,21 @@
                 });
 
                 // Load service and resource spec info
-                Promise.all(vm.item.resourceSpecification.map((res) => {
-                    return ResourceSpec.getResourceSpec(res.id)
-                })).then((resources) => {
-                    vm.dataRes = resources
-                })
+                if (vm.item.resourceSpecification != null) {
+                    Promise.all(vm.item.resourceSpecification.map((res) => {
+                        return ResourceSpec.getResourceSpec(res.id)
+                    })).then((resources) => {
+                        vm.dataRes = resources
+                    })
+                }
 
-                Promise.all(vm.item.serviceSpecification.map((serv) => {
-                    return ServiceSpecification.getServiceSpecficiation(serv.id)
-                })).then((services) => {
-                    vm.dataServ = services
-                })
+                if (vm.item.serviceSpecification != null) {
+                    Promise.all(vm.item.serviceSpecification.map((serv) => {
+                        return ServiceSpecification.getServiceSpecficiation(serv.id)
+                    })).then((services) => {
+                        vm.dataServ = services
+                    })
+                }
             },
             function(response) {
                 vm.error = Utils.parseError(response, 'The requested product could not be retrieved');
@@ -1627,7 +1631,8 @@
         }
 
         function updateImage() {
-            if (!angular.equals(vm.item.attachment[0].url, vm.data.attachment[0].url)) {
+            if (vm.item.attachment == null || vm.item.attachment.length == 0 || !angular.equals(vm.item.attachment[0].url, vm.data.attachment[0].url)) {
+                vm.data.attachment[0].attachmentType = "Picture"
                 executeUpdate({
                     attachment: vm.data.attachment
                 });

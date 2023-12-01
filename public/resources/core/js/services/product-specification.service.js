@@ -127,6 +127,10 @@
                 params['id'] = filters.id;
             }
 
+            if (filters.href) {
+                params['href'] = filters.href
+            }
+
             if (filters.status) {
                 params['lifecycleStatus'] = filters.status;
             }
@@ -137,6 +141,9 @@
 
             if (filters.offset !== undefined) {
                 params['offset'] = filters.offset;
+            }
+
+            if (filters.limit !== undefined) {
                 params['limit'] = filters.limit;
             }
 
