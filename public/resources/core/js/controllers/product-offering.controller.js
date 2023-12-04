@@ -895,12 +895,13 @@
         vm.services = []
         vm.resources = []
 
-        const supportedCerts = ["cloudsecurity", "cloudrulebook", "iso27001", "iso27017"]
+        const supportedCerts = ["cloudsecurity", "cloudrulebook", "iso27001", "iso27017", "iso17025"]
         vm.certs = {
             cloudsecurity: null,
             cloudrulebook: null,
             iso27001: null,
-            iso27017: null
+            iso27017: null,
+            iso17025: null
         }
 
         Offering.detail($state.params.offeringId).then(function (offeringRetrieved) {

@@ -56,6 +56,11 @@
             span #{ __("ISO 27017: ") }
             span.cert-span.text-dark-secondary(ng-if="detailVM.certs.iso27017 == null") {{ '#{ __("Not achieved yet") }' }}
             a.cert-span(href="{{ detailVM.certs.iso27017 }}" ng-if="detailVM.certs.iso27017 != null" target="_blank") {{ '#{ __("Yes") }' }}
+        dl
+          dt
+            span #{ __("ISO 17025: ") }
+            span.cert-span.text-dark-secondary(ng-if="detailVM.certs.iso17025 == null") {{ '#{ __("Not achieved yet") }' }}
+            a.cert-span(href="{{ detailVM.certs.iso17025 }}" ng-if="detailVM.certs.iso17025 != null" target="_blank") {{ '#{ __("Yes") }' }}
 
 .panel.panel-default.z-depth-1
   .panel-body

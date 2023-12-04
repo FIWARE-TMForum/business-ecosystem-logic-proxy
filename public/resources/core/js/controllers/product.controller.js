@@ -957,6 +957,10 @@
                 templateUrl: 'stock/product/create/assets'
             },*/
             {
+                title: 'Compliance profile',
+                templateUrl: 'stock/product/create/compliance'
+            },
+            {
                 title: 'Characteristics',
                 templateUrl: 'stock/product/create/characteristics'
             },
@@ -998,6 +1002,14 @@
 
         vm.characteristicEnabled = false;
         vm.pictureFormat = 'url';
+
+        vm.compliance = {
+            cloudSecurity: null,
+            cloudRulebook: null,
+            iso27001: null,
+            iso27017: null,
+            iso17025: null
+        }
 
         vm.create = create;
 
@@ -1220,10 +1232,51 @@
             }
         });
 
+        function buildCharacteristic(name, value, description) {
+            return {
+                id: `urn:ngsi-ld:characteristic:${uuid.v4()}`,
+                configurable: false,
+                description: description,
+                name: name,
+                valueType: "string",
+                productSpecCharacteristicValue: [
+                    {
+                        "isDefault": true,
+                        "value": value
+                    }
+                ]
+            }
+        }
+
         function saveProduct() {
             // Append product characteristics
             var data = angular.copy(vm.data);
             data.productSpecCharacteristic = angular.copy(vm.characteristics);
+
+            if (vm.compliance.cloudRulebook != null) {
+                data.productSpecCharacteristic.push(buildCharacteristic("cloudRulebook", vm.compliance.cloudRulebook,
+                    "The EU Cloud Rulebook certification outlines standardized guidelines and regulations for cloud service providers to ensure compliance with European Union data protection and security requirements"))
+            }
+
+            if (vm.compliance.cloudSecurity != null) {
+                data.productSpecCharacteristic.push(buildCharacteristic("cloudSecurity", vm.compliance.cloudSecurity,
+                    "The EU Cloud Security Certification, in accordance with the ENISA guidelines, assures that cloud service providers adhere to robust security measures, safeguarding data in compliance with European Union standards."))
+            }
+
+            if (vm.compliance.iso27001 != null) {
+                data.productSpecCharacteristic.push(buildCharacteristic("iso27001", vm.compliance.iso27001,
+                    "ISO 27001 is an internationally recognized information security management system (ISMS) standard that provides a systematic approach for managing sensitive company information, ensuring its confidentiality, integrity, and availability"))
+            }
+
+            if (vm.compliance.iso27017 != null) {
+                data.productSpecCharacteristic.push(buildCharacteristic("iso27017", vm.compliance.iso27017,
+                    "ISO/IEC 27017 is a code of practice for information security controls based on ISO/IEC 27002, specifically addressing cloud services, offering guidelines and best practices for implementing effective cloud security management."))
+            }
+
+            if (vm.compliance.iso17025 != null) {
+                data.productSpecCharacteristic.push(buildCharacteristic("iso17025", vm.compliance.iso17025,
+                    "ISO/IEC 17025 is an international standard specifying the general requirements for the competence of testing and calibration laboratories, ensuring they meet rigorous quality management and technical proficiency criteria"))
+            }
 
             // Append resources
             data.resourceSpecification = resources.map((resource) => {
