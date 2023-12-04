@@ -198,7 +198,7 @@
         vm.item = {};
         vm.offerings = [];
         vm.charges = {
-            loadStatus: LOADING,
+            loadStatus: LOADED,
             items: []
         };
 
@@ -220,6 +220,7 @@
         vm.getUsageURL = getUsageURL;
         vm.downloadInvoice = downloadInvoice;
         vm.tokenSupported = tokenSupported;
+        vm.initUsageChart = initUsageChart;
         vm.password = "";
         vm.refreshToken = "";
         vm.sla = "";
@@ -262,7 +263,7 @@
             getServices(productRetrieved);
 
             // Retrieve existing charges
-            BillingAccount.searchCharges(vm.item.id).then(function(charges) {
+            /*BillingAccount.searchCharges(vm.item.id).then(function(charges) {
                 // Extract invoice url
                 vm.charges.items = charges.map(function(charge) {
                     var invoiceUrl = charge.description.split(' ').pop();
@@ -275,7 +276,7 @@
             }, function(response) {
                 vm.charges.error = Utils.parseError(response, 'It was impossible to load the list of charges');
                 vm.charges.loadStatus = ERROR;
-            });
+            });*/
 
             },
             function(response) {
@@ -510,6 +511,39 @@
                     });
                 }
             );
+        }
+
+        function initUsageChart() {
+            // Initialize the echarts instance based on the prepared dom
+            var myChart = echarts.init(document.getElementById('usage-chart'));
+
+            // Specify the configuration items and data for the chart
+            const now = moment(vm.item.startDate)
+            const data = [now.format('DD-MM-YYYY')]
+
+            for (let i = 0; i < 7; i++) {
+                now.add(1, 'day')
+                data.push(now.format('DD-MM-YYYY'))
+            }
+
+            var option = {
+                xAxis: {
+                    type: 'category',
+                    data: data
+                },
+                yAxis: {
+                    type: 'value'
+                },
+                series: [
+                    {
+                      data: [0],
+                      type: 'line'
+                    }
+                ]
+            };
+
+            // Display the chart using the configuration items and data just specified.
+            myChart.setOption(option);
         }
 
         function getUsageURL() {
