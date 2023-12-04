@@ -40,7 +40,8 @@ const inventory = (function() {
     const validators = {
         GET: [utils.validateLoggedIn, tmfUtils.ensureRelatedPartyIncluded, validateRetrieving],
         POST: [utils.methodNotAllowed],
-        PATCH: [utils.methodNotAllowed],
+        //PATCH: [utils.methodNotAllowed],
+        PATCH: [utils.validateLoggedIn],
         PUT: [utils.methodNotAllowed],
         DELETE: [utils.methodNotAllowed]
     };

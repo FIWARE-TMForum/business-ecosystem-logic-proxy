@@ -452,7 +452,20 @@
             $('#confirm-prod-modal').modal('hide');
             $('.modal-backdrop').remove();
             load = true;
-            InventoryProduct.remove({
+            InventoryProduct.terminate($state.params.productId).then(() => {
+                $state.go($state.current, {}, {reload: true});
+            }, (response) =>{
+                load = false;
+                var defaultMessage =
+                    'There was an unexpected error that prevented the ' + 'system from unsubscribing your product';
+                var error = Utils.parseError(response, defaultMessage);
+
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                    error: error
+                });
+            })
+
+            /*InventoryProduct.remove({
                 name: vm.item.name,
                 id: vm.item.id,
                 priceType: vm.item.productPrice[0].priceType.toLowerCase()
@@ -475,7 +488,7 @@
                         error: error
                     });
                 }
-            );
+            );*/
         }
 
         function renewProductModal() {

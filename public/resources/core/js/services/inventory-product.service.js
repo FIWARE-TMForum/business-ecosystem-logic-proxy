@@ -35,12 +35,17 @@
     function InventoryProductService($q, $resource, URLS, User, Offering) {
         var resource = $resource(URLS.INVENTORY + '/product/:productId', {
             productId: '@id'
+        }, {
+            update: {
+                method: 'PATCH'
+            }
         });
 
         return {
             search: search,
             count: count,
             detail: detail,
+            terminate: terminate,
             renew: renew,
             remove: remove,
             getToken: getToken,
@@ -49,6 +54,30 @@
             setRating : setRating,
             getOwnRating : getOwnRating
         };
+
+        function terminate(productId) {
+            var deferred = $q.defer();
+            var params = {
+                productId: productId
+            };
+
+            const updatedData = {
+                status: "suspended"
+            }
+
+            resource.update(
+                params,
+                updatedData,
+                function(updated) {
+                    deferred.resolve(updated);
+                },
+                function(response) {
+                    deferred.reject(response);
+                }
+            );
+
+            return deferred.promise;
+        }
 
         function query(deferred, filters, method, callback) {
             var params = {};
@@ -62,7 +91,10 @@
             }
 
             if (filters.status) {
-                params['status'] = filters.status;
+                params['status'] = filters.status.toLowerCase();
+            } else {
+                // Filtering by default
+                params['status'] = 'active,created'
             }
 
             if (filters.action) {
