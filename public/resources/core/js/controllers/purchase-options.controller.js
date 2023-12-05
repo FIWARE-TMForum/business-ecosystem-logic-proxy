@@ -206,7 +206,7 @@
                     result = characteristicValue.value;
                     break;
                 case ProductSpec.VALUE_TYPES.NUMBER.toLowerCase():
-                    if (characteristicValue.value && characteristicValue.value.length) {
+                    if (characteristicValue.value && characteristicValue.value != '') {
                         result = characteristicValue.value;
                     } else {
                         result = characteristicValue.valueFrom + ' - ' + characteristicValue.valueTo;
