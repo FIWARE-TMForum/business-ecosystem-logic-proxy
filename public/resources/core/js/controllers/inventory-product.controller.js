@@ -616,7 +616,7 @@
                 return characteristicMatches(prodCharacteristic, characteristic, offId, productId);
             })[0];
 
-            return result === productCharacteristic.value;
+            return result.startsWith(productCharacteristic.value);
         }
 
         function downloadInvoice(invoice) {
@@ -634,10 +634,10 @@
                     result = characteristicValue.value;
                     break;
                 case ProductSpec.VALUE_TYPES.NUMBER.toLowerCase():
-                    if (characteristicValue.value && characteristicValue.value.length) {
+                    if (characteristicValue.value && characteristicValue.value != "") {
                         result = characteristicValue.value;
                     } else {
-                        result = characteristicValue.valueFrom + ' - ' + characteristicValue.valueTo;
+                        result = characteristicValue.valueFrom + '-' + characteristicValue.valueTo;
                     }
                     result += ' ' + characteristicValue.unitOfMeasure;
                     break;
