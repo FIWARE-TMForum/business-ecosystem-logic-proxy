@@ -32,14 +32,14 @@ form(name="step.form", novalidate)
           span.input-group-addon %
     .col-sm-6
       .form-group(
-      ng-class="{ 'has-error' : createForm.hasError(step.form.providerValue) }"
+      ng-class="{ 'has-error' : createForm.hasError(step.form.providerShare) }"
       )
         label #{ __("Provider percentage") }
         .input-group
           input.form-control(
           type="number"
-          name="providerValue"
-          ng-model="createVM.data.ownerValue"
+          name="providerShare"
+          ng-model="createVM.data.providerShare"
           min="0"
           max="100"
           required
@@ -47,8 +47,8 @@ form(name="step.form", novalidate)
           span.input-group-addon %
 
         .help-block(
-        ng-messages="step.form.providerValue.$error"
-        ng-show="createForm.hasError(step.form.providerValue)"
+        ng-messages="step.form.providerShare.$error"
+        ng-show="createForm.hasError(step.form.providerShare)"
         )
           span(ng-message="required") #{ __("This field is required.") }
           span(ng-message="min") #{ __("This field must not be a negative number.") }

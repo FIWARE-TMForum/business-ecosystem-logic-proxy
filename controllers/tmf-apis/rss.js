@@ -81,7 +81,7 @@ const rss = (function() {
 
         // Include the revenue model as aggregator value when creating RS models
         if (req.apiUrl.indexOf('revenueSharing/models') >= 0) {
-            body.aggregatorValue = config.revenueModel
+            body.aggregatorShare = config.revenueModel
             body.providerId = req.user.partyId
             utils.updateBody(req, body)
         }

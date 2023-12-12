@@ -102,11 +102,11 @@
         }, updateRSModels);
     }
 
-    function calculateTotalPercentage(platformValue, ownerValue, currentStValue, stakeholders) {
-        var values = [platformValue, ownerValue, currentStValue];
+    function calculateTotalPercentage(aggregatorShare, providerShare, currentStValue, stakeholders) {
+        var values = [aggregatorShare, providerShare, currentStValue];
 
         stakeholders.forEach((st) => {
-            values.push(st.modelValue);
+            values.push(st.stakeholderShare);
         });
 
         var total = values.filter((value) => !isNaN(value)).reduce((val, curr) => {
@@ -137,7 +137,7 @@
         function getTotalPercentage() {
             return calculateTotalPercentage(
                 PLATFORM_REVENUE,
-                vm.data.ownerValue,
+                vm.data.providerShare,
                 vm.currentStValue,
                 vm.data.stakeholders
             );
@@ -168,7 +168,7 @@
             if (total <= 100) {
                 vm.data.stakeholders.push({
                     stakeholderId: vm.currentStakeholder.providerId,
-                    modelValue: vm.currentStValue
+                    stakeholderShare: vm.currentStValue
                 });
 
                 // The same provider cannot be included twice as an stakeholder
@@ -257,7 +257,7 @@
         vm.data = {
             stakeholders: [],
             algorithmType: 'FIXED_PERCENTAGE',
-            ownerValue: 0
+            providerShare: 0
         };
 
         vm.create = create;
@@ -334,13 +334,13 @@
         );
 
         function getSavedPercentage() {
-            return calculateTotalPercentage(vm.data.aggregatorValue, vm.data.ownerValue, 0, vm.data.stakeholders);
+            return calculateTotalPercentage(vm.data.aggregatorShare, vm.data.providerShare, 0, vm.data.stakeholders);
         }
 
         function update() {
             var total = calculateTotalPercentage(
-                vm.data.aggregatorValue,
-                vm.data.ownerValue,
+                vm.data.aggregatorShare,
+                vm.data.providerShare,
                 vm.currentStValue,
                 vm.data.stakeholders
             );

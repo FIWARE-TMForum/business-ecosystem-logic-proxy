@@ -107,8 +107,8 @@ describe('RSS Client', function() {
                     'X-Email': userInfo.email
                 },
                 body: JSON.stringify({
-                    aggregatorValue: config.revenueModel,
-                    ownerValue: 100 - config.revenueModel,
+                    providerShare: config.revenueModel,
+                    providerShare: 100 - config.revenueModel,
                     algorithmType: 'FIXED_PERCENTAGE',
                     productClass: 'defaultRevenue'
                 })
@@ -131,7 +131,7 @@ describe('RSS Client', function() {
                 'content-type': 'application/json'
             };
             var body = {
-                aggregatorValue: 30
+                aggregatorShare: 30
             };
 
             testDefaultModelCreation(
@@ -211,7 +211,7 @@ describe('RSS Client', function() {
 
             var body = [
                 {
-                    aggregatorValue: 30
+                    aggregatorShare: 30
                 }
             ];
             var expOptions = {
