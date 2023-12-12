@@ -1577,6 +1577,16 @@
         vm.dataRes = []
         vm.dataServ = []
 
+        const certs = ["cloudSecurity", "cloudRulebook", "iso27001", "iso27017", "iso17025"]
+
+        vm.compliance = {
+            cloudSecurity: null,
+            cloudRulebook: null,
+            iso27001: null,
+            iso27017: null,
+            iso17025: null
+        }
+
         var detailPromise = ProductSpec.detail($state.params.productId);
         detailPromise.then(
             function(productRetrieved) {
@@ -1610,6 +1620,14 @@
                         return ServiceSpecification.getServiceSpecficiation(serv.id)
                     })).then((services) => {
                         vm.dataServ = services
+                    })
+                }
+
+                if (vm.item.productSpecCharacteristic != null) {
+                    vm.item.productSpecCharacteristic.forEach((char) => {
+                        if (certs.indexOf(char.name) >= 0) {
+                            vm.compliance[char.name] = char.productSpecCharacteristicValue[0].value
+                        }
                     })
                 }
             },
@@ -1657,7 +1675,61 @@
 
         var updatePromise = null;
 
+        function buildCharacteristic(name, value, description) {
+            return {
+                id: `urn:ngsi-ld:characteristic:${uuid.v4()}`,
+                configurable: false,
+                description: description,
+                name: name,
+                valueType: "string",
+                productSpecCharacteristicValue: [
+                    {
+                        "isDefault": true,
+                        "value": value
+                    }
+                ]
+            }
+        }
+
         function executeUpdate(dataUpdated) {
+            const characteristics = []
+            const processed = []
+            const descriptions = {
+                cloudRulebook: "The EU Cloud Rulebook certification outlines standardized guidelines and regulations for cloud service providers to ensure compliance with European Union data protection and security requirements",
+                cloudSecurity: "The EU Cloud Security Certification, in accordance with the ENISA guidelines, assures that cloud service providers adhere to robust security measures, safeguarding data in compliance with European Union standards.",
+                iso27001: "ISO 27001 is an internationally recognized information security management system (ISMS) standard that provides a systematic approach for managing sensitive company information, ensuring its confidentiality, integrity, and availability",
+                iso27017: "ISO/IEC 27017 is a code of practice for information security controls based on ISO/IEC 27002, specifically addressing cloud services, offering guidelines and best practices for implementing effective cloud security management.",
+                iso17025: "ISO/IEC 17025 is an international standard specifying the general requirements for the competence of testing and calibration laboratories, ensuring they meet rigorous quality management and technical proficiency criteria"
+            }
+
+            // Process product spec characteristics
+            if (vm.item.productSpecCharacteristic != null) {
+                vm.item.productSpecCharacteristic.forEach((char) => {
+                    if (certs.indexOf(char.name) < 0) {
+                        // Keep the characteristics
+                        characteristics.push(char)
+                    } else if (vm.compliance[char.name] != null && vm.compliance[char.name].length > 0) {
+                        // Update the cert value
+                        char.productSpecCharacteristicValue[0].value = vm.compliance[char.name]
+                        characteristics.push(char)
+                        processed.push(char.name)
+                    }
+                    // ELSE, the certificate was included but not now, so not adding it to the
+                    // patch will remove it
+                })
+            }
+
+            if (processed.length != certs.length) {
+                // New certificates has been added
+                certs.forEach((cert) => {
+                    if (processed.indexOf(cert) < 0 && vm.compliance[cert] != null && vm.compliance[cert].length > 0) {
+                        characteristics.push(buildCharacteristic(cert, vm.compliance[cert], descriptions[cert]))
+                    }
+                })
+            }
+
+            dataUpdated.productSpecCharacteristic = characteristics
+
             updatePromise = ProductSpec.update(vm.item, dataUpdated);
             updatePromise.then(
                 function(productUpdated) {
