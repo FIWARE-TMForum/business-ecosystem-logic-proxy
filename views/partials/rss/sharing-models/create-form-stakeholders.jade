@@ -7,7 +7,7 @@ table.table.table-bordered(ng-if="createVM.data.stakeholders.length")
   tbody
     tr(ng-repeat="stakeholder in createVM.data.stakeholders")
       td {{ stakeholder.stakeholderId }}
-      td {{ stakeholder.modelValue }} %
+      td {{ stakeholder.stakeholderShare }} %
       td
         a.btn.btn-sm.btn-icon.btn-danger(ng-click="createVM.removeStakeholder($index)")
           span.item-icon.fa.fa-trash

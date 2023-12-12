@@ -245,13 +245,13 @@ describe('RSS API', function() {
                         }
                     ]
                 },
-                body: JSON.stringify({ aggregatorValue: 0 }),
+                body: JSON.stringify({ aggregatorShare: 0 }),
                 headers: {}
             };
             var validator = function(err) {
                 expect(err).toBe(null);
                 var body = JSON.parse(req.body);
-                expect(body.aggregatorValue).toBe(config.revenueModel);
+                expect(body.aggregatorShare).toBe(config.revenueModel);
             };
             testCheckPermissions(req, null, validator, done);
         });
@@ -318,7 +318,7 @@ describe('RSS API', function() {
                         }
                     ]
                 },
-                body: JSON.stringify({ aggregatorValue: 0 }),
+                body: JSON.stringify({ aggregatorTotal: 0 }),
                 headers: {}
             };
             var validator = function(err) {

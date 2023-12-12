@@ -166,11 +166,12 @@ form(name="step.form", novalidate)
   //-           td
   //-             span {{ createVM.getSharingModel().productClass }}
   //-           td
-  //-             span {{ createVM.getSharingModel().aggregatorValue }}
+  //-             span {{ createVM.getSharingModel().aggregatorShare }}
   //-           td
-  //-             span {{ createVM.getSharingModel().ownerValue }}
+  //-             span {{ createVM.getSharingModel().providerShare }}
   //-           td
   //-             span {{ createVM.getSharingModel().stakeholders.length }}
+
   .form-group.text-right
     a.btn.btn-warning(
       ng-click="createVM.create()"

@@ -26,20 +26,20 @@ form(name="updateVM.form", novalidate)
           .input-group
             input.form-control(
               type="text"
-              ng-model="updateVM.data.aggregatorValue"
+              ng-model="updateVM.data.aggregatorShare"
               disabled
             )
             span.input-group-addon %
     .col-sm-6
       .form-group(
-        ng-class="{ 'has-error' : updateForm.hasError(updateVM.form.providerValue) }"
+        ng-class="{ 'has-error' : updateForm.hasError(updateVM.form.providerShare) }"
       )
         label #{ __("Provider percentage") }
         .input-group
           input.form-control(
             type="number"
-            name="providerValue"
-            ng-model="updateVM.data.ownerValue"
+            name="providerShare"
+            ng-model="updateVM.data.providerShare"
             min="0"
             max="100"
             required
@@ -47,8 +47,8 @@ form(name="updateVM.form", novalidate)
           span.input-group-addon %
 
         .help-block(
-          ng-messages="updateVM.form.providerValue.$error"
-          ng-show="updateForm.hasError(updateVM.form.providerValue)"
+          ng-messages="updateVM.form.providerShare.$error"
+          ng-show="updateForm.hasError(updateVM.form.providerShare)"
         )
           span(ng-message="required") #{ __("This field is required.") }
           span(ng-message="min") #{ __("This field must not be a negative number.") }
@@ -64,7 +64,7 @@ form(name="updateVM.form", novalidate)
     tbody
       tr(ng-repeat="stakeholder in updateVM.data.stakeholders")
         td {{ stakeholder.stakeholderId }}
-        td {{ stakeholder.modelValue }} %
+        td {{ stakeholder.stakeholderShare }} %
         td
           a.btn.btn-sm.btn-icon.btn-danger(ng-click="updateVM.removeStakeholder($index)")
             span.fa.fa-trash
