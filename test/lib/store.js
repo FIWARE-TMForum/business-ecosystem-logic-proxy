@@ -1,4 +1,6 @@
-/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 CoNWeT Lab., Universidad Politécnica de Madrid
+ *
+ * Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -17,38 +19,36 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var nock = require('nock');
-
-var proxyquire = require('proxyquire');
-
-var testUtils = require('../utils');
+const nock = require('nock');
+const proxyquire = require('proxyquire');
+const testUtils = require('../utils');
 
 describe('Store Client', function() {
-    var OFFERING_ASSET = 'offering';
-    var PRODUCT_ASSET = 'product';
+    const OFFERING_ASSET = 'offering';
+    const PRODUCT_ASSET = 'product';
 
-    var ASSETS_URL_MAPPING = {};
+    const ASSETS_URL_MAPPING = {};
     ASSETS_URL_MAPPING[OFFERING_ASSET] = '/charging/api/assetManagement/assets/offeringJob';
     ASSETS_URL_MAPPING[PRODUCT_ASSET] = '/charging/api/assetManagement/assets/validateJob';
 
-    var ASSETS_FUNCTION_MAPPING = {};
+    const ASSETS_FUNCTION_MAPPING = {};
     ASSETS_FUNCTION_MAPPING[OFFERING_ASSET] = 'validateOffering';
     ASSETS_FUNCTION_MAPPING[PRODUCT_ASSET] = 'validateProduct';
 
-    var config = testUtils.getDefaultConfig();
+    const config = testUtils.getDefaultConfig();
 
-    var storeClient = proxyquire('../../lib/store', {
+    const storeClient = proxyquire('../../lib/store', {
         './../config': config,
         './utils': {
             attachUserHeaders: function() {}
         }
     }).storeClient;
 
-    var testValidateAssetOk = function(assetType, method, action, protocol, done) {
+    const testValidateAssetOk = function(assetType, method, action, protocol, done) {
         // Mock the server
         config.endpoints.charging.appSsl = protocol === 'https';
-        var serverUrl = protocol + '://' + config.endpoints.charging.host + ':' + config.endpoints.charging.port;
-        var receivedBody;
+        const serverUrl = protocol + '://' + config.endpoints.charging.host + ':' + config.endpoints.charging.port;
+        let receivedBody;
 
         nock(serverUrl, {
             reqheaders: {
@@ -62,9 +62,9 @@ describe('Store Client', function() {
             .reply(200);
 
         // Call the validator
-        var assetInfo = { a: 'b', example: 'c' };
+        const assetInfo = { a: 'b', example: 'c' };
         storeClient[method](assetInfo, { id: 'test' }, function(err) {
-            var expectedBody = {
+            const expectedBody = {
                 action: action
             };
 
@@ -125,11 +125,11 @@ describe('Store Client', function() {
         testValidateAssetOk(OFFERING_ASSET, 'updateOffering', 'update', 'https', done);
     });
 
-    var testValidateProductError = function(assetType, errorStatus, response, expectedErrMsg, done) {
+    const testValidateProductError = function(assetType, errorStatus, response, expectedErrMsg, done) {
         // Mock the server
         config.endpoints.charging.appSsl = false;
-        var serverUrl = 'http' + '://' + config.endpoints.charging.host + ':' + config.endpoints.charging.port;
-        var receivedBody;
+        const serverUrl = 'http' + '://' + config.endpoints.charging.host + ':' + config.endpoints.charging.port;
+        let receivedBody;
 
         if (errorStatus) {
             nock(serverUrl, {
@@ -145,9 +145,9 @@ describe('Store Client', function() {
         }
 
         // Call the validator
-        var assetInfo = { a: 'b', example: 'c' };
+        const assetInfo = { a: 'b', example: 'c' };
         storeClient[ASSETS_FUNCTION_MAPPING[assetType]](assetInfo, { id: 'test' }, function(err) {
-            var expectedBody = {
+            const expectedBody = {
                 action: 'create'
             };
 
@@ -169,17 +169,17 @@ describe('Store Client', function() {
     // Products
 
     it('should not validate product when store returns 400', function(done) {
-        var message = 'Invalid field X';
+        const message = 'Invalid field X';
         testValidateProductError(PRODUCT_ASSET, 400, { error: message }, message, done);
     });
 
     it('should not validate product when store returns 403', function(done) {
-        var message = 'Forbidden';
+        const message = 'Forbidden';
         testValidateProductError(PRODUCT_ASSET, 403, { error: message }, message, done);
     });
 
     it('should not validate product when store returns 409', function(done) {
-        var message = 'Confict';
+        const message = 'Confict';
         testValidateProductError(PRODUCT_ASSET, 409, { error: message }, message, done);
     });
 
@@ -206,12 +206,12 @@ describe('Store Client', function() {
     // Offerings
 
     it('should not validate offering when store returns 400', function(done) {
-        var message = 'Invalid field X';
+        const message = 'Invalid field X';
         testValidateProductError(OFFERING_ASSET, 400, { error: message }, message, done);
     });
 
     it('should not validate offering when store returns 403', function(done) {
-        var message = 'Forbidden';
+        const message = 'Forbidden';
         testValidateProductError(OFFERING_ASSET, 403, { error: message }, message, done);
     });
 
@@ -233,12 +233,13 @@ describe('Store Client', function() {
         // Only a case is tested in since this method relies on makeStoreRequest
         // which has been already tested
 
-        var redirectUrl = 'http://redirecturl.com';
+        const redirectUrl = 'http://redirecturl.com';
 
         // Mock the server
-        var serverUrl = 'http' + '://' + config.endpoints.charging.host + ':' + config.endpoints.charging.port;
-        var receivedBody;
-        var response = {
+        const serverUrl = 'http' + '://' + config.endpoints.charging.host + ':' + config.endpoints.charging.port;
+        let receivedBody;
+
+        const response = {
             redirectUrl: redirectUrl
         };
 
@@ -254,20 +255,22 @@ describe('Store Client', function() {
             .reply(200, response);
 
         // Call the validator
-        var orderInfo = { a: 'b', example: 'c' };
+        const orderInfo = { a: 'b', example: 'c' };
         storeClient.notifyOrder(orderInfo, { id: 'test' }, function(err, res) {
             expect(receivedBody).toEqual(orderInfo);
             expect(err).toBe(null);
 
-            var expectedResponse = {
+            const expectedResponse = {
                 status: 200,
-                body: '{"redirectUrl":"' + redirectUrl + '"}',
+                body: {"redirectUrl": redirectUrl},
                 headers: {
                     'content-type': 'application/json'
                 }
             };
 
-            expect(res).toEqual(expectedResponse);
+            expect(res.status).toEqual(expectedResponse.status);
+            expect(res.body).toEqual(expectedResponse.body);
+            expect(res.headers['content-type']).toEqual(expectedResponse.headers['content-type']);
             done();
         });
     });
@@ -275,8 +278,8 @@ describe('Store Client', function() {
     it('should call callback without errors when refund works', function(done) {
         // Mock the server
         config.endpoints.charging.appSsl = false;
-        var serverUrl = 'http://' + config.endpoints.charging.host + ':' + config.endpoints.charging.port;
-        var receivedBody;
+        const serverUrl = 'http://' + config.endpoints.charging.host + ':' + config.endpoints.charging.port;
+        let receivedBody;
 
         nock(serverUrl, {
             reqheaders: {
@@ -290,9 +293,9 @@ describe('Store Client', function() {
             .reply(200);
 
         // Call the validator
-        var orderId = 7;
+        const orderId = 7;
         storeClient.refund(orderId, { id: 'test' }, function(err) {
-            var expectedBody = {
+            const expectedBody = {
                 orderId: orderId
             };
 
@@ -304,12 +307,12 @@ describe('Store Client', function() {
     });
 
     it('should call callback with errors when refund fails', function(done) {
-        var errorStatus = 500;
+        const errorStatus = 500;
 
         // Mock the server
         config.endpoints.charging.appSsl = false;
-        var serverUrl = 'http://' + config.endpoints.charging.host + ':' + config.endpoints.charging.port;
-        var receivedBody;
+        const serverUrl = 'http://' + config.endpoints.charging.host + ':' + config.endpoints.charging.port;
+        let receivedBody;
 
         nock(serverUrl, {
             reqheaders: {
@@ -323,9 +326,9 @@ describe('Store Client', function() {
             .reply(errorStatus);
 
         // Call the validator
-        var orderId = 7;
+        const orderId = 7;
         storeClient.refund(orderId, { id: 'test' }, function(err) {
-            var expectedBody = {
+            const expectedBody = {
                 orderId: orderId
             };
 
@@ -339,10 +342,10 @@ describe('Store Client', function() {
         });
     });
 
-    var mockUsageNotification = function testUsageNotification(status, path) {
+    const mockUsageNotification = function testUsageNotification(status, path) {
         // Mock the server
         config.endpoints.charging.appSsl = false;
-        var serverUrl = 'http://' + config.endpoints.charging.host + ':' + config.endpoints.charging.port;
+        const serverUrl = 'http://' + config.endpoints.charging.host + ':' + config.endpoints.charging.port;
 
         nock(serverUrl, {
             reqheaders: {
@@ -364,7 +367,7 @@ describe('Store Client', function() {
     });
 
     it('should call callback with errors when usage notification fails', function(done) {
-        var errorStatus = 500;
+        const errorStatus = 500;
         mockUsageNotification(errorStatus, '/charging/api/orderManagement/accounting/');
         storeClient.validateUsage({}, function(err) {
             expect(err).toEqual({
@@ -384,7 +387,7 @@ describe('Store Client', function() {
     });
 
     it('should call callback with errors when refresh usage notification fails', function(done) {
-        var errorStatus = 500;
+        const errorStatus = 500;
         mockUsageNotification(errorStatus, '/charging/api/orderManagement/accounting/refresh/');
         storeClient.refreshUsage('1', '2', function(err) {
             expect(err).toEqual({
