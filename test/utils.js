@@ -109,8 +109,8 @@ var defaultConfig = {
 		},
 		rss: {
 			path: 'rss',
-			host: 'rss.com',
-			port: 753,
+			host: 'charging.com',
+			port: 35,
 			appSsl: false
 		},
 		party: {
