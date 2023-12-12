@@ -1,4 +1,6 @@
-/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 CoNWeT Lab., Universidad Politécnica de Madrid
+ *
+ * Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -45,6 +47,12 @@ var defaultConfig = {
 		}
 	},
 	endpoints: {
+		account: {
+			path: 'account',
+			host: 'host.docker.internal',
+			port: '8639',
+			appSsl: false
+		},
 		management: {
 			path: 'management',
 			host: 'localhost',
@@ -57,6 +65,18 @@ var defaultConfig = {
 			port: 99,
 			appSsl: false
 		},
+		resource: {
+			path: 'resource',
+			host: 'resource.com',
+			port: '8636',
+			appSsl: false
+		},
+		service: {
+			path: 'service',
+			host: 'service.com',
+			port: '8637',
+			appSsl: false
+		},
 		ordering: {
 			path: 'ordering',
 			host: 'ordering.com',
@@ -67,6 +87,18 @@ var defaultConfig = {
 			path: 'inventory',
 			host: 'inventory.com',
 			port: 475,
+			appSsl: false
+		},
+		serviceInventory: {
+			path: 'serviceInventory',
+			host: 'charging.docker',
+			port: '8006',
+			appSsl: false
+		},
+		resourceInventory: {
+			path: 'resourceInventory',
+			host: 'tmforum-tm-forum-api-resource-inventory',
+			port: '8080',
 			appSsl: false
 		},
 		charging: {
@@ -121,12 +153,6 @@ var defaultConfig = {
 			path: 'resourceSpecification',
 			host: 'resourceSpecification.com',
 			port: 85,
-			appSsl: false
-		},
-		service: {
-			path: 'service',
-			host: 'localhost',
-			port: 86,
 			appSsl: false
 		}
 	},
