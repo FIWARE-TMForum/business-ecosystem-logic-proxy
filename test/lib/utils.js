@@ -22,7 +22,7 @@
 const proxyquire = require('proxyquire');
 const testUtils = require('../utils');
 
-fdescribe('Utils', function() {
+describe('Utils', function() {
 
     let config = testUtils.getDefaultConfig();
     let utils = proxyquire('../../lib/utils', { './../config.js': config });
