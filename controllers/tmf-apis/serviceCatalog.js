@@ -35,94 +35,94 @@ const serviceCatalog = (function() {
         // validate if a service specification is returned only by the owner
     };
 
-    var getResourceAPIUrl = function(path) {
-        const resPath = path.replace(`/${config.endpoints.service.path}/`, '')
+	var getResourceAPIUrl = function(path) {
+		const resPath = path.replace(`/${config.endpoints.service.path}/`, '')
 
-        return utils.getAPIURL(
-            config.endpoints.service.appSsl,
-            config.endpoints.service.host,
-            config.endpoints.service.port,
-            resPath
-        );
-    };
+		return utils.getAPIURL(
+			config.endpoints.service.appSsl,
+			config.endpoints.service.host,
+			config.endpoints.service.port,
+			resPath
+		);
+	};
 
-    const retrieveAsset = function(path, callback) {
-        const uri = getResourceAPIUrl(path);
+	const retrieveAsset = function(path, callback) {
+		const uri = getResourceAPIUrl(path);
 
-        axios.get(uri).then((response) => {
-            if (response.status >= 400) {
-                callback({
-                    status: response.status
-                });
-            } else {
-                callback(null, {
-                    status: response.status,
-                    body: response.data
-                });
-            }
-        }).catch((err) => {
-            callback({
-                status: err.response.status
-            });
-        })
-    };
+		axios.get(uri).then((response) => {
+			if (response.status >= 400) {
+				callback({
+					status: response.status
+				});
+			} else {
+				callback(null, {
+					status: response.status,
+					body: response.data
+				});
+			}
+		}).catch((err) => {
+			callback({
+				status: err.response.status
+			});
+		})
+	};
 
-    const validateOwnerSeller = function(req, callback) {
-        retrieveAsset(req.apiUrl, function(err, response) {
-            if (err) {
-                if (err.status === 404) {
-                    callback({
-                        status: 404,
-                        message: 'The required service does not exist'
-                    });
-                } else {
-                    callback({
-                        status: 500,
-                        message: 'The required service cannot be created/updated'
-                    });
-                }
-            } else {
-                if (!tmfUtils.hasPartyRole(req, response.body.relatedParty, 'owner') || !utils.hasRole(req.user, config.oauth2.roles.seller)) {
-                    callback({
-                        status: 403,
-                        message: 'Unauthorized to update non-owned/non-seller services'
-                    });
-                } else {
-                    callback(null)
-                }
-            }
-        });
-    };
+	const validateOwnerSeller = function(req, callback) {
+		retrieveAsset(req.apiUrl, function(err, response) {
+			if (err) {
+				if (err.status === 404) {
+					callback({
+						status: 404,
+						message: 'The required service does not exist'
+					});
+				} else {
+					callback({
+						status: 500,
+						message: 'The required service cannot be created/updated'
+					});
+				}
+			} else {
+				if (!tmfUtils.hasPartyRole(req, response.body.relatedParty, 'owner') || !utils.hasRole(req.user, config.oauth2.roles.seller)) {
+					callback({
+						status: 403,
+						message: 'Unauthorized to update non-owned/non-seller services'
+					});
+				} else {
+					callback(null)
+				}
+			}
+		});
+	};
 
 	const validateOwnerSellerPost = function(req, callback) {
-        let body;
-        try {
-            body = JSON.parse(req.body);
-        } catch (e) {
-            callback({
-                status: 400,
-                message: 'The provided body is not a valid JSON'
-            });
+		let body;
+		try {
+			body = JSON.parse(req.body);
+		} catch (e) {
+			callback({
+				status: 400,
+				message: 'The provided body is not a valid JSON'
+			});
 
-            return; // EXIT
-        }
+			return; // EXIT
+		}
 
-        if (!tmfUtils.hasPartyRole(req, body.relatedParty, 'owner') || !utils.hasRole(req.user, config.oauth2.roles.seller)) {
-            callback({
-                status: 403,
-                message: 'Unauthorized to create non-owned/non-seller service specs'
-            });
-        } else {
-            callback(null)
-        }
-    };
+		if (!tmfUtils.hasPartyRole(req, body.relatedParty, 'owner') || !utils.hasRole(req.user, config.oauth2.roles.seller)) {
+			callback({
+				status: 403,
+				message: 'Unauthorized to create non-owned/non-seller service specs'
+			});
+		} else {
+			callback(null)
+		}
+	};
 
 	const validators = {
 		GET: [validateRetrieving],
 		POST: [utils.validateLoggedIn, validateOwnerSellerPost],
 		PATCH: [utils.validateLoggedIn, validateOwnerSeller],
-		PUT: [utils.validateLoggedIn],
-		DELETE: [utils.validateLoggedIn]
+		PUT: [utils.methodNotAllowed],
+		DELETE: [utils.methodNotAllowed]
 	};
 
 	const checkPermissions = function(req, callback) {
