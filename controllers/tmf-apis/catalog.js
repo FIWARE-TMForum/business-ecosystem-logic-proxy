@@ -657,7 +657,7 @@ const catalog = (function() {
                     callback
                 );
             }
-        } else if (
+        } /*else if (
             !!newBody.productSpecCharacteristic &&
             !equal(newBody.productSpecCharacteristic, prevBody.productSpecCharacteristic)
         ) {
@@ -665,7 +665,7 @@ const catalog = (function() {
                 status: 422,
                 message: 'Product spec characteristics cannot be updated'
             });
-        }
+        }*/
 
         return callback(null);
     };
