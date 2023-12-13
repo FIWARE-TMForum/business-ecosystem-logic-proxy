@@ -28,7 +28,6 @@ const storeClient = require('./../../lib/store').storeClient
 const tmfUtils = require('./../../lib/tmfUtils')
 const url = require('url')
 const utils = require('./../../lib/utils')
-const inventory = require('./../../lib/inventory_subscription')
 
 const ordering = (function() {
     const CUSTOMER = 'Customer';
