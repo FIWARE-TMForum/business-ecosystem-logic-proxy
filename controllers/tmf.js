@@ -91,8 +91,6 @@ function tmf() {
 			url = url.replace('rss', 'charging')
 		}
 
-		console.log('========================')
-		console.log(url)
 		const options = {
 			url: url,
 			method: req.method,
@@ -116,8 +114,6 @@ function tmf() {
 					res.setHeader(header, resp.headers[header]);
 				}
 
-				console.log(resp.headers)
-				console.log(resp.headers['content-type'])
 				if (resp.headers['content-type'].toLowerCase().indexOf('application/json') >= 0 || resp.headers['content-type'].toLowerCase().indexOf('application/ld+json') >= 0) {
 					res.json(resp.body)
 				} else {
@@ -180,8 +176,8 @@ function tmf() {
 		})
 	};
 
-	var checkPermissions = function(req, res) {
-		var api = getAPIName(req.apiUrl);
+	const checkPermissions = function(req, res) {
+		const api = getAPIName(req.apiUrl);
 
 		if (apiControllers[api] === undefined) {
 			utils.log(logger, 'warn', req, 'API ' + api + ' not defined');
@@ -192,7 +188,7 @@ function tmf() {
 			});
 		} else {
 			apiControllers[api].checkPermissions(req, function(err) {
-				var basicLogMessage = 'Pre-Validation (' + api + '): ';
+				const basicLogMessage = 'Pre-Validation (' + api + '): ';
 
 				if (err) {
 					utils.log(logger, 'warn', req, basicLogMessage + err.message);
