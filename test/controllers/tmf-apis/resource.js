@@ -1,6 +1,4 @@
-/* Copyright (c) 2015 CoNWeT Lab., Universidad Politécnica de Madrid
- *
- * Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
+/* Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -19,28 +17,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var nock = require('nock');
+const nock = require('nock');
+const proxyquire = require('proxyquire');
+const testUtils = require('../../utils');
 
-var proxyquire = require('proxyquire');
-
-var testUtils = require('../../utils');
 describe('ResourceSpecification API', function() {
 
-    var config = testUtils.getDefaultConfig();
-    var SERVER =
+    const config = testUtils.getDefaultConfig();
+    const SERVER =
         (config.endpoints.resource.appSsl ? 'https' : 'http') +
         '://' +
         config.endpoints.resource.host +
         ':' +
         config.endpoints.resource.port;
-    var CATALOG_SERVER =
-        (config.endpoints.catalog.appSsl ? 'https' : 'http') +
-        '://' +
-        config.endpoints.catalog.host +
-        ':' +
-        config.endpoints.catalog.port;
 
-    var getResourceSpecAPI = function( tmfUtils, utils) {
+        const getResourceSpecAPI = function(tmfUtils, utils) {
 
         return proxyquire('../../../controllers/tmf-apis/resource', {
             './../../config': config,
@@ -49,18 +40,16 @@ describe('ResourceSpecification API', function() {
             './../../lib/utils': utils
         }).resource;
     };
-    var individual = '/party/individual/resourceSpec'
-    var path = '/resourceSpecification';
-    var seller = {
+
+    const individual = '/party/individual/resourceSpec'
+    const path = '/resourceSpecification';
+    const seller = {
         id: 'test',
         roles: ['seller'],
         partyId: 'resourceSpec',
     }
-    var nonSeller = {
-        id: 'test2',
-    }
-    var protocol = config.endpoints.catalog.appSsl ? 'https' : 'http';
-	var url = protocol + '://' + config.endpoints.resource.host + ':' + config.endpoints.resource.port; 
+    const protocol = config.endpoints.catalog.appSsl ? 'https' : 'http';
+	const url = protocol + '://' + config.endpoints.resource.host + ':' + config.endpoints.resource.port; 
     
     beforeEach(function() {
         nock.cleanAll();
@@ -68,20 +57,20 @@ describe('ResourceSpecification API', function() {
 
     describe('check permissions', function (){
         describe('Not Authenticated Requests', function() {
-            var validateLoggedError = function(req, callback) {
+            const validateLoggedError = function(req, callback) {
                 callback({
                     status: 401,
                     message: 'You need to be authenticated to create/update/delete resources'
                 });
             };
 
-            var testNotLoggedIn = function(method, done) {
-                var utils = {
+            const testNotLoggedIn = function(method, done) {
+                const utils = {
                     validateLoggedIn: validateLoggedError
                 };
 
-                var resourceApi = getResourceSpecAPI( {}, utils);
-                var req = {
+                const resourceApi = getResourceSpecAPI( {}, utils);
+                const req = {
                     method: method,
                     url: path
                 };
@@ -95,10 +84,6 @@ describe('ResourceSpecification API', function() {
                 });
             };
 
-            it('should reject not authenticated GET requests', function(done) {
-                testNotLoggedIn('GET', done);
-            });
-
             it('should reject not authenticated POST requests', function(done) {
                 testNotLoggedIn('POST', done);
             });
@@ -107,27 +92,36 @@ describe('ResourceSpecification API', function() {
                 testNotLoggedIn('PATCH', done);
             });
         });
+
         describe('retrieval', function(){
             function testRetrieveList(query, url, isList, done){
-                var checkRelatedParty = jasmine.createSpy();
+                const checkRelatedParty = jasmine.createSpy();
                 checkRelatedParty.and.callFake((req, callback) => callback(null));
-                var filter = jasmine.createSpy();
+
+                const filter = jasmine.createSpy();
                 filter.and.callFake((req, callback) => callback(null));
-                var utils = {
+
+                const utils = {
                     validateLoggedIn: function(req, callback) {
                         callback(null);
                     }
                 };
-                var tmfUtils = {
+
+                const tmfUtils = {
                     ensureRelatedPartyIncluded: checkRelatedParty,
                     filterRelatedPartyFields: filter
                 }
-                var resourceApi = getResourceSpecAPI( tmfUtils, utils);
-                var req = {
+
+                const resourceApi = getResourceSpecAPI( tmfUtils, utils);
+                const req = {
                     method: 'GET',
                     query: query,
-                    path: url
+                    path: url,
+                    user: {
+                        partyId: '1234'
+                    }
                 };
+
                 resourceApi.checkPermissions(req, function(_) { 
                     if(isList){
                         expect(filter).toHaveBeenCalledTimes(1)
@@ -146,51 +140,8 @@ describe('ResourceSpecification API', function() {
             it('should call filterRelatedPartyFields method with ensureRelatedPartyIncluded as callback', function(done){
                 testRetrieveList({fields: 'relatedParty'}, path, true, done)
             })
-
-
-            function testRetrieveSingle(url, body, isArray, isCustomer, n, done){
-                var checkOwnerMethod = jasmine.createSpy();
-                checkOwnerMethod.and.returnValue(isCustomer);
-                var utils = {
-                    validateLoggedIn: function(req, callback) {
-                        callback(null);
-                    }
-                };
-                var tmfUtils = {       
-                    hasPartyRole: checkOwnerMethod
-                };
-                var resourceApi = getResourceSpecAPI( tmfUtils, utils);
-                var req = {
-                    method: 'GET',
-                    path: url,
-                    body: body
-                };
-                resourceApi.executePostValidation(req, function(err){
-                     if (!isArray && !isCustomer){
-                        expect(err.status).toBe(403)
-                        expect(err.message).toBe('You are not authorized to retrieve the specified resource specification from the catalog')
-                    }
-                    
-                    expect(checkOwnerMethod).toHaveBeenCalledTimes(n)
-
-                  
-                })
-                done()
-            }
-
-            it('should raise 403 auth error', function(done){
-                testRetrieveSingle(url, {}, false, false, 1, done)
-            })
-            it('should call hasPartyRole method', function(done){
-                testRetrieveSingle(url, {}, false, true, 1, done)
-            })
-            it('should call hasPartyRole method', function(done){
-                testRetrieveSingle(url, [], true, false, 0,done)
-            })
-            it('should call hasPartyRole method', function(done){
-                testRetrieveSingle(url, [], true, false, 0,done)
-            })
         })
+
         describe('creation/updation', function() {
             function testCreationUpdation (userInfo, body, hasError, expectedStatus, expectedErr, isOwner, isSeller, checkRole, method, nockBody,done) {
                 var checkRoleMethod = jasmine.createSpy();

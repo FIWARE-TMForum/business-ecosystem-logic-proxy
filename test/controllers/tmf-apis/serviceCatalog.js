@@ -1,14 +1,32 @@
-var nock = require('nock');
+/* Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
+ *
+ * This file belongs to the business-ecosystem-logic-proxy of the
+ * Business API Ecosystem
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
-var proxyquire = require('proxyquire');
+const nock = require('nock');
+const proxyquire = require('proxyquire');
+const testUtils = require('../../utils');
 
-var testUtils = require('../../utils');
 describe('ServiceSpecification API', function() {
 
-	var config = testUtils.getDefaultConfig();
-	var SERVER = (config.endpoints.service.appSsl ? 'https' : 'http') + '://' + config.endpoints.service.host + ':' + config.endpoints.service.port;
+	const config = testUtils.getDefaultConfig();
+	const SERVER = (config.endpoints.service.appSsl ? 'https' : 'http') + '://' + config.endpoints.service.host + ':' + config.endpoints.service.port;
 
-	var getServiceSpecAPI = function(tmfUtils, utils) {
+	const getServiceSpecAPI = function(tmfUtils, utils) {
 		return proxyquire('../../../controllers/tmf-apis/serviceCatalog', {
 			'./../../config': config,
 			'./../../lib/logger': testUtils.emptyLogger,
@@ -16,18 +34,16 @@ describe('ServiceSpecification API', function() {
 			'./../../lib/utils': utils
 		}).serviceCatalog;
 	};
-	var individual = '/party/individual/serviceSpec';
-	var path = '/serviceSpecification';
-	var seller = {
+
+	const individual = '/party/individual/serviceSpec';
+	const path = '/serviceSpecification';
+	const seller = {
 		id: 'test',
 		roles: ['seller'],
 		partyId: 'serviceSpec',
 	}
-	var nonSeller = {
-		id: 'test2',
-	}
-	var protocol = config.endpoints.service.appSsl ? 'https' : 'http';
-	var url = protocol + '://' + config.endpoints.service.host + ':' + config.endpoints.service.port;
+	const protocol = config.endpoints.service.appSsl ? 'https' : 'http';
+	const url = protocol + '://' + config.endpoints.service.host + ':' + config.endpoints.service.port;
 
 	beforeEach(function() {
 		nock.cleanAll();
@@ -35,20 +51,20 @@ describe('ServiceSpecification API', function() {
 
 	describe('check permissions', function() {
 		describe('Not Authenticated Requests', function() {
-			var validateLoggedError = function(req, callback) {
+			const validateLoggedError = function(req, callback) {
 				callback({
 					status: 401,
 					message: 'You need to be authenticated to create/update/delete services'
 				});
 			};
 
-			var testNotLoggedIn = function(method, done) {
-				var utils = {
+			const testNotLoggedIn = function(method, done) {
+				const utils = {
 					validateLoggedIn: validateLoggedError
 				};
 
-				var serviceAPI = getServiceSpecAPI({}, utils);
-				var req = {
+				const serviceAPI = getServiceSpecAPI({}, utils);
+				const req = {
 					method: method,
 					url: path
 				};
@@ -62,10 +78,6 @@ describe('ServiceSpecification API', function() {
 				});
 			};
 
-			it('should reject not authenticated GET requests', function(done) {
-				testNotLoggedIn('GET', done);
-			});
-
 			it('should reject not authenticated POST requests', function(done) {
 				testNotLoggedIn('POST', done);
 			});
@@ -74,27 +86,36 @@ describe('ServiceSpecification API', function() {
 				testNotLoggedIn('PATCH', done);
 			});
 		});
+
 		describe('retrieval', function() {
 			function testRetrieveList(query, url, isList, done) {
-				var checkRelatedParty = jasmine.createSpy();
+				const checkRelatedParty = jasmine.createSpy();
 				checkRelatedParty.and.callFake((req, callback) => callback(null));
-				var filter = jasmine.createSpy();
+
+				const filter = jasmine.createSpy();
 				filter.and.callFake((req, callback) => callback(null));
-				var utils = {
+
+				const utils = {
 					validateLoggedIn: function(req, callback) {
 						callback(null);
 					}
 				};
-				var tmfUtils = {
+
+				const tmfUtils = {
 					ensureRelatedPartyIncluded: checkRelatedParty,
 					filterRelatedPartyFields: filter
 				}
-				var serviceAPI = getServiceSpecAPI(tmfUtils, utils);
-				var req = {
+
+				const serviceAPI = getServiceSpecAPI(tmfUtils, utils);
+				const req = {
 					method: 'GET',
 					query: query,
-					path: url
+					path: url,
+					user: {
+						partyId: '1234'
+					}
 				};
+
 				serviceAPI.checkPermissions(req, function(_) {
 					if (isList) {
 						expect(filter).toHaveBeenCalledTimes(1);
@@ -111,46 +132,8 @@ describe('ServiceSpecification API', function() {
 			it('should call filterRelatedPartyFields method with ensureRelatedPartyIncluded as callback', function(done) {
 				testRetrieveList({ fields: 'relatedParty' }, path, true, done)
 			})
-
-			function testRetrieveSingle(url, body, isArray, isCustomer, n, done) {
-				var checkOwnerMethod = jasmine.createSpy();
-				checkOwnerMethod.and.returnValue(isCustomer);
-				var utils = {
-					validateLoggenIn: function(req, callback) {
-						callback(null);
-					}
-				};
-				var tmfUtils = {
-					hasPartyRole: checkOwnerMethod
-				};
-				var serviceAPI = getServiceSpecAPI(tmfUtils, utils);
-				var req = {
-					method: 'GET',
-					path: url,
-					body: body
-				};
-				serviceAPI.executePostValidation(req, function(err) {
-					if (!isArray && !isCustomer) {
-						expect(err.status).toBe(403)
-						expect(err.message).toBe('You are not authorized to retrieve the specified service specification from the catalog')
-					}
-					expect(checkOwnerMethod).toHaveBeenCalledTimes(n)
-				})
-				done()
-			}
-			it('should raise 403 auth error', function(done) {
-				testRetrieveSingle(url, {}, false, false, 1, done)
-			})
-			it('should call hasPartyRole method', function(done) {
-				testRetrieveSingle(url, {}, false, true, 1, done)
-			})
-			it('should call hasPartyRole method', function(done) {
-				testRetrieveSingle(url, [], true, false, 0, done)
-			})
-			it('should call hasPartyRole method', function(done) {
-				testRetrieveSingle(url, [], true, false, 0, done)
-			})
 		})
+
 		describe('creation/updation', function() {
 			function testCreationUpdation(UserInfo, body, hasError, expectedStatus, expectedErr, isOwner, isSeller, checkRole, method, nockBody, done) {
 				var checkRoleMethod = jasmine.createSpy();

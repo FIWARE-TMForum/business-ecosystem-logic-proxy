@@ -136,17 +136,6 @@ const serviceCatalog = (function() {
 	};
 
 	const executePostValidation = function(response, callback) {
-		const body = response.body
-
-        // Check if the user is allowed to retrieve the requested resource specification
-        /*if (!Array.isArray(body) && !tmfUtils.hasPartyRole(response, body.relatedParty, 'owner')) {
-            callback({
-                status: 403,
-                message: 'You are not authorized to retrieve the specified service specification from the catalog'
-            });
-        } else {
-            callback(null);
-        }*/
         callback(null);
 	};
 
