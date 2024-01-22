@@ -1,4 +1,6 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 CoNWeT Lab., Universidad Politécnica de Madrid
+ *
+ * Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -17,14 +19,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var proxyquire = require('proxyquire');
+const proxyquire = require('proxyquire');
 
 describe('Shopping Cart', function() {
-    var DEFAULT_USER = 'example-user';
-    var DEFAULT_ITEM = 7;
-    var DEFAULT_ERROR = 'There was an error retrieving your cart...';
+    const DEFAULT_USER = 'example-user';
+    const DEFAULT_ITEM = 7;
+    const DEFAULT_ERROR = 'There was an error retrieving your cart...';
 
-    var getShoppingCartController = function(cartItemSchema) {
+    const getShoppingCartController = function(cartItemSchema) {
         return proxyquire('../../controllers/shoppingCart', {
             '../db/schemas/cartItem': cartItemSchema
         }).shoppingCart;
@@ -32,24 +34,23 @@ describe('Shopping Cart', function() {
 
     describe('Get Cart', function() {
         it('should return 500 when db fails', function(done) {
-            var dbQueryConditions = null;
+            let dbQueryConditions = null;
 
-            var cartItemSchema = {
-                find: function(conditions, callback) {
+            const cartItemSchema = {
+                find: function(conditions) {
                     dbQueryConditions = conditions;
-                    callback({ message: DEFAULT_ERROR });
+                    return Promise.reject({ message: DEFAULT_ERROR })
                 }
             };
 
-            var shoppingCartController = getShoppingCartController(cartItemSchema);
+            const shoppingCartController = getShoppingCartController(cartItemSchema);
 
-            var req = { user: { id: DEFAULT_USER } };
-            var res = jasmine.createSpyObj('res', ['json', 'setHeader', 'end']);
+            const req = { user: { id: DEFAULT_USER } };
+            const res = jasmine.createSpyObj('res', ['json', 'setHeader', 'end']);
 
-            shoppingCartController.getCart(req, res);
-
-            // Wail till request has been processed
-            setTimeout(function() {
+            // End method is the last method called
+            // we can use it to verify the requests
+            res.end.and.callFake(() => {
                 expect(dbQueryConditions).toEqual({ user: DEFAULT_USER });
 
                 expect(res.statusCode).toBe(500);
@@ -58,71 +59,72 @@ describe('Shopping Cart', function() {
                 expect(res.end).toHaveBeenCalled();
 
                 done();
-            }, 100);
+            })
+
+            shoppingCartController.getCart(req, res);
         });
 
         it('should return the items given by the database', function(done) {
-            var returnedItems = [
-                { id: 77, name: 'Off1', href: 'http://fiware.org/off2' },
-                { id: 78, name: 'Off2', href: 'http://fiware.org/off1' }
+            const item1 = { id: 77, name: 'Off1', href: 'http://fiware.org/off2' }
+            const item2 = { id: 78, name: 'Off2', href: 'http://fiware.org/off1' }
+
+            const returnedItems = [
+                {itemObject: item1},
+                {itemObject: item2}
             ];
+            const expectedItems = [item1, item2]
 
-            var dbQueryConditions = null;
+            let dbQueryConditions = null;
 
-            var cartItemSchema = {
-                find: function(conditions, callback) {
+            const cartItemSchema = {
+                find: function(conditions) {
                     dbQueryConditions = conditions;
 
-                    var response = [];
+                    const response = [];
                     returnedItems.forEach(function(item) {
                         response.push({ user: DEFAULT_USER, itemId: item.id, itemObject: item });
                     });
 
-                    callback(null, response);
+                    return Promise.resolve(returnedItems)
                 }
             };
 
-            var shoppingCartController = getShoppingCartController(cartItemSchema);
+            const shoppingCartController = getShoppingCartController(cartItemSchema);
 
-            var req = { user: { id: DEFAULT_USER } };
-            var res = jasmine.createSpyObj('res', ['json', 'setHeader', 'end']);
+            const req = { user: { id: DEFAULT_USER } };
+            const res = jasmine.createSpyObj('res', ['json', 'setHeader', 'end']);
 
-            shoppingCartController.getCart(req, res);
-
-            // Wail till request has been processed
-            setTimeout(function() {
+            res.end.and.callFake(() => {
                 expect(dbQueryConditions).toEqual({ user: DEFAULT_USER });
 
                 expect(res.statusCode).toBe(200);
                 expect(res.setHeader).not.toHaveBeenCalled();
-                expect(res.json).toHaveBeenCalledWith(returnedItems);
+                expect(res.json).toHaveBeenCalledWith(expectedItems);
                 expect(res.end).toHaveBeenCalled();
 
                 done();
-            }, 100);
+            })
+
+            shoppingCartController.getCart(req, res);
         });
     });
 
     describe('Get Item', function() {
         it('should return 500 when db fails', function(done) {
-            var dbQueryConditions = null;
+            let dbQueryConditions = null;
 
-            var cartItemSchema = {
-                findOne: function(conditions, callback) {
+            const cartItemSchema = {
+                findOne: function(conditions) {
                     dbQueryConditions = conditions;
-                    callback({ message: DEFAULT_ERROR });
+                    return Promise.reject({ message: DEFAULT_ERROR })
                 }
             };
 
-            var shoppingCartController = getShoppingCartController(cartItemSchema);
+            const shoppingCartController = getShoppingCartController(cartItemSchema);
 
-            var req = { user: { id: DEFAULT_USER }, params: { id: DEFAULT_ITEM } };
-            var res = jasmine.createSpyObj('res', ['json', 'setHeader', 'end']);
-
-            shoppingCartController.getItem(req, res);
-
-            // Wail till request has been processed
-            setTimeout(function() {
+            const req = { user: { id: DEFAULT_USER }, params: { id: DEFAULT_ITEM } };
+            const res = jasmine.createSpyObj('res', ['json', 'setHeader', 'end']);
+            res.end.and.callFake(() => {
                 expect(dbQueryConditions).toEqual({ user: DEFAULT_USER, itemId: DEFAULT_ITEM });
 
                 expect(res.statusCode).toBe(500);
@@ -131,35 +133,33 @@ describe('Shopping Cart', function() {
                 expect(res.end).toHaveBeenCalled();
 
                 done();
-            }, 100);
+            })
+
+            shoppingCartController.getItem(req, res);
         });
 
-        var getItemDBNotFail = function(returnedItem, expectedStatus, expectedBody, done) {
-            var dbQueryConditions = null;
+        const getItemDBNotFail = function(returnedItem, expectedStatus, expectedBody, done) {
+            let dbQueryConditions = null;
 
-            var cartItemSchema = {
-                findOne: function(conditions, callback) {
+            const cartItemSchema = {
+                findOne: function(conditions) {
                     dbQueryConditions = conditions;
 
-                    var response = null;
+                    let response = null;
 
                     if (returnedItem) {
                         response = { user: DEFAULT_USER, itemId: DEFAULT_ITEM, itemObject: returnedItem };
                     }
 
-                    callback(null, response);
+                    return Promise.resolve(response)
                 }
             };
 
-            var shoppingCartController = getShoppingCartController(cartItemSchema);
+            const shoppingCartController = getShoppingCartController(cartItemSchema);
 
-            var req = { user: { id: DEFAULT_USER }, params: { id: DEFAULT_ITEM } };
-            var res = jasmine.createSpyObj('res', ['json', 'setHeader', 'end']);
-
-            shoppingCartController.getItem(req, res);
-
-            // Wail till request has been processed
-            setTimeout(function() {
+            const req = { user: { id: DEFAULT_USER }, params: { id: DEFAULT_ITEM } };
+            const res = jasmine.createSpyObj('res', ['json', 'setHeader', 'end']);
+            res.end.and.callFake(() => {
                 expect(dbQueryConditions).toEqual({ user: DEFAULT_USER, itemId: DEFAULT_ITEM });
 
                 expect(res.statusCode).toBe(expectedStatus);
@@ -168,11 +168,13 @@ describe('Shopping Cart', function() {
                 expect(res.end).toHaveBeenCalled();
 
                 done();
-            }, 100);
+            })
+
+            shoppingCartController.getItem(req, res);
         };
 
         it('should return the item given by the database', function(done) {
-            var returnedItem = { id: 77, name: 'Off1', href: 'http://fiware.org/off2' };
+            const returnedItem = { id: 77, name: 'Off1', href: 'http://fiware.org/off2' };
 
             getItemDBNotFail(returnedItem, 200, returnedItem, done);
         });
@@ -183,27 +185,25 @@ describe('Shopping Cart', function() {
     });
 
     describe('Add to cart', function() {
-        var addInvalidInput = function(reqBody, expectedStatus, expectedBody, done) {
-            var cartItemSchema = function() {
+        const addInvalidInput = function(reqBody, expectedStatus, expectedBody, done) {
+            const cartItemSchema = function() {
                 return {};
             };
 
-            var shoppingCartController = getShoppingCartController(cartItemSchema);
+            const shoppingCartController = getShoppingCartController(cartItemSchema);
 
-            var req = { user: { id: DEFAULT_USER }, body: reqBody };
-            var res = jasmine.createSpyObj('res', ['json', 'setHeader', 'end']);
-
-            shoppingCartController.add(req, res);
-
-            // Wail till request has been processed
-            setTimeout(function() {
+            const req = { user: { id: DEFAULT_USER }, body: reqBody };
+            const res = jasmine.createSpyObj('res', ['json', 'setHeader', 'end']);
+            res.end.and.callFake(() => {
                 expect(res.statusCode).toBe(expectedStatus);
                 expect(res.setHeader).not.toHaveBeenCalled();
                 expect(res.json).toHaveBeenCalledWith(expectedBody);
                 expect(res.end).toHaveBeenCalled();
 
                 done();
-            }, 100);
+            })
+
+            shoppingCartController.add(req, res);
         };
 
         it('should return 400 when body is an invalid JSON', function(done) {
@@ -214,28 +214,24 @@ describe('Shopping Cart', function() {
             addInvalidInput(JSON.stringify({ name: 'Example' }), 400, { error: 'Cart Item ID missing' }, done);
         });
 
-        var addItemDBFails = function(code, expectedStatus, expectedBody, done) {
-            var itemSent = { id: DEFAULT_ITEM, name: 'OFFERING', href: 'http://www.fiware.org' };
-            var itemSaved = null;
+        const addItemDBFails = function(code, expectedStatus, expectedBody, done) {
+            const itemSent = { id: DEFAULT_ITEM, name: 'OFFERING', href: 'http://www.fiware.org' };
+            let itemSaved = null;
 
-            var cartItemSchema = function() {
+            const cartItemSchema = function() {
                 return {
-                    save: function(callback) {
+                    save: function() {
                         itemSaved = this;
-                        callback({ code: code, message: expectedBody.error });
+                        return Promise.reject({ code: code, message: expectedBody.error })
                     }
                 };
             };
 
-            var shoppingCartController = getShoppingCartController(cartItemSchema);
+            const shoppingCartController = getShoppingCartController(cartItemSchema);
 
-            var req = { user: { id: DEFAULT_USER }, body: JSON.stringify(itemSent) };
-            var res = jasmine.createSpyObj('res', ['json', 'setHeader', 'end']);
-
-            shoppingCartController.add(req, res);
-
-            // Wail till request has been processed
-            setTimeout(function() {
+            const req = { user: { id: DEFAULT_USER }, body: JSON.stringify(itemSent) };
+            const res = jasmine.createSpyObj('res', ['json', 'setHeader', 'end']);
+            res.end.and.callFake(() => {
                 expect(itemSaved.user).toBe(DEFAULT_USER);
                 expect(itemSaved.itemId).toBe(DEFAULT_ITEM);
                 expect(itemSaved.itemObject).toEqual(itemSent);
@@ -246,7 +242,9 @@ describe('Shopping Cart', function() {
                 expect(res.end).toHaveBeenCalled();
 
                 done();
-            }, 100);
+            })
+
+            shoppingCartController.add(req, res);
         };
 
         it('should return 500 when db fails', function(done) {
@@ -258,27 +256,23 @@ describe('Shopping Cart', function() {
         });
 
         it('should return 200 and set header when item added', function(done) {
-            var itemSent = { id: DEFAULT_ITEM, name: 'OFFERING', href: 'http://www.fiware.org' };
-            var itemSaved = null;
+            const itemSent = { id: DEFAULT_ITEM, name: 'OFFERING', href: 'http://www.fiware.org' };
+            let itemSaved = null;
 
-            var cartItemSchema = function() {
+            const cartItemSchema = function() {
                 return {
-                    save: function(callback) {
+                    save: function() {
                         itemSaved = this;
-                        callback();
+                        return Promise.resolve()
                     }
                 };
             };
 
-            var shoppingCartController = getShoppingCartController(cartItemSchema);
+            const shoppingCartController = getShoppingCartController(cartItemSchema);
 
-            var req = { user: { id: DEFAULT_USER }, body: JSON.stringify(itemSent), url: '/shoppingCart/item/' };
-            var res = jasmine.createSpyObj('res', ['json', 'setHeader', 'end']);
-
-            shoppingCartController.add(req, res);
-
-            // Wail till request has been processed
-            setTimeout(function() {
+            const req = { user: { id: DEFAULT_USER }, body: JSON.stringify(itemSent), url: '/shoppingCart/item/' };
+            const res = jasmine.createSpyObj('res', ['json', 'setHeader', 'end']);
+            res.end.and.callFake(() => {
                 expect(itemSaved.user).toBe(DEFAULT_USER);
                 expect(itemSaved.itemId).toBe(DEFAULT_ITEM);
                 expect(itemSaved.itemObject).toEqual(itemSent);
@@ -289,30 +283,28 @@ describe('Shopping Cart', function() {
                 expect(res.end).toHaveBeenCalled();
 
                 done();
-            }, 100);
+            })
+
+            shoppingCartController.add(req, res);
         });
     });
 
     describe('Remove from the Cart', function() {
         it('should return 500 when db fails', function(done) {
-            var dbQueryConditions = null;
+            let dbQueryConditions = null;
 
-            var cartItemSchema = {
-                remove: function(conditions, callback) {
+            const cartItemSchema = {
+                deleteOne: function(conditions) {
                     dbQueryConditions = conditions;
-                    callback({ message: DEFAULT_ERROR });
+                    return Promise.reject({ message: DEFAULT_ERROR })
                 }
             };
 
-            var shoppingCartController = getShoppingCartController(cartItemSchema);
+            const shoppingCartController = getShoppingCartController(cartItemSchema);
 
-            var req = { user: { id: DEFAULT_USER }, params: { id: DEFAULT_ITEM } };
-            var res = jasmine.createSpyObj('res', ['json', 'setHeader', 'end']);
-
-            shoppingCartController.remove(req, res);
-
-            // Wail till request has been processed
-            setTimeout(function() {
+            const req = { user: { id: DEFAULT_USER }, params: { id: DEFAULT_ITEM } };
+            const res = jasmine.createSpyObj('res', ['json', 'setHeader', 'end']);
+            res.end.and.callFake(() => {
                 expect(dbQueryConditions).toEqual({ user: DEFAULT_USER, itemId: DEFAULT_ITEM });
 
                 expect(res.statusCode).toBe(500);
@@ -321,28 +313,26 @@ describe('Shopping Cart', function() {
                 expect(res.end).toHaveBeenCalled();
 
                 done();
-            }, 100);
+            })
+
+            shoppingCartController.remove(req, res);
         });
 
         it('should return 204 when item removed', function(done) {
-            var dbQueryConditions = null;
+            let dbQueryConditions = null;
 
-            var cartItemSchema = {
-                remove: function(conditions, callback) {
+            const cartItemSchema = {
+                deleteOne: function(conditions) {
                     dbQueryConditions = conditions;
-                    callback(null, { n: 1 } );
+                    return Promise.resolve({ deletedCount: 1 } )
                 }
             };
 
-            var shoppingCartController = getShoppingCartController(cartItemSchema);
+            const shoppingCartController = getShoppingCartController(cartItemSchema);
 
-            var req = { user: { id: DEFAULT_USER }, params: { id: DEFAULT_ITEM } };
-            var res = jasmine.createSpyObj('res', ['json', 'setHeader', 'end']);
-
-            shoppingCartController.remove(req, res);
-
-            // Wail till request has been processed
-            setTimeout(function() {
+            const req = { user: { id: DEFAULT_USER }, params: { id: DEFAULT_ITEM } };
+            const res = jasmine.createSpyObj('res', ['json', 'setHeader', 'end']);
+            res.end.and.callFake(() => {
                 expect(dbQueryConditions).toEqual({ user: DEFAULT_USER, itemId: DEFAULT_ITEM });
 
                 expect(res.statusCode).toBe(204);
@@ -351,28 +341,26 @@ describe('Shopping Cart', function() {
                 expect(res.end).toHaveBeenCalled();
 
                 done();
-            }, 100);
+            })
+
+            shoppingCartController.remove(req, res);
         });
 
         it('should return 404 when item is not in the cart', function(done) {
-            var dbQueryConditions = null;
+            let dbQueryConditions = null;
 
-            var cartItemSchema = {
-                remove: function(conditions, callback) {
+            const cartItemSchema = {
+                deleteOne: function(conditions) {
                     dbQueryConditions = conditions;
-                    callback(null, { result: { n: 0 } });
+                    return Promise.resolve({ result: { deletedCount: 0 } });
                 }
             };
 
-            var shoppingCartController = getShoppingCartController(cartItemSchema);
+            const shoppingCartController = getShoppingCartController(cartItemSchema);
 
-            var req = { user: { id: DEFAULT_USER }, params: { id: DEFAULT_ITEM } };
-            var res = jasmine.createSpyObj('res', ['json', 'setHeader', 'end']);
-
-            shoppingCartController.remove(req, res);
-
-            // Wail till request has been processed
-            setTimeout(function() {
+            const req = { user: { id: DEFAULT_USER }, params: { id: DEFAULT_ITEM } };
+            const res = jasmine.createSpyObj('res', ['json', 'setHeader', 'end']);
+            res.end.and.callFake(() => {
                 expect(dbQueryConditions).toEqual({ user: DEFAULT_USER, itemId: DEFAULT_ITEM });
 
                 expect(res.statusCode).toBe(404);
@@ -383,30 +371,27 @@ describe('Shopping Cart', function() {
                 expect(res.end).toHaveBeenCalled();
 
                 done();
-            }, 100);
+            })
+            shoppingCartController.remove(req, res);
         });
     });
 
     describe('Empty Cart', function() {
         it('should return 500 when db fails', function(done) {
-            var dbQueryConditions = null;
+            let dbQueryConditions = null;
 
-            var cartItemSchema = {
-                remove: function(conditions, callback) {
+            const cartItemSchema = {
+                deleteMany: function(conditions) {
                     dbQueryConditions = conditions;
-                    callback({ message: DEFAULT_ERROR });
+                    return Promise.reject({ message: DEFAULT_ERROR })
                 }
             };
 
-            var shoppingCartController = getShoppingCartController(cartItemSchema);
+            const shoppingCartController = getShoppingCartController(cartItemSchema);
 
-            var req = { user: { id: DEFAULT_USER } };
-            var res = jasmine.createSpyObj('res', ['json', 'setHeader', 'end']);
-
-            shoppingCartController.empty(req, res);
-
-            // Wail till request has been processed
-            setTimeout(function() {
+            const req = { user: { id: DEFAULT_USER } };
+            const res = jasmine.createSpyObj('res', ['json', 'setHeader', 'end']);
+            res.end.and.callFake(() => {
                 expect(dbQueryConditions).toEqual({ user: DEFAULT_USER });
 
                 expect(res.statusCode).toBe(500);
@@ -415,28 +400,25 @@ describe('Shopping Cart', function() {
                 expect(res.end).toHaveBeenCalled();
 
                 done();
-            }, 100);
+            })
+            shoppingCartController.empty(req, res);
         });
 
         it('should return 204 when item removed', function(done) {
-            var dbQueryConditions = null;
+            let dbQueryConditions = null;
 
-            var cartItemSchema = {
-                remove: function(conditions, callback) {
+            const cartItemSchema = {
+                deleteMany: function(conditions) {
                     dbQueryConditions = conditions;
-                    callback(null, { result: { n: 1 } });
+                    return Promise.resolve({ result: { deletedCount: 1 } })
                 }
             };
 
-            var shoppingCartController = getShoppingCartController(cartItemSchema);
+            const shoppingCartController = getShoppingCartController(cartItemSchema);
 
-            var req = { user: { id: DEFAULT_USER } };
-            var res = jasmine.createSpyObj('res', ['json', 'setHeader', 'end']);
-
-            shoppingCartController.empty(req, res);
-
-            // Wail till request has been processed
-            setTimeout(function() {
+            const req = { user: { id: DEFAULT_USER } };
+            const res = jasmine.createSpyObj('res', ['json', 'setHeader', 'end']);
+            res.end.and.callFake(() => {
                 expect(dbQueryConditions).toEqual({ user: DEFAULT_USER });
 
                 expect(res.statusCode).toBe(204);
@@ -445,7 +427,8 @@ describe('Shopping Cart', function() {
                 expect(res.end).toHaveBeenCalled();
 
                 done();
-            }, 100);
+            })
+            shoppingCartController.empty(req, res);
         });
     });
 });

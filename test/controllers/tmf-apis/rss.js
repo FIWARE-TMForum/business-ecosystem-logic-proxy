@@ -1,4 +1,6 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 CoNWeT Lab., Universidad Politécnica de Madrid
+ *
+ * Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -17,11 +19,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var nock = require('nock');
-
-var proxyquire = require('proxyquire');
-
-var testUtils = require('../../utils');
+const nock = require('nock');
+const proxyquire = require('proxyquire');
+const testUtils = require('../../utils');
 
 describe('RSS API', function() {
     var config = testUtils.getDefaultConfig();
@@ -124,25 +124,15 @@ describe('RSS API', function() {
         });
     });
 
-    var mockCreateProvider = function(response) {
-        return function(user, callback) {
-            // Ensure that the create provider method has been called with the request user
-            expect(user.id).toBe('username');
-            callback(response);
-        };
-    };
-
-    var testCheckPermissions = function(req, provResponse, validator, done) {
-        var rssClient = {
-            rssClient: {
-                createProvider: mockCreateProvider(provResponse)
-            }
+    const testCheckPermissions = function(req, validator, done) {
+        const rssClient = {
+            rssClient: {}
         };
 
-        var utils = {
+        const utils = {
             log: function() {}
         };
-        var rssApi = getRSSAPI(rssClient, {}, utils);
+        const rssApi = getRSSAPI(rssClient, {}, utils);
 
         rssApi.checkPermissions(req, function(err) {
             validator(err);
@@ -156,7 +146,7 @@ describe('RSS API', function() {
         /// ///////////////////////////////////////////////////////////////////////////////////////////
 
         it('should call the callback without errors when the user is authorized to retrieve models', function(done) {
-            var req = {
+            const req = {
                 method: 'GET',
                 apiUrl: '/rss/models',
                 user: {
@@ -168,29 +158,30 @@ describe('RSS API', function() {
                     ]
                 }
             };
-            var validator = function(err) {
+            const validator = function(err) {
                 expect(err).toBe(null);
             };
-            testCheckPermissions(req, null, validator, done);
+
+            testCheckPermissions(req, validator, done);
         });
 
         it('should call the callback with error if the user is trying to access a private API', function(done) {
-            var req = {
+            const req = {
                 method: 'GET',
                 apiUrl: '/rss/aggregators',
                 user: {}
             };
 
-            var validator = function(err) {
+            const validator = function(err) {
                 expect(err).not.toBe(null);
                 expect(err.status).toBe(403);
                 expect(err.message).toBe('This API is private');
             };
-            testCheckPermissions(req, null, validator, done);
+            testCheckPermissions(req, validator, done);
         });
 
         it('should call the callback with error if the user is not a seller', function(done) {
-            var req = {
+            const req = {
                 method: 'GET',
                 apiUrl: '/rss/models',
                 user: {
@@ -198,33 +189,12 @@ describe('RSS API', function() {
                     roles: []
                 }
             };
-            var validator = function(err) {
+            const validator = function(err) {
                 expect(err).not.toBe(null);
                 expect(err.status).toBe(403);
                 expect(err.message).toBe('You are not authorized to access the RSS API');
             };
-            testCheckPermissions(req, null, validator, done);
-        });
-
-        it('should call the callback with error if the RSS fails creating the user provider', function(done) {
-            var req = {
-                method: 'GET',
-                apiUrl: '/rss/models',
-                user: {
-                    id: 'username',
-                    roles: [
-                        {
-                            name: 'seller'
-                        }
-                    ]
-                }
-            };
-            var validator = function(err) {
-                expect(err).not.toBe(null);
-                expect(err.status).toBe(500);
-                expect(err.message).toBe('An unexpected error in the RSS API prevented your request to be processed');
-            };
-            testCheckPermissions(req, {}, validator, done);
+            testCheckPermissions(req, validator, done);
         });
     });
 
@@ -234,9 +204,9 @@ describe('RSS API', function() {
         /// ///////////////////////////////////////////////////////////////////////////////////////////
 
         it('should call the callback without error after creating a RS model', function(done) {
-            var req = {
+            const req = {
                 method: 'POST',
-                apiUrl: '/rss/models',
+                apiUrl: '/revenueSharing/models',
                 user: {
                     id: 'username',
                     roles: [
@@ -248,16 +218,16 @@ describe('RSS API', function() {
                 body: JSON.stringify({ aggregatorShare: 0 }),
                 headers: {}
             };
-            var validator = function(err) {
+            const validator = function(err) {
                 expect(err).toBe(null);
-                var body = JSON.parse(req.body);
+                const body = JSON.parse(req.body);
                 expect(body.aggregatorShare).toBe(config.revenueModel);
             };
-            testCheckPermissions(req, null, validator, done);
+            testCheckPermissions(req, validator, done);
         });
 
         it('should call the callback with error if trying to access the CDRs API using POST', function(done) {
-            var req = {
+            const req = {
                 method: 'POST',
                 apiUrl: '/rss/cdrs',
                 user: {
@@ -269,16 +239,16 @@ describe('RSS API', function() {
                     ]
                 }
             };
-            var validator = function(err) {
+            const validator = function(err) {
                 expect(err).not.toBe(null);
                 expect(err.status).toBe(403);
                 expect(err.message).toBe('This API can only be accessed with GET requests');
             };
-            testCheckPermissions(req, null, validator, done);
+            testCheckPermissions(req, validator, done);
         });
 
         it('should call the callback with error if the body is not a valid JSON document', function(done) {
-            var req = {
+            const req = {
                 method: 'POST',
                 apiUrl: '/rss/models',
                 user: {
@@ -291,23 +261,24 @@ describe('RSS API', function() {
                 },
                 body: {}
             };
-            var validator = function(err) {
+            const validator = function(err) {
                 expect(err).not.toBe(null);
                 expect(err.status).toBe(400);
                 expect(err.message).toBe('The provided body is not a valid JSON');
             };
-            testCheckPermissions(req, null, validator, done);
+            testCheckPermissions(req, validator, done);
         });
 
         it('should add callbackUrl to charging backend if not provided', function(done) {
-            var chargbackUrl =
+            const chargbackUrl =
                 (config.endpoints.charging.appSsl ? 'https' : 'http') +
                 '://' +
                 config.endpoints.charging.host +
                 ':' +
                 config.endpoints.charging.port +
                 '/charging/api/reportManagement/created';
-            var req = {
+
+            const req = {
                 method: 'POST',
                 apiUrl: '/rss/settlement',
                 user: {
@@ -321,12 +292,13 @@ describe('RSS API', function() {
                 body: JSON.stringify({ aggregatorTotal: 0 }),
                 headers: {}
             };
-            var validator = function(err) {
+
+            const validator = function(err) {
                 expect(err).toBe(null);
-                var body = JSON.parse(req.body);
+                const body = JSON.parse(req.body);
                 expect(body.callbackUrl).toEqual(chargbackUrl);
             };
-            testCheckPermissions(req, null, validator, done);
+            testCheckPermissions(req, validator, done);
         });
     });
 
@@ -361,7 +333,7 @@ describe('RSS API', function() {
         });
 
         it('should call the callback if the server response body is not a valid JSON', function(done) {
-            var req = {
+            const req = {
                 method: 'GET',
                 apiUrl: '/rss/models',
                 body: [{}]
@@ -370,56 +342,56 @@ describe('RSS API', function() {
         });
 
         it('should call the callback and create the default RS model if the response contains an empty model list', function(done) {
-            var req = {
+            const req = {
                 method: 'GET',
-                apiUrl: '/rss/models',
-                body: JSON.stringify([]),
+                apiUrl: '/revenueSharing/models',
+                body: [],
                 user: {
                     id: 'username'
                 },
                 headers: {}
             };
 
-            var newModel = {
+            const newModel = {
                 providerId: 'provider'
             };
 
-            var rssClient = {
+            const rssClient = {
                 rssClient: {
                     createDefaultModel: function(userInfo, callback) {
                         expect(userInfo.id).toBe('username');
                         callback(null, {
-                            body: JSON.stringify(newModel)
+                            body: newModel
                         });
                     }
                 }
             };
 
-            var rssAPI = getRSSAPI(rssClient, {}, {});
+            const rssAPI = getRSSAPI(rssClient, {}, {});
 
             rssAPI.executePostValidation(req, function(err) {
                 expect(err).toBe(undefined);
 
-                var body = JSON.parse(req.body);
+                const body = req.body;
                 expect(body).toEqual([newModel]);
                 done();
             });
         });
 
         it('should call the callback with error if the server fails creating the default RS model', function(done) {
-            var errorStatus = 500;
-            var errorMessage = 'Error creating default RS model';
-            var req = {
+            const errorStatus = 500;
+            const errorMessage = 'Error creating default RS model';
+            const req = {
                 method: 'GET',
-                apiUrl: '/rss/models',
-                body: JSON.stringify([]),
+                apiUrl: '/revenueSharing/models',
+                body: [],
                 user: {
                     id: 'username'
                 },
                 headers: {}
             };
 
-            var rssClient = {
+            const rssClient = {
                 rssClient: {
                     createDefaultModel: function(userInfo, callback) {
                         expect(userInfo.id).toBe('username');
@@ -431,7 +403,7 @@ describe('RSS API', function() {
                 }
             };
 
-            var rssAPI = getRSSAPI(rssClient, {}, {});
+            const rssAPI = getRSSAPI(rssClient, {}, {});
 
             rssAPI.executePostValidation(req, function(err) {
                 expect(err).not.toBe(undefined);
@@ -442,23 +414,23 @@ describe('RSS API', function() {
         });
 
         it('should call the callback and set to 1 the count if the default RS model has not been created', function(done) {
-            var req = {
+            const req = {
                 method: 'GET',
-                apiUrl: '/rss/models',
-                body: JSON.stringify({
+                apiUrl: '/revenueSharing/models',
+                body: {
                     size: 0
-                }),
+                },
                 user: {
                     id: 'username'
                 },
                 headers: {}
             };
 
-            var rssAPI = getRSSAPI({}, {}, {});
+            const rssAPI = getRSSAPI({}, {}, {});
             rssAPI.executePostValidation(req, function(err) {
                 expect(err).toBe(undefined);
 
-                var body = JSON.parse(req.body);
+                const body = req.body;
                 expect(body).toEqual({
                     size: 1
                 });

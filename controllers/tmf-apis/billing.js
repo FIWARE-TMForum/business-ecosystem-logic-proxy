@@ -31,16 +31,10 @@ const billing = (function() {
 
     var makeRequest = function(url, callback) {
         axios.get(url).then((response) => {
-            if (response.status >= 400) {
-                callback({
-                    status: response.status ? response.status : 500
-                });
-            } else {
-                callback(null, response.data);
-            }
+            callback(null, response.data);
         }).catch((err) => {
             callback({
-                status:  500
+                status:  err && err.response && err.response.status ? err.response.status : 500
             });
         });
     };

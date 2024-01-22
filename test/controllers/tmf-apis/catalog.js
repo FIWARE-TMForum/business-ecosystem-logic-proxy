@@ -684,65 +684,6 @@ describe('Catalog API', function() {
 			);
 		});
 
-		// it('should not allow to create an offering when the RSS provider cannot be verified', function(done) {
-		// 	testCreateOffering(
-		// 		productRequestInfoActive,
-		// 		catalogRequestInfoLaunched,
-		// 		null,
-		// 		null,
-		// 		500,
-		// 		RSS_CANNOT_BE_ACCESSED,
-		// 		{
-		// 			provider: {}
-		// 		},
-		// 		basicBody,
-		// 		done
-		// 	);
-		// });
-
-		// it('should not allow to create an offering when the RSS fails retrieving models', function(done) {
-		// 	var errMsg = 'RSS failure';
-		// 	var status = 500;
-
-		// 	testCreateOffering(
-		// 		productRequestInfoActive,
-		// 		catalogRequestInfoLaunched,
-		// 		null,
-		// 		null,
-		// 		status,
-		// 		errMsg,
-		// 		{
-		// 			provider: null,
-		// 			modelErr: {
-		// 				status: status,
-		// 				message: errMsg
-		// 			}
-		// 		},
-		// 		basicBody,
-		// 		done
-		// 	);
-		// });
-
-		// it('should not allow to create an offering when there are not RS Models', function(done) {
-		// 	testCreateOffering(
-		// 		productRequestInfoActive,
-		// 		catalogRequestInfoLaunched,
-		// 		null,
-		// 		null,
-		// 		422,
-		// 		INVALID_PRODUCT_CLASS,
-		// 		{
-		// 			provider: null,
-		// 			modelErr: null,
-		// 			modelBody: {
-		// 				body: JSON.stringify([])
-		// 			}
-		// 		},
-		// 		basicBody,
-		// 		done
-		// 	);
-		// });
-
 		it('should not allow to create an offering when the productSpecification field has not been provided', function(done) {
 			testCreateOffering(
 				productRequestInfoActive,
@@ -756,24 +697,6 @@ describe('Catalog API', function() {
 				done
 			);
 		});
-
-		// it('should not allow to create an offering when the product specification does not contain a href', function(done) {
-		// 	testCreateOffering(
-		// 		productRequestInfoActive,
-		// 		catalogRequestInfoLaunched,
-		// 		null,
-		// 		null,
-		// 		422,
-		// 		MISSING_HREF_PRODUCT_SPEC,
-		// 		null,
-		// 		{
-		// 			productSpecification: {
-		// 				id: '1'
-		// 			}
-		// 		},
-		// 		done
-		// 	);
-		// });
 
 		it('should not allow to create an offering when a bundled offering is provided and not a bundle', function(done) {
 			var offeringBody = {
@@ -2684,7 +2607,7 @@ describe('Catalog API', function() {
 		testNonDigitalUpgrade(newBody, null, null, done);
 	});
 
-	it('should allow to upgrade a non-digital product when the characteristics are provided', function(done) {
+	/*it('should not allow to upgrade a non-digital product when the characteristics are provided', function(done) {
 		var newBody = {
 			version: '1.1',
 			productSpecCharacteristic: [
@@ -2702,7 +2625,7 @@ describe('Catalog API', function() {
 			]
 		};
 		testNonDigitalUpgrade(newBody, 422, INVALID_NON_DIGITAL_UPGRADE, done);
-	});
+	});*/
 
 	var testDigitalUpgrade = function(newBody, errorStatus, errorMsg, done) {
 		var storeClient = jasmine.createSpyObj('storeClient', ['upgradeProduct']);

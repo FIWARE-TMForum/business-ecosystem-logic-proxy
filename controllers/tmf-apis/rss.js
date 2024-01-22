@@ -45,17 +45,6 @@ const rss = (function() {
             });
         }
 
-        // Check if the provider object has been already created
-        /*rssClient.createProvider(req.user, function(err) {
-            var status = null;
-            if (err) {
-                status = {
-                    status: 500,
-                    message: 'An unexpected error in the RSS API prevented your request to be processed'
-                };
-            }
-            callback(status);
-        });*/
         callback(null);
     };
 
@@ -138,9 +127,7 @@ const rss = (function() {
             }
 
             // If the models list is empty create the default revenue model
-            console.log(body)
-
-            if (Array.isArray(body) && !body.length) {
+            if (Array.isArray(body) && body.length == 0) {
                 console.log("Creating default model")
                 rssClient.createDefaultModel(req.user, function(err, response) {
                     if (err) {
@@ -152,7 +139,7 @@ const rss = (function() {
                     callback();
                 });
                 // Is a Count request
-            } else if (!Array.isArray(body) && !body.size) {
+            } else if (!Array.isArray(body) && body.size == 0) {
                 // If the count result is 0 means that the default model is not created yet.
                 // It will be created in the first model request, so the 0 is changed by 1
                 body = {

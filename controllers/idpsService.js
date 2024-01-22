@@ -86,7 +86,6 @@ const idpService = (function() {
     }
 
     const createIdp = function(req, res) {
-        console.log(req.body);
         const data = JSON.parse(req.body);
 
         try {
@@ -135,7 +134,6 @@ const idpService = (function() {
                 }
             });
         } catch (e) {
-            console.log(e);
             res.status(500).json({ error: e.message + ' Invalid request' });
         }
     };
@@ -177,7 +175,6 @@ const idpService = (function() {
                 res.status(500).json({ error: 'Unexpected error' });
             });
         } catch (e) {
-            console.log(e);
             res.status(500).json({ error: e.message + ' Invalid request' });
         }
     }
