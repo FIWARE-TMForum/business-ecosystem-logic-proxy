@@ -20,7 +20,6 @@
  */
 
 const async = require('async')
-const config = require('./../../config')
 const utils = require('./../../lib/utils')
 const tmfUtils = require('./../../lib/tmfUtils')
 
@@ -60,7 +59,6 @@ const inventory = (function() {
         const body = req.body;
 
         // Check if the user is allowed to retrieve the requested product
-        console.log(body)
         if (!Array.isArray(body) && !tmfUtils.hasPartyRole(req, body.relatedParty, 'customer')) {
             callback({
                 status: 403,
