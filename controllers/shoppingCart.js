@@ -109,7 +109,6 @@ const shoppingCart = (function() {
         const userName = req.user.id;
 
         CartItem.deleteOne({ user: userName, itemId: itemId }).then((dbRes) => {
-            console.log(dbRes)
             if (dbRes.deletedCount > 0) {
                 endRequest(res, 204, null, null);
             } else {
