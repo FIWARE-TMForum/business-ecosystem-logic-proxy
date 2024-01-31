@@ -38,6 +38,13 @@ MONGO_PORT=`node getConfig mongoport`
 # Wait for mongodb to be running
 test_connection 'MongoDB' ${MONGO_HOST} ${MONGO_PORT}
 
+# Load remote theme if needed
+if [ ! -z ${BAE_LP_THEME_URL} ]; then
+    cd themes
+    git clone ${BAE_LP_THEME_URL}
+    cd ..
+fi
+
 export NODE_ENV=develop
 if [ ${COLLECT} = "True" ]; then
     node collect_static.js
