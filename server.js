@@ -156,6 +156,29 @@ var importPath = config.theme || !debug ? './static/public/imports' : './public/
 var imports = require(importPath).imports;
 
 /////////////////////////////////////////////////////////////////////
+//////////////////////////////// APIs ///////////////////////////////
+/////////////////////////////////////////////////////////////////////
+
+// Middleware: Add CORS headers. Handle OPTIONS requests.
+app.use(function(req, res, next) {
+    'use strict';
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'HEAD, POST, GET, PATCH, PUT, OPTIONS, DELETE');
+    res.header('Access-Control-Allow-Headers', 'origin, content-type, X-Auth-Token, Tenant-ID, Authorization');
+
+    if (req.method == 'OPTIONS') {
+        utils.log(logger, 'debug', req, 'CORS request');
+
+        res.status(200);
+        res.header('Content-Length', '0');
+        res.send();
+        res.end();
+    } else {
+        next();
+    }
+});
+
+/////////////////////////////////////////////////////////////////////
 ////////////////////////////// PASSPORT /////////////////////////////
 /////////////////////////////////////////////////////////////////////
 
@@ -215,8 +238,10 @@ app.all(config.logInPath, function(req, res) {
 app.get('/auth/' + config.oauth2.provider + '/callback', passport.authenticate(config.oauth2.provider, { failureRedirect: '/error' }), function(req, res) {
     var state = JSON.parse(base64url.decode(req.query.state));
     var redirectPath = state[OAUTH2_CAME_FROM_FIELD] !== undefined ? state[OAUTH2_CAME_FROM_FIELD] : '/';
-
-    res.redirect(redirectPath);
+    res.header('Access-Control-Allow-Origin', 'http://localhost:4200')
+    res.header("Access-Control-Allow-Credentials", true);
+    //res.header('Authorization', 'Bearer '+ req.user.accessToken);
+    res.redirect('http://localhost:4200/dashboard?token='+req.user.accessToken);
 });
 
 let idps = {
@@ -474,27 +499,20 @@ app.get(config.portalPrefix + '/payment', ensureAuthenticated, function(req, res
     renderTemplate(req, res, 'app-payment');
 });
 
-/////////////////////////////////////////////////////////////////////
-//////////////////////////////// APIs ///////////////////////////////
-/////////////////////////////////////////////////////////////////////
-
-// Middleware: Add CORS headers. Handle OPTIONS requests.
-app.use(function(req, res, next) {
-    'use strict';
-    res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Methods', 'HEAD, POST, GET, PATCH, PUT, OPTIONS, DELETE');
-    res.header('Access-Control-Allow-Headers', 'origin, content-type, X-Auth-Token, Tenant-ID, Authorization');
-
-    if (req.method == 'OPTIONS') {
-        utils.log(logger, 'debug', req, 'CORS request');
-
-        res.status(200);
-        res.header('Content-Length', '0');
-        res.send();
-        res.end();
-    } else {
-        next();
-    }
+app.get('/logintoken', authMiddleware.headerAuthentication, function(req, res) {
+    console.log('---- REQ USER ANGULAR --------------------')    
+    console.log(req.headers.authorization)
+    const authToken = utils.getAuthToken(req.headers);
+    console.log(authToken)
+    console.log(req.user)
+    console.log(req.user.refreshToken)
+    console.log(req.isAuthenticated())
+    //ADDED:
+    res.header('Access-Control-Allow-Origin', 'http://localhost:4200')
+    //res.setHeader("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Credentials", true);
+    console.log('----------------------------------------------------------------------')
+    res.json(req.user)
 });
 
 // Public Paths are not protected by the Proxy
