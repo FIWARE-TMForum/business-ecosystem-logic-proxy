@@ -238,10 +238,16 @@ app.all(config.logInPath, function(req, res) {
 app.get('/auth/' + config.oauth2.provider + '/callback', passport.authenticate(config.oauth2.provider, { failureRedirect: '/error' }), function(req, res) {
     var state = JSON.parse(base64url.decode(req.query.state));
     var redirectPath = state[OAUTH2_CAME_FROM_FIELD] !== undefined ? state[OAUTH2_CAME_FROM_FIELD] : '/';
-    res.header('Access-Control-Allow-Origin', 'http://localhost:4200')
-    res.header("Access-Control-Allow-Credentials", true);
-    //res.header('Authorization', 'Bearer '+ req.user.accessToken);
-    res.redirect('http://localhost:4200/dashboard?token='+req.user.accessToken);
+
+    if (redirectPath != '/' || config.externalPortal == null || config.externalPortal == '') {
+        res.redirect(redirectPath)
+    } else {
+        res.header('Access-Control-Allow-Origin', 'http://localhost:4200')
+        res.header("Access-Control-Allow-Credentials", true);
+
+        //res.header('Authorization', 'Bearer '+ req.user.accessToken);
+        res.redirect(`${config.externalPortal}/dashboard?token=` + req.user.accessToken);
+    }
 });
 
 let idps = {

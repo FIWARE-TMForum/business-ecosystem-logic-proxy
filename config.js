@@ -542,3 +542,7 @@ if (config.extLogin) {
 	config.ishareCrt = process.env.BAE_TOKEN_CRT;
 }
 module.exports = config;
+
+// External Portal config
+config.externalPortal = 'http://localhost:4200';
+config.externalPortal = process.env.BAE_LP_EXTERNAL_PORTAL || config.externalPortal;
