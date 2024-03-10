@@ -242,7 +242,7 @@ app.get('/auth/' + config.oauth2.provider + '/callback', passport.authenticate(c
     if (redirectPath != '/' || config.externalPortal == null || config.externalPortal == '') {
         res.redirect(redirectPath)
     } else {
-        res.header('Access-Control-Allow-Origin', 'http://localhost:4200')
+        res.header('Access-Control-Allow-Origin', config.externalPortal)
         res.header("Access-Control-Allow-Credentials", true);
 
         //res.header('Authorization', 'Bearer '+ req.user.accessToken);
@@ -286,7 +286,10 @@ if (config.siop.enabled) {
     passport.use(config.siop.provider, siopAuth.STRATEGY);
 
     app.get(`/login/${config.siop.provider}`, (req, res) => {
-        const encodedState = getOAuth2State(utils.getCameFrom(req));
+        //const encodedState = getOAuth2State(utils.getCameFrom(req));
+        // Use a unique uuid for encoding the state, so we dont have collisions
+        // between users using the SIOP authentication
+        const encodedState = uuidv4();
         res.render("siop.jade",  {
             cssFilesToInject: imports.cssFilesToInject,
             title: 'VC Login',
@@ -303,7 +306,8 @@ if (config.siop.enabled) {
     });
 
     app.get(config.siop.pollPath, (req, res, next) => {
-        const encodedState = getOAuth2State(utils.getCameFrom(req));
+        // const encodedState = getOAuth2State(utils.getCameFrom(req));
+        const encodedState = req.query.state
         passport.authenticate(config.siop.provider, { poll: true, state: encodedState })(req, res, next);
     });
 }
