@@ -28,17 +28,17 @@ config.portalPrefix = '';
 config.logInPath = '/login';
 config.logOutPath = '/logOut';
 config.sessionSecret = 'keyboard cat';
-config.theme = 'bae-dome-theme';
+config.theme = '';
 
 // OAuth2 configuration
 //'server': 'http://34.213.26.168:8000/',
 config.oauth2 = {
 	provider: 'fiware',
 	server: 'http://idm.docker:3000',
-	clientID: '19dd858c-328c-4642-93ab-da45e4d253ae',
-	clientSecret: '09ffe023-a242-46a3-bd83-9277d36e2379',
+	clientID: 'b7956b46-ec03-4dbd-b62f-c3f72f338e8b',
+	clientSecret: 'c09d61fb-5c06-41aa-9dd2-5d8c319fdaf9',
 	callbackURL: 'http://proxy.docker:8004/auth/fiware/callback',
-	oidc: true,
+	oidc: false,
 	oidcScopes: "openid",
 	oidcDiscoveryURI: null,
 	oidcTokenEndpointAuthMethod: "client_secret_basic",
