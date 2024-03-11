@@ -18,6 +18,7 @@ const logger = require('./lib/logger').logger.getLogger('Server');
 const mongoose = require('mongoose');
 const onFinished = require('on-finished');
 const passport = require('passport');
+const path = require('path');
 const session = require('express-session');
 const shoppingCart = require('./controllers/shoppingCart').shoppingCart;
 const management = require('./controllers/management').management;
@@ -445,6 +446,21 @@ if (extLogin) {
     app.delete(config.idpServicePath + '/:idpId', idpService.deleteIdp);
     app.put(config.idpServicePath + '/:idpId', idpService.updateIdp);
 }
+
+/////////////////////////////////////////////////////////////////////
+///////////////////////////// NEW PORTAL ////////////////////////////
+/////////////////////////////////////////////////////////////////////
+
+if (config.externalPortal != null) {
+    // Serve static files from the Angular app from a specific route, e.g., "/angular"
+    app.use('/gui', express.static(path.join(__dirname, 'portal/bae-frontend')));
+
+    // Handle deep links - serve Angular's index.html for any sub-route under "/angular"
+    app.get('/gui/*', (req, res) => {
+        res.sendFile(path.join(__dirname, 'portal/bae-frontend/index.html'));
+    });
+}
+
 
 /////////////////////////////////////////////////////////////////////
 /////////////////////////////// PORTAL //////////////////////////////

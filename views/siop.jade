@@ -58,7 +58,7 @@ html
         setInterval(pollServer, 1000, 'nonce');
         async function pollServer() {
             try {
-                const response = await fetch('#{pollURL}')
+                const response = await fetch('#{pollURL}?#{statePair}')
                 if (response.status === 400 || response.status === 500) {
                     location.replace('/')
                     return

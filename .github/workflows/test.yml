@@ -3,11 +3,11 @@ name: Tests
 on:
   push:
     branches:
-      - master
+      - angular-gui
 
   pull_request:
     branches:
-      - master
+      - angular-gui
 
 jobs:
   test:
@@ -52,9 +52,11 @@ jobs:
         with:
           context: .
           file: ./docker/Dockerfile
+          build-args: |
+            THEME=https://github.com/Ficodes/bae-dome-theme
           tags: |
-            fiware/biz-ecosystem-logic-proxy:master
-          push: ${{ github.ref == 'refs/heads/master' }}
+            fiware/biz-ecosystem-logic-proxy:v9.0.0-gui-1
+          push: ${{ github.ref == 'refs/heads/angular-gui' }}
 
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
