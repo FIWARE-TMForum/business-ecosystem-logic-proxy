@@ -55,7 +55,7 @@ jobs:
           build-args: |
             THEME=https://github.com/Ficodes/bae-dome-theme
           tags: |
-            fiware/biz-ecosystem-logic-proxy:v9.0.0-gui-1
+            fiware/biz-ecosystem-logic-proxy:v9.0.0-gui-2
           push: ${{ github.ref == 'refs/heads/angular-gui' }}
 
       - name: Image digest
