@@ -177,7 +177,9 @@
         "_license": "License",
         "_sla": "SLA",
         "_no_sla": "No SLA included",
-        "_no_relatioships": "No relationships included"
+        "_no_relatioships": "No relationships included",
+        "_service_spec": "This offering includes the following service specifications",
+        "_resource_spec": "This offering includes the following resource specifications"
     },
     "CATALOGS": {
         "_all_catalogs": "All catalogs",
