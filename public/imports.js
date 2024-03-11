@@ -54,6 +54,7 @@ let jsAppFilesToInject = [
     'app.directives',
     'directives/product-offering.directives',
     'services/user.service',
+    'services/usage.service',
     'services/payment.service',
     'services/product-specification.service',
     'services/product-category.service',
