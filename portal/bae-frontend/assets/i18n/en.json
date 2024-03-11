@@ -1,0 +1,199 @@
+{
+    "_yes": "Yes",
+    "_no": "No",
+    "DASHBOARD": {
+        "_title": "DOME MARKETPLACE is out! See what's new",
+        "_header": "A Distributed Open Marketplace for Cloud and Edge Services",
+        "_subheader": "Welcome to the first open distributed marketplace ecosystem for cloud & edge services in Europe.",
+        "_new": "New",
+        "_learn_more": "Learn more",
+        "_video": "Watch video",
+        "_categories": "All categories",
+        "_cloud": "Cloud Services",
+        "_edge": "Edge Services",
+        "_smart_ports": "Smart ports",
+        "_smart_cities": "Smart cities",
+        "_search_ph": "Search Cloud Services, Edge Services, Providers...",
+        "_search": "Search"
+    },
+    "FEATURED": {
+        "_title": "Featured offerings",
+        "CARD1": {
+            "_badge": "Design",
+            "_title": "Start with Flowbite Design System",
+            "_description": "Static websites are now used to bootstrap lots of websites and are becoming the basis for a variety of tools that even influence both web designers and developers.",
+            "_more": "Read more"
+        },
+        "CARD2": {
+            "_badge": "Code",
+            "_title": "Best react libraries around the web",
+            "_description": "Static websites are now used to bootstrap lots of websites and are becoming the basis for a variety of tools that even influence both web designers and developers.",
+            "_more": "Read more"
+        }
+    },
+    "GALLERY": {
+        "_title": "Featured offerings",
+        "_explore": "Explore marketplace",
+        "_add_your_service": "Add your service",
+        "_no_products": "Sorry! There are no products available at this moment. Please check again later."
+    },
+    "PLATFORM": {
+        "_title": "Platform benefits",
+        "_subtitle": "Your Gateway to Europe's Premier Digital Ecosystem",
+        "_learn_more": "Learn more",
+        "OPEN": {
+            "_title": "Open",
+            "_desc": "Navigate with confidence through transparent practices in service provisioning, pricing and operations."
+        },
+        "INTEROPERABLE": {
+            "_title": "Interoperable",
+            "_desc": "Unlock endless possibilities with our open ecosystem, designed for seamless collaboration and innovation."
+        },
+        "TRUSTWORTHY": {
+            "_title": "Trustworthy",
+            "_desc": "Build on a foundation of trust with services vetted for security, reliability and compliance."
+        },
+        "COMPLIANT": {
+            "_title": "Compliant",
+            "_desc": "Stay ahead of the curve with services that adhere strictly to EU regulations and standards, for legal compliance and data protection."
+        },
+        "SUSTAINABLE": {
+            "_title": "Sustainable",
+            "_desc": "Embrace sustainability with services that prioritize enery efficiency and environmental responsability."
+        },
+        "TRANSPARENT": {
+            "_title": "Transparent",
+            "_desc": "Navigate with confidence trough transparent practices in service provisioning, pricing and operations."
+        }
+    },
+    "HOWITWORKS":{
+        "_title": "How It Works",
+        "_subtitle": "Discover how the DOME Marketplace connects you to Europe's finest cloud and edge services",
+        "CUSTOMERS":{
+            "_title": "For customers",
+            "_subtitle": "Discover and Deploy",
+            "_search_title": "Search and Explore",
+            "_search_desc": "Use our intuitive search to find the services that match your digital transformation needs.",
+            "_compare_title": "Compare and Decide",
+            "_compare_desc": "Evaluate services based on features, compliance and reviews to make informed choices.",
+            "_seamless_title": "Seamless Integration",
+            "_seamless_desc": "Follow our easy process to integrate and deploy your chosen services swiftly.",
+            "_join": "Join as customer"
+        },
+        "PROVIDERS": {
+            "_title": "For providers",
+            "_subtitle": "Connect and Grow",
+            "_register_title": "Register Your Service",
+            "_register_desc": "Sign up and submit your service for validation, ensuring compliance and quality.",
+            "_verified_title": "Get verified",
+            "_verified_desc": "Our team will quickly verify your offerings to ensure they meet DOME standards.",
+            "_reach_title": "Reach Europe",
+            "_reach_desc": "Once verified, your services will be accessible to a wide European audience, ready to grow your business.",
+            "_join": "Join as provider"
+        }
+    },
+    "EXPLORE": {
+        "_title": "Explore DOME",
+        "_subtitle": "Whether you're seeking in-depth reports, latest updates or upcoming events, everything ou need to know is just a click away.",
+        "_events_title": "Events and Webinars",
+        "_events_desc": "Join us at our next event or webinar to connect with fellow innovators, learn from industry leaders and discover new opportunities within the DOME ecosystem.",
+        "_updates_title": "Latest Updates and News",
+        "_updates_desc": "Stay informed with the latest developments, service enhancements and industry insights directly from the DOME website.",
+        "_resources_title": "Resources & Reports",
+        "_resources_desc": "Access our library of resources, detailed reports and case studies to gain a deep understanding of the cloud and edge market landscape and DOME's impact.",
+        "_go": "Go to DOME's Site"
+    },
+    "CARD": {
+        "_details": "View details",
+        "_add_cart": "Add to cart",
+        "_close": "Close modal",
+        "_categories": "Categories",
+        "_prod_details": "Product details",
+        "_comp_profile": "Compliance profile",
+        "_extra_info": "Extra information",
+        "_offer_version": "Offer version",
+        "_product_name": "Product name",
+        "_brand": "Brand",
+        "_last_update": "Last update",
+        "_product_version": "Product version",
+        "_id_number": "Identification number",
+        "_added_card": "Added to the cart",
+        "_undo": "Undo",
+        "_close_toast": "Close",
+        "_from": "From",
+        "_full_desc": "Full description",
+        "_price_plans": "Price plans",
+        "_select_price": "Select price plan",
+        "_chars": "Characteristics",
+        "_select_char": "Select characteristics",
+        "_terms": "Terms and conditions",
+        "_accept_terms": "I have read and I accept the terms and conditions."
+    },
+    "CATEGORIES_FILTER": {
+        "_remove_badge": "Remove badge",
+        "_applied_filters": "Applied filters:"
+    },
+    "CART_DRAWER": {
+        "_title": "Shopping Cart",
+        "_close": "Close menu",
+        "_empty": "Empty cart",
+        "_purchase": "Proceed to purchase",
+        "_subtotal": "Subtotal"
+    },
+    "FOOTER": {
+        "_about": "About",
+        "_privacy": "Privacy Policy",
+        "_licensing": "Licensing",
+        "_contact": "Contact",
+        "_rights": "All Rights Reserved"
+    },
+    "HEADER": {
+        "_marketplace": "MARKETPLACE",
+        "_open_menu": "Open main menu",
+        "_home": "Home",
+        "_catalogs": "Catalogs",
+        "_search": "Search",
+        "_cloud": "Cloud Services",
+        "_smart_ports": "Smart ports",
+        "_smart_cities": "Smart cities",
+        "_see_all": "See all",
+        "_services": "Services",
+        "_contact": "Contact",
+        "_profile": "Profile",
+        "_offerings": "My Offerings",
+        "_cart": "My shopping cart",
+        "_sign_out": "Sign out"
+    },
+    "PRODUCT_DETAILS": {
+        "_back": "Back",
+        "_details": "Details",
+        "_information": "Information",
+        "_chars": "Characteristics",
+        "_attach": "Attachments",
+        "_agreements": "Agreements",
+        "_relationships": "Relationships",
+        "_no_chars": "No characteristics included",
+        "_no_attach": "No attachments included",
+        "_license": "License",
+        "_sla": "SLA",
+        "_no_sla": "No SLA included",
+        "_no_relatioships": "No relationships included"
+    },
+    "CATALOGS": {
+        "_all_catalogs": "All catalogs",
+        "_no_desc": "No description included"
+    },
+    "SHOPPING_CART": {
+        "_buy": "Buy",
+        "_back": "Back",
+        "_confirm": "Confirm and pay",
+        "_note": "Add notes",
+        "_choose_bill": "Choose a billing address",
+        "_cart": "Cart",
+        "_email": "Email",
+        "_postalAddress": "Postal address",
+        "_phone": "Phone number",
+        "_billing_check": "You should first create at least a billing address in order to checkout an order.",
+        "_click_here": "Click here"
+    }
+}
