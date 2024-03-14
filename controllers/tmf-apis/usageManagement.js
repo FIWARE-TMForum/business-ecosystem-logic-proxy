@@ -88,9 +88,9 @@ var usageManagement = (function() {
 
     let checkProductId = function(req, callback){
         if ( !req.query['relatedParty.id'] || req.user.partyId != req.query['relatedParty.id']){
-            callback( { status: 403, message: 'invalid request'})
+            return callback( { status: 403, message: 'invalid request'})
         }
-        callback(null)
+        return callback(null)
 
     }
 
@@ -114,7 +114,7 @@ var usageManagement = (function() {
 
     var validators = {
         GET: [utils.validateLoggedIn, tmfUtils.filterRelatedPartyFields, checkFilters, checkProductId],
-        POST: [],
+        POST: [utils.methodNotAllowed],
         PATCH: [utils.methodNotAllowed],
         PUT: [utils.methodNotAllowed],
         DELETE: [utils.methodNotAllowed]
