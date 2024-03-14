@@ -457,6 +457,7 @@ var renderTemplate = function(req, res, viewName) {
         proxyPath: config.proxyPrefix,
         catalogPath: config.endpoints.catalog.path,
         resourcePath: config.endpoints.resource.path,
+        usagePath: config.endpoints.usage.path,
         serviceCatalogPath: config.endpoints.service.path,
         orderingPath: config.endpoints.ordering.path,
         inventoryPath: config.endpoints.inventory.path,
