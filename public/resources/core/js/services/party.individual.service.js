@@ -164,7 +164,8 @@
             getCurrentOrg: getCurrentOrg,
             hasAdminRole: hasAdminRole,
             isOrganization: isOrganization,
-            parseCountry: parseCountry
+            parseCountry: parseCountry,
+            searchOrganization: searchOrganization
         };
 
         function isOrganization() {
@@ -242,6 +243,19 @@
             // Make a requests asking just for the needed attributes
             process(method, [params], deferred, transform);
 
+            return deferred.promise;
+        }
+
+        function searchOrganization() {
+            var deferred = $q.defer();
+            process(Organization.query, [], deferred, (orgs) => {
+                return orgs.map((org)=> {
+                    return {
+                        providerName: org.tradingName,
+                        providerId: org.id
+                    }
+                })
+            })
             return deferred.promise;
         }
 
