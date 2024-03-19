@@ -103,7 +103,7 @@
     }
 
     function calculateTotalPercentage(aggregatorShare, providerShare, currentStValue, stakeholders) {
-        var values = [aggregatorShare, providerShare, currentStValue];
+        var values = [parseFloat(aggregatorShare), parseFloat(providerShare), currentStValue];
 
         stakeholders.forEach((st) => {
             values.push(st.stakeholderShare);
@@ -316,6 +316,8 @@
         RSS.detailModel($state.params.productClass).then(
             function(sharingModel) {
                 vm.data = sharingModel;
+                vm.data.providerShare = parseFloat(sharingModel.providerShare)
+
                 vm.status = DATA_STATUS.LOADED;
 
                 buildStakeholdersController(vm, $rootScope, PLATFORM_REVENUE, EVENTS, DATA_STATUS, RSS, Utils, User);
