@@ -19,9 +19,9 @@
               dd {{ detailVM.item.getCustomer().name }}
               dt #{ __("Notification email") }
               dd {{ detailVM.item.notificationContact }}
-              dt #{ __("Billing address") }
-              dd
-                span.text-preline {{ detailVM.getShippingAddress() }}
+              //dt #{ __("Billing address") }
+              //dd
+              //  span.text-preline {{ detailVM.getShippingAddress() }}
             dl
               dt #{ __("Order Date") }
               dd {{ detailVM.item.orderDate ? (detailVM.item.orderDate | amDateFormat: 'dddd, MMMM Do YYYY, h:mm a') : '#{ __("No data provided.") }' }}

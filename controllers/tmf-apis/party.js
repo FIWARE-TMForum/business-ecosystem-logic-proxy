@@ -38,7 +38,7 @@ var party = (function() {
         }
 
         var individualsPattern = new RegExp(
-            '^/' + config.endpoints.party.path + '/api/partyManagement/v2/(individual|organization)(/([^/]*))?$'
+            '^/' + config.endpoints.party.path + '/(individual|organization)(/([^/]*))?$'
         );
         var apiPath = url.parse(req.apiUrl).pathname;
 

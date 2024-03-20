@@ -30,22 +30,27 @@ html(ng-app="app")
           TOKEN_GET: '#{ proxyPath }/authorizeService/read',
           RENEW_JOB: '#{ proxyPath }/#{ chargingPath }/api/orderManagement/products/renewJob',
           UNSUBSCRIBE_JOB: '#{ proxyPath }/#{ chargingPath }/api/orderManagement/products/unsubscribeJob',
-          CATALOGUE_MANAGEMENT: '#{ proxyPath }/#{ catalogPath }/api/catalogManagement/v2',
-          PRODUCTORDER_MANAGEMENT: '#{ proxyPath }/#{ orderingPath }/api/productOrdering/v2',
-          INVENTORY: '#{ proxyPath }/#{ inventoryPath }/api/productInventory/v2',
-          PARTY_MANAGEMENT: '#{ proxyPath }/#{ partyPath }/api/partyManagement/v2',
-          BILLING_MANAGEMENT: '#{ proxyPath }/#{ billingPath }/api/billingManagement/v2',
-          CUSTOMER_MANAGEMENT: '#{ proxyPath }/#{ customerPath }/api/customerManagement/v2',
+          CATALOGUE_MANAGEMENT: '#{ proxyPath }/#{ catalogPath }',
+          RESOURCE_MANAGEMENT: '#{ proxyPath }/#{ resourcePath }',
+          INVENTORY: '#{ proxyPath }/#{ inventoryPath }',
+          SERVICE_INVENTORY: '#{ proxyPath }/#{ serviceInventoryPath }',
+          RESOURCE_INVENTORY: '#{ proxyPath }/#{ resourceInventoryPath }',
+          USAGE_MANAGEMENT: '#{ proxyPath }/#{ usagePath }',
+          PRODUCTORDER_MANAGEMENT: '#{ proxyPath }/#{ orderingPath }',
+          PARTY_MANAGEMENT: '#{ proxyPath }/#{ partyPath }',
+          BILLING_MANAGEMENT: '#{ proxyPath }/#{ billingPath }',
+          CUSTOMER_MANAGEMENT: '#{ proxyPath }/#{ customerPath }',
           PAYMENT: '#{ proxyPath }/#{ chargingPath }/api/orderManagement/orders/:action',
-          SHARING_MODELS: '#{ proxyPath }/#{ rssPath }/rss/models',
+          SHARING_MODELS: '#{ proxyPath }/#{ rssPath }/api/revenueSharing/models',
           SHARING_PROVIDERS: '#{ proxyPath }/#{ rssPath }/rss/providers',
-          SHARING_TRANSACTIONS: '#{ proxyPath }/#{ rssPath }/rss/cdrs',
+          SHARING_TRANSACTIONS: '#{ proxyPath }/#{ rssPath }/api/revenueSharing/cdrs',
           SHARING_CLASSES: '#{ proxyPath }/#{ rssPath }/rss/cdrs/classes',
-          SHARING_SETTLEMENT: '#{ proxyPath }/#{ rssPath }/rss/settlement',
-          SHARING_REPORTS: '#{ proxyPath }/#{ rssPath }/rss/settlement/reports',
+          SHARING_SETTLEMENT: '#{ proxyPath }/#{ rssPath }/api/revenueSharing/settlement',
+          SHARING_REPORTS: '#{ proxyPath }/#{ rssPath }/api/revenueSharing/settlement/reports',
           SHOPPING_CART: '#{ shoppingCartPath }/:action/:id',
           IDPS: '#{ proxyPath }/IDP',
-          IDP: '#{ proxyPath }/IDP/:idpId'
+          IDP: '#{ proxyPath }/IDP/:idpId',
+          SERVICE_CATALOG: '#{ proxyPath }/#{ serviceCatalogPath }'
         })
         .constant('CHARGE_PERIODS', '#{ chargePeriods }'.split(',').map(function (value) {
           var cp = value.split(':');
@@ -88,17 +93,19 @@ html(ng-app="app")
         angular.module('app')
           .constant('LOGGED_USER', {
             id: '#{ user.id }',
+            partyId: '#{ user.partyId }',
             name: '#{ user.username }',
-            href: '#{ contextPath }/#{ partyPath }/api/partyManagement/v2/individual/#{ user.id }',
+            href: '#{ contextPath }/#{ partyPath }/individual/#{ user.partyId }',
             email: '#{ user.email }',
             bearerToken: '#{ user.accessToken }',
             organizations: '#{ '{ "organizations":' + JSON.stringify(user.organizations) + '}' }',
             currentUser: {
               id: '#{ user.id }',
+              partyId: '#{ user.partyId }',
               name: '#{ user.username }',
               email: '#{ user.email }',
               roles: '#{ JSON.stringify(user.roles) }',
-              href: '#{ contextPath }/#{ partyPath }/api/partyManagement/v2/individual/#{ user.id }'
+              href: '#{ contextPath }/#{ partyPath }/individual/#{ user.partyId }'
             }
           })
           .run(function ($http, LOGGED_USER) {
@@ -170,7 +177,7 @@ html(ng-app="app")
                       a.dropdown-menu-item(ng-click="user.switchSession(" + "'#{ organization.id }'" + ")", ng-if="user.showOrgList(" + "'#{ organization.id }'" + ")")
                         span.item-icon.fa.fa-users
                         span.item-text #{ organization.name }
-                        
+
                 a.dropdown-menu-item(ng-if="user.isAdmin()", ui-sref="admin", ui-sref-opts="{ reload: true, inherit: false }")
                   span.item-icon.fa.fa-dashboard
                   span.item-text #{ __("Administration") }
@@ -276,8 +283,14 @@ html(ng-app="app")
       include ./partials/stock/product/create-form-bundle.jade
     script(type="text/ng-template", id="stock/product/create/characteristics")
       include ./partials/stock/product/create-form-characteristics.jade
+    script(type="text/ng-template", id="stock/product/create/compliance")
+      include ./partials/stock/product/create-form-compliance.jade
     script(type="text/ng-template", id="stock/product/create/attachments")
       include ./partials/stock/product/create-form-attachments.jade
+    script(type="text/ng-template", id="stock/product/create/resources")
+      include ./partials/stock/product/create-form-resource.jade
+    script(type="text/ng-template", id="stock/product/create/services")
+      include ./partials/stock/product/create-form-service.jade
     script(type="text/ng-template", id="stock/product/create/assets")
       include ./partials/stock/product/create-form-assets.jade
     script(type="text/ng-template", id="stock/product/create/relationships")
@@ -302,6 +315,10 @@ html(ng-app="app")
       include partials/stock/product/update-bundled-product
     script(type="text/ng-template", id="stock/product/update/characteristic")
       include ./partials/stock/product/update-form-characteristic.jade
+    script(type="text/ng-template", id="stock/product/update/resources")
+      include ./partials/stock/product/update-form-resources.jade
+    script(type="text/ng-template", id="stock/product/update/services")
+      include ./partials/stock/product/update-form-services.jade
     script(type="text/ng-template", id="stock/product/update/attachment")
       include ./partials/stock/product/update-form-attachment.jade
     script(type="text/ng-template", id="stock/product/update/relationship")
@@ -348,7 +365,7 @@ html(ng-app="app")
     script(type="text/ng-template", id="directives/offering-priceplan")
       include ./partials/stock/product-offering/directives/priceplan.jade
     script(type="text/ng-template", id="directives/offering-sla")
-      include ./partials/stock/product-offering/directives/sla.jade  
+      include ./partials/stock/product-offering/directives/sla.jade
 
     script(type="text/ng-template", id="directives/forms/priceplan")
       include ./partials/stock/product-offering/directives/priceplan-form.jade
@@ -382,6 +399,36 @@ html(ng-app="app")
       include ./partials/stock/product-catalogue/update-party.jade
     script(type="text/ng-template", id="stock/product-catalogue/update/offering")
       include ./partials/stock/product-catalogue/update-offering.jade
+      
+    script(type="text/ng-template", id="stock/service-specification/search")
+      include ./partials/stock/service-specification/search.jade
+    script(type="text/ng-template", id="stock/service-specification/create")
+      include ./partials/stock/service-specification/create.jade
+    script(type="text/ng-template", id="stock/service-specification/create/general")
+      include ./partials/stock/service-specification/create-form.jade
+    script(type="text/ng-template", id="stock/service-specification/create/characteristics")
+      include ./partials/stock/service-specification/create-form-characteristics.jade
+    script(type="text/ng-template", id="stock/service-specification/create/finish")
+      include ./partials/stock/service-specification/create-form-finish.jade
+    script(type="text/ng-template", id="stock/service-specification/update")
+      include ./partials/stock/service-specification/update.jade
+    script(type="text/ng-template", id="stock/service-specification/update/characteristic")
+      include ./partials/stock/service-specification/update-form-characteristic.jade
+
+    script(type="text/ng-template", id="stock/resource-spec/search")
+      include ./partials/stock/resource-spec/search.jade
+    script(type="text/ng-template", id="stock/resource-spec/create")
+      include ./partials/stock/resource-spec/create.jade
+    script(type="text/ng-template", id="stock/resource-spec/create/general")
+      include ./partials/stock/resource-spec/create-form.jade
+    script(type="text/ng-template", id="stock/resource-spec/create/characteristics")
+      include ./partials/stock/resource-spec/create-form-characteristics.jade
+    script(type="text/ng-template", id="stock/resource-spec/create/finish")
+      include ./partials/stock/resource-spec/create-form-finish.jade
+    script(type="text/ng-template", id="stock/resource-spec/update")
+      include ./partials/stock/resource-spec/update.jade
+    script(type="text/ng-template", id="stock/resource-spec/update/characteristic")
+      include ./partials/stock/resource-spec/update-form-characteristic.jade
 
     script(type="text/ng-template", id="rss/sidebar")
       include ./partials/rss/sidebar.jade
@@ -426,6 +473,24 @@ html(ng-app="app")
       include ./partials/inventory/product/detail-content-usage.jade
     script(type="text/ng-template", id="inventory/product/detail/charges")
       include ./partials/inventory/product/detail-content-charges.jade
+    script(type="text/ng-template", id="inventory/product/detail/resources")
+      include ./partials/inventory/product/detail-content-resources.jade
+    script(type="text/ng-template", id="inventory/product/detail/services")
+      include ./partials/inventory/product/detail-content-services.jade
+
+    script(type="text/ng-template", id="inventory/service/search")
+      include partials/inventory/service/search
+    script(type="text/ng-template", id="inventory/service/detail")
+      include partials/inventory/service/detail
+    script(type="text/ng-template", id="inventory/service/detail/characteristic")
+      include ./partials/inventory/service/detail-content-characteristic.jade
+
+    script(type="text/ng-template", id="inventory/resource/search")
+      include partials/inventory/resource/search
+    script(type="text/ng-template", id="inventory/resource/detail")
+      include partials/inventory/resource/detail
+    script(type="text/ng-template", id="inventory/resource/detail/characteristic")
+      include ./partials/inventory/resource/detail-content-characteristic.jade
 
     script(type="text/ng-template", id="shopping-cart/list")
       include partials/shopping-cart/create

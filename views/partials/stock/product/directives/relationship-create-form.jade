@@ -8,7 +8,7 @@
       .col-xs-12(ng-if="createVM.list.status === createVM.STATUS.LOADED")
         .form-group
           label #{ __("Choose a relationship") }
-          select.form-control(name="type" ng-model="createVM.data.type")
+          select.form-control(name="type" ng-model="createVM.relType")
             option(ng-repeat="(key, value) in createVM.RELATIONSHIPS" value="{{ value.code }}") {{ value.name }}
         .form-group
           label #{ __("Choose a product specification") }
@@ -33,7 +33,7 @@
                   th #{ __("Last Updated") }
               tbody
                 tr(ng-repeat="productSpec in createVM.list",
-                  ng-class="{ active: productSpec.id === createVM.data.productSpec.id, disabled: createVM.hasRelationship(resource, productSpec) }",
+                  ng-class="{ active: productSpec.id === createVM.data.id, disabled: createVM.hasRelationship(resource, productSpec) }",
                   ng-click="createVM.setProductSpec(productSpec)")
 
                   th {{ productSpec.name }}
@@ -45,7 +45,7 @@
         .form-group.text-right
           a.btn.btn-warning(
             ng-click="createVM.create(parentVM)"
-            ng-disabled="!createVM.form.$valid || createVM.create.status === createVM.STATUS.LOADING"
+            ng-disabled="createVM.data == null || createVM.create.status === createVM.STATUS.LOADING"
           )
             span.item-icon.fa.fa-spin.fa-spinner(ng-if="createVM.create.status === createVM.STATUS.LOADING")
             span.item-text #{ __("Create") }

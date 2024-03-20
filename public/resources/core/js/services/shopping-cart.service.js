@@ -1,4 +1,6 @@
-/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 CoNWeT Lab., Universidad Politécnica de Madrid
+ *
+ * Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -75,14 +77,14 @@
         }
 
         function getItems() {
-            var deferred = $q.defer();
+            const deferred = $q.defer();
 
             resource.query(
                 { action: 'item' },
                 function(itemList) {
-                    var items = {};
-                    var params = {
-                        id: itemList
+                    const items = {};
+                    const params = {
+                        href: itemList
                             .map(function(item) {
                                 items[item.id] = item;
                                 return item.id;

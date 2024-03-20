@@ -1,4 +1,6 @@
-/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 CoNWeT Lab., Universidad Politécnica de Madrid
+ *
+ * Copyright (c) 2024 Future Internet Consulting and Development Solutions S.L.
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -43,7 +45,7 @@
         vm.$params = $state.params;
         vm.state = $state;
         vm.offset = -1;
-        vm.size = -1;
+        vm.limit = -1;
         vm.list = [];
         vm.list.status = DATA_STATUS.LOADING;
 
@@ -54,7 +56,8 @@
         vm.getElementsLength = getElementsLength;
 
         function getElementsLength() {
-            return RSS.countTransactions();
+            return Promise.resolve(10)
+            //return RSS.countTransactions();
         }
 
         function createReport() {
@@ -83,7 +86,7 @@
             if (vm.offset >= 0) {
                 var params = {
                     offset: vm.offset,
-                    size: vm.size
+                    size: vm.limit
                 };
 
                 RSS.searchTransactions(params).then(

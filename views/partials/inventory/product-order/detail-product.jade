@@ -1,32 +1,32 @@
-.panel.panel-default(ng-repeat="orderItem in detailVM.item.orderItem")
+.panel.panel-default(ng-repeat="productOrderItem in detailVM.item.productOrderItem")
   .panel-heading
     .panel-heading-wrapper
       h3.panel-title #{ __("Product") } {{ $index + 1 }}
       .panel-actions
-        a.btn.btn-sm.btn-default(ng-if="detailVM.can('send', orderItem)" bs-tooltip title="Set as sent" ng-click="detailVM.sendProduct($index)" ng-disabled="detailVM.sendProduct.status === detailVM.STATUS.PENDING")
+        a.btn.btn-sm.btn-default(ng-if="detailVM.can('send', productOrderItem)" bs-tooltip title="Set as sent" ng-click="detailVM.sendProduct($index)" ng-disabled="detailVM.sendProduct.status === detailVM.STATUS.PENDING")
           span.fa(ng-class="detailVM.sendProduct.status === detailVM.STATUS.PENDING ? ['fa-circle-o-notch', 'fa-spin'] : 'fa-truck'")
-        a.btn.btn-sm.btn-default(ng-if="detailVM.can('deliver', orderItem)" bs-tooltip title="Set as delivered" ng-click="detailVM.deliverProduct($index)" ng-disabled="detailVM.deliverProduct.status === detailVM.STATUS.PENDING")
+        a.btn.btn-sm.btn-default(ng-if="detailVM.can('deliver', productOrderItem)" bs-tooltip title="Set as delivered" ng-click="detailVM.deliverProduct($index)" ng-disabled="detailVM.deliverProduct.status === detailVM.STATUS.PENDING")
           span.fa(ng-class="detailVM.deliverProduct.status === detailVM.STATUS.PENDING ? ['fa-circle-o-notch', 'fa-spin'] : 'fa-home'")
-        a.btn.btn-sm.btn-danger(ng-if="detailVM.can('reject', orderItem)" bs-tooltip title="Reject" ng-click="detailVM.rejectProduct($index)" ng-disabled="detailVM.rejectProduct.status === detailVM.STATUS.PENDING")
+        a.btn.btn-sm.btn-danger(ng-if="detailVM.can('reject', productOrderItem)" bs-tooltip title="Reject" ng-click="detailVM.rejectProduct($index)" ng-disabled="detailVM.rejectProduct.status === detailVM.STATUS.PENDING")
           span.fa(ng-class="detailVM.rejectProduct.status === detailVM.STATUS.PENDING ? ['fa-circle-o-notch', 'fa-spin'] : 'fa-close'")
   .panel-body
     .product
       .product-heading
         .thumbnail.thumbnail-lg
-          img(no-image, ng-src="{{ orderItem.productOffering.getPicture() }}")
+          img(no-image, ng-src="{{ productOrderItem.productOffering.getPicture() }}")
       .product-body
         dl
           dt #{ __("Offering") }
           dd
-            a(ui-sref="offering.detail({ offeringId: orderItem.productOffering.id })" ui-sref-opts="{ inherit: false }") {{ orderItem.productOffering.name }}
+            a(ui-sref="offering.detail({ offeringId: productOrderItem.productOffering.id })" ui-sref-opts="{ inherit: false }") {{ productOrderItem.productOffering.name }}
           dt #{ __("Status") }
-          dd {{ orderItem.state }}
+          dd {{ productOrderItem.state }}
           dt #{ __("Vendor name") }
-          dd {{ detailVM.item.getItemSeller(orderItem).name }}
+          dd {{ detailVM.item.getItemSeller(productOrderItem).name }}
           dt #{ __("Characteristics") }
           dd
-            span(ng-if="!orderItem.product.productCharacteristic.length") #{ __("No data provided.") }
-            dl.dl-horizontal(ng-repeat="characteristic in orderItem.product.productCharacteristic")
+            span(ng-if="!productOrderItem.product.productCharacteristic.length") #{ __("No data provided.") }
+            dl.dl-horizontal(ng-repeat="characteristic in productOrderItem.product.productCharacteristic")
               dt {{ characteristic.name }}
               dd {{ characteristic.value }}
           dt Price

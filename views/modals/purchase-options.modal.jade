@@ -49,7 +49,7 @@
                   strong #{ __("Terms and conditions") }
                 .h4.text-dark-secondary
                   strong {{ term.name }}
-                pre(ng-if="term.type == 'Custom'") {{ term.description }}
+                pre {{ term.description }}
                 .col-sm-6(ng-if="term.type == 'Custom' && !term.isFullCustom", style="margin-bottom: 10px;")
                   dd.text-dark-secondary <b>Excusivity: </b> {{ term.exclusivity }}
                   dd.text-dark-secondary <b>Region: </b> {{ term.region }}

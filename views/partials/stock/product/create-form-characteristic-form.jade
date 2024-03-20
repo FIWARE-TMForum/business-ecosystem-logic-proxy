@@ -45,7 +45,7 @@
           .input-group(ng-repeat="characteristicValue in createVM.characteristic.productSpecCharacteristicValue")
             .input-group-btn
               a.btn.btn-default.z-depth-0(ng-click="createVM.setDefaultValue($index)")
-                span.item-icon.fa(ng-class="characteristicValue.default ? ['fa-dot-circle-o', 'text-success']: 'fa-circle-o'")
+                span.item-icon.fa(ng-class="characteristicValue.isDefault ? ['fa-dot-circle-o', 'text-success']: 'fa-circle-o'")
                 span.item-text #{ __("Default") }
             input.form-control(type="text", value="{{ createVM.getFormattedValueOf(createVM.characteristic, characteristicValue) }}", readonly)
             .input-group-btn

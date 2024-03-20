@@ -1,4 +1,6 @@
-/* Copyright (c) 2015 - 2018 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 CoNWeT Lab., Universidad Politécnica de Madrid
+ *
+ * Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -60,14 +62,16 @@
             'Utils',
             ProductOfferingCreateController
         ])
-
         .controller('OfferingDetailCtrl', [
             '$state',
+            '$scope',
             'Offering',
             'ProductSpec',
             'Utils',
             'Download',
             '$window',
+            'ServiceSpecification',
+            'ResourceSpec',
             ProductOfferingDetailController
         ])
         .controller('OfferingUpdateCtrl', [
@@ -103,7 +107,7 @@
         vm.list = [];
         vm.list.flow = $state.params.flow;
         vm.offset = -1;
-        vm.size = -1;
+        vm.limit = -1;
         vm.showFilters = showFilters;
         vm.getElementsLength = getElementsLength;
         vm.setFormMode = setFormMode;
@@ -171,8 +175,9 @@
         }
 
         function getElementsLength() {
-            var params = getParams();
-            return Offering.count(params);
+            //var params = getParams();
+            //return Offering.count(params);
+            return Promise.resolve(10)
         }
 
         function getParams() {
@@ -205,7 +210,7 @@
                 var params = getParams();
 
                 params.offset = vm.offset;
-                params.size = vm.size;
+                params.limit = vm.limit;
 
                 Offering.search(params).then(function (offeringList) {
                     angular.copy(offeringList, vm.list);
@@ -340,10 +345,10 @@
                 title: 'Price Plans',
                 templateUrl: 'stock/product-offering/create/priceplan'
             },
-            {
+            /*{
                 title: 'RS Model',
                 templateUrl: 'stock/product-offering/create/sharing'
-            },
+            },*/
             {
                 title: 'Finish',
                 templateUrl: 'stock/product-offering/create/finish'
@@ -402,9 +407,9 @@
         vm.hasCategories = hasCategories;
 
         /* PRICE PLANS MEMBERS */
-
+        vm.pricingModels = []
         vm.pricePlan = new Offering.PricePlan();
-        vm.isOpen = true;
+        vm.isOpen = false;
         vm.pricePlanEnabled = false;
         vm.priceAlterationType = vm.PRICE_ALTERATIONS_SUPPORTED.NOTHING;
 
@@ -444,7 +449,7 @@
         vm.removePlace = removePlace;
 
         $scope.$on(Offering.EVENTS.PRICEPLAN_UPDATED, function(event, index, pricePlan) {
-            angular.merge(vm.data.productOfferingPrice[index], pricePlan);
+            angular.merge(vm.pricingModels[index], pricePlan);
         });
 
         var searchParams = {
@@ -546,7 +551,7 @@
 //        "href": "http://127.0.0.1:8000/DSProductCatalog/api/catalogManagement/v2/productSpecification/4:(0.1)"
 //    }
 //}
-        function create() {
+        async function create() {
             var data = angular.copy(vm.data);
 
             data.category = formatCategory();
@@ -583,7 +588,19 @@
                     });
                 });
             }
-            
+
+            if (vm.pricingModels.length > 0) {
+                 vm.data.productOfferingPrice = await Promise.all(vm.pricingModels.map(async (model) => {
+                    let priceObj = await Offering.createPricing(model)
+                    let offModel = Offering.buildTMFPricing(model)
+
+                    offModel.id = priceObj.id
+                    offModel.href = priceObj.href
+
+                    return offModel
+                }))
+            }
+
             Promise.all(createPromise).then(function(){
                 //var data = angular.copy(vm.data);
                 vm.data.category = formatCategory();
@@ -774,22 +791,23 @@
 
         function isFreeOffering() {
             // Return true if the offering is free or open
-            return !vm.data.productOfferingPrice.length || isOpenOffering();
+            return !vm.pricingModels.length || isOpenOffering();
         }
 
         function createPricePlan() {
-            vm.data.productOfferingPrice.push(vm.pricePlan);
+            vm.pricingModels.push(vm.pricePlan);
+
             vm.pricePlan = new Offering.PricePlan();
             vm.pricePlanEnabled = false;
             vm.priceAlterationType = vm.PRICE_ALTERATIONS_SUPPORTED.NOTHING;
         }
 
         function updatePricePlan(index) {
-            $rootScope.$broadcast(Offering.EVENTS.PRICEPLAN_UPDATE, index, vm.data.productOfferingPrice[index]);
+            $rootScope.$broadcast(Offering.EVENTS.PRICEPLAN_UPDATE, index, vm.pricingModels[index]);
         }
 
         function removePricePlan(index) {
-            vm.data.productOfferingPrice.splice(index, 1);
+            vm.pricingModels.splice(index, 1);
         }
 
         function setAlteration(alterationType) {
@@ -863,15 +881,28 @@
         );
     }
 
-    function ProductOfferingDetailController($state, Offering, ProductSpec, Utils, Download, $window) {
+    function ProductOfferingDetailController($state, $scope, Offering, ProductSpec, Utils, Download, $window, ServiceSpecification, ResourceSpec) {
         /* jshint validthis: true */
         var vm = this;
         vm.sla = {};
         vm.item = {};
+        vm.pricingModels = []
         vm.$state = $state;
         vm.hasCharacteristics = hasCharacteristics;
         vm.formatCharacteristicValue = formatCharacteristicValue;
         vm.downloadAsset = downloadAsset;
+
+        vm.services = []
+        vm.resources = []
+
+        const supportedCerts = ["cloudsecurity", "cloudrulebook", "iso27001", "iso27017", "iso17025"]
+        vm.certs = {
+            cloudsecurity: null,
+            cloudrulebook: null,
+            iso27001: null,
+            iso27017: null,
+            iso17025: null
+        }
 
         Offering.detail($state.params.offeringId).then(function (offeringRetrieved) {
             vm.item = offeringRetrieved;
@@ -886,6 +917,38 @@
                 });
             }
             vm.item.status = LOADED;
+
+            Promise.all(vm.item.productOfferingPrice.map((pricing) => {
+                return Offering.getPricing(pricing.id)
+            })).then((pricingModels) => {
+                vm.pricingModels = pricingModels
+            })
+
+            if (vm.item.productSpecification.serviceSpecification != null) {
+                Promise.all(vm.item.productSpecification.serviceSpecification.map((serv) => {
+                    return ServiceSpecification.getServiceSpecficiation(serv.id)
+                })).then((servModel) => {
+                    vm.services = servModel
+                    $scope.$apply()
+                })
+            }
+
+            if (vm.item.productSpecification.resourceSpecification != null) {
+                Promise.all(vm.item.productSpecification.resourceSpecification.map((res) => {
+                    return ResourceSpec.getResourceSpec(res.id)
+                })).then((resModel) => {
+                    vm.resources = resModel
+                    $scope.$apply()
+                })
+            }
+
+            if (vm.item.productSpecification.productSpecCharacteristic != null) {
+                vm.item.productSpecification.productSpecCharacteristic.forEach((charact) => {
+                    if (supportedCerts.indexOf(charact.name.toLowerCase()) > -1) {
+                        vm.certs[charact.name.toLowerCase()] = charact.productSpecCharacteristicValue[0].value
+                    }
+                })
+            }
         }, function (response) {
             vm.error = Utils.parseError(response, 'The requested offering could not be retrieved');
             vm.item.status = ERROR;
@@ -935,7 +998,7 @@
                     result = characteristicValue.value;
                     break;
                 case ProductSpec.VALUE_TYPES.NUMBER.toLowerCase():
-                    if (characteristicValue.value && characteristicValue.value.length) {
+                    if (characteristicValue.value && characteristicValue.value != '') {
                         result = characteristicValue.value;
                     } else {
                         result = characteristicValue.valueFrom + ' - ' + characteristicValue.valueTo;
@@ -987,7 +1050,7 @@
         vm.PRICE_CONDITIONS = Offering.TYPES.PRICE_CONDITION;
 
         vm.update = update;
-        vm.updateStatus = updateStatus;
+        vm.updateOfferingStatus = updateOfferingStatus;
 
         vm.categories = {};
 
@@ -997,6 +1060,7 @@
         vm.updateCategories = updateCategories;
 
         vm.pricePlan = new Offering.PricePlan();
+        vm.pricingModels = []
         vm.pricePlanEnabled = false;
         vm.priceAlterationType = vm.PRICE_ALTERATIONS_SUPPORTED.NOTHING;
 
@@ -1011,22 +1075,28 @@
 
         vm.sla = {};
 
-        var updatePricePlanPromise = null;
+        vm.updateStatus = null;
+        vm.deleteStatus = null;
+        vm.appendStatus = null;
 
         $scope.$on(Offering.EVENTS.PRICEPLAN_UPDATED, function(event, index, pricePlan) {
-            updatePricePlanPromise = vm.item.updatePricePlan(index, pricePlan);
-            updatePricePlanPromise.then(
-                function() {
+            vm.updateStatus = vm.STATUS.PENDING;
+            Offering.updatePricing(pricePlan.id, pricePlan).then(
+                () => {
+                    vm.pricingModels[index] = pricePlan;
                     $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {
                         message: 'The offering price plan was updated.'
                     });
-                },
-                function(response) {
+                })
+            .catch(
+                (response) => {
                     $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
                         error: Utils.parseError(response, 'Unexpected error trying to update the offering price plan.')
                     });
                 }
-            );
+            ).finally(() => {
+                vm.updateStatus = null
+            });
         });
 
         var detailPromise = Offering.detail($state.params.offeringId);
@@ -1040,6 +1110,12 @@
                     vm.categories[category.id] = category;
                 });
                 vm.isOpen = isOpenOffering();
+
+                Promise.all(productOffering.productOfferingPrice.map((priceRef) => {
+                    return Offering.getPricing(priceRef.id)
+                })).then((pricings) => {
+                    vm.pricingModels = pricings
+                })
             },
             function(response) {
                 vm.error = Utils.parseError(response, 'Unexpected error trying to retrieve the offering.');
@@ -1059,8 +1135,6 @@
                 return detailPromise != null ? detailPromise.$$state.status : -1;
             }
         });
-
-        var createPricePlanPromise = null;
 
         function switchOpenStatus() {
             // Change between free and open offering when no price plan
@@ -1088,26 +1162,32 @@
 
         function isFreeOffering() {
             // Return true if the offering is free or open
-            return !vm.item.productOfferingPrice.length || isOpenOffering();
+            return !vm.pricingModels.length || isOpenOffering();
         }
 
         function appendPricePlan(plan) {
-            createPricePlanPromise = vm.item.appendPricePlan(plan);
-            createPricePlanPromise.then(
-                function() {
-                    vm.pricePlan = new Offering.PricePlan();
-                    vm.pricePlanEnabled = false;
-                    vm.priceAlterationType = vm.PRICE_ALTERATIONS_SUPPORTED.NOTHING;
-                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {
-                        message: 'The offering price plan was created.'
-                    });
-                },
-                function(response) {
-                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
-                        error: Utils.parseError(response, 'Unexpected error trying to create the offering price plan.')
-                    });
-                }
-            );
+            vm.appendStatus = vm.STATUS.PENDING;
+            Offering.createPricing(plan)
+            .then((pricing) => {
+                plan.id = pricing.id
+                plan.href = pricing.href
+                return vm.item.appendPricePlan(plan)
+            }).then(() => {
+                vm.pricingModels.push(plan)
+
+                vm.pricePlan = new Offering.PricePlan();
+                vm.pricePlanEnabled = false;
+                vm.priceAlterationType = vm.PRICE_ALTERATIONS_SUPPORTED.NOTHING;
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {
+                    message: 'The offering price plan was created.'
+                });
+            }).catch((response) => {
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                    error: Utils.parseError(response, 'Unexpected error trying to create the offering price plan.')
+                });
+            }).finally(() => {
+                vm.appendStatus = null;
+            })
         }
 
         function createPricePlan() {
@@ -1119,39 +1199,27 @@
             appendPricePlan(vm.pricePlan);
         }
 
-        Object.defineProperty(createPricePlan, 'status', {
-            get: function() {
-                return createPricePlanPromise != null ? createPricePlanPromise.$$state.status : -1;
-            }
-        });
-
         function updatePricePlan(index) {
-            var pricePlan = angular.copy(vm.item.productOfferingPrice[index]);
+            const pricePlan = angular.copy(vm.pricingModels[index]);
             $rootScope.$broadcast(Offering.EVENTS.PRICEPLAN_UPDATE, index, pricePlan);
         }
 
-        Object.defineProperty(updatePricePlan, 'status', {
-            get: function() {
-                return updatePricePlanPromise != null ? updatePricePlanPromise.$$state.status : -1;
-            }
-        });
-
-        var removePricePlanPromise = null;
-
         function removePricePlan(index) {
-            removePricePlanPromise = vm.item.removePricePlan(index);
-            removePricePlanPromise.then(
-                function() {
-                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {
-                        message: 'The offering price plan was removed.'
-                    });
-                },
-                function(response) {
-                    $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
-                        error: Utils.parseError(response, 'Unexpected error trying to remove the offering price plan.')
-                    });
-                }
-            );
+            vm.deleteStatus = vm.STATUS.PENDING;
+            Offering.deletePricing(vm.pricingModels[index].id).then(() => {
+                return vm.item.removePricePlan(index)
+            }).then(() => {
+                vm.pricingModels.splice(index, 1)
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'success', {
+                    message: 'The offering price plan was removed.'
+                });
+            }).catch((response) => {
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                    error: Utils.parseError(response, 'Unexpected error trying to remove the offering price plan.')
+                });
+            }).finally(() => {
+                vm.deleteStatus = null;
+            })
         }
 
         function setAlteration(alterationType) {
@@ -1159,13 +1227,7 @@
             vm.pricePlan.resetPriceAlteration(alterationType);
         }
 
-        Object.defineProperty(removePricePlan, 'status', {
-            get: function() {
-                return removePricePlanPromise != null ? removePricePlanPromise.$$state.status : -1;
-            }
-        });
-
-        function updateStatus(status) {
+        function updateOfferingStatus(status) {
             vm.data.lifecycleStatus = status;
             vm.statusUpdated = true;
         }

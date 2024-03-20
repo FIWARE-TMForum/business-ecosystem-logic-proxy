@@ -1,19 +1,15 @@
 {
-  "appenders": [
-    { 
+  "appenders": {
+    "console": {
       "type": "console",
       "layout": {
         "type": "pattern",
         "pattern": "%d  - %p: %c - %m",
         "replaceConsole": true
-      } 
+      }
     }
-  ],
-  "levels": {
-  	"Server": "INFO",
-    "TMF": "INFO",
-    "HTTP-Client": "INFO",
-    "AZF-Client": "INFO",
-    "IDM-Client": "INFO"
+  },
+  "categories": {
+    "default": { "appenders": ["console"], "level": "trace" }
   }
 }

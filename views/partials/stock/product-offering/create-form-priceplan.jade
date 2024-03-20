@@ -1,7 +1,7 @@
 .row
   .col-xs-12
-    price-plan-table(controller="createVM" data="createVM.data.productOfferingPrice")
-  .col-xs-12(ng-if="!createVM.data.productOfferingPrice.length")
+    price-plan-table(controller="createVM" data="createVM.pricingModels")
+  .col-xs-12(ng-if="!createVM.pricingModels.length")
     .alert.alert-info.text-center
       | #{ __("No price plans included.") } #{ __("The offering can be open or free") }
     .item-toggle

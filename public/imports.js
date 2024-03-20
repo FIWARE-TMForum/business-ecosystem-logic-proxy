@@ -1,4 +1,6 @@
-/* Copyright (c) 2017 - 2018 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2017 CoNWeT Lab., Universidad Politécnica de Madrid
+ *
+ * Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -18,30 +20,32 @@
  */
 
 const cssFilesToInject = [
-    'bootstrap-3.3.5/css/bootstrap',
-    'font-awesome-4.5.0/css/font-awesome',
-    'intl-tel-input-8.4.7/css/intlTelInput',
-    'core/css/default-theme'
+	'bootstrap-3.3.5/css/bootstrap',
+	'font-awesome-4.5.0/css/font-awesome',
+	'intl-tel-input-8.4.7/css/intlTelInput',
+	'core/css/default-theme'
 ].map(function(path) {
-    return 'resources/' + path + '.css';
+	return 'resources/' + path + '.css';
 });
 
 const jsDepFilesToInject = [
-    // Dependencies:
-    'jquery-1.11.3/js/jquery',
-    'bootstrap-3.3.5/js/bootstrap',
-    'moment-2.10.6/js/moment',
-    'intl-tel-input-8.4.7/js/intlTelInput',
-    'angular-1.4.7/js/angular',
-    // Angular Dependencies:
-    'angular-1.4.7/js/angular-messages',
-    'angular-1.4.7/js/angular-cookies',
-    'angular-1.4.7/js/angular-moment',
-    'angular-1.4.7/js/angular-resource',
-    'angular-1.4.7/js/angular-ui-router',
-    'angular-1.4.7/js/international-phone-number'
+	// Dependencies:
+	'jquery-1.11.3/js/jquery',
+	'bootstrap-3.3.5/js/bootstrap',
+	'moment-2.10.6/js/moment',
+	'intl-tel-input-8.4.7/js/intlTelInput',
+	'angular-1.4.7/js/angular',
+	'uuid/js/uuid',
+    'echarts/echarts.min',
+	// Angular Dependencies:
+	'angular-1.4.7/js/angular-messages',
+	'angular-1.4.7/js/angular-cookies',
+	'angular-1.4.7/js/angular-moment',
+	'angular-1.4.7/js/angular-resource',
+	'angular-1.4.7/js/angular-ui-router',
+	'angular-1.4.7/js/international-phone-number'
 ].map(function(path) {
-    return 'resources/' + path + '.js';
+	return 'resources/' + path + '.js';
 });
 
 let jsAppFilesToInject = [
@@ -50,12 +54,15 @@ let jsAppFilesToInject = [
     'app.directives',
     'directives/product-offering.directives',
     'services/user.service',
+    'services/usage.service',
     'services/payment.service',
     'services/product-specification.service',
     'services/product-category.service',
     'services/idp.service',
     'services/product-offering.service',
     'services/product-catalogue.service',
+    'services/resource-spec.service',
+    'services/service-spec.service',
     'services/sharing-models.service',
     'services/asset.service',
     'services/asset-type.service',
@@ -63,10 +70,13 @@ let jsAppFilesToInject = [
     'services/product-order.service',
     'services/shopping-cart.service',
     'services/inventory-product.service',
+    'services/inventory-resource.service',
+    'services/inventory-service.service',
     'services/utils.service',
     'services/party.individual.service',
     'services/billing-account.service',
     'services/customer.service',
+    'services/account.service',
     'services/customer-account.service',
     'services/download.service',
     'controllers/form-wizard.controller',
@@ -82,6 +92,8 @@ let jsAppFilesToInject = [
     'controllers/product-offering.controller',
     'controllers/product-offering.price.controller',
     'controllers/product-catalogue.controller',
+    'controllers/resource-spec.controller',
+	'controllers/service-catalog.controller',
     'controllers/sharing-models.controller',
     'controllers/transactions.controller',
     'controllers/sharing-reports.controller',
@@ -89,22 +101,27 @@ let jsAppFilesToInject = [
     'controllers/product-order.controller',
     'controllers/message.controller',
     'controllers/inventory-product.controller',
+    'controllers/inventory-resource.controller',
+    'controllers/inventory-service.controller',
     'controllers/unauthorized.controller',
     'controllers/party.individual.controller',
     'controllers/party.contact-medium.controller',
     'controllers/pager.controller',
     'controllers/billing-account.controller',
     'controllers/customer.controller',
+    'controllers/account.controller',
     'controllers/lang.controller',
     'routes/offering.routes',
     'routes/settings.routes',
     'routes/inventory.routes',
     'routes/inventory.product-order.routes',
     'routes/inventory.product.routes',
+    'routes/inventory.resource.routes',
+    'routes/inventory.service.routes',
     'routes/shopping-cart.routes',
     'routes/unauthorized.routes'
 ].map(function(path) {
-    return 'resources/core/js/' + path + '.js';
+	return 'resources/core/js/' + path + '.js';
 });
 
 // Stock dependencies
@@ -113,30 +130,32 @@ let jsStockFilesToInject = [
     'routes/stock.product.routes',
     'routes/stock.product-offering.routes',
     'routes/stock.product-catalogue.routes',
+    'routes/stock.resource-spec.routes',
+	'routes/stock.service-specifications.routes',
     'routes/rss.routes',
     'routes/rss.sharing-models.routes',
     'routes/rss.transactions.routes',
     'routes/rss.reports.routes'
 ].map(function(path) {
-    return 'resources/core/js/' + path + '.js';
+	return 'resources/core/js/' + path + '.js';
 });
 
 // Admin dependencies
 let jsAdminFilesToInject = ['routes/admin.routes', 'routes/admin.product-category.routes', 'routes/admin.idps.routes'].map(function(path) {
-    return 'resources/core/js/' + path + '.js';
+	return 'resources/core/js/' + path + '.js';
 });
 
 if (process.env.NODE_ENV == 'production') {
-    // If the software is is production all js files have been minimized into bae.min.js
-    jsAppFilesToInject = ['resources/core/js/bae.min.js'];
-    jsStockFilesToInject = [];
-    jsAdminFilesToInject = [];
+	// If the software is is production all js files have been minimized into bae.min.js
+	jsAppFilesToInject = ['resources/core/js/bae.min.js'];
+	jsStockFilesToInject = [];
+	jsAdminFilesToInject = [];
 }
 
 exports.imports = {
-    cssFilesToInject: cssFilesToInject,
-    jsDepFilesToInject: jsDepFilesToInject,
-    jsAppFilesToInject: jsAppFilesToInject,
-    jsStockFilesToInject: jsStockFilesToInject,
-    jsAdminFilesToInject: jsAdminFilesToInject
+	cssFilesToInject: cssFilesToInject,
+	jsDepFilesToInject: jsDepFilesToInject,
+	jsAppFilesToInject: jsAppFilesToInject,
+	jsStockFilesToInject: jsStockFilesToInject,
+	jsAdminFilesToInject: jsAdminFilesToInject
 };

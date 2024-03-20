@@ -1,0 +1,13 @@
+.row
+  .col-xs-12
+    .panel.panel-default.z-depth-1(ng-repeat="characteristic in detailVM.item.resourceCharacteristic", ng-init="characteristicIndex = $index")
+      .panel-heading
+        .h4
+          strong {{ characteristic.name }}
+      .panel-body
+        .form-group
+          p
+            span.fa.fa-fw.fa-check-circle
+            span  {{ characteristic.value }}
+  .col-xs-12(ng-if="!detailVM.item.resourceCharacteristic.length")
+    .alert.alert-info.text-center #{ __("No characteristics included.") }

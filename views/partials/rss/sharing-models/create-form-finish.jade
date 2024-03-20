@@ -31,14 +31,14 @@ form(name="step.form", novalidate)
           span.input-group-addon %
     .col-sm-6
       .form-group(
-      ng-class="{ 'has-error' : createForm.hasError(step.form.providerValue) }"
+      ng-class="{ 'has-error' : createForm.hasError(step.form.providerShare) }"
       )
         label #{ __("Provider percentage") }
         .input-group
           input.form-control(
           type="number"
-          name="providerValue"
-          ng-model="createVM.data.ownerValue"
+          name="providerShare"
+          ng-model="createVM.data.providerShare"
           required
           disabled
           )
@@ -56,7 +56,7 @@ form(name="step.form", novalidate)
         tbody
           tr(ng-repeat="stakeholder in createVM.data.stakeholders")
             td {{ stakeholder.stakeholderId }}
-            td {{ stakeholder.modelValue }} %
+            td {{ stakeholder.stakeholderShare }} %
       .alert.alert-info.text-center(ng-if="!createVM.data.stakeholders.length")
         | #{ __("No stakeholders included.") }
 

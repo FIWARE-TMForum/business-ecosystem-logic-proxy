@@ -10,7 +10,7 @@
           .item-radio.readonly(ng-repeat="characteristicValue in characteristic.productSpecCharacteristicValue")
             label.radio
               .track
-                input(type="radio", name="{{ 'detailVM_char' + characteristicIndex }}", ng-checked="{{ characteristicValue.default }}")
+                input(type="radio", name="{{ 'detailVM_char' + characteristicIndex }}", ng-checked="{{ characteristicValue.isDefault }}")
                 i.fa.fa-lg
               | {{ detailVM.formatCharacteristicValue(characteristic, characteristicValue) }}
 

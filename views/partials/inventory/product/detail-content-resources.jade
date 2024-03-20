@@ -1,0 +1,20 @@
+div(ng-if="!detailVM.resources.length > 0")
+  .alert.alert-info.text-center #{ __("No resources found.") }
+div(ng-if="detailVM.resources.length > 0")
+  .table-responsive
+    table.table.table-bordered.table-hover
+      thead
+        tr
+          th #{ __("Status") }
+          th #{ __("Name") }
+          th #{ __("Start Date") }
+      tbody
+        tr(ng-repeat="resource in detailVM.resources")
+          td
+            .status-item.active(class="status-obsolete")
+              span.item-icon
+              span.item-text {{ resource.resourceStatus }}
+          th
+            a(ui-sref="inventory.resource.detail({ resourceId: resource.id })", ui-sref-opts="{ inherit: false }") {{ resource.name }}
+          td
+            time(am-time-ago="resource.startOperatingDate")

@@ -206,7 +206,7 @@
                     result = characteristicValue.value;
                     break;
                 case ProductSpec.VALUE_TYPES.NUMBER.toLowerCase():
-                    if (characteristicValue.value && characteristicValue.value.length) {
+                    if (characteristicValue.value && characteristicValue.value != '') {
                         result = characteristicValue.value;
                     } else {
                         result = characteristicValue.valueFrom + ' - ' + characteristicValue.valueTo;
@@ -270,7 +270,7 @@
             var i, characteristicValue;
 
             for (i = 0; i < characteristic.productSpecCharacteristicValue.length; i++) {
-                if (characteristic.productSpecCharacteristicValue[i].default) {
+                if (characteristic.productSpecCharacteristicValue[i].isDefault) {
                     characteristicValue = characteristic.productSpecCharacteristicValue[i];
                 }
             }

@@ -1,4 +1,6 @@
-/* Copyright (c) 2015 - 2018 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 CoNWeT Lab., Universidad Politécnica de Madrid
+ *
+ * Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -53,15 +55,10 @@ var apiKeyService = (function () {
                 service.apiKey = apiKey;
                 service.state = 'UNCOMMITTED';
 
-                service.save(function(err) {
-
-                    if (err) {
-                        res.status(500).json({error: err.message});
-
-                    } else {
-
-                        res.status(201).json({apiKey: apiKey});
-                    }
+                service.save().then((err) => {
+                    res.status(201).json({apiKey: apiKey});
+                }).catch((err) => {
+                    res.status(500).json({error: err.message});
                 });
 
             } else {
@@ -84,14 +81,14 @@ var apiKeyService = (function () {
         // Update the apiKey state
         var apiKey = req.params.apiKey;
 
-        AccountingService.update({apiKey: apiKey}, { $set: {state: 'COMMITTED'}}, function (err, rawResp) {
-            if (err) {
-                res.status(500).json({error: err.message});
-            } else if (rawResp.n < 1) {
+        AccountingService.update({apiKey: apiKey}, { $set: {state: 'COMMITTED'}}).then((rawResp) => {
+            if (rawResp.updatedCount < 1) {
                 res.status(404).json({error: 'Invalid API Key'});
             } else {
                 res.status(200).send();
             }
+        }).catch((err) => {
+            res.status(500).json({error: err.message})
         });
     };
 

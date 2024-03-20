@@ -1,6 +1,10 @@
 name: Publish
 
 on:
+  push:
+    tags:
+      - '*'
+
   release:
     types: [released]
 

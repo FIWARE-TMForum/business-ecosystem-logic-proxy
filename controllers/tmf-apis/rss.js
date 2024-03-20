@@ -1,4 +1,6 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 CoNWeT Lab., Universidad Politécnica de Madrid
+ *
+ * Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -17,14 +19,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var async = require('async'),
-    utils = require('./../../lib/utils'),
-    config = require('./../../config'),
-    logger = require('./../../lib/logger').logger.getLogger('TMF'),
-    rssClient = require('./../../lib/rss').rssClient;
+const async = require('async')
+const utils = require('./../../lib/utils')
+const config = require('./../../config')
+const logger = require('./../../lib/logger').logger.getLogger('TMF')
+const rssClient = require('./../../lib/rss').rssClient
 
-var rss = (function() {
-    var validateProvider = function(req, callback) {
+const rss = (function() {
+    const validateProvider = function(req, callback) {
         utils.log(logger, 'info', req, 'Validating RSS provider');
 
         // Hide private APIs
@@ -43,21 +45,11 @@ var rss = (function() {
             });
         }
 
-        // Check if the provider object has been already created
-        rssClient.createProvider(req.user, function(err) {
-            var status = null;
-            if (err) {
-                status = {
-                    status: 500,
-                    message: 'An unexpected error in the RSS API prevented your request to be processed'
-                };
-            }
-            callback(status);
-        });
+        callback(null);
     };
 
-    var validateContentRequest = function(req, callback) {
-        var body;
+    const validateContentRequest = function(req, callback) {
+        let body;
 
         // Hide CDRs API
         if (req.apiUrl.indexOf('rss/cdrs') >= 0) {
@@ -77,14 +69,15 @@ var rss = (function() {
         }
 
         // Include the revenue model as aggregator value when creating RS models
-        if (req.apiUrl.indexOf('rss/models') >= 0) {
-            body.aggregatorValue = config.revenueModel;
-            utils.updateBody(req, body);
+        if (req.apiUrl.indexOf('revenueSharing/models') >= 0) {
+            body.aggregatorShare = config.revenueModel
+            body.providerId = req.user.partyId
+            utils.updateBody(req, body)
         }
         callback(null);
     };
 
-    var changeCallbackUrl = function changeCallbackUrl(req, callback) {
+    const changeCallbackUrl = function changeCallbackUrl(req, callback) {
         if (/rss\/settlement$/.test(req.apiUrl)) {
             var body = JSON.parse(req.body);
             var url = utils.getAPIURL(
@@ -101,7 +94,7 @@ var rss = (function() {
         callback(null);
     };
 
-    var validators = {
+    const validators = {
         GET: [utils.validateLoggedIn, validateProvider],
         POST: [utils.validateLoggedIn, validateProvider, validateContentRequest, changeCallbackUrl],
         PUT: [utils.validateLoggedIn, validateProvider, validateContentRequest],
@@ -109,8 +102,8 @@ var rss = (function() {
         PATCH: [utils.methodNotAllowed]
     };
 
-    var checkPermissions = function(req, callback) {
-        var reqValidators = [];
+    const checkPermissions = function(req, callback) {
+        const reqValidators = [];
 
         for (var i in validators[req.method]) {
             reqValidators.push(validators[req.method][i].bind(this, req));
@@ -119,39 +112,41 @@ var rss = (function() {
         async.series(reqValidators, callback);
     };
 
-    var executePostValidation = function(req, callback) {
+    const executePostValidation = function(req, callback) {
         logger.info('Executing RSS post validation');
-        if (req.method == 'GET' && req.apiUrl.indexOf('rss/models') >= 0) {
-            var body;
+        if (req.method == 'GET' && req.apiUrl.indexOf('revenueSharing/models') >= 0) {
+            let body;
             // Check if the models list is empty
             try {
-                body = JSON.parse(req.body);
+                body = req.body;
             } catch (e) {
                 // If an error parsing the body occurs this is a failure in the
                 // request so the error is retransmitted
+                console.log(e)
                 return callback();
             }
 
             // If the models list is empty create the default revenue model
-            if (Array.isArray(body) && !body.length) {
+            if (Array.isArray(body) && body.length == 0) {
+                console.log("Creating default model")
                 rssClient.createDefaultModel(req.user, function(err, response) {
                     if (err) {
                         return callback(err);
                     }
 
-                    body.push(JSON.parse(response.body));
-                    utils.updateBody(req, body);
+                    body.push(response.body);
+                    utils.updateResponseBody(req, body);
                     callback();
                 });
                 // Is a Count request
-            } else if (!Array.isArray(body) && !body.size) {
+            } else if (!Array.isArray(body) && body.size == 0) {
                 // If the count result is 0 means that the default model is not created yet.
                 // It will be created in the first model request, so the 0 is changed by 1
                 body = {
                     size: 1
                 };
 
-                utils.updateBody(req, body);
+                utils.updateResponseBody(req, body);
                 callback();
             } else {
                 callback();

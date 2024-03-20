@@ -1,13 +1,13 @@
 nav.invisible(aria-label="Catalog pagination", ng-controller="PagerController as pagerCtrl")
-  ul.pagination(ng-show="pagerCtrl.getNPages() > 1")
+  ul.pagination(ng-show="pagerCtrl.isEnabled()")
     li(ng-click="pagerCtrl.prevPage()" ng-class="{'disabled': pagerCtrl.prevDisabled()}")
       a(aria-label="Previous")
         span &laquo;
-    li(ng-repeat="i in pagerCtrl.getPages()"
-      ng-click="pagerCtrl.setPage(i.page)"
-      ng-class="{'active':  pagerCtrl.isSelected(i.page)}"
-    )
-      span {{i.page + 1}}
+    //- li(ng-repeat="i in pagerCtrl.getPages()"
+    //-   ng-click="pagerCtrl.setPage(i.page)"
+    //-   ng-class="{'active':  pagerCtrl.isSelected(i.page)}"
+    //- )
+    //-   span {{i.page + 1}}
     li(ng-click="pagerCtrl.nextPage()" ng-class="{'disabled': pagerCtrl.nextDisabled()}")
       a(aria-label="Next")
         span &raquo;

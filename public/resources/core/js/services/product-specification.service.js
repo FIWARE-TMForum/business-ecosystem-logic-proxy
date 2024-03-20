@@ -1,5 +1,7 @@
 /* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
+ * Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
+ * 
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
  *
@@ -125,17 +127,24 @@
                 params['id'] = filters.id;
             }
 
+            if (filters.href) {
+                params['href'] = filters.href
+            }
+
             if (filters.status) {
                 params['lifecycleStatus'] = filters.status;
             }
 
             if (filters.owner) {
-                params['relatedParty.id'] = User.loggedUser.currentUser.id;
+                params['relatedParty.id'] = User.loggedUser.currentUser.partyId;
             }
 
             if (filters.offset !== undefined) {
                 params['offset'] = filters.offset;
-                params['size'] = filters.size;
+            }
+
+            if (filters.limit !== undefined) {
+                params['limit'] = filters.limit;
             }
 
             if (filters.action) {
@@ -320,7 +329,7 @@
                 productSpecificationRelationship: [],
                 attachment: [
                     {
-                        type: 'Picture'
+                        attachmentType: 'Picture'
                     }
                 ],
                 relatedParty: [User.serialize()]
@@ -386,7 +395,7 @@
 
             if (angular.isArray(this.attachment)) {
                 for (i = 0; i < this.attachment.length && !src; i++) {
-                    if (this.attachment[i].type == 'Picture') {
+                    if (this.attachment[i].attachmentType == 'Picture') {
                         src = this.attachment[i].url;
                     }
                 }
@@ -408,11 +417,11 @@
 
             if (angular.isArray(this.attachment)) {
                 for (i = 0; i < this.attachment.length; i++) {
-                    if (this.attachment[i].type.toLowerCase() !== 'picture') {
+                    if (this.attachment[i].attachmentType.toLowerCase() !== 'picture') {
                         extraFiles.push({
                             href: this.attachment[i].url,
                             name: this.attachment[i].url.split(prefix + '__')[1],
-                            type: this.attachment[i].type
+                            attachmentType: this.attachment[i].attachmentType
                         });
                     }
                 }
@@ -432,6 +441,7 @@
         function createCharacteristic(initialInfo) {
             return angular.extend(
                 {
+                    id: `urn:ngsi-ld:characteristic:${uuid.v4()}`,
                     name: '',
                     description: '',
                     valueType: VALUE_TYPES.STRING,
@@ -445,7 +455,7 @@
         function createCharacteristicValue(data) {
             return angular.extend(
                 {
-                    default: false,
+                    isDefault: false,
                     unitOfMeasure: '',
                     value: '',
                     valueFrom: '',

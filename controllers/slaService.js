@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var slaModel = require('../db/schemas/slaModel');
+const slaModel = require('../db/schemas/slaModel');
 
-var slaService = (function () {
+const slaService = (function () {
 
     /**
      * Save an SLA for the offering specifed in the request body.
@@ -27,13 +27,13 @@ var slaService = (function () {
      * @param  {Object} req     Incoming request.
      * @param  {Object} res     Outgoing object.
      */    
-    var saveSla = function (req, res) {
+    const saveSla = function (req, res) {
 
         try{
             // Check the request and extract info
-            var offerId = JSON.parse(req.body).offerId;
-            var description = JSON.parse(req.body).description;
-            var services = JSON.parse(req.body).services;
+            const offerId = JSON.parse(req.body).offerId;
+            const description = JSON.parse(req.body).description;
+            const services = JSON.parse(req.body).services;
 
             if (offerId) {
 
@@ -42,14 +42,14 @@ var slaService = (function () {
                 // service.offerId = offerId;
                 // service.description = description;
                 // service.services = services;
-                slaModel.findOneAndUpdate({offerId: offerId}, { $set: {offerId: offerId, description: description, services: services}}, {new: true, upsert: true}, function (err, rawResp) {
-                    if (err) {
-                        res.status(500).json({error: err.message}); 
-                    } 
-                    else {
-                        res.status(200).json(rawResp);
-                    }
-                });
+                slaModel.findOneAndUpdate({offerId: offerId},
+                    { $set: {offerId: offerId, description: description, services: services}},
+                    {new: true, upsert: true})
+                .then((rawResp) => {
+                    res.status(200).json(rawResp);
+                }).catch((err) => {
+                    res.status(500).json({error: err.message});
+                })
                 
 
             } else {
@@ -68,12 +68,12 @@ var slaService = (function () {
      * @param  {Object} req     Incoming request.
      * @param  {Object} res     Outgoing object.
      */    
-    var getSla = function (req, res) {
+    const getSla = function (req, res) {
 
         try{
 
             // Check the request and extract info
-            var offerId = req.params.id
+            const offerId = req.params.id
             
             if (offerId) {
                 //var service = new slaService();
@@ -83,14 +83,10 @@ var slaService = (function () {
                 //service.refreshToken = refreshToken;
                 //service.expire = Date.now() + 3600000; //expire; TODO FIX
 
-                slaModel.findOne({offerId: offerId}, function (err, rawResp) {
-                    if (err) {
-                        res.status(500).json({error: err.message});
-                    } 
-                    else {
-                        //res.status(200).json({appId: appId, userId: userId, authToken: JSON.parse(rawResp).authToken, refreshToken: JSON.parse(rawResp).refreshToken, expire: JSON.parse(rawResp).expire});
-                        res.status(200).json(rawResp);
-                    }
+                slaModel.findOne({offerId: offerId}).then((rawResp) => {
+                    res.status(200).json(rawResp);
+                }).catch((err) => {
+                    res.status(500).json({error: err.message});
                 });
             } else {
                 res.status(422).json({error: 'offerId missing'});
@@ -100,28 +96,6 @@ var slaService = (function () {
             res.status(400).json({ error: e.message + ' Invalid body' });
         }
     };
-
-    // /**
-    //  * Change the apiKey state to "committed".
-    //  *
-    //  * @param  {Object} req      Incoming request.
-    //  * @param  {Object} res      Outgoing response.
-    //  */
-    // var commitApiKey = function (req, res) {
-
-    //     // Update the apiKey state
-    //     var apiKey = req.params.apiKey;
-
-    //     AccountingService.update({appId: appId, userId: userId}, { $set: {authToken: authToken, refreshToken: refreshToken, expire: expire}}, function (err, rawResp) {
-    //         if (err) {
-    //             res.status(500).json({error: err.message});
-    //         } else if (rawResp.n < 1) {
-    //             res.status(404).json({error: 'Invalid API Key'});
-    //         } else {
-    //             res.status(200).send();
-    //         }
-    //     });
-    // };
 
     return {
         saveSla: saveSla,

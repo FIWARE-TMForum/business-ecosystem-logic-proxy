@@ -21,12 +21,10 @@ const recommendationModel = require('../db/schemas/recommendations')
 
 var recommendationService = (function() {
 	const getAllRecomList = function(req, res) {
-		recommendationModel.find({}, (err, result) => {
-			if (err) {
-				res.status(500).json({ error: err.message });
-			} else {
-				res.status(200).json(result);
-			}
+		recommendationModel.find({}).then((result) => {
+			res.status(200).json(result);
+		}).catch((err) => {
+			res.status(500).json({ error: err.message });
 		});
 	}
 
@@ -35,16 +33,14 @@ var recommendationService = (function() {
 			var userName = req.params.id;
 			console.log(userName);
 			if (userName) {
-				recommendationModel.find({ userId: userName }, function(err, result) {
-					if (err) {
-						res.status(500).json({ error: err.message });
+				recommendationModel.find({ userId: userName }).then((result) => {
+					if (result.length == 0) {
+						res.status(404).end();
 					} else {
-						if (result.length == 0) {
-							res.status(404).end();
-						} else {
-							res.status(200).json(result[0]);	
-						}
+						res.status(200).json(result[0]);	
 					}
+				}).catch((err) => {
+					res.status(500).json({ error: err.message });
 				})
 			} else {
 				res.status(400).json({ error: 'userId missing' })
@@ -76,14 +72,11 @@ var recommendationService = (function() {
 				recommendationModel.findOneAndUpdate(
 					{ userId: userId },
 					{ $set:  set},
-					{ new: true, upsert: true },
- 
-					(err, rawResp) => {
-						if (err) {
-							res.status(500).json({ error: err.message });
-						} else {
-							res.status(200).json(rawResp);
-						}
+					{ new: true, upsert: true })
+				.then((rawResp) => {
+					res.status(200).json(rawResp);
+				}).catch((err) => {
+					res.status(500).json({ error: err.message });
 				});
 			} else {
 				res.status(422).json({ error: 'userId missing' });

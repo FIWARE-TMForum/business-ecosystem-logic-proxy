@@ -1,0 +1,165 @@
+.row(ng-if="createVM.characteristicEnabled")
+  .col-xs-12
+    form(name="step.characteristicForm", novalidate)
+      .row
+        .col-sm-8
+          .form-group(ng-class="{ 'has-error': createForm.hasError(step.characteristicForm.name) }")
+            label #{ __("Enter a name") }
+            input.form-control(
+              type="text"
+              name="name"
+              ng-model="createVM.characteristic.name"
+              required
+              ng-maxlength="100"
+            )
+            .help-block(
+              ng-messages="step.characteristicForm.name.$error"
+              ng-show="createForm.hasError(step.characteristicForm.name)"
+            )
+              span(ng-message="required") #{ __("This field is required.") }
+              span(ng-message="maxlength") #{ __("This field must not exceed %s chars.", "100") }
+        .col-sm-4
+          .form-group
+            label #{ __("Choose a type") }
+            select.form-control(
+              name="valueType"
+              ng-model="createVM.characteristic.valueType"
+              ng-change="createVM.resetCharacteristicValue()"
+            )
+              option(ng-repeat="(key, value) in createVM.VALUE_TYPES", value="{{ value }}") {{ value }}
+      .row
+        .col-md-12
+          .form-group
+            label
+              span #{ __("Enter a description") }
+              small.text-muted (#{ __("optional") })
+            textarea.form-control(name="description", rows="3", ng-model="createVM.characteristic.description")
+    form(name="step.characteristicValuesForm", novalidate)
+      label #{ __("Values") }
+      input(type="hidden", name="values", ng-model="createVM.characteristic.resourceSpecCharacteristicValue", field-array, limit-from="1", required)
+    .row
+      .col-xs-12(ng-if="!createVM.characteristic.resourceSpecCharacteristicValue.length")
+        .alert.alert-warning.text-center #{ __("Must be at least one value for each characteristic.") }
+      .col-sm-12(ng-if="createVM.characteristic.resourceSpecCharacteristicValue.length")
+        .form-group
+          .input-group(ng-repeat="characteristicValue in createVM.characteristic.resourceSpecCharacteristicValue")
+            .input-group-btn
+              a.btn.btn-default.z-depth-0(ng-click="createVM.setDefaultValue($index)")
+                span.item-icon.fa(ng-class="characteristicValue.isDefault ? ['fa-dot-circle-o', 'text-success']: 'fa-circle-o'")
+                span.item-text #{ __("Default") }
+            input.form-control(type="text", value="{{ createVM.getFormattedValueOf(createVM.characteristic, characteristicValue) }}", readonly)
+            .input-group-btn
+              a.btn.btn-danger.z-depth-0(ng-click="createVM.removeCharacteristicValue($index)")
+                span.item-icon.fa.fa-trash
+    .h5.text-dark-secondary
+      strong #{ __("Create a value") }
+    form(name="step.characteristicValueForm", novalidate)
+      .row
+        .col-sm-10
+          .row
+            .col-sm-12(ng-if="createVM.characteristic.valueType === createVM.VALUE_TYPES.STRING")
+              .form-group(ng-class="{ 'has-error': createForm.hasError(step.characteristicValueForm.value) }")
+                input.form-control(
+                  type="text"
+                  name="value"
+                  ng-model="createVM.characteristicValue.value"
+                  required
+                )
+                .help-block(
+                  ng-messages="step.characteristicValueForm.value.$error"
+                  ng-show="createForm.hasError(step.characteristicValueForm.value)"
+                )
+                  span(ng-message="required") #{ __("This field is required.") }
+            .col-sm-12(ng-if="createVM.characteristic.valueType === createVM.VALUE_TYPES.NUMBER")
+              .row
+                .col-sm-8
+                  .form-group(ng-class="{ 'has-error': createForm.hasError(step.characteristicValueForm.value) }")
+                    input.form-control(
+                      type="number"
+                      name="value"
+                      ng-model="createVM.characteristicValue.value"
+                      required
+                    )
+                    .help-block(
+                      ng-messages="step.characteristicValueForm.value.$error"
+                      ng-show="createForm.hasError(step.characteristicValueForm.value)"
+                    )
+                      span(ng-message="required") #{ __("This field is required.") }
+                .col-sm-4
+                  .form-group(ng-class="{ 'has-error': createForm.hasError(step.characteristicValueForm.unitOfMeasure) }")
+                    .input-group
+                      .input-group-addon #{ __("Unit") }
+                      input.form-control(
+                        type="text"
+                        name="unitOfMeasure"
+                        ng-model="createVM.characteristicValue.unitOfMeasure"
+                        required
+                        ng-maxlength="20"
+                      )
+                    .help-block(
+                      ng-messages="step.characteristicValueForm.unitOfMeasure.$error"
+                      ng-show="createForm.hasError(step.characteristicValueForm.unitOfMeasure)"
+                    )
+                      span(ng-message="required") #{ __("This field is required.") }
+                      span(ng-message="maxlength") #{ __("This field must not exceed %s chars.", "20") }
+            .col-sm-12(ng-if="createVM.characteristic.valueType === createVM.VALUE_TYPES.NUMBER_RANGE")
+              .row
+                .col-sm-4
+                  .form-group(ng-class="{ 'has-error': createForm.hasError(step.characteristicValueForm.valueFrom) }")
+                    .input-group
+                      .input-group-addon #{ __("From") }
+                      input.form-control(
+                        type="number"
+                        name="valueFrom"
+                        ng-model="createVM.characteristicValue.valueFrom"
+                        required
+                      )
+                    .help-block(
+                      ng-messages="step.characteristicValueForm.valueFrom.$error"
+                      ng-show="createForm.hasError(step.characteristicValueForm.valueFrom)"
+                    )
+                      span(ng-message="required") #{ __("This field is required.") }
+                .col-sm-4
+                  .form-group(ng-class="{ 'has-error': createForm.hasError(step.characteristicValueForm.valueTo) }")
+                    .input-group
+                      .input-group-addon #{ __("To") }
+                      input.form-control(
+                        type="number"
+                        name="valueTo"
+                        ng-model="createVM.characteristicValue.valueTo"
+                        required
+                      )
+                    .help-block(
+                      ng-messages="step.characteristicValueForm.valueTo.$error"
+                      ng-show="createForm.hasError(step.characteristicValueForm.valueTo)"
+                    )
+                      span(ng-message="required") #{ __("This field is required.") }
+                .col-sm-4
+                  .form-group(ng-class="{ 'has-error': createForm.hasError(step.characteristicValueForm.unitOfMeasure) }")
+                    .input-group
+                      .input-group-addon #{ __("Unit") }
+                      input.form-control(
+                        type="text"
+                        name="unitOfMeasure"
+                        ng-model="createVM.characteristicValue.unitOfMeasure"
+                        required
+                        ng-maxlength="20"
+                      )
+                    .help-block(
+                      ng-messages="step.characteristicValueForm.unitOfMeasure.$error"
+                      ng-show="createForm.hasError(step.characteristicValueForm.unitOfMeasure)"
+                    )
+                      span(ng-message="required") #{ __("This field is required.") }
+                      span(ng-message="maxlength") #{ __("This field must not exceed %s chars.", "20") }
+        .col-sm-2.text-right
+          a.btn.btn-default.z-depth-1(ng-disabled="!step.characteristicValueForm.$valid", ng-click="createVM.createCharacteristicValue() && createForm.resetForm(step.characteristicValueForm)")
+            span.item-icon.fa.fa-plus
+.row
+  .col-sm-12
+    .form-group.text-left
+      a.btn.btn-default.z-depth-1(ng-click="createVM.characteristicEnabled = true", ng-if="!createVM.characteristicEnabled")
+        span.item-icon.fa.fa-plus
+        span.item-text #{ __("New Characteristic") }
+      a.btn.btn-warning.z-depth-1(ng-click="createVM.createCharacteristic() && createForm.resetForm(step.characteristicForm)", ng-disabled="!step.characteristicForm.$valid || !step.characteristicValuesForm.$valid", ng-if="createVM.characteristicEnabled")
+        span.item-icon.fa.fa-save
+        span.item-text #{ __("Create") }

@@ -98,7 +98,7 @@
         initialiceData();
 
         function initialiceData() {
-            Party.detail(User.loggedUser.currentUser.id).then(
+            Party.detail(User.loggedUser.currentUser.partyId).then(
                 function(infoRetrieved) {
                     retrievePartyInfo(infoRetrieved);
                 },

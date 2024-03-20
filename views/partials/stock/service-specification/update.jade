@@ -1,0 +1,29 @@
+.row
+  .col-xs-12
+    include ./breadcrumb.jade
+  .col-xs-12(ng-if="updateVM.status === updateVM.STATUS.LOADED")
+    .row
+      .col-xs-12
+        .panel.panel-default.z-depth-1
+          .panel-body
+            .h4.text-center.text-dark-secondary
+              strong {{ updateVM.item.name }}
+          ul.nav.nav-justified.nav-pills
+            li(ui-sref-active-eq="active")
+              a(ui-sref="stock.service.update")
+                span.item-icon.fa.fa-newspaper-o
+                span.item-text.hidden-xs #{ __("About") }
+            li(ui-sref-active-eq="active")
+              a(ui-sref="stock.service.update.characteristic")
+                span.item-icon.fa.fa-gears
+                span.item-text.hidden-xs #{ __("Characteristics") }
+      .col-xs-12
+        ui-view
+          .panel.panel-default.z-depth-1(ng-controller="FormWizardCtrl as updateForm")
+            .panel-body
+              include ./update-form.jade
+  .col-xs-12(ng-if="updateVM.status === updateVM.STATUS.ERROR")
+    .alert.alert-danger.text-center {{ updateVM.errorMessage }}
+  .col-xs-12(ng-if="updateVM.status === updateVM.STATUS.LOADING")
+    .container-spinner
+      span.fa.fa-spinner.fa-spin.fa-2x

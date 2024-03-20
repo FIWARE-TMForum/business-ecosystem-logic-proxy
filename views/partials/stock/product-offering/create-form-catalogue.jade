@@ -37,7 +37,7 @@ form(name="step.form", novalidate)
                     span.item-icon
                     span.item-text {{ catalogue.lifecycleStatus }}
                 th {{ catalogue.name }}
-                td {{ catalogue.getRoleOf(user.id) }}
+                td {{ catalogue.getRoleOf(user.currentUser.partyId) }}
                 td
                   time(am-time-ago="catalogue.lastUpdate")
       pager(controller="searchVM", size="12", max="12")

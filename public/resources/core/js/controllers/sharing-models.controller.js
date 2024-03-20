@@ -1,5 +1,7 @@
-/* Copyright (c) 2015 - 2018 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 CoNWeT Lab., Universidad Politécnica de Madrid
  *
+ * Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
+ * 
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
  *
@@ -37,6 +39,7 @@
             'RSS',
             'Utils',
             'User',
+            'Party',
             RSModelCreateController
         ])
         .controller('RSModelUpdateCtrl', [
@@ -48,6 +51,7 @@
             'RSS',
             'Utils',
             'User',
+            'Party',
             RSModelUpdateController
         ])
         .controller('RSModelUpdateSTCtrl', RSModelUpdateSTController);
@@ -57,14 +61,15 @@
         vm.STATUS = DATA_STATUS;
 
         vm.offset = -1;
-        vm.size = -1;
+        vm.limit = -1;
 
         vm.list = [];
         vm.state = $state;
         vm.getElementsLength = getElementsLength;
 
         function getElementsLength() {
-            return RSS.countModels();
+            return Promise.resolve(10)
+            //return RSS.countModels();
         }
 
         function updateRSModels() {
@@ -73,7 +78,7 @@
             if (vm.offset >= 0) {
                 var params = {
                     offset: vm.offset,
-                    size: vm.size
+                    size: vm.limit
                 };
 
                 RSS.searchModels(params).then(
@@ -99,11 +104,11 @@
         }, updateRSModels);
     }
 
-    function calculateTotalPercentage(platformValue, ownerValue, currentStValue, stakeholders) {
-        var values = [platformValue, ownerValue, currentStValue];
+    function calculateTotalPercentage(aggregatorShare, providerShare, currentStValue, stakeholders) {
+        var values = [parseFloat(aggregatorShare), parseFloat(providerShare), currentStValue];
 
         stakeholders.forEach((st) => {
-            values.push(st.modelValue);
+            values.push(parseFloat(st.stakeholderShare));
         });
 
         var total = values.filter((value) => !isNaN(value)).reduce((val, curr) => {
@@ -113,7 +118,7 @@
         return total;
     }
 
-    function buildStakeholdersController(vm, $rootScope, PLATFORM_REVENUE, EVENTS, DATA_STATUS, RSS, Utils, User) {
+    function buildStakeholdersController(vm, $rootScope, PLATFORM_REVENUE, EVENTS, DATA_STATUS, RSS, Utils, User, Party) {
         vm.selectedProviders = [];
 
         vm.providers = [];
@@ -134,7 +139,7 @@
         function getTotalPercentage() {
             return calculateTotalPercentage(
                 PLATFORM_REVENUE,
-                vm.data.ownerValue,
+                vm.data.providerShare,
                 vm.currentStValue,
                 vm.data.stakeholders
             );
@@ -153,9 +158,9 @@
             }
 
             if (index > -1) {
-                provider = vm.providers.splice(index, 1);
+                provider = vm.providers.splice(index, 1)[0];
             }
-            return provider[0];
+            return provider;
         }
 
         function addStakeholder() {
@@ -165,7 +170,7 @@
             if (total <= 100) {
                 vm.data.stakeholders.push({
                     stakeholderId: vm.currentStakeholder.providerId,
-                    modelValue: vm.currentStValue
+                    stakeholderShare: vm.currentStValue
                 });
 
                 // The same provider cannot be included twice as an stakeholder
@@ -205,12 +210,12 @@
         }
 
         function searchProviders(callback) {
-            RSS.searchProviders().then(
+            Party.searchOrganization().then(
                 function(providersList) {
                     angular.copy(providersList, vm.providers);
 
                     // Remove the current user from the provider list since it cannot be a stakeholder of the model
-                    removeProvider(User.loggedUser.currentUser.id);
+                    removeProvider(User.loggedUser.currentUser.partyId);
 
                     if (vm.providers.length) {
                         vm.currentStakeholder = vm.providers[0];
@@ -233,7 +238,7 @@
         }
     }
 
-    function RSModelCreateController($state, $rootScope, DATA_STATUS, EVENTS, PLATFORM_REVENUE, RSS, Utils, User) {
+    function RSModelCreateController($state, $rootScope, DATA_STATUS, EVENTS, PLATFORM_REVENUE, RSS, Utils, User, Party) {
         var vm = this;
         vm.stepList = [
             {
@@ -254,12 +259,12 @@
         vm.data = {
             stakeholders: [],
             algorithmType: 'FIXED_PERCENTAGE',
-            ownerValue: 0
+            providerShare: 0
         };
 
         vm.create = create;
 
-        buildStakeholdersController(vm, $rootScope, PLATFORM_REVENUE, EVENTS, DATA_STATUS, RSS, Utils, User);
+        buildStakeholdersController(vm, $rootScope, PLATFORM_REVENUE, EVENTS, DATA_STATUS, RSS, Utils, User, Party);
 
         function create() {
             var total = vm.getTotalPercentage();
@@ -304,7 +309,7 @@
         vm.searchProviders();
     }
 
-    function RSModelUpdateController($state, $rootScope, EVENTS, PLATFORM_REVENUE, DATA_STATUS, RSS, Utils, User) {
+    function RSModelUpdateController($state, $rootScope, EVENTS, PLATFORM_REVENUE, DATA_STATUS, RSS, Utils, User, Party) {
         var vm = this;
 
         vm.update = update;
@@ -313,9 +318,11 @@
         RSS.detailModel($state.params.productClass).then(
             function(sharingModel) {
                 vm.data = sharingModel;
+                vm.data.providerShare = parseFloat(sharingModel.providerShare)
+
                 vm.status = DATA_STATUS.LOADED;
 
-                buildStakeholdersController(vm, $rootScope, PLATFORM_REVENUE, EVENTS, DATA_STATUS, RSS, Utils, User);
+                buildStakeholdersController(vm, $rootScope, PLATFORM_REVENUE, EVENTS, DATA_STATUS, RSS, Utils, User, Party);
                 vm.searchProviders(function() {
                     // Populate stakeholders lists with the actual values
                     for (var i = 0; i < vm.data.stakeholders.length; i++) {
@@ -331,13 +338,13 @@
         );
 
         function getSavedPercentage() {
-            return calculateTotalPercentage(vm.data.aggregatorValue, vm.data.ownerValue, 0, vm.data.stakeholders);
+            return calculateTotalPercentage(vm.data.aggregatorShare, vm.data.providerShare, 0, vm.data.stakeholders);
         }
 
         function update() {
             var total = calculateTotalPercentage(
-                vm.data.aggregatorValue,
-                vm.data.ownerValue,
+                vm.data.aggregatorShare,
+                vm.data.providerShare,
                 vm.currentStValue,
                 vm.data.stakeholders
             );
