@@ -162,7 +162,8 @@
         "_profile": "Profile",
         "_offerings": "My Offerings",
         "_cart": "My shopping cart",
-        "_sign_out": "Sign out"
+        "_sign_out": "Sign out",
+        "_inventory": "My inventory"
     },
     "PRODUCT_DETAILS": {
         "_back": "Back",
@@ -188,7 +189,9 @@
     "SHOPPING_CART": {
         "_buy": "Buy",
         "_back": "Back",
+        "_billingAddress": "Billing Address",
         "_confirm": "Confirm and pay",
+        "_checkout": "Checkout",
         "_note": "Add notes",
         "_choose_bill": "Choose a billing address",
         "_cart": "Cart",
@@ -197,5 +200,62 @@
         "_phone": "Phone number",
         "_billing_check": "You should first create at least a billing address in order to checkout an order.",
         "_click_here": "Click here"
+    },
+    "PROFILE":{
+        "_general": "General",
+        "_bill": "Billing addresses",
+        "_orders": "Orders",
+        "_update": "Update",
+        "_account": "Account",
+        "_username": "Username",
+        "_token": "Access token",
+        "_email": "Email",
+        "_profile": "Profile",
+        "_name": "Name",
+        "_lastname": "Lastname",
+        "_treatment": "Treatment",
+        "_marital_status": "Marital status",
+        "_gender": "Gender",
+        "_nacionality": "Nacionality",
+        "_birthdate": "Birthdate",
+        "_date": "Date",
+        "_country": "Country",
+        "_city": "City",
+        "_mybills": "My billing addresses",
+        "_user_id": "User id"
+    },
+    "PRODUCT_INVENTORY":{
+        "_loading": "Loading...",
+        "_products": "Products",
+        "_services": "Services",
+        "_resources": "Resources",
+        "_orders": "Orders",
+        "_not_found": "No offers found",
+        "_order_id": "Order Id",
+        "_state": "State",
+        "_priority": "Priority",
+        "_desc": "Description",
+        "_price": "Price"
+    },
+    "BILLING": {
+        "_title": "Title",
+        "_email": "Email",
+        "_postalAddress": "Postal address",
+        "_phone": "Phone number",
+        "_phone_type": "Phone Type",
+        "_action": "Actions",
+        "_country": "Country",
+        "_city": "City",
+        "_state": "State / Province",
+        "_post_code": "ZIP / Postal Code",
+        "_street": "Street Address",
+        "_add": "Add billing address",
+        "_edit": "Edit billing address",
+        "_update": "Update billing address",
+        "_delete": "Delete billing address",
+        "_confirm_delete": "Are you sure about deleting the following billing address?",
+        "_cancel": "Cancel",
+        "_invalid_phone": "Phonenumber is invalid!",
+        "_invalid_email": "Email is invalid!"
     }
 }
