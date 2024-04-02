@@ -544,5 +544,5 @@ if (config.extLogin) {
 module.exports = config;
 
 // External Portal config
-config.externalPortal = 'http://localhost:4200';
+config.externalPortal = null;
 config.externalPortal = process.env.BAE_LP_EXTERNAL_PORTAL || config.externalPortal;

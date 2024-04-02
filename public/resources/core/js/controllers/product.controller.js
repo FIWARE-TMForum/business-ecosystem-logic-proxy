@@ -952,10 +952,10 @@
                 title: 'Bundle',
                 templateUrl: 'stock/product/create/bundle'
             },
-            /*{
+            {
                 title: 'Assets',
                 templateUrl: 'stock/product/create/assets'
-            },*/
+            },
             {
                 title: 'Compliance profile',
                 templateUrl: 'stock/product/create/compliance'
