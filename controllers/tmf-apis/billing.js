@@ -1,4 +1,6 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 CoNWeT Lab., Universidad Politécnica de Madrid
+ *
+ * Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -17,25 +19,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var async = require('async'),
-    config = require('./../../config'),
-    request = require('request'),
-    tmfUtils = require('./../../lib/tmfUtils'),
-    url = require('url'),
-    utils = require('./../../lib/utils');
+const async = require('async')
+const config = require('./../../config')
+const axios = require('axios')
+const tmfUtils = require('./../../lib/tmfUtils')
+const url = require('url')
+const utils = require('./../../lib/utils')
 
-var billing = (function() {
+const billing = (function() {
     var OWNER_ROLE = config.billingAccountOwnerRole;
 
     var makeRequest = function(url, callback) {
-        request(url, function(err, response, body) {
-            if (err || response.statusCode >= 400) {
-                callback({
-                    status: response.statusCode ? response.statusCode : 500
-                });
-            } else {
-                callback(null, JSON.parse(body));
-            }
+        axios.get(url).then((response) => {
+            callback(null, response.data);
+        }).catch((err) => {
+            callback({
+                status:  err && err.response && err.response.status ? err.response.status : 500
+            });
         });
     };
 
@@ -45,7 +45,7 @@ var billing = (function() {
             config.endpoints.inventory.appSsl,
             config.endpoints.inventory.host,
             config.endpoints.inventory.port,
-            config.endpoints.inventory.path + '/api/productInventory/v2/product/' + productId
+            config.endpoints.inventory.path + '/product/' + productId
         );
 
         makeRequest(productUrl, function(err, product) {

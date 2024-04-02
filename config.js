@@ -2,24 +2,24 @@ const url = require('url');
 
 var config = {};
 
-// The PORT used by 
+// The PORT used by
 config.port = 8004;
 config.host = 'proxy.docker';
 
 config.proxy = {
-    enabled: false,
-    host: '',
-    secured: false,
-    port: 80
+	enabled: false,
+	host: '',
+	secured: false,
+	port: 80
 };
 
 // Set this var to undefined if you don't want the server to listen on HTTPS
 config.https = {
-    enabled: false,
-    certFile: 'cert/cert.crt',
-    keyFile: 'cert/key.key',
-    caFile: 'cert/ca.crt',
-    port: 443
+	enabled: false,
+	certFile: 'cert/cert.crt',
+	keyFile: 'cert/key.key',
+	caFile: 'cert/ca.crt',
+	port: 443
 };
 
 // Express configuration
@@ -33,69 +33,69 @@ config.theme = '';
 // OAuth2 configuration
 //'server': 'http://34.213.26.168:8000/',
 config.oauth2 = {
-    provider: 'fiware',
-    server: 'http://idm.docker:3000',
-    clientID: '19dd858c-328c-4642-93ab-da45e4d253ae',
-    clientSecret: '09ffe023-a242-46a3-bd83-9277d36e2379',
-    callbackURL: 'http://proxy.docker:8004/auth/fiware/callback',
-    oidc: true,
-    oidcScopes: "openid",
-    oidcDiscoveryURI: null,
-    oidcTokenEndpointAuthMethod: "client_secret_basic",
-    key: '281e126aa35c80f2',
-    defaultRole: null,
-    roles: {
-        admin: 'admin',
-        customer: 'customer',
-        seller: 'seller',
-        orgAdmin: 'manager'
-    }
+	provider: 'fiware',
+	server: 'http://idm.docker:3000',
+	clientID: 'b7956b46-ec03-4dbd-b62f-c3f72f338e8b',
+	clientSecret: 'c09d61fb-5c06-41aa-9dd2-5d8c319fdaf9',
+	callbackURL: 'http://proxy.docker:8004/auth/fiware/callback',
+	oidc: false,
+	oidcScopes: "openid",
+	oidcDiscoveryURI: null,
+	oidcTokenEndpointAuthMethod: "client_secret_basic",
+	key: '281e126aa35c80f2',
+	defaultRole: null,
+	roles: {
+		admin: 'admin',
+		customer: 'customer',
+		seller: 'seller',
+		orgAdmin: 'manager'
+	}
 };
 
 /*config.oauth2 = {
-    provider: 'keycloak',
-    server: 'http://keycloak.docker:8080',
-    clientID: 'bae',
-    clientSecret: 'df68d1b9-f85f-4b5e-807c-c8be3ba27388',
-    callbackURL: 'http://proxy.docker:8004/auth/keycloak/callback',
-    realm: 'bae',
-    oidc: true,
-    key: '281e126aa35c80f2',
-    roles: {
-        admin: 'admin',
-        customer: 'customer',
-        seller: 'seller',
-        orgAdmin: 'manager'
-    }
-}*/
+  provider: 'keycloak',
+  server: 'http://keycloak.docker:8080',
+  clientID: 'bae',
+  clientSecret: 'df68d1b9-f85f-4b5e-807c-c8be3ba27388',
+  callbackURL: 'http://proxy.docker:8004/auth/keycloak/callback',
+  realm: 'bae',
+  oidc: true,
+  key: '281e126aa35c80f2',
+  roles: {
+  admin: 'admin',
+  customer: 'customer',
+  seller: 'seller',
+  orgAdmin: 'manager'
+  }
+  }*/
 
 /*config.oauth2 = {
-    provider: 'github',
-    clientID: '',
-    clientSecret: '',
-    callbackURL: 'http://proxy.docker:8004/auth/github/callback',
-    roles: {
-        admin: 'admin',
-        customer: 'customer',
-        seller: 'seller',
-        orgAdmin: 'manager'
-    }
-}*/
+  provider: 'github',
+  clientID: '',
+  clientSecret: '',
+  callbackURL: 'http://proxy.docker:8004/auth/github/callback',
+  roles: {
+  admin: 'admin',
+  customer: 'customer',
+  seller: 'seller',
+  orgAdmin: 'manager'
+  }
+  }*/
 
 config.siop = {
-    enabled: process.env.BAE_LP_SIOP_ENABLED === 'true',
-    provider: 'vc',
-    pollPath: '/poll',
-    clientID: process.env.BAE_LP_SIOP_CLIENT_ID || 'some_id',
-    callbackURL: process.env.BAE_LP_SIOP_CALLBACK_PATH || 'http://proxy.docker:8004/auth/vc/callback',
-    verifierHost: process.env.BAE_LP_SIOP_VERIFIER_HOST || 'https://verifier.apps.fiware.fiware.dev',
-    verifierQRCodePath: process.env.BAE_LP_SIOP_VERIFIER_QRCODE_PATH || '/api/v1/loginQR',
-    verifierTokenPath: process.env.BAE_LP_SIOP_VERIFIER_TOKEN_PATH || '/token',
-    verifierJWKSPath: process.env.BAE_LP_SIOP_VERIFIER_JWKS_PATH || '/.well-known/jwks',
-    allowedRoles: process.env.BAE_LP_SIOP_ALLOWED_ROLES ? process.env.BAE_LP_SIOP_ALLOWED_ROLES.split(',') : {
-        customer: 'customer',
-        seller: 'seller'
-    }
+	enabled: process.env.BAE_LP_SIOP_ENABLED === 'true',
+	provider: 'vc',
+	pollPath: '/poll',
+	clientID: process.env.BAE_LP_SIOP_CLIENT_ID || 'some_id',
+	callbackURL: process.env.BAE_LP_SIOP_CALLBACK_PATH || 'http://proxy.docker:8004/auth/vc/callback',
+	verifierHost: process.env.BAE_LP_SIOP_VERIFIER_HOST || 'https://verifier.apps.fiware.fiware.dev',
+	verifierQRCodePath: process.env.BAE_LP_SIOP_VERIFIER_QRCODE_PATH || '/api/v1/loginQR',
+	verifierTokenPath: process.env.BAE_LP_SIOP_VERIFIER_TOKEN_PATH || '/token',
+	verifierJWKSPath: process.env.BAE_LP_SIOP_VERIFIER_JWKS_PATH || '/.well-known/jwks',
+	allowedRoles: process.env.BAE_LP_SIOP_ALLOWED_ROLES ? process.env.BAE_LP_SIOP_ALLOWED_ROLES.split(',') : {
+		customer: 'customer',
+		seller: 'seller'
+	}
 };
 
 config.extLogin = false;
@@ -112,11 +112,11 @@ config.customerRoleRequired = false;
 
 // MongoDB
 config.mongoDb = {
-    server: 'mongo',
-    port: 27017,
-    user: '',
-    password: '',
-    db: 'belp'
+	server: 'mongo',
+	port: 27017,
+	user: '',
+	password: '',
+	db: 'belp'
 };
 
 // Configure endpoints
@@ -128,20 +128,47 @@ config.endpoints = {
         appSsl: config.https.enabled
     },
     catalog: {
-        path: 'DSProductCatalog',
-        host: 'apis.docker',
-        port: '8080',
+        path: 'catalog',
+        host: 'host.docker.internal',
+        port: '8632',
+        appSsl: false
+    },
+    resource: {
+        path: 'resource',
+        host: 'host.docker.internal',
+        port: '8636',
+        appSsl: false
+    },
+    service: {
+        path: 'service',
+        host: 'host.docker.internal',
+        port: '8637',
         appSsl: false
     },
     ordering: {
-        path: 'DSProductOrdering',
-        host: 'apis.docker',
-        port: '8080',
+        path: 'ordering',
+        host: 'host.docker.internal',
+        port: '8634',
         appSsl: false
     },
     inventory: {
-        path: 'DSProductInventory',
-        host: 'apis.docker',
+        path: 'inventory',
+        host: 'host.docker.internal',
+        port: '8635',
+        appSsl: false
+    },
+    serviceInventory: {
+        path: 'serviceInventory',
+        //host: 'charging.docker',
+        host: 'bae-marketplace-biz-ecosystem-charging-backend.marketplace.svc.cluster.local',
+        port: '8006',
+        appSsl: false
+    },
+    resourceInventory: {
+        path: 'resourceInventory',
+        //host: 'host.docker.internal',
+        //port: '8641',
+        host: 'tmforum-tm-forum-api-resource-inventory',
         port: '8080',
         appSsl: false
     },
@@ -152,33 +179,33 @@ config.endpoints = {
         appSsl: false
     },
     rss: {
-        path: 'DSRevenueSharing',
-        host: 'rss.docker',
-        port: '8080',
+        path: 'rss',
+        host: 'charging.docker',
+        port: '8006',
         appSsl: false
     },
     party: {
-        path: 'DSPartyManagement',
-        host: 'apis.docker',
-        port: '8080',
+        path: 'party',
+        host: 'host.docker.internal',
+        port: '8633',
         appSsl: false
     },
-    billing: {
-        path: 'DSBillingManagement',
-        host: 'apis.docker',
-        port: '8080',
+    account: {
+        path: 'account',
+        host: 'host.docker.internal',
+        port: '8639',
         appSsl: false
     },
     customer: {
-        path: 'DSCustomerManagement',
-        host: 'apis.docker',
-        port: '8080',
+        path: 'customer',
+        host: 'host.docker.internal',
+        port: '8637',
         appSsl: false
     },
     usage:  {
-        path: 'DSUsageManagement',
-        host: 'apis.docker',
-        port: '8080',
+        path: 'usage',
+        host: 'host.docker.internal',
+        port: '8638',
         appSsl: false
     },
     sla: {
@@ -215,8 +242,9 @@ config.billingAccountOwnerRole = 'bill receiver';
 config.publicPaths = [];
 
 config.indexes = {
-    'elasticHost': 'elastic.docker:9200',
-    'apiVersion': '7.5'
+	elasticHost: 'https://elastic.docker:9200',
+	user: 'elastic',
+	password: '+S284gwQI+U1THU--C29'
 };
 
 config.magicKey = undefined;
@@ -228,20 +256,20 @@ config.usageChartURL = '';
 ////////////////////////// CONFIG CHECKERS //////////////////////////
 /////////////////////////////////////////////////////////////////////
 const checkPrefix = function(prefix, byDefault) {
-    let finalPrefix = prefix === undefined ? byDefault : prefix;
+	let finalPrefix = prefix === undefined ? byDefault : prefix;
 
-    // Remove the last slash
-    if (finalPrefix.slice(-1) == '/') {
-        finalPrefix = finalPrefix.slice(0, -1);
-    }
+	// Remove the last slash
+	if (finalPrefix.slice(-1) == '/') {
+		finalPrefix = finalPrefix.slice(0, -1);
+	}
 
-    // If a prefix is set, the prefix MUST start with a slash
-    // When the prefix is not set, the slash is NOT required
-    if (finalPrefix.length > 0 && finalPrefix.charAt(0) !== '/') {
-        finalPrefix = '/' + finalPrefix;
-    }
+	// If a prefix is set, the prefix MUST start with a slash
+	// When the prefix is not set, the slash is NOT required
+	if (finalPrefix.length > 0 && finalPrefix.charAt(0) !== '/') {
+		finalPrefix = '/' + finalPrefix;
+	}
 
-    return finalPrefix;
+	return finalPrefix;
 };
 
 config.port = process.env.BAE_LP_PORT || config.port || 8004;
@@ -251,21 +279,21 @@ config.host = process.env.BAE_LP_HOST || config.host || 'localhost';
 
 // Check proxy URL config config
 if (!!process.env.BAE_SERVICE_HOST) {
-    // If this var is enabled, the service is accessible in a different URL
-    let parsedUrl = url.parse(process.env.BAE_SERVICE_HOST);
-    let secured = parsedUrl.protocol == 'https:';
-    let port = parsedUrl.port
+	// If this var is enabled, the service is accessible in a different URL
+	let parsedUrl = url.parse(process.env.BAE_SERVICE_HOST);
+	let secured = parsedUrl.protocol == 'https:';
+	let port = parsedUrl.port
 
-    if (port == null) {
-        port = secured ? 443 : 80;
-    }
+	if (port == null) {
+		port = secured ? 443 : 80;
+	}
 
-    config.proxy = {
-        enabled: true,
-        host: parsedUrl.hostname,
-        port: port,
-        secured: secured
-    };
+	config.proxy = {
+		enabled: true,
+		host: parsedUrl.hostname,
+		port: port,
+		secured: secured
+	};
 }
 
 // HTTPS Configuration
@@ -278,23 +306,23 @@ config.https.port = process.env.BAE_LP_HTTPS_PORT || config.https.port;
 
 // OAuth2 Configuration
 if (!!process.env.BAE_LP_EXT_LOGIN) {
-    config.extLogin = process.env.BAE_LP_EXT_LOGIN == 'true';
+	config.extLogin = process.env.BAE_LP_EXT_LOGIN == 'true';
 }
 
 if (!!process.env.BAE_LP_SHOW_LOCAL_LOGIN) {
-    config.showLocalLogin = process.env.BAE_LP_SHOW_LOCAL_LOGIN == 'true';
+	config.showLocalLogin = process.env.BAE_LP_SHOW_LOCAL_LOGIN == 'true';
 }
 
 if (!!process.env.BAE_LP_PROPAGATE_TOKEN) {
-    config.propagateToken = process.env.BAE_LP_PROPAGATE_TOKEN == 'true';
+	config.propagateToken = process.env.BAE_LP_PROPAGATE_TOKEN == 'true';
 }
 
 if (!!process.env.BAE_LP_ALLOW_LOCAL_EORI) {
-    config.allowLocalEORI = process.env.BAE_LP_ALLOW_LOCAL_EORI == 'true';
+	config.allowLocalEORI = process.env.BAE_LP_ALLOW_LOCAL_EORI == 'true';
 }
 
 if (!!process.env.BAE_LP_EDIT_PARTY) {
-    config.editParty = process.env.BAE_LP_EDIT_PARTY == 'true';
+	config.editParty = process.env.BAE_LP_EDIT_PARTY == 'true';
 }
 
 config.oauth2.provider = process.env.BAE_LP_OAUTH2_PROVIDER || config.oauth2.provider;
@@ -304,17 +332,17 @@ config.oauth2.clientSecret = process.env.BAE_LP_OAUTH2_CLIENT_SECRET || config.o
 config.oauth2.callbackURL = process.env.BAE_LP_OAUTH2_CALLBACK || config.oauth2.callbackURL;
 
 if (process.env.BAE_LP_OAUTH2_DEFAULT_ROLE) {
-    config.oauth2.defaultRole = process.env.BAE_LP_OAUTH2_DEFAULT_ROLE;
+	config.oauth2.defaultRole = process.env.BAE_LP_OAUTH2_DEFAULT_ROLE;
 }
 
 if (!!process.env.BAE_LP_OIDC_ENABLED) {
-    config.oauth2.oidc = process.env.BAE_LP_OIDC_ENABLED == 'true';
+	config.oauth2.oidc = process.env.BAE_LP_OIDC_ENABLED == 'true';
 }
 
 config.oauth2.oidcScopes = process.env.BAE_LP_OIDC_SCOPES || config.oauth2.oidcScopes;
 config.oauth2.oidcTokenEndpointAuthMethod = process.env.BAE_LP_OIDC_TOKEN_AUTH_METHOD || config.oauth2.oidcTokenEndpointAuthMethod;
 if (process.env.BAE_LP_OIDC_DISCOVERY_URI) {
-    config.oauth2.oidcDiscoveryURI = process.env.BAE_LP_OIDC_DISCOVERY_URI;
+	config.oauth2.oidcDiscoveryURI = process.env.BAE_LP_OIDC_DISCOVERY_URI;
 }
 
 config.oauth2.key = process.env.BAE_LP_OIDC_KEY || config.oauth2.key;
@@ -329,7 +357,7 @@ config.oauth2.roles.customer = process.env.BAE_LP_OAUTH2_CUSTOMER_ROLE || config
 config.oauth2.roles.orgAdmin = process.env.BAE_LP_OAUTH2_ORG_ADMIN_ROLE || config.oauth2.roles.orgAdmin;
 
 if (!!process.env.BAE_LP_OAUTH2_IS_LEGACY) {
-    config.oauth2.isLegacy = process.env.BAE_LP_OAUTH2_IS_LEGACY == 'true';
+	config.oauth2.isLegacy = process.env.BAE_LP_OAUTH2_IS_LEGACY == 'true';
 }
 
 // Theme config
@@ -360,7 +388,25 @@ config.endpoints.catalog.port = process.env.BAE_LP_ENDPOINT_CATALOG_PORT || conf
 config.endpoints.catalog.host = process.env.BAE_LP_ENDPOINT_CATALOG_HOST || config.endpoints.catalog.host;
 
 if (!!process.env.BAE_LP_ENDPOINT_CATALOG_SECURED) {
-    config.endpoints.catalog.appSsl = process.env.BAE_LP_ENDPOINT_CATALOG_SECURED == 'true';
+	config.endpoints.catalog.appSsl = process.env.BAE_LP_ENDPOINT_CATALOG_SECURED == 'true';
+}
+
+// Resource Catalog
+config.endpoints.resource.path = process.env.BAE_LP_ENDPOINT_RESOURCE_PATH || config.endpoints.resource.path;
+config.endpoints.resource.port = process.env.BAE_LP_ENDPOINT_RESOURCE_PORT || config.endpoints.resource.port;
+config.endpoints.resource.host = process.env.BAE_LP_ENDPOINT_RESOURCE_HOST || config.endpoints.resource.host;
+
+if (!!process.env.BAE_LP_ENDPOINT_RESOURCE_SECURED) {
+    config.endpoints.resource.appSsl = process.env.BAE_LP_ENDPOINT_RESOURCE_SECURED == 'true';
+}
+
+// Service Catalog
+config.endpoints.service.path = process.env.BAE_LP_ENDPOINT_SERVICE_PATH || config.endpoints.service.path;
+config.endpoints.service.port = process.env.BAE_LP_ENDPOINT_SERVICE_PORT || config.endpoints.service.port;
+config.endpoints.service.host = process.env.BAE_LP_ENDPOINT_SERVICE_HOST || config.endpoints.service.host;
+
+if (!!process.env.BAE_LP_ENDPOINT_SERVICE_SECURED) {
+    config.endpoints.service.appSsl = process.env.BAE_LP_ENDPOINT_SERVICE_SECURED == 'true';
 }
 
 // Ordering
@@ -369,7 +415,7 @@ config.endpoints.ordering.port = process.env.BAE_LP_ENDPOINT_ORDERING_PORT || co
 config.endpoints.ordering.host = process.env.BAE_LP_ENDPOINT_ORDERING_HOST || config.endpoints.ordering.host;
 
 if (!!process.env.BAE_LP_ENDPOINT_ORDERING_SECURED) {
-    config.endpoints.ordering.appSsl = process.env.BAE_LP_ENDPOINT_ORDERING_SECURED == 'true';
+	config.endpoints.ordering.appSsl = process.env.BAE_LP_ENDPOINT_ORDERING_SECURED == 'true';
 }
 
 // Inventory
@@ -378,7 +424,25 @@ config.endpoints.inventory.port = process.env.BAE_LP_ENDPOINT_INVENTORY_PORT || 
 config.endpoints.inventory.host = process.env.BAE_LP_ENDPOINT_INVENTORY_HOST || config.endpoints.inventory.host;
 
 if (!!process.env.BAE_LP_ENDPOINT_INVENTORY_SECURED) {
-    config.endpoints.inventory.appSsl = process.env.BAE_LP_ENDPOINT_INVENTORY_SECURED == 'true';
+	config.endpoints.inventory.appSsl = process.env.BAE_LP_ENDPOINT_INVENTORY_SECURED == 'true';
+}
+
+// Service Inventory
+//config.endpoints.serviceInventory.path = process.env.BAE_LP_ENDPOINT_SERVICE_INVENTORY_PATH || config.endpoints.serviceInventory.path;
+//config.endpoints.serviceInventory.port = process.env.BAE_LP_ENDPOINT_SERVICE_INVENTORY_PORT || config.endpoints.serviceInventory.port;
+//config.endpoints.serviceInventory.host = process.env.BAE_LP_ENDPOINT_SERVICE_INVENTORY_HOST || config.endpoints.serviceInventory.host;
+
+//if (!!process.env.BAE_LP_ENDPOINT_SERVICE_INVENTORY_SECURED) {
+//	config.endpoints.serviceInventory.appSsl = process.env.BAE_LP_ENDPOINT_SERVICE_INVENTORY_SECURED == 'true';
+//}
+
+// Resource Intentory
+config.endpoints.resourceInventory.path = process.env.BAE_LP_ENDPOINT_RESOURCE_INVENTORY_PATH || config.endpoints.resourceInventory.path;
+config.endpoints.resourceInventory.port = process.env.BAE_LP_ENDPOINT_RESOURCE_INVENTORY_PORT || config.endpoints.resourceInventory.port;
+config.endpoints.resourceInventory.host = process.env.BAE_LP_ENDPOINT_RESOURCE_INVENTORY_HOST || config.endpoints.resourceInventory.host;
+
+if (!!process.env.BAE_LP_ENDPOINT_RESOURCE_INVENTORY_SECURED) {
+	config.endpoints.resourceInventory.appSsl = process.env.BAE_LP_ENDPOINT_RESOURCE_INVENTORY_SECURED == 'true';
 }
 
 // Charging
@@ -387,7 +451,7 @@ config.endpoints.charging.port = process.env.BAE_LP_ENDPOINT_CHARGING_PORT || co
 config.endpoints.charging.host = process.env.BAE_LP_ENDPOINT_CHARGING_HOST || config.endpoints.charging.host;
 
 if (!!process.env.BAE_LP_ENDPOINT_CHARGING_SECURED) {
-    config.endpoints.charging.appSsl = process.env.BAE_LP_ENDPOINT_CHARGING_SECURED == 'true';
+	config.endpoints.charging.appSsl = process.env.BAE_LP_ENDPOINT_CHARGING_SECURED == 'true';
 }
 
 // RSS
@@ -396,7 +460,7 @@ config.endpoints.rss.port = process.env.BAE_LP_ENDPOINT_RSS_PORT || config.endpo
 config.endpoints.rss.host = process.env.BAE_LP_ENDPOINT_RSS_HOST || config.endpoints.rss.host;
 
 if (!!process.env.BAE_LP_ENDPOINT_RSS_SECURED) {
-    config.endpoints.rss.appSsl = process.env.BAE_LP_ENDPOINT_RSS_SECURED == 'true';
+	config.endpoints.rss.appSsl = process.env.BAE_LP_ENDPOINT_RSS_SECURED == 'true';
 }
 
 // Party
@@ -405,16 +469,16 @@ config.endpoints.party.port = process.env.BAE_LP_ENDPOINT_PARTY_PORT || config.e
 config.endpoints.party.host = process.env.BAE_LP_ENDPOINT_PARTY_HOST || config.endpoints.party.host;
 
 if (!!process.env.BAE_LP_ENDPOINT_PARTY_SECURED) {
-    config.endpoints.party.appSsl = process.env.BAE_LP_ENDPOINT_PARTY_SECURED == 'true';
+	config.endpoints.party.appSsl = process.env.BAE_LP_ENDPOINT_PARTY_SECURED == 'true';
 }
 
 // Billing
-config.endpoints.billing.path = process.env.BAE_LP_ENDPOINT_BILLING_PATH || config.endpoints.billing.path;
-config.endpoints.billing.port = process.env.BAE_LP_ENDPOINT_BILLING_PORT || config.endpoints.billing.port;
-config.endpoints.billing.host = process.env.BAE_LP_ENDPOINT_BILLING_HOST || config.endpoints.billing.host;
+config.endpoints.account.path = process.env.BAE_LP_ENDPOINT_BILLING_PATH || config.endpoints.account.path;
+config.endpoints.account.port = process.env.BAE_LP_ENDPOINT_BILLING_PORT || config.endpoints.account.port;
+config.endpoints.account.host = process.env.BAE_LP_ENDPOINT_BILLING_HOST || config.endpoints.account.host;
 
 if (!!process.env.BAE_LP_ENDPOINT_BILLING_SECURED) {
-    config.endpoints.billing.appSsl = process.env.BAE_LP_ENDPOINT_BILLING_SECURED == 'true';
+	config.endpoints.account.appSsl = process.env.BAE_LP_ENDPOINT_BILLING_SECURED == 'true';
 }
 
 // Customer
@@ -423,7 +487,7 @@ config.endpoints.customer.port = process.env.BAE_LP_ENDPOINT_CUSTOMER_PORT || co
 config.endpoints.customer.host = process.env.BAE_LP_ENDPOINT_CUSTOMER_HOST || config.endpoints.customer.host;
 
 if (!!process.env.BAE_LP_ENDPOINT_CUSTOMER_SECURED) {
-    config.endpoints.customer.appSsl = process.env.BAE_LP_ENDPOINT_CUSTOMER_SECURED == 'true';
+	config.endpoints.customer.appSsl = process.env.BAE_LP_ENDPOINT_CUSTOMER_SECURED == 'true';
 }
 
 // Usage
@@ -432,7 +496,7 @@ config.endpoints.usage.port = process.env.BAE_LP_ENDPOINT_USAGE_PORT || config.e
 config.endpoints.usage.host = process.env.BAE_LP_ENDPOINT_USAGE_HOST || config.endpoints.usage.host;
 
 if (!!process.env.BAE_LP_ENDPOINT_USAGE_SECURED) {
-    config.endpoints.usage.appSsl = process.env.BAE_LP_ENDPOINT_USAGE_SECURED == 'true';
+	config.endpoints.usage.appSsl = process.env.BAE_LP_ENDPOINT_USAGE_SECURED == 'true';
 }
 
 // ======
@@ -446,24 +510,24 @@ config.mongoDb.db = process.env.BAE_LP_MONGO_DB || config.mongoDb.db || 'belp';
 
 // Revenue Sharing and tax rate
 config.revenueModel =
-    (config.revenueModel !== undefined && config.revenueModel !== null && config.revenueModel >= 0 && config.revenueModel <= 100) ? config.revenueModel : 30;
+	(config.revenueModel !== undefined && config.revenueModel !== null && config.revenueModel >= 0 && config.revenueModel <= 100) ? config.revenueModel : 30;
 
 config.revenueModel =
-    !!process.env.BAE_LP_REVENUE_MODEL &&
-    Number(process.env.BAE_LP_REVENUE_MODEL) >= 0 &&
-    Number(process.env.BAE_LP_REVENUE_MODEL) <= 100
-        ? Number(process.env.BAE_LP_REVENUE_MODEL)
-        : config.revenueModel;
+	!!process.env.BAE_LP_REVENUE_MODEL &&
+		Number(process.env.BAE_LP_REVENUE_MODEL) >= 0 &&
+		Number(process.env.BAE_LP_REVENUE_MODEL) <= 100
+		? Number(process.env.BAE_LP_REVENUE_MODEL)
+		: config.revenueModel;
 
 config.taxRate =
-    (config.taxRate !== undefined && config.taxRate !== null && config.taxRate >= 0 && config.taxRate <= 100) ? config.taxRate : 30;
+	(config.taxRate !== undefined && config.taxRate !== null && config.taxRate >= 0 && config.taxRate <= 100) ? config.taxRate : 30;
 
 config.taxRate =
-    !!process.env.BAE_LP_TAX_RATE &&
-    Number(process.env.BAE_LP_TAX_RATE) >= 0 &&
-    Number(process.env.BAE_LP_TAX_RATE) <= 100
-        ? Number(process.env.BAE_LP_TAX_RATE)
-        : config.taxRate;
+	!!process.env.BAE_LP_TAX_RATE &&
+		Number(process.env.BAE_LP_TAX_RATE) >= 0 &&
+		Number(process.env.BAE_LP_TAX_RATE) <= 100
+		? Number(process.env.BAE_LP_TAX_RATE)
+		: config.taxRate;
 
 config.usageChartURL = process.env.BAE_LP_USAGE_CHART || config.usageChartURL;
 
@@ -473,8 +537,12 @@ config.indexes.apiVersion = process.env.BAE_LP_INDEX_API_VERSION || config.index
 
 // External IDPs configs
 if (config.extLogin) {
-    config.localEORI = process.env.BAE_EORI;
-    config.ishareKey = process.env.BAE_TOKEN_KEY;
-    config.ishareCrt = process.env.BAE_TOKEN_CRT;
+	config.localEORI = process.env.BAE_EORI;
+	config.ishareKey = process.env.BAE_TOKEN_KEY;
+	config.ishareCrt = process.env.BAE_TOKEN_CRT;
 }
 module.exports = config;
+
+// External Portal config
+config.externalPortal = null;
+config.externalPortal = process.env.BAE_LP_EXTERNAL_PORTAL || config.externalPortal;

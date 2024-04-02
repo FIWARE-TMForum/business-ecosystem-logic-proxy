@@ -18,155 +18,155 @@
  */
 
 var indexes = require('./lib/indexes.js'),
-    request = require('request'),
-    utils = require('./lib/utils'),
-    Promiz = require('promiz');
+	request = require('request'),
+	utils = require('./lib/utils'),
+	Promiz = require('promiz');
 
 var createUrl = function createUrl(api, extra) {
-    return utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + extra;
+	console.log('-------------------------------------------------------------------------------------------------')
+	console.log(api)
+	console.log(extra)
+	console.log('-------------------------------------------------------------------------------------------------')
+	if (api === 'DSProductCatalog') {
+		return (config.endpoints.catalog.appSsl == true ? 'https://' : 'http://') + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port + extra
+	}
+	return utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + extra;
 };
 
 var genericRequest = function genericRequest(options, extra) {
-    var p = new Promiz();
+	var p = new Promiz();
 
-    request(options, function(err, response, body) {
-        if (err) {
-            console.log(err);
-            p.reject(err);
-            return;
-        }
+	request(options, function(err, response, body) {
+		if (err) {
+			console.log(err);
+			p.reject(err);
+			return;
+		}
 
-        if (response.statusCode == 200) {
-            var parsedBody = JSON.parse(body);
+		if (response.statusCode == 200) {
+			var parsedBody = JSON.parse(body);
 
-            if (extra) {
-                parsedBody.forEach(function(element) {
-                    element[extra.field] = extra.value;
-                });
-            }
-            p.resolve(parsedBody);
-        } else {
-            p.reject('Unexpected HTTP error code: ' + response.statusCode);
-            return;
-        }
-    });
+			if (extra) {
+				parsedBody.forEach(function(element) {
+					element[extra.field] = extra.value;
+				});
+			}
+			p.resolve(parsedBody);
+		} else {
+			p.reject('Unexpected HTTP error code: ' + response.statusCode);
+			return;
+		}
+	});
 
-    return p;
+	return p;
 };
 
 var getProducts = function getProducts() {
-    var url = createUrl('DSProductCatalog', '/DSProductCatalog/api/catalogManagement/v2/productSpecification');
-    return genericRequest(url);
+	var url = createUrl('DSProductCatalog', '/productSpecification');
+	// var url = 'http://' + config.endpoints.catalog.host + config.endpoints.catalog.path + ':' + config.endpoints.catalog.port + '/productSpecification'
+	return genericRequest(url);
 };
 
 var getOfferings = function getOfferings(catalog, qstring) {
-    // For every catalog!
-    var url;
-    if (catalog) {
-        url = createUrl(
-            'DSProductCatalog',
-            '/DSProductCatalog/api/catalogManagement/v2/catalog/' + catalog + '/productOffering'
-        );
-    } else {
-        url = createUrl('DSProductCatalog', '/DSProductCatalog/api/catalogManagement/v2/productOffering');
-    }
+	// For every catalog!
+	var url = createUrl('DSProductCatalog', 'productOffering');
 
-    if (qstring) {
-        url += qstring;
-    }
+	if (qstring) {
+		url += qstring;
+	}
 
-    return genericRequest(url, {
-        field: 'catalog',
-        value: catalog
-    });
+	return genericRequest(url, {
+		field: 'catalog',
+		value: catalog
+	});
 };
 
 var getCatalogs = function getCatalogs() {
-    var url = createUrl('DSProductCatalog', '/DSProductCatalog/api/catalogManagement/v2/catalog');
-    return genericRequest(url);
+	var url = createUrl('DSProductCatalog', 'catalog');
+	return genericRequest(url);
 };
 
 var getInventory = function getInventory() {
-    var url = createUrl('DSProductInventory', '/DSProductInventory/api/productInventory/v2/product');
-    return genericRequest(url);
+	var url = createUrl('inventory', 'product');
+	return genericRequest(url);
 };
 
 var getOrders = function getOrders() {
-    var url = createUrl('DSProductOrdering', '/DSProductOrdering/api/productOrdering/v2/productOrder');
-    return genericRequest(url);
+	var url = createUrl('DSProductOrdering', '/DSProductOrdering/api/productOrdering/v2/productOrder');
+	return genericRequest(url);
 };
 
 var downloadProducts = function downloadProducts() {
-    return getProducts().then(indexes.saveIndexProduct);
+	return getProducts().then(indexes.saveIndexProduct);
 };
 
 var downloadOfferings = function downloadOfferings(catalog, qstring) {
-    return getOfferings(catalog, qstring).then(indexes.saveIndexOffering);
+	return getOfferings(catalog, qstring).then(indexes.saveIndexOffering);
 };
 
 var downloadCatalogOfferings = function downloadCatalogOfferings(catalogs) {
-    var promise = Promiz.resolve();
-    if (catalogs.length) {
-        catalogs.forEach(function(catalog) {
-            promise = promise.then(function() {
-                return downloadOfferings(catalog.id, '?isBundle=false');
-            });
-        });
-        catalogs.forEach(function(catalog) {
-            promise = promise.then(function() {
-                return downloadOfferings(catalog.id, '?isBundle=true');
-            });
-        });
-    } else {
-        promise = promise.then(function() {
-            return downloadOfferings();
-        });
-    }
-    promise = promise.then(function() {
-        return indexes.saveIndexCatalog(catalogs);
-    });
-    return promise;
+	var promise = Promiz.resolve();
+	if (catalogs.length) {
+		catalogs.forEach(function(catalog) {
+			promise = promise.then(function() {
+				return downloadOfferings(catalog.id, '?isBundle=false');
+			});
+		});
+		catalogs.forEach(function(catalog) {
+			promise = promise.then(function() {
+				return downloadOfferings(catalog.id, '?isBundle=true');
+			});
+		});
+	} else {
+		promise = promise.then(function() {
+			return downloadOfferings();
+		});
+	}
+	promise = promise.then(function() {
+		return indexes.saveIndexCatalog(catalogs);
+	});
+	return promise;
 };
 
 var downloadCatalogs = function downloadCatalogs() {
-    return getCatalogs().then(downloadCatalogOfferings);
+	return getCatalogs().then(downloadCatalogOfferings);
 };
 
 var downloadInventory = function downloadInventory() {
-    return getInventory().then(indexes.saveIndexInventory);
+	return getInventory().then(indexes.saveIndexInventory);
 };
 
 var downloadOrdering = function downloadOrdering() {
-    return getOrders().then(indexes.saveIndexOrder);
+	return getOrders().then(indexes.saveIndexOrder);
 };
 
 var logAllIndexes = function logAllIndexes(path) {
-    return indexes
-        .search(path, { AND: { '*': ['*'] } })
-        .catch((err) => console.log(err))
-        .then((results) => {
-            console.log(results);
-            results.hits.forEach((x) => console.log(x));
-        });
+	return indexes
+		.search(path, { AND: { '*': ['*'] } })
+		.catch((err) => console.log(err))
+		.then((results) => {
+			console.log(results);
+			results.hits.forEach((x) => console.log(x));
+		});
 };
 
 function load() {
-    indexes
-        .init()
-        .then(downloadProducts)
-        .then(downloadCatalogs)
-        .then(downloadInventory)
-        .then(downloadOrdering)
-        .then(indexes.close)
-        .then(() => console.log('All saved!'))
-        .catch((e) => console.log('Error: ', e));
+	indexes
+		.init()
+		.then(downloadProducts)
+		.then(downloadCatalogs)
+		.then(downloadInventory)
+		.then(downloadOrdering)
+		.then(indexes.close)
+		.then(() => console.log('All saved!'))
+		.catch((e) => console.log('Error: ', e));
 }
 
 async function loadAll() {
-    for (let i = 0; i < 3; i ++) {
-        load();
-        await new Promise(r => setTimeout(r, 20000));;
-    }
+	for (let i = 0; i < 3; i++) {
+		load();
+		await new Promise(r => setTimeout(r, 20000));;
+	}
 }
 
 loadAll();

@@ -1,5 +1,7 @@
-/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 CoNWeT Lab., Universidad Politécnica de Madrid
  *
+ * Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
+ * 
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
  *
@@ -33,12 +35,17 @@
     function InventoryProductService($q, $resource, URLS, User, Offering) {
         var resource = $resource(URLS.INVENTORY + '/product/:productId', {
             productId: '@id'
+        }, {
+            update: {
+                method: 'PATCH'
+            }
         });
 
         return {
             search: search,
             count: count,
             detail: detail,
+            terminate: terminate,
             renew: renew,
             remove: remove,
             getToken: getToken,
@@ -48,6 +55,30 @@
             getOwnRating : getOwnRating
         };
 
+        function terminate(productId) {
+            var deferred = $q.defer();
+            var params = {
+                productId: productId
+            };
+
+            const updatedData = {
+                status: "suspended"
+            }
+
+            resource.update(
+                params,
+                updatedData,
+                function(updated) {
+                    deferred.resolve(updated);
+                },
+                function(response) {
+                    deferred.reject(response);
+                }
+            );
+
+            return deferred.promise;
+        }
+
         function query(deferred, filters, method, callback) {
             var params = {};
 
@@ -56,11 +87,14 @@
             }
 
             if (filters.customer) {
-                params['relatedParty.id'] = User.loggedUser.currentUser.id;
+                params['relatedParty.id'] = User.loggedUser.currentUser.partyId;
             }
 
             if (filters.status) {
-                params['status'] = filters.status;
+                params['status'] = filters.status.toLowerCase();
+            } else {
+                // Filtering by default
+                params['status'] = 'active,created'
             }
 
             if (filters.action) {
@@ -69,7 +103,7 @@
 
             if (filters.offset !== undefined) {
                 params['offset'] = filters.offset;
-                params['size'] = filters.size;
+                params['limit'] = filters.limit;
             }
 
             if (filters.body !== undefined) {
@@ -142,8 +176,9 @@
                 params,
                 function(productRetrieved) {
                     if (
-                        productRetrieved.productCharacteristic.length === 1 &&
-                        Object.keys(productRetrieved.productCharacteristic[0]).length === 0
+                        productRetrieved.productCharacteristic == null ||
+                        (productRetrieved.productCharacteristic.length === 1 &&
+                        Object.keys(productRetrieved.productCharacteristic[0]).length === 0)
                     ) {
                         productRetrieved.productCharacteristic = [];
                     }

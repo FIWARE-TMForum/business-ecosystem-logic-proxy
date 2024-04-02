@@ -23,12 +23,10 @@ const recommendationModel = require('../db/schemas/recommendations')
 
 const promotionService = (() => {
 	const getPromotions = function(req, res) {
-		promotionModel.find({}, (err, result) => {
-			if (err) {
-				res.status(500).json({ error: err.message });
-			} else {
-				res.status(200).json(result);
-			}
+		promotionModel.find({}).then((result) => {
+			res.status(200).json(result);
+		}).catch((err) => {
+			res.status(500).json({ error: err.message });
 		});
 	}
 
@@ -36,12 +34,10 @@ const promotionService = (() => {
 		try {
 			const id = req.params.id;
 			if (id) {
-				promotionModel.find({ _id: id }, (err, result) => {
-					if (err) {
-						res.status(500).json({ error: err.message });
-					} else {
-						res.status(200).json(result[0]);
-					}
+				promotionModel.find({ _id: id }).then((result) => {
+					res.status(200).json(result[0]);
+				}).catch((err) => {
+					res.status(500).json({ error: err.message });
 				})
 			} else {
 				res.status(400).json({ error: 'id missing' })
@@ -52,19 +48,10 @@ const promotionService = (() => {
 	};
 
 	const updateRecommendation = function(userId, categories, promotions) {
-		return new Promise((resolve, reject) => {
-			recommendationModel.findOneAndUpdate(
+		return recommendationModel.findOneAndUpdate(
 				{ userId: userId },
 				{ $set: { userId: userId, categories: categories, promotions: promotions } },
-				{ new: true, upsert: true },
-
-				(err) => {
-					if (err) {
-						console.log(err)
-					}
-					resolve()
-			});
-		})
+				{ new: true, upsert: true });
 	}
 
 	const saveRecommendations = async function (userIds, promotionId) {
@@ -74,13 +61,15 @@ const promotionService = (() => {
 		// Get existing recommendation objects
 		await Promise.all(userIds.map((userId) => {
 			return new Promise((resolve, reject) => {
-				recommendationModel.find({ userId: userId }, function(err, result) {
-					if (err || result.length == 0) {
+				recommendationModel.find({ userId: userId }).then((result) => {
+					if (result.length == 0) {
 						newIds.push(userId)
 					} else {
 						recomendations.push(result[0])
 					}
 					resolve(result);
+				}).catch((err) => {
+					newIds.push(userId)
 				})
 			});
 		}))
@@ -114,18 +103,16 @@ const promotionService = (() => {
 		promotion.termsURL = body.termsURL;
 
 		try {
-			promotion.save(async (err, data) => {
-				if (err) {
-					console.log(err);
-					res.status(500).json({ error: 'Unexpected error creating promotion' });
-				} else {
-					// Save recomendations
-					console.log(data);
-					if (body.userIds != null && body.userIds.length > 0) {
-						await saveRecommendations(body.userIds, data._id);
-					}
-					res.status(201).json();
+			promotion.save().then(async (data) => {
+				// Save recomendations
+				console.log(data);
+				if (body.userIds != null && body.userIds.length > 0) {
+					await saveRecommendations(body.userIds, data._id);
 				}
+				res.status(201).json();
+			}).catch((err) => {
+				console.log(err);
+				res.status(500).json({ error: 'Unexpected error creating promotion' });
 			});
 		} catch (e) {
 			console.log(e);
@@ -156,14 +143,11 @@ const promotionService = (() => {
 						imageName: imageName,
 						termsURL: termsURL
 					}},
-					{ new: true, upsert: true },
- 
-					(err, rawResp) => {
-						if (err) {
-							res.status(500).json({ error: err.message });
-						} else {
-							res.status(200).json(rawResp);
-						}
+					{ new: true, upsert: true })
+				.then((rawResp) => {
+					res.status(200).json(rawResp);
+				}).catch((err) => {
+					res.status(500).json({ error: err.message });
 				});
 			} else {
 				res.status(422).json({ error: 'Missing required field' });
@@ -179,20 +163,13 @@ const promotionService = (() => {
 			// Remove promotion from recomendations
 			recommendationModel.updateMany(
 				{ promotion: { "$eq": id } },
-				{ $pull: { promotion:  id } },
-			(err) => {
-				console.log(err);
-				if (err) {
-					res.status(500).json({ error: 'Unexpected error updating recomendations' });
-				}
-
-				promotionModel.remove({_id: id}, (err, result) => {
-					if (err) {
-						res.status(500).json({ error: 'Unexpected error deleting the promotion' });
-					} else {
-						res.status(204).end();
-					}
+				{ $pull: { promotion:  id } })
+			.then(() => {
+				return promotionModel.deleteOne({_id: id}).then(() => {
+					res.status(204).end();
 				});
+			}).catch((err) => {
+				res.status(500).json({ error: 'Unexpected error updating recomendations' });
 			})
         } catch (e) {
             res.status(500).json({ error: e.message + ' Invalid request' });

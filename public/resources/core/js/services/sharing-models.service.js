@@ -103,7 +103,7 @@
 
             modelsResource.query(
                 {
-                    providerId: User.loggedUser.currentUser.id,
+                    providerId: User.loggedUser.currentUser.partyId,
                     productClass: productClass
                 },
                 function(models) {
@@ -132,7 +132,7 @@
                 qParams.action = params.action;
             } else if (params.offset >= 0) {
                 qParams.offset = params.offset;
-                qParams.size = params.size;
+                qParams.limit = params.limit;
             }
 
             if (!method) {
@@ -157,13 +157,13 @@
                 params = {};
             }
 
-            params.providerId = User.loggedUser.currentUser.id;
+            params.providerId = User.loggedUser.currentUser.partyId;
             return search(modelsResource, params);
         }
 
         function countModels() {
             var params = {
-                providerId: User.loggedUser.currentUser.id,
+                providerId: User.loggedUser.currentUser.partyId,
                 action: 'count'
             };
             return search(modelsResource, params, modelsResource.get);
@@ -178,13 +178,13 @@
                 params = {};
             }
 
-            params.providerId = User.loggedUser.currentUser.id;
+            params.providerId = User.loggedUser.currentUser.partyId;
             return search(transactionResource, params);
         }
 
         function countTransactions() {
             var params = {
-                providerId: User.loggedUser.currentUser.id,
+                providerId: User.loggedUser.currentUser.partyId,
                 action: 'count'
             };
             return search(transactionResource, params, transactionResource.get);
@@ -192,7 +192,7 @@
 
         function searchProductClasses() {
             var params = {
-                providerId: User.loggedUser.currentUser.id
+                providerId: User.loggedUser.currentUser.partyId
             };
             return search(classesResource, params, classesResource.get);
         }
@@ -202,20 +202,20 @@
                 params = {};
             }
 
-            params.providerId = User.loggedUser.currentUser.id;
+            params.providerId = User.loggedUser.currentUser.partyId;
             return search(reportResource, params);
         }
 
         function countReports() {
             var params = {
-                providerId: User.loggedUser.currentUser.id,
+                providerId: User.loggedUser.currentUser.partyId,
                 action: 'count'
             };
             return search(reportResource, params, reportResource.get);
         }
 
         function createReport(report) {
-            report.providerId = User.loggedUser.currentUser.id;
+            report.providerId = User.loggedUser.currentUser.partyId;
             report.callbackUrl =
                 $location.protocol() + '://' + $location.host() + ':' + $location.port() + '/#/rss/reports';
 

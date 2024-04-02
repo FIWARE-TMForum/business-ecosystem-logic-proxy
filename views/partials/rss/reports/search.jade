@@ -17,19 +17,19 @@ ui-view
                 .panel-body.dl-responsive
                   dl
                     dt #{ __("Provider id") }
-                    dd.text-dark-secondary {{ report.ownerProviderId }}
+                    dd.text-dark-secondary {{ report.providerId }}
                     dt #{ __("Provider amount") }
-                    dd.text-dark-secondary {{ report.ownerValue }} {{ report.currency }}
+                    dd.text-dark-secondary {{ report.providerTotal }} {{ report.currency }}
                   dl
                     dt #{ __("Store id") }
                     dd.text-dark-secondary {{ report.aggregatorId }}
                     dt #{ __("Store amount") }
-                    dd.text-dark-secondary {{ report.aggregatorValue }} {{ report.currency }}
+                    dd.text-dark-secondary {{ report.aggregatorTotal }} {{ report.currency }}
                   dl(ng-repeat="stakeholder in report.stakeholders")
                     dt Stakeholder-{{ $index + 1 }} id
                     dd.text-dark-secondary {{ stakeholder.stakeholderId }}
                     dt Stakeholder-{{ $index + 1 }} #{ __("amount") }
-                    dd.text-dark-secondary {{ stakeholder.modelValue }} {{ report.currency }}
+                    dd.text-dark-secondary {{ stakeholder.stakeholderTotal }} {{ report.currency }}
       div(ng-switch-when="ERROR")
         .alert.alert-danger.text-center {{ searchVM.error }}
       div(ng-switch-default)

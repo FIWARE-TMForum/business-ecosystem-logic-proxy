@@ -1,5 +1,7 @@
 /* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
  *
+ * Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
+ * 
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
  *
@@ -62,7 +64,7 @@
         /* jshint validthis: true */
         var vm = this;
         vm.offset = -1;
-        vm.size = 0;
+        vm.limit = 0;
         vm.list = [];
         vm.searchInput = '';
 
@@ -71,7 +73,8 @@
         vm.RELATIONSHIPS = ProductSpec.TYPES.RELATIONSHIP;
         vm.STATUS = DATA_STATUS;
 
-        vm.data = ProductSpec.Relationship({}, vm.RELATIONSHIPS.MIGRATION.code);
+        vm.data = null
+        vm.relType = vm.RELATIONSHIPS.MIGRATION.code
 
         vm.create = create;
         vm.setProductSpec = setProductSpec;
@@ -101,8 +104,9 @@
         }
 
         function getElementsLength() {
-            var params = getParams();
-            return ProductSpec.count(params);
+            //var params = getParams();
+            //return ProductSpec.count(params);
+            return Promise.resolve(10)
         }
 
         function launchSearch() {
@@ -121,7 +125,7 @@
                 if (vm.offset >= 0) {
                     var params = getParams();
                     params.offset = vm.offset;
-                    params.size = vm.size;
+                    params.limit = vm.limit;
 
                     ProductSpec.search(params).then(
                         function(productList) {
@@ -145,7 +149,8 @@
         function create($parentController) {
             createPromise = $parentController.createRelationship(vm.data);
             createPromise.then(function (productSpec) {
-                vm.data = ProductSpec.Relationship({}, vm.RELATIONSHIPS.MIGRATION.code);
+                vm.data = null
+                vm.relType = vm.RELATIONSHIPS.MIGRATION.code
             }, function (response) {
                 $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
                     error: Utils.parseError(response, 'Unexpected error trying to create the relationship.')
@@ -161,15 +166,19 @@
 
         function hasRelationship(productSpec, relationshipProductSpec) {
             return (
-                productSpec.id === relationshipProductSpec.id ||
                 productSpec.productSpecificationRelationship.some(function(relationship) {
-                    return relationship.productSpec.id === relationshipProductSpec.id;
+                    return relationship.id === relationshipProductSpec.id;
                 })
             );
         }
 
         function setProductSpec(productSpec) {
-            vm.data = productSpec.Relationship(productSpec, vm.data.type);
+            vm.data = {
+                id: productSpec.id,
+                href: productSpec.href,
+                relationshipType: vm.relType,
+                productSpec: productSpec
+            }
         }
     }
 

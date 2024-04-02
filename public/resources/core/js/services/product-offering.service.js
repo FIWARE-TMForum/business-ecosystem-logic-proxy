@@ -1,4 +1,6 @@
-/* Copyright (c) 2015 - 2018 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 CoNWeT Lab., Universidad Politécnica de Madrid
+ *
+ * Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -54,7 +56,7 @@
         ProductSpec,
         Category
     ) {
-        var resource = $resource(
+        const resource = $resource(
             URLS.CATALOGUE_MANAGEMENT + '/:catalogue/:catalogueId/productOffering/:offeringId',
             {
                 offeringId: '@id'
@@ -70,10 +72,19 @@
         resource.prototype.getPicture = getPicture;
         resource.prototype.serialize = serialize;
         resource.prototype.appendPricePlan = appendPricePlan;
-        resource.prototype.updatePricePlan = updatePricePlan;
         resource.prototype.removePricePlan = removePricePlan;
         resource.prototype.relationshipOf = relationshipOf;
         resource.prototype.relationships = relationships;
+
+        const priceResource = $resource(
+            URLS.CATALOGUE_MANAGEMENT + '/productOfferingPrice/:priceId',
+            {
+                priceId: '@id'
+            },
+            {
+                update: { method: 'PATCH' }
+            }
+        );
 
         var PATCHABLE_ATTRS = ['description', 'lifecycleStatus', 'name', 'version'];
 
@@ -721,6 +732,121 @@
             return '(' + this.price.currencyCode + ') ' + TYPES.CURRENCY_CODE[this.price.currencyCode];
         };
 
+        const buildInternalPricingObject = (plan) => {
+            const pricing = {
+                "id": plan.id,
+                "description": plan.description,
+                "name": plan.name,
+                "priceType": plan.priceType,
+                "price": {
+                    "currencyCode": plan.price.unit,
+                    "taxIncludedAmount": plan.price.value
+                }
+            }
+
+            if (plan.recurringChargePeriodType != null && plan.recurringChargePeriodType.length > 0) {
+                pricing.recurringChargePeriod = plan.recurringChargePeriodType
+            }
+
+            if (plan.unitOfMeasure != null && plan.unitOfMeasure.units.length > 0) {
+                pricing.unitOfMeasure = plan.unitOfMeasure.units
+            }
+
+            return new PricePlan(pricing)
+        }
+
+        const buildTMFPricingObject = (plan) => {
+            const newPricing = {
+                "description": plan.description,
+                "lifecycleStatus": "Active",
+                "name": plan.name,
+                "percentage": 0,
+                "priceType": plan.priceType,
+                "price": {
+                    "unit": plan.price.currencyCode,
+                    "value": plan.price.taxIncludedAmount
+                }
+            }
+
+            // Recurring units
+            if (plan.recurringChargePeriod != null && plan.recurringChargePeriod.length > 0) {
+                newPricing.recurringChargePeriodType = plan.recurringChargePeriod
+            }
+
+            // Usage units
+            if (plan.unitOfMeasure != null && plan.unitOfMeasure.length > 0) {
+                newPricing.unitOfMeasure = {
+                    "amount": 1,
+                    "units": plan.unitOfMeasure
+                }
+            }
+
+            return newPricing
+        }
+
+        const buildTMFPricing = (plan) => {
+            const newPricing = {
+                "description": plan.description,
+                "lifecycleStatus": "Active",
+                "name": plan.name,
+                "percentage": 0,
+                "priceType": plan.priceType,
+                "price": {
+                    "percentage": 0,
+                    "taxRate": plan.price.taxRate,
+                    "dutyFreeAmount": {
+                      "unit": plan.price.currencyCode,
+                      "value": plan.price.dutyFreeAmount
+                    },
+                    "taxIncludedAmount": {
+                      "unit": plan.price.currencyCode,
+                      "value": plan.price.taxIncludedAmount
+                    },
+                }
+            }
+
+            // Recurring units
+            if (plan.recurringChargePeriod != null && plan.recurringChargePeriod.length > 0) {
+                newPricing.recurringChargePeriodType = plan.recurringChargePeriod
+            }
+
+            // Usage units
+            if (plan.unitOfMeasure != null && plan.unitOfMeasure.length > 0) {
+                newPricing.unitOfMeasure = {
+                    "amount": 1,
+                    "units": plan.unitOfMeasure
+                }
+            }
+
+            // Price alterations
+            if (plan.productOfferPriceAlteration != null) {
+                newPricing.priceAlteration = [{
+                    "description": `${plan.productOfferPriceAlteration.description} : ${plan.productOfferPriceAlteration.priceAlterationType} - ${plan.productOfferPriceAlteration.priceConditionOperator} - ${plan.productOfferPriceAlteration.priceCondition}`,
+                    "name": plan.productOfferPriceAlteration.name,
+                    "priceType": plan.productOfferPriceAlteration.priceType,
+                    "priority": 0,
+                    "recurringChargePeriod": plan.productOfferPriceAlteration.recurringChargePeriod,
+                    "price": {
+                        "percentage": plan.productOfferPriceAlteration.price.percentage,
+                        "dutyFreeAmount": {
+                            "unit": plan.productOfferPriceAlteration.price.currencyCode,
+                            "value": 0
+                        },
+                        "taxIncludedAmount": {
+                            "unit": plan.productOfferPriceAlteration.price.currencyCode,
+                            "value": 0
+                        },
+                    },
+                    "unitOfMeasure": {
+                        "amount": 1,
+                        "units": plan.productOfferPriceAlteration.unitOfMeasure
+                    }
+                }]
+            }
+
+            return newPricing
+        }
+
         var Terms = function Terms(data) {
             angular.extend(this, TEMPLATES.TERMS, data);
         };
@@ -926,6 +1052,11 @@
             count: count,
             exists: exists,
             create: create,
+            buildTMFPricing: buildTMFPricing,
+            createPricing: createPricing,
+            getPricing: getPricing,
+            updatePricing: updatePricing,
+            deletePricing: deletePricing,
             setSla: setSla,
             getSla: getSla,
             getReputation: getReputation,
@@ -957,6 +1088,10 @@
                 params['id'] = filters.id;
             }
 
+            if (filters.href) {
+                params['href'] = filters.href;
+            }
+
             if (filters.status) {
                 params['lifecycleStatus'] = filters.status;
             }
@@ -974,7 +1109,7 @@
             }
 
             if (filters.owner) {
-                params['relatedParty'] = User.loggedUser.currentUser.id;
+                params['relatedParty'] = User.loggedUser.currentUser.partyId;
             } else {
                 params['lifecycleStatus'] = LIFECYCLE_STATUS.LAUNCHED;
             }
@@ -985,7 +1120,7 @@
 
             if (filters.offset !== undefined) {
                 params['offset'] = filters.offset;
-                params['size'] = filters.size;
+                params['limit'] = filters.limit;
             }
 
             if (filters.body !== undefined) {
@@ -1026,14 +1161,18 @@
                 });
             }
 
-            return query(deferred, filters, resource.query, function(offeringList) {
+            return query(deferred, filters, resource.query, async function(offeringList) {
                 if (offeringList.length) {
-                    var bundleOfferings = [];
-                    var productFilters = {
-                        id: offeringList
+                    await Promise.all(offeringList.map((offering) => {
+                        return extendPricePlans(offering);
+                    }))
+
+                    const bundleOfferings = [];
+                    const productFilters = {
+                        limit: 12,
+                        href: offeringList
                             .map(function(offering) {
-                                var offId = '';
-                                extendPricePlans(offering);
+                                let offId = '';
 
                                 if (!offering.isBundle) {
                                     offId = offering.productSpecification.id;
@@ -1048,7 +1187,7 @@
                     if (!bundleOfferings.length) {
                         searchOfferingProducts(productFilters, offeringList);
                     } else {
-                        var processed = 0;
+                        let processed = 0;
                         bundleOfferings.forEach(function(offering) {
                             attachOfferingBundleProducts(offering, function(res) {
                                 processed += 1;
@@ -1126,6 +1265,55 @@
 //        "href": "http://127.0.0.1:8000/DSProductCatalog/api/catalogManagement/v2/productSpecification/4:(0.1)"
 //    }
 //}
+
+        function createPricing(priceModel) {
+            const newModel = buildTMFPricingObject(priceModel)
+
+            return new Promise((resolve, reject) => {
+                priceResource.save(newModel,
+                    (pricingCreated) => {
+                        resolve(pricingCreated)
+                    }, (error) => {
+                        reject(error)
+                    })
+            })
+        }
+
+        function getPricing(priceId) {
+            return new Promise((resolve, reject) => {
+                priceResource.get({
+                    priceId: priceId
+                }, (priceModel) => {
+                    const internalModel = buildInternalPricingObject(priceModel)
+                    resolve(internalModel)
+                }, (error) => {
+                    reject(error)
+                })
+            })
+        }
+
+        function updatePricing(priceId, priceModel) {
+            const tmfModel = buildTMFPricingObject(priceModel)
+
+            return new Promise((resolve, reject) => {
+                priceResource.update({ priceId: priceId }, tmfModel, (pricing) => {
+                    resolve(pricing)
+                }, (error) => {
+                    reject(error)
+                })
+            })
+        }
+
+        function deletePricing(priceId) {
+            return new Promise((resolve, reject) => {
+                priceResource.update({ priceId: priceId }, {lifecycleStatus: "Retired"}, () => {
+                    resolve()
+                }, (error) => {
+                    reject(error)
+                })
+            })
+        }
+
         function create(data, product, catalogue, terms) {
             var deferred = $q.defer();
             var params = {
@@ -1255,13 +1443,16 @@
 
             resource.query(
                 params,
-                function(offeringList) {
+                async function(offeringList) {
+                    await Promise.all(offeringList.map((offering) => {
+                        return extendPricePlans(offering);
+                    }))
+
                     offering.bundledProductOffering = offeringList;
-                    var bundleIndexes = {};
-                    var productParams = {
+                    const bundleIndexes = {};
+                    const productParams = {
                         id: offeringList
                             .map(function(data, index) {
-                                extendPricePlans(data);
                                 bundleIndexes[data.productSpecification.id] = index;
                                 return data.productSpecification.id;
                             })
@@ -1292,16 +1483,13 @@
         function detail(id) {
             var deferred = $q.defer();
             var params = {
-                id: id
+                offeringId: id
             };
 
-            resource.query(
+            resource.get(
                 params,
-                function(collection) {
-                    if (collection.length) {
-                        var productOffering = collection[0];
-
-                        extendPricePlans(productOffering);
+                async function(productOffering) {
+                        await extendPricePlans(productOffering);
                         if (productOffering.productSpecification) {
                             ProductSpec.detail(productOffering.productSpecification.id).then(function(
                                 productRetrieved
@@ -1312,9 +1500,6 @@
                         } else {
                             extendBundledProductOffering(productOffering);
                         }
-                    } else {
-                        deferred.reject(404);
-                    }
                 },
                 function(response) {
                     deferred.reject(response);
@@ -1336,10 +1521,13 @@
 
                     resource.query(
                         params,
-                        function(collection) {
+                        async function(collection) {
                             if (collection.length) {
+                                await Promise.all(collection.map((productOfferingRelated) => {
+                                    return extendPricePlans(productOfferingRelated);
+                                }))
+
                                 collection.forEach(function(productOfferingRelated) {
-                                    extendPricePlans(productOfferingRelated);
                                     productOffering.productSpecification.productSpecificationRelationship.forEach(
                                         function(relationship) {
                                             if (
@@ -1402,21 +1590,21 @@
             }
         }
 
-        function extendPricePlans(productOffering) {
+        async function extendPricePlans(productOffering) {
             if (!angular.isArray(productOffering.productOfferingPrice)) {
                 productOffering.productOfferingPrice = [];
             } else {
-                productOffering.productOfferingPrice = productOffering.productOfferingPrice.map(function(pricePlan) {
-                    return new PricePlan(pricePlan);
-                });
+                productOffering.productOfferingPrice = await Promise.all(productOffering.productOfferingPrice.map(function(pricePlan) {
+                    return getPricing(pricePlan["id"]);
+                }));
             }
         }
 
         function update(offering, data) {
             var deferred = $q.defer();
             var params = {
-                catalogue: 'catalog',
-                catalogueId: getCatalogueId(offering),
+                //catalogue: 'catalog',
+                //catalogueId: getCatalogueId(offering),
                 offeringId: offering.id
             };
 
@@ -1468,7 +1656,9 @@
             /* jshint validthis: true */
             var picture = null;
             if (this.productSpecification) {
-                picture = this.productSpecification.getPicture();
+                if (this.productSpecification.getPicture != null) {
+                    picture = this.productSpecification.getPicture();
+                }
             } else {
                 // The offering is a bundle, get a random image from its bundled offerings
                 var imageIndex = Math.floor(Math.random() * this.bundledProductOffering.length);
@@ -1523,68 +1713,38 @@
             return result;
         }
 
-        function appendPricePlan(pricePlan) {
-            /* jshint validthis: true */
-            var deferred = $q.defer();
-            var dataUpdated = {
-                productOfferingPrice: this.productOfferingPrice.concat(pricePlan)
-            };
+        function updateOfferingPlan(self) {
+            return new Promise((resolve, reject) => {
+                const dataUpdated = {
+                    productOfferingPrice: self.productOfferingPrice.slice(0).map((model) => {
+                        const tmfModel = buildTMFPricing(model)
+                        tmfModel.id = model.id
+                        tmfModel.herf = model.href
+                        return tmfModel
+                    })
+                };
 
-            update(this, dataUpdated).then(
-                function() {
-                    this.productOfferingPrice.push(pricePlan);
-                    deferred.resolve(this);
-                }.bind(this),
-                function(response) {
-                    deferred.reject(response);
-                }
-            );
-
-            return deferred.promise;
+                update(self, dataUpdated).then(
+                    function() {
+                        resolve(self);
+                    }.bind(self),
+                    function(response) {
+                        reject(response);
+                    }
+                );
+            })
         }
 
-        function updatePricePlan(index, pricePlan) {
+        function appendPricePlan(pricePlan) {
             /* jshint validthis: true */
-            var deferred = $q.defer();
-            var dataUpdated = {
-                productOfferingPrice: this.productOfferingPrice.slice(0)
-            };
-
-            dataUpdated.productOfferingPrice[index] = pricePlan;
-
-            update(this, dataUpdated).then(
-                function() {
-                    angular.merge(this.productOfferingPrice[index], pricePlan);
-                    deferred.resolve(this);
-                }.bind(this),
-                function(response) {
-                    deferred.reject(response);
-                }
-            );
-
-            return deferred.promise;
+            this.productOfferingPrice = this.productOfferingPrice.concat(pricePlan)
+            return updateOfferingPlan(this)
         }
 
         function removePricePlan(index) {
             /* jshint validthis: true */
-            var deferred = $q.defer();
-            var dataUpdated = {
-                productOfferingPrice: this.productOfferingPrice.slice(0)
-            };
-
-            dataUpdated.productOfferingPrice.splice(index, 1);
-
-            update(this, dataUpdated).then(
-                function() {
-                    this.productOfferingPrice.splice(index, 1);
-                    deferred.resolve(this);
-                }.bind(this),
-                function(response) {
-                    deferred.reject(response);
-                }
-            );
-
-            return deferred.promise;
+            this.productOfferingPrice.splice(index, 1)
+            return updateOfferingPlan(this)
         }
 
         function relationshipOf(productOffering) {

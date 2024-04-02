@@ -86,6 +86,86 @@ form(name="updateVM.form", novalidate)
       span #{ __("Description") }
       small.text-muted (#{ __("optional") })
     textarea.form-control(rows="3", name="description", ng-model="updateVM.data.description")
+
+  .h4.text-dark-secondary
+    strong #{ __("Compliance Profile") }
+
+  .row
+    .col-sm-12
+      .form-group(
+        ng-class="{ 'has-error': updateForm.hasError(step.form.name) }"
+      )
+        label #{ __("EU Cloud Security") }
+        input.form-control(
+          type="text"
+          name="cloudSecurity"
+          ng-model="updateVM.compliance.cloudSecurity"
+        )
+        .help-block(
+          ng-messages="step.form.name.$error"
+          ng-show="updateForm.hasError(step.form.name)"
+        )
+  .row
+    .col-sm-12
+      .form-group(
+        ng-class="{ 'has-error': updateForm.hasError(step.form.name) }"
+      )
+        label #{ __("EU Cloud Rulebook") }
+        input.form-control(
+          type="text"
+          name="cloudRulebook"
+          ng-model="updateVM.compliance.cloudRulebook"
+        )
+        .help-block(
+          ng-messages="step.form.name.$error"
+          ng-show="updateForm.hasError(step.form.name)"
+        )
+  .row
+    .col-sm-12
+      .form-group(
+        ng-class="{ 'has-error': updateForm.hasError(step.form.name) }"
+      )
+        label #{ __("ISO 27001") }
+        input.form-control(
+          type="text"
+          name="iso27001"
+          ng-model="updateVM.compliance.iso27001"
+        )
+        .help-block(
+          ng-messages="step.form.name.$error"
+          ng-show="updateForm.hasError(step.form.name)"
+        )
+  .row
+    .col-sm-12
+      .form-group(
+        ng-class="{ 'has-error': updateForm.hasError(step.form.name) }"
+      )
+        label #{ __("ISO 27017") }
+        input.form-control(
+          type="text"
+          name="iso27017"
+          ng-model="updateVM.compliance.iso27017"
+        )
+        .help-block(
+          ng-messages="step.form.name.$error"
+          ng-show="updateForm.hasError(step.form.name)"
+        )
+  .row
+    .col-sm-12
+      .form-group(
+        ng-class="{ 'has-error': updateForm.hasError(step.form.name) }"
+      )
+        label #{ __("ISO 17025") }
+        input.form-control(
+          type="text"
+          name="iso17025"
+          ng-model="updateVM.compliance.iso17025"
+        )
+        .help-block(
+          ng-messages="step.form.name.$error"
+          ng-show="createForm.hasError(step.form.name)"
+        )
+
   .form-group.text-right
     a.btn.btn-success(
       ng-click="updateVM.update()"

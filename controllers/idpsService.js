@@ -28,26 +28,24 @@ const idpService = (function() {
     const getIdp = function(req, res) {
         const idpId = req.params.idpId;
         try {
-            idpModel.findOne({idpId: idpId}, (err, result) => {
-                if (err) {
-                    res.status(500).json({ error: 'Unexpected error' });
-                } else {
-                    if (result) {
-                        const response = {
-                            name: result.name,
-                            server: result.server,
-                            idpId: result.idpId,
-                            issuerDid: result.issuerDid,
-                            description: result.description
-                        }
-
-                        res.statusCode = 200;
-                        res.json(response);
-                        res.end()
-                    } else {
-                        res.status(404).json({ error: 'Idp not found' });
+            idpModel.findOne({idpId: idpId}).then((result) => {
+                if (result) {
+                    const response = {
+                        name: result.name,
+                        server: result.server,
+                        idpId: result.idpId,
+                        issuerDid: result.issuerDid,
+                        description: result.description
                     }
+
+                    res.statusCode = 200;
+                    res.json(response);
+                    res.end()
+                } else {
+                    res.status(404).json({ error: 'Idp not found' });
                 }
+            }).catch((err) => {
+                res.status(500).json({ error: 'Unexpected error' });
             });
         } catch (e) {
             res.status(500).json({ error: e.message + ' Invalid request' });
@@ -62,23 +60,21 @@ const idpService = (function() {
         }
 
         try {
-            idpModel.find(query, (err, result) => {
-                if (err) {
-                    res.status(500).json({ error: 'Unexpected error' });
-                } else {
-                    const response = result.map((item) => {
-                        return {
-                            name: item.name,
-                            server: item.server,
-                            idpId: item.idpId,                          
-                            issuerDid: item.issuerDid,
-                            description: item.description
-                        }
-                    })
-                    res.statusCode = 200;
-                    res.json(response);
-                    res.end();
-                }
+            idpModel.find(query).then((result) => {
+                const response = result.map((item) => {
+                    return {
+                        name: item.name,
+                        server: item.server,
+                        idpId: item.idpId,
+                        issuerDid: item.issuerDid,
+                        description: item.description
+                    }
+                })
+                res.statusCode = 200;
+                res.json(response);
+                res.end();
+            }).catch((err) => {
+                res.status(500).json({ error: 'Unexpected error' });
             });
         } catch (e) {
             res.status(500).json({ error: e.message + ' Invalid request' });
@@ -86,19 +82,10 @@ const idpService = (function() {
     }
 
     const getDBIdps = function() {
-        return new Promise((resolve, reject) => {
-            idpModel.find({}, (err, result) => {
-                if (err) {
-                    return reject(err);
-                }
-
-                resolve(result);
-            });
-        });
+        return idpModel.find({});
     }
 
     const createIdp = function(req, res) {
-        console.log(req.body);
         const data = JSON.parse(req.body);
 
         try {
@@ -132,24 +119,21 @@ const idpService = (function() {
             idp.tokenCrt = config.ishareCrt;
             idp.callbackURL = `${marketUrl}/auth/${idp.idpId}/callback`
 
-            idp.save((err) => {
-                if (err) {
-                    if (err.message && err.message.startsWith('E11000')) {
-                        res.status(409).json({ error: 'The provided IDP ID is already registered' });
-                    } else {
-                        res.status(500).json({ error: 'Unexpected error' });
-                    }
-                } else {
-                    addProcessor(idp);
+            idp.save().then(() => {
+                addProcessor(idp);
 
-                    let slash = req.url.slice(-1) === '/' ? '' : '/';
-                    res.statusCode = 200;
-                    res.setHeader('location', req.url + slash + idp.idpId);
-                    res.end();
+                let slash = req.url.slice(-1) === '/' ? '' : '/';
+                res.statusCode = 200;
+                res.setHeader('location', req.url + slash + idp.idpId);
+                res.end();
+            }).catch((err) => {
+                if (err.message && err.message.startsWith('E11000')) {
+                    res.status(409).json({ error: 'The provided IDP ID is already registered' });
+                } else {
+                    res.status(500).json({ error: 'Unexpected error' });
                 }
             });
         } catch (e) {
-            console.log(e);
             res.status(500).json({ error: e.message + ' Invalid request' });
         }
     };
@@ -157,13 +141,11 @@ const idpService = (function() {
     const deleteIdp = function(req, res) {
         const idpId = req.params.idpId;
         try {
-            idpModel.remove({idpId: idpId}, (err, result) => {
-                if (err) {
-                    res.status(500).json({ error: 'Unexpected error' });
-                } else {
-                    removeProcessor({idpId: idpId});
-                    res.status(204).end();
-                }
+            idpModel.deleteOne({idpId: idpId}).then(() => {
+                removeProcessor({idpId: idpId});
+                res.status(204).end();
+            }).catch((err) => {
+                res.status(500).json({ error: 'Unexpected error' });
             });
         } catch (e) {
             res.status(500).json({ error: e.message + ' Invalid request' });
@@ -174,33 +156,25 @@ const idpService = (function() {
         const idpId = req.params.idpId;
         const data = JSON.parse(req.body);
         try {
-            idpModel.findOne({idpId: idpId}, (err, result) => {
-                if (err) {
-                    res.status(500).json({ error: 'Unexpected error' });
-                } else {
-                    if (result) {
-                        result.name = data.name;
-                        result.description = data.description;
-                        result.server = data.server;
-                        result.issuerDid = data.issuerDid;
+            idpModel.findOne({idpId: idpId}).then((result) => {
+                if (result) {
+                    result.name = data.name;
+                    result.description = data.description;
+                    result.server = data.server;
+                    result.issuerDid = data.issuerDid;
 
-                        result.save((err) => {
-                            if (err) {
-                                console.log(err);
-                                res.status(500).json({ error: 'Unexpected error' });
-                            } else {
-                                addProcessor(result);
-                                res.statusCode = 200;
-                                res.end();
-                            }
-                        });
-                    } else {
-                        res.status(404).json({ error: 'Idp not found' });
-                    }
+                    return result.save().then(() => {
+                        addProcessor(result);
+                        res.statusCode = 200;
+                        res.end();
+                    });
+                } else {
+                    res.status(404).json({ error: 'Idp not found' });
                 }
+            }).catch(() => {
+                res.status(500).json({ error: 'Unexpected error' });
             });
         } catch (e) {
-            console.log(e);
             res.status(500).json({ error: e.message + ' Invalid request' });
         }
     }

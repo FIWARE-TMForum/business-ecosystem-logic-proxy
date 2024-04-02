@@ -1,8 +1,4 @@
 .row
   .col-xs-12
-    .panel.panel-default.z-depth-1
-      iframe.usage-chart(
-        ng-src="{{ detailVM.getUsageURL() | trusted }}"
-        frameborder="0"
-        allowfullscreen
-      )
+    .panel.panel-default.z-depth-1#usage-chart(ng-init="detailVM.initUsageChart()")
+      

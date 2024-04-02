@@ -75,6 +75,14 @@
             .state('stock.product.update.characteristic', {
                 url: '/characteristic',
                 templateUrl: 'stock/product/update/characteristic'
+            })
+            .state('stock.product.update.resources', {
+                url: '/resources',
+                templateUrl: 'stock/product/update/resources'
+            })
+            .state('stock.product.update.services', {
+                url: '/services',
+                templateUrl: 'stock/product/update/services'
             });
     }
 })();

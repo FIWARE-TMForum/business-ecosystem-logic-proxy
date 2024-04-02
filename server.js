@@ -14,8 +14,6 @@ const express = require('express');
 const fs = require('fs');
 const https = require('https');
 const i18n = require('i18n-2');
-const indexes = require('./lib/indexes');
-const inventorySubscription = require('./lib/inventory_subscription');
 const logger = require('./lib/logger').logger.getLogger('Server');
 const mongoose = require('mongoose');
 const onFinished = require('on-finished');
@@ -36,8 +34,8 @@ const debug = !(process.env.NODE_ENV == 'production');
 const OAUTH2_CAME_FROM_FIELD = 'came_from_path';
 
 const PORT = config.https.enabled
-    ? config.https.port || 443 // HTTPS
-    : config.port || 80; // HTTP
+	? config.https.port || 443 // HTTPS
+	: config.port || 80; // HTTP
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
@@ -65,14 +63,11 @@ if (config.mongoDb.user && config.mongoDb.password) {
 const mongoUrl =
     'mongodb://' + mongoCredentials + config.mongoDb.server + ':' + config.mongoDb.port + '/' + config.mongoDb.db;
 
-mongoose.connect(
-    mongoUrl,
-    function(err) {
-        if (err) {
-            logger.error('Cannot connect to MongoDB - ' + err.name + ' (' + err.code + '): ' + err.message);
-        }
-    }
-);
+mongoose.connect(mongoUrl).then(() => {
+    logger.info('Connection with MongoDB created');
+}).catch((err) => {
+    logger.error('Cannot connect to MongoDB - ' + err.name + ' (' + err.code + '): ' + err.message);
+})
 
 mongoose.connection.on('disconnected', function() {
     logger.error('Connection with MongoDB lost');
@@ -161,6 +156,29 @@ var importPath = config.theme || !debug ? './static/public/imports' : './public/
 var imports = require(importPath).imports;
 
 /////////////////////////////////////////////////////////////////////
+//////////////////////////////// APIs ///////////////////////////////
+/////////////////////////////////////////////////////////////////////
+
+// Middleware: Add CORS headers. Handle OPTIONS requests.
+app.use(function(req, res, next) {
+    'use strict';
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'HEAD, POST, GET, PATCH, PUT, OPTIONS, DELETE');
+    res.header('Access-Control-Allow-Headers', 'origin, content-type, X-Auth-Token, Tenant-ID, Authorization');
+
+    if (req.method == 'OPTIONS') {
+        utils.log(logger, 'debug', req, 'CORS request');
+
+        res.status(200);
+        res.header('Content-Length', '0');
+        res.send();
+        res.end();
+    } else {
+        next();
+    }
+});
+
+/////////////////////////////////////////////////////////////////////
 ////////////////////////////// PASSPORT /////////////////////////////
 /////////////////////////////////////////////////////////////////////
 
@@ -221,7 +239,15 @@ app.get('/auth/' + config.oauth2.provider + '/callback', passport.authenticate(c
     var state = JSON.parse(base64url.decode(req.query.state));
     var redirectPath = state[OAUTH2_CAME_FROM_FIELD] !== undefined ? state[OAUTH2_CAME_FROM_FIELD] : '/';
 
-    res.redirect(redirectPath);
+    if (redirectPath != '/' || config.externalPortal == null || config.externalPortal == '') {
+        res.redirect(redirectPath)
+    } else {
+        res.header('Access-Control-Allow-Origin', config.externalPortal)
+        res.header("Access-Control-Allow-Credentials", true);
+
+        //res.header('Authorization', 'Bearer '+ req.user.accessToken);
+        res.redirect(`${config.externalPortal}/dashboard?token=` + req.user.accessToken);
+    }
 });
 
 let idps = {
@@ -260,7 +286,10 @@ if (config.siop.enabled) {
     passport.use(config.siop.provider, siopAuth.STRATEGY);
 
     app.get(`/login/${config.siop.provider}`, (req, res) => {
-        const encodedState = getOAuth2State(utils.getCameFrom(req));
+        //const encodedState = getOAuth2State(utils.getCameFrom(req));
+        // Use a unique uuid for encoding the state, so we dont have collisions
+        // between users using the SIOP authentication
+        const encodedState = uuidv4();
         res.render("siop.jade",  {
             cssFilesToInject: imports.cssFilesToInject,
             title: 'VC Login',
@@ -277,7 +306,8 @@ if (config.siop.enabled) {
     });
 
     app.get(config.siop.pollPath, (req, res, next) => {
-        const encodedState = getOAuth2State(utils.getCameFrom(req));
+        // const encodedState = getOAuth2State(utils.getCameFrom(req));
+        const encodedState = req.query.state
         passport.authenticate(config.siop.provider, { poll: true, state: encodedState })(req, res, next);
     });
 }
@@ -341,7 +371,6 @@ app.post(config.shoppingCartPath + '/empty', shoppingCart.empty);
 /////////////////////////////////////////////////////////////////////
 
 app.get('/version', management.getVersion);
-app.get('/' + config.endpoints.management.path + '/count/:size', management.getCount);
 
 /////////////////////////////////////////////////////////////////////
 ///////////////////////// AUTHORIZE SERVICE /////////////////////////
@@ -427,11 +456,16 @@ var renderTemplate = function(req, res, viewName) {
         contextPath: config.portalPrefix,
         proxyPath: config.proxyPrefix,
         catalogPath: config.endpoints.catalog.path,
+        resourcePath: config.endpoints.resource.path,
+        usagePath: config.endpoints.usage.path,
+        serviceCatalogPath: config.endpoints.service.path,
         orderingPath: config.endpoints.ordering.path,
         inventoryPath: config.endpoints.inventory.path,
+        resourceInventoryPath: config.endpoints.resourceInventory.path,
+        serviceInventoryPath: config.endpoints.serviceInventory.path,
         chargingPath: config.endpoints.charging.path,
         partyPath: config.endpoints.party.path,
-        billingPath: config.endpoints.billing.path,
+        billingPath: config.endpoints.account.path,
         customerPath: config.endpoints.customer.path,
         shoppingCartPath: config.shoppingCartPath,
         authorizeServicePath: config.authorizeServicePath,
@@ -476,42 +510,20 @@ app.get(config.portalPrefix + '/payment', ensureAuthenticated, function(req, res
     renderTemplate(req, res, 'app-payment');
 });
 
-/////////////////////////////////////////////////////////////////////
-//////////////////////////////// APIs ///////////////////////////////
-/////////////////////////////////////////////////////////////////////
-
-var inventorySubscriptionPath = config.proxyPrefix + '/create/inventory';
-app.post(config.proxyPrefix + inventorySubscriptionPath, inventorySubscription.postNotification);
-inventorySubscription
-    .createSubscription(inventorySubscriptionPath)
-    .then(() => {
-        console.log('Subscribed to inventory hub!');
-    })
-    .catch((e) => {
-        console.log(e);
-    });
-
-/////////////////////////////////////////////////////////////////////
-//////////////////////////////// APIs ///////////////////////////////
-/////////////////////////////////////////////////////////////////////
-
-// Middleware: Add CORS headers. Handle OPTIONS requests.
-app.use(function(req, res, next) {
-    'use strict';
-    res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Methods', 'HEAD, POST, GET, PATCH, PUT, OPTIONS, DELETE');
-    res.header('Access-Control-Allow-Headers', 'origin, content-type, X-Auth-Token, Tenant-ID, Authorization');
-
-    if (req.method == 'OPTIONS') {
-        utils.log(logger, 'debug', req, 'CORS request');
-
-        res.status(200);
-        res.header('Content-Length', '0');
-        res.send();
-        res.end();
-    } else {
-        next();
-    }
+app.get('/logintoken', authMiddleware.headerAuthentication, function(req, res) {
+    console.log('---- REQ USER ANGULAR --------------------')    
+    console.log(req.headers.authorization)
+    const authToken = utils.getAuthToken(req.headers);
+    console.log(authToken)
+    console.log(req.user)
+    console.log(req.user.refreshToken)
+    console.log(req.isAuthenticated())
+    //ADDED:
+    res.header('Access-Control-Allow-Origin', 'http://localhost:4200')
+    //res.setHeader("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Credentials", true);
+    console.log('----------------------------------------------------------------------')
+    res.json(req.user)
 });
 
 // Public Paths are not protected by the Proxy
@@ -520,7 +532,6 @@ for (var p in config.publicPaths) {
     app.all(config.proxyPrefix + '/' + config.publicPaths[p], tmf.public);
 }
 
-console.log('Now the paths ==== ');
 app.all(/^\/(?!(login|auth))(.*)\/?$/, authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, function(
     req,
     res,
@@ -571,97 +582,68 @@ app.use(function(err, req, res, next) {
 //////////////////////////// START SERVER ///////////////////////////
 /////////////////////////////////////////////////////////////////////
 
-// Initialize indexes
-indexes.init().then(function() {
-    logger.info('Business Ecosystem Logic Proxy starting on port ' + PORT);
-    if (config.https.enabled === true) {
+logger.info('Business Ecosystem Logic Proxy starting on port ' + PORT);
+if (config.https.enabled === true) {
 
-        var options = {
-            secureOptions: constants.SSL_OP_NO_SSLv3 | constants.SSL_OP_NO_SSLv2,
-            ciphers: [
-                "ECDHE-RSA-AES256-SHA384",
-                "DHE-RSA-AES256-SHA384",
-                "ECDHE-RSA-AES256-SHA256",
-                "DHE-RSA-AES256-SHA256",
-                "ECDHE-RSA-AES128-SHA256",
-                "DHE-RSA-AES128-SHA256",
-                "HIGH",
-                "!aNULL",
-                "!eNULL",
-                "!EXPORT",
-                "!DES",
-                "!RC4",
-                "!MD5",
-                "!PSK",
-                "!SRP",
-                "!CAMELLIA"
-            ].join(':'),
-            honorCipherOrder: true,
-            key: fs.readFileSync(config.https.keyFile),
-            cert: fs.readFileSync(config.https.certFile),
-            ca: fs.readFileSync(config.https.caFile)
-        };
+    var options = {
+        secureOptions: constants.SSL_OP_NO_SSLv3 | constants.SSL_OP_NO_SSLv2,
+        ciphers: [
+            "ECDHE-RSA-AES256-SHA384",
+            "DHE-RSA-AES256-SHA384",
+            "ECDHE-RSA-AES256-SHA256",
+            "DHE-RSA-AES256-SHA256",
+            "ECDHE-RSA-AES128-SHA256",
+            "DHE-RSA-AES128-SHA256",
+            "HIGH",
+            "!aNULL",
+            "!eNULL",
+            "!EXPORT",
+            "!DES",
+            "!RC4",
+            "!MD5",
+            "!PSK",
+            "!SRP",
+            "!CAMELLIA"
+        ].join(':'),
+        honorCipherOrder: true,
+        key: fs.readFileSync(config.https.keyFile),
+        cert: fs.readFileSync(config.https.certFile),
+        ca: fs.readFileSync(config.https.caFile)
+    };
 
-        https.createServer(options, function(req,res) {
-            app.handle(req, res);
-        }).listen(app.get('port'), onlistening);
-    } else {
-        app.listen(app.get('port'), onlistening);
-    }
-}).catch(function() {
-    logger.error('CRITICAL: The indexes could not be created, the server is not starting');
-});
-
+    https.createServer(options, function(req,res) {
+        app.handle(req, res);
+    }).listen(app.get('port'), onlistening);
+} else {
+    app.listen(app.get('port'), onlistening);
+}
 
 function onlistening() {
-    var request = require('request');
-    var urldata = config.endpoints.charging;
+    const axios = require('axios');
+    const urldata = config.endpoints.charging;
+    const expectedData = ['chargePeriods', 'currencyCodes']
 
-    Promise.all([
-        new Promise(function(resolve, reject) {
-            var uri = url.format({
-                protocol: urldata.appSsl ? 'https' : 'http',
-                hostname: urldata.host,
-                port: urldata.port,
-                pathname: '/' + urldata.path + '/api/assetManagement/chargePeriods/'
-            });
-
-            request(uri, function(err, res, body) {
-                if (err || res.statusCode != 200) {
-                    reject('Failed to retrieve charge periods');
-                } else {
-                    resolve(JSON.parse(body));
-                }
-            });
-        }),
-        new Promise(function(resolve, reject) {
-            var uri = url.format({
-                protocol: urldata.appSsl ? 'https' : 'http',
-                hostname: urldata.host,
-                port: urldata.port,
-                pathname: '/' + urldata.path + '/api/assetManagement/currencyCodes/'
-            });
-
-            request(uri, function(err, res, body) {
-                if (err || res.statusCode != 200) {
-                    reject('Failed to retrieve currency codes');
-                } else {
-                    resolve(JSON.parse(body));
-                }
-            });
-        })
-    ]).then(
+    Promise.all(expectedData.map((data) => {
+        const uri = url.format({
+            protocol: urldata.appSsl ? 'https' : 'http',
+            hostname: urldata.host,
+            port: urldata.port,
+            pathname: `/${urldata.path}/api/assetManagement/${data}/`
+        });
+        return axios.get(uri)
+    })).then(
         function(result) {
-            app.locals.chargePeriods = result[0].map(function(cp) {
+            app.locals.chargePeriods = result[0].data.map(function(cp) {
                 return cp.title + ':' + cp.value;
             });
-            app.locals.currencyCodes = result[1].map(function(cc) {
+            app.locals.currencyCodes = result[1].data.map(function(cc) {
                 return cc.value + ':' + cc.title;
             });
-        },
-        function(reason) {
-            logger.error(reason);
+            logger.info("Charging info loaded")
         }
-    );
+    ).catch((reason) => {
+        logger.error("Cannot connect to the charging backend");
+        setTimeout(onlistening, 5000);
+    });
 }
 })();

@@ -17,7 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-const { json } = require('body-parser');
 const proxyquire = require('proxyquire');
 
 describe('IDPs API', () => {
@@ -49,9 +48,9 @@ describe('IDPs API', () => {
             };
 
             const schema = {
-                findOne: (query, callback) => {
+                findOne: (query) => {
                     querysend = query;
-                    callback(null, result);
+                    return Promise.resolve(result)
                 }
             };
 
@@ -89,7 +88,7 @@ describe('IDPs API', () => {
         it('should return a 500 error if find operation fails', (done) => {
             let querysend = null;
             const schema = {
-                findOne: (query, callback) => {
+                findOne: (query) => {
                     querysend = query;
                     throw new Error('Unexpected error');
                 },
@@ -103,9 +102,9 @@ describe('IDPs API', () => {
         it('should return a 500 error if find operation returns an error', (done) => {
             let querysend = null;
             const schema = {
-                findOne: (query, callback) => {
+                findOne: (query) => {
                     querysend = query;
-                    callback('error', null);
+                    return Promise.reject('error')
                 },
                 query: () => {
                     return querysend
@@ -117,9 +116,9 @@ describe('IDPs API', () => {
         it('should return a 404 error if the IDP is not found', (done) => {
             let querysend = null;
             const schema = {
-                findOne: (query, callback) => {
+                findOne: (query) => {
                     querysend = query;
-                    callback(null, null);
+                    return Promise.resolve(null)
                 },
                 query: () => {
                     return querysend
@@ -151,7 +150,7 @@ describe('IDPs API', () => {
             const schema = {
                 find: (query, callback) => {
                     querysend = query;
-                    callback(null, result);
+                    return Promise.resolve(result)
                 }
             };
 
@@ -206,7 +205,7 @@ describe('IDPs API', () => {
         it('should return a 500 error if find operation fails', (done) => {
             let querysend = null;
             const schema = {
-                find: (query, callback) => {
+                find: (query) => {
                     querysend = query;
                     throw new Error('Unexpected error');
                 },
@@ -220,9 +219,9 @@ describe('IDPs API', () => {
         it('should return a 500 error if find operation returns an error', (done) => {
             let querysend = null;
             const schema = {
-                find: (query, callback) => {
+                find: (query) => {
                     querysend = query;
-                    callback('error', null);
+                    return Promise.reject('error')
                 },
                 query: () => {
                     return querysend
@@ -264,8 +263,8 @@ describe('IDPs API', () => {
             }
 
             const schemaInstance = {
-                save: (callback) => {
-                    callback();
+                save: () => {
+                    return Promise.resolve()
                 }
             };
             const schema = function () {

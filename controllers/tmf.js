@@ -1,4 +1,6 @@
-/* Copyright (c) 2015 - 2018 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 CoNWeT Lab., Universidad Politécnica de Madrid
+ *
+ * Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -17,176 +19,196 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var config = require('./../config'),
-    // TMF APIs
-    catalog = require('./tmf-apis/catalog').catalog,
-    inventory = require('./tmf-apis/inventory').inventory,
-    ordering = require('./tmf-apis/ordering').ordering,
-    charging = require('./tmf-apis/charging').charging,
-    rss = require('./tmf-apis/rss').rss,
-    party = require('./tmf-apis/party').party,
-    usageManagement = require('./tmf-apis/usageManagement').usageManagement,
-    billing = require('./tmf-apis/billing').billing,
-    customer = require('./tmf-apis/customer').customer,
-    // Other dependencies
-    logger = require('./../lib/logger').logger.getLogger('TMF'),
-    request = require('request'),
-    utils = require('./../lib/utils');
+const config = require('./../config')
+
+// TMF APIs
+const catalog = require('./tmf-apis/catalog').catalog
+const inventory = require('./tmf-apis/inventory').inventory
+const serviceInventory = require('./tmf-apis/serviceInventory').serviceInventory
+const resourceInventory = require('./tmf-apis/resourceInventory').resourceInventory
+const ordering = require('./tmf-apis/ordering').ordering
+const charging = require('./tmf-apis/charging').charging
+const rss = require('./tmf-apis/rss').rss
+const party = require('./tmf-apis/party').party
+const usageManagement = require('./tmf-apis/usageManagement').usageManagement
+const account = require('./tmf-apis/account').account
+const customer = require('./tmf-apis/customer').customer
+const serviceCatalog = require('./tmf-apis/serviceCatalog').serviceCatalog
+const resource = require('./tmf-apis/resource').resource
+
+// Other dependencies
+const logger = require('./../lib/logger').logger.getLogger('TMF')
+const axios = require('axios')
+const utils = require('./../lib/utils')
 
 function tmf() {
-    var apiControllers = {};
-    apiControllers[config.endpoints.catalog.path] = catalog;
-    apiControllers[config.endpoints.ordering.path] = ordering;
-    apiControllers[config.endpoints.inventory.path] = inventory;
-    apiControllers[config.endpoints.charging.path] = charging;
-    apiControllers[config.endpoints.rss.path] = rss;
-    apiControllers[config.endpoints.party.path] = party;
-    apiControllers[config.endpoints.usage.path] = usageManagement;
-    apiControllers[config.endpoints.billing.path] = billing;
-    apiControllers[config.endpoints.customer.path] = customer;
+	const apiControllers = {};
+	apiControllers[config.endpoints.catalog.path] = catalog;
+	apiControllers[config.endpoints.ordering.path] = ordering;
+	apiControllers[config.endpoints.inventory.path] = inventory;
+	apiControllers[config.endpoints.serviceInventory.path] = serviceInventory;
+	apiControllers[config.endpoints.resourceInventory.path] = resourceInventory;
+	apiControllers[config.endpoints.charging.path] = charging;
+	apiControllers[config.endpoints.rss.path] = rss;
+	apiControllers[config.endpoints.party.path] = party;
+	apiControllers[config.endpoints.usage.path] = usageManagement;
+	apiControllers[config.endpoints.account.path] = account;
+	apiControllers[config.endpoints.customer.path] = customer;
+	apiControllers[config.endpoints.service.path] = serviceCatalog;
+	apiControllers[config.endpoints.resource.path] = resource;
 
-    var getAPIName = function(apiUrl) {
-        return apiUrl.split('/')[1];
-    };
+	const newApis = ['party', 'catalog', 'ordering', 'inventory', 'service', 'resource', 'account', 'serviceInventory', 'resourceInventory', 'usage']
 
-    var sendError = function(res, err) {
-        var status = err.status;
-        var errMsg = err.message;
+	const getAPIName = function(apiUrl) {
+		return apiUrl.split('/')[1];
+	};
 
-        res.status(status);
-        res.json({ error: errMsg });
-        res.end();
-    };
+	const sendError = function(res, err) {
+		const status = err.status;
+		const errMsg = err.message;
 
-    var redirectRequest = function(req, res) {
-        if (req.user) {
-            utils.attachUserHeaders(req.headers, req.user);
-        }
+		res.status(status);
+		res.json({ error: errMsg });
+		res.end();
+	};
 
-        var api = getAPIName(req.apiUrl);
+	const redirectRequest = function(req, res) {
+		let url;
+		const api = getAPIName(req.apiUrl);
 
-        var url = utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + req.apiUrl;
+		if (req.user) {
+			utils.attachUserHeaders(req.headers, req.user);
+		}
 
-        var options = {
-            url: url,
-            method: req.method,
-            encoding: null,
-            headers: utils.proxiedRequestHeaders(req)
-        };
+		if (newApis.indexOf(api) >= 0) {
+			url = utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + req.apiUrl.replace(`/${api}`, '');
+		} else {
+			url = utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + req.apiUrl;
+		}
 
-        if (typeof req.body === 'string') {
-            options.body = req.body;
-        }
+		// TODO: provide a general feature for rewriting paths
+		if (api == 'rss') {
+			url = url.replace('rss', 'charging')
+		}
 
-        // PROXY THE REQUEST
-        request(options, function(err, response, body) {
-            var completeRequest = function(result) {
-                res.status(result.status);
+		const options = {
+			url: url,
+			method: req.method,
+			headers: utils.proxiedRequestHeaders(req)
+		};
 
-                for (var header in result.headers) {
-                    res.setHeader(header, result.headers[header]);
-                }
+		if (typeof req.body === 'string') {
+			options.data = req.body;
+		}
 
-                res.write(result.body);
-                res.end();
-            };
+		if (url.indexOf('/media/') >= 0) {
+			options.responseType = 'arraybuffer'
+		}
 
-            if (err) {
-                res.status(504).json({ error: 'Service unreachable' });
-            } else {
-                var result = {
-                    status: response.statusCode,
-                    headers: response.headers,
-                    hostname: req.hostname,
-                    secure: req.secure,
-                    body: body,
-                    user: req.user,
-                    method: req.method,
-                    url: req.url,
-                    id: req.id,
-                    apiUrl: req.apiUrl,
-                    connection: req.connection,
-                    reqBody: req.body
-                };
+		// PROXY THE REQUEST
+		axios.request(options).then((response) => {
+			const completeRequest = function(resp) {
+				res.status(resp.status);
 
-                var header = req.get('X-Terms-Accepted');
+				for (let header in resp.headers) {
+					res.setHeader(header, resp.headers[header]);
+				}
 
-                if (result.user != null && header != null) {
-                    result.user.agreedOnTerms = header.toLowerCase() === 'true';
-                }
+				if (resp.headers['content-type'].toLowerCase().indexOf('application/json') >= 0 || resp.headers['content-type'].toLowerCase().indexOf('application/ld+json') >= 0) {
+					res.json(resp.body)
+				} else {
+					res.write(resp.body);
+					res.end();
+				}
+			};
 
-                // Execute postValidation if status code is lower than 400 and the
-                // function is defined
-                if (
-                    response.statusCode < 400 &&
-                    apiControllers[api] !== undefined &&
-                    apiControllers[api].executePostValidation
-                ) {
-                    apiControllers[api].executePostValidation(result, function(err) {
-                        var basicLogMessage = 'Post-Validation (' + api + '): ';
+			const result = {
+				status: response.status,
+				headers: response.headers,
+				hostname: req.hostname,
+				secure: req.secure,
+				body: response.data,
+				user: req.user,
+				method: req.method,
+				url: req.url,
+				id: req.id,
+				apiUrl: req.apiUrl,
+				connection: req.connection,
+				reqBody: req.body,
+				query: req.query
+			};
 
-                        if (err) {
-                            utils.log(logger, 'warn', req, basicLogMessage + err.message);
-                            res.status(err.status).json({ error: err.message });
-                        } else {
-                            utils.log(logger, 'info', req, basicLogMessage + 'OK');
-                            completeRequest(result);
-                        }
-                    });
-                } else if (
-                    response.statusCode >= 400 &&
-                    apiControllers[api] !== undefined &&
-                    apiControllers[api].handleAPIError
-                ) {
-                    apiControllers[api].handleAPIError(result, (err) => {
-                        utils.log(logger, 'warn', req, 'Handling API error (' + api + ')');
+			const header = req.get('X-Terms-Accepted');
 
-                        if (err) {
-                            res.status(err.status).json({ error: err.message });
-                        } else {
-                            completeRequest(result);
-                        }
-                    });
-                } else {
-                    completeRequest(result);
-                }
-            }
-        });
-    };
+			if (result.user != null && header != null) {
+				result.user.agreedOnTerms = header.toLowerCase() === 'true';
+			}
 
-    var checkPermissions = function(req, res) {
-        var api = getAPIName(req.apiUrl);
+			const handleValidation = (err) => {
+				const basicLogMessage = 'Post-Validation (' + api + '): ';
 
-        if (apiControllers[api] === undefined) {
-            utils.log(logger, 'warn', req, 'API ' + api + ' not defined');
+				if (err) {
+					utils.log(logger, 'warn', req, basicLogMessage + err.message);
+					res.status(err.status).json({ error: err.message });
+				} else {
+					utils.log(logger, 'info', req, basicLogMessage + 'OK');
+					completeRequest(result);
+				}
+			}
 
-            sendError(res, {
-                status: 404,
-                message: 'Path not found'
-            });
-        } else {
-            apiControllers[api].checkPermissions(req, function(err) {
-                var basicLogMessage = 'Pre-Validation (' + api + '): ';
+			if (response.status < 400 && apiControllers[api] !== undefined
+				&& apiControllers[api].executePostValidation) {
 
-                if (err) {
-                    utils.log(logger, 'warn', req, basicLogMessage + err.message);
-                    sendError(res, err);
-                } else {
-                    utils.log(logger, 'info', req, basicLogMessage + 'OK');
-                    redirectRequest(req, res);
-                }
-            });
-        }
-    };
+				apiControllers[api].executePostValidation(result, handleValidation)
 
-    var public = function(req, res) {
-        redirectRequest(req, res);
-    };
+			} else if (response.status >= 400 && apiControllers[api] !== undefined
+				&& apiControllers[api].handleAPIError) {
 
-    return {
-        checkPermissions: checkPermissions,
-        public: public
-    };
+				utils.log(logger, 'warn', req, 'Handling API error (' + api + ')');
+				apiControllers[api].handleAPIError(result, handleValidation)
+			} else {
+				completeRequest(result);
+			}
+		}).catch((err) => {
+			console.log(err)
+			utils.log(logger, 'error', req, 'Proxy error: ' + err.message);
+			res.status(504).json({ error: 'Service unreachable' });
+		})
+	};
+
+	const checkPermissions = function(req, res) {
+		const api = getAPIName(req.apiUrl);
+
+		if (apiControllers[api] === undefined) {
+			utils.log(logger, 'warn', req, 'API ' + api + ' not defined');
+
+			sendError(res, {
+				status: 404,
+				message: 'Path not found'
+			});
+		} else {
+			apiControllers[api].checkPermissions(req, function(err) {
+				const basicLogMessage = 'Pre-Validation (' + api + '): ';
+
+				if (err) {
+					utils.log(logger, 'warn', req, basicLogMessage + err.message);
+					sendError(res, err);
+				} else {
+					utils.log(logger, 'info', req, basicLogMessage + 'OK');
+					redirectRequest(req, res);
+				}
+			});
+		}
+	};
+
+	var public = function(req, res) {
+		redirectRequest(req, res);
+	};
+
+	return {
+		checkPermissions: checkPermissions,
+		public: public
+	};
 }
 
 exports.tmf = tmf;

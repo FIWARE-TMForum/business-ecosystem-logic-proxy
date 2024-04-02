@@ -1,4 +1,6 @@
-/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 CoNWeT Lab., Universidad Politécnica de Madrid
+ *
+ * Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -41,7 +43,7 @@
             'ProductSpec', 'Asset', 'AssetType', 'Utils', ProductImportController])
 
         .controller('ProductUpdateCtrl', ['$state', '$scope', '$rootScope', 'EVENTS', 'PROMISE_STATUS', 'ProductSpec',
-            'Utils', 'Asset', ProductUpdateController])
+            'Utils', 'Asset', 'ResourceSpec', 'ServiceSpecification', ProductUpdateController])
 
         .controller('ProductUpgradeCtrl', ['$state', '$rootScope', '$element', 'AssetType', 'ProductSpec', 'Utils',
             'EVENTS', ProductUpgradeController])
@@ -60,7 +62,7 @@
         vm.STATUS = DATA_STATUS;
 
         vm.offset = -1;
-        vm.size = -1;
+        vm.limit = -1;
         vm.list = [];
 
         vm.list = [];
@@ -123,8 +125,9 @@
         }
 
         function getElementsLength() {
-            var params = getParams();
-            return ProductSpec.count(params);
+            //var params = getParams();
+            //return ProductSpec.count(params);
+            return Promise.resolve(10)
         }
 
         function setFilters(newFilters) {
@@ -148,7 +151,7 @@
                 var params = getParams();
 
                 params.offset = vm.offset;
-                params.size = vm.size;
+                params.limit = vm.limit;
 
                 ProductSpec.search(params).then(
                     function(productList) {
@@ -389,7 +392,7 @@
         }
 
         function createCharacteristicValue() {
-            vm.characteristicValue.default = getDefaultValueOf(vm.characteristic) == null;
+            vm.characteristicValue.isDefault = getDefaultValueOf(vm.characteristic) == null;
             vm.characteristic.productSpecCharacteristicValue.push(vm.characteristicValue);
             vm.characteristicValue = angular.copy(characteristicValue);
 
@@ -404,8 +407,8 @@
             var value = vm.characteristic.productSpecCharacteristicValue[index];
             vm.characteristic.productSpecCharacteristicValue.splice(index, 1);
 
-            if (value.default && vm.characteristic.productSpecCharacteristicValue.length) {
-                vm.characteristic.productSpecCharacteristicValue[0].default = true;
+            if (value.isDefault && vm.characteristic.productSpecCharacteristicValue.length) {
+                vm.characteristic.productSpecCharacteristicValue[0].isDefault = true;
             }
 
             if (vm.characteristic.productSpecCharacteristicValue.length <= 1) {
@@ -417,7 +420,7 @@
             var i, defaultValue;
 
             for (i = 0; i < characteristic.productSpecCharacteristicValue.length; i++) {
-                if (characteristic.productSpecCharacteristicValue[i].default) {
+                if (characteristic.productSpecCharacteristicValue[i].isDefault) {
                     defaultValue = characteristic.productSpecCharacteristicValue[i];
                 }
             }
@@ -451,10 +454,10 @@
             var value = getDefaultValueOf(vm.characteristic);
 
             if (value != null) {
-                value.default = false;
+                value.isDefault = false;
             }
 
-            vm.characteristic.productSpecCharacteristicValue[index].default = true;
+            vm.characteristic.productSpecCharacteristicValue[index].isDefault = true;
         }
 
         AssetType.search().then(function (typeList) {
@@ -467,7 +470,7 @@
                     description: "Type of the digital asset described in this product specification"
                 }));
                 vm.digitalChars[0].productSpecCharacteristicValue.push(ProductSpec.createCharacteristicValue({
-                    default: true,
+                    isDefault: true,
                     value: typeList[0].name
                 }));
                 vm.digitalChars.push(ProductSpec.createCharacteristic({
@@ -475,14 +478,14 @@
                     description: "Media type of the digital asset described in this product specification"
                 }));
                 vm.digitalChars[1].productSpecCharacteristicValue.push(ProductSpec.createCharacteristicValue({
-                    default: true
+                    isDefault: true
                 }));
                 vm.digitalChars.push(ProductSpec.createCharacteristic({
                     name: "Location",
                     description: "URL pointing to the digital asset described in this product specification"
                 }));
                 vm.digitalChars[2].productSpecCharacteristicValue.push(ProductSpec.createCharacteristicValue({
-                    default: true
+                    isDefault: true
                 }));
                 vm.currentType = typeList[0];
                 vm.currFormat = vm.currentType.formats[0];
@@ -576,7 +579,7 @@
             }));
             vm.digitalChars[0].productSpecCharacteristicValue = [];
             vm.digitalChars[0].productSpecCharacteristicValue.push(ProductSpec.createCharacteristicValue({
-                default: true,
+                isDefault: true,
                 value: "Basic Service"
             }));
             vm.digitalChars.push(ProductSpec.createCharacteristic({
@@ -584,7 +587,7 @@
                 description: "Media type of the digital asset described in this product specification"
             }));
             vm.digitalChars[1].productSpecCharacteristicValue.push(ProductSpec.createCharacteristicValue({
-                default: true
+                isDefault: true
             }));
             vm.digitalChars.push(ProductSpec.createCharacteristic({
                 name: "Location",
@@ -610,7 +613,7 @@
                 vm.data.productNumber = productNumber;
                 vm.data.description = response.data;
                 vm.digitalChars[2].productSpecCharacteristicValue.push(ProductSpec.createCharacteristicValue({
-                    default: true,
+                    isDefault: true,
                     value: vm.datastore.baseUrl + "/dataset/" + packageName
                 }));
                 saveProduct(vm, createPromise, ProductSpec, $state, $rootScope, Utils, EVENTS);
@@ -875,7 +878,7 @@
                     );
                     vm.digitalChars[0].productSpecCharacteristicValue.push(
                         ProductSpec.createCharacteristicValue({
-                            default: true,
+                            isDefault: true,
                             value: typeList[0].name
                         })
                     );
@@ -887,7 +890,7 @@
                     );
                     vm.digitalChars[1].productSpecCharacteristicValue.push(
                         ProductSpec.createCharacteristicValue({
-                            default: true
+                            isDefault: true
                         })
                     );
                     vm.digitalChars.push(
@@ -898,7 +901,7 @@
                     );
                     vm.digitalChars[2].productSpecCharacteristicValue.push(
                         ProductSpec.createCharacteristicValue({
-                            default: true
+                            isDefault: true
                         })
                     );
                     vm.digitalChars.push(
@@ -909,7 +912,7 @@
                     );
                     vm.digitalChars[3].productSpecCharacteristicValue.push(
                         ProductSpec.createCharacteristicValue({
-                            default: true
+                            isDefault: true
                         })
                     );
                     vm.currentType = typeList[0];
@@ -954,8 +957,20 @@
                 templateUrl: 'stock/product/create/assets'
             },
             {
+                title: 'Compliance profile',
+                templateUrl: 'stock/product/create/compliance'
+            },
+            {
                 title: 'Characteristics',
                 templateUrl: 'stock/product/create/characteristics'
+            },
+            {
+                title: 'Resource Specs.',
+                templateUrl: 'stock/product/create/resources'
+            },
+            {
+                title: 'Service Specs.',
+                templateUrl: 'stock/product/create/services'
             },
             {
                 title: 'Attachments',
@@ -987,6 +1002,14 @@
 
         vm.characteristicEnabled = false;
         vm.pictureFormat = 'url';
+
+        vm.compliance = {
+            cloudSecurity: null,
+            cloudRulebook: null,
+            iso27001: null,
+            iso27017: null,
+            iso17025: null
+        }
 
         vm.create = create;
 
@@ -1024,6 +1047,18 @@
         vm.loadPictureController = loadPictureController;
         vm.loadFileController = loadFileController;
 
+        vm.isActiveResource = isActiveResource;
+        vm.handleResource = handleResource;
+
+        vm.isActiveService = isActiveService;
+        vm.handleService = handleService;
+
+        const resources = []
+        const services = []
+
+        this.dataRes = []
+        this.dataServ = []
+
         function createRelationship(data) {
             var deferred = $q.defer();
 
@@ -1045,6 +1080,7 @@
         /* CHARACTERISTICS METHODS */
 
         function createCharacteristic() {
+            vm.characteristic.id = `urn:ngsi-ld:characteristic:${uuid.v4()}`;
             vm.characteristics.push(vm.characteristic);
             vm.characteristic = angular.copy(characteristic);
             vm.characteristicValue = angular.copy(characteristicValue);
@@ -1057,7 +1093,7 @@
         }
 
         function createCharacteristicValue() {
-            vm.characteristicValue.default = getDefaultValueOf(vm.characteristic) == null;
+            vm.characteristicValue.isDefault = getDefaultValueOf(vm.characteristic) == null;
             vm.characteristic.productSpecCharacteristicValue.push(vm.characteristicValue);
             vm.characteristicValue = angular.copy(characteristicValue);
 
@@ -1072,8 +1108,8 @@
             var value = vm.characteristic.productSpecCharacteristicValue[index];
             vm.characteristic.productSpecCharacteristicValue.splice(index, 1);
 
-            if (value.default && vm.characteristic.productSpecCharacteristicValue.length) {
-                vm.characteristic.productSpecCharacteristicValue[0].default = true;
+            if (value.isDefault && vm.characteristic.productSpecCharacteristicValue.length) {
+                vm.characteristic.productSpecCharacteristicValue[0].isDefault = true;
             }
 
             if (vm.characteristic.productSpecCharacteristicValue.length <= 1) {
@@ -1085,7 +1121,7 @@
             var i, defaultValue;
 
             for (i = 0; i < characteristic.productSpecCharacteristicValue.length; i++) {
-                if (characteristic.productSpecCharacteristicValue[i].default) {
+                if (characteristic.productSpecCharacteristicValue[i].isDefault) {
                     defaultValue = characteristic.productSpecCharacteristicValue[i];
                 }
             }
@@ -1124,10 +1160,10 @@
             var value = getDefaultValueOf(vm.characteristic);
 
             if (value != null) {
-                value.default = false;
+                value.isDefault = false;
             }
 
-            vm.characteristic.productSpecCharacteristicValue[index].default = true;
+            vm.characteristic.productSpecCharacteristicValue[index].isDefault = true;
         }
 
         function getAssetTypes() {
@@ -1196,10 +1232,67 @@
             }
         });
 
+        function buildCharacteristic(name, value, description) {
+            return {
+                id: `urn:ngsi-ld:characteristic:${uuid.v4()}`,
+                configurable: false,
+                description: description,
+                name: name,
+                valueType: "string",
+                productSpecCharacteristicValue: [
+                    {
+                        "isDefault": true,
+                        "value": value
+                    }
+                ]
+            }
+        }
+
         function saveProduct() {
             // Append product characteristics
             var data = angular.copy(vm.data);
             data.productSpecCharacteristic = angular.copy(vm.characteristics);
+
+            if (vm.compliance.cloudRulebook != null) {
+                data.productSpecCharacteristic.push(buildCharacteristic("cloudRulebook", vm.compliance.cloudRulebook,
+                    "The EU Cloud Rulebook certification outlines standardized guidelines and regulations for cloud service providers to ensure compliance with European Union data protection and security requirements"))
+            }
+
+            if (vm.compliance.cloudSecurity != null) {
+                data.productSpecCharacteristic.push(buildCharacteristic("cloudSecurity", vm.compliance.cloudSecurity,
+                    "The EU Cloud Security Certification, in accordance with the ENISA guidelines, assures that cloud service providers adhere to robust security measures, safeguarding data in compliance with European Union standards."))
+            }
+
+            if (vm.compliance.iso27001 != null) {
+                data.productSpecCharacteristic.push(buildCharacteristic("iso27001", vm.compliance.iso27001,
+                    "ISO 27001 is an internationally recognized information security management system (ISMS) standard that provides a systematic approach for managing sensitive company information, ensuring its confidentiality, integrity, and availability"))
+            }
+
+            if (vm.compliance.iso27017 != null) {
+                data.productSpecCharacteristic.push(buildCharacteristic("iso27017", vm.compliance.iso27017,
+                    "ISO/IEC 27017 is a code of practice for information security controls based on ISO/IEC 27002, specifically addressing cloud services, offering guidelines and best practices for implementing effective cloud security management."))
+            }
+
+            if (vm.compliance.iso17025 != null) {
+                data.productSpecCharacteristic.push(buildCharacteristic("iso17025", vm.compliance.iso17025,
+                    "ISO/IEC 17025 is an international standard specifying the general requirements for the competence of testing and calibration laboratories, ensuring they meet rigorous quality management and technical proficiency criteria"))
+            }
+
+            // Append resources
+            data.resourceSpecification = resources.map((resource) => {
+                return {
+                    id: resource,
+                    href: resource
+                }
+            })
+
+            // Append services
+            data.serviceSpecification = services.map((service) => {
+                return {
+                    id: service,
+                    href: service
+                }
+            })
 
             if (vm.isDigital) {
                 data.productSpecCharacteristic = data.productSpecCharacteristic.concat(vm.assetCtl.getDigitalChars());
@@ -1214,7 +1307,7 @@
                     });
     
                     appIdChar.productSpecCharacteristicValue.push(ProductSpec.createCharacteristicValue({
-                        default: true,
+                        isDefault: true,
                         value: appId
                     }));
     
@@ -1239,7 +1332,7 @@
                     }
 
                     fiware_serviceChar.productSpecCharacteristicValue.push(ProductSpec.createCharacteristicValue({
-                        default: true,
+                        isDefault: true,
                         value: fiware_service
                     }));
     
@@ -1260,7 +1353,7 @@
 
                 legalChar.productSpecCharacteristicValue.push(
                     ProductSpec.createCharacteristicValue({
-                        default: true,
+                        isDefault: true,
                         value: title
                     })
                 );
@@ -1268,9 +1361,16 @@
                 data.productSpecCharacteristic.push(legalChar);
             }
 
+            if (data.attachment[0].url == null || data.attachment[0].url == '') {
+                data.attachment.shift()
+            } else {
+                data.attachment[0].id = `urn:ngsi-ld:attachment:${uuid.v4()}`
+            }
+
             vm.extraFiles.forEach(function(extraFile) {
                 data.attachment.push({
-                    type: extraFile.type,
+                    id: `urn:ngsi-ld:attachment:${uuid.v4()}`,
+                    attachmentType: extraFile.type,
                     url: extraFile.href
                 });
             });
@@ -1304,6 +1404,34 @@
 
         function loadFileController() {
             buildFileController(vm, $scope, vm.stepList[4].form, Asset);
+        }
+
+        function isActiveResource(resourceId) {
+            return resources.indexOf(resourceId) >= 0
+        }
+
+        function handleResource(resource) {
+            if (isActiveResource(resource.id)) {
+                resources.splice(resources.indexOf(resource.id), 1)
+                this.dataRes.splice(resources.indexOf(resource.id), 1)
+            } else {
+                resources.push(resource.id)
+                this.dataRes.push(resource)
+            }
+        }
+
+        function isActiveService(serviceId) {
+            return services.indexOf(serviceId) >= 0
+        }
+
+        function handleService(service) {
+            if (isActiveService(service.id)) {
+                services.splice(services.indexOf(service.id), 1)
+                this.dataServ.splice(services.indexOf(service.id), 1)
+            } else {
+                services.push(service.id)
+                this.dataServ.push(service)
+            }
         }
     }
 
@@ -1423,7 +1551,7 @@
         });
     }
 
-    function ProductUpdateController($state, $scope, $rootScope, EVENTS, PROMISE_STATUS, ProductSpec, Utils, Asset) {
+    function ProductUpdateController($state, $scope, $rootScope, EVENTS, PROMISE_STATUS, ProductSpec, Utils, Asset, ResourceSpec, ServiceSpecification) {
         /* jshint validthis: true */
         var digital = false;
         var vm = this;
@@ -1446,6 +1574,19 @@
         vm.removeRelationship = removeRelationship;
         vm.loadPictureController = loadPictureController;
 
+        vm.dataRes = []
+        vm.dataServ = []
+
+        const certs = ["cloudSecurity", "cloudRulebook", "iso27001", "iso27017", "iso17025"]
+
+        vm.compliance = {
+            cloudSecurity: null,
+            cloudRulebook: null,
+            iso27001: null,
+            iso27017: null,
+            iso17025: null
+        }
+
         var detailPromise = ProductSpec.detail($state.params.productId);
         detailPromise.then(
             function(productRetrieved) {
@@ -1464,6 +1605,31 @@
                     }
                     return true;
                 });
+
+                // Load service and resource spec info
+                if (vm.item.resourceSpecification != null) {
+                    Promise.all(vm.item.resourceSpecification.map((res) => {
+                        return ResourceSpec.getResourceSpec(res.id)
+                    })).then((resources) => {
+                        vm.dataRes = resources
+                    })
+                }
+
+                if (vm.item.serviceSpecification != null) {
+                    Promise.all(vm.item.serviceSpecification.map((serv) => {
+                        return ServiceSpecification.getServiceSpecficiation(serv.id)
+                    })).then((services) => {
+                        vm.dataServ = services
+                    })
+                }
+
+                if (vm.item.productSpecCharacteristic != null) {
+                    vm.item.productSpecCharacteristic.forEach((char) => {
+                        if (certs.indexOf(char.name) >= 0) {
+                            vm.compliance[char.name] = char.productSpecCharacteristicValue[0].value
+                        }
+                    })
+                }
             },
             function(response) {
                 vm.error = Utils.parseError(response, 'The requested product could not be retrieved');
@@ -1509,7 +1675,61 @@
 
         var updatePromise = null;
 
+        function buildCharacteristic(name, value, description) {
+            return {
+                id: `urn:ngsi-ld:characteristic:${uuid.v4()}`,
+                configurable: false,
+                description: description,
+                name: name,
+                valueType: "string",
+                productSpecCharacteristicValue: [
+                    {
+                        "isDefault": true,
+                        "value": value
+                    }
+                ]
+            }
+        }
+
         function executeUpdate(dataUpdated) {
+            const characteristics = []
+            const processed = []
+            const descriptions = {
+                cloudRulebook: "The EU Cloud Rulebook certification outlines standardized guidelines and regulations for cloud service providers to ensure compliance with European Union data protection and security requirements",
+                cloudSecurity: "The EU Cloud Security Certification, in accordance with the ENISA guidelines, assures that cloud service providers adhere to robust security measures, safeguarding data in compliance with European Union standards.",
+                iso27001: "ISO 27001 is an internationally recognized information security management system (ISMS) standard that provides a systematic approach for managing sensitive company information, ensuring its confidentiality, integrity, and availability",
+                iso27017: "ISO/IEC 27017 is a code of practice for information security controls based on ISO/IEC 27002, specifically addressing cloud services, offering guidelines and best practices for implementing effective cloud security management.",
+                iso17025: "ISO/IEC 17025 is an international standard specifying the general requirements for the competence of testing and calibration laboratories, ensuring they meet rigorous quality management and technical proficiency criteria"
+            }
+
+            // Process product spec characteristics
+            if (vm.item.productSpecCharacteristic != null) {
+                vm.item.productSpecCharacteristic.forEach((char) => {
+                    if (certs.indexOf(char.name) < 0) {
+                        // Keep the characteristics
+                        characteristics.push(char)
+                    } else if (vm.compliance[char.name] != null && vm.compliance[char.name].length > 0) {
+                        // Update the cert value
+                        char.productSpecCharacteristicValue[0].value = vm.compliance[char.name]
+                        characteristics.push(char)
+                        processed.push(char.name)
+                    }
+                    // ELSE, the certificate was included but not now, so not adding it to the
+                    // patch will remove it
+                })
+            }
+
+            if (processed.length != certs.length) {
+                // New certificates has been added
+                certs.forEach((cert) => {
+                    if (processed.indexOf(cert) < 0 && vm.compliance[cert] != null && vm.compliance[cert].length > 0) {
+                        characteristics.push(buildCharacteristic(cert, vm.compliance[cert], descriptions[cert]))
+                    }
+                })
+            }
+
+            dataUpdated.productSpecCharacteristic = characteristics
+
             updatePromise = ProductSpec.update(vm.item, dataUpdated);
             updatePromise.then(
                 function(productUpdated) {
@@ -1536,7 +1756,8 @@
         }
 
         function updateImage() {
-            if (!angular.equals(vm.item.attachment[0].url, vm.data.attachment[0].url)) {
+            if (vm.item.attachment == null || vm.item.attachment.length == 0 || !angular.equals(vm.item.attachment[0].url, vm.data.attachment[0].url)) {
+                vm.data.attachment[0].attachmentType = "Picture"
                 executeUpdate({
                     attachment: vm.data.attachment
                 });
@@ -1591,7 +1812,7 @@
                     result = characteristicValue.value;
                     break;
                 case ProductSpec.VALUE_TYPES.NUMBER.toLowerCase():
-                    if (characteristicValue.value && characteristicValue.value.length) {
+                    if (characteristicValue.value && characteristicValue.value != '') {
                         result = characteristicValue.value;
                     } else {
                         result = characteristicValue.valueFrom + ' - ' + characteristicValue.valueTo;

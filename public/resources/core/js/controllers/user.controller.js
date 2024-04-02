@@ -1,4 +1,6 @@
-/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 CoNWeT Lab., Universidad Politécnica de Madrid
+ *
+ * Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -115,7 +117,8 @@
             vm.currentUser.name = currUser.name;
             vm.currentUser.email = currUser.email;
             vm.currentUser.id = currUser.id;
-            vm.currentUser.href = User.loggedUser.href.replace(/(individual)\/(.*)/g, 'organization/' + currUser.id);
+            vm.currentUser.partyId = currUser.partyId;
+            vm.currentUser.href = User.loggedUser.href.replace(/(individual)\/(.*)/g, 'organization/' + currUser.partyId);
 
             vm.currentUser.roles = currUser.roles;
 
@@ -131,6 +134,7 @@
 
             vm.currentUser.name = User.loggedUser.name;
             vm.currentUser.id = User.loggedUser.id;
+            vm.currentUser.partyId = User.loggedUser.partyId;
             vm.currentUser.email = User.loggedUser.email;
             vm.currentUser.href = User.loggedUser.href;
             vm.currentUser.roles = User.loggedUser.roles;

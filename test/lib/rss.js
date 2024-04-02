@@ -1,4 +1,6 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 CoNWeT Lab., Universidad Politécnica de Madrid
+ *
+ * Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -17,106 +19,82 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var proxyquire = require('proxyquire');
-
-var testUtils = require('../utils');
+const proxyquire = require('proxyquire');
+const testUtils = require('../utils');
 
 describe('RSS Client', function() {
-    var PROVIDER_URL = '/rss/rss/providers';
-    var MODELS_URL = '/rss/rss/models';
+    const MODELS_URL = '/charging/api/revenueSharing/models';
 
-    var config = testUtils.getDefaultConfig();
+    const config = testUtils.getDefaultConfig();
 
-    var userInfo = {
-        id: 'testuser',
+    const userInfo = {
+        partyId: 'testuser',
         displayName: 'Test user',
         email: 'testuser@email.com'
     };
 
-    var getRssClient = function(request) {
+    const getRssClient = function(request) {
         return proxyquire('../../lib/rss', {
             './../config': config,
             './utils': {
                 attachUserHeaders: function(headers) {
-                    headers['X-Nick-Name'] = userInfo.id;
+                    headers['X-Nick-Name'] = userInfo.partyId;
                     headers['X-Email'] = userInfo.email;
                     headers['X-Display-Name'] = userInfo.displayName;
                     headers['X-Roles'] = '';
                 }
             },
-            request: request
+            axios: request
         }).rssClient;
     };
 
-    var protocol = config.endpoints.rss.appSsl ? 'https' : 'http';
-    var serverUrl = protocol + '://' + config.endpoints.rss.host + ':' + config.endpoints.rss.port;
+    const protocol = config.endpoints.rss.appSsl ? 'https' : 'http';
+    const serverUrl = protocol + '://' + config.endpoints.rss.host + ':' + config.endpoints.rss.port;
 
-    var mockRSSServer = function(expOptions, err, resp, body) {
-        return function(calledOptions, callback) {
-            expect(calledOptions).toEqual(expOptions);
-            callback(err, resp, body);
-        };
+    const mockRSSServer = function(expOptions, err, resp) {
+        return {
+            request: function(calledOptions) {
+                expect(calledOptions).toEqual(expOptions);
+
+                return new Promise((resolve, reject) => {
+                    if (err) {
+                        reject({
+                            response: resp
+                        })
+                    } else {
+                        resolve(resp)
+                    }
+                })
+            }
+        }
     };
 
-    describe('Create provider', function() {
-        it('should call the callback with the RSS server response when creating a provider', function(done) {
-            var expOptions = {
-                url: serverUrl + PROVIDER_URL,
-                method: 'POST',
-                headers: {
-                    'content-type': 'application/json',
-                    'X-Nick-Name': 'proxyAdmin',
-                    'X-Roles': config.oauth2.roles.admin,
-                    'X-Email': 'proxy@email.com'
-                },
-                body: JSON.stringify({
-                    providerId: userInfo.id,
-                    providerName: userInfo.displayName
-                })
-            };
-
-            var request = mockRSSServer(
-                expOptions,
-                null,
-                {
-                    statusCode: 201
-                },
-                null
-            );
-
-            var rssClient = getRssClient(request);
-
-            rssClient.createProvider(userInfo, function(resp) {
-                expect(resp).toBe(null);
-                done();
-            });
-        });
-    });
-
     describe('Create default model', function() {
-        var testDefaultModelCreation = function(err, resp, body, expErr, expResp, done) {
-            var expOptions = {
+        const testDefaultModelCreation = function(err, resp, body, expErr, expResp, done) {
+            const expOptions = {
                 url: serverUrl + MODELS_URL,
                 method: 'POST',
                 headers: {
                     'content-type': 'application/json',
                     Accept: 'application/json',
-                    'X-Nick-Name': userInfo.id,
+                    'X-Nick-Name': userInfo.partyId,
                     'X-Display-Name': userInfo.displayName,
                     'X-Roles': '',
                     'X-Email': userInfo.email
                 },
-                body: JSON.stringify({
-                    aggregatorValue: config.revenueModel,
-                    ownerValue: 100 - config.revenueModel,
+                data: {
+                    aggregatorShare: config.revenueModel,
+                    providerShare: 100 - config.revenueModel,
                     algorithmType: 'FIXED_PERCENTAGE',
-                    productClass: 'defaultRevenue'
-                })
+                    productClass: 'defaultRevenue',
+                    providerId: userInfo.partyId
+                }
             };
 
-            var request = mockRSSServer(expOptions, err, resp, body);
+            resp.data = body
 
-            var rssClient = getRssClient(request);
+            const request = mockRSSServer(expOptions, err, resp);
+            const rssClient = getRssClient(request);
 
             rssClient.createDefaultModel(userInfo, function(err, resp) {
                 expect(err).toEqual(expErr);
@@ -126,18 +104,18 @@ describe('RSS Client', function() {
         };
 
         it('should call the callback with the response info when the RSS server returns a 201 code', function(done) {
-            var status = 201;
-            var headers = {
+            const status = 201;
+            const headers = {
                 'content-type': 'application/json'
             };
-            var body = {
-                aggregatorValue: 30
+            const body = {
+                aggregatorShare: 30
             };
 
             testDefaultModelCreation(
-                null,
+                false,
                 {
-                    statusCode: status,
+                    status: status,
                     headers: headers
                 },
                 body,
@@ -153,8 +131,10 @@ describe('RSS Client', function() {
 
         it('should call the callback with the default error message when the server has an error', function(done) {
             testDefaultModelCreation(
-                'ERROR',
-                null,
+                true,
+                {
+                    status: 504
+                },
                 null,
                 {
                     status: 504,
@@ -165,16 +145,16 @@ describe('RSS Client', function() {
             );
         });
 
-        var testRSSErrorCode = function(status, done) {
-            var errMsg = 'Unexpected error';
+        const testRSSErrorCode = function(status, done) {
+            const errMsg = 'Unexpected error';
             testDefaultModelCreation(
-                null,
+                true,
                 {
-                    statusCode: status
+                    status: status
                 },
-                JSON.stringify({
-                    exceptionText: errMsg
-                }),
+                {
+                    error: errMsg
+                },
                 {
                     status: status,
                     message: errMsg
@@ -203,41 +183,41 @@ describe('RSS Client', function() {
 
     describe('Retrieve RS Models', function() {
         it('should call the callback with the response when the server responds with a 200 code', function(done) {
-            var productClass = 'MyClass';
-            var status = 200;
-            var headers = {
+            const productClass = 'MyClass';
+            const status = 200;
+            const headers = {
                 'content-type': 'application/json'
             };
 
-            var body = [
+            const body = [
                 {
-                    aggregatorValue: 30
+                    aggregatorShare: 30
                 }
             ];
-            var expOptions = {
+            const expOptions = {
                 url: serverUrl + MODELS_URL + '?productClass=' + productClass + '&providerId=' + userInfo.id,
                 method: 'GET',
                 headers: {
                     'content-type': 'application/json',
                     Accept: 'application/json',
-                    'X-Nick-Name': userInfo.id,
+                    'X-Nick-Name': userInfo.partyId,
                     'X-Display-Name': userInfo.displayName,
                     'X-Roles': '',
                     'X-Email': userInfo.email
                 }
             };
 
-            var request = mockRSSServer(
+            const request = mockRSSServer(
                 expOptions,
-                null,
+                false,
                 {
-                    statusCode: status,
-                    headers: headers
-                },
-                body
+                    status: status,
+                    headers: headers,
+                    data: body
+                }
             );
 
-            var rssClient = getRssClient(request);
+            const rssClient = getRssClient(request);
 
             rssClient.retrieveRSModel(userInfo, productClass, function(err, resp) {
                 expect(err).toEqual(null);

@@ -1,0 +1,26 @@
+.row
+  .col-xs-12(ng-if="updateVM.dataRes.length")
+    .panel.panel-default.z-depth-1
+      .panel-body
+        .h4.text-dark-secondary
+          strong #{ __("Resources") }
+        hr
+        .table-responsive
+          table.table.table-bordered.table-hover.table-selectable
+            thead
+              tr
+                th #{ __("Status") }
+                th #{ __("Name") }
+                th #{ __("Last Updated") }
+            tbody
+              tr(ng-repeat="resource in updateVM.dataRes")
+                td
+                  .status-item.text-nowrap(class="status-{{ resource.lifecycleStatus | lowercase }}")
+                    span.item-icon
+                    span.item-text {{ resource.lifecycleStatus }}
+                th
+                  a(ui-sref="stock.resource.update({ resourceId: resource.id })", ui-sref-opts="{ inherit: false }") {{ resource.name }}
+                td
+                  time(am-time-ago="resource.lastUpdate")
+  .col-xs-12(ng-if="!updateVM.dataRes.length")
+    .alert.alert-info.text-center #{ __("No resource specs included.") }

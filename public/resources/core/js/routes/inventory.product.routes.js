@@ -65,6 +65,14 @@
             .state('inventory.product.detail.usage', {
                 url: '/usage',
                 templateUrl: 'inventory/product/detail/usage'
+            })
+            .state('inventory.product.detail.services', {
+                url: '/services',
+                templateUrl: 'inventory/product/detail/services'
+            })
+            .state('inventory.product.detail.resources', {
+                url: '/resources',
+                templateUrl: 'inventory/product/detail/resources'
             });
     }
 })();

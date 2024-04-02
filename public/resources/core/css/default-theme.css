@@ -1977,6 +1977,8 @@ a.thumbnail:focus {
 
 .terms-container pre {
     max-width: 99%;
+    white-space: initial;
+    word-break: normal;
 }
 
 /* ===================================================================================

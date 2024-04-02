@@ -1,4 +1,6 @@
-/* Copyright (c) 2016 - 2018 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+ *
+ * Copyright (c) 2024 Future Internet Consulting and Development Solutions S.L.
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -22,23 +24,14 @@ const versionInfo = require('./versionInfo').versionInfo;
 
 const management = (function() {
 
-    const getCount = function(req, res) {
-        var size = req.params.size;
-        res.statusCode = 200;
-        res.json({
-            size: size
-        });
-        res.end();
-    };
-
     const getVersion = function(req, res) {
-        var uptime = process.uptime();
-        var days = Math.floor(uptime / 86400);
-        var hours = Math.floor((uptime - days * 86400) / 3600);
-        var minutes = Math.floor((uptime - days * 86400 - hours * 3600) / 60);
-        var seconds = Math.floor(uptime - days * 86400 - hours * 3600 - minutes * 60);
+        const uptime = process.uptime();
+        const days = Math.floor(uptime / 86400);
+        const hours = Math.floor((uptime - days * 86400) / 3600);
+        const minutes = Math.floor((uptime - days * 86400 - hours * 3600) / 60);
+        const seconds = Math.floor(uptime - days * 86400 - hours * 3600 - minutes * 60);
 
-        var upMsg = days + ' d, ' + hours + ' h, ' + minutes + ' m, ' + seconds + ' s';
+        const upMsg = days + ' d, ' + hours + ' h, ' + minutes + ' m, ' + seconds + ' s';
 
         res.statusCode = 200;
         res.json({
@@ -53,7 +46,6 @@ const management = (function() {
     };
 
     return {
-        getCount: getCount,
         getVersion: getVersion
     };
 })();

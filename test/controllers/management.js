@@ -1,4 +1,6 @@
-/* Copyright (c) 2015 - 2018 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 CoNWeT Lab., Universidad Politécnica de Madrid
+ *
+ * Copyright (c) 2024 Future Internet Consulting and Development Solutions S.L.
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -21,42 +23,14 @@ const proxyquire = require('proxyquire');
 
 describe('Management API', function () {
 
-    describe('get count', function () {
-
-        it('should return the correct size object when the param is included', function () {
-            const management = require('../../controllers/management').management;
-            var req = {
-                params: {
-                    size: '10'
-                }
-            };
-
-            var res = {
-                json: function(val) {},
-                end: function() {}
-            };
-
-            spyOn(res, 'json');
-            spyOn(res, 'end');
-
-            management.getCount(req, res);
-
-            expect(res.statusCode).toBe(200);
-            expect(res.json).toHaveBeenCalledWith({
-                size: '10'
-            });
-            expect(res.end).toHaveBeenCalledWith();
-        });
-    });
-
     describe('get version', function() {
         it('should return the valid value of version object', function() {
-            var res = {
+            const res = {
                 json: function(val) {},
                 end: function() {}
             };
-            var uptime = 90061;
-            var expVersion = {
+            const uptime = 90061;
+            const expVersion = {
                 versionInfo: {
                     version: 'develop',
                     releaseDate: '',
@@ -73,7 +47,7 @@ describe('Management API', function () {
 
             versionInfo = expVersion;
 
-            let management = proxyquire('../../controllers/management', {
+            const management = proxyquire('../../controllers/management', {
                 './versionInfo': expVersion
             }).management;
 

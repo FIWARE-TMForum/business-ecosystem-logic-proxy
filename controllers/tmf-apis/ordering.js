@@ -1,5 +1,7 @@
-/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 CoNWeT Lab., Universidad Politécnica de Madrid
  *
+ * Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
+ * 
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
  *
@@ -17,36 +19,37 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var async = require('async'),
-    config = require('./../../config'),
-    equal = require('deep-equal'),
-    indexes = require('./../../lib/indexes'),
-    moment = require('moment'),
-    request = require('request'),
-    storeClient = require('./../../lib/store').storeClient,
-    tmfUtils = require('./../../lib/tmfUtils'),
-    url = require('url'),
-    utils = require('./../../lib/utils');
+const async = require('async')
+const axios = require('axios')
+const config = require('./../../config')
+const equal = require('deep-equal')
+const moment = require('moment')
+const storeClient = require('./../../lib/store').storeClient
+const tmfUtils = require('./../../lib/tmfUtils')
+const url = require('url')
+const utils = require('./../../lib/utils')
 
-var ordering = (function() {
-    var CUSTOMER = 'Customer';
-    var SELLER = 'Seller';
+const ordering = (function() {
+    const CUSTOMER = 'Customer';
+    const SELLER = 'Seller';
 
     //////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////////// COMMON ///////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
 
-    var makeRequest = function(url, errMsg, callback) {
-        request(url, function(err, response, body) {
-            if (err || response.statusCode >= 400) {
-                callback({
-                    status: 400,
-                    message: errMsg
-                });
-            } else {
-                callback(null, JSON.parse(body));
-            }
-        });
+    const makeRequest = function(url, errMsg, callback) {
+        //console.log('------------------------------------------')
+        //console.log(url)
+        axios.get(url).then((response) => {
+
+            callback(null, response.data);
+            
+        }).catch((err) => {
+            callback({
+                status: 400,
+                message: errMsg
+            });
+        })
     };
 
     var getBillingAccountUrl = function(billingAccount) {
@@ -71,26 +74,26 @@ var ordering = (function() {
     ////////////////////////////////////////// CREATION //////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
 
-    var includeProductParty = function(offering, item, callback) {
-        var errorMessageProduct = 'The system fails to retrieve the product attached to the ordering item ' + item.id;
+    const includeProductParty = function(offering, item, resolve, reject) {
+        const errorMessageProduct = 'The system fails to retrieve the product attached to the ordering item ' + item.id;
 
-        var productUrl = utils.getAPIURL(
+        const productUrl = utils.getAPIURL(
             config.endpoints.catalog.appSsl,
             config.endpoints.catalog.host,
             config.endpoints.catalog.port,
-            url.parse(offering.productSpecification.href).path
+            `/productSpecification/${offering.productSpecification.id}`
         );
 
         makeRequest(productUrl, errorMessageProduct, function(err, product) {
             if (err) {
-                callback(err);
+                reject(err);
             } else {
                 var owners = product.relatedParty.filter(function(relatedParty) {
                     return relatedParty['role'].toLowerCase() === 'owner';
                 });
 
                 if (!owners.length) {
-                    callback({
+                    reject({
                         status: 400,
                         message: 'You cannot order a product without owners'
                     });
@@ -103,89 +106,90 @@ var ordering = (function() {
                         });
                     });
 
-                    callback(null, item);
+                    resolve();
                 }
             }
         });
     };
 
-    var includeOfferingParty = function(offeringUrl, item, callback) {
-        var errorMessageOffer = 'The system fails to retrieve the offering attached to the ordering item ' + item.id;
+    const includeOfferingParty = function(offeringUrl, item, resolve, reject) {
+        const errorMessageOffer = 'The system fails to retrieve the offering attached to the ordering item ' + item.id;
 
         makeRequest(offeringUrl, errorMessageOffer, function(err, offering) {
             if (err) {
-                callback(err);
+                reject(err);
             } else {
                 if (!offering.isBundle) {
-                    includeProductParty(offering, item, callback);
+                    includeProductParty(offering, item, resolve, reject);
                 } else {
-                    var offeringUrl = utils.getAPIURL(
+                    const offeringUrl = utils.getAPIURL(
                         config.endpoints.catalog.appSsl,
                         config.endpoints.catalog.host,
                         config.endpoints.catalog.port,
-                        url.parse(offering.bundledProductOffering[0].href).path
+                        `/productOffering/${offering.bundledProductOffering[0].id}`
                     );
-                    includeOfferingParty(offeringUrl, item, callback);
+                    includeOfferingParty(offeringUrl, item, resolve, reject);
                 }
             }
         });
     };
 
-    var completeRelatedPartyInfo = function(req, item, user, callback) {
-        if (!item.product) {
-            callback({
-                status: 400,
-                message: 'The product order item ' + item.id + ' must contain a product field'
-            });
+    const completeRelatedPartyInfo = async function(req, item, user) {
+        return new Promise((resolve, reject) => {
+            if (!item.product) {
+                reject({
+                    status: 400,
+                    message: 'The product order item ' + item.id + ' must contain a product field'
+                });
 
-            return;
-        }
+                return;
+            }
 
-        if (!item.productOffering) {
-            callback({
-                status: 400,
-                message: 'The product order item ' + item.id + ' must contain a productOffering field'
-            });
+            if (!item.productOffering) {
+                reject({
+                    status: 400,
+                    message: 'The product order item ' + item.id + ' must contain a productOffering field'
+                });
 
-            return;
-        }
+                return;
+            }
+    
+            if (!item.product.relatedParty) {
+                item.product.relatedParty = [];
+            }
 
-        if (!item.product.relatedParty) {
-            item.product.relatedParty = [];
-        }
-        var itemCustCheck = tmfUtils.isOrderingCustomer(user, item.product);
+            const itemCustCheck = tmfUtils.isOrderingCustomer(user, item.product);
+            if (itemCustCheck[0] && !itemCustCheck[1]) {
+                reject({
+                    status: 403,
+                    message: 'The customer specified in the order item ' + item.id + ' is not the user making the request'
+                });
+                return;
+            }
 
-        if (itemCustCheck[0] && !itemCustCheck[1]) {
-            callback({
-                status: 403,
-                message: 'The customer specified in the order item ' + item.id + ' is not the user making the request'
-            });
-            return;
-        }
+            if (!itemCustCheck[0]) {
+                item.product.relatedParty.push({
+                    id: user.partyId,
+                    role: CUSTOMER,
+                    href: tmfUtils.getIndividualURL(req, user.partyId)
+                });
+            }
 
-        if (!itemCustCheck[0]) {
-            item.product.relatedParty.push({
-                id: user.id,
-                role: CUSTOMER,
-                href: tmfUtils.getIndividualURL(req, user.id)
-            });
-        }
+            // Inject customer and seller related parties in the order items in order to make this info
+            // available thought the inventory API
+            const offeringUrl = utils.getAPIURL(
+                config.endpoints.catalog.appSsl,
+                config.endpoints.catalog.host,
+                config.endpoints.catalog.port,
+                `/productOffering/${item.productOffering.id}`
+            );
 
-        // Inject customer and seller related parties in the order items in order to make this info
-        // available thought the inventory API
-
-        var offeringUrl = utils.getAPIURL(
-            config.endpoints.catalog.appSsl,
-            config.endpoints.catalog.host,
-            config.endpoints.catalog.port,
-            url.parse(item.productOffering.href).path
-        );
-
-        includeOfferingParty(offeringUrl, item, callback);
+            includeOfferingParty(offeringUrl, item, resolve, reject);
+        })
     };
 
-    var validateCreation = function(req, callback) {
-        var body;
+    const validateCreation = async function(req, callback) {
+        let body;
 
         // The request body may not be well formed
         try {
@@ -214,7 +218,7 @@ var ordering = (function() {
         }
 
         // Check that the user is the specified customer
-        var customerCheck = tmfUtils.isOrderingCustomer(req.user, body);
+        const customerCheck = tmfUtils.isOrderingCustomer(req.user, body);
         if (!customerCheck[0]) {
             return callback({
                 status: 403,
@@ -229,117 +233,57 @@ var ordering = (function() {
             });
         }
 
-        if (!body.orderItem || !body.orderItem.length) {
+        if (!body.productOrderItem || !body.productOrderItem.length) {
             return callback({
                 status: 400,
-                message: 'A product order must contain an orderItem field'
+                message: 'A product order must contain an productOrderItem field'
             });
         }
 
-        var asyncTasks = [];
-
-        body.orderItem.forEach(function(item) {
-            asyncTasks.push(completeRelatedPartyInfo.bind(this, req, item, req.user));
-        });
-
-        async.series(asyncTasks, function(err /*, results*/) {
-            if (err) {
-                callback(err);
-            } else {
-                // Include sellers as related party in the ordering
-                var pushedSellers = [];
-                var customerItem = false;
-
-                body.orderItem.forEach(function(item) {
-                    var sellers = item.product.relatedParty.filter(function(party) {
-                        return party.role.toLowerCase() === SELLER.toLowerCase();
-                    });
-
-                    sellers.forEach(function(seller) {
-                        if (seller.id === req.user.id) {
-                            customerItem = true;
-                        } else if (pushedSellers.indexOf(seller.id) < 0) {
-                            body.relatedParty.push(seller);
-                            pushedSellers.push(seller.id);
-                        }
-                    });
-                });
-
-                if (!customerItem) {
-                    utils.updateBody(req, body);
-                    checkBillingAccounts(req, body, callback);
-                } else {
-                    callback({
-                        status: 403,
-                        message: 'You cannot acquire your own offering'
-                    });
-                }
-            }
-        });
-    };
-
-    var checkBillingAccounts = function(req, ordering, callback) {
-        // PLEASE NOTE: Billing account cannot be updated till the ordering has been created
-
-        // Check that all the billing accounts for all the items are the same
-        var initialBillingAccount;
-
-        if (ordering.orderItem[0].billingAccount && ordering.orderItem[0].billingAccount.length) {
-            initialBillingAccount = ordering.orderItem[0].billingAccount[0];
+        try {
+            await Promise.all(body.productOrderItem.map((item) => {
+                return completeRelatedPartyInfo(req, item, req.user)
+            }))
+        } catch (e) {
+            console.log(e)
+            return callback(e)
         }
 
-        if (!initialBillingAccount || !initialBillingAccount.href) {
+        // Include sellers as related party in the ordering
+        const pushedSellers = [];
+        let customerItem = false;
+
+        body.productOrderItem.forEach(function(item) {
+            const sellers = item.product.relatedParty.filter(function(party) {
+                return party.role.toLowerCase() === SELLER.toLowerCase();
+            });
+
+            sellers.forEach(function(seller) {
+                if (seller.id === req.user.partyId) {
+                    customerItem = true;
+                } else if (pushedSellers.indexOf(seller.id) < 0) {
+                    body.relatedParty.push(seller);
+                    pushedSellers.push(seller.id);
+                }
+            });
+        });
+
+        if (customerItem) {
+            return callback({
+                status: 403,
+                message: 'You cannot acquire your own offering'
+            });
+        }
+
+        if (!body.billingAccount || !body.billingAccount.id) {
             return callback({
                 status: 422,
                 message: 'Billing Account is required'
             });
         }
 
-        var error = false;
-
-        for (var i = 1; i < ordering.orderItem.length && !error; i++) {
-            error =
-                !ordering.orderItem[i].billingAccount ||
-                !ordering.orderItem[i].billingAccount.length ||
-                !equal(initialBillingAccount, ordering.orderItem[i].billingAccount[0]);
-        }
-
-        if (error) {
-            return callback({
-                status: 422,
-                message: 'Billing Accounts must be the same for all the order items contained in the ordering'
-            });
-        }
-
-        // Verify that the billing account exists and that the user is the owner of that billing account
-        var billingAccountUrl = getBillingAccountUrl(initialBillingAccount);
-
-        request(billingAccountUrl, function(err, response, body) {
-            if (!err && response.statusCode === 200) {
-                var billingAccount = JSON.parse(body);
-
-                if (tmfUtils.hasPartyRole(req, billingAccount.relatedParty, config.billingAccountOwnerRole)) {
-                    callback(null);
-                } else {
-                    callback({
-                        status: 403,
-                        message: 'Unauthorized to use non-owned billing accounts'
-                    });
-                }
-            } else {
-                if (response && response.statusCode === 404) {
-                    callback({
-                        status: 422,
-                        message: 'The given billing account does not exist'
-                    });
-                } else {
-                    callback({
-                        status: 500,
-                        message: 'There was an unexpected error at the time of retrieving the provided billing account'
-                    });
-                }
-            }
-        });
+        utils.updateBody(req, body)
+        callback(null)
     };
 
     //////////////////////////////////////////////////////////////////////////////////////////////
@@ -356,9 +300,9 @@ var ordering = (function() {
             };
         }
 
-        for (var i = 0; i < updatedOrdering.orderItem.length && !error; i++) {
-            var updatedItem = updatedOrdering.orderItem[i];
-            var previousOrderItem = previousOrdering.orderItem.filter(function(item) {
+        for (var i = 0; i < updatedOrdering.productOrderItem.length && !error; i++) {
+            var updatedItem = updatedOrdering.productOrderItem[i];
+            var previousOrderItem = previousOrdering.productOrderItem.filter(function(item) {
                 // id is supposed to be unique
                 return item.id === updatedItem.id;
             })[0];
@@ -406,10 +350,10 @@ var ordering = (function() {
         }
 
         if (!error) {
-            // Sellers can only modify the 'orderItem' field...
+            // Sellers can only modify the 'productOrderItem' field...
             // State is automatically calculated
             var finalBody = includeOtherFields ? updatedOrdering : {};
-            finalBody['orderItem'] = previousOrdering.orderItem;
+            finalBody['productOrderItem'] = previousOrdering.productOrderItem;
 
             utils.updateBody(req, finalBody);
 
@@ -470,7 +414,7 @@ var ordering = (function() {
                                 status: 403,
                                 message: 'Related parties cannot be modified'
                             });
-                        } else if ('orderItem' in ordering) {
+                        } else if ('productOrderItem' in ordering) {
                             callback({
                                 status: 403,
                                 message: 'Order items can only be modified by sellers'
@@ -483,11 +427,11 @@ var ordering = (function() {
                                 });
                             } else {
                                 // Orderings can only be cancelled when all items are marked as Acknowledged
-                                var productsInAckState = previousOrdering.orderItem.filter(function(item) {
+                                var productsInAckState = previousOrdering.productOrderItem.filter(function(item) {
                                     return 'acknowledged' === item.state.toLowerCase();
                                 });
 
-                                if (productsInAckState.length != previousOrdering.orderItem.length) {
+                                if (productsInAckState.length != previousOrdering.productOrderItem.length) {
                                     callback({
                                         status: 403,
                                         message:
@@ -503,12 +447,12 @@ var ordering = (function() {
                                             callback(err);
                                         } else {
                                             // Cancel all order items
-                                            previousOrdering.orderItem.forEach(function(item) {
+                                            previousOrdering.productOrderItem.forEach(function(item) {
                                                 item.state = 'Cancelled';
                                             });
 
                                             // Included order items will be ignored
-                                            ordering.orderItem = previousOrdering.orderItem;
+                                            ordering.productOrderItem = previousOrdering.productOrderItem;
                                             utils.updateBody(req, ordering);
 
                                             callback(null);
@@ -522,7 +466,7 @@ var ordering = (function() {
                             callback(null);
                         }
                     } else if (isSeller) {
-                        if (Object.keys(ordering).length == 1 && 'orderItem' in ordering) {
+                        if (Object.keys(ordering).length == 1 && 'productOrderItem' in ordering) {
                             updateItemsState(req, ordering, previousOrdering, false, callback);
                         } else if (Object.keys(ordering).length == 1 && 'note' in ordering) {
                             validateNotes(ordering.note, previousOrdering.note, callback);
@@ -548,43 +492,11 @@ var ordering = (function() {
         }
     };
 
-    var orderRegex = new RegExp('/productOrder(\\?|$)');
-
-    var createQuery = indexes.genericCreateQuery.bind(
-        null,
-        ['priority', 'category', 'state', 'notificationContact', 'note'],
-        'order',
-        function(req, query) {
-            if (
-                req.query['relatedParty.id'] &&
-                (!req.query['relatedParty.role'] || req.query['relatedParty.role'].toLowerCase() == 'customer')
-            ) {
-                indexes.addAndCondition(query, { relatedPartyHash: [indexes.fixUserId(req.query['relatedParty.id'])] });
-            }
-
-            if (
-                req.query['relatedParty.id'] &&
-                req.query['relatedParty.role'] &&
-                req.query['relatedParty.role'].toLowerCase() == 'seller'
-            ) {
-                indexes.addAndCondition(query, { sellerHash: [indexes.fixUserId(req.query['relatedParty.id'])] });
-            }
-
-            utils.queryAndOrCommas(req.query.state, 'state', query);
-        }
-    );
-
-    var getOrderRequest = indexes.getMiddleware.bind(null, orderRegex, createQuery, indexes.searchOrders);
-
-    var methodIndexed = function methodIndexed(req) {
-        return getOrderRequest(req);
-    };
-
     //////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////// PRE-VALIDATION ///////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
 
-    var validators = {
+    const validators = {
         GET: [utils.validateLoggedIn, tmfUtils.ensureRelatedPartyIncluded, validateRetrieving],
         POST: [utils.validateLoggedIn, validateCreation],
         PATCH: [utils.validateLoggedIn, validateUpdate],
@@ -592,25 +504,21 @@ var ordering = (function() {
         DELETE: [utils.methodNotAllowed]
     };
 
-    var checkPermissions = function(req, callback) {
-        var reqValidators = [];
+    const checkPermissions = function(req, callback) {
+        const reqValidators = [];
 
-        for (var i in validators[req.method]) {
+        for (let i in validators[req.method]) {
             reqValidators.push(validators[req.method][i].bind(this, req));
         }
 
-        methodIndexed(req)
-            .catch(() => Promise.resolve(req))
-            .then(() => {
-                async.series(reqValidators, callback);
-            });
+        async.series(reqValidators, callback);
     };
 
     //////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////// POST-VALIDATION //////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
 
-    var sortByDate = function sortByDate(list) {
+    const sortByDate = function sortByDate(list) {
         if (!Array.isArray(list)) {
             return [];
         }
@@ -624,11 +532,11 @@ var ordering = (function() {
         });
     };
 
-    var filterOrderItems = function(req, callback) {
-        var body = JSON.parse(req.body);
-        var orderings = [];
-        var isArray = true;
-
+    const filterOrderItems = function(req, callback) {
+        const body = req.body;
+        let orderings = [];
+        let isArray = true;
+        
         if (!Array.isArray(body)) {
             orderings = [body];
             isArray = false;
@@ -637,10 +545,10 @@ var ordering = (function() {
         }
 
         // This array is needed as the length of the array cannot be modified while it's being iterated
-        var orderingsToRemove = [];
+        const orderingsToRemove = [];
         orderings.forEach(function(ordering) {
-            var customer = tmfUtils.hasPartyRole(req, ordering.relatedParty, CUSTOMER);
-            var seller = tmfUtils.hasPartyRole(req, ordering.relatedParty, SELLER);
+            const customer = tmfUtils.hasPartyRole(req, ordering.relatedParty, CUSTOMER);
+            const seller = tmfUtils.hasPartyRole(req, ordering.relatedParty, SELLER);
 
             if (!customer && !seller) {
                 // This can happen when a user ask for a specific ordering.
@@ -648,12 +556,11 @@ var ordering = (function() {
             } else if (!customer && seller) {
                 // When a user is involved only as a seller in an ordering, only the order items
                 // where the user is a seller have to be returned
-                ordering.orderItem = ordering.orderItem.filter(function(item) {
+                ordering.productOrderItem = ordering.productOrderItem.filter(function(item) {
                     return tmfUtils.hasPartyRole(req, item.product.relatedParty, SELLER);
                 });
             }
             // ELSE: If the user is the customer, order items don't have to be filtered
-
             if (req.method.toUpperCase() === 'GET') {
                 ordering.note = sortByDate(ordering.note);
             }
@@ -670,74 +577,44 @@ var ordering = (function() {
                     message: 'You are not authorized to retrieve the specified ordering'
                 });
             } else {
-                utils.updateBody(req, orderings[0]);
+                utils.updateResponseBody(req, orderings[0]);
                 callback(null);
             }
         } else {
-            utils.updateBody(req, orderings);
+            utils.updateResponseBody(req, orderings);
             callback(null);
         }
     };
 
-    var includeSellersInBillingAccount = function(req, callback) {
-        // PLEASE NOTE: Billing Accounts have been checked in the checkPermissions step.
+    const filterOrders = function(req, callback) {
+        const body = req.body
 
-        var ordering = JSON.parse(req.body);
+        if (!Array.isArray(body)) {
+            return callback(null)
+        }
 
-        var billingAccountUrl = getBillingAccountUrl(ordering.orderItem[0].billingAccount[0]);
+        let role = CUSTOMER
 
-        request(billingAccountUrl, function(err, response, rawBillingAccount) {
-            if (!err && response.statusCode === 200) {
-                var billingAccount = JSON.parse(rawBillingAccount);
-                var billingAccountRelatedParties = billingAccount.relatedParty;
-                var currentUsers = [];
+        if (req.query['relatedParty.role'] != null && req.query['relatedParty.role'] == SELLER) {
+            role = SELLER
+        }
 
-                billingAccountRelatedParties.forEach(function(party) {
-                    currentUsers.push(party.id);
-                });
+        const orders = body.filter((order) => {
+            return tmfUtils.hasPartyRole(req, order.relatedParty, role);
+        })
 
-                ordering.relatedParty.forEach(function(party) {
-                    if (currentUsers.indexOf(party.id) < 0) {
-                        billingAccountRelatedParties.push({
-                            id: party.id,
-                            href: party.href,
-                            role: 'bill responsible'
-                        });
-                    }
-                });
+        utils.updateResponseBody(req, orders)
+        callback(null)
+    }
 
-                request(billingAccountUrl, {
-                    method: 'PATCH',
-                    json: { relatedParty: billingAccountRelatedParties }
-                }, function(err, response) {
-
-                    if (err || response.statusCode >= 400) {
-                        callback({
-                            status: 500,
-                            message: 'Unexpected error when updating the given billing account'
-                        })
-                    } else {
-                        callback(null);
-                    }
-                });
-
-            } else {
-                callback({
-                    status: 500,
-                    message: 'Unexpected error when checking the given billing account'
-                });
-            }
-        });
-    };
-
-    var notifyOrder = function(req, callback) {
-        var body = JSON.parse(req.body);
+    const notifyOrder = function(req, callback) {
+        const body = req.body;
 
         // Send ordering notification to the store
         storeClient.notifyOrder(body, req.user, function(err, res) {
             if (res) {
-                var parsedResp = JSON.parse(res.body);
-
+                const parsedResp = res.body;
+            
                 if (parsedResp.redirectUrl) {
                     req.headers['X-Redirect-URL'] = parsedResp.redirectUrl;
                 }
@@ -749,23 +626,20 @@ var ordering = (function() {
         });
     };
 
-    var saveOrderIndex = function saveOrderIndex(req, callback) {
-        var body = JSON.parse(req.body);
-
-        indexes
-            .saveIndexOrder([body])
-            .then(() => callback(null))
-            .catch(() => callback(null));
-    };
-
-    var executePostValidation = function(req, callback) {
+    const executePostValidation = function(req, callback) {
         if (['GET', 'PUT', 'PATCH'].indexOf(req.method.toUpperCase()) >= 0) {
-            filterOrderItems(req, callback);
+            filterOrderItems(req, (err) => {
+                if (req.method.toUpperCase() != 'GET' || err != null) {
+                    callback(err)
+                } else {
+                    // Filter results
+                    filterOrders(req, callback)
+                }
+            });
         } else if (req.method === 'POST') {
-            var tasks = [];
+            const tasks = [];
             tasks.push(notifyOrder.bind(this, req));
-            tasks.push(includeSellersInBillingAccount.bind(this, req));
-            tasks.push(saveOrderIndex.bind(this, req));
+            //tasks.push(includeSellersInBillingAccount.bind(this, req));
             async.series(tasks, callback);
         } else {
             callback(null);

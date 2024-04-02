@@ -1,0 +1,15 @@
+.row
+  .col-xs-12
+    .panel.panel-default.z-depth-1(ng-repeat="characteristic in detailVM.item.serviceCharacteristic", ng-init="characteristicIndex = $index")
+      .panel-heading
+        .h4
+          strong {{ characteristic.name }}
+      .panel-body
+        .form-group
+          p
+            span.fa.fa-fw.fa-check-circle
+            span(ng-if="!detailVM.isUrl(characteristic.value)")  {{ characteristic.value }}
+            a(href="{{ characteristic.value }}" ng-if="detailVM.isUrl(characteristic.value)" target="_blank")  {{ characteristic.value }}
+
+  .col-xs-12(ng-if="!detailVM.item.serviceCharacteristic.length")
+    .alert.alert-info.text-center #{ __("No characteristics included.") }

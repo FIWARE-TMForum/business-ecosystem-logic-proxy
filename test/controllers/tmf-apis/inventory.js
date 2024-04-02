@@ -1,4 +1,6 @@
-/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 CoNWeT Lab., Universidad Politécnica de Madrid
+ *
+ * Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -17,16 +19,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var proxyquire = require('proxyquire');
-
-var Promise = require('promiz');
-
-var md5 = require('blueimp-md5');
-
-var testUtils = require('../../utils');
+const proxyquire = require('proxyquire')
+const testUtils = require('../../utils')
 
 describe('Inventory API', function() {
-    var getInventoryAPI = function(tmfUtils, utils, indexes) {
+    const getInventoryAPI = function(tmfUtils, utils, indexes) {
         if (!indexes) {
             indexes = {
                 safeIndexExecute: function() {
@@ -38,9 +35,7 @@ describe('Inventory API', function() {
         return proxyquire('../../../controllers/tmf-apis/inventory', {
             './../../lib/logger': testUtils.emptyLogger,
             './../../lib/tmfUtils': tmfUtils,
-            './../../lib/utils': utils,
-            './../../lib/indexes': indexes,
-            './../../lib/indexes.js': indexes
+            './../../lib/utils': utils
         }).inventory;
     };
 
@@ -49,10 +44,10 @@ describe('Inventory API', function() {
         /// ////////////////////////////////////// NOT ALLOWED ////////////////////////////////////////
         /// ///////////////////////////////////////////////////////////////////////////////////////////
 
-        var testNotAllowedMethod = function(method, done) {
-            var inventory = getInventoryAPI({}, {});
+        const testNotAllowedMethod = function(method, done) {
+            const inventory = getInventoryAPI({}, {});
 
-            var req = {
+            const req = {
                 method: method
             };
 
@@ -81,10 +76,10 @@ describe('Inventory API', function() {
         /// ///////////////////////////////////////////////////////////////////////////////////////////
 
         it('should call callback with error when user is not logged in', function(done) {
-            var errorStatus = 401;
-            var errorMessage = 'You need to be authenticated to create/update/delete resources';
+            const errorStatus = 401;
+            const errorMessage = 'You need to be authenticated to create/update/delete resources';
 
-            var utils = {
+            const utils = {
                 validateLoggedIn: function(req, callback) {
                     callback({
                         status: errorStatus,
@@ -93,10 +88,10 @@ describe('Inventory API', function() {
                 }
             };
 
-            var inventoryApi = getInventoryAPI({}, utils);
+            const inventoryApi = getInventoryAPI({}, utils);
 
             // Call the method
-            var req = {
+            const req = {
                 method: 'GET'
             };
 
@@ -109,170 +104,10 @@ describe('Inventory API', function() {
             });
         });
 
-        /// ///////////////////////////////////////////////////////////////////////////////////////////
-        /// ////////////////////////////////////// INDEXES / //////////////////////////////////////////
-        /// ///////////////////////////////////////////////////////////////////////////////////////////
+        const testRetrieval = function(filterRelatedPartyFields, expectedErr, done) {
+            let ensureRelatedPartyIncludedCalled = false;
 
-        describe('Test index in checkPermissions middleware', function() {
-            var requestHelper = function requestHelper(done, results, url, query, expectedUrl, expectedQuery) {
-                var pathname = '/product';
-                url = pathname + '?' + url;
-                expectedUrl = pathname + '?' + expectedUrl;
-
-                var indexes = {
-                    searchInventory: (q) => {
-                        if (expectedQuery) {
-                            expect(q).toEqual(expectedQuery);
-                        }
-
-                        return Promise.resolve(results.map((x) => ({ document: { originalId: x } })));
-                    }
-                };
-
-                var inventoryApi = getInventoryAPI({}, {}, indexes);
-                var req = {
-                    method: 'GET',
-                    apiUrl: url,
-                    _parsedUrl: {
-                        pathname: pathname
-                    },
-                    query: query
-                };
-
-                inventoryApi.checkPermissions(req, function() {
-                    expect(req.apiUrl).toEqual(expectedUrl);
-                    done();
-                });
-            };
-
-            it('should not change request URL when inventory index fails', function(done) {
-                var indexes = {
-                    searchInventory: () => Promise.reject('Error')
-                };
-                var inventoryApi = getInventoryAPI({}, {}, indexes);
-                var url = '/product?relatedParty.id=rock';
-                var req = {
-                    method: 'GET',
-                    apiUrl: url,
-                    _parsedUrl: {
-                        pathname: '/product'
-                    },
-                    query: {
-                        'relatedParty.id': 'rock'
-                    }
-                };
-
-                inventoryApi.checkPermissions(req, function() {
-                    expect(req.apiUrl).toEqual(url);
-                    done();
-                });
-            });
-
-            it('should change request URL to include inventory IDs when relatedParty.id is provided', function(done) {
-                requestHelper(
-                    done,
-                    [3, 4],
-                    'relatedParty.id=rock',
-                    {
-                        'relatedParty.id': 'rock'
-                    },
-                    'id=3,4',
-                    {
-                        sort: {
-                            field: 'lastUpdate',
-                            direction: 'desc'
-                        },
-                        query: {
-                            AND: { relatedPartyHash: [md5('rock')] }
-                        }
-                    }
-                );
-            });
-
-            var testQueryParameters = function testQueryParameters(done, params) {
-                // Transform object to param=value&param2=value2
-                var paramUrl = Object.keys(params)
-                    .map((key) => key + '=' + params[key])
-                    .join('&');
-                // Transform object to index AND query (String keys must be lower case to perform index search correctly)
-                var ANDs = {};
-                Object.keys(params).map(
-                    (key) => (ANDs[key] = [typeof params[key] === 'string' ? params[key].toLowerCase() : params[key]])
-                );
-
-                requestHelper(done, [7, 9, 11], paramUrl, params, 'id=7,9,11', {
-                    sort: {
-                        field: 'lastUpdate',
-                        direction: 'desc'
-                    },
-                    query: { AND: ANDs }
-                });
-            };
-
-            it('should should change URL to include inventory IDs when no parameter are provided', function(done) {
-                requestHelper(done, [1, 2], '', {}, 'id=1,2', {
-                    sort: {
-                        field: 'lastUpdate',
-                        direction: 'desc'
-                    },
-                    query: { AND: { '*': ['*'] } }
-                });
-            });
-
-            it('should change request URL to not add any id if no inventory results', function(done) {
-                requestHelper(
-                    done,
-                    [],
-                    'relatedParty.id=someother',
-                    {
-                        'relatedParty.id': 'someother'
-                    },
-                    'id=',
-                    {
-                        sort: {
-                            field: 'lastUpdate',
-                            direction: 'desc'
-                        },
-                        query: {
-                            AND: { relatedPartyHash: [md5('someother')] }
-                        }
-                    }
-                );
-            });
-
-            it('should change request URL adding extra params and ids', function(done) {
-                requestHelper(
-                    done,
-                    [1, 2],
-                    'depth=2&fields=name',
-                    {
-                        depth: '2',
-                        fields: 'name'
-                    },
-                    'id=1,2&depth=2&fields=name',
-                    {
-                        sort: {
-                            field: 'lastUpdate',
-                            direction: 'desc'
-                        },
-                        query: { AND: { '*': ['*'] } }
-                    }
-                );
-            });
-
-            it('should change request URL to include inventory IDs when status is provided', function(done) {
-                testQueryParameters(done, { status: 'Accepted' });
-            });
-
-            it('should change request URL to include inventory IDs when name is provided', function(done) {
-                testQueryParameters(done, { name: 'Name' });
-            });
-        });
-
-        var testRetrieval = function(filterRelatedPartyFields, expectedErr, done) {
-            var ensureRelatedPartyIncludedCalled = false;
-
-            var tmfUtils = {
+            const tmfUtils = {
                 filterRelatedPartyFields: filterRelatedPartyFields,
 
                 ensureRelatedPartyIncluded: function(req, callback) {
@@ -281,18 +116,18 @@ describe('Inventory API', function() {
                 }
             };
 
-            var utils = {
+            const utils = {
                 validateLoggedIn: function(req, callback) {
                     callback(null);
                 }
             };
 
-            var req = {
+            const req = {
                 method: 'GET',
                 path: '/example/api/path/product'
             };
 
-            var inventoryApi = getInventoryAPI(tmfUtils, utils);
+            const inventoryApi = getInventoryAPI(tmfUtils, utils);
 
             inventoryApi.checkPermissions(req, function(err) {
                 expect(ensureRelatedPartyIncludedCalled).toBe(true);
@@ -302,12 +137,12 @@ describe('Inventory API', function() {
         };
 
         it('should call callback with error when retrieving list of products and filter related party fields fails', function(done) {
-            var error = {
+            const error = {
                 status: 401,
                 message: 'Invalid filters'
             };
 
-            var filterRelatedPartyFields = function(req, callback) {
+            const filterRelatedPartyFields = function(req, callback) {
                 callback(error);
             };
 
@@ -315,7 +150,7 @@ describe('Inventory API', function() {
         });
 
         it('should call callback without errors when user is allowed to retrieve the list of products', function(done) {
-            var filterRelatedPartyFields = function(req, callback) {
+            const filterRelatedPartyFields = function(req, callback) {
                 callback();
             };
 
@@ -323,27 +158,27 @@ describe('Inventory API', function() {
         });
 
         it('should call callback without error when retrieving a single product', function(done) {
-            var ensureRelatedPartyIncludedCalled = false;
+            let ensureRelatedPartyIncludedCalled = false;
 
-            var tmfUtils = {
+            const tmfUtils = {
                 ensureRelatedPartyIncluded: function(req, callback) {
                     ensureRelatedPartyIncludedCalled = true;
                     callback(null);
                 }
             };
 
-            var utils = {
+            const utils = {
                 validateLoggedIn: function(req, callback) {
                     callback(null);
                 }
             };
 
-            var req = {
+            const req = {
                 method: 'GET',
                 path: '/example/api/path/product/7'
             };
 
-            var inventoryApi = getInventoryAPI(tmfUtils, utils);
+            const inventoryApi = getInventoryAPI(tmfUtils, utils);
 
             inventoryApi.checkPermissions(req, function(err) {
                 expect(ensureRelatedPartyIncludedCalled).toBe(true);
@@ -354,8 +189,8 @@ describe('Inventory API', function() {
     });
 
     describe('Execute Post Validation', function() {
-        var testPostValidation = function(hasPartyRole, expectedError, done) {
-            var req = {
+        const testPostValidation = function(hasPartyRole, expectedError, done) {
+            const req = {
                 method: 'GET',
                 path: 'DSProductCatalog/api/productManagement/product/10',
                 user: {
@@ -372,7 +207,7 @@ describe('Inventory API', function() {
                 })
             };
 
-            var inventory = getInventoryAPI(
+            const inventory = getInventoryAPI(
                 {
                     hasPartyRole: function() {
                         return hasPartyRole;
@@ -393,7 +228,7 @@ describe('Inventory API', function() {
         });
 
         it('should give a 403 error when the user is not the customer who acquired the product', function(done) {
-            var error = {
+            const error = {
                 status: 403,
                 message: 'You are not authorized to retrieve the specified product from the inventory'
             };

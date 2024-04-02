@@ -97,6 +97,22 @@
             SUSPENDED: 'Suspended',
             TERMINATED: 'Terminated'
         })
+        .constant('RESOURCE_INVENTORY_STATUS', {
+            STANDBY: 'standby',
+            ALARM: "alarm",
+            AVAILABLE: "available",
+            RESERVED: "reserved",
+            UNKNOWN: "unknown",
+            SUSPENDED: "suspended"
+        })
+        .constant('SERVICE_INVENTORY_STATUS', {
+            DESIGNED: 'Designed',
+            FEASABILITY_CHECKED: 'feasabilityChecked',
+            RESERVED: 'Reserved',
+            ACTIVE: 'Active',
+            INACTIVE: 'Inactive',
+            TERMINATED: 'Terminated'
+        })
         .constant('PRODUCTORDER_STATUS', PRODUCTORDER_STATUS)
         .constant('PRODUCTORDER_LIFECYCLE', [
             PRODUCTORDER_STATUS.ACKNOWLEDGED,

@@ -19,29 +19,29 @@
               dt.order-title #{ __("Priority") }
               dd.order-title-info {{ productOrder.priority }}
       .panel-body
-        .row(ng-repeat="orderItem in productOrder.orderItem")
+        .row(ng-repeat="productOrderItem in productOrder.productOrderItem")
           hr(ng-if="!$first")
           .col-xs-12.col-sm-4
             .thumbnail.thumbnail-lg
-              img(no-image, ng-src="{{ orderItem.productOffering.getPicture() }}")
-            .btn-toolbar(ng-if="searchVM.role === 'Seller' && productOrder.state == 'InProgress' && searchVM.isTransitable(orderItem)")
+              img(no-image, ng-src="{{ productOrderItem.productOffering.getPicture() }}")
+            .btn-toolbar(ng-if="searchVM.role === 'Seller' && productOrder.state == 'InProgress' && searchVM.isTransitable(productOrderItem)")
               .btn-group.btn-group-justified.z-depth-1
-                a.btn.btn-default(ng-click="searchVM.updateStatus(productOrder, $index, searchVM.getNextStatus(orderItem))")
-                  span(ng-if="orderItem.state == 'Acknowledged'").item-text #{ __("Sent") }
-                  span(ng-if="orderItem.state == 'InProgress'").item-text #{ __("Delivered") }
+                a.btn.btn-default(ng-click="searchVM.updateStatus(productOrder, $index, searchVM.getNextStatus(productOrderItem))")
+                  span(ng-if="productOrderItem.state == 'Acknowledged'").item-text #{ __("Sent") }
+                  span(ng-if="productOrderItem.state == 'InProgress'").item-text #{ __("Delivered") }
                 a.btn.btn-danger(ng-click="searchVM.updateStatus(productOrder, $index, 'Failed')")
                   span.item-text #{ __("Reject") }
           .col-xs-12.col-sm-6
             .h4.text-ellipsis
               strong
-                a(ui-sref="offering.detail({ offeringId: orderItem.productOffering.id })", ui-sref-opts="{ inherit: false }")
-                  span.item-text {{ orderItem.productOffering.name }}
+                a(ui-sref="offering.detail({ offeringId: productOrderItem.productOffering.id })", ui-sref-opts="{ inherit: false }")
+                  span.item-text {{ productOrderItem.productOffering.name }}
             dl.limit-table
               dt #{ __("Description") }
-              dd.text-dark-secondary {{ orderItem.productOffering.description ? orderItem.productOffering.description : '#{ __("No description provided.") }' }}
+              dd.text-dark-secondary {{ productOrderItem.productOffering.description ? productOrderItem.productOffering.description : '#{ __("No description provided.") }' }}
               dt #{ __("Status") }
-              dd.text-dark-secondary {{ orderItem.state }}
+              dd.text-dark-secondary {{ productOrderItem.state }}
               dt #{ __("Price") }
               dd.text-dark-secondary {{ productOrder.formatPriceplanOf($index) }}
               dt #{ __("Appointment") }
-              dd.text-dark-secondary {{ orderItem.appointment ? orderItem.appointment : '#{ __("No appointment included.") }' }}
+              dd.text-dark-secondary {{ productOrderItem.appointment ? productOrderItem.appointment : '#{ __("No appointment included.") }' }}

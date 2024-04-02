@@ -1,5 +1,7 @@
-/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 CoNWeT Lab., Universidad Politécnica de Madrid
  *
+ * Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
+ * 
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
  *
@@ -55,6 +57,9 @@
             'USAGE_CHART_URL',
             'BillingAccount',
             'Download',
+            'ResourceInventory',
+            'ServiceInventory',
+            'Usage',
             ProductDetailController
         ]);
 
@@ -67,7 +72,7 @@
         vm.list = [];
         vm.list.flow = $state.params.flow;
         vm.offset = -1;
-        vm.size = -1;
+        vm.limit = -1;
 
         vm.showFilters = showFilters;
         vm.getElementsLength = getElementsLength;
@@ -100,7 +105,7 @@
                 angular.copy($state.params, params);
 
                 params.offset = vm.offset;
-                params.size = vm.size;
+                params.limit = vm.limit;
 
                 InventoryProduct.search(params).then(
                     function(productList) {
@@ -124,15 +129,16 @@
         }
 
         function getElementsLength() {
-            var params = {};
-            angular.copy($state.params, params);
-            return InventoryProduct.count(params);
+            //var params = {};
+            //angular.copy($state.params, params);
+            //return InventoryProduct.count(params);
+            return Promise.resolve(10)
         }
     }
 
     function ProductDetailController(
         $rootScope, $scope, $state, InventoryProduct, Utils, ProductSpec, EVENTS, $interval,
-        $window, LOGGED_USER, USAGE_CHART_URL, BillingAccount, Download) {
+        $window, LOGGED_USER, USAGE_CHART_URL, BillingAccount, Download, ResourceInventory, ServiceInventory, Usage) {
 
         /* Rating stuff */
         $scope.rating = 0;
@@ -142,7 +148,6 @@
         };
 
         $scope.updateSelectedRating = function (rating) {
-            console.log(rating);
             //update rating via API
             /*
             "offerId": "205",
@@ -156,11 +161,9 @@
            data.consumerId = LOGGED_USER.id;
            data.rate = rating;
            InventoryProduct.setRating(data).then(function (ratingUpdated) {
-               console.log("Rating update OK")
                //$scope.ratings.current = rating;
                //$scope.rating = rating;
            }, function (response){
-                console.log("Rating update FAIL")
                 //vm.error = Utils.parseError(response, 'The requested rating could not be retrieved');
                 //vm.item.status = ERROR;
                 //$scope.ratings.current = 0;
@@ -188,13 +191,12 @@
         var load = false;
         var digital = false;
         var locations = [];
-        var applicationId = [];
         var hasApplicationId = false;
 
         vm.item = {};
         vm.offerings = [];
         vm.charges = {
-            loadStatus: LOADING,
+            loadStatus: LOADED,
             items: []
         };
 
@@ -215,13 +217,14 @@
         vm.downloadAsset = downloadAsset;
         vm.getUsageURL = getUsageURL;
         vm.downloadInvoice = downloadInvoice;
-        vm.generateToken = generateToken;
-        vm.retrieveToken = retrieveToken;
         vm.tokenSupported = tokenSupported;
+        vm.initUsageChart = initUsageChart;
         vm.password = "";
         vm.refreshToken = "";
-        vm.token = retrieveToken();
         vm.sla = "";
+
+        vm.resources = []
+        vm.services = []
     
         function tokenSupported() {
             // To be updated when functionality available in Charging backend
@@ -237,7 +240,9 @@
                 vm.item.loadStatus = LOADED;
                 vm.offerings = [];
 
-                $scope.priceplanSelected = productRetrieved.productPrice[0];
+                if (productRetrieved.productPrice && productRetrieved.productPrice.length > 0) {
+                    $scope.priceplanSelected = productRetrieved.productPrice[0];
+                }
 
             digital = false;
             if (!productRetrieved.productOffering.isBundle) {
@@ -252,9 +257,11 @@
 
             getSla(productRetrieved.productOffering.id);
             getCurrentOwnRating(productRetrieved.productOffering.id);
+            getResources(productRetrieved);
+            getServices(productRetrieved);
 
             // Retrieve existing charges
-            BillingAccount.searchCharges(vm.item.id).then(function(charges) {
+            /*BillingAccount.searchCharges(vm.item.id).then(function(charges) {
                 // Extract invoice url
                 vm.charges.items = charges.map(function(charge) {
                     var invoiceUrl = charge.description.split(' ').pop();
@@ -263,12 +270,11 @@
                     return charge;
                 });
                 vm.charges.loadStatus = LOADED;
-                vm.token = retrieveToken();
 
             }, function(response) {
                 vm.charges.error = Utils.parseError(response, 'It was impossible to load the list of charges');
                 vm.charges.loadStatus = ERROR;
-            });
+            });*/
 
             },
             function(response) {
@@ -276,6 +282,30 @@
                 vm.item.loadStatus = ERROR;
             }
         );
+
+        function getResources(product) {
+            if (product.realizingResource) {
+                Promise.all(product.realizingResource.map((res) => {
+                    return ResourceInventory.detail(res.id)
+                })).then((resources) => {
+                    vm.resources = resources
+                })
+            }
+        }
+
+        function getServices(product) {
+            if (product.productCharacteristic) {
+                const service_chars = product.productCharacteristic.filter((serv) => {
+                    return serv.name.toLowerCase() == 'service'
+                })
+
+                Promise.all(service_chars.map((serv) => {
+                    return ServiceInventory.detail(serv.value)
+                })).then((services) => {
+                    vm.services = services
+                })
+            }
+        }
 
         function checkOfferingProduct(offering) {
             var characteristics = offering.productSpecification.productSpecCharacteristic;
@@ -420,7 +450,20 @@
             $('#confirm-prod-modal').modal('hide');
             $('.modal-backdrop').remove();
             load = true;
-            InventoryProduct.remove({
+            InventoryProduct.terminate($state.params.productId).then(() => {
+                $state.go($state.current, {}, {reload: true});
+            }, (response) =>{
+                load = false;
+                var defaultMessage =
+                    'There was an unexpected error that prevented the ' + 'system from unsubscribing your product';
+                var error = Utils.parseError(response, defaultMessage);
+
+                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
+                    error: error
+                });
+            })
+
+            /*InventoryProduct.remove({
                 name: vm.item.name,
                 id: vm.item.id,
                 priceType: vm.item.productPrice[0].priceType.toLowerCase()
@@ -443,7 +486,7 @@
                         error: error
                     });
                 }
-            );
+            );*/
         }
 
         function renewProductModal() {
@@ -479,6 +522,97 @@
                     });
                 }
             );
+        }
+
+        function parseCharacteristic(List){
+            // Assume that there is only one variable to measure
+            let values
+            let date
+            let key
+            const result = {}
+            for(const item of List){
+             
+                if (item.usageDate){
+                    date = new Date(item.usageDate)
+                    key = `${date.getDate()}-${date.getMonth()+1}-${date.getFullYear()}`
+                    for (const characteristic of item.usageCharacteristic){
+                        if(characteristic.name != 'orderId' && characteristic.name != 'productId'){
+                            if(!result[characteristic.name]){
+                                result[characteristic.name] = {}
+                            }
+                            values = result[characteristic.name]
+                            values[key] = 
+                                !!values[key]?
+                                values[key] 
+                                    + characteristic.value : characteristic.value
+                        }
+                    }
+                }
+            }
+            return result
+        } 
+
+        function initUsageChart() {
+            // Initialize the echarts instance based on the prepared dom
+            const chartParent = document.getElementById('usage-chart');
+            let chartChild
+            let myChart
+            let now
+            // Request data to Usage API
+            Usage.getUsages(LOGGED_USER.partyId, $state.params.productId).then((itemList)=>{
+                const dict = parseCharacteristic(itemList); 
+                var option
+                let measures
+                let format
+                let data 
+                let cont = 0
+                // key: characteristic.name 
+                // value: dict (date, valuepoint)
+                for (const [key, value] of Object.entries(dict)){ 
+                    now = new Date();
+                    now.setDate(now.getDate() +1)
+                    chartChild= document.createElement('div')
+                    chartChild.id = key
+                    chartChild.style.height = '400px'
+                    chartParent.appendChild(chartChild)
+                    myChart = echarts.init(document.getElementById(key))
+
+                    // Cleaning data for the next iteration
+                    measures = []
+                    data = []
+                    for (let i = 0; i < 7; i++) {
+                        now.setDate(now.getDate() -1)
+                        format = `${now.getDate()}-${now.getMonth()+1}-${now.getFullYear()}`
+                        data.unshift(format)
+                        measures.unshift((!!value[format]? Math.round((value[format]+ Number.EPSILON) * 1000) / 1000 : 0))
+                    }
+                    
+                    option = {
+                        xAxis: {
+                            type: 'category',
+                            data: data
+                        },
+                        yAxis: {
+                            type: 'value'
+                        },
+                        series: [
+                            {
+                              data: measures,
+                              type: 'line'
+                            }
+                        ],
+                        tooltip: {
+                            trigger: 'axis',
+                            formatter: `{b} <br>${key}: <b>{c}<b>`
+                          },
+                    };
+
+                    // Display the chart using the configuration items and data just specified.
+                    myChart.setOption(option);
+                }
+
+            
+            })
         }
 
         function getUsageURL() {
@@ -538,67 +672,13 @@
                 return characteristicMatches(prodCharacteristic, characteristic, offId, productId);
             })[0];
 
-            return result === productCharacteristic.value;
+            return result.startsWith(productCharacteristic.value);
         }
 
         function downloadInvoice(invoice) {
             Download.download(invoice).then((result) => {
                 let url = $window.URL.createObjectURL(result);
                 $window.open(url, '_blank');
-            });
-        }
-
-        function getApplicationId(){
-            return applicationId;
-        }
-
-        function retrieveToken() {
-            load = true;
-
-            InventoryProduct.getToken({
-                appId: getApplicationId(),
-                userId: LOGGED_USER.id,
-            }).then(function(tokenBody,tokenHeader) {
-                load = false;
-                var now = Date.now();
-                var token_expiration = new Date(tokenBody.expire);
-                if(now > token_expiration)
-                    vm.token = "Token expired";
-                else
-                    vm.token = tokenBody.authToken;
-                vm.refreshToken = tokenBody.refreshToken;    
-                return vm.token;
-            }, function (response) {
-                load = false;
-                var defaultMessage = 'There was an unexpected error that prevented the ' +
-                    'system from renewing your product';
-                var error = Utils.parseError(response, defaultMessage);
-
-                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
-                    error: error
-                });
-            });
-        }
-
-        function generateToken() {
-            load = true;
-            InventoryProduct.setToken({
-                username: LOGGED_USER.email,
-                password: vm.password,
-                appId: getApplicationId(),
-            }).then(function(tokenBody,tokenHeader) {
-                load = false;
-                vm.token = retrieveToken();
-                return tokenBody.access_token;
-            }, function (response) {
-                load = false;
-                var defaultMessage = 'There was an unexpected error that prevented the ' +
-                    'system from generating a new token';
-                var error = Utils.parseError(response, defaultMessage);
-
-                $rootScope.$broadcast(EVENTS.MESSAGE_ADDED, 'error', {
-                    error: error
-                });
             });
         }
 
@@ -610,10 +690,10 @@
                     result = characteristicValue.value;
                     break;
                 case ProductSpec.VALUE_TYPES.NUMBER.toLowerCase():
-                    if (characteristicValue.value && characteristicValue.value.length) {
+                    if (characteristicValue.value && characteristicValue.value != "") {
                         result = characteristicValue.value;
                     } else {
-                        result = characteristicValue.valueFrom + ' - ' + characteristicValue.valueTo;
+                        result = characteristicValue.valueFrom + '-' + characteristicValue.valueTo;
                     }
                     result += ' ' + characteristicValue.unitOfMeasure;
                     break;

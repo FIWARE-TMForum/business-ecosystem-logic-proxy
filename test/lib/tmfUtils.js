@@ -1,4 +1,6 @@
-/* Copyright (c) 2015 - 2016 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 CoNWeT Lab., Universidad Politécnica de Madrid
+ *
+ * Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -17,21 +19,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var proxyquire = require('proxyquire');
-
-var testUtils = require('../utils');
+const proxyquire = require('proxyquire');
+const testUtils = require('../utils');
 
 describe('TMF Utils', function() {
-    var config = testUtils.getDefaultConfig();
+    const config = testUtils.getDefaultConfig();
 
-    var getTmfUtils = function(utils) {
+    const getTmfUtils = function(utils) {
         return proxyquire('../../lib/tmfUtils', {
             './../config': config,
             './utils': utils || {}
         });
     };
 
-    var getPartyHref = function(protocol, hostname, userName) {
+    const getPartyHref = function(protocol, hostname, userName) {
         return (
             protocol +
             '://' +
@@ -40,13 +41,13 @@ describe('TMF Utils', function() {
             config.port +
             '/' +
             config.endpoints.party.path +
-            '/api/partyManagement/v2/individual/' +
+            '/individual/' +
             userName
         );
     };
 
     describe('Is Owner', function() {
-        var testIsOwner = function(req, info, expected) {
+        const testIsOwner = function(req, info, expected) {
             var tmfUtils = getTmfUtils();
 
             var result = tmfUtils.isOwner(req, info);
@@ -54,18 +55,18 @@ describe('TMF Utils', function() {
         };
 
         it('should return true when the user is owner of the given resource', function() {
-            var userName = 'test';
+            const userName = 'test';
 
-            var req = {
+            const req = {
                 secure: false,
                 hostname: 'belp.fiware.org',
                 user: {
                     roles: [],
-                    id: userName
+                    partyId: userName
                 }
             };
 
-            var info = {
+            const info = {
                 relatedParty: [
                     {
                         role: 'Owner',
@@ -79,18 +80,18 @@ describe('TMF Utils', function() {
         });
 
         it('should return false when the user is not owner of the resource', function() {
-            var userName = 'user';
+            const userName = 'user';
 
-            var req = {
+            const req = {
                 secure: false,
                 hostname: 'belp.fiware.org',
                 user: {
                     roles: [],
-                    id: 'another_user'
+                    partyId: 'another_user'
                 }
             };
 
-            var info = {
+            const info = {
                 relatedParty: [
                     {
                         role: 'Owner',
@@ -103,67 +104,42 @@ describe('TMF Utils', function() {
             testIsOwner(req, info, false);
         });
 
-        it('should return false when the href is invalid', function() {
-            var userName = 'test';
-
-            var req = {
-                secure: false,
-                hostname: 'belp.fiware.org',
-                user: {
-                    roles: [],
-                    id: 'test'
-                }
-            };
-
-            var info = {
-                relatedParty: [
-                    {
-                        role: 'Owner',
-                        id: userName,
-                        href: getPartyHref('http', req.hostname, userName + 'ABC')
-                    }
-                ]
-            };
-
-            testIsOwner(req, info, false);
-        });
-
         it('should return false when the resource does not contain related party field', function() {
-            var req = {
+            const req = {
                 secure: false,
                 hostname: 'belp.fiware.org',
                 user: {
                     roles: [],
-                    id: 'test'
+                    partyId: 'test'
                 }
             };
 
-            var info = {};
+            const info = {};
             testIsOwner(req, info, false);
         });
     });
 
     describe('Filter Related Party Fields', function() {
-        var testFilterRelatedPartyFields = function(user, query, expectedErr, newQueryParams, done) {
-            var buildQueryString = function(query) {
-                var queryArray = [];
+        const testFilterRelatedPartyFields = function(user, query, expectedErr, newQueryParams, done) {
+            const buildQueryString = function(query) {
+                const queryArray = [];
 
-                for (var key in query) {
+                for (let key in query) {
                     queryArray.push(key + '=' + query[key]);
                 }
 
                 return queryArray.join('&');
             };
 
-            var originalApiUrl = '/example/api/path';
-            var queryIncluded = query && Object.keys(query).length > 0;
+            let originalApiUrl = '/example/api/path';
+            const queryIncluded = query && Object.keys(query).length > 0;
 
             if (queryIncluded) {
                 originalApiUrl += '?' + buildQueryString(query);
             }
 
-            var tmfUtils = getTmfUtils();
-            var req = {
+            const tmfUtils = getTmfUtils();
+            const req = {
                 apiUrl: originalApiUrl,
                 query: query,
                 user: user
@@ -173,12 +149,11 @@ describe('TMF Utils', function() {
                 expect(err).toEqual(expectedErr);
 
                 if (!err) {
-                    var newQueryParamsExpected = newQueryParams && Object.keys(newQueryParams).length > 0;
-
-                    var expectedApiUrl = originalApiUrl;
+                    const newQueryParamsExpected = newQueryParams && Object.keys(newQueryParams).length > 0;
+                    let expectedApiUrl = originalApiUrl;
 
                     if (newQueryParamsExpected) {
-                        var separator = queryIncluded ? '&' : '?';
+                        const separator = queryIncluded ? '&' : '?';
                         expectedApiUrl = originalApiUrl + separator + buildQueryString(newQueryParams);
                     }
 
@@ -190,15 +165,15 @@ describe('TMF Utils', function() {
         };
 
         it('should call callback with error when Related Party field includes href', function(done) {
-            var user = {
-                id: 'fiware'
+            const user = {
+                partyId: 'fiware'
             };
 
-            var query = {
+            const query = {
                 'relatedParty.href': 'http://fiware.org/user/fiware'
             };
 
-            var err = {
+            const err = {
                 status: 403,
                 message: 'You are not allowed to filter items using these filters'
             };
@@ -207,15 +182,15 @@ describe('TMF Utils', function() {
         });
 
         it('should call callback with error when Related Party field includes role', function(done) {
-            var user = {
-                id: 'fiware'
+            const user = {
+                partyId: 'fiware'
             };
 
-            var query = {
+            const query = {
                 'relatedParty.role': 'Customer'
             };
 
-            var err = {
+            const err = {
                 status: 403,
                 message: 'You are not allowed to filter items using these filters'
             };
@@ -224,15 +199,15 @@ describe('TMF Utils', function() {
         });
 
         it('should call callback with error when asking for items from another user', function(done) {
-            var user = {
-                id: 'fiware'
+            const user = {
+                partyId: 'fiware'
             };
 
-            var query = {
-                'relatedParty.id': user.id + 'a'
+            const query = {
+                'relatedParty.id': user.partyId + 'a'
             };
 
-            var err = {
+            const err = {
                 status: 403,
                 message: 'You are not authorized to retrieve the orderings made by the user ' + query['relatedParty.id']
             };
@@ -241,40 +216,40 @@ describe('TMF Utils', function() {
         });
 
         it('should call callback without error when asking for their own items', function(done) {
-            var user = {
-                id: 'fiware'
+            const user = {
+                partyId: 'fiware'
             };
 
-            var query = {
-                'relatedParty.id': user.id
+            const query = {
+                'relatedParty.id': user.partyId
             };
 
             testFilterRelatedPartyFields(user, query, null, null, done);
         });
 
         it('should include party id when not included in the original request', function(done) {
-            var user = {
-                id: 'fiware'
+            const user = {
+                partyId: 'fiware'
             };
 
-            var newQueryParams = {
-                'relatedParty.id': user.id
+            const newQueryParams = {
+                'relatedParty.id': user.partyId
             };
 
             testFilterRelatedPartyFields(user, {}, null, newQueryParams, done);
         });
 
         it('should include party id when not included in the original request and extra query params', function(done) {
-            var user = {
-                id: 'fiware'
+            const user = {
+                partyId: 'fiware'
             };
 
-            var query = {
+            const query = {
                 state: 'failed'
             };
 
-            var newQueryParams = {
-                'relatedParty.id': user.id
+            const newQueryParams = {
+                'relatedParty.id': user.partyId
             };
 
             testFilterRelatedPartyFields(user, query, null, newQueryParams, done);
@@ -282,14 +257,14 @@ describe('TMF Utils', function() {
     });
 
     describe('Ensure Related Party Field', function() {
-        var testEnsureRelatedParty = function(originalApiUrl, query, expectedApiUrl) {
-            var req = {
+        const testEnsureRelatedParty = function(originalApiUrl, query, expectedApiUrl) {
+            const req = {
                 apiUrl: originalApiUrl,
                 query: query
             };
 
-            var tmfUtils = getTmfUtils();
-            var callback = jasmine.createSpy();
+            const tmfUtils = getTmfUtils();
+            const callback = jasmine.createSpy();
 
             tmfUtils.ensureRelatedPartyIncluded(req, callback);
 
@@ -297,11 +272,11 @@ describe('TMF Utils', function() {
             expect(req.apiUrl).toBe(expectedApiUrl);
         };
 
-        var urlNotModified = function(originalApiUrl, query) {
+        const urlNotModified = function(originalApiUrl, query) {
             testEnsureRelatedParty(originalApiUrl, query, originalApiUrl);
         };
 
-        var urlNotModifiedFields = function(fields) {
+        const urlNotModifiedFields = function(fields) {
             urlNotModified('/product?fields=' + fields, { fields: fields });
         };
 
@@ -310,22 +285,22 @@ describe('TMF Utils', function() {
         });
 
         it('should not modify the API URL when query included but fields is not included', function() {
-            var name = 'fiware';
+            const name = 'fiware';
             urlNotModified('/product?name=' + name, { name: name });
         });
 
         it('should not modify the API URL when fields include related party at the beginning', function() {
-            var fields = 'relatedParty,name';
+            const fields = 'relatedParty,name';
             urlNotModifiedFields(fields);
         });
 
         it('should not modify the API URL when fields include related party at the end', function() {
-            var fields = 'relatedParty,name';
+            const fields = 'relatedParty,name';
             urlNotModifiedFields(fields);
         });
 
         it('should not modify the API URL when fields include related party in the middle', function() {
-            var fields = 'name,relatedParty,version';
+            const fields = 'name,relatedParty,version';
             urlNotModifiedFields(fields);
         });
 
@@ -333,9 +308,9 @@ describe('TMF Utils', function() {
             'should modify the API URL when related party is not included in the fields query param ' +
                 'and there are no more query params',
             function() {
-                var fields = 'name';
-                var originalApiUrl = '/product?fields=' + fields;
-                var expectedApiUrl = originalApiUrl + ',relatedParty';
+                const fields = 'name';
+                const originalApiUrl = '/product?fields=' + fields;
+                const expectedApiUrl = originalApiUrl + ',relatedParty';
 
                 testEnsureRelatedParty(originalApiUrl, { fields: fields }, expectedApiUrl);
             }
@@ -345,12 +320,12 @@ describe('TMF Utils', function() {
             'should modify the API URL when related party is not included in the fields query param ' +
                 'and there are more query params',
             function() {
-                var version = '1';
-                var fields = 'name';
+                const version = '1';
+                const fields = 'name';
 
-                var urlPattern = '/product?fields=FIELDS&version=' + version;
-                var originalApiUrl = urlPattern.replace('FIELDS', fields);
-                var expectedApiUrl = urlPattern.replace('FIELDS', fields + ',relatedParty');
+                const urlPattern = '/product?fields=FIELDS&version=' + version;
+                const originalApiUrl = urlPattern.replace('FIELDS', fields);
+                const expectedApiUrl = urlPattern.replace('FIELDS', fields + ',relatedParty');
 
                 testEnsureRelatedParty(originalApiUrl, { fields: fields, version: version }, expectedApiUrl);
             }
@@ -359,9 +334,9 @@ describe('TMF Utils', function() {
 
     describe('Has Party Role', function() {
         it('should return false when related Party is empty', function() {
-            var tmfUtils = getTmfUtils();
-            var result = tmfUtils.hasPartyRole(
-                { hostname: 'belp.fiware.org', secure: false, user: { id: 'fiware' } },
+            const tmfUtils = getTmfUtils();
+            const result = tmfUtils.hasPartyRole(
+                { hostname: 'belp.fiware.org', secure: false, user: { partyId: 'fiware' } },
                 [],
                 'seller'
             );
@@ -369,19 +344,19 @@ describe('TMF Utils', function() {
         });
 
         it('should return true when related Party contains one element and user and role matches', function() {
-            var tmfUtils = getTmfUtils();
-            var role = 'seller';
-            var userName = 'fiware';
+            const tmfUtils = getTmfUtils();
+            const role = 'seller';
+            const userName = 'fiware';
 
-            var req = {
+            const req = {
                 secure: false,
                 hostname: 'belp.fiware.org',
                 user: {
-                    id: userName
+                    partyId: userName
                 }
             };
 
-            var relatedParties = [
+            const relatedParties = [
                 {
                     role: role,
                     id: userName,
@@ -389,24 +364,24 @@ describe('TMF Utils', function() {
                 }
             ];
 
-            var result = tmfUtils.hasPartyRole(req, relatedParties, role);
+            const result = tmfUtils.hasPartyRole(req, relatedParties, role);
             expect(result).toBe(true);
         });
 
         it('should return true when related Party contains one element and user and role (ignore case) matches', function() {
-            var tmfUtils = getTmfUtils();
-            var role = 'seller';
-            var userName = 'fiware';
+            const tmfUtils = getTmfUtils();
+            const role = 'seller';
+            const userName = 'fiware';
 
-            var req = {
+            const req = {
                 secure: false,
                 hostname: 'belp.fiware.org',
                 user: {
-                    id: userName
+                    partyId: userName
                 }
             };
 
-            var relatedParties = [
+            const relatedParties = [
                 {
                     role: role.toUpperCase(),
                     id: userName,
@@ -414,24 +389,24 @@ describe('TMF Utils', function() {
                 }
             ];
 
-            var result = tmfUtils.hasPartyRole(req, relatedParties, role.toLowerCase());
+            const result = tmfUtils.hasPartyRole(req, relatedParties, role.toLowerCase());
             expect(result).toBe(true);
         });
 
         it('should return false when related Party contains one element and user matches but role does not', function() {
-            var tmfUtils = getTmfUtils();
-            var role = 'seller';
-            var userName = 'fiware';
+            const tmfUtils = getTmfUtils();
+            const role = 'seller';
+            const userName = 'fiware';
 
-            var req = {
+            const req = {
                 secure: false,
                 hostname: 'belp.fiware.org',
                 user: {
-                    id: userName
+                    partyId: userName
                 }
             };
 
-            var relatedParties = [
+            const relatedParties = [
                 {
                     role: role,
                     id: userName,
@@ -439,49 +414,24 @@ describe('TMF Utils', function() {
                 }
             ];
 
-            var result = tmfUtils.hasPartyRole(req, relatedParties, role + 'a');
-            expect(result).toBe(false);
-        });
-
-        it('should return false when related Party href does not match', function() {
-            var tmfUtils = getTmfUtils();
-            var role = 'seller';
-            var userName = 'fiware';
-
-            var req = {
-                secure: false,
-                hostname: 'belp.fiware.org',
-                user: {
-                    id: userName
-                }
-            };
-
-            var relatedParties = [
-                {
-                    role: role,
-                    id: userName,
-                    href: getPartyHref('http', req.hostname, userName + 'ABC')
-                }
-            ];
-
-            var result = tmfUtils.hasPartyRole(req, relatedParties, role);
+            const result = tmfUtils.hasPartyRole(req, relatedParties, role + 'a');
             expect(result).toBe(false);
         });
 
         it('should return false when related Party contains one element and role matches but user does not', function() {
-            var tmfUtils = getTmfUtils();
-            var role = 'seller';
-            var userName = 'fiware';
+            const tmfUtils = getTmfUtils();
+            const role = 'seller';
+            const userName = 'fiware';
 
-            var req = {
+            const req = {
                 secure: false,
                 hostname: 'belp.fiware.org',
                 user: {
-                    id: userName + 'a'
+                    partyId: userName + 'a'
                 }
             };
 
-            var relatedParties = [
+            const relatedParties = [
                 {
                     role: role,
                     id: userName,
@@ -489,24 +439,24 @@ describe('TMF Utils', function() {
                 }
             ];
 
-            var result = tmfUtils.hasPartyRole(req, relatedParties, role);
+            const result = tmfUtils.hasPartyRole(req, relatedParties, role);
             expect(result).toBe(false);
         });
 
         it('should return true when related Party contains two element and one matches', function() {
-            var tmfUtils = getTmfUtils();
-            var role = 'seller';
-            var userName = 'fiware';
+            const tmfUtils = getTmfUtils();
+            const role = 'seller';
+            const userName = 'fiware';
 
-            var req = {
+            const req = {
                 secure: false,
                 hostname: 'belp.fiware.org',
                 user: {
-                    id: userName
+                    partyId: userName
                 }
             };
 
-            var relatedParties = [
+            const relatedParties = [
                 {
                     role: role,
                     id: userName,
@@ -519,24 +469,24 @@ describe('TMF Utils', function() {
                 }
             ];
 
-            var result = tmfUtils.hasPartyRole(req, relatedParties, role);
+            const result = tmfUtils.hasPartyRole(req, relatedParties, role);
             expect(result).toBe(true);
         });
 
         it('should return false when related Party contains two element and none matches', function() {
-            var tmfUtils = getTmfUtils();
-            var role = 'seller';
-            var userName = 'fiware';
+            const tmfUtils = getTmfUtils();
+            const role = 'seller';
+            const userName = 'fiware';
 
-            var req = {
+            const req = {
                 secure: false,
                 hostname: 'belp.fiware.org',
                 user: {
-                    id: userName
+                    partyId: userName
                 }
             };
 
-            var relatedParties = [
+            const relatedParties = [
                 {
                     role: role + 'b',
                     id: userName + 'b',
@@ -549,19 +499,19 @@ describe('TMF Utils', function() {
                 }
             ];
 
-            var result = tmfUtils.hasPartyRole(req, relatedParties, role);
+            const result = tmfUtils.hasPartyRole(req, relatedParties, role);
             expect(result).toBe(false);
         });
     });
 
     describe('Get Party Individuals Collection URL', function() {
-        var testGetIndividualsCollectionURL = function(req, user) {
-            var utils = jasmine.createSpyObj('utils', ['getAPIURL']);
+        const testGetIndividualsCollectionURL = function(req, user) {
+            const utils = jasmine.createSpyObj('utils', ['getAPIURL']);
 
-            var tmfUtils = getTmfUtils(utils);
+            const tmfUtils = getTmfUtils(utils);
             tmfUtils.getIndividualURL(req);
 
-            var expectedPath = '/' + config.endpoints.party.path + '/api/partyManagement/v2/individual/';
+            let expectedPath = '/' + config.endpoints.party.path + '/individual/';
 
             if (user) {
                 expectedPath += user;
@@ -571,7 +521,7 @@ describe('TMF Utils', function() {
         };
 
         it('should call utils with http', function() {
-            var req = {
+            const req = {
                 secure: false,
                 hostname: 'belp.fiware.org'
             };
@@ -581,7 +531,7 @@ describe('TMF Utils', function() {
 
         it('should call utils with https', function() {
             config.proxy.secured = true;
-            var req = {
+            const req = {
                 secure: true,
                 hostname: 'belp.fiware.org'
             };
@@ -592,7 +542,7 @@ describe('TMF Utils', function() {
         it('should call utils with http and without proxy', function() {
             config.proxy.enabled = false;
 
-            var req = {
+            const req = {
                 secure: false,
                 hostname: 'anotherHost.com'
             };
@@ -603,7 +553,7 @@ describe('TMF Utils', function() {
         it('should call utils with https and without proxy', function() {
             config.proxy.enabled = false;
 
-            var req = {
+            const req = {
                 secure: true,
                 hostname: 'anotherHost.com'
             };
