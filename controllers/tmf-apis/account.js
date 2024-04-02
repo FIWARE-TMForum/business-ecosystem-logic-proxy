@@ -27,87 +27,64 @@ const utils = require('./../../lib/utils')
 
 const account = (function() {
 
-    var getAccountPath = function(asset) {
-        return url.parse(asset.account.href).pathname;
-    };
+    const validateCreation = function (req, callback) {
+        console.log(req.json)
 
-    var getAccountAPIUrl = function(path) {
-        return utils.getAPIURL(
+        // Missing related party info
+        if (!('relatedParty' in req.json) || req.json.relatedParty.length == 0) {
+            return callback({
+                status: 400,
+                message: "Missing relatedParty field"
+            })
+        }
+
+        // Check the user making the request is the expected owner
+        if (!tmfUtils.isOwner(req, req.json)) {
+            return callback({
+                status: 403,
+                message: "The user making the request is not the specified owner"
+            })
+        }
+
+
+        callback(null)
+    }
+
+    const validateRetrieval = function(req, callback) {
+        return tmfUtils.filterRelatedPartyFields(req, () => {
+            tmfUtils.ensureRelatedPartyIncluded(req, callback)
+        });
+    }
+
+    const validateUpdate = function(req, callback) {
+        const path = req.apiUrl.replace('/' + config.endpoints.account.path, '')
+        const uri = utils.getAPIURL(
             config.endpoints.account.appSsl,
             config.endpoints.account.host,
             config.endpoints.account.port,
             path
         );
-    };
-
-    const retrieveAsset = function(path, callback) {
-        const uri = getAccountAPIUrl(path);
 
         axios.get(uri).then((response) => {
-            if (response.status >= 400) {
-                callback({
-                    status: response.status
-                });
-            } else {
-                callback(null, {
-                    status: response.status,
-                    body: response.data
-                });
+            if (!tmfUtils.isOwner(req, response.data)) {
+                return callback({
+                    status: 403,
+                    message: "The user making the request is not the specified owner"
+                })
             }
+            callback(null)
         }).catch((err) => {
             callback({
-                status: 500
+                status: err.response.status
             });
         })
-    };
-
-    var isOwner = function(req, asset, notAuthorizedMessage, callback) {
-        if ('account' in asset) {
-            // Customer Account - The attached customer need to be checked
-            var accountPath = getAccountPath(asset);
-
-            retrieveAsset(accountPath, function(err, result) {
-                if (err) {
-                    callback({
-                        status: 500,
-                        message: 'The attached account cannot be retrieved'
-                    });
-                } else {
-                    const account = result.body;
-
-                    if (tmfUtils.hasPartyRole(req, [account.relatedParty], 'owner')) {
-                        callback(null);
-                    } else {
-                        callback({
-                            status: 403,
-                            message: notAuthorizedMessage
-                        });
-                    }
-                }
-            });
-        } else {
-            // Customer - Related party is directly included
-            if (tmfUtils.hasPartyRole(req, [asset.relatedParty], 'owner')) {
-                callback(null);
-            } else {
-                callback({
-                    status: 403,
-                    message: notAuthorizedMessage
-                });
-            }
-        }
-    };
+    }
 
     const validators = {
-        //GET: [utils.validateLoggedIn, validateRetrieval],
-        GET: [utils.validateLoggedIn],
-        //POST: [utils.validateLoggedIn, validateCreation, validateAccountAccountNotIncluded],
-        POST: [utils.validateLoggedIn],
-        //PATCH: [utils.validateLoggedIn, validateUpdateOwner, validateIDNotModified, validateAccountAccountNotIncluded],
-        PATCH: [utils.validateLoggedIn],
-        // This method is not implemented by this API
-        //'PUT': [ utils.validateLoggedIn, validateOwner, validateCreation ],
-        DELETE: [utils.validateLoggedIn]
+        GET: [utils.validateLoggedIn, validateRetrieval],
+        POST: [utils.validateLoggedIn, validateCreation],
+        PATCH: [utils.validateLoggedIn, validateUpdate],
+        DELETE: [utils.methodNotAllowed]
     };
 
     const checkPermissions = function(req, callback) {
@@ -115,22 +92,8 @@ const account = (function() {
             '^/' + config.endpoints.account.path + '?(/(.*))?$'
         );
 
-        //req.apiUrl = "/account";
-
         const apiPath = url.parse(req.apiUrl).pathname;
         const regExpResult = pathRegExp.exec(apiPath);
-
-        console.log("Inicio checkPermissions");
-        console.log(config.endpoints.account.path);
-        console.log("req.apiUrl");
-        console.log(req.apiUrl);
-        console.log("apiPath");
-        console.log(apiPath);
-        console.log("regExpResult");
-        console.log(regExpResult);
-        console.log("complete request");
-        console.log(req.body);
-        console.log("Fin checkPermissions");
 
         if (regExpResult) {
             req.isCollection = regExpResult[3] ? false : true;
@@ -147,10 +110,6 @@ const account = (function() {
                     for (var i in validators[req.method]) {
                         reqValidators.push(validators[req.method][i].bind(this, req));
                     }
-
-                    console.log("Miramos el json");
-                    console.log(req.json);
-                    console.log("Fin json");
 
                     async.series(reqValidators, callback);
                 } catch (e) {
@@ -172,63 +131,6 @@ const account = (function() {
             });
         }
     };
-
-    //No acaba de funcionar poque no hay un calback(null)
-    //esto parece que lo hace el 
-
-    /*var executePostValidation = function(proxyRes, callback) {
-        // This is not supposed to fail since this method is only called when the request to the
-        // actual server is OK!
-
-        console.log("Inicio");
-        console.log(proxyRes.body);
-        console.log("Final");
-
-        //As veces devolve lista vacía e o parse non é capaz de lelo
-        if (proxyRes.length != 0) {
-            proxyRes.json = JSON.parse(proxyRes.body)
-        } else {
-            proxyRes.json = proxyRes.body;
-        }
-
-        if (proxyRes.method === 'GET') {
-            if (!Array.isArray(proxyRes.json)) {
-                isOwner(proxyRes, proxyRes.json, 'Unauthorized to retrieve the given account profile', function(err) {
-                    if (err) {
-                        var customerAccountsIds = null;
-
-                        if ('customerAccount' in proxyRes.json) {
-                            // Resource: Customer
-                            customerAccountsIds = proxyRes.json.customerAccount.map(function(item) {
-                                return item.id;
-                            });
-                        } else if ('customer' in proxyRes.json) {
-                            // Resource: CustomerAccount
-                            customerAccountsIds = [proxyRes.json.id];
-                        }
-
-                        if (customerAccountsIds && err.status === 403) {
-                            // Billing Addresses can be retrieved by involved sellers
-                            checkIsRelatedSeller(proxyRes, customerAccountsIds, callback);
-                        } else {
-                            callback(err);
-                        }
-                    } else {
-                        callback(null);
-                    }
-                });
-            } else {
-                // checkPermissions filters the requests to list customer accounts.
-                // checkPermissions ensures that users can only retrieve the list
-                // of customer they own.
-                callback(null);
-            }
-        } else if (proxyRes.method === 'POST' && 'customer' in proxyRes.json) {
-            attachCustomerAccount(proxyRes, callback);
-        } else {
-            callback(null);
-        }
-    };*/
 
     var executePostValidation = function(proxyRes, callback) {
         callback(null);
