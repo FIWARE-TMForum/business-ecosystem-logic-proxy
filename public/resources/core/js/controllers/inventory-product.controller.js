@@ -526,10 +526,10 @@
 
         function parseCharacteristic(List){
             // Assume that there is only one variable to measure
-            const values = {}
+            let values
             let date
             let key
-            let name
+            const result = {}
             for(const item of List){
              
                 if (item.usageDate){
@@ -537,9 +537,10 @@
                     key = `${date.getDate()}-${date.getMonth()+1}-${date.getFullYear()}`
                     for (const characteristic of item.usageCharacteristic){
                         if(characteristic.name != 'orderId' && characteristic.name != 'productId'){
-                            if(!name){
-                                name = characteristic.name
+                            if(!result[characteristic.name]){
+                                result[characteristic.name] = {}
                             }
+                            values = result[characteristic.name]
                             values[key] = 
                                 !!values[key]?
                                 values[key] 
@@ -548,51 +549,68 @@
                     }
                 }
             }
-            return {name: name, values: values}
-        }
+            return result
+        } 
 
         function initUsageChart() {
             // Initialize the echarts instance based on the prepared dom
-            var myChart = echarts.init(document.getElementById('usage-chart'));
-
-            // Specify the configuration items and data for the chart
-            const now = new Date();
-            now.setDate(now.getDate() +1)
-            const data = []
+            const chartParent = document.getElementById('usage-chart');
+            let chartChild
+            let myChart
+            let now
+            // Request data to Usage API
             Usage.getUsages(LOGGED_USER.partyId, $state.params.productId).then((itemList)=>{
                 const dict = parseCharacteristic(itemList); 
-                const values = dict.values
-                const name = dict.name
-                const measures = []
+                var option
+                let measures
                 let format
-                for (let i = 0; i < 7; i++) {
-                    now.setDate(now.getDate() -1)
-                    format = `${now.getDate()}-${now.getMonth()+1}-${now.getFullYear()}`
-                    data.unshift(format)
-                    measures.unshift((!!values[format]? Math.round((values[format]+ Number.EPSILON) * 1000) / 1000 : 0))
+                let data 
+                let cont = 0
+                // key: characteristic.name 
+                // value: dict (date, valuepoint)
+                for (const [key, value] of Object.entries(dict)){ 
+                    now = new Date();
+                    now.setDate(now.getDate() +1)
+                    chartChild= document.createElement('div')
+                    chartChild.id = key
+                    chartChild.style.height = '400px'
+                    chartParent.appendChild(chartChild)
+                    myChart = echarts.init(document.getElementById(key))
+
+                    // Cleaning data for the next iteration
+                    measures = []
+                    data = []
+                    for (let i = 0; i < 7; i++) {
+                        now.setDate(now.getDate() -1)
+                        format = `${now.getDate()}-${now.getMonth()+1}-${now.getFullYear()}`
+                        data.unshift(format)
+                        measures.unshift((!!value[format]? Math.round((value[format]+ Number.EPSILON) * 1000) / 1000 : 0))
+                    }
+                    
+                    option = {
+                        xAxis: {
+                            type: 'category',
+                            data: data
+                        },
+                        yAxis: {
+                            type: 'value'
+                        },
+                        series: [
+                            {
+                              data: measures,
+                              type: 'line'
+                            }
+                        ],
+                        tooltip: {
+                            trigger: 'axis',
+                            formatter: `{b} <br>${key}: <b>{c}<b>`
+                          },
+                    };
+
+                    // Display the chart using the configuration items and data just specified.
+                    myChart.setOption(option);
                 }
-                
-                var option = {
-                    xAxis: {
-                        type: 'category',
-                        data: data
-                    },
-                    yAxis: {
-                        type: 'value'
-                    },
-                    series: [
-                        {
-                          data: measures,
-                          type: 'line'
-                        }
-                    ],
-                    tooltip: {
-                        trigger: 'axis',
-                        formatter: `{b} <br>${name}: <b>{c}<b>`
-                      },
-                };
-                // Display the chart using the configuration items and data just specified.
-                myChart.setOption(option);
+
             
             })
         }

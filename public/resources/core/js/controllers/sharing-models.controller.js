@@ -39,6 +39,7 @@
             'RSS',
             'Utils',
             'User',
+            'Party',
             RSModelCreateController
         ])
         .controller('RSModelUpdateCtrl', [
@@ -50,6 +51,7 @@
             'RSS',
             'Utils',
             'User',
+            'Party',
             RSModelUpdateController
         ])
         .controller('RSModelUpdateSTCtrl', RSModelUpdateSTController);
@@ -103,10 +105,10 @@
     }
 
     function calculateTotalPercentage(aggregatorShare, providerShare, currentStValue, stakeholders) {
-        var values = [aggregatorShare, providerShare, currentStValue];
+        var values = [parseFloat(aggregatorShare), parseFloat(providerShare), currentStValue];
 
         stakeholders.forEach((st) => {
-            values.push(st.stakeholderShare);
+            values.push(parseFloat(st.stakeholderShare));
         });
 
         var total = values.filter((value) => !isNaN(value)).reduce((val, curr) => {
@@ -116,7 +118,7 @@
         return total;
     }
 
-    function buildStakeholdersController(vm, $rootScope, PLATFORM_REVENUE, EVENTS, DATA_STATUS, RSS, Utils, User) {
+    function buildStakeholdersController(vm, $rootScope, PLATFORM_REVENUE, EVENTS, DATA_STATUS, RSS, Utils, User, Party) {
         vm.selectedProviders = [];
 
         vm.providers = [];
@@ -156,9 +158,9 @@
             }
 
             if (index > -1) {
-                provider = vm.providers.splice(index, 1);
+                provider = vm.providers.splice(index, 1)[0];
             }
-            return provider[0];
+            return provider;
         }
 
         function addStakeholder() {
@@ -208,12 +210,12 @@
         }
 
         function searchProviders(callback) {
-            RSS.searchProviders().then(
+            Party.searchOrganization().then(
                 function(providersList) {
                     angular.copy(providersList, vm.providers);
 
                     // Remove the current user from the provider list since it cannot be a stakeholder of the model
-                    removeProvider(User.loggedUser.currentUser.id);
+                    removeProvider(User.loggedUser.currentUser.partyId);
 
                     if (vm.providers.length) {
                         vm.currentStakeholder = vm.providers[0];
@@ -236,7 +238,7 @@
         }
     }
 
-    function RSModelCreateController($state, $rootScope, DATA_STATUS, EVENTS, PLATFORM_REVENUE, RSS, Utils, User) {
+    function RSModelCreateController($state, $rootScope, DATA_STATUS, EVENTS, PLATFORM_REVENUE, RSS, Utils, User, Party) {
         var vm = this;
         vm.stepList = [
             {
@@ -262,7 +264,7 @@
 
         vm.create = create;
 
-        buildStakeholdersController(vm, $rootScope, PLATFORM_REVENUE, EVENTS, DATA_STATUS, RSS, Utils, User);
+        buildStakeholdersController(vm, $rootScope, PLATFORM_REVENUE, EVENTS, DATA_STATUS, RSS, Utils, User, Party);
 
         function create() {
             var total = vm.getTotalPercentage();
@@ -307,7 +309,7 @@
         vm.searchProviders();
     }
 
-    function RSModelUpdateController($state, $rootScope, EVENTS, PLATFORM_REVENUE, DATA_STATUS, RSS, Utils, User) {
+    function RSModelUpdateController($state, $rootScope, EVENTS, PLATFORM_REVENUE, DATA_STATUS, RSS, Utils, User, Party) {
         var vm = this;
 
         vm.update = update;
@@ -316,9 +318,11 @@
         RSS.detailModel($state.params.productClass).then(
             function(sharingModel) {
                 vm.data = sharingModel;
+                vm.data.providerShare = parseFloat(sharingModel.providerShare)
+
                 vm.status = DATA_STATUS.LOADED;
 
-                buildStakeholdersController(vm, $rootScope, PLATFORM_REVENUE, EVENTS, DATA_STATUS, RSS, Utils, User);
+                buildStakeholdersController(vm, $rootScope, PLATFORM_REVENUE, EVENTS, DATA_STATUS, RSS, Utils, User, Party);
                 vm.searchProviders(function() {
                     // Populate stakeholders lists with the actual values
                     for (var i = 0; i < vm.data.stakeholders.length; i++) {
