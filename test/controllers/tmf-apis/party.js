@@ -1,4 +1,6 @@
-/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 CoNWeT Lab., Universidad Politécnica de Madrid
+ *
+ * Copyright (c) 2024 Future Internet Consulting and Development Solutions S.L.
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -145,26 +147,26 @@ describe('Party API', function() {
                 const conf = {
                     editParty: false
                 };
-                accessPartyTest(user, indPath, { id: user }, EDIT_NOT_ENABLED, conf, done);
+                accessPartyTest(user, indPath, { partyId: user }, EDIT_NOT_ENABLED, conf, done);
             });
 
             it('should allow to modify party if path and request user id match', function(done) {
                 var user = 'user';
-                accessPartyTest(user, indPath, { id: user }, null, null, done);
+                accessPartyTest(user, indPath, { partyId: user }, null, null, done);
             });
 
             it('should allow to modify party if path and request user id match even if query string included', function(done) {
                 var user = 'user';
-                accessPartyTest(user + '?fields=status', indPath, { id: user }, null, null, done);
+                accessPartyTest(user + '?fields=status', indPath, { partyId: user }, null, null, done);
             });
 
             it('should not allow to modify party if user ID is not included in the path', function(done) {
-                accessPartyTest('', orgPath, { id: 'test' }, INVALID_PATH_ERROR, null, done);
+                accessPartyTest('', orgPath, { partyId: 'test' }, INVALID_PATH_ERROR, null, done);
             });
 
             it('should allow to modify organization if the user is an org admin', function(done) {
                 var userObj = {
-                    id: 'org',
+                    partyId: 'org',
                     userNickname: 'user',
                     roles: [{ name: testUtils.getDefaultConfig().oauth2.roles.orgAdmin }]
                 };
