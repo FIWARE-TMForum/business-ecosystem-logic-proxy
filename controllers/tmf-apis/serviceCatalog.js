@@ -28,7 +28,13 @@ const serviceCatalog = (function() {
 	const validateRetrieving = function(req, callback) {
         // Check if the request is a list of service specifications
         if (req.path.endsWith('serviceSpecification') && req.user != null) {
-            return tmfUtils.filterRelatedPartyFields(req, () => tmfUtils.ensureRelatedPartyIncluded(req, callback));
+            return tmfUtils.filterRelatedPartyFields(req, (err) => {
+				if (err) {
+					return callback(err)
+				}
+
+				tmfUtils.ensureRelatedPartyIncluded(req, callback)
+			});
         } else {
             callback(null);
         }

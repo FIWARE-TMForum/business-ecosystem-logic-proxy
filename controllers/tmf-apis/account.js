@@ -28,7 +28,6 @@ const utils = require('./../../lib/utils')
 const account = (function() {
 
     const validateCreation = function (req, callback) {
-        console.log(req.json)
 
         // Missing related party info
         if (!('relatedParty' in req.json) || req.json.relatedParty.length == 0) {
@@ -51,7 +50,10 @@ const account = (function() {
     }
 
     const validateRetrieval = function(req, callback) {
-        return tmfUtils.filterRelatedPartyFields(req, () => {
+        return tmfUtils.filterRelatedPartyFields(req, (err) => {
+            if (err) {
+                return callback(err)
+            }
             tmfUtils.ensureRelatedPartyIncluded(req, callback)
         });
     }
@@ -74,8 +76,9 @@ const account = (function() {
             }
             callback(null)
         }).catch((err) => {
+            const status = err.response.status != null ? err.response.status : err.status
             callback({
-                status: err.response.status
+                status: status
             });
         })
     }
@@ -84,6 +87,7 @@ const account = (function() {
         GET: [utils.validateLoggedIn, validateRetrieval],
         POST: [utils.validateLoggedIn, validateCreation],
         PATCH: [utils.validateLoggedIn, validateUpdate],
+        PUT: [utils.methodNotAllowed],
         DELETE: [utils.methodNotAllowed]
     };
 
@@ -132,7 +136,7 @@ const account = (function() {
         }
     };
 
-    var executePostValidation = function(proxyRes, callback) {
+    const executePostValidation = function(proxyRes, callback) {
         callback(null);
     }
     
