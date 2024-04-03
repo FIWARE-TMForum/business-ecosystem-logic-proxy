@@ -83,7 +83,6 @@ const catalog = (function() {
 
         retrieveAsset(productPath, function(err, response) {
             if (err) {
-
                 callback({
                     status: 422,
                     message: 'The attached product cannot be read or does not exist'
@@ -216,7 +215,6 @@ const catalog = (function() {
         let validStates = null;
         let errorMessageStateProduct = null;
         let errorMessageStateCatalog = null;
-
         if (previousBody === null) {
             // Offering creation
             validStates = [ACTIVE_STATE, LAUNCHED_STATE];
@@ -245,29 +243,20 @@ const catalog = (function() {
             }
         }
 
+        if(newBody && newBody['category']){
+            const dict = {}
+            newBody['category'] = newBody
+            ['category'].filter((category) => { 
+                if(dict[category.id]) return false
+                else{
+                    dict[category.id] = 1
+                    return true
+                }
+            })
+            utils.updateBody(req, newBody)
+        }
         async.series(
-            [
-                /*function(callback) {
-                    // Check the RS model
-                    if ((newBody && !previousBody) || (previousBody && newBody && newBody.serviceCandidate)) {
-                        validateRSModel(req, newBody, callback);
-                    } else {
-                        callback(null);
-                    }
-                },*/
-                /*function(callback) {
-                    // Check the offering categories
-                    var categories = newBody ? newBody.category : [];
-                    
-                    async.eachSeries(
-                        categories,
-                        function(category, taskCallback) {
-                            checkExistingCategoryById(category.id, taskCallback);
-                        },
-                        callback
-                        );
-                    }*/
-                ],
+            [],
                 function(err) {
                     if (err) {
                         callback(err);
@@ -410,7 +399,6 @@ const catalog = (function() {
 
     const checkExistingCategoryById = function(categoryId, callback) {
         const categoryPath = '/category';
-        
         retrieveAsset(`${categoryPath}/${categoryId}`, function(err, result) {
             if (err) {
                 if (err.status == 404) {
@@ -920,7 +908,6 @@ const catalog = (function() {
 
             // Retrieve the resource to be updated or removed
             let url = req.apiUrl.replace(`/${config.endpoints.catalog.path}`, '')
-
             // THE URL for Offersa include a catalog
             if (offeringsPattern.test(req.apiUrl)) {
                 let parts = req.apiUrl.split('/')
@@ -954,7 +941,6 @@ const catalog = (function() {
                     if (categoryPattern.test(req.apiUrl)) {
                         validateCategory(req, parsedBody, previousBody, 'modify', callback);
                     } else if (offeringsPattern.test(req.apiUrl)) {
-
                         validateOffering(req, req.apiUrl, previousBody, parsedBody, (err) => {
                             if (err) {
                                 callback(err)
