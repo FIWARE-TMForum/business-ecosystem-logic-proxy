@@ -142,7 +142,7 @@
             const deferred = $q.defer();
 
             var user = User.serializeBasic();
-            user.role = 'bill receiver';
+            user.role = 'owner';
             data.relatedParty.push(user);
 
             Account.save(

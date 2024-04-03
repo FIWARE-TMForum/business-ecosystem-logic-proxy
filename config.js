@@ -235,7 +235,7 @@ config.revenueModel = 30;
 config.taxRate = 20;
 
 // Billing Account owner role
-config.billingAccountOwnerRole = 'bill receiver';
+config.billingAccountOwnerRole = 'owner';
 
 // list of paths that will not check authentication/authorization
 // example: ['/public/*', '/static/css/']

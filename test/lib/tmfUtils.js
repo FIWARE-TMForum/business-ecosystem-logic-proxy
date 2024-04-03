@@ -209,7 +209,7 @@ describe('TMF Utils', function() {
 
             const err = {
                 status: 403,
-                message: 'You are not authorized to retrieve the orderings made by the user ' + query['relatedParty.id']
+                message: 'You are not authorized to retrieve the entities made by the user ' + query['relatedParty.id']
             };
 
             testFilterRelatedPartyFields(user, query, err, null, done);

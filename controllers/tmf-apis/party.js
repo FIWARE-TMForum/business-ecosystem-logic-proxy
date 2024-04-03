@@ -1,4 +1,6 @@
-/* Copyright (c) 2015 - 2017 CoNWeT Lab., Universidad Politécnica de Madrid
+/* Copyright (c) 2015 CoNWeT Lab., Universidad Politécnica de Madrid
+ *
+ * Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -17,18 +19,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var async = require('async'),
-    config = require('./../../config'),
-    url = require('url'),
-    utils = require('./../../lib/utils'),
-    logger = require('./../../lib/logger').logger.getLogger('TMF');
+const async = require('async')
+const config = require('./../../config')
+const url = require('url')
+const utils = require('./../../lib/utils')
+const logger = require('./../../lib/logger').logger.getLogger('TMF')
 
-var party = (function() {
-    var validateAllowed = function(req, callback) {
+const party = (function() {
+    const validateAllowed = function(req, callback) {
         callback(null);
     };
 
-    var validateUpdate = function(req, callback) {
+    const validateUpdate = function(req, callback) {
         if (!config.editParty) {
             // Edit parties is dissabled
             return callback({
@@ -37,12 +39,12 @@ var party = (function() {
             });
         }
 
-        var individualsPattern = new RegExp(
+        const individualsPattern = new RegExp(
             '^/' + config.endpoints.party.path + '/(individual|organization)(/([^/]*))?$'
         );
-        var apiPath = url.parse(req.apiUrl).pathname;
+        const apiPath = url.parse(req.apiUrl).pathname;
 
-        var regexResult = individualsPattern.exec(apiPath);
+        const regexResult = individualsPattern.exec(apiPath);
 
         if (!regexResult || !regexResult[3]) {
             callback({
@@ -50,7 +52,7 @@ var party = (function() {
                 message: 'The given path is invalid'
             });
         } else if (
-            req.user.id !== regexResult[3] ||
+            req.user.partyId !== regexResult[3] ||
             (regexResult[1] == 'individual' && utils.isOrganization(req)) ||
             (regexResult[1] == 'organization' && !utils.isOrganization(req)) ||
             (regexResult[1] == 'organization' &&
@@ -70,16 +72,15 @@ var party = (function() {
     /////////////////////////////////////////// COMMON ///////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
 
-    var validators = {
+    const validators = {
         GET: [validateAllowed],
         POST: [utils.methodNotAllowed],
         PATCH: [utils.validateLoggedIn, validateUpdate],
-        PUT: [utils.validateLoggedIn, validateUpdate],
         DELETE: [utils.validateLoggedIn, validateUpdate]
     };
 
-    var checkPermissions = function(req, callback) {
-        var reqValidators = [];
+    const checkPermissions = function(req, callback) {
+        const reqValidators = [];
 
         if (req.method in validators) {
             for (var i in validators[req.method]) {

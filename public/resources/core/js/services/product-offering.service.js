@@ -1347,6 +1347,17 @@
                 startDateTime: moment().format()
             };
 
+            if (data.place != null && data.place.length > 0) {
+                data.place = data.place.map((place) => {
+                    const id = `urn:ngsi-ld:place:${uuid.v4()}`
+                    return {
+                        id: id,
+                        href: id,
+                        name: place.name
+                    }
+                })
+            }
+
             resource.save(
                 params,
                 data,

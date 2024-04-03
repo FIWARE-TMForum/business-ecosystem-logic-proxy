@@ -110,50 +110,6 @@ const catalog = (function() {
         return `/catalog/${result[3]}`
     };
 
-    // var validateRSModel = function(req, body, callback) {
-    //     // Someone may have made a PATCH request without body
-    //     if (body == null) {
-    //         return callback(null);
-    //     }
-
-    //     // Check if the provider has been included in the RSS
-    //     rssClient.createProvider(req.user, function(err) {
-    //         if (err) {
-    //             return callback({
-    //                 status: 500,
-    //                 message: 'An unexpected error in the RSS API prevented your request to be processed'
-    //             });
-    //         }
-
-    //         // Check if the productClass has been provided
-    //         if (body.serviceCandidate && body.serviceCandidate.id) {
-    //             rssClient.retrieveRSModel(req.user, body.serviceCandidate.id, function(err, res) {
-    //                 if (err) {
-    //                     return callback(err);
-    //                 } else {
-    //                     // Check if there is a model for the specified product class
-    //                     var models = JSON.parse(res.body);
-    //                     if (!models.length) {
-    //                         return callback({
-    //                             status: 422,
-    //                             message: 'The provided productClass does not specify a valid revenue sharing model'
-    //                         });
-    //                     }
-    //                     callback(null);
-    //                 }
-    //             });
-    //         } else {
-    //             // Include the default product class
-    //             body.serviceCandidate = {
-    //                 id: 'defaultRevenue',
-    //                 name: 'Revenue Sharing Service'
-    //             };
-    //             utils.updateBody(req, body);
-    //             callback(null);
-    //         }
-    //     });
-    // };
-
     const validateOfferingFields = function(previousBody, newBody) {
         var fixedFields = ['isBundle', 'productSpecification', 'bundledProductOffering'];
         var modified = null;
