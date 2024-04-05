@@ -413,7 +413,7 @@ describe('Catalog API', function() {
 			lifecycleStatus: 'launched'
 		};
 
-		var mockCatalogAPI = function(body, requestInfo, storeError, rssResp) {
+		var mockCatalogAPI = function(body, requestInfo, storeError, rssResp, cloned) {
 			// Mocks
 			var checkRoleMethod = jasmine.createSpy();
 			checkRoleMethod.and.returnValue(true);
@@ -427,14 +427,14 @@ describe('Catalog API', function() {
 				hasRole: checkRoleMethod
 			};
 
-			var storeClient = {
+			var storeClient ={
 				storeClient: {
-					validateOffering: function(offeringInfo, userInfo, callback) {
+					validateOffering: (!cloned)?function(offeringInfo, userInfo, callback) {
 						expect(offeringInfo).toEqual(body);
 						expect(userInfo).toEqual(user);
 						
 						callback(storeError);
-					}
+					} : cloned
 				}
 			};
 			
@@ -505,10 +505,11 @@ describe('Catalog API', function() {
 			errorMsg,
 			rssResp,
 			body,
+			cloned,
 			done
 		) {
 			var defaultErrorMessage = 'Internal Server Error';
-			var catalogApi = mockCatalogAPI(body, productRequestInfo, storeError, rssResp);
+			var catalogApi = mockCatalogAPI(body, productRequestInfo, storeError, rssResp, cloned);
 
 			// The mock server that will handle the request when the product is requested
 			var bodyGetProductOk = {
@@ -547,6 +548,7 @@ describe('Catalog API', function() {
 				null,
 				null,
 				basicBody,
+				null,
 				done
 			);
 		});
@@ -566,6 +568,7 @@ describe('Catalog API', function() {
 				storeResponse.message,
 				null,
 				basicBody,
+				null,
 				done
 			);
 		});
@@ -591,6 +594,7 @@ describe('Catalog API', function() {
 				CREATE_OFFERING_FOR_NON_OWNED_PRODUCT,
 				null,
 				basicBody,
+				null,
 				done
 			);
 		});
@@ -610,6 +614,7 @@ describe('Catalog API', function() {
 				'Offerings can only be created in a ' + 'catalog that is active or launched',
 				null,
 				basicBody,
+				null,
 				done
 			);
 		});
@@ -635,6 +640,7 @@ describe('Catalog API', function() {
 				'Offerings can only be attached to ' + 'active or launched products',
 				null,
 				basicBody,
+				null,
 				done
 			);
 		});
@@ -660,6 +666,7 @@ describe('Catalog API', function() {
 				INVALID_PRODUCT,
 				null,
 				basicBody,
+				null,
 				done
 			);
 		});
@@ -680,6 +687,7 @@ describe('Catalog API', function() {
 				'The catalog attached to the offering ' + 'cannot be read',
 				null,
 				basicBody,
+				null,
 				done
 			);
 		});
@@ -694,6 +702,7 @@ describe('Catalog API', function() {
 				MISSING_PRODUCT_SPEC,
 				null,
 				{},
+				null,
 				done
 			);
 		});
@@ -714,46 +723,66 @@ describe('Catalog API', function() {
 				BUNDLED_OFFERING_NOT_BUNDLE,
 				null,
 				offeringBody,
+				null,
 				done
 			);
 		});
 
-		// it('should not allow to create an offering when it is no possible to check the offering categories', function(done) {
-		// 	var categoryId1 = '7';
-		// 	var categoryId2 = '8';
-		// 	var baseHref = 'http://example' + categoryPath + '/';
 
-		// 	var offeringBody = {
-		// 		category: [
-		// 			{
-		// 				id: categoryId1,
-		// 				href: baseHref + categoryId1
-		// 			},
-		// 			{
-		// 				id: categoryId2,
-		// 				href: baseHref + categoryId2
-		// 			}
-		// 		]
-		// 	};
+		it('should filter repeated categories in offerings categories', function(done) {
+			var categoryId1 = '7';
+			var categoryId2 = '8';
+			var baseHref = 'http://example' + categoryPath + '/';
 
-		// 	var categoriesRequestInfo = {};
-		// 	categoriesRequestInfo[categoryId1] = { requestStatus: 200 };
-		// 	categoriesRequestInfo[categoryId2] = { requestStatus: 500 };
+			var offeringBody = {
+				category: [
+					{
+						id: categoryId1,
+						href: baseHref + categoryId1
+					},
+					{
+						id: categoryId2,
+						href: baseHref + categoryId2
+					},
+					{
+						id: categoryId1,
+						href: baseHref + categoryId1
+					},
+					{
+						id: categoryId2,
+						href: baseHref + categoryId2
+					}
+				],
+				productSpecification: {
+					id:7	
+				},
+				validFor: {
+					startDateTime: '2016-05-01'
+				}
+			};
 
-		// 	var errorMsg = CATEGORY_CANNOT_BE_CHECKED[0] + categoryId2 + CATEGORY_CANNOT_BE_CHECKED[1];
+			var categoriesRequestInfo = {};
+			categoriesRequestInfo[categoryId1] = { requestStatus: 200 };
+			categoriesRequestInfo[categoryId2] = { requestStatus: 200 };
 
-		// 	testCreateOffering(
-		// 		productRequestInfoActive,
-		// 		catalogRequestInfoLaunched,
-		// 		categoriesRequestInfo,
-		// 		null,
-		// 		500,
-		// 		errorMsg,
-		// 		null,
-		// 		offeringBody,
-		// 		done
-		// 	);
-		// });
+			testCreateOffering(
+				productRequestInfoActive,
+				catalogRequestInfoLaunched,
+				categoriesRequestInfo,
+				null,
+				null,
+				null,
+				null,
+				offeringBody,
+				function(offeringInfo, userInfo, callback) {
+						expect(offeringInfo.category.length).toEqual(2);
+						expect(offeringInfo.category[0].id).not.toEqual(offeringInfo.category[1])
+						
+						callback(null);
+					},
+				done
+			);
+		});
 
 		// it('should not allow to create an offering when at least one offering category is not a valid category', function(done) {
 		// 	var categoryId1 = '7';
@@ -1793,6 +1822,7 @@ describe('Catalog API', function() {
 		expectedErrorStatus,
 		expectedErrorMsg,
 		updated,
+		uniqueCategories,
 		done
 	) {
 		var checkRoleMethod = jasmine.createSpy();
@@ -1891,7 +1921,14 @@ describe('Catalog API', function() {
 						startDateTime: nowStr
 					};
 
-					expect(utils.updateBody).toHaveBeenCalledWith(req, expOff);
+					if (uniqueCategories) {	
+						expect(utils.updateBody).toHaveBeenCalledWith(req, {category: uniqueCategories, validFor: {
+							startDateTime: nowStr
+						}});
+					} 
+					else
+						expect(utils.updateBody).toHaveBeenCalledWith(req, expOff);
+
 				} else {
 					expect(utils.updateBody).not.toHaveBeenCalled();
 				}
@@ -1916,7 +1953,38 @@ describe('Catalog API', function() {
 			lifecycleStatus: 'active'
 		};
 
-		testUpdateProductOffering({}, productRequestInfo, null, catalogRequestInfo, null, null, false, done);
+		testUpdateProductOffering({}, productRequestInfo, null, catalogRequestInfo, null, null, false, null, done);
+	});
+
+	it('should filter repeated categories when an offering is updated', function(done) {
+		let productRequestInfo = {
+			requestStatus: 200,
+			owner: true,
+			lifecycleStatus: 'active'
+		};
+
+		let catalogRequestInfo = {
+			requestStatus: 200,
+			lifecycleStatus: 'active'
+		};
+
+		let category= [{
+			"id": "1",
+			"href": "urn 1",
+		},
+		{
+			"id": "1",
+			"href": "urn 1.",
+		},
+		{
+			"id": "2",
+			"href": "urn 2",
+		}]
+		let newOffering = JSON.stringify({
+			category: category
+		});
+
+		testUpdateProductOffering(newOffering, productRequestInfo, null, catalogRequestInfo, null, null, true, [category[0], category[2]], done);
 	});
 
 	it('should allow to update an owned offering when productSpecification is included but the content does not vary', function(done) {
@@ -1936,7 +2004,7 @@ describe('Catalog API', function() {
 			productSpecification: getProductSpecification(productRequestInfo.path)
 		});
 
-		testUpdateProductOffering(newOffering, productRequestInfo, null, catalogRequestInfo, null, null, true, done);
+		testUpdateProductOffering(newOffering, productRequestInfo, null, catalogRequestInfo, null, null, true, null, done);
 	});
 
 	it('should not allow to update an owned offering when productSpecification changes', function(done) {
@@ -1959,6 +2027,7 @@ describe('Catalog API', function() {
 			403,
 			'Field productSpecification cannot be modified',
 			false,
+			null,
 			done
 		);
 	});
@@ -1982,6 +2051,7 @@ describe('Catalog API', function() {
 			403,
 			UPDATE_OFFERING_WITH_NON_OWNED_PRODUCT,
 			false,
+			null,
 			done
 		);
 	});
@@ -1998,7 +2068,7 @@ describe('Catalog API', function() {
 			lifecycleStatus: 'active'
 		};
 
-		testUpdateProductOffering({}, productRequestInfo, null, catalogRequestInfo, 422, INVALID_PRODUCT, false, done);
+		testUpdateProductOffering({}, productRequestInfo, null, catalogRequestInfo, 422, INVALID_PRODUCT, false, null, done);
 	});
 
 	it('should allow to change the status of an offering to launched when product and catalog are launched', function(done) {
@@ -2016,11 +2086,11 @@ describe('Catalog API', function() {
 			requestStatus: 200,
 			lifecycleStatus: 'launched'
 		};
-		testUpdateProductOffering(offeringBody, productRequestInfo, null, catalogRequestInfo, null, null, true, done);
+		testUpdateProductOffering(offeringBody, productRequestInfo, null, catalogRequestInfo, null, null, true, null, done);
 	});
 
 	it('should not allow to update offerings when the body is not a valid JSON', function(done) {
-		testUpdateProductOffering('{ TEST', {}, null, {}, 400, INVALID_JSON, false, done);
+		testUpdateProductOffering('{ TEST', {}, null, {}, 400, INVALID_JSON, false, null, done);
 	});
 
 	it('should not allow to launch an offering when the catalog is active', function(done) {
@@ -2047,6 +2117,7 @@ describe('Catalog API', function() {
 			400,
 			'Offerings can only be ' + 'launched when the attached catalog is also launched',
 			false,
+			null,
 			done
 		);
 	});
@@ -2075,6 +2146,7 @@ describe('Catalog API', function() {
 			400,
 			'Offerings can only be ' + 'launched when the attached product is also launched',
 			false,
+			null,
 			done
 		);
 	});
