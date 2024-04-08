@@ -3,11 +3,11 @@ name: Tests
 on:
   push:
     branches:
-      - master
+      - new-gui
 
   pull_request:
     branches:
-      - master
+      - new-gui
 
 jobs:
   test:
@@ -53,8 +53,8 @@ jobs:
           context: .
           file: ./docker/Dockerfile
           tags: |
-            fiware/biz-ecosystem-logic-proxy:master
-          push: ${{ github.ref == 'refs/heads/master' }}
+            fiware/biz-ecosystem-logic-proxy:v9.0.0-gui-v0.1.0
+          push: ${{ github.ref == 'refs/heads/new-gui' }}
 
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
