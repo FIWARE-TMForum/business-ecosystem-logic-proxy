@@ -240,14 +240,23 @@ app.get('/auth/' + config.oauth2.provider + '/callback', passport.authenticate(c
     var state = JSON.parse(base64url.decode(req.query.state));
     var redirectPath = state[OAUTH2_CAME_FROM_FIELD] !== undefined ? state[OAUTH2_CAME_FROM_FIELD] : '/';
 
-    if (redirectPath != '/' || config.externalPortal == null || config.externalPortal == '') {
+    if ((redirectPath != '/' && !redirectPath.startsWith('/gui'))
+            || config.externalPortal == null || config.externalPortal == '') {
+
+        console.log('================================ NO EXTERNAL')
+        console.log(redirectPath)
+
         res.redirect(redirectPath)
     } else {
+        console.log('================================ EXTERNAL')
+        console.log(`${config.externalPortal}/dashboard?token=` + req.user.accessToken)
+
         res.header('Access-Control-Allow-Origin', config.externalPortal)
         res.header("Access-Control-Allow-Credentials", true);
 
         //res.header('Authorization', 'Bearer '+ req.user.accessToken);
         res.redirect(`${config.externalPortal}/dashboard?token=` + req.user.accessToken);
+        //res.redirect(`${config.externalPortal}/dashboard?token=local`);
     }
 });
 
@@ -527,9 +536,9 @@ app.get(config.portalPrefix + '/payment', ensureAuthenticated, function(req, res
 
 app.get('/logintoken', authMiddleware.headerAuthentication, function(req, res) {
     console.log('---- REQ USER ANGULAR --------------------')    
-    console.log(req.headers.authorization)
-    const authToken = utils.getAuthToken(req.headers);
-    console.log(authToken)
+    // console.log(req.headers.authorization)
+    // const authToken = utils.getAuthToken(req.headers);
+    // console.log(authToken)
     console.log(req.user)
     console.log(req.user.refreshToken)
     console.log(req.isAuthenticated())
