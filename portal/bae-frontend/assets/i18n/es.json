@@ -180,6 +180,7 @@
         "_no_chars": "No characteristics included",
         "_no_attach": "No attachments included",
         "_license": "License",
+        "_no_license": "No license included",
         "_sla": "SLA",
         "_no_sla": "No SLA included",
         "_no_relatioships": "No relationships included",
@@ -260,9 +261,9 @@
         "_add": "Add billing address",
         "_edit": "Edit billing address",
         "_update": "Update billing address",
-        "_delete": "Delete billing address",
+        "_delete": "Yes, delete",
         "_confirm_delete": "Are you sure about deleting the following billing address?",
-        "_cancel": "Cancel",
+        "_cancel": "No, cancel",
         "_invalid_phone": "Phonenumber is invalid!",
         "_invalid_email": "Email is invalid!"
     }
