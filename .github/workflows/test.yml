@@ -3,11 +3,11 @@ name: Tests
 on:
   push:
     branches:
-      - new-gui
+      - master
 
   pull_request:
     branches:
-      - new-gui
+      - master
 
 jobs:
   test:
@@ -52,11 +52,9 @@ jobs:
         with:
           context: .
           file: ./docker/Dockerfile
-          build-args: |
-            THEME=https://github.com/Ficodes/bae-dome-theme
           tags: |
-            fiware/biz-ecosystem-logic-proxy:v9.0.1-gui-v0.1.0
-          push: ${{ github.ref == 'refs/heads/new-gui' }}
+            fiware/biz-ecosystem-logic-proxy:master
+          push: ${{ github.ref == 'refs/heads/master' }}
 
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
