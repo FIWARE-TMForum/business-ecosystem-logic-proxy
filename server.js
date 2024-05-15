@@ -46,6 +46,11 @@ const showLocal = config.showLocalLogin == true;
 const showVC = config.showVCLogin == true;
 const editParty = config.editParty == true;
 
+// If not using default legacy API, portal prefix must be defined for legacy portal
+if (!config.legacyGUI && (!!config.portalPrefix || !config.proxyPrefix.length || config.portalPrefix == '/')) {
+    config.portalPrefix = '/ux'
+}
+
 (async () => {
 
 // Local auth method
@@ -286,12 +291,13 @@ if (config.siop.enabled) {
     let siopAuth = await authModule.auth(config.siop);
     passport.use(config.siop.provider, siopAuth.STRATEGY);
 
-    app.get(`/login/${config.siop.provider}`, (req, res) => {
+    app.get(`${config.portalPrefix}/login/${config.siop.provider}`, (req, res) => {
         //const encodedState = getOAuth2State(utils.getCameFrom(req));
         // Use a unique uuid for encoding the state, so we dont have collisions
         // between users using the SIOP authentication
         const encodedState = uuidv4();
         res.render("siop.jade",  {
+            portalPrefix: config.portalPrefix,
             cssFilesToInject: imports.cssFilesToInject,
             title: 'VC Login',
             verifierQRCodeURL: config.siop.verifierHost + config.siop.verifierQRCodePath,
@@ -463,14 +469,9 @@ if (!config.legacyGUI) {
     app.use('/', express.static(path.join(__dirname, 'portal/bae-frontend')));
 
     // Handle deep links - serve Angular's index.html for any sub-route under "/angular"
-    app.get('/*', (req, res) => {
-        res.sendFile(path.join(__dirname, 'portal/bae-frontend/index.html'));
-    });
-
-    // If not using default legacy API, portal prefix must be defined for legacy portal
-    if (config.portalPrefix && config.portalPrefix == '/') {
-        config.portalPrefix = '/ux'
-    }
+    //app.get('/*', (req, res) => {
+    //    res.sendFile(path.join(__dirname, 'portal/bae-frontend/index.html'));
+    //});
 }
 
 /////////////////////////////////////////////////////////////////////
