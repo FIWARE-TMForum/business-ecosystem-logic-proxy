@@ -543,6 +543,13 @@ if (config.extLogin) {
 }
 module.exports = config;
 
+
+// Gui config
+config.legacyGUI = false
+if (!!process.env.BAE_LP_LEGACY_GUI) {
+    config.legacyGUI = process.env.BAE_LP_LEGACY_GUI == 'true'
+}
+
 // External Portal config
-config.externalPortal = 'https://dome-marketplace.org/gui';
+config.externalPortal = '';
 config.externalPortal = process.env.BAE_LP_EXTERNAL_PORTAL || config.externalPortal;

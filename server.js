@@ -242,21 +242,12 @@ app.get('/auth/' + config.oauth2.provider + '/callback', passport.authenticate(c
 
     if ((redirectPath != '/' && !redirectPath.startsWith('/gui'))
             || config.externalPortal == null || config.externalPortal == '') {
-
-        console.log('================================ NO EXTERNAL')
-        console.log(redirectPath)
-
         res.redirect(redirectPath)
     } else {
-        console.log('================================ EXTERNAL')
-        console.log(`${config.externalPortal}/dashboard?token=` + req.user.accessToken)
-
         res.header('Access-Control-Allow-Origin', config.externalPortal)
         res.header("Access-Control-Allow-Credentials", true);
 
-        //res.header('Authorization', 'Bearer '+ req.user.accessToken);
         res.redirect(`${config.externalPortal}/dashboard?token=` + req.user.accessToken);
-        //res.redirect(`${config.externalPortal}/dashboard?token=local`);
     }
 });
 
@@ -338,18 +329,25 @@ if (extLogin) {
 }
 
 const authMiddleware = authModule.authMiddleware(idps);
+
 // Handler to destroy sessions
 app.all(config.logOutPath, function(req, res) {
     // Destroy the session and redirect the user to the main page
     req.session.destroy();
-    res.redirect(config.portalPrefix + '/');
+
+    let redirUrl = '/'
+    if (config.legacyGUI) {
+        redirUrl = config.portalPrefix + '/'
+    }
+
+    res.redirect(redirUrl);
 });
 
 /////////////////////////////////////////////////////////////////////
 /////////////////////////// SHOPPING CART ///////////////////////////
 /////////////////////////////////////////////////////////////////////
 
-var checkMongoUp = function(req, res, next) {
+const checkMongoUp = function(req, res, next) {
     // We lost connection!
     if (mongoose.connection.readyState !== 1) {
         // Connection is down!
@@ -460,22 +458,27 @@ if (extLogin) {
 ///////////////////////////// NEW PORTAL ////////////////////////////
 /////////////////////////////////////////////////////////////////////
 
-if (config.externalPortal != null) {
+if (!config.legacyGUI) {
     // Serve static files from the Angular app from a specific route, e.g., "/angular"
-    app.use('/gui', express.static(path.join(__dirname, 'portal/bae-frontend')));
+    app.use('/', express.static(path.join(__dirname, 'portal/bae-frontend')));
 
     // Handle deep links - serve Angular's index.html for any sub-route under "/angular"
-    app.get('/gui/*', (req, res) => {
+    app.get('/*', (req, res) => {
         res.sendFile(path.join(__dirname, 'portal/bae-frontend/index.html'));
     });
+
+    // If not using default legacy API, portal prefix must be defined for legacy portal
+    if (config.portalPrefix && config.portalPrefix == '/') {
+        config.portalPrefix = '/ux'
+    }
 }
 
 /////////////////////////////////////////////////////////////////////
 /////////////////////////////// PORTAL //////////////////////////////
 /////////////////////////////////////////////////////////////////////
 
-var renderTemplate = function(req, res, viewName) {
-    var options = {
+const renderTemplate = function(req, res, viewName) {
+    const options = {
         user: req.user,
         contextPath: config.portalPrefix,
         proxyPath: config.proxyPrefix,
@@ -535,18 +538,8 @@ app.get(config.portalPrefix + '/payment', ensureAuthenticated, function(req, res
 });
 
 app.get('/logintoken', authMiddleware.headerAuthentication, function(req, res) {
-    console.log('---- REQ USER ANGULAR --------------------')    
-    // console.log(req.headers.authorization)
-    // const authToken = utils.getAuthToken(req.headers);
-    // console.log(authToken)
-    console.log(req.user)
-    console.log(req.user.refreshToken)
-    console.log(req.isAuthenticated())
-    //ADDED:
     res.header('Access-Control-Allow-Origin', 'http://localhost:4200')
-    //res.setHeader("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Credentials", true);
-    console.log('----------------------------------------------------------------------')
     res.json(req.user)
 });
 
