@@ -18,6 +18,7 @@ const logger = require('./lib/logger').logger.getLogger('Server');
 const mongoose = require('mongoose');
 const onFinished = require('on-finished');
 const passport = require('passport');
+const path = require('path');
 const session = require('express-session');
 const shoppingCart = require('./controllers/shoppingCart').shoppingCart;
 const management = require('./controllers/management').management;
@@ -44,6 +45,11 @@ const extLogin = config.extLogin == true;
 const showLocal = config.showLocalLogin == true;
 const showVC = config.showVCLogin == true;
 const editParty = config.editParty == true;
+
+// If not using default legacy API, portal prefix must be defined for legacy portal
+if (!config.legacyGUI && (!!config.portalPrefix || !config.proxyPrefix.length || config.portalPrefix == '/')) {
+    config.portalPrefix = '/ux'
+}
 
 (async () => {
 
@@ -239,13 +245,13 @@ app.get('/auth/' + config.oauth2.provider + '/callback', passport.authenticate(c
     var state = JSON.parse(base64url.decode(req.query.state));
     var redirectPath = state[OAUTH2_CAME_FROM_FIELD] !== undefined ? state[OAUTH2_CAME_FROM_FIELD] : '/';
 
-    if (redirectPath != '/' || config.externalPortal == null || config.externalPortal == '') {
+    if ((redirectPath != '/' && !redirectPath.startsWith('/gui'))
+            || config.externalPortal == null || config.externalPortal == '') {
         res.redirect(redirectPath)
     } else {
         res.header('Access-Control-Allow-Origin', config.externalPortal)
         res.header("Access-Control-Allow-Credentials", true);
 
-        //res.header('Authorization', 'Bearer '+ req.user.accessToken);
         res.redirect(`${config.externalPortal}/dashboard?token=` + req.user.accessToken);
     }
 });
@@ -285,12 +291,13 @@ if (config.siop.enabled) {
     let siopAuth = await authModule.auth(config.siop);
     passport.use(config.siop.provider, siopAuth.STRATEGY);
 
-    app.get(`/login/${config.siop.provider}`, (req, res) => {
+    app.get(`${config.portalPrefix}/login/${config.siop.provider}`, (req, res) => {
         //const encodedState = getOAuth2State(utils.getCameFrom(req));
         // Use a unique uuid for encoding the state, so we dont have collisions
         // between users using the SIOP authentication
         const encodedState = uuidv4();
         res.render("siop.jade",  {
+            portalPrefix: config.portalPrefix,
             cssFilesToInject: imports.cssFilesToInject,
             title: 'VC Login',
             verifierQRCodeURL: config.siop.verifierHost + config.siop.verifierQRCodePath,
@@ -328,18 +335,25 @@ if (extLogin) {
 }
 
 const authMiddleware = authModule.authMiddleware(idps);
+
 // Handler to destroy sessions
 app.all(config.logOutPath, function(req, res) {
     // Destroy the session and redirect the user to the main page
     req.session.destroy();
-    res.redirect(config.portalPrefix + '/');
+
+    let redirUrl = '/'
+    if (config.legacyGUI) {
+        redirUrl = config.portalPrefix + '/'
+    }
+
+    res.redirect(redirUrl);
 });
 
 /////////////////////////////////////////////////////////////////////
 /////////////////////////// SHOPPING CART ///////////////////////////
 /////////////////////////////////////////////////////////////////////
 
-var checkMongoUp = function(req, res, next) {
+const checkMongoUp = function(req, res, next) {
     // We lost connection!
     if (mongoose.connection.readyState !== 1) {
         // Connection is down!
@@ -447,11 +461,25 @@ if (extLogin) {
 }
 
 /////////////////////////////////////////////////////////////////////
+///////////////////////////// NEW PORTAL ////////////////////////////
+/////////////////////////////////////////////////////////////////////
+
+if (!config.legacyGUI) {
+    // Serve static files from the Angular app from a specific route, e.g., "/angular"
+    app.use('/', express.static(path.join(__dirname, 'portal/bae-frontend')));
+
+    // Handle deep links - serve Angular's index.html for any sub-route under "/angular"
+    //app.get('/*', (req, res) => {
+    //    res.sendFile(path.join(__dirname, 'portal/bae-frontend/index.html'));
+    //});
+}
+
+/////////////////////////////////////////////////////////////////////
 /////////////////////////////// PORTAL //////////////////////////////
 /////////////////////////////////////////////////////////////////////
 
-var renderTemplate = function(req, res, viewName) {
-    var options = {
+const renderTemplate = function(req, res, viewName) {
+    const options = {
         user: req.user,
         contextPath: config.portalPrefix,
         proxyPath: config.proxyPrefix,
@@ -511,18 +539,8 @@ app.get(config.portalPrefix + '/payment', ensureAuthenticated, function(req, res
 });
 
 app.get('/logintoken', authMiddleware.headerAuthentication, function(req, res) {
-    console.log('---- REQ USER ANGULAR --------------------')    
-    console.log(req.headers.authorization)
-    const authToken = utils.getAuthToken(req.headers);
-    console.log(authToken)
-    console.log(req.user)
-    console.log(req.user.refreshToken)
-    console.log(req.isAuthenticated())
-    //ADDED:
     res.header('Access-Control-Allow-Origin', 'http://localhost:4200')
-    //res.setHeader("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Credentials", true);
-    console.log('----------------------------------------------------------------------')
     res.json(req.user)
 });
 
