@@ -461,20 +461,6 @@ if (extLogin) {
 }
 
 /////////////////////////////////////////////////////////////////////
-///////////////////////////// NEW PORTAL ////////////////////////////
-/////////////////////////////////////////////////////////////////////
-
-if (!config.legacyGUI) {
-    // Serve static files from the Angular app from a specific route, e.g., "/angular"
-    app.use('/', express.static(path.join(__dirname, 'portal/bae-frontend')));
-
-    // Handle deep links - serve Angular's index.html for any sub-route under "/angular"
-    //app.get('/*', (req, res) => {
-    //    res.sendFile(path.join(__dirname, 'portal/bae-frontend/index.html'));
-    //});
-}
-
-/////////////////////////////////////////////////////////////////////
 /////////////////////////////// PORTAL //////////////////////////////
 /////////////////////////////////////////////////////////////////////
 
@@ -550,7 +536,14 @@ for (var p in config.publicPaths) {
     app.all(config.proxyPrefix + '/' + config.publicPaths[p], tmf.public);
 }
 
-app.all(/^\/(?!(login|auth))(.*)\/?$/, authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, function(
+//
+// Access to TMForum APIs
+//
+
+const paths = Object.values(config.endpoints).map(endpoint => endpoint.path);
+const regexPattern = new RegExp(`^\\/(${paths.join('|')})(.*)\\/?$`);
+
+app.all(regexPattern, authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, function(
     req,
     res,
     next
@@ -560,6 +553,20 @@ app.all(/^\/(?!(login|auth))(.*)\/?$/, authMiddleware.headerAuthentication, auth
     req.apiUrl = url.parse(req.url).path.substring(config.proxyPrefix.length);
     tmf.checkPermissions(req, res);
 });
+
+/////////////////////////////////////////////////////////////////////
+///////////////////////////// NEW PORTAL ////////////////////////////
+/////////////////////////////////////////////////////////////////////
+
+if (!config.legacyGUI) {
+    // Serve static files from the Angular app from a specific route, e.g., "/angular"
+    app.use('/', express.static(path.join(__dirname, 'portal/bae-frontend')));
+
+    // Handle deep links - serve Angular's index.html for any sub-route under "/angular"
+    app.get('/*', (req, res) => {
+        res.sendFile(path.join(__dirname, 'portal/bae-frontend/index.html'));
+    });
+}
 
 /////////////////////////////////////////////////////////////////////
 /////////////////////////// ERROR HANDLER ///////////////////////////
