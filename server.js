@@ -287,6 +287,17 @@ const addIdpStrategy = async (idp) => {
     return extAuth;
 }
 
+app.get('/siop', (_, res) =>{
+    res.send({
+        enabled: config.siop.enabled,
+        pollPath: config.siop.pollPath,
+        clientID: config.siop.clientID,
+        callbackURL: config.siop.callbackURL,
+        verifierHost: config.siop.verifierHost,
+        verifierQRCodePath: config.siop.verifierQRCodePath,
+    })
+})
+
 if (config.siop.enabled) {
     let siopAuth = await authModule.auth(config.siop);
     passport.use(config.siop.provider, siopAuth.STRATEGY);
