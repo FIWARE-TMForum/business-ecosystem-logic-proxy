@@ -1,6 +1,6 @@
 {
     "_yes": "Yes",
-    "_no": "No",
+    "_no": "No",    
     "DASHBOARD": {
         "_title": "DOME MARKETPLACE is out! See what's new",
         "_header": "A Distributed Open Marketplace for Cloud and Edge Services",
@@ -205,7 +205,19 @@
         "_postalAddress": "Postal address",
         "_phone": "Phone number",
         "_billing_check": "You should first create at least a billing address in order to checkout an order.",
-        "_click_here": "Click here"
+        "_click_here": "Click here",
+        "_free": "Free",
+        "_free_desc": "The offering is free",
+        "_loading_purchase": "Loading purchase",
+        "_contact": "Contact",
+        "_update": "Update",
+        "_contact_person": "Contact Person",
+        "_order_note": "Order Note",
+        "_your_order": "Your Order",
+        "_subtotal": "Sub Total",
+        "_tax": "Tax",
+        "_calculated": "Calculated at checkout",
+        "_fee": "Service fee*"
     },
     "PROFILE":{
         "_general": "General",
