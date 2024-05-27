@@ -282,7 +282,7 @@ const addIdpStrategy = async (idp) => {
 }
 
 app.get('/siop', (_, res) =>{
-    res.send({siopEnabled: config.siop.enabled})
+    res.send(config.siop)
 })
 
 if (config.siop.enabled) {
