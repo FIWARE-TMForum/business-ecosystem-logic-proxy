@@ -282,7 +282,14 @@ const addIdpStrategy = async (idp) => {
 }
 
 app.get('/siop', (_, res) =>{
-    res.send(config.siop)
+    res.send({
+        enabled: config.siop.enabled,
+        pollPath: config.siop.pollPath,
+        clientID: config.siop.clientID,
+        callbackURL: config.siop.callbackURL,
+        verifierHost: config.siop.verifierHost,
+        verifierQRCodePath: config.siop.verifierQRCodePath,
+    })
 })
 
 if (config.siop.enabled) {
