@@ -281,6 +281,10 @@ const addIdpStrategy = async (idp) => {
     return extAuth;
 }
 
+app.get('/siop', (_, res) =>{
+    res.send({siopEnabled: config.siop.enabled})
+})
+
 if (config.siop.enabled) {
     let siopAuth = await authModule.auth(config.siop);
     passport.use(config.siop.provider, siopAuth.STRATEGY);
