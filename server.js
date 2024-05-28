@@ -292,6 +292,7 @@ app.get('/siop', (_, res) =>{
     res.send({
         enabled: config.siop.enabled,
         pollPath: config.siop.pollPath,
+        pollCertPath: config.siop.pollCertPath,
         clientID: config.siop.clientID,
         callbackURL: config.siop.callbackURL,
         verifierHost: config.siop.verifierHost,
@@ -338,7 +339,7 @@ if (config.siop.enabled) {
         passport.authenticate(config.siop.provider, { poll: true, state: encodedState })(req, res, next);
     });
 
-    app.get('/certs/poll', certsValidator.checkStatus)
+    app.get(config.siop.pollCertPath, certsValidator.checkStatus)
 }
 
 // Load other stragies if external IDPs are enabled
