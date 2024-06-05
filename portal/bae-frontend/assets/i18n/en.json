@@ -127,7 +127,13 @@
         "_chars": "Characteristics",
         "_select_char": "Select characteristics",
         "_terms": "Terms and conditions",
-        "_accept_terms": "I have read and I accept the terms and conditions."
+        "_accept_terms": "I have read and I accept the terms and conditions.",
+        "_next": "Next",
+        "_back": "Back",
+        "_checkout": "Add to cart",
+        "_no_terms": "This product has no terms and conditions.",
+        "_no_chars": "This product has no characteristics.",
+        "_no_prices": "This product has no price plans."
     },
     "CATEGORIES_FILTER": {
         "_remove_badge": "Remove badge",
@@ -167,7 +173,8 @@
         "_support": "Support",
         "_knowledge": "Knowledge Base",
         "_ticketing": "Ticketing System",
-        "_change_session": "Change session"
+        "_change_session": "Change session",
+        "_admin": "Administration"
     },
     "PRODUCT_DETAILS": {
         "_back": "Back",
@@ -277,7 +284,8 @@
         "_confirm_delete": "Are you sure about deleting the following billing address?",
         "_cancel": "No, cancel",
         "_invalid_phone": "Phonenumber is invalid!",
-        "_invalid_email": "Email is invalid!"
+        "_invalid_email": "Email is invalid!",
+        "_no_billing": "There's no billing information."
     },
     "CREATE_CATALOG": {
         "_back": "Back",
@@ -653,7 +661,11 @@
         "_save_price":"Save price",
         "_save_license": "Save license",
         "_no_prod_spec": "Bundled offers can't include product specifications.",
-        "_cancel": "Cancel"
+        "_cancel": "Cancel",
+        "_no_prods": "There's no product specifications.",
+        "_no_cats": "There's no catalogs.",
+        "_no_categories": "There's no categories",
+        "_no_offer": "There's no offerings."
     },
     "UPDATE_OFFER":{
         "_back": "Back",
@@ -745,11 +757,23 @@
         "_save_price":"Save price",
         "_save_license": "Save license",
         "_no_prod_spec": "Bundled offers can't include product specifications.",
-        "_cancel": "Cancel"
+        "_cancel": "Cancel",
+        "_no_prods": "There's no product specifications.",
+        "_no_cats": "There's no catalogs.",
+        "_no_categories": "There's no categories",
+        "_no_offer": "There's no offerings."
     },
     "OFFERINGS": {
         "_catalogs": "Catalogs",
         "_offers": "Offer",
+        "_no_offer": "No offerings included.",
+        "_no_offerings": "There's no product offerings.",
+        "_no_prod": "There's no product specifications.",
+        "_no_prod_rel": "There's no product specifications, so you can't create relationships.",
+        "_no_cat": "There's no catalogs.",
+        "_no_categories": "There's no categories.",
+        "_no_res": "There's no resource specifications",
+        "_no_serv": "There's no service specifications",
         "_prod_spec": "Product Specifications",
         "_serv_spec": "Service Specifications",
         "_res_spec": "Resource Specifications",
@@ -781,5 +805,47 @@
         "_seller": "Seller",
         "_owner": "Owner",
         "_role": "Role"
+    },
+    "ADMIN":{
+        "_admin": "Administration",
+        "_filter_state": "Filter by state",
+        "_state": "State",
+        "_order_by": "Order by...",
+        "_last_update": "Last update",
+        "_name": "Name",
+        "_active": "Active",
+        "_launched": "Launched",
+        "_retired": "Retired",
+        "_obsolete": "Obsolete",
+        "_status": "Status",
+        "_actions": "Actions",
+        "_load_more": "Load more",
+        "_categories": "Categories"
+    },
+    "CATEGORIES":{
+        "_categories": "Categories",
+        "_add_new_cat": "Add new category",
+        "_no_cat": "No categories included"
+    },
+    "CREATE_CATEGORIES":{
+        "_categories": "Categories",
+        "_add_new_cat": "Add new category",
+        "_no_cat": "No categories included",
+        "_back": "Back",
+        "_create": "Create category",
+        "_new": "New category",
+        "_steps": "Steps",
+        "_general": "General",
+        "_general_info": "Category's general information",
+        "_finish": "Create category",        
+        "_summary": "Category's summary",
+        "_name": "Name",
+        "_description": "Description",
+        "_preview": "Preview",
+        "_show_preview": "Show preview",
+        "_status": "Status",
+        "_next": "Next",
+        "_choose_parent": "Choose a parent category",
+        "_parent": "Parent category"
     }
 }
