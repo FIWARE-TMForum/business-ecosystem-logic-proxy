@@ -28,6 +28,7 @@ const url = require('url');
 const utils = require('./lib/utils');
 const authModule = require('./lib/auth');
 const uuidv4 = require('uuid').v4;
+const certsValidator = require('./lib/certificate').certsValidator
 
 const debug = !(process.env.NODE_ENV == 'production');
 
@@ -291,6 +292,7 @@ app.get('/siop', (_, res) =>{
     res.send({
         enabled: config.siop.enabled,
         pollPath: config.siop.pollPath,
+        pollCertPath: config.siop.pollCertPath,
         clientID: config.siop.clientID,
         callbackURL: config.siop.callbackURL,
         verifierHost: config.siop.verifierHost,
@@ -319,8 +321,16 @@ if (config.siop.enabled) {
         });
     });
 
-    app.get('/auth/' + config.siop.provider + '/callback', passport.authenticate(config.siop.provider), function(req, res) {
-        res.send('ok');
+    app.get('/auth/' + config.siop.provider + '/callback', (req, res) => {
+        // Certificate verification
+        // TODO: Check if it is possible to have different callback URLs
+        // in the verifier
+        if (req.query && req.query.state && req.query.state.startsWith('cert:')) {
+            certsValidator.loadCredential(req, res)
+        } else {
+            // Login request
+            passport.authenticate(config.siop.provider)(req, res)
+        }
     });
 
     app.get(config.siop.pollPath, (req, res, next) => {
@@ -328,6 +338,8 @@ if (config.siop.enabled) {
         const encodedState = req.query.state
         passport.authenticate(config.siop.provider, { poll: true, state: encodedState })(req, res, next);
     });
+
+    app.get(config.siop.pollCertPath, certsValidator.checkStatus)
 }
 
 // Load other stragies if external IDPs are enabled

@@ -86,6 +86,7 @@ config.siop = {
 	enabled: process.env.BAE_LP_SIOP_ENABLED === 'true',
 	provider: 'vc',
 	pollPath: '/poll',
+    pollCertPath: '/cert/poll',
 	clientID: process.env.BAE_LP_SIOP_CLIENT_ID || 'some_id',
 	callbackURL: process.env.BAE_LP_SIOP_CALLBACK_PATH || 'http://proxy.docker:8004/auth/vc/callback',
 	verifierHost: process.env.BAE_LP_SIOP_VERIFIER_HOST || 'https://verifier.apps.fiware.fiware.dev',
