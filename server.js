@@ -246,10 +246,15 @@ app.get('/auth/' + config.oauth2.provider + '/callback', passport.authenticate(c
     var state = JSON.parse(base64url.decode(req.query.state));
     var redirectPath = state[OAUTH2_CAME_FROM_FIELD] !== undefined ? state[OAUTH2_CAME_FROM_FIELD] : '/';
 
-    if ((redirectPath != '/' && !redirectPath.startsWith('/gui'))
-            || config.externalPortal == null || config.externalPortal == '') {
+    if (config.legacyGUI) {
+        // Using old GUI
         res.redirect(redirectPath)
+
+    } else if (config.externalPortal == null || config.externalPortal == ''){
+        // Using local new GUI
+        res.redirect('/dashboard?token=local');
     } else {
+        // Using an external portal
         res.header('Access-Control-Allow-Origin', config.externalPortal)
         res.header("Access-Control-Allow-Credentials", true);
 
@@ -288,15 +293,20 @@ const addIdpStrategy = async (idp) => {
     return extAuth;
 }
 
-app.get('/siop', (_, res) =>{
+app.get('/config', (_, res) =>{
     res.send({
-        enabled: config.siop.enabled,
-        pollPath: config.siop.pollPath,
-        pollCertPath: config.siop.pollCertPath,
-        clientID: config.siop.clientID,
-        callbackURL: config.siop.callbackURL,
-        verifierHost: config.siop.verifierHost,
-        verifierQRCodePath: config.siop.verifierQRCodePath,
+        siop: {
+            enabled: config.siop.enabled,
+            pollPath: config.siop.pollPath,
+            pollCertPath: config.siop.pollCertPath,
+            clientID: config.siop.clientID,
+            callbackURL: config.siop.callbackURL,
+            verifierHost: config.siop.verifierHost,
+            verifierQRCodePath: config.siop.verifierQRCodePath
+        },
+        chat: config.chatUrl,
+        matomoId: config.matomoId,
+        matomoUrl: config.matomoUrl
     })
 })
 

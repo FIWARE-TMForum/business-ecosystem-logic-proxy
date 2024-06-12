@@ -552,5 +552,17 @@ if (!!process.env.BAE_LP_LEGACY_GUI) {
 }
 
 // External Portal config
+//config.externalPortal = 'http://localhost:4200';
 config.externalPortal = '';
 config.externalPortal = process.env.BAE_LP_EXTERNAL_PORTAL || config.externalPortal;
+
+// Chatbot
+config.chatUrl = 'https://eng-gpt.dome-marketplace-sbx.org/predict'
+config.chatUrl = process.env.BAE_LP_CHAT_URL || config.chatUrl;
+
+// Matomo
+config.matomoId = ''
+config.matomoId = process.env.BAE_LP_MATOMO_ID || config.matomoId;
+
+config.matomoUrl = ''
+config.matomoUrl = process.env.BAE_LP_MATOMO_URL || config.matomoUrl;
