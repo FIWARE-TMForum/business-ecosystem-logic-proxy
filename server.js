@@ -293,15 +293,20 @@ const addIdpStrategy = async (idp) => {
     return extAuth;
 }
 
-app.get('/siop', (_, res) =>{
+app.get('/config', (_, res) =>{
     res.send({
-        enabled: config.siop.enabled,
-        pollPath: config.siop.pollPath,
-        pollCertPath: config.siop.pollCertPath,
-        clientID: config.siop.clientID,
-        callbackURL: config.siop.callbackURL,
-        verifierHost: config.siop.verifierHost,
-        verifierQRCodePath: config.siop.verifierQRCodePath,
+        siop: {
+            enabled: config.siop.enabled,
+            pollPath: config.siop.pollPath,
+            pollCertPath: config.siop.pollCertPath,
+            clientID: config.siop.clientID,
+            callbackURL: config.siop.callbackURL,
+            verifierHost: config.siop.verifierHost,
+            verifierQRCodePath: config.siop.verifierQRCodePath
+        },
+        chat: config.chatUrl,
+        matomoId: config.matomoId,
+        matomoUrl: config.matomoUrl
     })
 })
 
