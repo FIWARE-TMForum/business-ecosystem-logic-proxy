@@ -557,7 +557,7 @@ config.externalPortal = '';
 config.externalPortal = process.env.BAE_LP_EXTERNAL_PORTAL || config.externalPortal;
 
 // Chatbot
-config.chatUrl = 'https://eng-gpt.dome-marketplace-sbx.org/predict'
+config.chatUrl = ''
 config.chatUrl = process.env.BAE_LP_CHAT_URL || config.chatUrl;
 
 // Matomo
@@ -566,3 +566,9 @@ config.matomoId = process.env.BAE_LP_MATOMO_ID || config.matomoId;
 
 config.matomoUrl = ''
 config.matomoUrl = process.env.BAE_LP_MATOMO_URL || config.matomoUrl;
+
+config.knowledgeUrl = ''
+config.knowledgeUrl = process.env.BAE_LP_KNOWLEDGE_BASE_URL || config.knowledgeUrl;
+
+config.ticketingUrl = ''
+config.ticketingUrl = process.env.BAE_LP_TICKETING_URL || config.ticketingUrl;

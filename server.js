@@ -305,6 +305,8 @@ app.get('/config', (_, res) =>{
             verifierQRCodePath: config.siop.verifierQRCodePath
         },
         chat: config.chatUrl,
+        knowledgeBaseUrl: config.knowledgeUrl,
+        ticketingUrl: config.ticketingUrl,
         matomoId: config.matomoId,
         matomoUrl: config.matomoUrl
     })
