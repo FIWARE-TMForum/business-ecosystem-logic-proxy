@@ -19,9 +19,14 @@
 
 
 const nock = require('nock')
+const moment = require('moment')
 const proxyquire = require('proxyquire')
 
 describe('VC Certs', () => {
+    const serverUrl = 'http://verifier.com'
+    const tokenPath = '/token'
+    const jwksPath = '/jwks'
+    const callback = 'http://bae.com/callback'
 
     function mockResponse() {
         const res = jasmine.createSpyObj('res', ['status', 'end'])
@@ -38,10 +43,6 @@ describe('VC Certs', () => {
     }
 
     describe('Load VC', () => {
-        const serverUrl = 'http://verifier.com'
-        const tokenPath = '/token'
-        const jwksPath = '/jwks'
-        const callback = 'http://bae.com/callback'
         const state = 'state'
         const code = 'code'
 
@@ -56,7 +57,7 @@ describe('VC Certs', () => {
             }
         }
 
-        function getCertLib(cache, jwks, jwt, config) {
+        function getCertLib(cache, config) {
             const MockedNodeCache = function() {
                 return cache
             }
@@ -65,8 +66,6 @@ describe('VC Certs', () => {
                 '../config': {
                     siop: config
                 },
-                'jwks-rsa': jwks,
-                'jsonwebtoken': jwt,
                 'node-cache': MockedNodeCache
             })
         }
@@ -84,29 +83,9 @@ describe('VC Certs', () => {
             }).reply(200, tokenResponse);
 
             const cache = jasmine.createSpyObj('cache', ['set'])
-            const jwt = jasmine.createSpyObj('jwt', ['decode', 'verify'])
-
-            const kid = 'kid'
-            jwt.decode.and.returnValue({
-                kid: kid
-            })
-
-            const jwksClient = jasmine.createSpy('jwksClient')
-            const jwks = jasmine.createSpyObj('jwks', ['getSigningKey'])
-
-            jwksClient.and.returnValue(jwks)
-
-            const keyMock = jasmine.createSpyObj('keyMock', ['getPublicKey'])
-
-            const pubKey = 'publicKey'
-            keyMock.getPublicKey.and.returnValue(pubKey)
-
-            jwks.getSigningKey.and.returnValue(new Promise((resolve, reject) => {
-                resolve(keyMock)
-            }))
 
             // Mock JWT and JWKS
-            const certs = getCertLib(cache, jwksClient, jwt, {
+            const certs = getCertLib(cache, {
                 verifierHost: serverUrl,
                 verifierTokenPath: tokenPath,
                 verifierJWKSPath: jwksPath,
@@ -124,15 +103,6 @@ describe('VC Certs', () => {
                     'redirect_uri': callback
                 })
 
-                expect(jwt.decode).toHaveBeenCalledWith(token)
-                expect(jwt.verify).toHaveBeenCalledWith(token, pubKey)
-
-                expect(jwksClient).toHaveBeenCalledWith({
-                    jwksUri: serverUrl + jwksPath
-                })
-                expect(jwks.getSigningKey).toHaveBeenCalledWith(kid)
-                expect(keyMock.getPublicKey).toHaveBeenCalledWith()
-
                 expect(cache.set).toHaveBeenCalledWith(state, token)
 
                 expect(resMock.res.status).toHaveBeenCalledWith(200)
@@ -142,7 +112,7 @@ describe('VC Certs', () => {
     
         function testMissingParam(req, done) {
             const cache = jasmine.createSpyObj('cache', ['set'])
-            const certs = getCertLib(cache, {}, {}, {})
+            const certs = getCertLib(cache, {})
 
             const resMock = mockResponse()
 
@@ -182,7 +152,7 @@ describe('VC Certs', () => {
 
             const cache = jasmine.createSpyObj('cache', ['set'])
 
-            const certs = getCertLib(cache, {}, {}, {
+            const certs = getCertLib(cache, {
                 verifierHost: serverUrl,
                 verifierTokenPath: tokenPath,
                 verifierJWKSPath: jwksPath,
@@ -199,17 +169,161 @@ describe('VC Certs', () => {
                 done()
             })
         })
-    
-        function testInvalidVC(jwt, msg, done) {
-            nock(serverUrl, {
-                reqheaders: {
-                    'content-type': 'application/x-www-form-urlencoded'
-                }
-            }).post(tokenPath, () => {
-                return true;
-            }).reply(200, tokenResponse);
+    })
 
-            const cache = jasmine.createSpyObj('cache', ['set'])
+    describe('Check status', () => {
+        const state = '1234'
+        const kid = 'kid'
+        const issuer = 'did:web:dekra.com'
+        const decodedVC = {
+            kid: kid,
+            verifiableCredential: {
+                issuer: {
+                    did: issuer
+                },
+                subject: {
+                    product: {},
+                    company: {},
+                    compliance: {}
+                },
+                expirationDate: moment().utc().add(30, 'days').toISOString()
+            }
+        }
+
+        function getCertLib(cache, jwks, jwt, config) {
+            const MockedNodeCache = function() {
+                return cache
+            }
+
+            return proxyquire('../../lib/certificate', {
+                '../config': {
+                    siop: config
+                },
+                'jwks-rsa': jwks,
+                'jsonwebtoken': jwt,
+                'node-cache': MockedNodeCache
+            })
+        }
+
+        it('should return the VC if already loaded', (done) => {
+            const vc = 'myvctoken'
+
+            const cache = jasmine.createSpyObj('cache', ['get', 'del'])
+            cache.get.and.returnValue(vc)
+
+            const req = {
+                query: {
+                    state: state
+                }
+            }
+            const mockRes = mockResponse()
+
+            const jwt = jasmine.createSpyObj('jwt', ['decode', 'verify'])
+
+            jwt.decode.and.returnValue(decodedVC)
+
+            const jwksClient = jasmine.createSpy('jwksClient')
+            const jwks = jasmine.createSpyObj('jwks', ['getSigningKey'])
+
+            jwksClient.and.returnValue(jwks)
+
+            const keyMock = jasmine.createSpyObj('keyMock', ['getPublicKey'])
+
+            const pubKey = 'publicKey'
+            keyMock.getPublicKey.and.returnValue(pubKey)
+
+            jwks.getSigningKey.and.returnValue(new Promise((resolve, reject) => {
+                resolve(keyMock)
+            }))
+
+            const certs = getCertLib(cache, jwksClient, jwt, {
+                certIssuers: [issuer],
+                verifierHost: serverUrl,
+                verifierTokenPath: tokenPath,
+                verifierJWKSPath: jwksPath,
+                callbackURL: callback
+            })
+
+            // Call the tested method
+            certs.certsValidator.checkStatus(req, mockRes.res).then(() => {
+                // Check calls
+                expect(cache.get).toHaveBeenCalledWith(state)
+                expect(cache.del).toHaveBeenCalledWith(state)
+
+                expect(jwt.decode).toHaveBeenCalledWith(vc)
+                expect(jwt.verify).toHaveBeenCalledWith(vc, pubKey)
+
+                expect(jwksClient).toHaveBeenCalledWith({
+                    jwksUri: serverUrl + jwksPath
+                })
+                expect(jwks.getSigningKey).toHaveBeenCalledWith(kid)
+                expect(keyMock.getPublicKey).toHaveBeenCalledWith()
+
+                expect(mockRes.res.status).toHaveBeenCalledWith(200)
+                expect(mockRes.json.json).toHaveBeenCalledWith({
+                    vc: vc,
+                    subject: decodedVC.verifiableCredential.subject
+                })
+                done()
+            })
+        })
+
+        it('should raise an error if the state is not provided', (done) => {
+            const cache = jasmine.createSpyObj('cache', ['get', 'del'])
+            const certs = getCertLib(cache, {}, {}, {})
+
+            const req = {
+                query: {}
+            }
+            const mockRes = mockResponse()
+
+            // Call the tested method
+            certs.certsValidator.checkStatus(req, mockRes.res).then(() => {
+                // Check calls
+                expect(mockRes.res.status).toHaveBeenCalledWith(400)
+                expect(mockRes.json.json).toHaveBeenCalledWith({
+                    error: 'Missing required param: state'
+                })
+                done()
+            })
+        })
+
+        it('should send unauthorize code if the VC is not yet loaded', (done) => {
+            const cache = jasmine.createSpyObj('cache', ['get', 'del'])
+            cache.get.and.returnValue(null)
+
+            const req = {
+                query: {
+                    state: state
+                }
+            }
+            const mockRes = mockResponse()
+            const certs = getCertLib(cache, {}, {}, {})
+
+            // Call the tested method
+            certs.certsValidator.checkStatus(req, mockRes.res).then(() => {
+                // Check calls
+                expect(cache.get).toHaveBeenCalledWith(state)
+                expect(cache.del).not.toHaveBeenCalledWith(state)
+
+                expect(mockRes.res.status).toHaveBeenCalledWith(401)
+                expect(mockRes.json.json).toHaveBeenCalledWith({
+                    error: 'VC not found'
+                })
+                done()
+            })
+        })
+
+        function testInvalidVC(jwt, msg, done) {
+            const vc = 'myvctoken'
+            const req = {
+                query: {
+                    state: state
+                }
+            }
+
+            const cache = jasmine.createSpyObj('cache', ['get', 'del'])
+            cache.get.and.returnValue(vc)
 
             const certs = getCertLib(cache, {}, jwt, {
                 verifierHost: serverUrl,
@@ -221,12 +335,11 @@ describe('VC Certs', () => {
             const resMock = mockResponse()
 
             // Call the tested method
-            certs.certsValidator.loadCredential(req, resMock.res).then(() => {
+            certs.certsValidator.checkStatus(req, resMock.res).then(() => {
                 // Verify calls
-                expect(jwt.decode).toHaveBeenCalledWith(token)
-                expect(cache.set).not.toHaveBeenCalled()
+                expect(jwt.decode).toHaveBeenCalledWith(vc)
 
-                expect(resMock.res.status).toHaveBeenCalledWith(401)
+                expect(resMock.res.status).toHaveBeenCalledWith(400)
                 expect(resMock.json.json).toHaveBeenCalledWith({
                     error: msg
                 })
@@ -250,22 +363,19 @@ describe('VC Certs', () => {
         })
 
         it('should raise an error if VC signature cannot be checked', (done) => {
-            nock(serverUrl, {
-                reqheaders: {
-                    'content-type': 'application/x-www-form-urlencoded'
+            const vc = 'myvctoken'
+            const req = {
+                query: {
+                    state: state
                 }
-            }).post(tokenPath, (body) => {
-                receivedBody = body;
-                return true;
-            }).reply(200, tokenResponse);
+            }
 
-            const cache = jasmine.createSpyObj('cache', ['set'])
+            const cache = jasmine.createSpyObj('cache', ['get', 'del'])
+            cache.get.and.returnValue(vc)
+
             const jwt = jasmine.createSpyObj('jwt', ['decode', 'verify'])
 
-            const kid = 'kid'
-            jwt.decode.and.returnValue({
-                kid: kid
-            })
+            jwt.decode.and.returnValue(decodedVC)
 
             const jwksClient = jasmine.createSpy('jwksClient')
             const jwks = jasmine.createSpyObj('jwks', ['getSigningKey'])
@@ -284,105 +394,187 @@ describe('VC Certs', () => {
             const resMock = mockResponse()
 
             // Call the tested method
-            certs.certsValidator.loadCredential(req, resMock.res).then(() => {
+            certs.certsValidator.checkStatus(req, resMock.res).then(() => {
                 // Verify calls
-                expect(jwt.decode).toHaveBeenCalledWith(token)
+                expect(jwt.decode).toHaveBeenCalledWith(vc)
                 expect(jwksClient).toHaveBeenCalledWith({
                     jwksUri: serverUrl + jwksPath
                 })
                 expect(jwks.getSigningKey).toHaveBeenCalledWith(kid)
 
-                expect(resMock.res.status).toHaveBeenCalledWith(401)
+                expect(resMock.res.status).toHaveBeenCalledWith(400)
                 expect(resMock.json.json).toHaveBeenCalledWith({
                     error: 'Invalid VC'
                 })
                 done()
             })
         })
-    })
 
-    describe('Check status', () => {
-        const state = '1234'
-
-        function getCertLib(cache) {
-            const MockedNodeCache = function() {
-                return cache
-            }
-
-            return proxyquire('../../lib/certificate', {
-                'node-cache': MockedNodeCache
-            })
-        }
-
-        it('should return the VC if already loaded', () => {
+        function testInvalidDecodedVC(decodedCred, msg, done) {
             const vc = 'myvctoken'
+            const req = {
+                query: {
+                    state: state
+                }
+            }
 
             const cache = jasmine.createSpyObj('cache', ['get', 'del'])
             cache.get.and.returnValue(vc)
 
-            const req = {
-                query: {
-                    state: state
-                }
-            }
-            const mockRes = mockResponse()
-            const certs = getCertLib(cache)
+            const jwt = jasmine.createSpyObj('jwt', ['decode', 'verify'])
+
+            jwt.decode.and.returnValue(decodedCred)
+
+            const jwksClient = jasmine.createSpy('jwksClient')
+            const jwks = jasmine.createSpyObj('jwks', ['getSigningKey'])
+
+            jwksClient.and.returnValue(jwks)
+
+            const keyMock = jasmine.createSpyObj('keyMock', ['getPublicKey'])
+
+            const pubKey = 'publicKey'
+            keyMock.getPublicKey.and.returnValue(pubKey)
+
+            jwks.getSigningKey.and.returnValue(new Promise((resolve, reject) => {
+                resolve(keyMock)
+            }))
+
+            const certs = getCertLib(cache, jwksClient, jwt, {
+                certIssuers: [issuer],
+                verifierHost: serverUrl,
+                verifierTokenPath: tokenPath,
+                verifierJWKSPath: jwksPath,
+                callbackURL: callback
+            })
+
+            const resMock = mockResponse()
 
             // Call the tested method
-            certs.certsValidator.checkStatus(req, mockRes.res)
+            certs.certsValidator.checkStatus(req, resMock.res).then(() => {
+                // Verify calls
+                expect(jwt.decode).toHaveBeenCalledWith(vc)
 
-            // Check calls
-            expect(cache.get).toHaveBeenCalledWith(state)
-            expect(cache.del).toHaveBeenCalledWith(state)
-
-            expect(mockRes.res.status).toHaveBeenCalledWith(200)
-            expect(mockRes.json.json).toHaveBeenCalledWith({
-                vc: vc
+                expect(resMock.res.status).toHaveBeenCalledWith(400)
+                expect(resMock.json.json).toHaveBeenCalledWith({
+                    error: msg
+                })
+                done()
             })
+        }
+
+        it('should raise an error if verifiable credential is not provided', (done) => {
+            testInvalidDecodedVC({
+                kid: kid
+            }, 'Invalid VC', done)
         })
 
-        it('should raise an error if the state is not provided', () => {
-            const cache = jasmine.createSpyObj('cache', ['get', 'del'])
-            const certs = getCertLib(cache)
-
-            const req = {
-                query: {}
-            }
-            const mockRes = mockResponse()
-
-            // Call the tested method
-            certs.certsValidator.checkStatus(req, mockRes.res)
-
-            // Check calls
-            expect(mockRes.res.status).toHaveBeenCalledWith(400)
-            expect(mockRes.json.json).toHaveBeenCalledWith({
-                error: 'Missing required param: state'
-            })
+        it('should raise an error if issuer is not provided', (done) => {
+            testInvalidDecodedVC({
+                kid: kid,
+                verifiableCredential: {
+                    subject: {
+                        product: {},
+                        company: {},
+                        compliance: {}
+                    },
+                    expirationDate: moment().utc().add(30, 'days').toISOString()
+                }
+            }, 'Invalid VC issuer', done)
         })
 
-        it('should send unauthorize code if the VC is not yet loaded', () => {
-            const cache = jasmine.createSpyObj('cache', ['get', 'del'])
-            cache.get.and.returnValue(null)
-
-            const req = {
-                query: {
-                    state: state
+        it('should raise an error if issuer is not valid', (done) => {
+            testInvalidDecodedVC({
+                kid: kid,
+                verifiableCredential: {
+                    issuer: {
+                        did: 'invalid'
+                    },
+                    subject: {
+                        product: {},
+                        company: {},
+                        compliance: {}
+                    },
+                    expirationDate: moment().utc().add(30, 'days').toISOString()
                 }
-            }
-            const mockRes = mockResponse()
-            const certs = getCertLib(cache)
+            }, 'Invalid VC issuer', done)
+        })
 
-            // Call the tested method
-            certs.certsValidator.checkStatus(req, mockRes.res)
+        it('should raise an error if VC is expired', (done) => {
+            testInvalidDecodedVC({
+                kid: kid,
+                verifiableCredential: {
+                    issuer: {
+                        did: issuer
+                    },
+                    subject: {
+                        product: {},
+                        company: {},
+                        compliance: {}
+                    },
+                    expirationDate: moment().utc().subtract(30, 'days').toISOString()
+                }
+            }, 'The VC is expired', done)
+        })
 
-            // Check calls
-            expect(cache.get).toHaveBeenCalledWith(state)
-            expect(cache.del).not.toHaveBeenCalledWith(state)
+        it('should raise an error if VC expired field is invalid', (done) => {
+            testInvalidDecodedVC({
+                kid: kid,
+                verifiableCredential: {
+                    issuer: {
+                        did: issuer
+                    },
+                    subject: {
+                        product: {},
+                        company: {},
+                        compliance: {}
+                    },
+                    expirationDate: 'invalid'
+                }
+            }, 'The VC is expired', done)
+        })
 
-            expect(mockRes.res.status).toHaveBeenCalledWith(401)
-            expect(mockRes.json.json).toHaveBeenCalledWith({
-                error: 'VC not found'
-            })
+        it('should raise an error if subject is missing', (done) => {
+            testInvalidDecodedVC({
+                kid: kid,
+                verifiableCredential: {
+                    issuer: {
+                        did: issuer
+                    },
+                    expirationDate: moment().utc().add(30, 'days').toISOString()
+                }
+            }, 'Invalid VC subject', done)
+        })
+
+        it('should raise an error if product subject is missing', (done) => {
+            testInvalidDecodedVC({
+                kid: kid,
+                verifiableCredential: {
+                    issuer: {
+                        did: issuer
+                    },
+                    subject: {
+                        company: {},
+                        compliance: {}
+                    },
+                    expirationDate: moment().utc().add(30, 'days').toISOString()
+                }
+            }, 'Invalid VC subject', done)
+        })
+
+        it('should raise an error if VC compliance is missing', (done) => {
+            testInvalidDecodedVC({
+                kid: kid,
+                verifiableCredential: {
+                    issuer: {
+                        did: issuer
+                    },
+                    subject: {
+                        product: {},
+                        company: {},
+                    },
+                    expirationDate: moment().utc().add(30, 'days').toISOString()
+                }
+            }, 'Invalid VC subject', done)
         })
     })
 })
