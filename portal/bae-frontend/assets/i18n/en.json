@@ -2,9 +2,9 @@
     "_yes": "Yes",
     "_no": "No",    
     "DASHBOARD": {
-        "_title": "DOME MARKETPLACE is out! See what's new",
-        "_header": "A Distributed Open Marketplace for Cloud and Edge Services",
-        "_subheader": "Welcome to the first open distributed marketplace ecosystem for cloud & edge services in Europe.",
+        "_title": "YUMKET is out! See what's new",
+        "_header": "YUMKET: Cloud & Edge Services you can Trust",
+        "_subheader": "Welcome to the first open distributed marketplace ecosystem for cloud, edge & AI services in Europe.",
         "_new": "New",
         "_learn_more": "Learn more",
         "_video": "Watch video",
@@ -71,14 +71,16 @@
         "_subtitle": "Discover how the DOME Marketplace connects you to Europe's finest cloud and edge services",
         "CUSTOMERS":{
             "_title": "For customers",
-            "_subtitle": "Discover and Purchase",
+            "_subtitle": "Discover",
             "_search_title": "Search and Explore",
             "_search_desc": "Use our intuitive search to find the services that match your digital transformation needs.",
             "_compare_title": "Compare and Decide",
             "_compare_desc": "Evaluate services based on features, compliance and reviews to make informed choices.",
             "_seamless_title": "Seamless Integration",
             "_seamless_desc": "Follow our easy process to integrate and deploy your chosen services swiftly.",
-            "_join": "Join as customer"
+            "_join": "Join as customer",
+            "_explore": "Explore the catalogue",
+            "_contact": "Contact us"
         },
         "PROVIDERS": {
             "_title": "For providers",
@@ -89,7 +91,9 @@
             "_verified_desc": "Our team will quickly verify your offerings to ensure they meet DOME standards.",
             "_reach_title": "Reach Europe",
             "_reach_desc": "Once verified, your services will be accessible to a wide European audience, ready to grow your business.",
-            "_join": "Join as provider"
+            "_join": "Join as provider",
+            "_onboard": "Onboard the marketplace",
+            "_contact": "Contact us"
         }
     },
     "EXPLORE": {
@@ -455,7 +459,8 @@
         "_profile_pic": "Profile picture",
         "_finish": "Finish",
         "_summary": "Product's summary",
-        "_update_prod": "Update product"
+        "_update_prod": "Update product",
+        "_verify": "Verify Certificates"
     },
     "CREATE_RES_SPEC": {
         "_back": "Back",
@@ -838,6 +843,27 @@
         "_general": "General",
         "_general_info": "Category's general information",
         "_finish": "Create category",        
+        "_summary": "Category's summary",
+        "_name": "Name",
+        "_description": "Description",
+        "_preview": "Preview",
+        "_show_preview": "Show preview",
+        "_status": "Status",
+        "_next": "Next",
+        "_choose_parent": "Choose a parent category",
+        "_parent": "Parent category"
+    },
+    "UPDATE_CATEGORIES":{
+        "_categories": "Categories",
+        "_add_new_cat": "Add new category",
+        "_no_cat": "No categories included",
+        "_back": "Back",
+        "_update": "Update category",
+        "_new": "New category",
+        "_steps": "Steps",
+        "_general": "General",
+        "_general_info": "Category's general information",
+        "_finish": "Update category",        
         "_summary": "Category's summary",
         "_name": "Name",
         "_description": "Description",
