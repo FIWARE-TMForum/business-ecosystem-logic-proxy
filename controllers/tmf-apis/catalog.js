@@ -1129,6 +1129,9 @@ const catalog = (function() {
                 query.limit = req.query.limit
             }
 
+            if (req.query['category.id'] != null) {
+                query.category = req.query['category.id']
+            }
             indexes.search('offering', query)
                 .then(returnQueryRes)
 
@@ -1141,13 +1144,19 @@ const catalog = (function() {
         return indexes.indexDocument('offering', body.id, {
             relatedParty: party,
             catalog: catalog,
-            lifecycleStatus: body.lifecycleStatus
+            lifecycleStatus: body.lifecycleStatus,
+            category: body.category ? body.category.map((cat) => {
+                return cat.id
+            }) : []
         })
     }
 
     const updateindex = (body) => {
         return indexes.updateDocument('offering', body.id, {
-            lifecycleStatus: body.lifecycleStatus
+            lifecycleStatus: body.lifecycleStatus,
+            category: body.category ? body.category.map((cat) => {
+                return cat.id
+            }) : []
         })
     }
     //////////////////////////////////////////////////////////////////////////////////////////////
@@ -1169,12 +1178,6 @@ const catalog = (function() {
             reqValidators.push(validators[req.method][i].bind(this, req));
         }
 
-        // We can now execute the queries in the API
-        // methodIndexed(req)
-        //     .catch(() => Promise.resolve(req))
-        //     .then(() => {
-        //         async.series(reqValidators, callback);
-        //     });
         async.series(reqValidators, callback);
     };
 
