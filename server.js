@@ -308,7 +308,8 @@ app.get('/config', (_, res) =>{
         knowledgeBaseUrl: config.knowledgeUrl,
         ticketingUrl: config.ticketingUrl,
         matomoId: config.matomoId,
-        matomoUrl: config.matomoUrl
+        matomoUrl: config.matomoUrl,
+        searchEnabled: config.searchUrl != ''
     })
 })
 
@@ -333,7 +334,7 @@ if (config.siop.enabled) {
         });
     });
 
-    app.get('/auth/' + config.siop.provider + '/callback', (req, res) => {
+    app.get('/auth/' + config.siop.provider + '/callback', (req, res, next) => {
         // Certificate verification
         // TODO: Check if it is possible to have different callback URLs
         // in the verifier
@@ -341,7 +342,7 @@ if (config.siop.enabled) {
             certsValidator.loadCredential(req, res)
         } else {
             // Login request
-            passport.authenticate(config.siop.provider)(req, res)
+            passport.authenticate(config.siop.provider)(req, res, next)
         }
     });
 

@@ -96,7 +96,8 @@ config.siop = {
 	allowedRoles: process.env.BAE_LP_SIOP_ALLOWED_ROLES ? process.env.BAE_LP_SIOP_ALLOWED_ROLES.split(',') : {
 		customer: 'customer',
 		seller: 'seller'
-	}
+	},
+    operators: process.env.BAE_LP_SIOP_OPERATORS ? process.env.BAE_LP_SIOP_OPERATORS.split(',') : []
 };
 
 config.extLogin = false;
@@ -572,3 +573,6 @@ config.knowledgeUrl = process.env.BAE_LP_KNOWLEDGE_BASE_URL || config.knowledgeU
 
 config.ticketingUrl = ''
 config.ticketingUrl = process.env.BAE_LP_TICKETING_URL || config.ticketingUrl;
+
+config.searchUrl = ''
+config.searchUrl = process.env.BAE_LP_SEARCH_URL || config.searchUrl;
