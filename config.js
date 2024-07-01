@@ -96,7 +96,8 @@ config.siop = {
 	allowedRoles: process.env.BAE_LP_SIOP_ALLOWED_ROLES ? process.env.BAE_LP_SIOP_ALLOWED_ROLES.split(',') : {
 		customer: 'customer',
 		seller: 'seller'
-	}
+	},
+    operators: process.env.BAE_LP_SIOP_OPERATORS ? process.env.BAE_LP_SIOP_OPERATORS.split(',') : []
 };
 
 config.extLogin = false;
