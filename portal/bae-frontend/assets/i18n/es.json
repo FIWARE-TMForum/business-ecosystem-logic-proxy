@@ -153,7 +153,7 @@
     "FOOTER": {
         "_about": "About",
         "_privacy": "Privacy Policy",
-        "_licensing": "Licensing",
+        "_licensing": "Terms of Use",
         "_contact": "Contact",
         "_rights": "All Rights Reserved"
     },
@@ -253,7 +253,8 @@
         "_city": "City",
         "_mybills": "My billing addresses",
         "_user_id": "User id",
-        "_no_orders": "No orders found"
+        "_no_orders": "No orders found",
+        "_organization": "Organization"
     },
     "PRODUCT_INVENTORY":{
         "_loading": "Loading...",
@@ -585,7 +586,7 @@
         "_general_info": "Offer's general information",
         "_bundle": "Bundle",
         "_bundle_info": "Offer's bundle information",
-        "_prod_spec": "Product Specification",
+        "_prod_spec": "Product Spec",
         "_prod_spec_info": "Offer's related product",
         "_catalog": "Catalogue",
         "_catalog_info": "Offer's related catalogue",
@@ -681,7 +682,7 @@
         "_general_info": "Offer's general information",
         "_bundle": "Bundle",
         "_bundle_info": "Offer's bundle information",
-        "_prod_spec": "Product Specification",
+        "_prod_spec": "Product Spec",
         "_prod_spec_info": "Offer's related product",
         "_catalog": "Catalogue",
         "_catalog_info": "Offer's related catalogue",
@@ -783,7 +784,7 @@
         "_serv_spec": "Service Specifications",
         "_res_spec": "Resource Specifications",
         "_search": "Search",
-        "_add_new_serv": "Add new service specification",
+        "_add_new_serv": "Add new service",
         "_filter_state": "Filter by state",
         "_state": "State",
         "_order_by": "Order by...",
@@ -796,7 +797,7 @@
         "_status": "Status",
         "_actions": "Actions",
         "_load_more": "Load more",
-        "_add_new_res": "Add new resource specification",
+        "_add_new_res": "Add new resource",
         "_add_new_prod": "Add new product specification",
         "_filter_type": "Filter by type",
         "_all": "All",
