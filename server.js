@@ -308,7 +308,8 @@ app.get('/config', (_, res) =>{
         knowledgeBaseUrl: config.knowledgeUrl,
         ticketingUrl: config.ticketingUrl,
         matomoId: config.matomoId,
-        matomoUrl: config.matomoUrl
+        matomoUrl: config.matomoUrl,
+        searchEnabled: config.searchUrl != ''
     })
 })
 

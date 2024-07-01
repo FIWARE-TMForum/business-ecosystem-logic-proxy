@@ -31,6 +31,7 @@ const storeClient = require('./../../lib/store').storeClient
 const tmfUtils = require('./../../lib/tmfUtils')
 const url = require('url')
 const utils = require('./../../lib/utils')
+const searchEngine = require('../../lib/search').searchEngine
 
 var LIFE_CYCLE = 'lifecycleStatus';
 
@@ -1073,24 +1074,36 @@ const catalog = (function() {
     const processQuery = async (req, callback) => {
         const returnQueryRes = (result) => {
             let newUrl = '/catalog/productOffering?href='
-            
+
             if (result.length > 0) {
                 let ids = result.map((hit) => {
                     return hit.id
                 })
-                
+
                 newUrl += ids.join(',')
             } else {
                 newUrl += 'null'
             }
-            
+
             req.apiUrl = newUrl
-            
+
             // TODO: Check how to avoid the call if the result is 0
             callback(null)
         }
-        
-        if (offeringsPattern.test(req.path) && req.query.relatedParty != null) {
+
+        if (offeringsPattern.test(req.path) && req.query.keyword != null && config.searchUrl) {
+            // Query to the external search engine
+            searchEngine.search(req.query.keyword, req.query['category.id'])
+                .then(returnQueryRes)
+                .catch(() => {
+                    callback({
+                        status: 400,
+                        message: 'Error accessing search indexes'
+                    })
+                })
+
+        } else if (offeringsPattern.test(req.path) && req.query.relatedParty != null) {
+            // Local query for relarted party
 
             let query = {
                 relatedParty: req.query.relatedParty

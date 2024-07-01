@@ -572,3 +572,6 @@ config.knowledgeUrl = process.env.BAE_LP_KNOWLEDGE_BASE_URL || config.knowledgeU
 
 config.ticketingUrl = ''
 config.ticketingUrl = process.env.BAE_LP_TICKETING_URL || config.ticketingUrl;
+
+config.searchUrl = ''
+config.searchUrl = process.env.BAE_LP_SEARCH_URL || config.searchUrl;
