@@ -43,7 +43,7 @@ describe('Search client', () => {
         let receivedBody;
 
         nock(searchUrl, {
-        }).post(`/api/SearchProductsByKeywords/${keyword}`, (body) => {
+        }).post(`/api/SearchProduct/${keyword}`, (body) => {
             receivedBody = body;
             return true;
         }).reply(200, JSON.stringify([{
@@ -61,7 +61,9 @@ describe('Search client', () => {
     }
 
     it('should search if a keyword is provided', (done) => {
-        testSearch('test', null, {}, done)
+        testSearch('test', null, {
+            categories: []
+        }, done)
     })
 
     it('should search if categories are provided', (done) => {
