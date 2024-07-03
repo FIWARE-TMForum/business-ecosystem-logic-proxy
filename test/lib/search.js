@@ -51,7 +51,7 @@ describe('Search client', () => {
         }]));
 
         const client = searchClient()
-        client.search(keyword, categories).then((ids) => {
+        client.search(keyword, categories, {}).then((ids) => {
             expect(ids).toEqual([{
                 id: 'testid'
             }])

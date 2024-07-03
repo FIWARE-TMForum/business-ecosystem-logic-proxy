@@ -1093,7 +1093,17 @@ const catalog = (function() {
 
         if (offeringsPattern.test(req.path) && req.query.keyword != null && config.searchUrl) {
             // Query to the external search engine
-            searchEngine.search(req.query.keyword, req.query['category.id'])
+            let page = {}
+
+            if (req.query.offset != null) {
+                page.offset = req.query.offset
+            }
+
+            if (req.query.limit != null) {
+                page.pageSize = req.query.limit
+            }
+
+            searchEngine.search(req.query.keyword, req.query['category.id'], page)
                 .then(returnQueryRes)
                 .catch(() => {
                     callback({
