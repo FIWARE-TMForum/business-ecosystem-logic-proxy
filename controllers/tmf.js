@@ -103,6 +103,12 @@ function tmf() {
 
 		if (url.indexOf('/media/') >= 0) {
 			options.responseType = 'arraybuffer'
+
+			// Dissable default browser cache headers
+			delete options.headers['if-modified-since'];
+			delete options.headers['if-none-match'];
+
+			options.headers['cache-control'] = 'no-cache';
 		}
 
 		// PROXY THE REQUEST
