@@ -28,8 +28,9 @@ describe('Search client', () => {
         searchUrl: searchUrl
     }
 
-    const searchClient = () => {
+    const searchClient = (axios) => {
         return proxyquire('../../lib/search', {
+            'axios': axios,
             '../config': config,
             './utils': {
                 getAPIURL: function(a, b, c, path) {
@@ -50,7 +51,7 @@ describe('Search client', () => {
             id: 'testid'
         }]));
 
-        const client = searchClient()
+        const client = searchClient({})
         client.search(keyword, categories, {}).then((ids) => {
             expect(ids).toEqual([{
                 id: 'testid'
@@ -84,5 +85,26 @@ describe('Search client', () => {
         testSearch('test', '1,2', {
             categories: ['cat1', 'cat2']
         }, done)
+    })
+
+    it('should search if keyword and paging is provided', (done) => {
+        let axios = jasmine.createSpy()
+        axios.and.returnValue(Promise.resolve({
+            data: []
+        }))
+
+        const client = searchClient({
+            post: axios
+        })
+
+        client.search('test', '', {offset: 10, pageSize: 10}).then((ids) => {
+            expect(ids).toEqual([])
+
+            let url = 'http://search.com/api/SearchProduct/test?page=1&size=10'
+            expect(axios).toHaveBeenCalledWith(url, {
+                categories: []
+            })
+            done()
+        })
     })
 })
