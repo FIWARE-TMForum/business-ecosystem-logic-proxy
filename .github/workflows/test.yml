@@ -3,7 +3,7 @@ name: Tests
 on:
   push:
     branches:
-      - master
+      - test/login-new-tab
 
   pull_request:
     branches:
@@ -53,8 +53,8 @@ jobs:
           context: .
           file: ./docker/Dockerfile
           tags: |
-            fiware/biz-ecosystem-logic-proxy:master
-          push: ${{ github.ref == 'refs/heads/master' }}
+            fiware/biz-ecosystem-logic-proxy:9.4.9-ld
+          push: ${{ github.ref == 'refs/heads/test/login-new-tab' }}
 
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
