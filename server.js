@@ -23,6 +23,7 @@ const session = require('express-session');
 const shoppingCart = require('./controllers/shoppingCart').shoppingCart;
 const management = require('./controllers/management').management;
 const tmf = require('./controllers/tmf').tmf();
+const admin = require('./controllers/admin').admin();
 const trycatch = require('trycatch');
 const url = require('url');
 const utils = require('./lib/utils');
@@ -575,6 +576,11 @@ for (var p in config.publicPaths) {
 //
 // Access to TMForum APIs
 //
+const adminRegex = new RegExp(`^\\/admin(.*)\\/?$`)
+app.all(adminRegex, authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, (req, res) => {
+    req.apiUrl = url.parse(req.url).path.substring(config.proxyPrefix.length);
+    admin.checkPermissions(req, res)
+})
 
 const paths = Object.values(config.endpoints).map(endpoint => endpoint.path);
 const regexPattern = new RegExp(`^\\/(${paths.join('|')})(.*)\\/?$`);
