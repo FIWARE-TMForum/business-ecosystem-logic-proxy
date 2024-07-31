@@ -81,7 +81,8 @@
             "_seamless_desc": "Follow our easy process to integrate and deploy your chosen services swiftly.",
             "_join": "Join as customer",
             "_explore": "Explore the catalogue",
-            "_contact": "Contact us"
+            "_contact": "Contact us",
+            "_description": "The marketplace is actually free to browse. Take a look at the catalogue contents, search for the services you need, verify the different offerings, get in touch with the service providers to better understand the proposal and acquire the desired service."
         },
         "PROVIDERS": {
             "_title": "For providers",
@@ -94,7 +95,10 @@
             "_reach_desc": "Once verified, your services will be accessible to a wide European audience, ready to grow your business.",
             "_join": "Join as provider",
             "_onboard": "Onboard the marketplace",
-            "_contact": "Contact us"
+            "_contact": "Contact us",
+            "_description_start": "Qualify you company through the reference",
+            "_link": "Company Onboarding process",
+            "_description_end": "and then start describing your offerings through the Offering qualification process and star being visible on the market inside this trustable catalogue."
         }
     },
     "EXPLORE": {
@@ -485,7 +489,10 @@
         "_finish": "Finish",
         "_summary": "Product's summary",
         "_update_prod": "Update product",
-        "_verify": "Verify Certificates"
+        "_verify": "Verify Certificates",
+        "_how_to_verify": "How to get a valid VC of the certificate?",
+        "_verify_text": "To get a valid VC of the certificate you can access the ",
+        "_dome_trust": "DOME Trust Service Provider for Certification"
     },
     "CREATE_RES_SPEC": {
         "_back": "Back",
