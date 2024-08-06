@@ -27,14 +27,16 @@ function admin() {
 
     const checkPermissions = function (req, res) {
         // Check if the user is an admin
-        if (!utils.hasRole(req.user, config.oauth2.roles.admin)) {
-            return res.status(403).json({ error: "You are not authorized to access admin endpoint" });
+        if (!utils.isAdmin(req.user)) {
+            res.status(403)
+            res.json({ error: "You are not authorized to access admin endpoint" })
+            return
         }
 
         // If the user is an admin redirect the request
         // without extra validation
         const api = req.apiUrl.split('/')[2]
-        const url = utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + req.apiUrl.replace(`/${api}`, '')
+        const url = utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + req.apiUrl.replace(`/admin/${api}`, '')
 
         utils.attachUserHeaders(req.headers, req.user)
 
@@ -43,6 +45,7 @@ function admin() {
 			method: req.method,
 			headers: utils.proxiedRequestHeaders(req)
 		};
+
 
 		if (typeof req.body === 'string') {
 			options.data = req.body;
@@ -66,20 +69,21 @@ function admin() {
 			}
 
 			if (resp.headers['content-type'].toLowerCase().indexOf('application/json') >= 0 || resp.headers['content-type'].toLowerCase().indexOf('application/ld+json') >= 0) {
-				res.json(resp.body)
+				res.json(resp.data)
 			} else {
-				res.write(resp.body);
+				res.write(resp.data);
 				res.end();
 			}
 
         }).catch((err) => {
-            console.log(err)
             utils.log(logger, 'error', req, 'Proxy error: ' + err.message)
 
             if (err.response) {
-                res.status(error.response.status).json(error.response.data)
+                res.status(err.response.status)
+                res.json(err.response.data)
             } else {
-                res.status(504).json({ error: 'Service unreachable' })
+                res.status(504)
+                res.json({ error: 'Service unreachable' })
             }
 		})
     }
