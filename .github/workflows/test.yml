@@ -53,7 +53,7 @@ jobs:
           context: .
           file: ./docker/Dockerfile
           tags: |
-            fiware/biz-ecosystem-logic-proxy:9.10.0-rc1
+            fiware/biz-ecosystem-logic-proxy:9.5.0-rc1
           push: ${{ github.ref == 'refs/heads/master' }}
 
       - name: Image digest
