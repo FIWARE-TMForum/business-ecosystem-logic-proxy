@@ -857,7 +857,11 @@
         "_status": "Status",
         "_actions": "Actions",
         "_load_more": "Load more",
-        "_categories": "Categories"
+        "_categories": "Categories",
+        "_verification": "Verification",
+        "_productId": "Product ID",
+        "_vc": "Verifiable Credential",
+        "_add": "Add"
     },
     "CATEGORIES":{
         "_categories": "Categories",
