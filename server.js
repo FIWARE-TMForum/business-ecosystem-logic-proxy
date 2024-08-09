@@ -298,6 +298,7 @@ app.get('/config', (_, res) =>{
     res.send({
         siop: {
             enabled: config.siop.enabled,
+            isRedirection: config.siop.isRedirection,
             pollPath: config.siop.pollPath,
             pollCertPath: config.siop.pollCertPath,
             clientID: config.siop.clientID,
@@ -335,25 +336,31 @@ if (config.siop.enabled) {
         });
     });
 
-    app.get('/auth/' + config.siop.provider + '/callback', (req, res, next) => {
-        // Certificate verification
-        // TODO: Check if it is possible to have different callback URLs
-        // in the verifier
-        if (req.query && req.query.state && req.query.state.startsWith('cert:')) {
-            certsValidator.loadCredential(req, res)
-        } else {
-            // Login request
-            passport.authenticate(config.siop.provider)(req, res, next)
-        }
-    });
+    if (!config.siop.isRedirection) {
+        app.get('/auth/' + config.siop.provider + '/callback', (req, res, next) => {
+            // Certificate verification
+            // TODO: Check if it is possible to have different callback URLs
+            // in the verifier
+            if (req.query && req.query.state && req.query.state.startsWith('cert:')) {
+                certsValidator.loadCredential(req, res)
+            } else {
+                // Login request
+                passport.authenticate(config.siop.provider)(req, res, next)
+            }
+        });
 
-    app.get(config.siop.pollPath, (req, res, next) => {
-        // const encodedState = getOAuth2State(utils.getCameFrom(req));
-        const encodedState = req.query.state
-        passport.authenticate(config.siop.provider, { poll: true, state: encodedState })(req, res, next);
-    });
+        app.get(config.siop.pollPath, (req, res, next) => {
+            // const encodedState = getOAuth2State(utils.getCameFrom(req));
+            const encodedState = req.query.state
+            passport.authenticate(config.siop.provider, { poll: true, state: encodedState })(req, res, next);
+        });
 
-    app.get(config.siop.pollCertPath, certsValidator.checkStatus)
+        app.get(config.siop.pollCertPath, certsValidator.checkStatus)
+    } else {
+        app.get('/auth/' + config.siop.provider + '/callback', passport.authenticate(config.siop.provider), (req, res) => {
+            res.redirect('/dashboard?token=local');
+        })
+    }
 }
 
 // Load other stragies if external IDPs are enabled
