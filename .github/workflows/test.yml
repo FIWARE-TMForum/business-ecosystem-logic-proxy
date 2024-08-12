@@ -54,7 +54,7 @@ jobs:
           file: ./docker/Dockerfile
           tags: |
             fiware/biz-ecosystem-logic-proxy:9.5.0-rc1
-          push: ${{ github.ref == 'refs/heads/master' }}
+          push: ${{ github.ref == 'refs/heads/feat/admin-endpoint' }}
 
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
