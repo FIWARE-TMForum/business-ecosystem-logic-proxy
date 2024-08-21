@@ -583,14 +583,19 @@ for (var p in config.publicPaths) {
 //
 // Access to TMForum APIs
 //
-const adminRegex = new RegExp(`^\\/admin(.*)\\/?$`)
+app.patch('/admin/uploadcertificate/:specId', authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, (req, res) => {
+    req.apiUrl = url.parse(req.url).path.substring(config.proxyPrefix.length);
+    admin.uploadCertificate(req, res)
+})
+
+const adminRegex = new RegExp(`^\/admin\/(.*)\/?$`)
 app.all(adminRegex, authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, (req, res) => {
     req.apiUrl = url.parse(req.url).path.substring(config.proxyPrefix.length);
     admin.checkPermissions(req, res)
 })
 
 const paths = Object.values(config.endpoints).map(endpoint => endpoint.path);
-const regexPattern = new RegExp(`^\\/(${paths.join('|')})(.*)\\/?$`);
+const regexPattern = new RegExp(`^\/(${paths.join('|')})\/(.*)\/?$`);
 
 app.all(regexPattern, authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, function(
     req,

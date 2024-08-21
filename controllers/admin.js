@@ -20,10 +20,109 @@
 const axios = require('axios')
 const config = require('./../config')
 const utils = require('./../lib/utils')
+const uuidv4 = require('uuid').v4
 
 const logger = require('./../lib/logger').logger.getLogger('Admin')
 
 function admin() {
+
+    const redirRequest = function(options, req, res) {
+        axios.request(options).then((resp) => {
+            res.status(resp.status)
+
+            for (let header in resp.headers) {
+                res.setHeader(header, resp.headers[header]);
+            }
+
+            if (resp.headers['content-type'].toLowerCase().indexOf('application/json') >= 0 || resp.headers['content-type'].toLowerCase().indexOf('application/ld+json') >= 0) {
+                res.json(resp.data)
+            } else {
+                res.write(resp.data);
+                res.end();
+            }
+        }).catch((err) => {
+            utils.log(logger, 'error', req, 'Proxy error: ' + err.message)
+
+            if (err.response) {
+                res.status(err.response.status)
+                res.json(err.response.data)
+            } else {
+                res.status(504)
+                res.json({ error: 'Service unreachable' })
+            }
+        })
+    }
+
+    const uploadCertificate = async function (req, res) {
+        // Check user permissions
+        if (!utils.isAdmin(req.user) && !utils.hasRole(req.user, 'certifier')) {
+            res.status(403)
+            res.json({ error: "You are not authorized to upload certificates" })
+            return
+        }
+
+        let vc
+        try {
+            const reqBody = JSON.parse(req.body)
+            vc = reqBody.vc
+        } catch (e) {
+            res.status(400)
+            res.json({ error: 'Invalid body' })
+            return
+        }
+
+        if (vc == null) {
+            res.status(400)
+            res.json({ error: 'Missing VC' })
+            return
+        }
+
+        // Get the product Specification
+        let productSpec;
+
+        const specId = req.params.specId
+        const url = `${utils.getAPIProtocol('catalog')}://${utils.getAPIHost('catalog')}:${utils.getAPIPort('catalog')}/productSpecification/${specId}`
+
+        try {
+            const options = {
+                url: url,
+			    method: 'GET'
+            }
+            productSpec = (await axios.request(options)).data
+        } catch (e) {
+            res.status(404)
+            res.json({ error: 'The product spec does not exists' })
+            return
+        }
+
+        // Patch the spec
+        let body = {
+            productSpecCharacteristic: productSpec.productSpecCharacteristic != null ? productSpec.productSpecCharacteristic.filter((char) => {
+              return char.name != 'Compliance:VC'
+            }) : []
+        }
+
+        // Add the credential as a characteristic
+        body.productSpecCharacteristic.push({
+            id: `urn:ngsi-ld:characteristic:${uuidv4()}`,
+            name: `Compliance:VC`,
+            productSpecCharacteristicValue: [{
+                isDefault: true,
+                value: vc
+            }]
+        })
+
+        const patchOptions = {
+            url: url,
+            method: 'PATCH',
+            data: body,
+            headers: {
+                'content-type': 'application/json'
+            }
+        }
+
+        redirRequest(patchOptions, req, res)
+    }
 
     const checkPermissions = function (req, res) {
         // Check if the user is an admin
@@ -61,35 +160,12 @@ function admin() {
 			options.headers['cache-control'] = 'no-cache';
 		}
 
-        axios.request(options).then((resp) => {
-            res.status(resp.status)
-
-			for (let header in resp.headers) {
-				res.setHeader(header, resp.headers[header]);
-			}
-
-			if (resp.headers['content-type'].toLowerCase().indexOf('application/json') >= 0 || resp.headers['content-type'].toLowerCase().indexOf('application/ld+json') >= 0) {
-				res.json(resp.data)
-			} else {
-				res.write(resp.data);
-				res.end();
-			}
-
-        }).catch((err) => {
-            utils.log(logger, 'error', req, 'Proxy error: ' + err.message)
-
-            if (err.response) {
-                res.status(err.response.status)
-                res.json(err.response.data)
-            } else {
-                res.status(504)
-                res.json({ error: 'Service unreachable' })
-            }
-		})
+        redirRequest(options, req, res)
     }
 
     return {
-        checkPermissions: checkPermissions
+        checkPermissions: checkPermissions,
+        uploadCertificate: uploadCertificate
     }
 }
 
