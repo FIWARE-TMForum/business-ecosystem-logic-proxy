@@ -171,7 +171,7 @@ app.use(function(req, res, next) {
     'use strict';
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Methods', 'HEAD, POST, GET, PATCH, PUT, OPTIONS, DELETE');
-    res.header('Access-Control-Allow-Headers', 'origin, content-type, X-Auth-Token, Tenant-ID, Authorization');
+    res.header('Access-Control-Allow-Headers', 'origin, content-type, X-Auth-Token, Tenant-ID, Authorization, X-Organization');
 
     if (req.method == 'OPTIONS') {
         utils.log(logger, 'debug', req, 'CORS request');
@@ -309,7 +309,8 @@ app.get('/config', (_, res) =>{
         ticketingUrl: config.ticketingUrl,
         matomoId: config.matomoId,
         matomoUrl: config.matomoUrl,
-        searchEnabled: config.searchUrl != ''
+        searchEnabled: config.searchUrl != '',
+        domeTrust: config.domeTrust
     })
 })
 

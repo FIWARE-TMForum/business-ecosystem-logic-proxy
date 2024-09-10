@@ -109,6 +109,8 @@ config.allowLocalEORI = false;
 
 config.editParty = true;
 
+config.domeTrust = process.env.BAE_LP_DOME_TRUST;
+
 // Customer Role Required to buy items
 config.customerRoleRequired = false;
 
