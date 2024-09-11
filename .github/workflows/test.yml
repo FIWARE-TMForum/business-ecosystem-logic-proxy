@@ -3,11 +3,11 @@ name: Tests
 on:
   push:
     branches:
-      - feat/admin-endpoint
+      - master
 
   pull_request:
     branches:
-      - feat/admin-endpoint
+      - master
 
 jobs:
   test:
@@ -53,8 +53,8 @@ jobs:
           context: .
           file: ./docker/Dockerfile
           tags: |
-            fiware/biz-ecosystem-logic-proxy:9.5.0-rc1
-          push: ${{ github.ref == 'refs/heads/feat/admin-endpoint' }}
+            fiware/biz-ecosystem-logic-proxy:master
+          push: ${{ github.ref == 'refs/heads/master' }}
 
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
