@@ -19,7 +19,7 @@
 
 const proxyquire = require('proxyquire');
 
-fdescribe('Admin Controller', () => {
+describe('Admin Controller', () => {
 
     const utils = {
         log: function() {},

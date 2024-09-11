@@ -17,7 +17,8 @@ describe('VC Strategy', () => {
         verifierTokenPath: '/path',
         verifierJWKSPath: '/jwksPath',
         callbackURL: 'some_uri',
-        allowedRoles: ['seller', 'customer']
+        allowedRoles: ['seller', 'customer'],
+        isRedirection: false 
     };
     const idpId = 'some_id';
 
@@ -53,7 +54,8 @@ describe('VC Strategy', () => {
                     verifierTokenURL: config.verifierHost + config.verifierTokenPath,
                     verifierJWKSURL: config.verifierHost + config.verifierJWKSPath,
                     redirectURI: config.callbackURL,
-                    allowedRoles: config.allowedRoles
+                    allowedRoles: config.allowedRoles,
+                    isRedirection: false
                 });
 
                 done();
@@ -108,11 +110,34 @@ describe('VC Strategy', () => {
         const VALID_CONFIG = {
             allowedRoles: ['customer', 'seller', 'admin']
         };
+        const REDIRECTION_CONFIG = {
+            allowedRoles: ['customer', 'seller', 'admin'],
+            isRedirection: true
+        }
+
         let nextFunctionFor200;
         let nextFunctionFor401;
         let accessToken;
 
-        const initPassportStrategy = (done) => {
+        const mockNextHandlers = (done) => {
+            nextFunctionFor200 = (err = null) => {
+                if (err) {
+                    done.fail(err);
+                } else {
+                    done();
+                }
+            };
+
+            nextFunctionFor401 = (err = null) => {
+                if (err) {
+                    done();
+                } else {
+                    done.fail(new Error('Authentication should have been failed.'));
+                }
+            };
+        }
+
+        const initPassportStrategy = (strategyConfig, cb) => {
             const strategy = proxyquire('../../../lib/strategies/vc', {
                 './passport-vc': proxyquire('../../../lib/strategies/passport-vc', {
                     'node-fetch': async function (){
@@ -147,26 +172,24 @@ describe('VC Strategy', () => {
                 })
             }).strategy;
 
-            const vc = strategy(VALID_CONFIG);
+            const vc = strategy(strategyConfig);
             passport.use(STRATEGY_NAME, vc.buildStrategy((accToken, refreshToken, profile, _cbDone) => {
                 expect(accToken).toEqual(accessToken);
                 expect(refreshToken).toEqual(accessToken);
+
+                cb()
             }));
-            nextFunctionFor200 = (err = null) => {
-                if (err) {
-                    done.fail(err);
-                } else {
-                    done();
-                }
-            };
-            nextFunctionFor401 = (err = null) => {
-                if (err) {
-                    done();
-                } else {
-                    done.fail(new Error('Authentication should have been failed.'));
-                }
-            };
         };
+
+        const initPassportStrategyNextHandler = (strategyConfig) => {
+            initPassportStrategy(strategyConfig, () => {})
+        }
+
+        const initPassportStrategyVerifyCb = (strategyConfig, done) => {
+            initPassportStrategy(strategyConfig, () => {
+                done()
+            })
+        }
 
         const callPassportAuthenticateForCallback = () => {
             passport.authenticate(STRATEGY_NAME, { failureRedirect: '/error' })(
@@ -188,13 +211,13 @@ describe('VC Strategy', () => {
         };
 
         const userScansQRCodeWithValidCertificate = () => {
-            callPassportAuthenticateForCallback();
             accessToken = VALID_ACCESS_TOKEN;
+            callPassportAuthenticateForCallback();
         };
 
         const userScansQRCodeWithExpiredCertificate = () => {
-            callPassportAuthenticateForCallback();
             accessToken = EXPIRED_ACCESS_TOKEN;
+            callPassportAuthenticateForCallback();
         };
 
         const userGets200AndReceivesAccessToken = () => {
@@ -206,16 +229,24 @@ describe('VC Strategy', () => {
         };
 
         it('should authenticate user with a valid certificate', (done) => {
-            initPassportStrategy(done);
+            mockNextHandlers(done)
+            initPassportStrategyNextHandler(VALID_CONFIG);
             userScansQRCodeWithValidCertificate();
             userGets200AndReceivesAccessToken();
         });
 
         it('should not authenticate user with an expired certificate', (done) => {
-            initPassportStrategy(done);
+            mockNextHandlers(done)
+            initPassportStrategyNextHandler(VALID_CONFIG);
             userScansQRCodeWithExpiredCertificate();
             userGets401();
         });
+
+        it('should authenticate user with a valid certificate using the redirection approach', (done) => {
+            initPassportStrategyVerifyCb(REDIRECTION_CONFIG, done);
+            userScansQRCodeWithValidCertificate()
+            // No need to call the polling
+        })
     });
 
     describe('VC types subjects', () => {
@@ -481,6 +512,78 @@ describe('VC Strategy', () => {
                 roles: [
                     { name: 'orgAdmin', id: 'orgAdmin' },
                     { name: 'seller', id: 'seller' }
+                ]
+            }])
+        })
+
+        it ('should build a VC with a LEARCredential including certifier power', () => {
+            const payload = {
+                "verifiableCredential": {
+                    "id": "1f33e8dc-bd3b-4395-8061-ebc6be7d06dd",
+                    "type": [
+                      "VerifiableCredential",
+                      "LEARCredentialEmployee"
+                    ],
+                    "credentialSubject": {
+                      "mandate": {
+                        "id": "4e3c02b8-5c57-4679-8aa5-502d62484af5",
+                        "life_span": {
+                          "end_date_time": "2025-04-02 09:23:22.637345122 +0000 UTC",
+                          "start_date_time": "2024-04-02 09:23:22.637345122 +0000 UTC"
+                        },
+                        "mandatee": {
+                          "id": "did:key:zDnaeei6HxVe7ibR123456789",
+                          "email": "admin@email.com",
+                          "first_name": "Admin",
+                          "gender": "M",
+                          "last_name": "User",
+                          "mobile_phone": "+34666111222"
+                        },
+                        "mandator": {
+                          "commonName": "TEST",
+                          "country": "ES",
+                          "emailAddress": "test@test.com",
+                          "organization": "TestCompany, S.L.",
+                          "organizationIdentifier": "VATES-C12341234",
+                          "serialNumber": "C12341234"
+                        },
+                        "power": [
+                          {
+                            "id": "6b8f3137-a57a-46a5-97e7-1117a20142fb",
+                            "tmf_action": "Execute",
+                            "tmf_domain": "DOME",
+                            "tmf_function": "Onboarding",
+                            "tmf_type": "Domain"
+                          },
+                          {
+                            "id": "ad9b1509-60ea-47d4-9878-18b581d8e19b",
+                            "tmf_action": [
+                              "UploadCertificate"
+                            ],
+                            "tmf_domain": "DOME",
+                            "tmf_function": "Certification",
+                            "tmf_type": "Domain"
+                          }
+                        ]
+                      },
+                      "roles": []
+                    },
+                    "expirationDate": "2025-04-02 09:23:22.637345122 +0000 UTC",
+                    "issuanceDate": "2024-04-02 09:23:22.637345122 +0000 UTC",
+                    "issuer": "did:web:test.es",
+                    "validFrom": "2024-04-02 09:23:22.637345122 +0000 UTC"
+                }
+            }
+
+            const credential = new VerifiableCredential(payload)
+            const profile = credential.getProfile()
+
+            expect(profile.organizations).toEqual([{
+                id: 'VATES-C12341234',
+                name: 'TestCompany, S.L.',
+                roles: [
+                    { name: 'orgAdmin', id: 'orgAdmin' },
+                    { name: 'certifier', id: 'certifier' }
                 ]
             }])
         })
