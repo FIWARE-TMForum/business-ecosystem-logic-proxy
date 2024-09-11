@@ -85,6 +85,7 @@ config.oauth2 = {
 config.siop = {
 	enabled: process.env.BAE_LP_SIOP_ENABLED === 'true',
 	provider: 'vc',
+    isRedirection: process.env.BAE_LP_SIOP_IS_REDIRECTION === 'true',
 	pollPath: '/poll',
     pollCertPath: '/cert/poll',
 	clientID: process.env.BAE_LP_SIOP_CLIENT_ID || 'some_id',

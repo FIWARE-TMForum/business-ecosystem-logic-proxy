@@ -23,6 +23,7 @@ const session = require('express-session');
 const shoppingCart = require('./controllers/shoppingCart').shoppingCart;
 const management = require('./controllers/management').management;
 const tmf = require('./controllers/tmf').tmf();
+const admin = require('./controllers/admin').admin();
 const trycatch = require('trycatch');
 const url = require('url');
 const utils = require('./lib/utils');
@@ -297,6 +298,7 @@ app.get('/config', (_, res) =>{
     res.send({
         siop: {
             enabled: config.siop.enabled,
+            isRedirection: config.siop.isRedirection,
             pollPath: config.siop.pollPath,
             pollCertPath: config.siop.pollCertPath,
             clientID: config.siop.clientID,
@@ -335,25 +337,31 @@ if (config.siop.enabled) {
         });
     });
 
-    app.get('/auth/' + config.siop.provider + '/callback', (req, res, next) => {
-        // Certificate verification
-        // TODO: Check if it is possible to have different callback URLs
-        // in the verifier
-        if (req.query && req.query.state && req.query.state.startsWith('cert:')) {
-            certsValidator.loadCredential(req, res)
-        } else {
-            // Login request
-            passport.authenticate(config.siop.provider)(req, res, next)
-        }
-    });
+    if (!config.siop.isRedirection) {
+        app.get('/auth/' + config.siop.provider + '/callback', (req, res, next) => {
+            // Certificate verification
+            // TODO: Check if it is possible to have different callback URLs
+            // in the verifier
+            if (req.query && req.query.state && req.query.state.startsWith('cert:')) {
+                certsValidator.loadCredential(req, res)
+            } else {
+                // Login request
+                passport.authenticate(config.siop.provider)(req, res, next)
+            }
+        });
 
-    app.get(config.siop.pollPath, (req, res, next) => {
-        // const encodedState = getOAuth2State(utils.getCameFrom(req));
-        const encodedState = req.query.state
-        passport.authenticate(config.siop.provider, { poll: true, state: encodedState })(req, res, next);
-    });
+        app.get(config.siop.pollPath, (req, res, next) => {
+            // const encodedState = getOAuth2State(utils.getCameFrom(req));
+            const encodedState = req.query.state
+            passport.authenticate(config.siop.provider, { poll: true, state: encodedState })(req, res, next);
+        });
 
-    app.get(config.siop.pollCertPath, certsValidator.checkStatus)
+        app.get(config.siop.pollCertPath, certsValidator.checkStatus)
+    } else {
+        app.get('/auth/' + config.siop.provider + '/callback', passport.authenticate(config.siop.provider), (req, res) => {
+            res.redirect('/dashboard?token=local');
+        })
+    }
 }
 
 // Load other stragies if external IDPs are enabled
@@ -576,9 +584,19 @@ for (var p in config.publicPaths) {
 //
 // Access to TMForum APIs
 //
+app.patch('/admin/uploadcertificate/:specId', authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, (req, res) => {
+    req.apiUrl = url.parse(req.url).path.substring(config.proxyPrefix.length);
+    admin.uploadCertificate(req, res)
+})
+
+const adminRegex = new RegExp(`^\/admin\/(.*)\/?$`)
+app.all(adminRegex, authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, (req, res) => {
+    req.apiUrl = url.parse(req.url).path.substring(config.proxyPrefix.length);
+    admin.checkPermissions(req, res)
+})
 
 const paths = Object.values(config.endpoints).map(endpoint => endpoint.path);
-const regexPattern = new RegExp(`^\\/(${paths.join('|')})(.*)\\/?$`);
+const regexPattern = new RegExp(`^\/(${paths.join('|')})\/(.*)\/?$`);
 
 app.all(regexPattern, authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, function(
     req,

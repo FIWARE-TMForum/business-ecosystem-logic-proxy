@@ -282,7 +282,10 @@
         "_invalid_phone": "Phonenumber is invalid!",
         "_invalid_email": "Email is invalid!",
         "_save": "Save",
-        "_success": "Updated successfully"
+        "_success": "Updated successfully",
+        "_website": "Website",
+        "_add_logo": "Add organization logo",
+        "_add_logo_url": "Add organization logo using a URL"
     },
     "PRODUCT_INVENTORY":{
         "_loading": "Loading...",
@@ -421,7 +424,9 @@
         "_profile_pic": "Profile picture",
         "_finish": "Finish",
         "_summary": "Product's summary",
-        "_create_prod": "Create product"
+        "_create_prod": "Create product",
+        "_file_res": "File restrictions",
+        "_restrictions": "File size must be under 3MB. File names can only include alphabetical characters (A-Z, a-z) and a limited set of symbols, such as underscores (_), hyphens (-), and periods (.). "
     },
     "UPDATE_PROD_SPEC":{
         "_back": "Back",
@@ -492,7 +497,9 @@
         "_verify": "Verify Certificates",
         "_how_to_verify": "How to get a valid VC of the certificate?",
         "_verify_text": "To get a valid VC of the certificate you can access the ",
-        "_dome_trust": "DOME Trust Service Provider for Certification"
+        "_dome_trust": "DOME Trust Service Provider for Certification",
+        "_file_res": "File restrictions",
+        "_restrictions": "File size must be under 3MB. File names can only include characters (a-z), (A-Z), (0-9), and a limited set of symbols including underscores (_), hyphens (-), and periods (.). "
     },
     "CREATE_RES_SPEC": {
         "_back": "Back",
@@ -696,6 +703,7 @@
         "_create_license": "Create license",
         "_price": "Price",
         "_save_price":"Save price",
+        "_duplicated_price_name": "Price name already exists.",
         "_save_license": "Save license",
         "_no_prod_spec": "Bundled offers can't include product specifications.",
         "_cancel": "Cancel",
@@ -792,6 +800,7 @@
         "_create_license": "Create license",
         "_price": "Price",
         "_save_price":"Save price",
+        "_duplicated_price_name": "Price name already exists.",
         "_save_license": "Save license",
         "_no_prod_spec": "Bundled offers can't include product specifications.",
         "_cancel": "Cancel",
@@ -816,7 +825,7 @@
         "_res_spec": "Resource Specifications",
         "_search": "Search",
         "_add_new_serv": "Add new service",
-        "_filter_state": "Filter by state",
+        "_filter_state": "Filter by status",
         "_state": "State",
         "_order_by": "Order by...",
         "_last_update": "Last update",
@@ -845,7 +854,7 @@
     },
     "ADMIN":{
         "_admin": "Administration",
-        "_filter_state": "Filter by state",
+        "_filter_state": "Filter by status",
         "_state": "State",
         "_order_by": "Order by...",
         "_last_update": "Last update",
@@ -857,7 +866,11 @@
         "_status": "Status",
         "_actions": "Actions",
         "_load_more": "Load more",
-        "_categories": "Categories"
+        "_categories": "Categories",
+        "_verification": "Verification",
+        "_productId": "Product ID",
+        "_vc": "Verifiable Credential",
+        "_add": "Add"
     },
     "CATEGORIES":{
         "_categories": "Categories",
