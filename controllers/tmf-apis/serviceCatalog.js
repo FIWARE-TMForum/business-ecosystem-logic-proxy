@@ -22,9 +22,9 @@ const axios = require('axios')
 const config = require('./../../config')
 const utils = require('./../../lib/utils')
 const tmfUtils = require('./../../lib/tmfUtils')
-
+const storeClient = require('./../../lib/store').storeClient
 const serviceCatalog = (function() {
-
+	const servicePattern = new RegExp('/serviceSpecification/[^/]+/?$');
 	const validateRetrieving = function(req, callback) {
         // Check if the request is a list of service specifications
         if (req.path.endsWith('serviceSpecification') && req.user != null) {
@@ -100,7 +100,7 @@ const serviceCatalog = (function() {
 		});
 	};
 
-	const validateOwnerSellerPost = function(req, callback) {
+	const validateCreation = function(req, callback){
 		let body;
 		try {
 			body = JSON.parse(req.body);
@@ -112,20 +112,33 @@ const serviceCatalog = (function() {
 
 			return; // EXIT
 		}
+		validateOwnerSellerPost(req, body, callback)
+		validateService(req.user, body, callback)
+	}
 
+	const validateService = function(user, body, callback) {
+        // service as a bundle is not supported
+        if (body.isBundle) {
+            return callback({
+                status: 422,
+                message: 'Service bundles are not supported'
+            });
+        }
+		storeClient.validateService(body, user, callback);
+    }
+
+	const validateOwnerSellerPost = function(req, body, callback) {
 		if (!tmfUtils.hasPartyRole(req, body.relatedParty, 'owner') || !utils.hasRole(req.user, config.oauth2.roles.seller)) {
 			callback({
 				status: 403,
 				message: 'Unauthorized to create non-owned/non-seller service specs'
 			});
-		} else {
-			callback(null)
 		}
 	};
 
 	const validators = {
 		GET: [validateRetrieving],
-		POST: [utils.validateLoggedIn, validateOwnerSellerPost],
+		POST: [utils.validateLoggedIn, validateCreation],
 		PATCH: [utils.validateLoggedIn, validateOwnerSeller],
 		PUT: [utils.methodNotAllowed],
 		DELETE: [utils.methodNotAllowed]
@@ -141,12 +154,34 @@ const serviceCatalog = (function() {
 		async.series(reqValidators, callback);
 	};
 
-	const executePostValidation = function(response, callback) {
-        callback(null);
+	const executePostValidation = function(req, callback) {
+		if (req.method == 'POST' && servicePattern.test(req.apiUrl)) {
+            body = req.body;
+            storeClient.attachService(
+                body,
+                req.user,
+                callback
+            );
+        } else {
+			callback(null);
+		}
 	};
 
-	const handleAPIError = function(res, callback) {
-		callback(null);
+	const handleAPIError = function(req, callback) {
+		if (servicePattern.test(req.apiUrl) && req.method == 'POST') {
+            var body = JSON.parse(req.reqBody);
+
+            // Notify the error to the charging backend to remove tha asset
+            storeClient.rollbackService(body, req.user, () => {
+                // No matter rollback status, return API message
+                callback(null);
+            });
+        } else if (servicePattern.test(req.apiUrl) && req.method == 'PATCH') {
+			// TODO: Configurar patch
+            callback(null);
+        } else {
+            callback(null);
+        }
 	};
 
 	return {

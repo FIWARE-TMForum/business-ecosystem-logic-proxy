@@ -1194,14 +1194,7 @@ const catalog = (function() {
         // Attach product spec info for product creation request
         let body;
 
-        if (req.method == 'POST' && productsPattern.test(req.apiUrl)) {
-            body = req.body;
-            storeClient.attachProduct(
-                body,
-                req.user,
-                callback
-            );
-        } else if (req.method == 'POST' && offeringsPattern.test(req.apiUrl)) {
+        if (req.method == 'POST' && offeringsPattern.test(req.apiUrl)) {
             let catalog = '';
             body = req.body
 
