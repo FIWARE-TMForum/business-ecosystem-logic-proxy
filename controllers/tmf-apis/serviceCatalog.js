@@ -23,8 +23,9 @@ const config = require('./../../config')
 const utils = require('./../../lib/utils')
 const tmfUtils = require('./../../lib/tmfUtils')
 const storeClient = require('./../../lib/store').storeClient
+const uuidv4 = require('uuid').v4;
 const serviceCatalog = (function() {
-	const servicePattern = new RegExp('/serviceSpecification/[^/]+/?$');
+	const servicesPattern = new RegExp('/serviceSpecification/?$');
 	const validateRetrieving = function(req, callback) {
         // Check if the request is a list of service specifications
         if (req.path.endsWith('serviceSpecification') && req.user != null) {
@@ -113,10 +114,34 @@ const serviceCatalog = (function() {
 			return; // EXIT
 		}
 		validateOwnerSellerPost(req, body, callback)
-		validateService(req.user, body, callback)
+		validateService(req, body, callback)
+		console.log("ssssss3")
 	}
 
-	const validateService = function(user, body, callback) {
+	const add_id_char = function(body, id){
+		
+		body["specCharacteristic"].push(
+			{
+				id: `urn:ngsi-ld:characteristic:${uuidv4()}`,
+				name: "Asset",
+				description: "ID of the asset being offered as registered in the BAE",
+				valueType: "string",
+				configurable: false,
+				characteristicValueSpecification: [
+					{
+						isDefault: true,
+						unitOfMeasure: "",
+						value: id,
+						valueFrom: "",
+						valueTo: ""
+					}
+				]
+			}
+		)
+		
+	}
+
+	const validateService = function(req, body, callback) {
         // service as a bundle is not supported
         if (body.isBundle) {
             return callback({
@@ -124,7 +149,22 @@ const serviceCatalog = (function() {
                 message: 'Service bundles are not supported'
             });
         }
-		storeClient.validateService(body, user, callback);
+		console.log("validate service body: ")
+		storeClient.validateService(body, req.user, function (err, response){
+			if (err)
+				callback(err)
+			else{
+				if(response.body.id){
+					add_id_char(body, response.body.id)
+					req.body = JSON.stringify(body)
+					req.headers['content-length']=undefined
+				}
+				console.log('ssssssss')
+				callback(null)
+				console.log('ssssssss2')
+			}
+
+		});
     }
 
 	const validateOwnerSellerPost = function(req, body, callback) {
@@ -155,20 +195,26 @@ const serviceCatalog = (function() {
 	};
 
 	const executePostValidation = function(req, callback) {
-		if (req.method == 'POST' && servicePattern.test(req.apiUrl)) {
+		console.log("execute post validation")
+		if (req.method == 'POST' && servicesPattern.test(req.apiUrl)) {
+			console.log("into post validation")
             body = req.body;
+			//console.log(body)
             storeClient.attachService(
                 body,
                 req.user,
                 callback
             );
         } else {
+			console.log("no executePostValidation")
+			console.log(req.apiUrl + "--> " + servicesPattern.test(req.apiUrl))
+			console.log(req.method + "--> " + req.method == 'POST')
 			callback(null);
 		}
 	};
 
 	const handleAPIError = function(req, callback) {
-		if (servicePattern.test(req.apiUrl) && req.method == 'POST') {
+		if (servicesPattern.test(req.apiUrl) && req.method == 'POST') {
             var body = JSON.parse(req.reqBody);
 
             // Notify the error to the charging backend to remove tha asset
@@ -176,7 +222,7 @@ const serviceCatalog = (function() {
                 // No matter rollback status, return API message
                 callback(null);
             });
-        } else if (servicePattern.test(req.apiUrl) && req.method == 'PATCH') {
+        } else if (servicesPattern.test(req.apiUrl) && req.method == 'PATCH') {
 			// TODO: Configurar patch
             callback(null);
         } else {
