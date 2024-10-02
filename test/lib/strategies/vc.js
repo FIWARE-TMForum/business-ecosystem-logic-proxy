@@ -55,6 +55,8 @@ describe('VC Strategy', () => {
                     verifierJWKSURL: config.verifierHost + config.verifierJWKSPath,
                     redirectURI: config.callbackURL,
                     allowedRoles: config.allowedRoles,
+                    clientID: config.clientID,
+                    privateKey: config.privateKey,
                     isRedirection: false
                 });
 
@@ -108,11 +110,15 @@ describe('VC Strategy', () => {
             end: () => {}
         };
         const VALID_CONFIG = {
-            allowedRoles: ['customer', 'seller', 'admin']
+            allowedRoles: ['customer', 'seller', 'admin'],
+            clientID: 'did:1234',
+            privateKey: '123456'
         };
         const REDIRECTION_CONFIG = {
             allowedRoles: ['customer', 'seller', 'admin'],
-            isRedirection: true
+            isRedirection: true,
+            clientID: 'did:1234',
+            privateKey: '123456'
         }
 
         let nextFunctionFor200;
