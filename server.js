@@ -30,6 +30,7 @@ const utils = require('./lib/utils');
 const authModule = require('./lib/auth');
 const uuidv4 = require('uuid').v4;
 const certsValidator = require('./lib/certificate').certsValidator
+const buildRequestJWT = require('./lib/strategies/vc').buildRequestJWT
 
 const debug = !(process.env.NODE_ENV == 'production');
 
@@ -294,7 +295,7 @@ const addIdpStrategy = async (idp) => {
     return extAuth;
 }
 
-app.get('/config', (_, res) =>{
+app.get('/config', (_, res) => {
     res.send({
         siop: {
             enabled: config.siop.enabled,
@@ -304,7 +305,8 @@ app.get('/config', (_, res) =>{
             clientID: config.siop.clientID,
             callbackURL: config.siop.callbackURL,
             verifierHost: config.siop.verifierHost,
-            verifierQRCodePath: config.siop.verifierQRCodePath
+            verifierQRCodePath: config.siop.verifierQRCodePath,
+            requestUri: config.siop.requestUri
         },
         chat: config.chatUrl,
         knowledgeBaseUrl: config.knowledgeUrl,
@@ -360,6 +362,10 @@ if (config.siop.enabled) {
     } else {
         app.get('/auth/' + config.siop.provider + '/callback', passport.authenticate(config.siop.provider), (req, res) => {
             res.redirect('/search?token=local');
+        })
+
+        app.get('/auth/' + config.siop.provider + '/request.jwt', (req, res) => {
+            res.send(buildRequestJWT(config.siop))
         })
     }
 }
