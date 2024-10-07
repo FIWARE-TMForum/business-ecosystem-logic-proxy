@@ -53,7 +53,7 @@ jobs:
           context: .
           file: ./docker/Dockerfile
           tags: |
-            fiware/biz-ecosystem-logic-proxy:9.7.0-rc6
+            fiware/biz-ecosystem-logic-proxy:9.7.0-rc7
           push: ${{ github.ref == 'refs/heads/feat/oidc-verifier' }}
 
       - name: Image digest
