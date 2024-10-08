@@ -314,7 +314,10 @@ app.get('/config', (_, res) => {
         matomoId: config.matomoId,
         matomoUrl: config.matomoUrl,
         searchEnabled: config.searchUrl != '',
-        domeTrust: config.domeTrust
+        domeTrust: config.domeTrust,
+        domeAbout: config.domeAbout,
+        domeRegister: config.domeRegister,
+        domePublish: config.domePublish
     })
 })
 
