@@ -112,6 +112,12 @@ config.editParty = true;
 
 config.domeTrust = process.env.BAE_LP_DOME_TRUST;
 
+config.domeAbout = process.env.BAE_LP_DOME_ABOUT;
+
+config.domeRegister = process.env.BAE_LP_DOME_REGISTER;
+
+config.domePublish = process.env.BAE_LP_DOME_PUBLISH;
+
 // Customer Role Required to buy items
 config.customerRoleRequired = false;
 
