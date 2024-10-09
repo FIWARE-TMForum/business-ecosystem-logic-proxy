@@ -112,11 +112,9 @@ config.editParty = true;
 
 config.domeTrust = process.env.BAE_LP_DOME_TRUST;
 
-config.domeAbout = process.env.BAE_LP_DOME_ABOUT;
-
-config.domeRegister = process.env.BAE_LP_DOME_REGISTER;
-
-config.domePublish = process.env.BAE_LP_DOME_PUBLISH;
+config.domeAbout = process.env.BAE_LP_DOME_ABOUT || "https://dome-marketplace.eu/about/";
+config.domeRegister = process.env.BAE_LP_DOME_REGISTER || "https://dome-marketplace.github.io/onboarding/";
+config.domePublish = process.env.BAE_LP_DOME_PUBLISH || "https://knowledgebase.dome-marketplace.org/shelves/company-onboarding-process";
 
 // Customer Role Required to buy items
 config.customerRoleRequired = false;

@@ -142,7 +142,8 @@
         "_checkout": "Add to cart",
         "_no_terms": "This product has no terms and conditions.",
         "_no_chars": "This product has no characteristics.",
-        "_no_prices": "This product has no price plans."
+        "_no_prices": "This product has no price plans.",
+        "_owner": "Owner"
     },
     "CATEGORIES_FILTER": {
         "_remove_badge": "Remove badge",
@@ -297,7 +298,19 @@
         "_services": "Services",
         "_resources": "Resources",
         "_orders": "Orders",
-        "_not_found": "No offers found",
+        "_not_found": "No products found.",
+        "_no_resources": "No resources found.",
+        "_no_services": "No services found.",
+        "_search_criteria": "Search criteria",
+        "_prod_details": "Product details",
+        "_description": "Description",
+        "_pricing": "Product pricing",
+        "_chars": "Product characteristics",
+        "_res_details": "Resource details",
+        "_res_chars": "Resource characteristics",
+        "_serv_details": "Service details",
+        "_serv_chars": "Service characteristics",
+        "_start_date": "Start operating date",
         "_order_id": "Order Id",
         "_state": "State",
         "_priority": "Priority",
@@ -854,6 +867,7 @@
         "_filter_role": "Filter by role",
         "_seller": "Seller",
         "_owner": "Owner",
+        "_customer": "Customer",
         "_role": "Role"
     },
     "ADMIN":{
@@ -922,5 +936,9 @@
         "_next": "Next",
         "_choose_parent": "Choose a parent category",
         "_parent": "Parent category"
+    },
+    "ORGANIZATION": {
+        "_details": "Organization details",
+        "_description": "Description"
     }
 }
