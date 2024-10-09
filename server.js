@@ -221,7 +221,6 @@ var failIfNotAuthenticated = function(req, res, next) {
 };
 
 // Configure Passport to use FIWARE as authentication strategy
-
 passport.serializeUser(function(user, done) {
     done(null, user);
 });
@@ -229,44 +228,49 @@ passport.serializeUser(function(user, done) {
 passport.deserializeUser(function(obj, done) {
     done(null, obj);
 });
+
 // Passport middlewares
 app.use(passport.initialize());
 app.use(passport.session());
 
 // Load local strategy
-passport.use(config.oauth2.provider, auth.STRATEGY);
 
-// Handler for default logging
-app.all(config.logInPath, function(req, res) {
-    var encodedState = getOAuth2State(utils.getCameFrom(req));
+let idps = {};
 
-    passport.authenticate(config.oauth2.provider, { scope: auth.getScope(), state: encodedState })(req, res);
-});
+if (!config.siop.enabled) {
+    passport.use(config.oauth2.provider, auth.STRATEGY);
 
-// Handler for the callback
-app.get('/auth/' + config.oauth2.provider + '/callback', passport.authenticate(config.oauth2.provider, { failureRedirect: '/error' }), function(req, res) {
-    var state = JSON.parse(base64url.decode(req.query.state));
-    var redirectPath = state[OAUTH2_CAME_FROM_FIELD] !== undefined ? state[OAUTH2_CAME_FROM_FIELD] : '/';
+    // Handler for default logging
+    app.all(config.logInPath, function(req, res) {
+        var encodedState = getOAuth2State(utils.getCameFrom(req));
 
-    if (config.legacyGUI) {
-        // Using old GUI
-        res.redirect(redirectPath)
+        passport.authenticate(config.oauth2.provider, { scope: auth.getScope(), state: encodedState })(req, res);
+    });
 
-    } else if (config.externalPortal == null || config.externalPortal == ''){
-        // Using local new GUI
-        res.redirect('/search?token=local');
-    } else {
-        // Using an external portal
-        res.header('Access-Control-Allow-Origin', config.externalPortal)
-        res.header("Access-Control-Allow-Credentials", true);
+    // Handler for the callback
+    app.get('/auth/' + config.oauth2.provider + '/callback', passport.authenticate(config.oauth2.provider, { failureRedirect: '/error' }), function(req, res) {
+        console.log(' =========================================================================================== ')
+        var state = JSON.parse(base64url.decode(req.query.state));
+        var redirectPath = state[OAUTH2_CAME_FROM_FIELD] !== undefined ? state[OAUTH2_CAME_FROM_FIELD] : '/';
 
-        res.redirect(`${config.externalPortal}/search?token=` + req.user.accessToken);
-    }
-});
+        if (config.legacyGUI) {
+            // Using old GUI
+            res.redirect(redirectPath)
 
-let idps = {
-    'local': auth
-};
+        } else if (config.externalPortal == null || config.externalPortal == ''){
+            // Using local new GUI
+            res.redirect('/dashboard?token=local');
+        } else {
+            // Using an external portal
+            res.header('Access-Control-Allow-Origin', config.externalPortal)
+            res.header("Access-Control-Allow-Credentials", true);
+
+            res.redirect(`${config.externalPortal}/dashboard?token=` + req.user.accessToken);
+        }
+    });
+
+    idps['local'] = auth
+}
 
 const addIdpStrategy = async (idp) => {
     let extAuth = await authModule.auth(idp);
@@ -295,6 +299,75 @@ const addIdpStrategy = async (idp) => {
     return extAuth;
 }
 
+// Load other stragies if external IDPs are enabled
+if (extLogin) {
+    // Load IDPs from database
+    const externalIdps = await idpService.getDBIdps();
+
+    externalIdps.forEach(async (idp) => {
+        console.log("===========================");
+        console.log(idp);
+
+        const extAuth = await addIdpStrategy(idp);
+        //authMiddleware.addIdp(idp, extAuth);
+        idps[idp.idpId] = extAuth;
+    });
+}
+
+if (config.siop.enabled) {
+    let siopAuth = await authModule.auth(config.siop);
+    passport.use(config.siop.provider, siopAuth.STRATEGY);
+
+    if (!config.siop.isRedirection) {
+        app.get('/auth/' + config.siop.provider + '/callback', (req, res, next) => {
+            // Certificate verification
+            // TODO: Check if it is possible to have different callback URLs
+            // in the verifier
+            if (req.query && req.query.state && req.query.state.startsWith('cert:')) {
+                certsValidator.loadCredential(req, res)
+            } else {
+                // Login request
+                passport.authenticate(config.siop.provider)(req, res, next)
+            }
+        });
+
+        app.get(config.siop.pollPath, (req, res, next) => {
+            // const encodedState = getOAuth2State(utils.getCameFrom(req));
+            const encodedState = req.query.state
+            passport.authenticate(config.siop.provider, { poll: true, state: encodedState })(req, res, next);
+        });
+
+        app.get(config.siop.pollCertPath, certsValidator.checkStatus)
+    } else {
+        app.get('/auth/' + config.siop.provider + '/callback', passport.authenticate(config.siop.provider), (req, res) => {
+            res.redirect('/dashboard?token=local');
+        })
+
+        app.get('/auth/' + config.siop.provider + '/request.jwt', (req, res) => {
+            res.send(buildRequestJWT(config.siop))
+        })
+    }
+
+    idps['local'] = siopAuth
+}
+
+const authMiddleware = authModule.authMiddleware(idps);
+
+// Handler to destroy sessions
+app.all(config.logOutPath, function(req, res) {
+    // Destroy the session and redirect the user to the main page
+    req.session.destroy();
+
+    let redirUrl = '/'
+    if (config.legacyGUI) {
+        redirUrl = config.portalPrefix + '/'
+    }
+
+    res.redirect(redirUrl);
+});
+
+// Config endpoint
+
 app.get('/config', (_, res) => {
     res.send({
         siop: {
@@ -320,88 +393,6 @@ app.get('/config', (_, res) => {
         domePublish: config.domePublish
     })
 })
-
-if (config.siop.enabled) {
-    let siopAuth = await authModule.auth(config.siop);
-    passport.use(config.siop.provider, siopAuth.STRATEGY);
-
-    app.get(`${config.portalPrefix}/login/${config.siop.provider}`, (req, res) => {
-        //const encodedState = getOAuth2State(utils.getCameFrom(req));
-        // Use a unique uuid for encoding the state, so we dont have collisions
-        // between users using the SIOP authentication
-        const encodedState = uuidv4();
-        res.render("siop.jade",  {
-            portalPrefix: config.portalPrefix,
-            cssFilesToInject: imports.cssFilesToInject,
-            title: 'VC Login',
-            verifierQRCodeURL: config.siop.verifierHost + config.siop.verifierQRCodePath,
-            statePair: `state=${encodedState}`,
-            callbackURLPair: `client_callback=${config.siop.callbackURL}`,
-            clientIDPair: `client_id=${config.siop.clientID}`,
-            pollURL: config.siop.pollPath
-        });
-    });
-
-    if (!config.siop.isRedirection) {
-        app.get('/auth/' + config.siop.provider + '/callback', (req, res, next) => {
-            // Certificate verification
-            // TODO: Check if it is possible to have different callback URLs
-            // in the verifier
-            if (req.query && req.query.state && req.query.state.startsWith('cert:')) {
-                certsValidator.loadCredential(req, res)
-            } else {
-                // Login request
-                passport.authenticate(config.siop.provider)(req, res, next)
-            }
-        });
-
-        app.get(config.siop.pollPath, (req, res, next) => {
-            // const encodedState = getOAuth2State(utils.getCameFrom(req));
-            const encodedState = req.query.state
-            passport.authenticate(config.siop.provider, { poll: true, state: encodedState })(req, res, next);
-        });
-
-        app.get(config.siop.pollCertPath, certsValidator.checkStatus)
-    } else {
-        app.get('/auth/' + config.siop.provider + '/callback', passport.authenticate(config.siop.provider), (req, res) => {
-            res.redirect('/search?token=local');
-        })
-
-        app.get('/auth/' + config.siop.provider + '/request.jwt', (req, res) => {
-            res.send(buildRequestJWT(config.siop))
-        })
-    }
-}
-
-// Load other stragies if external IDPs are enabled
-if (extLogin) {
-    // Load IDPs from database
-    const externalIdps = await idpService.getDBIdps();
-
-    externalIdps.forEach(async (idp) => {
-        console.log("===========================");
-        console.log(idp);
-
-        const extAuth = await addIdpStrategy(idp);
-        //authMiddleware.addIdp(idp, extAuth);
-        idps[idp.idpId] = extAuth;
-    });
-}
-
-const authMiddleware = authModule.authMiddleware(idps);
-
-// Handler to destroy sessions
-app.all(config.logOutPath, function(req, res) {
-    // Destroy the session and redirect the user to the main page
-    req.session.destroy();
-
-    let redirUrl = '/'
-    if (config.legacyGUI) {
-        redirUrl = config.portalPrefix + '/'
-    }
-
-    res.redirect(redirUrl);
-});
 
 /////////////////////////////////////////////////////////////////////
 /////////////////////////// SHOPPING CART ///////////////////////////
