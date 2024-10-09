@@ -18,7 +18,8 @@ describe('VC Strategy', () => {
         verifierJWKSPath: '/jwksPath',
         callbackURL: 'some_uri',
         allowedRoles: ['seller', 'customer'],
-        isRedirection: false 
+        isRedirection: false,
+        verifierHost: 'https://verifierhost.com'
     };
     const idpId = 'some_id';
 
@@ -57,7 +58,8 @@ describe('VC Strategy', () => {
                     allowedRoles: config.allowedRoles,
                     clientID: config.clientID,
                     privateKey: config.privateKey,
-                    isRedirection: false
+                    isRedirection: false,
+                    verifierHost: config.verifierHost
                 });
 
                 done();
@@ -169,7 +171,7 @@ describe('VC Strategy', () => {
                     },
                     'jsonwebtoken': {
                         decode: (token) => {
-                            return jwt.decode(token);
+                            return jwt.decode(token, {complete: true});
                         },
                         verify: (token, key, cb) => {
                             cb(null, jwt.decode(accessToken));
