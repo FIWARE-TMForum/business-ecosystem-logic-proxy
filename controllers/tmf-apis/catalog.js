@@ -545,10 +545,10 @@ const catalog = (function() {
         }
 
         // Check upgrade problems if the product is a digital one
-        if (tmfUtils.isDigitalProduct(prevBody.productSpecCharacteristic)) {
+        if (tmfUtils.hasDigitalAsset(prevBody.productSpecCharacteristic)) {
             if (
                 !!newBody.version &&
-                !tmfUtils.isDigitalProduct(newBody.productSpecCharacteristic) &&
+                !tmfUtils.hasDigitalAsset(newBody.productSpecCharacteristic) &&
                 newBody.version != prevBody.version
             ) {
                 // Trying to upgrade the product without providing new asset info
@@ -573,7 +573,7 @@ const catalog = (function() {
             if (
                 !!newBody.version &&
                 newBody.version != prevBody.version &&
-                tmfUtils.isDigitalProduct(newBody.productSpecCharacteristic) &&
+                tmfUtils.hasDigitalAsset(newBody.productSpecCharacteristic) &&
                 !tmfUtils.equalCustomCharacteristics(
                     newBody.productSpecCharacteristic,
                     prevBody.productSpecCharacteristic
