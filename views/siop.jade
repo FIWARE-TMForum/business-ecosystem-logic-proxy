@@ -7,13 +7,13 @@ html
         meta(name="viewport" content="width=device-width, initial-scale=1")
 
         each cssFilePath in cssFilesToInject
-            link(rel="stylesheet", href="/#{ cssFilePath }")
+            link(rel="stylesheet", href="#{ portalPrefix }/#{ cssFilePath }")
     body
         .navbar.navbar-default.navbar-fixed-top.z-depth-2
             .container
                 .navbar-header
                     a.navbar-brand.hidden-xs(href="/")
-                        img(src="/resources/core/images/fiware-tmforum-logo.png")
+                        img(src="#{ portalPrefix }/resources/core/images/fiware-tmforum-logo.png")
                 .navbar-text #{title}
 
                 a.btn.btn-warning.navbar-btn.navbar-right.z-depth-1(href="/")

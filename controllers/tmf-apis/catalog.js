@@ -31,6 +31,7 @@ const storeClient = require('./../../lib/store').storeClient
 const tmfUtils = require('./../../lib/tmfUtils')
 const url = require('url')
 const utils = require('./../../lib/utils')
+const searchEngine = require('../../lib/search').searchEngine
 
 var LIFE_CYCLE = 'lifecycleStatus';
 
@@ -1073,24 +1074,46 @@ const catalog = (function() {
     const processQuery = async (req, callback) => {
         const returnQueryRes = (result) => {
             let newUrl = '/catalog/productOffering?href='
-            
+
             if (result.length > 0) {
                 let ids = result.map((hit) => {
                     return hit.id
                 })
-                
+
                 newUrl += ids.join(',')
             } else {
                 newUrl += 'null'
             }
-            
+
             req.apiUrl = newUrl
-            
+
             // TODO: Check how to avoid the call if the result is 0
             callback(null)
         }
-        
-        if (offeringsPattern.test(req.path) && req.query.relatedParty != null) {
+
+        if (offeringsPattern.test(req.path) && req.query.keyword != null && config.searchUrl) {
+            // Query to the external search engine
+            let page = {}
+
+            if (req.query.offset != null) {
+                page.offset = req.query.offset
+            }
+
+            if (req.query.limit != null) {
+                page.pageSize = req.query.limit
+            }
+
+            searchEngine.search(req.query.keyword, req.query['category.id'], page)
+                .then(returnQueryRes)
+                .catch(() => {
+                    callback({
+                        status: 400,
+                        message: 'Error accessing search indexes'
+                    })
+                })
+
+        } else if (offeringsPattern.test(req.path) && req.query.relatedParty != null) {
+            // Local query for relarted party
 
             let query = {
                 relatedParty: req.query.relatedParty
@@ -1116,6 +1139,22 @@ const catalog = (function() {
             const query = {
                 catalog: catalogId
             }
+
+            if (req.query.lifecycleStatus != null) {
+                query.lifecycleStatus = req.query.lifecycleStatus
+            }
+
+            if (req.query.offset != null) {
+                query.offset = req.query.offset
+            }
+
+            if (req.query.limit != null) {
+                query.limit = req.query.limit
+            }
+
+            if (req.query['category.id'] != null) {
+                query.category = req.query['category.id']
+            }
             indexes.search('offering', query)
                 .then(returnQueryRes)
 
@@ -1128,13 +1167,19 @@ const catalog = (function() {
         return indexes.indexDocument('offering', body.id, {
             relatedParty: party,
             catalog: catalog,
-            lifecycleStatus: body.lifecycleStatus
+            lifecycleStatus: body.lifecycleStatus,
+            category: body.category ? body.category.map((cat) => {
+                return cat.id
+            }) : []
         })
     }
 
     const updateindex = (body) => {
         return indexes.updateDocument('offering', body.id, {
-            lifecycleStatus: body.lifecycleStatus
+            lifecycleStatus: body.lifecycleStatus,
+            category: body.category ? body.category.map((cat) => {
+                return cat.id
+            }) : []
         })
     }
     //////////////////////////////////////////////////////////////////////////////////////////////
@@ -1156,12 +1201,6 @@ const catalog = (function() {
             reqValidators.push(validators[req.method][i].bind(this, req));
         }
 
-        // We can now execute the queries in the API
-        // methodIndexed(req)
-        //     .catch(() => Promise.resolve(req))
-        //     .then(() => {
-        //         async.series(reqValidators, callback);
-        //     });
         async.series(reqValidators, callback);
     };
 

@@ -28,17 +28,17 @@ config.portalPrefix = '';
 config.logInPath = '/login';
 config.logOutPath = '/logOut';
 config.sessionSecret = 'keyboard cat';
-config.theme = '';
+config.theme = 'bae-dome-theme';
 
 // OAuth2 configuration
 //'server': 'http://34.213.26.168:8000/',
 config.oauth2 = {
 	provider: 'fiware',
 	server: 'http://idm.docker:3000',
-	clientID: 'b7956b46-ec03-4dbd-b62f-c3f72f338e8b',
-	clientSecret: 'c09d61fb-5c06-41aa-9dd2-5d8c319fdaf9',
+	clientID: '19dd858c-328c-4642-93ab-da45e4d253ae',
+	clientSecret: '09ffe023-a242-46a3-bd83-9277d36e2379',
 	callbackURL: 'http://proxy.docker:8004/auth/fiware/callback',
-	oidc: false,
+	oidc: true,
 	oidcScopes: "openid",
 	oidcDiscoveryURI: null,
 	oidcTokenEndpointAuthMethod: "client_secret_basic",
@@ -85,7 +85,9 @@ config.oauth2 = {
 config.siop = {
 	enabled: process.env.BAE_LP_SIOP_ENABLED === 'true',
 	provider: 'vc',
+    isRedirection: process.env.BAE_LP_SIOP_IS_REDIRECTION === 'true',
 	pollPath: '/poll',
+    pollCertPath: '/cert/poll',
 	clientID: process.env.BAE_LP_SIOP_CLIENT_ID || 'some_id',
 	callbackURL: process.env.BAE_LP_SIOP_CALLBACK_PATH || 'http://proxy.docker:8004/auth/vc/callback',
 	verifierHost: process.env.BAE_LP_SIOP_VERIFIER_HOST || 'https://verifier.apps.fiware.fiware.dev',
@@ -95,7 +97,8 @@ config.siop = {
 	allowedRoles: process.env.BAE_LP_SIOP_ALLOWED_ROLES ? process.env.BAE_LP_SIOP_ALLOWED_ROLES.split(',') : {
 		customer: 'customer',
 		seller: 'seller'
-	}
+	},
+    operators: process.env.BAE_LP_SIOP_OPERATORS ? process.env.BAE_LP_SIOP_OPERATORS.split(',') : []
 };
 
 config.extLogin = false;
@@ -106,6 +109,12 @@ config.propagateToken = true;
 config.allowLocalEORI = false;
 
 config.editParty = true;
+
+config.domeTrust = process.env.BAE_LP_DOME_TRUST;
+
+config.domeAbout = process.env.BAE_LP_DOME_ABOUT || "https://dome-marketplace.eu/about/";
+config.domeRegister = process.env.BAE_LP_DOME_REGISTER || "https://dome-marketplace.github.io/onboarding/";
+config.domePublish = process.env.BAE_LP_DOME_PUBLISH || "https://knowledgebase.dome-marketplace.org/shelves/company-onboarding-process";
 
 // Customer Role Required to buy items
 config.customerRoleRequired = false;
@@ -543,6 +552,34 @@ if (config.extLogin) {
 }
 module.exports = config;
 
+
+// Gui config
+config.legacyGUI = false
+if (!!process.env.BAE_LP_LEGACY_GUI) {
+    config.legacyGUI = process.env.BAE_LP_LEGACY_GUI == 'true'
+}
+
 // External Portal config
-config.externalPortal = null;
+//config.externalPortal = 'http://localhost:4200';
+config.externalPortal = '';
 config.externalPortal = process.env.BAE_LP_EXTERNAL_PORTAL || config.externalPortal;
+
+// Chatbot
+config.chatUrl = ''
+config.chatUrl = process.env.BAE_LP_CHAT_URL || config.chatUrl;
+
+// Matomo
+config.matomoId = ''
+config.matomoId = process.env.BAE_LP_MATOMO_ID || config.matomoId;
+
+config.matomoUrl = ''
+config.matomoUrl = process.env.BAE_LP_MATOMO_URL || config.matomoUrl;
+
+config.knowledgeUrl = ''
+config.knowledgeUrl = process.env.BAE_LP_KNOWLEDGE_BASE_URL || config.knowledgeUrl;
+
+config.ticketingUrl = ''
+config.ticketingUrl = process.env.BAE_LP_TICKETING_URL || config.ticketingUrl;
+
+config.searchUrl = ''
+config.searchUrl = process.env.BAE_LP_SEARCH_URL || config.searchUrl;

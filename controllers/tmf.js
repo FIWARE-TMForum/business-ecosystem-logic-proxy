@@ -103,6 +103,12 @@ function tmf() {
 
 		if (url.indexOf('/media/') >= 0) {
 			options.responseType = 'arraybuffer'
+
+			// Dissable default browser cache headers
+			delete options.headers['if-modified-since'];
+			delete options.headers['if-none-match'];
+
+			options.headers['cache-control'] = 'no-cache';
 		}
 
 		// PROXY THE REQUEST
@@ -172,7 +178,12 @@ function tmf() {
 		}).catch((err) => {
 			console.log(err)
 			utils.log(logger, 'error', req, 'Proxy error: ' + err.message);
-			res.status(504).json({ error: 'Service unreachable' });
+
+			if (err.response) {
+                res.status(error.response.status).json(error.response.data)
+            } else {
+                res.status(504).json({ error: 'Service unreachable' })
+            }
 		})
 	};
 

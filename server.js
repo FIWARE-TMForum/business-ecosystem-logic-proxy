@@ -18,15 +18,18 @@ const logger = require('./lib/logger').logger.getLogger('Server');
 const mongoose = require('mongoose');
 const onFinished = require('on-finished');
 const passport = require('passport');
+const path = require('path');
 const session = require('express-session');
 const shoppingCart = require('./controllers/shoppingCart').shoppingCart;
 const management = require('./controllers/management').management;
 const tmf = require('./controllers/tmf').tmf();
+const admin = require('./controllers/admin').admin();
 const trycatch = require('trycatch');
 const url = require('url');
 const utils = require('./lib/utils');
 const authModule = require('./lib/auth');
 const uuidv4 = require('uuid').v4;
+const certsValidator = require('./lib/certificate').certsValidator
 
 const debug = !(process.env.NODE_ENV == 'production');
 
@@ -44,6 +47,11 @@ const extLogin = config.extLogin == true;
 const showLocal = config.showLocalLogin == true;
 const showVC = config.showVCLogin == true;
 const editParty = config.editParty == true;
+
+// If not using default legacy API, portal prefix must be defined for legacy portal
+if (!config.legacyGUI && (!!config.portalPrefix || !config.proxyPrefix.length || config.portalPrefix == '/')) {
+    config.portalPrefix = '/ux'
+}
 
 (async () => {
 
@@ -164,7 +172,7 @@ app.use(function(req, res, next) {
     'use strict';
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Methods', 'HEAD, POST, GET, PATCH, PUT, OPTIONS, DELETE');
-    res.header('Access-Control-Allow-Headers', 'origin, content-type, X-Auth-Token, Tenant-ID, Authorization');
+    res.header('Access-Control-Allow-Headers', 'origin, content-type, X-Auth-Token, Tenant-ID, Authorization, X-Organization');
 
     if (req.method == 'OPTIONS') {
         utils.log(logger, 'debug', req, 'CORS request');
@@ -239,14 +247,19 @@ app.get('/auth/' + config.oauth2.provider + '/callback', passport.authenticate(c
     var state = JSON.parse(base64url.decode(req.query.state));
     var redirectPath = state[OAUTH2_CAME_FROM_FIELD] !== undefined ? state[OAUTH2_CAME_FROM_FIELD] : '/';
 
-    if (redirectPath != '/' || config.externalPortal == null || config.externalPortal == '') {
+    if (config.legacyGUI) {
+        // Using old GUI
         res.redirect(redirectPath)
+
+    } else if (config.externalPortal == null || config.externalPortal == ''){
+        // Using local new GUI
+        res.redirect('/search?token=local');
     } else {
+        // Using an external portal
         res.header('Access-Control-Allow-Origin', config.externalPortal)
         res.header("Access-Control-Allow-Credentials", true);
 
-        //res.header('Authorization', 'Bearer '+ req.user.accessToken);
-        res.redirect(`${config.externalPortal}/dashboard?token=` + req.user.accessToken);
+        res.redirect(`${config.externalPortal}/search?token=` + req.user.accessToken);
     }
 });
 
@@ -281,14 +294,28 @@ const addIdpStrategy = async (idp) => {
     return extAuth;
 }
 
-app.get('/siop', (_, res) =>{
+app.get('/config', (_, res) =>{
     res.send({
-        enabled: config.siop.enabled,
-        pollPath: config.siop.pollPath,
-        clientID: config.siop.clientID,
-        callbackURL: config.siop.callbackURL,
-        verifierHost: config.siop.verifierHost,
-        verifierQRCodePath: config.siop.verifierQRCodePath,
+        siop: {
+            enabled: config.siop.enabled,
+            isRedirection: config.siop.isRedirection,
+            pollPath: config.siop.pollPath,
+            pollCertPath: config.siop.pollCertPath,
+            clientID: config.siop.clientID,
+            callbackURL: config.siop.callbackURL,
+            verifierHost: config.siop.verifierHost,
+            verifierQRCodePath: config.siop.verifierQRCodePath
+        },
+        chat: config.chatUrl,
+        knowledgeBaseUrl: config.knowledgeUrl,
+        ticketingUrl: config.ticketingUrl,
+        matomoId: config.matomoId,
+        matomoUrl: config.matomoUrl,
+        searchEnabled: config.searchUrl != '',
+        domeTrust: config.domeTrust,
+        domeAbout: config.domeAbout,
+        domeRegister: config.domeRegister,
+        domePublish: config.domePublish
     })
 })
 
@@ -296,12 +323,13 @@ if (config.siop.enabled) {
     let siopAuth = await authModule.auth(config.siop);
     passport.use(config.siop.provider, siopAuth.STRATEGY);
 
-    app.get(`/login/${config.siop.provider}`, (req, res) => {
+    app.get(`${config.portalPrefix}/login/${config.siop.provider}`, (req, res) => {
         //const encodedState = getOAuth2State(utils.getCameFrom(req));
         // Use a unique uuid for encoding the state, so we dont have collisions
         // between users using the SIOP authentication
         const encodedState = uuidv4();
         res.render("siop.jade",  {
+            portalPrefix: config.portalPrefix,
             cssFilesToInject: imports.cssFilesToInject,
             title: 'VC Login',
             verifierQRCodeURL: config.siop.verifierHost + config.siop.verifierQRCodePath,
@@ -312,15 +340,31 @@ if (config.siop.enabled) {
         });
     });
 
-    app.get('/auth/' + config.siop.provider + '/callback', passport.authenticate(config.siop.provider), function(req, res) {
-        res.send('ok');
-    });
+    if (!config.siop.isRedirection) {
+        app.get('/auth/' + config.siop.provider + '/callback', (req, res, next) => {
+            // Certificate verification
+            // TODO: Check if it is possible to have different callback URLs
+            // in the verifier
+            if (req.query && req.query.state && req.query.state.startsWith('cert:')) {
+                certsValidator.loadCredential(req, res)
+            } else {
+                // Login request
+                passport.authenticate(config.siop.provider)(req, res, next)
+            }
+        });
 
-    app.get(config.siop.pollPath, (req, res, next) => {
-        // const encodedState = getOAuth2State(utils.getCameFrom(req));
-        const encodedState = req.query.state
-        passport.authenticate(config.siop.provider, { poll: true, state: encodedState })(req, res, next);
-    });
+        app.get(config.siop.pollPath, (req, res, next) => {
+            // const encodedState = getOAuth2State(utils.getCameFrom(req));
+            const encodedState = req.query.state
+            passport.authenticate(config.siop.provider, { poll: true, state: encodedState })(req, res, next);
+        });
+
+        app.get(config.siop.pollCertPath, certsValidator.checkStatus)
+    } else {
+        app.get('/auth/' + config.siop.provider + '/callback', passport.authenticate(config.siop.provider), (req, res) => {
+            res.redirect('/search?token=local');
+        })
+    }
 }
 
 // Load other stragies if external IDPs are enabled
@@ -339,18 +383,25 @@ if (extLogin) {
 }
 
 const authMiddleware = authModule.authMiddleware(idps);
+
 // Handler to destroy sessions
 app.all(config.logOutPath, function(req, res) {
     // Destroy the session and redirect the user to the main page
     req.session.destroy();
-    res.redirect(config.portalPrefix + '/');
+
+    let redirUrl = '/'
+    if (config.legacyGUI) {
+        redirUrl = config.portalPrefix + '/'
+    }
+
+    res.redirect(redirUrl);
 });
 
 /////////////////////////////////////////////////////////////////////
 /////////////////////////// SHOPPING CART ///////////////////////////
 /////////////////////////////////////////////////////////////////////
 
-var checkMongoUp = function(req, res, next) {
+const checkMongoUp = function(req, res, next) {
     // We lost connection!
     if (mongoose.connection.readyState !== 1) {
         // Connection is down!
@@ -461,8 +512,8 @@ if (extLogin) {
 /////////////////////////////// PORTAL //////////////////////////////
 /////////////////////////////////////////////////////////////////////
 
-var renderTemplate = function(req, res, viewName) {
-    var options = {
+const renderTemplate = function(req, res, viewName) {
+    const options = {
         user: req.user,
         contextPath: config.portalPrefix,
         proxyPath: config.proxyPrefix,
@@ -522,18 +573,8 @@ app.get(config.portalPrefix + '/payment', ensureAuthenticated, function(req, res
 });
 
 app.get('/logintoken', authMiddleware.headerAuthentication, function(req, res) {
-    console.log('---- REQ USER ANGULAR --------------------')    
-    console.log(req.headers.authorization)
-    const authToken = utils.getAuthToken(req.headers);
-    console.log(authToken)
-    console.log(req.user)
-    console.log(req.user.refreshToken)
-    console.log(req.isAuthenticated())
-    //ADDED:
     res.header('Access-Control-Allow-Origin', 'http://localhost:4200')
-    //res.setHeader("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Credentials", true);
-    console.log('----------------------------------------------------------------------')
     res.json(req.user)
 });
 
@@ -543,7 +584,24 @@ for (var p in config.publicPaths) {
     app.all(config.proxyPrefix + '/' + config.publicPaths[p], tmf.public);
 }
 
-app.all(/^\/(?!(login|auth))(.*)\/?$/, authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, function(
+//
+// Access to TMForum APIs
+//
+app.patch('/admin/uploadcertificate/:specId', authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, (req, res) => {
+    req.apiUrl = url.parse(req.url).path.substring(config.proxyPrefix.length);
+    admin.uploadCertificate(req, res)
+})
+
+const adminRegex = new RegExp(`^\/admin\/(.*)\/?$`)
+app.all(adminRegex, authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, (req, res) => {
+    req.apiUrl = url.parse(req.url).path.substring(config.proxyPrefix.length);
+    admin.checkPermissions(req, res)
+})
+
+const paths = Object.values(config.endpoints).map(endpoint => endpoint.path);
+const regexPattern = new RegExp(`^\/(${paths.join('|')})\/(.*)\/?$`);
+
+app.all(regexPattern, authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, function(
     req,
     res,
     next
@@ -553,6 +611,20 @@ app.all(/^\/(?!(login|auth))(.*)\/?$/, authMiddleware.headerAuthentication, auth
     req.apiUrl = url.parse(req.url).path.substring(config.proxyPrefix.length);
     tmf.checkPermissions(req, res);
 });
+
+/////////////////////////////////////////////////////////////////////
+///////////////////////////// NEW PORTAL ////////////////////////////
+/////////////////////////////////////////////////////////////////////
+
+if (!config.legacyGUI) {
+    // Serve static files from the Angular app from a specific route, e.g., "/angular"
+    app.use('/', express.static(path.join(__dirname, 'portal/bae-frontend')));
+
+    // Handle deep links - serve Angular's index.html for any sub-route under "/angular"
+    app.get('/*', (req, res) => {
+        res.sendFile(path.join(__dirname, 'portal/bae-frontend/index.html'));
+    });
+}
 
 /////////////////////////////////////////////////////////////////////
 /////////////////////////// ERROR HANDLER ///////////////////////////
