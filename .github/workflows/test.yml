@@ -3,7 +3,7 @@ name: Tests
 on:
   push:
     branches:
-      - feat/oidc-verifier
+      - master
 
   pull_request:
     branches:
@@ -34,7 +34,7 @@ jobs:
 
   build-docker:
     runs-on: ubuntu-latest
-    #needs: test
+    needs: test
     steps:
       - uses: actions/checkout@v2
 
@@ -53,8 +53,8 @@ jobs:
           context: .
           file: ./docker/Dockerfile
           tags: |
-            fiware/biz-ecosystem-logic-proxy:9.8.0-rc4
-          push: ${{ github.ref == 'refs/heads/feat/oidc-verifier' }}
+            fiware/biz-ecosystem-logic-proxy:master
+          push: ${{ github.ref == 'refs/heads/master' }}
 
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
