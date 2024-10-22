@@ -24,6 +24,7 @@ const utils = require('./../../lib/utils')
 const tmfUtils = require('./../../lib/tmfUtils')
 const storeClient = require('./../../lib/store').storeClient
 const uuidv4 = require('uuid').v4;
+const equal = require('deep-equal')
 const serviceCatalog = (function() {
 	const servicesPattern = new RegExp('/serviceSpecification/?$');
 	const singleServicePattern = new RegExp('/serviceSpecification/[^/]+/?$');
@@ -45,7 +46,6 @@ const serviceCatalog = (function() {
 
 	var getResourceAPIUrl = function(path) {
 		const resPath = path.replace(`/${config.endpoints.service.path}/`, '')
-
 		return utils.getAPIURL(
 			config.endpoints.service.appSsl,
 			config.endpoints.service.host,
@@ -56,7 +56,6 @@ const serviceCatalog = (function() {
 
 	const retrieveAsset = function(path, callback) {
 		const uri = getResourceAPIUrl(path);
-		console.log("retriving asset from " + path)
 		axios.get(uri).then((response) => {
 			if (response.status >= 400) {
 				callback({
@@ -69,12 +68,12 @@ const serviceCatalog = (function() {
 				});
 			}
 		}).catch((err) => {
-			if (!!err.response)
+			if (!!err.response){
 				callback({
 					status: err.response.status
 				});
+			}
 			else{
-				console.log("error: " + err)
 				callback({
 					status: err.status
 				});
@@ -96,9 +95,14 @@ const serviceCatalog = (function() {
 	
 				return; // EXIT
 			}
-			validateOwnerSellerPost(req, body, callback)
-			validateService(req, body, callback)
-			console.log("ssssss3")
+			async.series([
+				function(callback){
+					validateOwnerSellerPost(req, body, callback)
+				},
+				function(callback){
+					validateService(req, body, callback)
+				}
+				], callback)
 		}
 	}
 
@@ -133,7 +137,6 @@ const serviceCatalog = (function() {
                 message: 'Service bundles are not supported'
             });
         }
-		console.log("validate service body: ")
 		storeClient.validateService(body, req.user, function (err, response){
 			if (err)
 				callback(err)
@@ -143,9 +146,7 @@ const serviceCatalog = (function() {
 					req.body = JSON.stringify(body)
 					req.headers['content-length']=undefined
 				}
-				console.log('ssssssss')
 				callback(null)
-				console.log('ssssssss2')
 			}
 
 		});
@@ -153,15 +154,16 @@ const serviceCatalog = (function() {
 
 	const validateOwnerSellerPost = function(req, body, callback) {
 		if (!tmfUtils.hasPartyRole(req, body.relatedParty, 'owner') || !utils.hasRole(req.user, config.oauth2.roles.seller)) {
-			callback({
+			return callback({
 				status: 403,
 				message: 'Unauthorized to create non-owned/non-seller service specs'
 			});
 		}
+		callback(null)
 	};
 
-	const validateOwnerSeller = function(req, prevBody, callback) {
-		if (!tmfUtils.hasPartyRole(req, prevBody.relatedParty, 'owner') || !utils.hasRole(req.user, config.oauth2.roles.seller)) {
+	const validateOwnerSeller = function(req, body, callback) {
+		if (!tmfUtils.hasPartyRole(req, body.relatedParty, 'owner') || !utils.hasRole(req.user, config.oauth2.roles.seller)) {
 			return callback({
 				status: 403,
 				message: 'Unauthorized to update non-owned/non-seller services'
@@ -219,7 +221,7 @@ const serviceCatalog = (function() {
 			}
 
 			if (!!newBody.version && newBody.version != prevBody.version && !!newBody.specCharacteristic) {
-                return storeClient.upgradeService(
+				return storeClient.upgradeService(
                     {
                         id: prevBody.id,
                         version: newBody.version,
@@ -230,7 +232,8 @@ const serviceCatalog = (function() {
                 );
             }
 
-		} 
+		}
+		return callback(null)
 	}
 
 	const validateUpdate = function(req, callback){
@@ -271,11 +274,9 @@ const serviceCatalog = (function() {
 					}
 					async.series([
 						function(callback){
-							console.log("validateOwnerSeller")
 							validateOwnerSeller(req, previousBody, callback)
 						},
 						function(callback){
-							console.log("validateServiceUpdate")
 							validateServiceUpdate(req, previousBody, parsedBody, callback)
 						}
 						], callback)
@@ -313,10 +314,7 @@ const serviceCatalog = (function() {
 	};
 
 	const executePostValidation = function(req, callback) {
-		console.log("execute post validation")
 		if (req.method == 'POST' && servicesPattern.test(req.apiUrl)) {
-			console.log("into post validation")
-			//console.log(body)
             storeClient.attachService(
                 req.body,
                 req.user,
@@ -324,13 +322,9 @@ const serviceCatalog = (function() {
             );
         }
 		else if(req.method == 'PATCH' && singleServicePattern.test(req.apiUrl)){
-			console.log("inside patch validation")
 			storeClient.attachUpgradedService(req.body, req.user, callback)
 		}
 		else {
-			console.log("no executePostValidation")
-			console.log(req.apiUrl + "--> " + servicesPattern.test(req.apiUrl))
-			console.log(req.method + "--> " + req.method == 'POST')
 			callback(null);
 		}
 	};

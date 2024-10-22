@@ -92,7 +92,7 @@ var defaultConfig = {
 		serviceInventory: {
 			path: 'serviceInventory',
 			host: 'charging.docker',
-			port: '8006',
+			port: '8643',
 			appSsl: false
 		},
 		resourceInventory: {
