@@ -1,6 +1,6 @@
 {
   "name": "business-ecosystem-logic-proxy",
-  "version": "9.0.0",
+  "version": "9.8.0",
   "description": "Logic Layer for the Business API Ecosystem",
   "author": "FICODES",
   "license": "AGPL-3.0",
@@ -17,6 +17,7 @@
     "cookie-parser": "1.4.0",
     "deep-equal": "^1.0.1",
     "deepcopy": "^0.6.3",
+    "elliptic": "^6.5.7",
     "errorhandler": "1.4.x",
     "express": "^4.x",
     "express-session": "^1.17.3",
