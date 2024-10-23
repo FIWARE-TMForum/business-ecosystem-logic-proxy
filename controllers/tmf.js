@@ -106,15 +106,17 @@ function tmf() {
 		if (api == 'rss') {
 			url = url.replace('rss', 'charging')
 		}
-		
+
 		// remove the catalog sub-address from the path of all requests to the product-catalog api, since they are not addressed as such in TMF v4
 		if (api == 'catalog') {
 			queryPart = ""
 			if (req.apiUrl.includes("?")) {
 			 	queryParts = req.apiUrl.split("?")
 				queryPart = queryParts[queryParts.length-1]
+				url = utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + getResourcePath(req.path.split("/")) + "?" + queryPart
+			} else {
+				url = utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + getResourcePath(req.path.split("/"))
 			}
-			url = utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + getResourcePath(req.path.split("/")) + "?" + queryPart
 		}
 
 		const options = {
