@@ -235,7 +235,7 @@ describe('TMF Controller', function() {
             testApiReturnsError('inventory', done);
         });
 
-        const testApiOk = function(api, path, done) {
+        const testApiOk = function(api, path, done, opts) {
             // 'redirRequest' has been tested by testing the 'public' function. 'checkTmfPermissions'
             // is supposed to use the same function to redirect requests when they are allowed by the
             // API controller. For this reason, we do not check with other protocols or methods
@@ -265,10 +265,12 @@ describe('TMF Controller', function() {
             const orderingController = api.startsWith(config.endpoints.ordering.path) ? controller : null;
             const inventoryController = api.startsWith(config.endpoints.inventory.path) ? controller : null;
             const tmf = getTmfInstance(request, catalogController, orderingController, inventoryController);
+     
 
             // Actual call
             const req = {
                 apiUrl: '/' + api + path,
+                path: '/' + api + path.split("?")[0],
                 body: 'Example',
                 method: method,
                 user: { id: 'user' },
@@ -280,8 +282,14 @@ describe('TMF Controller', function() {
             };
 
             const res = jasmine.createSpyObj('res', ['status', 'json', 'setHeader']);
+
+            expectPath = path
+            if (typeof opts != "undefined" && opts['expectedPath']) {
+                expectPath = opts['expectedPath']
+            }
+
             const expectedOptions = {
-                url: protocol + '://' + utils.getAPIHost() + ':' + utils.getAPIPort() + path,
+                url: protocol + '://' + utils.getAPIHost() + ':' + utils.getAPIPort() + expectPath,
                 method: method,
                 data: req.body,
                 headers: utils.proxiedRequestHeaders()
@@ -294,12 +302,16 @@ describe('TMF Controller', function() {
 
                 done();
             })
-
             tmf.checkPermissions(req, res);
         };
 
         it('should redirect the request to the actual catalog API when controller does not reject it (root)', function(done) {
-            testApiOk('catalog', '', done);
+            // when requesting the resource "catalog", it needs to stay in the request
+            testApiOk('catalog', '/catalog', done);
+        });
+
+        it('should redirect the request to the actual catalog API when controller does not reject it (sub-resource)', function(done) {
+            testApiOk('catalog', '/catalog/some-id/productSpecification', done, { 'expectedPath': '/productSpecification' });
         });
 
         it('should redirect the request to the actual ordering API when controller does not reject it (root)', function(done) {

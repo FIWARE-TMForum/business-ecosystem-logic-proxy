@@ -1134,30 +1134,6 @@ const catalog = (function() {
             indexes.search('offering', query)
                 .then(returnQueryRes)
 
-        } else if (catalogOfferingsPattern.test(req.path)){
-            const catalogId = req.path.split('/')[3]
-            const query = {
-                catalog: catalogId
-            }
-
-            if (req.query.lifecycleStatus != null) {
-                query.lifecycleStatus = req.query.lifecycleStatus
-            }
-
-            if (req.query.offset != null) {
-                query.offset = req.query.offset
-            }
-
-            if (req.query.limit != null) {
-                query.limit = req.query.limit
-            }
-
-            if (req.query['category.id'] != null) {
-                query.category = req.query['category.id']
-            }
-            indexes.search('offering', query)
-                .then(returnQueryRes)
-
         } else {
             callback(null)
         }
