@@ -40,6 +40,7 @@ const resource = require('./tmf-apis/resource').resource
 const logger = require('./../lib/logger').logger.getLogger('TMF')
 const axios = require('axios')
 const utils = require('./../lib/utils')
+const { log } = require('async')
 
 function tmf() {
 	const apiControllers = {};
@@ -72,6 +73,21 @@ function tmf() {
 		res.end();
 	};
 
+	// extracts the concrete resource from the path(e.g. the last part of the path)
+	// f.e.:
+	//   /catalog/some-id/productOffering/id -> /productOffering/id
+	//   /catalog/some-id/productOffering -> /productOffering
+	function getResourcePath(pathArray) {
+		pathLength = pathArray.length
+		pathModulo = pathLength % 2 
+		switch(pathModulo) {
+			case 1:
+				return "/" + pathArray[pathLength-1];
+			case 0: 
+				return "/" + pathArray[pathLength-2] + "/" + pathArray[pathLength-1];
+		}
+	}
+
 	const redirectRequest = function(req, res) {
 		let url;
 		const api = getAPIName(req.apiUrl);
@@ -89,6 +105,16 @@ function tmf() {
 		// TODO: provide a general feature for rewriting paths
 		if (api == 'rss') {
 			url = url.replace('rss', 'charging')
+		}
+		
+		// remove the catalog sub-address from the path of all requests to the product-catalog api, since they are not addressed as such in TMF v4
+		if (api == 'catalog') {
+			queryPart = ""
+			if (req.apiUrl.includes("?")) {
+			 	queryParts = req.apiUrl.split("?")
+				queryPart = queryParts[queryParts.length-1]
+			}
+			url = utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + getResourcePath(req.path.split("/")) + "?" + queryPart
 		}
 
 		const options = {
