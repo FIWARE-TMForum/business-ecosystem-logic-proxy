@@ -77,6 +77,21 @@ const catalog = (function() {
         })
     };
 
+    const retrieveCatalog = function(catalogId, callback) {
+        const catalogPath = `/catalog/${catalogId}`
+
+        retrieveAsset(catalogPath, function(err, response) {
+            if (err) {
+                callback({
+                    status: 422,
+                    message: 'The attached catalog cannot be read or does not exist'
+                });
+            } else {
+                callback(err, response);
+            }
+        });
+    }
+
     // Retrieves the product belonging to a given offering
     const retrieveProduct = function(productId, callback) {
 
@@ -1281,7 +1296,8 @@ const catalog = (function() {
     return {
         checkPermissions: checkPermissions,
         executePostValidation: executePostValidation,
-        handleAPIError: handleAPIError
+        handleAPIError: handleAPIError,
+        retrieveCatalog: retrieveCatalog,
     };
 })();
 
