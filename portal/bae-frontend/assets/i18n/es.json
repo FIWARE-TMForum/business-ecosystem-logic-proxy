@@ -3,8 +3,8 @@
     "_no": "No",    
     "DASHBOARD": {
         "_title": "DOME Marketplace is out! See what's new",
-        "_header": "DOME Marketplace: Cloud & Edge Services you can Trust",
-        "_subheader": "Welcome to the first open distributed marketplace ecosystem for cloud, edge & AI services in Europe",
+        "_header": "Digital Trust to move forward",
+        "_subheader": "Join the first open distributed marketplace ecosystem for cloud, edge & AI services in europe.",
         "_new": "New",
         "_learn_more": "Learn more",
         "_video": "Watch video",
@@ -15,7 +15,8 @@
         "_smart_cities": "Smart cities",
         "_search_ph": "Search Cloud Services, Edge Services, Providers...",
         "_search": "Search",
-        "_not_found": "No offers found"
+        "_not_found": "No offers found",
+        "_browse_serv": "Browse services"
     },
     "FEATURED": {
         "_title": "Featured offerings",
@@ -110,7 +111,7 @@
         "_updates_desc": "Stay informed with the latest developments, service enhancements and industry insights directly from the 'DOME' Project's website.",
         "_resources_title": "Resources & Reports",
         "_resources_desc": "Access our library of resources, detailed reports and case studies to gain a deep understanding of the cloud and edge market landscape and 'DOME' Project's impact.",
-        "_go": "Go to 'DOME' Project's Site"
+        "_go": "DOME Project"
     },
     "CARD": {
         "_details": "View details",
@@ -170,6 +171,7 @@
         "_home": "Home",
         "_catalogs": "Catalogues",
         "_search": "Search",
+        "_browse": "Browse",        
         "_cloud": "Cloud Services",
         "_smart_ports": "Smart ports",
         "_smart_cities": "Smart cities",
@@ -186,9 +188,12 @@
         "_ticketing": "Ticketing System",
         "_change_session": "Change session",
         "_admin": "Administration",
-        "_publish": "Publish your product",
+        "_publish": "Publish your service",
         "_register": "Register",
-        "_about": "About",
+        "_guidelines": "Guidelines",
+        "_onboarding": "Onboarding",    
+        "_about": "About DOME",
+        "_verify": "Verify and publish",
         "_info": "Info"
     },
     "PRODUCT_DETAILS": {
