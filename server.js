@@ -24,6 +24,7 @@ const shoppingCart = require('./controllers/shoppingCart').shoppingCart;
 const management = require('./controllers/management').management;
 const tmf = require('./controllers/tmf').tmf();
 const admin = require('./controllers/admin').admin();
+const stats = require('./controllers/stats').stats();
 const trycatch = require('trycatch');
 const url = require('url');
 const utils = require('./lib/utils');
@@ -394,6 +395,8 @@ app.get('/config', (_, res) => {
     })
 })
 
+app.get('/stats', stats.getStats)
+
 /////////////////////////////////////////////////////////////////////
 /////////////////////////// SHOPPING CART ///////////////////////////
 /////////////////////////////////////////////////////////////////////
@@ -725,5 +728,9 @@ function onlistening() {
         logger.error("Cannot connect to the charging backend");
         setTimeout(onlistening, 5000);
     });
+
+    stats.init().then(() => {
+        logger.info("Stats info loaded")
+    })
 }
 })();
