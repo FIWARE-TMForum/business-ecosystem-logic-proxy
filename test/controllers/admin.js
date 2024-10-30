@@ -1,4 +1,4 @@
-/* Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
+/* Copyright (c) 2024 Future Internet Consulting and Development Solutions S.L.
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem

@@ -27,39 +27,53 @@ const logger = require('./../lib/logger').logger.getLogger('TMF')
 
 function stats() {
 
+    const pageData = async function(baseUrl, mapper) {
+        let start = 0
+        let limit = 50
+        let complete = false
+        let data = []
+
+        while (!complete) {
+            let productUrl = baseUrl + `&offset=${start}&limit=${limit}`
+            const response = await axios.request({
+                method: 'GET',
+                url: productUrl
+            })
+
+            if (response.data.length == 0) {
+                complete = true
+            }
+
+            data = data.concat(response.data.map(mapper))
+            start += limit
+        }
+        return data
+    }
+
     const loadStats = async function() {
         // Get the list of launched offering
-        const productUrl = utils.getAPIProtocol('catalog') + '://' + utils.getAPIHost('catalog') + ':' + utils.getAPIPort('catalog') + '/productOffering?lifecycleStatus=Launched&fields=name'
-        const offers = await axios.request({
-            method: 'GET',
-            url: productUrl
+        const productBaseUrl = utils.getAPIProtocol('catalog') + '://' + utils.getAPIHost('catalog') + ':' + utils.getAPIPort('catalog') + '/productOffering?lifecycleStatus=Launched&fields=name'
+        const offers = await pageData(productBaseUrl, (off) => {
+            return off.name
         })
 
         // Get the list of organizations
-        const partyUrl = utils.getAPIProtocol('party') + '://' + utils.getAPIHost('party') + ':' + utils.getAPIPort('party') + '/organization?fields=tradingName'
-        const parties = await axios.request({
-            method: 'GET',
-            url: partyUrl
+        const partyBaseUrl = utils.getAPIProtocol('party') + '://' + utils.getAPIHost('party') + ':' + utils.getAPIPort('party') + '/organization?fields=tradingName'
+        const parties = await pageData(partyBaseUrl, (part) => {
+            return part.tradingName
         })
 
         // Save data in MongoDB
         const res = await statsSchema.findOne()
-        const services = offers.data.map((off) => {
-            return off.name
-        })
-
-        const organizations = parties.data.map((part) => {
-            return part.tradingName
-        })
 
         if (res) {
-            res.services = services
-            res.organizations = organizations
+            res.services = offers
+            res.organizations = parties
             await res.save()
         } else {
             const newStat = new statsSchema()
-            newStat.services = services
-            newStat.organizations = organizations
+            newStat.services = offers
+            newStat.organizations = parties
             await newStat.save()
         }
     }
