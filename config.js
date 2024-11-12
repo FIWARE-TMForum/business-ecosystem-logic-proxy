@@ -585,3 +585,9 @@ config.ticketingUrl = process.env.BAE_LP_TICKETING_URL || config.ticketingUrl;
 
 config.searchUrl = ''
 config.searchUrl = process.env.BAE_LP_SEARCH_URL || config.searchUrl;
+
+// Purchase enabled
+config.purchaseEnabled = false
+if (!!process.env.BAE_LP_PURCHASE_ENABLED) {
+    config.purchaseEnabled = process.env.BAE_LP_PURCHASE_ENABLED == 'true'
+}
