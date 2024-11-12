@@ -391,7 +391,8 @@ app.get('/config', (_, res) => {
         domeTrust: config.domeTrust,
         domeAbout: config.domeAbout,
         domeRegister: config.domeRegister,
-        domePublish: config.domePublish
+        domePublish: config.domePublish,
+        purchaseEnabled: config.purchaseEnabled
     })
 })
 
