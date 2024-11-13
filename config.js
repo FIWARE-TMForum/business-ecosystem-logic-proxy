@@ -89,7 +89,9 @@ config.siop = {
 	pollPath: '/poll',
     pollCertPath: '/cert/poll',
 	clientID: process.env.BAE_LP_SIOP_CLIENT_ID || 'some_id',
+    privateKey: process.env.BAE_LP_SIOP_PRIVATE_KEY,
 	callbackURL: process.env.BAE_LP_SIOP_CALLBACK_PATH || 'http://proxy.docker:8004/auth/vc/callback',
+    requestUri: process.env.BAE_LP_SIOP_REQUEST_URI || '/auth/vc/request.jwt',
 	verifierHost: process.env.BAE_LP_SIOP_VERIFIER_HOST || 'https://verifier.apps.fiware.fiware.dev',
 	verifierQRCodePath: process.env.BAE_LP_SIOP_VERIFIER_QRCODE_PATH || '/api/v1/loginQR',
 	verifierTokenPath: process.env.BAE_LP_SIOP_VERIFIER_TOKEN_PATH || '/token',
@@ -583,3 +585,9 @@ config.ticketingUrl = process.env.BAE_LP_TICKETING_URL || config.ticketingUrl;
 
 config.searchUrl = ''
 config.searchUrl = process.env.BAE_LP_SEARCH_URL || config.searchUrl;
+
+// Purchase enabled
+config.purchaseEnabled = false
+if (!!process.env.BAE_LP_PURCHASE_ENABLED) {
+    config.purchaseEnabled = process.env.BAE_LP_PURCHASE_ENABLED == 'true'
+}

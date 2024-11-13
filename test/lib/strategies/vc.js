@@ -18,7 +18,8 @@ describe('VC Strategy', () => {
         verifierJWKSPath: '/jwksPath',
         callbackURL: 'some_uri',
         allowedRoles: ['seller', 'customer'],
-        isRedirection: false 
+        isRedirection: false,
+        verifierHost: 'https://verifierhost.com'
     };
     const idpId = 'some_id';
 
@@ -55,7 +56,10 @@ describe('VC Strategy', () => {
                     verifierJWKSURL: config.verifierHost + config.verifierJWKSPath,
                     redirectURI: config.callbackURL,
                     allowedRoles: config.allowedRoles,
-                    isRedirection: false
+                    clientID: config.clientID,
+                    privateKey: config.privateKey,
+                    isRedirection: false,
+                    verifierHost: config.verifierHost
                 });
 
                 done();
@@ -108,11 +112,15 @@ describe('VC Strategy', () => {
             end: () => {}
         };
         const VALID_CONFIG = {
-            allowedRoles: ['customer', 'seller', 'admin']
+            allowedRoles: ['customer', 'seller', 'admin'],
+            clientID: 'did:1234',
+            privateKey: '123456'
         };
         const REDIRECTION_CONFIG = {
             allowedRoles: ['customer', 'seller', 'admin'],
-            isRedirection: true
+            isRedirection: true,
+            clientID: 'did:1234',
+            privateKey: '123456'
         }
 
         let nextFunctionFor200;
@@ -163,7 +171,7 @@ describe('VC Strategy', () => {
                     },
                     'jsonwebtoken': {
                         decode: (token) => {
-                            return jwt.decode(token);
+                            return jwt.decode(token, {complete: true});
                         },
                         verify: (token, key, cb) => {
                             cb(null, jwt.decode(accessToken));
@@ -584,6 +592,87 @@ describe('VC Strategy', () => {
                 roles: [
                     { name: 'orgAdmin', id: 'orgAdmin' },
                     { name: 'certifier', id: 'certifier' }
+                ]
+            }])
+        })
+
+        it ('should build a VC with a LEARCredentialMachine including certifier power', () => {
+            const payload = {
+                "verifiableCredential": {
+                    "id": "1f33e8dc-bd3b-4395-8061-ebc6be7d06dd",
+                    "type": [
+                      "VerifiableCredential",
+                      "LEARCredentialMachine"
+                    ],
+                    "credentialSubject": {
+                      "mandate": {
+                        "id": "4e3c02b8-5c57-4679-8aa5-502d62484af5",
+                        "life_span": {
+                          "end_date_time": "2025-04-02 09:23:22.637345122 +0000 UTC",
+                          "start_date_time": "2024-04-02 09:23:22.637345122 +0000 UTC"
+                        },
+                        "mandatee": {
+                          "id": "did:key:zDnaeei6HxVe7ibR123456789",
+                          "email": "admin@email.com",
+                          "first_name": "Admin",
+                          "gender": "M",
+                          "last_name": "User",
+                          "mobile_phone": "+34666111222"
+                        },
+                        "mandator": {
+                          "commonName": "TEST",
+                          "country": "ES",
+                          "emailAddress": "test@test.com",
+                          "organization": "TestCompany, S.L.",
+                          "organizationIdentifier": "VATES-C12341234",
+                          "serialNumber": "C12341234"
+                        },
+                        "power": [
+                            {
+                                "id": "ad9b1509-60ea-47d4-9878-18b581d8e19b",
+                                "action": [
+                                  "Create",
+                                  "Update"
+                                ],
+                                "domain": "DOME",
+                                "function": "ProductOffering",
+                                "type": "Domain"
+                            },
+                            {
+                                "id": "6b8f3137-a57a-46a5-97e7-1117a20142fb",
+                                "action": "Execute",
+                                "domain": "DOME",
+                                "function": "Onboarding",
+                                "type": "Domain"
+                            },
+                            {
+                                "id": "ad9b1509-60ea-47d4-9878-18b581d8e19b",
+                                "action": "post_verifiable_certification",
+                                "domain": "DOME",
+                                "function": "Certification",
+                                "type": "Domain"
+                            }
+                        ]
+                      },
+                      "roles": []
+                    },
+                    "expirationDate": "2025-04-02 09:23:22.637345122 +0000 UTC",
+                    "issuanceDate": "2024-04-02 09:23:22.637345122 +0000 UTC",
+                    "issuer": "did:web:test.es",
+                    "validFrom": "2024-04-02 09:23:22.637345122 +0000 UTC"
+                }
+            }
+
+            const credential = new VerifiableCredential(payload)
+            const profile = credential.getProfile()
+
+            expect(profile.organizations).toEqual([{
+                id: 'VATES-C12341234',
+                name: 'TestCompany, S.L.',
+                roles: [
+                    { name: 'seller', id: 'seller' },
+                    { name: 'orgAdmin', id: 'orgAdmin' },
+                    { name: 'certifier', id: 'certifier' },
                 ]
             }])
         })

@@ -1,4 +1,4 @@
-/* Copyright (c) 2023 Future Internet Consulting and Development Solutions S.L.
+/* Copyright (c) 2024 Future Internet Consulting and Development Solutions S.L.
  *
  * This file belongs to the business-ecosystem-logic-proxy of the
  * Business API Ecosystem
@@ -48,12 +48,17 @@ describe('Admin Controller', () => {
         }
     }
 
-    const getAdminInstance = function (axios) {
-        return proxyquire('../../controllers/admin', {
+    const getAdminInstance = function (axios, uuid) {
+        let mocks = {
             'axios': axios,
             './../config': config,
             './../lib/utils': utils
-        }).admin()
+        }
+
+        if (uuid) {
+            mocks.uuid = uuid
+        }
+        return proxyquire('../../controllers/admin', mocks).admin()
     }
 
     it('should redrect json request if the user is admin', (done) => {
@@ -269,5 +274,242 @@ describe('Admin Controller', () => {
             })
             done()
         })
+    })
+
+    const testCertificateUpload = function(user, done) {
+        const vc = '1234567899'
+        const data = {
+            vc: vc
+        }
+        const body = JSON.stringify(data)
+
+        const request = {
+            headers: [],
+            params: {
+                specId: '1'
+            },
+            user: user,
+            apiUrl: '/admin/uploadcertificate/1',
+            method: 'PATCH',
+            body: body
+        }
+
+        const respBody = {
+            productSpecCharacteristic: [{
+                name: 'char1'
+            }, {
+                name: 'Compliance:VC'
+            }]
+        }
+
+        const axios = jasmine.createSpyObj('axios', ['request'])
+        axios.request.and.returnValue(Promise.resolve({
+            status: 200,
+            headers: {
+                'content-type': 'application/json'
+            },
+            data: respBody
+        }))
+
+        const response = jasmine.createSpyObj('res', ['status', 'setHeader', 'json'])
+
+        let resPromise = new Promise((resolve, reject) => {
+            response.json.and.callFake(() => {
+                return resolve()
+            })
+        })
+
+        const instance = getAdminInstance(axios, {
+            v4: () => {
+                return '1234'
+            }
+        })
+
+        instance.uploadCertificate(request, response)
+
+        resPromise.then(() => {
+            expect(axios.request).toHaveBeenCalledTimes(2); // Check the number of calls
+
+            expect(axios.request.calls.argsFor(0)).toEqual([{
+                url: 'http://example.com:1234/productSpecification/1',
+                method: 'GET'
+            }]);
+
+            expect(axios.request.calls.argsFor(1)).toEqual([{
+                url: 'http://example.com:1234/productSpecification/1',
+                method: 'PATCH',
+                headers: {
+                  'content-type': 'application/json'
+                },
+                data: {
+                  productSpecCharacteristic: [
+                    { name: 'char1' },
+                    {
+                      id: 'urn:ngsi-ld:characteristic:1234',
+                      name: 'Compliance:VC',
+                      productSpecCharacteristicValue: [
+                        { isDefault: true, value: vc }
+                      ]
+                    }
+                  ]
+                }
+            }]);
+
+            expect(response.status).toHaveBeenCalledWith(200)
+            expect(response.setHeader).toHaveBeenCalledWith('content-type', 'application/json')
+            expect(response.json).toHaveBeenCalledWith(respBody)
+            done()
+        })
+    }
+
+    it('should allow to upload VC if the user is an admin', (done) => {
+        testCertificateUpload({
+            partyId: '1234',
+            roles: [{
+                name: 'admin',
+            }]
+        }, done)
+    })
+
+    it('should allow to upload VC if the user is a certifier', (done) => {
+        testCertificateUpload({
+            partyId: '1234',
+            roles: [{
+                name: 'certifier',
+            }]
+        }, done)
+    })
+
+    it('should allow to upload VC if the user organization is certifier', (done) => {
+        testCertificateUpload({
+            partyId: '1234',
+            roles: [],
+            organizations: [{
+                roles: [{
+                    name: 'seller'
+                }]
+            }, {
+                roles: [{
+                    name: 'certifier'
+                }]
+            }]
+        }, done)
+    })
+
+    const testCertificateError = (axios, request, code, msg, validator, done) => {
+        const response = jasmine.createSpyObj('res', ['status', 'setHeader', 'json'])
+
+        let resPromise = new Promise((resolve, reject) => {
+            response.json.and.callFake(() => {
+                return resolve()
+            })
+        })
+
+        const instance = getAdminInstance(axios)
+
+        instance.uploadCertificate(request, response)
+
+        resPromise.then(() => {
+            validator()
+
+            expect(response.status).toHaveBeenCalledWith(code)
+            expect(response.setHeader).not.toHaveBeenCalled()
+            expect(response.json).toHaveBeenCalledWith({
+                error: msg
+            })
+            done()
+        })
+    }
+
+    const testUploadCertificateError = (request, code, msg, done) => {
+        const axios = jasmine.createSpyObj('axios', ['request'])
+
+        const validator = () => {
+            expect(axios.request).not.toHaveBeenCalled()
+        }
+        testCertificateError(axios, request, code, msg, validator, done)
+    }
+
+    it('should fail if the user is not authorized to upload a VC certificate', (done) => {
+        const request = {
+            user: {
+                partyId: '1234',
+                roles: [],
+                organizations: [{
+                    roles: [{
+                        name: 'seller'
+                    }]
+                }]
+            }
+        }
+
+        testUploadCertificateError(request, 403, "You are not authorized to upload certificates", done)
+    })
+
+    it('should return an error if the body is not a valid JSON when uploading a VC', (done) => {
+        const request = {
+            headers: [],
+            params: {
+                specId: '1'
+            },
+            user: {
+                partyId: '1234',
+                roles: [{
+                    name: 'admin',
+                }]
+            },
+            apiUrl: '/admin/uploadcertificate/1',
+            method: 'PATCH',
+        }
+
+        testUploadCertificateError(request, 400, "Invalid body", done)
+    })
+
+    it('should return an error if the VC is not provided', (done) => {
+        const request = {
+            headers: [],
+            params: {
+                specId: '1'
+            },
+            user: {
+                partyId: '1234',
+                roles: [{
+                    name: 'admin',
+                }]
+            },
+            apiUrl: '/admin/uploadcertificate/1',
+            method: 'PATCH',
+            body: '{}'
+        }
+
+        testUploadCertificateError(request, 400, "Missing VC", done)
+    })
+
+    it('should return an error if the product spec is not found', (done) => {
+        const axios = jasmine.createSpyObj('axios', ['request'])
+        axios.request.and.returnValue(Promise.reject({
+            status: 404
+        }))
+
+        const request = {
+            headers: [],
+            params: {
+                specId: '1'
+            },
+            user: {
+                partyId: '1234',
+                roles: [{
+                    name: 'admin',
+                }]
+            },
+            apiUrl: '/admin/uploadcertificate/1',
+            method: 'PATCH',
+            body: JSON.stringify({vc: '1234'})
+        }
+
+        const validator = () => {
+            expect(axios.request).toHaveBeenCalled()
+        }
+        testCertificateError(axios, request, 404, "The product spec does not exists", validator, done)
     })
 })
