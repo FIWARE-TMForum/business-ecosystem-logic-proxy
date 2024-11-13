@@ -339,8 +339,8 @@ const serviceCatalog = (function() {
                 callback(null);
             });
         } else if (servicesPattern.test(req.apiUrl) && req.method == 'PATCH') {
-			// TODO: Configurar patch
-            callback(null);
+			var body = JSON.parse(req.reqBody);
+            handleUpgradePostAction(req, body, storeClient.rollbackServiceUpgrade, callback);
         } else {
             callback(null);
         }
