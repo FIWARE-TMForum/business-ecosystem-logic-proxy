@@ -75,7 +75,8 @@ function tmf() {
 	const redirectRequest = function(req, res) {
 		let url;
 		const api = getAPIName(req.apiUrl);
-		console.log("redirect")
+		console.log("redirectRequest")
+		console.log(api)
 		if (req.user) {
 			utils.attachUserHeaders(req.headers, req.user);
 		}
@@ -111,7 +112,7 @@ function tmf() {
 			options.headers['cache-control'] = 'no-cache';
 		}
 
-		console.log("mandando petición a charging del attach")
+		console.log("proxy request")
 		console.log(options)
 		// PROXY THE REQUEST
 		axios.request(options).then((response) => {
@@ -183,7 +184,7 @@ function tmf() {
 			utils.log(logger, 'error', req, 'Proxy error: ' + err.message);
 
 			if (err.response) {
-                res.status(error.response.status).json(error.response.data)
+                res.status(err.response.status).json(err.response.data)
             } else {
                 res.status(504).json({ error: 'Service unreachable' })
             }
