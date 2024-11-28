@@ -67,14 +67,21 @@ const serviceCatalog = (function() {
 				});
 			}
 		}).catch((err) => {
-			callback({
-				status: err.response.status
-			});
+			let errCb = {
+				status: err.status
+			}
+
+			if (err.response) {
+				errCb = {
+					status: err.response.status
+				}
+			}
+			callback(errCb);
 		})
 	};
 
-	const validateOwnerSeller = function(req, callback) {
-		retrieveAsset(req.apiUrl, function(err, response) {
+	const getPrevVersion = function(req, callback) {
+		retrieveAsset(req.apiUrl, (err, response) => {
 			if (err) {
 				if (err.status === 404) {
 					callback({
@@ -88,22 +95,15 @@ const serviceCatalog = (function() {
 					});
 				}
 			} else {
-				if (!tmfUtils.hasPartyRole(req, response.body.relatedParty, 'owner') || !utils.hasRole(req.user, config.oauth2.roles.seller)) {
-					callback({
-						status: 403,
-						message: 'Unauthorized to update non-owned/non-seller services'
-					});
-				} else {
-					callback(null)
-				}
+				req.prevBody = response.body
+				callback(null)
 			}
 		});
-	};
+	}
 
-	const validateOwnerSellerPost = function(req, callback) {
-		let body;
+	const parseBody = function (req, callback) {
 		try {
-			body = JSON.parse(req.body);
+			req.parsedBody = JSON.parse(req.body);
 		} catch (e) {
 			callback({
 				status: 400,
@@ -112,7 +112,22 @@ const serviceCatalog = (function() {
 
 			return; // EXIT
 		}
+		callback(null)
+	}
 
+	const validateOwnerSeller = function(req, callback) {
+		if (!tmfUtils.hasPartyRole(req, req.prevBody.relatedParty, 'owner') || !utils.hasRole(req.user, config.oauth2.roles.seller)) {
+			callback({
+				status: 403,
+				message: 'Unauthorized to update non-owned/non-seller services'
+			});
+		} else {
+			callback(null)
+		}
+	};
+
+	const validateOwnerSellerPost = function(req, callback) {
+		const body = req.parsedBody
 		if (!tmfUtils.hasPartyRole(req, body.relatedParty, 'owner') || !utils.hasRole(req.user, config.oauth2.roles.seller)) {
 			callback({
 				status: 403,
@@ -123,10 +138,26 @@ const serviceCatalog = (function() {
 		}
 	};
 
+	const validateUpdate = function(req, callback) {
+		// Check the lifecycle updates
+		const body = req.parsedBody
+		const prevBody = req.prevBody
+
+		if (body.lifecycleStatus != null && !tmfUtils.isValidStatusTransition(prevBody.lifecycleStatus, body.lifecycleStatus)) {
+			// The status is being updated
+			return callback({
+				status: 400,
+				message: `Cannot transition from lifecycle status ${prevBody.lifecycleStatus} to ${body.lifecycleStatus}`
+			})
+		}
+
+		callback(null)
+	}
+
 	const validators = {
 		GET: [validateRetrieving],
-		POST: [utils.validateLoggedIn, validateOwnerSellerPost],
-		PATCH: [utils.validateLoggedIn, validateOwnerSeller],
+		POST: [utils.validateLoggedIn, parseBody, validateOwnerSellerPost],
+		PATCH: [utils.validateLoggedIn, parseBody, getPrevVersion, validateUpdate, validateOwnerSeller],
 		PUT: [utils.methodNotAllowed],
 		DELETE: [utils.methodNotAllowed]
 	};
