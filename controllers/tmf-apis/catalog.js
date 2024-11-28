@@ -311,7 +311,7 @@ const catalog = (function() {
                                     });
                                 }
 
-                                var offeringPath = url.parse(offering.href).pathname;
+                                const offeringPath = `/productOffering/${offering.id}`
                                 retrieveAsset(offeringPath, function(err, result) {
                                     if (err) {
                                         var id = offering.id ? offering.id : '';

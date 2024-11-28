@@ -59,7 +59,7 @@ const INVALID_BUNDLE_MISSING_OFF = 'Product offering bundles must contain at lea
 const INVALID_BUNDLE_STATUS =
 	'It is not allowed to update bundle related attributes (isBundle, bundledProductSpecification) in launched products';
 const INVALID_BUNDLE_MISSING_OFF_HREF = 'Missing required field href in bundled offering';
-const OFF_BUNDLE_FAILED_TO_RETRIEVE = 'The bundled offering 2 cannot be accessed or does not exists';
+const OFF_BUNDLE_FAILED_TO_RETRIEVE = 'The bundled offering urn:offering:1 cannot be accessed or does not exists';
 const OFF_BUNDLE_IN_BUNDLE = 'Product offering bundles cannot include another bundle';
 const UNAUTHORIZED_OFF_BUNDLE = 'You are not allowed to bundle offerings you do not own';
 const MISSING_BUNDLE_PRODUCTS = 'Product spec bundles must contain at least two bundled product specs';
@@ -868,18 +868,18 @@ describe('Catalog API', function() {
 							const array =offeringRequestInfo.products[i].split('/')
 							return array[array.length-1]
 						})(),
-						href: serverUrl + offeringRequestInfo.products[i]
+						href: offeringRequestInfo.products[i]
 					}
 				};
 				var bodyGetOffering =
 					offeringRequestInfo.requestStatus === 200 ? bodyGetOfferingOk : defaultErrorMessage;
 
 				nock(serverUrl)
-					.get(offeringRequestInfo.products[i])
+					.get(`/productSpecification/${offeringRequestInfo.products[i]}`)
 					.reply(offeringRequestInfo.productRequestStatus, bodyGetProduct);
 
 				nock(serverUrl)
-					.get(offeringRequestInfo.hrefs[i])
+					.get(`/productOffering/${offeringRequestInfo.hrefs[i]}`)
 					.reply(offeringRequestInfo.requestStatus, bodyGetOffering);
 			}
 
@@ -888,20 +888,22 @@ describe('Catalog API', function() {
 			executeCheckPermissionsTest(body, catalogApi, errorStatus, errorMsg, done);
 		};
 
-		var offering1 = catalogPath + '/productOffering/1';
-		var offering2 = catalogPath + '/productOffering/2';
-		var product1 = '/productSpecification/20';
-		var product2 = '/productSpecification/21';
+		const offering1 = 'urn:offering:1';
+		const offering2 = 'urn:offering:2';
+		const product1 = 'urn:product-spec:20';
+		const product2 = 'urn:product-spec:21';
 
-		it('should allow to create an offering bundle', function(done) {
+		it('should allow to create an offering bundle', (done) => {
 			var body = {
 				isBundle: true,
 				bundledProductOffering: [
 					{
-						href: serverUrl + offering1
+						id: offering1,
+						href: offering1
 					},
 					{
-						href: serverUrl + offering2
+						id: offering2,
+						href: offering2
 					}
 				],
 				serviceCandidate: { id: 'defaultRevenue', name: 'Revenue Sharing Service' }
@@ -1004,22 +1006,22 @@ describe('Catalog API', function() {
 			);
 		});
 
-		it('should not allow to create an offering bundle when a bundled offering cannot be accessed', function(done) {
-			var body = {
+		it('should not allow to create an offering bundle when a bundled offering cannot be accessed', (done) => {
+			const body = {
 				isBundle: true,
 				bundledProductOffering: [
 					{
-						id: '2',
-						href: serverUrl + offering1
+						id: offering1,
+						href: offering1
 					},
 					{
-						id: '2',
-						href: serverUrl + offering2
+						id: offering2,
+						href: offering2
 					}
 				]
 			};
 
-			var offeringRequestInfo = {
+			const offeringRequestInfo = {
 				role: 'Owner',
 				isBundle: false,
 				lifecycleStatus: 'active',
@@ -1040,19 +1042,21 @@ describe('Catalog API', function() {
 		});
 
 		it('should not allow to create an offering bundle when a bundled offering is also a bundle', function(done) {
-			var body = {
+			const body = {
 				isBundle: true,
 				bundledProductOffering: [
 					{
-						href: serverUrl + offering1
+						id: offering1,
+						href: offering1
 					},
 					{
-						href: serverUrl + offering2
+						id: offering2,
+						href: offering2
 					}
 				]
 			};
 
-			var offeringRequestInfo = {
+			const offeringRequestInfo = {
 				role: 'Owner',
 				isBundle: true,
 				lifecycleStatus: 'active',
@@ -1073,19 +1077,21 @@ describe('Catalog API', function() {
 		});
 
 		it('should not allow to create a bundle with a non owned offering', function(done) {
-			var body = {
+			const body = {
 				isBundle: true,
 				bundledProductOffering: [
 					{
-						href: serverUrl + offering1
+						id: offering1,
+						href: offering1
 					},
 					{
-						href: serverUrl + offering2
+						id: offering2,
+						href: offering2
 					}
 				]
 			};
 
-			var offeringRequestInfo = {
+			const offeringRequestInfo = {
 				role: 'seller',
 				isBundle: false,
 				lifecycleStatus: 'active',
@@ -1106,19 +1112,21 @@ describe('Catalog API', function() {
 		});
 
 		it('should not allow to create a bundle when bundled offering product cannot be accessed', function(done) {
-			var body = {
+			const body = {
 				isBundle: true,
 				bundledProductOffering: [
 					{
-						href: serverUrl + offering1
+						id: offering1,
+						href: offering1
 					},
 					{
-						href: serverUrl + offering2
+						id: offering2,
+						href: offering2
 					}
 				]
 			};
 
-			var offeringRequestInfo = {
+			const offeringRequestInfo = {
 				role: 'Owner',
 				isBundle: false,
 				lifecycleStatus: 'active',
