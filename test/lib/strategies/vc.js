@@ -646,7 +646,7 @@ describe('VC Strategy', () => {
                           {
                             "id": "ad9b1509-60ea-47d4-9878-18b581d8e19b",
                             "tmf_action": [
-                              "UploadCertificate"
+                              "Upload"
                             ],
                             "tmf_domain": "DOME",
                             "tmf_function": "Certification",
