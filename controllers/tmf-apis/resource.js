@@ -23,9 +23,9 @@ const tmfUtils = require('./../../lib/tmfUtils')
 const axios = require('axios')
 const config = require('./../../config')
 
-var resource = (function (){
+const resource = (function (){
 
-    var validateRetrieving = function(req, callback) {
+    const validateRetrieving = function(req, callback) {
         // Check if the request is a list of resources specifications
         if (req.path.endsWith('resourceSpecification') && req.user != null) {
             return tmfUtils.filterRelatedPartyFields(req, () => tmfUtils.ensureRelatedPartyIncluded(req, callback));
@@ -35,7 +35,7 @@ var resource = (function (){
         // validate if a resource specification is returned only by the owner
     };
 
-    var getResourceAPIUrl = function(path) {
+    const getResourceAPIUrl = function(path) {
         const resPath = path.replace(`/${config.endpoints.resource.path}/`, '')
 
         return utils.getAPIURL(
@@ -61,58 +61,88 @@ var resource = (function (){
                 });
             }
         }).catch((err) => {
-            callback({
-                status: err.response.status
-            });
+            let errCb = {
+				status: err.status
+			}
+
+			if (err.response) {
+				errCb = {
+					status: err.response.status
+				}
+			}
+			callback(errCb);
         })
     };
 
-    
-    var validateOwnerSeller = function(req, callback) {
-        retrieveAsset(req.apiUrl, function(err, response) {
-            if (err) {
-                if (err.status === 404) {
-                    callback({
-                        status: 404,
-                        message: 'The required resource does not exist'
-                    });
-                } else {
-                    callback({
-                        status: 500,
-                        message: 'The required resource cannot be created/updated'
-                    });
-                }
-            } else {
-                if (!tmfUtils.hasPartyRole(req, response.body.relatedParty, 'owner') || !utils.hasRole(req.user, config.oauth2.roles.seller)) {
-                    callback({
-                        status: 403,
-                        message: 'Unauthorized to update non-owned/non-seller resources'
-                    });
-                }        
-                else{
-                    callback(null)
-                }
-            }
-        });
+    const getPrevVersion = function(req, callback) {
+		retrieveAsset(req.apiUrl, (err, response) => {
+			if (err) {
+				if (err.status === 404) {
+					callback({
+						status: 404,
+						message: 'The required resource does not exist'
+					});
+				} else {
+					callback({
+						status: 500,
+						message: 'The required resource cannot be created/updated'
+					});
+				}
+			} else {
+				req.prevBody = response.body
+				callback(null)
+			}
+		});
+	}
+
+    const parseBody = function (req, callback) {
+		try {
+			req.parsedBody = JSON.parse(req.body);
+		} catch (e) {
+			callback({
+				status: 400,
+				message: 'The provided body is not a valid JSON'
+			});
+
+			return; // EXIT
+		}
+		callback(null)
+	}
+
+    const validateOwnerSeller = function(req, callback) {
+        if (!tmfUtils.hasPartyRole(req, req.prevBody.relatedParty, 'owner') || !utils.hasRole(req.user, config.oauth2.roles.seller)) {
+            callback({
+                status: 403,
+                message: 'Unauthorized to update non-owned/non-seller resource specs'
+            });
+        } else{
+            callback(null)
+        }
     };
 
-    var validateOwnerSellerPost = function(req, callback) {
-        let body;
-        try {
-            body = JSON.parse(req.body);
-        } catch (e) {
-            callback({
-                status: 400,
-                message: 'The provided body is not a valid JSON'
-            });
+    const validateUpdate = function(req, callback) {
+		// Check the lifecycle updates
+		const body = req.parsedBody
+		const prevBody = req.prevBody
 
-            return; // EXIT
-        }
+		if (body.lifecycleStatus != null && !tmfUtils.isValidStatusTransition(prevBody.lifecycleStatus, body.lifecycleStatus)) {
+			// The status is being updated
+			return callback({
+				status: 400,
+				message: `Cannot transition from lifecycle status ${prevBody.lifecycleStatus} to ${body.lifecycleStatus}`
+			})
+		}
+
+		callback(null)
+	}
+
+    const validateOwnerSellerPost = function(req, callback) {
+        const body = req.parsedBody
 
         if (!tmfUtils.hasPartyRole(req, body.relatedParty, 'owner') || !utils.hasRole(req.user, config.oauth2.roles.seller)) {
             callback({
                 status: 403,
-                message: 'Unauthorized to create non-owned/non-seller resources'
+                message: 'Unauthorized to create non-owned/non-seller resource specs'
             });
         }        
         else{
@@ -120,10 +150,10 @@ var resource = (function (){
         }
     };
 
-    var validators = {
+    const validators = {
         GET: [validateRetrieving],
-        POST: [utils.validateLoggedIn, validateOwnerSellerPost],
-        PATCH: [utils.validateLoggedIn, validateOwnerSeller],
+        POST: [utils.validateLoggedIn, parseBody, validateOwnerSellerPost],
+        PATCH: [utils.validateLoggedIn, parseBody, getPrevVersion, validateUpdate, validateOwnerSeller],
         PUT: [utils.methodNotAllowed],
         DELETE: [utils.methodNotAllowed]
     };

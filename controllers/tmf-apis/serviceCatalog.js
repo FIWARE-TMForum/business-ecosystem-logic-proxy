@@ -41,7 +41,7 @@ const serviceCatalog = (function() {
         // validate if a service specification is returned only by the owner
     };
 
-	var getResourceAPIUrl = function(path) {
+	const getResourceAPIUrl = function(path) {
 		const resPath = path.replace(`/${config.endpoints.service.path}/`, '')
 
 		return utils.getAPIURL(
