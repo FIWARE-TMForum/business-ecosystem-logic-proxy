@@ -75,7 +75,8 @@ function tmf() {
 	const redirectRequest = function(req, res) {
 		let url;
 		const api = getAPIName(req.apiUrl);
-
+		console.log("redirectRequest")
+		console.log(api)
 		if (req.user) {
 			utils.attachUserHeaders(req.headers, req.user);
 		}
@@ -111,8 +112,11 @@ function tmf() {
 			options.headers['cache-control'] = 'no-cache';
 		}
 
+		console.log("proxy request")
+		console.log(options)
 		// PROXY THE REQUEST
 		axios.request(options).then((response) => {
+			console.log("axios response")
 			const completeRequest = function(resp) {
 				res.status(resp.status);
 
@@ -180,7 +184,7 @@ function tmf() {
 			utils.log(logger, 'error', req, 'Proxy error: ' + err.message);
 
 			if (err.response) {
-                res.status(error.response.status).json(error.response.data)
+                res.status(err.response.status).json(err.response.data)
             } else {
                 res.status(504).json({ error: 'Service unreachable' })
             }
@@ -200,7 +204,7 @@ function tmf() {
 		} else {
 			apiControllers[api].checkPermissions(req, function(err) {
 				const basicLogMessage = 'Pre-Validation (' + api + '): ';
-
+				console.log("sssss4")
 				if (err) {
 					utils.log(logger, 'warn', req, basicLogMessage + err.message);
 					sendError(res, err);
