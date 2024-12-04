@@ -148,12 +148,6 @@ var defaultConfig = {
 			host: 'localhost',
 			port: 80,
 			appSsl: false
-		},
-		resource: {
-			path: 'resourceSpecification',
-			host: 'resourceSpecification.com',
-			port: 85,
-			appSsl: false
 		}
 	},
 	billingAccountOwnerRole: 'owner',
