@@ -1,0 +1,56 @@
+services:
+
+  postgis:
+    image: ${POSTGIS_IMAGE:-postgis/postgis:17-3.4-alpine}
+    hostname: postgis
+    restart: always
+    environment:
+      - POSTGRES_DB=ngb
+      - POSTGRES_PASSWORD=ngb
+      - POSTGRES_USER=ngb
+      - PGUSER=postgres    
+      - PGDATA=/data/postgres
+    volumes:
+       - postgres:/data/postgres
+    networks:
+      - dev-network
+
+  scorpio:
+    image: ${SCORPIO_IMAGE:-scorpiobroker/all-in-one-runner:java-5.0.3}
+    hostname: scorpio
+    restart: always
+    ports:
+      - 9090:9090
+    environment:
+      - DBHOST=postgis
+      - DBPASS=ngb
+      - DBUSER=ngb
+      - POSTGRES_DB=ngb
+      - POSTGRES_PASSWORD=ngb
+      - POSTGRES_USER=ngb
+      - QUARKUS_LOG_LEVEL=DEBUG
+    depends_on:
+      - postgis
+    networks:
+      - dev-network
+    healthcheck:
+      test: curl --fail -s http://scorpio:9090/q/health || exit 1
+      interval: 30s
+      retries: 15
+  
+  mock-idp:
+    image: mock-idp
+    hostname: idp
+    restart: always
+    ports:
+      - 8080:8080
+    networks:
+      - dev-network
+
+networks:
+  dev-network:
+    driver: bridge
+
+volumes:
+  postgres:
+    external: true

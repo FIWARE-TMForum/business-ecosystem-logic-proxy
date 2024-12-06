@@ -1,0 +1,42 @@
+tag: 0.24.1
+apis:
+  - name: party-catalog
+    image: tmforum-party-catalog
+    port: 8081
+    baeVar: BAE_LP_ENDPOINT_PARTY
+  - name: customer-management
+    image: tmforum-customer-management
+    port: 8083
+    baeVar: BAE_LP_ENDPOINT_CUSTOMER
+  - name: product-catalog
+    image: tmforum-product-catalog
+    port: 8084
+    baeVar: BAE_LP_ENDPOINT_CATALOG
+  - name: product-inventory
+    image: tmforum-product-inventory
+    port: 8085
+    baeVar: BAE_LP_ENDPOINT_INVENTORY
+  - name: product-ordering-management
+    image: tmforum-product-ordering-management
+    port: 8086
+    baeVar: BAE_LP_ENDPOINT_ORDERING
+  - name: resource-catalog
+    image: tmforum-resource-catalog
+    port: 8087
+    baeVar: BAE_LP_ENDPOINT_RESOURCE
+  - name: resource-inventory
+    image: tmforum-resource-inventory 
+    port: 8089
+    baeVar: BAE_LP_ENDPOINT_RESOURCE_INVENTORY
+  - name: service-catalog
+    image: tmforum-service-catalog
+    port: 8090
+    baeVar: BAE_LP_ENDPOINT_SERVICE
+  - name: account
+    image: tmforum-account
+    port: 8091
+    baeVar: BAE_LP_ENDPOINT_BILLING
+  - name: usage-management
+    image: tmforum-usage-management
+    port: 8092
+    baeVar: BAE_LP_ENDPOINT_USAGE

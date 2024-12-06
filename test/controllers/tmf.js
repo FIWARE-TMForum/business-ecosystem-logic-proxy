@@ -21,6 +21,7 @@
 
 const proxyquire = require('proxyquire');
 const testUtils = require('../utils');
+const { catalog } = require('../../controllers/tmf-apis/catalog');
 
 describe('TMF Controller', function() {
     const INVALID_API_STATUS = 401;
@@ -235,7 +236,7 @@ describe('TMF Controller', function() {
             testApiReturnsError('inventory', done);
         });
 
-        const testApiOk = function(api, path, done) {
+        const testApiOk = function(api, path, done, opts) {
             // 'redirRequest' has been tested by testing the 'public' function. 'checkTmfPermissions'
             // is supposed to use the same function to redirect requests when they are allowed by the
             // API controller. For this reason, we do not check with other protocols or methods
@@ -247,8 +248,13 @@ describe('TMF Controller', function() {
 
             const method = 'GET';
 
+            const retrieveCatalog = function(catalogId, callback) {
+                callback(null, opts['catalogResponse'])
+            }
+
             // Configure the API controller
-            const controller = { checkPermissions: checkPermissionsValid };
+            const controller = { checkPermissions: checkPermissionsValid, retrieveCatalog: retrieveCatalog }; 
+            
 
             // TMF API
             const respStatus = 200
@@ -260,7 +266,7 @@ describe('TMF Controller', function() {
                     'content-type': 'application/json'
                 }
             });
-
+            
             const catalogController = api.startsWith(config.endpoints.catalog.path) ? controller : null;
             const orderingController = api.startsWith(config.endpoints.ordering.path) ? controller : null;
             const inventoryController = api.startsWith(config.endpoints.inventory.path) ? controller : null;
@@ -269,6 +275,7 @@ describe('TMF Controller', function() {
             // Actual call
             const req = {
                 apiUrl: '/' + api + path,
+                path: '/' + api + path.split("?")[0],
                 body: 'Example',
                 method: method,
                 user: { id: 'user' },
@@ -280,8 +287,14 @@ describe('TMF Controller', function() {
             };
 
             const res = jasmine.createSpyObj('res', ['status', 'json', 'setHeader']);
+
+            expectPath = path
+            if (typeof opts != "undefined" && opts['expectedPath']) {
+                expectPath = opts['expectedPath']
+            }
+
             const expectedOptions = {
-                url: protocol + '://' + utils.getAPIHost() + ':' + utils.getAPIPort() + path,
+                url: protocol + '://' + utils.getAPIHost() + ':' + utils.getAPIPort() + expectPath,
                 method: method,
                 data: req.body,
                 headers: utils.proxiedRequestHeaders()
@@ -294,12 +307,28 @@ describe('TMF Controller', function() {
 
                 done();
             })
-
             tmf.checkPermissions(req, res);
         };
 
         it('should redirect the request to the actual catalog API when controller does not reject it (root)', function(done) {
-            testApiOk('catalog', '', done);
+            // when requesting the resource "catalog", it needs to stay in the request
+            testApiOk('catalog', '/catalog', done);
+        });
+
+        it('should redirect the request to the actual catalog API with the categories available in the catalog, when controller does not reject it (sub-resource)', function(done) {
+            testApiOk('catalog', '/catalog/some-id/productSpecification', done, { 'expectedPath': '/productSpecification?category=cat', 'catalogResponse': {'status': 200, 'body':{'category':[{'id': 'cat'}]}}});
+        });
+
+        it('should redirect the request to the actual catalog API with the categories available in the catalog, when controller does not reject it (sub-resource)', function(done) {
+            testApiOk('catalog', '/catalog/some-id/productSpecification', done, { 'expectedPath': '/productSpecification?category=cat-1,cat-2', 'catalogResponse': {'status': 200, 'body':{'category':[{'id': 'cat-1'}, {'id': 'cat-2'}]}}});
+        });
+
+        it('should redirect the request to the actual catalog API with the categories available in the catalog, when controller does not reject it (sub-resource)', function(done) {
+            testApiOk('catalog', '/catalog/some-id/productSpecification?category=cat-1', done, { 'expectedPath': '/productSpecification?category=cat-1', 'catalogResponse': {'status': 200, 'body':{'category':[{'id': 'cat-1'}, {'id': 'cat-2'}]}}});
+        });
+
+        it('should redirect the request to the actual catalog API with the categories available in the catalog, when controller does not reject it (sub-resource)', function(done) {
+            testApiOk('catalog', '/catalog/some-id/productSpecification?category=cat-1,cat-2', done, { 'expectedPath': '/productSpecification?category=cat-1', 'catalogResponse': {'status': 200, 'body':{'category':[{'id': 'cat-1'}]}}});
         });
 
         it('should redirect the request to the actual ordering API when controller does not reject it (root)', function(done) {
@@ -311,7 +340,7 @@ describe('TMF Controller', function() {
         });
 
         it('should redirect the request to the actual catalog API when controller does not reject it (non root)', function(done) {
-            testApiOk('catalog', '/complex?a=b', done);
+            testApiOk('catalog', '/complex?a=b', done, { 'catalogResponse': {'status': 200, 'body':{'category':[{'id': 'cat'}]}}});
         });
 
         it('should redirect the request to the actual ordering API when controller does not reject it (non root)', function(done) {
