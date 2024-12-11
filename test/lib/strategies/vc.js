@@ -439,6 +439,86 @@ describe('VC Strategy', () => {
             }])
         })
 
+        it('should build a vc with a LEARCredential with a vc claim', () => {
+            const payload = {
+                "vc": {
+                    "id": "1f33e8dc-bd3b-4395-8061-ebc6be7d06dd",
+                    "type": [
+                      "VerifiableCredential",
+                      "LEARCredentialEmployee"
+                    ],
+                    "credentialSubject": {
+                      "mandate": {
+                        "id": "4e3c02b8-5c57-4679-8aa5-502d62484af5",
+                        "life_span": {
+                          "end_date_time": "2025-04-02 09:23:22.637345122 +0000 UTC",
+                          "start_date_time": "2024-04-02 09:23:22.637345122 +0000 UTC"
+                        },
+                        "mandatee": {
+                          "id": "did:key:zDnaeei6HxVe7ibR123456789",
+                          "email": "admin@email.com",
+                          "first_name": "Admin",
+                          "gender": "M",
+                          "last_name": "User",
+                          "mobile_phone": "+34666111222"
+                        },
+                        "mandator": {
+                          "commonName": "TEST",
+                          "country": "ES",
+                          "emailAddress": "test@test.com",
+                          "organization": "TestCompany, S.L.",
+                          "organizationIdentifier": "VATES-C12341234",
+                          "serialNumber": "C12341234"
+                        },
+                        "power": [
+                          {
+                            "id": "6b8f3137-a57a-46a5-97e7-1117a20142fb",
+                            "tmf_action": "Execute",
+                            "tmf_domain": "DOME",
+                            "tmf_function": "Onboarding",
+                            "tmf_type": "Domain"
+                          },
+                          {
+                            "id": "ad9b1509-60ea-47d4-9878-18b581d8e19b",
+                            "tmf_action": [
+                              "Create",
+                              "Update"
+                            ],
+                            "tmf_domain": "DOME",
+                            "tmf_function": "ProductOffering",
+                            "tmf_type": "Domain"
+                          }
+                        ]
+                      },
+                      "roles": []
+                    },
+                    "expirationDate": "2025-04-02 09:23:22.637345122 +0000 UTC",
+                    "issuanceDate": "2024-04-02 09:23:22.637345122 +0000 UTC",
+                    "issuer": "did:web:test.es",
+                    "validFrom": "2024-04-02 09:23:22.637345122 +0000 UTC"
+                }
+            }
+
+            const credential = new VerifiableCredential(payload)
+            const profile = credential.getProfile()
+
+            expect(profile.id).toEqual('did:key:zDnaeei6HxVe7ibR123456789')
+            expect(profile.email).toEqual('admin@email.com')
+            expect(profile.username).toEqual('admin')
+            expect(profile.issuerDid).toEqual('did:web:test.es')
+            expect(profile.idpId).toEqual('did:web:test.es')
+            expect(profile.roles).toEqual([])
+
+            expect(profile.organizations).toEqual([{
+                id: 'VATES-C12341234',
+                name: 'TestCompany, S.L.',
+                roles: [
+                    { name: 'orgAdmin', id: 'orgAdmin' },
+                    { name: 'seller', id: 'seller' }
+                ]
+            }])
+        })
+
         it('should build a vc with a LEARCredential in VerifiablePresentation', () => {
             const payload = {
                 "verifiablePresentation": [{
@@ -566,7 +646,7 @@ describe('VC Strategy', () => {
                           {
                             "id": "ad9b1509-60ea-47d4-9878-18b581d8e19b",
                             "tmf_action": [
-                              "UploadCertificate"
+                              "Upload"
                             ],
                             "tmf_domain": "DOME",
                             "tmf_function": "Certification",

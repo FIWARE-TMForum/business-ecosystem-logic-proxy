@@ -322,6 +322,10 @@ describe('ServiceSpecification API', function() {
 			it('should raise a 403 unauthorized error', function(done) {
 				const basicBody = {
 					id: 'serviceSpecNotFound',
+					validFor: {
+						startDateTime: '2016-07-12T10:56:00'
+					},
+					relatedParty: [{ id: 'test3', role: 'owner', href: SERVER + individual }]
 				};
 				testCreation(seller, basicBody, true, 403, 'Unauthorized to create non-owned/non-seller service specs', false, true, true, {}, done)
 				})

@@ -217,7 +217,9 @@
     "CATALOGS": {
         "_all_catalogs": "All catalogues",
         "_no_desc": "No description included",
-        "_no_cat": "No categories included"
+        "_no_cat": "No categories included",
+        "_view_details": "View details",
+        "_desc": "Description"
     },
     "SHOPPING_CART": {
         "_buy": "Buy",
