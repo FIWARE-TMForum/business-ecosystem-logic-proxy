@@ -291,10 +291,10 @@ const serviceCatalog = (function() {
 			}
 			async.series([
 				function(callback){
-					validateOwnerSeller(req, previousBody, callback)
+					validateOwnerSeller(req, prevBody, callback)
 				},
 				function(callback){
-					validateServiceUpdate(req, previousBody, body, callback)
+					validateServiceUpdate(req, prevBody, body, callback)
 				}
 				], callback)
 		} else {

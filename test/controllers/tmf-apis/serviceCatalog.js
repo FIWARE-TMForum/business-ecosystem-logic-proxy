@@ -161,7 +161,7 @@ describe('ServiceSpecification API', function() {
 					user: UserInfo,
 					method: 'POST',
 					body: JSON.stringify(body),
-					apiUrl: 'service/'+path,
+					apiUrl: '/service'+path,
 					url: path,
 					hostname: config.endpoints.service.host,
 					headers: {}
@@ -366,7 +366,7 @@ describe('ServiceSpecification API', function() {
 					user: UserInfo,
 					method: 'PATCH',
 					body: JSON.stringify(body),
-					apiUrl: 'service/'+path + '/' + body.id,
+					apiUrl: '/service'+path + '/' + body.id,
 					url: path + '/' + body.id,
 					hostname: config.endpoints.service.host,
 					headers: {}
@@ -394,7 +394,7 @@ describe('ServiceSpecification API', function() {
 			const basicBody = {
 				"id": "123",
 				"version": "2.0",
-				"lifecycleStatus": "Active",
+				"lifecycleStatus": "Launched",
 				"specCharacteristic": [
 					{
 						"id": "42",
@@ -524,7 +524,7 @@ describe('ServiceSpecification API', function() {
 				],
 			}
 			it('should update a service specification successfully', function(done) {
-				const scope = nock(url).get(path + '/' + basicBody.id).reply(200, {id: basicBody.id, version: 1.0, specCharacteristic: basicBody.specCharacteristic, lifecycleStatus: "Launched"})
+				const scope = nock(url).get(path + '/' + basicBody.id).reply(200, {id: basicBody.id, version: 1.0, specCharacteristic: basicBody.specCharacteristic, lifecycleStatus: "Active"})
 				testUpdation(seller, basicBody, false, 200, null, true, true, true, scope, done)
 			})
 
@@ -533,11 +533,11 @@ describe('ServiceSpecification API', function() {
 				const noDig = {
 					id: "123",
 					version: "2.0",
-					"lifecycleStatus": "Active",
+					"lifecycleStatus": "Launched",
 					"specCharacteristic": [basicBody.specCharacteristic[0], basicBody.specCharacteristic[1]
 					],
 				}
-				const scope = nock(url).get(path + '/' + basicBody.id).reply(200, {id: basicBody.id, version: 1.0, specCharacteristic:basicBody.specCharacteristic, lifecycleStatus: "Launched"})
+				const scope = nock(url).get(path + '/' + basicBody.id).reply(200, {id: basicBody.id, version: 1.0, specCharacteristic:basicBody.specCharacteristic, lifecycleStatus: "Active"})
 				testUpdation(seller, noDig, true, 422, 'To upgrade service specifications it is required to provide a valid asset info', true, true, true, scope, done)
 			})
 
@@ -545,10 +545,10 @@ describe('ServiceSpecification API', function() {
 				
 				const patchBody = {
 					id: "123",
-					"lifecycleStatus": "Active",
+					"lifecycleStatus": "Launched",
 					"specCharacteristic": [basicBody.specCharacteristic[0]]
 				}
-				const scope = nock(url).get(path + '/' + basicBody.id).reply(200, {id: basicBody.id, version: 1.0, specCharacteristic:basicBody.specCharacteristic, lifecycleStatus: "Launched"})
+				const scope = nock(url).get(path + '/' + basicBody.id).reply(200, {id: basicBody.id, version: 1.0, specCharacteristic:basicBody.specCharacteristic, lifecycleStatus: "Active"})
 				testUpdation(seller, patchBody, true, 422, 'Service specification characteristics only can be updated for upgrading digital assets', true, true, true, scope, done)
 			})
 
@@ -557,10 +557,10 @@ describe('ServiceSpecification API', function() {
 				const patchBody = {
 					version: "2.0",
 					id: "123",
-					"lifecycleStatus": "Active",
+					"lifecycleStatus": "Launched",
 					"specCharacteristic": [...basicBody.specCharacteristic, basicBody.specCharacteristic[0]]
 				}
-				const scope = nock(url).get(path + '/' + basicBody.id).reply(200, {id: basicBody.id, version: 1.0, specCharacteristic:basicBody.specCharacteristic, lifecycleStatus: "Launched"})
+				const scope = nock(url).get(path + '/' + basicBody.id).reply(200, {id: basicBody.id, version: 1.0, specCharacteristic:basicBody.specCharacteristic, lifecycleStatus: "Active"})
 				testUpdation(seller, patchBody, true, 422, 'It is not allowed to update custom characteristics during a service upgrade', true, true, true, scope, done)
 			})
 
@@ -568,18 +568,18 @@ describe('ServiceSpecification API', function() {
 				
 				const patchBody = {
 					id: "123",
-					"lifecycleStatus": "Active",
+					"lifecycleStatus": "Launched",
 					"specCharacteristic": [...basicBody.specCharacteristic]
 				}
-				const scope = nock(url).get(path + '/' + basicBody.id).reply(200, {id: basicBody.id, version: 1.0, specCharacteristic:basicBody.specCharacteristic, lifecycleStatus: "Launched"})
+				const scope = nock(url).get(path + '/' + basicBody.id).reply(200, {id: basicBody.id, version: 1.0, specCharacteristic:basicBody.specCharacteristic, lifecycleStatus: "Active"})
 				testUpdation(seller, patchBody, true, 403, 'Digital service spec must include the version', true, true, true, scope, done)
 			})
 
 			it('should raise a 403 unauthorized to update list', function(done) {
 				const basicBody = {
-					id: 'unauthorized',
+					id: '',
 				};
-				const scope = nock(url).get(path + '/' + basicBody.id).reply(200, {id: basicBody.id, version: 1.0, specCharacteristic:basicBody.specCharacteristic, lifecycleStatus: "Launched"})
+				const scope = nock(url).get(path + '/' + basicBody.id).reply(200, {id: basicBody.id, version: 1.0, specCharacteristic:basicBody.specCharacteristic, lifecycleStatus: "Active"})
 				testUpdation(seller, basicBody, true, 403, 'It is not allowed to update a list', false, true, true, scope, done)
 			})
 
@@ -596,7 +596,7 @@ describe('ServiceSpecification API', function() {
 					id: 'idwithbundle',
 					isBundle: true
 				};
-				const scope = nock(url).get(path + '/' + basicBody.id).reply(200, {id: basicBody.id, version: 1.0, specCharacteristic:basicBody.specCharacteristic, lifecycleStatus: "Launched"})
+				const scope = nock(url).get(path + '/' + basicBody.id).reply(200, {id: basicBody.id, version: 1.0, specCharacteristic:basicBody.specCharacteristic, lifecycleStatus: "Active"})
 				testUpdation(seller, basicBody, true, 422, 'Service bundles are not supported', false, true, true, scope, done)
 			})
 			it('should raise a 404 not found error while updating', function(done) {
