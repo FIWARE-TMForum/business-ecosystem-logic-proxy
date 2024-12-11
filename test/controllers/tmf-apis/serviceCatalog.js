@@ -41,7 +41,7 @@ describe('ServiceSpecification API', function() {
 	const seller = {
 		id: 'test',
 		roles: ['seller'],
-		partyId: 'serviceSpec',
+		partyId: 'testParty',
 	}
 	const protocol = config.endpoints.service.appSsl ? 'https' : 'http';
 	const url = protocol + '://' + config.endpoints.service.host + ':' + config.endpoints.service.port;
@@ -136,30 +136,30 @@ describe('ServiceSpecification API', function() {
 		})
 
 		describe('creation', function() {
-			function testCreation(UserInfo, body, hasError, expectedStatus, expectedErr, isOwner, isSeller, checkRole, method, nockBody, done) {
-				var checkRoleMethod = jasmine.createSpy();
+			function testCreation(UserInfo, body, hasError, expectedStatus, expectedErr, isOwner, isSeller, checkRole, nockBody, done) {
+				const checkRoleMethod = jasmine.createSpy();
 				checkRoleMethod.and.returnValue(isSeller);
-				var checkOwnerMethod = jasmine.createSpy();
+				const checkOwnerMethod = jasmine.createSpy();
 				checkOwnerMethod.and.returnValue(isOwner);
-				var utils = {
+				const utils = {
 					validateLoggedIn: function(req, callback) {
 						callback(null);
 					},
 					hasRole: checkRoleMethod
 				};
-				var tmfUtils = {
+				const tmfUtils = {
 					hasPartyRole: checkOwnerMethod
 				};
-				var storeClient = jasmine.createSpyObj('storeClient', ['validateService']);
+				const storeClient = jasmine.createSpyObj('storeClient', ['validateService']);
 				storeClient.validateService.and.callFake((data, user, callback) => {
 					if(!hasError){
 						callback(null, {body: {result: 'correct', 'id': 123, 'message': 'OK'}});
 					}
 				});
-				var serviceAPI = getServiceSpecAPI({ storeClient: storeClient }, tmfUtils, utils);
-				var req = {
+				const serviceAPI = getServiceSpecAPI({ storeClient: storeClient }, tmfUtils, utils);
+				const req = {
 					user: UserInfo,
-					method: method,
+					method: 'POST',
 					body: JSON.stringify(body),
 					apiUrl: 'service/'+path,
 					url: path,
@@ -316,14 +316,14 @@ describe('ServiceSpecification API', function() {
 					],
 				};
 				
-				testCreation(seller, basicBody, false, 200, null, true, true, true, 'POST', {}, done)
+				testCreation(seller, basicBody, false, 200, null, true, true, true, {}, done)
 				})
 
 			it('should raise a 403 unauthorized error', function(done) {
 				const basicBody = {
 					id: 'serviceSpecNotFound',
 				};
-				testCreation(seller, basicBody, true, 403, 'Unauthorized to create non-owned/non-seller service specs', false, true, true, 'POST', {}, done)
+				testCreation(seller, basicBody, true, 403, 'Unauthorized to create non-owned/non-seller service specs', false, true, true, {}, done)
 				})
 
 			it('should raise a 422 bundles are not allowed', function(done) {
@@ -331,12 +331,12 @@ describe('ServiceSpecification API', function() {
 					id: 'idwithbundle',
 					isBundle: true
 				};
-				testCreation(seller, basicBody, true, 422, 'Service bundles are not supported', true, true, true, 'POST', {}, done)
+				testCreation(seller, basicBody, true, 422, 'Service bundles are not supported', true, true, true, {}, done)
 			})
 		})
 
 		describe('updation', function(){
-			function testUpdation(UserInfo, body, hasError, expectedStatus, expectedErr, isOwner, isSeller, checkRole, method, scope, done) {
+			function testUpdation(UserInfo, body, hasError, expectedStatus, expectedErr, isOwner, isSeller, checkRole, scope, done) {
 				const checkRoleMethod = jasmine.createSpy();
 				checkRoleMethod.and.returnValue(isSeller);
 				const checkOwnerMethod = jasmine.createSpy();
@@ -360,7 +360,7 @@ describe('ServiceSpecification API', function() {
 				const serviceAPI = getServiceSpecAPI({ storeClient: storeClient }, tmfUtils, utils);
 				const req = {
 					user: UserInfo,
-					method: method,
+					method: 'PATCH',
 					body: JSON.stringify(body),
 					apiUrl: 'service/'+path + '/' + body.id,
 					url: path + '/' + body.id,
@@ -390,6 +390,7 @@ describe('ServiceSpecification API', function() {
 			const basicBody = {
 				"id": "123",
 				"version": "2.0",
+				"lifecycleStatus": "Active",
 				"specCharacteristic": [
 					{
 						"id": "42",
@@ -519,8 +520,8 @@ describe('ServiceSpecification API', function() {
 				],
 			}
 			it('should update a service specification successfully', function(done) {
-				const scope = nock(url).get(path + '/' + basicBody.id).reply(200, {id: basicBody.id, version: 1.0, specCharacteristic: basicBody.specCharacteristic})
-				testUpdation(seller, basicBody, false, 200, null, true, true, true, 'PATCH', scope, done)
+				const scope = nock(url).get(path + '/' + basicBody.id).reply(200, {id: basicBody.id, version: 1.0, specCharacteristic: basicBody.specCharacteristic, lifecycleStatus: "Launched"})
+				testUpdation(seller, basicBody, false, 200, null, true, true, true, scope, done)
 			})
 
 			it('should raise 422 has not digital asset', function(done) {
@@ -528,21 +529,23 @@ describe('ServiceSpecification API', function() {
 				const noDig = {
 					id: "123",
 					version: "2.0",
+					"lifecycleStatus": "Active",
 					"specCharacteristic": [basicBody.specCharacteristic[0], basicBody.specCharacteristic[1]
 					],
 				}
-				const scope = nock(url).get(path + '/' + basicBody.id).reply(200, {id: basicBody.id, version: 1.0, specCharacteristic:basicBody.specCharacteristic})
-				testUpdation(seller, noDig, true, 422, 'To upgrade service specifications it is required to provide a valid asset info', true, true, true, 'PATCH', scope, done)
+				const scope = nock(url).get(path + '/' + basicBody.id).reply(200, {id: basicBody.id, version: 1.0, specCharacteristic:basicBody.specCharacteristic, lifecycleStatus: "Launched"})
+				testUpdation(seller, noDig, true, 422, 'To upgrade service specifications it is required to provide a valid asset info', true, true, true, scope, done)
 			})
 
 			it('should raise 422 only digital asset can be modified', function(done) {
 				
 				const patchBody = {
 					id: "123",
+					"lifecycleStatus": "Active",
 					"specCharacteristic": [basicBody.specCharacteristic[0]]
 				}
-				const scope = nock(url).get(path + '/' + basicBody.id).reply(200, {id: basicBody.id, version: 1.0, specCharacteristic:basicBody.specCharacteristic})
-				testUpdation(seller, patchBody, true, 422, 'Service specification characteristics only can be updated for upgrading digital assets', true, true, true, 'PATCH', scope, done)
+				const scope = nock(url).get(path + '/' + basicBody.id).reply(200, {id: basicBody.id, version: 1.0, specCharacteristic:basicBody.specCharacteristic, lifecycleStatus: "Launched"})
+				testUpdation(seller, patchBody, true, 422, 'Service specification characteristics only can be updated for upgrading digital assets', true, true, true, scope, done)
 			})
 
 			it('should raise 422 only digital asset can be modified', function(done) {
@@ -550,27 +553,30 @@ describe('ServiceSpecification API', function() {
 				const patchBody = {
 					version: "2.0",
 					id: "123",
+					"lifecycleStatus": "Active",
 					"specCharacteristic": [...basicBody.specCharacteristic, basicBody.specCharacteristic[0]]
 				}
-				const scope = nock(url).get(path + '/' + basicBody.id).reply(200, {id: basicBody.id, version: 1.0, specCharacteristic:basicBody.specCharacteristic})
-				testUpdation(seller, patchBody, true, 422, 'It is not allowed to update custom characteristics during a service upgrade', true, true, true, 'PATCH', scope, done)
+				const scope = nock(url).get(path + '/' + basicBody.id).reply(200, {id: basicBody.id, version: 1.0, specCharacteristic:basicBody.specCharacteristic, lifecycleStatus: "Launched"})
+				testUpdation(seller, patchBody, true, 422, 'It is not allowed to update custom characteristics during a service upgrade', true, true, true, scope, done)
 			})
 
 			it('should raise 403 if version not found during asset upgrading', function(done) {
 				
 				const patchBody = {
 					id: "123",
+					"lifecycleStatus": "Active",
 					"specCharacteristic": [...basicBody.specCharacteristic]
 				}
-				const scope = nock(url).get(path + '/' + basicBody.id).reply(200, {id: basicBody.id, version: 1.0, specCharacteristic:basicBody.specCharacteristic})
-				testUpdation(seller, patchBody, true, 403, 'Digital service spec must include the version', true, true, true, 'PATCH', scope, done)
+				const scope = nock(url).get(path + '/' + basicBody.id).reply(200, {id: basicBody.id, version: 1.0, specCharacteristic:basicBody.specCharacteristic, lifecycleStatus: "Launched"})
+				testUpdation(seller, patchBody, true, 403, 'Digital service spec must include the version', true, true, true, scope, done)
 			})
 
 			it('should raise a 403 unauthorized to update list', function(done) {
 				const basicBody = {
-					id: '',
+					id: 'unauthorized',
 				};
-				testUpdation(seller, basicBody, true, 403, 'It is not allowed to update a list', false, true, true, 'PATCH', false, done)
+				const scope = nock(url).get(path + '/' + basicBody.id).reply(200, {id: basicBody.id, version: 1.0, specCharacteristic:basicBody.specCharacteristic, lifecycleStatus: "Launched"})
+				testUpdation(seller, basicBody, true, 403, 'It is not allowed to update a list', false, true, true, scope, done)
 			})
 
 			it('should raise a 403 unauthorized error', function(done) {
@@ -578,7 +584,7 @@ describe('ServiceSpecification API', function() {
 					id: 'serviceSpecNotFound',
 				};
 				const scope = nock(url).get(path + '/' + basicBody.id).reply(200, {id: basicBody.id, version: 1.0, specCharacteristic: basicBody.specCharacteristic})
-				testUpdation(seller, basicBody, true, 403, 'Unauthorized to update non-owned/non-seller services', false, true, true, 'PATCH', false, done)
+				testUpdation(seller, basicBody, true, 403, 'Unauthorized to update non-owned/non-seller services', false, true, true, scope, done)
 			})
 
 			it('should raise a 422 bundles are not allowed while updating', function(done) {
@@ -586,8 +592,8 @@ describe('ServiceSpecification API', function() {
 					id: 'idwithbundle',
 					isBundle: true
 				};
-				
-				testUpdation(seller, basicBody, true, 422, 'Service bundles are not supported', false, true, true, 'PATCH', false, done)
+				const scope = nock(url).get(path + '/' + basicBody.id).reply(200, {id: basicBody.id, version: 1.0, specCharacteristic:basicBody.specCharacteristic, lifecycleStatus: "Launched"})
+				testUpdation(seller, basicBody, true, 422, 'Service bundles are not supported', false, true, true, scope, done)
 			})
 			it('should raise a 404 not found error while updating', function(done) {
 				const basicBody = {
@@ -595,7 +601,7 @@ describe('ServiceSpecification API', function() {
 				};
 				
 				const scope = nock(url).get(path + '/' + basicBody.id).reply(404)
-				testUpdation(seller, basicBody, true, 404, 'The required service does not exist', true, true, false, 'PATCH', scope, done)
+				testUpdation(seller, basicBody, true, 404, 'The required service does not exist', true, true, false, scope, done)
 			})
 
 			it('should raise a 500 internal error while updating', function(done) {
@@ -604,7 +610,7 @@ describe('ServiceSpecification API', function() {
 				};
 				// returning other status different from 500 and 404
 				const scope = nock(url).get(path + '/' + basicBody.id).reply(423)
-				testUpdation(seller, basicBody, true, 500, 'The required service cannot be updated', true, true, false, 'PATCH', scope, done)
+				testUpdation(seller, basicBody, true, 500, 'The required service cannot be created/updated', true, true, false, scope, done)
 			})
 		})
 

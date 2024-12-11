@@ -44,7 +44,7 @@ const serviceCatalog = (function() {
         // validate if a service specification is returned only by the owner
     };
 
-	var getResourceAPIUrl = function(path) {
+	const getResourceAPIUrl = function(path) {
 		const resPath = path.replace(`/${config.endpoints.service.path}/`, '')
 		return utils.getAPIURL(
 			config.endpoints.service.appSsl,
@@ -81,20 +81,45 @@ const serviceCatalog = (function() {
 		})
 	};
 
+	const getPrevVersion = function(req, callback) {
+		retrieveAsset(req.apiUrl, (err, response) => {
+			if (err) {
+				if (err.status === 404) {
+					callback({
+						status: 404,
+						message: 'The required service does not exist'
+					});
+				} else {
+					callback({
+						status: 500,
+						message: 'The required service cannot be created/updated'
+					});
+				}
+			} else {
+				req.prevBody = response.body
+				callback(null)
+			}
+		});
+	}
+
+	const parseBody = function (req, callback) {
+		try {
+			req.parsedBody = JSON.parse(req.body);
+		} catch (e) {
+			callback({
+				status: 400,
+				message: 'The provided body is not a valid JSON'
+			});
+
+			return; // EXIT
+		}
+		callback(null)
+	}
+
 	const validateCreation = function(req, callback){
 		if (servicesPattern.test(req.apiUrl)){
 
-			let body;
-			try {
-				body = JSON.parse(req.body);
-			} catch (e) {
-				callback({
-					status: 400,
-					message: 'The provided body is not a valid JSON'
-				});
-	
-				return; // EXIT
-			}
+			let body = req.parsedBody
 			async.series([
 				function(callback){
 					validateOwnerSellerPost(req, body, callback)
@@ -239,8 +264,16 @@ const serviceCatalog = (function() {
 	const validateUpdate = function(req, callback){
 
 		if(singleServicePattern.test(req.apiUrl)){
-			const parsedBody = utils.emptyObject(req.body) ? null : JSON.parse(req.body);
-			if (parsedBody.isBundle) {
+			const body = req.parsedBody
+			const prevBody = req.prevBody
+			if (body.lifecycleStatus != null && !tmfUtils.isValidStatusTransition(prevBody.lifecycleStatus, body.lifecycleStatus)) {
+				// The status is being updated
+				return callback({
+					status: 400,
+					message: `Cannot transition from lifecycle status ${prevBody.lifecycleStatus} to ${body.lifecycleStatus}`
+				})
+			}
+			if (body.isBundle) {
 				return callback({
 					status: 422,
 					message: 'Service bundles are not supported'
@@ -248,42 +281,22 @@ const serviceCatalog = (function() {
 			}
 			let parts = req.apiUrl.split('/')
 			const url = `/serviceSpecification/${parts[parts.length - 1]}`
-			retrieveAsset(url, function(err, result){
-				if(err){
-					if (err.status === 404) {
-						callback({
-							status: 404,
-							message: 'The required service does not exist'
-						});
-					} else {
-						callback({
-							status: 500,
-							message: 'The required service cannot be updated'
-						});
-					}
+			//
+			// Catalog stuff should include a validFor field
+			if (body && !prevBody.validFor && !body.validFor) {
+				body.validFor = {
+					startDateTime: new Date().toISOString()
+				};
+				utils.updateBody(req, body);
+			}
+			async.series([
+				function(callback){
+					validateOwnerSeller(req, previousBody, callback)
+				},
+				function(callback){
+					validateServiceUpdate(req, previousBody, body, callback)
 				}
-				else {
-					const previousBody = result.body;
-					//
-					// Catalog stuff should include a validFor field
-					if (parsedBody && !previousBody.validFor && !parsedBody.validFor) {
-						parsedBody.validFor = {
-							startDateTime: new Date().toISOString()
-						};
-						utils.updateBody(req, parsedBody);
-					}
-					async.series([
-						function(callback){
-							validateOwnerSeller(req, previousBody, callback)
-						},
-						function(callback){
-							validateServiceUpdate(req, previousBody, parsedBody, callback)
-						}
-						], callback)
-					
-
-				}
-			})
+				], callback)
 		} else {
 			callback({
 				status: 403,
@@ -297,8 +310,8 @@ const serviceCatalog = (function() {
 
 	const validators = {
 		GET: [validateRetrieving],
-		POST: [utils.validateLoggedIn, validateCreation],
-		PATCH: [utils.validateLoggedIn, validateUpdate],
+		POST: [utils.validateLoggedIn, parseBody, validateCreation],
+		PATCH: [utils.validateLoggedIn,parseBody, getPrevVersion, validateUpdate],
 		PUT: [utils.methodNotAllowed],
 		DELETE: [utils.methodNotAllowed]
 	};
