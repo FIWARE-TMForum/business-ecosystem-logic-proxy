@@ -394,7 +394,7 @@ describe('ServiceSpecification API', function() {
 			const basicBody = {
 				"id": "123",
 				"version": "2.0",
-				"lifecycleStatus": "Launched",
+				"lifecycleStatus": "Active",
 				"specCharacteristic": [
 					{
 						"id": "42",
