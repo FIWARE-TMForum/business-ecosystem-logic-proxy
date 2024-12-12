@@ -563,7 +563,16 @@ describe('ServiceSpecification API', function() {
 				const scope = nock(url).get(path + '/' + basicBody.id).reply(200, {id: basicBody.id, version: 1.0, specCharacteristic:basicBody.specCharacteristic, lifecycleStatus: "Active"})
 				testUpdation(seller, patchBody, true, 422, 'It is not allowed to update custom characteristics during a service upgrade', true, true, true, scope, done)
 			})
-
+			it('should raise 400 if lifecycle status are incorrect', function(done) {
+				
+				const patchBody = {
+					id: "123",
+					"lifecycleStatus": "Active",
+					"specCharacteristic": [...basicBody.specCharacteristic]
+				}
+				const scope = nock(url).get(path + '/' + basicBody.id).reply(200, {id: basicBody.id, version: 1.0, specCharacteristic:basicBody.specCharacteristic, lifecycleStatus: "Launched"})
+				testUpdation(seller, patchBody, true, 400, `Cannot transition from lifecycle status Launched to Active`, true, true, true, scope, done)
+			})
 			it('should raise 403 if version not found during asset upgrading', function(done) {
 				
 				const patchBody = {
