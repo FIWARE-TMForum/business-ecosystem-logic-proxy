@@ -3,7 +3,7 @@ name: Tests
 on:
   push:
     branches:
-      - fix/portal-cert-vc-claim
+      - master
 
   pull_request:
     branches:
@@ -53,8 +53,8 @@ jobs:
           context: .
           file: ./docker/Dockerfile
           tags: |
-            fiware/biz-ecosystem-logic-proxy:9.11.1-rc1
-          push: ${{ github.ref == 'refs/heads/fix/portal-cert-vc-claim' }}
+            fiware/biz-ecosystem-logic-proxy:master
+          push: ${{ github.ref == 'refs/heads/master' }}
 
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
