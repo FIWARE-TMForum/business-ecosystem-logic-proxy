@@ -7,7 +7,7 @@ const product_catalog_path = "http://host.docker.internal:8632"
 const category_api = `${product_catalog_path}/category`
 const catalog_api = `${product_catalog_path}/catalog`
 const p_offering_api = `${product_catalog_path}/productOffering`
-const mongo_host = "mongo" //mongo
+const mongo_host = "host.docker.internal" //mongo
 let url
 if (process.env.BAE_LP_MONGO_USER != null && process.env.BAE_LP_MONGO_USER.length > 0) {
     url = `mongodb://${process.env.BAE_LP_MONGO_USER}:${process.env.BAE_LP_MONGO_PASS}@mongo:27017/${db_name}?authSource=${db_name}`
@@ -44,7 +44,7 @@ async function run(){
             }
             const catalog_body = response.data
             const name = catalog_body.name
-            const categories = catalog_body.category
+            let categories = catalog_body.category
             // if category was not created
             if (!(id in category_map)){
                 info("catalog name: " + name)
@@ -52,29 +52,35 @@ async function run(){
                 info("creating category with catalog data...")
                 response = await axios.post(category_api, {name: name, isRoot: true, lifecycleStatus: "Launched" })
                 if (response.status !== 201){
-                    error("category creation failed with name: " + name)
+                    error("category creation failed with name: " + name + " status: " + response.status)
                     continue;
                 }
                 const category_body = response.data
-                const cat_id = category_body.id
-                info("category created with id: " + cat_id)
+                const category_id = category_body.id
+                info("category created with id: " + category_id)
 
-                info(`adding category ${cat_id} to the catalog ${id}`)
-                categories.push({id: cat_id})
-                response = await axios.patch(catalog_api, {category: categories})
-                if (response.status !== 201){
+                info(`adding category ${category_id} to the catalog ${id}`)
+                if(!categories){
+                    categories = []
+                }
+                categories.push({id: category_id})
+                response = await axios.patch(catalog_api + "/" + id, {category: categories})
+                if (response.status !== 200){
                     throw Error("cannot add category to catalog")
                 }
                 // register category created in map
-                category_map[id] = cat_id
+                category_map[id] = category_id
             }
 
-            info(`adding category ${cat_id} to the product offering ${p_off_id}`)
-                response = await axios.get(p_offering_api)
+            info(`adding category ${category_map[id]} to the product offering ${p_off_id}`)
+                response = await axios.get(p_offering_api + "/" + p_off_id)
                 const p_off_body = response.data
-                const p_off_cat = p_off_body.category
+                let p_off_cat = p_off_body.category
+                if(!p_off_cat){
+                    p_off_cat = []
+                }
                 p_off_cat.push({id: category_map[id]})
-                response = await axios.patch(p_offering_api, {category: p_off_cat})
+                response = await axios.patch(p_offering_api + "/" + p_off_id, {category: p_off_cat})
                 if (response.status !== 201){
                     error("category creation failed with name: " + name)
                     continue;
