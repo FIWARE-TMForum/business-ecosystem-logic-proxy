@@ -11,12 +11,27 @@ if (process.env.BAE_LP_MONGO_USER != null && process.env.BAE_LP_MONGO_USER.lengt
     url = `mongodb://${mongo_host}:27017/${db_name}`
 }
 
+function success(text){
+    console.log(`\u001b[32m${text}\u001b[37m`)
+}
+function info(text){
+    console.log(`\u001b[33m${text}\u001b[37m`)
+}
+function data(text){
+    console.log(`\u001b[35m${text}\u001b[37m`)
+}
+function error(text){
+    console.log(`\u001b[31merror: ${text}\u001b[37m`)
+}
+
 module.exports = {
     db_name,
-    product_catalog_path,
     category_api,
     catalog_api,
     p_offering_api,
-    mongo_host,
     url,
+    error,
+    info,
+    data,
+    success
   };
