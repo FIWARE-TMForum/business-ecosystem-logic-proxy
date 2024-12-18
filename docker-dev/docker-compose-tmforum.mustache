@@ -1,0 +1,24 @@
+services:
+
+{{#apis}}
+    {{name}}:
+        image: ${TMFORUM_IMAGE_REPO:-quay.io/fiware}/{{image}}:{{tag}}
+        hostname: {{name}}
+        environment:
+            - MICRONAUT_HTTP_SERVICES_NGSI_URL=http://scorpio:9090
+            - MICRONAUT_SERVER_PORT={{port}}
+            - LOGGERS_LEVELS_ROOT=DEBUG
+            - GENERAL_NGSILD_OR_QUERY_VALUE=|
+        ports:
+            - {{port}}:{{port}}
+        networks:
+            - dev-network
+        healthcheck:
+            test: curl --fail -s http://{{name}}:{{port}}/health/liveness || exit 1
+            interval: 30s
+            retries: 15
+
+{{/apis}}
+networks:
+  dev-network:
+    driver: bridge
