@@ -25,14 +25,17 @@ const testUtils = require('../utils');
 
 describe('Store Client', function() {
     const OFFERING_ASSET = 'offering';
+    const SERVICE_ASSET = 'service';
     const PRODUCT_ASSET = 'product';
 
     const ASSETS_URL_MAPPING = {};
     ASSETS_URL_MAPPING[OFFERING_ASSET] = '/charging/api/assetManagement/assets/offeringJob';
+    ASSETS_URL_MAPPING[SERVICE_ASSET] = '/charging/api/assetManagement/assets/validateServiceJob';
     ASSETS_URL_MAPPING[PRODUCT_ASSET] = '/charging/api/assetManagement/assets/validateJob';
 
     const ASSETS_FUNCTION_MAPPING = {};
     ASSETS_FUNCTION_MAPPING[OFFERING_ASSET] = 'validateOffering';
+    ASSETS_FUNCTION_MAPPING[SERVICE_ASSET] = 'validateService';
     ASSETS_FUNCTION_MAPPING[PRODUCT_ASSET] = 'validateProduct';
 
     const config = testUtils.getDefaultConfig();
@@ -87,24 +90,34 @@ describe('Store Client', function() {
         testValidateAssetOk(PRODUCT_ASSET, 'validateProduct', 'create', 'https', done);
     });
 
-    it('should attach product', function(done) {
-        testValidateAssetOk(PRODUCT_ASSET, 'attachProduct', 'attach', 'http', done);
+    // Services
+
+    it('should validate service (HTTP)', function(done) {
+        testValidateAssetOk(SERVICE_ASSET, 'validateService', 'create', 'http', done);
     });
 
-    it('should rollback product creation', function(done) {
-        testValidateAssetOk(PRODUCT_ASSET, 'rollbackProduct', 'rollback_create', 'http', done);
+    it('should validate service (HTTPS)', function(done) {
+        testValidateAssetOk(SERVICE_ASSET, 'validateService', 'create', 'https', done);
     });
 
-    it('should validate product upgrade', function(done) {
-        testValidateAssetOk(PRODUCT_ASSET, 'upgradeProduct', 'upgrade', 'http', done);
+    it('should attach service', function(done) {
+        testValidateAssetOk(SERVICE_ASSET, 'attachService', 'attach', 'http', done);
     });
 
-    it('should notify product upgraded', function(done) {
-        testValidateAssetOk(PRODUCT_ASSET, 'attachUpgradedProduct', 'attach_upgrade', 'http', done);
+    it('should rollback service creation', function(done) {
+        testValidateAssetOk(SERVICE_ASSET, 'rollbackService', 'rollback_create', 'http', done);
     });
 
-    it('should rollback product upgrade', function(done) {
-        testValidateAssetOk(PRODUCT_ASSET, 'rollbackProductUpgrade', 'rollback_upgrade', 'http', done);
+    it('should validate service upgrade', function(done) {
+        testValidateAssetOk(SERVICE_ASSET, 'upgradeService', 'upgrade', 'http', done);
+    });
+
+    it('should notify service upgraded', function(done) {
+        testValidateAssetOk(SERVICE_ASSET, 'attachUpgradedService', 'attach_upgrade', 'http', done);
+    });
+
+    it('should rollback service upgrade', function(done) {
+        testValidateAssetOk(SERVICE_ASSET, 'rollbackServiceUpgrade', 'rollback_upgrade', 'http', done);
     });
 
     // Offerings
@@ -125,7 +138,7 @@ describe('Store Client', function() {
         testValidateAssetOk(OFFERING_ASSET, 'updateOffering', 'update', 'https', done);
     });
 
-    const testValidateProductError = function(assetType, errorStatus, response, expectedErrMsg, done) {
+    const testValidateServiceError = function(assetType, errorStatus, response, expectedErrMsg, done) {
         // Mock the server
         config.endpoints.charging.appSsl = false;
         const serverUrl = 'http' + '://' + config.endpoints.charging.host + ':' + config.endpoints.charging.port;
@@ -170,21 +183,21 @@ describe('Store Client', function() {
 
     it('should not validate product when store returns 400', function(done) {
         const message = 'Invalid field X';
-        testValidateProductError(PRODUCT_ASSET, 400, { error: message }, message, done);
+        testValidateServiceError(PRODUCT_ASSET, 400, { error: message }, message, done);
     });
 
     it('should not validate product when store returns 403', function(done) {
         const message = 'Forbidden';
-        testValidateProductError(PRODUCT_ASSET, 403, { error: message }, message, done);
+        testValidateServiceError(PRODUCT_ASSET, 403, { error: message }, message, done);
     });
 
     it('should not validate product when store returns 409', function(done) {
         const message = 'Confict';
-        testValidateProductError(PRODUCT_ASSET, 409, { error: message }, message, done);
+        testValidateServiceError(PRODUCT_ASSET, 409, { error: message }, message, done);
     });
 
-    it('should not validate product when store cannot validate the product', function(done) {
-        testValidateProductError(
+    it('should not validate product when store cannot validate the service', function(done) {
+        testValidateServiceError(
             PRODUCT_ASSET,
             500,
             'Internal Server Error',
@@ -194,7 +207,7 @@ describe('Store Client', function() {
     });
 
     it('should not validate product when store cannot be accessed', function(done) {
-        testValidateProductError(
+        testValidateServiceError(
             PRODUCT_ASSET,
             null,
             null,
@@ -203,20 +216,57 @@ describe('Store Client', function() {
         );
     });
 
+    // Services
+
+    it('should not validate service when store returns 400', function(done) {
+        const message = 'Invalid field X';
+        testValidateServiceError(SERVICE_ASSET, 400, { error: message }, message, done);
+    });
+
+    it('should not validate service when store returns 403', function(done) {
+        const message = 'Forbidden';
+        testValidateServiceError(SERVICE_ASSET, 403, { error: message }, message, done);
+    });
+
+    it('should not validate service when store returns 409', function(done) {
+        const message = 'Confict';
+        testValidateServiceError(SERVICE_ASSET, 409, { error: message }, message, done);
+    });
+
+    it('should not validate service when store cannot validate the service', function(done) {
+        testValidateServiceError(
+            SERVICE_ASSET,
+            500,
+            'Internal Server Error',
+            'The server has failed validating the service specification',
+            done
+        );
+    });
+
+    it('should not validate service when store cannot be accessed', function(done) {
+        testValidateServiceError(
+            SERVICE_ASSET,
+            null,
+            null,
+            'The server has failed validating the service specification',
+            done
+        );
+    });
+
     // Offerings
 
     it('should not validate offering when store returns 400', function(done) {
         const message = 'Invalid field X';
-        testValidateProductError(OFFERING_ASSET, 400, { error: message }, message, done);
+        testValidateServiceError(OFFERING_ASSET, 400, { error: message }, message, done);
     });
 
     it('should not validate offering when store returns 403', function(done) {
         const message = 'Forbidden';
-        testValidateProductError(OFFERING_ASSET, 403, { error: message }, message, done);
+        testValidateServiceError(OFFERING_ASSET, 403, { error: message }, message, done);
     });
 
     it('should not validate offering when store cannot validate the product', function(done) {
-        testValidateProductError(
+        testValidateServiceError(
             OFFERING_ASSET,
             500,
             'Internal Server Error',
@@ -226,7 +276,7 @@ describe('Store Client', function() {
     });
 
     it('should not validate offering when store cannot be accessed', function(done) {
-        testValidateProductError(OFFERING_ASSET, null, null, 'The server has failed validating the offering', done);
+        testValidateServiceError(OFFERING_ASSET, null, null, 'The server has failed validating the offering', done);
     });
 
     it('should notify the store the creation of a product order', function(done) {
