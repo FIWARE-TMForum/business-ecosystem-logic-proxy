@@ -54,7 +54,7 @@ async function run(){
         success(`unassigned categories gotten, size: ${u_categories.length}`)
 
         info("creating default catalog...")
-        const new_dft_catalog = await createApi("default catalog", catalog_api, {name: "default", category: u_categories, lifecycle: "Launched"})
+        const new_dft_catalog = await createApi("default catalog", catalog_api, {name: "default", category: u_categories, lifecycleStatus: "Launched"})
         success("default catalog created with " +  JSON.stringify(new_dft_catalog, null, 2))
         // axios.delete(catalog_api + "/" + new_dft_catalog.id)
     }
