@@ -3,7 +3,7 @@ const product_catalog_path = "http://host.docker.internal:8632"
 const category_api = `${product_catalog_path}/category`
 const catalog_api = `${product_catalog_path}/catalog`
 const p_offering_api = `${product_catalog_path}/productOffering`
-const mongo_host = "host.docker.internal" //mongo
+const mongo_host = "mongo" //manual testing use: host.docker.internal
 let url
 if (process.env.BAE_LP_MONGO_USER != null && process.env.BAE_LP_MONGO_USER.length > 0) {
     url = `mongodb://${process.env.BAE_LP_MONGO_USER}:${process.env.BAE_LP_MONGO_PASS}@mongo:27017/${db_name}?authSource=${db_name}`
