@@ -32,6 +32,7 @@ const authModule = require('./lib/auth');
 const uuidv4 = require('uuid').v4;
 const certsValidator = require('./lib/certificate').certsValidator
 const buildRequestJWT = require('./lib/strategies/vc').buildRequestJWT
+const { indexes } = require('./lib/indexes')
 
 const debug = !(process.env.NODE_ENV == 'production');
 
@@ -368,8 +369,12 @@ app.all(config.logOutPath, function(req, res) {
 });
 
 // Config endpoint
+const fetchData =async () => { 
+    result = await indexes.search('defaultcatalog', {})
+    return (result.length === 0 || result.length > 1)? '' : result[0].default_id
+}
 
-app.get('/config', (_, res) => {
+app.get('/config', async (_, res) => {
     res.send({
         siop: {
             enabled: config.siop.enabled,
@@ -392,7 +397,8 @@ app.get('/config', (_, res) => {
         domeAbout: config.domeAbout,
         domeRegister: config.domeRegister,
         domePublish: config.domePublish,
-        purchaseEnabled: config.purchaseEnabled
+        purchaseEnabled: config.purchaseEnabled,
+        defaultId: await fetchData()
     })
 })
 
