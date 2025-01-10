@@ -188,7 +188,7 @@
         "_ticketing": "Ticketing System",
         "_change_session": "Change session",
         "_admin": "Administration",
-        "_publish": "Publish your service",
+        "_publish": "Publish your offerings",
         "_register": "Register",
         "_guidelines": "Guidelines",
         "_onboarding": "Onboarding",    
@@ -450,7 +450,7 @@
         "_summary": "Product's summary",
         "_create_prod": "Create product",
         "_file_res": "File restrictions",
-        "_restrictions": "File size must be under 3MB. File names can only include alphabetical characters (A-Z, a-z) and a limited set of symbols, such as underscores (_), hyphens (-), and periods (.). "
+        "_restrictions": "File size must be under 3MB. File names can only include alphabetical characters (A-Z, a-z), numbers (0-9) and a limited set of symbols, such as underscores (_), hyphens (-), and periods (.). "
     },
     "UPDATE_PROD_SPEC":{
         "_back": "Back",

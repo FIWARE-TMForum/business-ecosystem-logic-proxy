@@ -39,6 +39,14 @@ const party = (function() {
             });
         }
 
+        if(typeof req.body != "undefined" ) {
+            // remove id and href from patches, since they would be rejected by tmf
+            let newBody =  JSON.parse(req.body);
+            delete newBody.id
+            delete newBody.href
+            utils.updateBody(req, newBody)
+        }
+   
         const individualsPattern = new RegExp(
             '^/' + config.endpoints.party.path + '/(individual|organization)(/([^/]*))?$'
         );
