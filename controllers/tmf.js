@@ -180,7 +180,7 @@ function tmf() {
 			utils.log(logger, 'error', req, 'Proxy error: ' + err.message);
 
 			if (err.response) {
-                res.status(error.response.status).json(error.response.data)
+                res.status(err.response.status).json(err.response.data)
             } else {
                 res.status(504).json({ error: 'Service unreachable' })
             }

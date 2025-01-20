@@ -32,6 +32,7 @@ const authModule = require('./lib/auth');
 const uuidv4 = require('uuid').v4;
 const certsValidator = require('./lib/certificate').certsValidator
 const buildRequestJWT = require('./lib/strategies/vc').buildRequestJWT
+const simulator = require('./controllers/simulator').simulator();
 
 const debug = !(process.env.NODE_ENV == 'production');
 
@@ -584,6 +585,10 @@ for (var p in config.publicPaths) {
     logger.debug('Public Path', config.publicPaths[p]);
     app.all(config.proxyPrefix + '/' + config.publicPaths[p], tmf.public);
 }
+
+//
+// BILLING ENGINE
+app.post('/billing/order', authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, simulator.simulate)
 
 //
 // Access to TMForum APIs
