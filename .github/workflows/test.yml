@@ -3,11 +3,11 @@ name: Tests
 on:
   push:
     branches:
-      - master
+      - feat/extended-pricing
 
   pull_request:
     branches:
-      - master
+      - feat/extended-pricing
 
 jobs:
   test:
@@ -53,8 +53,8 @@ jobs:
           context: .
           file: ./docker/Dockerfile
           tags: |
-            fiware/biz-ecosystem-logic-proxy:master
-          push: ${{ github.ref == 'refs/heads/master' }}
+            fiware/biz-ecosystem-logic-proxy:10.0.0-rc1
+          push: ${{ github.ref == 'refs/heads/feat/extended-pricing' }}
 
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
