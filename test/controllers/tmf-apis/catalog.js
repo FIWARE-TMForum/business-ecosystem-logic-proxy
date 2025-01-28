@@ -24,6 +24,7 @@ const nock = require('nock');
 const proxyquire = require('proxyquire');
 const md5 = require('blueimp-md5');
 const testUtils = require('../../utils');
+const { haveSameStatus } = require('../../../lib/tmfUtils');
 
 // ERRORS
 const INVALID_METHOD = 'The HTTP method DELETE is not allowed in the accessed API';
@@ -75,10 +76,16 @@ const UPGRADE_ASSET_NOT_PROVIDED = 'To upgrade product specifications it is requ
 const UPGRADE_VERSION_NOT_PROVIDED = 'Product specification characteristics only can be updated for upgrading digital products';
 const UPGRADE_CUSTOM_CHAR_MOD = 'It is not allowed to update custom characteristics during a product upgrade';
 const INVALID_NON_DIGITAL_UPGRADE = 'Product spec characteristics cannot be updated';
+const INVALID_S_LAUNCH = 'It is not allowed to launch a product spec without launching service spec previously'
+const INVALID_R_LAUNCH = 'It is not allowed to launch a product spec without launching resource spec previously'
+const INVALID_S_API = 'Error getting service specification through the API'
+const INVALID_R_API = 'Error getting resource specification through the API'
 
 describe('Catalog API', function() {
 	var config = testUtils.getDefaultConfig();
 	const basepath = '/catalog'
+	const serviceLaunchFail= 0
+	const resourceLaunchFail= 1
 	var getCatalogApi = function(storeClient, tmfUtils, utils, rssClient, indexes, async) {
 		if (!rssClient) {
 			rssClient = {};
@@ -2222,7 +2229,11 @@ describe('Catalog API', function() {
 		errorStatus,
 		errorMsg,
 		done,
-		storeClient
+		storeClient,
+		launched,
+		queryRef,
+		launchError,
+		launchApiError
 	) {
 		var checkRoleMethod = jasmine.createSpy();
 		checkRoleMethod.and.returnValue(true);
@@ -2234,6 +2245,34 @@ describe('Catalog API', function() {
 				return true;
 			}
 		};
+		if(launched !== undefined && launched !== null){
+			tmfUtils.haveSameStatus = (function() {
+				// if launched is false, all method calls except the first one are false
+				let callCount = 0
+				return function(){
+					if (launched){
+						return launched
+					}
+					return !(callCount++ === launchError)
+				}
+			})()
+		}
+		let serviceParam = null
+		let resourceParam = null
+		if (!!queryRef){
+			tmfUtils.refsToQuery = () => queryRef
+			const serv_prt = config.endpoints.service.appSsl ? 'https' : 'http';
+			const serv_url = serv_prt+ '://' + config.endpoints.service.host + ':' + config.endpoints.service.port;
+			const res_prt = config.endpoints.resource.appSsl ? 'https' : 'http';
+			const res_url = res_prt+ '://' + config.endpoints.resource.host + ':' + config.endpoints.resource.port;
+
+			const serviceStatus = (launchApiError !== serviceLaunchFail)? 200 : 500
+			serviceParam = nock(serv_url).get('/serviceSpecification').query({id: queryRef, fields: 'lifecycleStatus'}).reply(serviceStatus, [])
+			if (launchError !== serviceLaunchFail && launchApiError !== serviceLaunchFail){
+				const resourceStatus = (launchApiError !== resourceLaunchFail)? 200 : 500
+				resourceParam = nock(res_url).get('/resourceSpecification').query({id: queryRef, fields: 'lifecycleStatus'}).reply(resourceStatus, [])
+			}
+		}
 
 		var utils = {
 			validateLoggedIn: validateLoggedOk,
@@ -2286,6 +2325,12 @@ describe('Catalog API', function() {
 		};
 
 		catalogApi.checkPermissions(req, function(err) {
+			if (serviceParam !== null){
+				serviceParam.done()
+			}
+			if(resourceParam !== null){
+				resourceParam.done()
+			}
 			if (errorStatus && errorMsg) {
 				expect(err).not.toBe(null);
 				expect(err.status).toBe(errorStatus);
@@ -2300,7 +2345,7 @@ describe('Catalog API', function() {
 
 	// PRODUCTS
 
-	var testChangeProductStatus = function(productBody, offeringsInfo, errorStatus, errorMsg, done, status) {
+	var testChangeProductStatus = function(productBody, offeringsInfo, errorStatus, errorMsg, done, status, launched, queryref, launchError, launchApiError) {
 		var productId = '7';
 		var productPath = '/productSpecification/' + productId;
 		var offeringsPath = '/productOffering?productSpecification.id=' + productId;
@@ -2314,7 +2359,9 @@ describe('Catalog API', function() {
 		var prevBody = {
 			lifecycleStatus: bodyStatus,
 			relatedParty: previousProductBody.relatedParty,
-			validFor: {}
+			validFor: {},
+			serviceSpecification: [],
+			resourceSpecification: []
 		};
 		testChangeProductCatalogStatus(
 			productPath,
@@ -2324,7 +2371,12 @@ describe('Catalog API', function() {
 			offeringsInfo,
 			errorStatus,
 			errorMsg,
-			done
+			done,
+			null,
+			launched,
+			queryref,
+			launchError,
+			launchApiError
 		);
 	};
 
@@ -2383,7 +2435,7 @@ describe('Catalog API', function() {
 		testChangeProductStatus(productBody, offeringsInfo, null, null, done);
 	});
 
-	it('should allow launch a product', function(done) {
+	it('should allow launch a product spec', function(done) {
 		var productBody = JSON.stringify({
 			lifecycleStatus: 'launched'
 		});
@@ -2393,7 +2445,59 @@ describe('Catalog API', function() {
 			offerings: []
 		};
 
-		testChangeProductStatus(productBody, offeringsInfo, null, null, done);
+		testChangeProductStatus(productBody, offeringsInfo, null, null, done, null, true, 'n1,n2');
+	});
+
+	it('should not allow launch a product spec when resource specs do not have the same status as their parent', function(done) {
+		var productBody = JSON.stringify({
+			lifecycleStatus: 'launched'
+		});
+
+		var offeringsInfo = {
+			requestStatus: 200,
+			offerings: []
+		};
+
+		testChangeProductStatus(productBody, offeringsInfo, 409, INVALID_R_LAUNCH, done, null, false, 'n1,n2', resourceLaunchFail);
+	});
+
+	it('should not allow launch a product spec when service specs do not have the same status as their parent', function(done) {
+		var productBody = JSON.stringify({
+			lifecycleStatus: 'launched'
+		});
+
+		var offeringsInfo = {
+			requestStatus: 200,
+			offerings: []
+		};
+
+		testChangeProductStatus(productBody, offeringsInfo, 409, INVALID_S_LAUNCH, done, null, false, 'n1,n2', serviceLaunchFail);
+	});
+
+	it('should not allow launch a product spec when resource spec API fails retrieving data', function(done) {
+		var productBody = JSON.stringify({
+			lifecycleStatus: 'launched'
+		});
+
+		var offeringsInfo = {
+			requestStatus: 200,
+			offerings: []
+		};
+
+		testChangeProductStatus(productBody, offeringsInfo, 400, INVALID_R_API, done, null, false, 'n1,n2', null, resourceLaunchFail);
+	});
+
+	it('should not allow launch a product spec when service spec API fails retrieving data', function(done) {
+		var productBody = JSON.stringify({
+			lifecycleStatus: 'launched'
+		});
+
+		var offeringsInfo = {
+			requestStatus: 200,
+			offerings: []
+		};
+
+		testChangeProductStatus(productBody, offeringsInfo, 400, INVALID_S_API, done, null, false, 'n1,n2', null, serviceLaunchFail);
 	});
 
 	// Retire

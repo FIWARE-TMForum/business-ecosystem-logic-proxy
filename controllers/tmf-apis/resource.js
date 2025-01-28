@@ -120,6 +120,28 @@ const resource = (function (){
         }
     };
 
+    const getProductSpecs = function (ref, fields, callback){
+		const endpoint = config.endpoints.catalog
+        const specPath = `/productSpecification?resourceSpecification.id=${ref}&fields=${fields}`
+        const uri = utils.getAPIURL(
+            endpoint.appSsl,
+            endpoint.host,
+            endpoint.port,
+            specPath
+        );
+        axios.get(uri).then((response) => {
+            callback(null, {
+                status: response.status,
+                body: response.data
+            });
+
+        }).catch((err) => {
+            callback({
+                status: err.status
+            });
+        })
+    }
+
     const validateUpdate = function(req, callback) {
 		// Check the lifecycle updates
 		const body = req.parsedBody
@@ -132,8 +154,36 @@ const resource = (function (){
 				message: `Cannot transition from lifecycle status ${prevBody.lifecycleStatus} to ${body.lifecycleStatus}`
 			})
 		}
+        if (!!prevBody.lifecycleStatus && prevBody.lifecycleStatus.toLowerCase() !== 'retired' && 
+		!!body.lifecycleStatus && body.lifecycleStatus.toLowerCase() === 'retired' ){
+            getProductSpecs(prevBody.id, 'lifecycleStatus', function (err, response){
+                if(err) {
+					callback(err)
+				} else {
+                    const data = response.body
+                    let allRetObs = true
+					for (let prodSpec of data){
+						if(prodSpec.lifecycleStatus.toLowerCase() !== 'retired' && prodSpec.lifecycleStatus.toLowerCase() !== 'obsolete'){
+							allRetObs = false
+							break;
+						}
+					}
+					if(allRetObs){
+						callback(null)
+					}
+					else {
+						callback({
+							status: 409,
+							message: `Cannot retire a resource spec without retiring all product specs linked with it`
+						})
+					}
+                }
+            })
+        }
+        else{
+            callback(null)
+        }
 
-		callback(null)
 	}
 
     const validateOwnerSellerPost = function(req, callback) {

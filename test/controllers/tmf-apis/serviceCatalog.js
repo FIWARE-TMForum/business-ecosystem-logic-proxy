@@ -20,6 +20,7 @@
 const nock = require('nock');
 const proxyquire = require('proxyquire');
 const testUtils = require('../../utils');
+const RETIRE_ERROR = 'Cannot retire a service spec without retiring all product specs linked with it'
 
 describe('ServiceSpecification API', function() {
 
@@ -44,6 +45,7 @@ describe('ServiceSpecification API', function() {
 	}
 	const protocol = config.endpoints.service.appSsl ? 'https' : 'http';
 	const url = protocol + '://' + config.endpoints.service.host + ':' + config.endpoints.service.port;
+	const prodSpecUrl = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
 
 	beforeEach(function() {
 		nock.cleanAll();
@@ -233,7 +235,7 @@ describe('ServiceSpecification API', function() {
 		})
 
 		describe('update', () => {
-			function testUpdateService(userInfo, serviceId, prevBody, body, isOwner, errMsg, done) {
+			function testUpdateService(userInfo, serviceId, prevBody, body, isOwner, errMsg, done, extraNock) {
 				const checkRoleMethod = jasmine.createSpy();
 				checkRoleMethod.and.returnValue(isOwner);
 				const checkOwnerMethod = jasmine.createSpy();
@@ -274,6 +276,9 @@ describe('ServiceSpecification API', function() {
 					} else {
 						expect(err).toEqual(errMsg)
 					}
+					if (extraNock){
+						extraNock.done()
+					}
 
 					done()
 				})
@@ -290,6 +295,40 @@ describe('ServiceSpecification API', function() {
 				}, {
 					'lifecycleStatus': 'Launched'
 				}, true, null, done)
+			})
+
+			it('should allow to retire service specification', (done) => {
+				const prodSpecMock = nock(prodSpecUrl).get('/productSpecification')
+				.query({'serviceSpecification.id':'urn:service-spec:1', fields:'lifecycleStatus'})
+				.reply(200, [{id: 'prod', lifecycleStatus: 'Retired'}])
+				testUpdateService(seller, 'urn:service-spec:1', {
+					id: 'urn:service-spec:1',
+					lifecycleStatus: 'Launched',
+					relatedParty: [{
+						id: 'test',
+						role: 'owner'
+					}]
+				}, {
+					lifecycleStatus: 'Retired'
+				}, true, null, done, prodSpecMock)
+			})
+
+			it('should raise 409 if product specs linked with the service spec are not retired previously', (done) => {
+				const prodSpecMock = nock(prodSpecUrl).get('/productSpecification')
+				.query({'serviceSpecification.id':'urn:service-spec:1', fields:'lifecycleStatus'})
+				.reply(200, [{id: 'prod', lifecycleStatus: 'Active'}])
+				testUpdateService(seller, 'urn:service-spec:1', {
+					id: 'urn:service-spec:1',
+					lifecycleStatus: 'Launched',
+					relatedParty: [{
+						id: 'test',
+						role: 'owner'
+					}]
+				}, {
+					lifecycleStatus: 'Retired'
+				}, true, {
+					status: 409,
+					message: RETIRE_ERROR}, done, prodSpecMock)
 			})
 
 			it('should raise a 403 if the user is not authorized to update', (done) => {
