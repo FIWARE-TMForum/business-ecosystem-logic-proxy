@@ -25,7 +25,7 @@ const logger = require('./../lib/logger').logger.getLogger('TMF')
 
 function simulator() {
     const simulate = (req, res) => {
-        const targetUrl = config.billingEngineUrl;
+        let targetUrl = config.billingEngineUrl;
 
         if (!targetUrl) {
             logger.error('TARGET_URL is not defined');
