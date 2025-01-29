@@ -34,7 +34,7 @@ function simulator() {
 
         axios({
             method: req.method,
-            url: targetUrl + '/price/order',
+            url: targetUrl + 'billing/previewPrice',
             data: req.body,
             headers: {
                 'Content-Type': 'application/json'
