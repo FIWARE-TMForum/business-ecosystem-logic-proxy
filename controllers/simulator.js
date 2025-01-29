@@ -32,6 +32,10 @@ function simulator() {
             return res.status(500).send('Internal Server Error');
         }
 
+        if (!targetUrl.endsWith('/')) {
+            targetUrl += '/';
+        }
+
         axios({
             method: req.method,
             url: targetUrl + 'billing/previewPrice',
