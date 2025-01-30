@@ -53,7 +53,8 @@ function simulator() {
         body.relatedParty.push({
             id: req.user.partyId,
             role: CUSTOMER,
-            href: req.user.partyId
+            href: req.user.partyId,
+            '@referredType': 'organization'
         });
 
         // Only one item is supported in the billing preview
@@ -88,7 +89,8 @@ function simulator() {
                     body.relatedParty.push({
                         id: element.id,
                         role: SELLER,
-                        href: element.id
+                        href: element.id,
+                        '@referredType': 'organization'
                     })
                 }
             });
