@@ -19,12 +19,16 @@
 
 const axios = require('axios')
 const config = require('./../config')
+const utils = require('./../lib/utils')
 
 
 const logger = require('./../lib/logger').logger.getLogger('TMF')
 
 function simulator() {
-    const simulate = (req, res) => {
+    const CUSTOMER = 'Customer';
+    const SELLER = 'Seller';
+
+    const simulate = async (req, res) => {
         let targetUrl = config.billingEngineUrl;
 
         if (!targetUrl) {
@@ -36,10 +40,69 @@ function simulator() {
             targetUrl += '/';
         }
 
+        // Related parties need to be included in the request body
+        let body;
+        try {
+            body = JSON.parse(req.body);
+        } catch (error) {
+            return res.status(400).send('Invalid JSON body');
+        }
+
+        body.relatedParty = [];
+
+        body.relatedParty.push({
+            id: req.user.partyId,
+            role: CUSTOMER,
+            href: req.user.partyId
+        });
+
+        // Only one item is supported in the billing preview
+        try {
+            const offeringRef = body.productOrderItem[0].productOffering.id
+            // Get the offering
+            const offeringUrl = utils.getAPIURL(
+                config.endpoints.catalog.appSsl,
+                config.endpoints.catalog.host,
+                config.endpoints.catalog.port,
+                `/productOffering/${offeringRef}`)
+
+            let resp = await axios({
+                method: 'GET',
+                url: offeringUrl
+            })
+
+            const prodRef = resp.data.productSpecification.id
+            const productUrl = utils.getAPIURL(
+                config.endpoints.catalog.appSsl,
+                config.endpoints.catalog.host,
+                config.endpoints.catalog.port,
+                `/productSpecification/${prodRef}`)
+
+            let prodResp = await axios({
+                method: 'GET',
+                url: productUrl
+            })
+
+            prodResp.data.relatedParty.forEach(element => {
+                if (element.role.toLowerCase() == 'owner') {
+                    body.relatedParty.push({
+                        id: element.id,
+                        role: SELLER,
+                        href: element.id
+                    })
+                }
+            });
+        } catch (error) {
+            console.log(error)
+            return res.status(400).send('Error retrieving parties');
+        }
+        
+        console.log(body)
+
         axios({
             method: req.method,
             url: targetUrl + 'billing/previewPrice',
-            data: req.body,
+            data: body,
             headers: {
                 'Content-Type': 'application/json'
             }
