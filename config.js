@@ -219,6 +219,11 @@ config.endpoints = {
         port: '8638',
         appSsl: false
     },
+    billing: {
+        path: 'billing',
+        host: 'host.docker.internal',
+        port: '8640'
+    },
     sla: {
         path: 'SLAManagement',
         host: 'localhost',
