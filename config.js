@@ -515,6 +515,15 @@ if (!!process.env.BAE_LP_ENDPOINT_USAGE_SECURED) {
 	config.endpoints.usage.appSsl = process.env.BAE_LP_ENDPOINT_USAGE_SECURED == 'true';
 }
 
+// Customer Bill
+config.endpoints.billing.path = process.env.BAE_LP_ENDPOINT_CUSTOMER_BILL_PATH || config.endpoints.billing.path;
+config.endpoints.billing.port = process.env.BAE_LP_ENDPOINT_CUSTOMER_BILL_PORT || config.endpoints.billing.port;
+config.endpoints.billing.host = process.env.BAE_LP_ENDPOINT_CUSTOMER_BILL_HOST || config.endpoints.billing.host;
+
+if (!!process.env.BAE_LP_ENDPOINT_CUSTOMER_BILL_SECURED) {
+	config.endpoints.billing.appSsl = process.env.BAE_LP_ENDPOINT_CUSTOMER_BILL_SECURED == 'true';
+}
+
 // ======
 // MongoDB Config
 config.mongoDb = config.mongoDb || {};
