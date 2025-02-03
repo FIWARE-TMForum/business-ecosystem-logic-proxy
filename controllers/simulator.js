@@ -99,7 +99,7 @@ function simulator() {
             return res.status(400).send('Error retrieving parties');
         }
         
-        console.log(body)
+        console.log(JSON.stringify(body))
 
         axios({
             method: req.method,
