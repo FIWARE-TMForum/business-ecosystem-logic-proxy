@@ -360,7 +360,8 @@
       "_pending": "Pending",
       "_status": "Status",
       "_name": "Invoice num.",
-      "_type": "Type"
+      "_type": "Type",
+      "_product": "Product ID"
     },
     "CREATE_CATALOG": {
         "_back": "Back",
