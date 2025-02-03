@@ -359,7 +359,8 @@
       "_billed": "Billed",
       "_pending": "Pending",
       "_status": "Status",
-      "_name": "Name"
+      "_name": "Invoice num.",
+      "_type": "Type"
     },
     "CREATE_CATALOG": {
         "_back": "Back",

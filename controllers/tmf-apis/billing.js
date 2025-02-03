@@ -51,7 +51,41 @@ const billing = (function() {
     };
     
     const executePostValidation = function(response, callback) {
-        callback(null);
+        // Filter the result
+        if (response.method == 'GET') {
+            let respBody = response.body.filter((rate) => {
+                let partyId = response.query["relatedParty.id"]
+                let role = response.query["relatedParty.role"]
+                let filter = false
+
+                if (rate.relatedParty) {
+                    console.log('==============')
+                    console.log(rate.relatedParty)
+                    if (!Array.isArray(rate.relatedParty)) {
+                        rate.relatedParty = [rate.relatedParty]
+                    }
+
+                    rate.relatedParty.forEach((party) => {
+                        console.log(party.id)
+                        console.log(partyId)
+                        console.log(party.role)
+                        console.log(role)
+
+                        if (party.id == partyId && party.role == role) {
+                            filter = true
+                        }
+                    })
+                }
+                return filter
+            })
+
+            console.log(respBody)
+
+            utils.updateResponseBody(response, respBody);
+            callback(null);
+        } else {
+            callback(null);
+        }
     };
 
     const handleAPIError = function(res, callback) {

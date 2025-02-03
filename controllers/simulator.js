@@ -40,6 +40,9 @@ function simulator() {
             targetUrl += '/';
         }
 
+        //let simUrl = targetUrl + 'billing/previewPrice'
+        let simUrl = targetUrl + 'charging/api/orderManagement/orders/preview/'
+
         // Related parties need to be included in the request body
         let body;
         try {
@@ -103,7 +106,7 @@ function simulator() {
 
         axios({
             method: req.method,
-            url: targetUrl + 'billing/previewPrice',
+            url: simUrl,
             data: body,
             headers: {
                 'Content-Type': 'application/json'
