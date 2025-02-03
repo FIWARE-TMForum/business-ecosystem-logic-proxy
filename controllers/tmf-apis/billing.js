@@ -81,6 +81,8 @@ const billing = (function() {
 
             console.log(respBody)
 
+            // Sort the response body
+            respBody.sort((a, b) => new Date(b.date) - new Date(a.date))
             utils.updateResponseBody(response, respBody);
             callback(null);
         } else {

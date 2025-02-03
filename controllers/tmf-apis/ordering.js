@@ -581,6 +581,8 @@ const ordering = (function() {
                 callback(null);
             }
         } else {
+            orderings.sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate))
+
             utils.updateResponseBody(req, orderings);
             callback(null);
         }
