@@ -121,7 +121,7 @@ const resource = (function (){
 	};
 
 	const getProductSpecs = function (ref, fields, callback){
-	const endpoint = config.endpoints.catalog
+		const endpoint = config.endpoints.catalog
 		const specPath = `/productSpecification?resourceSpecification.id=${ref}&fields=${fields}`
 		const uri = utils.getAPIURL(
 			endpoint.appSsl,
