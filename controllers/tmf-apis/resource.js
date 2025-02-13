@@ -155,7 +155,7 @@ const resource = (function (){
 			})
 		}
         if (!!prevBody.lifecycleStatus && prevBody.lifecycleStatus.toLowerCase() !== 'retired' && 
-		!!body.lifecycleStatus && body.lifecycleStatus.toLowerCase() === 'retired' ){
+		!!body.lifecycleStatus && body.lifecycleStatus.toLowerCase() === 'retired'){
             getProductSpecs(prevBody.id, 'lifecycleStatus', function (err, response){
                 if(err) {
 					callback(err)

@@ -2267,8 +2267,10 @@ describe('Catalog API', function() {
 			const res_url = res_prt+ '://' + config.endpoints.resource.host + ':' + config.endpoints.resource.port;
 
 			const serviceStatus = (launchApiError !== serviceLaunchFail)? 200 : 500
+			previousAssetBody.serviceSpecification.push(queryRef) //not important, but it needs to be filled with smth
 			serviceParam = nock(serv_url).get('/serviceSpecification').query({id: queryRef, fields: 'lifecycleStatus'}).reply(serviceStatus, [])
 			if (launchError !== serviceLaunchFail && launchApiError !== serviceLaunchFail){
+				previousAssetBody.resourceSpecification.push(queryRef)
 				const resourceStatus = (launchApiError !== resourceLaunchFail)? 200 : 500
 				resourceParam = nock(res_url).get('/resourceSpecification').query({id: queryRef, fields: 'lifecycleStatus'}).reply(resourceStatus, [])
 			}
@@ -2345,7 +2347,7 @@ describe('Catalog API', function() {
 
 	// PRODUCTS
 
-	var testChangeProductStatus = function(productBody, offeringsInfo, errorStatus, errorMsg, done, status, launched, queryref, launchError, launchApiError) {
+	var testChangeProductStatus = function(productBody, offeringsInfo, errorStatus, errorMsg, done, status, launched, queryRef, launchError, launchApiError) {
 		var productId = '7';
 		var productPath = '/productSpecification/' + productId;
 		var offeringsPath = '/productOffering?productSpecification.id=' + productId;
@@ -2374,7 +2376,7 @@ describe('Catalog API', function() {
 			done,
 			null,
 			launched,
-			queryref,
+			queryRef,
 			launchError,
 			launchApiError
 		);

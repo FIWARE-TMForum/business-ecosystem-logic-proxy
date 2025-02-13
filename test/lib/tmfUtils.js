@@ -562,7 +562,7 @@ describe('TMF Utils', function() {
         });
     });
 
-    describe('Method haveSameStatus ', function() {
+    describe('Method haveSameStatus', function() {
 
         it('should return true if all elements inside the array have the specified status', function(){
             const tmfUtils = getTmfUtils();
@@ -575,7 +575,7 @@ describe('TMF Utils', function() {
             expect(result).toBe(true)
         })
 
-        it('should return true if all elements inside the array have the specified status', function(){
+        it('should return false if all elements inside the array have different status', function(){
             const tmfUtils = getTmfUtils();
             const array=[]
             for(let i=0; i<5; i++){

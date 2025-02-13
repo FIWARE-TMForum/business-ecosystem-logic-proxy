@@ -561,48 +561,60 @@ const catalog = (function() {
         ){
             async.series([
                 function(callback){
-                    getDependencySpecs(config.endpoints.service , 'serviceSpecification', prevBody.serviceSpecification, 'lifecycleStatus',
-                        function (err, response){
-                            if (err){
-                                return callback({
-                                    status: 400,
-                                    message: 'Error getting service specification through the API'
-                                })
-                            }
-                            else {
-                                const serviceSpecification = response.body
-                                if(!tmfUtils.haveSameStatus('launched', serviceSpecification)){
+                    servSpecCheck = (newBody.serviceSpecification)? newBody.serviceSpecification : prevBody.serviceSpecification
+                    if (!!servSpecCheck && servSpecCheck.length > 0){
+                        getDependencySpecs(config.endpoints.service , 'serviceSpecification', servSpecCheck, 'lifecycleStatus',
+                            function (err, response){
+                                if (err){
                                     return callback({
-                                        status: 409,
-                                        message: 'It is not allowed to launch a product spec without launching service spec previously'
+                                        status: 400,
+                                        message: 'Error getting service specification through the API'
                                     })
                                 }
-                                callback(null)
+                                else {
+                                    const serviceSpecification = response.body
+                                    if(!tmfUtils.haveSameStatus('launched', serviceSpecification)){
+                                        return callback({
+                                            status: 409,
+                                            message: 'It is not allowed to launch a product spec without launching service spec previously'
+                                        })
+                                    }
+                                    callback(null)
+                                }
                             }
-                        }
-                    )
+                        )
+                    }
+                    else {
+                        callback(null)
+                    }
                 },
                 function(callback){
-                    getDependencySpecs(config.endpoints.resource, 'resourceSpecification', prevBody.resourceSpecification, 'lifecycleStatus',
-                        function (err, response){
-                            if (err){
-                                return callback({
-                                    status: 400,
-                                    message: 'Error getting resource specification through the API'
-                                })
-                            }
-                            else {
-                                const resourceSpecification = response.body
-                                if(!tmfUtils.haveSameStatus('launched', resourceSpecification)){
+                    resSpecCheck = (newBody.resourceSpecification)? newBody.resourceSpecification : prevBody.resourceSpecification
+                    if(!!resSpecCheck && resSpecCheck.length >0){
+                        getDependencySpecs(config.endpoints.resource, 'resourceSpecification', resSpecCheck, 'lifecycleStatus',
+                            function (err, response){
+                                if (err){
                                     return callback({
-                                        status: 409,
-                                        message: 'It is not allowed to launch a product spec without launching resource spec previously'
+                                        status: 400,
+                                        message: 'Error getting resource specification through the API'
                                     })
                                 }
-                                callback(null)
+                                else {
+                                    const resourceSpecification = response.body
+                                    if(!tmfUtils.haveSameStatus('launched', resourceSpecification)){
+                                        return callback({
+                                            status: 409,
+                                            message: 'It is not allowed to launch a product spec without launching resource spec previously'
+                                        })
+                                    }
+                                    callback(null)
+                                }
                             }
-                        }
-                    )
+                        )
+                    }
+                    else {
+                        callback(null)
+                    }
                 }
             ], callback)
         }
