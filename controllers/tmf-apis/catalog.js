@@ -535,78 +535,16 @@ const catalog = (function() {
 
     const validateProductUpdate = function(req, prevBody, newBody, callback) {
         if (
-            (!!newBody.isBundle || !!newBody.bundledProductSpecification) &&
+            (!!newBody.isBundle || !!newBody.serviceSpecification) &&
             prevBody.lifecycleStatus.toLowerCase() != 'active'
         ) {
             return callback({
                 status: 422,
                 message:
-                    'It is not allowed to update bundle related attributes (isBundle, bundledProductSpecification) in launched products'
+                    'It is not allowed to update bundle related attributes (isBundle, serviceSpecification) in launched products'
             });
         }
-
-        // Check upgrade problems if the product is a digital one
-        if (tmfUtils.isDigitalProduct(prevBody.productSpecCharacteristic)) {
-            if (
-                !!newBody.version &&
-                !tmfUtils.isDigitalProduct(newBody.productSpecCharacteristic) &&
-                newBody.version != prevBody.version
-            ) {
-                // Trying to upgrade the product without providing new asset info
-                return callback({
-                    status: 422,
-                    message: 'To upgrade product specifications it is required to provide new asset info'
-                });
-            }
-
-            if (
-                (!!newBody.version && newBody.version == prevBody.version) ||
-                (typeof newBody.version === 'undefined' &&
-                    !!newBody.productSpecCharacteristic &&
-                    !equal(newBody.productSpecCharacteristic, prevBody.productSpecCharacteristic))
-            ) {
-                return callback({
-                    status: 422,
-                    message: 'Product specification characteristics only can be updated for upgrading digital products'
-                });
-            }
-
-            if (
-                !!newBody.version &&
-                newBody.version != prevBody.version &&
-                tmfUtils.isDigitalProduct(newBody.productSpecCharacteristic) &&
-                !tmfUtils.equalCustomCharacteristics(
-                    newBody.productSpecCharacteristic,
-                    prevBody.productSpecCharacteristic
-                )
-            ) {
-                return callback({
-                    status: 422,
-                    message: 'It is not allowed to update custom characteristics during a product upgrade'
-                });
-            }
-
-            if (!!newBody.version && newBody.version != prevBody.version && !!newBody.productSpecCharacteristic) {
-                return storeClient.upgradeProduct(
-                    {
-                        id: prevBody.id,
-                        version: newBody.version,
-                        productSpecCharacteristic: newBody.productSpecCharacteristic
-                    },
-                    req.user,
-                    callback
-                );
-            }
-        } /*else if (
-            !!newBody.productSpecCharacteristic &&
-            !equal(newBody.productSpecCharacteristic, prevBody.productSpecCharacteristic)
-        ) {
-            return callback({
-                status: 422,
-                message: 'Product spec characteristics cannot be updated'
-            });
-        }*/
-
+        
         return callback(null);
     };
 
@@ -616,7 +554,7 @@ const catalog = (function() {
             return callback(null);
         }
 
-        // Check that al least two products have been included
+        // Check that at least two products have been included
         if (!productSpec.bundledProductSpecification || productSpec.bundledProductSpecification.length < 2) {
             return callback({
                 status: 422,
@@ -793,7 +731,17 @@ const catalog = (function() {
                         } else {
                             // Check that the product specification contains a valid product
                             // according to the charging backend
-                            storeClient.validateProduct(body, req.user, callback);
+                            if (body.serviceSpecification && body.serviceSpecification.length > 0){
+                                if(body.isBundle){
+                                    callback({
+                                        status: 422,
+                                        message: 'bundles cannot contain service specifications'
+                                    })
+                                }
+                                storeClient.validateProduct(body, req.user, callback);
+                            }
+                            else
+                                callback(null)
                         }
                     });
                 });
@@ -1233,14 +1181,7 @@ const catalog = (function() {
         // Attach product spec info for product creation request
         let body;
 
-        if (req.method == 'POST' && productsPattern.test(req.apiUrl)) {
-            body = req.body;
-            storeClient.attachProduct(
-                body,
-                req.user,
-                callback
-            );
-        } else if (req.method == 'POST' && offeringsPattern.test(req.apiUrl)) {
+        if (req.method == 'POST' && offeringsPattern.test(req.apiUrl)) {
             let catalog = '';
             body = req.body
 
@@ -1268,16 +1209,7 @@ const catalog = (function() {
                     callback
                 );
             })
-        } else if (req.method == 'PATCH' && productPattern.test(req.apiUrl)) {
-            body = req.reqBody;
-
-            handleUpgradePostAction(
-                req,
-                body,
-                storeClient.attachUpgradedProduct,
-                callback
-            );
-        } else if (req.method == 'POST' && catalogsPattern.test(req.apiUrl)) {
+        }else if (req.method == 'POST' && catalogsPattern.test(req.apiUrl)) {
             body = req.body;
             callback(null)
         } else {
@@ -1294,9 +1226,6 @@ const catalog = (function() {
                 // No matter rollback status, return API message
                 callback(null);
             });
-        } else if (productPattern.test(req.apiUrl) && req.method == 'PATCH') {
-            var body = JSON.parse(req.reqBody);
-            handleUpgradePostAction(req, body, storeClient.rollbackProductUpgrade, callback);
         } else {
             callback(null);
         }
