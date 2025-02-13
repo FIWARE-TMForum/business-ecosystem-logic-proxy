@@ -25,121 +25,121 @@ const tmfUtils = require('./../../lib/tmfUtils')
 
 const serviceCatalog = (function() {
 
-	const validateRetrieving = function(req, callback) {
+    const validateRetrieving = function(req, callback) {
         // Check if the request is a list of service specifications
         if (req.path.endsWith('serviceSpecification') && req.user != null) {
             return tmfUtils.filterRelatedPartyFields(req, (err) => {
-				if (err) {
-					return callback(err)
-				}
+                if (err) {
+                    return callback(err)
+                }
 
-				tmfUtils.ensureRelatedPartyIncluded(req, callback)
-			});
+                tmfUtils.ensureRelatedPartyIncluded(req, callback)
+            });
         } else {
             callback(null);
         }
         // validate if a service specification is returned only by the owner
     };
 
-	const getResourceAPIUrl = function(path) {
-		const resPath = path.replace(`/${config.endpoints.service.path}/`, '')
+    const getResourceAPIUrl = function(path) {
+        const resPath = path.replace(`/${config.endpoints.service.path}/`, '')
 
-		return utils.getAPIURL(
-			config.endpoints.service.appSsl,
-			config.endpoints.service.host,
-			config.endpoints.service.port,
-			resPath
-		);
-	};
+        return utils.getAPIURL(
+            config.endpoints.service.appSsl,
+            config.endpoints.service.host,
+            config.endpoints.service.port,
+            resPath
+        );
+    };
 
-	const retrieveAsset = function(path, callback) {
-		const uri = getResourceAPIUrl(path);
+    const retrieveAsset = function(path, callback) {
+        const uri = getResourceAPIUrl(path);
 
-		axios.get(uri).then((response) => {
-			if (response.status >= 400) {
-				callback({
-					status: response.status
-				});
-			} else {
-				callback(null, {
-					status: response.status,
-					body: response.data
-				});
-			}
-		}).catch((err) => {
-			let errCb = {
-				status: err.status
-			}
+        axios.get(uri).then((response) => {
+            if (response.status >= 400) {
+                callback({
+                    status: response.status
+                });
+            } else {
+                callback(null, {
+                    status: response.status,
+                    body: response.data
+                });
+            }
+        }).catch((err) => {
+            let errCb = {
+                status: err.status
+            }
 
-			if (err.response) {
-				errCb = {
-					status: err.response.status
-				}
-			}
-			callback(errCb);
-		})
-	};
+            if (err.response) {
+                errCb = {
+                    status: err.response.status
+                }
+            }
+            callback(errCb);
+        })
+    };
 
-	const getPrevVersion = function(req, callback) {
-		retrieveAsset(req.apiUrl, (err, response) => {
-			if (err) {
-				if (err.status === 404) {
-					callback({
-						status: 404,
-						message: 'The required service does not exist'
-					});
-				} else {
-					callback({
-						status: 500,
-						message: 'The required service cannot be created/updated'
-					});
-				}
-			} else {
-				req.prevBody = response.body
-				callback(null)
-			}
-		});
-	}
+    const getPrevVersion = function(req, callback) {
+        retrieveAsset(req.apiUrl, (err, response) => {
+            if (err) {
+                if (err.status === 404) {
+                    callback({
+                        status: 404,
+                        message: 'The required service does not exist'
+                    });
+                } else {
+                    callback({
+                        status: 500,
+                        message: 'The required service cannot be created/updated'
+                    });
+                }
+            } else {
+                req.prevBody = response.body
+                callback(null)
+            }
+        });
+    }
 
-	const parseBody = function (req, callback) {
-		try {
-			req.parsedBody = JSON.parse(req.body);
-		} catch (e) {
-			callback({
-				status: 400,
-				message: 'The provided body is not a valid JSON'
-			});
+    const parseBody = function (req, callback) {
+        try {
+            req.parsedBody = JSON.parse(req.body);
+        } catch (e) {
+            callback({
+                status: 400,
+                message: 'The provided body is not a valid JSON'
+            });
 
-			return; // EXIT
-		}
-		callback(null)
-	}
+            return; // EXIT
+        }
+        callback(null)
+    }
 
-	const validateOwnerSeller = function(req, callback) {
-		if (!tmfUtils.hasPartyRole(req, req.prevBody.relatedParty, 'owner') || !utils.hasRole(req.user, config.oauth2.roles.seller)) {
-			callback({
-				status: 403,
-				message: 'Unauthorized to update non-owned/non-seller services'
-			});
-		} else {
-			callback(null)
-		}
-	};
+    const validateOwnerSeller = function(req, callback) {
+        if (!tmfUtils.hasPartyRole(req, req.prevBody.relatedParty, 'owner') || !utils.hasRole(req.user, config.oauth2.roles.seller)) {
+            callback({
+                status: 403,
+                message: 'Unauthorized to update non-owned/non-seller services'
+            });
+        } else {
+            callback(null)
+        }
+    };
 
-	const validateOwnerSellerPost = function(req, callback) {
-		const body = req.parsedBody
-		if (!tmfUtils.hasPartyRole(req, body.relatedParty, 'owner') || !utils.hasRole(req.user, config.oauth2.roles.seller)) {
-			callback({
-				status: 403,
-				message: 'Unauthorized to create non-owned/non-seller service specs'
-			});
-		} else {
-			callback(null)
-		}
-	};
+    const validateOwnerSellerPost = function(req, callback) {
+        const body = req.parsedBody
+        if (!tmfUtils.hasPartyRole(req, body.relatedParty, 'owner') || !utils.hasRole(req.user, config.oauth2.roles.seller)) {
+            callback({
+                status: 403,
+                message: 'Unauthorized to create non-owned/non-seller service specs'
+            });
+        } else {
+            callback(null)
+        }
+    };
 
-	const getProductSpecs = function (ref, fields, callback){
-		const endpoint = config.endpoints.catalog //indent
+    const getProductSpecs = function (ref, fields, callback){
+        const endpoint = config.endpoints.catalog //indent
         const specPath = `/productSpecification?serviceSpecification.id=${ref}&fields=${fields}`
         const uri = utils.getAPIURL(
             endpoint.appSsl,
@@ -160,81 +160,81 @@ const serviceCatalog = (function() {
         })
     }
 
-	const validateUpdate = function(req, callback) {
-		// Check the lifecycle updates
-		const body = req.parsedBody
-		const prevBody = req.prevBody
+    const validateUpdate = function(req, callback) {
+        // Check the lifecycle updates
+        const body = req.parsedBody
+        const prevBody = req.prevBody
 
-		if (body.lifecycleStatus != null && !tmfUtils.isValidStatusTransition(prevBody.lifecycleStatus, body.lifecycleStatus)) {
-			// The status is being updated
-			return callback({
-				status: 400,
-				message: `Cannot transition from lifecycle status ${prevBody.lifecycleStatus} to ${body.lifecycleStatus}`
-			})
-		}
-		if (!!prevBody.lifecycleStatus && prevBody.lifecycleStatus.toLowerCase() !== 'retired' && 
-		!!body.lifecycleStatus && body.lifecycleStatus.toLowerCase() === 'retired'){
-			getProductSpecs(prevBody.id, 'lifecycleStatus', function (err, response){
+        if (body.lifecycleStatus != null && !tmfUtils.isValidStatusTransition(prevBody.lifecycleStatus, body.lifecycleStatus)) {
+            // The status is being updated
+            return callback({
+                status: 400,
+                message: `Cannot transition from lifecycle status ${prevBody.lifecycleStatus} to ${body.lifecycleStatus}`
+            })
+        }
+        if (!!prevBody.lifecycleStatus && prevBody.lifecycleStatus.toLowerCase() !== 'retired' && 
+        !!body.lifecycleStatus && body.lifecycleStatus.toLowerCase() === 'retired'){
+            getProductSpecs(prevBody.id, 'lifecycleStatus', function (err, response){
 
-				if(err) {
-					callback(err)
-				} else {
-					const data = response.body
-					let allRetObs = true
-					for (let prodSpec of data){
-						if(prodSpec.lifecycleStatus.toLowerCase() !== 'retired' && prodSpec.lifecycleStatus.toLowerCase() !== 'obsolete'){
-							allRetObs = false
-							break;
-						}
-					}
-					if(allRetObs){
-						callback(null)
-					}
-					else {
-						callback({
-							status: 409,
-							message: `Cannot retire a service spec without retiring all product specs linked with it`
-						})
-					}
-				}
-			})
-		}
-		else{
-			callback(null)
-		}
-	}
+                if(err) {
+                    callback(err)
+                } else {
+                    const data = response.body
+                    let allRetObs = true
+                    for (let prodSpec of data){
+                        if(prodSpec.lifecycleStatus.toLowerCase() !== 'retired' && prodSpec.lifecycleStatus.toLowerCase() !== 'obsolete'){
+                            allRetObs = false
+                            break;
+                        }
+                    }
+                    if(allRetObs){
+                        callback(null)
+                    }
+                    else {
+                        callback({
+                            status: 409,
+                            message: `Cannot retire a service spec without retiring all product specs linked with it`
+                        })
+                    }
+                }
+            })
+        }
+        else{
+            callback(null)
+        }
+    }
 
-	const validators = {
-		GET: [validateRetrieving],
-		POST: [utils.validateLoggedIn, parseBody, validateOwnerSellerPost],
-		PATCH: [utils.validateLoggedIn, parseBody, getPrevVersion, validateUpdate, validateOwnerSeller],
-		PUT: [utils.methodNotAllowed],
-		DELETE: [utils.methodNotAllowed]
-	};
+    const validators = {
+        GET: [validateRetrieving],
+        POST: [utils.validateLoggedIn, parseBody, validateOwnerSellerPost],
+        PATCH: [utils.validateLoggedIn, parseBody, getPrevVersion, validateUpdate, validateOwnerSeller],
+        PUT: [utils.methodNotAllowed],
+        DELETE: [utils.methodNotAllowed]
+    };
 
-	const checkPermissions = function(req, callback) {
-		const reqValidators = [];
+    const checkPermissions = function(req, callback) {
+        const reqValidators = [];
 
-		for (let i in validators[req.method]) {
-			reqValidators.push(validators[req.method][i].bind(this, req));
-		}
+        for (let i in validators[req.method]) {
+            reqValidators.push(validators[req.method][i].bind(this, req));
+        }
 
-		async.series(reqValidators, callback);
-	};
+        async.series(reqValidators, callback);
+    };
 
-	const executePostValidation = function(response, callback) {
+    const executePostValidation = function(response, callback) {
         callback(null);
-	};
+    };
 
-	const handleAPIError = function(res, callback) {
-		callback(null);
-	};
+    const handleAPIError = function(res, callback) {
+        callback(null);
+    };
 
-	return {
-		checkPermissions: checkPermissions,
-		executePostValidation: executePostValidation,
-		handleAPIError: handleAPIError
-	}
+    return {
+        checkPermissions: checkPermissions,
+        executePostValidation: executePostValidation,
+        handleAPIError: handleAPIError
+    }
 })();
 
 exports.serviceCatalog = serviceCatalog;
