@@ -139,7 +139,7 @@ const serviceCatalog = (function() {
 	};
 
 	const getProductSpecs = function (ref, fields, callback){
-		const endpoint = config.endpoints.catalog
+		const endpoint = config.endpoints.catalog //indent
         const specPath = `/productSpecification?serviceSpecification.id=${ref}&fields=${fields}`
         const uri = utils.getAPIURL(
             endpoint.appSsl,
