@@ -25,43 +25,43 @@ const config = require('./../../config')
 
 const resource = (function (){
 
-    const validateRetrieving = function(req, callback) {
-        // Check if the request is a list of resources specifications
-        if (req.path.endsWith('resourceSpecification') && req.user != null) {
-            return tmfUtils.filterRelatedPartyFields(req, () => tmfUtils.ensureRelatedPartyIncluded(req, callback));
-        } else {
-            callback(null);
-        }
-        // validate if a resource specification is returned only by the owner
-    };
+	const validateRetrieving = function(req, callback) {
+		// Check if the request is a list of resources specifications
+		if (req.path.endsWith('resourceSpecification') && req.user != null) {
+			return tmfUtils.filterRelatedPartyFields(req, () => tmfUtils.ensureRelatedPartyIncluded(req, callback));
+		} else {
+			callback(null);
+		}
+		// validate if a resource specification is returned only by the owner
+	};
 
-    const getResourceAPIUrl = function(path) {
-        const resPath = path.replace(`/${config.endpoints.resource.path}/`, '')
+	const getResourceAPIUrl = function(path) {
+		const resPath = path.replace(`/${config.endpoints.resource.path}/`, '')
 
-        return utils.getAPIURL(
-            config.endpoints.resource.appSsl,
-            config.endpoints.resource.host,
-            config.endpoints.resource.port,
-            resPath
-        );
-    };
+		return utils.getAPIURL(
+			config.endpoints.resource.appSsl,
+			config.endpoints.resource.host,
+			config.endpoints.resource.port,
+			resPath
+		);
+	};
 
-    const retrieveAsset = function(path, callback) {
-        const uri = getResourceAPIUrl(path);
+	const retrieveAsset = function(path, callback) {
+		const uri = getResourceAPIUrl(path);
 
-        axios.get(uri).then((response) => {
-            if (response.status >= 400) {
-                callback({
-                    status: response.status
-                });
-            } else {
-                callback(null, {
-                    status: response.status,
-                    body: response.data
-                });
-            }
-        }).catch((err) => {
-            let errCb = {
+		axios.get(uri).then((response) => {
+			if (response.status >= 400) {
+				callback({
+					status: response.status
+				});
+			} else {
+				callback(null, {
+					status: response.status,
+					body: response.data
+				});
+			}
+		}).catch((err) => {
+			let errCb = {
 				status: err.status
 			}
 
@@ -71,10 +71,10 @@ const resource = (function (){
 				}
 			}
 			callback(errCb);
-        })
-    };
+		})
+	};
 
-    const getPrevVersion = function(req, callback) {
+	const getPrevVersion = function(req, callback) {
 		retrieveAsset(req.apiUrl, (err, response) => {
 			if (err) {
 				if (err.status === 404) {
@@ -95,7 +95,7 @@ const resource = (function (){
 		});
 	}
 
-    const parseBody = function (req, callback) {
+	const parseBody = function (req, callback) {
 		try {
 			req.parsedBody = JSON.parse(req.body);
 		} catch (e) {
@@ -109,40 +109,40 @@ const resource = (function (){
 		callback(null)
 	}
 
-    const validateOwnerSeller = function(req, callback) {
-        if (!tmfUtils.hasPartyRole(req, req.prevBody.relatedParty, 'owner') || !utils.hasRole(req.user, config.oauth2.roles.seller)) {
-            callback({
-                status: 403,
-                message: 'Unauthorized to update non-owned/non-seller resource specs'
-            });
-        } else{
-            callback(null)
-        }
-    };
+	const validateOwnerSeller = function(req, callback) {
+		if (!tmfUtils.hasPartyRole(req, req.prevBody.relatedParty, 'owner') || !utils.hasRole(req.user, config.oauth2.roles.seller)) {
+			callback({
+				status: 403,
+				message: 'Unauthorized to update non-owned/non-seller resource specs'
+			});
+		} else{
+			callback(null)
+		}
+	};
 
-    const getProductSpecs = function (ref, fields, callback){
-		const endpoint = config.endpoints.catalog
-        const specPath = `/productSpecification?resourceSpecification.id=${ref}&fields=${fields}`
-        const uri = utils.getAPIURL(
-            endpoint.appSsl,
-            endpoint.host,
-            endpoint.port,
-            specPath
-        );
-        axios.get(uri).then((response) => {
-            callback(null, {
-                status: response.status,
-                body: response.data
-            });
+	const getProductSpecs = function (ref, fields, callback){
+	const endpoint = config.endpoints.catalog
+		const specPath = `/productSpecification?resourceSpecification.id=${ref}&fields=${fields}`
+		const uri = utils.getAPIURL(
+			endpoint.appSsl,
+			endpoint.host,
+			endpoint.port,
+			specPath
+		);
+		axios.get(uri).then((response) => {
+			callback(null, {
+				status: response.status,
+				body: response.data
+			});
 
-        }).catch((err) => {
-            callback({
-                status: err.status
-            });
-        })
-    }
+		}).catch((err) => {
+			callback({
+				status: err.status
+			});
+		})
+	}
 
-    const validateUpdate = function(req, callback) {
+	const validateUpdate = function(req, callback) {
 		// Check the lifecycle updates
 		const body = req.parsedBody
 		const prevBody = req.prevBody
@@ -154,14 +154,14 @@ const resource = (function (){
 				message: `Cannot transition from lifecycle status ${prevBody.lifecycleStatus} to ${body.lifecycleStatus}`
 			})
 		}
-        if (!!prevBody.lifecycleStatus && prevBody.lifecycleStatus.toLowerCase() !== 'retired' && 
+		if (!!prevBody.lifecycleStatus && prevBody.lifecycleStatus.toLowerCase() !== 'retired' &&
 		!!body.lifecycleStatus && body.lifecycleStatus.toLowerCase() === 'retired'){
-            getProductSpecs(prevBody.id, 'lifecycleStatus', function (err, response){
-                if(err) {
+			getProductSpecs(prevBody.id, 'lifecycleStatus', function (err, response){
+				if(err) {
 					callback(err)
 				} else {
-                    const data = response.body
-                    let allRetObs = true
+					const data = response.body
+					let allRetObs = true
 					for (let prodSpec of data){
 						if(prodSpec.lifecycleStatus.toLowerCase() !== 'retired' && prodSpec.lifecycleStatus.toLowerCase() !== 'obsolete'){
 							allRetObs = false
@@ -177,54 +177,54 @@ const resource = (function (){
 							message: `Cannot retire a resource spec without retiring all product specs linked with it`
 						})
 					}
-                }
-            })
-        }
-        else{
-            callback(null)
-        }
+				}
+			})
+		}
+		else{
+			callback(null)
+		}
 
 	}
 
-    const validateOwnerSellerPost = function(req, callback) {
-        const body = req.parsedBody
+	const validateOwnerSellerPost = function(req, callback) {
+		const body = req.parsedBody
 
-        if (!tmfUtils.hasPartyRole(req, body.relatedParty, 'owner') || !utils.hasRole(req.user, config.oauth2.roles.seller)) {
-            callback({
-                status: 403,
-                message: 'Unauthorized to create non-owned/non-seller resource specs'
-            });
-        }        
-        else{
-            callback(null)
-        }
-    };
+		if (!tmfUtils.hasPartyRole(req, body.relatedParty, 'owner') || !utils.hasRole(req.user, config.oauth2.roles.seller)) {
+			callback({
+				status: 403,
+				message: 'Unauthorized to create non-owned/non-seller resource specs'
+			});
+		}
+		else{
+			callback(null)
+		}
+	};
 
-    const validators = {
-        GET: [validateRetrieving],
-        POST: [utils.validateLoggedIn, parseBody, validateOwnerSellerPost],
-        PATCH: [utils.validateLoggedIn, parseBody, getPrevVersion, validateUpdate, validateOwnerSeller],
-        PUT: [utils.methodNotAllowed],
-        DELETE: [utils.methodNotAllowed]
-    };
+	const validators = {
+		GET: [validateRetrieving],
+		POST: [utils.validateLoggedIn, parseBody, validateOwnerSellerPost],
+		PATCH: [utils.validateLoggedIn, parseBody, getPrevVersion, validateUpdate, validateOwnerSeller],
+		PUT: [utils.methodNotAllowed],
+		DELETE: [utils.methodNotAllowed]
+	};
 
-    var checkPermissions = function(req, callback) {
-        var reqValidators = [];
+	var checkPermissions = function(req, callback) {
+		var reqValidators = [];
 
-        for (var i in validators[req.method]) {
-            reqValidators.push(validators[req.method][i].bind(this, req));
-        }
+		for (var i in validators[req.method]) {
+			reqValidators.push(validators[req.method][i].bind(this, req));
+		}
 
-        async.series(reqValidators, callback);
-    };
+		async.series(reqValidators, callback);
+	};
 
-    var executePostValidation = function(response, callback) {
-        callback(null)
-    };
-    return {
-        checkPermissions: checkPermissions,
-        executePostValidation: executePostValidation
-    };
+	var executePostValidation = function(response, callback) {
+		callback(null)
+	};
+	return {
+		checkPermissions: checkPermissions,
+		executePostValidation: executePostValidation
+	};
 })()
 
 exports.resource = resource;
