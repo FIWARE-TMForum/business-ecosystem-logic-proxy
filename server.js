@@ -373,8 +373,8 @@ const fetchData =async () => {
     result = await indexes.search('defaultcatalog', {})
     return (result.length === 0 || result.length > 1)? '' : result[0].default_id
 }
-
-app.get('/config', async (_, res) => {
+config.defaultId = await fetchData()
+app.get('/config', (_, res) => {
     res.send({
         siop: {
             enabled: config.siop.enabled,
@@ -398,7 +398,7 @@ app.get('/config', async (_, res) => {
         domeRegister: config.domeRegister,
         domePublish: config.domePublish,
         purchaseEnabled: config.purchaseEnabled,
-        defaultId: await fetchData()
+        defaultId: config.defaultId
     })
 })
 

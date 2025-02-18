@@ -155,7 +155,8 @@ var defaultConfig = {
 	indexes: {
 		'engine': 'local', // 'elastic_indexes.js' if using elasticsearch
 		'elasticHost': 'http://imaginary-elastic.docker:9200/' // hostname:port
-	}
+	},
+    defaultId: 'dft'
 };
 
 exports.getDefaultConfig = function() {

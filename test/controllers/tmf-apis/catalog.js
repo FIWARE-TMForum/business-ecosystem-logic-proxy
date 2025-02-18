@@ -79,6 +79,8 @@ const INVALID_NON_DIGITAL_UPGRADE = 'Product spec characteristics cannot be upda
 describe('Catalog API', function() {
 	var config = testUtils.getDefaultConfig();
 	const basepath = '/catalog'
+    var protocol = config.endpoints.catalog.appSsl ? 'https' : 'http';
+	var serverUrl = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
 	var getCatalogApi = function(storeClient, tmfUtils, utils, rssClient, indexes, async) {
 		if (!rssClient) {
 			rssClient = {};
@@ -378,8 +380,6 @@ describe('Catalog API', function() {
 		var userName = 'test';
 		var catalogPath = '/catalog/7';
 		var offeringPath = '/catalog'+catalogPath + '/productOffering';
-		var protocol = config.endpoints.catalog.appSsl ? 'https' : 'http';
-		var serverUrl = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
 		var productPath = '/productSpecification/7';
 		var categoryPath = '/category';
 
@@ -4499,6 +4499,18 @@ describe('Catalog API', function() {
 			id: '1'
 		};
 
+        const response = {
+            id: '1',
+            href: '1',
+            name: 'testing'
+        }
+
+        const category = {
+            name: 'testing',
+            isRoot: true,
+            lifecycleStatus: "Launched"
+        }
+
 		var user = {
 			username: 'test',
 			partyId: 'test'
@@ -4514,7 +4526,7 @@ describe('Catalog API', function() {
 			productSpecCharacteristic: []
 		};
 
-		var testPostValidation = function(req, validator, done) {
+		var testPostValidation = function(req, validator, done, extraNocks) {
 			var callCallback = (a, b, cb) => {
 				cb(null);
 			};
@@ -4541,6 +4553,11 @@ describe('Catalog API', function() {
 
 			catalogApi.executePostValidation(req, function() {
 				validator(storeClientMock);
+                if (!!extraNocks){
+                    for(let nock of extraNocks){
+                        nock.done()
+                    }
+                }
 				done();
 			});
 		};
@@ -4624,13 +4641,17 @@ describe('Catalog API', function() {
 			);
 		});
 
-		it('should create catalog indexes when a new catalog has been created', function(done) {
+		it('should create an associated category when a new catalog has been created', function(done) {
 			var req = {
 				method: 'POST',
 				url: '/catalog/',
-				body: body,
+				apiUrl: 'catalog/catalog/',
+				body: response,
 				user: user
 			};
+
+            const createCategory = nock(serverUrl).post('/category', category).reply(200, response)
+            const updateCatalog = nock(serverUrl).patch('/catalog/1', {category: [response]}).reply(200, {})
 
 			testPostValidation(
 				req,
@@ -4640,7 +4661,32 @@ describe('Catalog API', function() {
 					expect(storeMock.updateOffering).not.toHaveBeenCalled();
 					expect(storeMock.attachUpgradedProduct).not.toHaveBeenCalled();
 				},
-				done
+				done,
+                [createCategory, updateCatalog]
+			);
+		});
+
+		it('should assign the newly created category to default catalog', function(done) {
+			var req = {
+				method: 'POST',
+				url: '/category/',
+				apiUrl: 'catalog/category/',
+				body: response,
+				user: user
+			};
+
+            const getCatalog = nock(serverUrl).get(`/catalog/${config.defaultId}`).reply(200, {...response, category: [body]})
+            const updateCatalog = nock(serverUrl).patch(`/catalog/${config.defaultId}`, {category: [body, response]}).reply(200, {})
+			testPostValidation(
+				req,
+				(storeMock) => {
+					expect(storeMock.attachProduct).not.toHaveBeenCalled();
+					expect(storeMock.attachOffering).not.toHaveBeenCalled();
+					expect(storeMock.updateOffering).not.toHaveBeenCalled();
+					expect(storeMock.attachUpgradedProduct).not.toHaveBeenCalled();
+				},
+				done,
+                [getCatalog, updateCatalog]
 			);
 		});
 
