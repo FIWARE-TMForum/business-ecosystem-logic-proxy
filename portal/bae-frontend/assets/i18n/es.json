@@ -16,7 +16,8 @@
         "_search_ph": "Search Cloud Services, Edge Services, Providers...",
         "_search": "Search",
         "_not_found": "No offers found",
-        "_browse_serv": "Browse services"
+        "_browse_serv": "Browse services",
+        "_view_serv": "View services"
     },
     "FEATURED": {
         "_title": "Featured offerings",
@@ -190,8 +191,10 @@
         "_admin": "Administration",
         "_publish": "Publish your offerings",
         "_register": "Register",
-        "_guidelines": "Guidelines",
+        "_guidelines": "Guidelines to register",
+        "_guideline_publish": "Guideline to publish",
         "_onboarding": "Onboarding",
+        "_registration": "Registration form",
         "_about": "About",
         "_verify": "Publish your offering",
         "_info": "Info",
@@ -964,24 +967,24 @@
         "_details": "Organization details",
         "_description": "Description"
     },
-    "PRODUCT_ORDERS": {
-        "_orders": "Product Orders",
-        "_invoices": "Invoices",
-        "_no_orders": "No orders found.",
-        "_search_criteria": "Search criteria",
-        "_order_id": "Order Id",
-        "_status": "Choose a status",
-        "_priority": "Priority",
-        "_desc": "Description",
-        "_price": "Price",
-        "_bill": "Billing address",
-        "_filter_state": "Filter by status",
-        "_acknowledged": "Acknowledged",
-        "_in_progress": "In Progress",
-        "_completed": "Completed",
-        "_failed": "Failed",
-        "_pending": "Pending",
-        "_cancelled": "Cancelled"
+        "PRODUCT_ORDERS": {
+            "_orders": "Product Orders",
+            "_invoices": "Invoices",
+            "_no_orders": "No orders found.",
+            "_search_criteria": "Search criteria",
+            "_order_id": "Order Id",
+            "_status": "Choose a status",
+            "_priority": "Priority",
+            "_desc": "Description",
+            "_price": "Price",
+            "_bill": "Billing address",
+            "_filter_state": "Filter by status",
+            "_acknowledged": "Acknowledged",
+            "_in_progress": "In Progress",
+            "_completed": "Completed",
+            "_failed": "Failed",
+            "_pending": "Pending",
+            "_cancelled": "Cancelled"
 
-    }
+        }
 }

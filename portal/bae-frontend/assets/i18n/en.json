@@ -16,7 +16,8 @@
         "_search_ph": "Search Cloud Services, Edge Services, Providers...",
         "_search": "Search",
         "_not_found": "No offers found",
-        "_browse_serv": "Browse services"
+        "_browse_serv": "Browse services",
+        "_view_serv": "View services"
     },
     "FEATURED": {
         "_title": "Featured offerings",
@@ -190,8 +191,10 @@
         "_admin": "Administration",
         "_publish": "Publish your offerings",
         "_register": "Register",
-        "_guidelines": "Guidelines",
+        "_guidelines": "Guidelines to register",
+        "_guideline_publish": "Guideline to publish",
         "_onboarding": "Onboarding",
+        "_registration": "Registration form",
         "_about": "About",
         "_verify": "Publish your offering",
         "_info": "Info",
