@@ -66,7 +66,7 @@ const ordering = (function() {
     ///////////////////////////////////////// RETRIEVAL //////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
 
-    var validateRetrieving = function(req, callback) {
+    const validateRetrieving = function(req, callback) {
         tmfUtils.filterRelatedPartyWithRole(req, ['customer', 'seller'], callback);
     };
 
@@ -290,19 +290,20 @@ const ordering = (function() {
     /////////////////////////////////////////// UPDATE ///////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
 
-    var updateItemsState = function(req, updatedOrdering, previousOrdering, includeOtherFields, callback) {
-        var error = null;
+    const updateItemsState = function(req, updatedOrdering, previousOrdering, includeOtherFields, callback) {
+        let error = null;
 
-        if (previousOrdering.state.toLowerCase() !== 'inprogress') {
-            error = {
-                status: 403,
-                message: previousOrdering.state + ' orders cannot be manually modified'
-            };
-        }
+        // TODO: Check if this is true with  the automatic payment support
+        // if (previousOrdering.state.toLowerCase() !== 'inprogress') {
+        //     error = {
+        //         status: 403,
+        //         message: previousOrdering.state + ' orders cannot be manually modified'
+        //     };
+        // }
 
-        for (var i = 0; i < updatedOrdering.productOrderItem.length && !error; i++) {
-            var updatedItem = updatedOrdering.productOrderItem[i];
-            var previousOrderItem = previousOrdering.productOrderItem.filter(function(item) {
+        for (let i = 0; i < updatedOrdering.productOrderItem.length && !error; i++) {
+            let updatedItem = updatedOrdering.productOrderItem[i];
+            let previousOrderItem = previousOrdering.productOrderItem.filter((item) => {
                 // id is supposed to be unique
                 return item.id === updatedItem.id;
             })[0];
@@ -320,7 +321,7 @@ const ordering = (function() {
                         message: 'The fields of an order item cannot be modified'
                     };
                 } else {
-                    for (var field in previousOrderItem) {
+                    for (let field in previousOrderItem) {
                         if (field.toLowerCase() !== 'state' && !equal(previousOrderItem[field], updatedItem[field])) {
                             error = {
                                 status: 403,
@@ -332,7 +333,7 @@ const ordering = (function() {
                     }
 
                     if (!error) {
-                        var isSeller = tmfUtils.hasPartyRole(req, previousOrderItem.product.relatedParty, SELLER);
+                        const isSeller = tmfUtils.hasPartyRole(req, previousOrderItem.product.relatedParty, SELLER);
 
                         // If the user is not the seller and the state is changed
                         if (!isSeller && previousOrderItem['state'] != updatedItem['state']) {
@@ -352,7 +353,7 @@ const ordering = (function() {
         if (!error) {
             // Sellers can only modify the 'productOrderItem' field...
             // State is automatically calculated
-            var finalBody = includeOtherFields ? updatedOrdering : {};
+            let finalBody = includeOtherFields ? updatedOrdering : {};
             finalBody['productOrderItem'] = previousOrdering.productOrderItem;
 
             utils.updateBody(req, finalBody);
@@ -363,18 +364,18 @@ const ordering = (function() {
         }
     };
 
-    var validateNotes = function(newNotes, prevNotes, callback) {
+    const validateNotes = function(newNotes, prevNotes, callback) {
         // The patch operation to include a note must be an append
         if (!prevNotes || !prevNotes.length) {
             return callback(null);
         }
 
-        for (var i = 0; i < prevNotes.length; i++) {
-            var matches = 0;
-            var prev = prevNotes[i];
+        for (let i = 0; i < prevNotes.length; i++) {
+            let matches = 0;
+            let prev = prevNotes[i];
 
-            for (var j = 0; j < newNotes.length; j++) {
-                var n = newNotes[j];
+            for (let j = 0; j < newNotes.length; j++) {
+                let n = newNotes[j];
                 if (prev.text === n.text && prev.date === n.date && prev.author === n.author) {
                     matches++;
                 }
@@ -383,7 +384,7 @@ const ordering = (function() {
             if (matches !== 1) {
                 return callback({
                     status: 403,
-                    message: 'You are not allowed to modify the existing notes of an ordering'
+                    message: 'You are not allowed to modify the existing notes of an order'
                 });
             }
         }
@@ -391,22 +392,22 @@ const ordering = (function() {
         callback(null);
     };
 
-    var validateUpdate = function(req, callback) {
+    const validateUpdate = function(req, callback) {
         try {
-            var ordering = JSON.parse(req.body);
-            var orderingUrl = utils.getAPIURL(
+            const ordering = JSON.parse(req.body);
+            const orderingUrl = utils.getAPIURL(
                 config.endpoints.ordering.appSsl,
                 config.endpoints.ordering.host,
                 config.endpoints.ordering.port,
                 req.apiUrl
             );
 
-            makeRequest(orderingUrl, 'The requested ordering cannot be retrieved', function(err, previousOrdering) {
+            makeRequest(orderingUrl, 'The requested ordering cannot be retrieved', (err, previousOrdering) => {
                 if (err) {
                     callback(err);
                 } else {
-                    var isCustomer = tmfUtils.hasPartyRole(req, previousOrdering.relatedParty, CUSTOMER);
-                    var isSeller = tmfUtils.hasPartyRole(req, previousOrdering.relatedParty, SELLER);
+                    const isCustomer = tmfUtils.hasPartyRole(req, previousOrdering.relatedParty, CUSTOMER);
+                    const isSeller = tmfUtils.hasPartyRole(req, previousOrdering.relatedParty, SELLER);
 
                     if (isCustomer) {
                         if ('relatedParty' in ordering) {
@@ -427,7 +428,7 @@ const ordering = (function() {
                                 });
                             } else {
                                 // Orderings can only be cancelled when all items are marked as Acknowledged
-                                var productsInAckState = previousOrdering.productOrderItem.filter(function(item) {
+                                const productsInAckState = previousOrdering.productOrderItem.filter(function(item) {
                                     return 'acknowledged' === item.state.toLowerCase();
                                 });
 
@@ -479,7 +480,7 @@ const ordering = (function() {
                     } else {
                         callback({
                             status: 403,
-                            message: 'You are not authorized to modify this ordering'
+                            message: 'You are not authorized to modify this order'
                         });
                     }
                 }
