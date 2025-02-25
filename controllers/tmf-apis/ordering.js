@@ -395,15 +395,17 @@ const ordering = (function() {
     const validateUpdate = function(req, callback) {
         try {
             const ordering = JSON.parse(req.body);
+            const path = req.apiUrl.replace('/ordering', '');
             const orderingUrl = utils.getAPIURL(
                 config.endpoints.ordering.appSsl,
                 config.endpoints.ordering.host,
                 config.endpoints.ordering.port,
-                req.apiUrl
+                path
             );
 
             makeRequest(orderingUrl, 'The requested ordering cannot be retrieved', (err, previousOrdering) => {
                 if (err) {
+                    console.log(err);
                     callback(err);
                 } else {
                     const isCustomer = tmfUtils.hasPartyRole(req, previousOrdering.relatedParty, CUSTOMER);
