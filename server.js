@@ -374,6 +374,7 @@ const fetchData =async () => {
     return (result.length === 0 || result.length > 1)? '' : result[0].default_id
 }
 
+app.use('/feedback', authMiddleware.headerAuthentication, failIfNotAuthenticated)
 app.post('/feedback', async (req,res) => {
     try {
         feedback = JSON.parse(req.body)
