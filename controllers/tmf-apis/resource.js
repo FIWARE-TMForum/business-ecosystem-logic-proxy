@@ -62,52 +62,52 @@ const resource = (function (){
             }
         }).catch((err) => {
             let errCb = {
-				status: err.status
-			}
+                status: err.status
+            }
 
-			if (err.response) {
-				errCb = {
-					status: err.response.status
-				}
-			}
-			callback(errCb);
+            if (err.response) {
+                errCb = {
+                    status: err.response.status
+                }
+            }
+            callback(errCb);
         })
     };
 
     const getPrevVersion = function(req, callback) {
-		retrieveAsset(req.apiUrl, (err, response) => {
-			if (err) {
-				if (err.status === 404) {
-					callback({
-						status: 404,
-						message: 'The required resource does not exist'
-					});
-				} else {
-					callback({
-						status: 500,
-						message: 'The required resource cannot be created/updated'
-					});
-				}
-			} else {
-				req.prevBody = response.body
-				callback(null)
-			}
-		});
-	}
+        retrieveAsset(req.apiUrl, (err, response) => {
+            if (err) {
+                if (err.status === 404) {
+                    callback({
+                        status: 404,
+                        message: 'The required resource does not exist'
+                    });
+                } else {
+                    callback({
+                        status: 500,
+                        message: 'The required resource cannot be created/updated'
+                    });
+                }
+            } else {
+                req.prevBody = response.body
+                callback(null)
+            }
+        });
+    }
 
     const parseBody = function (req, callback) {
-		try {
-			req.parsedBody = JSON.parse(req.body);
-		} catch (e) {
-			callback({
-				status: 400,
-				message: 'The provided body is not a valid JSON'
-			});
+        try {
+            req.parsedBody = JSON.parse(req.body);
+        } catch (e) {
+            callback({
+                status: 400,
+                message: 'The provided body is not a valid JSON'
+            });
 
-			return; // EXIT
-		}
-		callback(null)
-	}
+            return; // EXIT
+        }
+        callback(null)
+    }
 
     const validateOwnerSeller = function(req, callback) {
         if (!tmfUtils.hasPartyRole(req, req.prevBody.relatedParty, 'owner') || !utils.hasRole(req.user, config.oauth2.roles.seller)) {
@@ -120,21 +120,71 @@ const resource = (function (){
         }
     };
 
+    const getProductSpecs = function (ref, fields, callback){
+        const endpoint = config.endpoints.catalog
+        const specPath = `/productSpecification?resourceSpecification.id=${ref}&fields=${fields}`
+        const uri = utils.getAPIURL(
+            endpoint.appSsl,
+            endpoint.host,
+            endpoint.port,
+            specPath
+        );
+        axios.get(uri).then((response) => {
+            callback(null, {
+                status: response.status,
+                body: response.data
+            });
+
+        }).catch((err) => {
+            callback({
+                status: err.status
+            });
+        })
+    }
+
     const validateUpdate = function(req, callback) {
-		// Check the lifecycle updates
-		const body = req.parsedBody
-		const prevBody = req.prevBody
+        // Check the lifecycle updates
+        const body = req.parsedBody
+        const prevBody = req.prevBody
 
-		if (body.lifecycleStatus != null && !tmfUtils.isValidStatusTransition(prevBody.lifecycleStatus, body.lifecycleStatus)) {
-			// The status is being updated
-			return callback({
-				status: 400,
-				message: `Cannot transition from lifecycle status ${prevBody.lifecycleStatus} to ${body.lifecycleStatus}`
-			})
-		}
+        if (body.lifecycleStatus != null && !tmfUtils.isValidStatusTransition(prevBody.lifecycleStatus, body.lifecycleStatus)) {
+            // The status is being updated
+            return callback({
+                status: 400,
+                message: `Cannot transition from lifecycle status ${prevBody.lifecycleStatus} to ${body.lifecycleStatus}`
+            })
+        }
+        if (!!prevBody.lifecycleStatus && prevBody.lifecycleStatus.toLowerCase() !== 'retired' &&
+        !!body.lifecycleStatus && body.lifecycleStatus.toLowerCase() === 'retired'){
+            getProductSpecs(prevBody.id, 'lifecycleStatus', function (err, response){
+                if(err) {
+                    callback(err)
+                } else {
+                    const data = response.body
+                    let allRetObs = true
+                    for (let prodSpec of data){
+                        if(prodSpec.lifecycleStatus.toLowerCase() !== 'retired' && prodSpec.lifecycleStatus.toLowerCase() !== 'obsolete'){
+                            allRetObs = false
+                            break;
+                        }
+                    }
+                    if(allRetObs){
+                        callback(null)
+                    }
+                    else {
+                        callback({
+                            status: 409,
+                            message: `Cannot retire a resource spec without retiring all product specs linked with it`
+                        })
+                    }
+                }
+            })
+        }
+        else{
+            callback(null)
+        }
 
-		callback(null)
-	}
+    }
 
     const validateOwnerSellerPost = function(req, callback) {
         const body = req.parsedBody
@@ -144,7 +194,7 @@ const resource = (function (){
                 status: 403,
                 message: 'Unauthorized to create non-owned/non-seller resource specs'
             });
-        }        
+        }
         else{
             callback(null)
         }

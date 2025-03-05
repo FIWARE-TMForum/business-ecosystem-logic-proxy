@@ -77,6 +77,28 @@ const catalog = (function() {
         })
     };
 
+    const getDependencySpecs = function (endpoint, path, refs, fields, callback){
+
+        const specPath = `/${path}?id=${tmfUtils.refsToQuery(refs)}&fields=${fields}`
+        const uri = utils.getAPIURL(
+            endpoint.appSsl,
+            endpoint.host,
+            endpoint.port,
+            specPath
+        );
+        axios.get(uri).then((response) => {
+            callback(null, {
+                status: response.status,
+                body: response.data
+            });
+
+        }).catch((err) => {
+            callback({
+                status: err.status
+            });
+        })
+    }
+
     const retrieveCatalog = function(catalogId, callback) {
         const catalogPath = `/catalog/${catalogId}`
 
@@ -548,6 +570,74 @@ const catalog = (function() {
         }
     };
 
+    const checkDependencySpecs = function(prevBody, newBody, callback){
+        if (!!prevBody.lifecycleStatus && prevBody.lifecycleStatus.toLowerCase() !== 'launched' &&
+            !!newBody.lifecycleStatus && newBody.lifecycleStatus.toLowerCase() === 'launched'
+        ){
+            async.series([
+                function(callback){
+                    servSpecCheck = (newBody.serviceSpecification)? newBody.serviceSpecification : prevBody.serviceSpecification
+                    if (!!servSpecCheck && servSpecCheck.length > 0){
+                        getDependencySpecs(config.endpoints.service , 'serviceSpecification', servSpecCheck, 'lifecycleStatus',
+                            function (err, response){
+                                if (err){
+                                    return callback({
+                                        status: 400,
+                                        message: 'Error getting service specification through the API'
+                                    })
+                                }
+                                else {
+                                    const serviceSpecification = response.body
+                                    if(!tmfUtils.haveSameStatus('launched', serviceSpecification)){
+                                        return callback({
+                                            status: 409,
+                                            message: 'It is not allowed to launch a product spec without launching service spec previously'
+                                        })
+                                    }
+                                    callback(null)
+                                }
+                            }
+                        )
+                    }
+                    else {
+                        callback(null)
+                    }
+                },
+                function(callback){
+                    resSpecCheck = (newBody.resourceSpecification)? newBody.resourceSpecification : prevBody.resourceSpecification
+                    if(!!resSpecCheck && resSpecCheck.length >0){
+                        getDependencySpecs(config.endpoints.resource, 'resourceSpecification', resSpecCheck, 'lifecycleStatus',
+                            function (err, response){
+                                if (err){
+                                    return callback({
+                                        status: 400,
+                                        message: 'Error getting resource specification through the API'
+                                    })
+                                }
+                                else {
+                                    const resourceSpecification = response.body
+                                    if(!tmfUtils.haveSameStatus('launched', resourceSpecification)){
+                                        return callback({
+                                            status: 409,
+                                            message: 'It is not allowed to launch a product spec without launching resource spec previously'
+                                        })
+                                    }
+                                    callback(null)
+                                }
+                            }
+                        )
+                    }
+                    else {
+                        callback(null)
+                    }
+                }
+            ], callback)
+        }
+        else{
+            callback(null)
+        }
+    }
+
     const validateProductUpdate = function(req, prevBody, newBody, callback) {
         if (
             (!!newBody.isBundle || !!newBody.bundledProductSpecification) &&
@@ -559,70 +649,76 @@ const catalog = (function() {
                     'It is not allowed to update bundle related attributes (isBundle, bundledProductSpecification) in launched products'
             });
         }
+        async.series([
+            function(callback){
+                checkDependencySpecs(prevBody, newBody, callback)
+            },
+            function(callback){
+                // Check upgrade problems if the product is a digital one
+                if (tmfUtils.isDigitalProduct(prevBody.productSpecCharacteristic)) {
+                    if (
+                        !!newBody.version &&
+                        !tmfUtils.isDigitalProduct(newBody.productSpecCharacteristic) &&
+                        newBody.version != prevBody.version
+                    ) {
+                        // Trying to upgrade the product without providing new asset info
+                        return callback({
+                            status: 422,
+                            message: 'To upgrade product specifications it is required to provide new asset info'
+                        });
+                    }
 
-        // Check upgrade problems if the product is a digital one
-        if (tmfUtils.isDigitalProduct(prevBody.productSpecCharacteristic)) {
-            if (
-                !!newBody.version &&
-                !tmfUtils.isDigitalProduct(newBody.productSpecCharacteristic) &&
-                newBody.version != prevBody.version
-            ) {
-                // Trying to upgrade the product without providing new asset info
-                return callback({
-                    status: 422,
-                    message: 'To upgrade product specifications it is required to provide new asset info'
-                });
-            }
+                    if (
+                        (!!newBody.version && newBody.version == prevBody.version) ||
+                        (typeof newBody.version === 'undefined' &&
+                            !!newBody.productSpecCharacteristic &&
+                            !equal(newBody.productSpecCharacteristic, prevBody.productSpecCharacteristic))
+                    ) {
+                        return callback({
+                            status: 422,
+                            message: 'Product specification characteristics only can be updated for upgrading digital products'
+                        });
+                    }
 
-            if (
-                (!!newBody.version && newBody.version == prevBody.version) ||
-                (typeof newBody.version === 'undefined' &&
+                    if (
+                        !!newBody.version &&
+                        newBody.version != prevBody.version &&
+                        tmfUtils.isDigitalProduct(newBody.productSpecCharacteristic) &&
+                        !tmfUtils.equalCustomCharacteristics(
+                            newBody.productSpecCharacteristic,
+                            prevBody.productSpecCharacteristic
+                        )
+                    ) {
+                        return callback({
+                            status: 422,
+                            message: 'It is not allowed to update custom characteristics during a product upgrade'
+                        });
+                    }
+
+                    if (!!newBody.version && newBody.version != prevBody.version && !!newBody.productSpecCharacteristic) {
+                        return storeClient.upgradeProduct(
+                            {
+                                id: prevBody.id,
+                                version: newBody.version,
+                                productSpecCharacteristic: newBody.productSpecCharacteristic
+                            },
+                            req.user,
+                            callback
+                        );
+                    }
+                } /*else if (
                     !!newBody.productSpecCharacteristic &&
-                    !equal(newBody.productSpecCharacteristic, prevBody.productSpecCharacteristic))
-            ) {
-                return callback({
-                    status: 422,
-                    message: 'Product specification characteristics only can be updated for upgrading digital products'
-                });
-            }
+                    !equal(newBody.productSpecCharacteristic, prevBody.productSpecCharacteristic)
+                ) {
+                    return callback({
+                        status: 422,
+                        message: 'Product spec characteristics cannot be updated'
+                    });
+                }*/
 
-            if (
-                !!newBody.version &&
-                newBody.version != prevBody.version &&
-                tmfUtils.isDigitalProduct(newBody.productSpecCharacteristic) &&
-                !tmfUtils.equalCustomCharacteristics(
-                    newBody.productSpecCharacteristic,
-                    prevBody.productSpecCharacteristic
-                )
-            ) {
-                return callback({
-                    status: 422,
-                    message: 'It is not allowed to update custom characteristics during a product upgrade'
-                });
-            }
-
-            if (!!newBody.version && newBody.version != prevBody.version && !!newBody.productSpecCharacteristic) {
-                return storeClient.upgradeProduct(
-                    {
-                        id: prevBody.id,
-                        version: newBody.version,
-                        productSpecCharacteristic: newBody.productSpecCharacteristic
-                    },
-                    req.user,
-                    callback
-                );
-            }
-        } /*else if (
-            !!newBody.productSpecCharacteristic &&
-            !equal(newBody.productSpecCharacteristic, prevBody.productSpecCharacteristic)
-        ) {
-            return callback({
-                status: 422,
-                message: 'Product spec characteristics cannot be updated'
-            });
-        }*/
-
-        return callback(null);
+                return callback(null);
+            },
+        ], callback)
     };
 
     const validateProduct = function(req, productSpec, callback) {

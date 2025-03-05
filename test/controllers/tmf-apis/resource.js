@@ -20,6 +20,7 @@
 const nock = require('nock');
 const proxyquire = require('proxyquire');
 const testUtils = require('../../utils');
+const RETIRE_ERROR = 'Cannot retire a resource spec without retiring all product specs linked with it'
 
 describe('ResourceSpecification API', function() {
 
@@ -48,8 +49,9 @@ describe('ResourceSpecification API', function() {
         partyId: 'resourceSpec',
     }
     const protocol = config.endpoints.catalog.appSsl ? 'https' : 'http';
-	const url = protocol + '://' + config.endpoints.resource.host + ':' + config.endpoints.resource.port; 
-    
+    const url = protocol + '://' + config.endpoints.resource.host + ':' + config.endpoints.resource.port; 
+    const prodSpecUrl = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
+
     beforeEach(function() {
         nock.cleanAll();
     });
@@ -142,204 +144,242 @@ describe('ResourceSpecification API', function() {
         })
 
         describe('create', () => {
-			function testCreateSpec(UserInfo, body, hasError, expectedStatus, expectedErr, isOwner, isSeller, checkRole, done) {
-				const checkRoleMethod = jasmine.createSpy();
-				checkRoleMethod.and.returnValue(isSeller);
+            function testCreateSpec(UserInfo, body, hasError, expectedStatus, expectedErr, isOwner, isSeller, checkRole, done) {
+                const checkRoleMethod = jasmine.createSpy();
+                checkRoleMethod.and.returnValue(isSeller);
 
-				const checkOwnerMethod = jasmine.createSpy();
-				checkOwnerMethod.and.returnValue(isOwner);
+                const checkOwnerMethod = jasmine.createSpy();
+                checkOwnerMethod.and.returnValue(isOwner);
 
-				const utils = {
-					validateLoggedIn: function(req, callback) {
-						callback(null);
-					},
-					hasRole: checkRoleMethod
-				};
+                const utils = {
+                    validateLoggedIn: function(req, callback) {
+                        callback(null);
+                    },
+                    hasRole: checkRoleMethod
+                };
 
-				const tmfUtils = {
-					hasPartyRole: checkOwnerMethod
-				};
+                const tmfUtils = {
+                    hasPartyRole: checkOwnerMethod
+                };
 
-				const resourceAPI = getResourceSpecAPI(tmfUtils, utils);
+                const resourceAPI = getResourceSpecAPI(tmfUtils, utils);
 
-				const req = {
-					user: UserInfo,
-					method: 'POST',
-					body: JSON.stringify(body),
-					apiUrl: path,
-					url: path,
-					hostname: config.endpoints.service.host,
-					headers: {}
-				};
+                const req = {
+                    user: UserInfo,
+                    method: 'POST',
+                    body: JSON.stringify(body),
+                    apiUrl: path,
+                    url: path,
+                    hostname: config.endpoints.service.host,
+                    headers: {}
+                };
 
-				resourceAPI.checkPermissions(req, (err) => {
-					if (checkRole) {
-						expect(checkOwnerMethod).toHaveBeenCalledWith(req, body.relatedParty, 'owner')
-						
-						if (isOwner) {
-							expect(checkRoleMethod).toHaveBeenCalledWith(req.user, config.oauth2.roles.seller)
-						}
-						expect(checkRoleMethod.calls.count()).toBe(isOwner ? 1 : 0);
-					}
+                resourceAPI.checkPermissions(req, (err) => {
+                    if (checkRole) {
+                        expect(checkOwnerMethod).toHaveBeenCalledWith(req, body.relatedParty, 'owner')
 
-					if (!hasError) {
-						expect(err).toBe(null)
-					} else {
-						expect(err.status).toBe(expectedStatus);
-						expect(err.message).toBe(expectedErr);
-					}
-				});
-				done();
-			}
+                        if (isOwner) {
+                            expect(checkRoleMethod).toHaveBeenCalledWith(req.user, config.oauth2.roles.seller)
+                        }
+                        expect(checkRoleMethod.calls.count()).toBe(isOwner ? 1 : 0);
+                    }
 
-			it('should create a resource specification successfully', (done) => {
-				const basicBody = {
-					id: 'resSpec',
-					validFor: {
-						startDateTime: '2016-07-12T10:56:00'
-					},
-					relatedParty: [{ id: 'test', role: 'owner', href: SERVER + individual }]
-				};
+                    if (!hasError) {
+                        expect(err).toBe(null)
+                    } else {
+                        expect(err.status).toBe(expectedStatus);
+                        expect(err.message).toBe(expectedErr);
+                    }
+                });
+                done();
+            }
 
-				testCreateSpec(seller, basicBody, false, 200, null, true, true, true, done)
-			})
+            it('should create a resource specification successfully', (done) => {
+                const basicBody = {
+                    id: 'resSpec',
+                    validFor: {
+                        startDateTime: '2016-07-12T10:56:00'
+                    },
+                    relatedParty: [{ id: 'test', role: 'owner', href: SERVER + individual }]
+                };
 
-			it('should raise a 403 unauthorized error if the user is not the owner', (done) => {
-				const basicBody = {
-					id: 'resspec',
-					validFor: {
-						startDateTime: '2016-07-12T10:56:00'
-					},
-					relatedParty: [{ id: 'test3', role: 'owner', href: SERVER + individual }]
-				};
-				testCreateSpec(seller, basicBody, true, 403, 'Unauthorized to create non-owned/non-seller resource specs', false, true, true, done)
-			})
+                testCreateSpec(seller, basicBody, false, 200, null, true, true, true, done)
+            })
 
-			it('should raise an error if the body is not valid', (done) => {
-				const invalidBody = 'invalid'
-				const resourceAPI = getResourceSpecAPI({}, {});
+            it('should raise a 403 unauthorized error if the user is not the owner', (done) => {
+                const basicBody = {
+                    id: 'resspec',
+                    validFor: {
+                        startDateTime: '2016-07-12T10:56:00'
+                    },
+                    relatedParty: [{ id: 'test3', role: 'owner', href: SERVER + individual }]
+                };
+                testCreateSpec(seller, basicBody, true, 403, 'Unauthorized to create non-owned/non-seller resource specs', false, true, true, done)
+            })
 
-				const req = {
-					user: seller,
-					method: 'POST',
-					body: invalidBody,
-					apiUrl: path,
-					url: path,
-					hostname: config.endpoints.service.host,
-					headers: {}
-				};
+            it('should raise an error if the body is not valid', (done) => {
+                const invalidBody = 'invalid'
+                const resourceAPI = getResourceSpecAPI({}, {});
 
-				resourceAPI.checkPermissions(req, (err) => {
-					expect(err).toEqual({
-						status: 400,
-						message: 'The provided body is not a valid JSON'
-					})
-					done()
-				})
-			})
-		})
+                const req = {
+                    user: seller,
+                    method: 'POST',
+                    body: invalidBody,
+                    apiUrl: path,
+                    url: path,
+                    hostname: config.endpoints.service.host,
+                    headers: {}
+                };
+
+                resourceAPI.checkPermissions(req, (err) => {
+                    expect(err).toEqual({
+                        status: 400,
+                        message: 'The provided body is not a valid JSON'
+                    })
+                    done()
+                })
+            })
+        })
 
         describe('update', () => {
-			function testUpdateSpec(userInfo, resId, prevBody, body, isOwner, errMsg, done) {
-				const checkRoleMethod = jasmine.createSpy();
-				checkRoleMethod.and.returnValue(isOwner);
-				const checkOwnerMethod = jasmine.createSpy();
-				checkOwnerMethod.and.returnValue(isOwner);
+            function testUpdateSpec(userInfo, resId, prevBody, body, isOwner, errMsg, done, extraNock) {
+                const checkRoleMethod = jasmine.createSpy();
+                checkRoleMethod.and.returnValue(isOwner);
+                const checkOwnerMethod = jasmine.createSpy();
+                checkOwnerMethod.and.returnValue(isOwner);
 
-				nock(url).get(`${path}/urn:resource-spec:1`).reply(200, prevBody)
+                nock(url).get(`${path}/urn:resource-spec:1`).reply(200, prevBody)
 
-				const utils = {
-					validateLoggedIn: (req, callback) => {
-						callback(null);
-					},
-					hasRole: checkRoleMethod
-				}
+                const utils = {
+                    validateLoggedIn: (req, callback) => {
+                        callback(null);
+                    },
+                    hasRole: checkRoleMethod
+                }
 
-				const tmfUtils = {
-					hasPartyRole: checkOwnerMethod
-				}
+                const tmfUtils = {
+                    hasPartyRole: checkOwnerMethod
+                }
 
-				const serviceAPI = getResourceSpecAPI(tmfUtils, utils);
-				const req = {
-					user: userInfo,
-					method: 'PATCH',
-					body: JSON.stringify(body),
-					apiUrl: `${path}/${resId}`,
-					url: `${path}/${resId}`,
-					hostname: config.endpoints.service.host,
-					headers: {}
-				}
+                const serviceAPI = getResourceSpecAPI(tmfUtils, utils);
+                const req = {
+                    user: userInfo,
+                    method: 'PATCH',
+                    body: JSON.stringify(body),
+                    apiUrl: `${path}/${resId}`,
+                    url: `${path}/${resId}`,
+                    hostname: config.endpoints.service.host,
+                    headers: {}
+                }
 
-				serviceAPI.checkPermissions(req, (err) => {
-					if (!errMsg) {
-						expect(checkOwnerMethod).toHaveBeenCalledWith(req, prevBody.relatedParty, 'owner')
+                serviceAPI.checkPermissions(req, (err) => {
+                    if (!errMsg) {
+                        expect(checkOwnerMethod).toHaveBeenCalledWith(req, prevBody.relatedParty, 'owner')
 
-						if (isOwner) {
-							expect(checkRoleMethod).toHaveBeenCalledWith(req.user, config.oauth2.roles.seller)
-						}
-						expect(err).toBe(null)
-					} else {
-						expect(err).toEqual(errMsg)
-					}
+                        if (isOwner) {
+                            expect(checkRoleMethod).toHaveBeenCalledWith(req.user, config.oauth2.roles.seller)
+                        }
+                        expect(err).toBe(null)
+                    } else {
+                        expect(err).toEqual(errMsg)
+                    }
+                    if (extraNock){
+                        extraNock.done()
+                    }
 
-					done()
-				})
-			}
+                    done()
+                })
+            }
 
-			it('should allow to update a resource specification', (done) => {
-				testUpdateSpec(seller, 'urn:resource-spec:1', {
-					id: 'urn:resource-spec:1',
-					lifecycleStatus: 'Active',
-					relatedParty: [{
-						id: 'test',
-						role: 'owner'
-					}]
-				}, {
-					'lifecycleStatus': 'Launched'
-				}, true, null, done)
-			})
+            it('should allow to update a resource specification', (done) => {
+                testUpdateSpec(seller, 'urn:resource-spec:1', {
+                    id: 'urn:resource-spec:1',
+                    lifecycleStatus: 'Active',
+                    relatedParty: [{
+                        id: 'test',
+                        role: 'owner'
+                    }]
+                }, {
+                    'lifecycleStatus': 'Launched'
+                }, true, null, done)
+            })
 
-			it('should raise a 403 if the user is not authorized to update', (done) => {
-				testUpdateSpec(seller, 'urn:resource-spec:1', {
-					id: 'urn:resource-spec:1',
-					lifecycleStatus: 'Active',
-					relatedParty: [{
-						id: 'test3',
-						role: 'owner'
-					}]
-				}, {
-					'lifecycleStatus': 'Launched'
-				}, false, {
-					status: 403,
-					message: 'Unauthorized to update non-owned/non-seller resource specs'
-				}, done)
-			})
+            it('should allow to retire a resource specification', (done) => {
+                const prodSpecMock = nock(prodSpecUrl).get('/productSpecification')
+                .query({'resourceSpecification.id':'urn:resource-spec:1', fields:'lifecycleStatus'})
+                .reply(200, [{id: 'prod', lifecycleStatus: 'Obsolete'}])
+                testUpdateSpec(seller, 'urn:resource-spec:1', {
+                    id: 'urn:resource-spec:1',
+                    lifecycleStatus: 'Launched',
+                    relatedParty: [{
+                        id: 'test',
+                        role: 'owner'
+                    }]
+                }, {
+                    lifecycleStatus: 'Retired'
+                }, true, null, done, prodSpecMock)
+            })
 
-			it('should raise a 404 error if the resource specification is not found', (done) => {
-				testUpdateSpec(seller, 'urn:resource-spec:2', {}, {
-					'lifecycleStatus': 'Launched'
-				}, true, {
-					status: 404,
-					message: 'The required resource does not exist'
-				}, done)
-			})
+            it('should raise 409 if product specs linked with the resource spec are not retired previously', (done) => {
+                const prodSpecMock = nock(prodSpecUrl).get('/productSpecification')
+                .query({'resourceSpecification.id':'urn:resource-spec:1', fields:'lifecycleStatus'})
+                .reply(200, [{id: 'prod', lifecycleStatus: 'Active'}])
+                testUpdateSpec(seller, 'urn:resource-spec:1', {
+                    id: 'urn:resource-spec:1',
+                    lifecycleStatus: 'Launched',
+                    relatedParty: [{
+                        id: 'test',
+                        role: 'owner'
+                    }]
+                }, {
+                    lifecycleStatus: 'Retired'
+                }, true, {
+                    status: 409,
+                    message: RETIRE_ERROR}, done, prodSpecMock)
+            })
 
-			it('should raise a 400 error is an invalid lifecycle is provided', (done) => {
-				testUpdateSpec(seller, 'urn:resource-spec:1', {
-					id: 'urn:resource-spec:1',
-					lifecycleStatus: 'Active',
-					relatedParty: [{
-						id: 'test',
-						role: 'owner'
-					}]
-				}, {
-					'lifecycleStatus': 'Retired'
-				}, true, {
-					status: 400,
-					message: 'Cannot transition from lifecycle status Active to Retired'
-				}, done)
-			})
-		})
+
+            it('should raise a 403 if the user is not authorized to update', (done) => {
+                testUpdateSpec(seller, 'urn:resource-spec:1', {
+                    id: 'urn:resource-spec:1',
+                    lifecycleStatus: 'Active',
+                    relatedParty: [{
+                        id: 'test3',
+                        role: 'owner'
+                    }]
+                }, {
+                    'lifecycleStatus': 'Launched'
+                }, false, {
+                    status: 403,
+                    message: 'Unauthorized to update non-owned/non-seller resource specs'
+                }, done)
+            })
+
+            it('should raise a 404 error if the resource specification is not found', (done) => {
+                testUpdateSpec(seller, 'urn:resource-spec:2', {}, {
+                    'lifecycleStatus': 'Launched'
+                }, true, {
+                    status: 404,
+                    message: 'The required resource does not exist'
+                }, done)
+            })
+
+            it('should raise a 400 error is an invalid lifecycle is provided', (done) => {
+                testUpdateSpec(seller, 'urn:resource-spec:1', {
+                    id: 'urn:resource-spec:1',
+                    lifecycleStatus: 'Active',
+                    relatedParty: [{
+                        id: 'test',
+                        role: 'owner'
+                    }]
+                }, {
+                    'lifecycleStatus': 'Retired'
+                }, true, {
+                    status: 400,
+                    message: 'Cannot transition from lifecycle status Active to Retired'
+                }, done)
+            })
+        })
 
         describe('not allowed method', function (){
             function TestNotAllowedMethod(method, done){
