@@ -43,3 +43,17 @@ test or execute the software inside the container. To access to the container ex
 ```
 docker exec -ti dockerdev_proxy_1 /bin/bash
 ```
+
+## Development setup
+
+In order to setup a local development environment, running the Logic Proxy, TMForum APIs and the Context Broker, the following steps need to be taken:
+
+> :warning: The scripts are tested on Ubuntu and require [mustache](https://mustache.github.io/), [docker](https://docs.docker.com/engine/install/) and [docker compose](https://docs.docker.com/compose/install/) to be available.
+
+1. Configure version and TMForum-APIs to be included at [tmforum.yaml](./tmforum.yaml). It already contains sane defaults and only needs to be touched if something very specific is required.
+2. In case additional configuration is required, add as env-var in the [proxy-env.mustache](./proxy-env.mustache) file. 
+2. Execute the [start-dev.sh](./start-dev.sh). It will create a temporary folder(```target```), build the proxy-image from the current code, render the templates and start the docker environment. 
+
+Follow the instructions of the script, in case you want to preserve data between executions and want to access the logs.
+
+> :warning: The current setup does not include any authorization/authentication components. At the moment it needs to be configured individually. 
