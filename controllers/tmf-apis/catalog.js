@@ -131,6 +131,47 @@ const catalog = (function() {
         });
     };
 
+    const createAsset = function(assetPath, body, callback) {
+        const uri = utils.getAPIURL(
+            config.endpoints.catalog.appSsl,
+            config.endpoints.catalog.host,
+            config.endpoints.catalog.port,
+            assetPath
+        );
+        axios.post(uri, body).then((response) => {
+            callback(null, {
+                status: response.status,
+                body: response.data
+            });
+
+        }).catch((err) => {
+            callback({
+                status: err.response.status
+            });
+        })
+    };
+
+    const updateAsset = function(assetPath, body, callback) {
+        const uri = utils.getAPIURL(
+            config.endpoints.catalog.appSsl,
+            config.endpoints.catalog.host,
+            config.endpoints.catalog.port,
+            assetPath
+        );
+
+        axios.patch(uri, body).then((response) => {
+            callback(null, {
+                status: response.status,
+                body: response.data
+            });
+
+        }).catch((err) => {
+            callback({
+                status: err.response.status
+            });
+        })
+    };
+
     const checkAssetStatus = function(assetBody, validStates) {
         return LIFE_CYCLE in assetBody && validStates.indexOf(assetBody[LIFE_CYCLE].toLowerCase()) >= 0;
     };
@@ -1320,7 +1361,37 @@ const catalog = (function() {
         // Attach product spec info for product creation request
         let body;
 
-        if (req.method == 'POST' && productsPattern.test(req.apiUrl)) {
+        if (req.method == 'POST' && categoriesPattern.test(req.apiUrl)) {
+            body = req.body
+            retrieveAsset(`/catalog/${config.defaultId}`, function(err, result) {
+            if (err) {
+                if (err.status == 404) {
+                    callback({
+                        status: 400,
+                        message: 'Missing default catalog in the system'
+                    });
+                } else {
+                    callback({
+                        status: 500,
+                        message: 'Error with default catalog in the system'
+                    });
+                }
+            } else {
+                const dftCategory = result.body.category
+                dftCategory.push({id: body.id, href: body.href, name: body.name})
+                updateAsset(`/catalog/${config.defaultId}`, {category: dftCategory}, function(err, result){
+                    if (err){
+                        callback({
+                            status: 500,
+                            message: 'Error adding the category to default catalog'
+                        })
+                    } else{
+                        callback(null)
+                    }
+                })
+            }
+        })
+        } else if (req.method == 'POST' && productsPattern.test(req.apiUrl)) {
             body = req.body;
             storeClient.attachProduct(
                 body,
@@ -1366,7 +1437,28 @@ const catalog = (function() {
             );
         } else if (req.method == 'POST' && catalogsPattern.test(req.apiUrl)) {
             body = req.body;
-            callback(null)
+
+            createAsset('/category', {isRoot: true, name: body.name, lifecycleStatus: 'Launched'}, function(err, result){
+                if (err){
+                    callback({
+                        status: 500,
+                        message: 'Error creating the associated category'
+                    })
+                } else{
+                    const category = result.body
+                    console.log(result)
+                    updateAsset(`/catalog/${body.id}`, {category: [{id: category.id, href: category.href, name: category.name}]},function(err, result){
+                        if (err){
+                            callback({
+                                status: 500,
+                                message: 'Error adding the category to created catalog'
+                            })
+                        } else{
+                            callback(null)
+                        }
+                    })
+                }
+            })
         } else {
             callback(null)
         }
