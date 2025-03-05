@@ -32,6 +32,7 @@ const authModule = require('./lib/auth');
 const uuidv4 = require('uuid').v4;
 const certsValidator = require('./lib/certificate').certsValidator
 const buildRequestJWT = require('./lib/strategies/vc').buildRequestJWT
+const { indexes } = require('./lib/indexes')
 
 const debug = !(process.env.NODE_ENV == 'production');
 
@@ -174,7 +175,8 @@ app.use(function(req, res, next) {
     'use strict';
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Methods', 'HEAD, POST, GET, PATCH, PUT, OPTIONS, DELETE');
-    res.header('Access-Control-Allow-Headers', 'origin, content-type, X-Auth-Token, Tenant-ID, Authorization, X-Organization');
+    res.header('Access-Control-Allow-Headers', 'origin, content-type, X-Auth-Token, Tenant-ID, Authorization, X-Organization, x-terms-accepted');
+
 
     if (req.method == 'OPTIONS') {
         utils.log(logger, 'debug', req, 'CORS request');
@@ -368,8 +370,12 @@ app.all(config.logOutPath, function(req, res) {
 });
 
 // Config endpoint
+const fetchData =async () => { 
+    result = await indexes.search('defaultcatalog', {})
+    return (result.length === 0 || result.length > 1)? '' : result[0].default_id
+}
 
-app.get('/config', (_, res) => {
+app.get('/config', async (_, res) => {
     res.send({
         siop: {
             enabled: config.siop.enabled,
@@ -392,7 +398,8 @@ app.get('/config', (_, res) => {
         domeAbout: config.domeAbout,
         domeRegister: config.domeRegister,
         domePublish: config.domePublish,
-        purchaseEnabled: config.purchaseEnabled
+        purchaseEnabled: config.purchaseEnabled,
+        defaultId: await fetchData()
     })
 })
 
@@ -576,6 +583,9 @@ app.get(config.portalPrefix + '/payment', ensureAuthenticated, function(req, res
 app.get('/logintoken', authMiddleware.headerAuthentication, function(req, res) {
     res.header('Access-Control-Allow-Origin', 'http://localhost:4200')
     res.header("Access-Control-Allow-Credentials", true);
+
+    console.log('Returning user token')
+
     res.json(req.user)
 });
 
