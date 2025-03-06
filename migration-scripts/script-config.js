@@ -1,8 +1,9 @@
 const db_name = "belp"
-const product_catalog_path = "http://host.docker.internal:8632"
+const product_catalog_path = "http://host.docker.internal:8632" //manual testing use: localhost
 const category_api = `${product_catalog_path}/category`
 const catalog_api = `${product_catalog_path}/catalog`
 const p_offering_api = `${product_catalog_path}/productOffering`
+const p_spec_api = `${product_catalog_path}/productSpecification`
 const mongo_host = "mongo" //manual testing use: host.docker.internal
 let url
 if (process.env.BAE_LP_MONGO_USER != null && process.env.BAE_LP_MONGO_USER.length > 0) {
@@ -29,6 +30,7 @@ module.exports = {
     category_api,
     catalog_api,
     p_offering_api,
+    p_spec_api,
     url,
     error,
     info,
