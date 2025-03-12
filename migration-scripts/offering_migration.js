@@ -15,12 +15,14 @@ async function run(){
         const db = await client.db(db_name)
         await db.command({ ping: 1 });
         success("connected!")
+
         const coll = db.collection("offering")
         const databases = await client.db().admin().listDatabases();
         console.log("Databases:", databases);
         const count = await coll.countDocuments()
         console.log("count: " + count)
         const result = await coll.find()
+
         info("iterating through the collection")
         for await (const element of result){
             // requesting catalog api
@@ -31,8 +33,10 @@ async function run(){
                 error("cannot retrieve the catalog with id: " + id )
                 continue;
             }
+
             const catalog_body = response.data
             const name = catalog_body.name
+
             let categories = catalog_body.category
             // if category was not created
             if (!(id in category_map)){

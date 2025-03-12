@@ -1,4 +1,4 @@
-const {url, p_offering_api, p_spec_api, db_name} = require('./script-config.js')
+const {url, p_offering_api, p_spec_api, catalog_api, db_name} = require('./script-config.js')
 const { MongoClient } = require('mongodb');
 const {info, error, success, data} = require('./script-config.js')
 const { default: axios } = require('axios');
@@ -45,10 +45,19 @@ async function run(){
                     data(`single offering: ${prd_off.id}`)
                     const owner = product_spec.relatedParty.find((party) => party.role.toLowerCase() === 'owner')
 
+                    const catalog = await retrieveApi("catalog", `${catalog_api}?relatedParty.id=${owner.id}&fields=name`)
+                    if (catalog.length === 0){
+                        error(`catalog not found for owner: ${owner.id}`)
+                        continue
+                    }
+
+                    data(`Using catalog: ${catalog[0].name}`)
+
                     coll.insertOne({
                         id: prd_off.id,
                         relatedParty: owner.id,
-                        lifecycleStatus: prd_off.lifecycleStatus
+                        lifecycleStatus: prd_off.lifecycleStatus,
+                        catalog: catalog[0].id
                     })
                     storedSize++
                 }
