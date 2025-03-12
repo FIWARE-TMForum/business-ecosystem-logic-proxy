@@ -14,6 +14,7 @@ async function run(){
         const db = await client.db(db_name)
         await db.command({ ping: 1 });
         success("connected!")
+
         const coll = db.collection("defaultcatalog")
         const catalog_size = await coll.countDocuments()
         if (catalog_size == 1 ){
@@ -40,8 +41,12 @@ async function run(){
             offset +=limit
 
             for (const catalog of all_catalogs){
+                if (!catalog.category){
+                    catalog.category = []
+                }
+
                 for (const category of catalog.category){
-                    map[category.id]= true
+                    map[category.id] = true
                 }
             }
 
@@ -65,7 +70,7 @@ async function run(){
         success(`all rooted categories retrieved, size: ${rooted_categories.length}`)
 
         info("getting unassigned categories...")
-        let u_categories= []
+        let u_categories = []
         for (const r_category of rooted_categories){
             if (r_category.id in map){
                 continue
