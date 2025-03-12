@@ -1,4 +1,4 @@
-const {url, p_offering_api, p_spec_api, db_name} = require('./script-config.js')
+const {url, p_offering_api, p_spec_api, catalog_api, db_name} = require('./script-config.js')
 const { MongoClient } = require('mongodb');
 const {info, error, success, data} = require('./script-config.js')
 const { default: axios } = require('axios');
@@ -9,8 +9,9 @@ async function run(){
         await client.connect()
         const db = client.db(db_name)
         await db.command({ ping: 1 });
+
         success("connected!")
-        const coll = db.collection("offering_owner")
+        const coll = db.collection("offering")
         const databases = await client.db().admin().listDatabases();
         data("databases: " + databases)
 
@@ -21,7 +22,7 @@ async function run(){
         let storedSize = 0
         while(!finished){
             const offerings = await retrieveApi("product offering", 
-                p_offering_api+ `?fields=id,isBundle,bundledProductOffering,productSpecification&limit=${limit}&offset=${offset}`)
+                p_offering_api+ `?fields=id,isBundle,lifecycleStatus,bundledProductOffering,productSpecification&limit=${limit}&offset=${offset}`)
         
             if(offerings.length === 0 ){
                 finished = true
@@ -30,14 +31,34 @@ async function run(){
 
             for(const prd_off of offerings){
 
+                let prev_offer = await coll.find({id: prd_off.id}).toArray()
+                if (prev_offer.length > 0){
+                    data(`Skipping: ${prd_off.id}`)
+                    continue
+                }
+
                 if(!prd_off.isBundle && prd_off.productSpecification){ // if not bundle
 
                     const id = prd_off.productSpecification.id
                     const product_spec = await retrieveApi("product spec", `${p_spec_api}/${id}?fields=relatedParty`)
+
                     data(`single offering: ${prd_off.id}`)
                     const owner = product_spec.relatedParty.find((party) => party.role.toLowerCase() === 'owner')
 
-                    coll.insertOne({owner_id: owner.id, off_id: prd_off.id})
+                    const catalog = await retrieveApi("catalog", `${catalog_api}?relatedParty.id=${owner.id}&fields=name`)
+                    if (catalog.length === 0){
+                        error(`catalog not found for owner: ${owner.id}`)
+                        continue
+                    }
+
+                    data(`Using catalog: ${catalog[0].name}`)
+
+                    coll.insertOne({
+                        id: prd_off.id,
+                        relatedParty: owner.id,
+                        lifecycleStatus: prd_off.lifecycleStatus,
+                        catalog: catalog[0].id
+                    })
                     storedSize++
                 }
                 else if(prd_off.isBundle && prd_off.bundledProductOffering && prd_off.bundledProductOffering.length > 0){ // if bundle
@@ -53,7 +74,12 @@ async function run(){
                             const product_spec = await retrieveApi("product spec", `${p_spec_api}/${id}?fields=relatedParty`)
                             const owner = product_spec.relatedParty.find((party) => party.role.toLowerCase() === 'owner')
 
-                            coll.insertOne({owner_id: owner.id, off_id: prd_off.id})
+                            coll.insertOne({
+                                id: prd_off.id,
+                                relatedParty: owner.id,
+                                lifecycleStatus: prd_off.lifecycleStatus
+                            })
+
                             storedSize++
                             break
                         }

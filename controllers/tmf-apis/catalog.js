@@ -102,7 +102,7 @@ const catalog = (function() {
     const retrieveCatalog = function(catalogId, callback) {
         const catalogPath = `/catalog/${catalogId}`
 
-        retrieveAsset(catalogPath, function(err, response) {
+        retrieveAsset(catalogPath, (err, response) => {
             if (err) {
                 callback({
                     status: 422,

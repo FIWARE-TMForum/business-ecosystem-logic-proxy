@@ -90,7 +90,7 @@ function tmf() {
 	}
 
 	function getCatalogIdFromPath(pathArray) {
-		if(pathArray.length >= 4 && pathArray[2] == 'catalog') {
+		if(pathArray.length >= 5 && pathArray[2] == 'catalog' && pathArray[4] == 'productOffering') {
 			return pathArray[3]
 		}
 	}
@@ -165,12 +165,13 @@ function tmf() {
 	const handleCatalogRequests = function(req, res, api) {
 		pathArray = req.path.split("/")
 		catalogId = getCatalogIdFromPath(pathArray)
-		
+
 		if (typeof catalogId != 'undefined') {
 			catalogUrl = utils.getAPIProtocol('catalog') + '://' + utils.getAPIHost('catalog') + ':' + utils.getAPIPort('catalog') + '/catalog/' + catalogId
+
 			catalog.retrieveCatalog(catalogId, (err, response) => {
 				if (response.status == 200) {
-					url = buildCatalogUrl(req, getCategoryIdsFromCatalog(response.body), pathArray)
+					const url = buildCatalogUrl(req, getCategoryIdsFromCatalog(response.body), pathArray)
 					proxyRequest(req, res, api, buildOptions(req, url))
 				} else {
 					logger["warn"]("was not able to retrieve the catalog " + catalogId)
@@ -178,7 +179,10 @@ function tmf() {
 				}
 			})
 		} else {
-			proxyRequest(req, res, api, buildOptions(req, buildCatalogUrl(req, [], pathArray)))
+			// This is a normal catalog api request
+			const api = 'catalog'
+			const url = utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + req.apiUrl.replace(`/${api}`, '');
+			proxyRequest(req, res, api, buildOptions(req, url))
 		}
 	}
 
@@ -299,7 +303,6 @@ function tmf() {
 				completeRequest(result);
 			}
 		}).catch((err) => {
-
 			console.log(err)
 			utils.log(logger, 'error', req, 'Proxy error: ' + err.message);
 
