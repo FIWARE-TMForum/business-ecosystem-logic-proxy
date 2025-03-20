@@ -315,7 +315,8 @@ const ordering = (function() {
                 };
             } else {
                 // Check that fields are not added or removed
-                if (Object.keys(updatedItem).length !== Object.keys(previousOrderItem).length) {
+                if ((!!previousOrderItem.state && Object.keys(updatedItem).length !== Object.keys(previousOrderItem).length)
+                        || (!previousOrderItem.state && Object.keys(updatedItem).length - 1 !== Object.keys(previousOrderItem).length)) {
                     error = {
                         status: 403,
                         message: 'The fields of an order item cannot be modified'
@@ -356,6 +357,41 @@ const ordering = (function() {
             let finalBody = includeOtherFields ? updatedOrdering : {};
             finalBody['productOrderItem'] = previousOrdering.productOrderItem;
 
+            // Calculate the new state of the product order
+            let state = null;
+            let itemStatus = {
+                'unckecked': 0,
+                'acknowledged': 0,
+                'cancelled': 0,
+                'completed': 0,
+                'inProgress': 0,
+                'pending': 0,
+                'failed': 0
+            }
+            previousOrdering.productOrderItem.forEach((item) => {
+                console.log(item.state)
+                if (!!item.state) {
+                    itemStatus[item.state] += 1;
+                } else {
+                    itemStatus['unckecked'] += 1;
+                }
+            })
+
+            if (itemStatus.completed === previousOrdering.productOrderItem.length) {
+                state = 'completed';
+            } else if (itemStatus.cancelled === previousOrdering.productOrderItem.length) {
+                state = 'cancelled';
+            } else if(itemStatus.failed === previousOrdering.productOrderItem.length) {
+                state = 'failed';
+            } else if (itemStatus.completed + itemStatus.cancelled + itemStatus.failed === previousOrdering.productOrderItem.length) {
+                state = 'partial';
+            } else if (itemStatus.inProgress > 0) {
+                state = 'inProgress';
+            } else if (itemStatus.acknowledged > 0) {
+                state = 'acknowledged';
+            }
+
+            finalBody['state'] = state;
             utils.updateBody(req, finalBody);
 
             callback(null);
