@@ -1,0 +1,39 @@
+version: '3'
+services:
+    mongo:
+        image: mongo:6.0
+        ports:
+            - 27017:27017
+        networks:
+            main:
+        volumes:
+            - ./proxy-data:/data/db
+
+    proxy:
+        image: proxy-dev
+        links:
+            - mongo
+        depends_on:
+            - mongo
+        ports:
+            - 8004:8004
+        networks:
+            main:
+                aliases:
+                    - proxy.docker
+        environment:
+            - BAE_LP_SIOP_ENABLED=false
+            - BAE_LP_SIOP_CLIENT_ID=marketplace-client
+            - BAE_LP_SIOP_VERIFIER_HOST=https://verifier.dome-marketplace.org
+            - BAE_LP_SIOP_VERIFIER_QRCODE_PATH=/api/v1/loginQR
+            - BAE_LP_SIOP_VERIFIER_TOKEN_PATH=/token
+            - BAE_LP_SIOP_VERIFIER_JWKS_PATH=/.well-known/jwks
+            - BAE_LP_SIOP_CALLBACK_PATH=http://proxy.docker:8004/auth/vc/callback
+            - BAE_LP_SIOP_ALLOWED_ROLES=seller,customer
+            - MIGRATE_DATA=True
+        volumes:
+            - ../:/business-ecosystem-logic-proxy
+
+networks:
+    main:
+        external: true
