@@ -650,6 +650,7 @@ const ordering = (function() {
 
     const notifyOrderCompleted = function(req, callback) {
         storeClient.notifyOrderCompleted(req.body.id, req.user, (err) => {
+            console.log('we got the response')
             if (err) {
                 console.log('Error notifying order completion')
             }
@@ -677,7 +678,8 @@ const ordering = (function() {
     };
 
     const executePostValidation = function(req, callback) {
-        if (['GET', 'PUT', 'PATCH'].indexOf(req.method.toUpperCase()) >= 0) {
+        // TODO: Filter the result of the PATCH request
+        if (['GET', 'PUT'].indexOf(req.method.toUpperCase()) >= 0) {
             filterOrderItems(req, (err) => {
                 if (req.method.toUpperCase() != 'GET' || err != null) {
                     callback(err)
@@ -692,9 +694,10 @@ const ordering = (function() {
             //tasks.push(includeSellersInBillingAccount.bind(this, req));
             async.series(tasks, callback);
         } else if (req.method === 'PATCH' && req.body.state.toLowerCase() === 'completed') {
-            const tasks = [];
-            tasks.push(notifyOrderCompleted.bind(this, req));
-            async.series(tasks, callback);
+            console.log('Making the notification call')
+            notifyOrderCompleted(req, () => {
+                callback(null)
+            })
         } else {
             callback(null);
         }
