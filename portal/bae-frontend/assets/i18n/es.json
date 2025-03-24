@@ -988,6 +988,12 @@
 
     },
   "FORMS": {
+    "PROCUREMENT_MODE": {
+      "_title": "Select Procurement Mode",
+      "_manual": "Manual",
+      "_automatic": "Automatic",
+      "_payment_automatic": "Payment Automatic - Procurement Manual"
+    },
     "PRICE_PLANS": {
       "_price_plans": "Price Plans",
       "_add": "Add new Price Plans",
@@ -995,6 +1001,8 @@
       "_description": "Description",
       "_online_payment": "Online Payment",
       "_online_payment_long": "Is this product to be paid online?",
+      "_online_payment_desc": "By checking this box, all the price plans of this offer will be paid online. Leave it unchecked if you want offline payments.",
+      "_locked_after_first_plan": "Locked. You can't change it after defining the first price plan.",
       "_actions": "Actions",
       "_no_price_plans": "This offer has no Price Plans at this moment. So currently it is FREE.",
       "_no_price_plans_components": "This offer has no Price Components. You need to add at least one!",
