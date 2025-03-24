@@ -691,7 +691,7 @@ const ordering = (function() {
             tasks.push(notifyOrder.bind(this, req));
             //tasks.push(includeSellersInBillingAccount.bind(this, req));
             async.series(tasks, callback);
-        } else if (req.method === 'PATCH' && req.body.state.toLowerCase === 'completed') {
+        } else if (req.method === 'PATCH' && req.body.state.toLowerCase() === 'completed') {
             const tasks = [];
             tasks.push(notifyOrderCompleted.bind(this, req));
             async.series(tasks, callback);
