@@ -648,6 +648,15 @@ const ordering = (function() {
         callback(null)
     }
 
+    const notifyOrderCompleted = function(req, callback) {
+        storeClient.notifyOrderCompleted(req.body.id, req.user, (err) => {
+            if (err) {
+                console.log('Error notifying order completion')
+            }
+            callback(null)
+        })
+    }
+
     const notifyOrder = function(req, callback) {
         const body = req.body;
 
@@ -681,6 +690,10 @@ const ordering = (function() {
             const tasks = [];
             tasks.push(notifyOrder.bind(this, req));
             //tasks.push(includeSellersInBillingAccount.bind(this, req));
+            async.series(tasks, callback);
+        } else if (req.method === 'PATCH' && req.body.state.toLowerCase === 'completed') {
+            const tasks = [];
+            tasks.push(notifyOrderCompleted.bind(this, req));
             async.series(tasks, callback);
         } else {
             callback(null);

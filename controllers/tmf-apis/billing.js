@@ -32,10 +32,14 @@ const billing = (function() {
         callback(null);
     }
 
+    const validateUpdate = function(req, callback) {
+        callback(null);
+    }
+
     const validators = {
         GET: [utils.validateLoggedIn, validateRetrieving],
         POST: [utils.methodNotAllowed],
-        PATCH: [utils.methodNotAllowed],
+        PATCH: [utils.validateLoggedIn, validateUpdate],
         PUT: [utils.methodNotAllowed],
         DELETE: [utils.methodNotAllowed]
     };
