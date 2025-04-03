@@ -1,13 +1,21 @@
-const db_name = "belp"
-const product_catalog_path = "http://host.docker.internal:8632" //manual testing use: localhost
+const config = require('../config')
+
+
+const db_name = config.mongoDb.db
+const mongo_host = config.mongoDb.server
+const user = config.mongoDb.user
+const pass = config.mongoDb.password
+
+const product_catalog_path = `http://${config.endpoints.catalog.host}:${config.endpoints.catalog.port}`
 const category_api = `${product_catalog_path}/category`
 const catalog_api = `${product_catalog_path}/catalog`
 const p_offering_api = `${product_catalog_path}/productOffering`
 const p_spec_api = `${product_catalog_path}/productSpecification`
-const mongo_host = "mongo" //manual testing use: host.docker.internal
+
+
 let url
-if (process.env.BAE_LP_MONGO_USER != null && process.env.BAE_LP_MONGO_USER.length > 0) {
-    url = `mongodb://${process.env.BAE_LP_MONGO_USER}:${process.env.BAE_LP_MONGO_PASS}@mongo:27017/${db_name}?authSource=${db_name}`
+if (user != null && user.length > 0) {
+    url = `mongodb://${user}:${pass}@mongo:27017/${db_name}?authSource=${db_name}`
 } else {
     url = `mongodb://${mongo_host}:27017/${db_name}`
 }
