@@ -82,8 +82,6 @@ async function run(){
             success("category added to the product offering")
             updates++
         }
-        
-        
     }
     catch (e){
         error(e)

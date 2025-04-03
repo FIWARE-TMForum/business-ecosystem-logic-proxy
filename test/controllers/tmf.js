@@ -316,19 +316,19 @@ describe('TMF Controller', function() {
         });
 
         it('should redirect the request to the actual catalog API with the categories available in the catalog, when controller does not reject it (sub-resource)', function(done) {
-            testApiOk('catalog', '/catalog/some-id/productSpecification', done, { 'expectedPath': '/productSpecification?category=cat', 'catalogResponse': {'status': 200, 'body':{'category':[{'id': 'cat'}]}}});
+            testApiOk('catalog', '/catalog/some-id/productOffering', done, { 'expectedPath': '/productOffering?category=cat', 'catalogResponse': {'status': 200, 'body':{'category':[{'id': 'cat'}]}}});
         });
 
         it('should redirect the request to the actual catalog API with the categories available in the catalog, when controller does not reject it (sub-resource)', function(done) {
-            testApiOk('catalog', '/catalog/some-id/productSpecification', done, { 'expectedPath': '/productSpecification?category=cat-1,cat-2', 'catalogResponse': {'status': 200, 'body':{'category':[{'id': 'cat-1'}, {'id': 'cat-2'}]}}});
+            testApiOk('catalog', '/catalog/some-id/productOffering', done, { 'expectedPath': '/productOffering?category=cat-1,cat-2', 'catalogResponse': {'status': 200, 'body':{'category':[{'id': 'cat-1'}, {'id': 'cat-2'}]}}});
         });
 
         it('should redirect the request to the actual catalog API with the categories available in the catalog, when controller does not reject it (sub-resource)', function(done) {
-            testApiOk('catalog', '/catalog/some-id/productSpecification?category=cat-1', done, { 'expectedPath': '/productSpecification?category=cat-1', 'catalogResponse': {'status': 200, 'body':{'category':[{'id': 'cat-1'}, {'id': 'cat-2'}]}}});
+            testApiOk('catalog', '/catalog/some-id/productOffering?category=cat-1', done, { 'expectedPath': '/productOffering?category=cat-1', 'catalogResponse': {'status': 200, 'body':{'category':[{'id': 'cat-1'}, {'id': 'cat-2'}]}}});
         });
 
         it('should redirect the request to the actual catalog API with the categories available in the catalog, when controller does not reject it (sub-resource)', function(done) {
-            testApiOk('catalog', '/catalog/some-id/productSpecification?category=cat-1,cat-2', done, { 'expectedPath': '/productSpecification?category=cat-1', 'catalogResponse': {'status': 200, 'body':{'category':[{'id': 'cat-1'}]}}});
+            testApiOk('catalog', '/catalog/some-id/productOffering?category=cat-1,cat-2', done, { 'expectedPath': '/productOffering?category=cat-1', 'catalogResponse': {'status': 200, 'body':{'category':[{'id': 'cat-1'}]}}});
         });
 
         it('should redirect the request to the actual ordering API when controller does not reject it (root)', function(done) {
