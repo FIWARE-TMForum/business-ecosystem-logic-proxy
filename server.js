@@ -175,7 +175,8 @@ app.use(function(req, res, next) {
     'use strict';
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Methods', 'HEAD, POST, GET, PATCH, PUT, OPTIONS, DELETE');
-    res.header('Access-Control-Allow-Headers', 'origin, content-type, X-Auth-Token, Tenant-ID, Authorization, X-Organization');
+    res.header('Access-Control-Allow-Headers', 'origin, content-type, X-Auth-Token, Tenant-ID, Authorization, X-Organization, x-terms-accepted');
+
 
     if (req.method == 'OPTIONS') {
         utils.log(logger, 'debug', req, 'CORS request');
@@ -396,7 +397,8 @@ app.post('/feedback', async (req,res) => {
     }
 })
 
-app.get('/config', async (_, res) => {
+config.defaultId = await fetchData()
+app.get('/config', (_, res) => {
     res.send({
         siop: {
             enabled: config.siop.enabled,
@@ -420,7 +422,7 @@ app.get('/config', async (_, res) => {
         domeRegister: config.domeRegister,
         domePublish: config.domePublish,
         purchaseEnabled: config.purchaseEnabled,
-        defaultId: await fetchData()
+        defaultId: config.defaultId
     })
 })
 
@@ -604,6 +606,9 @@ app.get(config.portalPrefix + '/payment', ensureAuthenticated, function(req, res
 app.get('/logintoken', authMiddleware.headerAuthentication, function(req, res) {
     res.header('Access-Control-Allow-Origin', 'http://localhost:4200')
     res.header("Access-Control-Allow-Credentials", true);
+
+    console.log('Returning user token')
+
     res.json(req.user)
 });
 
