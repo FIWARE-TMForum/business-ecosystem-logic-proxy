@@ -190,6 +190,7 @@
         "_change_session": "Change session",
         "_admin": "Administration",
         "_publish": "Publish your offerings",
+        "_register_here": "Register here",
         "_register": "Register",
         "_guidelines": "Guidelines to register",
         "_guideline_publish": "Guideline to publish",
@@ -324,6 +325,7 @@
         "_start_date": "Start operating date",
         "_order_id": "Order Id",
         "_state": "State",
+        "_status": "Status",
         "_priority": "Priority",
         "_desc": "Description",
         "_price": "Price",
@@ -469,7 +471,9 @@
         "_summary": "Product's summary",
         "_create_prod": "Create product",
         "_file_res": "File restrictions",
-        "_restrictions": "File size must be under 3MB. File names can only include alphabetical characters (A-Z, a-z), numbers (0-9) and a limited set of symbols, such as underscores (_), hyphens (-), and periods (.). "
+        "_restrictions": "File size must be under 3MB. File names can only include alphabetical characters (A-Z, a-z), numbers (0-9) and a limited set of symbols, such as underscores (_), hyphens (-), and periods (.). ",
+        "_file_name": "Image URL should end by png, jpg, jpeg, gif, bmp or webp format.",
+        "_file_check": "You need to upload a file before proceeding."
     },
     "UPDATE_PROD_SPEC":{
         "_back": "Back",
@@ -542,7 +546,8 @@
         "_verify_text": "To get a valid VC of the certificate you can access the ",
         "_dome_trust": "DOME Trust Service Provider for Certification",
         "_file_res": "File restrictions",
-        "_restrictions": "File size must be under 3MB. File names can only include characters (a-z), (A-Z), (0-9), and a limited set of symbols including underscores (_), hyphens (-), and periods (.). "
+        "_restrictions": "File size must be under 3MB. File names can only include characters (a-z), (A-Z), (0-9), and a limited set of symbols including underscores (_), hyphens (-), and periods (.). ",
+        "_file_name": "Image URL should end by png, jpg, jpeg, gif, bmp or webp format."
     },
     "CREATE_RES_SPEC": {
         "_back": "Back",
@@ -751,6 +756,7 @@
         "_no_prod_spec": "Bundled offers can't include product specifications.",
         "_cancel": "Cancel",
         "_no_prods": "There's no product specifications.",
+        "_no_prods_to_proceed": "Please add at least one product specification to proceed to the next step",
         "_no_cats": "There's no catalogues.",
         "_no_categories": "There's no categories",
         "_no_offer": "There's no offerings."
@@ -848,6 +854,7 @@
         "_no_prod_spec": "Bundled offers can't include product specifications.",
         "_cancel": "Cancel",
         "_no_prods": "There's no product specifications.",
+        "_no_prods_to_proceed": "Please add at least one product specification to proceed to the next step",
         "_no_cats": "There's no catalogues.",
         "_no_categories": "There's no categories",
         "_no_offer": "There's no offerings."
@@ -984,16 +991,17 @@
         "_completed": "Completed",
         "_failed": "Failed",
         "_pending": "Pending",
-        "_cancelled": "Cancelled"
+        "_cancelled": "Cancelled",
+        "_unchecked": "Unchecked"
 
     },
   "FORMS": {
     "PROCUREMENT_MODE": {
-      "_title": "Select Procurement Mode",
-      "_manual": "Manual",
-      "_automatic": "Automatic",
-      "_payment_automatic": "Payment Automatic - Procurement Manual"
-    },
+        "_title": "Select Procurement Mode",
+        "_manual": "Manual",
+        "_automatic": "Automatic",
+        "_payment_automatic": "Payment Automatic - Procurement Manual"
+      },
     "PRICE_PLANS": {
       "_price_plans": "Price Plans",
       "_add": "Add new Price Plans",
