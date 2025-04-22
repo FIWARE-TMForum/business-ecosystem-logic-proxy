@@ -41,6 +41,8 @@ const { billing } = require('./tmf-apis/billing')
 const logger = require('./../lib/logger').logger.getLogger('TMF')
 const axios = require('axios')
 const utils = require('./../lib/utils')
+const { log } = require('async')
+const { query } = require('express')
 
 function tmf() {
 	const apiControllers = {};
@@ -74,24 +76,144 @@ function tmf() {
 		res.end();
 	};
 
+	// extracts the concrete resource from the path(e.g. the last part of the path)
+	// f.e.:
+	//   /catalog/some-id/productOffering/id -> /productOffering/id
+	//   /catalog/some-id/productOffering -> /productOffering
+	function getResourcePath(pathArray) {
+		pathLength = pathArray.length
+		pathModulo = pathLength % 2 
+		switch(pathModulo) {
+			case 1:
+				return "/" + pathArray[pathLength-1];
+			case 0: 
+				return "/" + pathArray[pathLength-2] + "/" + pathArray[pathLength-1];
+		}
+	}
+
+	function getCatalogIdFromPath(pathArray) {
+		if(pathArray.length >= 5 && pathArray[2] == 'catalog' && pathArray[4] == 'productOffering') {
+			return pathArray[3]
+		}
+	}
+
+	function getCategoryIdsFromCatalog(catalogObject) {
+		categoryIds = []
+		if (typeof catalogObject['category'] == 'undefined') {
+			return categoryIds
+		}
+		for(let i = 0; i < catalogObject['category'].length; i++) {
+			categoryIds.push(catalogObject['category'][i]['id']);
+		}
+		return categoryIds
+	}
+
+	function queryToParams(query) {
+		queryParts = query.split("&")
+		params = [] 
+		for(let i = 0; i < queryParts.length; i++) {
+			params.push(queryParts[i].split("="))
+		}
+		return params
+	}
+
+	function buildQuery(query, categoryIds) {
+		if(categoryIds.length > 0) {
+			categoryQuery = categoryIds.join(",")
+			if (query) {
+				queryParams = queryToParams(query)
+				categoryParam = queryParams.filter(qp => qp[0] == "category")
+				if (typeof categoryParam == 'undefined' || categoryParam.length == 0) {
+					return query + "&category=" + categoryQuery
+				} else {
+					queriedCategories = categoryParam[0][1].split(',')
+					let idIntersection;
+					if (queriedCategories.length > categoryIds.length) {
+						idIntersection = queriedCategories.filter(x => categoryIds.includes(x))
+					} else {
+						idIntersection = categoryIds.filter(x => queriedCategories.includes(x))
+					}
+					queryParams.splice(queryParams.indexOf(categoryParam), 1)
+					newQueryString = "category=" + idIntersection.join(",")
+					for (let i = 0; i<queryParams.length; i++) {
+						newQueryString = newQueryString + "&" + queryParams[i].join("=")
+					}
+					return newQueryString
+				}				
+			} else {
+				return "category=" + categoryQuery
+			}
+		}
+		return query
+	}
+
+	function buildCatalogUrl(req, categoryIds, pathArray) {
+		api = "catalog"
+		queryPart = ""
+		if (req.apiUrl.includes("?")) {
+			queryParts = req.apiUrl.split("?")
+			queryPart = buildQuery(queryParts[queryParts.length-1], categoryIds)
+		} else {
+			queryPart = buildQuery(null, categoryIds)
+		}
+		if (queryPart) {
+			return utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + getResourcePath(pathArray) + "?" + queryPart
+		} else {
+			return utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + getResourcePath(pathArray)
+		}
+	}
+
+	
+	const handleCatalogRequests = function(req, res, api) {
+		pathArray = req.path.split("/")
+		catalogId = getCatalogIdFromPath(pathArray)
+
+		if (typeof catalogId != 'undefined') {
+			catalogUrl = utils.getAPIProtocol('catalog') + '://' + utils.getAPIHost('catalog') + ':' + utils.getAPIPort('catalog') + '/catalog/' + catalogId
+
+			catalog.retrieveCatalog(catalogId, (err, response) => {
+				if (response.status == 200) {
+					const url = buildCatalogUrl(req, getCategoryIdsFromCatalog(response.body), pathArray)
+					proxyRequest(req, res, api, buildOptions(req, url))
+				} else {
+					logger["warn"]("was not able to retrieve the catalog " + catalogId)
+					return null
+				}
+			})
+		} else {
+			// This is a normal catalog api request
+			const api = 'catalog'
+			const url = utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + req.apiUrl.replace(`/${api}`, '');
+			proxyRequest(req, res, api, buildOptions(req, url))
+		}
+	}
+
 	const redirectRequest = function(req, res) {
-		let url;
+
 		const api = getAPIName(req.apiUrl);
 
 		if (req.user) {
 			utils.attachUserHeaders(req.headers, req.user);
 		}
 
-		if (newApis.indexOf(api) >= 0) {
-			url = utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + req.apiUrl.replace(`/${api}`, '');
+		// remove the catalog sub-address from the path of all requests to the product-catalog api, since they are not addressed as such in TMF v4
+		if (api == 'catalog') {
+			handleCatalogRequests(req, res, api)
 		} else {
-			url = utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + req.apiUrl;
+			if (newApis.indexOf(api) >= 0) {
+				url = utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + req.apiUrl.replace(`/${api}`, '');
+			} else {
+				url = utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + req.apiUrl;
+			}
+			if (api == 'rss') {
+				url = url.replace('rss', 'charging')
+			}
+			proxyRequest(req, res, api, buildOptions(req, url))
 		}
+			
+	};
 
-		// TODO: provide a general feature for rewriting paths
-		if (api == 'rss') {
-			url = url.replace('rss', 'charging')
-		}
+	function buildOptions(req, url) {
 
 		const options = {
 			url: url,
@@ -112,12 +234,17 @@ function tmf() {
 
 			options.headers['cache-control'] = 'no-cache';
 		}
+		return options
+	}
+
+	const proxyRequest = function(req, res, api, options) {
 
 		// PROXY THE REQUEST
 		axios.request(options).then((response) => {
+
 			const completeRequest = function(resp) {
 				res.status(resp.status);
-
+				
 				for (let header in resp.headers) {
 					res.setHeader(header, resp.headers[header]);
 				}
@@ -187,7 +314,7 @@ function tmf() {
                 res.status(504).json({ error: 'Service unreachable' })
             }
 		})
-	};
+	}
 
 	const checkPermissions = function(req, res) {
 		const api = getAPIName(req.apiUrl);

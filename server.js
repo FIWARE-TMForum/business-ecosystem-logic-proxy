@@ -33,6 +33,7 @@ const uuidv4 = require('uuid').v4;
 const certsValidator = require('./lib/certificate').certsValidator
 const buildRequestJWT = require('./lib/strategies/vc').buildRequestJWT
 const simulator = require('./controllers/simulator').simulator();
+const { indexes } = require('./lib/indexes')
 
 const debug = !(process.env.NODE_ENV == 'production');
 
@@ -369,7 +370,34 @@ app.all(config.logOutPath, function(req, res) {
 });
 
 // Config endpoint
+const fetchData =async () => { 
+    result = await indexes.search('defaultcatalog', {})
+    return (result.length === 0 || result.length > 1)? '' : result[0].default_id
+}
 
+app.use('/feedback', authMiddleware.headerAuthentication, failIfNotAuthenticated)
+app.post('/feedback', async (req,res) => {
+    try {
+        feedback = JSON.parse(req.body)
+        const rating = feedback.rating
+        if (!!rating && rating > 0 && rating < 6){
+            const mongoFb = {
+                rating: feedback.rating,
+                description: feedback.description,
+                creation_date: new Date().toISOString()
+            }
+            indexes.indexDocument('feedback', uuidv4(), mongoFb)
+            res.send(mongoFb)
+        }else{
+            res.status(422).send('Feedback body is not correct')
+        }
+    }
+    catch{
+        res.status(500).send('Error indexing the feedback')
+    }
+})
+
+config.defaultId = await fetchData()
 app.get('/config', (_, res) => {
     res.send({
         siop: {
@@ -393,7 +421,8 @@ app.get('/config', (_, res) => {
         domeAbout: config.domeAbout,
         domeRegister: config.domeRegister,
         domePublish: config.domePublish,
-        purchaseEnabled: config.purchaseEnabled
+        purchaseEnabled: config.purchaseEnabled,
+        defaultId: config.defaultId
     })
 })
 

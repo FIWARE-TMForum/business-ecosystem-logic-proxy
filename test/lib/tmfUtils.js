@@ -561,4 +561,45 @@ describe('TMF Utils', function() {
             testGetIndividualsCollectionURL(req);
         });
     });
+
+    describe('Method haveSameStatus', function() {
+
+        it('should return true if all elements inside the array have the specified status', function(){
+            const tmfUtils = getTmfUtils();
+            const array=[]
+            for(let i=0; i<5; i++){
+                array.push({name: `n${i}`, lifecycleStatus: 'Launched'})
+            }
+            expect(array.length).toBe(5)
+            result = tmfUtils.haveSameStatus('launched', array)
+            expect(result).toBe(true)
+        })
+
+        it('should return false if all elements inside the array have different status', function(){
+            const tmfUtils = getTmfUtils();
+            const array=[]
+            for(let i=0; i<5; i++){
+                array.push({name: `n${i}`, lifecycleStatus: 'Launched'})
+            }
+            array.push({name: 'error', lifecycleStatus: 'Launche'})
+            expect(array.length).toBe(6)
+            result = tmfUtils.haveSameStatus('launched', array)
+            expect(result).toBe(false)
+        })
+
+    })
+
+    describe('Method refsToQuery', function(){
+        it('should parse an array of refs to query structure string', function(){
+            const tmfUtils = getTmfUtils();
+            const array=[]
+            for(let i=0; i<5; i++){
+                array.push({id: `n${i}`, lifecycleStatus: 'Launched'})
+            }
+            expect(array.length).toBe(5)
+            result = tmfUtils.refsToQuery(array)
+            expect(result).toBe('n0,n1,n2,n3,n4')
+
+        })
+    })
 });

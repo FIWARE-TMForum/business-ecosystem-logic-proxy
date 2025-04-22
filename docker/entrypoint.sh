@@ -50,4 +50,12 @@ if [ ${COLLECT} = "True" ]; then
     node collect_static.js
 fi
 
+if [ ${MIGRATE_DATA} = "True" ]; then
+    cd migration-scripts
+    node offering_owner.js
+    node default_catalog.js
+    node offering_migration.js
+    cd ..
+fi
+
 node server.js --max-http-header-size=16384

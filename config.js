@@ -603,6 +603,8 @@ config.searchUrl = process.env.BAE_LP_SEARCH_URL || config.searchUrl;
 config.billingEngineUrl = ''
 config.billingEngineUrl = process.env.BAE_LP_BILLING_ENGINE_URL || config.billingEngineUrl;
 
+config.defaultId = ''
+
 // Purchase enabled
 config.purchaseEnabled = false
 if (!!process.env.BAE_LP_PURCHASE_ENABLED) {
