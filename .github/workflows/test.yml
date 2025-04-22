@@ -3,34 +3,34 @@ name: Tests
 on:
   push:
     branches:
-      - feat/extended-pricing
+      - master
 
   pull_request:
     branches:
-      - feat/extended-pricing
+      - master
 
 jobs:
-  # test:
-  #   runs-on: ubuntu-latest
-  #   strategy:
-  #     matrix:
-  #       node-version: [16.x, 18.x, 20.x]
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [16.x, 18.x, 20.x]
 
-  #   steps:
-  #     - uses: actions/checkout@v2
-  #     - name: Use Node.js ${{ matrix.node-version }}
-  #       uses: actions/setup-node@v1
-  #       with:
-  #         node-version: ${{ matrix.node-version }}
-  #     - run: npm ci
-  #     - run: npm run build --if-present
-  #     - run: npm test
-  #     - name: Coveralls Parallel
-  #       uses: coverallsapp/github-action@master
-  #       with:
-  #         github-token: ${{ secrets.github_token }}
-  #         parallel: true
-  #         flag-name: run-${{ matrix.node-version }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: npm ci
+      - run: npm run build --if-present
+      - run: npm test
+      - name: Coveralls Parallel
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.github_token }}
+          parallel: true
+          flag-name: run-${{ matrix.node-version }}
 
   build-docker:
     runs-on: ubuntu-latest
@@ -53,8 +53,8 @@ jobs:
           context: .
           file: ./docker/Dockerfile
           tags: |
-            fiware/biz-ecosystem-logic-proxy:10.0.0-rc18
-          push: ${{ github.ref == 'refs/heads/feat/extended-pricing' }}
+            fiware/biz-ecosystem-logic-proxy:master
+          push: ${{ github.ref == 'refs/heads/master' }}
 
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
