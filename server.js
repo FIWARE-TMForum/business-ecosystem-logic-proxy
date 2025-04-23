@@ -420,6 +420,9 @@ app.get('/config', (_, res) => {
         domeTrust: config.domeTrust,
         domeAbout: config.domeAbout,
         domeRegister: config.domeRegister,
+        domeRegistrationForm: config.domeRegistrationForm,
+        domeOnboardingGuidelines: config.domeOnboardingGuidelines,
+        domeGuidelines: config.domeGuidelines,
         domePublish: config.domePublish,
         purchaseEnabled: config.purchaseEnabled,
         defaultId: config.defaultId

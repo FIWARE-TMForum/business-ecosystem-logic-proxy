@@ -603,6 +603,15 @@ config.searchUrl = process.env.BAE_LP_SEARCH_URL || config.searchUrl;
 config.billingEngineUrl = ''
 config.billingEngineUrl = process.env.BAE_LP_BILLING_ENGINE_URL || config.billingEngineUrl;
 
+config.domeRegistrationForm = ''
+config.domeRegistrationForm = process.env.BAE_LP_DOME_REGISTRATION_FORM || config.domeRegistrationForm;
+
+config.domeOnboardingGuidelines = ''
+config.domeOnboardingGuidelines = process.env.BAE_LP_DOME_ONBOARDING_GUIDELINES || config.domeOnboardingGuidelines;
+
+config.domeGuidelines = ''
+config.domeGuidelines = process.env.BAE_LP_DOME_GUIDELINES || config.domeGuidelines;
+
 config.defaultId = ''
 
 // Purchase enabled
