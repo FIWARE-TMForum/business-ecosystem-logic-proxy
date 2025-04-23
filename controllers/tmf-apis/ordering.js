@@ -293,14 +293,6 @@ const ordering = (function() {
     const updateItemsState = function(req, updatedOrdering, previousOrdering, includeOtherFields, callback) {
         let error = null;
 
-        // TODO: Check if this is true with  the automatic payment support
-        // if (previousOrdering.state.toLowerCase() !== 'inprogress') {
-        //     error = {
-        //         status: 403,
-        //         message: previousOrdering.state + ' orders cannot be manually modified'
-        //     };
-        // }
-
         for (let i = 0; i < updatedOrdering.productOrderItem.length && !error; i++) {
             let updatedItem = updatedOrdering.productOrderItem[i];
             let previousOrderItem = previousOrdering.productOrderItem.filter((item) => {
@@ -462,7 +454,7 @@ const ordering = (function() {
                             if (ordering['state'].toLowerCase() !== 'cancelled') {
                                 callback({
                                     status: 403,
-                                    message: 'Invalid order state. Valid states for customers are: "Cancelled"'
+                                    message: 'Invalid order state. Valid states for customers are: "cancelled"'
                                 });
                             } else {
                                 // Orderings can only be cancelled when all items are marked as Acknowledged
@@ -487,7 +479,7 @@ const ordering = (function() {
                                         } else {
                                             // Cancel all order items
                                             previousOrdering.productOrderItem.forEach(function(item) {
-                                                item.state = 'Cancelled';
+                                                item.state = 'cancelled';
                                             });
 
                                             // Included order items will be ignored
@@ -691,13 +683,16 @@ const ordering = (function() {
         } else if (req.method === 'POST') {
             const tasks = [];
             tasks.push(notifyOrder.bind(this, req));
-            //tasks.push(includeSellersInBillingAccount.bind(this, req));
             async.series(tasks, callback);
-        } else if (req.method === 'PATCH' && req.body.state.toLowerCase() === 'completed') {
-            console.log('Making the notification call')
-            notifyOrderCompleted(req, () => {
-                callback(null)
-            })
+        } else if (req.method === 'PATCH') {
+            if (req.body.state.toLowerCase() === 'completed') {
+                console.log('Making the notification call')
+                notifyOrderCompleted(req, () => {
+                    filterOrderItems(req, callback);
+                })
+            } else {
+                filterOrderItems(req, callback);
+            }
         } else {
             callback(null);
         }
