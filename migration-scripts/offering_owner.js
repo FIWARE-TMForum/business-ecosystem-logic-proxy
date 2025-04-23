@@ -23,7 +23,7 @@ async function run(){
         while(!finished){
             const offerings = await retrieveApi("product offering", 
                 p_offering_api+ `?fields=id,isBundle,lifecycleStatus,bundledProductOffering,productSpecification&limit=${limit}&offset=${offset}`)
-        
+
             if(offerings.length === 0 ){
                 finished = true
                 continue
