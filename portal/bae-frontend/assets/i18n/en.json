@@ -1,6 +1,6 @@
 {
     "_yes": "Yes",
-    "_no": "No",    
+    "_no": "No",
     "DASHBOARD": {
         "_title": "DOME Marketplace is out! See what's new",
         "_header": "Digital Trust to move forward",
@@ -16,7 +16,8 @@
         "_search_ph": "Search Cloud Services, Edge Services, Providers...",
         "_search": "Search",
         "_not_found": "No offers found",
-        "_browse_serv": "Browse services"
+        "_browse_serv": "Browse services",
+        "_view_serv": "View services"
     },
     "FEATURED": {
         "_title": "Featured offerings",
@@ -171,7 +172,7 @@
         "_home": "Home",
         "_catalogs": "Catalogues",
         "_search": "Search",
-        "_browse": "Browse",        
+        "_browse": "Browse",
         "_cloud": "Cloud Services",
         "_smart_ports": "Smart ports",
         "_smart_cities": "Smart cities",
@@ -189,12 +190,16 @@
         "_change_session": "Change session",
         "_admin": "Administration",
         "_publish": "Publish your offerings",
+        "_register_here": "Register here",
         "_register": "Register",
-        "_guidelines": "Guidelines",
-        "_onboarding": "Onboarding",    
+        "_guidelines": "Guidelines to register",
+        "_guideline_publish": "Guideline to publish",
+        "_onboarding": "Onboarding",
+        "_registration": "Registration form",
         "_about": "About",
         "_verify": "Publish your offering",
-        "_info": "Info"
+        "_info": "Info",
+        "_orders": "Product Orders"
     },
     "PRODUCT_DETAILS": {
         "_back": "Back",
@@ -320,6 +325,7 @@
         "_start_date": "Start operating date",
         "_order_id": "Order Id",
         "_state": "State",
+        "_status": "Status",
         "_priority": "Priority",
         "_desc": "Description",
         "_price": "Price",
@@ -346,6 +352,21 @@
         "_invalid_phone": "Phonenumber is invalid!",
         "_invalid_email": "Email is invalid!",
         "_no_billing": "There's no billing information."
+    },
+    "INVOICES": {
+      "_invoice_id": "Invoice ID",
+      "_date": "Date",
+      "_not_found": "No invoices found.",
+      "_description": "Description",
+      "_tax_included_amount": "Amount (tax included)",
+      "_tax_excluded_amount": "Amount (without tax)",
+      "_tax": "Tax",
+      "_billed": "Billed",
+      "_pending": "Pending",
+      "_status": "Status",
+      "_name": "Invoice num.",
+      "_type": "Type",
+      "_product": "Product ID"
     },
     "CREATE_CATALOG": {
         "_back": "Back",
@@ -450,7 +471,9 @@
         "_summary": "Product's summary",
         "_create_prod": "Create product",
         "_file_res": "File restrictions",
-        "_restrictions": "File size must be under 3MB. File names can only include alphabetical characters (A-Z, a-z), numbers (0-9) and a limited set of symbols, such as underscores (_), hyphens (-), and periods (.). "
+        "_restrictions": "File size must be under 3MB. File names can only include alphabetical characters (A-Z, a-z), numbers (0-9) and a limited set of symbols, such as underscores (_), hyphens (-), and periods (.). ",
+        "_file_name": "Image URL should end by png, jpg, jpeg, gif, bmp or webp format.",
+        "_file_check": "You need to upload a file before proceeding."
     },
     "UPDATE_PROD_SPEC":{
         "_back": "Back",
@@ -523,7 +546,8 @@
         "_verify_text": "To get a valid VC of the certificate you can access the ",
         "_dome_trust": "DOME Trust Service Provider for Certification",
         "_file_res": "File restrictions",
-        "_restrictions": "File size must be under 3MB. File names can only include characters (a-z), (A-Z), (0-9), and a limited set of symbols including underscores (_), hyphens (-), and periods (.). "
+        "_restrictions": "File size must be under 3MB. File names can only include characters (a-z), (A-Z), (0-9), and a limited set of symbols including underscores (_), hyphens (-), and periods (.). ",
+        "_file_name": "Image URL should end by png, jpg, jpeg, gif, bmp or webp format."
     },
     "CREATE_RES_SPEC": {
         "_back": "Back",
@@ -699,7 +723,7 @@
         "_add_relationship": "Add new relationship",
         "_save_relationship": "Save relationship",
         "_profile_pic": "Profile picture",
-        "_finish": "Finish",        
+        "_finish": "Finish",
         "_summary": "Product's summary",
         "_create_prod": "Create product",
         "_choose_license": "Choose a license",
@@ -732,6 +756,7 @@
         "_no_prod_spec": "Bundled offers can't include product specifications.",
         "_cancel": "Cancel",
         "_no_prods": "There's no product specifications.",
+        "_no_prods_to_proceed": "Please add at least one product specification to proceed to the next step",
         "_no_cats": "There's no catalogues.",
         "_no_categories": "There's no categories",
         "_no_offer": "There's no offerings."
@@ -796,7 +821,7 @@
         "_add_relationship": "Add new relationship",
         "_save_relationship": "Save relationship",
         "_profile_pic": "Profile picture",
-        "_finish": "Update product",        
+        "_finish": "Update product",
         "_summary": "Product's summary",
         "_create_prod": "Create product",
         "_choose_license": "Choose a license",
@@ -829,6 +854,7 @@
         "_no_prod_spec": "Bundled offers can't include product specifications.",
         "_cancel": "Cancel",
         "_no_prods": "There's no product specifications.",
+        "_no_prods_to_proceed": "Please add at least one product specification to proceed to the next step",
         "_no_cats": "There's no catalogues.",
         "_no_categories": "There's no categories",
         "_no_offer": "There's no offerings."
@@ -912,7 +938,7 @@
         "_steps": "Steps",
         "_general": "General",
         "_general_info": "Category's general information",
-        "_finish": "Create category",        
+        "_finish": "Create category",
         "_summary": "Category's summary",
         "_name": "Name",
         "_description": "Description",
@@ -933,7 +959,7 @@
         "_steps": "Steps",
         "_general": "General",
         "_general_info": "Category's general information",
-        "_finish": "Update category",        
+        "_finish": "Update category",
         "_summary": "Category's summary",
         "_name": "Name",
         "_description": "Description",
@@ -947,5 +973,94 @@
     "ORGANIZATION": {
         "_details": "Organization details",
         "_description": "Description"
+    },
+    "PRODUCT_ORDERS": {
+        "_orders": "Product Orders",
+        "_invoices": "Invoices",
+        "_no_orders": "No orders found.",
+        "_search_criteria": "Search criteria",
+        "_order_id": "Order Id",
+        "_status": "Choose a status",
+        "_priority": "Priority",
+        "_desc": "Description",
+        "_price": "Price",
+        "_bill": "Billing address",
+        "_filter_state": "Filter by status",
+        "_acknowledged": "Acknowledged",
+        "_in_progress": "In Progress",
+        "_completed": "Completed",
+        "_failed": "Failed",
+        "_pending": "Pending",
+        "_cancelled": "Cancelled",
+        "_unchecked": "Unchecked"
+    },
+  "FORMS": {
+    "PROCUREMENT_MODE": {
+        "_title": "Select Procurement Mode",
+        "_manual": "Manual",
+        "_automatic": "Automatic",
+        "_payment_automatic": "Payment Automatic - Procurement Manual"
+      },
+    "PRICE_PLANS": {
+      "_price_plans": "Price Plans",
+      "_add": "Add new Price Plans",
+      "_name": "Name",
+      "_description": "Description",
+      "_online_payment": "Online Payment",
+      "_online_payment_long": "Is this product to be paid online?",
+      "_online_payment_desc": "By checking this box, all the price plans of this offer will be paid online. Leave it unchecked if you want offline payments.",
+      "_locked_after_first_plan": "Locked. You can't change it after defining the first price plan.",
+      "_actions": "Actions",
+      "_no_price_plans": "This offer has no Price Plans at this moment. So currently it is FREE.",
+      "_no_price_plans_components": "This offer has no Price Components. You need to add at least one!",
+      "_sure_delete": "Are you sure you want to delete this Price Plan?",
+      "_cant_be_undone": "This action can't be undone",
+      "_cancel": "Cancel",
+      "_delete": "Delete",
+      "_save": "Save",
+      "_edit_price_plan": "Edit Price Plan",
+      "_new_price_plan": "Create a Price Plan",
+      "_config_profile": "Configuration Profile",
+      "_price_components": "Price components",
+      "_add_price_component": "Add a new Price Component",
+      "_currency": "Set the currency that must be used in all the price components of this price plan",
+      "_profile_desc": "If you want this price plan to apply exclusively to a specific product configuration, select that configuration here.",
+      "_price_comp_with_chars": "If you want this price plan to apply exclusively to a specific product configuration, remove the selected characteristics from the created price components.",
+      "_add_profile": "Set a configuration profile",
+      "_edit_profile": "Edit the current profile",
+      "_char_name": "Characteristic",
+      "_char_value": "Current value",
+      "_prev": "Previous",
+      "_next": "Next",
+      "_no_value_selected": "n/a"
+    },
+    "PRICE_PLAN_COMPONENT": {
+      "_name": "Name",
+      "_description": "Description",
+      "_type_of_price": "Type of price",
+      "_one_time": "One Time",
+      "_recurring": "Recurring",
+      "_recurring_prepaid": "Recurring-Prepaid",
+      "_usage": "Usage",
+      "_base_price": "Base price",
+      "_add_discount": "Add discount",
+      "_percentage": "%",
+      "_fixed": "Fixed amount",
+      "_discount_duration": "Discount duration",
+      "_apply_to_char": "Does this price component apply to a product characteristic?",
+      "_days": "Days",
+      "_weeks": "Weeks",
+      "_months": "Months",
+      "_years": "Years",
+      "recurring_period": "Recurring period",
+      "_daily": "Daily",
+      "_weekly": "Weekly",
+      "_monthly": "Monthly",
+      "_yearly": "Yearly",
+      "_unit": "Usage unit",
+      "_cancel": "Cancel",
+      "_delete": "Delete",
+      "_save": "Save"
     }
+  }
 }

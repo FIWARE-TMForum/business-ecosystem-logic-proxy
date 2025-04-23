@@ -35,6 +35,7 @@ const account = require('./tmf-apis/account').account
 const customer = require('./tmf-apis/customer').customer
 const serviceCatalog = require('./tmf-apis/serviceCatalog').serviceCatalog
 const resource = require('./tmf-apis/resource').resource
+const { billing } = require('./tmf-apis/billing')
 
 // Other dependencies
 const logger = require('./../lib/logger').logger.getLogger('TMF')
@@ -58,8 +59,9 @@ function tmf() {
 	apiControllers[config.endpoints.customer.path] = customer;
 	apiControllers[config.endpoints.service.path] = serviceCatalog;
 	apiControllers[config.endpoints.resource.path] = resource;
+	apiControllers[config.endpoints.billing.path] = billing;
 
-	const newApis = ['party', 'catalog', 'ordering', 'inventory', 'service', 'resource', 'account', 'serviceInventory', 'resourceInventory', 'usage']
+	const newApis = ['party', 'catalog', 'ordering', 'inventory', 'service', 'resource', 'account', 'serviceInventory', 'resourceInventory', 'usage', 'billing']
 
 	const getAPIName = function(apiUrl) {
 		return apiUrl.split('/')[1];
@@ -307,10 +309,10 @@ function tmf() {
 			utils.log(logger, 'error', req, 'Proxy error: ' + err.message);
 
 			if (err.response) {
-				res.status(error.response.status).json(error.response.data)
-			} else {
-				res.status(504).json({ error: 'Service unreachable' })
-			}
+                res.status(err.response.status).json(err.response.data)
+            } else {
+                res.status(504).json({ error: 'Service unreachable' })
+            }
 		})
 	}
 

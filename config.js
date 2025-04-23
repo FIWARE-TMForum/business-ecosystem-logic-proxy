@@ -219,6 +219,11 @@ config.endpoints = {
         port: '8638',
         appSsl: false
     },
+    billing: {
+        path: 'billing',
+        host: 'host.docker.internal',
+        port: '8640'
+    },
     sla: {
         path: 'SLAManagement',
         host: 'localhost',
@@ -510,6 +515,15 @@ if (!!process.env.BAE_LP_ENDPOINT_USAGE_SECURED) {
 	config.endpoints.usage.appSsl = process.env.BAE_LP_ENDPOINT_USAGE_SECURED == 'true';
 }
 
+// Customer Bill
+config.endpoints.billing.path = process.env.BAE_LP_ENDPOINT_CUSTOMER_BILL_PATH || config.endpoints.billing.path;
+config.endpoints.billing.port = process.env.BAE_LP_ENDPOINT_CUSTOMER_BILL_PORT || config.endpoints.billing.port;
+config.endpoints.billing.host = process.env.BAE_LP_ENDPOINT_CUSTOMER_BILL_HOST || config.endpoints.billing.host;
+
+if (!!process.env.BAE_LP_ENDPOINT_CUSTOMER_BILL_SECURED) {
+	config.endpoints.billing.appSsl = process.env.BAE_LP_ENDPOINT_CUSTOMER_BILL_SECURED == 'true';
+}
+
 // ======
 // MongoDB Config
 config.mongoDb = config.mongoDb || {};
@@ -585,6 +599,9 @@ config.ticketingUrl = process.env.BAE_LP_TICKETING_URL || config.ticketingUrl;
 
 config.searchUrl = ''
 config.searchUrl = process.env.BAE_LP_SEARCH_URL || config.searchUrl;
+
+config.billingEngineUrl = ''
+config.billingEngineUrl = process.env.BAE_LP_BILLING_ENGINE_URL || config.billingEngineUrl;
 
 config.defaultId = ''
 

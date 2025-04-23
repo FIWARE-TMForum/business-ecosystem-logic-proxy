@@ -66,7 +66,7 @@ const ordering = (function() {
     ///////////////////////////////////////// RETRIEVAL //////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
 
-    var validateRetrieving = function(req, callback) {
+    const validateRetrieving = function(req, callback) {
         tmfUtils.filterRelatedPartyWithRole(req, ['customer', 'seller'], callback);
     };
 
@@ -290,19 +290,12 @@ const ordering = (function() {
     /////////////////////////////////////////// UPDATE ///////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
 
-    var updateItemsState = function(req, updatedOrdering, previousOrdering, includeOtherFields, callback) {
-        var error = null;
+    const updateItemsState = function(req, updatedOrdering, previousOrdering, includeOtherFields, callback) {
+        let error = null;
 
-        if (previousOrdering.state.toLowerCase() !== 'inprogress') {
-            error = {
-                status: 403,
-                message: previousOrdering.state + ' orders cannot be manually modified'
-            };
-        }
-
-        for (var i = 0; i < updatedOrdering.productOrderItem.length && !error; i++) {
-            var updatedItem = updatedOrdering.productOrderItem[i];
-            var previousOrderItem = previousOrdering.productOrderItem.filter(function(item) {
+        for (let i = 0; i < updatedOrdering.productOrderItem.length && !error; i++) {
+            let updatedItem = updatedOrdering.productOrderItem[i];
+            let previousOrderItem = previousOrdering.productOrderItem.filter((item) => {
                 // id is supposed to be unique
                 return item.id === updatedItem.id;
             })[0];
@@ -314,13 +307,14 @@ const ordering = (function() {
                 };
             } else {
                 // Check that fields are not added or removed
-                if (Object.keys(updatedItem).length !== Object.keys(previousOrderItem).length) {
+                if ((!!previousOrderItem.state && Object.keys(updatedItem).length !== Object.keys(previousOrderItem).length)
+                        || (!previousOrderItem.state && Object.keys(updatedItem).length - 1 !== Object.keys(previousOrderItem).length)) {
                     error = {
                         status: 403,
                         message: 'The fields of an order item cannot be modified'
                     };
                 } else {
-                    for (var field in previousOrderItem) {
+                    for (let field in previousOrderItem) {
                         if (field.toLowerCase() !== 'state' && !equal(previousOrderItem[field], updatedItem[field])) {
                             error = {
                                 status: 403,
@@ -332,7 +326,7 @@ const ordering = (function() {
                     }
 
                     if (!error) {
-                        var isSeller = tmfUtils.hasPartyRole(req, previousOrderItem.product.relatedParty, SELLER);
+                        const isSeller = tmfUtils.hasPartyRole(req, previousOrderItem.product.relatedParty, SELLER);
 
                         // If the user is not the seller and the state is changed
                         if (!isSeller && previousOrderItem['state'] != updatedItem['state']) {
@@ -352,9 +346,44 @@ const ordering = (function() {
         if (!error) {
             // Sellers can only modify the 'productOrderItem' field...
             // State is automatically calculated
-            var finalBody = includeOtherFields ? updatedOrdering : {};
+            let finalBody = includeOtherFields ? updatedOrdering : {};
             finalBody['productOrderItem'] = previousOrdering.productOrderItem;
 
+            // Calculate the new state of the product order
+            let state = null;
+            let itemStatus = {
+                'unckecked': 0,
+                'acknowledged': 0,
+                'cancelled': 0,
+                'completed': 0,
+                'inProgress': 0,
+                'pending': 0,
+                'failed': 0
+            }
+            previousOrdering.productOrderItem.forEach((item) => {
+                console.log(item.state)
+                if (!!item.state) {
+                    itemStatus[item.state] += 1;
+                } else {
+                    itemStatus['unckecked'] += 1;
+                }
+            })
+
+            if (itemStatus.completed === previousOrdering.productOrderItem.length) {
+                state = 'completed';
+            } else if (itemStatus.cancelled === previousOrdering.productOrderItem.length) {
+                state = 'cancelled';
+            } else if(itemStatus.failed === previousOrdering.productOrderItem.length) {
+                state = 'failed';
+            } else if (itemStatus.completed + itemStatus.cancelled + itemStatus.failed === previousOrdering.productOrderItem.length) {
+                state = 'partial';
+            } else if (itemStatus.inProgress > 0) {
+                state = 'inProgress';
+            } else if (itemStatus.acknowledged > 0) {
+                state = 'acknowledged';
+            }
+
+            finalBody['state'] = state;
             utils.updateBody(req, finalBody);
 
             callback(null);
@@ -363,18 +392,18 @@ const ordering = (function() {
         }
     };
 
-    var validateNotes = function(newNotes, prevNotes, callback) {
+    const validateNotes = function(newNotes, prevNotes, callback) {
         // The patch operation to include a note must be an append
         if (!prevNotes || !prevNotes.length) {
             return callback(null);
         }
 
-        for (var i = 0; i < prevNotes.length; i++) {
-            var matches = 0;
-            var prev = prevNotes[i];
+        for (let i = 0; i < prevNotes.length; i++) {
+            let matches = 0;
+            let prev = prevNotes[i];
 
-            for (var j = 0; j < newNotes.length; j++) {
-                var n = newNotes[j];
+            for (let j = 0; j < newNotes.length; j++) {
+                let n = newNotes[j];
                 if (prev.text === n.text && prev.date === n.date && prev.author === n.author) {
                     matches++;
                 }
@@ -383,7 +412,7 @@ const ordering = (function() {
             if (matches !== 1) {
                 return callback({
                     status: 403,
-                    message: 'You are not allowed to modify the existing notes of an ordering'
+                    message: 'You are not allowed to modify the existing notes of an order'
                 });
             }
         }
@@ -391,22 +420,24 @@ const ordering = (function() {
         callback(null);
     };
 
-    var validateUpdate = function(req, callback) {
+    const validateUpdate = function(req, callback) {
         try {
-            var ordering = JSON.parse(req.body);
-            var orderingUrl = utils.getAPIURL(
+            const ordering = JSON.parse(req.body);
+            const path = req.apiUrl.replace('/ordering', '');
+            const orderingUrl = utils.getAPIURL(
                 config.endpoints.ordering.appSsl,
                 config.endpoints.ordering.host,
                 config.endpoints.ordering.port,
-                req.apiUrl
+                path
             );
 
-            makeRequest(orderingUrl, 'The requested ordering cannot be retrieved', function(err, previousOrdering) {
+            makeRequest(orderingUrl, 'The requested ordering cannot be retrieved', (err, previousOrdering) => {
                 if (err) {
+                    console.log(err);
                     callback(err);
                 } else {
-                    var isCustomer = tmfUtils.hasPartyRole(req, previousOrdering.relatedParty, CUSTOMER);
-                    var isSeller = tmfUtils.hasPartyRole(req, previousOrdering.relatedParty, SELLER);
+                    const isCustomer = tmfUtils.hasPartyRole(req, previousOrdering.relatedParty, CUSTOMER);
+                    const isSeller = tmfUtils.hasPartyRole(req, previousOrdering.relatedParty, SELLER);
 
                     if (isCustomer) {
                         if ('relatedParty' in ordering) {
@@ -423,11 +454,11 @@ const ordering = (function() {
                             if (ordering['state'].toLowerCase() !== 'cancelled') {
                                 callback({
                                     status: 403,
-                                    message: 'Invalid order state. Valid states for customers are: "Cancelled"'
+                                    message: 'Invalid order state. Valid states for customers are: "cancelled"'
                                 });
                             } else {
                                 // Orderings can only be cancelled when all items are marked as Acknowledged
-                                var productsInAckState = previousOrdering.productOrderItem.filter(function(item) {
+                                const productsInAckState = previousOrdering.productOrderItem.filter(function(item) {
                                     return 'acknowledged' === item.state.toLowerCase();
                                 });
 
@@ -448,7 +479,7 @@ const ordering = (function() {
                                         } else {
                                             // Cancel all order items
                                             previousOrdering.productOrderItem.forEach(function(item) {
-                                                item.state = 'Cancelled';
+                                                item.state = 'cancelled';
                                             });
 
                                             // Included order items will be ignored
@@ -479,7 +510,7 @@ const ordering = (function() {
                     } else {
                         callback({
                             status: 403,
-                            message: 'You are not authorized to modify this ordering'
+                            message: 'You are not authorized to modify this order'
                         });
                     }
                 }
@@ -581,6 +612,8 @@ const ordering = (function() {
                 callback(null);
             }
         } else {
+            orderings.sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate))
+
             utils.updateResponseBody(req, orderings);
             callback(null);
         }
@@ -607,6 +640,16 @@ const ordering = (function() {
         callback(null)
     }
 
+    const notifyOrderCompleted = function(req, callback) {
+        storeClient.notifyOrderCompleted(req.body.id, req.user, (err) => {
+            console.log('we got the response')
+            if (err) {
+                console.log('Error notifying order completion')
+            }
+            callback(null)
+        })
+    }
+
     const notifyOrder = function(req, callback) {
         const body = req.body;
 
@@ -627,7 +670,8 @@ const ordering = (function() {
     };
 
     const executePostValidation = function(req, callback) {
-        if (['GET', 'PUT', 'PATCH'].indexOf(req.method.toUpperCase()) >= 0) {
+        // TODO: Filter the result of the PATCH request
+        if (['GET', 'PUT'].indexOf(req.method.toUpperCase()) >= 0) {
             filterOrderItems(req, (err) => {
                 if (req.method.toUpperCase() != 'GET' || err != null) {
                     callback(err)
@@ -639,8 +683,16 @@ const ordering = (function() {
         } else if (req.method === 'POST') {
             const tasks = [];
             tasks.push(notifyOrder.bind(this, req));
-            //tasks.push(includeSellersInBillingAccount.bind(this, req));
             async.series(tasks, callback);
+        } else if (req.method === 'PATCH') {
+            if (req.body.state.toLowerCase() === 'completed') {
+                console.log('Making the notification call')
+                notifyOrderCompleted(req, () => {
+                    filterOrderItems(req, callback);
+                })
+            } else {
+                filterOrderItems(req, callback);
+            }
         } else {
             callback(null);
         }

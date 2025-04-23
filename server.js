@@ -32,6 +32,7 @@ const authModule = require('./lib/auth');
 const uuidv4 = require('uuid').v4;
 const certsValidator = require('./lib/certificate').certsValidator
 const buildRequestJWT = require('./lib/strategies/vc').buildRequestJWT
+const simulator = require('./controllers/simulator').simulator();
 const { indexes } = require('./lib/indexes')
 
 const debug = !(process.env.NODE_ENV == 'production');
@@ -176,7 +177,6 @@ app.use(function(req, res, next) {
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Methods', 'HEAD, POST, GET, PATCH, PUT, OPTIONS, DELETE');
     res.header('Access-Control-Allow-Headers', 'origin, content-type, X-Auth-Token, Tenant-ID, Authorization, X-Organization, x-terms-accepted');
-
 
     if (req.method == 'OPTIONS') {
         utils.log(logger, 'debug', req, 'CORS request');
@@ -617,6 +617,10 @@ for (var p in config.publicPaths) {
     logger.debug('Public Path', config.publicPaths[p]);
     app.all(config.proxyPrefix + '/' + config.publicPaths[p], tmf.public);
 }
+
+//
+// BILLING ENGINE
+app.post('/billing/order', authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, simulator.simulate)
 
 //
 // Access to TMForum APIs
