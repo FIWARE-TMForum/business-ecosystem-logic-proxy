@@ -3,6 +3,7 @@ const config = require('../config')
 
 const db_name = config.mongoDb.db
 const mongo_host = config.mongoDb.server
+const mongo_port = config.mongoDb.port
 const user = config.mongoDb.user
 const pass = config.mongoDb.password
 
@@ -15,9 +16,9 @@ const p_spec_api = `${product_catalog_path}/productSpecification`
 
 let url
 if (user != null && user.length > 0) {
-    url = `mongodb://${user}:${pass}@mongo:27017/${db_name}?authSource=${db_name}`
+    url = `mongodb://${user}:${pass}@${mongo_host}:${mongo_port}/${db_name}?authSource=${db_name}`
 } else {
-    url = `mongodb://${mongo_host}:27017/${db_name}`
+    url = `mongodb://${mongo_host}:${mongo_port}/${db_name}`
 }
 
 function success(text){
