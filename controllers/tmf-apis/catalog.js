@@ -382,43 +382,51 @@ const catalog = (function() {
                         async.each(
                             offeringBody.bundledProductOffering,
                             function(offering, taskCallback) {
-                                if (!offering.href) {
-                                    return taskCallback({
-                                        status: 422,
-                                        message: 'Missing required field href in bundled offering'
+                                try{
+                                    if (!offering.href) {
+                                        return taskCallback({
+                                            status: 422,
+                                            message: 'Missing required field href in bundled offering'
+                                        });
+                                    }
+
+                                    const offeringPath = `/productOffering/${offering.id}`
+                                    retrieveAsset(offeringPath, function(err, result) {
+                                        if (err) {
+                                            var id = offering.id ? offering.id : '';
+                                            return taskCallback({
+                                                status: 422,
+                                                message:
+                                                    'The bundled offering ' + id + ' cannot be accessed or does not exists'
+                                            });
+                                        }
+
+                                        // Check that the included offering is not also a bundle
+                                        var bundledOffering = result.body;
+                                        if (bundledOffering.isBundle) {
+                                            return taskCallback({
+                                                status: 422,
+                                                message: 'Product offering bundles cannot include another bundle'
+                                            });
+                                        }
+
+                                        var userNotAllowedMsg = 'You are not allowed to bundle offerings you do not own';
+                                        validateAssetPermissions(
+                                            req,
+                                            bundledOffering,
+                                            validStates,
+                                            errorMessageStateProduct,
+                                            userNotAllowedMsg,
+                                            taskCallback
+                                        );
                                     });
+
+                                } catch(err){
+                                    return taskCallback({
+                                        status: 500,
+                                        message: 'An unexpected error occurred, contact the support team.'
+                                    })
                                 }
-
-                                const offeringPath = `/productOffering/${offering.id}`
-                                retrieveAsset(offeringPath, function(err, result) {
-                                    if (err) {
-                                        var id = offering.id ? offering.id : '';
-                                        return taskCallback({
-                                            status: 422,
-                                            message:
-                                                'The bundled offering ' + id + ' cannot be accessed or does not exists'
-                                        });
-                                    }
-
-                                    // Check that the included offering is not also a bundle
-                                    var bundledOffering = result.body;
-                                    if (bundledOffering.isBundle) {
-                                        return taskCallback({
-                                            status: 422,
-                                            message: 'Product offering bundles cannot include another bundle'
-                                        });
-                                    }
-
-                                    var userNotAllowedMsg = 'You are not allowed to bundle offerings you do not own';
-                                    validateAssetPermissions(
-                                        req,
-                                        bundledOffering,
-                                        validStates,
-                                        errorMessageStateProduct,
-                                        userNotAllowedMsg,
-                                        taskCallback
-                                    );
-                                });
                             },
                             lifecycleHandler
                         );
@@ -779,51 +787,60 @@ const catalog = (function() {
         async.each(
             productSpec.bundledProductSpecification,
             function(spec, taskCallback) {
-                // Validate that the bundled products exists
-                if (!spec.href) {
-                    return taskCallback({
-                        status: 422,
-                        message: 'Missing required field href in bundleProductSpecification'
-                    });
-                }
-
-                retrieveProduct(spec.id, function(err, result) {
-                    if (err) {
-                        taskCallback(err);
-                    } else {
-                        const product = result.body;
-
-                        // Validate that the bundle products belong to the same owner
-                        if (!tmfUtils.isOwner(req, product)) {
-                            return taskCallback({
-                                status: 403,
-                                message:
-                                    'You are not authorized to include the product spec ' +
-                                    product.id +
-                                    ' in a product spec bundle'
-                            });
-                        }
-
-                        // Validate that the bundle products are not also bundles
-                        if (product.isBundle) {
-                            return taskCallback({
-                                status: 422,
-                                message:
-                                    'It is not possible to include a product spec bundle in another product spec bundle'
-                            });
-                        }
-
-                        // Validate that the bundled products are in a valid life cycle state (Active or launched)
-                        if ([ACTIVE_STATE, LAUNCHED_STATE].indexOf(product.lifecycleStatus.toLowerCase()) < 0) {
-                            return taskCallback({
-                                status: 422,
-                                message: 'Only Active or Launched product specs can be included in a bundle'
-                            });
-                        }
-
-                        taskCallback(null);
+                try{
+                    // Validate that the bundled products exists
+                    if (!spec.href) {
+                        return taskCallback({
+                            status: 422,
+                            message: 'Missing required field href in bundleProductSpecification'
+                        });
                     }
-                });
+    
+                    retrieveProduct(spec.id, function(err, result) {
+                        if (err) {
+                            taskCallback(err);
+                        } else {
+                            const product = result.body;
+    
+                            // Validate that the bundle products belong to the same owner
+                            if (!tmfUtils.isOwner(req, product)) {
+                                return taskCallback({
+                                    status: 403,
+                                    message:
+                                        'You are not authorized to include the product spec ' +
+                                        product.id +
+                                        ' in a product spec bundle'
+                                });
+                            }
+
+                            // Validate that the bundle products are not also bundles
+                            if (product.isBundle) {
+                                return taskCallback({
+                                    status: 422,
+                                    message:
+                                        'It is not possible to include a product spec bundle in another product spec bundle'
+                                });
+                            }
+
+                            // Validate that the bundled products are in a valid life cycle state (Active or launched)
+                            if (product.lifecycleStatus && [ACTIVE_STATE, LAUNCHED_STATE].indexOf(product.lifecycleStatus.toLowerCase()) < 0) {
+                                return taskCallback({
+                                    status: 422,
+                                    message: 'Only Active or Launched product specs can be included in a bundle'
+                                });
+                            }
+
+                            taskCallback(null);
+                        }
+                    });
+
+                }
+                catch(err){
+                    return taskCallback({
+                        status: 500,
+                        message: 'An unexpected error occurred, contact the support team.'
+                    })
+                }
             },
             function(err) {
                 callback(err);

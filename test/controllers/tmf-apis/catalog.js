@@ -1286,7 +1286,7 @@ describe('Catalog API', function() {
                 {
                     id: '15',
                     status: 200,
-                    body: null
+                    body: {}
                 },
                 {}
             ];
@@ -3099,7 +3099,7 @@ describe('Catalog API', function() {
         testUpdateBundle([], null, 422, MISSING_BUNDLE_PRODUCTS, done);
     });
 
-    it('should not allow to create bundles when the bundle info does not contain an href field', function(done) {
+    it('should not allow to update bundles when the bundle info does not contain an href field', function(done) {
         var bundles = [
             {
                 
@@ -3112,7 +3112,7 @@ describe('Catalog API', function() {
         testUpdateBundle(bundles, null, 422, MISSING_HREF_BUNDLE_INFO, done);
     });
 
-    it('should not allow to create bundles when one of the included bundled products does not exists', function(done) {
+    it('should not allow to update bundles when one of the included bundled products does not exists', function(done) {
         var bundles = [
             {
                 id: '1',
