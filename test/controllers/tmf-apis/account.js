@@ -304,6 +304,24 @@ describe('Account API', () => {
                                 }
                             }
                         ]
+                    },
+                    {
+                        contactMedium: [
+                            {
+                                mediumType: "Email",
+                            },
+                            {
+                                mediumType: "PostalAddress",
+                            },
+                            {
+                                mediumType: "TelephoneNumber",
+                                preferred: true,
+                                characteristic: {
+                                    "contactType": "Mobile",
+                                    "phoneNumber": "+34912883242"
+                                }
+                            }
+                        ]
                     }],
                     relatedParty: [{
                         id: userId,
@@ -324,7 +342,7 @@ describe('Account API', () => {
             });
         })
 
-        it('should not redirect the creation request if the phone number is not valid', (done) => {
+        it('should not redirect the creation request if the phone number is not wrong', (done) => {
             const req = {
                 method: 'POST',
                 apiUrl: billingPath,
@@ -367,6 +385,52 @@ describe('Account API', () => {
                 expect(err).not.toBe(null);
                 expect(err.status).toBe(400)
                 expect(err.message).toBe('Wrong phone number format')
+                done();
+            });
+        })
+        it('should not redirect the creation request if the phone number is not valid', (done) => {
+            const req = {
+                method: 'POST',
+                apiUrl: billingPath,
+                user: {
+                    partyId: userId
+                },
+                body: JSON.stringify({
+                    contact: [{
+                        contactMedium: [
+                            {
+                                mediumType: "Email",
+                            },
+                            {
+                                mediumType: "PostalAddress",
+                            },
+                            {
+                                mediumType: "TelephoneNumber",
+                                preferred: true,
+                                characteristic: {
+                                    "contactType": "Mobile",
+                                    "phoneNumber": "+346505468821"
+                                }
+                            }
+                        ]
+                    }],
+                    relatedParty: [{
+                        id: userId,
+                        role: 'owner'
+                    }]
+                })
+            }
+
+            const accountAPI = getAccountAPI({}, {
+                validateLoggedIn: (req, callback) => {
+                    callback(null)
+                }
+            })
+
+            accountAPI.checkPermissions(req, (err) => {
+                expect(err).not.toBe(null);
+                expect(err.status).toBe(400)
+                expect(err.message).toBe('Invalid phone number')
                 done();
             });
         })

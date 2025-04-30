@@ -31,7 +31,7 @@ const account = (function() {
     const billingPattern = new RegExp('/billingAccount/?$');
 
     const validateCreation = function (req, callback) {
-        console.log('------------------------------'+req.apiUrl)
+
         const body = req.json;
         // Missing related party info
         if (!('relatedParty' in body) || body.relatedParty.length == 0) {
@@ -59,24 +59,20 @@ const account = (function() {
     }
 
     const validateBilling = function(body, callback){
-        console.log(body.contact)
+
         for (let contact of body.contact){
             const phoneNumber = contact.contactMedium.filter((medium) => {
                 return medium.mediumType === 'TelephoneNumber'
             })[0].characteristic.phoneNumber
-            if (!phoneNumber){
-                return callback({
-                    status: 400,
-                    message: "Phone number must exists"
-                })
-            }
             try{
-                const checkNumber = new PhoneNumber(phoneNumber)
-                if(!checkNumber.isValid()){
-                    return callback({
-                        status: 400,
-                        message: "Invalid phone number"
-                    })
+                if(phoneNumber){
+                    const checkNumber = new PhoneNumber(phoneNumber)
+                    if(!checkNumber.isValid()){
+                        return callback({
+                            status: 400,
+                            message: "Invalid phone number"
+                        })
+                    }
                 }
             }
             catch(error){
