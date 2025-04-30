@@ -24,6 +24,7 @@ const testUtils = require('../../utils');
 describe('Account API', () => {
 
     const path = '/account'
+    const billingPath = path +'/billingAccount'
     const userId = 'urn:individual:1234'
     const config = testUtils.getDefaultConfig();
 
@@ -193,7 +194,7 @@ describe('Account API', () => {
         })
     })
 
-    describe('Validate creation', () => {
+    describe('Validate account creation', () => {
 
         it('should redirect the creation request if the info is valid', (done) => {
             const req = {
@@ -276,6 +277,153 @@ describe('Account API', () => {
         })
     })
 
+    describe('Validate billingAccount creation', () => {
+
+        it('should redirect the creation request if the info is valid', (done) => {
+            const req = {
+                method: 'POST',
+                apiUrl: billingPath,
+                user: {
+                    partyId: userId
+                },
+                body: JSON.stringify({
+                    contact: [{
+                        contactMedium: [
+                            {
+                                mediumType: "Email",
+                            },
+                            {
+                                mediumType: "PostalAddress",
+                            },
+                            {
+                                mediumType: "TelephoneNumber",
+                                preferred: true,
+                                characteristic: {
+                                    "contactType": "Mobile",
+                                    "phoneNumber": "+34650546882"
+                                }
+                            }
+                        ]
+                    }],
+                    relatedParty: [{
+                        id: userId,
+                        role: 'owner'
+                    }]
+                })
+            }
+
+            const accountAPI = getAccountAPI({}, {
+                validateLoggedIn: (req, callback) => {
+                    callback(null)
+                }
+            })
+
+            accountAPI.checkPermissions(req, (err) => {
+                expect(err).toBe(null);
+                done();
+            });
+        })
+
+        it('should not redirect the creation request if the phone number is not valid', (done) => {
+            const req = {
+                method: 'POST',
+                apiUrl: billingPath,
+                user: {
+                    partyId: userId
+                },
+                body: JSON.stringify({
+                    contact: [{
+                        contactMedium: [
+                            {
+                                mediumType: "Email",
+                            },
+                            {
+                                mediumType: "PostalAddress",
+                            },
+                            {
+                                mediumType: "TelephoneNumber",
+                                preferred: true,
+                                characteristic: {
+                                    "contactType": "Mobile",
+                                    "phoneNumber": "+34-650546882"
+                                }
+                            }
+                        ]
+                    }],
+                    relatedParty: [{
+                        id: userId,
+                        role: 'owner'
+                    }]
+                })
+            }
+
+            const accountAPI = getAccountAPI({}, {
+                validateLoggedIn: (req, callback) => {
+                    callback(null)
+                }
+            })
+
+            accountAPI.checkPermissions(req, (err) => {
+                expect(err).not.toBe(null);
+                expect(err.status).toBe(400)
+                expect(err.message).toBe('Wrong phone number format')
+                done();
+            });
+        })
+
+        it('should not redirect the creation request if relatedParty is missing', (done) => {
+            const req = {
+                method: 'POST',
+                apiUrl: billingPath,
+                user: {
+                    partyId: userId
+                },
+                body: JSON.stringify({})
+            }
+
+            const accountAPI = getAccountAPI({}, {
+                validateLoggedIn: (req, callback) => {
+                    callback(null)
+                }
+            })
+
+            accountAPI.checkPermissions(req, (err) => {
+                expect(err).not.toBe(null);
+                expect(err.status).toBe(400)
+                expect(err.message).toBe('Missing relatedParty field')
+                done();
+            });
+        })
+
+        it('should not redirect the creation request if relatedParty is invalid', (done) => {
+            const req = {
+                method: 'POST',
+                apiUrl: billingPath,
+                user: {
+                    partyId: userId
+                },
+                body: JSON.stringify({
+                    relatedParty: [{
+                        id: 'invalid',
+                        role: 'owner'
+                    }]
+                })
+            }
+
+            const accountAPI = getAccountAPI({}, {
+                validateLoggedIn: (req, callback) => {
+                    callback(null)
+                }
+            })
+
+            accountAPI.checkPermissions(req, (err) => {
+                expect(err).not.toBe(null);
+                expect(err.status).toBe(403)
+                expect(err.message).toBe('The user making the request is not the specified owner')
+                done();
+            });
+        })
+    })
     describe('Validate update', () => {
         const protocol = config.endpoints.account.appSsl ? 'https' : 'http';
 	    const url = protocol + '://' + config.endpoints.account.host + ':' + config.endpoints.account.port;

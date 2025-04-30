@@ -25,6 +25,7 @@
     "jade": "^1.11.0",
     "jsonwebtoken": "^8.5.1",
     "jwks-rsa": "^3.0.1",
+    "libphonenumber-js": "^1.12.7",
     "log4js": "^6.9.1",
     "lru-cache": "^6.0.0",
     "merge-dirs": "^0.2.1",

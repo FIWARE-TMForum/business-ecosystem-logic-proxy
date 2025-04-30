@@ -24,13 +24,17 @@ const logger = require('./../../lib/logger').logger.getLogger('TMF')
 const tmfUtils = require('./../../lib/tmfUtils')
 const url = require('url')
 const utils = require('./../../lib/utils')
+const { PhoneNumber } = require('libphonenumber-js')
 
 const account = (function() {
 
-    const validateCreation = function (req, callback) {
+    const billingPattern = new RegExp('/billingAccount/?$');
 
+    const validateCreation = function (req, callback) {
+        console.log('------------------------------'+req.apiUrl)
+        const body = req.json;
         // Missing related party info
-        if (!('relatedParty' in req.json) || req.json.relatedParty.length == 0) {
+        if (!('relatedParty' in body) || body.relatedParty.length == 0) {
             return callback({
                 status: 400,
                 message: "Missing relatedParty field"
@@ -38,14 +42,50 @@ const account = (function() {
         }
 
         // Check the user making the request is the expected owner
-        if (!tmfUtils.isOwner(req, req.json)) {
+        if (!tmfUtils.isOwner(req, body)) {
             return callback({
                 status: 403,
                 message: "The user making the request is not the specified owner"
             })
         }
 
+        if (billingPattern.test(req.apiUrl)){
+            validateBilling(body, callback)
+        }
+        else{
+            callback(null)
+        }
 
+    }
+
+    const validateBilling = function(body, callback){
+        console.log(body.contact)
+        for (let contact of body.contact){
+            const phoneNumber = contact.contactMedium.filter((medium) => {
+                return medium.mediumType === 'TelephoneNumber'
+            })[0].characteristic.phoneNumber
+            if (!phoneNumber){
+                return callback({
+                    status: 400,
+                    message: "Phone number must exists"
+                })
+            }
+            try{
+                const checkNumber = new PhoneNumber(phoneNumber)
+                if(!checkNumber.isValid()){
+                    return callback({
+                        status: 400,
+                        message: "Invalid phone number"
+                    })
+                }
+            }
+            catch(error){
+                return callback({
+                    status: 400,
+                    message: "Wrong phone number format"
+                })
+            }
+        }
         callback(null)
     }
 
