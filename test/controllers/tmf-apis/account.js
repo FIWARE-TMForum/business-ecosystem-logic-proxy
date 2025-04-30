@@ -342,7 +342,7 @@ describe('Account API', () => {
             });
         })
 
-        it('should not redirect the creation request if the phone number is not wrong', (done) => {
+        it('should not redirect the creation request if the phone number is wrong', (done) => {
             const req = {
                 method: 'POST',
                 apiUrl: billingPath,
@@ -388,7 +388,7 @@ describe('Account API', () => {
                 done();
             });
         })
-        it('should not redirect the creation request if the phone number is not valid', (done) => {
+        it('should not redirect the creation request if the phone number is  invalid', (done) => {
             const req = {
                 method: 'POST',
                 apiUrl: billingPath,
@@ -488,7 +488,7 @@ describe('Account API', () => {
             });
         })
     })
-    describe('Validate update', () => {
+    describe('Validate account update', () => {
         const protocol = config.endpoints.account.appSsl ? 'https' : 'http';
 	    const url = protocol + '://' + config.endpoints.account.host + ':' + config.endpoints.account.port;
 
@@ -527,6 +527,187 @@ describe('Account API', () => {
 
         it('should not redirect the request when the user is not the owner', (done) => {
             mockNock(200, {
+                relatedParty: [{
+                    id: 'other',
+                    role: 'owner'
+                }]
+            })
+
+            const accountAPI = getAccountAPI({}, {
+                validateLoggedIn: (req, callback) => {
+                    callback(null)
+                }
+            })
+
+            accountAPI.checkPermissions(req, (err) => {
+                expect(err).not.toBe(null);
+                expect(err.status).toBe(403)
+                expect(err.message).toBe('The user making the request is not the specified owner')
+                done();
+            });
+        })
+
+        it('should not redirect the request when the account cannot be retrieved', (done) => {
+            mockNock(500, {})
+
+            const accountAPI = getAccountAPI({}, {
+                validateLoggedIn: (req, callback) => {
+                    callback(null)
+                }
+            })
+
+            accountAPI.checkPermissions(req, (err) => {
+                expect(err).not.toBe(null);
+                expect(err.status).toBe(500)
+                done();
+            });
+        })
+    })
+    describe('Validate billingAccount update', () => {
+        const protocol = config.endpoints.account.appSsl ? 'https' : 'http';
+	    const url = protocol + '://' + config.endpoints.account.host + ':' + config.endpoints.account.port;
+        const billingId = 1
+
+        const req = {
+            method: 'PATCH',
+            apiUrl: `${billingPath}/${billingId}`,
+            user: {
+                partyId: userId
+            },
+            body: JSON.stringify({})
+        }
+
+        const mockNock = function(status, nockBody) {
+            nock(url).get(`/billingAccount/${billingId}`).reply(status, nockBody)
+        }
+
+        it('should redirect the request when the info is valid', (done) => {
+            mockNock(200, {
+                id: billingId,
+                relatedParty: [{
+                    id: userId,
+                    role: 'owner'
+                }]
+            })
+            req.body = JSON.stringify({
+                contact: [{
+                contactMedium: [
+                    {
+                        mediumType: "Email",
+                    },
+                    {
+                        mediumType: "PostalAddress",
+                    },
+                    {
+                        mediumType: "TelephoneNumber",
+                        preferred: true,
+                        characteristic: {
+                            "contactType": "Mobile",
+                            "phoneNumber": "+34650546882"
+                        }
+                    }
+                ]
+            }]})
+
+            const accountAPI = getAccountAPI({}, {
+                validateLoggedIn: (req, callback) => {
+                    callback(null)
+                }
+            })
+
+            accountAPI.checkPermissions(req, (err) => {
+                expect(err).toBe(null);
+                done();
+            });
+        })
+
+        it('should not redirect the request when the phone number is wrong', (done) => {
+            mockNock(200, {
+                id: billingId,
+                relatedParty: [{
+                    id: userId,
+                    role: 'owner'
+                }]
+            })
+
+            req.body = JSON.stringify({
+                contact: [{
+                contactMedium: [
+                    {
+                        mediumType: "Email",
+                    },
+                    {
+                        mediumType: "PostalAddress",
+                    },
+                    {
+                        mediumType: "TelephoneNumber",
+                        preferred: true,
+                        characteristic: {
+                            "contactType": "Mobile",
+                            "phoneNumber": "+346505468821e"
+                        }
+                    }
+                ]
+            }],})
+
+            const accountAPI = getAccountAPI({}, {
+                validateLoggedIn: (req, callback) => {
+                    callback(null)
+                }
+            })
+
+            accountAPI.checkPermissions(req, (err) => {
+                expect(err).not.toBe(null);
+                expect(err.status).toBe(400)
+                expect(err.message).toBe('Wrong phone number format')
+                done();
+            });
+        })
+        it('should not redirect the request when the phone number is invalid', (done) => {
+            mockNock(200, {
+                id: billingId,
+                relatedParty: [{
+                    id: userId,
+                    role: 'owner'
+                }]
+            })
+
+            req.body = JSON.stringify({
+                contact: [{
+                contactMedium: [
+                    {
+                        mediumType: "Email",
+                    },
+                    {
+                        mediumType: "PostalAddress",
+                    },
+                    {
+                        mediumType: "TelephoneNumber",
+                        preferred: true,
+                        characteristic: {
+                            "contactType": "Mobile",
+                            "phoneNumber": "+342505468821"
+                        }
+                    }
+                ]
+            }],})
+
+            const accountAPI = getAccountAPI({}, {
+                validateLoggedIn: (req, callback) => {
+                    callback(null)
+                }
+            })
+
+            accountAPI.checkPermissions(req, (err) => {
+                expect(err).not.toBe(null);
+                expect(err.status).toBe(400)
+                expect(err.message).toBe('Invalid phone number')
+                done();
+            });
+        })
+        it('should not redirect the request when the user is not the owner', (done) => {
+            mockNock(200, {
+                id: billingId,
                 relatedParty: [{
                     id: 'other',
                     role: 'owner'

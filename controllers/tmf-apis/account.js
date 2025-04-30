@@ -95,6 +95,8 @@ const account = (function() {
     }
 
     const validateUpdate = function(req, callback) {
+
+        const billingPattern = new RegExp('/billingAccount/[^/]+/?$');
         const path = req.apiUrl.replace('/' + config.endpoints.account.path, '')
         const uri = utils.getAPIURL(
             config.endpoints.account.appSsl,
@@ -102,7 +104,6 @@ const account = (function() {
             config.endpoints.account.port,
             path
         );
-
         axios.get(uri).then((response) => {
             if (!tmfUtils.isOwner(req, response.data)) {
                 return callback({
@@ -110,7 +111,12 @@ const account = (function() {
                     message: "The user making the request is not the specified owner"
                 })
             }
-            callback(null)
+            if(billingPattern.test(req.apiUrl)){
+                validateBilling(req.json, callback)
+            }
+            else{
+                callback(null)
+            }
         }).catch((err) => {
             const status = err.response.status != null ? err.response.status : err.status
             callback({
