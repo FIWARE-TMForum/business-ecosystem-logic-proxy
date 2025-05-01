@@ -24,13 +24,17 @@ const logger = require('./../../lib/logger').logger.getLogger('TMF')
 const tmfUtils = require('./../../lib/tmfUtils')
 const url = require('url')
 const utils = require('./../../lib/utils')
+const { PhoneNumber } = require('libphonenumber-js')
 
 const account = (function() {
 
+    const billingPattern = new RegExp('/billingAccount/?$');
+
     const validateCreation = function (req, callback) {
 
+        const body = req.json;
         // Missing related party info
-        if (!('relatedParty' in req.json) || req.json.relatedParty.length == 0) {
+        if (!('relatedParty' in body) || body.relatedParty.length == 0) {
             return callback({
                 status: 400,
                 message: "Missing relatedParty field"
@@ -38,14 +42,46 @@ const account = (function() {
         }
 
         // Check the user making the request is the expected owner
-        if (!tmfUtils.isOwner(req, req.json)) {
+        if (!tmfUtils.isOwner(req, body)) {
             return callback({
                 status: 403,
                 message: "The user making the request is not the specified owner"
             })
         }
 
+        if (billingPattern.test(req.apiUrl)){
+            validateBilling(body, callback)
+        }
+        else{
+            callback(null)
+        }
 
+    }
+
+    const validateBilling = function(body, callback){
+
+        for (let contact of body.contact){
+            const phoneNumber = contact.contactMedium.filter((medium) => {
+                return medium.mediumType === 'TelephoneNumber'
+            })[0].characteristic.phoneNumber
+            try{
+                if(phoneNumber){
+                    const checkNumber = new PhoneNumber(phoneNumber)
+                    if(!checkNumber.isValid()){
+                        return callback({
+                            status: 400,
+                            message: "Invalid phone number"
+                        })
+                    }
+                }
+            }
+            catch(error){
+                return callback({
+                    status: 400,
+                    message: "Wrong phone number format"
+                })
+            }
+        }
         callback(null)
     }
 
@@ -59,6 +95,8 @@ const account = (function() {
     }
 
     const validateUpdate = function(req, callback) {
+
+        const billingPattern = new RegExp('/billingAccount/[^/]+/?$');
         const path = req.apiUrl.replace('/' + config.endpoints.account.path, '')
         const uri = utils.getAPIURL(
             config.endpoints.account.appSsl,
@@ -66,7 +104,6 @@ const account = (function() {
             config.endpoints.account.port,
             path
         );
-
         axios.get(uri).then((response) => {
             if (!tmfUtils.isOwner(req, response.data)) {
                 return callback({
@@ -74,7 +111,12 @@ const account = (function() {
                     message: "The user making the request is not the specified owner"
                 })
             }
-            callback(null)
+            if(billingPattern.test(req.apiUrl)){
+                validateBilling(req.json, callback)
+            }
+            else{
+                callback(null)
+            }
         }).catch((err) => {
             const status = err.response.status != null ? err.response.status : err.status
             callback({
