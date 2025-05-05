@@ -676,6 +676,118 @@ describe('VC Strategy', () => {
             }])
         })
 
+        it ('should build a VC with a LEARCredential V2 including certifier power', () => {
+          const payload = {
+              "vc": {
+                "@context": [
+                  "https://www.w3.org/ns/credentials/v2",
+                  "https://www.dome-marketplace.eu/2025/credentials/learcredentialemployee/v2"
+                ],
+                "credentialSubject": {
+                  "mandate": {
+                    "id": "04cfbf67-4c9d-457f-b077-f4711a172156",
+                    "mandatee": {
+                      "email": "ykostov@qualityhouse.com",
+                      "firstName": "y mandatee name",
+                    "first_name": "y mandatee name",
+                      "id": "did:key:zDnaefUNjrSC9vaQgR7yL1SRJng1VtzHbuuXTJxfvu7LRhdUW",
+                      "lastName": "as signer option",
+                      "last_name": "as signer option",
+                      "nationality": "Bulgaria"
+                    },
+                    "mandator": {
+                      "commonName": "Mandator name INTwo As Signer",
+                      "country": "Bulgaria",
+                      "emailAddress": "mandator@mailinator.com",
+                      "organization": "Mandator company",
+                      "organizationIdentifier": "VATBG-123ABCC",
+                      "serialNumber": ""
+                    },
+                    "power": [
+                      {
+                        "action": "Execute",
+                        "domain": "DOME",
+                        "function": "Onboarding",
+                        "id": "23a62c7a-1732-4a16-9615-705434e1de7f",
+                        "tmf_action": "Execute",
+                        "tmf_domain": "DOME",
+                        "tmf_function": "Onboarding",
+                        "tmf_type": "Domain",
+                        "type": "Domain"
+                      },
+                      {
+                        "action": [
+                          "Create",
+                          "Update",
+                          "Delete"
+                        ],
+                        "domain": "DOME",
+                        "function": "ProductOffering",
+                        "id": "889c0670-ebdf-4be5-b321-7076739682bc",
+                        "tmf_action": [
+                          "Create",
+                          "Update",
+                          "Delete"
+                        ],
+                        "tmf_domain": "DOME",
+                        "tmf_function": "ProductOffering",
+                        "tmf_type": "Domain",
+                        "type": "Domain"
+                      },
+                      {
+                        "action": [
+                          "Upload",
+                          "Attest"
+                        ],
+                        "domain": "DOME",
+                        "function": "Certification",
+                        "id": "2b1a997b-8a7e-4bfd-8ded-c458522f129b",
+                        "tmf_action": [
+                          "Upload",
+                          "Attest"
+                        ],
+                        "tmf_domain": "DOME",
+                        "tmf_function": "Certification",
+                        "tmf_type": "Domain",
+                        "type": "Domain"
+                      }
+                    ]
+                  }
+                },
+                "description": "Verifiable Credential for employees of an organization",
+                "id": "72278011-d25a-4f5a-a6e6-44223dceeff0",
+                "issuer": {
+                  "commonName": "Seal Signature Credentials in SBX for testing",
+                  "country": "ES",
+                  "emailAddress": "mandator@mailinator.com",
+                  "id": "did:elsi:VATES-B60645900",
+                  "organization": "IN2",
+                  "organizationIdentifier": "VATES-B60645900",
+                  "serialNumber": "B47447560"
+                },
+                "type": [
+                  "LEARCredentialEmployee",
+                  "VerifiableCredential"
+                ],
+                "validFrom": "2025-04-14T09:56:37.237270650Z",
+                "validUntil": "2026-04-14T09:56:37.237270650Z"
+              }
+          }
+
+          const credential = new VerifiableCredential(payload)
+          const profile = credential.getProfile()
+
+          expect(profile.organizations).toEqual([{
+              id: 'VATBG-123ABCC',
+              name: 'Mandator company',
+              roles: [
+                  { name: 'orgAdmin', id: 'orgAdmin' },
+                  { name: 'seller', id: 'seller' },
+                  { name: 'certifier', id: 'certifier' }
+              ]
+          }])
+      })
+
         it ('should build a VC with a LEARCredentialMachine including certifier power', () => {
             const payload = {
                 "verifiableCredential": {
