@@ -291,6 +291,31 @@ const catalog = (function() {
 
     const validateOffering = function(req, offeringPath, previousBody, newBody, callback) {
 
+        if(newBody && newBody.name!==null && newBody.name!==undefined){ // newBody.name === '' should enter here
+            const errorMessage = tmfUtils.validateNameField(newBody.name, 'Product offering');
+            if (errorMessage) {
+                return callback({
+                    status: 422,
+                    message: errorMessage
+                });
+            }
+        }else if(newBody && !previousBody){ // newBody.name is null or undefined and it is a POST request
+            return callback({
+                status: 422,
+                message: 'Product offering name is mandatory'
+            });
+        }
+        // Check that the offering description
+        if (newBody && newBody.description) {
+            const errorMessage = tmfUtils.validateDescriptionField(newBody.description, 'Product offering');
+            if (errorMessage) {
+                return callback({
+                    status: 422,
+                    message: errorMessage
+                });
+            }
+        }
+
         let validStates = null;
         let errorMessageStateProduct = null;
         let errorMessageStateCatalog = null;
@@ -875,7 +900,7 @@ const catalog = (function() {
 
     const validateCatalog = function(req, prevCatalog, catalog, callback) {
         if(catalog && catalog.name!==null && catalog.name!==undefined){ // catalog.name === '' should enter here
-            const errorMessage = tmfUtils.validateNameField(catalog.name, 'catalog');
+            const errorMessage = tmfUtils.validateNameField(catalog.name, 'Catalog');
             if (errorMessage) {
                 return callback({
                     status: 422,
@@ -891,7 +916,7 @@ const catalog = (function() {
         }
         // Check that the catalog description
         if (catalog && catalog.description) {
-            const errorMessage = tmfUtils.validateDescriptionField(catalog.description, 'catalog');
+            const errorMessage = tmfUtils.validateDescriptionField(catalog.description, 'Catalog');
             if (errorMessage) {
                 return callback({
                     status: 422,

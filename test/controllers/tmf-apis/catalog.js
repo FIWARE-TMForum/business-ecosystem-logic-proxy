@@ -42,6 +42,11 @@ const OFFERS_NOT_RETIRED_PRODUCT = 'All the attached offerings must be retired o
 const OFFERS_NOT_RETIRED_CATALOG = 'All the attached offerings must be retired or obsolete to retire a catalog';
 const OFFERS_NOT_OBSOLETE_PRODUCT = 'All the attached offerings must be obsolete to make a product obsolete';
 const OFFERS_NOT_OBSOLETE_CATALOG = 'All the attached offerings must be obsolete to make a catalog obsolete';
+const OFFERS_NAME_LONG = 'Product offering name is too long, it must be less than 100 characters';
+const OFFERS_NAME_EMPTY = 'Product offering name is empty';
+const OFFERS_NAME_MISSING = 'Product offering name is mandatory';
+const OFFERS_NAME_NUMBER = 'Product offering name must be a string';
+const OFFERS_DESCRIPTION_LONG = 'Product offering description is too long, it must be less than 100.000 characters';
 const ONLY_ADMINS_MODIFY_CATEGORIES = 'Only administrators can modify categories';
 const OFFERINGS_NOT_RETRIEVED = 'Attached offerings cannot be retrieved';
 const CATEGORY_EXISTS = 'This category already exists';
@@ -52,7 +57,7 @@ const CATALOG_EXISTS = 'This catalog name is already taken';
 const CATALOG_NAME_LONG = 'Catalog name is too long, it must be less than 100 characters';
 const CATALOG_NAME_EMPTY = 'Catalog name is empty';
 const CATALOG_NAME_MISSING = 'Catalog name is mandatory';
-const CATALOG_NAME_STRING = 'Catalog name must be a string';
+const CATALOG_NAME_NUMBER = 'Catalog name must be a string';
 const CATALOG_DESCRIPTION_LONG = 'Catalog description is too long, it must be less than 100.000 characters';
 const RSS_CANNOT_BE_ACCESSED = 'An unexpected error in the RSS API prevented your request to be processed';
 const INVALID_PRODUCT_CLASS = 'The provided productClass does not specify a valid revenue sharing model';
@@ -400,6 +405,7 @@ describe('Catalog API', function() {
         };
 
         var basicBody = {
+            name: 'test',
             productSpecification: {
                 // the server will be avoided by the SW
                 // The catalog server will be used instead
@@ -564,6 +570,97 @@ describe('Catalog API', function() {
             );
         });
 
+        it('should not allow to create an offering with a number type name', function(done) {
+            const offeringBody = {
+                name: 123456,
+            }
+            testCreateOffering(
+                productRequestInfoActive,
+                catalogRequestInfoLaunched,
+                null,
+                null,
+                422,
+                OFFERS_NAME_NUMBER,
+                null,
+                offeringBody,
+                null,
+                done
+            );
+        });
+
+        it('should not allow to create an offering with an empty name', function(done) {
+            const offeringBody = {
+                name: '',
+            }
+            testCreateOffering(
+                productRequestInfoActive,
+                catalogRequestInfoLaunched,
+                null,
+                null,
+                422,
+                OFFERS_NAME_EMPTY,
+                null,
+                offeringBody,
+                null,
+                done
+            );
+        });
+
+        it('should not allow to create an offering with 100+ characters in name', function(done) {
+            const offeringBody = {
+                name: 'a'.repeat(101),
+            }
+            testCreateOffering(
+                productRequestInfoActive,
+                catalogRequestInfoLaunched,
+                null,
+                null,
+                422,
+                OFFERS_NAME_LONG,
+                null,
+                offeringBody,
+                null,
+                done
+            );
+        });
+
+        it('should not allow to create an offering without a name attribute', function(done) {
+            const offeringBody = {
+                description:'test'
+            }
+            testCreateOffering(
+                productRequestInfoActive,
+                catalogRequestInfoLaunched,
+                null,
+                null,
+                422,
+                OFFERS_NAME_MISSING,
+                null,
+                offeringBody,
+                null,
+                done
+            );
+        });
+
+        it('should not allow to create an offering with 100.000+ characters in description', function(done) {
+            const offeringBody = {
+                name: 'test',
+                description:'a'.repeat(100001)
+            }
+            testCreateOffering(
+                productRequestInfoActive,
+                catalogRequestInfoLaunched,
+                null,
+                null,
+                422,
+                OFFERS_DESCRIPTION_LONG,
+                null,
+                offeringBody,
+                null,
+                done
+            );
+        });
+
         it('should not allow to create an offering when store validation fails', function(done) {
             var storeResponse = {
                 status: 400,
@@ -712,7 +809,7 @@ describe('Catalog API', function() {
                 422,
                 MISSING_PRODUCT_SPEC,
                 null,
-                {},
+                {name: 'test'},
                 null,
                 done
             );
@@ -720,6 +817,7 @@ describe('Catalog API', function() {
 
         it('should not allow to create an offering when a bundled offering is provided and not a bundle', function(done) {
             var offeringBody = {
+                name: 'test',
                 productSpecification: {
                     href: 'http://product.com'
                 },
@@ -746,6 +844,7 @@ describe('Catalog API', function() {
             var baseHref = 'http://example' + categoryPath + '/';
 
             var offeringBody = {
+                name: 'test',
                 category: [
                     {
                         id: categoryId1,
@@ -906,6 +1005,7 @@ describe('Catalog API', function() {
 
         it('should allow to create an offering bundle', (done) => {
             var body = {
+                name: 'test',
                 isBundle: true,
                 bundledProductOffering: [
                     {
@@ -934,6 +1034,7 @@ describe('Catalog API', function() {
 
         it('should not allow to create an offering bundle with a productSpecification', function(done) {
             var body = {
+                name: 'test',
                 isBundle: true,
                 productSpecification: {
                     id: '1'
@@ -963,6 +1064,7 @@ describe('Catalog API', function() {
 
         it('should not allow to create an offering bundle when less than 2 bundled offerings has been provided', function(done) {
             var body = {
+                name: 'test',
                 isBundle: true
             };
 
@@ -989,6 +1091,7 @@ describe('Catalog API', function() {
 
         it('should not allow to create an offering bundle when there is missing an href in the bundled offering info', function(done) {
             var body = {
+                name: 'test',
                 isBundle: true,
                 bundledProductOffering: [
                     {},
@@ -1019,6 +1122,7 @@ describe('Catalog API', function() {
 
         it('should not allow to create an offering bundle when a bundled offering cannot be accessed', (done) => {
             const body = {
+                name: 'test',
                 isBundle: true,
                 bundledProductOffering: [
                     {
@@ -1054,6 +1158,7 @@ describe('Catalog API', function() {
 
         it('should not allow to create an offering bundle when a bundled offering is also a bundle', function(done) {
             const body = {
+                name: 'test',
                 isBundle: true,
                 bundledProductOffering: [
                     {
@@ -1089,6 +1194,7 @@ describe('Catalog API', function() {
 
         it('should not allow to create a bundle with a non owned offering', function(done) {
             const body = {
+                name: 'test',
                 isBundle: true,
                 bundledProductOffering: [
                     {
@@ -1124,6 +1230,7 @@ describe('Catalog API', function() {
 
         it('should not allow to create a bundle when bundled offering product cannot be accessed', function(done) {
             const body = {
+                name: 'test',
                 isBundle: true,
                 bundledProductOffering: [
                     {
@@ -1727,7 +1834,7 @@ describe('Catalog API', function() {
             body: []
         };
 
-        testCreateCatalog(true, isOwnerTrue, {name: catalogName}, catalogRequest, 422, CATALOG_NAME_STRING, false, done, CATALOG_NAME_STRING, null);
+        testCreateCatalog(true, isOwnerTrue, {name: catalogName}, catalogRequest, 422, CATALOG_NAME_NUMBER, false, done, CATALOG_NAME_NUMBER, null);
     });
 
     it('should not allow to create owned catalog with 100.0000+ characters description', function(done) {
@@ -3380,7 +3487,7 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testUpdateCatalog(catalogBody, offeringsInfo, 422, CATALOG_NAME_STRING, done, CATALOG_NAME_STRING, null);
+        testUpdateCatalog(catalogBody, offeringsInfo, 422, CATALOG_NAME_NUMBER, done, CATALOG_NAME_NUMBER, null);
     });
 
     it('should not allow to update a catalog if the name of the catalog is empty', function(done) {
