@@ -24,7 +24,6 @@ const nock = require('nock');
 const proxyquire = require('proxyquire');
 const md5 = require('blueimp-md5');
 const testUtils = require('../../utils');
-const { haveSameStatus } = require('../../../lib/tmfUtils');
 
 // ERRORS
 const INVALID_METHOD = 'The HTTP method DELETE is not allowed in the accessed API';
@@ -1583,7 +1582,7 @@ describe('Catalog API', function() {
         testCreateCategory(true, category, null, parentCategoryRequest, 500, errorMsg, callback);
     });
 
-    var testCreateCatalog = function(admin, owner, catalog, catalogRequest, errorStatus, errorMsg, updated, done) {
+    var testCreateCatalog = function(admin, owner, catalog, catalogRequest, errorStatus, errorMsg, updated, done, vNameF, vDescrF) {
         var checkRoleMethod = jasmine.createSpy();
         checkRoleMethod.and.returnValues(admin);
 
@@ -1599,7 +1598,9 @@ describe('Catalog API', function() {
         };
 
         var tmfUtils = {
-            isOwner: owner ? isOwnerTrue : isOwnerFalse
+            isOwner: owner ? isOwnerTrue : isOwnerFalse,
+            validateNameField: vNameF ? ()=> vNameF : ()=> null,
+            validateDescriptionField: vDescrF ? ()=> vDescrF : ()=> null
         };
 
         var catalogApi = getCatalogApi({}, tmfUtils, utils);
@@ -1692,7 +1693,7 @@ describe('Catalog API', function() {
             body: []
         };
 
-        testCreateCatalog(true, isOwnerTrue, { name: catalogName }, catalogRequest, 422, CATALOG_NAME_LONG, false, done);
+        testCreateCatalog(true, isOwnerTrue, { name: catalogName }, catalogRequest, 422, CATALOG_NAME_LONG, false, done, CATALOG_NAME_LONG, null);
     });
 
     it('should not allow to create owned catalog with empty name', function(done) {
@@ -1704,7 +1705,7 @@ describe('Catalog API', function() {
             body: []
         };
 
-        testCreateCatalog(true, isOwnerTrue, { name: catalogName, description: 'test' }, catalogRequest, 422, CATALOG_NAME_EMPTY, false, done);
+        testCreateCatalog(true, isOwnerTrue, { name: catalogName, description: 'test' }, catalogRequest, 422, CATALOG_NAME_EMPTY, false, done, CATALOG_NAME_EMPTY, null);
     });
 
     it('should not allow to create owned catalog without name', function(done) {
@@ -1715,7 +1716,7 @@ describe('Catalog API', function() {
             body: []
         };
 
-        testCreateCatalog(true, isOwnerTrue, {}, catalogRequest, 422, CATALOG_NAME_MISSING, false, done);
+        testCreateCatalog(true, isOwnerTrue, {}, catalogRequest, 422, CATALOG_NAME_MISSING, false, done, null, null);
     });
 
     it('should not allow to create owned catalog with number type in name', function(done) {
@@ -1726,7 +1727,7 @@ describe('Catalog API', function() {
             body: []
         };
 
-        testCreateCatalog(true, isOwnerTrue, {name: catalogName}, catalogRequest, 422, CATALOG_NAME_STRING, false, done);
+        testCreateCatalog(true, isOwnerTrue, {name: catalogName}, catalogRequest, 422, CATALOG_NAME_STRING, false, done, CATALOG_NAME_STRING, null);
     });
 
     it('should not allow to create owned catalog with 100.0000+ characters description', function(done) {
@@ -1738,7 +1739,7 @@ describe('Catalog API', function() {
             body: []
         };
 
-        testCreateCatalog(true, isOwnerTrue, { name: catalogName, description: catalogDescription}, catalogRequest, 422, CATALOG_DESCRIPTION_LONG, false, done);
+        testCreateCatalog(true, isOwnerTrue, { name: catalogName, description: catalogDescription}, catalogRequest, 422, CATALOG_DESCRIPTION_LONG, false, done, null, CATALOG_DESCRIPTION_LONG);
     });
 
     it('should not allow to create not owned catalog', function(done) {
@@ -2296,7 +2297,9 @@ describe('Catalog API', function() {
         launched,
         queryRef,
         launchError,
-        launchApiError
+        launchApiError,
+        vNameF,
+        vDescrF
     ) {
         var checkRoleMethod = jasmine.createSpy();
         checkRoleMethod.and.returnValue(true);
@@ -2306,7 +2309,9 @@ describe('Catalog API', function() {
         var tmfUtils = {
             isOwner: function() {
                 return true;
-            }
+            },
+            validateNameField: vNameF ? () => vNameF : () => null,
+            validateDescriptionField: vDescrF ? () => vDescrF : () => null
         };
         if(launched !== undefined && launched !== null){
             tmfUtils.haveSameStatus = (function() {
@@ -3273,7 +3278,7 @@ describe('Catalog API', function() {
 
     // CATALOGS
 
-    var testUpdateCatalog = function(catalogBody, offeringsInfo, errorStatus, errorMsg, done) {
+    var testUpdateCatalog = function(catalogBody, offeringsInfo, errorStatus, errorMsg, done, vNameF, vDescrF) {
         var catalogPath = '/catalog/7';
         var offeringsPath = '/productOffering';
 
@@ -3292,7 +3297,14 @@ describe('Catalog API', function() {
             offeringsInfo,
             errorStatus,
             errorMsg,
-            done
+            done,
+            null,
+            null,
+            null,
+            null,
+            null,
+            vNameF,
+            vDescrF
         );
     };
 
@@ -3355,7 +3367,7 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testUpdateCatalog(catalogBody, offeringsInfo, 422, CATALOG_NAME_LONG, done);
+        testUpdateCatalog(catalogBody, offeringsInfo, 422, CATALOG_NAME_LONG, done, CATALOG_NAME_LONG, null);
     });
 
     it('should not allow to update a catalog if the name is a number type', function(done) {
@@ -3368,7 +3380,7 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testUpdateCatalog(catalogBody, offeringsInfo, 422, CATALOG_NAME_STRING, done);
+        testUpdateCatalog(catalogBody, offeringsInfo, 422, CATALOG_NAME_STRING, done, CATALOG_NAME_STRING, null);
     });
 
     it('should not allow to update a catalog if the name of the catalog is empty', function(done) {
@@ -3381,7 +3393,7 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testUpdateCatalog(catalogBody, offeringsInfo, 422, CATALOG_NAME_EMPTY, done);
+        testUpdateCatalog(catalogBody, offeringsInfo, 422, CATALOG_NAME_EMPTY, done, CATALOG_NAME_EMPTY, null);
     });
 
     it('should not allow to update a catalog if the desription of the catalog is over 100.000 characters', function(done) {
@@ -3395,7 +3407,7 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testUpdateCatalog(catalogBody, offeringsInfo, 422, CATALOG_DESCRIPTION_LONG, done);
+        testUpdateCatalog(catalogBody, offeringsInfo, 422, CATALOG_DESCRIPTION_LONG, done, null, CATALOG_DESCRIPTION_LONG);
     });
 
     it('should not allow to update a catalog if the body modifies the original relatedParty', function(done) {
