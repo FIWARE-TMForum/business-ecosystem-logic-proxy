@@ -874,8 +874,44 @@ const catalog = (function() {
     };
 
     const validateCatalog = function(req, prevCatalog, catalog, callback) {
+        if(catalog && catalog.name!==null && catalog.name!==undefined){ // catalog.name === '' should enter here
+            // Check that the catalog name is a String
+            if (typeof catalog.name !== 'string') {
+                return callback({
+                    status: 422,
+                    message: 'Catalog name must be a string'
+                });
+            }
+            // Check that the catalog name is 100 characters or less
+            if (catalog.name.length > 100) {
+                return callback({
+                    status: 422,
+                    message: 'Catalog name is too long, it must be less than 100 characters'
+                });
+            }
+            // Check that the catalog name is not empty or only with spaces
+            if (catalog.name.trim() === '') {
+                return callback({
+                    status: 422,
+                    message: 'Catalog name is empty'
+                });
+            }
+        }
+        else if(catalog && !prevCatalog){
+            return callback({
+                status: 422,
+                message: 'Catalog name is mandatory'
+            });
+        }
+        // Check that the catalog description is 100.000 characters or less
+        if (catalog && catalog.description && catalog.description.length > 100000) {
+            return callback({
+                status: 422,
+                message: 'Catalog description is too long, it must be less than 100.000 characters'
+            });
+        }
         // Check that the catalog name is not already taken
-        if (catalog && (!prevCatalog || !!catalog.name)) {
+        if (catalog && (!prevCatalog || catalog.name)) {
             checkExistingCatalog(catalog.name, callback);
         } else {
             callback(null);

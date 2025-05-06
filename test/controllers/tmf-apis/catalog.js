@@ -50,6 +50,11 @@ const CATEGORIES_CANNOT_BE_CHECKED = 'It was impossible to check if the provided
 const CATEGORY_NAME_MISSING = 'Category name is mandatory';
 const CATALOG_CANNOT_BE_CHECKED = 'It was impossible to check if there is another catalog with the same name';
 const CATALOG_EXISTS = 'This catalog name is already taken';
+const CATALOG_NAME_LONG = 'Catalog name is too long, it must be less than 100 characters';
+const CATALOG_NAME_EMPTY = 'Catalog name is empty';
+const CATALOG_NAME_MISSING = 'Catalog name is mandatory';
+const CATALOG_NAME_STRING = 'Catalog name must be a string';
+const CATALOG_DESCRIPTION_LONG = 'Catalog description is too long, it must be less than 100.000 characters';
 const RSS_CANNOT_BE_ACCESSED = 'An unexpected error in the RSS API prevented your request to be processed';
 const INVALID_PRODUCT_CLASS = 'The provided productClass does not specify a valid revenue sharing model';
 const MISSING_PRODUCT_SPEC = 'Product offerings must contain a productSpecification';
@@ -1678,6 +1683,64 @@ describe('Catalog API', function() {
         );
     });
 
+    it('should not allow to create owned catalog with 100.000+ characters in name', function(done) {
+        var catalogName = 'example' + new Array(100000).join('a');
+
+        var catalogRequest = {
+            query: '?name=' + catalogName,
+            status: 200,
+            body: []
+        };
+
+        testCreateCatalog(true, isOwnerTrue, { name: catalogName }, catalogRequest, 422, CATALOG_NAME_LONG, false, done);
+    });
+
+    it('should not allow to create owned catalog with empty name', function(done) {
+        var catalogName = '';
+
+        var catalogRequest = {
+            query: '?name=' + catalogName,
+            status: 200,
+            body: []
+        };
+
+        testCreateCatalog(true, isOwnerTrue, { name: catalogName, description: 'test' }, catalogRequest, 422, CATALOG_NAME_EMPTY, false, done);
+    });
+
+    it('should not allow to create owned catalog without name', function(done) {
+        var catalogName = '';
+        var catalogRequest = {
+            query: '?name=' + catalogName,
+            status: 200,
+            body: []
+        };
+
+        testCreateCatalog(true, isOwnerTrue, {}, catalogRequest, 422, CATALOG_NAME_MISSING, false, done);
+    });
+
+    it('should not allow to create owned catalog with number type in name', function(done) {
+        var catalogName = 3;
+        var catalogRequest = {
+            query: '?name=' + catalogName,
+            status: 200,
+            body: []
+        };
+
+        testCreateCatalog(true, isOwnerTrue, {name: catalogName}, catalogRequest, 422, CATALOG_NAME_STRING, false, done);
+    });
+
+    it('should not allow to create owned catalog with 100.0000+ characters description', function(done) {
+        var catalogName = 'test';
+        var catalogDescription = 'example' + new Array(100000).join('e');
+        var catalogRequest = {
+            query: '?name=' + catalogName,
+            status: 200,
+            body: []
+        };
+
+        testCreateCatalog(true, isOwnerTrue, { name: catalogName, description: catalogDescription}, catalogRequest, 422, CATALOG_DESCRIPTION_LONG, false, done);
+    });
+
     it('should not allow to create not owned catalog', function(done) {
         var catalogName = 'example';
 
@@ -2220,7 +2283,7 @@ describe('Catalog API', function() {
         ]
     };
 
-    var testChangeProductCatalogStatus = function(
+    var testChangeProductSpec = function(
         assetPath,
         offeringsPath,
         previousAssetBody,
@@ -2347,7 +2410,7 @@ describe('Catalog API', function() {
 
     // PRODUCTS
 
-    var testChangeProductStatus = function(productBody, offeringsInfo, errorStatus, errorMsg, done, status, launched, queryRef, launchError, launchApiError) {
+    var testUpdateProductSpec = function(productBody, offeringsInfo, errorStatus, errorMsg, done, status, launched, queryRef, launchError, launchApiError) {
         var productId = '7';
         var productPath = '/productSpecification/' + productId;
         var offeringsPath = '/productOffering?productSpecification.id=' + productId;
@@ -2365,7 +2428,7 @@ describe('Catalog API', function() {
             serviceSpecification: [],
             resourceSpecification: []
         };
-        testChangeProductCatalogStatus(
+        testChangeProductSpec(
             productPath,
             offeringsPath,
             prevBody,
@@ -2390,7 +2453,7 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testChangeProductStatus(productBody, offeringsInfo, 400, INVALID_JSON, done);
+        testUpdateProductSpec(productBody, offeringsInfo, 400, INVALID_JSON, done);
     });
 
     it('should allow to update a product if the body does not contains cycle information', function(done) {
@@ -2401,7 +2464,7 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testChangeProductStatus(productBody, offeringsInfo, null, null, done);
+        testUpdateProductSpec(productBody, offeringsInfo, null, null, done);
     });
 
     it('should not allow to update a product if the body modifies the original relatedParty', function(done) {
@@ -2421,7 +2484,7 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testChangeProductStatus(productBody, offeringsInfo, 409, INVALID_RELATED_PARTY, done);
+        testUpdateProductSpec(productBody, offeringsInfo, 409, INVALID_RELATED_PARTY, done);
     });
 
     it('should allow to update a product if the body does not modify the original relatedParty', function(done) {
@@ -2434,7 +2497,7 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testChangeProductStatus(productBody, offeringsInfo, null, null, done);
+        testUpdateProductSpec(productBody, offeringsInfo, null, null, done);
     });
 
     it('should allow launch a product spec', function(done) {
@@ -2447,7 +2510,7 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testChangeProductStatus(productBody, offeringsInfo, null, null, done, null, true, 'n1,n2');
+        testUpdateProductSpec(productBody, offeringsInfo, null, null, done, null, true, 'n1,n2');
     });
 
     it('should not allow launch a product spec when resource specs do not have the same status as their parent', function(done) {
@@ -2460,7 +2523,7 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testChangeProductStatus(productBody, offeringsInfo, 409, INVALID_R_LAUNCH, done, null, false, 'n1,n2', resourceLaunchFail);
+        testUpdateProductSpec(productBody, offeringsInfo, 409, INVALID_R_LAUNCH, done, null, false, 'n1,n2', resourceLaunchFail);
     });
 
     it('should not allow launch a product spec when service specs do not have the same status as their parent', function(done) {
@@ -2473,7 +2536,7 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testChangeProductStatus(productBody, offeringsInfo, 409, INVALID_S_LAUNCH, done, null, false, 'n1,n2', serviceLaunchFail);
+        testUpdateProductSpec(productBody, offeringsInfo, 409, INVALID_S_LAUNCH, done, null, false, 'n1,n2', serviceLaunchFail);
     });
 
     it('should not allow launch a product spec when resource spec API fails retrieving data', function(done) {
@@ -2486,7 +2549,7 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testChangeProductStatus(productBody, offeringsInfo, 400, INVALID_R_API, done, null, false, 'n1,n2', null, resourceLaunchFail);
+        testUpdateProductSpec(productBody, offeringsInfo, 400, INVALID_R_API, done, null, false, 'n1,n2', null, resourceLaunchFail);
     });
 
     it('should not allow launch a product spec when service spec API fails retrieving data', function(done) {
@@ -2499,7 +2562,7 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testChangeProductStatus(productBody, offeringsInfo, 400, INVALID_S_API, done, null, false, 'n1,n2', null, serviceLaunchFail);
+        testUpdateProductSpec(productBody, offeringsInfo, 400, INVALID_S_API, done, null, false, 'n1,n2', null, serviceLaunchFail);
     });
 
     // Retire
@@ -2514,7 +2577,7 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testChangeProductStatus(productBody, offeringsInfo, null, null, done);
+        testUpdateProductSpec(productBody, offeringsInfo, null, null, done);
     });
 
     it('should allow to retire a product when there is one attached offering with retired status', function(done) {
@@ -2531,7 +2594,7 @@ describe('Catalog API', function() {
             ]
         };
 
-        testChangeProductStatus(productBody, offeringsInfo, null, null, done);
+        testUpdateProductSpec(productBody, offeringsInfo, null, null, done);
     });
 
     it('should allow to retire a product when there is one attached offering with obsolete status', function(done) {
@@ -2548,7 +2611,7 @@ describe('Catalog API', function() {
             ]
         };
 
-        testChangeProductStatus(productBody, offeringsInfo, null, null, done);
+        testUpdateProductSpec(productBody, offeringsInfo, null, null, done);
     });
 
     it('should not allow to retire a product when there is one attached offering with active status', function(done) {
@@ -2565,7 +2628,7 @@ describe('Catalog API', function() {
             ]
         };
 
-        testChangeProductStatus(productBody, offeringsInfo, 400, OFFERS_NOT_RETIRED_PRODUCT, done);
+        testUpdateProductSpec(productBody, offeringsInfo, 400, OFFERS_NOT_RETIRED_PRODUCT, done);
     });
 
     it('should allow to retire a product when there are two attached offerings - one retired and one obsolete', function(done) {
@@ -2585,7 +2648,7 @@ describe('Catalog API', function() {
             ]
         };
 
-        testChangeProductStatus(productBody, offeringsInfo, null, null, done);
+        testUpdateProductSpec(productBody, offeringsInfo, null, null, done);
     });
 
     it('should not allow to retire a product when there is at least one attached offering with launched status', function(done) {
@@ -2605,7 +2668,7 @@ describe('Catalog API', function() {
             ]
         };
 
-        testChangeProductStatus(productBody, offeringsInfo, 400, OFFERS_NOT_RETIRED_PRODUCT, done);
+        testUpdateProductSpec(productBody, offeringsInfo, 400, OFFERS_NOT_RETIRED_PRODUCT, done);
     });
 
     it('should not allow to retire a product if the attached offerings cannot be retrieved', function(done) {
@@ -2618,7 +2681,7 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testChangeProductStatus(productBody, offeringsInfo, 500, OFFERINGS_NOT_RETRIEVED, done);
+        testUpdateProductSpec(productBody, offeringsInfo, 500, OFFERINGS_NOT_RETRIEVED, done);
     });
 
     // Make obsolete
@@ -2633,7 +2696,7 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testChangeProductStatus(productBody, offeringsInfo, null, null, done);
+        testUpdateProductSpec(productBody, offeringsInfo, null, null, done);
     });
 
     it('should allow to make a product obsolete when there is one attached offering with obsolete status', function(done) {
@@ -2650,7 +2713,7 @@ describe('Catalog API', function() {
             ]
         };
 
-        testChangeProductStatus(productBody, offeringsInfo, null, null, done);
+        testUpdateProductSpec(productBody, offeringsInfo, null, null, done);
     });
 
     it('should not allow to make a product obsolete when there is one attached offering with retired status', function(done) {
@@ -2667,7 +2730,7 @@ describe('Catalog API', function() {
             ]
         };
 
-        testChangeProductStatus(productBody, offeringsInfo, 400, OFFERS_NOT_OBSOLETE_PRODUCT, done);
+        testUpdateProductSpec(productBody, offeringsInfo, 400, OFFERS_NOT_OBSOLETE_PRODUCT, done);
     });
 
     it('should allow to make a product obsolete when there are two attached obsolete offerings', function(done) {
@@ -2687,7 +2750,7 @@ describe('Catalog API', function() {
             ]
         };
 
-        testChangeProductStatus(productBody, offeringsInfo, null, null, done);
+        testUpdateProductSpec(productBody, offeringsInfo, null, null, done);
     });
 
     it('should not allow to make a product obsolete when there is at least one attached offering with retired status', function(done) {
@@ -2707,7 +2770,7 @@ describe('Catalog API', function() {
             ]
         };
 
-        testChangeProductStatus(productBody, offeringsInfo, 400, OFFERS_NOT_OBSOLETE_PRODUCT, done);
+        testUpdateProductSpec(productBody, offeringsInfo, 400, OFFERS_NOT_OBSOLETE_PRODUCT, done);
     });
 
     it('should not allow to make a product obsolete if the attached offerings cannot be retrieved', function(done) {
@@ -2720,17 +2783,17 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testChangeProductStatus(productBody, offeringsInfo, 500, OFFERINGS_NOT_RETRIEVED, done);
+        testUpdateProductSpec(productBody, offeringsInfo, 500, OFFERINGS_NOT_RETRIEVED, done);
     });
 
     // UPGRADES
 
-    var testProductUpgrade = function(prevBody, productBody, errorStatus, errorMsg, storeClient, done) {
+    var testUpgradeProductSpec = function(prevBody, productBody, errorStatus, errorMsg, storeClient, done) {
         var productId = '7';
         var productPath = '/productSpecification/' + productId;
         var offeringsPath = '/productOffering?productSpecification.id=' + productId;
 
-        testChangeProductCatalogStatus(
+        testChangeProductSpec(
             productPath,
             offeringsPath,
             prevBody,
@@ -2763,7 +2826,7 @@ describe('Catalog API', function() {
             ]
         };
 
-        testProductUpgrade(prevBody, newBody, errorStatus, errorMsg, null, done);
+        testUpgradeProductSpec(prevBody, newBody, errorStatus, errorMsg, null, done);
     };
 
     it('should allow to upgrade a non-digital product when the characteristics are provided', function(done) {
@@ -2860,7 +2923,7 @@ describe('Catalog API', function() {
             ]
         };
 
-        testProductUpgrade(prevBody, newBody, errorStatus, errorMsg, { storeClient: storeClient }, () => {
+        testUpgradeProductSpec(prevBody, newBody, errorStatus, errorMsg, { storeClient: storeClient }, () => {
             // Check store client call
             if (!errorMsg) {
                 expect(storeClient.upgradeProduct).toHaveBeenCalledWith(
@@ -3067,7 +3130,7 @@ describe('Catalog API', function() {
     // Bundles
     var testUpdateBundle = function(bundles, offeringsInfo, errorStatus, errorMsg, done) {
         var body = mockBundles(bundles);
-        testChangeProductStatus(JSON.stringify(body), offeringsInfo, errorStatus, errorMsg, done);
+        testUpdateProductSpec(JSON.stringify(body), offeringsInfo, errorStatus, errorMsg, done);
     };
 
     it('should allow to update bundles when all products specs are single and owned by the user', function(done) {
@@ -3205,12 +3268,12 @@ describe('Catalog API', function() {
         ];
 
         var body = mockBundles(bundles);
-        testChangeProductStatus(JSON.stringify(body), null, 422, INVALID_BUNDLE_STATUS, done, 'Launched');
+        testUpdateProductSpec(JSON.stringify(body), null, 422, INVALID_BUNDLE_STATUS, done, 'Launched');
     });
 
     // CATALOGS
 
-    var testChangeCatalogStatus = function(productBody, offeringsInfo, errorStatus, errorMsg, done) {
+    var testUpdateCatalog = function(catalogBody, offeringsInfo, errorStatus, errorMsg, done) {
         var catalogPath = '/catalog/7';
         var offeringsPath = '/productOffering';
 
@@ -3221,11 +3284,11 @@ describe('Catalog API', function() {
             relatedParty: previousProductBody.relatedParty
         };
 
-        testChangeProductCatalogStatus(
+        testChangeProductSpec(
             catalogPath,
             offeringsPath,
             prevBody,
-            productBody,
+            catalogBody,
             offeringsInfo,
             errorStatus,
             errorMsg,
@@ -3233,7 +3296,7 @@ describe('Catalog API', function() {
         );
     };
 
-    var testChangeCatalogStatusHref = function(productBody, offeringsInfo, errorStatus, errorMsg, done) {
+    var testUpdateCatalogWithOfferings = function(catalogBody, offeringsInfo, errorStatus, errorMsg, done) {
         var catalogPath = '/catalog/7';
         var offeringsPath = '/productOffering?href=';
 
@@ -3248,11 +3311,11 @@ describe('Catalog API', function() {
             relatedParty: previousProductBody.relatedParty
         };
 
-        testChangeProductCatalogStatus(
+        testChangeProductSpec(
             catalogPath,
             offeringsPath,
             prevBody,
-            productBody,
+            catalogBody,
             offeringsInfo,
             errorStatus,
             errorMsg,
@@ -3268,7 +3331,7 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testChangeCatalogStatus(catalogBody, offeringsInfo, 400, INVALID_JSON, done);
+        testUpdateCatalog(catalogBody, offeringsInfo, 400, INVALID_JSON, done);
     });
 
     it('should allow to update a catalog if the body does not contains cycle information', function(done) {
@@ -3279,7 +3342,60 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testChangeCatalogStatus(catalogBody, offeringsInfo, null, null, done);
+        testUpdateCatalog(catalogBody, offeringsInfo, null, null, done);
+    });
+
+    it('should not allow to update a catalog if the name of the catalog is over 100 characters', function(done) {
+        var catalogBody = JSON.stringify({
+            name: 'a'.repeat(101),
+        });
+
+        var offeringsInfo = {
+            requestStatus: 200,
+            offerings: []
+        };
+
+        testUpdateCatalog(catalogBody, offeringsInfo, 422, CATALOG_NAME_LONG, done);
+    });
+
+    it('should not allow to update a catalog if the name is a number type', function(done) {
+        var catalogBody = JSON.stringify({
+            name: 4,
+        });
+
+        var offeringsInfo = {
+            requestStatus: 200,
+            offerings: []
+        };
+
+        testUpdateCatalog(catalogBody, offeringsInfo, 422, CATALOG_NAME_STRING, done);
+    });
+
+    it('should not allow to update a catalog if the name of the catalog is empty', function(done) {
+        var catalogBody = JSON.stringify({
+            name: '',
+        });
+
+        var offeringsInfo = {
+            requestStatus: 200,
+            offerings: []
+        };
+
+        testUpdateCatalog(catalogBody, offeringsInfo, 422, CATALOG_NAME_EMPTY, done);
+    });
+
+    it('should not allow to update a catalog if the desription of the catalog is over 100.000 characters', function(done) {
+        var catalogBody = JSON.stringify({
+            name: 'long',
+            description: 'a'.repeat(100001)
+        });
+
+        var offeringsInfo = {
+            requestStatus: 200,
+            offerings: []
+        };
+
+        testUpdateCatalog(catalogBody, offeringsInfo, 422, CATALOG_DESCRIPTION_LONG, done);
     });
 
     it('should not allow to update a catalog if the body modifies the original relatedParty', function(done) {
@@ -3299,7 +3415,7 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testChangeCatalogStatus(catalogBody, offeringsInfo, 409, INVALID_RELATED_PARTY, done);
+        testUpdateCatalog(catalogBody, offeringsInfo, 409, INVALID_RELATED_PARTY, done);
     });
 
     it('should allow to update a catalog if the body does not modifie the original relatedParty', function(done) {
@@ -3312,7 +3428,7 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testChangeCatalogStatus(catalogBody, offeringsInfo, null, null, done);
+        testUpdateCatalog(catalogBody, offeringsInfo, null, null, done);
     });
 
     it('should allow launch a catalog', function(done) {
@@ -3329,7 +3445,7 @@ describe('Catalog API', function() {
             ]
         };
 
-        testChangeCatalogStatus(catalogBody, offeringsInfo, null, null, done);
+        testUpdateCatalog(catalogBody, offeringsInfo, null, null, done);
     });
 
     // Retire
@@ -3344,7 +3460,7 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testChangeCatalogStatus(catalogBody, offeringsInfo, null, null, done);
+        testUpdateCatalog(catalogBody, offeringsInfo, null, null, done);
     });
 
     it('should allow to retire a catalog when there is one attached offering with retired status', function(done) {
@@ -3362,7 +3478,7 @@ describe('Catalog API', function() {
             ]
         };
 
-        testChangeCatalogStatusHref(catalogBody, offeringsInfo, null, null, done);
+        testUpdateCatalogWithOfferings(catalogBody, offeringsInfo, null, null, done);
     });
 
     it('should allow to retire a catalog when there is one attached offering with obsolete status', function(done) {
@@ -3380,7 +3496,7 @@ describe('Catalog API', function() {
             ]
         };
 
-        testChangeCatalogStatusHref(catalogBody, offeringsInfo, null, null, done);
+        testUpdateCatalogWithOfferings(catalogBody, offeringsInfo, null, null, done);
     });
 
     it('should not allow to retire a catalog when there is one attached offering with active status', function(done) {
@@ -3398,7 +3514,7 @@ describe('Catalog API', function() {
             ]
         };
 
-        testChangeCatalogStatusHref(catalogBody, offeringsInfo, 400, OFFERS_NOT_RETIRED_CATALOG, done);
+        testUpdateCatalogWithOfferings(catalogBody, offeringsInfo, 400, OFFERS_NOT_RETIRED_CATALOG, done);
     });
 
     it('should allow to retire a catalog when there are two attached offerings - one retired and one obsolete', function(done) {
@@ -3420,7 +3536,7 @@ describe('Catalog API', function() {
             ]
         };
 
-        testChangeCatalogStatusHref(catalogBody, offeringsInfo, null, null, done);
+        testUpdateCatalogWithOfferings(catalogBody, offeringsInfo, null, null, done);
     });
 
     it('should not allow to retire a catalog when there is at least one attached offering with launched status', function(done) {
@@ -3442,7 +3558,7 @@ describe('Catalog API', function() {
             ]
         };
 
-        testChangeCatalogStatusHref(catalogBody, offeringsInfo, 400, OFFERS_NOT_RETIRED_CATALOG, done);
+        testUpdateCatalogWithOfferings(catalogBody, offeringsInfo, 400, OFFERS_NOT_RETIRED_CATALOG, done);
     });
 
     // it('should not allow to retire a catalog if the attached offerings cannot be retrieved', function(done) {
@@ -3470,7 +3586,7 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testChangeCatalogStatus(catalogBody, offeringsInfo, null, null, done);
+        testUpdateCatalog(catalogBody, offeringsInfo, null, null, done);
     });
 
     it('should allow to make a catalog obsolete when there is one attached offering with obsolete status', function(done) {
@@ -3488,7 +3604,7 @@ describe('Catalog API', function() {
             ]
         };
 
-        testChangeCatalogStatusHref(catalogBody, offeringsInfo, null, null, done);
+        testUpdateCatalogWithOfferings(catalogBody, offeringsInfo, null, null, done);
     });
 
     it('should not allow to make a catalog obsolete when there is one attached offering with retired status', function(done) {
@@ -3506,7 +3622,7 @@ describe('Catalog API', function() {
             ]
         };
 
-        testChangeCatalogStatusHref(catalogBody, offeringsInfo, 400, OFFERS_NOT_OBSOLETE_CATALOG, done);
+        testUpdateCatalogWithOfferings(catalogBody, offeringsInfo, 400, OFFERS_NOT_OBSOLETE_CATALOG, done);
     });
 
     it('should allow to make a catalog obsolete when there are two attached obsolete offerings', function(done) {
@@ -3528,7 +3644,7 @@ describe('Catalog API', function() {
             ]
         };
 
-        testChangeCatalogStatusHref(catalogBody, offeringsInfo, null, null, done);
+        testUpdateCatalogWithOfferings(catalogBody, offeringsInfo, null, null, done);
     });
 
     it('should not allow to make a catalog obsolete when there is at least one attached offering with retired status', function(done) {
@@ -3550,7 +3666,7 @@ describe('Catalog API', function() {
             ]
         };
 
-        testChangeCatalogStatusHref(catalogBody, offeringsInfo, 400, OFFERS_NOT_OBSOLETE_CATALOG, done);
+        testUpdateCatalogWithOfferings(catalogBody, offeringsInfo, 400, OFFERS_NOT_OBSOLETE_CATALOG, done);
     });
 
     it('should not allow to make a catalog obsolete if the attached offerings cannot be retrieved', function(done) {
@@ -3563,7 +3679,7 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testChangeCatalogStatus(catalogBody, offeringsInfo, 200, null, done);
+        testUpdateCatalog(catalogBody, offeringsInfo, 200, null, done);
     });
 
     // CATEGORIES
