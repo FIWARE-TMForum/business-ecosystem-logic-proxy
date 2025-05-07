@@ -138,9 +138,39 @@ const serviceCatalog = (function() {
         }
     };
 
-    const getProductSpecs = function (ref, fields, callback){
-        const endpoint = config.endpoints.catalog //indent
-        const specPath = `/productSpecification?serviceSpecification.id=${ref}&fields=${fields}`
+    const validateFields = function(req, callback) {
+        const serviceSpec = req.parsedBody
+        if(serviceSpec && serviceSpec.name!==null && serviceSpec.name!==undefined){ // serviceSpec.name === '' should enter here
+            const errorMessage = tmfUtils.validateNameField(serviceSpec.name, 'Service spec');
+            if (errorMessage) {
+                return callback({
+                    status: 422,
+                    message: errorMessage
+                });
+            }
+        } else if(serviceSpec && req.method === 'POST'){ // serviceSpec.name is null or undefined and it is a POST request
+            return callback({
+                status: 422,
+                message: 'Service spec name is mandatory'
+            });
+        }
+        if (serviceSpec && serviceSpec.description) {
+            const errorMessage = tmfUtils.validateDescriptionField(serviceSpec.description, 'Service spec');
+            if (errorMessage) {
+                return callback({
+                    status: 422,
+                    message: errorMessage
+                });
+            }
+        }
+        callback(null)
+
+    }
+
+
+    const getServiceSpecs = function (ref, fields, callback){
+        const endpoint = config.endpoints.catalog
+        const specPath = `/serviceSpecification?serviceSpecification.id=${ref}&fields=${fields}`
         const uri = utils.getAPIURL(
             endpoint.appSsl,
             endpoint.host,
@@ -172,9 +202,10 @@ const serviceCatalog = (function() {
                 message: `Cannot transition from lifecycle status ${prevBody.lifecycleStatus} to ${body.lifecycleStatus}`
             })
         }
-        if (!!prevBody.lifecycleStatus && prevBody.lifecycleStatus.toLowerCase() !== 'retired' && 
-        !!body.lifecycleStatus && body.lifecycleStatus.toLowerCase() === 'retired'){
-            getProductSpecs(prevBody.id, 'lifecycleStatus', function (err, response){
+        if (prevBody.lifecycleStatus && prevBody.lifecycleStatus.toLowerCase() !== 'retired' && 
+            body.lifecycleStatus && body.lifecycleStatus.toLowerCase() === 'retired'){
+
+                getServiceSpecs(prevBody.id, 'lifecycleStatus', function (err, response){
 
                 if(err) {
                     callback(err)
@@ -193,7 +224,7 @@ const serviceCatalog = (function() {
                     else {
                         callback({
                             status: 409,
-                            message: `Cannot retire a service spec without retiring all product specs linked with it`
+                            message: `Cannot retire a service spec without retiring all service specs linked with it`
                         })
                     }
                 }
@@ -206,8 +237,8 @@ const serviceCatalog = (function() {
 
     const validators = {
         GET: [validateRetrieving],
-        POST: [utils.validateLoggedIn, parseBody, validateOwnerSellerPost],
-        PATCH: [utils.validateLoggedIn, parseBody, getPrevVersion, validateUpdate, validateOwnerSeller],
+        POST: [utils.validateLoggedIn, parseBody, validateOwnerSellerPost, validateFields],
+        PATCH: [utils.validateLoggedIn, parseBody, getPrevVersion, validateUpdate, validateOwnerSeller, validateFields],
         PUT: [utils.methodNotAllowed],
         DELETE: [utils.methodNotAllowed]
     };
