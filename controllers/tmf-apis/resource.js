@@ -186,6 +186,34 @@ const resource = (function (){
 
     }
 
+   const validateFields = function(req, callback) {
+        const resourceSpec = req.parsedBody
+        if(resourceSpec && resourceSpec.name!==null && resourceSpec.name!==undefined){ // resourceSpec.name === '' should enter here
+            const errorMessage = tmfUtils.validateNameField(resourceSpec.name, 'Resource spec');
+            if (errorMessage) {
+                return callback({
+                    status: 422,
+                    message: errorMessage
+                });
+            }
+        } else if(resourceSpec && req.method === 'POST'){ // resourceSpec.name is null or undefined and it is a POST request
+            return callback({
+                status: 422,
+                message: 'Resource spec name is mandatory'
+            });
+        }
+        if (resourceSpec && resourceSpec.description) {
+            const errorMessage = tmfUtils.validateDescriptionField(resourceSpec.description, 'Resource spec');
+            if (errorMessage) {
+                return callback({
+                    status: 422,
+                    message: errorMessage
+                });
+            }
+        }
+        callback(null)
+    }
+
     const validateOwnerSellerPost = function(req, callback) {
         const body = req.parsedBody
 
@@ -202,8 +230,8 @@ const resource = (function (){
 
     const validators = {
         GET: [validateRetrieving],
-        POST: [utils.validateLoggedIn, parseBody, validateOwnerSellerPost],
-        PATCH: [utils.validateLoggedIn, parseBody, getPrevVersion, validateUpdate, validateOwnerSeller],
+        POST: [utils.validateLoggedIn, parseBody, validateOwnerSellerPost, validateFields],
+        PATCH: [utils.validateLoggedIn, parseBody, getPrevVersion, validateUpdate, validateOwnerSeller, validateFields],
         PUT: [utils.methodNotAllowed],
         DELETE: [utils.methodNotAllowed]
     };

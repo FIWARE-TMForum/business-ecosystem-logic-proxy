@@ -164,7 +164,6 @@ const serviceCatalog = (function() {
             }
         }
         callback(null)
-
     }
 
 
