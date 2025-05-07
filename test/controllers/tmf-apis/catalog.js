@@ -42,11 +42,6 @@ const OFFERS_NOT_RETIRED_PRODUCT = 'All the attached offerings must be retired o
 const OFFERS_NOT_RETIRED_CATALOG = 'All the attached offerings must be retired or obsolete to retire a catalog';
 const OFFERS_NOT_OBSOLETE_PRODUCT = 'All the attached offerings must be obsolete to make a product obsolete';
 const OFFERS_NOT_OBSOLETE_CATALOG = 'All the attached offerings must be obsolete to make a catalog obsolete';
-const OFFERS_NAME_LONG = 'Product offering name is too long, it must be less than 100 characters';
-const OFFERS_NAME_EMPTY = 'Product offering name is empty';
-const OFFERS_NAME_MISSING = 'Product offering name is mandatory';
-const OFFERS_NAME_NUMBER = 'Product offering name must be a string';
-const OFFERS_DESCRIPTION_LONG = 'Product offering description is too long, it must be less than 100.000 characters';
 const ONLY_ADMINS_MODIFY_CATEGORIES = 'Only administrators can modify categories';
 const OFFERINGS_NOT_RETRIEVED = 'Attached offerings cannot be retrieved';
 const CATEGORY_EXISTS = 'This category already exists';
@@ -54,11 +49,6 @@ const CATEGORIES_CANNOT_BE_CHECKED = 'It was impossible to check if the provided
 const CATEGORY_NAME_MISSING = 'Category name is mandatory';
 const CATALOG_CANNOT_BE_CHECKED = 'It was impossible to check if there is another catalog with the same name';
 const CATALOG_EXISTS = 'This catalog name is already taken';
-const CATALOG_NAME_LONG = 'Catalog name is too long, it must be less than 100 characters';
-const CATALOG_NAME_EMPTY = 'Catalog name is empty';
-const CATALOG_NAME_MISSING = 'Catalog name is mandatory';
-const CATALOG_NAME_NUMBER = 'Catalog name must be a string';
-const CATALOG_DESCRIPTION_LONG = 'Catalog description is too long, it must be less than 100.000 characters';
 const RSS_CANNOT_BE_ACCESSED = 'An unexpected error in the RSS API prevented your request to be processed';
 const INVALID_PRODUCT_CLASS = 'The provided productClass does not specify a valid revenue sharing model';
 const MISSING_PRODUCT_SPEC = 'Product offerings must contain a productSpecification';
@@ -236,6 +226,7 @@ describe('Catalog API', function() {
 
         // Mock bundles
         var body = {
+            name: 'test',
             validFor: {
                 startDateTime: '2019-06-10'
             },
@@ -430,13 +421,15 @@ describe('Catalog API', function() {
             lifecycleStatus: 'launched'
         };
 
-        var mockCatalogAPI = function(body, requestInfo, storeError, rssResp, cloned) {
+        var mockCatalogAPI = function(body, requestInfo, storeError, rssResp, cloned, vNameF, vDescrF) {
             // Mocks
             var checkRoleMethod = jasmine.createSpy();
             checkRoleMethod.and.returnValue(true);
 
             var tmfUtils = {
-                isOwner: requestInfo.role.toLowerCase() === 'owner' ? isOwnerTrue : isOwnerFalse
+                isOwner: requestInfo.role.toLowerCase() === 'owner' ? isOwnerTrue : isOwnerFalse,
+                validateNameField: vNameF ? ()=> vNameF : ()=> null,
+                validateDescriptionField: vDescrF ? ()=> vDescrF : ()=> null
             };
 
             var utils = {
@@ -523,10 +516,12 @@ describe('Catalog API', function() {
             rssResp,
             body,
             cloned,
-            done
+            done,
+            vNameF,
+            vDescrF
         ) {
             var defaultErrorMessage = 'Internal Server Error';
-            var catalogApi = mockCatalogAPI(body, productRequestInfo, storeError, rssResp, cloned);
+            var catalogApi = mockCatalogAPI(body, productRequestInfo, storeError, rssResp, cloned, vNameF, vDescrF);
 
             // The mock server that will handle the request when the product is requested
             var bodyGetProductOk = {
@@ -570,25 +565,7 @@ describe('Catalog API', function() {
             );
         });
 
-        it('should not allow to create an offering with a number type name', function(done) {
-            const offeringBody = {
-                name: 123456,
-            }
-            testCreateOffering(
-                productRequestInfoActive,
-                catalogRequestInfoLaunched,
-                null,
-                null,
-                422,
-                OFFERS_NAME_NUMBER,
-                null,
-                offeringBody,
-                null,
-                done
-            );
-        });
-
-        it('should not allow to create an offering with an empty name', function(done) {
+        it('should not allow to create an offering if name validator fails', function(done) {
             const offeringBody = {
                 name: '',
             }
@@ -598,51 +575,17 @@ describe('Catalog API', function() {
                 null,
                 null,
                 422,
-                OFFERS_NAME_EMPTY,
+                'error',
                 null,
                 offeringBody,
                 null,
-                done
+                done,
+                'error',
+                null
             );
         });
 
-        it('should not allow to create an offering with 100+ characters in name', function(done) {
-            const offeringBody = {
-                name: 'a'.repeat(101),
-            }
-            testCreateOffering(
-                productRequestInfoActive,
-                catalogRequestInfoLaunched,
-                null,
-                null,
-                422,
-                OFFERS_NAME_LONG,
-                null,
-                offeringBody,
-                null,
-                done
-            );
-        });
-
-        it('should not allow to create an offering without a name attribute', function(done) {
-            const offeringBody = {
-                description:'test'
-            }
-            testCreateOffering(
-                productRequestInfoActive,
-                catalogRequestInfoLaunched,
-                null,
-                null,
-                422,
-                OFFERS_NAME_MISSING,
-                null,
-                offeringBody,
-                null,
-                done
-            );
-        });
-
-        it('should not allow to create an offering with 100.000+ characters in description', function(done) {
+        it('should not allow to create an offering if description validator fails', function(done) {
             const offeringBody = {
                 name: 'test',
                 description:'a'.repeat(100001)
@@ -653,11 +596,13 @@ describe('Catalog API', function() {
                 null,
                 null,
                 422,
-                OFFERS_DESCRIPTION_LONG,
+                'descr error',
                 null,
                 offeringBody,
                 null,
-                done
+                done,
+                null,
+                'descr error'
             );
         });
 
@@ -1266,7 +1211,7 @@ describe('Catalog API', function() {
     });
 
     describe('Create product', function() {
-        var mockCatalogAPI = function(isOwner, storeValidator) {
+        var mockCatalogAPI = function(isOwner, storeValidator, vNameF, vDescrF) {
             var checkRoleMethod = jasmine.createSpy();
             checkRoleMethod.and.returnValue(true);
 
@@ -1278,7 +1223,9 @@ describe('Catalog API', function() {
             };
 
             var tmfUtils = {
-                isOwner: isOwner
+                isOwner: isOwner,
+                validateNameField: vNameF ? ()=> vNameF : ()=> null,
+                validateDescriptionField: vDescrF ? ()=> vDescrF : ()=> null
             };
 
             var utils = {
@@ -1317,11 +1264,11 @@ describe('Catalog API', function() {
             });
         };
 
-        var testCreateProduct = function(storeValidator, errorStatus, errorMsg, owner, done) {
-            var catalogApi = mockCatalogAPI(owner ? isOwnerTrue : isOwnerFalse, storeValidator);
+        var testCreateProduct = function(storeValidator, errorStatus, errorMsg, owner, vName, vDescr, done) {
+            var catalogApi = mockCatalogAPI(owner ? isOwnerTrue : isOwnerFalse, storeValidator, vName, vDescr);
 
             var role = owner ? 'Owner' : 'Seller';
-            var body = { relatedParty: [{ id: 'test', role: role }], validFor: { startDateTime: '2010-04-12' } };
+            var body = {name: '',description: 'test', relatedParty: [{ id: 'test', role: role }], validFor: { startDateTime: '2010-04-12' } };
             var req = buildProductRequest(body);
 
             checkProductCreationResult(catalogApi, req, errorStatus, errorMsg, done);
@@ -1332,11 +1279,11 @@ describe('Catalog API', function() {
         };
 
         it('should allow to create owned products', function(done) {
-            testCreateProduct(storeValidatorOk, null, null, true, done);
+            testCreateProduct(storeValidatorOk, null, null, true, null, null, done);
         });
 
         it('should not allow to create non-owned products', function(done) {
-            testCreateProduct(storeValidatorOk, 403, INVALID_USER_CREATE, false, done);
+            testCreateProduct(storeValidatorOk, 403, INVALID_USER_CREATE, false, null, null, done);
         });
 
         it('should not allow to create products that cannot be retrieved from the Store', function(done) {
@@ -1349,7 +1296,15 @@ describe('Catalog API', function() {
 
             // Actual call
             // isOwner does not matter when productRequestFails is set to true
-            testCreateProduct(storeValidatorErr, storeErrorStatus, storeErrorMessage, true, done);
+            testCreateProduct(storeValidatorErr, storeErrorStatus, storeErrorMessage, true, null, null, done);
+        });
+
+        it('should not allow to create products with number type name', function(done) {
+            testCreateProduct(storeValidatorOk, 422, 'error', true, 'error', null, done);
+        });
+
+        it('should not allow to create non-owned products', function(done) {
+            testCreateProduct(storeValidatorOk, 422, 'descr error', true, null, 'descr error', done);
         });
 
         var testCreateBundle = function(bundles, errorStatus, errorMsg, done) {
@@ -1791,7 +1746,7 @@ describe('Catalog API', function() {
         );
     });
 
-    it('should not allow to create owned catalog with 100.000+ characters in name', function(done) {
+    it('should not allow to create owned catalog if name validator fails', function(done) {
         var catalogName = 'example' + new Array(100000).join('a');
 
         var catalogRequest = {
@@ -1800,41 +1755,7 @@ describe('Catalog API', function() {
             body: []
         };
 
-        testCreateCatalog(true, isOwnerTrue, { name: catalogName }, catalogRequest, 422, CATALOG_NAME_LONG, false, done, CATALOG_NAME_LONG, null);
-    });
-
-    it('should not allow to create owned catalog with empty name', function(done) {
-        var catalogName = '';
-
-        var catalogRequest = {
-            query: '?name=' + catalogName,
-            status: 200,
-            body: []
-        };
-
-        testCreateCatalog(true, isOwnerTrue, { name: catalogName, description: 'test' }, catalogRequest, 422, CATALOG_NAME_EMPTY, false, done, CATALOG_NAME_EMPTY, null);
-    });
-
-    it('should not allow to create owned catalog without name', function(done) {
-        var catalogName = '';
-        var catalogRequest = {
-            query: '?name=' + catalogName,
-            status: 200,
-            body: []
-        };
-
-        testCreateCatalog(true, isOwnerTrue, {}, catalogRequest, 422, CATALOG_NAME_MISSING, false, done, null, null);
-    });
-
-    it('should not allow to create owned catalog with number type in name', function(done) {
-        var catalogName = 3;
-        var catalogRequest = {
-            query: '?name=' + catalogName,
-            status: 200,
-            body: []
-        };
-
-        testCreateCatalog(true, isOwnerTrue, {name: catalogName}, catalogRequest, 422, CATALOG_NAME_NUMBER, false, done, CATALOG_NAME_NUMBER, null);
+        testCreateCatalog(true, isOwnerTrue, { name: catalogName }, catalogRequest, 422, 'error', false, done, 'error', null);
     });
 
     it('should not allow to create owned catalog with 100.0000+ characters description', function(done) {
@@ -1846,7 +1767,7 @@ describe('Catalog API', function() {
             body: []
         };
 
-        testCreateCatalog(true, isOwnerTrue, { name: catalogName, description: catalogDescription}, catalogRequest, 422, CATALOG_DESCRIPTION_LONG, false, done, null, CATALOG_DESCRIPTION_LONG);
+        testCreateCatalog(true, isOwnerTrue, { name: catalogName, description: catalogDescription}, catalogRequest, 422, 'descr error', false, done, null, 'descr error');
     });
 
     it('should not allow to create not owned catalog', function(done) {
@@ -2522,7 +2443,7 @@ describe('Catalog API', function() {
 
     // PRODUCTS
 
-    var testUpdateProductSpec = function(productBody, offeringsInfo, errorStatus, errorMsg, done, status, launched, queryRef, launchError, launchApiError) {
+    var testUpdateProductSpec = function(productBody, offeringsInfo, errorStatus, errorMsg, done, status, launched, queryRef, launchError, launchApiError, vNameF, vDescrF) {
         var productId = '7';
         var productPath = '/productSpecification/' + productId;
         var offeringsPath = '/productOffering?productSpecification.id=' + productId;
@@ -2553,7 +2474,9 @@ describe('Catalog API', function() {
             launched,
             queryRef,
             launchError,
-            launchApiError
+            launchApiError,
+            vNameF,
+            vDescrF
         );
     };
 
@@ -2569,7 +2492,7 @@ describe('Catalog API', function() {
     });
 
     it('should allow to update a product if the body does not contains cycle information', function(done) {
-        var productBody = {};
+        var productBody = JSON.stringify({name: ''});
 
         var offeringsInfo = {
             requestStatus: 200,
@@ -2577,6 +2500,17 @@ describe('Catalog API', function() {
         };
 
         testUpdateProductSpec(productBody, offeringsInfo, null, null, done);
+    });
+
+    it('should not allow to update a product if the tmfUtils returns a errorMessage when name is set', function(done) {
+        var productBody = JSON.stringify({name: ''});
+
+        var offeringsInfo = {
+            requestStatus: 200,
+            offerings: []
+        };
+
+        testUpdateProductSpec(productBody, offeringsInfo, 422, 'error', done, null, null, null, null, null, 'error', null);
     });
 
     it('should not allow to update a product if the body modifies the original relatedParty', function(done) {
@@ -3464,7 +3398,7 @@ describe('Catalog API', function() {
         testUpdateCatalog(catalogBody, offeringsInfo, null, null, done);
     });
 
-    it('should not allow to update a catalog if the name of the catalog is over 100 characters', function(done) {
+    it('should not allow to update a catalog if the name validator fails', function(done) {
         var catalogBody = JSON.stringify({
             name: 'a'.repeat(101),
         });
@@ -3474,36 +3408,10 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testUpdateCatalog(catalogBody, offeringsInfo, 422, CATALOG_NAME_LONG, done, CATALOG_NAME_LONG, null);
+        testUpdateCatalog(catalogBody, offeringsInfo, 422, 'error', done, 'error', null);
     });
 
-    it('should not allow to update a catalog if the name is a number type', function(done) {
-        var catalogBody = JSON.stringify({
-            name: 4,
-        });
-
-        var offeringsInfo = {
-            requestStatus: 200,
-            offerings: []
-        };
-
-        testUpdateCatalog(catalogBody, offeringsInfo, 422, CATALOG_NAME_NUMBER, done, CATALOG_NAME_NUMBER, null);
-    });
-
-    it('should not allow to update a catalog if the name of the catalog is empty', function(done) {
-        var catalogBody = JSON.stringify({
-            name: '',
-        });
-
-        var offeringsInfo = {
-            requestStatus: 200,
-            offerings: []
-        };
-
-        testUpdateCatalog(catalogBody, offeringsInfo, 422, CATALOG_NAME_EMPTY, done, CATALOG_NAME_EMPTY, null);
-    });
-
-    it('should not allow to update a catalog if the desription of the catalog is over 100.000 characters', function(done) {
+    it('should not allow to update a catalog if the description validator fails', function(done) {
         var catalogBody = JSON.stringify({
             name: 'long',
             description: 'a'.repeat(100001)
@@ -3514,7 +3422,7 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testUpdateCatalog(catalogBody, offeringsInfo, 422, CATALOG_DESCRIPTION_LONG, done, null, CATALOG_DESCRIPTION_LONG);
+        testUpdateCatalog(catalogBody, offeringsInfo, 422, 'descr long', done, null, 'descr long');
     });
 
     it('should not allow to update a catalog if the body modifies the original relatedParty', function(done) {

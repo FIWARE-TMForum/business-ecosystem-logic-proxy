@@ -31,6 +31,7 @@ const storeClient = require('./../../lib/store').storeClient
 const tmfUtils = require('./../../lib/tmfUtils')
 const url = require('url')
 const utils = require('./../../lib/utils')
+const { parse } = require('path')
 const searchEngine = require('../../lib/search').searchEngine
 
 var LIFE_CYCLE = 'lifecycleStatus';
@@ -796,6 +797,31 @@ const catalog = (function() {
     };
 
     const validateProduct = function(req, productSpec, callback) {
+
+        if(productSpec && productSpec.name!==null && productSpec.name!==undefined){ // productSpec.name === '' should enter here
+            const errorMessage = tmfUtils.validateNameField(productSpec.name, 'Product spec');
+            if (errorMessage) {
+                return callback({
+                    status: 422,
+                    message: errorMessage
+                });
+            }
+        } else if(productSpec && req.method === 'POST'){ // productSpec.name is null or undefined and it is a POST request
+            return callback({
+                status: 422,
+                message: 'Product spec name is mandatory'
+            });
+        }
+        if (productSpec && productSpec.description) {
+            const errorMessage = tmfUtils.validateDescriptionField(productSpec.description, 'Product spec');
+            if (errorMessage) {
+                return callback({
+                    status: 422,
+                    message: errorMessage
+                });
+            }
+        }
+
         // Check if the product is a bundle
         if (!productSpec.isBundle) {
             return callback(null);
