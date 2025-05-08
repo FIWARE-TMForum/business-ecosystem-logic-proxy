@@ -641,13 +641,7 @@ describe('TMF Utils', function() {
         it('should return true if the phoneNumber in contacts is correctly set', function(){
             const tmfUtils = getTmfUtils();
             contacts = [{
-                contactMedium: [
-                    {
-                        mediumType: "Email",
-                    },
-                    {
-                        mediumType: "PostalAddress",
-                    },
+                contactMedium: [{mediumType: "Email",},{mediumType: "PostalAddress",},
                     {
                         mediumType: "TelephoneNumber",
                         preferred: true,
@@ -659,13 +653,7 @@ describe('TMF Utils', function() {
                 ]
             },
             {
-                contactMedium: [
-                    {
-                        mediumType: "Email",
-                    },
-                    {
-                        mediumType: "PostalAddress",
-                    },
+                contactMedium: [{mediumType: "Email",},{mediumType: "PostalAddress",},
                     {
                         mediumType: "TelephoneNumber",
                         preferred: true,
@@ -676,6 +664,20 @@ describe('TMF Utils', function() {
                     }
                 ]
             }]
+            const result = tmfUtils.hasValidPhoneNumber(contacts)
+            expect(result).toBe(true)
+        })
+
+        it('should return true if there is no contact attribute', function(){
+            const tmfUtils = getTmfUtils();
+            contacts = undefined
+            const result = tmfUtils.hasValidPhoneNumber(contacts)
+            expect(result).toBe(true)
+        })
+
+        it('should return true if there contact attribute is an empty array', function(){
+            const tmfUtils = getTmfUtils();
+            contacts = []
             const result = tmfUtils.hasValidPhoneNumber(contacts)
             expect(result).toBe(true)
         })
