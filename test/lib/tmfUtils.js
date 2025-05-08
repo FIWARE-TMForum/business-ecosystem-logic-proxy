@@ -562,7 +562,7 @@ describe('TMF Utils', function() {
         });
     });
 
-    describe('Method haveSameStatus', function() {
+    describe('Method: haveSameStatus', function() {
 
         it('should return true if all elements inside the array have the specified status', function(){
             const tmfUtils = getTmfUtils();
@@ -589,7 +589,7 @@ describe('TMF Utils', function() {
 
     })
 
-    describe('Method refsToQuery', function(){
+    describe('Method: refsToQuery', function(){
         it('should parse an array of refs to query structure string', function(){
             const tmfUtils = getTmfUtils();
             const array=[]
@@ -601,5 +601,118 @@ describe('TMF Utils', function() {
             expect(result).toBe('n0,n1,n2,n3,n4')
 
         })
+    })
+
+    describe('Methods: validateField', function(){
+        it('should return null if the name is correctly set', function(){
+            const tmfUtils = getTmfUtils();
+            const name = 'correctName'
+            const result = tmfUtils.validateNameField(name, 'product')
+            expect(result).toBe(null)
+
+        })
+
+        it('should return an error 422 if the name is empty', function(){
+            const tmfUtils = getTmfUtils();
+            const name = ''
+            const result = tmfUtils.validateNameField(name, 'product')
+            expect(result).toBe('product name is empty')
+
+        })
+
+        it('should return an error 422 if the name is over 100 characters', function(){
+            const tmfUtils = getTmfUtils();
+            const name = 'a'.repeat(101)
+            const result = tmfUtils.validateNameField(name, 'product')
+            expect(result).toBe('product name is too long, it must be less than 100 characters')
+
+        })
+
+        it('should return an error 422 if the name is not a string', function(){
+            const tmfUtils = getTmfUtils();
+            const name = 7
+            const result = tmfUtils.validateNameField(name, 'product')
+            expect(result).toBe('product name must be a string')
+
+        })
+    })
+    
+    describe('Methods: hasValidPhoneNumber', function(){
+        it('should return true if the phoneNumber in contacts is correctly set', function(){
+            const tmfUtils = getTmfUtils();
+            contacts = [{
+                contactMedium: [{mediumType: "Email",},{mediumType: "PostalAddress",},
+                    {
+                        mediumType: "TelephoneNumber",
+                        preferred: true,
+                        characteristic: {
+                            "contactType": "Mobile",
+                            "phoneNumber": "+34650546882"
+                        }
+                    }
+                ]
+            },
+            {
+                contactMedium: [{mediumType: "Email",},{mediumType: "PostalAddress",},
+                    {
+                        mediumType: "TelephoneNumber",
+                        preferred: true,
+                        characteristic: {
+                            "contactType": "Mobile",
+                            "phoneNumber": "+34912883242"
+                        }
+                    }
+                ]
+            }]
+            const result = tmfUtils.hasValidPhoneNumber(contacts)
+            expect(result).toBe(true)
+        })
+
+        it('should return true if there is no contact attribute', function(){
+            const tmfUtils = getTmfUtils();
+            contacts = undefined
+            const result = tmfUtils.hasValidPhoneNumber(contacts)
+            expect(result).toBe(true)
+        })
+
+        it('should return true if there contact attribute is an empty array', function(){
+            const tmfUtils = getTmfUtils();
+            contacts = []
+            const result = tmfUtils.hasValidPhoneNumber(contacts)
+            expect(result).toBe(true)
+        })
+
+        it('should return false if the phoneNumber in contacts is a invalid', function(){
+            const tmfUtils = getTmfUtils();
+            contacts = [{
+                contactMedium: [{mediumType: "Email"},{mediumType: "PostalAddress",},
+                    {
+                        mediumType: "TelephoneNumber",
+                        preferred: true,
+                        characteristic: {
+                            "contactType": "Mobile",
+                            "phoneNumber": "+34650546882" // correct
+                        }
+                    }
+                ]
+            },
+            {
+                contactMedium: [
+                    {mediumType: "Email",},{mediumType: "PostalAddress",},
+                    {
+                        mediumType: "TelephoneNumber",
+                        preferred: true,
+                        characteristic: {
+                            "contactType": "Mobile",
+                            "phoneNumber": "+34512883242" // incorrect
+                        }
+                    }
+                ]
+            }]
+            const result = tmfUtils.hasValidPhoneNumber(contacts)
+            expect(result).toBe(true)
+        })
+
+
     })
 });

@@ -24,7 +24,6 @@ const logger = require('./../../lib/logger').logger.getLogger('TMF')
 const tmfUtils = require('./../../lib/tmfUtils')
 const url = require('url')
 const utils = require('./../../lib/utils')
-const { PhoneNumber } = require('libphonenumber-js')
 
 const account = (function() {
 
@@ -60,27 +59,11 @@ const account = (function() {
 
     const validateBilling = function(body, callback){
 
-        for (let contact of body.contact){
-            const phoneNumber = contact.contactMedium.filter((medium) => {
-                return medium.mediumType === 'TelephoneNumber'
-            })[0].characteristic.phoneNumber
-            try{
-                if(phoneNumber){
-                    const checkNumber = new PhoneNumber(phoneNumber)
-                    if(!checkNumber.isValid()){
-                        return callback({
-                            status: 400,
-                            message: "Invalid phone number"
-                        })
-                    }
-                }
-            }
-            catch(error){
-                return callback({
-                    status: 400,
-                    message: "Wrong phone number format"
-                })
-            }
+        if (!tmfUtils.hasValidPhoneNumber(body.contact)) {
+            return callback({
+                status: 400,
+                message: "Invalid phone number"
+            })
         }
         callback(null)
     }
