@@ -636,4 +636,81 @@ describe('TMF Utils', function() {
 
         })
     })
+    
+    describe('Methods: hasValidPhoneNumber', function(){
+        it('should return true if the phoneNumber in contacts is correctly set', function(){
+            const tmfUtils = getTmfUtils();
+            contacts = [{
+                contactMedium: [
+                    {
+                        mediumType: "Email",
+                    },
+                    {
+                        mediumType: "PostalAddress",
+                    },
+                    {
+                        mediumType: "TelephoneNumber",
+                        preferred: true,
+                        characteristic: {
+                            "contactType": "Mobile",
+                            "phoneNumber": "+34650546882"
+                        }
+                    }
+                ]
+            },
+            {
+                contactMedium: [
+                    {
+                        mediumType: "Email",
+                    },
+                    {
+                        mediumType: "PostalAddress",
+                    },
+                    {
+                        mediumType: "TelephoneNumber",
+                        preferred: true,
+                        characteristic: {
+                            "contactType": "Mobile",
+                            "phoneNumber": "+34912883242"
+                        }
+                    }
+                ]
+            }]
+            const result = tmfUtils.hasValidPhoneNumber(contacts)
+            expect(result).toBe(true)
+        })
+
+        it('should return false if the phoneNumber in contacts is a invalid', function(){
+            const tmfUtils = getTmfUtils();
+            contacts = [{
+                contactMedium: [{mediumType: "Email"},{mediumType: "PostalAddress",},
+                    {
+                        mediumType: "TelephoneNumber",
+                        preferred: true,
+                        characteristic: {
+                            "contactType": "Mobile",
+                            "phoneNumber": "+34650546882" // correct
+                        }
+                    }
+                ]
+            },
+            {
+                contactMedium: [
+                    {mediumType: "Email",},{mediumType: "PostalAddress",},
+                    {
+                        mediumType: "TelephoneNumber",
+                        preferred: true,
+                        characteristic: {
+                            "contactType": "Mobile",
+                            "phoneNumber": "+34512883242" // incorrect
+                        }
+                    }
+                ]
+            }]
+            const result = tmfUtils.hasValidPhoneNumber(contacts)
+            expect(result).toBe(true)
+        })
+
+
+    })
 });
