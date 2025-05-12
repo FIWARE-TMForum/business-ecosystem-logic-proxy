@@ -636,4 +636,79 @@ describe('TMF Utils', function() {
 
         })
     })
+
+    describe('Methods: validateOfferingPrice', function(){
+
+        it('should return true if the price is correctly set following ISO 4217 standard', function(){
+            const tmfUtils = getTmfUtils();
+            const price = 4.99
+            const unit = 'EUR'
+            const result = tmfUtils.isValidPrice(price, unit)
+            expect(result).toBe(true)
+
+        })
+        it('should return false if the price is not a number', function(){
+            const tmfUtils = getTmfUtils();
+            const price = '4.99'
+            const unit = 'EUR'
+            const result = tmfUtils.isValidPrice(price, unit)
+            expect(result).toBe(false)
+
+        })
+        it('should return false if the price is not following ISO 4217 standard', function(){
+            const tmfUtils = getTmfUtils();
+            const price = 4.992
+            const unit = 'EUR'
+            const result = tmfUtils.isValidPrice(price, unit)
+            expect(result).toBe(false)
+
+        })
+
+        it('should return true if percentage is between 0 and 100', function(){
+            const tmfUtils = getTmfUtils();
+            const percentage = 50
+            const result = tmfUtils.isValidPercentage(percentage)
+            expect(result).toBe(true)
+
+        })
+
+        it('should return false if percentage is not a number', function(){
+            const tmfUtils = getTmfUtils();
+            const percentage = '50'
+            const result = tmfUtils.isValidPercentage(percentage)
+            expect(result).toBe(false)
+
+        })
+
+        it('should return false if percentage is not between 0 and 100', function(){
+            const tmfUtils = getTmfUtils();
+            const percentage = 150
+            const result = tmfUtils.isValidPercentage(percentage)
+            expect(result).toBe(false)
+
+        })
+
+        it('should return true if amount is more or equal than 1', function(){
+            const tmfUtils = getTmfUtils();
+            const amount = 1
+            const result = tmfUtils.isValidAmount(amount)
+            expect(result).toBe(true)
+        })
+
+        it('should return false if amount is not a number', function(){
+            const tmfUtils = getTmfUtils();
+            const amount = '1'
+            const result = tmfUtils.isValidAmount(amount)
+            expect(result).toBe(false)
+
+        })
+
+        it('should return false if amount is less than 1', function(){
+            const tmfUtils = getTmfUtils();
+            const amount = 0.99
+            const result = tmfUtils.isValidAmount(amount)
+            expect(result).toBe(false)
+
+        })
+    })
 });
