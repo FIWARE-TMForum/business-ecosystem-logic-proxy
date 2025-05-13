@@ -1518,7 +1518,7 @@ describe('Catalog API', function() {
                 }
             };
 
-            validateOfferingPrice(false, true, true, offeringPrice, 422, 'Percentage must be a number between 0 and 100', done);
+            validateOfferingPrice(false, true, true, offeringPrice, 422, 'Percentage must be either a number or a string representing a number between 0 and 100', done);
 
         });
 
@@ -1535,7 +1535,7 @@ describe('Catalog API', function() {
                 }
             };
 
-            validateOfferingPrice(true, false, true, offeringPrice, 422, 'Amount must be a number greater than 0', done);
+            validateOfferingPrice(true, false, true, offeringPrice, 422, 'Amount must be either a number or a string representing a number greater than 0', done);
 
         });
 
@@ -1552,7 +1552,7 @@ describe('Catalog API', function() {
                 }
             };
 
-            validateOfferingPrice(true, true, false, offeringPrice, 422, 'Price must be a number between 0 and 1.000.000.000 and follows ISO 4217 standard', done);
+            validateOfferingPrice(true, true, false, offeringPrice, 422, 'Price must be either a number or a string representing a number between 0 and 1.000.000.000 and it must follow the ISO 4217 standard', done);
 
         });
 
@@ -2019,7 +2019,7 @@ describe('Catalog API', function() {
                 id: '1'
             });
 
-            testUpdateOfferingPrice(offeringPrice, nockMock, false, true, true, 422, 'Percentage must be a number between 0 and 100', done);
+            testUpdateOfferingPrice(offeringPrice, nockMock, false, true, true, 422, 'Percentage must be either a number or a string representing a number between 0 and 100', done);
         });
 
         it('should now allow to update offering price when amount is invalid', function(done) {
@@ -2035,7 +2035,7 @@ describe('Catalog API', function() {
                 id: '1'
             });
 
-            testUpdateOfferingPrice(offeringPrice, nockMock, true, false, true, 422, 'Amount must be a number greater than 0', done);
+            testUpdateOfferingPrice(offeringPrice, nockMock, true, false, true, 422, 'Amount must be either a number or a string representing a number greater than 0', done);
         });
 
         it('should now allow to update offering price when price is invalid', function(done) {
@@ -2051,7 +2051,7 @@ describe('Catalog API', function() {
                 id: '1'
             });
 
-            testUpdateOfferingPrice(offeringPrice, nockMock, true, true, false, 422, 'Price must be a number between 0 and 1.000.000.000 and follows ISO 4217 standard', done);
+            testUpdateOfferingPrice(offeringPrice, nockMock, true, true, false, 422, 'Price must be either a number or a string representing a number between 0 and 1.000.000.000 and it must follow the ISO 4217 standard', done);
         });
     });
 

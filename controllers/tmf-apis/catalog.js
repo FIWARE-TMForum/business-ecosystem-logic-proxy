@@ -1068,21 +1068,21 @@ const catalog = (function() {
         if (offerPrice && offerPrice.priceType && offerPrice.priceType.toLowerCase() === 'discount' && !tmfUtils.isPercentage(offerPrice.percentage)) {
             return callback({
                 status: 422,
-                message: 'Percentage must be a number between 0 and 100'
+                message: 'Percentage must be either a number or a string representing a number between 0 and 100'
             })
         }
 
         if (offerPrice && offerPrice.unitOfMeasure && !tmfUtils.isValidAmount(offerPrice.unitOfMeasure.amount)) {
             return callback({
                 status: 422,
-                message: 'Amount must be a number greater than 0'
+                message: 'Amount must be either a number or a string representing a number greater than 0'
             })
         }
 
         if (offerPrice && offerPrice.price && !tmfUtils.isValidPrice(offerPrice.price.value, offerPrice.price.unit)) {
             return callback({
                 status: 422,
-                message: 'Price must be a number between 0 and 1.000.000.000 and follows ISO 4217 standard'
+                message: 'Price must be either a number or a string representing a number between 0 and 1.000.000.000 and it must follow the ISO 4217 standard'
             })
         }
 

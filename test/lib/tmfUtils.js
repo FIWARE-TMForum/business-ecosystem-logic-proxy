@@ -639,7 +639,7 @@ describe('TMF Utils', function() {
 
     describe('Methods: validateOfferingPrice', function(){
 
-        it('should return true if the price is correctly set following ISO 4217 standard', function(){
+        it('should return true if the price is a number and is correctly set following ISO 4217 standard', function(){
             const tmfUtils = getTmfUtils();
             const price = 4.99
             const unit = 'EUR'
@@ -647,17 +647,37 @@ describe('TMF Utils', function() {
             expect(result).toBe(true)
 
         })
-        it('should return false if the price is not a number', function(){
+
+        it('should return true if the price is a string and is correctly set following ISO 4217 standard', function(){
             const tmfUtils = getTmfUtils();
             const price = '4.99'
+            const unit = 'EUR'
+            const result = tmfUtils.isValidPrice(price, unit)
+            expect(result).toBe(true)
+
+        })
+
+        it('should return false if the price is not a number or string', function(){
+            const tmfUtils = getTmfUtils();
+            const price = {}
             const unit = 'EUR'
             const result = tmfUtils.isValidPrice(price, unit)
             expect(result).toBe(false)
 
         })
+
         it('should return false if the price is not following ISO 4217 standard', function(){
             const tmfUtils = getTmfUtils();
             const price = 4.992
+            const unit = 'EUR'
+            const result = tmfUtils.isValidPrice(price, unit)
+            expect(result).toBe(false)
+
+        })
+
+        it('should return false if the price is out of the interval', function(){
+            const tmfUtils = getTmfUtils();
+            const price = '1000000000000000'
             const unit = 'EUR'
             const result = tmfUtils.isValidPrice(price, unit)
             expect(result).toBe(false)
@@ -672,9 +692,17 @@ describe('TMF Utils', function() {
 
         })
 
-        it('should return false if percentage is not a number', function(){
+        it('should return true if percentage is a string and is between 0 and 100', function(){
             const tmfUtils = getTmfUtils();
             const percentage = '50'
+            const result = tmfUtils.isValidPercentage(percentage)
+            expect(result).toBe(true)
+
+        })
+
+        it('should return false if percentage is not a number or string', function(){
+            const tmfUtils = getTmfUtils();
+            const percentage = null
             const result = tmfUtils.isValidPercentage(percentage)
             expect(result).toBe(false)
 
@@ -695,9 +723,16 @@ describe('TMF Utils', function() {
             expect(result).toBe(true)
         })
 
-        it('should return false if amount is not a number', function(){
+        it('should return true if amount is a valid string', function(){
             const tmfUtils = getTmfUtils();
             const amount = '1'
+            const result = tmfUtils.isValidAmount(amount)
+            expect(result).toBe(true)
+        })
+
+        it('should return false if amount is not a number or string', function(){
+            const tmfUtils = getTmfUtils();
+            const amount = {}
             const result = tmfUtils.isValidAmount(amount)
             expect(result).toBe(false)
 
