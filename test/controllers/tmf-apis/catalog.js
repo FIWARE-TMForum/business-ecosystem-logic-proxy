@@ -1458,9 +1458,9 @@ describe('Catalog API', function() {
 
     describe('offering price creation', function() {
 
-        const validateOfferingPrice = function(isPercentage, isValidAmount, isValidPrice,  offeringPrice, ErrorStatus, ErrorMsg, done) {
+        const validateOfferingPrice = function(isValidPercentage, isValidAmount, isValidPrice,  offeringPrice, ErrorStatus, ErrorMsg, done) {
             tmfUtils = {
-                isPercentage: ()=> isPercentage,
+                isValidPercentage: ()=> isValidPercentage,
                 isValidAmount: ()=> isValidAmount,
                 isValidPrice: ()=> isValidPrice
             }
@@ -1937,7 +1937,7 @@ describe('Catalog API', function() {
         const testUpdateOfferingPrice = function(
             offeringPrice,
             nockResponse,
-            isPercentage,
+            isValidPercentage,
             isValidAmount,
             isValidPrice,
             expectedErrorStatus,
@@ -1952,7 +1952,7 @@ describe('Catalog API', function() {
 
             var tmfUtils = {
                 isOwner: isOwnerTrue,
-                isPercentage: () => isPercentage,
+                isValidPercentage: () => isValidPercentage,
                 isValidAmount: () => isValidAmount,
                 isValidPrice: () => isValidPrice
             };
