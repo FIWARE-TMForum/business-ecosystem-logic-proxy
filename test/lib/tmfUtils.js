@@ -562,7 +562,7 @@ describe('TMF Utils', function() {
         });
     });
 
-    describe('Method haveSameStatus', function() {
+    describe('Method: haveSameStatus', function() {
 
         it('should return true if all elements inside the array have the specified status', function(){
             const tmfUtils = getTmfUtils();
@@ -589,7 +589,7 @@ describe('TMF Utils', function() {
 
     })
 
-    describe('Method refsToQuery', function(){
+    describe('Method: refsToQuery', function(){
         it('should parse an array of refs to query structure string', function(){
             const tmfUtils = getTmfUtils();
             const array=[]
@@ -601,5 +601,70 @@ describe('TMF Utils', function() {
             expect(result).toBe('n0,n1,n2,n3,n4')
 
         })
+    })
+
+    describe('Methods: validateField', function(){
+        it('should return null if the name is correctly set', function(){
+            const tmfUtils = getTmfUtils();
+            const name = 'correctName'
+            const result = tmfUtils.validateNameField(name, 'product')
+            expect(result).toBe(null)
+
+        })
+
+        it('should return an error 422 if the name is empty', function(){
+            const tmfUtils = getTmfUtils();
+            const name = ''
+            const result = tmfUtils.validateNameField(name, 'product')
+            expect(result).toBe('product name is empty')
+
+        })
+
+        it('should return an error 422 if the name is over 100 characters', function(){
+            const tmfUtils = getTmfUtils();
+            const name = 'a'.repeat(101)
+            const result = tmfUtils.validateNameField(name, 'product')
+            expect(result).toBe('product name is too long, it must be less than 100 characters')
+
+        })
+
+        it('should return an error 422 if the name is not a string', function(){
+            const tmfUtils = getTmfUtils();
+            const name = 7
+            const result = tmfUtils.validateNameField(name, 'product')
+            expect(result).toBe('product name must be a string')
+
+        })
+    })
+    
+    describe('Methods: hasValidPhoneNumber', function(){
+        it('should return true if telephone number is correct', function(){
+            const tmfUtils = getTmfUtils();
+            const tel = '+34630000000'
+            const result = tmfUtils.isValidPhoneNumber(tel)
+            expect(result).toBe(true)
+        })
+
+        it('should return false if telephone number is incorrect in length', function(){
+            const tmfUtils = getTmfUtils();
+            const tel = '+346300000001'
+            const result = tmfUtils.isValidPhoneNumber(tel)
+            expect(result).toBe(false)
+        })
+
+        it('should return false if telephone number is incorrect in format', function(){
+            const tmfUtils = getTmfUtils();
+            const tel = '+34-630000000'
+            const result = tmfUtils.isValidPhoneNumber(tel)
+            expect(result).toBe(false)
+        })
+
+        it('should return false if telephone is undefined', function(){
+            const tmfUtils = getTmfUtils();
+            const tel = undefined
+            const result = tmfUtils.isValidPhoneNumber(tel)
+            expect(result).toBe(false)
+        })
+
     })
 });

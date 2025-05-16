@@ -22,6 +22,7 @@
 var proxyquire = require('proxyquire');
 
 var testUtils = require('../../utils');
+const { updateBody } = require('../../../lib/utils');
 
 describe('Party API', function() {
     const NOT_LOGGED_ERROR = {
@@ -32,6 +33,21 @@ describe('Party API', function() {
     const INVALID_PATH_ERROR = {
         status: 404,
         message: 'The given path is invalid'
+    };
+
+    const INVALID_CONTACT = { 
+        status: 400,
+        message: 'Invalid contact format'
+    }
+
+    const INVALID_MEDIUM = {
+        status: 400,
+        message: 'Invalid contactMedium format'
+    }
+
+    const INVALID_NUMBER = {
+        status: 422,
+        message: 'Invalid phone number'
     };
 
     const NOT_AUTH_ERROR = {
@@ -53,18 +69,25 @@ describe('Party API', function() {
             } else {
                 callback(NOT_LOGGED_ERROR);
             }
-        }
+        },
+        updateBody: function(req, body) {return ;}
     };
 
-    const buildPartyAPI = (conf) => {
+    const buildPartyAPI = (conf, phone) => {
+        const tmfUtils = {
+            isValidPhoneNumber: function(_) {
+                return phone;
+            }
+        };
         return proxyquire('../../../controllers/tmf-apis/party', {
             './../../config': conf,
             './../../lib/logger': testUtils.emptyLogger,
-            './../../lib/utils': utils
+            './../../lib/utils': utils,
+            './../../lib/tmfUtils': tmfUtils,
         }).party;
     }
 
-    const partyAPI = buildPartyAPI(config);
+    const partyAPI = buildPartyAPI(config, true);
 
     describe('Party', function() {
         var failIfNotLoggedIn = function(method, done) {
@@ -113,7 +136,7 @@ describe('Party API', function() {
             var indPath = 'individual/';
             var orgPath = 'organization/';
 
-            var accessPartyTest = function(party, path, user, expectedErr, conf, done) {
+            var accessPartyTest = function(party, path, user, expectedErr, conf, phone, done) {
                 loggedIn = true;
 
                 var req = {
@@ -122,11 +145,40 @@ describe('Party API', function() {
                     user: user
                 };
 
+                req.body = JSON.stringify({
+                    contact:[{
+                        contactMedium: [{mediumType: "Email"},{mediumType: "PostalAddress",},
+                            {
+                                mediumType: "TelephoneNumber",
+                                preferred: true,
+                                characteristic: {
+                                    "contactType": "Mobile",
+                                    "phoneNumber": "+34650546882" // correct
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        contactMedium: [
+                            {mediumType: "Email",},{mediumType: "PostalAddress",},
+                            {
+                                mediumType: "TelephoneNumber",
+                                preferred: true,
+                                characteristic: {
+                                    "contactType": "Mobile",
+                                    "phoneNumber": (phone)? "+34650000000" : "+34512883242"
+                                }
+                            }
+                        ]
+                    }]
+                })
+
+
                 if (conf == null) {
                     conf = config;
                 }
 
-                const partyLib = buildPartyAPI(conf);
+                const partyLib = buildPartyAPI(conf, phone);
 
                 partyLib.checkPermissions(req, function(err) {
                     expect(err).toEqual(expectedErr);
@@ -139,7 +191,7 @@ describe('Party API', function() {
             });
 
             it('should not allow to modify party if path and request user id mismatch', function(done) {
-                accessPartyTest('user', indPath, { id: 'another_user' }, NOT_AUTH_ERROR, null, done);
+                accessPartyTest('user', indPath, { id: 'another_user' }, NOT_AUTH_ERROR, null, true, done);
             });
 
             it('should not allow to modify party if editParty setting is dissabled', function (done) {
@@ -147,21 +199,30 @@ describe('Party API', function() {
                 const conf = {
                     editParty: false
                 };
-                accessPartyTest(user, indPath, { partyId: user }, EDIT_NOT_ENABLED, conf, done);
+                accessPartyTest(user, indPath, { partyId: user }, EDIT_NOT_ENABLED, conf, true, done);
             });
 
             it('should allow to modify party if path and request user id match', function(done) {
                 var user = 'user';
-                accessPartyTest(user, indPath, { partyId: user }, null, null, done);
+                accessPartyTest(user, indPath, { partyId: user }, null, null, true, done);
             });
 
             it('should allow to modify party if path and request user id match even if query string included', function(done) {
                 var user = 'user';
-                accessPartyTest(user + '?fields=status', indPath, { partyId: user }, null, null, done);
+                accessPartyTest(user + '?fields=status', indPath, { partyId: user }, null, null, true, done);
             });
 
             it('should not allow to modify party if user ID is not included in the path', function(done) {
-                accessPartyTest('', orgPath, { partyId: 'test' }, INVALID_PATH_ERROR, null, done);
+                accessPartyTest('', orgPath, { partyId: 'test' }, INVALID_PATH_ERROR, null, true, done);
+            });
+
+            it('should not allow to modify organization if the phone validator fails', function(done) {
+                var userObj = {
+                    partyId: 'org',
+                    userNickname: 'user',
+                    roles: [{ name: testUtils.getDefaultConfig().oauth2.roles.orgAdmin }]
+                };
+                accessPartyTest('org', orgPath, userObj, INVALID_NUMBER, null, false, done);
             });
 
             it('should allow to modify organization if the user is an org admin', function(done) {
@@ -170,7 +231,7 @@ describe('Party API', function() {
                     userNickname: 'user',
                     roles: [{ name: testUtils.getDefaultConfig().oauth2.roles.orgAdmin }]
                 };
-                accessPartyTest('org', orgPath, userObj, null, null, done);
+                accessPartyTest('org', orgPath, userObj, null, null, true, done);
             });
 
             it('should not allow to modify individual if the user is an organization', function(done) {
@@ -179,14 +240,14 @@ describe('Party API', function() {
                     userNickname: 'user',
                     roles: [{ name: testUtils.getDefaultConfig().oauth2.roles.orgAdmin }]
                 };
-                accessPartyTest('org', indPath, userObj, NOT_AUTH_ERROR, null, done);
+                accessPartyTest('org', indPath, userObj, NOT_AUTH_ERROR, null, true, done);
             });
 
             it('should not allow to modify organization if the user is an individual', function(done) {
                 var userObj = {
                     id: 'org'
                 };
-                accessPartyTest('org', orgPath, userObj, NOT_AUTH_ERROR, null, done);
+                accessPartyTest('org', orgPath, userObj, NOT_AUTH_ERROR, null, true, done);
             });
 
             it('should not allow to modify organization if the user is not an org admin', function(done) {
@@ -195,7 +256,63 @@ describe('Party API', function() {
                     userNickname: 'user',
                     roles: []
                 };
-                accessPartyTest('org', orgPath, userObj, NOT_AUTH_ERROR, null, done);
+                accessPartyTest('org', orgPath, userObj, NOT_AUTH_ERROR, null, true, done);
+            });
+
+            it('should not allow to modify party if contact is not an array', function(done) {
+                loggedIn = true;
+                var user = {
+                    partyId: 'org',
+                    userNickname: 'user',
+                    roles: [{ name: testUtils.getDefaultConfig().oauth2.roles.orgAdmin }]
+                };
+
+                var req = {
+                    // OLD // Individual has been replaced by BAD_PATH in this path
+                    apiUrl: '/' + config.endpoints.party.path + '/organization/org',
+                    method: 'PATCH',
+                    user: user,
+                    body: JSON.stringify({
+                        contact: {
+                            contactMedium: [{ mediumType: 'Email' }]
+                        }
+                    })
+                };
+
+                const partyLib = buildPartyAPI(config, true);
+
+                partyLib.checkPermissions(req, function(err) {
+                    expect(err).toEqual(INVALID_CONTACT);
+                    done();
+                });
+            });
+
+            it('should not allow to modify party if medium is not an array', function(done) {
+                loggedIn = true;
+                var user = {
+                    partyId: 'org',
+                    userNickname: 'user',
+                    roles: [{ name: testUtils.getDefaultConfig().oauth2.roles.orgAdmin }]
+                };
+
+                var req = {
+                    // OLD // Individual has been replaced by BAD_PATH in this path
+                    apiUrl: '/' + config.endpoints.party.path + '/organization/org',
+                    method: 'PATCH',
+                    user: user,
+                    body: JSON.stringify({
+                        contact: [{
+                            contactMedium: { mediumType: 'Email' }
+                        }]
+                    })
+                };
+
+                const partyLib = buildPartyAPI(config, true);
+
+                partyLib.checkPermissions(req, function(err) {
+                    expect(err).toEqual(INVALID_MEDIUM);
+                    done();
+                });
             });
 
             it('should not allow to modify party if the path is not valid', function(done) {
