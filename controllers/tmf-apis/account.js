@@ -59,12 +59,32 @@ const account = (function() {
 
     const validateBilling = function(body, callback){
 
-        if (!tmfUtils.hasValidPhoneNumber(body.contact)) {
+        const contacts = body.contact;
+
+        if (contacts && !Array.isArray(contacts)){
             return callback({
                 status: 400,
-                message: "Invalid phone number"
+                message: 'Invalid contact format'
             })
         }
+
+        for (const contact of contacts){
+            if(!Array.isArray(contact.contactMedium)) {
+                return callback({
+                    status: 400,
+                    message: 'Invalid contactMedium format'
+                });
+            }
+            for(const medium of contact.contactMedium){
+                if (medium.mediumType === 'TelephoneNumber' && !tmfUtils.isValidPhoneNumber(medium.characteristic.phoneNumber)) {
+                    return callback({
+                        status: 422,
+                        message: "Invalid phone number"
+                    })
+                }
+            }
+        }
+
         callback(null)
     }
 

@@ -35,8 +35,18 @@ describe('Party API', function() {
         message: 'The given path is invalid'
     };
 
-    const INVALID_NUMBER = {
+    const INVALID_CONTACT = { 
         status: 400,
+        message: 'Invalid contact format'
+    }
+
+    const INVALID_MEDIUM = {
+        status: 400,
+        message: 'Invalid contactMedium format'
+    }
+
+    const INVALID_NUMBER = {
+        status: 422,
         message: 'Invalid phone number'
     };
 
@@ -65,7 +75,7 @@ describe('Party API', function() {
 
     const buildPartyAPI = (conf, phone) => {
         const tmfUtils = {
-            hasValidPhoneNumber: function(_) {
+            isValidPhoneNumber: function(_) {
                 return phone;
             }
         };
@@ -135,11 +145,34 @@ describe('Party API', function() {
                     user: user
                 };
 
-                if (!phone){
-                    req.body = JSON.stringify({
-                        contact:[] // Doesn't need to be filled because it depends on the tmfUtils
-                    })
-                }
+                req.body = JSON.stringify({
+                    contact:[{
+                        contactMedium: [{mediumType: "Email"},{mediumType: "PostalAddress",},
+                            {
+                                mediumType: "TelephoneNumber",
+                                preferred: true,
+                                characteristic: {
+                                    "contactType": "Mobile",
+                                    "phoneNumber": "+34650546882" // correct
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        contactMedium: [
+                            {mediumType: "Email",},{mediumType: "PostalAddress",},
+                            {
+                                mediumType: "TelephoneNumber",
+                                preferred: true,
+                                characteristic: {
+                                    "contactType": "Mobile",
+                                    "phoneNumber": (phone)? "+34650000000" : "+34512883242"
+                                }
+                            }
+                        ]
+                    }]
+                })
+
 
                 if (conf == null) {
                     conf = config;
@@ -224,6 +257,62 @@ describe('Party API', function() {
                     roles: []
                 };
                 accessPartyTest('org', orgPath, userObj, NOT_AUTH_ERROR, null, true, done);
+            });
+
+            it('should not allow to modify party if contact is not an array', function(done) {
+                loggedIn = true;
+                var user = {
+                    partyId: 'org',
+                    userNickname: 'user',
+                    roles: [{ name: testUtils.getDefaultConfig().oauth2.roles.orgAdmin }]
+                };
+
+                var req = {
+                    // OLD // Individual has been replaced by BAD_PATH in this path
+                    apiUrl: '/' + config.endpoints.party.path + '/organization/org',
+                    method: 'PATCH',
+                    user: user,
+                    body: JSON.stringify({
+                        contact: {
+                            contactMedium: [{ mediumType: 'Email' }]
+                        }
+                    })
+                };
+
+                const partyLib = buildPartyAPI(config, true);
+
+                partyLib.checkPermissions(req, function(err) {
+                    expect(err).toEqual(INVALID_CONTACT);
+                    done();
+                });
+            });
+
+            it('should not allow to modify party if medium is not an array', function(done) {
+                loggedIn = true;
+                var user = {
+                    partyId: 'org',
+                    userNickname: 'user',
+                    roles: [{ name: testUtils.getDefaultConfig().oauth2.roles.orgAdmin }]
+                };
+
+                var req = {
+                    // OLD // Individual has been replaced by BAD_PATH in this path
+                    apiUrl: '/' + config.endpoints.party.path + '/organization/org',
+                    method: 'PATCH',
+                    user: user,
+                    body: JSON.stringify({
+                        contact: [{
+                            contactMedium: { mediumType: 'Email' }
+                        }]
+                    })
+                };
+
+                const partyLib = buildPartyAPI(config, true);
+
+                partyLib.checkPermissions(req, function(err) {
+                    expect(err).toEqual(INVALID_MEDIUM);
+                    done();
+                });
             });
 
             it('should not allow to modify party if the path is not valid', function(done) {

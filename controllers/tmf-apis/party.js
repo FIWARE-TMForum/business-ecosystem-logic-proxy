@@ -73,12 +73,32 @@ const party = (function() {
                 message: 'You are not allowed to access this resource'
             });
         } 
-        else if (req.method === 'PATCH' && req.body &&
-            regexResult[1] === 'organization' && !tmfUtils.hasValidPhoneNumber(req.body.contact)) {
-            callback({
-                status: 400,
-                message: 'Invalid phone number'
-            });
+        else if (req.method === 'PATCH' && req.body && regexResult[1] === 'organization') {
+            const body = JSON.parse(req.body)
+            const contacts = body.contact;
+            if (contacts && !Array.isArray(contacts)) {
+                return callback({
+                    status: 400,
+                    message: 'Invalid contact format'
+                });
+            }
+            for (const contact of contacts) {
+                if(!Array.isArray(contact.contactMedium)) {
+                    return callback({
+                        status: 400,
+                        message: 'Invalid contactMedium format'
+                    });
+                }
+                for(const medium of contact.contactMedium){
+                    if (medium.mediumType === 'TelephoneNumber' && !tmfUtils.isValidPhoneNumber(medium.characteristic.phoneNumber)) {
+                        return callback({
+                            status: 422,
+                            message: 'Invalid phone number'
+                        });
+                    }
+                }
+            }
+            callback(null);
         }
         else {
             callback(null);

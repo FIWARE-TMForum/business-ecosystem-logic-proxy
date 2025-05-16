@@ -20,7 +20,7 @@
 const nock = require('nock');
 const proxyquire = require('proxyquire');
 const testUtils = require('../../utils');
-const { hasValidPhoneNumber } = require('../../../lib/tmfUtils');
+
 
 describe('Account API', () => {
 
@@ -280,7 +280,7 @@ describe('Account API', () => {
 
     describe('Validate billingAccount creation', () => {
 
-        it('should redirect the creation request if the info is valid', (done) => {
+        it('should redirect the creation request if contact is valid', (done) => {
             const req = {
                 method: 'POST',
                 apiUrl: billingPath,
@@ -288,7 +288,18 @@ describe('Account API', () => {
                     partyId: userId
                 },
                 body: JSON.stringify({
-                    contact: [], // Doesn't need to be filled because it depends on the tmfUtils
+                    contact: [{
+                        contactMedium: [{mediumType: "Email"},{mediumType: "PostalAddress",},
+                            {
+                                mediumType: "TelephoneNumber",
+                                preferred: true,
+                                characteristic: {
+                                    "contactType": "Mobile",
+                                    "phoneNumber": "+34650546882" // correct
+                                }
+                            }
+                        ]
+                        }],
                     relatedParty: [{
                         id: userId,
                         role: 'owner'
@@ -300,7 +311,7 @@ describe('Account API', () => {
                 validateLoggedIn: (req, callback) => {
                     callback(null)
                 },
-                hasValidPhoneNumber: (_) => true
+                isValidPhoneNumber: (_) => true
             })
 
             accountAPI.checkPermissions(req, (err) => {
@@ -309,7 +320,81 @@ describe('Account API', () => {
             });
         })
 
-        it('should not redirect the creation request if the tmfUtil number validator returns false', (done) => {
+        it('should not redirect the creation request if contact is not an array', (done) => {
+            const req = {
+                method: 'POST',
+                apiUrl: billingPath,
+                user: {
+                    partyId: userId
+                },
+                body: JSON.stringify({
+                    contact: {
+                        contactMedium: [{mediumType: "Email"},{mediumType: "PostalAddress",},
+                            {
+                                mediumType: "TelephoneNumber",
+                                preferred: true,
+                                characteristic: {
+                                    "contactType": "Mobile",
+                                    "phoneNumber": "+34650546882" // correct
+                                }
+                            }
+                        ]
+                        },
+                    relatedParty: [{
+                        id: userId,
+                        role: 'owner'
+                    }]
+                })
+            }
+
+            const accountAPI = getAccountAPI({}, {
+                validateLoggedIn: (req, callback) => {
+                    callback(null)
+                },
+                isValidPhoneNumber: (_) => true
+            })
+
+            accountAPI.checkPermissions(req, (err) => {
+                expect(err).not.toBe(null);
+                expect(err.status).toBe(400)
+                expect(err.message).toBe('Invalid contact format')
+                done();
+            });
+        })
+        it('should not redirect the creation request if contactMedium is not an array', (done) => {
+            const req = {
+                method: 'POST',
+                apiUrl: billingPath,
+                user: {
+                    partyId: userId
+                },
+                body: JSON.stringify({
+                    contact: [{
+                        contactMedium: {
+                            mediumType: "Email"
+                        }
+                    }],
+                    relatedParty: [{
+                        id: userId,
+                        role: 'owner'
+                    }]
+                })
+            }
+            const accountAPI = getAccountAPI({}, {
+                validateLoggedIn: (req, callback) => {
+                    callback(null)
+                },
+                isValidPhoneNumber: (_) => true
+            })
+            accountAPI.checkPermissions(req, (err) => {
+                expect(err).not.toBe(null);
+                expect(err.status).toBe(400)
+                expect(err.message).toBe('Invalid contactMedium format')
+                done();
+            });
+        })
+
+        it('should not redirect the creation request if tmfUtil number validator returns false', (done) => {
             const req = {
                 method: 'POST',
                 apiUrl: billingPath,
@@ -346,12 +431,12 @@ describe('Account API', () => {
                 validateLoggedIn: (req, callback) => {
                     callback(null)
                 },
-                hasValidPhoneNumber: (_) => false
+                isValidPhoneNumber: (_) => false
             })
 
             accountAPI.checkPermissions(req, (err) => {
                 expect(err).not.toBe(null);
-                expect(err.status).toBe(400)
+                expect(err.status).toBe(422)
                 expect(err.message).toBe('Invalid phone number')
                 done();
             });
@@ -535,7 +620,7 @@ describe('Account API', () => {
                 validateLoggedIn: (req, callback) => {
                     callback(null)
                 },
-                hasValidPhoneNumber: (_) => true
+                isValidPhoneNumber: (_) => true
             })
 
             accountAPI.checkPermissions(req, (err) => {
@@ -577,16 +662,17 @@ describe('Account API', () => {
                 validateLoggedIn: (req, callback) => {
                     callback(null)
                 },
-                hasValidPhoneNumber: (_) => false
+                isValidPhoneNumber: (_) => false
             })
 
             accountAPI.checkPermissions(req, (err) => {
                 expect(err).not.toBe(null);
-                expect(err.status).toBe(400)
+                expect(err.status).toBe(422)
                 expect(err.message).toBe('Invalid phone number')
                 done();
             });
         })
+
         it('should not redirect the request when the user is not the owner', (done) => {
             mockNock(200, {
                 id: billingId,

@@ -638,81 +638,33 @@ describe('TMF Utils', function() {
     })
     
     describe('Methods: hasValidPhoneNumber', function(){
-        it('should return true if the phoneNumber in contacts is correctly set', function(){
+        it('should return true if telephone number is correct', function(){
             const tmfUtils = getTmfUtils();
-            contacts = [{
-                contactMedium: [{mediumType: "Email",},{mediumType: "PostalAddress",},
-                    {
-                        mediumType: "TelephoneNumber",
-                        preferred: true,
-                        characteristic: {
-                            "contactType": "Mobile",
-                            "phoneNumber": "+34650546882"
-                        }
-                    }
-                ]
-            },
-            {
-                contactMedium: [{mediumType: "Email",},{mediumType: "PostalAddress",},
-                    {
-                        mediumType: "TelephoneNumber",
-                        preferred: true,
-                        characteristic: {
-                            "contactType": "Mobile",
-                            "phoneNumber": "+34912883242"
-                        }
-                    }
-                ]
-            }]
-            const result = tmfUtils.hasValidPhoneNumber(contacts)
+            const tel = '+34630000000'
+            const result = tmfUtils.isValidPhoneNumber(tel)
             expect(result).toBe(true)
         })
 
-        it('should return true if there is no contact attribute', function(){
+        it('should return false if telephone number is incorrect in length', function(){
             const tmfUtils = getTmfUtils();
-            contacts = undefined
-            const result = tmfUtils.hasValidPhoneNumber(contacts)
-            expect(result).toBe(true)
+            const tel = '+346300000001'
+            const result = tmfUtils.isValidPhoneNumber(tel)
+            expect(result).toBe(false)
         })
 
-        it('should return true if there contact attribute is an empty array', function(){
+        it('should return false if telephone number is incorrect in format', function(){
             const tmfUtils = getTmfUtils();
-            contacts = []
-            const result = tmfUtils.hasValidPhoneNumber(contacts)
-            expect(result).toBe(true)
+            const tel = '+34-630000000'
+            const result = tmfUtils.isValidPhoneNumber(tel)
+            expect(result).toBe(false)
         })
 
-        it('should return false if the phoneNumber in contacts is a invalid', function(){
+        it('should return false if telephone is undefined', function(){
             const tmfUtils = getTmfUtils();
-            contacts = [{
-                contactMedium: [{mediumType: "Email"},{mediumType: "PostalAddress",},
-                    {
-                        mediumType: "TelephoneNumber",
-                        preferred: true,
-                        characteristic: {
-                            "contactType": "Mobile",
-                            "phoneNumber": "+34650546882" // correct
-                        }
-                    }
-                ]
-            },
-            {
-                contactMedium: [
-                    {mediumType: "Email",},{mediumType: "PostalAddress",},
-                    {
-                        mediumType: "TelephoneNumber",
-                        preferred: true,
-                        characteristic: {
-                            "contactType": "Mobile",
-                            "phoneNumber": "+34512883242" // incorrect
-                        }
-                    }
-                ]
-            }]
-            const result = tmfUtils.hasValidPhoneNumber(contacts)
-            expect(result).toBe(true)
+            const tel = undefined
+            const result = tmfUtils.isValidPhoneNumber(tel)
+            expect(result).toBe(false)
         })
-
 
     })
 });
