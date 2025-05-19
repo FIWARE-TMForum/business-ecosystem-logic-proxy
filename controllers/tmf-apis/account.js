@@ -24,7 +24,6 @@ const logger = require('./../../lib/logger').logger.getLogger('TMF')
 const tmfUtils = require('./../../lib/tmfUtils')
 const url = require('url')
 const utils = require('./../../lib/utils')
-const { PhoneNumber } = require('libphonenumber-js')
 
 const account = (function() {
 
@@ -60,28 +59,33 @@ const account = (function() {
 
     const validateBilling = function(body, callback){
 
-        for (let contact of body.contact){
-            const phoneNumber = contact.contactMedium.filter((medium) => {
-                return medium.mediumType === 'TelephoneNumber'
-            })[0].characteristic.phoneNumber
-            try{
-                if(phoneNumber){
-                    const checkNumber = new PhoneNumber(phoneNumber)
-                    if(!checkNumber.isValid()){
+        const contacts = body.contact;
+        if(contacts){
+            if (!Array.isArray(contacts)){
+                return callback({
+                    status: 400,
+                    message: 'Invalid contact format'
+                })
+            }
+    
+            for (const contact of contacts){
+                if(!Array.isArray(contact.contactMedium)) {
+                    return callback({
+                        status: 400,
+                        message: 'Invalid contactMedium format'
+                    });
+                }
+                for(const medium of contact.contactMedium){
+                    if (medium.mediumType === 'TelephoneNumber' && !tmfUtils.isValidPhoneNumber(medium.characteristic.phoneNumber)) {
                         return callback({
-                            status: 400,
+                            status: 422,
                             message: "Invalid phone number"
                         })
                     }
                 }
             }
-            catch(error){
-                return callback({
-                    status: 400,
-                    message: "Wrong phone number format"
-                })
-            }
         }
+
         callback(null)
     }
 

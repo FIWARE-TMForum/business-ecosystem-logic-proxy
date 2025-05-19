@@ -24,6 +24,7 @@ const config = require('./../../config')
 const url = require('url')
 const utils = require('./../../lib/utils')
 const logger = require('./../../lib/logger').logger.getLogger('TMF')
+const tmfUtils = require('./../../lib/tmfUtils')
 
 const party = (function() {
     const validateAllowed = function(req, callback) {
@@ -71,7 +72,31 @@ const party = (function() {
                 status: 403,
                 message: 'You are not allowed to access this resource'
             });
-        } else {
+        } 
+        else if (req.method === 'PATCH' && req.body && regexResult[1] === 'organization') {
+            const body = JSON.parse(req.body)
+            const contactMediums = body.contactMedium;
+            if (contactMediums){
+                if(!Array.isArray(contactMediums)) {
+                    return callback({
+                        status: 400,
+                        message: 'Invalid contactMedium format'
+                    });
+                }
+
+                for(const medium of contactMediums){
+                    if (medium.mediumType === 'TelephoneNumber' && !tmfUtils.isValidPhoneNumber(medium.characteristic.phoneNumber)) {
+                        return callback({
+                            status: 422,
+                            message: 'Invalid phone number'
+                        });
+                    }
+                }
+            }
+
+            callback(null);
+        }
+        else {
             callback(null);
         }
     };

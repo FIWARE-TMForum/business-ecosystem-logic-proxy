@@ -144,7 +144,7 @@ describe('ResourceSpecification API', function() {
         })
 
         describe('create', () => {
-            function testCreateSpec(UserInfo, body, hasError, expectedStatus, expectedErr, isOwner, isSeller, checkRole, done) {
+            function testCreateSpec(UserInfo, body, hasError, expectedStatus, expectedErr, isOwner, isSeller, checkRole, vNameF, vDescrF, done) {
                 const checkRoleMethod = jasmine.createSpy();
                 checkRoleMethod.and.returnValue(isSeller);
 
@@ -159,7 +159,9 @@ describe('ResourceSpecification API', function() {
                 };
 
                 const tmfUtils = {
-                    hasPartyRole: checkOwnerMethod
+                    hasPartyRole: checkOwnerMethod,
+                    validateNameField: (vNameF) ? () => vNameF : ()=> null,
+                    validateDescriptionField: (vDescrF) ? () => vDescrF : () => null,
                 };
 
                 const resourceAPI = getResourceSpecAPI(tmfUtils, utils);
@@ -197,13 +199,41 @@ describe('ResourceSpecification API', function() {
             it('should create a resource specification successfully', (done) => {
                 const basicBody = {
                     id: 'resSpec',
+                    name: 'name',
                     validFor: {
                         startDateTime: '2016-07-12T10:56:00'
                     },
                     relatedParty: [{ id: 'test', role: 'owner', href: SERVER + individual }]
                 };
 
-                testCreateSpec(seller, basicBody, false, 200, null, true, true, true, done)
+                testCreateSpec(seller, basicBody, false, 200, null, true, true, true, null, null, done)
+            })
+
+            it('should raise 422 if name validator fails', (done) => {
+                const basicBody = {
+                    id: 'resSpec',
+                    name: 'invalid name',
+                    validFor: {
+                        startDateTime: '2016-07-12T10:56:00'
+                    },
+                    relatedParty: [{ id: 'test', role: 'owner', href: SERVER + individual }]
+                };
+
+                testCreateSpec(seller, basicBody, true, 422, 'error', true, true, true, 'error', null, done)
+            })
+
+            it('should raise 422 if description validator fails', (done) => {
+                const basicBody = {
+                    id: 'resSpec',
+                    name: 'name',
+                    description: 'invalid description',
+                    validFor: {
+                        startDateTime: '2016-07-12T10:56:00'
+                    },
+                    relatedParty: [{ id: 'test', role: 'owner', href: SERVER + individual }]
+                };
+
+                testCreateSpec(seller, basicBody, true, 422, 'descr error', true, true, true, null, 'descr error', done)
             })
 
             it('should raise a 403 unauthorized error if the user is not the owner', (done) => {
@@ -214,7 +244,7 @@ describe('ResourceSpecification API', function() {
                     },
                     relatedParty: [{ id: 'test3', role: 'owner', href: SERVER + individual }]
                 };
-                testCreateSpec(seller, basicBody, true, 403, 'Unauthorized to create non-owned/non-seller resource specs', false, true, true, done)
+                testCreateSpec(seller, basicBody, true, 403, 'Unauthorized to create non-owned/non-seller resource specs', false, true, true, null, null, done)
             })
 
             it('should raise an error if the body is not valid', (done) => {
@@ -242,7 +272,7 @@ describe('ResourceSpecification API', function() {
         })
 
         describe('update', () => {
-            function testUpdateSpec(userInfo, resId, prevBody, body, isOwner, errMsg, done, extraNock) {
+            function testUpdateSpec(userInfo, resId, prevBody, body, isOwner, errMsg, done, extraNock, vNameF, vDescrF) {
                 const checkRoleMethod = jasmine.createSpy();
                 checkRoleMethod.and.returnValue(isOwner);
                 const checkOwnerMethod = jasmine.createSpy();
@@ -258,7 +288,9 @@ describe('ResourceSpecification API', function() {
                 }
 
                 const tmfUtils = {
-                    hasPartyRole: checkOwnerMethod
+                    hasPartyRole: checkOwnerMethod,
+                    validateNameField: (vNameF) ? () => vNameF : () => null,
+                    validateDescriptionField: (vDescrF) ? () => vDescrF : () => null,
                 }
 
                 const serviceAPI = getResourceSpecAPI(tmfUtils, utils);
@@ -318,6 +350,39 @@ describe('ResourceSpecification API', function() {
                 }, {
                     lifecycleStatus: 'Retired'
                 }, true, null, done, prodSpecMock)
+            })
+
+            it('should raise 422 if name validator fails', (done) => {
+                testUpdateSpec(seller, 'urn:resource-spec:1', {
+                    id: 'urn:resource-spec:1',
+                    lifecycleStatus: 'Active',
+                    relatedParty: [{
+                        id: 'test',
+                        role: 'owner'
+                    }]
+                }, {
+                    'lifecycleStatus': 'Launched',
+                    'name': 'invalid name'
+                }, true, {
+                    status: 422,
+                    message: 'error'}, done, null, 'error', null)
+            })
+
+            it('should raise 422 if description validator fails', (done) => {
+                testUpdateSpec(seller, 'urn:resource-spec:1', {
+                    id: 'urn:resource-spec:1',
+                    lifecycleStatus: 'Active',
+                    relatedParty: [{
+                        id: 'test',
+                        role: 'owner'
+                    }]
+                }, {
+                    'lifecycleStatus': 'Launched',
+                    'name': 'name',
+                    'description': 'invalid description'
+                }, true, {
+                    status: 422,
+                    message: 'descr error'}, done, null, null, 'descr error')
             })
 
             it('should raise 409 if product specs linked with the resource spec are not retired previously', (done) => {
