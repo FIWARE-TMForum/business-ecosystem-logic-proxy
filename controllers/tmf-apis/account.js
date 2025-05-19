@@ -60,27 +60,28 @@ const account = (function() {
     const validateBilling = function(body, callback){
 
         const contacts = body.contact;
-
-        if (contacts && !Array.isArray(contacts)){
-            return callback({
-                status: 400,
-                message: 'Invalid contact format'
-            })
-        }
-
-        for (const contact of contacts){
-            if(!Array.isArray(contact.contactMedium)) {
+        if(contacts){
+            if (!Array.isArray(contacts)){
                 return callback({
                     status: 400,
-                    message: 'Invalid contactMedium format'
-                });
+                    message: 'Invalid contact format'
+                })
             }
-            for(const medium of contact.contactMedium){
-                if (medium.mediumType === 'TelephoneNumber' && !tmfUtils.isValidPhoneNumber(medium.characteristic.phoneNumber)) {
+    
+            for (const contact of contacts){
+                if(!Array.isArray(contact.contactMedium)) {
                     return callback({
-                        status: 422,
-                        message: "Invalid phone number"
-                    })
+                        status: 400,
+                        message: 'Invalid contactMedium format'
+                    });
+                }
+                for(const medium of contact.contactMedium){
+                    if (medium.mediumType === 'TelephoneNumber' && !tmfUtils.isValidPhoneNumber(medium.characteristic.phoneNumber)) {
+                        return callback({
+                            status: 422,
+                            message: "Invalid phone number"
+                        })
+                    }
                 }
             }
         }
