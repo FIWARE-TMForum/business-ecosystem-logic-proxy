@@ -24,7 +24,6 @@ const nock = require('nock');
 const proxyquire = require('proxyquire');
 const md5 = require('blueimp-md5');
 const testUtils = require('../../utils');
-const { haveSameStatus } = require('../../../lib/tmfUtils');
 
 // ERRORS
 const INVALID_METHOD = 'The HTTP method DELETE is not allowed in the accessed API';
@@ -227,6 +226,7 @@ describe('Catalog API', function() {
 
         // Mock bundles
         var body = {
+            name: 'test',
             validFor: {
                 startDateTime: '2019-06-10'
             },
@@ -396,6 +396,7 @@ describe('Catalog API', function() {
         };
 
         var basicBody = {
+            name: 'test',
             productSpecification: {
                 // the server will be avoided by the SW
                 // The catalog server will be used instead
@@ -420,13 +421,15 @@ describe('Catalog API', function() {
             lifecycleStatus: 'launched'
         };
 
-        var mockCatalogAPI = function(body, requestInfo, storeError, rssResp, cloned) {
+        var mockCatalogAPI = function(body, requestInfo, storeError, rssResp, cloned, vNameF, vDescrF) {
             // Mocks
             var checkRoleMethod = jasmine.createSpy();
             checkRoleMethod.and.returnValue(true);
 
             var tmfUtils = {
-                isOwner: requestInfo.role.toLowerCase() === 'owner' ? isOwnerTrue : isOwnerFalse
+                isOwner: requestInfo.role.toLowerCase() === 'owner' ? isOwnerTrue : isOwnerFalse,
+                validateNameField: vNameF ? ()=> vNameF : ()=> null,
+                validateDescriptionField: vDescrF ? ()=> vDescrF : ()=> null
             };
 
             var utils = {
@@ -513,10 +516,12 @@ describe('Catalog API', function() {
             rssResp,
             body,
             cloned,
-            done
+            done,
+            vNameF,
+            vDescrF
         ) {
             var defaultErrorMessage = 'Internal Server Error';
-            var catalogApi = mockCatalogAPI(body, productRequestInfo, storeError, rssResp, cloned);
+            var catalogApi = mockCatalogAPI(body, productRequestInfo, storeError, rssResp, cloned, vNameF, vDescrF);
 
             // The mock server that will handle the request when the product is requested
             var bodyGetProductOk = {
@@ -557,6 +562,47 @@ describe('Catalog API', function() {
                 basicBody,
                 null,
                 done
+            );
+        });
+
+        it('should not allow to create an offering if name validator fails', function(done) {
+            const offeringBody = {
+                name: '',
+            }
+            testCreateOffering(
+                productRequestInfoActive,
+                catalogRequestInfoLaunched,
+                null,
+                null,
+                422,
+                'error',
+                null,
+                offeringBody,
+                null,
+                done,
+                'error',
+                null
+            );
+        });
+
+        it('should not allow to create an offering if description validator fails', function(done) {
+            const offeringBody = {
+                name: 'test',
+                description:'a'.repeat(100001)
+            }
+            testCreateOffering(
+                productRequestInfoActive,
+                catalogRequestInfoLaunched,
+                null,
+                null,
+                422,
+                'descr error',
+                null,
+                offeringBody,
+                null,
+                done,
+                null,
+                'descr error'
             );
         });
 
@@ -708,7 +754,7 @@ describe('Catalog API', function() {
                 422,
                 MISSING_PRODUCT_SPEC,
                 null,
-                {},
+                {name: 'test'},
                 null,
                 done
             );
@@ -716,6 +762,7 @@ describe('Catalog API', function() {
 
         it('should not allow to create an offering when a bundled offering is provided and not a bundle', function(done) {
             var offeringBody = {
+                name: 'test',
                 productSpecification: {
                     href: 'http://product.com'
                 },
@@ -742,6 +789,7 @@ describe('Catalog API', function() {
             var baseHref = 'http://example' + categoryPath + '/';
 
             var offeringBody = {
+                name: 'test',
                 category: [
                     {
                         id: categoryId1,
@@ -902,6 +950,7 @@ describe('Catalog API', function() {
 
         it('should allow to create an offering bundle', (done) => {
             var body = {
+                name: 'test',
                 isBundle: true,
                 bundledProductOffering: [
                     {
@@ -930,6 +979,7 @@ describe('Catalog API', function() {
 
         it('should not allow to create an offering bundle with a productSpecification', function(done) {
             var body = {
+                name: 'test',
                 isBundle: true,
                 productSpecification: {
                     id: '1'
@@ -959,6 +1009,7 @@ describe('Catalog API', function() {
 
         it('should not allow to create an offering bundle when less than 2 bundled offerings has been provided', function(done) {
             var body = {
+                name: 'test',
                 isBundle: true
             };
 
@@ -985,6 +1036,7 @@ describe('Catalog API', function() {
 
         it('should not allow to create an offering bundle when there is missing an href in the bundled offering info', function(done) {
             var body = {
+                name: 'test',
                 isBundle: true,
                 bundledProductOffering: [
                     {},
@@ -1015,6 +1067,7 @@ describe('Catalog API', function() {
 
         it('should not allow to create an offering bundle when a bundled offering cannot be accessed', (done) => {
             const body = {
+                name: 'test',
                 isBundle: true,
                 bundledProductOffering: [
                     {
@@ -1050,6 +1103,7 @@ describe('Catalog API', function() {
 
         it('should not allow to create an offering bundle when a bundled offering is also a bundle', function(done) {
             const body = {
+                name: 'test',
                 isBundle: true,
                 bundledProductOffering: [
                     {
@@ -1085,6 +1139,7 @@ describe('Catalog API', function() {
 
         it('should not allow to create a bundle with a non owned offering', function(done) {
             const body = {
+                name: 'test',
                 isBundle: true,
                 bundledProductOffering: [
                     {
@@ -1120,6 +1175,7 @@ describe('Catalog API', function() {
 
         it('should not allow to create a bundle when bundled offering product cannot be accessed', function(done) {
             const body = {
+                name: 'test',
                 isBundle: true,
                 bundledProductOffering: [
                     {
@@ -1155,7 +1211,7 @@ describe('Catalog API', function() {
     });
 
     describe('Create product', function() {
-        var mockCatalogAPI = function(isOwner, storeValidator) {
+        var mockCatalogAPI = function(isOwner, storeValidator, vNameF, vDescrF) {
             var checkRoleMethod = jasmine.createSpy();
             checkRoleMethod.and.returnValue(true);
 
@@ -1167,7 +1223,9 @@ describe('Catalog API', function() {
             };
 
             var tmfUtils = {
-                isOwner: isOwner
+                isOwner: isOwner,
+                validateNameField: vNameF ? ()=> vNameF : ()=> null,
+                validateDescriptionField: vDescrF ? ()=> vDescrF : ()=> null
             };
 
             var utils = {
@@ -1206,11 +1264,11 @@ describe('Catalog API', function() {
             });
         };
 
-        var testCreateProduct = function(storeValidator, errorStatus, errorMsg, owner, done) {
-            var catalogApi = mockCatalogAPI(owner ? isOwnerTrue : isOwnerFalse, storeValidator);
+        var testCreateProduct = function(storeValidator, errorStatus, errorMsg, owner, vName, vDescr, done) {
+            var catalogApi = mockCatalogAPI(owner ? isOwnerTrue : isOwnerFalse, storeValidator, vName, vDescr);
 
             var role = owner ? 'Owner' : 'Seller';
-            var body = { relatedParty: [{ id: 'test', role: role }], validFor: { startDateTime: '2010-04-12' } };
+            var body = {name: '',description: 'test', relatedParty: [{ id: 'test', role: role }], validFor: { startDateTime: '2010-04-12' } };
             var req = buildProductRequest(body);
 
             checkProductCreationResult(catalogApi, req, errorStatus, errorMsg, done);
@@ -1221,11 +1279,11 @@ describe('Catalog API', function() {
         };
 
         it('should allow to create owned products', function(done) {
-            testCreateProduct(storeValidatorOk, null, null, true, done);
+            testCreateProduct(storeValidatorOk, null, null, true, null, null, done);
         });
 
         it('should not allow to create non-owned products', function(done) {
-            testCreateProduct(storeValidatorOk, 403, INVALID_USER_CREATE, false, done);
+            testCreateProduct(storeValidatorOk, 403, INVALID_USER_CREATE, false, null, null, done);
         });
 
         it('should not allow to create products that cannot be retrieved from the Store', function(done) {
@@ -1238,7 +1296,15 @@ describe('Catalog API', function() {
 
             // Actual call
             // isOwner does not matter when productRequestFails is set to true
-            testCreateProduct(storeValidatorErr, storeErrorStatus, storeErrorMessage, true, done);
+            testCreateProduct(storeValidatorErr, storeErrorStatus, storeErrorMessage, true, null, null, done);
+        });
+
+        it('should not allow to create products with number type name', function(done) {
+            testCreateProduct(storeValidatorOk, 422, 'error', true, 'error', null, done);
+        });
+
+        it('should not allow to create non-owned products', function(done) {
+            testCreateProduct(storeValidatorOk, 422, 'descr error', true, null, 'descr error', done);
         });
 
         var testCreateBundle = function(bundles, errorStatus, errorMsg, done) {
@@ -1388,6 +1454,108 @@ describe('Catalog API', function() {
 
             testCreateBundle(bundles, 422, INVALID_BUNDLED_PRODUCT_STATUS, done);
         });
+    });
+
+    describe('offering price creation', function() {
+
+        const validateOfferingPrice = function(isValidPercentage, isValidAmount, isValidPrice,  offeringPrice, ErrorStatus, ErrorMsg, done) {
+            tmfUtils = {
+                isValidPercentage: ()=> isValidPercentage,
+                isValidAmount: ()=> isValidAmount,
+                isValidPrice: ()=> isValidPrice
+            }
+            var catalogApi = getCatalogApi({}, tmfUtils, {isOwner: validateLoggedOk});
+            const req = {
+                method: 'POST',
+                apiUrl: '/catalog/productOfferingPrice',
+                user: {
+                    id: 'test',
+                    roles: [{ name: config.oauth2.roles.seller }]
+                },
+                body: JSON.stringify(offeringPrice)
+            };
+            catalogApi.checkPermissions(req, function(err) {
+                if (!ErrorStatus && !ErrorMsg) {
+                    expect(err).toBe(null);
+                } else {
+                    expect(err.status).toBe(ErrorStatus);
+                    expect(err.message).toBe(ErrorMsg);
+                }
+                done();
+            });
+        }
+
+        it('should allow to create offering price with valid values', function(done) {
+            const offeringPrice = {
+                name: 'test',
+                description: 'test',
+                percentage: 10,
+                priceType: 'discount',
+                unitOfMeasure:{
+                    amount: 120,
+                    unit: 'days'
+                },
+                price: {
+                    unit: 'EUR',
+                    value: 120
+                },
+                validFor: {
+                    startDateTime: '2017-10-05T10:00:00'
+                }
+            };
+
+            validateOfferingPrice(true, true, true, offeringPrice, null, null, done);
+
+        });
+
+        it('should not allow to create offering price with invalid percentage', function(done) {
+            const offeringPrice = {
+                name: 'test',
+                description: 'test',
+                priceType: 'discount',
+                validFor: {
+                    startDateTime: '2017-10-05T10:00:00'
+                }
+            };
+
+            validateOfferingPrice(false, true, true, offeringPrice, 422, 'Percentage must be either a number or a string representing a number between 0 and 100', done);
+
+        });
+
+        it('should not allow to create offering price with invalid amount', function(done) {
+            const offeringPrice = {
+                name: 'test',
+                description: 'test',
+                unitOfMeasure:{
+                    amount: 120,
+                    unit: 'days'
+                },
+                validFor: {
+                    startDateTime: '2017-10-05T10:00:00'
+                }
+            };
+
+            validateOfferingPrice(true, false, true, offeringPrice, 422, 'Amount must be either a number or a string representing a number greater than 0', done);
+
+        });
+
+        it('should not allow to create offering price with invalid price', function(done) {
+            const offeringPrice = {
+                name: 'test',
+                description: 'test',
+                price: {
+                    unit: 'EUR',
+                    value: 120
+                },
+                validFor: {
+                    startDateTime: '2017-10-05T10:00:00'
+                }
+            };
+
+            validateOfferingPrice(true, true, false, offeringPrice, 422, 'Price must be either a number or a string representing a number between 0 and 1.000.000.000 and it must follow the ISO 4217 standard', done);
+
+        });
+
     });
 
     var testCreateCategory = function(
@@ -1578,7 +1746,7 @@ describe('Catalog API', function() {
         testCreateCategory(true, category, null, parentCategoryRequest, 500, errorMsg, callback);
     });
 
-    var testCreateCatalog = function(admin, owner, catalog, catalogRequest, errorStatus, errorMsg, updated, done) {
+    var testCreateCatalog = function(admin, owner, catalog, catalogRequest, errorStatus, errorMsg, updated, done, vNameF, vDescrF) {
         var checkRoleMethod = jasmine.createSpy();
         checkRoleMethod.and.returnValues(admin);
 
@@ -1594,7 +1762,9 @@ describe('Catalog API', function() {
         };
 
         var tmfUtils = {
-            isOwner: owner ? isOwnerTrue : isOwnerFalse
+            isOwner: owner ? isOwnerTrue : isOwnerFalse,
+            validateNameField: vNameF ? ()=> vNameF : ()=> null,
+            validateDescriptionField: vDescrF ? ()=> vDescrF : ()=> null
         };
 
         var catalogApi = getCatalogApi({}, tmfUtils, utils);
@@ -1678,6 +1848,30 @@ describe('Catalog API', function() {
         );
     });
 
+    it('should not allow to create owned catalog if name validator fails', function(done) {
+        var catalogName = 'example' + new Array(100000).join('a');
+
+        var catalogRequest = {
+            query: '?name=' + catalogName,
+            status: 200,
+            body: []
+        };
+
+        testCreateCatalog(true, isOwnerTrue, { name: catalogName }, catalogRequest, 422, 'error', false, done, 'error', null);
+    });
+
+    it('should not allow to create owned catalog with 100.0000+ characters description', function(done) {
+        var catalogName = 'test';
+        var catalogDescription = 'example' + new Array(100000).join('e');
+        var catalogRequest = {
+            query: '?name=' + catalogName,
+            status: 200,
+            body: []
+        };
+
+        testCreateCatalog(true, isOwnerTrue, { name: catalogName, description: catalogDescription}, catalogRequest, 422, 'descr error', false, done, null, 'descr error');
+    });
+
     it('should not allow to create not owned catalog', function(done) {
         var catalogName = 'example';
 
@@ -1735,6 +1929,131 @@ describe('Catalog API', function() {
     /// ///////////////////////////////////////////////////////////////////////////////////////////
     /// //////////////////////////////////// UPDATE & DELETE //////////////////////////////////////
     /// ///////////////////////////////////////////////////////////////////////////////////////////
+
+    // OFFERING PRICE
+    describe('Update offering price', function() {
+        const protocol = config.endpoints.catalog.appSsl ? 'https' : 'http';
+        const serverUrl = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
+        const testUpdateOfferingPrice = function(
+            offeringPrice,
+            nockResponse,
+            isValidPercentage,
+            isValidAmount,
+            isValidPrice,
+            expectedErrorStatus,
+            expectedErrorMsg,
+            done
+        ) {
+            const updateBody = jasmine.createSpy();
+            var utils = {
+                validateLoggedIn: validateLoggedOk,
+                updateBody: updateBody
+            };
+
+            var tmfUtils = {
+                isOwner: isOwnerTrue,
+                isValidPercentage: () => isValidPercentage,
+                isValidAmount: () => isValidAmount,
+                isValidPrice: () => isValidPrice
+            };
+
+            var catalogApi = getCatalogApi({}, tmfUtils, utils);
+
+            const req = {
+                method: 'PATCH',
+                apiUrl: '/catalog/productOfferingPrice/1',
+                user: {
+                    id: 'test',
+                    roles: [{ name: config.oauth2.roles.seller }]
+                },
+                body: JSON.stringify(offeringPrice)
+            };
+
+            catalogApi.checkPermissions(req, function(err) {
+                if (!expectedErrorStatus && !expectedErrorMsg) {
+                    expect(err).toBe(null);
+                } else {
+                    expect(err.status).toBe(expectedErrorStatus);
+                    expect(err.message).toBe(expectedErrorMsg);
+                }
+                if(nockResponse){
+                    // verify nock url has been requested
+                    expect(nock.isDone()).toBe(true);
+                }
+                done()
+            }
+            );
+        };
+        it('should allow to update owned offering price', function(done) {
+            const offeringPrice = {
+                owner: true,
+                lifecycleStatus: 'active',
+            };
+            const nockMock = nock(serverUrl).get('/productOfferingPrice/1').reply(200, {
+                id: '1'
+            });
+
+            testUpdateOfferingPrice(offeringPrice, nockMock, true, true, true, null, null, done);
+        });
+
+        it('should not allow to update offering price when offering price cannot be retrieved', function(done) {
+            const offeringPrice = {
+                owner: true,
+                lifecycleStatus: 'active',
+            };
+            const nockMock = nock(serverUrl).get('/productOfferingPrice/1').reply(500, {
+                id: '1'
+            });
+
+            testUpdateOfferingPrice(offeringPrice, nockMock, true, true, true, 500, FAILED_TO_RETRIEVE, done);
+        });
+
+        it('should now allow to update offering price when percentage is invalid', function(done) {
+            const offeringPrice = {
+                owner: true,
+                lifecycleStatus: 'active',
+                priceType: 'discount',
+                percentage: 200
+            };
+            const nockMock = nock(serverUrl).get('/productOfferingPrice/1').reply(200, {
+                id: '1'
+            });
+
+            testUpdateOfferingPrice(offeringPrice, nockMock, false, true, true, 422, 'Percentage must be either a number or a string representing a number between 0 and 100', done);
+        });
+
+        it('should now allow to update offering price when amount is invalid', function(done) {
+            const offeringPrice = {
+                owner: true,
+                lifecycleStatus: 'active',
+                unitOfMeasure: {
+                    amount: 'invalid',
+                    unit: 'days'
+                }
+            };
+            const nockMock = nock(serverUrl).get('/productOfferingPrice/1').reply(200, {
+                id: '1'
+            });
+
+            testUpdateOfferingPrice(offeringPrice, nockMock, true, false, true, 422, 'Amount must be either a number or a string representing a number greater than 0', done);
+        });
+
+        it('should now allow to update offering price when price is invalid', function(done) {
+            const offeringPrice = {
+                owner: true,
+                lifecycleStatus: 'active',
+                price: {
+                    unit: 'EUR',
+                    value: 'invalid'
+                }
+            };
+            const nockMock = nock(serverUrl).get('/productOfferingPrice/1').reply(200, {
+                id: '1'
+            });
+
+            testUpdateOfferingPrice(offeringPrice, nockMock, true, true, false, 422, 'Price must be either a number or a string representing a number between 0 and 1.000.000.000 and it must follow the ISO 4217 standard', done);
+        });
+    });
 
     // ANY ASSET
 
@@ -2220,7 +2539,7 @@ describe('Catalog API', function() {
         ]
     };
 
-    var testChangeProductCatalogStatus = function(
+    var testChangeProductSpec = function(
         assetPath,
         offeringsPath,
         previousAssetBody,
@@ -2233,7 +2552,9 @@ describe('Catalog API', function() {
         launched,
         queryRef,
         launchError,
-        launchApiError
+        launchApiError,
+        vNameF,
+        vDescrF
     ) {
         var checkRoleMethod = jasmine.createSpy();
         checkRoleMethod.and.returnValue(true);
@@ -2243,7 +2564,9 @@ describe('Catalog API', function() {
         var tmfUtils = {
             isOwner: function() {
                 return true;
-            }
+            },
+            validateNameField: vNameF ? () => vNameF : () => null,
+            validateDescriptionField: vDescrF ? () => vDescrF : () => null
         };
         if(launched !== undefined && launched !== null){
             tmfUtils.haveSameStatus = (function() {
@@ -2347,7 +2670,7 @@ describe('Catalog API', function() {
 
     // PRODUCTS
 
-    var testChangeProductStatus = function(productBody, offeringsInfo, errorStatus, errorMsg, done, status, launched, queryRef, launchError, launchApiError) {
+    var testUpdateProductSpec = function(productBody, offeringsInfo, errorStatus, errorMsg, done, status, launched, queryRef, launchError, launchApiError, vNameF, vDescrF) {
         var productId = '7';
         var productPath = '/productSpecification/' + productId;
         var offeringsPath = '/productOffering?productSpecification.id=' + productId;
@@ -2365,7 +2688,7 @@ describe('Catalog API', function() {
             serviceSpecification: [],
             resourceSpecification: []
         };
-        testChangeProductCatalogStatus(
+        testChangeProductSpec(
             productPath,
             offeringsPath,
             prevBody,
@@ -2378,7 +2701,9 @@ describe('Catalog API', function() {
             launched,
             queryRef,
             launchError,
-            launchApiError
+            launchApiError,
+            vNameF,
+            vDescrF
         );
     };
 
@@ -2390,18 +2715,29 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testChangeProductStatus(productBody, offeringsInfo, 400, INVALID_JSON, done);
+        testUpdateProductSpec(productBody, offeringsInfo, 400, INVALID_JSON, done);
     });
 
     it('should allow to update a product if the body does not contains cycle information', function(done) {
-        var productBody = {};
+        var productBody = JSON.stringify({name: ''});
 
         var offeringsInfo = {
             requestStatus: 200,
             offerings: []
         };
 
-        testChangeProductStatus(productBody, offeringsInfo, null, null, done);
+        testUpdateProductSpec(productBody, offeringsInfo, null, null, done);
+    });
+
+    it('should not allow to update a product if the tmfUtils returns a errorMessage when name is set', function(done) {
+        var productBody = JSON.stringify({name: ''});
+
+        var offeringsInfo = {
+            requestStatus: 200,
+            offerings: []
+        };
+
+        testUpdateProductSpec(productBody, offeringsInfo, 422, 'error', done, null, null, null, null, null, 'error', null);
     });
 
     it('should not allow to update a product if the body modifies the original relatedParty', function(done) {
@@ -2421,7 +2757,7 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testChangeProductStatus(productBody, offeringsInfo, 409, INVALID_RELATED_PARTY, done);
+        testUpdateProductSpec(productBody, offeringsInfo, 409, INVALID_RELATED_PARTY, done);
     });
 
     it('should allow to update a product if the body does not modify the original relatedParty', function(done) {
@@ -2434,7 +2770,7 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testChangeProductStatus(productBody, offeringsInfo, null, null, done);
+        testUpdateProductSpec(productBody, offeringsInfo, null, null, done);
     });
 
     it('should allow launch a product spec', function(done) {
@@ -2447,7 +2783,7 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testChangeProductStatus(productBody, offeringsInfo, null, null, done, null, true, 'n1,n2');
+        testUpdateProductSpec(productBody, offeringsInfo, null, null, done, null, true, 'n1,n2');
     });
 
     it('should not allow launch a product spec when resource specs do not have the same status as their parent', function(done) {
@@ -2460,7 +2796,7 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testChangeProductStatus(productBody, offeringsInfo, 409, INVALID_R_LAUNCH, done, null, false, 'n1,n2', resourceLaunchFail);
+        testUpdateProductSpec(productBody, offeringsInfo, 409, INVALID_R_LAUNCH, done, null, false, 'n1,n2', resourceLaunchFail);
     });
 
     it('should not allow launch a product spec when service specs do not have the same status as their parent', function(done) {
@@ -2473,7 +2809,7 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testChangeProductStatus(productBody, offeringsInfo, 409, INVALID_S_LAUNCH, done, null, false, 'n1,n2', serviceLaunchFail);
+        testUpdateProductSpec(productBody, offeringsInfo, 409, INVALID_S_LAUNCH, done, null, false, 'n1,n2', serviceLaunchFail);
     });
 
     it('should not allow launch a product spec when resource spec API fails retrieving data', function(done) {
@@ -2486,7 +2822,7 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testChangeProductStatus(productBody, offeringsInfo, 400, INVALID_R_API, done, null, false, 'n1,n2', null, resourceLaunchFail);
+        testUpdateProductSpec(productBody, offeringsInfo, 400, INVALID_R_API, done, null, false, 'n1,n2', null, resourceLaunchFail);
     });
 
     it('should not allow launch a product spec when service spec API fails retrieving data', function(done) {
@@ -2499,7 +2835,7 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testChangeProductStatus(productBody, offeringsInfo, 400, INVALID_S_API, done, null, false, 'n1,n2', null, serviceLaunchFail);
+        testUpdateProductSpec(productBody, offeringsInfo, 400, INVALID_S_API, done, null, false, 'n1,n2', null, serviceLaunchFail);
     });
 
     // Retire
@@ -2514,7 +2850,7 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testChangeProductStatus(productBody, offeringsInfo, null, null, done);
+        testUpdateProductSpec(productBody, offeringsInfo, null, null, done);
     });
 
     it('should allow to retire a product when there is one attached offering with retired status', function(done) {
@@ -2531,7 +2867,7 @@ describe('Catalog API', function() {
             ]
         };
 
-        testChangeProductStatus(productBody, offeringsInfo, null, null, done);
+        testUpdateProductSpec(productBody, offeringsInfo, null, null, done);
     });
 
     it('should allow to retire a product when there is one attached offering with obsolete status', function(done) {
@@ -2548,7 +2884,7 @@ describe('Catalog API', function() {
             ]
         };
 
-        testChangeProductStatus(productBody, offeringsInfo, null, null, done);
+        testUpdateProductSpec(productBody, offeringsInfo, null, null, done);
     });
 
     it('should not allow to retire a product when there is one attached offering with active status', function(done) {
@@ -2565,7 +2901,7 @@ describe('Catalog API', function() {
             ]
         };
 
-        testChangeProductStatus(productBody, offeringsInfo, 400, OFFERS_NOT_RETIRED_PRODUCT, done);
+        testUpdateProductSpec(productBody, offeringsInfo, 400, OFFERS_NOT_RETIRED_PRODUCT, done);
     });
 
     it('should allow to retire a product when there are two attached offerings - one retired and one obsolete', function(done) {
@@ -2585,7 +2921,7 @@ describe('Catalog API', function() {
             ]
         };
 
-        testChangeProductStatus(productBody, offeringsInfo, null, null, done);
+        testUpdateProductSpec(productBody, offeringsInfo, null, null, done);
     });
 
     it('should not allow to retire a product when there is at least one attached offering with launched status', function(done) {
@@ -2605,7 +2941,7 @@ describe('Catalog API', function() {
             ]
         };
 
-        testChangeProductStatus(productBody, offeringsInfo, 400, OFFERS_NOT_RETIRED_PRODUCT, done);
+        testUpdateProductSpec(productBody, offeringsInfo, 400, OFFERS_NOT_RETIRED_PRODUCT, done);
     });
 
     it('should not allow to retire a product if the attached offerings cannot be retrieved', function(done) {
@@ -2618,7 +2954,7 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testChangeProductStatus(productBody, offeringsInfo, 500, OFFERINGS_NOT_RETRIEVED, done);
+        testUpdateProductSpec(productBody, offeringsInfo, 500, OFFERINGS_NOT_RETRIEVED, done);
     });
 
     // Make obsolete
@@ -2633,7 +2969,7 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testChangeProductStatus(productBody, offeringsInfo, null, null, done);
+        testUpdateProductSpec(productBody, offeringsInfo, null, null, done);
     });
 
     it('should allow to make a product obsolete when there is one attached offering with obsolete status', function(done) {
@@ -2650,7 +2986,7 @@ describe('Catalog API', function() {
             ]
         };
 
-        testChangeProductStatus(productBody, offeringsInfo, null, null, done);
+        testUpdateProductSpec(productBody, offeringsInfo, null, null, done);
     });
 
     it('should not allow to make a product obsolete when there is one attached offering with retired status', function(done) {
@@ -2667,7 +3003,7 @@ describe('Catalog API', function() {
             ]
         };
 
-        testChangeProductStatus(productBody, offeringsInfo, 400, OFFERS_NOT_OBSOLETE_PRODUCT, done);
+        testUpdateProductSpec(productBody, offeringsInfo, 400, OFFERS_NOT_OBSOLETE_PRODUCT, done);
     });
 
     it('should allow to make a product obsolete when there are two attached obsolete offerings', function(done) {
@@ -2687,7 +3023,7 @@ describe('Catalog API', function() {
             ]
         };
 
-        testChangeProductStatus(productBody, offeringsInfo, null, null, done);
+        testUpdateProductSpec(productBody, offeringsInfo, null, null, done);
     });
 
     it('should not allow to make a product obsolete when there is at least one attached offering with retired status', function(done) {
@@ -2707,7 +3043,7 @@ describe('Catalog API', function() {
             ]
         };
 
-        testChangeProductStatus(productBody, offeringsInfo, 400, OFFERS_NOT_OBSOLETE_PRODUCT, done);
+        testUpdateProductSpec(productBody, offeringsInfo, 400, OFFERS_NOT_OBSOLETE_PRODUCT, done);
     });
 
     it('should not allow to make a product obsolete if the attached offerings cannot be retrieved', function(done) {
@@ -2720,17 +3056,17 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testChangeProductStatus(productBody, offeringsInfo, 500, OFFERINGS_NOT_RETRIEVED, done);
+        testUpdateProductSpec(productBody, offeringsInfo, 500, OFFERINGS_NOT_RETRIEVED, done);
     });
 
     // UPGRADES
 
-    var testProductUpgrade = function(prevBody, productBody, errorStatus, errorMsg, storeClient, done) {
+    var testUpgradeProductSpec = function(prevBody, productBody, errorStatus, errorMsg, storeClient, done) {
         var productId = '7';
         var productPath = '/productSpecification/' + productId;
         var offeringsPath = '/productOffering?productSpecification.id=' + productId;
 
-        testChangeProductCatalogStatus(
+        testChangeProductSpec(
             productPath,
             offeringsPath,
             prevBody,
@@ -2763,7 +3099,7 @@ describe('Catalog API', function() {
             ]
         };
 
-        testProductUpgrade(prevBody, newBody, errorStatus, errorMsg, null, done);
+        testUpgradeProductSpec(prevBody, newBody, errorStatus, errorMsg, null, done);
     };
 
     it('should allow to upgrade a non-digital product when the characteristics are provided', function(done) {
@@ -2860,7 +3196,7 @@ describe('Catalog API', function() {
             ]
         };
 
-        testProductUpgrade(prevBody, newBody, errorStatus, errorMsg, { storeClient: storeClient }, () => {
+        testUpgradeProductSpec(prevBody, newBody, errorStatus, errorMsg, { storeClient: storeClient }, () => {
             // Check store client call
             if (!errorMsg) {
                 expect(storeClient.upgradeProduct).toHaveBeenCalledWith(
@@ -3067,7 +3403,7 @@ describe('Catalog API', function() {
     // Bundles
     var testUpdateBundle = function(bundles, offeringsInfo, errorStatus, errorMsg, done) {
         var body = mockBundles(bundles);
-        testChangeProductStatus(JSON.stringify(body), offeringsInfo, errorStatus, errorMsg, done);
+        testUpdateProductSpec(JSON.stringify(body), offeringsInfo, errorStatus, errorMsg, done);
     };
 
     it('should allow to update bundles when all products specs are single and owned by the user', function(done) {
@@ -3205,12 +3541,12 @@ describe('Catalog API', function() {
         ];
 
         var body = mockBundles(bundles);
-        testChangeProductStatus(JSON.stringify(body), null, 422, INVALID_BUNDLE_STATUS, done, 'Launched');
+        testUpdateProductSpec(JSON.stringify(body), null, 422, INVALID_BUNDLE_STATUS, done, 'Launched');
     });
 
     // CATALOGS
 
-    var testChangeCatalogStatus = function(productBody, offeringsInfo, errorStatus, errorMsg, done) {
+    var testUpdateCatalog = function(catalogBody, offeringsInfo, errorStatus, errorMsg, done, vNameF, vDescrF) {
         var catalogPath = '/catalog/7';
         var offeringsPath = '/productOffering';
 
@@ -3221,19 +3557,26 @@ describe('Catalog API', function() {
             relatedParty: previousProductBody.relatedParty
         };
 
-        testChangeProductCatalogStatus(
+        testChangeProductSpec(
             catalogPath,
             offeringsPath,
             prevBody,
-            productBody,
+            catalogBody,
             offeringsInfo,
             errorStatus,
             errorMsg,
-            done
+            done,
+            null,
+            null,
+            null,
+            null,
+            null,
+            vNameF,
+            vDescrF
         );
     };
 
-    var testChangeCatalogStatusHref = function(productBody, offeringsInfo, errorStatus, errorMsg, done) {
+    var testUpdateCatalogWithOfferings = function(catalogBody, offeringsInfo, errorStatus, errorMsg, done) {
         var catalogPath = '/catalog/7';
         var offeringsPath = '/productOffering?href=';
 
@@ -3248,11 +3591,11 @@ describe('Catalog API', function() {
             relatedParty: previousProductBody.relatedParty
         };
 
-        testChangeProductCatalogStatus(
+        testChangeProductSpec(
             catalogPath,
             offeringsPath,
             prevBody,
-            productBody,
+            catalogBody,
             offeringsInfo,
             errorStatus,
             errorMsg,
@@ -3268,7 +3611,7 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testChangeCatalogStatus(catalogBody, offeringsInfo, 400, INVALID_JSON, done);
+        testUpdateCatalog(catalogBody, offeringsInfo, 400, INVALID_JSON, done);
     });
 
     it('should allow to update a catalog if the body does not contains cycle information', function(done) {
@@ -3279,7 +3622,34 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testChangeCatalogStatus(catalogBody, offeringsInfo, null, null, done);
+        testUpdateCatalog(catalogBody, offeringsInfo, null, null, done);
+    });
+
+    it('should not allow to update a catalog if the name validator fails', function(done) {
+        var catalogBody = JSON.stringify({
+            name: 'a'.repeat(101),
+        });
+
+        var offeringsInfo = {
+            requestStatus: 200,
+            offerings: []
+        };
+
+        testUpdateCatalog(catalogBody, offeringsInfo, 422, 'error', done, 'error', null);
+    });
+
+    it('should not allow to update a catalog if the description validator fails', function(done) {
+        var catalogBody = JSON.stringify({
+            name: 'long',
+            description: 'a'.repeat(100001)
+        });
+
+        var offeringsInfo = {
+            requestStatus: 200,
+            offerings: []
+        };
+
+        testUpdateCatalog(catalogBody, offeringsInfo, 422, 'descr long', done, null, 'descr long');
     });
 
     it('should not allow to update a catalog if the body modifies the original relatedParty', function(done) {
@@ -3299,7 +3669,7 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testChangeCatalogStatus(catalogBody, offeringsInfo, 409, INVALID_RELATED_PARTY, done);
+        testUpdateCatalog(catalogBody, offeringsInfo, 409, INVALID_RELATED_PARTY, done);
     });
 
     it('should allow to update a catalog if the body does not modifie the original relatedParty', function(done) {
@@ -3312,7 +3682,7 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testChangeCatalogStatus(catalogBody, offeringsInfo, null, null, done);
+        testUpdateCatalog(catalogBody, offeringsInfo, null, null, done);
     });
 
     it('should allow launch a catalog', function(done) {
@@ -3329,7 +3699,7 @@ describe('Catalog API', function() {
             ]
         };
 
-        testChangeCatalogStatus(catalogBody, offeringsInfo, null, null, done);
+        testUpdateCatalog(catalogBody, offeringsInfo, null, null, done);
     });
 
     // Retire
@@ -3344,7 +3714,7 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testChangeCatalogStatus(catalogBody, offeringsInfo, null, null, done);
+        testUpdateCatalog(catalogBody, offeringsInfo, null, null, done);
     });
 
     it('should allow to retire a catalog when there is one attached offering with retired status', function(done) {
@@ -3362,7 +3732,7 @@ describe('Catalog API', function() {
             ]
         };
 
-        testChangeCatalogStatusHref(catalogBody, offeringsInfo, null, null, done);
+        testUpdateCatalogWithOfferings(catalogBody, offeringsInfo, null, null, done);
     });
 
     it('should allow to retire a catalog when there is one attached offering with obsolete status', function(done) {
@@ -3380,7 +3750,7 @@ describe('Catalog API', function() {
             ]
         };
 
-        testChangeCatalogStatusHref(catalogBody, offeringsInfo, null, null, done);
+        testUpdateCatalogWithOfferings(catalogBody, offeringsInfo, null, null, done);
     });
 
     it('should not allow to retire a catalog when there is one attached offering with active status', function(done) {
@@ -3398,7 +3768,7 @@ describe('Catalog API', function() {
             ]
         };
 
-        testChangeCatalogStatusHref(catalogBody, offeringsInfo, 400, OFFERS_NOT_RETIRED_CATALOG, done);
+        testUpdateCatalogWithOfferings(catalogBody, offeringsInfo, 400, OFFERS_NOT_RETIRED_CATALOG, done);
     });
 
     it('should allow to retire a catalog when there are two attached offerings - one retired and one obsolete', function(done) {
@@ -3420,7 +3790,7 @@ describe('Catalog API', function() {
             ]
         };
 
-        testChangeCatalogStatusHref(catalogBody, offeringsInfo, null, null, done);
+        testUpdateCatalogWithOfferings(catalogBody, offeringsInfo, null, null, done);
     });
 
     it('should not allow to retire a catalog when there is at least one attached offering with launched status', function(done) {
@@ -3442,7 +3812,7 @@ describe('Catalog API', function() {
             ]
         };
 
-        testChangeCatalogStatusHref(catalogBody, offeringsInfo, 400, OFFERS_NOT_RETIRED_CATALOG, done);
+        testUpdateCatalogWithOfferings(catalogBody, offeringsInfo, 400, OFFERS_NOT_RETIRED_CATALOG, done);
     });
 
     // it('should not allow to retire a catalog if the attached offerings cannot be retrieved', function(done) {
@@ -3470,7 +3840,7 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testChangeCatalogStatus(catalogBody, offeringsInfo, null, null, done);
+        testUpdateCatalog(catalogBody, offeringsInfo, null, null, done);
     });
 
     it('should allow to make a catalog obsolete when there is one attached offering with obsolete status', function(done) {
@@ -3488,7 +3858,7 @@ describe('Catalog API', function() {
             ]
         };
 
-        testChangeCatalogStatusHref(catalogBody, offeringsInfo, null, null, done);
+        testUpdateCatalogWithOfferings(catalogBody, offeringsInfo, null, null, done);
     });
 
     it('should not allow to make a catalog obsolete when there is one attached offering with retired status', function(done) {
@@ -3506,7 +3876,7 @@ describe('Catalog API', function() {
             ]
         };
 
-        testChangeCatalogStatusHref(catalogBody, offeringsInfo, 400, OFFERS_NOT_OBSOLETE_CATALOG, done);
+        testUpdateCatalogWithOfferings(catalogBody, offeringsInfo, 400, OFFERS_NOT_OBSOLETE_CATALOG, done);
     });
 
     it('should allow to make a catalog obsolete when there are two attached obsolete offerings', function(done) {
@@ -3528,7 +3898,7 @@ describe('Catalog API', function() {
             ]
         };
 
-        testChangeCatalogStatusHref(catalogBody, offeringsInfo, null, null, done);
+        testUpdateCatalogWithOfferings(catalogBody, offeringsInfo, null, null, done);
     });
 
     it('should not allow to make a catalog obsolete when there is at least one attached offering with retired status', function(done) {
@@ -3550,7 +3920,7 @@ describe('Catalog API', function() {
             ]
         };
 
-        testChangeCatalogStatusHref(catalogBody, offeringsInfo, 400, OFFERS_NOT_OBSOLETE_CATALOG, done);
+        testUpdateCatalogWithOfferings(catalogBody, offeringsInfo, 400, OFFERS_NOT_OBSOLETE_CATALOG, done);
     });
 
     it('should not allow to make a catalog obsolete if the attached offerings cannot be retrieved', function(done) {
@@ -3563,7 +3933,7 @@ describe('Catalog API', function() {
             offerings: []
         };
 
-        testChangeCatalogStatus(catalogBody, offeringsInfo, 200, null, done);
+        testUpdateCatalog(catalogBody, offeringsInfo, 200, null, done);
     });
 
     // CATEGORIES

@@ -20,7 +20,7 @@
 const nock = require('nock');
 const proxyquire = require('proxyquire');
 const testUtils = require('../../utils');
-const RETIRE_ERROR = 'Cannot retire a service spec without retiring all product specs linked with it'
+const RETIRE_ERROR = 'Cannot retire a service spec without retiring all service specs linked with it'
 
 describe('ServiceSpecification API', function() {
 
@@ -137,7 +137,7 @@ describe('ServiceSpecification API', function() {
         })
 
         describe('create', () => {
-            function testCreateSpec(UserInfo, body, hasError, expectedStatus, expectedErr, isOwner, isSeller, checkRole, done) {
+            function testCreateSpec(UserInfo, body, hasError, expectedStatus, expectedErr, isOwner, isSeller, checkRole, vNameF, vDescrF, done) {
                 const checkRoleMethod = jasmine.createSpy();
                 checkRoleMethod.and.returnValue(isSeller);
 
@@ -152,7 +152,9 @@ describe('ServiceSpecification API', function() {
                 };
 
                 const tmfUtils = {
-                    hasPartyRole: checkOwnerMethod
+                    hasPartyRole: checkOwnerMethod,
+                    validateNameField: (vNameF) ? ()=> vNameF : () => null,
+                    validateDescriptionField: (vDescrF) ? ()=> vDescrF : () => null,
                 };
 
                 const serviceAPI = getServiceSpecAPI(tmfUtils, utils);
@@ -190,24 +192,53 @@ describe('ServiceSpecification API', function() {
             it('should create a service specification successfully', (done) => {
                 const basicBody = {
                     id: 'sericeSpec',
+                    name: 'serviceSpec',
                     validFor: {
                         startDateTime: '2016-07-12T10:56:00'
                     },
                     relatedParty: [{ id: 'test', role: 'owner', href: SERVER + individual }]
                 };
 
-                testCreateSpec(seller, basicBody, false, 200, null, true, true, true, done)
+                testCreateSpec(seller, basicBody, false, 200, null, true, true, true, null, null, done)
+            })
+
+            it('should raise 422 if name validation failed', (done) => {
+                const basicBody = {
+                    id: 'sericeSpec',
+                    name: 'serviceSpec',
+                    validFor: {
+                        startDateTime: '2016-07-12T10:56:00'
+                    },
+                    relatedParty: [{ id: 'test', role: 'owner', href: SERVER + individual }]
+                };
+
+                testCreateSpec(seller, basicBody, true, 422, 'error', true, true, true, 'error', null, done)
+            })
+
+            it('should raise 422 if description validation failed', (done) => {
+                const basicBody = {
+                    id: 'sericeSpec',
+                    description: 'descr',
+                    name: 'serviceSpec',
+                    validFor: {
+                        startDateTime: '2016-07-12T10:56:00'
+                    },
+                    relatedParty: [{ id: 'test', role: 'owner', href: SERVER + individual }]
+                };
+
+                testCreateSpec(seller, basicBody, true, 422, 'descr error', true, true, true, null, 'descr error', done)
             })
 
             it('should raise a 403 unauthorized error if the user is not the owner', (done) => {
                 const basicBody = {
                     id: 'serviceSpecNotFound',
+                    name : '',
                     validFor: {
                         startDateTime: '2016-07-12T10:56:00'
                     },
                     relatedParty: [{ id: 'test3', role: 'owner', href: SERVER + individual }]
                 };
-                testCreateSpec(seller, basicBody, true, 403, 'Unauthorized to create non-owned/non-seller service specs', false, true, true, done)
+                testCreateSpec(seller, basicBody, true, 403, 'Unauthorized to create non-owned/non-seller service specs', false, true, true, null, null, done)
             })
 
             it('should raise an error if the body is not valid', (done) => {
@@ -235,7 +266,7 @@ describe('ServiceSpecification API', function() {
         })
 
         describe('update', () => {
-            function testUpdateService(userInfo, serviceId, prevBody, body, isOwner, errMsg, done, extraNock) {
+            function testUpdateService(userInfo, serviceId, prevBody, body, isOwner, errMsg, done, extraNock, vNameF, vDescrF) {
                 const checkRoleMethod = jasmine.createSpy();
                 checkRoleMethod.and.returnValue(isOwner);
                 const checkOwnerMethod = jasmine.createSpy();
@@ -251,7 +282,9 @@ describe('ServiceSpecification API', function() {
                 }
 
                 const tmfUtils = {
-                    hasPartyRole: checkOwnerMethod
+                    hasPartyRole: checkOwnerMethod,
+                    validateNameField: (vNameF) ? () => vNameF : () => null,
+                    validateDescriptionField: (vDescrF) ? () => vDescrF : () => null,
                 }
 
                 const serviceAPI = getServiceSpecAPI(tmfUtils, utils);
@@ -298,7 +331,7 @@ describe('ServiceSpecification API', function() {
             })
 
             it('should allow to retire service specification', (done) => {
-                const prodSpecMock = nock(prodSpecUrl).get('/productSpecification')
+                const prodSpecMock = nock(prodSpecUrl).get('/serviceSpecification')
                 .query({'serviceSpecification.id':'urn:service-spec:1', fields:'lifecycleStatus'})
                 .reply(200, [{id: 'prod', lifecycleStatus: 'Retired'}])
                 testUpdateService(seller, 'urn:service-spec:1', {
@@ -313,8 +346,43 @@ describe('ServiceSpecification API', function() {
                 }, true, null, done, prodSpecMock)
             })
 
-            it('should raise 409 if product specs linked with the service spec are not retired previously', (done) => {
-                const prodSpecMock = nock(prodSpecUrl).get('/productSpecification')
+            it('should raise 422 if name validation fails', (done) => {
+                testUpdateService(seller, 'urn:service-spec:1', {
+                    id: 'urn:service-spec:1',
+                    lifecycleStatus: 'Active',
+                    relatedParty: [{
+                        id: 'test',
+                        role: 'owner'
+                    }]
+                }, {
+                    name: 'serviceSpec',
+                    'lifecycleStatus': 'Launched'
+                }, true, {
+                    status: 422,
+                    message: 'error'}, done, null, 'error', null)
+            })
+
+            it('should raise 422 if description validation fails', (done) => {
+                testUpdateService(seller, 'urn:service-spec:1', {
+                    id: 'urn:service-spec:1',
+                    name: 'serviceSpec',
+                    description: 'descr',
+                    lifecycleStatus: 'Active',
+                    relatedParty: [{
+                        id: 'test',
+                        role: 'owner'
+                    }]
+                }, {
+                    name: 'serviceSpec',
+                    description: 'descr',
+                    'lifecycleStatus': 'Launched'
+                }, true, {
+                    status: 422,
+                    message: 'descr error'}, done, null, null, 'descr error')
+            })
+
+            it('should raise 409 if service specs linked with the service spec are not retired previously', (done) => {
+                const prodSpecMock = nock(prodSpecUrl).get('/serviceSpecification')
                 .query({'serviceSpecification.id':'urn:service-spec:1', fields:'lifecycleStatus'})
                 .reply(200, [{id: 'prod', lifecycleStatus: 'Active'}])
                 testUpdateService(seller, 'urn:service-spec:1', {

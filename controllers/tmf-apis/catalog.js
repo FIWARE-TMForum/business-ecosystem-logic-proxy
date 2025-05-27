@@ -31,6 +31,7 @@ const storeClient = require('./../../lib/store').storeClient
 const tmfUtils = require('./../../lib/tmfUtils')
 const url = require('url')
 const utils = require('./../../lib/utils')
+const { parse } = require('path')
 const searchEngine = require('../../lib/search').searchEngine
 
 var LIFE_CYCLE = 'lifecycleStatus';
@@ -50,6 +51,7 @@ const catalog = (function() {
     const catalogOfferingsPattern = new RegExp('/catalog/[^/]+/productOffering/?');
     const catalogOfferingPattern = new RegExp('/catalog/[^/]+/productOffering/[^/]+/?');
     const offeringPattern = new RegExp('/productOffering/[^/]+/?$');
+    const pricePattern = new RegExp('/productOfferingPrice/?$');
     const productsPattern = new RegExp('/productSpecification/?$');
     const productPattern = new RegExp('/productSpecification/[^/]+/?$');
     const categoryPattern = new RegExp('/category/[^/]+/?$');
@@ -290,6 +292,31 @@ const catalog = (function() {
     };
 
     const validateOffering = function(req, offeringPath, previousBody, newBody, callback) {
+
+        if(newBody && newBody.name!==null && newBody.name!==undefined){ // newBody.name === '' should enter here
+            const errorMessage = tmfUtils.validateNameField(newBody.name, 'Product offering');
+            if (errorMessage) {
+                return callback({
+                    status: 422,
+                    message: errorMessage
+                });
+            }
+        }else if(newBody && !previousBody){ // newBody.name is null or undefined and it is a POST request
+            return callback({
+                status: 422,
+                message: 'Product offering name is mandatory'
+            });
+        }
+        // Check that the offering description
+        if (newBody && newBody.description) {
+            const errorMessage = tmfUtils.validateDescriptionField(newBody.description, 'Product offering');
+            if (errorMessage) {
+                return callback({
+                    status: 422,
+                    message: errorMessage
+                });
+            }
+        }
 
         let validStates = null;
         let errorMessageStateProduct = null;
@@ -771,6 +798,31 @@ const catalog = (function() {
     };
 
     const validateProduct = function(req, productSpec, callback) {
+
+        if(productSpec && productSpec.name!==null && productSpec.name!==undefined){ // productSpec.name === '' should enter here
+            const errorMessage = tmfUtils.validateNameField(productSpec.name, 'Product spec');
+            if (errorMessage) {
+                return callback({
+                    status: 422,
+                    message: errorMessage
+                });
+            }
+        } else if(productSpec && req.method === 'POST'){ // productSpec.name is null or undefined and it is a POST request
+            return callback({
+                status: 422,
+                message: 'Product spec name is mandatory'
+            });
+        }
+        if (productSpec && productSpec.description) {
+            const errorMessage = tmfUtils.validateDescriptionField(productSpec.description, 'Product spec');
+            if (errorMessage) {
+                return callback({
+                    status: 422,
+                    message: errorMessage
+                });
+            }
+        }
+
         // Check if the product is a bundle
         if (!productSpec.isBundle) {
             return callback(null);
@@ -874,8 +926,33 @@ const catalog = (function() {
     };
 
     const validateCatalog = function(req, prevCatalog, catalog, callback) {
+        if(catalog && catalog.name!==null && catalog.name!==undefined){ // catalog.name === '' should enter here
+            const errorMessage = tmfUtils.validateNameField(catalog.name, 'Catalog');
+            if (errorMessage) {
+                return callback({
+                    status: 422,
+                    message: errorMessage
+                });
+            }
+        }
+        else if(catalog && !prevCatalog){
+            return callback({
+                status: 422,
+                message: 'Catalog name is mandatory'
+            });
+        }
+        // Check that the catalog description
+        if (catalog && catalog.description) {
+            const errorMessage = tmfUtils.validateDescriptionField(catalog.description, 'Catalog');
+            if (errorMessage) {
+                return callback({
+                    status: 422,
+                    message: errorMessage
+                });
+            }
+        }
         // Check that the catalog name is not already taken
-        if (catalog && (!prevCatalog || !!catalog.name)) {
+        if (catalog && (!prevCatalog || catalog.name)) {
             checkExistingCatalog(catalog.name, callback);
         } else {
             callback(null);
@@ -974,12 +1051,43 @@ const catalog = (function() {
                         createHandler(req, body, callback);
                     }
                 });
-            } else {
+            }
+            else if(pricePattern.test(req.apiUrl)){
+                validateOfferingPrice(req, callback);
+            }
+            else {
                 callback(null);
                 //createHandler(req, body, callback);
             }
         }
     };
+
+    const validateOfferingPrice = function (req, callback){
+        const offerPrice = JSON.parse(req.body)
+        // check if it is a valid percentage
+        if (offerPrice && offerPrice.priceType && offerPrice.priceType.toLowerCase() === 'discount' && !tmfUtils.isValidPercentage(offerPrice.percentage)) {
+            return callback({
+                status: 422,
+                message: 'Percentage must be either a number or a string representing a number between 0 and 100'
+            })
+        }
+
+        if (offerPrice && offerPrice.unitOfMeasure && !tmfUtils.isValidAmount(offerPrice.unitOfMeasure.amount)) {
+            return callback({
+                status: 422,
+                message: 'Amount must be either a number or a string representing a number greater than 0'
+            })
+        }
+
+        if (offerPrice && offerPrice.price && !tmfUtils.isValidPrice(offerPrice.price.value, offerPrice.price.unit)) {
+            return callback({
+                status: 422,
+                message: 'Price must be either a number or a string representing a number between 0 and 1.000.000.000 and it must follow the ISO 4217 standard'
+            })
+        }
+
+        callback(null)
+    }
 
     //////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////////// UPDATE ///////////////////////////////////////////
@@ -1120,8 +1228,7 @@ const catalog = (function() {
                             }
                         });
                     } else if (pricePattern.test(req.apiUrl)) {
-                        // TODO: Check if extra validation if needed
-                        callback(null)
+                        validateOfferingPrice(req, callback);
                     } else {
                         if (tmfUtils.isOwner(req, previousBody)) {
                             // The related party field is sorted, since the order is not important
