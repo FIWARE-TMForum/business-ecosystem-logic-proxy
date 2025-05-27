@@ -950,5 +950,171 @@ describe('VC Strategy', () => {
                 ]
             }])
       })
+
+      it ('should build a VC with a LEARCredentialMachine with attest included tmf power', () => {
+            const payload = {
+                "vc": {
+                  "@context": [
+                    "https://www.w3.org/ns/credentials/v2",
+                    "https://www.evidenceledger.eu/2022/credentials/machine/v1"
+                  ],
+                  "id": "8c7a6213-544d-450d-8e3d-b41fa9009198",
+                  "type": [
+                    "VerifiableCredential",
+                    "LEARCredentialMachine"
+                  ],
+                  "issuer": {
+                    "id": "did:elsi:VATES-B00000000"
+                  },
+                  "issuanceDate": "2024-01-01T08:00:00.000000000Z",
+                  "validFrom": "2024-01-01T08:00:00.000000000Z",
+                  "validUntil": "2025-12-31T23:59:00.000000000Z",
+                  "expirationDate": "2025-12-31T23:59:00.000000000Z",
+                  "credentialSubject": {
+                    "mandate": {
+                      "id": "7bf55d2e-5247-4714-91d1-8e2f8cb730d1",
+                      "life_span": {
+                        "startDateTime": "2024-01-01T08:00:00.000000000Z",
+                        "endDateTime": "2024-12-31T23:59:00.000000000Z"
+                      },
+                      "mandatee": {
+                        "id": "did:key:zDnaezLhSFWRZ1zrYQRwLxV8n00000000000000",
+                        "serviceName": "IssuerAPI",
+                        "serviceType": "API Server",
+                        "version": "v1.0",
+                        "domain": "https://issuer.dome-marketplace.org",
+                        "ipAddress": "127.0.0.1",
+                        "description": "API to issue Verifiable Credentials",
+                        "contact": {
+                          "email": "domesupport@in2.es",
+                          "phone": "+34999999999"
+                        }
+                      },
+                      "mandator": {
+                        "commonName": "Tester",
+                        "country": "ES",
+                        "emailAddress": "test@test.es",
+                        "organization": "IN2, Ingeniería de la Información, S.L.",
+                        "organizationIdentifier": "VATES-B00000000",
+                        "serialNumber": "IDCES-00000000P"
+                      },
+                      "power": [
+                        {
+                          "id": "66f3f0e0-4a87-4dc7-bff5-8a54088167f0",
+                          "tmf_domain": "DOME",
+                          "tmf_function": "Certification",
+                          "tmf_action": [
+                            "Attest",
+                            "Upload"
+                          ]
+                        }
+                      ],
+                      "signer": {
+                        "commonName": "ZEUS OLIMPOS",
+                        "country": "EU",
+                        "emailAddress": "domesupport@in2.es",
+                        "organization": "OLIMPO",
+                        "organizationIdentifier": "VATEU-B99999999",
+                        "serialNumber": "IDCEU-99999999P"
+                      }
+                    }
+                  }
+                }
+            }
+
+            const credential = new VerifiableCredential(payload)
+            const profile = credential.getProfile()
+
+            expect(profile.organizations).toEqual([{
+                id: 'VATES-B00000000',
+                name: 'IN2, Ingeniería de la Información, S.L.',
+                roles: [
+                    { name: 'certifier', id: 'certifier' }
+                ]
+            }])
+      })
+
+      it ('should build a VC with a LEARCredentialMachine with attest included tmf cammel power', () => {
+            const payload = {
+                "vc": {
+                  "@context": [
+                    "https://www.w3.org/ns/credentials/v2",
+                    "https://www.evidenceledger.eu/2022/credentials/machine/v1"
+                  ],
+                  "id": "8c7a6213-544d-450d-8e3d-b41fa9009198",
+                  "type": [
+                    "VerifiableCredential",
+                    "LEARCredentialMachine"
+                  ],
+                  "issuer": {
+                    "id": "did:elsi:VATES-B00000000"
+                  },
+                  "issuanceDate": "2024-01-01T08:00:00.000000000Z",
+                  "validFrom": "2024-01-01T08:00:00.000000000Z",
+                  "validUntil": "2025-12-31T23:59:00.000000000Z",
+                  "expirationDate": "2025-12-31T23:59:00.000000000Z",
+                  "credentialSubject": {
+                    "mandate": {
+                      "id": "7bf55d2e-5247-4714-91d1-8e2f8cb730d1",
+                      "life_span": {
+                        "startDateTime": "2024-01-01T08:00:00.000000000Z",
+                        "endDateTime": "2024-12-31T23:59:00.000000000Z"
+                      },
+                      "mandatee": {
+                        "id": "did:key:zDnaezLhSFWRZ1zrYQRwLxV8n00000000000000",
+                        "serviceName": "IssuerAPI",
+                        "serviceType": "API Server",
+                        "version": "v1.0",
+                        "domain": "https://issuer.dome-marketplace.org",
+                        "ipAddress": "127.0.0.1",
+                        "description": "API to issue Verifiable Credentials",
+                        "contact": {
+                          "email": "domesupport@in2.es",
+                          "phone": "+34999999999"
+                        }
+                      },
+                      "mandator": {
+                        "commonName": "Tester",
+                        "country": "ES",
+                        "emailAddress": "test@test.es",
+                        "organization": "IN2, Ingeniería de la Información, S.L.",
+                        "organizationIdentifier": "VATES-B00000000",
+                        "serialNumber": "IDCES-00000000P"
+                      },
+                      "power": [
+                        {
+                          "id": "66f3f0e0-4a87-4dc7-bff5-8a54088167f0",
+                          "tmfDomain": "DOME",
+                          "tmfFunction": "Certification",
+                          "tmfAction": [
+                            "Attest",
+                            "Upload"
+                          ]
+                        }
+                      ],
+                      "signer": {
+                        "commonName": "ZEUS OLIMPOS",
+                        "country": "EU",
+                        "emailAddress": "domesupport@in2.es",
+                        "organization": "OLIMPO",
+                        "organizationIdentifier": "VATEU-B99999999",
+                        "serialNumber": "IDCEU-99999999P"
+                      }
+                    }
+                  }
+                }
+            }
+
+            const credential = new VerifiableCredential(payload)
+            const profile = credential.getProfile()
+
+            expect(profile.organizations).toEqual([{
+                id: 'VATES-B00000000',
+                name: 'IN2, Ingeniería de la Información, S.L.',
+                roles: [
+                    { name: 'certifier', id: 'certifier' }
+                ]
+            }])
+      })
     })
 });
