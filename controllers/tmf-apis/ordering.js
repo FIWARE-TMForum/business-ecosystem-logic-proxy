@@ -364,6 +364,7 @@ const ordering = (function() {
             previousOrdering.productOrderItem.forEach((item) => {
                 if (item.state && itemStatus[item.state] === undefined){
                    invalidState = true;
+                   return;
                 }
                 else if (item.state) {
                     itemStatus[item.state] += 1;
