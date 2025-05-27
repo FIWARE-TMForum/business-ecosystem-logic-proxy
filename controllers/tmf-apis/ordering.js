@@ -381,6 +381,11 @@ const ordering = (function() {
                 state = 'inProgress';
             } else if (itemStatus.acknowledged > 0) {
                 state = 'acknowledged';
+            } else {
+                return callback({
+                    status: 400,
+                    message: 'Bad item state' // In case the items state are not the expected. (e.g. an item status with rejected that it does not exist)
+                });
             }
 
             finalBody['state'] = state;
