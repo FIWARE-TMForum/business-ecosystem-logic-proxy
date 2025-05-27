@@ -51,6 +51,7 @@ const catalog = (function() {
     const catalogOfferingsPattern = new RegExp('/catalog/[^/]+/productOffering/?');
     const catalogOfferingPattern = new RegExp('/catalog/[^/]+/productOffering/[^/]+/?');
     const offeringPattern = new RegExp('/productOffering/[^/]+/?$');
+    const pricePattern = new RegExp('/productOfferingPrice/?$');
     const productsPattern = new RegExp('/productSpecification/?$');
     const productPattern = new RegExp('/productSpecification/[^/]+/?$');
     const categoryPattern = new RegExp('/category/[^/]+/?$');
@@ -1050,12 +1051,43 @@ const catalog = (function() {
                         createHandler(req, body, callback);
                     }
                 });
-            } else {
+            }
+            else if(pricePattern.test(req.apiUrl)){
+                validateOfferingPrice(req, callback);
+            }
+            else {
                 callback(null);
                 //createHandler(req, body, callback);
             }
         }
     };
+
+    const validateOfferingPrice = function (req, callback){
+        const offerPrice = JSON.parse(req.body)
+        // check if it is a valid percentage
+        if (offerPrice && offerPrice.priceType && offerPrice.priceType.toLowerCase() === 'discount' && !tmfUtils.isValidPercentage(offerPrice.percentage)) {
+            return callback({
+                status: 422,
+                message: 'Percentage must be either a number or a string representing a number between 0 and 100'
+            })
+        }
+
+        if (offerPrice && offerPrice.unitOfMeasure && !tmfUtils.isValidAmount(offerPrice.unitOfMeasure.amount)) {
+            return callback({
+                status: 422,
+                message: 'Amount must be either a number or a string representing a number greater than 0'
+            })
+        }
+
+        if (offerPrice && offerPrice.price && !tmfUtils.isValidPrice(offerPrice.price.value, offerPrice.price.unit)) {
+            return callback({
+                status: 422,
+                message: 'Price must be either a number or a string representing a number between 0 and 1.000.000.000 and it must follow the ISO 4217 standard'
+            })
+        }
+
+        callback(null)
+    }
 
     //////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////////// UPDATE ///////////////////////////////////////////
@@ -1196,8 +1228,7 @@ const catalog = (function() {
                             }
                         });
                     } else if (pricePattern.test(req.apiUrl)) {
-                        // TODO: Check if extra validation if needed
-                        callback(null)
+                        validateOfferingPrice(req, callback);
                     } else {
                         if (tmfUtils.isOwner(req, previousBody)) {
                             // The related party field is sorted, since the order is not important

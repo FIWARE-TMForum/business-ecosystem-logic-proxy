@@ -1456,6 +1456,108 @@ describe('Catalog API', function() {
         });
     });
 
+    describe('offering price creation', function() {
+
+        const validateOfferingPrice = function(isValidPercentage, isValidAmount, isValidPrice,  offeringPrice, ErrorStatus, ErrorMsg, done) {
+            tmfUtils = {
+                isValidPercentage: ()=> isValidPercentage,
+                isValidAmount: ()=> isValidAmount,
+                isValidPrice: ()=> isValidPrice
+            }
+            var catalogApi = getCatalogApi({}, tmfUtils, {isOwner: validateLoggedOk});
+            const req = {
+                method: 'POST',
+                apiUrl: '/catalog/productOfferingPrice',
+                user: {
+                    id: 'test',
+                    roles: [{ name: config.oauth2.roles.seller }]
+                },
+                body: JSON.stringify(offeringPrice)
+            };
+            catalogApi.checkPermissions(req, function(err) {
+                if (!ErrorStatus && !ErrorMsg) {
+                    expect(err).toBe(null);
+                } else {
+                    expect(err.status).toBe(ErrorStatus);
+                    expect(err.message).toBe(ErrorMsg);
+                }
+                done();
+            });
+        }
+
+        it('should allow to create offering price with valid values', function(done) {
+            const offeringPrice = {
+                name: 'test',
+                description: 'test',
+                percentage: 10,
+                priceType: 'discount',
+                unitOfMeasure:{
+                    amount: 120,
+                    unit: 'days'
+                },
+                price: {
+                    unit: 'EUR',
+                    value: 120
+                },
+                validFor: {
+                    startDateTime: '2017-10-05T10:00:00'
+                }
+            };
+
+            validateOfferingPrice(true, true, true, offeringPrice, null, null, done);
+
+        });
+
+        it('should not allow to create offering price with invalid percentage', function(done) {
+            const offeringPrice = {
+                name: 'test',
+                description: 'test',
+                priceType: 'discount',
+                validFor: {
+                    startDateTime: '2017-10-05T10:00:00'
+                }
+            };
+
+            validateOfferingPrice(false, true, true, offeringPrice, 422, 'Percentage must be either a number or a string representing a number between 0 and 100', done);
+
+        });
+
+        it('should not allow to create offering price with invalid amount', function(done) {
+            const offeringPrice = {
+                name: 'test',
+                description: 'test',
+                unitOfMeasure:{
+                    amount: 120,
+                    unit: 'days'
+                },
+                validFor: {
+                    startDateTime: '2017-10-05T10:00:00'
+                }
+            };
+
+            validateOfferingPrice(true, false, true, offeringPrice, 422, 'Amount must be either a number or a string representing a number greater than 0', done);
+
+        });
+
+        it('should not allow to create offering price with invalid price', function(done) {
+            const offeringPrice = {
+                name: 'test',
+                description: 'test',
+                price: {
+                    unit: 'EUR',
+                    value: 120
+                },
+                validFor: {
+                    startDateTime: '2017-10-05T10:00:00'
+                }
+            };
+
+            validateOfferingPrice(true, true, false, offeringPrice, 422, 'Price must be either a number or a string representing a number between 0 and 1.000.000.000 and it must follow the ISO 4217 standard', done);
+
+        });
+
+    });
+
     var testCreateCategory = function(
         admin,
         category,
@@ -1827,6 +1929,131 @@ describe('Catalog API', function() {
     /// ///////////////////////////////////////////////////////////////////////////////////////////
     /// //////////////////////////////////// UPDATE & DELETE //////////////////////////////////////
     /// ///////////////////////////////////////////////////////////////////////////////////////////
+
+    // OFFERING PRICE
+    describe('Update offering price', function() {
+        const protocol = config.endpoints.catalog.appSsl ? 'https' : 'http';
+        const serverUrl = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
+        const testUpdateOfferingPrice = function(
+            offeringPrice,
+            nockResponse,
+            isValidPercentage,
+            isValidAmount,
+            isValidPrice,
+            expectedErrorStatus,
+            expectedErrorMsg,
+            done
+        ) {
+            const updateBody = jasmine.createSpy();
+            var utils = {
+                validateLoggedIn: validateLoggedOk,
+                updateBody: updateBody
+            };
+
+            var tmfUtils = {
+                isOwner: isOwnerTrue,
+                isValidPercentage: () => isValidPercentage,
+                isValidAmount: () => isValidAmount,
+                isValidPrice: () => isValidPrice
+            };
+
+            var catalogApi = getCatalogApi({}, tmfUtils, utils);
+
+            const req = {
+                method: 'PATCH',
+                apiUrl: '/catalog/productOfferingPrice/1',
+                user: {
+                    id: 'test',
+                    roles: [{ name: config.oauth2.roles.seller }]
+                },
+                body: JSON.stringify(offeringPrice)
+            };
+
+            catalogApi.checkPermissions(req, function(err) {
+                if (!expectedErrorStatus && !expectedErrorMsg) {
+                    expect(err).toBe(null);
+                } else {
+                    expect(err.status).toBe(expectedErrorStatus);
+                    expect(err.message).toBe(expectedErrorMsg);
+                }
+                if(nockResponse){
+                    // verify nock url has been requested
+                    expect(nock.isDone()).toBe(true);
+                }
+                done()
+            }
+            );
+        };
+        it('should allow to update owned offering price', function(done) {
+            const offeringPrice = {
+                owner: true,
+                lifecycleStatus: 'active',
+            };
+            const nockMock = nock(serverUrl).get('/productOfferingPrice/1').reply(200, {
+                id: '1'
+            });
+
+            testUpdateOfferingPrice(offeringPrice, nockMock, true, true, true, null, null, done);
+        });
+
+        it('should not allow to update offering price when offering price cannot be retrieved', function(done) {
+            const offeringPrice = {
+                owner: true,
+                lifecycleStatus: 'active',
+            };
+            const nockMock = nock(serverUrl).get('/productOfferingPrice/1').reply(500, {
+                id: '1'
+            });
+
+            testUpdateOfferingPrice(offeringPrice, nockMock, true, true, true, 500, FAILED_TO_RETRIEVE, done);
+        });
+
+        it('should now allow to update offering price when percentage is invalid', function(done) {
+            const offeringPrice = {
+                owner: true,
+                lifecycleStatus: 'active',
+                priceType: 'discount',
+                percentage: 200
+            };
+            const nockMock = nock(serverUrl).get('/productOfferingPrice/1').reply(200, {
+                id: '1'
+            });
+
+            testUpdateOfferingPrice(offeringPrice, nockMock, false, true, true, 422, 'Percentage must be either a number or a string representing a number between 0 and 100', done);
+        });
+
+        it('should now allow to update offering price when amount is invalid', function(done) {
+            const offeringPrice = {
+                owner: true,
+                lifecycleStatus: 'active',
+                unitOfMeasure: {
+                    amount: 'invalid',
+                    unit: 'days'
+                }
+            };
+            const nockMock = nock(serverUrl).get('/productOfferingPrice/1').reply(200, {
+                id: '1'
+            });
+
+            testUpdateOfferingPrice(offeringPrice, nockMock, true, false, true, 422, 'Amount must be either a number or a string representing a number greater than 0', done);
+        });
+
+        it('should now allow to update offering price when price is invalid', function(done) {
+            const offeringPrice = {
+                owner: true,
+                lifecycleStatus: 'active',
+                price: {
+                    unit: 'EUR',
+                    value: 'invalid'
+                }
+            };
+            const nockMock = nock(serverUrl).get('/productOfferingPrice/1').reply(200, {
+                id: '1'
+            });
+
+            testUpdateOfferingPrice(offeringPrice, nockMock, true, true, false, 422, 'Price must be either a number or a string representing a number between 0 and 1.000.000.000 and it must follow the ISO 4217 standard', done);
+        });
+    });
 
     // ANY ASSET
 
