@@ -352,7 +352,7 @@ const ordering = (function() {
             // Calculate the new state of the product order
             let state = null;
             let itemStatus = {
-                'unckecked': 0,
+                'unchecked': 0,
                 'acknowledged': 0,
                 'cancelled': 0,
                 'completed': 0,
@@ -360,16 +360,26 @@ const ordering = (function() {
                 'pending': 0,
                 'failed': 0
             }
+            let invalidState = false;
             previousOrdering.productOrderItem.forEach((item) => {
-                console.log(item.state)
-                if (!!item.state) {
+                if (item.state && itemStatus[item.state] === undefined){
+                   invalidState = true;
+                   return;
+                }
+                else if (item.state) {
                     itemStatus[item.state] += 1;
                 } else {
-                    itemStatus['unckecked'] += 1;
+                    itemStatus['unchecked'] += 1;
                 }
             })
 
-            if (itemStatus.completed === previousOrdering.productOrderItem.length) {
+            if (invalidState) {
+                return callback({
+                    status: 400,
+                    message: 'Bad item state'
+                });
+            }
+            else if (itemStatus.completed === previousOrdering.productOrderItem.length) {
                 state = 'completed';
             } else if (itemStatus.cancelled === previousOrdering.productOrderItem.length) {
                 state = 'cancelled';

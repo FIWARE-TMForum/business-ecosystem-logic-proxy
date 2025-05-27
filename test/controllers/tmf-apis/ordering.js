@@ -1159,6 +1159,21 @@ describe('Ordering API', function() {
                 );
             });
 
+            it('should fail when order item states are incorrect', function(done) {
+                const previousOrderItems = [{ id: 1, state: 'rejected' }];
+                testUpdate(
+                    [false, true],
+                    { productOrderItem: [] },
+                    'inProgress',
+                    previousOrderItems,
+                    [],
+                    null,
+                    { status: 400, message: 'Bad item state'},
+                    null,
+                    done
+                );
+            });
+
             it('should fail when the seller tries to edit a non existing item', function(done) {
                 const previousOrderItems = [{ id: 1, state: 'InProgress' }];
                 const updatedOrderings = {
