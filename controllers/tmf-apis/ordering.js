@@ -384,7 +384,7 @@ const ordering = (function() {
             } else {
                 return callback({
                     status: 400,
-                    message: 'Bad item state' // In case the items state are not the expected. (e.g. an item status with rejected that it does not exist)
+                    message: 'Bad item state' // In case the item states are not the expected. (e.g. an item status with rejected that it does not exist)
                 });
             }
 
