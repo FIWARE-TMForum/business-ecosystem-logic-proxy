@@ -636,6 +636,37 @@ describe('TMF Utils', function() {
 
         })
     })
+    
+    describe('Methods: hasValidPhoneNumber', function(){
+        it('should return true if telephone number is correct', function(){
+            const tmfUtils = getTmfUtils();
+            const tel = '+34630000000'
+            const result = tmfUtils.isValidPhoneNumber(tel)
+            expect(result).toBe(true)
+        })
+
+        it('should return false if telephone number is incorrect in length', function(){
+            const tmfUtils = getTmfUtils();
+            const tel = '+346300000001'
+            const result = tmfUtils.isValidPhoneNumber(tel)
+            expect(result).toBe(false)
+        })
+
+        it('should return false if telephone number is incorrect in format', function(){
+            const tmfUtils = getTmfUtils();
+            const tel = '+34-630000000'
+            const result = tmfUtils.isValidPhoneNumber(tel)
+            expect(result).toBe(false)
+        })
+
+        it('should return false if telephone is undefined', function(){
+            const tmfUtils = getTmfUtils();
+            const tel = undefined
+            const result = tmfUtils.isValidPhoneNumber(tel)
+            expect(result).toBe(false)
+        })
+
+    });
 
     describe('Methods: validateOfferingPrice', function(){
 

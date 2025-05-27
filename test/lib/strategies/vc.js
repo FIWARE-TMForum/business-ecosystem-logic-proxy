@@ -868,7 +868,7 @@ describe('VC Strategy', () => {
                 ]
             }])
       })
-      fit ('should build a VC with a LEARCredentialMachine with attest included', () => {
+      it ('should build a VC with a LEARCredentialMachine with attest included', () => {
             const payload = {
                 "vc": {
                   "@context": [
