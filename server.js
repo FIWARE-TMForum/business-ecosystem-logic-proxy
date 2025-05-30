@@ -370,7 +370,7 @@ app.all(config.logOutPath, function(req, res) {
 });
 
 // Config endpoint
-const fetchData =async () => { 
+const fetchData = async () => { 
     result = await indexes.search('defaultcatalog', {})
     return (result.length === 0 || result.length > 1)? '' : result[0].default_id
 }
@@ -398,7 +398,10 @@ app.post('/feedback', async (req,res) => {
 })
 
 config.defaultId = await fetchData()
-app.get('/config', (_, res) => {
+app.get('/config', async (_, res) => {
+    // Reload the defaultId if it has been during the operation
+    config.defaultId = await fetchData()
+
     res.send({
         siop: {
             enabled: config.siop.enabled,
@@ -631,6 +634,10 @@ app.post('/billing/order', authMiddleware.headerAuthentication, authMiddleware.c
 app.patch('/admin/uploadcertificate/:specId', authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, (req, res) => {
     req.apiUrl = url.parse(req.url).path.substring(config.proxyPrefix.length);
     admin.uploadCertificate(req, res)
+})
+
+app.post('/admin/defaultcatalog', authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, (req, res) => {
+    admin.updateDefaultCatalog(req, res)
 })
 
 const adminRegex = new RegExp(`^\/admin\/(.*)\/?$`)
