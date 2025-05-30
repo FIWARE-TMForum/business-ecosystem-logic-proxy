@@ -21,6 +21,7 @@ const axios = require('axios')
 const config = require('./../config')
 const utils = require('./../lib/utils')
 const uuidv4 = require('uuid').v4
+const { indexes } = require('./../lib/indexes')
 
 const logger = require('./../lib/logger').logger.getLogger('Admin')
 
@@ -171,9 +172,51 @@ function admin() {
         redirRequest(options, req, res)
     }
 
+    const updateDefaultCatalog = async function (req, res) {
+        // Check if the user is an admin
+        if (!utils.isAdmin(req.user)) {
+            res.status(403)
+            res.json({ error: "You are not authorized to access admin endpoint" })
+            return
+        }
+
+        // Get the new ID from the request
+        let catalogId;
+        try {
+            const reqBody = JSON.parse(req.body)
+            catalogId = reqBody.catalogId
+        } catch (e) {
+            res.status(400)
+            res.json({ error: 'Invalid body' })
+            return
+        }
+
+        // Update the default catalog
+        try {
+            const result = await indexes.search('defaultcatalog', {})
+            const mongoFb = {
+                default_id: catalogId
+            }
+            if (result.length > 0) {
+                // Update the existing document
+                await indexes.updateDocument('defaultcatalog', result[0].id, mongoFb)
+            } else {
+                // Create a new document
+                await indexes.indexDocument('defaultcatalog', uuidv4(), mongoFb)
+            }
+        } catch (e) {
+            res.status(500)
+            res.json({ error: 'Error updating default catalog: ' + e.message })
+            return
+        }
+
+        res.status(200).end()
+    }
+
     return {
         checkPermissions: checkPermissions,
-        uploadCertificate: uploadCertificate
+        uploadCertificate: uploadCertificate,
+        updateDefaultCatalog: updateDefaultCatalog
     }
 }
 
