@@ -440,7 +440,9 @@ describe('Catalog API', function() {
             var storeClient ={
                 storeClient: {
                     validateOffering: (!cloned)?function(offeringInfo, userInfo, callback) {
-                        expect(offeringInfo).toEqual(body);
+                        const expectedBody = { ...body, category: [ { id: 'urn:test_category' } ] }
+
+                        expect(offeringInfo).toEqual(expectedBody);
                         expect(userInfo).toEqual(user);
                         
                         callback(storeError);
@@ -476,11 +478,12 @@ describe('Catalog API', function() {
 
         var mockCatalogService = function(catalogRequestInfo, defaultErrorMessage) {
             // The mock server that will handle the request when the catalog is requested
-            var bodyGetCatalogOk = { lifecycleStatus: catalogRequestInfo.lifecycleStatus };
+            var bodyGetCatalogOk = { lifecycleStatus: catalogRequestInfo.lifecycleStatus, category:[{id: 'urn:test_category'}] };
             var bodyGetCatalog = catalogRequestInfo.requestStatus === 200 ? bodyGetCatalogOk : defaultErrorMessage;
 
             nock(serverUrl)
                 .get(catalogPath)
+                .times(2)
                 .reply(catalogRequestInfo.requestStatus, bodyGetCatalog);
         };
 
@@ -830,7 +833,7 @@ describe('Catalog API', function() {
                 null,
                 offeringBody,
                 function(offeringInfo, userInfo, callback) {
-                        expect(offeringInfo.category.length).toEqual(2);
+                        expect(offeringInfo.category.length).toEqual(3);
                         expect(offeringInfo.category[0].id).not.toEqual(offeringInfo.category[1])
                         
                         callback(null);
@@ -1774,6 +1777,7 @@ describe('Catalog API', function() {
         var protocol = config.endpoints.catalog.appSsl ? 'https' : 'http';
         var url = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
         var catalogPath = '/catalog';
+        var categoryPath = '/category';
 
         // Call the method
         var req = {
@@ -1785,6 +1789,16 @@ describe('Catalog API', function() {
             },
             body: JSON.stringify(catalog)
         };
+
+        // Mock call for creating category
+        var test_category = {
+            id: 'urn:test_category',
+            href: 'urn:test_category',
+            name: 'test_category'
+        }
+        nock(url)
+            .post(categoryPath)
+            .reply(201, test_category)
 
         // Mock server used by the proxy to check if there is another catalog with the same name
         if (catalogRequest) {
@@ -1802,9 +1816,8 @@ describe('Catalog API', function() {
                     expCat.validFor = {
                         startDateTime: nowStr
                     };
+                    expCat.category = [test_category]
                     expect(utils.updateBody).toHaveBeenCalledWith(req, expCat);
-                } else {
-                    expect(utils.updateBody).not.toHaveBeenCalled();
                 }
             } else {
                 expect(err.status).toBe(errorStatus);

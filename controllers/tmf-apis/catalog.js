@@ -59,6 +59,8 @@ const catalog = (function() {
     const catalogsPattern = new RegExp('/catalog/?$');
 
     const retrieveAsset = function(assetPath, callback) {
+        console.log('Retrieving asset from path: ' + assetPath)
+
         const uri = utils.getAPIURL(
             config.endpoints.catalog.appSsl,
             config.endpoints.catalog.host,
@@ -291,9 +293,33 @@ const catalog = (function() {
         });
     };
 
-    const validateOffering = function(req, offeringPath, previousBody, newBody, callback) {
+    const attachCatalogCategory = function(req, offeringPath, offeringBody, callback) {
+        var catalogPath = catalogPathFromOfferingUrl(offeringPath);
 
-        if(newBody && newBody.name!==null && newBody.name!==undefined){ // newBody.name === '' should enter here
+        retrieveAsset(catalogPath, function(err, result) {
+            if (err) {
+                console.log(err)
+                callback({
+                    status: 500,
+                    message: 'The catalog attached to the offering cannot be read'
+                });
+            } else {
+                const catalog = result.body;
+                if (catalog.category && catalog.category.length > 0) {
+                    if (offeringBody.category) {
+                        offeringBody.category.push(catalog.category[0])
+                    } else {
+                        offeringBody.category = [catalog.category[0]];
+                    }
+                    utils.updateBody(req, offeringBody);
+                }
+                callback(null);
+            }
+        })
+    }
+
+    const validateOffering = function(req, offeringPath, previousBody, newBody, callback) {
+        if(newBody && newBody.name !== null && newBody.name !== undefined){ // newBody.name === '' should enter here
             const errorMessage = tmfUtils.validateNameField(newBody.name, 'Product offering');
             if (errorMessage) {
                 return callback({
@@ -925,10 +951,35 @@ const catalog = (function() {
         });
     };
 
+    const createCatalogCategories = function(req, catalogBody, callback) {
+        logger.info('Attaching a category to the new catalog');
+        createAsset('/category', {isRoot: true, name: catalogBody.name, lifecycleStatus: 'Launched'}, function(err, result) {
+            if (err){
+                logger.error('Error creating the associated category');
+                callback({
+                    status: 500,
+                    message: 'Error creating the associated category'
+                })
+            } else {
+                logger.info('Updating the created catalog');
+                const category = result.body
+                catalogBody.category = [{
+                    id: category.id,
+                    href: category.href,
+                    name: category.name
+                }]
+                console.log(result)
+                utils.updateBody(req, catalogBody);
+                callback(null)
+            }
+        })
+    }
+
     const validateCatalog = function(req, prevCatalog, catalog, callback) {
-        if(catalog && catalog.name!==null && catalog.name!==undefined){ // catalog.name === '' should enter here
+        if(catalog && catalog.name !== null && catalog.name !== undefined){ // catalog.name === '' should enter here
             const errorMessage = tmfUtils.validateNameField(catalog.name, 'Catalog');
             if (errorMessage) {
+                logger.error('Invalid catalog name');
                 return callback({
                     status: 422,
                     message: errorMessage
@@ -1011,20 +1062,35 @@ const catalog = (function() {
             }
 
             if (offeringsPattern.test(req.apiUrl)) {
+                logger.info('Validating offering creation');
                 validateOffering(req, req.apiUrl, null, body, function(err) {
                     if (err) {
                         callback(err);
                     } else {
-                        storeClient.validateOffering(body, req.user, function(err) {
-                            if (err) {
-                                callback(err);
-                            } else {
-                                // The current implementation of the APIs does not support the
-                                // catalog ID in offering URL
-                                req.apiUrl = '/catalog/productOffering'
-                                callback(null);
-                            }
-                        });
+                        const storeCall = () => {
+                            storeClient.validateOffering(body, req.user, function(err) {
+                                if (err) {
+                                    callback(err);
+                                } else {
+                                    // The current implementation of the APIs does not support the
+                                    // catalog ID in offering URL
+                                    req.apiUrl = '/catalog/productOffering'
+                                    callback(null);
+                                }
+                            });
+                        }
+
+                        if (catalogOfferingsPattern.test(req.apiUrl)) {
+                            logger.info('Validating offering creation using a catalog ID URL');
+                            attachCatalogCategory(req, req.apiUrl, body, (err) => {
+                                if (err) {
+                                    return callback(err);
+                                }
+                                storeCall();
+                            })
+                        } else {
+                            storeCall();
+                        }
                     }
                 });
             } else if (productsPattern.test(req.apiUrl)) {
@@ -1048,7 +1114,12 @@ const catalog = (function() {
                     if (result) {
                         callback(result);
                     } else {
-                        createHandler(req, body, callback);
+                        createHandler(req, body, (err) => {
+                            if (err) {
+                                return callback(err);
+                            }
+                            createCatalogCategories(req, body, callback)
+                        });
                     }
                 });
             }
@@ -1559,30 +1630,6 @@ const catalog = (function() {
                 storeClient.attachUpgradedProduct,
                 callback
             );
-        } else if (req.method == 'POST' && catalogsPattern.test(req.apiUrl)) {
-            body = req.body;
-
-            createAsset('/category', {isRoot: true, name: body.name, lifecycleStatus: 'Launched'}, function(err, result){
-                if (err){
-                    callback({
-                        status: 500,
-                        message: 'Error creating the associated category'
-                    })
-                } else{
-                    const category = result.body
-                    console.log(result)
-                    updateAsset(`/catalog/${body.id}`, {category: [{id: category.id, href: category.href, name: category.name}]},function(err, result){
-                        if (err){
-                            callback({
-                                status: 500,
-                                message: 'Error adding the category to created catalog'
-                            })
-                        } else{
-                            callback(null)
-                        }
-                    })
-                }
-            })
         } else {
             callback(null)
         }
