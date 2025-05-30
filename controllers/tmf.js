@@ -168,12 +168,16 @@ function tmf() {
 		pathArray = req.path.split("/")
 		catalogId = getCatalogIdFromPath(pathArray)
 
+		logger["info"]("Handling a catalog request with ID: " + catalogId)
 		if (typeof catalogId != 'undefined') {
+			logger["info"]("Handling a catalog offer endpoint request")
+
 			catalogUrl = utils.getAPIProtocol('catalog') + '://' + utils.getAPIHost('catalog') + ':' + utils.getAPIPort('catalog') + '/catalog/' + catalogId
 
 			catalog.retrieveCatalog(catalogId, (err, response) => {
 				if (response.status == 200) {
 					const url = buildCatalogUrl(req, getCategoryIdsFromCatalog(response.body), pathArray)
+					logger["info"]("Making request with real endpoint: " + url)
 					proxyRequest(req, res, api, buildOptions(req, url))
 				} else {
 					logger["warn"]("was not able to retrieve the catalog " + catalogId)
@@ -182,6 +186,7 @@ function tmf() {
 			})
 		} else {
 			// This is a normal catalog api request
+			logger["info"]("Handling a simple catalog API request")
 			const api = 'catalog'
 			const url = utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + req.apiUrl.replace(`/${api}`, '');
 			proxyRequest(req, res, api, buildOptions(req, url))
