@@ -134,42 +134,49 @@ config.mongoDb = {
 config.endpoints = {
     management: {
         path: 'management',
+        apiPath: '',
         host: 'localhost',
         port: config.port,
         appSsl: config.https.enabled
     },
     catalog: {
         path: 'catalog',
+        apiPath: '',
         host: 'host.docker.internal',
         port: '8632',
         appSsl: false
     },
     resource: {
         path: 'resource',
+        apiPath: '',
         host: 'host.docker.internal',
         port: '8636',
         appSsl: false
     },
     service: {
         path: 'service',
+        apiPath: '',
         host: 'host.docker.internal',
         port: '8637',
         appSsl: false
     },
     ordering: {
         path: 'ordering',
+        apiPath: '',
         host: 'host.docker.internal',
         port: '8634',
         appSsl: false
     },
     inventory: {
         path: 'inventory',
+        apiPath: '',
         host: 'host.docker.internal',
         port: '8635',
         appSsl: false
     },
     serviceInventory: {
         path: 'serviceInventory',
+        apiPath: '',
         //host: 'charging.docker',
         host: 'bae-marketplace-biz-ecosystem-charging-backend.marketplace.svc.cluster.local',
         port: '8006',
@@ -177,6 +184,7 @@ config.endpoints = {
     },
     resourceInventory: {
         path: 'resourceInventory',
+        apiPath: '',
         //host: 'host.docker.internal',
         //port: '8641',
         host: 'tmforum-tm-forum-api-resource-inventory',
@@ -185,59 +193,69 @@ config.endpoints = {
     },
     charging: {
         path: 'charging',
+        apiPath: '',
         host: 'charging.docker',
         port: '8006',
         appSsl: false
     },
     rss: {
         path: 'rss',
+        apiPath: '',
         host: 'charging.docker',
         port: '8006',
         appSsl: false
     },
     party: {
         path: 'party',
+        apiPath: '',
         host: 'host.docker.internal',
         port: '8633',
         appSsl: false
     },
     account: {
         path: 'account',
+        apiPath: '',
         host: 'host.docker.internal',
         port: '8639',
         appSsl: false
     },
     customer: {
         path: 'customer',
+        apiPath: '',
         host: 'host.docker.internal',
         port: '8637',
         appSsl: false
     },
     usage:  {
         path: 'usage',
+        apiPath: '',
         host: 'host.docker.internal',
         port: '8638',
         appSsl: false
     },
     billing: {
         path: 'billing',
+        apiPath: '',
         host: 'host.docker.internal',
         port: '8640'
     },
     sla: {
         path: 'SLAManagement',
+        apiPath: '',
         host: 'localhost',
         port: config.port,
         appSsl: false
     },
     reputation: {
         path: 'REPManagement',
+        apiPath: '',
         host: 'localhost',
         port: config.port,
         appSsl: false
     },
     idp: {
         path: 'IDP',
+        apiPath: '',
         host: 'localhost',
         port: config.port,
         appSsl: false
