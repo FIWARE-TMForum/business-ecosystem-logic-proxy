@@ -68,7 +68,7 @@ function simulator() {
                 config.endpoints.catalog.appSsl,
                 config.endpoints.catalog.host,
                 config.endpoints.catalog.port,
-                `/productOffering/${offeringRef}`)
+                `${config.endpoints.catalog.apiPath}/productOffering/${offeringRef}`)
 
             let resp = await axios({
                 method: 'GET',
@@ -80,7 +80,7 @@ function simulator() {
                 config.endpoints.catalog.appSsl,
                 config.endpoints.catalog.host,
                 config.endpoints.catalog.port,
-                `/productSpecification/${prodRef}`)
+                `${config.endpoints.catalog.apiPath}/productSpecification/${prodRef}`)
 
             let prodResp = await axios({
                 method: 'GET',

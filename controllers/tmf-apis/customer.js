@@ -37,7 +37,7 @@ const customer = (function() {
             config.endpoints.customer.appSsl,
             config.endpoints.customer.host,
             config.endpoints.customer.port,
-            path
+            `${config.endpoints.customer.apiPath}${path}`
         );
     };
 
@@ -303,7 +303,7 @@ const customer = (function() {
             config.endpoints.billing.appSsl,
             config.endpoints.billing.host,
             config.endpoints.billing.port,
-            billingPath
+            `${config.endpoints.billing.apiPath}${billingPath}`
         );
 
         axios.get(billingUrl).then((response) => {

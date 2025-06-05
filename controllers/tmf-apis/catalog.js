@@ -65,7 +65,7 @@ const catalog = (function() {
             config.endpoints.catalog.appSsl,
             config.endpoints.catalog.host,
             config.endpoints.catalog.port,
-            assetPath
+            `${config.endpoints.catalog.apiPath}${assetPath}`
         );
 
         axios.get(uri).then((response) => {
@@ -88,7 +88,7 @@ const catalog = (function() {
             endpoint.appSsl,
             endpoint.host,
             endpoint.port,
-            specPath
+            `${endpoint.apiPath}${specPath}`
         );
         axios.get(uri).then((response) => {
             callback(null, {
@@ -140,7 +140,7 @@ const catalog = (function() {
             config.endpoints.catalog.appSsl,
             config.endpoints.catalog.host,
             config.endpoints.catalog.port,
-            assetPath
+            `${config.endpoints.catalog.apiPath}${assetPath}`
         );
         axios.post(uri, body).then((response) => {
             callback(null, {
@@ -160,7 +160,7 @@ const catalog = (function() {
             config.endpoints.catalog.appSsl,
             config.endpoints.catalog.host,
             config.endpoints.catalog.port,
-            assetPath
+            `${config.endpoints.catalog.apiPath}${assetPath}`
         );
 
         axios.patch(uri, body).then((response) => {

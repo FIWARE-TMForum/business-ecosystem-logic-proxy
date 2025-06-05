@@ -38,8 +38,6 @@ const ordering = (function() {
     //////////////////////////////////////////////////////////////////////////////////////////////
 
     const makeRequest = function(url, errMsg, callback) {
-        //console.log('------------------------------------------')
-        //console.log(url)
         axios.get(url).then((response) => {
 
             callback(null, response.data);
@@ -50,16 +48,6 @@ const ordering = (function() {
                 message: errMsg
             });
         })
-    };
-
-    var getBillingAccountUrl = function(billingAccount) {
-        var billingAccountPath = url.parse(billingAccount.href).pathname;
-        return utils.getAPIURL(
-            config.endpoints.billing.appSsl,
-            config.endpoints.billing.host,
-            config.endpoints.billing.port,
-            billingAccountPath
-        );
     };
 
     //////////////////////////////////////////////////////////////////////////////////////////////
@@ -81,7 +69,7 @@ const ordering = (function() {
             config.endpoints.catalog.appSsl,
             config.endpoints.catalog.host,
             config.endpoints.catalog.port,
-            `/productSpecification/${offering.productSpecification.id}`
+            `${config.endpoints.catalog.apiPath}/productSpecification/${offering.productSpecification.id}`
         );
 
         makeRequest(productUrl, errorMessageProduct, function(err, product) {
@@ -126,7 +114,7 @@ const ordering = (function() {
                         config.endpoints.catalog.appSsl,
                         config.endpoints.catalog.host,
                         config.endpoints.catalog.port,
-                        `/productOffering/${offering.bundledProductOffering[0].id}`
+                        `${config.endpoints.catalog.apiPath}/productOffering/${offering.bundledProductOffering[0].id}`
                     );
                     includeOfferingParty(offeringUrl, item, resolve, reject);
                 }
@@ -181,7 +169,7 @@ const ordering = (function() {
                 config.endpoints.catalog.appSsl,
                 config.endpoints.catalog.host,
                 config.endpoints.catalog.port,
-                `/productOffering/${item.productOffering.id}`
+                `${config.endpoints.catalog.apiPath}/productOffering/${item.productOffering.id}`
             );
 
             includeOfferingParty(offeringUrl, item, resolve, reject);
@@ -438,7 +426,7 @@ const ordering = (function() {
                 config.endpoints.ordering.appSsl,
                 config.endpoints.ordering.host,
                 config.endpoints.ordering.port,
-                path
+                `${config.endpoints.ordering.apiPath}${path}`
             );
 
             makeRequest(orderingUrl, 'The requested ordering cannot be retrieved', (err, previousOrdering) => {
