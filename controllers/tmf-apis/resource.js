@@ -42,7 +42,7 @@ const resource = (function (){
             config.endpoints.resource.appSsl,
             config.endpoints.resource.host,
             config.endpoints.resource.port,
-            resPath
+            `${config.endpoints.resource.apiPath}${resPath}`
         );
     };
 
@@ -127,7 +127,7 @@ const resource = (function (){
             endpoint.appSsl,
             endpoint.host,
             endpoint.port,
-            specPath
+            `${endpoint.apiPath}${specPath}`
         );
         axios.get(uri).then((response) => {
             callback(null, {

@@ -30,7 +30,7 @@ var createUrl = function createUrl(api, extra) {
 	if (api === 'DSProductCatalog') {
 		return (config.endpoints.catalog.appSsl == true ? 'https://' : 'http://') + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port + extra
 	}
-	return utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + extra;
+	return utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + utils.getAPIPath(api) + extra;
 };
 
 var genericRequest = function genericRequest(options, extra) {

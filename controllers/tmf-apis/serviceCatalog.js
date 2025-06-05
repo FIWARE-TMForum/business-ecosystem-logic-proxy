@@ -48,7 +48,7 @@ const serviceCatalog = (function() {
             config.endpoints.service.appSsl,
             config.endpoints.service.host,
             config.endpoints.service.port,
-            resPath
+            `${config.endpoints.service.apiPath}${resPath}`
         );
     };
 
@@ -174,7 +174,7 @@ const serviceCatalog = (function() {
             endpoint.appSsl,
             endpoint.host,
             endpoint.port,
-            specPath
+            `${endpoint.apiPath}${specPath}`
         );
         axios.get(uri).then((response) => {
             callback(null, {

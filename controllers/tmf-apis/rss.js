@@ -84,7 +84,7 @@ const rss = (function() {
                 config.endpoints.charging.appSsl,
                 config.endpoints.charging.host,
                 config.endpoints.charging.port,
-                '/charging/api/reportManagement/created'
+                `${config.endpoints.charging.apiPath}/charging/api/reportManagement/created`
             );
 
             body.callbackUrl = url;

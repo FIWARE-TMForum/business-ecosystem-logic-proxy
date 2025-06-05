@@ -157,9 +157,9 @@ function tmf() {
 			queryPart = buildQuery(null, categoryIds)
 		}
 		if (queryPart) {
-			return utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + getResourcePath(pathArray) + "?" + queryPart
+			return utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + utils.getAPIPath(api) + getResourcePath(pathArray) + "?" + queryPart
 		} else {
-			return utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + getResourcePath(pathArray)
+			return utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + + utils.getAPIPath(api) + getResourcePath(pathArray)
 		}
 	}
 
@@ -172,7 +172,7 @@ function tmf() {
 		if (typeof catalogId != 'undefined') {
 			logger["info"]("Handling a catalog offer endpoint request")
 
-			catalogUrl = utils.getAPIProtocol('catalog') + '://' + utils.getAPIHost('catalog') + ':' + utils.getAPIPort('catalog') + '/catalog/' + catalogId
+			catalogUrl = utils.getAPIProtocol('catalog') + '://' + utils.getAPIHost('catalog') + ':' + utils.getAPIPort('catalog') + utils.getAPIPath('catalog') + '/catalog/' + catalogId
 
 			catalog.retrieveCatalog(catalogId, (err, response) => {
 				if (response.status == 200) {
@@ -188,7 +188,7 @@ function tmf() {
 			// This is a normal catalog api request
 			logger["info"]("Handling a simple catalog API request")
 			const api = 'catalog'
-			const url = utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + req.apiUrl.replace(`/${api}`, '');
+			const url = utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + utils.getAPIPath(api) + req.apiUrl.replace(`/${api}`, '');
 			proxyRequest(req, res, api, buildOptions(req, url))
 		}
 	}
@@ -206,9 +206,9 @@ function tmf() {
 			handleCatalogRequests(req, res, api)
 		} else {
 			if (newApis.indexOf(api) >= 0) {
-				url = utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + req.apiUrl.replace(`/${api}`, '');
+				url = utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + utils.getAPIPath(api) + req.apiUrl.replace(`/${api}`, '');
 			} else {
-				url = utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + req.apiUrl;
+				url = utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + utils.getAPIPath(api) + req.apiUrl;
 			}
 			if (api == 'rss') {
 				url = url.replace('rss', 'charging')

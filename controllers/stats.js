@@ -52,13 +52,13 @@ function stats() {
 
     const loadStats = async function() {
         // Get the list of launched offering
-        const productBaseUrl = utils.getAPIProtocol('catalog') + '://' + utils.getAPIHost('catalog') + ':' + utils.getAPIPort('catalog') + '/productOffering?lifecycleStatus=Launched&fields=name'
+        const productBaseUrl = utils.getAPIProtocol('catalog') + '://' + utils.getAPIHost('catalog') + ':' + utils.getAPIPort('catalog') + utils.getAPIPath('catalog') + '/productOffering?lifecycleStatus=Launched&fields=name'
         const offers = await pageData(productBaseUrl, (off) => {
             return off.name
         })
 
         // Get the list of organizations
-        const partyBaseUrl = utils.getAPIProtocol('party') + '://' + utils.getAPIHost('party') + ':' + utils.getAPIPort('party') + '/organization?fields=tradingName'
+        const partyBaseUrl = utils.getAPIProtocol('party') + '://' + utils.getAPIHost('party') + ':' + utils.getAPIPort('party') + utils.getAPIPath('party') + '/organization?fields=tradingName'
         const parties = await pageData(partyBaseUrl, (part) => {
             return part.tradingName
         })

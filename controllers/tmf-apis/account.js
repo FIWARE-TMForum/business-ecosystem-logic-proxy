@@ -106,7 +106,7 @@ const account = (function() {
             config.endpoints.account.appSsl,
             config.endpoints.account.host,
             config.endpoints.account.port,
-            path
+            `${config.endpoints.account.apiPath}${path}`
         );
         axios.get(uri).then((response) => {
             if (!tmfUtils.isOwner(req, response.data)) {

@@ -90,7 +90,7 @@ function admin() {
         let productSpec;
 
         const specId = req.params.specId
-        const url = `${utils.getAPIProtocol('catalog')}://${utils.getAPIHost('catalog')}:${utils.getAPIPort('catalog')}/productSpecification/${specId}`
+        const url = `${utils.getAPIProtocol('catalog')}://${utils.getAPIHost('catalog')}:${utils.getAPIPort('catalog')}${utils.getAPIPath('catalog')}/productSpecification/${specId}`
 
         try {
             const options = {
@@ -144,7 +144,7 @@ function admin() {
         // If the user is an admin redirect the request
         // without extra validation
         const api = req.apiUrl.split('/')[2]
-        const url = utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + req.apiUrl.replace(`/admin/${api}`, '')
+        const url = utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + utils.getAPIPath(api) + req.apiUrl.replace(`/admin/${api}`, '')
 
         utils.attachUserHeaders(req.headers, req.user)
 
