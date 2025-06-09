@@ -169,7 +169,7 @@ const serviceCatalog = (function() {
 
     const getServiceSpecs = function (ref, fields, callback){
         const endpoint = config.endpoints.catalog
-        const specPath = `/serviceSpecification?serviceSpecification.id=${ref}&fields=${fields}`
+        const specPath = `/productSpecification?serviceSpecification.id=${ref}&fields=${fields}`
         const uri = utils.getAPIURL(
             endpoint.appSsl,
             endpoint.host,
@@ -204,8 +204,7 @@ const serviceCatalog = (function() {
         if (prevBody.lifecycleStatus && prevBody.lifecycleStatus.toLowerCase() !== 'retired' && 
             body.lifecycleStatus && body.lifecycleStatus.toLowerCase() === 'retired'){
 
-                getServiceSpecs(prevBody.id, 'lifecycleStatus', function (err, response){
-
+            getServiceSpecs(prevBody.id, 'lifecycleStatus', function (err, response){
                 if(err) {
                     callback(err)
                 } else {
@@ -228,8 +227,7 @@ const serviceCatalog = (function() {
                     }
                 }
             })
-        }
-        else{
+        } else {
             callback(null)
         }
     }

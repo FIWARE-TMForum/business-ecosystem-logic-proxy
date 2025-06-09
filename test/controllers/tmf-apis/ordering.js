@@ -286,9 +286,9 @@ describe('Ordering API', function() {
             const testValidOrdering = function(nOrderItems, isCustomer, customerRoleRequired, isBundle, done) {
                 const userName = 'example';
                 const billingAccountPath = '/billingAccount/7';
-                const productOfferingBundlePath = '/productOffering/2';
-                const productOfferingPath = '/productOffering/1';
-                const productSpecPath = '/productSpecification/2';
+                const productOfferingBundlePath = '/api/productOffering/2';
+                const productOfferingPath = '/api/productOffering/1';
+                const productSpecPath = '/api/productSpecification/2';
                 const ownerName = 'ownerUser';
 
                 const user = {
@@ -385,8 +385,8 @@ describe('Ordering API', function() {
             });
 
             it('should fail if the order does not include a billing account', (done) => {
-                const productOfferingPath = '/productOffering/1';
-                const productSpecPath = '/productSpecification/2';
+                const productOfferingPath = '/api/productOffering/1';
+                const productSpecPath = '/api/productSpecification/2';
                 const userName = 'example'
 
                 const user = {
@@ -428,8 +428,8 @@ describe('Ordering API', function() {
             })
 
             it('should fail if the product has not owners', function(done) {
-                const productOfferingPath = '/productOffering/1';
-                const productSpecPath = '/productSpecification/2';
+                const productOfferingPath = '/api/productOffering/1';
+                const productSpecPath = '/api/productSpecification/2';
                 const ownerName = 'example';
 
                 const user = {
@@ -472,7 +472,7 @@ describe('Ordering API', function() {
 
             it('should fail if the offering attached to the order cannot be retrieved', function(done) {
                 const SERVER = 'http://example.com';
-                const productOfferingPath = '/productOffering/1';
+                const productOfferingPath = '/api/productOffering/1';
 
                 const orderItemId = 1;
 
@@ -513,8 +513,8 @@ describe('Ordering API', function() {
 
             it('should fail if the product attached to the order cannot be retrieved', function(done) {
                 const SERVER = 'http://example.com';
-                const productOfferingPath = '/productOffering/1';
-                const productSpecPath = '/product/2';
+                const productOfferingPath = '/api/productOffering/1';
+                const productSpecPath = '/api/product/2';
 
                 const orderItemId = 1;
 
@@ -763,8 +763,8 @@ describe('Ordering API', function() {
 
             it('should fail when the customer is trying to acquire one of his offerings', function(done) {
                 const SERVER = 'http://example.com';
-                const productOfferingPath = '/productOffering/1';
-                const productSpecPath = '/productSpecification/2';
+                const productOfferingPath = '/api/productOffering/1';
+                const productSpecPath = '/api/productSpecification/2';
 
                 const user = {
                     partyId: 'example'
@@ -843,7 +843,7 @@ describe('Ordering API', function() {
             });
 
             it('should fail when the ordering cannot be retrieved', function(done) {
-                const productOfferingPath = '/productOrdering/ordering/7';
+                const productOfferingPath = '/api/productOrdering/ordering/7';
 
                 const orderingApi = getOrderingAPI({}, {}, {});
 
@@ -891,7 +891,7 @@ describe('Ordering API', function() {
 
                 const orderId = 7;
                 const productOrderPath = '/ordering/productOrder/7';
-                const productOrderBackendPath = '/productOrder/7';
+                const productOrderBackendPath = '/api/productOrder/7';
 
                 const tmfUtils = jasmine.createSpyObj('tmfUtils', ['hasPartyRole']);
                 tmfUtils.hasPartyRole.and.returnValues.apply(tmfUtils.hasPartyRole, hasRoleResponses);

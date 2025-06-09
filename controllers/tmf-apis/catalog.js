@@ -59,7 +59,9 @@ const catalog = (function() {
     const catalogsPattern = new RegExp('/catalog/?$');
 
     const retrieveAsset = function(assetPath, callback) {
-        console.log('Retrieving asset from path: ' + assetPath)
+        if (!assetPath.startsWith('/')) {
+            assetPath = `/${assetPath}`;
+        }
 
         const uri = utils.getAPIURL(
             config.endpoints.catalog.appSsl,
@@ -298,7 +300,6 @@ const catalog = (function() {
 
         retrieveAsset(catalogPath, function(err, result) {
             if (err) {
-                console.log(err)
                 callback({
                     status: 500,
                     message: 'The catalog attached to the offering cannot be read'
@@ -968,7 +969,6 @@ const catalog = (function() {
                     href: category.href,
                     name: category.name
                 }]
-                console.log(result)
                 utils.updateBody(req, catalogBody);
                 callback(null)
             }

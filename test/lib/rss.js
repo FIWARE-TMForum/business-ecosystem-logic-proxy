@@ -23,7 +23,7 @@ const proxyquire = require('proxyquire');
 const testUtils = require('../utils');
 
 describe('RSS Client', function() {
-    const MODELS_URL = '/charging/api/revenueSharing/models';
+    const MODELS_URL = '/api/revenueSharing/models';
 
     const config = testUtils.getDefaultConfig();
 

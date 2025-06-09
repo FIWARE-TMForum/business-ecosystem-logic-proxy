@@ -49,102 +49,119 @@ var defaultConfig = {
 	endpoints: {
 		account: {
 			path: 'account',
+			apiPath: '/api',
 			host: 'host.docker.internal',
 			port: '8639',
 			appSsl: false
 		},
 		management: {
 			path: 'management',
+			apiPath: '',
 			host: 'localhost',
 			port: 7496,
 			appSsl: false
 		},
 		catalog: {
 			path: 'catalog',
+			apiPath: '/api',
 			host: 'catalog.com',
 			port: 99,
 			appSsl: false
 		},
 		resource: {
 			path: 'resource',
+			apiPath: '/api',
 			host: 'resource.com',
 			port: '8636',
 			appSsl: false
 		},
 		service: {
 			path: 'service',
+			apiPath: '/api',
 			host: 'service.com',
 			port: '8637',
 			appSsl: false
 		},
 		ordering: {
 			path: 'ordering',
+			apiPath: '/api',
 			host: 'ordering.com',
 			port: 189,
 			appSsl: false
 		},
 		inventory: {
 			path: 'inventory',
+			apiPath: '/api',
 			host: 'inventory.com',
 			port: 475,
 			appSsl: false
 		},
 		serviceInventory: {
 			path: 'serviceInventory',
+			apiPath: '/api',
 			host: 'charging.docker',
 			port: '8006',
 			appSsl: false
 		},
 		resourceInventory: {
 			path: 'resourceInventory',
+			apiPath: '/api',
 			host: 'tmforum-tm-forum-api-resource-inventory',
 			port: '8080',
 			appSsl: false
 		},
 		charging: {
 			path: 'charging',
+			apiPath: '',
 			host: 'charging.com',
 			port: 35,
 			appSsl: false
 		},
 		rss: {
 			path: 'rss',
+			apiPath: '',
 			host: 'charging.com',
 			port: 35,
 			appSsl: false
 		},
 		party: {
 			path: 'party',
+			apiPath: '/api',
 			host: 'party.com',
 			port: 74,
 			appSsl: false
 		},
 		billing: {
 			path: 'billing',
+			apiPath: '/api',
 			host: 'billing.com',
 			port: 78,
 			appSsl: false
 		},
 		customer: {
 			path: 'customer',
+			apiPath: '/api',
 			host: 'customer.com',
 			port: 82,
 			appSsl: false
 		},
 		usage: {
 			path: 'usage',
+			apiPath: '/api',
 			host: 'usage.com',
 			port: 78,
 			appSsl: false
 		},
 		sla: {
 			path: 'SLAManagement',
+			apiPath: '',
 			host: 'localhost',
 			port: 80,
 			appSsl: false
 		},
 		reputation: {
 			path: 'REPManagement',
+			apiPath: '',
 			host: 'localhost',
 			port: 80,
 			appSsl: false
