@@ -21,7 +21,6 @@
 
 const proxyquire = require('proxyquire');
 const testUtils = require('../utils');
-const { catalog } = require('../../controllers/tmf-apis/catalog');
 
 describe('TMF Controller', function() {
     const INVALID_API_STATUS = 401;
@@ -92,6 +91,10 @@ describe('TMF Controller', function() {
                 return protocol;
             };
 
+            utils.getAPIPath = function() {
+                return '/api';
+            }
+
             const path = '/example/url?a=b&c=d';
 
             const req = {
@@ -107,7 +110,7 @@ describe('TMF Controller', function() {
             const res = jasmine.createSpyObj('res', ['status', 'json', 'setHeader']);
 
             const expectedOptions = {
-                url: protocol + '://' + utils.getAPIHost() + ':' + utils.getAPIPort() + path,
+                url: protocol + '://' + utils.getAPIHost() + ':' + utils.getAPIPort() + utils.getAPIPath() + path,
                 method: method,
                 headers: utils.proxiedRequestHeaders(),
                 data: req.body
@@ -245,6 +248,9 @@ describe('TMF Controller', function() {
             utils.getAPIProtocol = function() {
                 return protocol;
             };
+            utils.getAPIPath = function() {
+                return '/api';
+            }
 
             const method = 'GET';
 
@@ -294,7 +300,7 @@ describe('TMF Controller', function() {
             }
 
             const expectedOptions = {
-                url: protocol + '://' + utils.getAPIHost() + ':' + utils.getAPIPort() + expectPath,
+                url: protocol + '://' + utils.getAPIHost() + ':' + utils.getAPIPort() + utils.getAPIPath() + expectPath,
                 method: method,
                 data: req.body,
                 headers: utils.proxiedRequestHeaders()
@@ -481,7 +487,7 @@ describe('TMF Controller', function() {
 
                 expect(request.request).toHaveBeenCalledWith(
                     {
-                        url: 'http://' + utils.getAPIHost() + ':' + utils.getAPIPort(),
+                        url: 'http://' + utils.getAPIHost() + ':' + utils.getAPIPort() + utils.getAPIPath(),
                         method: 'POST',
                         headers: utils.proxiedRequestHeaders(),
                         data: reqBody

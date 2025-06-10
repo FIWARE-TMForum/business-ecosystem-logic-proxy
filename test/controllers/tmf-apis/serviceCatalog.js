@@ -272,7 +272,7 @@ describe('ServiceSpecification API', function() {
                 const checkOwnerMethod = jasmine.createSpy();
                 checkOwnerMethod.and.returnValue(isOwner);
 
-                nock(url).get(`${path}/urn:service-spec:1`).reply(200, prevBody)
+                nock(url).get(`/api${path}/urn:service-spec:1`).reply(200, prevBody)
 
                 const utils = {
                     validateLoggedIn: (req, callback) => {
@@ -331,7 +331,7 @@ describe('ServiceSpecification API', function() {
             })
 
             it('should allow to retire service specification', (done) => {
-                const prodSpecMock = nock(prodSpecUrl).get('/serviceSpecification')
+                const prodSpecMock = nock(prodSpecUrl).get('/api/productSpecification')
                 .query({'serviceSpecification.id':'urn:service-spec:1', fields:'lifecycleStatus'})
                 .reply(200, [{id: 'prod', lifecycleStatus: 'Retired'}])
                 testUpdateService(seller, 'urn:service-spec:1', {
@@ -382,7 +382,7 @@ describe('ServiceSpecification API', function() {
             })
 
             it('should raise 409 if service specs linked with the service spec are not retired previously', (done) => {
-                const prodSpecMock = nock(prodSpecUrl).get('/serviceSpecification')
+                const prodSpecMock = nock(prodSpecUrl).get('/api/productSpecification')
                 .query({'serviceSpecification.id':'urn:service-spec:1', fields:'lifecycleStatus'})
                 .reply(200, [{id: 'prod', lifecycleStatus: 'Active'}])
                 testUpdateService(seller, 'urn:service-spec:1', {

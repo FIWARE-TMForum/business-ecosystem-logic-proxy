@@ -222,7 +222,7 @@ describe('Catalog API', function() {
         config.endpoints.catalog.port;
 
     var mockBundles = function(bundles) {
-        var productPath = '/productSpecification/';
+        var productPath = '/api/productSpecification/';
 
         // Mock bundles
         var body = {
@@ -383,12 +383,12 @@ describe('Catalog API', function() {
     describe('Offering creation', function() {
         // Basic properties
         var userName = 'test';
-        var catalogPath = '/catalog/7';
-        var offeringPath = '/catalog'+catalogPath + '/productOffering';
+        var catalogPath = '/api/catalog/7';
+        var offeringPath = '/catalog/catalog/7/productOffering';
         var protocol = config.endpoints.catalog.appSsl ? 'https' : 'http';
         var serverUrl = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
-        var productPath = '/productSpecification/7';
-        var categoryPath = '/category';
+        var productPath = '/api/productSpecification/7';
+        var categoryPath = '/api/category';
 
         var user = {
             partyId: userName,
@@ -933,11 +933,11 @@ describe('Catalog API', function() {
                     offeringRequestInfo.requestStatus === 200 ? bodyGetOfferingOk : defaultErrorMessage;
 
                 nock(serverUrl)
-                    .get(`/productSpecification/${offeringRequestInfo.products[i]}`)
+                    .get(`/api/productSpecification/${offeringRequestInfo.products[i]}`)
                     .reply(offeringRequestInfo.productRequestStatus, bodyGetProduct);
 
                 nock(serverUrl)
-                    .get(`/productOffering/${offeringRequestInfo.hrefs[i]}`)
+                    .get(`/api/productOffering/${offeringRequestInfo.hrefs[i]}`)
                     .reply(offeringRequestInfo.requestStatus, bodyGetOffering);
             }
 
@@ -1310,19 +1310,19 @@ describe('Catalog API', function() {
             testCreateProduct(storeValidatorOk, 422, 'descr error', true, null, 'descr error', done);
         });
 
-        var testCreateBundle = function(bundles, errorStatus, errorMsg, done) {
-            var catalogApi = mockCatalogAPI(function(req, resource) {
+        const testCreateBundle = function(bundles, errorStatus, errorMsg, done) {
+            const catalogApi = mockCatalogAPI(function(req, resource) {
                 return !(resource.id === '3');
             }, storeValidatorOk);
 
-            var body = mockBundles(bundles);
-            var req = buildProductRequest(body);
+            const body = mockBundles(bundles);
+            const req = buildProductRequest(body);
 
             checkProductCreationResult(catalogApi, req, errorStatus, errorMsg, done);
         };
 
         it('should allow to create bundles when all products specs are single and owned by the user', function(done) {
-            var bundles = [
+            const bundles = [
                 {
                     id: '1',
                     status: 200,
@@ -1561,7 +1561,7 @@ describe('Catalog API', function() {
 
     });
 
-    var testCreateCategory = function(
+    const testCreateCategory = function(
         admin,
         category,
         categoriesRequest,
@@ -1570,25 +1570,26 @@ describe('Catalog API', function() {
         errorMsg,
         done
     ) {
-        var checkRoleMethod = jasmine.createSpy();
+        const checkRoleMethod = jasmine.createSpy();
         checkRoleMethod.and.returnValues(admin);
 
-        var utils = {
+        const utils = {
             validateLoggedIn: validateLoggedOk,
             hasRole: checkRoleMethod
         };
 
-        var catalogApi = getCatalogApi({}, {}, utils);
+        const catalogApi = getCatalogApi({}, {}, utils);
 
         // Basic properties
-        var userName = 'test';
-        var protocol = config.endpoints.catalog.appSsl ? 'https' : 'http';
-        var url = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
-        var catalogPath = '/category';
+        const userName = 'test';
+        const protocol = config.endpoints.catalog.appSsl ? 'https' : 'http';
+        const url = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
+        const apiPath = '/api';
+        const catalogPath = '/category';
 
         category.validFor = {};
         // Call the method
-        var req = {
+        const req = {
             method: 'POST',
             apiUrl: catalogPath,
             user: {
@@ -1601,14 +1602,14 @@ describe('Catalog API', function() {
         // Mock server used by the proxy to check if there are another category with the same properties
         if (categoriesRequest) {
             nock(url)
-                .get(catalogPath + categoriesRequest.query)
+                .get(apiPath + catalogPath + categoriesRequest.query)
                 .reply(categoriesRequest.status, categoriesRequest.body);
         }
 
         // Mock server used by the proxy to check if the parent category is valid
         if (parentCategoryRequest) {
             nock(url)
-                .get(catalogPath + '/' + category.parentId)
+                .get(apiPath + catalogPath + '/' + category.parentId)
                 .reply(parentCategoryRequest.status);
         }
 
@@ -1625,9 +1626,9 @@ describe('Catalog API', function() {
     };
 
     it('should allow to create category', function(callback) {
-        var categoryName = 'example';
+        const categoryName = 'example';
 
-        var categoriesRequest = {
+        const categoriesRequest = {
             query: '?lifecycleStatus=Launched&name=' + categoryName + '&isRoot=true',
             status: 200,
             body: []
@@ -1778,6 +1779,7 @@ describe('Catalog API', function() {
         var url = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
         var catalogPath = '/catalog';
         var categoryPath = '/category';
+        const apiPath = '/api';
 
         // Call the method
         var req = {
@@ -1797,13 +1799,13 @@ describe('Catalog API', function() {
             name: 'test_category'
         }
         nock(url)
-            .post(categoryPath)
+            .post(apiPath + categoryPath)
             .reply(201, test_category)
 
         // Mock server used by the proxy to check if there is another catalog with the same name
         if (catalogRequest) {
             nock(url)
-                .get(catalogPath + catalogRequest.query)
+                .get(apiPath + catalogPath + catalogRequest.query)
                 .reply(catalogRequest.status, catalogRequest.body);
         }
 
@@ -1829,9 +1831,9 @@ describe('Catalog API', function() {
     };
 
     it('should allow to create owned catalog', function(done) {
-        var catalogName = 'example';
+        const catalogName = 'example';
 
-        var catalogRequest = {
+        const catalogRequest = {
             query: '?name=' + catalogName,
             status: 200,
             body: []
@@ -2002,7 +2004,7 @@ describe('Catalog API', function() {
                 owner: true,
                 lifecycleStatus: 'active',
             };
-            const nockMock = nock(serverUrl).get('/productOfferingPrice/1').reply(200, {
+            const nockMock = nock(serverUrl).get('/api/productOfferingPrice/1').reply(200, {
                 id: '1'
             });
 
@@ -2014,7 +2016,7 @@ describe('Catalog API', function() {
                 owner: true,
                 lifecycleStatus: 'active',
             };
-            const nockMock = nock(serverUrl).get('/productOfferingPrice/1').reply(500, {
+            const nockMock = nock(serverUrl).get('/api/productOfferingPrice/1').reply(500, {
                 id: '1'
             });
 
@@ -2028,7 +2030,7 @@ describe('Catalog API', function() {
                 priceType: 'discount',
                 percentage: 200
             };
-            const nockMock = nock(serverUrl).get('/productOfferingPrice/1').reply(200, {
+            const nockMock = nock(serverUrl).get('/api/productOfferingPrice/1').reply(200, {
                 id: '1'
             });
 
@@ -2044,7 +2046,7 @@ describe('Catalog API', function() {
                     unit: 'days'
                 }
             };
-            const nockMock = nock(serverUrl).get('/productOfferingPrice/1').reply(200, {
+            const nockMock = nock(serverUrl).get('/api/productOfferingPrice/1').reply(200, {
                 id: '1'
             });
 
@@ -2060,7 +2062,7 @@ describe('Catalog API', function() {
                     value: 'invalid'
                 }
             };
-            const nockMock = nock(serverUrl).get('/productOfferingPrice/1').reply(200, {
+            const nockMock = nock(serverUrl).get('/api/productOfferingPrice/1').reply(200, {
                 id: '1'
             });
 
@@ -2087,6 +2089,7 @@ describe('Catalog API', function() {
 
         var userName = 'test';
         var path = '/productSpecification/1';
+        const backendPath = `/api${path}`
         var protocol = config.endpoints.catalog.appSsl ? 'https' : 'http';
         var url = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
         var role = isOwnerMethod() ? 'Owner' : 'Seller';
@@ -2095,10 +2098,11 @@ describe('Catalog API', function() {
         var bodyOk = { relatedParty: [{ id: userName, role: role }], lifecycleStatus: 'Active' };
         var bodyErr = 'Internal Server Error';
         var returnedBody = requestStatus !== 200 ? bodyErr : bodyOk;
+
         // The mock server that will handle the request
-        if (requestStatus!=null){
+        if (requestStatus != null){
             nock(url)
-            .get(path)
+            .get(backendPath)
             .reply(requestStatus, returnedBody);
         }
 
@@ -2206,12 +2210,13 @@ describe('Catalog API', function() {
         var catalogApi = getCatalogApi({}, tmfUtils, utils, rssClient);
 
         // Basic properties
-        var userName = 'test';
-        var catalogPath = '/catalog/8';
-        var offeringPath =  '/productOffering/1';
-        var productPath = productRequestInfo.path || '/productSpecification/7';
-        var protocol = config.endpoints.catalog.appSsl ? 'https' : 'http';
-        var serverUrl = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
+        const userName = 'test';
+        const apiBase = '/api'
+        const catalogPath = '/catalog/8';
+        const offeringPath =  '/productOffering/1';
+        const productPath = productRequestInfo.path || '/productSpecification/7';
+        const protocol = config.endpoints.catalog.appSsl ? 'https' : 'http';
+        const serverUrl = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
 
         // HTTP MOCK - OFFERING
         var bodyGetOffering = {
@@ -2219,7 +2224,7 @@ describe('Catalog API', function() {
         };
 
         nock(serverUrl)
-            .get(offeringPath)
+            .get(apiBase + offeringPath)
             .reply(200, bodyGetOffering);
 
         // The mock server that will handle the request when the product is requested
@@ -2231,7 +2236,7 @@ describe('Catalog API', function() {
         var bodyGetProduct = productRequestInfo.requestStatus === 200 ? bodyOk : defaultErrorMessage;
 
         nock(serverUrl)
-            .get(productPath)
+            .get(apiBase + productPath)
             .reply(productRequestInfo.requestStatus, bodyGetProduct);
 
         // The mock server that will handle the request when the catalog is requested
@@ -2239,7 +2244,7 @@ describe('Catalog API', function() {
         var bodyGetCatalog = catalogRequestInfo.requestStatus === 200 ? bodyGetCatalogOk : defaultErrorMessage;
 
         nock(serverUrl)
-            .get(catalogPath)
+            .get(apiBase + catalogPath)
             .reply(catalogRequestInfo.requestStatus, bodyGetCatalog);
 
         // Call the method
@@ -2248,7 +2253,7 @@ describe('Catalog API', function() {
             // requests are handled in the same way so here we do not need additional tests
             // for the different HTTP verbs.
             method: 'PATCH',
-            apiUrl: basepath +catalogPath+offeringPath,
+            apiUrl: basepath + catalogPath + offeringPath,
             user: {
                 id: userName,
                 roles: []
@@ -2604,11 +2609,13 @@ describe('Catalog API', function() {
 
             const serviceStatus = (launchApiError !== serviceLaunchFail)? 200 : 500
             previousAssetBody.serviceSpecification.push(queryRef) //not important, but it needs to be filled with smth
-            serviceParam = nock(serv_url).get('/serviceSpecification').query({id: queryRef, fields: 'lifecycleStatus'}).reply(serviceStatus, [])
+            serviceParam = nock(serv_url).get('/api/serviceSpecification').query({id: queryRef, fields: 'lifecycleStatus'}).reply(serviceStatus, [])
+
             if (launchError !== serviceLaunchFail && launchApiError !== serviceLaunchFail){
                 previousAssetBody.resourceSpecification.push(queryRef)
                 const resourceStatus = (launchApiError !== resourceLaunchFail)? 200 : 500
-                resourceParam = nock(res_url).get('/resourceSpecification').query({id: queryRef, fields: 'lifecycleStatus'}).reply(resourceStatus, [])
+
+                resourceParam = nock(res_url).get('/api/resourceSpecification').query({id: queryRef, fields: 'lifecycleStatus'}).reply(resourceStatus, [])
             }
         }
 
@@ -2627,12 +2634,13 @@ describe('Catalog API', function() {
         var userName = 'test';
         var protocol = config.endpoints.catalog.appSsl ? 'https' : 'http';
         var serverUrl = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
+        const apiPath = '/api';
         
         // The service will check that the user is the owner of the offering by making a request
         // to the API. However, a body is not required since the function isOwner has been set up
         // to return always true.
         nock(serverUrl)
-        .get(assetPath)
+        .get(apiPath + assetPath)
         .reply(200, previousAssetBody);
         
         if (!offeringsInfo) {
@@ -2646,7 +2654,7 @@ describe('Catalog API', function() {
             search: function(index, query){ return Promise.resolve(offeringsInfo.offerings)}
         });
         nock(serverUrl)
-            .get(offeringsPath)
+            .get(apiPath + offeringsPath)
             .reply(offeringsInfo.requestStatus, bodyGetOfferings);
         // Call the method
         var req = {
@@ -2854,11 +2862,11 @@ describe('Catalog API', function() {
     // Retire
 
     it('should allow to retire a product when there are no attached offerings', function(done) {
-        var productBody = JSON.stringify({
+        const productBody = JSON.stringify({
             lifecycleStatus: 'retired'
         });
 
-        var offeringsInfo = {
+        const offeringsInfo = {
             requestStatus: 200,
             offerings: []
         };
@@ -3560,8 +3568,8 @@ describe('Catalog API', function() {
     // CATALOGS
 
     var testUpdateCatalog = function(catalogBody, offeringsInfo, errorStatus, errorMsg, done, vNameF, vDescrF) {
-        var catalogPath = '/catalog/7';
-        var offeringsPath = '/productOffering';
+        var catalogPath = '/api/catalog/7';
+        var offeringsPath = '/api/productOffering';
 
         var prevBody = {
             validFor: {
@@ -3971,24 +3979,25 @@ describe('Catalog API', function() {
 
         var catalogApi = getCatalogApi({}, {}, utils);
 
-        var userName = 'test';
-        var basicPath = '/category';
-        var categoryResourcePath = basicPath + '/7';
-        var protocol = config.endpoints.catalog.appSsl ? 'https' : 'http';
-        var url = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
+        const userName = 'test';
+        const apiBase = '/api';
+        const basicPath = '/category';
+        const categoryResourcePath = basicPath + '/7';
+        const protocol = config.endpoints.catalog.appSsl ? 'https' : 'http';
+        const url = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
 
         // The mock server that will handle the request to retrieve the old state of the category
         if (oldStateRequest.body) {
             oldStateRequest.body.validFor = {};
         }
         nock(url)
-            .get(categoryResourcePath)
+            .get(apiBase + categoryResourcePath)
             .reply(oldStateRequest.status, JSON.stringify(oldStateRequest.body));
 
         if (existingCategoriesRequest) {
             // The mock server that will handle the request to retrieve categories with the same properties
             nock(url)
-                .get(basicPath + existingCategoriesRequest.query)
+                .get(apiBase + basicPath + existingCategoriesRequest.query)
                 .reply(existingCategoriesRequest.status, JSON.stringify(existingCategoriesRequest.body));
         }
 
@@ -3996,7 +4005,7 @@ describe('Catalog API', function() {
             // The mock server that will handle the request to retrieve parent categories
             var parentId = updatedCategory.parentId ? updatedCategory.parentId : oldStateRequest.body.parentId;
             nock(url)
-                .get(basicPath + '/' + parentId)
+                .get(apiBase + basicPath + '/' + parentId)
                 .reply(parentCategoryRequest.status);
         }
 

@@ -32,7 +32,6 @@ const rss = require('./tmf-apis/rss').rss
 const party = require('./tmf-apis/party').party
 const usageManagement = require('./tmf-apis/usageManagement').usageManagement
 const account = require('./tmf-apis/account').account
-const customer = require('./tmf-apis/customer').customer
 const serviceCatalog = require('./tmf-apis/serviceCatalog').serviceCatalog
 const resource = require('./tmf-apis/resource').resource
 const { billing } = require('./tmf-apis/billing')
@@ -56,7 +55,6 @@ function tmf() {
 	apiControllers[config.endpoints.party.path] = party;
 	apiControllers[config.endpoints.usage.path] = usageManagement;
 	apiControllers[config.endpoints.account.path] = account;
-	apiControllers[config.endpoints.customer.path] = customer;
 	apiControllers[config.endpoints.service.path] = serviceCatalog;
 	apiControllers[config.endpoints.resource.path] = resource;
 	apiControllers[config.endpoints.billing.path] = billing;
@@ -157,9 +155,9 @@ function tmf() {
 			queryPart = buildQuery(null, categoryIds)
 		}
 		if (queryPart) {
-			return utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + getResourcePath(pathArray) + "?" + queryPart
+			return utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + utils.getAPIPath(api) + getResourcePath(pathArray) + "?" + queryPart
 		} else {
-			return utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + getResourcePath(pathArray)
+			return utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + + utils.getAPIPath(api) + getResourcePath(pathArray)
 		}
 	}
 
@@ -172,7 +170,7 @@ function tmf() {
 		if (typeof catalogId != 'undefined') {
 			logger["info"]("Handling a catalog offer endpoint request")
 
-			catalogUrl = utils.getAPIProtocol('catalog') + '://' + utils.getAPIHost('catalog') + ':' + utils.getAPIPort('catalog') + '/catalog/' + catalogId
+			catalogUrl = utils.getAPIProtocol('catalog') + '://' + utils.getAPIHost('catalog') + ':' + utils.getAPIPort('catalog') + utils.getAPIPath('catalog') + '/catalog/' + catalogId
 
 			catalog.retrieveCatalog(catalogId, (err, response) => {
 				if (response.status == 200) {
@@ -188,7 +186,7 @@ function tmf() {
 			// This is a normal catalog api request
 			logger["info"]("Handling a simple catalog API request")
 			const api = 'catalog'
-			const url = utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + req.apiUrl.replace(`/${api}`, '');
+			const url = utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + utils.getAPIPath(api) + req.apiUrl.replace(`/${api}`, '');
 			proxyRequest(req, res, api, buildOptions(req, url))
 		}
 	}
@@ -206,9 +204,9 @@ function tmf() {
 			handleCatalogRequests(req, res, api)
 		} else {
 			if (newApis.indexOf(api) >= 0) {
-				url = utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + req.apiUrl.replace(`/${api}`, '');
+				url = utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + utils.getAPIPath(api) + req.apiUrl.replace(`/${api}`, '');
 			} else {
-				url = utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + req.apiUrl;
+				url = utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + utils.getAPIPath(api) + req.apiUrl;
 			}
 			if (api == 'rss') {
 				url = url.replace('rss', 'charging')

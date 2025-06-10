@@ -59,13 +59,15 @@ const catalog = (function() {
     const catalogsPattern = new RegExp('/catalog/?$');
 
     const retrieveAsset = function(assetPath, callback) {
-        console.log('Retrieving asset from path: ' + assetPath)
+        if (!assetPath.startsWith('/')) {
+            assetPath = `/${assetPath}`;
+        }
 
         const uri = utils.getAPIURL(
             config.endpoints.catalog.appSsl,
             config.endpoints.catalog.host,
             config.endpoints.catalog.port,
-            assetPath
+            `${config.endpoints.catalog.apiPath}${assetPath}`
         );
 
         axios.get(uri).then((response) => {
@@ -88,7 +90,7 @@ const catalog = (function() {
             endpoint.appSsl,
             endpoint.host,
             endpoint.port,
-            specPath
+            `${endpoint.apiPath}${specPath}`
         );
         axios.get(uri).then((response) => {
             callback(null, {
@@ -140,7 +142,7 @@ const catalog = (function() {
             config.endpoints.catalog.appSsl,
             config.endpoints.catalog.host,
             config.endpoints.catalog.port,
-            assetPath
+            `${config.endpoints.catalog.apiPath}${assetPath}`
         );
         axios.post(uri, body).then((response) => {
             callback(null, {
@@ -160,7 +162,7 @@ const catalog = (function() {
             config.endpoints.catalog.appSsl,
             config.endpoints.catalog.host,
             config.endpoints.catalog.port,
-            assetPath
+            `${config.endpoints.catalog.apiPath}${assetPath}`
         );
 
         axios.patch(uri, body).then((response) => {
@@ -298,7 +300,6 @@ const catalog = (function() {
 
         retrieveAsset(catalogPath, function(err, result) {
             if (err) {
-                console.log(err)
                 callback({
                     status: 500,
                     message: 'The catalog attached to the offering cannot be read'
@@ -968,7 +969,6 @@ const catalog = (function() {
                     href: category.href,
                     name: category.name
                 }]
-                console.log(result)
                 utils.updateBody(req, catalogBody);
                 callback(null)
             }

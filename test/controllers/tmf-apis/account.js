@@ -24,6 +24,7 @@ const testUtils = require('../../utils');
 
 describe('Account API', () => {
 
+    const apiPath = '/api';
     const path = '/account'
     const billingPath = path +'/billingAccount'
     const userId = 'urn:individual:1234'
@@ -509,7 +510,7 @@ describe('Account API', () => {
         }
 
         const mockNock = function(status, nockBody) {
-            nock(url).get(path).reply(status, nockBody)
+            nock(url).get(apiPath + path).reply(status, nockBody)
         }
 
         it('should redirect the request when the info is valid', (done) => {
@@ -585,7 +586,7 @@ describe('Account API', () => {
         }
 
         const mockNock = function(status, nockBody) {
-            nock(url).get(`/billingAccount/${billingId}`).reply(status, nockBody)
+            nock(url).get(`${apiPath}/billingAccount/${billingId}`).reply(status, nockBody)
         }
 
         it('should redirect the request when the info is valid', (done) => {

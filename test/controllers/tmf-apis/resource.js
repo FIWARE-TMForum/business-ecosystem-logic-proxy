@@ -43,6 +43,7 @@ describe('ResourceSpecification API', function() {
 
     const individual = '/party/individual/resourceSpec'
     const path = '/resourceSpecification';
+    const apiPath = '/api'
     const seller = {
         id: 'test',
         roles: ['seller'],
@@ -278,7 +279,7 @@ describe('ResourceSpecification API', function() {
                 const checkOwnerMethod = jasmine.createSpy();
                 checkOwnerMethod.and.returnValue(isOwner);
 
-                nock(url).get(`${path}/urn:resource-spec:1`).reply(200, prevBody)
+                nock(url).get(`${apiPath}${path}/urn:resource-spec:1`).reply(200, prevBody)
 
                 const utils = {
                     validateLoggedIn: (req, callback) => {
@@ -337,7 +338,7 @@ describe('ResourceSpecification API', function() {
             })
 
             it('should allow to retire a resource specification', (done) => {
-                const prodSpecMock = nock(prodSpecUrl).get('/productSpecification')
+                const prodSpecMock = nock(prodSpecUrl).get(apiPath + '/productSpecification')
                 .query({'resourceSpecification.id':'urn:resource-spec:1', fields:'lifecycleStatus'})
                 .reply(200, [{id: 'prod', lifecycleStatus: 'Obsolete'}])
                 testUpdateSpec(seller, 'urn:resource-spec:1', {
@@ -386,7 +387,7 @@ describe('ResourceSpecification API', function() {
             })
 
             it('should raise 409 if product specs linked with the resource spec are not retired previously', (done) => {
-                const prodSpecMock = nock(prodSpecUrl).get('/productSpecification')
+                const prodSpecMock = nock(prodSpecUrl).get(apiPath + '/productSpecification')
                 .query({'resourceSpecification.id':'urn:resource-spec:1', fields:'lifecycleStatus'})
                 .reply(200, [{id: 'prod', lifecycleStatus: 'Active'}])
                 testUpdateSpec(seller, 'urn:resource-spec:1', {
