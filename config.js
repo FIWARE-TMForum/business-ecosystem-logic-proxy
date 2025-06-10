@@ -417,7 +417,7 @@ config.logOutPath = config.logOutPath || '/logout';
 // =====
 
 // Catalog
-config.endpoints.catalog.path = process.env.BAE_LP_ENDPOINT_CATALOG_PATH || config.endpoints.catalog.path;
+config.endpoints.catalog.apiPath = process.env.BAE_LP_ENDPOINT_CATALOG_PATH || config.endpoints.catalog.apiPath;
 config.endpoints.catalog.port = process.env.BAE_LP_ENDPOINT_CATALOG_PORT || config.endpoints.catalog.port;
 config.endpoints.catalog.host = process.env.BAE_LP_ENDPOINT_CATALOG_HOST || config.endpoints.catalog.host;
 
@@ -426,7 +426,7 @@ if (!!process.env.BAE_LP_ENDPOINT_CATALOG_SECURED) {
 }
 
 // Resource Catalog
-config.endpoints.resource.path = process.env.BAE_LP_ENDPOINT_RESOURCE_PATH || config.endpoints.resource.path;
+config.endpoints.resource.apiPath = process.env.BAE_LP_ENDPOINT_RESOURCE_PATH || config.endpoints.resource.apiPath;
 config.endpoints.resource.port = process.env.BAE_LP_ENDPOINT_RESOURCE_PORT || config.endpoints.resource.port;
 config.endpoints.resource.host = process.env.BAE_LP_ENDPOINT_RESOURCE_HOST || config.endpoints.resource.host;
 
@@ -435,7 +435,7 @@ if (!!process.env.BAE_LP_ENDPOINT_RESOURCE_SECURED) {
 }
 
 // Service Catalog
-config.endpoints.service.path = process.env.BAE_LP_ENDPOINT_SERVICE_PATH || config.endpoints.service.path;
+config.endpoints.service.apiPath = process.env.BAE_LP_ENDPOINT_SERVICE_PATH || config.endpoints.service.apiPath;
 config.endpoints.service.port = process.env.BAE_LP_ENDPOINT_SERVICE_PORT || config.endpoints.service.port;
 config.endpoints.service.host = process.env.BAE_LP_ENDPOINT_SERVICE_HOST || config.endpoints.service.host;
 
@@ -444,7 +444,7 @@ if (!!process.env.BAE_LP_ENDPOINT_SERVICE_SECURED) {
 }
 
 // Ordering
-config.endpoints.ordering.path = process.env.BAE_LP_ENDPOINT_ORDERING_PATH || config.endpoints.ordering.path;
+config.endpoints.ordering.apiPath = process.env.BAE_LP_ENDPOINT_ORDERING_PATH || config.endpoints.ordering.apiPath;
 config.endpoints.ordering.port = process.env.BAE_LP_ENDPOINT_ORDERING_PORT || config.endpoints.ordering.port;
 config.endpoints.ordering.host = process.env.BAE_LP_ENDPOINT_ORDERING_HOST || config.endpoints.ordering.host;
 
@@ -453,7 +453,7 @@ if (!!process.env.BAE_LP_ENDPOINT_ORDERING_SECURED) {
 }
 
 // Inventory
-config.endpoints.inventory.path = process.env.BAE_LP_ENDPOINT_INVENTORY_PATH || config.endpoints.inventory.path;
+config.endpoints.inventory.apiPath = process.env.BAE_LP_ENDPOINT_INVENTORY_PATH || config.endpoints.inventory.apiPath;
 config.endpoints.inventory.port = process.env.BAE_LP_ENDPOINT_INVENTORY_PORT || config.endpoints.inventory.port;
 config.endpoints.inventory.host = process.env.BAE_LP_ENDPOINT_INVENTORY_HOST || config.endpoints.inventory.host;
 
@@ -462,16 +462,16 @@ if (!!process.env.BAE_LP_ENDPOINT_INVENTORY_SECURED) {
 }
 
 // Service Inventory
-//config.endpoints.serviceInventory.path = process.env.BAE_LP_ENDPOINT_SERVICE_INVENTORY_PATH || config.endpoints.serviceInventory.path;
-//config.endpoints.serviceInventory.port = process.env.BAE_LP_ENDPOINT_SERVICE_INVENTORY_PORT || config.endpoints.serviceInventory.port;
-//config.endpoints.serviceInventory.host = process.env.BAE_LP_ENDPOINT_SERVICE_INVENTORY_HOST || config.endpoints.serviceInventory.host;
+config.endpoints.serviceInventory.apiPath = process.env.BAE_LP_ENDPOINT_SERVICE_INVENTORY_PATH || config.endpoints.serviceInventory.apiPath;
+config.endpoints.serviceInventory.port = process.env.BAE_LP_ENDPOINT_SERVICE_INVENTORY_PORT || config.endpoints.serviceInventory.port;
+config.endpoints.serviceInventory.host = process.env.BAE_LP_ENDPOINT_SERVICE_INVENTORY_HOST || config.endpoints.serviceInventory.host;
 
-//if (!!process.env.BAE_LP_ENDPOINT_SERVICE_INVENTORY_SECURED) {
-//	config.endpoints.serviceInventory.appSsl = process.env.BAE_LP_ENDPOINT_SERVICE_INVENTORY_SECURED == 'true';
-//}
+if (!!process.env.BAE_LP_ENDPOINT_SERVICE_INVENTORY_SECURED) {
+	config.endpoints.serviceInventory.appSsl = process.env.BAE_LP_ENDPOINT_SERVICE_INVENTORY_SECURED == 'true';
+}
 
 // Resource Intentory
-config.endpoints.resourceInventory.path = process.env.BAE_LP_ENDPOINT_RESOURCE_INVENTORY_PATH || config.endpoints.resourceInventory.path;
+config.endpoints.resourceInventory.apiPath = process.env.BAE_LP_ENDPOINT_RESOURCE_INVENTORY_PATH || config.endpoints.resourceInventory.apiPath;
 config.endpoints.resourceInventory.port = process.env.BAE_LP_ENDPOINT_RESOURCE_INVENTORY_PORT || config.endpoints.resourceInventory.port;
 config.endpoints.resourceInventory.host = process.env.BAE_LP_ENDPOINT_RESOURCE_INVENTORY_HOST || config.endpoints.resourceInventory.host;
 
@@ -480,7 +480,7 @@ if (!!process.env.BAE_LP_ENDPOINT_RESOURCE_INVENTORY_SECURED) {
 }
 
 // Charging
-config.endpoints.charging.path = process.env.BAE_LP_ENDPOINT_CHARGING_PATH || config.endpoints.charging.path;
+config.endpoints.charging.apiPath = process.env.BAE_LP_ENDPOINT_CHARGING_PATH || config.endpoints.charging.apiPath;
 config.endpoints.charging.port = process.env.BAE_LP_ENDPOINT_CHARGING_PORT || config.endpoints.charging.port;
 config.endpoints.charging.host = process.env.BAE_LP_ENDPOINT_CHARGING_HOST || config.endpoints.charging.host;
 
@@ -489,7 +489,7 @@ if (!!process.env.BAE_LP_ENDPOINT_CHARGING_SECURED) {
 }
 
 // RSS
-config.endpoints.rss.path = process.env.BAE_LP_ENDPOINT_RSS_PATH || config.endpoints.rss.path;
+config.endpoints.rss.apiPath = process.env.BAE_LP_ENDPOINT_RSS_PATH || config.endpoints.rss.apiPath;
 config.endpoints.rss.port = process.env.BAE_LP_ENDPOINT_RSS_PORT || config.endpoints.rss.port;
 config.endpoints.rss.host = process.env.BAE_LP_ENDPOINT_RSS_HOST || config.endpoints.rss.host;
 
@@ -498,7 +498,7 @@ if (!!process.env.BAE_LP_ENDPOINT_RSS_SECURED) {
 }
 
 // Party
-config.endpoints.party.path = process.env.BAE_LP_ENDPOINT_PARTY_PATH || config.endpoints.party.path;
+config.endpoints.party.apiPath = process.env.BAE_LP_ENDPOINT_PARTY_PATH || config.endpoints.party.apiPath;
 config.endpoints.party.port = process.env.BAE_LP_ENDPOINT_PARTY_PORT || config.endpoints.party.port;
 config.endpoints.party.host = process.env.BAE_LP_ENDPOINT_PARTY_HOST || config.endpoints.party.host;
 
@@ -507,7 +507,7 @@ if (!!process.env.BAE_LP_ENDPOINT_PARTY_SECURED) {
 }
 
 // Billing
-config.endpoints.account.path = process.env.BAE_LP_ENDPOINT_BILLING_PATH || config.endpoints.account.path;
+config.endpoints.account.apiPath = process.env.BAE_LP_ENDPOINT_BILLING_PATH || config.endpoints.account.apiPath;
 config.endpoints.account.port = process.env.BAE_LP_ENDPOINT_BILLING_PORT || config.endpoints.account.port;
 config.endpoints.account.host = process.env.BAE_LP_ENDPOINT_BILLING_HOST || config.endpoints.account.host;
 
@@ -516,7 +516,7 @@ if (!!process.env.BAE_LP_ENDPOINT_BILLING_SECURED) {
 }
 
 // Customer
-config.endpoints.customer.path = process.env.BAE_LP_ENDPOINT_CUSTOMER_PATH || config.endpoints.customer.path;
+config.endpoints.customer.apiPath = process.env.BAE_LP_ENDPOINT_CUSTOMER_PATH || config.endpoints.customer.apiPath;
 config.endpoints.customer.port = process.env.BAE_LP_ENDPOINT_CUSTOMER_PORT || config.endpoints.customer.port;
 config.endpoints.customer.host = process.env.BAE_LP_ENDPOINT_CUSTOMER_HOST || config.endpoints.customer.host;
 
@@ -525,7 +525,7 @@ if (!!process.env.BAE_LP_ENDPOINT_CUSTOMER_SECURED) {
 }
 
 // Usage
-config.endpoints.usage.path = process.env.BAE_LP_ENDPOINT_USAGE_PATH || config.endpoints.usage.path;
+config.endpoints.usage.apiPath = process.env.BAE_LP_ENDPOINT_USAGE_PATH || config.endpoints.usage.apiPath;
 config.endpoints.usage.port = process.env.BAE_LP_ENDPOINT_USAGE_PORT || config.endpoints.usage.port;
 config.endpoints.usage.host = process.env.BAE_LP_ENDPOINT_USAGE_HOST || config.endpoints.usage.host;
 
@@ -534,7 +534,7 @@ if (!!process.env.BAE_LP_ENDPOINT_USAGE_SECURED) {
 }
 
 // Customer Bill
-config.endpoints.billing.path = process.env.BAE_LP_ENDPOINT_CUSTOMER_BILL_PATH || config.endpoints.billing.path;
+config.endpoints.billing.apiPath = process.env.BAE_LP_ENDPOINT_CUSTOMER_BILL_PATH || config.endpoints.billing.apiPath;
 config.endpoints.billing.port = process.env.BAE_LP_ENDPOINT_CUSTOMER_BILL_PORT || config.endpoints.billing.port;
 config.endpoints.billing.host = process.env.BAE_LP_ENDPOINT_CUSTOMER_BILL_HOST || config.endpoints.billing.host;
 
