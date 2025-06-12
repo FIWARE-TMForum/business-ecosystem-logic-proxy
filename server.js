@@ -384,6 +384,7 @@ app.post('/feedback', async (req,res) => {
             const mongoFb = {
                 rating: feedback.rating,
                 description: feedback.description,
+                type: feedback.type,
                 creation_date: new Date().toISOString()
             }
             indexes.indexDocument('feedback', uuidv4(), mongoFb)
