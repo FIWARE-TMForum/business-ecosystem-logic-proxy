@@ -108,19 +108,24 @@ describe('VC Strategy', () => {
             '-----END PUBLIC KEY-----';
         const ANY_STATE = 'state';
         const ANY_AUTH_CODE = 'code';
+        const JWKS_PATH = '/jwksPath';
         const DUMMY_RESPONSE = {
             end: () => {}
         };
         const VALID_CONFIG = {
             allowedRoles: ['customer', 'seller', 'admin'],
             clientID: 'did:1234',
-            privateKey: '123456'
+            privateKey: '123456',
+            verifierHost: 'https://verifierhost.com',
+            verifierJWKSPath: JWKS_PATH
         };
         const REDIRECTION_CONFIG = {
             allowedRoles: ['customer', 'seller', 'admin'],
             isRedirection: true,
             clientID: 'did:1234',
-            privateKey: '123456'
+            privateKey: '123456',
+            verifierHost: 'https://verifierhost.com',
+            verifierJWKSPath: JWKS_PATH
         }
 
         let nextFunctionFor200;
@@ -146,18 +151,32 @@ describe('VC Strategy', () => {
         }
 
         const initPassportStrategy = (strategyConfig, cb) => {
+            const fecthMock = async function (url) {
+              // Mocking fetch to return a valid access token
+              return Promise.resolve({
+                status: 200,
+                json: async () => {
+                  let response;
+                  if (url.endsWith(JWKS_PATH)) {
+                    response = {
+                      keys: [{
+                        kid: 'e8ndZcMaqKugI0FLTRfT_LMMc8YB5pKyEvFfELsErN8',
+                      }]
+                    }
+                  } else {
+                    response = {
+                      access_token: accessToken
+                    };
+                  }
+                  return response
+                }
+              });
+              // JWSK request
+            }
+
             const strategy = proxyquire('../../../lib/strategies/vc', {
                 './passport-vc': proxyquire('../../../lib/strategies/passport-vc', {
-                    'node-fetch': async function (){
-                        return Promise.resolve({
-                            status: 200,
-                            json: async () => {
-                                return {
-                                    access_token: accessToken
-                                };
-                            }
-                        });
-                    },
+                    'node-fetch': fecthMock,
                     'jwks-rsa': () => {
                         return {
                             getSigningKey: (kid, cb) => {
@@ -176,6 +195,9 @@ describe('VC Strategy', () => {
                         verify: (token, key, cb) => {
                             cb(null, jwt.decode(accessToken));
                         }
+                    },
+                    'jwk-to-pem': () => {
+                        return PUBLIC_KEY_FOR_VALID_TOKEN;
                     }
                 })
             }).strategy;
