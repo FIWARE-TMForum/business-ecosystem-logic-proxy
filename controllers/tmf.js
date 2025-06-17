@@ -239,6 +239,11 @@ function tmf() {
 
 			options.headers['cache-control'] = 'no-cache';
 		}
+
+		delete options.headers['if-modified-since'];
+		delete options.headers['if-none-match'];
+		options.headers['cache-control'] = 'no-cache';
+
 		return options
 	}
 
