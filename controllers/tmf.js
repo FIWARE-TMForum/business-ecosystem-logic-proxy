@@ -223,7 +223,8 @@ function tmf() {
 		const options = {
 			url: url,
 			method: req.method,
-			headers: utils.proxiedRequestHeaders(req)
+			headers: utils.proxiedRequestHeaders(req),
+			proxy: false // <-- disables env proxy
 		};
 
 		if (typeof req.body === 'string') {
@@ -272,7 +273,11 @@ function tmf() {
 			};
 
 			console.log('Request response')
-			console.log(response)
+			console.log(req.url)
+			console.log(response.status)
+			console.log(response.headers)
+			console.log(response.data)
+
 			const result = {
 				status: response.status,
 				headers: response.headers,
