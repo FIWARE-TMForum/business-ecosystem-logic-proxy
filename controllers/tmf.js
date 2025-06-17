@@ -250,6 +250,8 @@ function tmf() {
 	const proxyRequest = function(req, res, api, options) {
 
 		// PROXY THE REQUEST
+		console.log('Request options')
+		console.log(options)
 		axios.request(options).then((response) => {
 
 			const completeRequest = function(resp) {
@@ -269,6 +271,8 @@ function tmf() {
 				}
 			};
 
+			console.log('Request response')
+			console.log(response)
 			const result = {
 				status: response.status,
 				headers: response.headers,
