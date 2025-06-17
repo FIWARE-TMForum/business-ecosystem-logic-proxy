@@ -249,12 +249,14 @@ function tmf() {
 
 			const completeRequest = function(resp) {
 				res.status(resp.status);
+				logger["info"]("Response status: " + resp.status)
 				
 				for (let header in resp.headers) {
 					res.setHeader(header, resp.headers[header]);
 				}
 
 				if (resp.headers['content-type'].toLowerCase().indexOf('application/json') >= 0 || resp.headers['content-type'].toLowerCase().indexOf('application/ld+json') >= 0) {
+					logger["info"]("Response body: " + resp.body)
 					res.json(resp.body)
 				} else {
 					res.write(resp.body);
