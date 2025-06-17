@@ -187,6 +187,8 @@ function tmf() {
 			logger["info"]("Handling a simple catalog API request")
 			const api = 'catalog'
 			const url = utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + utils.getAPIPath(api) + req.apiUrl.replace(`/${api}`, '');
+
+			logger["info"]("Making request with real endpoint: " + url)
 			proxyRequest(req, res, api, buildOptions(req, url))
 		}
 	}
