@@ -630,6 +630,9 @@ config.domeOnboardingGuidelines = process.env.BAE_LP_DOME_ONBOARDING_GUIDELINES 
 config.domeGuidelines = ''
 config.domeGuidelines = process.env.BAE_LP_DOME_GUIDELINES || config.domeGuidelines;
 
+config.quoteApi = ''
+config.quoteApi = process.env.BAE_LP_QUOTE_API || config.quoteApi;
+
 config.defaultId = ''
 
 // Purchase enabled

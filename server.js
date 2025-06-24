@@ -429,6 +429,7 @@ app.get('/config', async (_, res) => {
         domeGuidelines: config.domeGuidelines,
         domePublish: config.domePublish,
         purchaseEnabled: config.purchaseEnabled,
+        quoteApi: config.quoteApi,
         defaultId: config.defaultId
     })
 })
