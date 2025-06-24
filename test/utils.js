@@ -165,6 +165,13 @@ var defaultConfig = {
 			host: 'localhost',
 			port: 80,
 			appSsl: false
+		},
+		quote: {
+			path: 'quote',
+			apiPath: '/api',
+			host: 'quote.com',
+			port: '8637',
+			appSsl: false
 		}
 	},
 	billingAccountOwnerRole: 'owner',

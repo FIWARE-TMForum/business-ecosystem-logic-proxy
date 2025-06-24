@@ -17,6 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+const utils = require('./../../lib/utils')
 
 const quote = (function() {
     const validateRetrieving = function(req, callback) {
@@ -25,10 +26,10 @@ const quote = (function() {
     
     const validators = {
         GET: [utils.validateLoggedIn, validateRetrieving],
-        POST: [utils.methodNotAllowed],
-        PATCH: [utils.validateLoggedIn, validateUpdate],
-        PUT: [utils.methodNotAllowed],
-        DELETE: [utils.methodNotAllowed]
+        POST: [utils.validateLoggedIn, validateRetrieving],
+        PATCH: [utils.validateLoggedIn, validateRetrieving],
+        PUT: [utils.validateLoggedIn, validateRetrieving],
+        DELETE: [utils.validateLoggedIn, validateRetrieving]
     };
     
     const checkPermissions = function(req, callback) {
