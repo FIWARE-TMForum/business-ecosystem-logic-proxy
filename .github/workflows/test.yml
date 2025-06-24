@@ -3,7 +3,7 @@ name: Tests
 on:
   push:
     branches:
-      - master
+      - feat/quote-api
 
   pull_request:
     branches:
@@ -53,8 +53,8 @@ jobs:
           context: .
           file: ./docker/Dockerfile
           tags: |
-            fiware/biz-ecosystem-logic-proxy:master
-          push: ${{ github.ref == 'refs/heads/master' }}
+            fiware/biz-ecosystem-logic-proxy:10.2.0-PRE-1
+          push: ${{ github.ref == 'refs/heads/feat/quote-api' }}
 
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
