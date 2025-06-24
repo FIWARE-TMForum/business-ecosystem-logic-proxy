@@ -116,6 +116,7 @@
     },
     "CARD": {
         "_details": "View details",
+        "_quote": "Create quote",
         "_add_cart": "Add to cart",
         "_close": "Close modal",
         "_categories": "Categories",
