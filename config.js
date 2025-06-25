@@ -261,8 +261,8 @@ config.endpoints = {
         appSsl: false
     },
     quote: {
-        path: 'quoteManagement',
-        apiPath: 'quoteManagement',
+        path: 'quote',
+        apiPath: '',
         host: 'quote-management.marketplace.svc.cluster.local',
         port: '8080'
     }

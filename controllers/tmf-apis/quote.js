@@ -17,6 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+const async = require('async')
 const utils = require('./../../lib/utils')
 
 const quote = (function() {
