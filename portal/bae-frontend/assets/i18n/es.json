@@ -993,7 +993,6 @@
         "_pending": "Pending",
         "_cancelled": "Cancelled",
         "_unchecked": "Unchecked"
-
     },
   "FORMS": {
     "PROCUREMENT_MODE": {
@@ -1049,6 +1048,8 @@
       "_fixed": "Fixed amount",
       "_discount_duration": "Discount duration",
       "_apply_to_char": "Does this price component apply to a product characteristic?",
+      "_product_char": "Product characteristic",
+      "_prod_char_info": "If the price component applies to a product characteristic, select it and a value below if needed.",
       "_days": "Days",
       "_weeks": "Weeks",
       "_months": "Months",
