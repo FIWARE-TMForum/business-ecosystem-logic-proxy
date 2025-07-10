@@ -343,6 +343,7 @@ if (config.siop.enabled) {
         app.get(config.siop.pollCertPath, certsValidator.checkStatus)
     } else {
         app.get('/auth/' + config.siop.provider + '/callback', passport.authenticate(config.siop.provider), (req, res) => {
+            console.log('---------> Redirecting to dashboard')
             res.redirect('/dashboard?token=local');
         })
 
