@@ -77,8 +77,13 @@ const catalog = (function() {
             });
 
         }).catch((err) => {
+            console.log(err)
+            let status = 400;
+            if (err.response && err.response.status) {
+                status = err.response.status;
+            }
             callback({
-                status: err.response.status
+                status: status
             });
         })
     };
@@ -188,8 +193,6 @@ const catalog = (function() {
     };
 
     const catalogPathFromOfferingUrl = function(offeringUrl) {
-
-
         const result = offeringUrl.split('/')
         return `/catalog/${result[3]}`
     };
@@ -239,7 +242,7 @@ const catalog = (function() {
         });
     };
 
-    var validateAssetPermissions = function(
+    const validateAssetPermissions = function(
         req,
         asset,
         validStates,
@@ -249,7 +252,7 @@ const catalog = (function() {
     ) {
         // Check that the user is the owner of the asset
         // Offerings don't include a relatedParty field, so for bundles it is needed to retrieve the product
-        var ownerHandler = function(req, asset, hdlrCallback) {
+        const ownerHandler = function(req, asset, hdlrCallback) {
             if (!asset.relatedParty) {
                 retrieveProduct(asset.productSpecification.id, function(err, result) {
                     var isOwner = false;
@@ -1572,7 +1575,10 @@ const catalog = (function() {
                     });
                 }
             } else {
-                const dftCategory = result.body.category
+                let dftCategory = result.body.category
+                if (!dftCategory) {
+                    dftCategory = []
+                }
                 dftCategory.push({id: body.id, href: body.href, name: body.name})
                 updateAsset(`/catalog/${config.defaultId}`, {category: dftCategory}, function(err, result){
                     if (err){
