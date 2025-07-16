@@ -28,6 +28,7 @@ const logger = require('./../lib/logger').logger.getLogger('Admin')
 function admin() {
 
     const redirRequest = function(options, req, res) {
+        console.log("Admin endpoint: Making request to the API")
         axios.request(options).then((resp) => {
             res.status(resp.status)
 
@@ -45,9 +46,11 @@ function admin() {
             utils.log(logger, 'error', req, 'Proxy error: ' + err.message)
 
             if (err.response) {
+                console.log("Admin endpoint: Error from the API")
                 res.status(err.response.status)
                 res.json(err.response.data)
             } else {
+                console.log("Admin endpoint: API Unreachable")
                 res.status(504)
                 res.json({ error: 'Service unreachable' })
             }
@@ -63,8 +66,14 @@ function admin() {
     }
 
     const uploadCertificate = async function (req, res) {
+        if (!req.user) {
+            res.status(401)
+            res.json({ error: "Missing credentials" })
+        }
+
         // Check user permissions
         if (!utils.isAdmin(req.user) && !utils.hasRole(req.user, 'certifier') && !isOrgAuth(req.user)) {
+            console.log("Upload certificate: The user is not authorized to upload certificates")
             res.status(403)
             res.json({ error: "You are not authorized to upload certificates" })
             return
@@ -75,12 +84,14 @@ function admin() {
             const reqBody = JSON.parse(req.body)
             vc = reqBody.vc
         } catch (e) {
+            console.log("Upload certificate: The body is invalid")
             res.status(400)
             res.json({ error: 'Invalid body' })
             return
         }
 
         if (vc == null) {
+            console.log("Upload certificate: Missing VC")
             res.status(400)
             res.json({ error: 'Missing VC' })
             return
@@ -99,6 +110,7 @@ function admin() {
             }
             productSpec = (await axios.request(options)).data
         } catch (e) {
+            console.log("Upload certificate: The product spec does not exists")
             res.status(404)
             res.json({ error: 'The product spec does not exists' })
             return
