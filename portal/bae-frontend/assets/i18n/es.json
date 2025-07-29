@@ -1065,5 +1065,21 @@
       "_delete": "Delete",
       "_save": "Save"
     }
+  },
+  "USAGE_SPECS": {
+    "_back": "Back",
+    "_usage_spec": "Usage Specifications",
+    "_create": "Create Usage Spec",
+    "_update": "Update Usage Spec",
+    "_list": "Usage List",
+    "_add_new": "Add new Usage Specification",
+    "_name": "Name",
+    "_description": "Description",
+    "_actions": "Actions",
+    "_no_usage": "No usage specifications found.",
+    "_load_more": "Load more",
+    "_no_metrics": "No metrics included.",
+    "_create_metric": "Create new metric",
+    "_save_metric": "Save metric"
   }
 }
