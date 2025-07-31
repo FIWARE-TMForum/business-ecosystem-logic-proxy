@@ -51,9 +51,10 @@ function simulator() {
             return res.status(400).send('Invalid JSON body');
         }
 
-        body.relatedParty = [];
+        const order = body.productOrder;
+        order.relatedParty = [];
 
-        body.relatedParty.push({
+        order.relatedParty.push({
             id: req.user.partyId,
             role: CUSTOMER,
             href: req.user.partyId,
@@ -62,7 +63,7 @@ function simulator() {
 
         // Only one item is supported in the billing preview
         try {
-            const offeringRef = body.productOrderItem[0].productOffering.id
+            const offeringRef = order.productOrderItem[0].productOffering.id
             // Get the offering
             const offeringUrl = utils.getAPIURL(
                 config.endpoints.catalog.appSsl,
@@ -89,7 +90,7 @@ function simulator() {
 
             prodResp.data.relatedParty.forEach(element => {
                 if (element.role.toLowerCase() == 'owner') {
-                    body.relatedParty.push({
+                    order.relatedParty.push({
                         id: element.id,
                         role: SELLER,
                         href: element.id,
@@ -104,6 +105,7 @@ function simulator() {
         
         console.log(JSON.stringify(body))
 
+        body.productOrder = order
         axios({
             method: req.method,
             url: simUrl,

@@ -17,7 +17,10 @@
         "_search": "Search",
         "_not_found": "No offers found",
         "_browse_serv": "Browse services",
-        "_view_serv": "View services"
+        "_view_serv": "View services",
+        "_close_menu": "Close menu",
+        "_all_catalogs": "All catalogues",
+        "_categories_single": "Categories"
     },
     "FEATURED": {
         "_title": "Featured offerings",
@@ -146,7 +149,8 @@
         "_no_terms": "This product has no terms and conditions.",
         "_no_chars": "This product has no characteristics.",
         "_no_prices": "This product has no price plans.",
-        "_owner": "Owner"
+        "_owner": "Owner",
+        "_price_plan": "Price Plan"
     },
     "CATEGORIES_FILTER": {
         "_remove_badge": "Remove badge",
@@ -218,7 +222,12 @@
         "_no_sla": "No SLA included",
         "_no_relatioships": "No relationships included",
         "_service_spec": "This offering includes the following service specifications",
-        "_resource_spec": "This offering includes the following resource specifications"
+        "_resource_spec": "This offering includes the following resource specifications",
+        "_self_attestation": "You can find the self attestation document here.",
+        "_product_pricing": "Product pricing",
+        "_product_chars": "Product characteristics",
+        "_product_att": "Product attachments",
+        "_product_rels": "Product relationships"
     },
     "CATALOGS": {
         "_all_catalogs": "All catalogues",
@@ -257,6 +266,7 @@
     "PROFILE":{
         "_general": "General",
         "_bill": "Billing addresses",
+        "_revenue": "Revenue sharing",
         "_orders": "Orders",
         "_order_list": "My order list",
         "_update": "Update",
@@ -303,7 +313,19 @@
         "_success": "Updated successfully",
         "_website": "Website",
         "_add_logo": "Add organization logo",
-        "_add_logo_url": "Add organization logo using a URL"
+        "_add_logo_url": "Add organization logo using a URL",
+        "_acknowledged": "Acknowledged",
+        "_in_progress": "In Progress",
+        "_completed": "Completed",
+        "_failed": "Failed",
+        "_pending": "Pending",
+        "_cancelled": "Cancelled",
+        "_order_details": "Order details:",
+        "_billing_address": "Billing address",
+        "_price": "Price",
+        "_img": "Img",
+        "_custom": "Custom",
+        "_free": "Free"
     },
     "PRODUCT_INVENTORY":{
         "_loading": "Loading...",
@@ -330,7 +352,27 @@
         "_priority": "Priority",
         "_desc": "Description",
         "_price": "Price",
-        "_bill": "Billing address"
+        "_bill": "Billing address",
+        "_inventory": "Inventory",
+        "_feasibility": "Feasibility Checked",
+        "_designed": "Designed",
+        "_reserved": "Reserved",
+        "_inactive": "Inactive",
+        "_active": "Active",
+        "_terminated": "Terminated",
+        "_id": "Id",
+        "_standby": "Standby",
+        "_alarm": "Alarm",
+        "_available": "Available",
+        "_suspended": "Suspended",
+        "_unknown": "Unknown",
+        "_created": "Created",
+        "_unsubscribe": "Unsubscribe",
+        "_close_modal": "Close modal",
+        "_cancel_sub": "Are you sure you want to cancel this subscription?",
+        "_cancel": "No, cancel",
+        "_yes_sure": "Yes, I'm sure",
+        "_renew_sub": "Are you sure you want to renew this subscription?"
     },
     "BILLING": {
         "_title": "Title",
@@ -352,7 +394,13 @@
         "_cancel": "No, cancel",
         "_invalid_phone": "Phonenumber is invalid!",
         "_invalid_email": "Email is invalid!",
-        "_no_billing": "There's no billing information."
+        "_no_billing": "There's no billing information.",
+        "_close_modal": "Close modal",
+        "_mandatory": "This field is mandatory.",
+        "_too_long": "This field is too long. Must be less than 250 characters.",
+        "_too_long_larger": "This field is too long. Must be less than 1000 characters.",
+        "_too_long_email": "Email is too long. Must be less than 320 characters.",
+        "_email_format": "Email must follow the following format: example@example.example"
     },
     "INVOICES": {
       "_invoice_id": "Invoice ID",
@@ -367,7 +415,11 @@
       "_status": "Status",
       "_name": "Invoice num.",
       "_type": "Type",
-      "_product": "Product ID"
+      "_product": "Product ID",
+      "_actions": "Actions",
+      "_as_customer": "As Customer",
+      "_as_provider": "As Provider",
+      "_invoice_details": "Invoice details:"
     },
     "CREATE_CATALOG": {
         "_back": "Back",
@@ -403,7 +455,11 @@
         "_description": "Description",
         "_next": "Next",
         "_summary": "Catalogue's summary",
-        "_finish": "Finish"
+        "_finish": "Finish",
+        "_active": "Active",
+        "_launched": "Launched",
+        "_retired": "Retired",
+        "_obsolete": "Obsolete"
     },
     "CREATE_PROD_SPEC":{
         "_back": "Back",
@@ -474,7 +530,11 @@
         "_file_res": "File restrictions",
         "_restrictions": "File size must be under 3MB. File names can only include alphabetical characters (A-Z, a-z), numbers (0-9) and a limited set of symbols, such as underscores (_), hyphens (-), and periods (.). ",
         "_file_name": "Image URL should end by png, jpg, jpeg, gif, bmp or webp format.",
-        "_file_check": "You need to upload a file before proceeding."
+        "_file_check": "You need to upload a file before proceeding.",
+        "_self_attestation": "Self Attestation:",
+        "_close_modal": "Close modal",
+        "_cancel": "Cancel",
+        "_upload": "Upload"
     },
     "UPDATE_PROD_SPEC":{
         "_back": "Back",
@@ -548,7 +608,15 @@
         "_dome_trust": "DOME Trust Service Provider for Certification",
         "_file_res": "File restrictions",
         "_restrictions": "File size must be under 3MB. File names can only include characters (a-z), (A-Z), (0-9), and a limited set of symbols including underscores (_), hyphens (-), and periods (.). ",
-        "_file_name": "Image URL should end by png, jpg, jpeg, gif, bmp or webp format."
+        "_file_name": "Image URL should end by png, jpg, jpeg, gif, bmp or webp format.",
+        "_active": "Active",
+        "_launched": "Launched",
+        "_retired": "Retired",
+        "_obsolete": "Obsolete",
+        "_self_attestation": "Self Attestation:",
+        "_close_modal": "Close modal",
+        "_cancel": "Cancel",
+        "_upload": "Upload"
     },
     "CREATE_RES_SPEC": {
         "_back": "Back",
@@ -760,7 +828,10 @@
         "_no_prods_to_proceed": "Please add at least one product specification to proceed to the next step",
         "_no_cats": "There's no catalogues.",
         "_no_categories": "There's no categories",
-        "_no_offer": "There's no offerings."
+        "_no_offer": "There's no offerings.",
+        "_previous": "Previous step",
+        "_next_step": "Next step",
+        "_no_subcats": "There's no subcategories"
     },
     "UPDATE_OFFER":{
         "_back": "Back",
@@ -890,6 +961,7 @@
         "_load_more": "Load more",
         "_add_new_res": "Add new resource",
         "_add_new_prod": "Add new product specification",
+        "_add_new_prod_short": "Add new product spec",
         "_filter_type": "Filter by type",
         "_all": "All",
         "_simple": "Simple",
@@ -902,7 +974,10 @@
         "_seller": "Seller",
         "_owner": "Owner",
         "_customer": "Customer",
-        "_role": "Role"
+        "_role": "Role",
+        "_choose": "Choose between our Catalogues",
+        "_offerings": "Offerings",
+        "_my_offerings": "My offerings"
     },
     "ADMIN":{
         "_admin": "Administration",
@@ -922,7 +997,8 @@
         "_verification": "Verification",
         "_productId": "Product ID",
         "_vc": "Verifiable Credential",
-        "_add": "Add"
+        "_add": "Add",
+        "_revenue": "Revenue sharing"
     },
     "CATEGORIES":{
         "_categories": "Categories",
@@ -993,7 +1069,20 @@
         "_failed": "Failed",
         "_pending": "Pending",
         "_cancelled": "Cancelled",
-        "_unchecked": "Unchecked"
+        "_unchecked": "Unchecked",
+        "_as_customer": "As Customer",
+        "_as_provider": "As Provider",
+        "_date": "Date",
+        "_actions": "Actions",
+        "_order_details": "Order details:",
+        "_customer_info": "Customer Info:",
+        "_name": "Name",
+        "_billing_address": "Billing address",
+        "_email": "Contact Email",
+        "_show_customer_details": "Show Customer Details",
+        "_img": "Img",
+        "_price_plan": "Price Plan",
+        "_state": "State"
     },
   "FORMS": {
     "PROCUREMENT_MODE": {
@@ -1033,7 +1122,11 @@
       "_char_value": "Current value",
       "_prev": "Previous",
       "_next": "Next",
-      "_no_value_selected": "n/a"
+      "_no_value_selected": "n/a",
+      "_configure_profile_chars": "Configure profile's characteristics",
+      "_prod_spec_no_chars": "The selected product specification has no characteristics related.",
+      "_mandatory": "This field is mandatory.",
+      "_unique": "Name must be unique."
     },
     "PRICE_PLAN_COMPONENT": {
       "_name": "Name",
@@ -1063,7 +1156,18 @@
       "_unit": "Usage unit",
       "_cancel": "Cancel",
       "_delete": "Delete",
-      "_save": "Save"
+      "_save": "Save",
+      "_price_required": "Price is required.",
+      "_price_limit": "Price cannot exceed 1,000,000,000.",
+      "_price_positive": "Price must be a positive number.",
+      "_includes_discount": "Does this price component include a discount?",
+      "_discount_positive": "Discount must be at least 0.",
+      "_discount_limit": "Discount cannot exceed 100.",
+      "_duration_positive": "Duration must be a positive number.",
+      "_price_type": "Price Type",
+      "_actions": "Actions",
+      "_delete_price_comp": "Are you sure you want to delete this Price Component?",
+      "_unable_undone": "This action can't be undone."
     }
   },
   "USAGE_SPECS": {
@@ -1080,6 +1184,56 @@
     "_load_more": "Load more",
     "_no_metrics": "No metrics included.",
     "_create_metric": "Create new metric",
-    "_save_metric": "Save metric"
+    "_save_metric": "Save metric",
+    "_previous": "Previous step",
+    "_next": "Next step"
+  },
+  "ABOUT_DOME": {
+    "_title": "Discover DOME Marketplace",
+    "_subtitle": "Your one-stop-shop for trusted Cloud and Edge services.",
+    "_whatisdome": "What is DOME Marketplace?",
+    "_description": "DOME Marketplace is a comprehensive online catalogue of cloud and edge offerings, available through a collection of independent marketplaces and different product and service providers.",
+    "_description2": "The uniqueness of the DOME marketplace is its ability to generate and use verifiable credentials ensuring the publication of trusted services, according to EU regulation. In other words, it enables a standardised process to verify that services and providers are certified and trustable.",
+    "_benefits": "Among its benefits, DOME Marketplace offers several advantages to users:",
+    "_trusted": "Provides trusted and standardised access to service providers’ offers, matching customers’ demands.",
+    "_verified": "Ensures verified and comparable qualifications across services and products.",
+    "_transactions": "Facilitates simple and transparent transactions and service management.",
+    "_whydome": "Why choose DOME?",
+    "_whydescription": "DOME Marketplace, with this single aggregated catalogue of products delivered by pre-validated European suppliers, aims to streamline the procurement journey, improve vendor selection, reduce search and evaluation time, facilitate product comparison, accelerate purchasing processes and simplify spending analysis, benefiting both buyers and suppliers within the European ecosystem.",
+    "_publish": "Publish Your Service",
+    "_central": "DOME Marketplace: A central piece of Europe’s Digital future.",
+    "_aligned": "DOME Marketplace is aligned with Europe’s vision of a digital future powered by cloud computing. The marketplace has been deployed by the DOME project, as part of the European Commission’s strategy to co-invest with Member States in the development of new digital infrastructures, as well as to improve existing capabilities at both national and EU levels.",
+    "_singlepoint": "The goal is to provide European companies and public organisations with the single-point access to trusted cloud and edge services, necessary for digital transformation. In this context, DOME Marketplace has been designed to offer a better and greater availability of trusted cloud and edge services, offered by providers and marketplaces members of the DOME ecosystem,",
+    "_focus": "focusing on increasing the adoption of these services among public and private entities, particularly in sectors that handle sensitive data, and who may be lagging behind in cloud adoption. This marketplace is a fundamental part of the EU’s objective to strengthen open strategic digital autonomy and boost Europe’s digital future.",
+    "_explore": "Explore the DOME project website if you want to know more!",
+    "_domeproject": "Dome Project"
+  },
+  "CONTACTUS": {
+    "_title": "Let's get in touch",
+    "_subtitle": "We are glad you are interested in the DOME Marketplace! Please share your questions or thoughts with us and we'll get back to you shortly.",
+    "_fill": "Please fill in this form to contact us",
+    "_email": "Email",
+    "_firstname": "First name",
+    "_fieldlong": "This field is too long. Must be less than 100 characters.",
+    "_mandatory": "This field is mandatory.",
+    "_emaillong": "Email is too long. Must be less than 320 characters.",
+    "_emailpattern": "Email must follow the following format: example@example.example",
+    "_lastname": "Last Name",
+    "_organization": "Organization",
+    "_role": "Role in organization",
+    "_message": "Message",
+    "_info": "Information about the processing of personal data is as follows:",
+    "_controller": "Data Controller DOME",
+    "_purpose": "Purpose: to send you information about DOME's project by electronic means. Legal basis: data subject's consent. Recipients: The personal data collected will not be communicated to third parties, unless requested by public administrations or if required by law. Exercise of Rights: sending an email to",
+    "_indicating": "indicating in the subject line: 'Exercise of rights'. You are also entitled to be assisted by a Data Protection Authority. Find more information about personal data processing in",
+    "_here": "our here",
+    "_submit": "Submit",
+    "_thanks": "Thank you for contacting DOME Marketplace."
+  },
+  "FEEDBACK": {
+    "_tap": "Tap the stars below to rate the service:",
+    "_write": "Write your feedback here:",
+    "_send": "Send",
+    "_thanks": "Thank you for contacting DOME Marketplace."
   }
 }
