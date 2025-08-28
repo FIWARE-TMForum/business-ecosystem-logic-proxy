@@ -28,6 +28,58 @@ function simulator() {
     const CUSTOMER = 'Customer';
     const SELLER = 'Seller';
 
+    const checkBillAcc = async (billAccRef, userId) =>{
+        if (billAccRef && billAccRef.id){
+            const billAccURL = utils.getAPIURL(
+                config.endpoints.account.appSsl,
+                config.endpoints.account.host,
+                config.endpoints.account.port,
+                `${config.endpoints.account.apiPath}/billingAccount/${billAccRef.id}`)
+
+            let billAcc;
+
+            try {
+                const resp = await axios.get(billAccURL);
+                billAcc = resp.data;
+            } catch (_) {
+                throw new Error("Invalid billing account id");
+            }
+
+            const matches =  billAcc.relatedParty.some(p => p?.id === userId)
+
+            if (billAcc && matches) return billAcc;
+
+            throw new Error("Cannot find the specified billing account for this user");
+
+        }
+        else { // get preferred billing account else returns null
+            const billAccURL = utils.getAPIURL(
+                config.endpoints.account.appSsl,
+                config.endpoints.account.host,
+                config.endpoints.account.port,
+                `${config.endpoints.account.apiPath}/billingAccount?relatedParty.id=${userId}`)
+
+            try {
+                const resp = await axios.get(billAccURL);
+                const result = resp.data;
+
+                for (const billAcc of result) {
+                    // Find default bill acc
+                    if (billAcc.contact && billAcc.contact[0] && billAcc.contact[0].contactMedium) {
+                        for (const medium of billAcc.contact[0].contactMedium) {
+                            if (medium.preferred && medium.mediumType === "PostalAddress") {
+                                return billAcc; // Return the entire billing account object
+                            }
+                        }
+                    }
+                }
+                return null
+            } catch (error) {
+                throw new Error("Error searching for preferred billing address");
+            }
+                }
+    }
+
     const simulate = async (req, res) => {
         let targetUrl = config.billingEngineUrl;
 
@@ -60,6 +112,12 @@ function simulator() {
             href: req.user.partyId,
             '@referredType': 'organization'
         });
+        try {
+            body.billingAccount ={...body.billingAccount, resolved: await checkBillAcc(body.billingAccount, req.user.partyId)}
+        }
+        catch (error) {
+            return res.status(400).send(error.message)
+        }
 
         // Only one item is supported in the billing preview
         try {
