@@ -502,6 +502,81 @@ describe('TMF Utils', function() {
             const result = tmfUtils.hasPartyRole(req, relatedParties, role);
             expect(result).toBe(false);
         });
+
+        it('should return false when party has missing role property without crashing', function() {
+            const tmfUtils = getTmfUtils();
+            const role = 'seller';
+            const userName = 'fiware';
+
+            const req = {
+                secure: false,
+                hostname: 'belp.fiware.org',
+                user: {
+                    partyId: userName
+                }
+            };
+
+            const relatedParties = [
+                {
+                    id: userName,
+                    href: getPartyHref('http', req.hostname, userName)
+                    // missing role property
+                }
+            ];
+
+            const result = tmfUtils.hasPartyRole(req, relatedParties, role);
+            expect(result).toBe(false);
+        });
+
+        it('should return false when party has missing id property without crashing', function() {
+            const tmfUtils = getTmfUtils();
+            const role = 'seller';
+            const userName = 'fiware';
+
+            const req = {
+                secure: false,
+                hostname: 'belp.fiware.org',
+                user: {
+                    partyId: userName
+                }
+            };
+
+            const relatedParties = [
+                {
+                    role: role,
+                    href: getPartyHref('http', req.hostname, userName)
+                    // missing id property
+                }
+            ];
+
+            const result = tmfUtils.hasPartyRole(req, relatedParties, role);
+            expect(result).toBe(false);
+        });
+
+        it('should return false when party has null role without crashing', function() {
+            const tmfUtils = getTmfUtils();
+            const role = 'seller';
+            const userName = 'fiware';
+
+            const req = {
+                secure: false,
+                hostname: 'belp.fiware.org',
+                user: {
+                    partyId: userName
+                }
+            };
+
+            const relatedParties = [
+                {
+                    role: null,
+                    id: userName,
+                    href: getPartyHref('http', req.hostname, userName)
+                }
+            ];
+
+            const result = tmfUtils.hasPartyRole(req, relatedParties, role);
+            expect(result).toBe(false);
+        });
     });
 
     describe('Get Party Individuals Collection URL', function() {
