@@ -270,6 +270,33 @@ const ordering = (function() {
             });
         }
 
+         const billAccURL = utils.getAPIURL(
+                config.endpoints.account.appSsl,
+                config.endpoints.account.host,
+                config.endpoints.account.port,
+                `${config.endpoints.account.apiPath}/billingAccount/${body.billingAccount.id}`)
+
+        let billAcc;
+
+        try {
+            const resp = await axios.get(billAccURL);
+            billAcc = resp.data;
+        } catch (_) {
+            return callback({
+                status: 422,
+                message: 'Invalid billing account id'
+            });
+        }
+
+        const matches =  billAcc.relatedParty.some(p => p?.id === req.user.partyId)
+
+        if (!billAcc || !matches) {
+            return callback({
+                status: 422,
+                message: 'Cannot find the specified billing account for this user'
+            });
+        }
+
         utils.updateBody(req, body)
         callback(null)
     };
