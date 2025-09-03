@@ -18,16 +18,27 @@
  */
 
 const proxyquire = require('proxyquire');
+const testUtils = require('../utils');
 
 describe('Admin Controller', () => {
 
+    const apiPath= ''
+
+    const config = testUtils.getDefaultConfig();
+
+    config.oauth2 =  {roles: {admin: 'admin'}}
+
     const utils = {
+        config: config,
         log: function() {},
         getAPIPort: function() {
             return 1234;
         },
         getAPIHost: function() {
             return 'example.com';
+        },
+        getAPIPath: function() {
+            return apiPath;
         },
         proxiedRequestHeaders: function() {
             return {
@@ -37,14 +48,6 @@ describe('Admin Controller', () => {
         },
         attachUserHeaders: function(headers, userInfo) {
             headers['X-Nick-Name'] = userInfo.partyId;
-        }
-    }
-
-    const config = {
-        oauth2: {
-            roles: {
-                admin: 'admin'
-            }
         }
     }
 

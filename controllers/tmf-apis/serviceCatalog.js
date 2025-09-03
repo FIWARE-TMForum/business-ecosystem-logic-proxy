@@ -48,7 +48,7 @@ const serviceCatalog = (function() {
             config.endpoints.service.appSsl,
             config.endpoints.service.host,
             config.endpoints.service.port,
-            `${config.endpoints.service.apiPath}${resPath}`
+            `${config.endpoints.service.apiPath}/${resPath}`
         );
     };
 
