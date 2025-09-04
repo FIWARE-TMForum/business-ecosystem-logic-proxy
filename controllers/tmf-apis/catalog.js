@@ -85,7 +85,7 @@ const catalog = (function() {
 
     const getDependencySpecs = function (endpoint, path, refs, fields, callback){
 
-        const specPath = `/${path}?id=${tmfUtils.refsToQuery(refs)}&fields=${fields}`
+        const specPath = `/${path}?href=${tmfUtils.refsToQuery(refs)}&fields=${fields}`
         const uri = utils.getAPIURL(
             endpoint.appSsl,
             endpoint.host,
