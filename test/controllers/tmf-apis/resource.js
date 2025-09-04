@@ -171,7 +171,7 @@ describe('ResourceSpecification API', function() {
                     user: UserInfo,
                     method: 'POST',
                     body: JSON.stringify(body),
-                    apiUrl: path,
+                    apiUrl: `/${config.endpoints.resource.path}${path}`,
                     url: path,
                     hostname: config.endpoints.service.host,
                     headers: {}
@@ -256,7 +256,7 @@ describe('ResourceSpecification API', function() {
                     user: seller,
                     method: 'POST',
                     body: invalidBody,
-                    apiUrl: path,
+                    apiUrl: `/${config.endpoints.resource.path}${path}`,
                     url: path,
                     hostname: config.endpoints.service.host,
                     headers: {}
@@ -299,7 +299,7 @@ describe('ResourceSpecification API', function() {
                     user: userInfo,
                     method: 'PATCH',
                     body: JSON.stringify(body),
-                    apiUrl: `${path}/${resId}`,
+                    apiUrl: `/${config.endpoints.resource.path}${path}/${resId}`,
                     url: `${path}/${resId}`,
                     hostname: config.endpoints.service.host,
                     headers: {}

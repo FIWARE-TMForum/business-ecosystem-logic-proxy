@@ -58,7 +58,7 @@ const usageManagement = (function() {
             config.endpoints.usage.appSsl,
             config.endpoints.usage.host,
             config.endpoints.usage.port,
-            `${config.endpoints.usage.apiPath}${resPath}`
+            `${config.endpoints.usage.apiPath}/${resPath}`
         );
 
         axios.get(url).then((response) => {

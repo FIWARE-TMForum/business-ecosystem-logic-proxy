@@ -42,7 +42,7 @@ const resource = (function (){
             config.endpoints.resource.appSsl,
             config.endpoints.resource.host,
             config.endpoints.resource.port,
-            `${config.endpoints.resource.apiPath}${resPath}`
+            `${config.endpoints.resource.apiPath}/${resPath}`
         );
     };
 

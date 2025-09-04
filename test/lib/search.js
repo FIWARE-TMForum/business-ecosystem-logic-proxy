@@ -19,14 +19,14 @@
 
 const nock = require('nock')
 const proxyquire = require('proxyquire')
+const testUtils = require('../utils');
 
 describe('Search client', () => {
 
     const catalogUrl = 'http://catalog'
     const searchUrl = 'http://search.com'
-    const config = {
-        searchUrl: searchUrl
-    }
+    const config = testUtils.getDefaultConfig();
+    config.searchUrl =  searchUrl
 
     const searchClient = (axios) => {
         return proxyquire('../../lib/search', {
@@ -69,14 +69,14 @@ describe('Search client', () => {
 
     it('should search if categories are provided', (done) => {
         nock(catalogUrl, {
-        }).get('/category/1', () => {
+        }).get(`${config.endpoints.catalog.apiPath}/category/1`, () => {
             return true;
         }).reply(200, JSON.stringify({
             name: 'cat1'
         }));
 
         nock(catalogUrl, {
-        }).get('/category/2', () => {
+        }).get(`${config.endpoints.catalog.apiPath}/category/2`, () => {
             return true;
         }).reply(200, JSON.stringify({
             name: 'cat2'
