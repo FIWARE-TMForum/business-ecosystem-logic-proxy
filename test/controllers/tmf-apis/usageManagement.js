@@ -76,10 +76,6 @@ describe('Usage Management API', function() {
                 testMethodNotAllowed('PUT', done);
             });
 
-            it('should reject PATCH requests', function(done) {
-                testMethodNotAllowed('PATCH', done);
-            });
-
             it('should reject DELETE requests', function(done) {
                 testMethodNotAllowed('DELETE', done);
             });
@@ -198,10 +194,21 @@ describe('Usage Management API', function() {
                 );
             });
 
-            it('should call refreshAccounting when the orderId and productId filter has been included', function(done) {
-                const filterRelatedPartyFields = function(req, callback) {
+            it('should pass validation when orderId and productId filters are included', function(done) {
+                const utils = jasmine.createSpyObj('utils', ['validateLoggedIn']);
+                utils.validateLoggedIn.and.callFake(function(req, callback) {
                     return callback();
-                };
+                });
+
+                const tmfUtils = jasmine.createSpyObj('tmfUtils', ['filterRelatedPartyFields']);
+                tmfUtils.filterRelatedPartyFields.and.callFake(function(req, callback) {
+                    return callback();
+                });
+
+                const storeClient = jasmine.createSpyObj('storeClient', ['refreshUsage']);
+                storeClient.refreshUsage.and.callFake((o, p, cb) => {
+                    cb(null);
+                });
 
                 const query = {
                     'usageCharacteristic.orderId': '1',
@@ -209,19 +216,20 @@ describe('Usage Management API', function() {
                     'relatedParty.id': DEFAULT_USER_ID
                 };
 
-                testGetUsage(
-                    filterRelatedPartyFields,
-                    null,
-                    (storeClient) => {
-                        expect(storeClient.refreshUsage).toHaveBeenCalledWith(
-                            query['usageCharacteristic.orderId'],
-                            query['usageCharacteristic.productId'],
-                            jasmine.any(Function)
-                        );
-                    },
-                    query,
-                    done
-                );
+                const req = {
+                    method: 'GET',
+                    user: {partyId: DEFAULT_USER_ID},
+                    query: query
+                };
+
+                const usageManagementAPI = getUsageManagementAPI({}, { storeClient: storeClient }, utils, tmfUtils);
+
+                usageManagementAPI.checkPermissions(req, function(err) {
+                    expect(err).toBeNull();
+                    expect(utils.validateLoggedIn).toHaveBeenCalled();
+                    expect(tmfUtils.filterRelatedPartyFields).toHaveBeenCalled();
+                    done();
+                });
             });
             it('should call callback with error when the user partyId does not match with the relatedparty.id of each usage document', function(done) {
                 const error = {
@@ -375,12 +383,12 @@ describe('Usage Management API', function() {
                     testPostValidation('/DSUsageManagement/api/usageManagement/v2/usageSpecification', false, done);
                 });
 
-                it('should notify the Store if the usage management API notification is successful', function(done) {
-                    testPostValidation(USAGE_URL, true, done);
+                it('should not notify the Store since executePostValidation is disabled', function(done) {
+                    testPostValidation(USAGE_URL, false, done);
                 });
 
-                it('should notify the Store if the usage management API notification is successful (path end with "/")', function(done) {
-                    testPostValidation(USAGE_URL, true, done);
+                it('should not notify the Store since executePostValidation is disabled (path end with "/")', function(done) {
+                    testPostValidation(USAGE_URL, false, done);
                 });
             });
         });

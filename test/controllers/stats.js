@@ -21,12 +21,16 @@ const proxyquire = require('proxyquire');
 
 describe('Stats Controller', () => {
 
+    const apiPath= ''
     const utils = {
         getAPIProtocol: function() {
             return 'https';
         },
         getAPIPort: function() {
             return 1234;
+        },
+        getAPIPath: function() {
+            return apiPath;
         },
         getAPIHost: function() {
             return 'example.com';
