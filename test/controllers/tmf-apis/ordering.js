@@ -38,12 +38,12 @@ describe('Ordering API', function() {
         config.endpoints.catalog.host +
         ':' +
         config.endpoints.catalog.port;
-    const BILLING_SERVER =
-        (config.endpoints.billing.appSsl ? 'https' : 'http') +
+    const B_ACCOUNT_SERVER =
+        (config.endpoints.account.appSsl ? 'https' : 'http') +
         '://' +
-        config.endpoints.billing.host +
+        config.endpoints.account.host +
         ':' +
-        config.endpoints.billing.port;
+        config.endpoints.account.port;
 
     // Errors
     const BILLING_ACCOUNT_REQUIRED = {
@@ -285,7 +285,7 @@ describe('Ordering API', function() {
 
             const testValidOrdering = function(nOrderItems, isCustomer, customerRoleRequired, isBundle, done) {
                 const userName = 'example';
-                const billingAccountPath = '/billingAccount/7';
+                const billingAccountPath = '/api/billingAccount/7';
                 const productOfferingBundlePath = '/api/productOffering/2';
                 const productOfferingPath = '/api/productOffering/1';
                 const productSpecPath = '/api/productSpecification/2';
@@ -318,7 +318,7 @@ describe('Ordering API', function() {
                     productOrderItem: orderItems,
                     billingAccount: {
                         id: 7,
-                        href: BILLING_SERVER + billingAccountPath
+                        href: B_ACCOUNT_SERVER + billingAccountPath
                     }
                 };
 
@@ -337,9 +337,9 @@ describe('Ordering API', function() {
                     .times(nOrderItems)
                     .reply(200, { relatedParty: [{ id: ownerName, role: 'owner' }] });
 
-                nock(BILLING_SERVER)
+                nock(B_ACCOUNT_SERVER)
                     .get(billingAccountPath)
-                    .reply(200, { relatedParty: [{ id: ownerName, role: config.billingAccountOwnerRole }] });
+                    .reply(200, { relatedParty: [{ id: userName, role: config.billingAccountOwnerRole }] });
 
                 testOrderCreation(
                     user,
@@ -1493,7 +1493,7 @@ describe('Ordering API', function() {
                         billingAccount: [
                             {
                                 id: 7,
-                                href: BILLING_SERVER + billingAccountPath
+                                href: B_ACCOUNT_SERVER + billingAccountPath
                             }
                         ]
                     }
@@ -1521,13 +1521,13 @@ describe('Ordering API', function() {
             };
 
             if (getBillingReq) {
-                nock(BILLING_SERVER)
+                nock(B_ACCOUNT_SERVER)
                     .get(getBillingReq.path)
                     .reply(getBillingReq.status, getBillingReq.body);
             }
 
             if (updateBillingReq) {
-                nock(BILLING_SERVER)
+                nock(B_ACCOUNT_SERVER)
                     .patch(updateBillingReq.path, updateBillingReq.expectedBody)
                     .reply(updateBillingReq.status);
             }
