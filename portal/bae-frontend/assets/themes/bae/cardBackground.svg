@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="116px" height="95px" viewBox="0 0 116 95" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>Group</title>
+    <defs>
+        <radialGradient cx="50%" cy="50%" fx="50%" fy="50%" r="50.4565991%" gradientTransform="translate(0.5, 0.5), scale(0.9133, 1), rotate(135.1186), scale(1, 1.4585), translate(-0.5, -0.5)" id="radialGradient-1">
+            <stop stop-color="#00C48C" offset="0%"></stop>
+            <stop stop-color="#017654" offset="100%"></stop>
+        </radialGradient>
+        <radialGradient cx="50%" cy="50%" fx="50%" fy="50%" r="53.1089479%" gradientTransform="translate(0.5, 0.5), scale(0.8286, 1), rotate(137.902), scale(1, 1.4585), translate(-0.5, -0.5)" id="radialGradient-2">
+            <stop stop-color="#00C48C" offset="0%"></stop>
+            <stop stop-color="#017654" offset="100%"></stop>
+        </radialGradient>
+        <radialGradient cx="50%" cy="50%" fx="50%" fy="50%" r="52.897297%" gradientTransform="translate(0.5, 0.5), scale(0.8347, 1), rotate(137.6946), scale(1, 1.4585), translate(-0.5, -0.5)" id="radialGradient-3">
+            <stop stop-color="#00C48C" offset="0%"></stop>
+            <stop stop-color="#017654" offset="100%"></stop>
+        </radialGradient>
+        <radialGradient cx="50%" cy="50%" fx="50%" fy="50%" r="53.2852395%" gradientTransform="translate(0.5, 0.5), scale(0.8237, 1), rotate(138.0731), scale(1, 1.4585), translate(-0.5, -0.5)" id="radialGradient-4">
+            <stop stop-color="#00C48C" offset="0%"></stop>
+            <stop stop-color="#017654" offset="100%"></stop>
+        </radialGradient>
+        <radialGradient cx="50%" cy="50%" fx="50%" fy="50%" r="53.9818637%" gradientTransform="translate(0.5, 0.5), scale(0.8047, 1), rotate(138.7337), scale(1, 1.4585), translate(-0.5, -0.5)" id="radialGradient-5">
+            <stop stop-color="#00C48C" offset="0%"></stop>
+            <stop stop-color="#017654" offset="100%"></stop>
+        </radialGradient>
+    </defs>
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Group" transform="translate(2.0374, 2.305)" stroke-width="6">
+            <path d="M82.8049761,54.5239949 C91.0152764,54.6678805 97.5653633,60.8629827 97.4350048,68.3611431 C97.3046463,75.8593035 90.5432064,81.8211211 82.3329061,81.6772355 C74.1226058,81.53335 67.5725189,75.3382477 67.7028774,67.8400873 C67.8332359,60.341927 74.5946758,54.3801093 82.8049761,54.5239949 Z" id="Oval" stroke="url(#radialGradient-1)"></path>
+            <path d="M77.4794059,41.3387594 C91.1552214,41.5784282 102.081972,50.9579326 101.884986,62.2884689 C101.688,73.6190051 90.4418723,82.6099297 76.7660567,82.3702609 C63.0902412,82.1305921 52.1634908,72.7510877 52.3604767,61.4205515 C52.5574627,50.0900152 63.8035903,41.0990906 77.4794059,41.3387594 Z" id="Oval" stroke="url(#radialGradient-2)"></path>
+            <path d="M71.2612093,26.8972625 C89.95519,27.2248746 104.889776,40.1378259 104.618541,55.7391465 C104.347306,71.340467 88.9729604,83.7222541 70.2789797,83.3946419 C51.5849991,83.0670298 36.6504131,70.1540785 36.9216483,54.5527579 C37.1928835,38.9514374 52.5672287,26.5696503 71.2612093,26.8972625 Z" id="Oval" stroke="url(#radialGradient-3)"></path>
+            <path d="M64.5671071,14.2442888 C88.7750759,14.6685336 108.118535,31.1740987 107.771933,51.1105003 C107.425331,71.0469018 87.5199178,86.8646302 63.311949,86.4403853 C39.1039802,86.0161405 19.7605208,69.5105754 20.1071232,49.5741738 C20.4537255,29.6377723 40.3591384,13.820044 64.5671071,14.2442888 Z" id="Oval" stroke="url(#radialGradient-4)"></path>
+            <path d="M56.8836122,1.48061832 C87.1125498,2.01038068 111.275145,22.1575669 110.852279,46.4806183 C110.429413,70.8036697 85.5812165,90.0919415 55.3522789,89.5621791 C25.1233413,89.0324168 0.960746198,68.8852305 1.38361221,44.5621791 C1.80647823,20.2391277 26.6546746,0.950855965 56.8836122,1.48061832 Z" id="Oval" stroke="url(#radialGradient-5)"></path>
+        </g>
+    </g>
+</svg>

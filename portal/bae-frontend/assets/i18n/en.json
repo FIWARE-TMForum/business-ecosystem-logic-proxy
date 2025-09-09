@@ -234,7 +234,8 @@
         "_no_desc": "No description included",
         "_no_cat": "No categories included",
         "_view_details": "View details",
-        "_desc": "Description"
+        "_desc": "Description",
+        "_choose": "Choose between our Catalogues"
     },
     "SHOPPING_CART": {
         "_buy": "Buy",
@@ -1234,6 +1235,8 @@
     "_tap": "Tap the stars below to rate the service:",
     "_write": "Write your feedback here:",
     "_send": "Send",
-    "_thanks": "Thank you for contacting DOME Marketplace."
+    "_thanks": "Thank you for contacting DOME Marketplace.",
+    "_footer_title": "How would you rate your overall experience with DOME?",
+    "_footer_improve": "How can we improve DOME?"
   }
 }
