@@ -259,6 +259,12 @@ config.endpoints = {
         host: 'localhost',
         port: config.port,
         appSsl: false
+    },
+    quote: {
+        path: 'quote',
+        apiPath: '',
+        host: 'quote-management.marketplace.svc.cluster.local',
+        port: '8080'
     }
 };
 
@@ -629,6 +635,9 @@ config.domeOnboardingGuidelines = process.env.BAE_LP_DOME_ONBOARDING_GUIDELINES 
 
 config.domeGuidelines = ''
 config.domeGuidelines = process.env.BAE_LP_DOME_GUIDELINES || config.domeGuidelines;
+
+config.quoteApi = '/quote/quoteManagement';
+config.quoteApi = process.env.BAE_LP_QUOTE_API || config.quoteApi;
 
 config.defaultId = ''
 

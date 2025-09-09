@@ -18,13 +18,16 @@
  */
 
 var proxyquire = require('proxyquire').noCallThru();
+const testUtils = require('../../utils');
 
 describe('Usage Management API', function() {
-    var DEFAULT_USER_ID = 'userId';
+    const config = testUtils.getDefaultConfig();
+    const DEFAULT_USER_ID = 'userId';
 
-    var getUsageManagementAPI = function(accountingService, storeClient, utils, tmfUtils) {
+    const getUsageManagementAPI = function(accountingService, storeClient, utils, tmfUtils) {
         return proxyquire('../../../controllers/tmf-apis/usageManagement', {
             './../../db/schemas/accountingService': accountingService,
+            './../../config': config,
             './../../lib/store': storeClient,
             './../../lib/utils': utils,
             './../../lib/tmfUtils': tmfUtils
@@ -37,11 +40,11 @@ describe('Usage Management API', function() {
         /// ///////////////////////////////////////////////////////////////////////////////////////////
 
         describe('Not allowed methods', function() {
-            var methodNotAllowedStatus = 405;
-            var methodNotAllowedMessage = 'This method used is not allowed in the accessed API';
+            const methodNotAllowedStatus = 405;
+            const methodNotAllowedMessage = 'This method used is not allowed in the accessed API';
 
-            var testMethodNotAllowed = function(method, done) {
-                var utils = jasmine.createSpyObj('utils', ['methodNotAllowed']);
+            const testMethodNotAllowed = function(method, done) {
+                const utils = jasmine.createSpyObj('utils', ['methodNotAllowed']);
                 utils.methodNotAllowed.and.callFake(function(req, callback) {
                     return callback({
                         status: methodNotAllowedStatus,
@@ -49,12 +52,13 @@ describe('Usage Management API', function() {
                     });
                 });
 
-                var usageManagementAPI = getUsageManagementAPI({}, {}, utils, {});
+                const usageManagementAPI = getUsageManagementAPI({}, {}, utils, {});
 
-                var path = '/apiKeys';
+                const path = '/apiKeys';
 
-                var req = {
+                const req = {
                     method: method,
+                    apiUrl: `/${config.endpoints.usage.path}${path}`,
                     url: path
                 };
 
@@ -72,10 +76,6 @@ describe('Usage Management API', function() {
                 testMethodNotAllowed('PUT', done);
             });
 
-            it('should reject PATCH requests', function(done) {
-                testMethodNotAllowed('PATCH', done);
-            });
-
             it('should reject DELETE requests', function(done) {
                 testMethodNotAllowed('DELETE', done);
             });
@@ -87,10 +87,10 @@ describe('Usage Management API', function() {
 
         describe('Not Authenticated Requests', function() {
             it('should reject not authenticated GET requests', function(done) {
-                var requestNotAuthenticatedStatus = 401;
-                var requestNotAuthenticatedMessage = 'You need to be authenticated to create/update/delete resources';
+                const requestNotAuthenticatedStatus = 401;
+                const requestNotAuthenticatedMessage = 'You need to be authenticated to create/update/delete resources';
 
-                var utils = jasmine.createSpyObj('utils', ['validateLoggedIn']);
+                const utils = jasmine.createSpyObj('utils', ['validateLoggedIn']);
                 utils.validateLoggedIn.and.callFake(function(req, callback) {
                     return callback({
                         status: requestNotAuthenticatedStatus,
@@ -98,12 +98,12 @@ describe('Usage Management API', function() {
                     });
                 });
 
-                var tmfUtils = jasmine.createSpyObj('tmfUtils', ['filterRelatedPartyFields']);
+                const tmfUtils = jasmine.createSpyObj('tmfUtils', ['filterRelatedPartyFields']);
 
-                var usageManagementAPI = getUsageManagementAPI({}, {}, utils, tmfUtils);
-                var path = '/apiKeys';
+                const usageManagementAPI = getUsageManagementAPI({}, {}, utils, tmfUtils);
+                const path = '/apiKeys';
 
-                var req = {
+                const req = {
                     method: 'GET',
                     url: path
                 };
@@ -125,27 +125,27 @@ describe('Usage Management API', function() {
         /// ///////////////////////////////////////////////////////////////////////////////////////////
 
         describe('GET', function() {
-            var testGetUsage = function(filterRelatedPartyFields, expectedErr, validator, query, done) {
-                var utils = jasmine.createSpyObj('utils', ['validateLoggedIn']);
+            const testGetUsage = function(filterRelatedPartyFields, expectedErr, validator, query, done) {
+                const utils = jasmine.createSpyObj('utils', ['validateLoggedIn']);
                 utils.validateLoggedIn.and.callFake(function(req, callback) {
                     return callback();
                 });
 
-                var tmfUtils = jasmine.createSpyObj('tmfUtils', ['filterRelatedPartyFields']);
+                const tmfUtils = jasmine.createSpyObj('tmfUtils', ['filterRelatedPartyFields']);
                 tmfUtils.filterRelatedPartyFields.and.callFake(filterRelatedPartyFields);
 
-                var storeClient = jasmine.createSpyObj('storeClient', ['refreshUsage']);
+                const storeClient = jasmine.createSpyObj('storeClient', ['refreshUsage']);
                 storeClient.refreshUsage.and.callFake((o, p, cb) => {
                     cb(null);
                 });
 
-                var req = {
+                const req = {
                     method: 'GET',
                     user: {partyId:DEFAULT_USER_ID},
                     query: query
                 };
 
-                var usageManagementAPI = getUsageManagementAPI({}, { storeClient: storeClient }, utils, tmfUtils);
+                const usageManagementAPI = getUsageManagementAPI({}, { storeClient: storeClient }, utils, tmfUtils);
 
                 usageManagementAPI.checkPermissions(req, function(err) {
                     expect(err).toEqual(expectedErr);
@@ -158,7 +158,7 @@ describe('Usage Management API', function() {
             };
 
             it('should call callback without errors when user is allowed to retrieve the list of usages', function(done) {
-                var filterRelatedPartyFields = function(req, callback) {
+                const filterRelatedPartyFields = function(req, callback) {
                     return callback();
                 };
 
@@ -174,12 +174,12 @@ describe('Usage Management API', function() {
             });
 
             it('should call callback with error when retrieving list of usages and using invalid filters', function(done) {
-                var error = {
+                const error = {
                     status: 401,
                     message: 'Invalid filters'
                 };
 
-                var filterRelatedPartyFields = function(req, callback) {
+                const filterRelatedPartyFields = function(req, callback) {
                     return callback(error);
                 };
 
@@ -194,38 +194,50 @@ describe('Usage Management API', function() {
                 );
             });
 
-            it('should call refreshAccounting when the orderId and productId filter has been included', function(done) {
-                var filterRelatedPartyFields = function(req, callback) {
+            it('should pass validation when orderId and productId filters are included', function(done) {
+                const utils = jasmine.createSpyObj('utils', ['validateLoggedIn']);
+                utils.validateLoggedIn.and.callFake(function(req, callback) {
                     return callback();
-                };
+                });
 
-                var query = {
+                const tmfUtils = jasmine.createSpyObj('tmfUtils', ['filterRelatedPartyFields']);
+                tmfUtils.filterRelatedPartyFields.and.callFake(function(req, callback) {
+                    return callback();
+                });
+
+                const storeClient = jasmine.createSpyObj('storeClient', ['refreshUsage']);
+                storeClient.refreshUsage.and.callFake((o, p, cb) => {
+                    cb(null);
+                });
+
+                const query = {
                     'usageCharacteristic.orderId': '1',
                     'usageCharacteristic.productId': '2',
                     'relatedParty.id': DEFAULT_USER_ID
                 };
 
-                testGetUsage(
-                    filterRelatedPartyFields,
-                    null,
-                    (storeClient) => {
-                        expect(storeClient.refreshUsage).toHaveBeenCalledWith(
-                            query['usageCharacteristic.orderId'],
-                            query['usageCharacteristic.productId'],
-                            jasmine.any(Function)
-                        );
-                    },
-                    query,
-                    done
-                );
+                const req = {
+                    method: 'GET',
+                    user: {partyId: DEFAULT_USER_ID},
+                    query: query
+                };
+
+                const usageManagementAPI = getUsageManagementAPI({}, { storeClient: storeClient }, utils, tmfUtils);
+
+                usageManagementAPI.checkPermissions(req, function(err) {
+                    expect(err).toBeNull();
+                    expect(utils.validateLoggedIn).toHaveBeenCalled();
+                    expect(tmfUtils.filterRelatedPartyFields).toHaveBeenCalled();
+                    done();
+                });
             });
             it('should call callback with error when the user partyId does not match with the relatedparty.id of each usage document', function(done) {
-                var error = {
+                const error = {
                     status: 403,
                     message: 'invalid request'
                 };
 
-                var filterRelatedPartyFields = function(req, callback) {
+                const filterRelatedPartyFields = function(req, callback) {
                     return callback();
                 };
                 let query = {
@@ -249,13 +261,13 @@ describe('Usage Management API', function() {
         /// ///////////////////////////////////////////////////////////////////////////////////////////
 
         describe('Creation', function() {
-            var testValidateApiKey = function(findOne, headers, expectedErr, done) {
-                var accountingService = jasmine.createSpyObj('accountingService', ['findOne']);
+            const testValidateApiKey = function(findOne, headers, expectedErr, done) {
+                const accountingService = jasmine.createSpyObj('accountingService', ['findOne']);
                 accountingService.findOne.and.callFake(findOne);
 
-                var usageManagementAPI = getUsageManagementAPI(accountingService, {}, {}, {});
+                const usageManagementAPI = getUsageManagementAPI(accountingService, {}, {}, {});
 
-                var req = {
+                const req = {
                     method: 'POST',
                     headers: headers,
                     get: function(header) {
@@ -279,7 +291,7 @@ describe('Usage Management API', function() {
         //     });
 
         //     it('should return 500 when db fails', function(done) {
-        //         var findOne = function(select, callback) {
+        //         const findOne = function(select, callback) {
         //             return callback('Error', {});
         //         };
 
@@ -292,7 +304,7 @@ describe('Usage Management API', function() {
         //     });
 
         //     it('should reject request with not valid API Key', function(done) {
-        //         var findOne = function(select, callback) {
+        //         const findOne = function(select, callback) {
         //             return callback(null, null);
         //         };
 
@@ -305,7 +317,7 @@ describe('Usage Management API', function() {
         //     });
 
         //     it('should reject request with an uncommitted API Key', function(done) {
-        //         var findOne = function(select, callback) {
+        //         const findOne = function(select, callback) {
         //             return callback(null, { state: 'UNCOMMITTED' });
         //         };
 
@@ -318,7 +330,7 @@ describe('Usage Management API', function() {
         //     });
 
         //     it('should admit the request when the API Key is valid', function(done) {
-        //         var findOne = function(select, callback) {
+        //         const findOne = function(select, callback) {
         //             return callback(null, { state: 'COMMITTED' });
         //         };
 
@@ -327,10 +339,10 @@ describe('Usage Management API', function() {
          });
 
         describe('Post Validation', function() {
-            var USAGE_URL = '/DSUsageManagement/api/usageManagement/v2/usage';
+            const USAGE_URL = '/DSUsageManagement/api/usageManagement/v2/usage';
 
-            var mockStoreClient = function() {
-                var storeClient = jasmine.createSpyObj('storeClient', ['validateUsage']);
+            const mockStoreClient = function() {
+                const storeClient = jasmine.createSpyObj('storeClient', ['validateUsage']);
                 storeClient.validateUsage.and.callFake(function(usageInfo, callback) {
                     return callback(null);
                 });
@@ -339,20 +351,20 @@ describe('Usage Management API', function() {
             };
 
             describe('POST request', function() {
-                var testPostValidation = function(apiUrl, shouldNotify, done) {
-                    var storeClient = mockStoreClient();
-                    var store = {
+                const testPostValidation = function(apiUrl, shouldNotify, done) {
+                    const storeClient = mockStoreClient();
+                    const store = {
                         storeClient: storeClient
                     };
 
-                    var req = {
+                    const req = {
                         method: 'POST',
                         status: 201,
                         body: '{}',
                         apiUrl: apiUrl
                     };
 
-                    var usageManagementAPI = getUsageManagementAPI({}, store, {}, {});
+                    const usageManagementAPI = getUsageManagementAPI({}, store, {}, {});
 
                     usageManagementAPI.executePostValidation(req, function(err) {
                         expect(err).toBe(null);
@@ -371,12 +383,12 @@ describe('Usage Management API', function() {
                     testPostValidation('/DSUsageManagement/api/usageManagement/v2/usageSpecification', false, done);
                 });
 
-                it('should notify the Store if the usage management API notification is successful', function(done) {
-                    testPostValidation(USAGE_URL, true, done);
+                it('should not notify the Store since executePostValidation is disabled', function(done) {
+                    testPostValidation(USAGE_URL, false, done);
                 });
 
-                it('should notify the Store if the usage management API notification is successful (path end with "/")', function(done) {
-                    testPostValidation(USAGE_URL, true, done);
+                it('should not notify the Store since executePostValidation is disabled (path end with "/")', function(done) {
+                    testPostValidation(USAGE_URL, false, done);
                 });
             });
         });

@@ -22,6 +22,7 @@ const path = require('path');
 const session = require('express-session');
 const shoppingCart = require('./controllers/shoppingCart').shoppingCart;
 const management = require('./controllers/management').management;
+const multer = require('multer');
 const tmf = require('./controllers/tmf').tmf();
 const admin = require('./controllers/admin').admin();
 const stats = require('./controllers/stats').stats();
@@ -101,18 +102,6 @@ i18n.expressBind(app, {
     locales: ['en', 'es', 'de']
 });
 
-app.use(function(req, res, next) {
-    trycatch(
-        function() {
-            next();
-        },
-        function(err) {
-            // Call the default Express error handler
-            next(err);
-        }
-    );
-});
-
 // Session
 app.use(
     session({
@@ -126,7 +115,10 @@ app.use(cookieParser());
 
 app.use(
     bodyParser.text({
-        type: '*/*',
+        type: function(req) {
+            const contentType = req.headers['content-type'] || '';
+            return !contentType.startsWith('multipart/form-data');
+        },
         limit: '50mb'
     })
 );
@@ -430,6 +422,7 @@ app.get('/config', async (_, res) => {
         domeGuidelines: config.domeGuidelines,
         domePublish: config.domePublish,
         purchaseEnabled: config.purchaseEnabled,
+        quoteApi: config.quoteApi,
         defaultId: config.defaultId
     })
 })
@@ -651,7 +644,23 @@ app.all(adminRegex, authMiddleware.headerAuthentication, authMiddleware.checkOrg
 const paths = Object.values(config.endpoints).map(endpoint => endpoint.path);
 const regexPattern = new RegExp(`^\/(${paths.join('|')})\/(.*)\/?$`);
 
-app.all(regexPattern, authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, function(
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 50 * 1024 * 1024, // 50 MB per file
+  },
+});
+
+app.all(regexPattern, (req, res, next) => {
+    // Process multipart if needed
+    const contentType = req.headers['content-type'] || '';
+    if (contentType.startsWith('multipart/form-data')) {
+        upload.any()(req, res, next); // invoke multer only for multipart
+    } else {
+        // Continue with the next middleware if this is not multipart
+        next();
+  }
+}, authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, function(
     req,
     res,
     next
@@ -688,19 +697,26 @@ app.use(function(err, req, res, next) {
         'Unexpected unhandled exception - ' + err.name + ': ' + err.message + '. Stack trace:\n' + err.stack
     );
 
-    var applicationJSON = 'application/json';
-    var textHtml = 'text/html';
-
-    res.status(500);
+    const applicationJSON = 'application/json';
+    const textHtml = 'text/html';
 
     switch (req.accepts([applicationJSON, textHtml])) {
         case applicationJSON:
+            if (err.code === 'LIMIT_FILE_SIZE') {
+                return res.status(413).json({ error: 'File too large' });
+            }
+            if (err.code === 'LIMIT_FILE_COUNT') {
+                return res.status(400).json({ error: 'Too many files' });
+            }
+
+            res.status(500);
             res.header('Content-Type', applicationJSON);
             res.json({ error: 'Unexpected error. The error has been notified to the administrators.' });
             res.end();
 
             break;
         case 'text/html':
+            res.status(500);
             res.header('Content-Type', textHtml);
             renderTemplate(req, res, 'unexpected-error');
 

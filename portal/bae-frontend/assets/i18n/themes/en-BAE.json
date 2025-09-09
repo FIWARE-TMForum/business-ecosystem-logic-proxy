@@ -1,0 +1,14 @@
+{
+  "DASHBOARD": {
+    "_header": "The Trusted BAE Data Space Marketplace",
+    "_subheader": "Leveraging cutting-edge FIWARE technology for data sharing in Data Spaces."
+  },
+  "FEEDBACK": {
+    "_tap": "Tap the stars below to rate the service:",
+    "_write": "Write your feedback here:",
+    "_send": "Send",
+    "_thanks": "Thank you for contacting.",
+    "_footer_title": "How would you rate your overall experience?",
+    "_footer_improve": "How can we improve?"
+  }
+}

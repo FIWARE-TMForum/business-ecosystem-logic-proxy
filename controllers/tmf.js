@@ -34,6 +34,7 @@ const usageManagement = require('./tmf-apis/usageManagement').usageManagement
 const account = require('./tmf-apis/account').account
 const serviceCatalog = require('./tmf-apis/serviceCatalog').serviceCatalog
 const resource = require('./tmf-apis/resource').resource
+const { quote } = require('./tmf-apis/quote')
 const { billing } = require('./tmf-apis/billing')
 
 // Other dependencies
@@ -42,6 +43,8 @@ const axios = require('axios')
 const utils = require('./../lib/utils')
 const { log } = require('async')
 const { query } = require('express')
+const FormData = require('form-data')
+
 
 function tmf() {
 	const apiControllers = {};
@@ -58,8 +61,9 @@ function tmf() {
 	apiControllers[config.endpoints.service.path] = serviceCatalog;
 	apiControllers[config.endpoints.resource.path] = resource;
 	apiControllers[config.endpoints.billing.path] = billing;
+	apiControllers[config.endpoints.quote.path] = quote;
 
-	const newApis = ['party', 'catalog', 'ordering', 'inventory', 'service', 'resource', 'account', 'serviceInventory', 'resourceInventory', 'usage', 'billing']
+	const newApis = ['party', 'catalog', 'ordering', 'inventory', 'service', 'resource', 'account', 'serviceInventory', 'resourceInventory', 'usage', 'billing', 'quote']
 
 	const getAPIName = function(apiUrl) {
 		return apiUrl.split('/')[1];
@@ -224,19 +228,47 @@ function tmf() {
 			headers: utils.proxiedRequestHeaders(req)
 		};
 
-		if (typeof req.body === 'string') {
-			options.data = req.body;
+		if (req.headers['content-type']?.startsWith('multipart/form-data')) {
+			// Multipart requests need to be rebuild
+			const form = new FormData();
+			for (const [key, value] of Object.entries(req.body)) {
+				form.append(key, value);
+			}
+
+			for (const file of req.files || []) {
+				form.append(file.fieldname, file.buffer, {
+					filename: file.originalname,
+					contentType: file.mimetype,
+				});
+			}
+			 // Replace options.data and headers
+			options.data = form;
+			delete options.headers['content-type'];
+			delete options.headers['content-length'];
+
+			options.headers = {
+				...options.headers,
+				...form.getHeaders(), // Sets multipart Content-Type with boundary
+			};
+
+			options.maxContentLength = Infinity;
+			options.maxBodyLength = Infinity;
+		} else {
+			if (typeof req.body === 'string') {
+				options.data = req.body;
+			}
+
+			if (url.indexOf('/media/') >= 0) {
+				options.responseType = 'arraybuffer'
+
+				// Dissable default browser cache headers
+				delete options.headers['if-modified-since'];
+				delete options.headers['if-none-match'];
+
+				options.headers['cache-control'] = 'no-cache';
+			}
 		}
 
-		if (url.indexOf('/media/') >= 0) {
-			options.responseType = 'arraybuffer'
-
-			// Dissable default browser cache headers
-			delete options.headers['if-modified-since'];
-			delete options.headers['if-none-match'];
-
-			options.headers['cache-control'] = 'no-cache';
-		}
 		return options
 	}
 

@@ -163,7 +163,7 @@ describe('ServiceSpecification API', function() {
                     user: UserInfo,
                     method: 'POST',
                     body: JSON.stringify(body),
-                    apiUrl: path,
+                    apiUrl: `/${config.endpoints.service.path}${path}`,
                     url: path,
                     hostname: config.endpoints.service.host,
                     headers: {}
@@ -249,7 +249,7 @@ describe('ServiceSpecification API', function() {
                     user: seller,
                     method: 'POST',
                     body: invalidBody,
-                    apiUrl: path,
+                    apiUrl: `/${config.endpoints.service.path}${path}`,
                     url: path,
                     hostname: config.endpoints.service.host,
                     headers: {}
@@ -292,7 +292,7 @@ describe('ServiceSpecification API', function() {
                     user: userInfo,
                     method: 'PATCH',
                     body: JSON.stringify(body),
-                    apiUrl: `${path}/${serviceId}`,
+                    apiUrl: `/${config.endpoints.service.path}${path}/${serviceId}`,
                     url: `${path}/${serviceId}`,
                     hostname: config.endpoints.service.host,
                     headers: {}

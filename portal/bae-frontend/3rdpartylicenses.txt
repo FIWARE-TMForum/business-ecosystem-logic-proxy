@@ -470,9 +470,6 @@ to represent the company, product, or service to which they refer.**
 @ngx-translate/core
 SEE LICENSE IN LICENSE
 
-@ngx-translate/http-loader
-SEE LICENSE IN LICENSE
-
 @popperjs/core
 MIT
 The MIT License (MIT)

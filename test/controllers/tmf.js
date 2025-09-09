@@ -104,7 +104,8 @@ describe('TMF Controller', function() {
                 connection: { remoteAddress: '127.0.0.1' },
                 get: () => {
                     return false
-                }
+                },
+                headers: {}
             };
 
             const res = jasmine.createSpyObj('res', ['status', 'json', 'setHeader']);
