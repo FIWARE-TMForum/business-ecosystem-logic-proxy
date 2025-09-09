@@ -64,7 +64,7 @@ describe('Simulator Controller', () => {
             const mockBillingAccount = {
                 id: 'billAcc123',
                 relatedParty: [
-                    { id: 'user123' }
+                    { id: '::individual' }
                 ]
             };
 
@@ -82,7 +82,7 @@ describe('Simulator Controller', () => {
             const request = {
                 method: 'POST',
                 body: JSON.stringify(requestBody),
-                user: { partyId: 'user123' }
+                user: { partyId: '::individual' }
             };
 
             const response = jasmine.createSpyObj('res', ['status', 'send']);
@@ -142,7 +142,7 @@ describe('Simulator Controller', () => {
             const request = {
                 method: 'POST',
                 body: JSON.stringify(requestBody),
-                user: { partyId: 'user123' }
+                user: { partyId: '::individual' }
             };
 
             const response = jasmine.createSpyObj('res', ['status', 'send']);
@@ -189,7 +189,7 @@ describe('Simulator Controller', () => {
             const request = {
                 method: 'POST',
                 body: JSON.stringify(requestBody),
-                user: { partyId: 'user123' }
+                user: { partyId: '::individual' }
             };
 
             const response = jasmine.createSpyObj('res', ['status', 'send']);
@@ -248,7 +248,7 @@ describe('Simulator Controller', () => {
             const request = {
                 method: 'POST',
                 body: JSON.stringify(requestBody),
-                user: { partyId: 'user123' }
+                user: { partyId: '::individual' }
             };
 
             const response = jasmine.createSpyObj('res', ['status', 'send']);
@@ -287,7 +287,65 @@ describe('Simulator Controller', () => {
             instance.simulate(request, response);
 
             resPromise.then(() => {
-                expect(axios.get).toHaveBeenCalledWith('http://account.example.com:8080/api/account/billingAccount?relatedParty.id=user123');
+                expect(axios.get).toHaveBeenCalledWith('http://account.example.com:8080/api/account/billingAccount?relatedParty.id=::individual');
+                expect(response.status).toHaveBeenCalledWith(200);
+                done();
+            });
+        });
+
+        it('should not call checkBillAcc when user is organization', (done) => {
+            const requestBody = {
+                productOrderItem: [{
+                    productOffering: {
+                        id: 'offering123'
+                    }
+                }],
+                billingAccount: {
+                    id: 'billAcc123'
+                }
+            };
+
+            const request = {
+                method: 'POST',
+                body: JSON.stringify(requestBody),
+                user: { partyId: 'org:123:organization' }
+            };
+
+            const response = jasmine.createSpyObj('res', ['status', 'send']);
+            response.status.and.returnValue(response);
+
+            const axios = jasmine.createSpy('axios');
+            axios.get = jasmine.createSpy('get');
+
+            axios.and.callFake((config) => {
+                if (config.url.includes('/productOffering/')) {
+                    return Promise.resolve({
+                        data: { productSpecification: { id: 'spec123' } }
+                    });
+                }
+                if (config.url.includes('/productSpecification/')) {
+                    return Promise.resolve({
+                        data: { relatedParty: [{ id: 'seller123', role: 'owner' }] }
+                    });
+                }
+                if (config.url.includes('/charging/api/orderManagement/orders/preview/')) {
+                    return Promise.resolve({
+                        status: 200,
+                        data: { price: '10.00' }
+                    });
+                }
+                return Promise.reject(new Error('Unknown URL'));
+            });
+
+            const resPromise = new Promise((resolve) => {
+                response.send.and.callFake(() => resolve());
+            });
+
+            const instance = getSimulatorInstance(axios);
+            instance.simulate(request, response);
+
+            resPromise.then(() => {
+                expect(axios.get).not.toHaveBeenCalledWith(jasmine.stringMatching(/billingAccount/));
                 expect(response.status).toHaveBeenCalledWith(200);
                 done();
             });

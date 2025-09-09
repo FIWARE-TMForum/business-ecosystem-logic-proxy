@@ -113,7 +113,9 @@ function simulator() {
             '@referredType': 'organization'
         });
         try {
-            body.billingAccount ={...body.billingAccount, resolved: await checkBillAcc(body.billingAccount, req.user.partyId)}
+            if (req.user.partyId.split(':')[2] === 'individual'){
+                body.billingAccount ={...body.billingAccount, resolved: await checkBillAcc(body.billingAccount, req.user.partyId)}
+            }
         }
         catch (error) {
             return res.status(400).send(error.message)
