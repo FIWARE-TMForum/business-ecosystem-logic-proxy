@@ -61,21 +61,29 @@ describe('Simulator Controller', () => {
     describe('checkBillAcc', () => {
 
         it('should handle valid billing account with matching user', (done) => {
-            const mockBillingAccount = {
+            const mockBillingAccounts = [{
                 id: 'billAcc123',
                 relatedParty: [
                     { id: '::individual' }
-                ]
-            };
+                ],
+                contact: [{
+                    contactMedium: [{
+                        preferred: true,
+                        mediumType: 'PostalAddress'
+                    }]
+                }]
+            }];
 
             const requestBody = {
-                productOrderItem: [{
-                    productOffering: {
-                        id: 'offering123'
-                    }
-                }],
-                billingAccount: {
-                    id: 'billAcc123'
+                productOrder: {
+                    productOrderItem: [{
+                        productOffering: {
+                            id: 'offering123'
+                        },
+                        billingAccount: {
+                            id: 'billAcc123'
+                        }
+                    }]
                 }
             };
 
@@ -90,7 +98,7 @@ describe('Simulator Controller', () => {
 
             const axios = jasmine.createSpy('axios');
             axios.get = jasmine.createSpy('get').and.returnValue(
-                Promise.resolve({ data: mockBillingAccount })
+                Promise.resolve({ data: mockBillingAccounts })
             );
 
             axios.and.callFake((config) => {
@@ -121,7 +129,7 @@ describe('Simulator Controller', () => {
             instance.simulate(request, response);
 
             resPromise.then(() => {
-                expect(axios.get).toHaveBeenCalledWith('http://account.example.com:8080/api/account/billingAccount/billAcc123');
+                expect(axios.get).toHaveBeenCalledWith('http://account.example.com:8080/api/account/billingAccount?relatedParty.id=::individual');
                 expect(response.status).toHaveBeenCalledWith(200);
                 done();
             });
@@ -129,13 +137,15 @@ describe('Simulator Controller', () => {
 
         it('should return error when billing account not found', (done) => {
             const requestBody = {
-                productOrderItem: [{
-                    productOffering: {
-                        id: 'offering123'
-                    }
-                }],
-                billingAccount: {
+                productOrder: {
+                    productOrderItem: [{
+                        productOffering: {
+                            id: 'offering123'
+                        }
+                    }],
+                    billingAccount: {
                     id: 'nonexistent'
+                    }
                 }
             };
 
@@ -176,14 +186,16 @@ describe('Simulator Controller', () => {
             };
 
             const requestBody = {
-                productOrderItem: [{
-                    productOffering: {
-                        id: 'offering123'
+                productOrder: {
+                    productOrderItem: [{
+                        productOffering: {
+                            id: 'offering123'
+                        }
+                    }],
+                    billingAccount: {
+                        id: 'billAcc123'
                     }
-                }],
-                billingAccount: {
-                    id: 'billAcc123'
-                }
+                },
             };
 
             const request = {
@@ -237,12 +249,14 @@ describe('Simulator Controller', () => {
             ];
 
             const requestBody = {
-                productOrderItem: [{
-                    productOffering: {
-                        id: 'offering123'
-                    }
-                }],
-                billingAccount: {}
+                productOrder: {
+                    productOrderItem: [{
+                        productOffering: {
+                            id: 'offering123'
+                        }
+                    }],
+                    billingAccount: {}
+                }
             };
 
             const request = {
@@ -295,13 +309,15 @@ describe('Simulator Controller', () => {
 
         it('should not call checkBillAcc when user is organization', (done) => {
             const requestBody = {
-                productOrderItem: [{
-                    productOffering: {
-                        id: 'offering123'
+                productOrder: {
+                    productOrderItem: [{
+                        productOffering: {
+                            id: 'offering123'
+                        }
+                    }],
+                    billingAccount: {
+                        id: 'billAcc123'
                     }
-                }],
-                billingAccount: {
-                    id: 'billAcc123'
                 }
             };
 

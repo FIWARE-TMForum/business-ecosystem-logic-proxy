@@ -104,6 +104,9 @@ function simulator() {
         }
 
         const order = body.productOrder;
+        if (!order) {
+            return res.status(400).send('Missing productOrder in request body');
+        }
         order.relatedParty = [];
 
         order.relatedParty.push({
@@ -114,7 +117,7 @@ function simulator() {
         });
         try {
             if (req.user.partyId.split(':')[2] === 'individual'){
-                body.billingAccount ={...body.billingAccount, resolved: await checkBillAcc(body.billingAccount, req.user.partyId)}
+                order.billingAccount ={...order.billingAccount, resolved: await checkBillAcc(order.billingAccount, req.user.partyId)}
             }
         }
         catch (error) {
