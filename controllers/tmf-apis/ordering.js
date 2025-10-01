@@ -89,8 +89,8 @@ const ordering = (function() {
                     owners.forEach(function(owner) {
                         item.product.relatedParty.push({
                             id: owner.id,
-                            role: SELLER,
-                            href: owner.href
+                            href: owner.id,
+                            role: SELLER
                         });
                     });
 

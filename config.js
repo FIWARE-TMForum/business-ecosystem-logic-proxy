@@ -48,7 +48,7 @@ config.oauth2 = {
 		admin: 'admin',
 		customer: 'customer',
 		seller: 'seller',
-		orgAdmin: 'manager'
+		orgAdmin: 'orgAdmin'
 	}
 };
 
