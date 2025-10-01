@@ -639,6 +639,12 @@ config.domeGuidelines = process.env.BAE_LP_DOME_GUIDELINES || config.domeGuideli
 config.quoteApi = '/quote/quoteManagement';
 config.quoteApi = process.env.BAE_LP_QUOTE_API || config.quoteApi;
 
+config.paymentGateway = 'https://dpas-sbx.egroup.hu'
+config.paymentGateway = process.env.BAE_LP_PAYMENT_GATEWAY || config.paymentGateway;
+
+config.paymentUrl = ''
+config.paymentUrl = process.env.BAE_LP_REVENUE_SHARING_URL || config.paymentUrl;
+
 config.defaultId = ''
 
 // Purchase enabled
