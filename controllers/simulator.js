@@ -109,12 +109,17 @@ function simulator() {
         }
         order.relatedParty = [];
 
-        order.relatedParty.push({
-            id: req.user.partyId,
-            role: CUSTOMER,
-            href: req.user.partyId,
-            '@referredType': 'organization'
-        });
+        try {
+            order.relatedParty.push({
+                id: req.user.partyId,
+                role: CUSTOMER,
+                href: req.user.partyId,
+                '@referredType': 'organization'
+            });
+        }
+        catch (error){
+            return res.status(400).send('Expired credentials')
+        }
         try {
             if (req.user.partyId.split(':')[2] === 'individual'){
                 order.billingAccount ={...order.billingAccount, resolved: await checkBillAcc(order.billingAccount, req.user.partyId)}
@@ -165,7 +170,7 @@ function simulator() {
             console.log(error)
             return res.status(400).send('Error retrieving parties');
         }
-        
+
         console.log(JSON.stringify(body))
 
         body.productOrder = order

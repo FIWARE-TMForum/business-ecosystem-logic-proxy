@@ -159,7 +159,7 @@ describe('Keycloak Strategy', () => {
                     }, {
                         name: 'customer'
                     }, {
-                        name: 'manager'
+                        name: 'orgAdmin'
                     }]
                 }, {
                     id: 'group2',
@@ -169,7 +169,7 @@ describe('Keycloak Strategy', () => {
                     }, {
                         name: 'customer'
                     }, {
-                        name: 'manager'
+                        name: 'orgAdmin'
                     }]
                 }],
                 _json: {

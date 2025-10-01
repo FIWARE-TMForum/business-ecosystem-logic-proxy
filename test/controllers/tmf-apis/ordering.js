@@ -361,7 +361,8 @@ describe('Ordering API', function() {
                             },
                             {
                                 id: ownerName,
-                                role: 'Seller'
+                                role: 'Seller',
+                                href: ownerName
                             }
                         ]);
                     }
