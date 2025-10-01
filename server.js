@@ -26,6 +26,7 @@ const multer = require('multer');
 const tmf = require('./controllers/tmf').tmf();
 const admin = require('./controllers/admin').admin();
 const stats = require('./controllers/stats').stats();
+const payment = require('./controllers/payment').payment();
 const trycatch = require('trycatch');
 const url = require('url');
 const utils = require('./lib/utils');
@@ -423,7 +424,9 @@ app.get('/config', async (_, res) => {
         domePublish: config.domePublish,
         purchaseEnabled: config.purchaseEnabled,
         quoteApi: config.quoteApi,
-        defaultId: config.defaultId
+        defaultId: config.defaultId,
+        paymentGateway: config.paymentGateway,
+        paymentUrl: config.paymentUrl
     })
 })
 
@@ -633,6 +636,10 @@ app.patch('/admin/uploadcertificate/:specId', authMiddleware.headerAuthenticatio
 
 app.post('/admin/defaultcatalog', authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, (req, res) => {
     admin.updateDefaultCatalog(req, res)
+})
+
+app.get('/paymentInfo', authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, (req, res) => {
+    payment.getPaymentInfo(req, res)
 })
 
 const adminRegex = new RegExp(`^\/admin\/(.*)\/?$`)
