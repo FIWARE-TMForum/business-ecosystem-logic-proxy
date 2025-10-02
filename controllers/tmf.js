@@ -305,9 +305,12 @@ function tmf() {
 				apiUrl: req.apiUrl,
 				connection: req.connection,
 				reqBody: req.body,
-				query: req.query,
-				extraData: req.extraData
+				query: req.query
 			};
+
+			if (req.extraData) {
+				result.extraData = req.extraData;
+			}
 
 			const header = req.get('X-Terms-Accepted');
 
