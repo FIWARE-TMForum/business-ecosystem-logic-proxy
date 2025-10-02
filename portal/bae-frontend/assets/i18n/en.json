@@ -420,7 +420,10 @@
       "_actions": "Actions",
       "_as_customer": "As Customer",
       "_as_provider": "As Provider",
-      "_invoice_details": "Invoice details:"
+      "_invoice_details": "Invoice details:",
+      "_applied_billing_rates": "Applied Billing Rates",
+      "_no_billing_rates": "No billing rates found",
+      "_period_coverage": "Period Coverage"
     },
     "CREATE_CATALOG": {
         "_back": "Back",
