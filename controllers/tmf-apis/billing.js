@@ -29,6 +29,9 @@ const utils = require('./../../lib/utils')
 const billing = (function() {
 
     const validateRetrieving = async function(req, callback) {
+
+        req.extraData = {role : req.query['relatedParty.role']}
+        delete req.query['relatedParty.role']
         if (!req.path.endsWith('appliedCustomerBillingRate')) {
             return tmfUtils.filterRelatedPartyWithRole(req, ['customer', 'seller'], callback);
         }
@@ -93,8 +96,32 @@ const billing = (function() {
     
     const executePostValidation = function(response, callback) {
         // Filter the result
-        if (response.method == 'GET') {
-            let respBody = response.body
+        if (response.method == 'GET' && !response.apiUrl.endsWith('appliedCustomerBillingRate')) {
+                let respBody = response.body.filter((rate) => {
+                let partyId = response.query["relatedParty.id"]
+                let role = response.extraData.role
+                let filter = false
+
+                if (rate.relatedParty) {
+                    console.log('==============')
+                    console.log(rate.relatedParty)
+                    if (!Array.isArray(rate.relatedParty)) {
+                        rate.relatedParty = [rate.relatedParty]
+                    }
+
+                    rate.relatedParty.forEach((party) => {
+                        console.log(party.id)
+                        console.log(partyId)
+                        console.log(party.role)
+                        console.log(role)
+
+                        if (party.id == partyId && party.role == role) {
+                            filter = true
+                        }
+                    })
+                }
+                return filter
+            })
             console.log(respBody)
             // Sort the response body
             respBody.sort((a, b) => new Date(b.date) - new Date(a.date))
