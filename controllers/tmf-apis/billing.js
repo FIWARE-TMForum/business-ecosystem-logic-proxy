@@ -28,8 +28,48 @@ const utils = require('./../../lib/utils')
 
 const billing = (function() {
 
-    const validateRetrieving = function(req, callback) {
-        callback(null);
+    const validateRetrieving = async function(req, callback) {
+
+        req.extraData = {role : req.query['relatedParty.role']}
+        delete req.query['relatedParty.role']
+        if (!req.path.endsWith('appliedCustomerBillingRate')) {
+            return tmfUtils.filterRelatedPartyWithRole(req, ['customer', 'seller'], callback);
+        }
+
+        // Validate query params
+        if (!req.query?.['bill.id'] || req.query?.['relatedParty']) {
+            return callback({
+                status: 422,
+                message: 'Invalid query params for appliedCustomerBillingRate'
+            });
+        }
+
+        // Fetch customer bill
+        const cbURL = utils.getAPIURL(
+            config.endpoints.billing.appSsl,
+            config.endpoints.billing.host,
+            config.endpoints.billing.port,
+            `${config.endpoints.billing.apiPath}/customerBill/${req.query['bill.id']}`
+        );
+
+        try {
+            const resp = await axios.get(cbURL);
+            const customerBill = resp.data;
+
+            if (!tmfUtils.hasPartyRole(req, customerBill.relatedParty, null)) {
+                return callback({
+                    status: 422,
+                    message: 'Invalid query params for appliedCustomerBillingRate'
+                });
+            }
+
+            return callback(null);
+        } catch (_) {
+            return callback({
+                status: 422,
+                message: 'Invalid customer bill id'
+            });
+        }
     }
 
     const validateUpdate = function(req, callback) {
@@ -56,10 +96,10 @@ const billing = (function() {
     
     const executePostValidation = function(response, callback) {
         // Filter the result
-        if (response.method == 'GET') {
-            let respBody = response.body.filter((rate) => {
+        if (response.method == 'GET' && !response.apiUrl.split('?')[0].endsWith('appliedCustomerBillingRate')) {
+                let respBody = response.body.filter((rate) => {
                 let partyId = response.query["relatedParty.id"]
-                let role = response.query["relatedParty.role"]
+                let role = response.extraData.role
                 let filter = false
 
                 if (rate.relatedParty) {
@@ -82,9 +122,7 @@ const billing = (function() {
                 }
                 return filter
             })
-
             console.log(respBody)
-
             // Sort the response body
             respBody.sort((a, b) => new Date(b.date) - new Date(a.date))
             utils.updateResponseBody(response, respBody);
