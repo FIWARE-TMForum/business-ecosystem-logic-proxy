@@ -96,7 +96,7 @@ const billing = (function() {
     
     const executePostValidation = function(response, callback) {
         // Filter the result
-        if (response.method == 'GET' && !response.apiUrl.endsWith('appliedCustomerBillingRate')) {
+        if (response.method == 'GET' && !response.apiUrl.split('?')[0].endsWith('appliedCustomerBillingRate')) {
                 let respBody = response.body.filter((rate) => {
                 let partyId = response.query["relatedParty.id"]
                 let role = response.extraData.role
