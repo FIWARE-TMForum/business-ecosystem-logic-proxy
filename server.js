@@ -158,7 +158,7 @@ app.locals.taxRate = config.taxRate || 20;
 
 
 // Load active file imports
-var importPath = config.theme || './public/imports';
+var importPath = config.theme || !debug ? './static/public/imports' : './public/imports';
 var imports = require(importPath).imports;
 
 /////////////////////////////////////////////////////////////////////
