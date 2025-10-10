@@ -308,6 +308,10 @@ function tmf() {
 				query: req.query
 			};
 
+			if (req.extraData) {
+				result.extraData = req.extraData;
+			}
+
 			const header = req.get('X-Terms-Accepted');
 
 			if (result.user != null && header != null) {
