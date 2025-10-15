@@ -93,7 +93,8 @@ function simulator() {
         }
 
         //let simUrl = targetUrl + 'billing/previewPrice'
-        let simUrl = targetUrl + 'charging/api/orderManagement/orders/preview/'
+        //let simUrl = targetUrl + 'charging/api/orderManagement/orders/preview/'
+        let simUrl = targetUrl;
 
         // Related parties need to be included in the request body
         let body;
