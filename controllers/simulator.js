@@ -88,9 +88,9 @@ function simulator() {
             return res.status(500).send('Internal Server Error');
         }
 
-        if (!targetUrl.endsWith('/')) {
-            targetUrl += '/';
-        }
+        //if (!targetUrl.endsWith('/')) {
+        //    targetUrl += '/';
+        //}
 
         //let simUrl = targetUrl + 'billing/previewPrice'
         //let simUrl = targetUrl + 'charging/api/orderManagement/orders/preview/'
