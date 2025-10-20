@@ -402,7 +402,7 @@ const ordering = (function() {
                 state = 'failed';
             } else if (itemStatus.completed + itemStatus.cancelled + itemStatus.failed === previousOrdering.productOrderItem.length) {
                 state = 'partial';
-            } else if (itemStatus.inProgress > 0) {
+            } else if (itemStatus.inProgress + itemStatus.completed + itemStatus.cancelled +itemStatus.failed > 0 ) {
                 state = 'inProgress';
             } else if (itemStatus.acknowledged > 0) {
                 state = 'acknowledged';
