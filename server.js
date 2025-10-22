@@ -21,6 +21,7 @@ const passport = require('passport');
 const path = require('path');
 const session = require('express-session');
 const shoppingCart = require('./controllers/shoppingCart').shoppingCart;
+const domeBlog = require('./controllers/domeBlog').domeBlog;
 const management = require('./controllers/management').management;
 const multer = require('multer');
 const tmf = require('./controllers/tmf').tmf();
@@ -369,7 +370,8 @@ const fetchData = async () => {
     return (result.length === 0 || result.length > 1)? '' : result[0].default_id
 }
 
-app.use('/feedback', authMiddleware.headerAuthentication, failIfNotAuthenticated)
+//Remove failIfNotAuthenticated because they want non-logged users to also be able to give feedback
+app.use('/feedback', authMiddleware.headerAuthentication)
 app.post('/feedback', async (req,res) => {
     try {
         feedback = JSON.parse(req.body)
@@ -391,6 +393,14 @@ app.post('/feedback', async (req,res) => {
         res.status(500).send('Error indexing the feedback')
     }
 })
+
+app.use('/domeblog', authMiddleware.headerAuthentication, failIfNotAuthenticated)
+app.post('/domeblog', domeBlog.create);
+app.get('/domeblog', domeBlog.listEntries);
+app.get('/domeblog/:id', domeBlog.getById);
+app.patch('/domeblog/:id', domeBlog.updateById);
+app.delete('/domeblog/:id', domeBlog.deleteById);
+
 
 config.defaultId = await fetchData()
 app.get('/config', async (_, res) => {
