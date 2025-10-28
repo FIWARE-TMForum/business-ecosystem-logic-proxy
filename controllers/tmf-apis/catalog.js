@@ -156,8 +156,13 @@ const catalog = (function() {
             });
 
         }).catch((err) => {
+            let status = 400;
+            if (err.response && err.response.status) {
+                status = err.response.status;
+            }
+
             callback({
-                status: err.response.status
+                status: status
             });
         })
     };

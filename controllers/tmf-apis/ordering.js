@@ -584,7 +584,7 @@ const ordering = (function() {
         }
 
         return list.sort(function(a, b) {
-            return moment(a.date).isBefore(b.date) ? 1 : -1;
+            return moment(a.date).isBefore(b.date) ? -1 : 1;
         });
     };
 
@@ -710,7 +710,7 @@ const ordering = (function() {
             tasks.push(notifyOrder.bind(this, req));
             async.series(tasks, callback);
         } else if (req.method === 'PATCH') {
-            if (req.body.state.toLowerCase() === 'completed') {
+            if (req.body.state && req.body.state.toLowerCase() === 'completed') {
                 console.log('Making the notification call')
                 notifyOrderCompleted(req, () => {
                     filterOrderItems(req, callback);
