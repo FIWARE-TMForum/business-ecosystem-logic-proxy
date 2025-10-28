@@ -622,7 +622,5 @@ fdescribe('Auth lib', function () {
         });
         }).catch(done.fail);
     });
-
     });
-
 });

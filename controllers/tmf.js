@@ -36,6 +36,7 @@ const serviceCatalog = require('./tmf-apis/serviceCatalog').serviceCatalog
 const resource = require('./tmf-apis/resource').resource
 const { quote } = require('./tmf-apis/quote')
 const { billing } = require('./tmf-apis/billing')
+const { revenue } = require('./tmf-apis/revenue')
 
 // Other dependencies
 const logger = require('./../lib/logger').logger.getLogger('TMF')
@@ -62,8 +63,9 @@ function tmf() {
 	apiControllers[config.endpoints.resource.path] = resource;
 	apiControllers[config.endpoints.billing.path] = billing;
 	apiControllers[config.endpoints.quote.path] = quote;
+	apiControllers[config.endpoints.revenue.path] = revenue;
 
-	const newApis = ['party', 'catalog', 'ordering', 'inventory', 'service', 'resource', 'account', 'serviceInventory', 'resourceInventory', 'usage', 'billing', 'quote']
+	const newApis = ['party', 'catalog', 'ordering', 'inventory', 'service', 'resource', 'account', 'serviceInventory', 'resourceInventory', 'usage', 'billing', 'quote', 'revenue']
 
 	const getAPIName = function(apiUrl) {
 		return apiUrl.split('/')[1];
