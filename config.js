@@ -265,6 +265,12 @@ config.endpoints = {
         apiPath: '',
         host: 'quote-management.marketplace.svc.cluster.local',
         port: '8080'
+    },
+    revenue: {
+        path: 'revenue',
+        apiPath: '',
+        host: 'revenue-engine-svc.billing.svc.cluster.local',
+        port: '8080'
     }
 };
 
@@ -548,6 +554,24 @@ if (!!process.env.BAE_LP_ENDPOINT_CUSTOMER_BILL_SECURED) {
 	config.endpoints.billing.appSsl = process.env.BAE_LP_ENDPOINT_CUSTOMER_BILL_SECURED == 'true';
 }
 
+// Quote
+config.endpoints.quote.apiPath = process.env.BAE_LP_ENDPOINT_QUOTE_PATH || config.endpoints.quote.apiPath;
+config.endpoints.quote.port = process.env.BAE_LP_ENDPOINT_QUOTE_PORT || config.endpoints.quote.port;
+config.endpoints.quote.host = process.env.BAE_LP_ENDPOINT_QUOTE_HOST || config.endpoints.quote.host;
+
+if (!!process.env.BAE_LP_ENDPOINT_QUOTE_SECURED) {
+	config.endpoints.quote.appSsl = process.env.BAE_LP_ENDPOINT_QUOTE_SECURED == 'true';
+}
+
+// Revenue
+config.endpoints.revenue.apiPath = process.env.BAE_LP_ENDPOINT_REVENUE_PATH || config.endpoints.revenue.apiPath;
+config.endpoints.revenue.port = process.env.BAE_LP_ENDPOINT_REVENUE_PORT || config.endpoints.revenue.port;
+config.endpoints.revenue.host = process.env.BAE_LP_ENDPOINT_REVENUE_HOST || config.endpoints.revenue.host;
+
+if (!!process.env.BAE_LP_ENDPOINT_REVENUE_SECURED) {
+	config.endpoints.revenue.appSsl = process.env.BAE_LP_ENDPOINT_REVENUE_SECURED == 'true';
+}
+
 // ======
 // MongoDB Config
 config.mongoDb = config.mongoDb || {};
@@ -642,8 +666,8 @@ config.quoteApi = process.env.BAE_LP_QUOTE_API || config.quoteApi;
 config.paymentGateway = 'https://dpas-sbx.egroup.hu'
 config.paymentGateway = process.env.BAE_LP_PAYMENT_GATEWAY || config.paymentGateway;
 
-config.paymentUrl = ''
-config.paymentUrl = process.env.BAE_LP_REVENUE_SHARING_URL || config.paymentUrl;
+config.analytics = ''
+config.analytics = process.env.BAE_LP_ANALYTICS_URL || config.analytics;
 
 config.defaultId = ''
 
