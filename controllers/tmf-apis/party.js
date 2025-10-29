@@ -66,7 +66,7 @@ const party = (function() {
             (regexResult[1] == 'organization' && !utils.isOrganization(req)) ||
             (regexResult[1] == 'organization' &&
                 utils.isOrganization(req) &&
-                !utils.hasRole(req.user, config.oauth2.roles.orgAdmin))
+                !utils.hasRole(req.user, config.roles.orgAdmin))
         ) {
             callback({
                 status: 403,

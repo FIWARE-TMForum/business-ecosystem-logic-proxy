@@ -116,7 +116,7 @@ const serviceCatalog = (function() {
     }
 
     const validateOwnerSeller = function(req, callback) {
-        if (!tmfUtils.hasPartyRole(req, req.prevBody.relatedParty, 'owner') || !utils.hasRole(req.user, config.oauth2.roles.seller)) {
+        if (!tmfUtils.hasPartyRole(req, req.prevBody.relatedParty, 'owner') || !utils.hasRole(req.user, config.roles.seller)) {
             callback({
                 status: 403,
                 message: 'Unauthorized to update non-owned/non-seller services'
@@ -128,7 +128,7 @@ const serviceCatalog = (function() {
 
     const validateOwnerSellerPost = function(req, callback) {
         const body = req.parsedBody
-        if (!tmfUtils.hasPartyRole(req, body.relatedParty, 'owner') || !utils.hasRole(req.user, config.oauth2.roles.seller)) {
+        if (!tmfUtils.hasPartyRole(req, body.relatedParty, 'owner') || !utils.hasRole(req.user, config.roles.seller)) {
             callback({
                 status: 403,
                 message: 'Unauthorized to create non-owned/non-seller service specs'

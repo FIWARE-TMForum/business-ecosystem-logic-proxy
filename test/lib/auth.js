@@ -138,7 +138,7 @@ function baseProfile(overrides) {
   );
 }
 
-fdescribe('Auth lib', function () {
+describe('Auth lib', function () {
   let clockNow;
   beforeEach(function () {
     // Fix "now" to keep exp/expire comparisons deterministic

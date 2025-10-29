@@ -38,13 +38,13 @@ var defaultConfig = {
 	proxyPrefix: '',
 	oauth2: {
 		server: 'https://account.lab.fiware.org',
-		clientID: 'client',
-		roles: {
-			admin: 'provider',
-			seller: 'seller',
-			customer: 'customer',
-			orgAdmin: 'orgAdmin'
-		}
+		clientID: 'client'
+	},
+	roles: {
+		admin: 'provider',
+		seller: 'seller',
+		customer: 'customer',
+		orgAdmin: 'orgAdmin'
 	},
 	endpoints: {
 		account: {
@@ -170,6 +170,13 @@ var defaultConfig = {
 			path: 'quote',
 			apiPath: '/api',
 			host: 'quote.com',
+			port: '8637',
+			appSsl: false
+		},
+		revenue: {
+			path: 'revenue',
+			apiPath: '/revenue',
+			host: 'revenue.com',
 			port: '8637',
 			appSsl: false
 		}

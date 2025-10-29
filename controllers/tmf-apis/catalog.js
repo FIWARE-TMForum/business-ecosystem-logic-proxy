@@ -600,7 +600,7 @@ const catalog = (function() {
 
     const validateCategory = function(req, updatedCategory, oldCategory, action, callback) {
         // Categories can only be created by administrators
-        if (!utils.hasRole(req.user, config.oauth2.roles.admin)) {
+        if (!utils.hasRole(req.user, config.roles.admin)) {
             callback({
                 status: 403,
                 message: 'Only administrators can ' + action + ' categories'
@@ -1060,7 +1060,7 @@ const catalog = (function() {
             validateCategory(req, body, null, 'create', callback);
         } else {
             // Check that the user has the seller role or is an admin
-            if (!utils.hasRole(req.user, config.oauth2.roles.seller)) {
+            if (!utils.hasRole(req.user, config.roles.seller)) {
                 callback({
                     status: 403,
                     message: 'You are not authorized to create resources'

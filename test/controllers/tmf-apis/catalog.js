@@ -292,7 +292,7 @@ describe('Catalog API', function() {
 
         catalogApi.checkPermissions(req, function(err) {
             if (sellerChecked) {
-                expect(checkRoleMethod).toHaveBeenCalledWith(req.user, config.oauth2.roles.seller);
+                expect(checkRoleMethod).toHaveBeenCalledWith(req.user, config.roles.seller);
             }
 
             expect(checkRoleMethod.calls.count()).toBe(sellerChecked ? 1 : 0);
@@ -333,31 +333,6 @@ describe('Catalog API', function() {
         );
     });
 
-    //DEPRECATED
-//-------------------------------------------------------------------------------------------------------------
-    
-    // it('should reject creation requests when related party role is not owner', function(done) { 
-        // 	var user = 'test';
-        // 	var resource = {
-            // 		relatedParty: [{ name: user, role: 'invalid role' }],
-            // 		validFor: basicBody.validFor
-            // 	};
-            
-            // 	testCreateBasic(
-                // 		user,
-                // 		JSON.stringify(resource),
-                // 		[{ name: config.oauth2.roles.seller }],
-                // 		true,
-                // 		403,
-                // 		INVALID_USER_CREATE,
-                // 		true,
-                // 		true,
-                // 		false,
-                // 		done
-                // 	);
-                // });
-//-------------------------------------------------------------------------------------------------------------
-
     it('should allow to create resources when user is seller', function(done) {
         var user = 'test';
         var resource = {
@@ -369,7 +344,7 @@ describe('Catalog API', function() {
         testCreateBasic(
             user,
             JSON.stringify(resource),
-            [{ name: config.oauth2.roles.seller }],
+            [{ name: config.roles.seller }],
             false,
             null,
             null,
@@ -392,7 +367,7 @@ describe('Catalog API', function() {
 
         var user = {
             partyId: userName,
-            roles: [{ name: config.oauth2.roles.seller }]
+            roles: [{ name: config.roles.seller }]
         };
 
         var basicBody = {
@@ -1248,7 +1223,7 @@ describe('Catalog API', function() {
                 apiUrl: offeringPath,
                 user: {
                     id: 'test',
-                    roles: [{ name: config.oauth2.roles.seller }]
+                    roles: [{ name: config.roles.seller }]
                 },
                 body: JSON.stringify(body)
             };
@@ -1473,7 +1448,7 @@ describe('Catalog API', function() {
                 apiUrl: '/catalog/productOfferingPrice',
                 user: {
                     id: 'test',
-                    roles: [{ name: config.oauth2.roles.seller }]
+                    roles: [{ name: config.roles.seller }]
                 },
                 body: JSON.stringify(offeringPrice)
             };
@@ -1594,7 +1569,7 @@ describe('Catalog API', function() {
             apiUrl: catalogPath,
             user: {
                 id: userName,
-                roles: [{ name: config.oauth2.roles.seller }]
+                roles: [{ name: config.roles.seller }]
             },
             body: JSON.stringify(category)
         };
@@ -1787,7 +1762,7 @@ describe('Catalog API', function() {
             apiUrl: catalogPath,
             user: {
                 partyId: userName,
-                roles: [{ name: config.oauth2.roles.seller }]
+                roles: [{ name: config.roles.seller }]
             },
             body: JSON.stringify(catalog)
         };
@@ -1979,7 +1954,7 @@ describe('Catalog API', function() {
                 apiUrl: '/catalog/productOfferingPrice/1',
                 user: {
                     id: 'test',
-                    roles: [{ name: config.oauth2.roles.seller }]
+                    roles: [{ name: config.roles.seller }]
                 },
                 body: JSON.stringify(offeringPrice)
             };
@@ -2665,7 +2640,7 @@ describe('Catalog API', function() {
             apiUrl: basepath + assetPath,
             user: {
                 id: userName,
-                roles: [{ name: config.oauth2.roles.seller }]
+                roles: [{ name: config.roles.seller }]
             },
             body: assetBody
         };

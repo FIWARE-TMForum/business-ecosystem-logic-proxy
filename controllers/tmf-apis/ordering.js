@@ -198,7 +198,7 @@ const ordering = (function() {
         }
 
         // Check that the user has the customer role
-        if (config.customerRoleRequired && !utils.hasRole(req.user, config.oauth2.roles.customer)) {
+        if (config.customerRoleRequired && !utils.hasRole(req.user, config.roles.customer)) {
             return callback({
                 status: 403,
                 message: 'You are not authorized to order products'

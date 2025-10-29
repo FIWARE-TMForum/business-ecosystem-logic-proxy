@@ -43,14 +43,16 @@ config.oauth2 = {
 	oidcDiscoveryURI: null,
 	oidcTokenEndpointAuthMethod: "client_secret_basic",
 	key: '281e126aa35c80f2',
-	defaultRole: null,
-	roles: {
-		admin: 'admin',
-		customer: 'customer',
-		seller: 'seller',
-		orgAdmin: 'orgAdmin'
-	}
+	defaultRole: null
 };
+
+config.roles = {
+    admin: 'admin',
+    customer: 'customer',
+    seller: 'seller',
+    orgAdmin: 'orgAdmin'
+}
+
 
 /*config.oauth2 = {
   provider: 'keycloak',
@@ -397,10 +399,10 @@ config.oauth2.realm = process.env.BAE_LP_OIDC_REALM || config.oauth2.realm;
 config.oauth2.tokenCrt = process.env.BAE_LP_OIDC_TOKEN_CRT || config.oauth2.tokenCrt;
 config.oauth2.tokenKey = process.env.BAE_LP_OIDC_TOKEN_KEY || config.oauth2.tokenKey;
 
-config.oauth2.roles.admin = process.env.BAE_LP_OAUTH2_ADMIN_ROLE || config.oauth2.roles.admin;
-config.oauth2.roles.seller = process.env.BAE_LP_OAUTH2_SELLER_ROLE || config.oauth2.roles.seller;
-config.oauth2.roles.customer = process.env.BAE_LP_OAUTH2_CUSTOMER_ROLE || config.oauth2.roles.customer;
-config.oauth2.roles.orgAdmin = process.env.BAE_LP_OAUTH2_ORG_ADMIN_ROLE || config.oauth2.roles.orgAdmin;
+config.roles.admin = process.env.BAE_LP_OAUTH2_ADMIN_ROLE || config.roles.admin;
+config.roles.seller = process.env.BAE_LP_OAUTH2_SELLER_ROLE || config.roles.seller;
+config.roles.customer = process.env.BAE_LP_OAUTH2_CUSTOMER_ROLE || config.roles.customer;
+config.roles.orgAdmin = process.env.BAE_LP_OAUTH2_ORG_ADMIN_ROLE || config.roles.orgAdmin;
 
 if (!!process.env.BAE_LP_OAUTH2_IS_LEGACY) {
 	config.oauth2.isLegacy = process.env.BAE_LP_OAUTH2_IS_LEGACY == 'true';

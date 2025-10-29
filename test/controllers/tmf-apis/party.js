@@ -200,7 +200,7 @@ describe('Party API', function() {
                 var userObj = {
                     partyId: 'org',
                     userNickname: 'user',
-                    roles: [{ name: testUtils.getDefaultConfig().oauth2.roles.orgAdmin }]
+                    roles: [{ name: testUtils.getDefaultConfig().roles.orgAdmin }]
                 };
                 accessPartyTest('org', orgPath, userObj, INVALID_NUMBER, null, false, done);
             });
@@ -209,7 +209,7 @@ describe('Party API', function() {
                 var userObj = {
                     partyId: 'org',
                     userNickname: 'user',
-                    roles: [{ name: testUtils.getDefaultConfig().oauth2.roles.orgAdmin }]
+                    roles: [{ name: testUtils.getDefaultConfig().roles.orgAdmin }]
                 };
                 accessPartyTest('org', orgPath, userObj, null, null, true, done);
             });
@@ -218,7 +218,7 @@ describe('Party API', function() {
                 var userObj = {
                     id: 'org',
                     userNickname: 'user',
-                    roles: [{ name: testUtils.getDefaultConfig().oauth2.roles.orgAdmin }]
+                    roles: [{ name: testUtils.getDefaultConfig().roles.orgAdmin }]
                 };
                 accessPartyTest('org', indPath, userObj, NOT_AUTH_ERROR, null, true, done);
             });
@@ -244,7 +244,7 @@ describe('Party API', function() {
                 var user = {
                     partyId: 'org',
                     userNickname: 'user',
-                    roles: [{ name: testUtils.getDefaultConfig().oauth2.roles.orgAdmin }]
+                    roles: [{ name: testUtils.getDefaultConfig().roles.orgAdmin }]
                 };
 
                 var req = {

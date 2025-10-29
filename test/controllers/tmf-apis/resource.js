@@ -182,7 +182,7 @@ describe('ResourceSpecification API', function() {
                         expect(checkOwnerMethod).toHaveBeenCalledWith(req, body.relatedParty, 'owner')
 
                         if (isOwner) {
-                            expect(checkRoleMethod).toHaveBeenCalledWith(req.user, config.oauth2.roles.seller)
+                            expect(checkRoleMethod).toHaveBeenCalledWith(req.user, config.roles.seller)
                         }
                         expect(checkRoleMethod.calls.count()).toBe(isOwner ? 1 : 0);
                     }
@@ -310,7 +310,7 @@ describe('ResourceSpecification API', function() {
                         expect(checkOwnerMethod).toHaveBeenCalledWith(req, prevBody.relatedParty, 'owner')
 
                         if (isOwner) {
-                            expect(checkRoleMethod).toHaveBeenCalledWith(req.user, config.oauth2.roles.seller)
+                            expect(checkRoleMethod).toHaveBeenCalledWith(req.user, config.roles.seller)
                         }
                         expect(err).toBe(null)
                     } else {
