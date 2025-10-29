@@ -268,7 +268,7 @@ config.endpoints = {
     },
     revenue: {
         path: 'revenue',
-        apiPath: 'revenue',
+        apiPath: '/revenue',
         host: 'revenue-engine-svc.billing.svc.cluster.local',
         port: '8080'
     }
