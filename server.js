@@ -409,6 +409,12 @@ app.get('/config', async (_, res) => {
             verifierQRCodePath: config.siop.verifierQRCodePath,
             requestUri: config.siop.requestUri
         },
+        roles: {
+            seller: config.roles.seller,
+            customer: config.roles.customer,
+            admin: config.roles.admin,
+            orgAdmin: config.roles.orgAdmin
+        },
         chat: config.chatUrl,
         knowledgeBaseUrl: config.knowledgeUrl,
         ticketingUrl: config.ticketingUrl,
