@@ -204,7 +204,8 @@
         "_about": "About",
         "_verify": "Publish your offering",
         "_info": "Info",
-        "_orders": "Product Orders"
+        "_orders": "Product Orders",
+        "_blog": "Dome blog"
     },
     "PRODUCT_DETAILS": {
         "_back": "Back",
