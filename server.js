@@ -158,7 +158,7 @@ app.locals.taxRate = config.taxRate || 20;
 
 
 // Load active file imports
-var importPath = config.theme || !debug ? './static/public/imports' : './public/imports';
+var importPath = config.theme || './public/imports';
 var imports = require(importPath).imports;
 
 /////////////////////////////////////////////////////////////////////
@@ -394,12 +394,11 @@ app.post('/feedback', async (req,res) => {
     }
 })
 
-app.use('/domeblog', authMiddleware.headerAuthentication, failIfNotAuthenticated)
-app.post('/domeblog', domeBlog.create);
+app.post('/domeblog', authMiddleware.headerAuthentication, failIfNotAuthenticated, domeBlog.create);
 app.get('/domeblog', domeBlog.listEntries);
 app.get('/domeblog/:id', domeBlog.getById);
-app.patch('/domeblog/:id', domeBlog.updateById);
-app.delete('/domeblog/:id', domeBlog.deleteById);
+app.patch('/domeblog/:id', authMiddleware.headerAuthentication, failIfNotAuthenticated, domeBlog.updateById);
+app.delete('/domeblog/:id',  authMiddleware.headerAuthentication, failIfNotAuthenticated, domeBlog.deleteById);
 
 
 config.defaultId = await fetchData()
