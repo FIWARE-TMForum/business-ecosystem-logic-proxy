@@ -456,8 +456,9 @@ describe('VC Strategy', () => {
                 name: 'TestCompany, S.L.',
                 roles: [
                     { name: 'orgAdmin', id: 'orgAdmin' },
-                    { name: 'seller', id: 'seller' }
-                ]
+                    { name: 'seller', id: 'seller' },
+                ],
+                country: 'ES'
             }])
         })
 
@@ -486,7 +487,6 @@ describe('VC Strategy', () => {
                         },
                         "mandator": {
                           "commonName": "TEST",
-                          "country": "ES",
                           "emailAddress": "test@test.com",
                           "organization": "TestCompany, S.L.",
                           "organizationIdentifier": "VATES-C12341234",
@@ -622,7 +622,8 @@ describe('VC Strategy', () => {
                 roles: [
                     { name: 'orgAdmin', id: 'orgAdmin' },
                     { name: 'seller', id: 'seller' }
-                ]
+                ],
+                country: 'ES'
             }])
         })
 
@@ -651,7 +652,6 @@ describe('VC Strategy', () => {
                         },
                         "mandator": {
                           "commonName": "TEST",
-                          "country": "ES",
                           "emailAddress": "test@test.com",
                           "organization": "TestCompany, S.L.",
                           "organizationIdentifier": "VATES-C12341234",
@@ -719,7 +719,6 @@ describe('VC Strategy', () => {
                     },
                     "mandator": {
                       "commonName": "Mandator name INTwo As Signer",
-                      "country": "Bulgaria",
                       "emailAddress": "mandator@mailinator.com",
                       "organization": "Mandator company",
                       "organizationIdentifier": "VATBG-123ABCC",
@@ -887,7 +886,8 @@ describe('VC Strategy', () => {
                     { name: 'seller', id: 'seller' },
                     { name: 'orgAdmin', id: 'orgAdmin' },
                     { name: 'certifier', id: 'certifier' },
-                ]
+                ],
+                country: 'ES'
             }])
       })
       it ('should build a VC with a LEARCredentialMachine with attest included', () => {
@@ -969,7 +969,8 @@ describe('VC Strategy', () => {
                 name: 'IN2, Ingeniería de la Información, S.L.',
                 roles: [
                     { name: 'certifier', id: 'certifier' }
-                ]
+                ],
+                country: 'ES'
             }])
       })
 
@@ -1014,7 +1015,6 @@ describe('VC Strategy', () => {
                       },
                       "mandator": {
                         "commonName": "Tester",
-                        "country": "ES",
                         "emailAddress": "test@test.es",
                         "organization": "IN2, Ingeniería de la Información, S.L.",
                         "organizationIdentifier": "VATES-B00000000",
@@ -1097,7 +1097,6 @@ describe('VC Strategy', () => {
                       },
                       "mandator": {
                         "commonName": "Tester",
-                        "country": "ES",
                         "emailAddress": "test@test.es",
                         "organization": "IN2, Ingeniería de la Información, S.L.",
                         "organizationIdentifier": "VATES-B00000000",

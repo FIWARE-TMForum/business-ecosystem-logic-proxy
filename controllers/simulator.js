@@ -88,12 +88,13 @@ function simulator() {
             return res.status(500).send('Internal Server Error');
         }
 
-        if (!targetUrl.endsWith('/')) {
-            targetUrl += '/';
-        }
+        //if (!targetUrl.endsWith('/')) {
+        //    targetUrl += '/';
+        //}
 
         //let simUrl = targetUrl + 'billing/previewPrice'
-        let simUrl = targetUrl + 'charging/api/orderManagement/orders/preview/'
+        //let simUrl = targetUrl + 'charging/api/orderManagement/orders/preview/'
+        let simUrl = targetUrl;
 
         // Related parties need to be included in the request body
         let body;

@@ -28,7 +28,7 @@ describe('Simulator Controller', () => {
     };
 
     const config = {
-        billingEngineUrl: 'http://billing.example.com',
+        billingEngineUrl: 'http://billing.example.com/charging/api/orderManagement/orders/preview/',
         endpoints: {
             account: {
                 appSsl: false,

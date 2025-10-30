@@ -435,7 +435,7 @@ app.get('/config', async (_, res) => {
         quoteApi: config.quoteApi,
         defaultId: config.defaultId,
         paymentGateway: config.paymentGateway,
-        paymentUrl: config.paymentUrl
+        analytics: config.analytics,
     })
 })
 
