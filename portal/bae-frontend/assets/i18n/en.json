@@ -317,6 +317,7 @@
         "_add_logo_url": "Add organization logo using a URL",
         "_acknowledged": "Acknowledged",
         "_in_progress": "In Progress",
+        "_partial": "Partial",
         "_completed": "Completed",
         "_failed": "Failed",
         "_pending": "Pending",
@@ -420,7 +421,10 @@
       "_actions": "Actions",
       "_as_customer": "As Customer",
       "_as_provider": "As Provider",
-      "_invoice_details": "Invoice details:"
+      "_invoice_details": "Invoice details:",
+      "_applied_billing_rates": "Applied Billing Rates",
+      "_no_billing_rates": "No billing rates found",
+      "_period_coverage": "Period Coverage"
     },
     "CREATE_CATALOG": {
         "_back": "Back",
@@ -1066,6 +1070,7 @@
         "_filter_state": "Filter by status",
         "_acknowledged": "Acknowledged",
         "_in_progress": "In Progress",
+        "_partial": "Partial",
         "_completed": "Completed",
         "_failed": "Failed",
         "_pending": "Pending",

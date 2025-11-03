@@ -402,7 +402,7 @@ const ordering = (function() {
                 state = 'failed';
             } else if (itemStatus.completed + itemStatus.cancelled + itemStatus.failed === previousOrdering.productOrderItem.length) {
                 state = 'partial';
-            } else if (itemStatus.inProgress > 0) {
+            } else if (itemStatus.inProgress + itemStatus.completed + itemStatus.cancelled +itemStatus.failed > 0 ) {
                 state = 'inProgress';
             } else if (itemStatus.acknowledged > 0) {
                 state = 'acknowledged';
@@ -584,7 +584,7 @@ const ordering = (function() {
         }
 
         return list.sort(function(a, b) {
-            return moment(a.date).isBefore(b.date) ? 1 : -1;
+            return moment(a.date).isBefore(b.date) ? -1 : 1;
         });
     };
 
@@ -710,7 +710,7 @@ const ordering = (function() {
             tasks.push(notifyOrder.bind(this, req));
             async.series(tasks, callback);
         } else if (req.method === 'PATCH') {
-            if (req.body.state.toLowerCase() === 'completed') {
+            if (req.body.state && req.body.state.toLowerCase() === 'completed') {
                 console.log('Making the notification call')
                 notifyOrderCompleted(req, () => {
                     filterOrderItems(req, callback);
