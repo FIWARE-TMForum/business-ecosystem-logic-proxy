@@ -50,7 +50,8 @@ config.roles = {
     admin: 'admin',
     customer: 'Buyer',
     seller: 'Seller',
-    orgAdmin: 'orgAdmin'
+    orgAdmin: 'orgAdmin',
+    certifier: 'certifier'
 }
 
 
@@ -400,6 +401,7 @@ config.roles.admin = process.env.BAE_LP_OAUTH2_ADMIN_ROLE || config.roles.admin;
 config.roles.seller = process.env.BAE_LP_OAUTH2_SELLER_ROLE || config.roles.seller;
 config.roles.customer = process.env.BAE_LP_OAUTH2_CUSTOMER_ROLE || config.roles.customer;
 config.roles.orgAdmin = process.env.BAE_LP_OAUTH2_ORG_ADMIN_ROLE || config.roles.orgAdmin;
+config.roles.certifier = process.env.BAE_LP_OAUTH2_ORG_CERTIFIER_ROLE || config.roles.certifier;
 
 if (!!process.env.BAE_LP_OAUTH2_IS_LEGACY) {
 	config.oauth2.isLegacy = process.env.BAE_LP_OAUTH2_IS_LEGACY == 'true';

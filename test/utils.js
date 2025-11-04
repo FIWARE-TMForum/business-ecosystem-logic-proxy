@@ -44,7 +44,8 @@ var defaultConfig = {
 		admin: 'provider',
 		seller: 'Seller',
 		customer: 'Buyer',
-		orgAdmin: 'orgAdmin'
+		orgAdmin: 'orgAdmin',
+		certifier: 'certifier'
 	},
 	endpoints: {
 		account: {

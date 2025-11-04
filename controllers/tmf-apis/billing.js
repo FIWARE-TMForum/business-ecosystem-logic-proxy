@@ -33,7 +33,7 @@ const billing = (function() {
         req.extraData = {role : req.query['relatedParty.role']}
         delete req.query['relatedParty.role']
         if (!req.path.endsWith('appliedCustomerBillingRate')) {
-            return tmfUtils.filterRelatedPartyWithRole(req, ['customer', 'seller'], callback);
+            return tmfUtils.filterRelatedPartyWithRole(req, [config.roles.customer, config.roles.seller], callback);
         }
 
         // Validate query params

@@ -55,7 +55,7 @@ const ordering = (function() {
     //////////////////////////////////////////////////////////////////////////////////////////////
 
     const validateRetrieving = function(req, callback) {
-        tmfUtils.filterRelatedPartyWithRole(req, ['customer', 'seller'], callback);
+        tmfUtils.filterRelatedPartyWithRole(req, [config.roles.customer, config.roles.seller], callback);
     };
 
     //////////////////////////////////////////////////////////////////////////////////////////////

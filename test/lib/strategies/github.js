@@ -18,8 +18,11 @@
  */
 
 const proxyquire = require('proxyquire');
+const testUtils = require('./../../utils');
 
 describe('Github Strategy', () => {
+    const nodeConfig = testUtils.getDefaultConfig();
+
     const MockStrategy = function MockStrategy(params, cb) {
         this.params = params;
         this.cb = cb;
@@ -44,6 +47,7 @@ describe('Github Strategy', () => {
     const buildStrategyMock = function buildStrategyMock(passport) {
         return proxyquire('../../../lib/strategies/github', {
             'passport-github': passport,
+            '../../config': nodeConfig
         }).strategy;
     }
 
@@ -69,8 +73,8 @@ describe('Github Strategy', () => {
                     email: 'fdelavega@email.com',
                     organizations: [],
                     roles: [{
-                        'name': 'seller',
-                        'id':' seller'
+                        'name': nodeConfig.roles.seller,
+                        'id': nodeConfig.roles.seller
                     }],
                     _json: {
                         email: 'fdelavega@email.com',

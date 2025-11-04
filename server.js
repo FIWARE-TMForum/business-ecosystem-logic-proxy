@@ -422,7 +422,8 @@ app.get('/config', async (_, res) => {
             seller: config.roles.seller,
             customer: config.roles.customer,
             admin: config.roles.admin,
-            orgAdmin: config.roles.orgAdmin
+            orgAdmin: config.roles.orgAdmin,
+            certifier: config.roles.certifier
         },
         chat: config.chatUrl,
         knowledgeBaseUrl: config.knowledgeUrl,

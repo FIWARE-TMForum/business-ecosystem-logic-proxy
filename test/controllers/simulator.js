@@ -29,6 +29,12 @@ describe('Simulator Controller', () => {
 
     const config = {
         billingEngineUrl: 'http://billing.example.com/charging/api/orderManagement/orders/preview/',
+        roles: {
+            admin: 'admin',
+            certifier: 'certifier',
+            seller: 'Seller',
+            customer: 'Buyer'
+        },
         endpoints: {
             account: {
                 appSsl: false,
@@ -101,18 +107,18 @@ describe('Simulator Controller', () => {
                 Promise.resolve({ data: mockBillingAccounts })
             );
 
-            axios.and.callFake((config) => {
-                if (config.url.includes('/productOffering/')) {
+            axios.and.callFake((resp) => {
+                if (resp.url.includes('/productOffering/')) {
                     return Promise.resolve({
                         data: { productSpecification: { id: 'spec123' } }
                     });
                 }
-                if (config.url.includes('/productSpecification/')) {
+                if (resp.url.includes('/productSpecification/')) {
                     return Promise.resolve({
-                        data: { relatedParty: [{ id: 'seller123', role: 'Seller' }] }
+                        data: { relatedParty: [{ id: 'seller123', role: config.roles.seller }] }
                     });
                 }
-                if (config.url.includes('/charging/api/orderManagement/orders/preview/')) {
+                if (resp.url.includes('/charging/api/orderManagement/orders/preview/')) {
                     return Promise.resolve({
                         status: 200,
                         data: { price: '10.00' }
@@ -273,18 +279,18 @@ describe('Simulator Controller', () => {
                 Promise.resolve({ data: mockBillingAccounts })
             );
 
-            axios.and.callFake((config) => {
-                if (config.url.includes('/productOffering/')) {
+            axios.and.callFake((resp) => {
+                if (resp.url.includes('/productOffering/')) {
                     return Promise.resolve({
                         data: { productSpecification: { id: 'spec123' } }
                     });
                 }
-                if (config.url.includes('/productSpecification/')) {
+                if (resp.url.includes('/productSpecification/')) {
                     return Promise.resolve({
-                        data: { relatedParty: [{ id: 'seller123', role: 'Seller' }] }
+                        data: { relatedParty: [{ id: 'seller123', role: config.roles.seller }] }
                     });
                 }
-                if (config.url.includes('/charging/api/orderManagement/orders/preview/')) {
+                if (resp.url.includes('/charging/api/orderManagement/orders/preview/')) {
                     return Promise.resolve({
                         status: 200,
                         data: { price: '10.00' }
@@ -333,18 +339,18 @@ describe('Simulator Controller', () => {
             const axios = jasmine.createSpy('axios');
             axios.get = jasmine.createSpy('get');
 
-            axios.and.callFake((config) => {
-                if (config.url.includes('/productOffering/')) {
+            axios.and.callFake((resp) => {
+                if (resp.url.includes('/productOffering/')) {
                     return Promise.resolve({
                         data: { productSpecification: { id: 'spec123' } }
                     });
                 }
-                if (config.url.includes('/productSpecification/')) {
+                if (resp.url.includes('/productSpecification/')) {
                     return Promise.resolve({
-                        data: { relatedParty: [{ id: 'seller123', role: 'Seller' }] }
+                        data: { relatedParty: [{ id: 'seller123', role: config.roles.seller }] }
                     });
                 }
-                if (config.url.includes('/charging/api/orderManagement/orders/preview/')) {
+                if (resp.url.includes('/charging/api/orderManagement/orders/preview/')) {
                     return Promise.resolve({
                         status: 200,
                         data: { price: '10.00' }
