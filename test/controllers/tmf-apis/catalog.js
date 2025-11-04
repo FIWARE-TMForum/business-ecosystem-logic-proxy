@@ -509,9 +509,9 @@ describe('Catalog API', function() {
             var bodyGetProduct = productRequestInfo.requestStatus === 200 ? bodyGetProductOk : defaultErrorMessage;
 
             if (body.category) {
-                var categories = body.category;
+                const categories = body.category;
 
-                for (var i = 0; i < categories.length; i++) {
+                for (let i = 0; i < categories.length; i++) {
                     nock(serverUrl)
                         .get(categoryPath + '/' + categories[i].id)
                         .reply(categoriesRequestInfo[categories[i].id].requestStatus, {});
@@ -605,13 +605,13 @@ describe('Catalog API', function() {
         });
 
         it('should not allow to create an offering with a non owned product', function(done) {
-            var productRequestInfo = {
+            const productRequestInfo = {
                 requestStatus: 200,
-                role: 'Seller',
+                role: 'buyer',
                 lifecycleStatus: 'active'
             };
 
-            var catalogRequestInfo = {
+            const catalogRequestInfo = {
                 requestStatus: 200,
                 lifecycleStatus: 'active'
             };
@@ -1132,7 +1132,7 @@ describe('Catalog API', function() {
             };
 
             const offeringRequestInfo = {
-                role: 'seller',
+                role: 'buyer',
                 isBundle: false,
                 lifecycleStatus: 'active',
                 hrefs: [offering1, offering2],
@@ -3203,7 +3203,7 @@ describe('Catalog API', function() {
                     },
                     {
                         id: 'test',
-                        roles: [{ name: 'seller' }]
+                        roles: [{ name: config.roles.seller }]
                     },
                     jasmine.any(Function)
                 );

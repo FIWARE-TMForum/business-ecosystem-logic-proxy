@@ -42,8 +42,8 @@ var defaultConfig = {
 	},
 	roles: {
 		admin: 'provider',
-		seller: 'seller',
-		customer: 'customer',
+		seller: 'Seller',
+		customer: 'Buyer',
 		orgAdmin: 'orgAdmin'
 	},
 	endpoints: {
@@ -181,7 +181,6 @@ var defaultConfig = {
 			appSsl: false
 		}
 	},
-	billingAccountOwnerRole: 'seller',
 	revenueModel: 30,
 	indexes: {
 		'engine': 'local', // 'elastic_indexes.js' if using elasticsearch

@@ -182,8 +182,13 @@ const catalog = (function() {
             });
 
         }).catch((err) => {
+            let status = 400;
+            if (err.response && err.response.status) {
+                status = err.response.status;
+            }
+
             callback({
-                status: err.response.status
+                status: status
             });
         })
     };
@@ -225,6 +230,7 @@ const catalog = (function() {
     ) {
         // Retrieve the catalog
         var catalogPath = catalogPathFromOfferingUrl(offeringPath);
+
         retrieveAsset(catalogPath, function(err, result) {
             if (err) {
                 callback({

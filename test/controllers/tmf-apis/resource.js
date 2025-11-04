@@ -179,7 +179,7 @@ describe('ResourceSpecification API', function() {
 
                 resourceAPI.checkPermissions(req, (err) => {
                     if (checkRole) {
-                        expect(checkOwnerMethod).toHaveBeenCalledWith(req, body.relatedParty, 'Seller')
+                        expect(checkOwnerMethod).toHaveBeenCalledWith(req, body.relatedParty, config.roles.seller)
 
                         if (isOwner) {
                             expect(checkRoleMethod).toHaveBeenCalledWith(req.user, config.roles.seller)
@@ -307,7 +307,7 @@ describe('ResourceSpecification API', function() {
 
                 serviceAPI.checkPermissions(req, (err) => {
                     if (!errMsg) {
-                        expect(checkOwnerMethod).toHaveBeenCalledWith(req, prevBody.relatedParty, 'Seller')
+                        expect(checkOwnerMethod).toHaveBeenCalledWith(req, prevBody.relatedParty, config.roles.seller)
 
                         if (isOwner) {
                             expect(checkRoleMethod).toHaveBeenCalledWith(req.user, config.roles.seller)

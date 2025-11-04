@@ -48,8 +48,8 @@ config.oauth2 = {
 
 config.roles = {
     admin: 'admin',
-    customer: 'customer',
-    seller: 'seller',
+    customer: 'Buyer',
+    seller: 'Seller',
     orgAdmin: 'orgAdmin'
 }
 
