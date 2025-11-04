@@ -181,7 +181,7 @@ var defaultConfig = {
 			appSsl: false
 		}
 	},
-	billingAccountOwnerRole: 'owner',
+	billingAccountOwnerRole: 'seller',
 	revenueModel: 30,
 	indexes: {
 		'engine': 'local', // 'elastic_indexes.js' if using elasticsearch

@@ -336,7 +336,7 @@ describe('Catalog API', function() {
     it('should allow to create resources when user is seller', function(done) {
         var user = 'test';
         var resource = {
-            relatedParty: [{ id: user, role: 'OwNeR' }],
+            relatedParty: [{ id: user, role: 'SelLer' }],
             validFor: basicBody.validFor
         };
 
@@ -387,7 +387,7 @@ describe('Catalog API', function() {
 
         var productRequestInfoActive = {
             requestStatus: 200,
-            role: 'Owner',
+            role: 'Seller',
             lifecycleStatus: 'active'
         };
 
@@ -402,7 +402,7 @@ describe('Catalog API', function() {
             checkRoleMethod.and.returnValue(true);
 
             var tmfUtils = {
-                isOwner: requestInfo.role.toLowerCase() === 'owner' ? isOwnerTrue : isOwnerFalse,
+                isOwner: requestInfo.role.toLowerCase() === 'seller' ? isOwnerTrue : isOwnerFalse,
                 validateNameField: vNameF ? ()=> vNameF : ()=> null,
                 validateDescriptionField: vDescrF ? ()=> vDescrF : ()=> null
             };
@@ -653,7 +653,7 @@ describe('Catalog API', function() {
         it('should not allow to create an offering for a retired product', function(done) {
             var productRequestInfo = {
                 requestStatus: 200,
-                role: 'Owner',
+                role: 'Seller',
                 lifecycleStatus: 'retired'
             };
 
@@ -679,7 +679,7 @@ describe('Catalog API', function() {
         it('should not allow to create an offering when product cannot be retrieved', function(done) {
             var productRequestInfo = {
                 requestStatus: 500,
-                role: 'Owner',
+                role: 'Seller',
                 lifeCycleStatus: 'active'
             };
 
@@ -944,7 +944,7 @@ describe('Catalog API', function() {
             };
 
             var offeringRequestInfo = {
-                role: 'Owner',
+                role: 'Seller',
                 isBundle: false,
                 lifecycleStatus: 'active',
                 hrefs: [offering1, offering2],
@@ -965,7 +965,7 @@ describe('Catalog API', function() {
             };
 
             var offeringRequestInfo = {
-                role: 'Owner',
+                role: 'Seller',
                 isBundle: false,
                 lifecycleStatus: 'active',
                 hrefs: [],
@@ -992,7 +992,7 @@ describe('Catalog API', function() {
             };
 
             var offeringRequestInfo = {
-                role: 'Owner',
+                role: 'Seller',
                 isBundle: false,
                 lifecycleStatus: 'active',
                 hrefs: [],
@@ -1023,7 +1023,7 @@ describe('Catalog API', function() {
             };
 
             var offeringRequestInfo = {
-                role: 'Owner',
+                role: 'Seller',
                 isBundle: false,
                 lifecycleStatus: 'active',
                 hrefs: [],
@@ -1060,7 +1060,7 @@ describe('Catalog API', function() {
             };
 
             const offeringRequestInfo = {
-                role: 'Owner',
+                role: 'Seller',
                 isBundle: false,
                 lifecycleStatus: 'active',
                 hrefs: [offering1, offering2],
@@ -1096,7 +1096,7 @@ describe('Catalog API', function() {
             };
 
             const offeringRequestInfo = {
-                role: 'Owner',
+                role: 'Seller',
                 isBundle: true,
                 lifecycleStatus: 'active',
                 hrefs: [offering1, offering2],
@@ -1168,7 +1168,7 @@ describe('Catalog API', function() {
             };
 
             const offeringRequestInfo = {
-                role: 'Owner',
+                role: 'Seller',
                 isBundle: false,
                 lifecycleStatus: 'active',
                 hrefs: [offering1, offering2],
@@ -1245,7 +1245,7 @@ describe('Catalog API', function() {
         var testCreateProduct = function(storeValidator, errorStatus, errorMsg, owner, vName, vDescr, done) {
             var catalogApi = mockCatalogAPI(owner ? isOwnerTrue : isOwnerFalse, storeValidator, vName, vDescr);
 
-            var role = owner ? 'Owner' : 'Seller';
+            var role = 'Seller';
             var body = {name: '',description: 'test', relatedParty: [{ id: 'test', role: role }], validFor: { startDateTime: '2010-04-12' } };
             var req = buildProductRequest(body);
 
@@ -2067,7 +2067,7 @@ describe('Catalog API', function() {
         const backendPath = `/api${path}`
         var protocol = config.endpoints.catalog.appSsl ? 'https' : 'http';
         var url = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
-        var role = isOwnerMethod() ? 'Owner' : 'Seller';
+        var role = 'Seller';
 
         // User information is send when the request does not fail
         var bodyOk = { relatedParty: [{ id: userName, role: role }], lifecycleStatus: 'Active' };
@@ -2203,7 +2203,7 @@ describe('Catalog API', function() {
             .reply(200, bodyGetOffering);
 
         // The mock server that will handle the request when the product is requested
-        var role = productRequestInfo.owner ? 'Owner' : 'Seller';
+        var role = 'Seller';
         var bodyOk = {
             relatedParty: [{ id: userName, role: role }],
             lifecycleStatus: productRequestInfo.lifecycleStatus
@@ -2522,7 +2522,7 @@ describe('Catalog API', function() {
             {
                 id: 'exmaple1',
                 href: 'http://localhost:8000/example1',
-                role: 'owner'
+                role: 'Seller'
             },
             {
                 id: 'exmaple2',

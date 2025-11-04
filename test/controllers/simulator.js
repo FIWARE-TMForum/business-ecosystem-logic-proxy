@@ -109,7 +109,7 @@ describe('Simulator Controller', () => {
                 }
                 if (config.url.includes('/productSpecification/')) {
                     return Promise.resolve({
-                        data: { relatedParty: [{ id: 'seller123', role: 'owner' }] }
+                        data: { relatedParty: [{ id: 'seller123', role: 'Seller' }] }
                     });
                 }
                 if (config.url.includes('/charging/api/orderManagement/orders/preview/')) {
@@ -281,7 +281,7 @@ describe('Simulator Controller', () => {
                 }
                 if (config.url.includes('/productSpecification/')) {
                     return Promise.resolve({
-                        data: { relatedParty: [{ id: 'seller123', role: 'owner' }] }
+                        data: { relatedParty: [{ id: 'seller123', role: 'Seller' }] }
                     });
                 }
                 if (config.url.includes('/charging/api/orderManagement/orders/preview/')) {
@@ -341,7 +341,7 @@ describe('Simulator Controller', () => {
                 }
                 if (config.url.includes('/productSpecification/')) {
                     return Promise.resolve({
-                        data: { relatedParty: [{ id: 'seller123', role: 'owner' }] }
+                        data: { relatedParty: [{ id: 'seller123', role: 'Seller' }] }
                     });
                 }
                 if (config.url.includes('/charging/api/orderManagement/orders/preview/')) {

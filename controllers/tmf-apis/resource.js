@@ -110,7 +110,7 @@ const resource = (function (){
     }
 
     const validateOwnerSeller = function(req, callback) {
-        if (!tmfUtils.hasPartyRole(req, req.prevBody.relatedParty, 'owner') || !utils.hasRole(req.user, config.roles.seller)) {
+        if (!tmfUtils.hasPartyRole(req, req.prevBody.relatedParty, config.roles.seller) || !utils.hasRole(req.user, config.roles.seller)) {
             callback({
                 status: 403,
                 message: 'Unauthorized to update non-owned/non-seller resource specs'
@@ -217,7 +217,7 @@ const resource = (function (){
     const validateOwnerSellerPost = function(req, callback) {
         const body = req.parsedBody
 
-        if (!tmfUtils.hasPartyRole(req, body.relatedParty, 'owner') || !utils.hasRole(req.user, config.roles.seller)) {
+        if (!tmfUtils.hasPartyRole(req, body.relatedParty, config.roles.seller) || !utils.hasRole(req.user, config.roles.seller)) {
             callback({
                 status: 403,
                 message: 'Unauthorized to create non-owned/non-seller resource specs'

@@ -69,7 +69,7 @@ describe('TMF Utils', function() {
             const info = {
                 relatedParty: [
                     {
-                        role: 'Owner',
+                        role: 'Seller',
                         id: userName,
                         href: getPartyHref('http', req.hostname, userName)
                     }
@@ -94,7 +94,7 @@ describe('TMF Utils', function() {
             const info = {
                 relatedParty: [
                     {
-                        role: 'Owner',
+                        role: 'Seller',
                         id: userName,
                         href: getPartyHref('http', req.hostname, userName)
                     }

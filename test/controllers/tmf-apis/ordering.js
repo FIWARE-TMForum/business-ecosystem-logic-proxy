@@ -335,7 +335,7 @@ describe('Ordering API', function() {
                 nock(CATALOG_SERVER)
                     .get(productSpecPath)
                     .times(nOrderItems)
-                    .reply(200, { relatedParty: [{ id: ownerName, role: 'owner' }] });
+                    .reply(200, { relatedParty: [{ id: ownerName, role: 'Seller' }] });
 
                 nock(B_ACCOUNT_SERVER)
                     .get(billingAccountPath)
@@ -418,7 +418,7 @@ describe('Ordering API', function() {
                 nock(CATALOG_SERVER)
                     .get(productSpecPath)
                     .times(1)
-                    .reply(200, { relatedParty: [{ id: 'owner', role: 'owner' }] });
+                    .reply(200, { relatedParty: [{ id: 'seller', role: 'Seller' }] });
 
                 const expected = {
                     status: 422,
@@ -808,7 +808,7 @@ describe('Ordering API', function() {
 
                 nock(CATALOG_SERVER)
                     .get(productSpecPath)
-                    .reply(200, { relatedParty: [{ role: 'owner', id: 'example' }] });
+                    .reply(200, { relatedParty: [{ role: 'Seller', id: 'example' }] });
 
                 testOrderCreation(user, JSON.stringify(body), true, true, true, expected, done);
             });

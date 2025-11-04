@@ -30,8 +30,8 @@ const url = require('url')
 const utils = require('./../../lib/utils')
 
 const ordering = (function() {
-    const CUSTOMER = 'Customer';
-    const SELLER = 'Seller';
+    const CUSTOMER = config.roles.customer;
+    const SELLER = config.roles.seller;
 
     //////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////////// COMMON ///////////////////////////////////////////
@@ -77,7 +77,7 @@ const ordering = (function() {
                 reject(err);
             } else {
                 var owners = product.relatedParty.filter(function(relatedParty) {
-                    return relatedParty['role'].toLowerCase() === 'owner';
+                    return relatedParty['role'].toLowerCase() === config.roles.seller.toLowerCase();
                 });
 
                 if (!owners.length) {
