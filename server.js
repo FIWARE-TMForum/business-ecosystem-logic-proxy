@@ -436,6 +436,7 @@ app.get('/config', async (_, res) => {
         defaultId: config.defaultId,
         paymentGateway: config.paymentGateway,
         analytics: config.analytics,
+        theme: config.theme
     })
 })
 
