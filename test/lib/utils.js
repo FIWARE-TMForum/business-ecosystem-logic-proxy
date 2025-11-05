@@ -58,10 +58,10 @@ describe('Utils', function() {
             utils.attachUserHeaders(headers, userInfo);
 
             // Check that heacers has been modified appropriately
-            expect(headers['X-Nick-Name']).toBe(userInfo.id);
+            expect(headers['X-User-ID']).toBe(userInfo.id);
             expect(headers['X-Display-Name']).toBe(userInfo.displayName);
             expect(headers['X-Roles']).toBe('provider,seller,');
-            expect(headers['X-Actor']).toBe(userInfo.id);
+            expect(headers['X-Actor-ID']).toBe(userInfo.id);
             expect(headers['X-Ext-Name']).toBe('username');
             expect(headers['X-IDP-ID']).toBe('local');
         });
@@ -86,10 +86,10 @@ describe('Utils', function() {
             utils.attachUserHeaders(headers, userInfo);
 
             // Check that heacers has been modified appropriately
-            expect(headers['X-Nick-Name']).toBe(userInfo.id);
+            expect(headers['X-Actor-ID']).toBe(userInfo.id);
             expect(headers['X-Display-Name']).toBe(userInfo.displayName);
             expect(headers['X-Roles']).toBe('');
-            expect(headers['X-Actor']).toBe(userInfo.userId);
+            expect(headers['X-User-ID']).toBe(userInfo.userId);
             expect(headers['X-Ext-Name']).toBe('');
             expect(headers['X-IDP-ID']).toBe(userInfo.displayName);
         })
