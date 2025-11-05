@@ -199,7 +199,7 @@ describe('Party API', function() {
             it('should not allow to modify organization if the phone validator fails', function(done) {
                 var userObj = {
                     partyId: 'org',
-                    userNickname: 'user',
+                    userId: 'user',
                     roles: [{ name: testUtils.getDefaultConfig().oauth2.roles.orgAdmin }]
                 };
                 accessPartyTest('org', orgPath, userObj, INVALID_NUMBER, null, false, done);
@@ -208,7 +208,7 @@ describe('Party API', function() {
             it('should allow to modify organization if the user is an org admin', function(done) {
                 var userObj = {
                     partyId: 'org',
-                    userNickname: 'user',
+                    userId: 'user',
                     roles: [{ name: testUtils.getDefaultConfig().oauth2.roles.orgAdmin }]
                 };
                 accessPartyTest('org', orgPath, userObj, null, null, true, done);
@@ -217,7 +217,7 @@ describe('Party API', function() {
             it('should not allow to modify individual if the user is an organization', function(done) {
                 var userObj = {
                     id: 'org',
-                    userNickname: 'user',
+                    userId: 'user',
                     roles: [{ name: testUtils.getDefaultConfig().oauth2.roles.orgAdmin }]
                 };
                 accessPartyTest('org', indPath, userObj, NOT_AUTH_ERROR, null, true, done);
@@ -233,7 +233,7 @@ describe('Party API', function() {
             it('should not allow to modify organization if the user is not an org admin', function(done) {
                 var userObj = {
                     id: 'org',
-                    userNickname: 'user',
+                    userId: 'user',
                     roles: []
                 };
                 accessPartyTest('org', orgPath, userObj, NOT_AUTH_ERROR, null, true, done);
@@ -243,7 +243,7 @@ describe('Party API', function() {
                 loggedIn = true;
                 var user = {
                     partyId: 'org',
-                    userNickname: 'user',
+                    userId: 'user',
                     roles: [{ name: testUtils.getDefaultConfig().oauth2.roles.orgAdmin }]
                 };
 

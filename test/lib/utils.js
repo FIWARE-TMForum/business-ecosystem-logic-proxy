@@ -76,7 +76,7 @@ describe('Utils', function() {
             const userInfo = {
                 id: 'org-1',
                 displayName: 'EORI.PARTICIPANT',
-                userNickname: 'user-1',
+                userId: 'user-1',
                 idp: 'local',
                 username: 'username',
                 roles: []
@@ -89,7 +89,7 @@ describe('Utils', function() {
             expect(headers['X-Nick-Name']).toBe(userInfo.id);
             expect(headers['X-Display-Name']).toBe(userInfo.displayName);
             expect(headers['X-Roles']).toBe('');
-            expect(headers['X-Actor']).toBe(userInfo.userNickname);
+            expect(headers['X-Actor']).toBe(userInfo.userId);
             expect(headers['X-Ext-Name']).toBe('');
             expect(headers['X-IDP-ID']).toBe(userInfo.displayName);
         })
