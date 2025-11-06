@@ -617,13 +617,6 @@ if (config.extLogin) {
 }
 module.exports = config;
 
-
-// Gui config
-config.legacyGUI = false
-if (!!process.env.BAE_LP_LEGACY_GUI) {
-    config.legacyGUI = process.env.BAE_LP_LEGACY_GUI == 'true'
-}
-
 // External Portal config
 //config.externalPortal = 'http://localhost:4200';
 config.externalPortal = '';
