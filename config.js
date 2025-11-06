@@ -103,7 +103,8 @@ config.siop = {
               customer: 'customer',
               seller: 'seller'
           },
-    operators: process.env.BAE_LP_SIOP_OPERATORS ? process.env.BAE_LP_SIOP_OPERATORS.split(',') : []
+    operators: process.env.BAE_LP_SIOP_OPERATORS ? process.env.BAE_LP_SIOP_OPERATORS.split(',') : [],
+    signAlgorithm: process.env.BAE_LP_SIO_SIGN_ALGORITHM || 'ES256'
 };
 
 config.extLogin = false;
