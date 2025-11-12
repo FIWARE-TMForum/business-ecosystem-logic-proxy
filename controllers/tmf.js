@@ -42,7 +42,7 @@ const { revenue } = require('./tmf-apis/revenue')
 const logger = require('./../lib/logger').logger.getLogger('TMF')
 const axios = require('axios')
 const utils = require('./../lib/utils')
-//const tmfUtils = require('./../lib/tmfUtils')
+const tmfUtils = require('./../lib/tmfUtils')
 
 const { log } = require('async')
 const { query } = require('express')
@@ -225,6 +225,10 @@ function tmf() {
 	};
 
 	function buildOptions(req, url) {
+		// Attach the needed relatedParties if not provided already
+		if (req.method == 'POST') {
+			tmfUtils.attachRelatedParty(req, getAPIName(req.apiUrl))
+		}
 
 		const options = {
 			url: url,

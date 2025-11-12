@@ -156,6 +156,7 @@ const catalog = (function() {
             });
 
         }).catch((err) => {
+            console.log(err)
             let status = 400;
             if (err.response && err.response.status) {
                 status = err.response.status;
@@ -970,6 +971,7 @@ const catalog = (function() {
         logger.info('Attaching a category to the new catalog');
         createAsset('/category', {isRoot: true, name: catalogBody.name, lifecycleStatus: 'Launched'}, function(err, result) {
             if (err){
+                console.log(err)
                 logger.error('Error creating the associated category');
                 callback({
                     status: 500,

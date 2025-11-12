@@ -36,6 +36,7 @@ const certsValidator = require('./lib/certificate').certsValidator
 const buildRequestJWT = require('./lib/strategies/vc').buildRequestJWT
 const simulator = require('./controllers/simulator').simulator();
 const { indexes } = require('./lib/indexes')
+const operator = require('./lib/operator').operator
 
 const debug = !(process.env.NODE_ENV == 'production');
 
@@ -730,6 +731,10 @@ function onlistening() {
 
     stats.init().then(() => {
         logger.info("Stats info loaded")
+    })
+
+    operator.initOperator().then(() => {
+        logger.info("Operator info loaded")
     })
 }
 })();

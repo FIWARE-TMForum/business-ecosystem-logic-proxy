@@ -51,9 +51,10 @@ config.roles = {
     customer: 'Buyer',
     seller: 'Seller',
     orgAdmin: 'orgAdmin',
-    certifier: 'certifier'
+    certifier: 'certifier',
+    sellerOperator: 'SellerOperator',
+    buyerOperator: 'BuyerOperator'
 }
-
 
 /*config.oauth2 = {
   provider: 'keycloak',
@@ -670,3 +671,9 @@ config.purchaseEnabled = false
 if (!!process.env.BAE_LP_PURCHASE_ENABLED) {
     config.purchaseEnabled = process.env.BAE_LP_PURCHASE_ENABLED == 'true'
 }
+
+config.operatorId = ''
+config.operatorId = process.env.BAE_LP_OPERATOR_ID || config.operatorId;
+
+config.partyLocation = 'https://raw.githubusercontent.com/Ficodes/tmf-schemas/refs/heads/main/schemas/relatedPartyRef.schema.json'
+config.partyLocation = process.env.BAE_LP_PARTY_LOCATION || config.partyLocation;
