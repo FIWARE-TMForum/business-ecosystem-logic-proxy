@@ -19,17 +19,20 @@
 
 const proxyquire = require('proxyquire');
 const testUtils = require('../utils');
+const { isAdmin } = require('../../lib/utils');
 
 describe('Admin Controller', () => {
 
     const apiPath= ''
-
     const config = testUtils.getDefaultConfig();
-
-    config.oauth2 =  {roles: {admin: 'admin'}}
 
     const utils = {
         config: config,
+        isAdmin: function(user) {
+            return user.roles.some(function(role) {
+                return role.name.toLowerCase() === config.roles.admin.toLowerCase();
+            });
+        },
         log: function() {},
         getAPIPort: function() {
             return 1234;
@@ -75,7 +78,7 @@ describe('Admin Controller', () => {
             user: {
                 partyId: '1234',
                 roles: [{
-                    name: 'admin'
+                    name: config.roles.admin
                 }]
             },
             apiUrl: '/admin/catalog/productSpec',
@@ -131,7 +134,7 @@ describe('Admin Controller', () => {
             user: {
                 partyId: '1234',
                 roles: [{
-                    name: 'admin'
+                    name: config.roles.admin
                 }]
             },
             apiUrl: '/admin/charging/media/uploadJob',
@@ -188,7 +191,7 @@ describe('Admin Controller', () => {
             user: {
                 partyId: '1234',
                 roles: [{
-                    name: 'admin'
+                    name: config.roles.admin
                 }]
             },
             apiUrl: '/admin/catalog/productSpec',
@@ -369,7 +372,7 @@ describe('Admin Controller', () => {
         testCertificateUpload({
             partyId: '1234',
             roles: [{
-                name: 'admin',
+                name: config.roles.admin
             }]
         }, done)
     })
@@ -378,7 +381,7 @@ describe('Admin Controller', () => {
         testCertificateUpload({
             partyId: '1234',
             roles: [{
-                name: 'certifier',
+                name: config.roles.certifier,
             }]
         }, done)
     })
@@ -389,11 +392,11 @@ describe('Admin Controller', () => {
             roles: [],
             organizations: [{
                 roles: [{
-                    name: 'seller'
+                    name: config.roles.seller
                 }]
             }, {
                 roles: [{
-                    name: 'certifier'
+                    name: config.roles.certifier
                 }]
             }]
         }, done)
@@ -440,7 +443,7 @@ describe('Admin Controller', () => {
                 roles: [],
                 organizations: [{
                     roles: [{
-                        name: 'seller'
+                        name: config.roles.seller
                     }]
                 }]
             }
@@ -458,7 +461,7 @@ describe('Admin Controller', () => {
             user: {
                 partyId: '1234',
                 roles: [{
-                    name: 'admin',
+                    name: config.roles.admin,
                 }]
             },
             apiUrl: '/admin/uploadcertificate/1',
@@ -477,7 +480,7 @@ describe('Admin Controller', () => {
             user: {
                 partyId: '1234',
                 roles: [{
-                    name: 'admin',
+                    name: config.roles.admin,
                 }]
             },
             apiUrl: '/admin/uploadcertificate/1',
@@ -502,7 +505,7 @@ describe('Admin Controller', () => {
             user: {
                 partyId: '1234',
                 roles: [{
-                    name: 'admin',
+                    name: config.roles.admin,
                 }]
             },
             apiUrl: '/admin/uploadcertificate/1',

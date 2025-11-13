@@ -1,7 +1,0 @@
-.breadcrumb-triangle.z-depth-1
-  a(ui-sref="inventory.service", ui-sref-opts="{ reload: true, inherit: false }", ui-sref-active-eq="active")
-    span.item-icon.fa.fa-list
-    span.item-text #{ __("List") }
-  a(ng-if="searchVM.state.includes('inventory.service.detail')", ui-sref="inventory.service.detail", ui-sref-opts="{ reload: true }", ui-sref-active="active")
-    span.item-icon.fa.fa-binoculars
-    span.item-text #{ __("Details") }
