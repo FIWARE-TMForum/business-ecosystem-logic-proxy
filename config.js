@@ -7,19 +7,19 @@ config.port = 8004;
 config.host = 'proxy.docker';
 
 config.proxy = {
-	enabled: false,
-	host: '',
-	secured: false,
-	port: 80
+    enabled: false,
+    host: '',
+    secured: false,
+    port: 80
 };
 
 // Set this var to undefined if you don't want the server to listen on HTTPS
 config.https = {
-	enabled: false,
-	certFile: 'cert/cert.crt',
-	keyFile: 'cert/key.key',
-	caFile: 'cert/ca.crt',
-	port: 443
+    enabled: false,
+    certFile: 'cert/cert.crt',
+    keyFile: 'cert/key.key',
+    caFile: 'cert/ca.crt',
+    port: 443
 };
 
 // Express configuration
@@ -33,23 +33,23 @@ config.theme = '';
 // OAuth2 configuration
 //'server': 'http://34.213.26.168:8000/',
 config.oauth2 = {
-	provider: 'fiware',
-	server: 'http://idm.docker:3000',
-	clientID: '19dd858c-328c-4642-93ab-da45e4d253ae',
-	clientSecret: '09ffe023-a242-46a3-bd83-9277d36e2379',
-	callbackURL: 'http://proxy.docker:8004/auth/fiware/callback',
-	oidc: true,
-	oidcScopes: "openid",
-	oidcDiscoveryURI: null,
-	oidcTokenEndpointAuthMethod: "client_secret_basic",
-	key: '281e126aa35c80f2',
-	defaultRole: null,
-	roles: {
-		admin: 'admin',
-		customer: 'customer',
-		seller: 'seller',
-		orgAdmin: 'orgAdmin'
-	}
+    provider: 'fiware',
+    server: 'http://idm.docker:3000',
+    clientID: '19dd858c-328c-4642-93ab-da45e4d253ae',
+    clientSecret: '09ffe023-a242-46a3-bd83-9277d36e2379',
+    callbackURL: 'http://proxy.docker:8004/auth/fiware/callback',
+    oidc: true,
+    oidcScopes: 'openid',
+    oidcDiscoveryURI: null,
+    oidcTokenEndpointAuthMethod: 'client_secret_basic',
+    key: '281e126aa35c80f2',
+    defaultRole: null,
+    roles: {
+        admin: 'admin',
+        customer: 'customer',
+        seller: 'seller',
+        orgAdmin: 'orgAdmin'
+    }
 };
 
 /*config.oauth2 = {
@@ -83,30 +83,34 @@ config.oauth2 = {
   }*/
 
 config.siop = {
-	enabled: process.env.BAE_LP_SIOP_ENABLED === 'true',
-	provider: 'vc',
+    enabled: process.env.BAE_LP_SIOP_ENABLED === 'true',
+    provider: 'vc',
     isRedirection: process.env.BAE_LP_SIOP_IS_REDIRECTION === 'true',
-	pollPath: '/poll',
+    pollPath: '/poll',
     pollCertPath: '/cert/poll',
-	clientID: process.env.BAE_LP_SIOP_CLIENT_ID || 'some_id',
+    clientID: process.env.BAE_LP_SIOP_CLIENT_ID || 'some_id',
     privateKey: process.env.BAE_LP_SIOP_PRIVATE_KEY,
-	callbackURL: process.env.BAE_LP_SIOP_CALLBACK_PATH || 'http://proxy.docker:8004/auth/vc/callback',
+    privateKeyPem: process.env.BAE_LP_SIOP_PRIVATE_KEY_PEM,
+    callbackURL: process.env.BAE_LP_SIOP_CALLBACK_PATH || 'http://proxy.docker:8004/auth/vc/callback',
     requestUri: process.env.BAE_LP_SIOP_REQUEST_URI || '/auth/vc/request.jwt',
-	verifierHost: process.env.BAE_LP_SIOP_VERIFIER_HOST || 'https://verifier.apps.fiware.fiware.dev',
-	verifierQRCodePath: process.env.BAE_LP_SIOP_VERIFIER_QRCODE_PATH || '/api/v1/loginQR',
-	verifierTokenPath: process.env.BAE_LP_SIOP_VERIFIER_TOKEN_PATH || '/token',
-	verifierJWKSPath: process.env.BAE_LP_SIOP_VERIFIER_JWKS_PATH || '/.well-known/jwks',
-	allowedRoles: process.env.BAE_LP_SIOP_ALLOWED_ROLES ? process.env.BAE_LP_SIOP_ALLOWED_ROLES.split(',') : {
-		customer: 'customer',
-		seller: 'seller'
-	},
-    operators: process.env.BAE_LP_SIOP_OPERATORS ? process.env.BAE_LP_SIOP_OPERATORS.split(',') : []
+    verifierHost: process.env.BAE_LP_SIOP_VERIFIER_HOST || 'https://verifier.apps.fiware.fiware.dev',
+    verifierQRCodePath: process.env.BAE_LP_SIOP_VERIFIER_QRCODE_PATH || '/api/v1/loginQR',
+    verifierTokenPath: process.env.BAE_LP_SIOP_VERIFIER_TOKEN_PATH || '/token',
+    verifierJWKSPath: process.env.BAE_LP_SIOP_VERIFIER_JWKS_PATH || '/.well-known/jwks',
+    allowedRoles: process.env.BAE_LP_SIOP_ALLOWED_ROLES
+        ? process.env.BAE_LP_SIOP_ALLOWED_ROLES.split(',')
+        : {
+              customer: 'customer',
+              seller: 'seller'
+          },
+    operators: process.env.BAE_LP_SIOP_OPERATORS ? process.env.BAE_LP_SIOP_OPERATORS.split(',') : [],
+    signAlgorithm: process.env.BAE_LP_SIO_SIGN_ALGORITHM || 'ES256'
 };
 
 config.extLogin = false;
 config.showLocalLogin = false;
 config.showVCLogin = process.env.BAE_LP_SIOP_ENABLED === 'true';
-config.externalIdps = []
+config.externalIdps = [];
 config.propagateToken = true;
 config.allowLocalEORI = false;
 
@@ -114,20 +118,21 @@ config.editParty = true;
 
 config.domeTrust = process.env.BAE_LP_DOME_TRUST;
 
-config.domeAbout = process.env.BAE_LP_DOME_ABOUT || "https://dome-marketplace.eu/about/";
-config.domeRegister = process.env.BAE_LP_DOME_REGISTER || "https://dome-marketplace.github.io/onboarding/";
-config.domePublish = process.env.BAE_LP_DOME_PUBLISH || "https://knowledgebase.dome-marketplace.org/shelves/company-onboarding-process";
+config.domeAbout = process.env.BAE_LP_DOME_ABOUT || 'https://dome-marketplace.eu/about/';
+config.domeRegister = process.env.BAE_LP_DOME_REGISTER || 'https://dome-marketplace.github.io/onboarding/';
+config.domePublish =
+    process.env.BAE_LP_DOME_PUBLISH || 'https://knowledgebase.dome-marketplace.org/shelves/company-onboarding-process';
 
 // Customer Role Required to buy items
 config.customerRoleRequired = false;
 
 // MongoDB
 config.mongoDb = {
-	server: 'mongo',
-	port: 27017,
-	user: '',
-	password: '',
-	db: 'belp'
+    server: 'mongo',
+    port: 27017,
+    user: '',
+    password: '',
+    db: 'belp'
 };
 
 // Configure endpoints
@@ -226,7 +231,7 @@ config.endpoints = {
         port: '8637',
         appSsl: false
     },
-    usage:  {
+    usage: {
         path: 'usage',
         apiPath: '',
         host: 'host.docker.internal',
@@ -288,9 +293,9 @@ config.billingAccountOwnerRole = 'owner';
 config.publicPaths = [];
 
 config.indexes = {
-	elasticHost: 'https://elastic.docker:9200',
-	user: 'elastic',
-	password: '+S284gwQI+U1THU--C29'
+    elasticHost: 'https://elastic.docker:9200',
+    user: 'elastic',
+    password: '+S284gwQI+U1THU--C29'
 };
 
 config.magicKey = undefined;
@@ -301,21 +306,21 @@ config.usageChartURL = '';
 /////////////////////////////////////////////////////////////////////
 ////////////////////////// CONFIG CHECKERS //////////////////////////
 /////////////////////////////////////////////////////////////////////
-const checkPrefix = function(prefix, byDefault) {
-	let finalPrefix = prefix === undefined ? byDefault : prefix;
+const checkPrefix = function (prefix, byDefault) {
+    let finalPrefix = prefix === undefined ? byDefault : prefix;
 
-	// Remove the last slash
-	if (finalPrefix.slice(-1) == '/') {
-		finalPrefix = finalPrefix.slice(0, -1);
-	}
+    // Remove the last slash
+    if (finalPrefix.slice(-1) == '/') {
+        finalPrefix = finalPrefix.slice(0, -1);
+    }
 
-	// If a prefix is set, the prefix MUST start with a slash
-	// When the prefix is not set, the slash is NOT required
-	if (finalPrefix.length > 0 && finalPrefix.charAt(0) !== '/') {
-		finalPrefix = '/' + finalPrefix;
-	}
+    // If a prefix is set, the prefix MUST start with a slash
+    // When the prefix is not set, the slash is NOT required
+    if (finalPrefix.length > 0 && finalPrefix.charAt(0) !== '/') {
+        finalPrefix = '/' + finalPrefix;
+    }
 
-	return finalPrefix;
+    return finalPrefix;
 };
 
 config.port = process.env.BAE_LP_PORT || config.port || 8004;
@@ -325,21 +330,21 @@ config.host = process.env.BAE_LP_HOST || config.host || 'localhost';
 
 // Check proxy URL config config
 if (!!process.env.BAE_SERVICE_HOST) {
-	// If this var is enabled, the service is accessible in a different URL
-	let parsedUrl = url.parse(process.env.BAE_SERVICE_HOST);
-	let secured = parsedUrl.protocol == 'https:';
-	let port = parsedUrl.port
+    // If this var is enabled, the service is accessible in a different URL
+    let parsedUrl = url.parse(process.env.BAE_SERVICE_HOST);
+    let secured = parsedUrl.protocol == 'https:';
+    let port = parsedUrl.port;
 
-	if (port == null) {
-		port = secured ? 443 : 80;
-	}
+    if (port == null) {
+        port = secured ? 443 : 80;
+    }
 
-	config.proxy = {
-		enabled: true,
-		host: parsedUrl.hostname,
-		port: port,
-		secured: secured
-	};
+    config.proxy = {
+        enabled: true,
+        host: parsedUrl.hostname,
+        port: port,
+        secured: secured
+    };
 }
 
 // HTTPS Configuration
@@ -352,23 +357,23 @@ config.https.port = process.env.BAE_LP_HTTPS_PORT || config.https.port;
 
 // OAuth2 Configuration
 if (!!process.env.BAE_LP_EXT_LOGIN) {
-	config.extLogin = process.env.BAE_LP_EXT_LOGIN == 'true';
+    config.extLogin = process.env.BAE_LP_EXT_LOGIN == 'true';
 }
 
 if (!!process.env.BAE_LP_SHOW_LOCAL_LOGIN) {
-	config.showLocalLogin = process.env.BAE_LP_SHOW_LOCAL_LOGIN == 'true';
+    config.showLocalLogin = process.env.BAE_LP_SHOW_LOCAL_LOGIN == 'true';
 }
 
 if (!!process.env.BAE_LP_PROPAGATE_TOKEN) {
-	config.propagateToken = process.env.BAE_LP_PROPAGATE_TOKEN == 'true';
+    config.propagateToken = process.env.BAE_LP_PROPAGATE_TOKEN == 'true';
 }
 
 if (!!process.env.BAE_LP_ALLOW_LOCAL_EORI) {
-	config.allowLocalEORI = process.env.BAE_LP_ALLOW_LOCAL_EORI == 'true';
+    config.allowLocalEORI = process.env.BAE_LP_ALLOW_LOCAL_EORI == 'true';
 }
 
 if (!!process.env.BAE_LP_EDIT_PARTY) {
-	config.editParty = process.env.BAE_LP_EDIT_PARTY == 'true';
+    config.editParty = process.env.BAE_LP_EDIT_PARTY == 'true';
 }
 
 config.oauth2.provider = process.env.BAE_LP_OAUTH2_PROVIDER || config.oauth2.provider;
@@ -378,17 +383,18 @@ config.oauth2.clientSecret = process.env.BAE_LP_OAUTH2_CLIENT_SECRET || config.o
 config.oauth2.callbackURL = process.env.BAE_LP_OAUTH2_CALLBACK || config.oauth2.callbackURL;
 
 if (process.env.BAE_LP_OAUTH2_DEFAULT_ROLE) {
-	config.oauth2.defaultRole = process.env.BAE_LP_OAUTH2_DEFAULT_ROLE;
+    config.oauth2.defaultRole = process.env.BAE_LP_OAUTH2_DEFAULT_ROLE;
 }
 
 if (!!process.env.BAE_LP_OIDC_ENABLED) {
-	config.oauth2.oidc = process.env.BAE_LP_OIDC_ENABLED == 'true';
+    config.oauth2.oidc = process.env.BAE_LP_OIDC_ENABLED == 'true';
 }
 
 config.oauth2.oidcScopes = process.env.BAE_LP_OIDC_SCOPES || config.oauth2.oidcScopes;
-config.oauth2.oidcTokenEndpointAuthMethod = process.env.BAE_LP_OIDC_TOKEN_AUTH_METHOD || config.oauth2.oidcTokenEndpointAuthMethod;
+config.oauth2.oidcTokenEndpointAuthMethod =
+    process.env.BAE_LP_OIDC_TOKEN_AUTH_METHOD || config.oauth2.oidcTokenEndpointAuthMethod;
 if (process.env.BAE_LP_OIDC_DISCOVERY_URI) {
-	config.oauth2.oidcDiscoveryURI = process.env.BAE_LP_OIDC_DISCOVERY_URI;
+    config.oauth2.oidcDiscoveryURI = process.env.BAE_LP_OIDC_DISCOVERY_URI;
 }
 
 config.oauth2.key = process.env.BAE_LP_OIDC_KEY || config.oauth2.key;
@@ -403,7 +409,7 @@ config.oauth2.roles.customer = process.env.BAE_LP_OAUTH2_CUSTOMER_ROLE || config
 config.oauth2.roles.orgAdmin = process.env.BAE_LP_OAUTH2_ORG_ADMIN_ROLE || config.oauth2.roles.orgAdmin;
 
 if (!!process.env.BAE_LP_OAUTH2_IS_LEGACY) {
-	config.oauth2.isLegacy = process.env.BAE_LP_OAUTH2_IS_LEGACY == 'true';
+    config.oauth2.isLegacy = process.env.BAE_LP_OAUTH2_IS_LEGACY == 'true';
 }
 
 // Theme config
@@ -424,7 +430,6 @@ config.idpServicePath = checkPrefix(config.idpServicePath, '/IDP');
 config.logInPath = config.logInPath || '/login';
 config.logOutPath = config.logOutPath || '/logout';
 
-
 // Endpoint config
 // =====
 
@@ -434,7 +439,7 @@ config.endpoints.catalog.port = process.env.BAE_LP_ENDPOINT_CATALOG_PORT || conf
 config.endpoints.catalog.host = process.env.BAE_LP_ENDPOINT_CATALOG_HOST || config.endpoints.catalog.host;
 
 if (!!process.env.BAE_LP_ENDPOINT_CATALOG_SECURED) {
-	config.endpoints.catalog.appSsl = process.env.BAE_LP_ENDPOINT_CATALOG_SECURED == 'true';
+    config.endpoints.catalog.appSsl = process.env.BAE_LP_ENDPOINT_CATALOG_SECURED == 'true';
 }
 
 // Resource Catalog
@@ -461,7 +466,7 @@ config.endpoints.ordering.port = process.env.BAE_LP_ENDPOINT_ORDERING_PORT || co
 config.endpoints.ordering.host = process.env.BAE_LP_ENDPOINT_ORDERING_HOST || config.endpoints.ordering.host;
 
 if (!!process.env.BAE_LP_ENDPOINT_ORDERING_SECURED) {
-	config.endpoints.ordering.appSsl = process.env.BAE_LP_ENDPOINT_ORDERING_SECURED == 'true';
+    config.endpoints.ordering.appSsl = process.env.BAE_LP_ENDPOINT_ORDERING_SECURED == 'true';
 }
 
 // Inventory
@@ -470,25 +475,31 @@ config.endpoints.inventory.port = process.env.BAE_LP_ENDPOINT_INVENTORY_PORT || 
 config.endpoints.inventory.host = process.env.BAE_LP_ENDPOINT_INVENTORY_HOST || config.endpoints.inventory.host;
 
 if (!!process.env.BAE_LP_ENDPOINT_INVENTORY_SECURED) {
-	config.endpoints.inventory.appSsl = process.env.BAE_LP_ENDPOINT_INVENTORY_SECURED == 'true';
+    config.endpoints.inventory.appSsl = process.env.BAE_LP_ENDPOINT_INVENTORY_SECURED == 'true';
 }
 
 // Service Inventory
-config.endpoints.serviceInventory.apiPath = process.env.BAE_LP_ENDPOINT_SERVICE_INVENTORY_PATH || config.endpoints.serviceInventory.apiPath;
-config.endpoints.serviceInventory.port = process.env.BAE_LP_ENDPOINT_SERVICE_INVENTORY_PORT || config.endpoints.serviceInventory.port;
-config.endpoints.serviceInventory.host = process.env.BAE_LP_ENDPOINT_SERVICE_INVENTORY_HOST || config.endpoints.serviceInventory.host;
+config.endpoints.serviceInventory.apiPath =
+    process.env.BAE_LP_ENDPOINT_SERVICE_INVENTORY_PATH || config.endpoints.serviceInventory.apiPath;
+config.endpoints.serviceInventory.port =
+    process.env.BAE_LP_ENDPOINT_SERVICE_INVENTORY_PORT || config.endpoints.serviceInventory.port;
+config.endpoints.serviceInventory.host =
+    process.env.BAE_LP_ENDPOINT_SERVICE_INVENTORY_HOST || config.endpoints.serviceInventory.host;
 
 if (!!process.env.BAE_LP_ENDPOINT_SERVICE_INVENTORY_SECURED) {
-	config.endpoints.serviceInventory.appSsl = process.env.BAE_LP_ENDPOINT_SERVICE_INVENTORY_SECURED == 'true';
+    config.endpoints.serviceInventory.appSsl = process.env.BAE_LP_ENDPOINT_SERVICE_INVENTORY_SECURED == 'true';
 }
 
 // Resource Intentory
-config.endpoints.resourceInventory.apiPath = process.env.BAE_LP_ENDPOINT_RESOURCE_INVENTORY_PATH || config.endpoints.resourceInventory.apiPath;
-config.endpoints.resourceInventory.port = process.env.BAE_LP_ENDPOINT_RESOURCE_INVENTORY_PORT || config.endpoints.resourceInventory.port;
-config.endpoints.resourceInventory.host = process.env.BAE_LP_ENDPOINT_RESOURCE_INVENTORY_HOST || config.endpoints.resourceInventory.host;
+config.endpoints.resourceInventory.apiPath =
+    process.env.BAE_LP_ENDPOINT_RESOURCE_INVENTORY_PATH || config.endpoints.resourceInventory.apiPath;
+config.endpoints.resourceInventory.port =
+    process.env.BAE_LP_ENDPOINT_RESOURCE_INVENTORY_PORT || config.endpoints.resourceInventory.port;
+config.endpoints.resourceInventory.host =
+    process.env.BAE_LP_ENDPOINT_RESOURCE_INVENTORY_HOST || config.endpoints.resourceInventory.host;
 
 if (!!process.env.BAE_LP_ENDPOINT_RESOURCE_INVENTORY_SECURED) {
-	config.endpoints.resourceInventory.appSsl = process.env.BAE_LP_ENDPOINT_RESOURCE_INVENTORY_SECURED == 'true';
+    config.endpoints.resourceInventory.appSsl = process.env.BAE_LP_ENDPOINT_RESOURCE_INVENTORY_SECURED == 'true';
 }
 
 // Charging
@@ -497,7 +508,7 @@ config.endpoints.charging.port = process.env.BAE_LP_ENDPOINT_CHARGING_PORT || co
 config.endpoints.charging.host = process.env.BAE_LP_ENDPOINT_CHARGING_HOST || config.endpoints.charging.host;
 
 if (!!process.env.BAE_LP_ENDPOINT_CHARGING_SECURED) {
-	config.endpoints.charging.appSsl = process.env.BAE_LP_ENDPOINT_CHARGING_SECURED == 'true';
+    config.endpoints.charging.appSsl = process.env.BAE_LP_ENDPOINT_CHARGING_SECURED == 'true';
 }
 
 // RSS
@@ -506,7 +517,7 @@ config.endpoints.rss.port = process.env.BAE_LP_ENDPOINT_RSS_PORT || config.endpo
 config.endpoints.rss.host = process.env.BAE_LP_ENDPOINT_RSS_HOST || config.endpoints.rss.host;
 
 if (!!process.env.BAE_LP_ENDPOINT_RSS_SECURED) {
-	config.endpoints.rss.appSsl = process.env.BAE_LP_ENDPOINT_RSS_SECURED == 'true';
+    config.endpoints.rss.appSsl = process.env.BAE_LP_ENDPOINT_RSS_SECURED == 'true';
 }
 
 // Party
@@ -515,7 +526,7 @@ config.endpoints.party.port = process.env.BAE_LP_ENDPOINT_PARTY_PORT || config.e
 config.endpoints.party.host = process.env.BAE_LP_ENDPOINT_PARTY_HOST || config.endpoints.party.host;
 
 if (!!process.env.BAE_LP_ENDPOINT_PARTY_SECURED) {
-	config.endpoints.party.appSsl = process.env.BAE_LP_ENDPOINT_PARTY_SECURED == 'true';
+    config.endpoints.party.appSsl = process.env.BAE_LP_ENDPOINT_PARTY_SECURED == 'true';
 }
 
 // Billing
@@ -524,7 +535,7 @@ config.endpoints.account.port = process.env.BAE_LP_ENDPOINT_BILLING_PORT || conf
 config.endpoints.account.host = process.env.BAE_LP_ENDPOINT_BILLING_HOST || config.endpoints.account.host;
 
 if (!!process.env.BAE_LP_ENDPOINT_BILLING_SECURED) {
-	config.endpoints.account.appSsl = process.env.BAE_LP_ENDPOINT_BILLING_SECURED == 'true';
+    config.endpoints.account.appSsl = process.env.BAE_LP_ENDPOINT_BILLING_SECURED == 'true';
 }
 
 // Customer
@@ -533,7 +544,7 @@ config.endpoints.customer.port = process.env.BAE_LP_ENDPOINT_CUSTOMER_PORT || co
 config.endpoints.customer.host = process.env.BAE_LP_ENDPOINT_CUSTOMER_HOST || config.endpoints.customer.host;
 
 if (!!process.env.BAE_LP_ENDPOINT_CUSTOMER_SECURED) {
-	config.endpoints.customer.appSsl = process.env.BAE_LP_ENDPOINT_CUSTOMER_SECURED == 'true';
+    config.endpoints.customer.appSsl = process.env.BAE_LP_ENDPOINT_CUSTOMER_SECURED == 'true';
 }
 
 // Usage
@@ -542,7 +553,7 @@ config.endpoints.usage.port = process.env.BAE_LP_ENDPOINT_USAGE_PORT || config.e
 config.endpoints.usage.host = process.env.BAE_LP_ENDPOINT_USAGE_HOST || config.endpoints.usage.host;
 
 if (!!process.env.BAE_LP_ENDPOINT_USAGE_SECURED) {
-	config.endpoints.usage.appSsl = process.env.BAE_LP_ENDPOINT_USAGE_SECURED == 'true';
+    config.endpoints.usage.appSsl = process.env.BAE_LP_ENDPOINT_USAGE_SECURED == 'true';
 }
 
 // Customer Bill
@@ -551,7 +562,7 @@ config.endpoints.billing.port = process.env.BAE_LP_ENDPOINT_CUSTOMER_BILL_PORT |
 config.endpoints.billing.host = process.env.BAE_LP_ENDPOINT_CUSTOMER_BILL_HOST || config.endpoints.billing.host;
 
 if (!!process.env.BAE_LP_ENDPOINT_CUSTOMER_BILL_SECURED) {
-	config.endpoints.billing.appSsl = process.env.BAE_LP_ENDPOINT_CUSTOMER_BILL_SECURED == 'true';
+    config.endpoints.billing.appSsl = process.env.BAE_LP_ENDPOINT_CUSTOMER_BILL_SECURED == 'true';
 }
 
 // Quote
@@ -560,7 +571,7 @@ config.endpoints.quote.port = process.env.BAE_LP_ENDPOINT_QUOTE_PORT || config.e
 config.endpoints.quote.host = process.env.BAE_LP_ENDPOINT_QUOTE_HOST || config.endpoints.quote.host;
 
 if (!!process.env.BAE_LP_ENDPOINT_QUOTE_SECURED) {
-	config.endpoints.quote.appSsl = process.env.BAE_LP_ENDPOINT_QUOTE_SECURED == 'true';
+    config.endpoints.quote.appSsl = process.env.BAE_LP_ENDPOINT_QUOTE_SECURED == 'true';
 }
 
 // Revenue
@@ -569,7 +580,7 @@ config.endpoints.revenue.port = process.env.BAE_LP_ENDPOINT_REVENUE_PORT || conf
 config.endpoints.revenue.host = process.env.BAE_LP_ENDPOINT_REVENUE_HOST || config.endpoints.revenue.host;
 
 if (!!process.env.BAE_LP_ENDPOINT_REVENUE_SECURED) {
-	config.endpoints.revenue.appSsl = process.env.BAE_LP_ENDPOINT_REVENUE_SECURED == 'true';
+    config.endpoints.revenue.appSsl = process.env.BAE_LP_ENDPOINT_REVENUE_SECURED == 'true';
 }
 
 // ======
@@ -583,24 +594,31 @@ config.mongoDb.db = process.env.BAE_LP_MONGO_DB || config.mongoDb.db || 'belp';
 
 // Revenue Sharing and tax rate
 config.revenueModel =
-	(config.revenueModel !== undefined && config.revenueModel !== null && config.revenueModel >= 0 && config.revenueModel <= 100) ? config.revenueModel : 30;
+    config.revenueModel !== undefined &&
+    config.revenueModel !== null &&
+    config.revenueModel >= 0 &&
+    config.revenueModel <= 100
+        ? config.revenueModel
+        : 30;
 
 config.revenueModel =
-	!!process.env.BAE_LP_REVENUE_MODEL &&
-		Number(process.env.BAE_LP_REVENUE_MODEL) >= 0 &&
-		Number(process.env.BAE_LP_REVENUE_MODEL) <= 100
-		? Number(process.env.BAE_LP_REVENUE_MODEL)
-		: config.revenueModel;
+    !!process.env.BAE_LP_REVENUE_MODEL &&
+    Number(process.env.BAE_LP_REVENUE_MODEL) >= 0 &&
+    Number(process.env.BAE_LP_REVENUE_MODEL) <= 100
+        ? Number(process.env.BAE_LP_REVENUE_MODEL)
+        : config.revenueModel;
 
 config.taxRate =
-	(config.taxRate !== undefined && config.taxRate !== null && config.taxRate >= 0 && config.taxRate <= 100) ? config.taxRate : 30;
+    config.taxRate !== undefined && config.taxRate !== null && config.taxRate >= 0 && config.taxRate <= 100
+        ? config.taxRate
+        : 30;
 
 config.taxRate =
-	!!process.env.BAE_LP_TAX_RATE &&
-		Number(process.env.BAE_LP_TAX_RATE) >= 0 &&
-		Number(process.env.BAE_LP_TAX_RATE) <= 100
-		? Number(process.env.BAE_LP_TAX_RATE)
-		: config.taxRate;
+    !!process.env.BAE_LP_TAX_RATE &&
+    Number(process.env.BAE_LP_TAX_RATE) >= 0 &&
+    Number(process.env.BAE_LP_TAX_RATE) <= 100
+        ? Number(process.env.BAE_LP_TAX_RATE)
+        : config.taxRate;
 
 config.usageChartURL = process.env.BAE_LP_USAGE_CHART || config.usageChartURL;
 
@@ -610,17 +628,16 @@ config.indexes.apiVersion = process.env.BAE_LP_INDEX_API_VERSION || config.index
 
 // External IDPs configs
 if (config.extLogin) {
-	config.localEORI = process.env.BAE_EORI;
-	config.ishareKey = process.env.BAE_TOKEN_KEY;
-	config.ishareCrt = process.env.BAE_TOKEN_CRT;
+    config.localEORI = process.env.BAE_EORI;
+    config.ishareKey = process.env.BAE_TOKEN_KEY;
+    config.ishareCrt = process.env.BAE_TOKEN_CRT;
 }
 module.exports = config;
 
-
 // Gui config
-config.legacyGUI = false
+config.legacyGUI = false;
 if (!!process.env.BAE_LP_LEGACY_GUI) {
-    config.legacyGUI = process.env.BAE_LP_LEGACY_GUI == 'true'
+    config.legacyGUI = process.env.BAE_LP_LEGACY_GUI == 'true';
 }
 
 // External Portal config
@@ -629,50 +646,50 @@ config.externalPortal = '';
 config.externalPortal = process.env.BAE_LP_EXTERNAL_PORTAL || config.externalPortal;
 
 // Chatbot
-config.chatUrl = ''
+config.chatUrl = '';
 config.chatUrl = process.env.BAE_LP_CHAT_URL || config.chatUrl;
 
 // Matomo
-config.matomoId = ''
+config.matomoId = '';
 config.matomoId = process.env.BAE_LP_MATOMO_ID || config.matomoId;
 
-config.matomoUrl = ''
+config.matomoUrl = '';
 config.matomoUrl = process.env.BAE_LP_MATOMO_URL || config.matomoUrl;
 
-config.knowledgeUrl = ''
+config.knowledgeUrl = '';
 config.knowledgeUrl = process.env.BAE_LP_KNOWLEDGE_BASE_URL || config.knowledgeUrl;
 
-config.ticketingUrl = ''
+config.ticketingUrl = '';
 config.ticketingUrl = process.env.BAE_LP_TICKETING_URL || config.ticketingUrl;
 
-config.searchUrl = ''
+config.searchUrl = '';
 config.searchUrl = process.env.BAE_LP_SEARCH_URL || config.searchUrl;
 
-config.billingEngineUrl = ''
+config.billingEngineUrl = '';
 config.billingEngineUrl = process.env.BAE_LP_BILLING_ENGINE_URL || config.billingEngineUrl;
 
-config.domeRegistrationForm = ''
+config.domeRegistrationForm = '';
 config.domeRegistrationForm = process.env.BAE_LP_DOME_REGISTRATION_FORM || config.domeRegistrationForm;
 
-config.domeOnboardingGuidelines = ''
+config.domeOnboardingGuidelines = '';
 config.domeOnboardingGuidelines = process.env.BAE_LP_DOME_ONBOARDING_GUIDELINES || config.domeOnboardingGuidelines;
 
-config.domeGuidelines = ''
+config.domeGuidelines = '';
 config.domeGuidelines = process.env.BAE_LP_DOME_GUIDELINES || config.domeGuidelines;
 
 config.quoteApi = '/quote/quoteManagement';
 config.quoteApi = process.env.BAE_LP_QUOTE_API || config.quoteApi;
 
-config.paymentGateway = 'https://dpas-sbx.egroup.hu'
+config.paymentGateway = 'https://dpas-sbx.egroup.hu';
 config.paymentGateway = process.env.BAE_LP_PAYMENT_GATEWAY || config.paymentGateway;
 
-config.analytics = ''
+config.analytics = '';
 config.analytics = process.env.BAE_LP_ANALYTICS_URL || config.analytics;
 
-config.defaultId = ''
+config.defaultId = '';
 
 // Purchase enabled
-config.purchaseEnabled = false
+config.purchaseEnabled = false;
 if (!!process.env.BAE_LP_PURCHASE_ENABLED) {
-    config.purchaseEnabled = process.env.BAE_LP_PURCHASE_ENABLED == 'true'
+    config.purchaseEnabled = process.env.BAE_LP_PURCHASE_ENABLED == 'true';
 }
