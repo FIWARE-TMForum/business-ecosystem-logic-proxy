@@ -1474,29 +1474,6 @@ const catalog = (function() {
                         message: 'Error accessing search indexes'
                     })
                 })
-
-        } else if (offeringsPattern.test(req.path) && req.query.relatedParty != null) {
-            // Local query for relarted party
-
-            let query = {
-                relatedParty: req.query.relatedParty
-            }
-
-            if (req.query.lifecycleStatus != null) {
-                query.lifecycleStatus = req.query.lifecycleStatus
-            }
-
-            if (req.query.offset != null) {
-                query.offset = req.query.offset
-            }
-
-            if (req.query.limit != null) {
-                query.limit = req.query.limit
-            }
-
-            indexes.search('offering', query)
-                .then(returnQueryRes)
-
         } else {
             callback(null)
         }
@@ -1620,7 +1597,7 @@ const catalog = (function() {
                 catalog = req.url.split('/')[3];
             }
 
-            indexObject(req.user.partyId, body, catalog).then(()=>{
+            indexObject(req.user.partyId, body, catalog).then(() => {
             }).catch((err)=>{
             }).finally(() => {
                 storeClient.attachOffering(
