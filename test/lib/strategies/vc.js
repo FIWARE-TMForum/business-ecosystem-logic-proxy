@@ -62,7 +62,8 @@ describe('VC Strategy', () => {
                     clientID: config.clientID,
                     privateKey: config.privateKey,
                     isRedirection: false,
-                    verifierHost: config.verifierHost
+                    verifierHost: config.verifierHost,
+                    signAlgorithm: config.signAlgorithm
                 });
 
                 done();
@@ -120,7 +121,8 @@ describe('VC Strategy', () => {
             clientID: 'did:1234',
             privateKey: '123456',
             verifierHost: 'https://verifierhost.com',
-            verifierJWKSPath: JWKS_PATH
+            verifierJWKSPath: JWKS_PATH,
+            signAlgorithm: 'ES256'
         };
         const REDIRECTION_CONFIG = {
             allowedRoles: ['customer', 'seller', 'admin'],
@@ -128,7 +130,8 @@ describe('VC Strategy', () => {
             clientID: 'did:1234',
             privateKey: '123456',
             verifierHost: 'https://verifierhost.com',
-            verifierJWKSPath: JWKS_PATH
+            verifierJWKSPath: JWKS_PATH,
+            signAlgorithm: 'ES256'
         }
 
         let nextFunctionFor200;
@@ -180,6 +183,9 @@ describe('VC Strategy', () => {
             const strategy = proxyquire('../../../lib/strategies/vc', {
                 './passport-vc': proxyquire('../../../lib/strategies/passport-vc', {
                     'node-fetch': fecthMock,
+                    '../jwtSigner': proxyquire('../../../lib/jwtSigner', {
+                      '../config': { siop: strategyConfig }
+                    }),
                     'jwks-rsa': () => {
                         return {
                             getSigningKey: (kid, cb) => {
