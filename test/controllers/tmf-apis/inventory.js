@@ -23,6 +23,8 @@ const proxyquire = require('proxyquire')
 const testUtils = require('../../utils')
 
 describe('Inventory API', function() {
+    const config = testUtils.getDefaultConfig()
+
     const getInventoryAPI = function(tmfUtils, utils, indexes) {
         if (!indexes) {
             indexes = {
@@ -35,7 +37,8 @@ describe('Inventory API', function() {
         return proxyquire('../../../controllers/tmf-apis/inventory', {
             './../../lib/logger': testUtils.emptyLogger,
             './../../lib/tmfUtils': tmfUtils,
-            './../../lib/utils': utils
+            './../../lib/utils': utils,
+            './../../config': config
         }).inventory;
     };
 
@@ -201,7 +204,7 @@ describe('Inventory API', function() {
                     relatedParty: [
                         {
                             id: 'test',
-                            role: 'Customer'
+                            role: config.roles.customer
                         }
                     ]
                 })

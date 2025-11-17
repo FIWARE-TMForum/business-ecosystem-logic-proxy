@@ -25,8 +25,8 @@ const utils = require('./../lib/utils')
 const logger = require('./../lib/logger').logger.getLogger('TMF')
 
 function simulator() {
-    const CUSTOMER = 'Customer';
-    const SELLER = 'Seller';
+    const CUSTOMER = config.roles.customer;
+    const SELLER = config.roles.seller;
 
     const checkBillAcc = async (billAccRef, userId) =>{
         if (billAccRef && billAccRef.id){
@@ -158,7 +158,7 @@ function simulator() {
             })
 
             prodResp.data.relatedParty.forEach(element => {
-                if (element.role.toLowerCase() == 'owner') {
+                if (element.role.toLowerCase() == SELLER.toLowerCase()) {
                     order.relatedParty.push({
                         id: element.id,
                         role: SELLER,

@@ -20,6 +20,7 @@
 const async = require('async')
 const utils = require('./../../lib/utils')
 const tmfUtils = require('./../../lib/tmfUtils')
+const config = require('./../../config');
 
 const resourceInventory = (function() {
     const validateRetrieving = function(req, callback) {
@@ -56,7 +57,7 @@ const resourceInventory = (function() {
         const body = req.body;
 
         // Check if the user is allowed to retrieve the requested resource
-        if (!Array.isArray(body) && !tmfUtils.hasPartyRole(req, body.relatedParty, 'customer')) {
+        if (!Array.isArray(body) && !tmfUtils.hasPartyRole(req, body.relatedParty, config.roles.customer)) {
             callback({
                 status: 403,
                 message: 'You are not authorized to retrieve the specified resource from the inventory'
@@ -64,7 +65,7 @@ const resourceInventory = (function() {
         } else if (Array.isArray(body)) {
             // TODO: This filter should be done by API itself
             const newBody = body.filter((resource) => {
-                return tmfUtils.hasPartyRole(req, resource.relatedParty, 'customer')
+                return tmfUtils.hasPartyRole(req, resource.relatedParty, config.roles.customer)
             })
             utils.updateResponseBody(req, newBody)
             callback(null)
