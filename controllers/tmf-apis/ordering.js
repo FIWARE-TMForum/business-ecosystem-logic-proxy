@@ -322,8 +322,8 @@ const ordering = (function() {
                 };
             } else {
                 // Check that fields are not added or removed
-                if ((!!previousOrderItem.state && Object.keys(updatedItem).length !== Object.keys(previousOrderItem).length)
-                        || (!previousOrderItem.state && Object.keys(updatedItem).length - 1 !== Object.keys(previousOrderItem).length)) {
+                if (((previousOrderItem.state || (!previousOrderItem.state && !updatedItem.state))&& Object.keys(updatedItem).length !== Object.keys(previousOrderItem).length)
+                        || (!previousOrderItem.state && updatedItem.state && Object.keys(updatedItem).length - 1 !== Object.keys(previousOrderItem).length)) {
                     error = {
                         status: 403,
                         message: 'The fields of an order item cannot be modified'
@@ -351,7 +351,10 @@ const ordering = (function() {
                             };
                         } else {
                             // If no errors, the state can be updated!
-                            previousOrderItem['state'] = updatedItem['state'];
+                            // If there is no "if", previous item state could be updated to undefined instead of not having it, so it causes problems in testing.
+                            if(updatedItem.state){
+                                previousOrderItem['state'] = updatedItem['state'];
+                            }
                         }
                     }
                 }
