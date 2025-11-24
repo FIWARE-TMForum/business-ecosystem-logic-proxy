@@ -76,6 +76,7 @@ const party = (function() {
         else if (req.method === 'PATCH' && req.body && regexResult[1] === 'organization') {
             const body = JSON.parse(req.body)
             const contactMediums = body.contactMedium;
+            const partyCharacteristics = body.partyCharacteristic
             if (contactMediums){
                 if(!Array.isArray(contactMediums)) {
                     return callback({
@@ -92,6 +93,19 @@ const party = (function() {
                         });
                     }
                 }
+            }
+
+            if (partyCharacteristics) {
+
+                for (const partyChar of partyCharacteristics){
+                    if (partyChar.name === "country" && partyChar.value.length !== 2){
+                        return callback({
+                            status: 422,
+                            message: 'Invalid country code'
+                        });
+                    }
+                }
+
             }
 
             callback(null);

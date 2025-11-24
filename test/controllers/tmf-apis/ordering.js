@@ -1309,15 +1309,45 @@ describe('Ordering API', function() {
                 );
             });
 
-            it('should not fail when the user tries to modify the state of an item appropiately', function(done) {
-                const previousOrderItems = [{ id: 1, state: 'inProgress', product: { relatedParty: [] } }];
+            it('should fail when the seller tries to modify the value of a field in the item without state', function(done) {
+                const previousOrderItems = [
+                    {
+                        id: 1,
+                        name: 'Order Item',
+                        product: { relatedParty: [] }
+                    }
+                ];
                 const updatedOrderings = {
-                    productOrderItem: [{ id: 1, state: 'completed', product: { relatedParty: [] } }]
+                    productOrderItem: [{ id: 1, product: { relatedParty: [] } }]
+                };
+
+                const expectedError = {
+                    status: 403,
+                    message: 'The fields of an order item cannot be modified'
+                };
+
+                testUpdate(
+                    [false, true, true],
+                    updatedOrderings,
+                    'InProgress',
+                    previousOrderItems,
+                    [],
+                    null,
+                    expectedError,
+                    null,
+                    done
+                );
+            });
+
+            it('should not fail when the user tries to modify the state of an item appropiately', function(done) {
+                const previousOrderItems = [{ id: 1, state: 'inProgress', product: { relatedParty: [] } }, { id: 2, product: { relatedParty: [] } }];
+                const updatedOrderings = {
+                    productOrderItem: [{ id: 1, state: 'completed', product: { relatedParty: [] } }, { id: 2, product: { relatedParty: [] } }]
                 };
 
                 const expectedBody = {
                     productOrderItem: updatedOrderings.productOrderItem,
-                    state: 'completed'
+                    state: 'inProgress'
                 };
 
                 testUpdate(
