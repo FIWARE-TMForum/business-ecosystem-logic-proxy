@@ -269,6 +269,7 @@
         "_general": "General",
         "_bill": "Billing addresses",
         "_revenue": "Revenue sharing",
+        "_payment_dashboard": "Payment dashboard",
         "_orders": "Orders",
         "_order_list": "My order list",
         "_update": "Update",
