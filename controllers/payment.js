@@ -23,12 +23,20 @@ const logger = require('../lib/logger').logger.getLogger("Server");
 
 function payment () {
 
-    const doLogin = async function(partyId) {
+    const doLogin = async function(partyId, userToken) {
         const loginUrl = `${config.paymentGateway}/api/product-providers/${partyId}/admin-token`;
 
         let token = null;
         try {
-            const resp = await axios.get(loginUrl)
+            const options = {
+                url: loginUrl,
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${userToken}`
+                }
+            };
+
+            const resp = await axios.request(options);
             token = resp.data;
         } catch (err) {
             logger['error']('%s: %s', "Error getting payment gateway token", err.message);
@@ -53,7 +61,7 @@ function payment () {
             logger['error']('%s: %s', "Error getting payment gateways count", err.message);
         }
 
-        const token = await doLogin(partyId);
+        const token = await doLogin(partyId, req.user.accessToken);
         let providerUrl = `${config.paymentGateway}/provider-admin/#/login?productProviderId=${partyId}`;
 
         if (token) {
