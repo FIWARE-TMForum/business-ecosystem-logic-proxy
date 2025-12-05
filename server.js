@@ -652,8 +652,9 @@ app.use(function(err, req, res, next) {
             break;
         case 'text/html':
             res.status(500);
-            res.header('Content-Type', textHtml);
-            renderTemplate(req, res, 'unexpected-error');
+            res.header('Content-Type', applicationJSON);
+            res.json({ error: 'Unexpected error. The error has been notified to the administrators.' });
+            res.end();
 
             break;
         default:
