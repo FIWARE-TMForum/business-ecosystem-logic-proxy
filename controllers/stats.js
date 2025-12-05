@@ -27,6 +27,15 @@ const logger = require('./../lib/logger').logger.getLogger('TMF')
 
 function stats() {
 
+    const getItem = async function (url) {
+        const response = await axios.request({
+            method: 'GET',
+            url: url
+        })
+
+        return response.data
+    }
+
     const pageData = async function(baseUrl, mapper) {
         let start = 0
         let limit = 50
@@ -52,16 +61,44 @@ function stats() {
 
     const loadStats = async function() {
         // Get the list of launched offering
-        const productBaseUrl = utils.getAPIProtocol('catalog') + '://' + utils.getAPIHost('catalog') + ':' + utils.getAPIPort('catalog') + utils.getAPIPath('catalog') + '/productOffering?lifecycleStatus=Launched&fields=name'
+        const products = new Set()
+
+        const productBaseUrl = utils.getAPIProtocol('catalog') + '://' + utils.getAPIHost('catalog') + ':' + utils.getAPIPort('catalog') + utils.getAPIPath('catalog') + '/productOffering?lifecycleStatus=Launched&fields=name,productSpecification'
         const offers = await pageData(productBaseUrl, (off) => {
+            if (off.productSpecification) {
+                products.add(off.productSpecification.id)
+            }
+
             return off.name
+        })
+
+        // The products array now has the list of product specifications launched
+        // Get the list of product owners
+        partyIds = new Set()
+        products.forEach(async (prodId) => {
+            const productUrl = utils.getAPIProtocol('catalog') + '://' + utils.getAPIHost('catalog') + ':' + utils.getAPIPort('catalog') + utils.getAPIPath('catalog') + `/productSpecification/${prodId}?fields=relatedParty`
+            const product = await getItem(productUrl)
+
+            if (product.relatedParty) {
+                product.relatedParty.forEach((party) => {
+                    if (party.role.toLowerCase() == 'owner') {
+                        partyIds.add(party.id)
+                    }
+                })
+            }
         })
 
         // Get the list of organizations
         const partyBaseUrl = utils.getAPIProtocol('party') + '://' + utils.getAPIHost('party') + ':' + utils.getAPIPort('party') + utils.getAPIPath('party') + '/organization?fields=tradingName'
-        const parties = await pageData(partyBaseUrl, (part) => {
-            return part.tradingName
+        let parties = await pageData(partyBaseUrl, (part) => {
+            return {
+                id: part.id,
+                name: part.tradingName
+            }
         })
+
+        // Filter only the parties that own launched products
+        parties = parties.filter((part) => partyIds.has(part.id)).map((part) => part.name)
 
         // Save data in MongoDB
         const res = await statsSchema.findOne()

@@ -53,21 +53,71 @@ describe('Stats Controller', () => {
         const axios = jasmine.createSpyObj('axios', ['request'])
         axios.request.and.returnValues(Promise.resolve({
             data: [{
-                'name': 'offering1'
+                'name': 'offering1',
+                'productSpecification': {'id': 'spec1'}
             }, {
-                'name': 'offering2'
+                'name': 'offering2',
+                'productSpecification': {'id': 'spec2'}
             }, {
-                'name': 'offering3'
+                'name': 'offering3',
+                'productSpecification': {'id': 'spec3'}
             }]
         }), Promise.resolve({
             data: [{
-                'name': 'offering4'
+                'name': 'offering4',
+                'productSpecification': {'id': 'spec4'}
             }]
         }), Promise.resolve({
             data: []
         }), Promise.resolve({
+            data: {
+                'id': 'spec1',
+                'relatedParty': [{
+                    'id': 'party1',
+                    'role': 'owner'
+                }]
+            }
+        }),
+        Promise.resolve({
+            data: {
+                'id': 'spec2',
+                'relatedParty': [{
+                    'id': 'party1',
+                    'role': 'owner'
+                }]
+            }
+        }),
+        Promise.resolve({
+            data: {
+                'id': 'spec3',
+                'relatedParty': [{
+                    'id': 'party2',
+                    'role': 'owner'
+                }]
+            }
+        }),
+        Promise.resolve({
+            data: {
+                'id': 'spec4',
+                'relatedParty': [{
+                    'id': 'party2',
+                    'role': 'owner'
+                }]
+            }
+        }),
+        Promise.resolve({
             data: [{
+                'id': 'party1',
                 'tradingName': 'party1'
+            }, {
+                'id': 'party2',
+                'tradingName': 'party2'
+            }, {
+                'id': 'party3',
+                'tradingName': 'party3'
+            }, {
+                'id': 'party4',
+                'tradingName': 'party4'
             }]
         }), Promise.resolve({
             data: []
@@ -89,35 +139,55 @@ describe('Stats Controller', () => {
 
         instance.init().then(() => {
             // Check the calls
-            expect(axios.request).toHaveBeenCalledTimes(5); // Check the number of calls
+            expect(axios.request).toHaveBeenCalledTimes(9); // Check the number of calls
 
             expect(axios.request.calls.argsFor(0)).toEqual([{
-                url: 'https://example.com:1234/productOffering?lifecycleStatus=Launched&fields=name&offset=0&limit=50',
+                url: 'https://example.com:1234/productOffering?lifecycleStatus=Launched&fields=name,productSpecification&offset=0&limit=50',
                 method: 'GET'
             }]);
 
             expect(axios.request.calls.argsFor(1)).toEqual([{
-                url: 'https://example.com:1234/productOffering?lifecycleStatus=Launched&fields=name&offset=50&limit=50',
+                url: 'https://example.com:1234/productOffering?lifecycleStatus=Launched&fields=name,productSpecification&offset=50&limit=50',
                 method: 'GET'
             }]);
 
             expect(axios.request.calls.argsFor(2)).toEqual([{
-                url: 'https://example.com:1234/productOffering?lifecycleStatus=Launched&fields=name&offset=100&limit=50',
+                url: 'https://example.com:1234/productOffering?lifecycleStatus=Launched&fields=name,productSpecification&offset=100&limit=50',
                 method: 'GET'
             }]);
 
             expect(axios.request.calls.argsFor(3)).toEqual([{
-                url: 'https://example.com:1234/organization?fields=tradingName&offset=0&limit=50',
+                url: 'https://example.com:1234/productSpecification/spec1?fields=relatedParty',
                 method: 'GET'
             }]);
 
             expect(axios.request.calls.argsFor(4)).toEqual([{
+                url: 'https://example.com:1234/productSpecification/spec2?fields=relatedParty',
+                method: 'GET'
+            }]);
+
+            expect(axios.request.calls.argsFor(5)).toEqual([{
+                url: 'https://example.com:1234/productSpecification/spec3?fields=relatedParty',
+                method: 'GET'
+            }]);
+
+            expect(axios.request.calls.argsFor(6)).toEqual([{
+                url: 'https://example.com:1234/productSpecification/spec4?fields=relatedParty',
+                method: 'GET'
+            }]);
+
+            expect(axios.request.calls.argsFor(7)).toEqual([{
+                url: 'https://example.com:1234/organization?fields=tradingName&offset=0&limit=50',
+                method: 'GET'
+            }]);
+
+            expect(axios.request.calls.argsFor(8)).toEqual([{
                 url: 'https://example.com:1234/organization?fields=tradingName&offset=50&limit=50',
                 method: 'GET'
             }]);
 
             expect(dbObject.services).toEqual(['offering1', 'offering2', 'offering3', 'offering4'])
-            expect(dbObject.organizations).toEqual(['party1'])
+            expect(dbObject.organizations).toEqual(['party1', 'party2'])
 
             expect(dbObject.save).toHaveBeenCalled()
             done()
