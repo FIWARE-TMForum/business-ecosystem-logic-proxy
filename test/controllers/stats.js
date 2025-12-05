@@ -42,7 +42,12 @@ describe('Stats Controller', () => {
             'axios': axios,
             'node-cron': cron,
             '../lib/utils': utils,
-            '../db/schemas/stats': schema
+            '../db/schemas/stats': schema,
+            '../config': {
+                roles: {
+                    seller: 'seller'
+                }
+            }
         }
 
         return proxyquire('../../controllers/stats', mocks).stats()
@@ -74,7 +79,7 @@ describe('Stats Controller', () => {
                 'id': 'spec1',
                 'relatedParty': [{
                     'id': 'party1',
-                    'role': 'owner'
+                    'role': 'seller'
                 }]
             }
         }),
@@ -83,7 +88,7 @@ describe('Stats Controller', () => {
                 'id': 'spec2',
                 'relatedParty': [{
                     'id': 'party1',
-                    'role': 'owner'
+                    'role': 'seller'
                 }]
             }
         }),
@@ -92,7 +97,7 @@ describe('Stats Controller', () => {
                 'id': 'spec3',
                 'relatedParty': [{
                     'id': 'party2',
-                    'role': 'owner'
+                    'role': 'seller'
                 }]
             }
         }),
@@ -101,7 +106,7 @@ describe('Stats Controller', () => {
                 'id': 'spec4',
                 'relatedParty': [{
                     'id': 'party2',
-                    'role': 'owner'
+                    'role': 'seller'
                 }]
             }
         }),
