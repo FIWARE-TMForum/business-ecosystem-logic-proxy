@@ -38,13 +38,14 @@ var defaultConfig = {
 	proxyPrefix: '',
 	oauth2: {
 		server: 'https://account.lab.fiware.org',
-		clientID: 'client',
-		roles: {
-			admin: 'provider',
-			seller: 'seller',
-			customer: 'customer',
-			orgAdmin: 'orgAdmin'
-		}
+		clientID: 'client'
+	},
+	roles: {
+		admin: 'provider',
+		seller: 'Seller',
+		customer: 'Buyer',
+		orgAdmin: 'orgAdmin',
+		certifier: 'certifier'
 	},
 	endpoints: {
 		account: {
@@ -181,7 +182,6 @@ var defaultConfig = {
 			appSsl: false
 		}
 	},
-	billingAccountOwnerRole: 'owner',
 	revenueModel: 30,
 	indexes: {
 		'engine': 'local', // 'elastic_indexes.js' if using elasticsearch

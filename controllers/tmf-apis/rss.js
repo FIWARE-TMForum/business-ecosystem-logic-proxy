@@ -38,7 +38,7 @@ const rss = (function() {
         }
 
         // Only sellers are allowed to access the RSS API
-        if (!utils.hasRole(req.user, config.oauth2.roles.seller)) {
+        if (!utils.hasRole(req.user, config.roles.seller)) {
             return callback({
                 status: 403,
                 message: 'You are not authorized to access the RSS API'
