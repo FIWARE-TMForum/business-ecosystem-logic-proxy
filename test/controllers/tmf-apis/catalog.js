@@ -2503,43 +2503,6 @@ describe('Catalog API', function() {
         );
     });
 
-    // fit('should not allow to update offerings when the RS model cannot be checked', function(done) {
-    // 	var errorMsg = 'RSS failure';
-    // 	var statusCode = 500;
-
-    // 	var offeringBody = JSON.stringify({
-    // 		serviceCandidate: {
-    // 			id: 'example'
-    // 		}
-    // 	});
-
-    // 	var rsModelRequestInfo = {
-    // 		err: {
-    // 			status: statusCode,
-    // 			message: errorMsg
-    // 		}
-    // 	};
-
-    // 	testUpdateProductOffering(offeringBody, {}, rsModelRequestInfo, {}, statusCode, errorMsg, false, done);
-    // });
-
-    // fit('should not allow to update offerings when the RS model is not valid', function(done) {
-    // 	var offeringBody = JSON.stringify({
-    // 		serviceCandidate: {
-    // 			id: 'wrong'
-    // 		}
-    // 	});
-
-    // 	var rsModelRequestInfo = {
-    // 		err: null,
-    // 		res: {
-    // 			body: '{}'
-    // 		}
-    // 	};
-
-    // 	testUpdateProductOffering(offeringBody, {}, rsModelRequestInfo, {}, 422, INVALID_PRODUCT_CLASS, false, done);
-    // });
-
     // PRODUCTS & CATALOGS
 
     var previousProductBody = {
@@ -5043,6 +5006,34 @@ describe('Catalog API', function() {
             });
         };
 
+        it('should properly order the response when quering by ID', (done) => {
+            const req = {
+                method: 'GET',
+                apiUrl: '/productOffering?href=id1,id2,id3&limit=3&sttrs=id',
+                body: [{
+                    id: 'id3'
+                }, {
+                    id: 'id1'
+                }, {
+                    id: 'id2'
+                }]
+            }
+
+            testPostValidation(
+                req,
+                () => {
+                    expect(req.body).toEqual([{
+                        id: 'id1'
+                    }, {
+                        id: 'id2'
+                    }, {
+                        id: 'id3'
+                    }])
+                },
+                done
+            );
+        });
+
         it('should call the store product attachment when a valid product creation request has been redirected', function(done) {
             var req = {
                 method: 'POST',
@@ -5067,6 +5058,7 @@ describe('Catalog API', function() {
             var req = {
                 method: 'GET',
                 url: '/productSpecification',
+                apiUrl: '/productSpecification',
                 body: body,
                 user: user
             };
