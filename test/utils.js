@@ -180,6 +180,13 @@ var defaultConfig = {
 			host: 'revenue.com',
 			port: '8637',
 			appSsl: false
+		},
+		invoicing: {
+			path: 'invoicing',
+			apiPath: '/invoicing',
+			host: 'invoicing.com',
+			port: '8637',
+			appSsl: false
 		}
 	},
 	revenueModel: 30,

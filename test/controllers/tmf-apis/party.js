@@ -229,7 +229,7 @@ describe('Party API', function() {
                 var userObj = {
                     partyId: 'org',
                     userId: 'user',
-                    roles: [{ name: testUtils.getDefaultConfig().oauth2.roles.orgAdmin }]
+                    roles: [{ name: testUtils.getDefaultConfig().roles.orgAdmin }]
                 };
                 accessPartyTest('org', orgPath, userObj, INVALID_COUNTRY, null, true, done, "France");
             });
