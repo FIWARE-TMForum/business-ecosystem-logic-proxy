@@ -280,6 +280,12 @@ config.endpoints = {
         apiPath: '/revenue',
         host: 'revenue-engine-svc.billing.svc.cluster.local',
         port: '8080'
+    },
+    invoicing: {
+        path: 'invoicing',
+        apiPath: '/invoicing',
+        host: 'invoicing-service-svc.billing.svc.cluster.local',
+        port: '8080'
     }
 };
 
@@ -583,6 +589,15 @@ config.endpoints.revenue.host = process.env.BAE_LP_ENDPOINT_REVENUE_HOST || conf
 
 if (!!process.env.BAE_LP_ENDPOINT_REVENUE_SECURED) {
     config.endpoints.revenue.appSsl = process.env.BAE_LP_ENDPOINT_REVENUE_SECURED == 'true';
+}
+
+// Invoicing
+config.endpoints.invoicing.apiPath = process.env.BAE_LP_ENDPOINT_INVOICING_PATH || config.endpoints.invoicing.apiPath;
+config.endpoints.invoicing.port = process.env.BAE_LP_ENDPOINT_INVOICING_PORT || config.endpoints.invoicing.port;
+config.endpoints.invoicing.host = process.env.BAE_LP_ENDPOINT_INVOICING_HOST || config.endpoints.invoicing.host;
+
+if (!!process.env.BAE_LP_ENDPOINT_INVOICING_SECURED) {
+    config.endpoints.invoicing.appSsl = process.env.BAE_LP_ENDPOINT_INVOICING_SECURED == 'true';
 }
 
 // ======
