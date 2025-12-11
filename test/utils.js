@@ -206,7 +206,8 @@ exports.emptyLogger = {
 			return {
 				info: emptyFunction,
 				warn: emptyFunction,
-				error: emptyFunction
+				error: emptyFunction,
+				debug: emptyFunction
 			};
 		}
 	}
