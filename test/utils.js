@@ -45,7 +45,9 @@ var defaultConfig = {
 		seller: 'Seller',
 		customer: 'Buyer',
 		orgAdmin: 'orgAdmin',
-		certifier: 'certifier'
+		certifier: 'certifier',
+		sellerOperator: 'SellerOperator',
+		buyerOperator: 'BuyerOperator'
 	},
 	endpoints: {
 		account: {
@@ -194,7 +196,9 @@ var defaultConfig = {
 		'engine': 'local', // 'elastic_indexes.js' if using elasticsearch
 		'elasticHost': 'http://imaginary-elastic.docker:9200/' // hostname:port
 	},
-    defaultId: 'dft'
+    defaultId: 'dft',
+	operatorId: 'VAT-OP',
+	partyLocation: 'https://mylocation.com/schema.json'
 };
 
 exports.getDefaultConfig = function() {

@@ -852,4 +852,166 @@ describe('TMF Utils', function() {
 
         })
     })
+
+    describe('Attach related party', () => {
+        const getOpTmfUtils = function(utils) {
+            return proxyquire('../../lib/tmfUtils', {
+                './../config': config,
+                './utils': utils || {},
+                './operator': {
+                    operator: {
+                        getOperatorId: () => {
+                            return 'urn:organization:operatorId';
+                        }
+                    }
+                },
+                './party': {
+                    partyClient: {
+                        getOrganization: async () => {
+                            return {
+                                body: {
+                                    externalReference: [{
+                                        externalReferenceType: 'idm_id',
+                                        name: 'VAT-ID2'
+                                }]}
+                            }
+                        }
+                    }
+                }
+            });
+        };
+
+        const testAttach = async (api, path, body, resp) => {
+            const tmfUtils = getOpTmfUtils();
+
+            const req = {
+                apiUrl: path,
+                headers: {},
+                body: JSON.stringify(body),
+                user: {
+                    id: 'VAT-ID1',
+                    partyId: 'urn:organization:partyId',
+                }
+            }
+            await tmfUtils.attachRelatedParty(req, api);
+
+            const newBody = JSON.parse(req.body);
+            expect(newBody.relatedParty).toEqual(resp)
+
+            return newBody;
+        };
+
+        const testAttachSupported = async (api, path, body) => {
+            return testAttach(api, path, body, [{
+                id: 'urn:organization:partyId',
+                href: 'urn:organization:partyId',
+                name: 'VAT-ID1',
+                role: 'Seller',
+                "@referredType": "Organization"
+            }, {
+                id: 'urn:organization:operatorId',
+                href: 'urn:organization:operatorId',
+                name: 'VAT-OP',
+                role: 'SellerOperator',
+                "@referredType": "Organization"
+            }]);
+        }
+
+        const testAttachNotSupported = async (api, path) => {
+            const newBody = await testAttachSupported(api, path, {})
+
+            expect(newBody['@schemaLocation']).toEqual('https://mylocation.com/schema.json')
+        }
+
+        const testAttachSpec = async (api, path) => {
+            await testAttachSupported(api, path, {
+                relatedParty: [{
+                    id: 'urn:organization:partyId',
+                    role: 'Seller'
+                }]
+            })
+        }
+
+        it('should attach related party to a product spec', async () => {
+            await testAttachSpec('catalog', '/productSpecification')
+        });
+
+        it('should attach related party to a catalog', async () => {
+            await testAttachSupported('catalog', '/catalog', {
+                relatedParty: []
+            })
+        });
+
+        it('should attach related party to a product offering', async () => {
+            await testAttachNotSupported('catalog', '/productOffering')
+        });
+
+        it('should attach related party to a product offering price', async () => {
+            await testAttachNotSupported('catalog', '/productOfferingPrice')
+        });
+
+        it('should attach related party to a category', async () => {
+            const newBody = await testAttach('catalog', '/category', {}, [{
+                id: 'urn:organization:operatorId',
+                href: 'urn:organization:operatorId',
+                name: 'VAT-OP',
+                role: 'SellerOperator',
+                "@referredType": "Organization"
+            }]);
+
+            expect(newBody['@schemaLocation']).toEqual('https://mylocation.com/schema.json')
+        });
+
+        it('should attach related party to a service spec', async () => {
+            await testAttachSpec('service', '/serviceSpecification')
+        });
+
+        it('should attach related party to a resource spec', async () => {
+            await testAttachSpec('resource', '/resourceSpecification')
+        });
+
+        it('should attach related party to a product order', async () => {
+            await testAttach('ordering', '/productOrder', {
+                relatedParty: [{
+                    id: 'urn:organization:partyId',
+                    role: 'Seller'
+                }, {
+                    id: 'urn:organization:partyId2',
+                    role: 'Buyer'
+                }]
+            }, [{
+                id: 'urn:organization:partyId',
+                href: 'urn:organization:partyId',
+                name: 'VAT-ID1',
+                role: 'Seller',
+                "@referredType": "Organization"
+            }, {
+                id: 'urn:organization:operatorId',
+                href: 'urn:organization:operatorId',
+                name: 'VAT-OP',
+                role: 'SellerOperator',
+                "@referredType": "Organization"
+            }, {
+                id: 'urn:organization:partyId2',
+                href: 'urn:organization:partyId2',
+                name: 'VAT-ID2',
+                role: 'Buyer',
+                "@referredType": "Organization"
+            }, {
+                id: 'urn:organization:operatorId',
+                href: 'urn:organization:operatorId',
+                name: 'VAT-OP',
+                role: 'BuyerOperator',
+                "@referredType": "Organization"
+            }]);
+        });
+
+        it('should attach related party to a billing account', async () => {
+            await testAttachSpec('account', '/billingAccount')
+        });
+
+        it('should attach related party to a usage spec', async () => {
+            await testAttachSpec('usage', '/usageSpecification')
+        });
+    })
 });
