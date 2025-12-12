@@ -156,6 +156,7 @@ const catalog = (function() {
             });
 
         }).catch((err) => {
+            console.log(err)
             let status = 400;
             if (err.response && err.response.status) {
                 status = err.response.status;
@@ -182,8 +183,13 @@ const catalog = (function() {
             });
 
         }).catch((err) => {
+            let status = 400;
+            if (err.response && err.response.status) {
+                status = err.response.status;
+            }
+
             callback({
-                status: err.response.status
+                status: status
             });
         })
     };
@@ -225,6 +231,7 @@ const catalog = (function() {
     ) {
         // Retrieve the catalog
         var catalogPath = catalogPathFromOfferingUrl(offeringPath);
+
         retrieveAsset(catalogPath, function(err, result) {
             if (err) {
                 callback({
@@ -600,7 +607,7 @@ const catalog = (function() {
 
     const validateCategory = function(req, updatedCategory, oldCategory, action, callback) {
         // Categories can only be created by administrators
-        if (!utils.hasRole(req.user, config.oauth2.roles.admin)) {
+        if (!utils.hasRole(req.user, config.roles.admin)) {
             callback({
                 status: 403,
                 message: 'Only administrators can ' + action + ' categories'
@@ -964,6 +971,7 @@ const catalog = (function() {
         logger.info('Attaching a category to the new catalog');
         createAsset('/category', {isRoot: true, name: catalogBody.name, lifecycleStatus: 'Launched'}, function(err, result) {
             if (err){
+                console.log(err)
                 logger.error('Error creating the associated category');
                 callback({
                     status: 500,
@@ -1060,7 +1068,7 @@ const catalog = (function() {
             validateCategory(req, body, null, 'create', callback);
         } else {
             // Check that the user has the seller role or is an admin
-            if (!utils.hasRole(req.user, config.oauth2.roles.seller)) {
+            if (!utils.hasRole(req.user, config.roles.seller)) {
                 callback({
                     status: 403,
                     message: 'You are not authorized to create resources'
@@ -1466,29 +1474,6 @@ const catalog = (function() {
                         message: 'Error accessing search indexes'
                     })
                 })
-
-        } else if (offeringsPattern.test(req.path) && req.query.relatedParty != null) {
-            // Local query for relarted party
-
-            let query = {
-                relatedParty: req.query.relatedParty
-            }
-
-            if (req.query.lifecycleStatus != null) {
-                query.lifecycleStatus = req.query.lifecycleStatus
-            }
-
-            if (req.query.offset != null) {
-                query.offset = req.query.offset
-            }
-
-            if (req.query.limit != null) {
-                query.limit = req.query.limit
-            }
-
-            indexes.search('offering', query)
-                .then(returnQueryRes)
-
         } else {
             callback(null)
         }
@@ -1640,7 +1625,7 @@ const catalog = (function() {
                 catalog = req.url.split('/')[3];
             }
 
-            indexObject(req.user.partyId, body, catalog).then(()=>{
+            indexObject(req.user.partyId, body, catalog).then(() => {
             }).catch((err)=>{
             }).finally(() => {
                 storeClient.attachOffering(

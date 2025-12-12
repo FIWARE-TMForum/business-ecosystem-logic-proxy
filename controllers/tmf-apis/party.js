@@ -25,6 +25,8 @@ const url = require('url')
 const utils = require('./../../lib/utils')
 const logger = require('./../../lib/logger').logger.getLogger('TMF')
 const tmfUtils = require('./../../lib/tmfUtils')
+const partyClient = require('./../../lib/party').partyClient
+
 
 const party = (function() {
     const validateAllowed = function(req, callback) {
@@ -66,7 +68,7 @@ const party = (function() {
             (regexResult[1] == 'organization' && !utils.isOrganization(req)) ||
             (regexResult[1] == 'organization' &&
                 utils.isOrganization(req) &&
-                !utils.hasRole(req.user, config.oauth2.roles.orgAdmin))
+                !utils.hasRole(req.user, config.roles.orgAdmin))
         ) {
             callback({
                 status: 403,
@@ -115,6 +117,21 @@ const party = (function() {
         }
     };
 
+    const clearPartyCache = function(req, callback) {
+        let url = req.apiUrl
+        let partyId = ''
+
+        if (url.includes("?")) {
+            url = url.split("?")[0]
+        }
+
+        const parts = url.split("/")
+        partyId = parts[parts.length -1]
+
+        partyClient.clearPartyCache(partyId);
+        return callback(null);
+    };
+
     //////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////////// COMMON ///////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
@@ -122,8 +139,8 @@ const party = (function() {
     const validators = {
         GET: [validateAllowed],
         POST: [utils.methodNotAllowed],
-        PATCH: [utils.validateLoggedIn, validateUpdate],
-        DELETE: [utils.validateLoggedIn, validateUpdate]
+        PATCH: [utils.validateLoggedIn, validateUpdate, clearPartyCache],
+        DELETE: [utils.validateLoggedIn, validateUpdate, clearPartyCache]
     };
 
     const checkPermissions = function(req, callback) {

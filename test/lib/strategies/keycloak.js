@@ -155,9 +155,9 @@ describe('Keycloak Strategy', () => {
                     id: 'group1',
                     name: 'group1',
                     roles: [{
-                        name: 'seller'
+                        name: 'Seller'
                     }, {
-                        name: 'customer'
+                        name: 'Buyer'
                     }, {
                         name: 'orgAdmin'
                     }]
@@ -165,9 +165,9 @@ describe('Keycloak Strategy', () => {
                     id: 'group2',
                     name: 'group2',
                     roles: [{
-                        name: 'seller'
+                        name: 'Seller'
                     }, {
-                        name: 'customer'
+                        name: 'Buyer'
                     }, {
                         name: 'orgAdmin'
                     }]

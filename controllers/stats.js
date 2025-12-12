@@ -21,6 +21,7 @@ const axios = require('axios')
 const cron = require('node-cron')
 const utils = require('../lib/utils')
 const statsSchema = require('../db/schemas/stats')
+const config = require('../config')
 
 const logger = require('./../lib/logger').logger.getLogger('TMF')
 
@@ -81,7 +82,7 @@ function stats() {
 
             if (product.relatedParty) {
                 product.relatedParty.forEach((party) => {
-                    if (party.role.toLowerCase() == 'owner') {
+                    if (party.role.toLowerCase() == config.roles.seller.toLowerCase()) {
                         partyIds.add(party.id)
                     }
                 })

@@ -312,7 +312,7 @@ describe('Ordering API', function() {
                     relatedParty: [
                         {
                             id: userName,
-                            role: 'customer'
+                            role: config.roles.customer
                         }
                     ],
                     productOrderItem: orderItems,
@@ -335,7 +335,7 @@ describe('Ordering API', function() {
                 nock(CATALOG_SERVER)
                     .get(productSpecPath)
                     .times(nOrderItems)
-                    .reply(200, { relatedParty: [{ id: ownerName, role: 'owner' }] });
+                    .reply(200, { relatedParty: [{ id: ownerName, role: config.roles.seller }] });
 
                 nock(B_ACCOUNT_SERVER)
                     .get(billingAccountPath)
@@ -356,12 +356,12 @@ describe('Ordering API', function() {
                         expect(newBody.productOrderItem[0].product.relatedParty).toEqual([
                             {
                                 id: userName,
-                                role: 'Customer',
+                                role: config.roles.customer,
                                 href: getIndividualURL(userName)
                             },
                             {
                                 id: ownerName,
-                                role: 'Seller',
+                                role: config.roles.seller,
                                 href: ownerName
                             }
                         ]);
@@ -398,7 +398,7 @@ describe('Ordering API', function() {
                     relatedParty: [
                         {
                             id: userName,
-                            role: 'customer'
+                            role: config.roles.customer
                         }
                     ],
                     productOrderItem: [{
@@ -418,7 +418,7 @@ describe('Ordering API', function() {
                 nock(CATALOG_SERVER)
                     .get(productSpecPath)
                     .times(1)
-                    .reply(200, { relatedParty: [{ id: 'owner', role: 'owner' }] });
+                    .reply(200, { relatedParty: [{ id: config.roles.seller, role: config.roles.seller }] });
 
                 const expected = {
                     status: 422,
@@ -441,7 +441,7 @@ describe('Ordering API', function() {
                     relatedParty: [
                         {
                             id: 'cust',
-                            role: 'customer'
+                            role: config.roles.customer
                         }
                     ],
                     productOrderItem: [
@@ -485,7 +485,7 @@ describe('Ordering API', function() {
                     relatedParty: [
                         {
                             id: 'cust',
-                            role: 'customer'
+                            role: config.roles.customer
                         }
                     ],
                     productOrderItem: [
@@ -527,7 +527,7 @@ describe('Ordering API', function() {
                     relatedParty: [
                         {
                             id: 'cust',
-                            role: 'customer'
+                            role: config.roles.customer
                         }
                     ],
                     productOrderItem: [
@@ -585,7 +585,7 @@ describe('Ordering API', function() {
                     relatedParty: [
                         {
                             id: 'test',
-                            role: 'customer'
+                            role: config.roles.customer
                         }
                     ]
                 };
@@ -619,7 +619,7 @@ describe('Ordering API', function() {
                     relatedParty: [
                         {
                             id: 'cust',
-                            role: 'seller'
+                            role: config.roles.seller
                         }
                     ]
                 };
@@ -640,7 +640,7 @@ describe('Ordering API', function() {
                     relatedParty: [
                         {
                             id: 'test',
-                            role: 'customer'
+                            role: config.roles.customer
                         }
                     ]
                 };
@@ -661,7 +661,7 @@ describe('Ordering API', function() {
                     relatedParty: [
                         {
                             id: 'cust',
-                            role: 'customer'
+                            role: config.roles.customer
                         }
                     ]
                 };
@@ -683,7 +683,7 @@ describe('Ordering API', function() {
                     relatedParty: [
                         {
                             id: 'cust',
-                            role: 'customer'
+                            role: config.roles.customer
                         }
                     ],
                     orderItem: [
@@ -710,7 +710,7 @@ describe('Ordering API', function() {
                     relatedParty: [
                         {
                             id: 'cust',
-                            role: 'customer'
+                            role: config.roles.customer
                         }
                     ],
                     orderItem: [
@@ -738,7 +738,7 @@ describe('Ordering API', function() {
                     relatedParty: [
                         {
                             id: 'cust',
-                            role: 'customer'
+                            role: config.roles.customer
                         }
                     ],
                     productOrderItem: [
@@ -748,7 +748,7 @@ describe('Ordering API', function() {
                                 relatedParty: [
                                     {
                                         id: 'test',
-                                        role: 'Customer'
+                                        role: config.roles.customer
                                     }
                                 ]
                             },
@@ -780,7 +780,7 @@ describe('Ordering API', function() {
                     relatedParty: [
                         {
                             id: 'example',
-                            role: 'customer'
+                            role: config.roles.customer
                         }
                     ],
                     productOrderItem: [
@@ -790,7 +790,7 @@ describe('Ordering API', function() {
                                 relatedParty: [
                                     {
                                         id: 'example',
-                                        role: 'Customer'
+                                        role: config.roles.customer
                                     }
                                 ]
                             },
@@ -808,7 +808,7 @@ describe('Ordering API', function() {
 
                 nock(CATALOG_SERVER)
                     .get(productSpecPath)
-                    .reply(200, { relatedParty: [{ role: 'owner', id: 'example' }] });
+                    .reply(200, { relatedParty: [{ role: config.roles.seller, id: 'example' }] });
 
                 testOrderCreation(user, JSON.stringify(body), true, true, true, expected, done);
             });
@@ -937,12 +937,12 @@ describe('Ordering API', function() {
                     expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(
                         req,
                         jasmine.arrayContaining(orderingRelatedParties),
-                        'Customer'
+                        config.roles.customer
                     );
                     expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(
                         req,
                         jasmine.arrayContaining(orderingRelatedParties),
-                        'Seller'
+                        config.roles.seller
                     );
 
                     if (expectedBody) {
@@ -1591,8 +1591,8 @@ describe('Ordering API', function() {
             const ordering = getBaseOrdering(billingAccountPath);
             const user = getBaseUser();
 
-            const user1 = buildUser('user1', 'customer');
-            const user2 = buildUser('user2', 'seller');
+            const user1 = buildUser('user1', config.roles.customer);
+            const user2 = buildUser('user2', config.roles.seller);
             ordering.relatedParty = [user1, user2];
 
             const getBillingReq = {
@@ -1796,8 +1796,8 @@ describe('Ordering API', function() {
                 expect(err).toBe(null);
 
                 orders.forEach(function(order) {
-                    expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(req, order.item.relatedParty, 'Customer');
-                    expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(req, order.item.relatedParty, 'Seller');
+                    expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(req, order.item.relatedParty, config.roles.customer);
+                    expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(req, order.item.relatedParty, config.roles.seller);
                 });
 
                 const calls = (orders.length * 2) + orders.length
@@ -1842,7 +1842,7 @@ describe('Ordering API', function() {
                 state: 'inProgress',
                 relatedParty: orderingRelatedParties,
                 note: [],
-                orderItem: [{ product: { relatedParty: [{ id: 'fiware', role: 'customer' }], id: 7 } }]
+                orderItem: [{ product: { relatedParty: [{ id: 'fiware', role: config.roles.customer }], id: 7 } }]
             };
             const expectedBody = JSON.parse(JSON.stringify(originalBody));
 
@@ -1864,8 +1864,8 @@ describe('Ordering API', function() {
 
             orderingApi.executePostValidation(req, function(err) {
                 expect(err).toEqual(null);
-                expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(req, orderingRelatedParties, 'Customer');
-                expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(req, orderingRelatedParties, 'Seller');
+                expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(req, orderingRelatedParties, config.roles.customer);
+                expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(req, orderingRelatedParties, config.roles.seller);
                 expect(tmfUtils.hasPartyRole.calls.count()).toBe(2);
 
                 done();
@@ -1932,11 +1932,11 @@ describe('Ordering API', function() {
             orderingApi.executePostValidation(req, function(err) {
                 expect(err).toEqual(null);
 
-                expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(req, orderingRelatedParties, 'Customer');
-                expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(req, orderingRelatedParties, 'Seller');
+                expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(req, orderingRelatedParties, config.roles.customer);
+                expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(req, orderingRelatedParties, config.roles.seller);
 
                 orderItems.forEach(function(item) {
-                    expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(req, item.item.product.relatedParty, 'Seller');
+                    expect(tmfUtils.hasPartyRole).toHaveBeenCalledWith(req, item.item.product.relatedParty, config.roles.seller);
                 });
 
                 done();
@@ -1944,7 +1944,7 @@ describe('Ordering API', function() {
         };
 
         const notFilterSingleItem = function(method, done) {
-            const orderItemRelatedParties = [{ id: 'fiware', role: 'seller' }];
+            const orderItemRelatedParties = [{ id: 'fiware', role: config.roles.seller }];
             const productOrderItem = { item: { product: { relatedParty: orderItemRelatedParties, id: 7 } }, isSeller: true };
 
             testSeller([productOrderItem], method, done);
@@ -1963,7 +1963,7 @@ describe('Ordering API', function() {
         });
 
         const filterSingleElement = function(method, done) {
-            const orderItemRelatedParties = [{ id: 'other-seller', role: 'seller' }];
+            const orderItemRelatedParties = [{ id: 'other-seller', role: config.roles.seller }];
             const productOrderItem = { item: { product: { relatedParty: orderItemRelatedParties, id: 7 } }, isSeller: false };
 
             testSeller([productOrderItem], method, done);
@@ -1982,8 +1982,8 @@ describe('Ordering API', function() {
         });
 
         const filterOneItem = function(method, done) {
-            const orderItem1RelatedParties = [{ id: 'other-seller', role: 'seller' }];
-            const orderItem2RelatedParties = [{ id: 'fiware', role: 'seller' }];
+            const orderItem1RelatedParties = [{ id: 'other-seller', role: config.roles.seller }];
+            const orderItem2RelatedParties = [{ id: 'fiware', role: config.roles.seller }];
             const orderItem1 = { item: { product: { relatedParty: orderItem1RelatedParties, id: 7 } }, isSeller: false };
             const orderItem2 = { item: { product: { relatedParty: orderItem2RelatedParties, id: 8 } }, isSeller: true };
 
@@ -2003,7 +2003,7 @@ describe('Ordering API', function() {
         });
 
         const notFilterItems = function(method, done) {
-            const orderItemRelatedParties = [{ id: 'fiware', role: 'seller' }];
+            const orderItemRelatedParties = [{ id: 'fiware', role: config.roles.seller }];
             const orderItem1 = { item: { product: { relatedParty: orderItemRelatedParties, id: 7 } }, isSeller: true };
             const orderItem2 = { item: { product: { relatedParty: orderItemRelatedParties, id: 8 } }, isSeller: true };
 
@@ -2023,8 +2023,8 @@ describe('Ordering API', function() {
         });
 
         const filterTwoItems = function(method, done) {
-            const nowOwnerRelatedParties = [{ id: 'other-seller', role: 'seller' }];
-            const ownerRelatedParties = [{ id: 'fiware', role: 'seller' }];
+            const nowOwnerRelatedParties = [{ id: 'other-seller', role: config.roles.seller }];
+            const ownerRelatedParties = [{ id: 'fiware', role: config.roles.seller }];
             const orderItem1 = { item: { product: { relatedParty: nowOwnerRelatedParties, id: 7 } }, isSeller: false };
             const orderItem2 = { item: { product: { relatedParty: ownerRelatedParties, id: 8 } }, isSeller: false };
             const orderItem3 = { item: { product: { relatedParty: ownerRelatedParties, id: 9 } }, isSeller: true };

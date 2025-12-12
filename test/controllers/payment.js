@@ -30,7 +30,7 @@ describe('payment controller: getPaymentInfo', () => {
   let payment;
 
   const makeReqRes = (partyId = 'prov-123') => {
-    const req = { user: { partyId } };
+    const req = { user: { partyId , accessToken: 'usertoken-123'} };
     const res = { json: jasmine.createSpy('json') };
     return { req, res };
   };
@@ -49,7 +49,7 @@ describe('payment controller: getPaymentInfo', () => {
   };
 
   beforeEach(() => {
-    axiosMock = { get: jasmine.createSpy('axios.get') };
+    axiosMock = { get: jasmine.createSpy('axios.get'), request: jasmine.createSpy('axios.request') };
     infoSpy = jasmine.createSpy('logger.info');
     errorSpy = jasmine.createSpy('logger.error');
 
@@ -61,7 +61,14 @@ describe('payment controller: getPaymentInfo', () => {
   });
 
   it('calls backend, parses numeric string, and returns gatewaysCount + providerUrl', async () => {
-    axiosMock.get.and.returnValue(Promise.resolve({ data: '3' }));
+    axiosMock.get.and.returnValue(
+      Promise.resolve({ data: '3' })
+    );
+
+    axiosMock.request.and.returnValue(
+      Promise.resolve({ data: 'token-123' })
+    );
+
     const { req, res } = makeReqRes('abc-123');
 
     await payment.getPaymentInfo(req, res);
@@ -70,9 +77,17 @@ describe('payment controller: getPaymentInfo', () => {
       `${cfg.paymentGateway}/api/product-providers/payment-gateways/count?productProviderExternalId=abc-123`
     );
 
+    expect(axiosMock.request).toHaveBeenCalledWith({
+      url: `${cfg.paymentGateway}/api/product-providers/abc-123/admin-token`,
+      method: 'GET',
+      headers: {
+        'Authorization': 'Bearer usertoken-123'
+      }
+    });
+
     expect(res.json).toHaveBeenCalledWith({
       gatewaysCount: 3,
-      providerUrl: `${cfg.paymentGateway}/provider-admin/#/login?productProviderId=abc-123`
+      providerUrl: `${cfg.paymentGateway}/provider-admin/#/login?productProviderToken=token-123`
     });
 
     expect(infoSpy).toHaveBeenCalledWith('%s: %s', 'Reading payment info from: ', 'abc-123');
