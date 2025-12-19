@@ -37,11 +37,14 @@ const resource = require('./tmf-apis/resource').resource
 const { quote } = require('./tmf-apis/quote')
 const { billing } = require('./tmf-apis/billing')
 const { revenue } = require('./tmf-apis/revenue')
+const { invoicing } = require('./tmf-apis/invoicing')
 
 // Other dependencies
 const logger = require('./../lib/logger').logger.getLogger('TMF')
 const axios = require('axios')
 const utils = require('./../lib/utils')
+const tmfUtils = require('./../lib/tmfUtils')
+
 const { log } = require('async')
 const { query } = require('express')
 const FormData = require('form-data')
@@ -64,8 +67,9 @@ function tmf() {
 	apiControllers[config.endpoints.billing.path] = billing;
 	apiControllers[config.endpoints.quote.path] = quote;
 	apiControllers[config.endpoints.revenue.path] = revenue;
+	apiControllers[config.endpoints.invoicing.path] = invoicing;
 
-	const newApis = ['party', 'catalog', 'ordering', 'inventory', 'service', 'resource', 'account', 'serviceInventory', 'resourceInventory', 'usage', 'billing', 'quote', 'revenue']
+	const newApis = ['party', 'catalog', 'ordering', 'inventory', 'service', 'resource', 'account', 'serviceInventory', 'resourceInventory', 'usage', 'billing', 'quote', 'revenue', 'invoicing']
 
 	const getAPIName = function(apiUrl) {
 		return apiUrl.split('/')[1];
@@ -182,7 +186,9 @@ function tmf() {
 				if (response.status == 200) {
 					const url = buildCatalogUrl(req, getCategoryIdsFromCatalog(response.body), pathArray)
 					logger["info"]("Making request with real endpoint: " + url)
-					proxyRequest(req, res, api, buildOptions(req, url))
+					buildOptions(req, url).then((options) => {
+						proxyRequest(req, res, api, options)
+					})
 				} else {
 					logger["warn"]("was not able to retrieve the catalog " + catalogId)
 					return null
@@ -193,7 +199,10 @@ function tmf() {
 			logger["info"]("Handling a simple catalog API request")
 			const api = 'catalog'
 			const url = utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + utils.getAPIPath(api) + req.apiUrl.replace(`/${api}`, '');
-			proxyRequest(req, res, api, buildOptions(req, url))
+
+			buildOptions(req, url).then((options) => {
+				proxyRequest(req, res, api, options)
+			})
 		}
 	}
 
@@ -217,12 +226,26 @@ function tmf() {
 			if (api == 'rss') {
 				url = url.replace('rss', 'charging')
 			}
-			proxyRequest(req, res, api, buildOptions(req, url))
+			buildOptions(req, url).then((options) => {
+				proxyRequest(req, res, api, options)
+			})
 		}
 			
 	};
 
-	function buildOptions(req, url) {
+	async function buildOptions(req, url) {
+		// Attach the needed relatedParties if not provided already
+		if (req.method == 'POST') {
+			try {
+				await tmfUtils.attachRelatedParty(req, getAPIName(req.apiUrl))
+			} catch (err) {
+				logger.error('Error attaching related parties: ' + err.message)
+				return sendError(res, {
+					status: 400,
+					message: 'Error processing party information'
+				});
+			}
+		}
 
 		const options = {
 			url: url,

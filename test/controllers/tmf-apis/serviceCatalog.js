@@ -171,10 +171,10 @@ describe('ServiceSpecification API', function() {
 
                 serviceAPI.checkPermissions(req, (err) => {
                     if (checkRole) {
-                        expect(checkOwnerMethod).toHaveBeenCalledWith(req, body.relatedParty, 'owner')
+                        expect(checkOwnerMethod).toHaveBeenCalledWith(req, body.relatedParty, config.roles.seller)
 
                         if (isOwner) {
-                            expect(checkRoleMethod).toHaveBeenCalledWith(req.user, config.oauth2.roles.seller)
+                            expect(checkRoleMethod).toHaveBeenCalledWith(req.user, config.roles.seller)
                         }
                         expect(checkRoleMethod.calls.count()).toBe(isOwner ? 1 : 0);
                     }
@@ -196,7 +196,7 @@ describe('ServiceSpecification API', function() {
                     validFor: {
                         startDateTime: '2016-07-12T10:56:00'
                     },
-                    relatedParty: [{ id: 'test', role: 'owner', href: SERVER + individual }]
+                    relatedParty: [{ id: 'test', role: 'Seller', href: SERVER + individual }]
                 };
 
                 testCreateSpec(seller, basicBody, false, 200, null, true, true, true, null, null, done)
@@ -209,7 +209,7 @@ describe('ServiceSpecification API', function() {
                     validFor: {
                         startDateTime: '2016-07-12T10:56:00'
                     },
-                    relatedParty: [{ id: 'test', role: 'owner', href: SERVER + individual }]
+                    relatedParty: [{ id: 'test', role: 'Seller', href: SERVER + individual }]
                 };
 
                 testCreateSpec(seller, basicBody, true, 422, 'error', true, true, true, 'error', null, done)
@@ -223,7 +223,7 @@ describe('ServiceSpecification API', function() {
                     validFor: {
                         startDateTime: '2016-07-12T10:56:00'
                     },
-                    relatedParty: [{ id: 'test', role: 'owner', href: SERVER + individual }]
+                    relatedParty: [{ id: 'test', role: 'Seller', href: SERVER + individual }]
                 };
 
                 testCreateSpec(seller, basicBody, true, 422, 'descr error', true, true, true, null, 'descr error', done)
@@ -236,7 +236,7 @@ describe('ServiceSpecification API', function() {
                     validFor: {
                         startDateTime: '2016-07-12T10:56:00'
                     },
-                    relatedParty: [{ id: 'test3', role: 'owner', href: SERVER + individual }]
+                    relatedParty: [{ id: 'test3', role: 'Seller', href: SERVER + individual }]
                 };
                 testCreateSpec(seller, basicBody, true, 403, 'Unauthorized to create non-owned/non-seller service specs', false, true, true, null, null, done)
             })
@@ -300,10 +300,10 @@ describe('ServiceSpecification API', function() {
 
                 serviceAPI.checkPermissions(req, (err) => {
                     if (!errMsg) {
-                        expect(checkOwnerMethod).toHaveBeenCalledWith(req, prevBody.relatedParty, 'owner')
+                        expect(checkOwnerMethod).toHaveBeenCalledWith(req, prevBody.relatedParty, config.roles.seller)
 
                         if (isOwner) {
-                            expect(checkRoleMethod).toHaveBeenCalledWith(req.user, config.oauth2.roles.seller)
+                            expect(checkRoleMethod).toHaveBeenCalledWith(req.user, config.roles.seller)
                         }
                         expect(err).toBe(null)
                     } else {
@@ -323,7 +323,7 @@ describe('ServiceSpecification API', function() {
                     lifecycleStatus: 'Active',
                     relatedParty: [{
                         id: 'test',
-                        role: 'owner'
+                        role: 'Seller'
                     }]
                 }, {
                     'lifecycleStatus': 'Launched'
@@ -339,7 +339,7 @@ describe('ServiceSpecification API', function() {
                     lifecycleStatus: 'Launched',
                     relatedParty: [{
                         id: 'test',
-                        role: 'owner'
+                        role: 'Seller'
                     }]
                 }, {
                     lifecycleStatus: 'Retired'
@@ -352,7 +352,7 @@ describe('ServiceSpecification API', function() {
                     lifecycleStatus: 'Active',
                     relatedParty: [{
                         id: 'test',
-                        role: 'owner'
+                        role: 'Seller'
                     }]
                 }, {
                     name: 'serviceSpec',
@@ -370,7 +370,7 @@ describe('ServiceSpecification API', function() {
                     lifecycleStatus: 'Active',
                     relatedParty: [{
                         id: 'test',
-                        role: 'owner'
+                        role: 'Seller'
                     }]
                 }, {
                     name: 'serviceSpec',
@@ -390,7 +390,7 @@ describe('ServiceSpecification API', function() {
                     lifecycleStatus: 'Launched',
                     relatedParty: [{
                         id: 'test',
-                        role: 'owner'
+                        role: 'Seller'
                     }]
                 }, {
                     lifecycleStatus: 'Retired'
@@ -405,7 +405,7 @@ describe('ServiceSpecification API', function() {
                     lifecycleStatus: 'Active',
                     relatedParty: [{
                         id: 'test3',
-                        role: 'owner'
+                        role: 'Seller'
                     }]
                 }, {
                     'lifecycleStatus': 'Launched'
@@ -430,7 +430,7 @@ describe('ServiceSpecification API', function() {
                     lifecycleStatus: 'Active',
                     relatedParty: [{
                         id: 'test',
-                        role: 'owner'
+                        role: 'Seller'
                     }]
                 }, {
                     'lifecycleStatus': 'Retired'

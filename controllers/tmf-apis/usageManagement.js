@@ -109,7 +109,7 @@ const usageManagement = (function() {
     }
 
     const validateOwner = function(req, body, callback) {
-        if (!tmfUtils.hasPartyRole(req, body.relatedParty, 'owner')) {
+        if (!tmfUtils.hasPartyRole(req, body.relatedParty, config.roles.seller)) {
             callback({
                 status: 403,
                 message: 'Unauthorized to create/update non-owned usage specs'

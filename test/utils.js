@@ -38,13 +38,16 @@ var defaultConfig = {
 	proxyPrefix: '',
 	oauth2: {
 		server: 'https://account.lab.fiware.org',
-		clientID: 'client',
-		roles: {
-			admin: 'provider',
-			seller: 'seller',
-			customer: 'customer',
-			orgAdmin: 'orgAdmin'
-		}
+		clientID: 'client'
+	},
+	roles: {
+		admin: 'provider',
+		seller: 'Seller',
+		customer: 'Buyer',
+		orgAdmin: 'orgAdmin',
+		certifier: 'certifier',
+		sellerOperator: 'SellerOperator',
+		buyerOperator: 'BuyerOperator'
 	},
 	endpoints: {
 		account: {
@@ -179,15 +182,23 @@ var defaultConfig = {
 			host: 'revenue.com',
 			port: '8637',
 			appSsl: false
+		},
+		invoicing: {
+			path: 'invoicing',
+			apiPath: '/invoicing',
+			host: 'invoicing.com',
+			port: '8637',
+			appSsl: false
 		}
 	},
-	billingAccountOwnerRole: 'owner',
 	revenueModel: 30,
 	indexes: {
 		'engine': 'local', // 'elastic_indexes.js' if using elasticsearch
 		'elasticHost': 'http://imaginary-elastic.docker:9200/' // hostname:port
 	},
-    defaultId: 'dft'
+    defaultId: 'dft',
+	operatorId: 'VAT-OP',
+	partyLocation: 'https://mylocation.com/schema.json'
 };
 
 exports.getDefaultConfig = function() {

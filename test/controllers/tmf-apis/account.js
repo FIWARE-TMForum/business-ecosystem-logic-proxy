@@ -208,7 +208,7 @@ describe('Account API', () => {
                 body: JSON.stringify({
                     relatedParty: [{
                         id: userId,
-                        role: 'owner'
+                        role: config.roles.seller
                     }]
                 })
             }
@@ -259,7 +259,7 @@ describe('Account API', () => {
                 body: JSON.stringify({
                     relatedParty: [{
                         id: 'invalid',
-                        role: 'owner'
+                        role: config.roles.seller
                     }]
                 })
             }
@@ -303,7 +303,7 @@ describe('Account API', () => {
                         }],
                     relatedParty: [{
                         id: userId,
-                        role: 'owner'
+                        role: config.roles.seller
                     }]
                 })
             }
@@ -343,7 +343,7 @@ describe('Account API', () => {
                         },
                     relatedParty: [{
                         id: userId,
-                        role: 'owner'
+                        role: config.roles.seller
                     }]
                 })
             }
@@ -377,7 +377,7 @@ describe('Account API', () => {
                     }],
                     relatedParty: [{
                         id: userId,
-                        role: 'owner'
+                        role: config.roles.seller
                     }]
                 })
             }
@@ -423,7 +423,7 @@ describe('Account API', () => {
                     }],
                     relatedParty: [{
                         id: userId,
-                        role: 'owner'
+                        role: config.roles.seller
                     }]
                 })
             }
@@ -477,7 +477,7 @@ describe('Account API', () => {
                 body: JSON.stringify({
                     relatedParty: [{
                         id: 'invalid',
-                        role: 'owner'
+                        role: config.roles.seller
                     }]
                 })
             }
@@ -517,7 +517,7 @@ describe('Account API', () => {
             mockNock(200, {
                 relatedParty: [{
                     id: userId,
-                    role: 'owner'
+                    role: config.roles.seller
                 }]
             })
 
@@ -537,7 +537,7 @@ describe('Account API', () => {
             mockNock(200, {
                 relatedParty: [{
                     id: 'other',
-                    role: 'owner'
+                    role: config.roles.seller
                 }]
             })
 
@@ -594,7 +594,7 @@ describe('Account API', () => {
                 id: billingId,
                 relatedParty: [{
                     id: userId,
-                    role: 'owner'
+                    role: config.roles.seller
                 }]
             })
             req.body = JSON.stringify({
@@ -635,7 +635,7 @@ describe('Account API', () => {
                 id: billingId,
                 relatedParty: [{
                     id: userId,
-                    role: 'owner'
+                    role: config.roles.seller
                 }]
             })
 
@@ -679,7 +679,7 @@ describe('Account API', () => {
                 id: billingId,
                 relatedParty: [{
                     id: 'other',
-                    role: 'owner'
+                    role: config.roles.seller
                 }]
             })
 

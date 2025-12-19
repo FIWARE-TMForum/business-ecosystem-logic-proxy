@@ -60,7 +60,7 @@ function admin() {
     function isOrgAuth(user) {
         return user.organizations.filter((org) => {
             return org.roles.filter((role) => {
-                return role.name.toLowerCase() == 'certifier'
+                return role.name.toLowerCase() == config.roles.certifier.toLowerCase()
             }).length > 0
         }).length > 0
     }
@@ -72,7 +72,7 @@ function admin() {
         }
 
         // Check user permissions
-        if (!utils.isAdmin(req.user) && !utils.hasRole(req.user, 'certifier') && !isOrgAuth(req.user)) {
+        if (!utils.isAdmin(req.user) && !utils.hasRole(req.user, config.roles.certifier) && !isOrgAuth(req.user)) {
             console.log("Upload certificate: The user is not authorized to upload certificates")
             res.status(403)
             res.json({ error: "You are not authorized to upload certificates" })

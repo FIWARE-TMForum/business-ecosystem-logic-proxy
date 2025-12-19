@@ -56,12 +56,10 @@ describe('i4trust Strategy', () => {
             }
 
             const nodeConfig = {
-                oauth2: {
-                    roles: {
-                        seller: 'seller',
-                        customer: 'customer',
-                        orgAdmin: 'orgAdmin'
-                    }
+                roles: {
+                    seller: 'seller',
+                    customer: 'customer',
+                    orgAdmin: 'orgAdmin'
                 }
             }
             const toTest = buildStrategyMock(passportMock, nodeConfig);

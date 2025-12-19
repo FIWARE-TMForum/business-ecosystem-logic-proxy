@@ -28,7 +28,6 @@ const tmf = require('./controllers/tmf').tmf();
 const admin = require('./controllers/admin').admin();
 const stats = require('./controllers/stats').stats();
 const payment = require('./controllers/payment').payment();
-const trycatch = require('trycatch');
 const url = require('url');
 const utils = require('./lib/utils');
 const authModule = require('./lib/auth');
@@ -37,6 +36,7 @@ const certsValidator = require('./lib/certificate').certsValidator
 const buildRequestJWT = require('./lib/strategies/vc').buildRequestJWT
 const simulator = require('./controllers/simulator').simulator();
 const { indexes } = require('./lib/indexes')
+const operator = require('./lib/operator').operator
 
 const debug = !(process.env.NODE_ENV == 'production');
 
@@ -54,11 +54,6 @@ const extLogin = config.extLogin == true;
 const showLocal = config.showLocalLogin == true;
 const showVC = config.showVCLogin == true;
 const editParty = config.editParty == true;
-
-// If not using default legacy API, portal prefix must be defined for legacy portal
-if (!config.legacyGUI && (!!config.portalPrefix || !config.proxyPrefix.length || config.portalPrefix == '/')) {
-    config.portalPrefix = '/ux'
-}
 
 (async () => {
 
@@ -145,21 +140,7 @@ app.use(function(req, res, next) {
     next();
 });
 
-// Static files && templates
-
-// Check if a theme has been loaded or the system is in production
-var staticPath = config.theme || !debug ? '/static' : '';
-
-app.use(config.portalPrefix + '/', express.static(__dirname + staticPath + '/public'));
-app.set('views', __dirname + staticPath + '/views');
-app.set('view engine', 'jade');
-
 app.locals.taxRate = config.taxRate || 20;
-
-
-// Load active file imports
-var importPath = config.theme || !debug ? './static/public/imports' : './public/imports';
-var imports = require(importPath).imports;
 
 /////////////////////////////////////////////////////////////////////
 //////////////////////////////// APIs ///////////////////////////////
@@ -250,11 +231,7 @@ if (!config.siop.enabled) {
         var state = JSON.parse(base64url.decode(req.query.state));
         var redirectPath = state[OAUTH2_CAME_FROM_FIELD] !== undefined ? state[OAUTH2_CAME_FROM_FIELD] : '/';
 
-        if (config.legacyGUI) {
-            // Using old GUI
-            res.redirect(redirectPath)
-
-        } else if (config.externalPortal == null || config.externalPortal == ''){
+        if (config.externalPortal == null || config.externalPortal == ''){
             // Using local new GUI
             res.redirect('/dashboard?token=local');
         } else {
@@ -357,9 +334,6 @@ app.all(config.logOutPath, function(req, res) {
     req.session.destroy();
 
     let redirUrl = '/'
-    if (config.legacyGUI) {
-        redirUrl = config.portalPrefix + '/'
-    }
 
     res.redirect(redirUrl);
 });
@@ -417,6 +391,13 @@ app.get('/config', async (_, res) => {
             verifierHost: config.siop.verifierHost,
             verifierQRCodePath: config.siop.verifierQRCodePath,
             requestUri: config.siop.requestUri
+        },
+        roles: {
+            seller: config.roles.seller,
+            customer: config.roles.customer,
+            admin: config.roles.admin,
+            orgAdmin: config.roles.orgAdmin,
+            certifier: config.roles.certifier
         },
         chat: config.chatUrl,
         knowledgeBaseUrl: config.knowledgeUrl,
@@ -554,70 +535,6 @@ if (extLogin) {
     app.put(config.idpServicePath + '/:idpId', idpService.updateIdp);
 }
 
-/////////////////////////////////////////////////////////////////////
-/////////////////////////////// PORTAL //////////////////////////////
-/////////////////////////////////////////////////////////////////////
-
-const renderTemplate = function(req, res, viewName) {
-    const options = {
-        user: req.user,
-        contextPath: config.portalPrefix,
-        proxyPath: config.proxyPrefix,
-        catalogPath: config.endpoints.catalog.path,
-        resourcePath: config.endpoints.resource.path,
-        usagePath: config.endpoints.usage.path,
-        serviceCatalogPath: config.endpoints.service.path,
-        orderingPath: config.endpoints.ordering.path,
-        inventoryPath: config.endpoints.inventory.path,
-        resourceInventoryPath: config.endpoints.resourceInventory.path,
-        serviceInventoryPath: config.endpoints.serviceInventory.path,
-        chargingPath: config.endpoints.charging.path,
-        partyPath: config.endpoints.party.path,
-        billingPath: config.endpoints.account.path,
-        customerPath: config.endpoints.customer.path,
-        shoppingCartPath: config.shoppingCartPath,
-        authorizeServicePath: config.authorizeServicePath,
-        recommendationPath: config.recommendationServicePath,
-        promotionPath: config.promotionServicePath,
-        rssPath: config.endpoints.rss.path,
-        platformRevenue: config.revenueModel,
-        cssFilesToInject: imports.cssFilesToInject,
-        jsDepFilesToInject: imports.jsDepFilesToInject,
-        jsAppFilesToInject: imports.jsAppFilesToInject,
-        accountHost: config.oauth2.server,
-        usageChartURL: config.usageChartURL,
-        orgAdmin: config.oauth2.roles.orgAdmin,
-        seller: config.oauth2.roles.seller,
-        customer: config.oauth2.roles.customer,
-        admin: config.oauth2.roles.admin,
-        extLogin: extLogin,
-        showLocal: showLocal,
-        showVC: showVC,
-        editParty: editParty
-    };
-
-    if (extLogin) {
-        options.externalIdps = config.externalIdps;
-    }
-
-    if (utils.isAdmin(req.user)) {
-        options.jsAppFilesToInject = options.jsAppFilesToInject.concat(imports.jsAdminFilesToInject);
-    }
-
-    options.jsAppFilesToInject = options.jsAppFilesToInject.concat(imports.jsStockFilesToInject);
-
-    res.render(viewName, options);
-    res.end();
-};
-
-app.get(config.portalPrefix + '/', function(req, res) {
-    renderTemplate(req, res, 'app');
-});
-
-app.get(config.portalPrefix + '/payment', ensureAuthenticated, function(req, res) {
-    renderTemplate(req, res, 'app-payment');
-});
-
 app.get('/logintoken', authMiddleware.headerAuthentication, function(req, res) {
     res.header('Access-Control-Allow-Origin', 'http://localhost:4200')
     res.header("Access-Control-Allow-Credentials", true);
@@ -693,15 +610,15 @@ app.all(regexPattern, (req, res, next) => {
 ///////////////////////////// NEW PORTAL ////////////////////////////
 /////////////////////////////////////////////////////////////////////
 
-if (!config.legacyGUI) {
-    // Serve static files from the Angular app from a specific route, e.g., "/angular"
-    app.use('/', express.static(path.join(__dirname, 'portal/bae-frontend')));
 
-    // Handle deep links - serve Angular's index.html for any sub-route under "/angular"
-    app.get('/*', (req, res) => {
-        res.sendFile(path.join(__dirname, 'portal/bae-frontend/index.html'));
-    });
-}
+// Serve static files from the Angular app from a specific route, e.g., "/angular"
+app.use('/', express.static(path.join(__dirname, 'portal/bae-frontend')));
+
+// Handle deep links - serve Angular's index.html for any sub-route under "/angular"
+app.get('/*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'portal/bae-frontend/index.html'));
+});
+
 
 /////////////////////////////////////////////////////////////////////
 /////////////////////////// ERROR HANDLER ///////////////////////////
@@ -735,8 +652,9 @@ app.use(function(err, req, res, next) {
             break;
         case 'text/html':
             res.status(500);
-            res.header('Content-Type', textHtml);
-            renderTemplate(req, res, 'unexpected-error');
+            res.header('Content-Type', applicationJSON);
+            res.json({ error: 'Unexpected error. The error has been notified to the administrators.' });
+            res.end();
 
             break;
         default:
@@ -815,6 +733,10 @@ function onlistening() {
 
     stats.init().then(() => {
         logger.info("Stats info loaded")
+    })
+
+    operator.initOperator().then(() => {
+        logger.info("Operator info loaded")
     })
 }
 })();

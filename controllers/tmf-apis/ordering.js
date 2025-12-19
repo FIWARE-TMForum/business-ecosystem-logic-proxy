@@ -30,8 +30,8 @@ const url = require('url')
 const utils = require('./../../lib/utils')
 
 const ordering = (function() {
-    const CUSTOMER = 'Customer';
-    const SELLER = 'Seller';
+    const CUSTOMER = config.roles.customer;
+    const SELLER = config.roles.seller;
 
     //////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////////// COMMON ///////////////////////////////////////////
@@ -55,7 +55,7 @@ const ordering = (function() {
     //////////////////////////////////////////////////////////////////////////////////////////////
 
     const validateRetrieving = function(req, callback) {
-        tmfUtils.filterRelatedPartyWithRole(req, ['customer', 'seller'], callback);
+        tmfUtils.filterRelatedPartyWithRole(req, [config.roles.customer.toLowerCase(), config.roles.seller.toLowerCase()], callback);
     };
 
     //////////////////////////////////////////////////////////////////////////////////////////////
@@ -77,7 +77,7 @@ const ordering = (function() {
                 reject(err);
             } else {
                 var owners = product.relatedParty.filter(function(relatedParty) {
-                    return relatedParty['role'].toLowerCase() === 'owner';
+                    return relatedParty['role'].toLowerCase() === config.roles.seller.toLowerCase();
                 });
 
                 if (!owners.length) {
@@ -198,7 +198,7 @@ const ordering = (function() {
         }
 
         // Check that the user has the customer role
-        if (config.customerRoleRequired && !utils.hasRole(req.user, config.oauth2.roles.customer)) {
+        if (config.customerRoleRequired && !utils.hasRole(req.user, config.roles.customer)) {
             return callback({
                 status: 403,
                 message: 'You are not authorized to order products'

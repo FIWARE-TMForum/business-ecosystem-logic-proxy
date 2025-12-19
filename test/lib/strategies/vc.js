@@ -2,9 +2,12 @@
 const proxyquire = require('proxyquire');
 const passport = require('passport');
 const jwt = require('jsonwebtoken');
+const testUtils = require('../../utils')
 const MockStrategy = require('../../utils').MockStrategy;
 
 describe('VC Strategy', () => {
+    const nodeConfig = testUtils.getDefaultConfig();
+  
     const buildStrategyMock = (passport) => {
         return proxyquire('../../../lib/strategies/vc', {
             './passport-vc': passport
@@ -286,7 +289,9 @@ describe('VC Strategy', () => {
     });
 
     describe('VC types subjects', () => {
-        const VerifiableCredential = require('../../../lib/strategies/passport-vc').VerifiableCredential
+        const VerifiableCredential = proxyquire('../../../lib/strategies/passport-vc', {
+            '../../config': nodeConfig
+        }).VerifiableCredential;
 
         it('should build a vc with a LegalPersonCredential with email', () => {
             const payload = {
@@ -331,9 +336,9 @@ describe('VC Strategy', () => {
                 id: 'did:web:dome-marketplace.org',
                 name: 'did:web:dome-marketplace.org',
                 roles: [
-                    { name: 'seller', id: 'seller' },
-                    { name: 'customer', id: 'customer' },
-                    { name: 'orgAdmin', id: 'orgAdmin' }
+                    { name: nodeConfig.roles.seller, id: nodeConfig.roles.seller },
+                    { name: nodeConfig.roles.customer, id: nodeConfig.roles.customer },
+                    { name: nodeConfig.roles.orgAdmin, id: nodeConfig.roles.orgAdmin }
                 ]
             }])
         })
@@ -380,9 +385,9 @@ describe('VC Strategy', () => {
                 id: 'did:web:dome-marketplace.org',
                 name: 'did:web:dome-marketplace.org',
                 roles: [
-                    { name: 'seller', id: 'seller' },
-                    { name: 'customer', id: 'customer' },
-                    { name: 'orgAdmin', id: 'orgAdmin' }
+                    { name: nodeConfig.roles.seller, id: nodeConfig.roles.seller },
+                    { name: nodeConfig.roles.customer, id: nodeConfig.roles.customer },
+                    { name: nodeConfig.roles.orgAdmin, id: nodeConfig.roles.orgAdmin }
                 ]
             }])
         })
@@ -461,8 +466,8 @@ describe('VC Strategy', () => {
                 id: 'VATES-C12341234',
                 name: 'TestCompany, S.L.',
                 roles: [
-                    { name: 'orgAdmin', id: 'orgAdmin' },
-                    { name: 'seller', id: 'seller' },
+                    { name: nodeConfig.roles.orgAdmin, id: nodeConfig.roles.orgAdmin },
+                    { name: nodeConfig.roles.seller, id: nodeConfig.roles.seller }
                 ],
                 country: 'ES'
             }])
@@ -541,8 +546,8 @@ describe('VC Strategy', () => {
                 id: 'VATES-C12341234',
                 name: 'TestCompany, S.L.',
                 roles: [
-                    { name: 'orgAdmin', id: 'orgAdmin' },
-                    { name: 'seller', id: 'seller' }
+                    { name: nodeConfig.roles.orgAdmin, id: nodeConfig.roles.orgAdmin },
+                    { name: nodeConfig.roles.seller, id: nodeConfig.roles.seller }
                 ]
             }])
         })
@@ -626,8 +631,8 @@ describe('VC Strategy', () => {
                 id: 'VATES-C12341234',
                 name: 'TestCompany, S.L.',
                 roles: [
-                    { name: 'orgAdmin', id: 'orgAdmin' },
-                    { name: 'seller', id: 'seller' }
+                    { name: nodeConfig.roles.orgAdmin, id: nodeConfig.roles.orgAdmin },
+                    { name: nodeConfig.roles.seller, id: nodeConfig.roles.seller }
                 ],
                 country: 'ES'
             }])
@@ -698,8 +703,8 @@ describe('VC Strategy', () => {
                 id: 'VATES-C12341234',
                 name: 'TestCompany, S.L.',
                 roles: [
-                    { name: 'orgAdmin', id: 'orgAdmin' },
-                    { name: 'certifier', id: 'certifier' }
+                    { name: nodeConfig.roles.orgAdmin, id: nodeConfig.roles.orgAdmin },
+                    { name: nodeConfig.roles.certifier, id: nodeConfig.roles.certifier }
                 ]
             }])
         })
@@ -808,9 +813,9 @@ describe('VC Strategy', () => {
               id: 'VATBG-123ABCC',
               name: 'Mandator company',
               roles: [
-                  { name: 'orgAdmin', id: 'orgAdmin' },
-                  { name: 'seller', id: 'seller' },
-                  { name: 'certifier', id: 'certifier' }
+                  { name: nodeConfig.roles.orgAdmin, id: nodeConfig.roles.orgAdmin },
+                  { name: nodeConfig.roles.seller, id: nodeConfig.roles.seller },
+                  { name: nodeConfig.roles.certifier, id: nodeConfig.roles.certifier }
               ]
           }])
       })
@@ -889,9 +894,9 @@ describe('VC Strategy', () => {
                 id: 'VATES-C12341234',
                 name: 'TestCompany, S.L.',
                 roles: [
-                    { name: 'seller', id: 'seller' },
-                    { name: 'orgAdmin', id: 'orgAdmin' },
-                    { name: 'certifier', id: 'certifier' },
+                  { name: nodeConfig.roles.seller, id: nodeConfig.roles.seller },
+                  { name: nodeConfig.roles.orgAdmin, id: nodeConfig.roles.orgAdmin },
+                  { name: nodeConfig.roles.certifier, id: nodeConfig.roles.certifier }
                 ],
                 country: 'ES'
             }])
@@ -974,7 +979,7 @@ describe('VC Strategy', () => {
                 id: 'VATES-B00000000',
                 name: 'IN2, Ingeniería de la Información, S.L.',
                 roles: [
-                    { name: 'certifier', id: 'certifier' }
+                  { name: nodeConfig.roles.certifier, id: nodeConfig.roles.certifier }
                 ],
                 country: 'ES'
             }])
@@ -1057,7 +1062,7 @@ describe('VC Strategy', () => {
                 id: 'VATES-B00000000',
                 name: 'IN2, Ingeniería de la Información, S.L.',
                 roles: [
-                    { name: 'certifier', id: 'certifier' }
+                  { name: nodeConfig.roles.certifier, id: nodeConfig.roles.certifier }
                 ]
             }])
       })
@@ -1139,7 +1144,7 @@ describe('VC Strategy', () => {
                 id: 'VATES-B00000000',
                 name: 'IN2, Ingeniería de la Información, S.L.',
                 roles: [
-                    { name: 'certifier', id: 'certifier' }
+                  { name: nodeConfig.roles.certifier, id: nodeConfig.roles.certifier }
                 ]
             }])
       })

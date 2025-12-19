@@ -33,24 +33,28 @@ config.theme = '';
 // OAuth2 configuration
 //'server': 'http://34.213.26.168:8000/',
 config.oauth2 = {
-    provider: 'fiware',
-    server: 'http://idm.docker:3000',
-    clientID: '19dd858c-328c-4642-93ab-da45e4d253ae',
-    clientSecret: '09ffe023-a242-46a3-bd83-9277d36e2379',
-    callbackURL: 'http://proxy.docker:8004/auth/fiware/callback',
-    oidc: true,
-    oidcScopes: 'openid',
-    oidcDiscoveryURI: null,
-    oidcTokenEndpointAuthMethod: 'client_secret_basic',
-    key: '281e126aa35c80f2',
-    defaultRole: null,
-    roles: {
-        admin: 'admin',
-        customer: 'customer',
-        seller: 'seller',
-        orgAdmin: 'orgAdmin'
-    }
+	provider: 'fiware',
+	server: 'http://idm.docker:3000',
+	clientID: '19dd858c-328c-4642-93ab-da45e4d253ae',
+	clientSecret: '09ffe023-a242-46a3-bd83-9277d36e2379',
+	callbackURL: 'http://proxy.docker:8004/auth/fiware/callback',
+	oidc: true,
+	oidcScopes: "openid",
+	oidcDiscoveryURI: null,
+	oidcTokenEndpointAuthMethod: "client_secret_basic",
+	key: '281e126aa35c80f2',
+	defaultRole: null
 };
+
+config.roles = {
+    admin: 'admin',
+    customer: 'Buyer',
+    seller: 'Seller',
+    orgAdmin: 'orgAdmin',
+    certifier: 'certifier',
+    sellerOperator: 'SellerOperator',
+    buyerOperator: 'BuyerOperator'
+}
 
 /*config.oauth2 = {
   provider: 'keycloak',
@@ -276,6 +280,12 @@ config.endpoints = {
         apiPath: '/revenue',
         host: 'revenue-engine-svc.billing.svc.cluster.local',
         port: '8080'
+    },
+    invoicing: {
+        path: 'invoicing',
+        apiPath: '/invoicing',
+        host: 'invoicing-service-svc.billing.svc.cluster.local',
+        port: '8080'
     }
 };
 
@@ -284,9 +294,6 @@ config.revenueModel = 30;
 
 // Tax rate
 config.taxRate = 20;
-
-// Billing Account owner role
-config.billingAccountOwnerRole = 'owner';
 
 // list of paths that will not check authentication/authorization
 // example: ['/public/*', '/static/css/']
@@ -403,10 +410,11 @@ config.oauth2.realm = process.env.BAE_LP_OIDC_REALM || config.oauth2.realm;
 config.oauth2.tokenCrt = process.env.BAE_LP_OIDC_TOKEN_CRT || config.oauth2.tokenCrt;
 config.oauth2.tokenKey = process.env.BAE_LP_OIDC_TOKEN_KEY || config.oauth2.tokenKey;
 
-config.oauth2.roles.admin = process.env.BAE_LP_OAUTH2_ADMIN_ROLE || config.oauth2.roles.admin;
-config.oauth2.roles.seller = process.env.BAE_LP_OAUTH2_SELLER_ROLE || config.oauth2.roles.seller;
-config.oauth2.roles.customer = process.env.BAE_LP_OAUTH2_CUSTOMER_ROLE || config.oauth2.roles.customer;
-config.oauth2.roles.orgAdmin = process.env.BAE_LP_OAUTH2_ORG_ADMIN_ROLE || config.oauth2.roles.orgAdmin;
+config.roles.admin = process.env.BAE_LP_OAUTH2_ADMIN_ROLE || config.roles.admin;
+config.roles.seller = process.env.BAE_LP_OAUTH2_SELLER_ROLE || config.roles.seller;
+config.roles.customer = process.env.BAE_LP_OAUTH2_CUSTOMER_ROLE || config.roles.customer;
+config.roles.orgAdmin = process.env.BAE_LP_OAUTH2_ORG_ADMIN_ROLE || config.roles.orgAdmin;
+config.roles.certifier = process.env.BAE_LP_OAUTH2_ORG_CERTIFIER_ROLE || config.roles.certifier;
 
 if (!!process.env.BAE_LP_OAUTH2_IS_LEGACY) {
     config.oauth2.isLegacy = process.env.BAE_LP_OAUTH2_IS_LEGACY == 'true';
@@ -583,6 +591,15 @@ if (!!process.env.BAE_LP_ENDPOINT_REVENUE_SECURED) {
     config.endpoints.revenue.appSsl = process.env.BAE_LP_ENDPOINT_REVENUE_SECURED == 'true';
 }
 
+// Invoicing
+config.endpoints.invoicing.apiPath = process.env.BAE_LP_ENDPOINT_INVOICING_PATH || config.endpoints.invoicing.apiPath;
+config.endpoints.invoicing.port = process.env.BAE_LP_ENDPOINT_INVOICING_PORT || config.endpoints.invoicing.port;
+config.endpoints.invoicing.host = process.env.BAE_LP_ENDPOINT_INVOICING_HOST || config.endpoints.invoicing.host;
+
+if (!!process.env.BAE_LP_ENDPOINT_INVOICING_SECURED) {
+    config.endpoints.invoicing.appSsl = process.env.BAE_LP_ENDPOINT_INVOICING_SECURED == 'true';
+}
+
 // ======
 // MongoDB Config
 config.mongoDb = config.mongoDb || {};
@@ -633,12 +650,6 @@ if (config.extLogin) {
     config.ishareCrt = process.env.BAE_TOKEN_CRT;
 }
 module.exports = config;
-
-// Gui config
-config.legacyGUI = false;
-if (!!process.env.BAE_LP_LEGACY_GUI) {
-    config.legacyGUI = process.env.BAE_LP_LEGACY_GUI == 'true';
-}
 
 // External Portal config
 //config.externalPortal = 'http://localhost:4200';
@@ -699,3 +710,9 @@ config.purchaseEnabled = false;
 if (!!process.env.BAE_LP_PURCHASE_ENABLED) {
     config.purchaseEnabled = process.env.BAE_LP_PURCHASE_ENABLED == 'true';
 }
+
+config.operatorId = ''
+config.operatorId = process.env.BAE_LP_OPERATOR_ID || config.operatorId;
+
+config.partyLocation = 'https://raw.githubusercontent.com/Ficodes/tmf-schemas/refs/heads/main/schemas/relatedPartyRef.schema.json'
+config.partyLocation = process.env.BAE_LP_PARTY_LOCATION || config.partyLocation;
