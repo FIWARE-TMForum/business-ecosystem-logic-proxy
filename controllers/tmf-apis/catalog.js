@@ -1144,10 +1144,10 @@ const catalog = (function() {
     const validateOfferingPrice = function (req, callback){
         const offerPrice = JSON.parse(req.body)
         // check if it is a valid percentage
-        if (offerPrice && offerPrice.priceType && offerPrice.priceType.toLowerCase() === 'discount' && !tmfUtils.isValidPercentage(offerPrice.percentage)) {
+        if (offerPrice && offerPrice.priceType && offerPrice.priceType.toLowerCase() === 'discount' && !tmfUtils.isValidDiscount(offerPrice)) {
             return callback({
                 status: 422,
-                message: 'Percentage must be either a number or a string representing a number between 0 and 100'
+                message: 'Discount must be either a number or a string representing a number, percentage must be between 0 and 100 and fixed amount must be higher than 0'
             })
         }
 
