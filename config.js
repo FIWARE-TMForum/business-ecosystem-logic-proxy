@@ -696,6 +696,10 @@ if (!!process.env.BAE_LP_QUOTE_ENABLED) {
     config.quoteEnabled = process.env.BAE_LP_QUOTE_ENABLED == 'true';
 }
 
+config.tenderingEnabled = true;
+if (!!process.env.BAE_LP_TENDERING_ENABLED) {
+    config.tenderingEnabled = process.env.BAE_LP_TENDERING_ENABLED == 'true';
+}
 
 config.paymentGateway = 'https://dpas-sbx.egroup.hu';
 config.paymentGateway = process.env.BAE_LP_PAYMENT_GATEWAY || config.paymentGateway;
