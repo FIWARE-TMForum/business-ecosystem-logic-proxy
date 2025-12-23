@@ -418,7 +418,8 @@ app.get('/config', async (_, res) => {
         paymentGateway: config.paymentGateway,
         analytics: config.analytics,
         theme: config.theme,
-        quotesEnabled: config.quoteEnabled
+        quotesEnabled: config.quoteEnabled,
+        tenderingEnabled: config.tenderingEnabled
     })
 })
 
