@@ -1006,7 +1006,12 @@
         "_productId": "Product ID",
         "_vc": "Verifiable Credential",
         "_add": "Add",
-        "_revenue": "Revenue sharing"
+        "_revenue": "Revenue sharing",
+        "_email": "Email",
+        "_smtpServer": "SMTP Server",
+        "_smtpPort": "SMTP Port",
+        "_emailUser": "Email User",
+        "_emailPass": "Email Password"
     },
     "CATEGORIES":{
         "_categories": "Categories",
