@@ -335,6 +335,15 @@ const catalog = (function() {
     }
 
     const validateOffering = function(req, offeringPath, previousBody, newBody, callback) {
+        if(previousBody !== null){
+            if (newBody.lifecycleStatus != null && !tmfUtils.isValidStatusTransition(previousBody.lifecycleStatus, newBody.lifecycleStatus)) {
+                // The status is being updated
+                return callback({
+                    status: 400,
+                    message: `Cannot transition from lifecycle status ${previousBody.lifecycleStatus} to ${newBody.lifecycleStatus}`
+                })
+            }
+        }
         if(newBody && newBody.name !== null && newBody.name !== undefined){ // newBody.name === '' should enter here
             const errorMessage = tmfUtils.validateNameField(newBody.name, 'Product offering');
             if (errorMessage) {
@@ -757,6 +766,13 @@ const catalog = (function() {
     }
 
     const validateProductUpdate = function(req, prevBody, newBody, callback) {
+        if (newBody.lifecycleStatus != null && !tmfUtils.isValidStatusTransition(prevBody.lifecycleStatus, newBody.lifecycleStatus)) {
+            // The status is being updated
+            return callback({
+                status: 400,
+                message: `Cannot transition from lifecycle status ${prevBody.lifecycleStatus} to ${newBody.lifecycleStatus}`
+            })
+        }
         if (
             (!!newBody.isBundle || !!newBody.bundledProductSpecification) &&
             prevBody.lifecycleStatus.toLowerCase() != 'active'
@@ -992,6 +1008,15 @@ const catalog = (function() {
     }
 
     const validateCatalog = function(req, prevCatalog, catalog, callback) {
+        if(prevCatalog !== null){
+            if (catalog.lifecycleStatus != null && !tmfUtils.isValidStatusTransition(prevCatalog.lifecycleStatus, catalog.lifecycleStatus)) {
+                // The status is being updated
+                return callback({
+                    status: 400,
+                    message: `Cannot transition from lifecycle status ${prevCatalog.lifecycleStatus} to ${catalog.lifecycleStatus}`
+                })
+            }
+        }
         if(catalog && catalog.name !== null && catalog.name !== undefined){ // catalog.name === '' should enter here
             const errorMessage = tmfUtils.validateNameField(catalog.name, 'Catalog');
             if (errorMessage) {
