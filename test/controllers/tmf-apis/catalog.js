@@ -1436,9 +1436,9 @@ describe('Catalog API', function() {
 
     describe('offering price creation', function() {
 
-        const validateOfferingPrice = function(isValidPercentage, isValidAmount, isValidPrice,  offeringPrice, ErrorStatus, ErrorMsg, done) {
+        const validateOfferingPrice = function(isValidDiscount, isValidAmount, isValidPrice,  offeringPrice, ErrorStatus, ErrorMsg, done) {
             tmfUtils = {
-                isValidPercentage: ()=> isValidPercentage,
+                isValidDiscount: ()=> isValidDiscount,
                 isValidAmount: ()=> isValidAmount,
                 isValidPrice: ()=> isValidPrice
             }
@@ -1496,7 +1496,7 @@ describe('Catalog API', function() {
                 }
             };
 
-            validateOfferingPrice(false, true, true, offeringPrice, 422, 'Percentage must be either a number or a string representing a number between 0 and 100', done);
+            validateOfferingPrice(false, true, true, offeringPrice, 422, 'Discount must be either a number or a string representing a number, percentage must be between 0 and 100 and fixed amount must be higher than 0', done);
 
         });
 
@@ -1532,6 +1532,26 @@ describe('Catalog API', function() {
 
             validateOfferingPrice(true, true, false, offeringPrice, 422, 'Price must be either a number or a string representing a number between 0 and 1.000.000.000 and it must follow the ISO 4217 standard', done);
 
+        });
+
+        it('should not allow to update offering price when fixed is invalid', function(done) {
+            const offeringPrice = {
+                name: 'test',
+                priceType: 'discount',
+                price: {
+                    value: -1,
+                    unit: "EUR"
+                },
+                unitOfMeasure:{
+                    amount: 120,
+                    unit: 'days'
+                },
+                validFor: {
+                    startDateTime: '2017-10-05T10:00:00'
+                }
+            };
+
+            validateOfferingPrice(false, true, true, offeringPrice, 422, 'Discount must be either a number or a string representing a number, percentage must be between 0 and 100 and fixed amount must be higher than 0', done);
         });
 
     });
@@ -1927,7 +1947,7 @@ describe('Catalog API', function() {
         const testUpdateOfferingPrice = function(
             offeringPrice,
             nockResponse,
-            isValidPercentage,
+            isValidDiscount,
             isValidAmount,
             isValidPrice,
             expectedErrorStatus,
@@ -1942,7 +1962,7 @@ describe('Catalog API', function() {
 
             var tmfUtils = {
                 isOwner: isOwnerTrue,
-                isValidPercentage: () => isValidPercentage,
+                isValidDiscount: () => isValidDiscount,
                 isValidAmount: () => isValidAmount,
                 isValidPrice: () => isValidPrice
             };
@@ -2009,7 +2029,7 @@ describe('Catalog API', function() {
                 id: '1'
             });
 
-            testUpdateOfferingPrice(offeringPrice, nockMock, false, true, true, 422, 'Percentage must be either a number or a string representing a number between 0 and 100', done);
+            testUpdateOfferingPrice(offeringPrice, nockMock, false, true, true, 422, 'Discount must be either a number or a string representing a number, percentage must be between 0 and 100 and fixed amount must be higher than 0', done);
         });
 
         it('should now allow to update offering price when amount is invalid', function(done) {
