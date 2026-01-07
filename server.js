@@ -732,7 +732,7 @@ function onlistening() {
     });
 
     stats.init().then(() => {
-        logger.info("Stats info loaded UPDATED CODE -------------------")
+        logger.info("Stats info loaded")
     })
 
     operator.initOperator().then(() => {
