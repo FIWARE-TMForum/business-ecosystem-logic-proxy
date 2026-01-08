@@ -1303,7 +1303,7 @@ const catalog = (function() {
                         utils.updateBody(req, parsedBody);
                     }
 
-                    if (parsedBody.lifecycleStatus != null && !tmfUtils.isValidStatusTransition(previousBody.lifecycleStatus, parsedBody.lifecycleStatus)) {
+                    if (parsedBody && parsedBody.lifecycleStatus != null && !tmfUtils.isValidStatusTransition(previousBody.lifecycleStatus, parsedBody.lifecycleStatus)) {
                         // The status is being updated
                         return callback({
                             status: 400,
