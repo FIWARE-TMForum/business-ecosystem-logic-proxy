@@ -1303,6 +1303,14 @@ const catalog = (function() {
                         utils.updateBody(req, parsedBody);
                     }
 
+                    if (parsedBody && parsedBody.lifecycleStatus != null && !tmfUtils.isValidStatusTransition(previousBody.lifecycleStatus, parsedBody.lifecycleStatus)) {
+                        // The status is being updated
+                        return callback({
+                            status: 400,
+                            message: `Cannot transition from lifecycle status ${previousBody.lifecycleStatus} to ${parsedBody.lifecycleStatus}`
+                        })
+                    }
+
                     if (categoryPattern.test(req.apiUrl)) {
                         validateCategory(req, parsedBody, previousBody, 'modify', callback);
                     } else if (offeringsPattern.test(req.apiUrl)) {

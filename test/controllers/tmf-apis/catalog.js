@@ -270,7 +270,10 @@ describe('Catalog API', function() {
         checkRoleMethod.and.returnValue(isSeller);
 
         var tmfUtils = {
-            isOwner: owner ? isOwnerTrue : isOwnerFalse
+            isOwner: owner ? isOwnerTrue : isOwnerFalse,
+            isValidStatusTransition: function(firstSt, nextSt) {
+                return true;
+            }
         };
 
         var utils = {
@@ -404,7 +407,10 @@ describe('Catalog API', function() {
             var tmfUtils = {
                 isOwner: requestInfo.role.toLowerCase() === 'seller' ? isOwnerTrue : isOwnerFalse,
                 validateNameField: vNameF ? ()=> vNameF : ()=> null,
-                validateDescriptionField: vDescrF ? ()=> vDescrF : ()=> null
+                validateDescriptionField: vDescrF ? ()=> vDescrF : ()=> null,
+                isValidStatusTransition: function(firstSt, nextSt) {
+                    return true;
+                }
             };
 
             var utils = {
@@ -1203,7 +1209,10 @@ describe('Catalog API', function() {
             var tmfUtils = {
                 isOwner: isOwner,
                 validateNameField: vNameF ? ()=> vNameF : ()=> null,
-                validateDescriptionField: vDescrF ? ()=> vDescrF : ()=> null
+                validateDescriptionField: vDescrF ? ()=> vDescrF : ()=> null,
+                isValidStatusTransition: function(firstSt, nextSt) {
+                    return true;
+                }
             };
 
             var utils = {
@@ -1763,7 +1772,10 @@ describe('Catalog API', function() {
         var tmfUtils = {
             isOwner: owner ? isOwnerTrue : isOwnerFalse,
             validateNameField: vNameF ? ()=> vNameF : ()=> null,
-            validateDescriptionField: vDescrF ? ()=> vDescrF : ()=> null
+            validateDescriptionField: vDescrF ? ()=> vDescrF : ()=> null,
+            isValidStatusTransition: function(firstSt, nextSt) {
+                return true;
+            }
         };
 
         var catalogApi = getCatalogApi({}, tmfUtils, utils);
@@ -1964,7 +1976,10 @@ describe('Catalog API', function() {
                 isOwner: isOwnerTrue,
                 isValidDiscount: () => isValidDiscount,
                 isValidAmount: () => isValidAmount,
-                isValidPrice: () => isValidPrice
+                isValidPrice: () => isValidPrice,
+                isValidStatusTransition: function(firstSt, nextSt) {
+                    return true;
+                }
             };
 
             var catalogApi = getCatalogApi({}, tmfUtils, utils);
@@ -2072,7 +2087,10 @@ describe('Catalog API', function() {
         checkRoleMethod.and.returnValue(true);
 
         var tmfUtils = {
-            isOwner: isOwnerMethod
+            isOwner: isOwnerMethod,
+            isValidStatusTransition: function(firstSt, nextSt) {
+                return true;
+            }
         };
 
         var utils = {
@@ -2177,7 +2195,10 @@ describe('Catalog API', function() {
         var defaultErrorMessage = 'Internal Server Error';
 
         var tmfUtils = {
-            isOwner: productRequestInfo.owner ? isOwnerTrue : isOwnerFalse
+            isOwner: productRequestInfo.owner ? isOwnerTrue : isOwnerFalse,
+            isValidStatusTransition: function(firstSt, nextSt) {
+                return true;
+            }
         };
 
         var nowStr = '2017-10-06T10:00:00.000Z';
@@ -2542,7 +2563,10 @@ describe('Catalog API', function() {
                 return true;
             },
             validateNameField: vNameF ? () => vNameF : () => null,
-            validateDescriptionField: vDescrF ? () => vDescrF : () => null
+            validateDescriptionField: vDescrF ? () => vDescrF : () => null,
+            isValidStatusTransition: function(firstSt, nextSt) {
+                return true;
+            }
         };
         if(launched !== undefined && launched !== null){
             tmfUtils.haveSameStatus = (function() {
