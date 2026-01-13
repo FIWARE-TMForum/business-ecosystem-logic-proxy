@@ -812,7 +812,126 @@ describe('Ordering API', function() {
 
                 testOrderCreation(user, JSON.stringify(body), true, true, true, expected, done);
             });
+
+            const testOrderCreationOfferParty = (relParty, done, cb, err) => {
+                const userName = 'example';
+                const billingAccountPath = '/api/billingAccount/7';
+                const offeringPath = '/api/productOffering/1';
+
+                const user = {
+                    partyId: userName
+                };
+
+                const orderItems = [];
+
+                orderItems.push({
+                    product: {},
+                    productOffering: {
+                        id: 1,
+                        href: 'http://extexample.com' + offeringPath
+                    }
+                });
+
+                const body = {
+                    relatedParty: [
+                        {
+                            id: userName,
+                            role: config.roles.customer
+                        }
+                    ],
+                    productOrderItem: orderItems,
+                    billingAccount: {
+                        id: 7,
+                        href: B_ACCOUNT_SERVER + billingAccountPath
+                    }
+                };
+
+                nock(CATALOG_SERVER)
+                    .get(offeringPath)
+                    .reply(200, {
+                        productSpecification: {
+                            id: 2,
+                            href: 2
+                        },
+                        relatedParty: relParty
+                    });
+
+                nock(B_ACCOUNT_SERVER)
+                    .get(billingAccountPath)
+                    .reply(200, { relatedParty: [{ id: userName, role: config.billingAccountOwnerRole }] });
+
+                testOrderCreation(
+                    user,
+                    JSON.stringify(body),
+                    true,
+                    true,
+                    true,
+                    err,
+                    done,
+                    cb
+                );
+            };
+
+            it('should create a product order when the offer includes a related party', (done) => {
+                const userName = 'example';
+                const ownerName = 'ownerUser';
+                testOrderCreationOfferParty([{ id: ownerName, role: config.roles.seller }], done, function(req) {
+                        const newBody = JSON.parse(req.body);
+                        expect(newBody.productOrderItem[0].product.relatedParty).toEqual([
+                            {
+                                id: userName,
+                                role: config.roles.customer,
+                                href: getIndividualURL(userName)
+                            },
+                            {
+                                id: ownerName,
+                                role: config.roles.seller,
+                                href: ownerName
+                            }
+                        ]);
+                    }, null);
+            });
+
+            it('should create a product order when the offer includes the user as a buyer', (done) => {
+                const userName = 'example';
+                const ownerName = 'ownerUser';
+                testOrderCreationOfferParty([
+                    { id: ownerName, role: config.roles.seller },
+                    { id: userName, role: config.roles.customer }],
+                    done,
+                    function(req) {
+                        const newBody = JSON.parse(req.body);
+                        expect(newBody.productOrderItem[0].product.relatedParty).toEqual([
+                            {
+                                id: userName,
+                                role: config.roles.customer,
+                                href: getIndividualURL(userName)
+                            },
+                            {
+                                id: ownerName,
+                                role: config.roles.seller,
+                                href: ownerName
+                            }
+                        ]);
+                    }, null
+                );
+            })
+
+            it('should fail when the offer includes a different buyer', (done) => {
+                const expected = {
+                    status: 403,
+                    message: 'The buyer specified in the product offering is not the user making the request'
+                };
+                testOrderCreationOfferParty([
+                    { id: 'ownerUser', role: config.roles.seller },
+                    { id: 'other', role: config.roles.customer }],
+                    done,
+                    () => {},
+                    expected
+                );
+            })
         });
+
 
         /// ///////////////////////////////////////////////////////////////////////////////////////////
         /// //////////////////////////////////////// UPDATE ///////////////////////////////////////////

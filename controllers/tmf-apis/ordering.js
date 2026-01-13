@@ -100,13 +100,40 @@ const ordering = (function() {
         });
     };
 
-    const includeOfferingParty = function(offeringUrl, item, resolve, reject) {
+    const includeOfferingParty = function(offeringUrl, item, resolve, reject, user) {
         const errorMessageOffer = 'The system fails to retrieve the offering attached to the ordering item ' + item.id;
 
         makeRequest(offeringUrl, errorMessageOffer, function(err, offering) {
             if (err) {
                 reject(err);
             } else {
+                if (offering.relatedParty && offering.relatedParty.length > 0) {
+                    const owners = offering.relatedParty.filter(function(relatedParty) {
+                        return relatedParty['role'].toLowerCase() === config.roles.seller.toLowerCase();
+                    });
+
+                    // If there is buyer, then the user creating the product order must be one of them
+                    const itemCustCheck = tmfUtils.isOrderingCustomer(user, offering);
+                    if (itemCustCheck[0] && !itemCustCheck[1]) {
+                        // Buyer is included but the user is nit the buyer
+                        return reject({
+                            status: 403,
+                            message: 'The buyer specified in the product offering is not the user making the request'
+                        });
+                    }
+
+                    if (owners.length > 0) {
+                        owners.forEach(function(owner) {
+                            item.product.relatedParty.push({
+                                id: owner.id,
+                                href: owner.id,
+                                role: SELLER
+                            });
+                        });
+                    }
+                    return resolve();
+                }
+
                 if (!offering.isBundle) {
                     includeProductParty(offering, item, resolve, reject);
                 } else {
@@ -116,7 +143,7 @@ const ordering = (function() {
                         config.endpoints.catalog.port,
                         `${config.endpoints.catalog.apiPath}/productOffering/${offering.bundledProductOffering[0].id}`
                     );
-                    includeOfferingParty(offeringUrl, item, resolve, reject);
+                    includeOfferingParty(offeringUrl, item, resolve, reject, user);
                 }
             }
         });
@@ -172,7 +199,7 @@ const ordering = (function() {
                 `${config.endpoints.catalog.apiPath}/productOffering/${item.productOffering.id}`
             );
 
-            includeOfferingParty(offeringUrl, item, resolve, reject);
+            includeOfferingParty(offeringUrl, item, resolve, reject, user);
         })
     };
 
