@@ -5053,6 +5053,108 @@ describe('Catalog API', function() {
             );
         });
 
+        it('should filter out ad-hoc offers when the user is not logged in', (done) => {
+            const req = {
+                method: 'GET',
+                apiUrl: '/productOffering',
+                body: [{
+                    id: 'id3',
+                    relatedParty: [{
+                        id: '1234',
+                        role: config.roles.customer
+                    }]
+                }, {
+                    id: 'id1'
+                }, {
+                    id: 'id2'
+                }]
+            }
+
+            testPostValidation(
+                req,
+                () => {
+                    expect(req.body).toEqual([{
+                        id: 'id1'
+                    }, {
+                        id: 'id2'
+                    }])
+                },
+                done
+            );
+        });
+
+        it('should filter out ad-hoc offers when the user is not the same', (done) => {
+            const req = {
+                method: 'GET',
+                user: {
+                    partyId: '5670'
+                },
+                apiUrl: '/productOffering',
+                body: [{
+                    id: 'id3',
+                    relatedParty: [{
+                        id: '1234',
+                        role: config.roles.customer
+                    }]
+                }, {
+                    id: 'id1'
+                }, {
+                    id: 'id2'
+                }]
+            }
+
+            testPostValidation(
+                req,
+                () => {
+                    expect(req.body).toEqual([{
+                        id: 'id1'
+                    }, {
+                        id: 'id2'
+                    }])
+                },
+                done
+            );
+        });
+
+        it('should not filter out ad-hoc offers when the user is the same', (done) => {
+            const req = {
+                method: 'GET',
+                user: {
+                    partyId: '1234'
+                },
+                apiUrl: '/productOffering',
+                body: [{
+                    id: 'id3',
+                    relatedParty: [{
+                        id: '1234',
+                        role: config.roles.customer
+                    }]
+                }, {
+                    id: 'id1'
+                }, {
+                    id: 'id2'
+                }]
+            }
+
+            testPostValidation(
+                req,
+                () => {
+                    expect(req.body).toEqual([{
+                        id: 'id3',
+                        relatedParty: [{
+                            id: '1234',
+                            role: config.roles.customer
+                        }]
+                    }, {
+                        id: 'id1'
+                    }, {
+                        id: 'id2'
+                    }])
+                },
+                done
+            );
+        });
+
         it('should call the store product attachment when a valid product creation request has been redirected', function(done) {
             var req = {
                 method: 'POST',
