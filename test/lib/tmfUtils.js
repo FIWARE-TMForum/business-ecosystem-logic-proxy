@@ -946,6 +946,40 @@ describe('TMF Utils', function() {
             await testAttachNotSupported('catalog', '/productOffering')
         });
 
+        it('should attach related party to a product offering with Buyer', async () => {
+            await testAttach('catalog', '/productOffering', {
+                relatedParty: [{
+                    id: 'urn:organization:buyerId',
+                    role: 'Buyer'
+                }]
+            }, [{
+                id: 'urn:organization:buyerId',
+                href: 'urn:organization:buyerId',
+                name: 'VAT-ID2',
+                role: 'Buyer',
+                "@referredType": "Organization"
+            }, {
+                id: 'urn:organization:operatorId',
+                href: 'urn:organization:operatorId',
+                name: 'VAT-OP',
+                role: 'BuyerOperator',
+                "@referredType": "Organization"
+            }, {
+                id: 'urn:organization:partyId',
+                href: 'urn:organization:partyId',
+                name: 'VAT-ID1',
+                role: 'Seller',
+                "@referredType": "Organization"
+            }, {
+                id: 'urn:organization:operatorId',
+                href: 'urn:organization:operatorId',
+                name: 'VAT-OP',
+                role: 'SellerOperator',
+                "@referredType": "Organization"
+            }])
+
+        });
+
         it('should attach related party to a product offering price', async () => {
             await testAttachNotSupported('catalog', '/productOfferingPrice')
         });

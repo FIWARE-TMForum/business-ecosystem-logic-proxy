@@ -1506,6 +1506,24 @@ const catalog = (function() {
             }) : []
         })
     }
+
+    const filterAdhocOffers = (req) => {
+        const body = req.body
+
+        if (Array.isArray(body)) {
+            req.body = body.filter((offering) => {
+                let filter = true;
+                if (offering.relatedParty && offering.relatedParty.length > 0) {
+                    const extBuyer = offering.relatedParty.find((party) => {
+                        return (party.role.toLowerCase() === config.roles.customer.toLowerCase())
+                            && (!req.user || party.id !== req.user.partyId)
+                    });
+                    filter = !extBuyer;
+                }
+                return filter
+            })
+        }
+    }
     //////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////////// COMMON ///////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
@@ -1557,33 +1575,39 @@ const catalog = (function() {
         // Attach product spec info for product creation request
         let body;
 
-        if (req.method == 'GET' && req.apiUrl.indexOf('href=') > -1) {
-            // Ensure that the response is in the same order as in the query string
-            try {
-                const query = req.apiUrl.split('?')[1]
-                const queryParts = query.split('&')
+        if (req.method == 'GET' && req.apiUrl.indexOf('/productOffering') > -1) {
+            // Process sort of responses if needed
+            if (req.apiUrl.indexOf('href=') > -1) {
+                // Ensure that the response is in the same order as in the query string
+                try {
+                    const query = req.apiUrl.split('?')[1]
+                    const queryParts = query.split('&')
 
-                let refs = []
+                    let refs = []
 
-                logger.debug(`Request ids in order: ${query}`);
+                    logger.debug(`Request ids in order: ${query}`);
 
-                queryParts.forEach((part) => {
-                    const keyValue = part.split('=')
-                    if (keyValue[0] === 'href') {
-                        refs = keyValue[1].split(',')
-                    }
-                })
+                    queryParts.forEach((part) => {
+                        const keyValue = part.split('=')
+                        if (keyValue[0] === 'href') {
+                            refs = keyValue[1].split(',')
+                        }
+                    })
 
-                let sortedBody = []
-                refs.forEach((itemId) => {
-                    let item = req.body.find((it) => it.id === itemId)
-                    sortedBody.push(item)
-                })
+                    let sortedBody = []
+                    refs.forEach((itemId) => {
+                        let item = req.body.find((it) => it.id === itemId)
+                        sortedBody.push(item)
+                    })
 
-                req.body = sortedBody
-            } catch (e) {
-                logger.error('Error parsing query string for offering retrieval');
+                    req.body = sortedBody
+                } catch (e) {
+                    logger.error('Error parsing query string for offering retrieval');
+                }
             }
+
+            filterAdhocOffers(req);
+
             return callback(null)
         } else if (req.method == 'POST' && categoriesPattern.test(req.apiUrl)) {
             body = req.body
