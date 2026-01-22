@@ -75,19 +75,31 @@ function stats() {
 
         // The products array now has the list of product specifications launched
         // Get the list of product owners
-        partyIds = new Set()
-        products.forEach(async (prodId) => {
+        const partyIds = new Set()
+        for (const prodId of products) {
             const productUrl = utils.getAPIProtocol('catalog') + '://' + utils.getAPIHost('catalog') + ':' + utils.getAPIPort('catalog') + utils.getAPIPath('catalog') + `/productSpecification/${prodId}?fields=relatedParty`
-            const product = await getItem(productUrl)
 
-            if (product.relatedParty) {
-                product.relatedParty.forEach((party) => {
-                    if (party.role.toLowerCase() == config.roles.seller.toLowerCase()) {
-                        partyIds.add(party.id)
-                    }
-                })
+            try {
+                const product = await getItem(productUrl)
+
+                if (product.relatedParty) {
+                    product.relatedParty.forEach((party) => {
+                        if ((party.role || '').toLowerCase() == config.roles.seller.toLowerCase()) {
+                            partyIds.add(party.id)
+                        }
+                    })
+                }
+            } catch (err) {
+                const status = err.response?.status;
+                const reason = err.response?.data?.message || err.response?.statusText;
+                logger.error(
+                    `Error getting product specification ${prodId}` +
+                    (status ? ` (HTTP ${status}${reason ? `: ${reason}` : ''})` : '') +
+                    `: ${err.message}`
+                );
+                continue;
             }
-        })
+        }
 
         // Get the list of organizations
         const partyBaseUrl = utils.getAPIProtocol('party') + '://' + utils.getAPIHost('party') + ':' + utils.getAPIPort('party') + utils.getAPIPath('party') + '/organization?fields=tradingName'
@@ -122,15 +134,23 @@ function stats() {
         })
     }
 
+    const setupCron = function() {
+        const scheduledTasks = cron.getTasks();
+
+        if (!scheduledTasks.has("stats-cron")) {
+            cron.schedule('0 3 * * *', () => {
+                loadStats().catch((err) => logger.error('Stats cron refresh failed', err));
+            }, { name: "stats-cron" });
+        }
+    }
+
     const init = function() {
-        return loadStats()
-        .catch((err) => {
-            console.log(err)
-            logger.error('Stats could not be loaded')
-        })
-        .finally(() => {
-            cron.schedule('0 3 * * *', loadStats);
-        })
+        setupCron();
+
+        return loadStats().catch((err) => {
+            logger.error('Stats could not be loaded', err);
+            throw err; // <-- critical for retryAsync
+        });
     }
 
     return {
