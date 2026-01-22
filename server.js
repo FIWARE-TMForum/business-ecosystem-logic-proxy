@@ -704,40 +704,62 @@ if (config.https.enabled === true) {
     app.listen(app.get('port'), onlistening);
 }
 
-function onlistening() {
+function retryAsync(fn, {
+  name,
+  delayMs = 5000
+} = {}) {
+  let attempt = 0;
+
+  const run = () => {
+    attempt += 1;
+
+    return Promise.resolve()
+      .then(fn)
+      .then((res) => {
+        logger.info(`${name} loaded`);
+        return res;
+      })
+      .catch((err) => {
+        // log useful info
+        logger.error(`${name} failed (attempt ${attempt}). Retrying...`, err);
+        setTimeout(run, delayMs);
+      });
+  };
+
+  run();
+}
+
+async function loadChargingInfo() {
     const axios = require('axios');
     const urldata = config.endpoints.charging;
-    const expectedData = ['chargePeriods', 'currencyCodes']
+    const expectedData = ['chargePeriods', 'currencyCodes'];
 
-    Promise.all(expectedData.map((data) => {
+    const results = await Promise.all(expectedData.map((data) => {
         const uri = url.format({
             protocol: urldata.appSsl ? 'https' : 'http',
             hostname: urldata.host,
             port: urldata.port,
             pathname: `/${urldata.path}/api/assetManagement/${data}/`
         });
-        return axios.get(uri)
-    })).then(
-        function(result) {
-            app.locals.chargePeriods = result[0].data.map(function(cp) {
-                return cp.title + ':' + cp.value;
-            });
-            app.locals.currencyCodes = result[1].data.map(function(cc) {
-                return cc.value + ':' + cc.title;
-            });
-            logger.info("Charging info loaded")
-        }
-    ).catch((reason) => {
-        logger.error("Cannot connect to the charging backend");
-        setTimeout(onlistening, 5000);
-    });
-
-    stats.init().then(() => {
-        logger.info("Stats info loaded")
-    })
-
-    operator.initOperator().then(() => {
-        logger.info("Operator info loaded")
-    })
+        return axios.get(uri);
+    }));
+    app.locals.chargePeriods = results[0].data.map(cp => `${cp.title}:${cp.value}`);
+    app.locals.currencyCodes = results[1].data.map(cc => `${cc.value}:${cc.title}`);
 }
+
+function loadStatsInfo() {
+    return stats.init(); // must return a Promise
+}
+
+function loadOperatorInfo() {
+    return operator.initOperator(); // must return a Promise
+}
+
+
+function onlistening() {
+    retryAsync(loadChargingInfo, { name: "Charging info", delayMs: 5000 });
+    retryAsync(loadStatsInfo,    { name: "Stats info",    delayMs: 5000 });
+    retryAsync(loadOperatorInfo, { name: "Operator info", delayMs: 5000 });
+}
+
 })();
