@@ -263,6 +263,12 @@ describe('Ordering API', function() {
                     './../config': config
                 });
 
+                spyOn(tmfUtils, 'getIndividualURL').and.callFake(function(req, user) {
+                    return getIndividualURL(user);
+                });
+
+                spyOn(tmfUtils, 'hasPartyRole').and.returnValue(hasPartyRole);
+
                 const orderingApi = getOrderingAPI({}, tmfUtils, utils);
 
                 const req = {
