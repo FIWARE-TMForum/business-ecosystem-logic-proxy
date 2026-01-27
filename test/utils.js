@@ -189,6 +189,13 @@ var defaultConfig = {
 			host: 'invoicing.com',
 			port: '8637',
 			appSsl: false
+		},
+		search: {
+			path: 'search',
+			apiPath: '/search',
+			host: 'search.com',
+			port: '8637',
+			appSsl: false
 		}
 	},
 	revenueModel: 30,
