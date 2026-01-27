@@ -944,14 +944,20 @@ const catalog = (function() {
 
     const checkExistingCatalog = function(catalogName, callback) {
         const catalogPath = '/catalog';
-        const queryParams = '?name=' + catalogName;
-
+        const queryParams = '?name=' + encodeURIComponent(catalogName);
+        const invalidChars = /[<>%"\|]/;
+        if(invalidChars.test(catalogName)){
+            return callback({
+                status: 400,
+                message: 'Invalid format, these characters have been temporarily disabled'
+            })
+        }
         retrieveAsset(catalogPath + queryParams, function(err, result) {
             if (err) {
-                callback({
-                    status: 500,
-                    message: 'It was impossible to check if there is another catalog with the same name'
-                });
+                    callback({
+                        status: 500,
+                        message: 'It was impossible to check if there is another catalog with the same name'
+                    });
             } else {
                 const existingCatalog = result.body;
 

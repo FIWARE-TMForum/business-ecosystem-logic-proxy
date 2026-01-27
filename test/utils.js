@@ -49,6 +49,7 @@ var defaultConfig = {
 		sellerOperator: 'SellerOperator',
 		buyerOperator: 'BuyerOperator'
 	},
+	billingAccountOwnerRole: 'owner',
 	endpoints: {
 		account: {
 			path: 'account',
