@@ -286,6 +286,12 @@ config.endpoints = {
         apiPath: '/invoicing',
         host: 'invoicing-service-svc.billing.svc.cluster.local',
         port: '8080'
+    },
+    search: {
+        path: 'search',
+        apiPath: '',
+        host: 'search-service-svc.billing.svc.cluster.local',
+        port: '8080'
     }
 };
 
@@ -599,6 +605,16 @@ config.endpoints.invoicing.host = process.env.BAE_LP_ENDPOINT_INVOICING_HOST || 
 if (!!process.env.BAE_LP_ENDPOINT_INVOICING_SECURED) {
     config.endpoints.invoicing.appSsl = process.env.BAE_LP_ENDPOINT_INVOICING_SECURED == 'true';
 }
+
+// Search
+config.endpoints.search.apiPath = process.env.BAE_LP_ENDPOINT_SEARCH_PATH || config.endpoints.search.apiPath;
+config.endpoints.search.port = process.env.BAE_LP_ENDPOINT_SEARCH_PORT || config.endpoints.search.port;
+config.endpoints.search.host = process.env.BAE_LP_ENDPOINT_SEARCH_HOST || config.endpoints.search.host;
+
+if (!!process.env.BAE_LP_ENDPOINT_SEARCH_SECURED) {
+    config.endpoints.search.appSsl = process.env.BAE_LP_ENDPOINT_SEARCH_SECURED == 'true';
+}
+
 
 // ======
 // MongoDB Config

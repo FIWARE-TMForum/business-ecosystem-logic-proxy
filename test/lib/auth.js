@@ -504,6 +504,37 @@ describe('Auth lib', function () {
         }).catch(done.fail);
     });
 
+    it('creates organization when none exists and includes full country characteristic', function(done) {
+        const stubs = makeStubs();
+        const { auth } = loadSUT(stubs);
+
+        stubs.partyStub.partyClient.getOrganizationsByQuery.and.returnValue(Promise.resolve({ body: [] }));
+        stubs.partyStub.partyClient.createOrganization.and.returnValue(Promise.resolve({ body: { id: 'ORG-NEW', href: '/party/ORG-NEW' } }));
+        stubs.partyStub.partyClient.getIndividualsByQuery.and.returnValue(Promise.resolve({ body: [{ id: 'INDIV-X' }] }));
+        stubs.partyStub.partyClient.updateIndividual.and.returnValue(Promise.resolve({}));
+
+        auth({ provider: 'fiware', idpId: 'local' }).then(({ STRATEGY }) => {
+        const profile = {
+            id: 'user-1',
+            username: 'u1',
+            displayName: 'User One',
+            organizations: [{
+            id: 'acme',
+            name: 'ACME Inc.',
+            roles: [{ name: 'ADMIN' }],
+            country: 'Spain'
+            }]
+        };
+        STRATEGY.__triggerVerify('AT1', 'RT1', profile).then(() => {
+            const payload = stubs.partyStub.partyClient.createOrganization.calls.mostRecent().args[0];
+            expect(payload.tradingName).toBe('ACME Inc.');
+            expect(payload.partyCharacteristic).toEqual([{ name: 'country', value: 'ES' }]);
+            expect(stubs.partyStub.partyClient.updateIndividual).toHaveBeenCalledWith('INDIV-X', jasmine.any(Object));
+            done();
+        }).catch(done.fail);
+        }).catch(done.fail);
+    });
+
     it('updates existing organization to add missing country characteristic', function(done) {
         const stubs = makeStubs();
         const { auth } = loadSUT(stubs);
