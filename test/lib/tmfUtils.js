@@ -711,6 +711,57 @@ describe('TMF Utils', function() {
 
         })
     })
+
+    describe('Methods: validateCharacteristics', function(){
+        it('should return true if all characteristics have unique names', function(){
+            const tmfUtils = getTmfUtils();
+            const chars = [
+                { name: 'Color', value: 'Red' },
+                { name: 'Size', value: 'Large' },
+                { name: 'Weight', value: '10kg' }
+            ]
+            const result = tmfUtils.validateCharacteristics(chars)
+            expect(result).toBe(true)
+        })
+
+        it('should return false if there are duplicate characteristic names', function(){
+            const tmfUtils = getTmfUtils();
+            const chars = [
+                { name: 'Color', value: 'Red' },
+                { name: 'Size', value: 'Large' },
+                { name: 'Color', value: 'Blue' }
+            ]
+            const result = tmfUtils.validateCharacteristics(chars)
+            expect(result).toBe(false)
+        })
+
+        it('should return true for an empty array', function(){
+            const tmfUtils = getTmfUtils();
+            const chars = []
+            const result = tmfUtils.validateCharacteristics(chars)
+            expect(result).toBe(true)
+        })
+
+        it('should return true for a single characteristic', function(){
+            const tmfUtils = getTmfUtils();
+            const chars = [
+                { name: 'Color', value: 'Red' }
+            ]
+            const result = tmfUtils.validateCharacteristics(chars)
+            expect(result).toBe(true)
+        })
+
+        it('should return false when first duplicate appears', function(){
+            const tmfUtils = getTmfUtils();
+            const chars = [
+                { name: 'Color', value: 'Red' },
+                { name: 'Color', value: 'Blue' },
+                { name: 'Size', value: 'Large' }
+            ]
+            const result = tmfUtils.validateCharacteristics(chars)
+            expect(result).toBe(false)
+        })
+    })
     
     describe('Methods: hasValidPhoneNumber', function(){
         it('should return true if telephone number is correct', function(){

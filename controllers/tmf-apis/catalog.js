@@ -865,6 +865,13 @@ const catalog = (function() {
             }
         }
 
+        if (productSpec && productSpec.productSpecCharacteristic && !tmfUtils.validateCharacteristics(productSpec.productSpecCharacteristic, 'product spec')){
+            return callback({
+                    status: 422,
+                    message: "duplicated name in product spec characteristics"
+                });
+        }
+
         // Check if the product is a bundle
         if (!productSpec.isBundle) {
             return callback(null);
