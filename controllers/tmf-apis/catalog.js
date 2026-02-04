@@ -865,10 +865,10 @@ const catalog = (function() {
             }
         }
 
-        if (productSpec && productSpec.productSpecCharacteristic && !tmfUtils.validateCharacteristics(productSpec.productSpecCharacteristic, 'product spec')){
+        if (productSpec && productSpec.productSpecCharacteristic && !tmfUtils.validateCharacteristics(productSpec.productSpecCharacteristic)){
             return callback({
                     status: 422,
-                    message: "duplicated name in product spec characteristics"
+                    message: "Invalid product spec characteristics"
                 });
         }
 
