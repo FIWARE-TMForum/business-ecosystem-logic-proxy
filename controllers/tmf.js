@@ -285,7 +285,7 @@ function tmf() {
 				options.data = req.body;
 			}
 
-			if (url.indexOf('/media/') >= 0 || url.indexOf('/invoicing/')) {
+			if (url.indexOf('/media/') >= 0 || url.indexOf('/invoicing/') >= 0) {
 				options.responseType = 'arraybuffer'
 
 				// Dissable default browser cache headers
