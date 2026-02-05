@@ -711,6 +711,140 @@ describe('TMF Utils', function() {
 
         })
     })
+
+    describe('Methods: validateCharacteristics', function(){
+        it('should return true if all characteristics have unique names', function(){
+            const tmfUtils = getTmfUtils();
+            const chars = [
+                { name: 'Color', value: 'Red' },
+                { name: 'Size', value: 'Large' },
+                { name: 'Weight', value: '10kg' }
+            ]
+            const result = tmfUtils.validateCharacteristics(chars)
+            expect(result).toBe(true)
+        })
+
+        it('should return false if there are duplicate characteristic names', function(){
+            const tmfUtils = getTmfUtils();
+            const chars = [
+                { name: 'Color', value: 'Red' },
+                { name: 'Size', value: 'Large' },
+                { name: 'Color', value: 'Blue' }
+            ]
+            const result = tmfUtils.validateCharacteristics(chars)
+            expect(result).toBe(false)
+        })
+
+        it('should return true for an empty array', function(){
+            const tmfUtils = getTmfUtils();
+            const chars = []
+            const result = tmfUtils.validateCharacteristics(chars)
+            expect(result).toBe(true)
+        })
+
+        it('should return true for a single characteristic', function(){
+            const tmfUtils = getTmfUtils();
+            const chars = [
+                { name: 'Color', value: 'Red' }
+            ]
+            const result = tmfUtils.validateCharacteristics(chars)
+            expect(result).toBe(true)
+        })
+
+        it('should return false when first duplicate appears', function(){
+            const tmfUtils = getTmfUtils();
+            const chars = [
+                { name: 'Color', value: 'Red' },
+                { name: 'Color', value: 'Blue' },
+                { name: 'Size', value: 'Large' }
+            ]
+            const result = tmfUtils.validateCharacteristics(chars)
+            expect(result).toBe(false)
+        })
+
+        it('should return true when characteristic has valid range (valueFrom < valueTo)', function(){
+            const tmfUtils = getTmfUtils();
+            const chars = [
+                {
+                    name: 'Temperature',
+                    productSpecCharacteristicValue: [
+                        { valueFrom: 10, valueTo: 50 }
+                    ]
+                }
+            ]
+            const result = tmfUtils.validateCharacteristics(chars)
+            expect(result).toBe(true)
+        })
+
+        it('should return false when valueFrom >= valueTo', function(){
+            const tmfUtils = getTmfUtils();
+            const chars = [
+                {
+                    name: 'Temperature',
+                    productSpecCharacteristicValue: [
+                        { valueFrom: 50, valueTo: 10 }
+                    ]
+                }
+            ]
+            const result = tmfUtils.validateCharacteristics(chars)
+            expect(result).toBe(false)
+        })
+
+        it('should return false when valueFrom equals valueTo', function(){
+            const tmfUtils = getTmfUtils();
+            const chars = [
+                {
+                    name: 'Temperature',
+                    productSpecCharacteristicValue: [
+                        { valueFrom: 25, valueTo: 25 }
+                    ]
+                }
+            ]
+            const result = tmfUtils.validateCharacteristics(chars)
+            expect(result).toBe(false)
+        })
+
+        it('should return false when multiple values exist with range defined', function(){
+            const tmfUtils = getTmfUtils();
+            const chars = [
+                {
+                    name: 'Temperature',
+                    productSpecCharacteristicValue: [
+                        { valueFrom: 10, valueTo: 50 },
+                        { value: 'Hot' }
+                    ]
+                }
+            ]
+            const result = tmfUtils.validateCharacteristics(chars)
+            expect(result).toBe(false)
+        })
+
+        it('should return true when characteristic has no productSpecCharacteristicValue', function(){
+            const tmfUtils = getTmfUtils();
+            const chars = [
+                { name: 'Color' },
+                { name: 'Size' }
+            ]
+            const result = tmfUtils.validateCharacteristics(chars)
+            expect(result).toBe(true)
+        })
+
+        it('should return true when characteristic has multiple discrete values without range', function(){
+            const tmfUtils = getTmfUtils();
+            const chars = [
+                {
+                    name: 'Color',
+                    productSpecCharacteristicValue: [
+                        { value: 'Red' },
+                        { value: 'Blue' },
+                        { value: 'Green' }
+                    ]
+                }
+            ]
+            const result = tmfUtils.validateCharacteristics(chars)
+            expect(result).toBe(true)
+        })
+    })
     
     describe('Methods: hasValidPhoneNumber', function(){
         it('should return true if telephone number is correct', function(){
