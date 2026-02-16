@@ -1283,6 +1283,7 @@
       "_config_profile": "Configuration Profile",
       "_price_components": "Price components",
       "_add_price_component": "Add a new Price Component",
+      "_add_tier_pricing": "Add Tier Pricing",
       "_currency": "Set the currency that must be used in all the price components of this price plan",
       "_profile_desc": "If you want this price plan to apply exclusively to a specific product configuration, select that configuration here.",
       "_price_comp_with_chars": "If you want this price plan to apply exclusively to a specific product configuration, remove the selected characteristics from the created price components.",
