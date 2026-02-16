@@ -557,6 +557,7 @@
       "_billno": "Invoice Num.",
       "_not_found": "No invoices found.",
       "_description": "Description",
+      "_product_acbr_ref": "Product ID",
       "_tax_included_amount": "Amount (tax included)",
       "_tax_excluded_amount": "Amount (without tax)",
       "_tax": "Tax",
