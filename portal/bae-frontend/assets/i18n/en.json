@@ -1,6 +1,151 @@
 {
     "_yes": "Yes",
     "_no": "No",
+
+
+    "dashboard": {
+    "nav": {
+      "forCustomers": "For Customers",
+      "forProviders": "For Providers",
+      "marketplace": "Marketplace",
+      "about": "About",
+      "resources": "Resources"
+    },
+    "hero": {
+      "eyebrow": "Distributed Open Marketplace for Europe",
+      "title": "The trusted European Ecosystem for cloud, edge & AI services",
+      "subtitle": "The DOME marketplace brings verified, EU-compliant cloud, edge and AI services into one transparent, interoperable platform, simplifying services discovery and procurement for organisations and expanding market reach for cloud providers.",
+      "ctaCustomers": "I’m looking for digital services",
+      "ctaProviders": "I offer digital services",
+      "browseAll": "Browse all services →",
+      "asideTitle": "Marketplace snapshot",
+      "stats": {
+        "servicesLabel": "verified services",
+        "providersLabel": "registered providers",
+        "euHosted": "EU-hosted & compliance-driven",
+        "transparency": "End-to-end transparency on data & pricing"
+      },
+      "moreAbout": "More about DOME"
+    },
+    "whatIs": {
+      "title": "What is DOME Marketplace?",
+      "subtitle": "DOME is the European marketplace that provides a unified environment where trust, compliance, and interoperability form the foundation of how digital services are published, compared, and used across Europe.",
+      "cards": {
+        "c1": {
+          "title": "Trusted, Sovereign Digital Ecosystem",
+          "text": "DOME ensures services operate under EU rules for security, data protection, and sovereignty, creating a reliable environment for digital operations across Europe."
+        },
+        "c2": {
+          "title": "Transparency and Comparability",
+          "text": "Consistent documentation, pricing clarity, and shared trust indicators make it easy to understand, compare, and assess digital services."
+        },
+        "c3": {
+          "title": "Interoperability and Federation",
+          "text": "DOME connects multiple marketplaces and providers through shared standards, enabling seamless discovery, integration, and cross-market collaboration."
+        },
+        "c4": {
+          "title": "Fair and Open Market Access",
+          "text": "The ecosystem removes barriers to entry, supports SMEs, and prevents vendor lock-in, ensuring all participants can compete and grow on equal terms."
+        }
+      }
+    },
+    "marketplace": {
+      "title": "Explore verified services",
+      "subtitle": "Search across cloud, edge, AI, data and other digital services from trusted European providers.",
+      "searchPlaceholder": "Search by keyword, category or provider…",
+      "browseFullCatalog": "Browse full catalog →",
+      "viewService": "View service"
+    },
+    "customers": {
+      "title": "For Customers",
+      "whyTitle": "Why to use DOME",
+      "cards": {
+        "c1": {
+          "title": "Access to verified digital services",
+          "text": "Discover offerings validated against EU security and data-protection rules, guaranteeing trusted providers and full data sovereignty."
+        },
+        "c2": {
+          "title": "Transparent, guided service discovery",
+          "text": "Quickly identify suitable offerings through consistent documentation, clear pricing, trust indicators, and intuitive filtering and comparison tools."
+        },
+        "c3": {
+          "title": "Powerful procurement tools",
+          "text": "Access built-in capabilities such as tendering, tailored-offer requests, and structured comparisons that make sourcing from multiple providers fast, clear, and efficient."
+        },
+        "c4": {
+          "title": "Unified access to a broad ecosystem",
+          "text": "Benefit from a growing network of European providers and federated marketplaces, giving you broader choice and easier access to specialised services."
+        }
+      },
+      "howTitle": "How DOME works",
+      "how": {
+        "s1Title": "Register as a customer",
+        "s1Text": "Create your customer profile",
+        "s2Title": "Search & compare",
+        "s2Text": "Find digital services according to your needs, use standardised documentation and trust badges to assess suitability",
+        "s3Title": "Connect & procure",
+        "s3Text": "Contact providers and procure directly, or use the DOME marketplace procurement tools in order to get the services that suit your needs"
+      },
+      "startJourney": "Start your customer journey now"
+    },
+    "providers": {
+      "title": "For Providers",
+      "whyTitle": "Why to use DOME",
+      "cards": {
+        "c1": {
+          "title": "Reach a pan-European market",
+          "text": "Expand your visibility across Europe and access new customer segments through a unified, trusted ecosystem."
+        },
+        "c2": {
+          "title": "Strengthen trust with customers",
+          "text": "Showcase compliance, transparency, and service quality through DOME’s verified trust indicators and documentation standards."
+        },
+        "c3": {
+          "title": "Leverage DOME’s provider tools",
+          "text": "Integrated tools for onboarding, service management, analytics, procurement and promotion to enhance your market presence and operational efficiency."
+        },
+        "c4": {
+          "title": "Complement and extend portfolio",
+          "text": "Discover services and partners across the ecosystem to enrich your offering and unlock new business opportunities."
+        }
+      },
+      "howTitle": "How DOME works",
+      "how": {
+        "s1Title": "Onboard your organisation",
+        "s1Text": "Complete the onboarding process and receive your verifiable credentials",
+        "s2Title": "Describe & verify your services",
+        "s2Text": "Use DOME Marketplace templates to detail features, data handling and compliance",
+        "s3Title": "Publish & reach customers",
+        "s3Text": "Ready to go! Your services are available in the DOME catalogues!"
+      },
+      "startJourney": "Start your provider journey now"
+    },
+    "roadmap": {
+      "title": "Growing the DOME ecosystem",
+      "subtitle": "DOME is at an early but active stage, expanding together with customers and providers.",
+      "now": {
+        "label": "Now",
+        "title": "Core marketplace live",
+        "text": "Initial catalog of verified services and providers."
+      },
+      "next": {
+        "label": "Next 6–12 months",
+        "title": "More services, better tools",
+        "text": "Expanded catalog, richer filtering, improved verification workflows."
+      },
+      "beyond": {
+        "label": "Beyond",
+        "title": "Deep EU integration",
+        "text": "Alignment with European data spaces and advanced trust services."
+      }
+    },
+    "finalCta": {
+      "title": "Ready to find out what DOME Marketplace can do for your business?",
+      "discover": "Discover services",
+      "publish": "Publish your service"
+    }
+},
+"europeTrademark": "Distributed Open Marketplace for Europe (DOME) Project has received funding from European Union’s Digital Europe Programme under the Grant Agreement No 101084071.",
     "DASHBOARD": {
         "_title": "DOME Marketplace is out! See what's new",
         "_header": "Digital Trust to move forward",

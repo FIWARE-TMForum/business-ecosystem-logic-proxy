@@ -288,7 +288,7 @@ config.endpoints = {
         port: '8080'
     },
     search: {
-        path: 'search',
+        path: 'search-bck',
         apiPath: '',
         host: 'search-service-svc.billing.svc.cluster.local',
         port: '8080'
