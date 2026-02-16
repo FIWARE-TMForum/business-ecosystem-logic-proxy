@@ -259,9 +259,15 @@ describe('Ordering API', function() {
                     }
                 };
 
-                const tmfUtils = jasmine.createSpyObj('tmfUtils', ['getIndividualURL', 'hasPartyRole']);
-                tmfUtils.getIndividualURL.and.returnValue(getIndividualURL(userInfo.partyId));
-                tmfUtils.hasPartyRole.and.returnValue(hasPartyRole);
+                const tmfUtils = proxyquire('../../../lib/tmfUtils', {
+                    './../config': config
+                });
+
+                spyOn(tmfUtils, 'getIndividualURL').and.callFake(function(req, user) {
+                    return getIndividualURL(user);
+                });
+
+                spyOn(tmfUtils, 'hasPartyRole').and.returnValue(hasPartyRole);
 
                 const orderingApi = getOrderingAPI({}, tmfUtils, utils);
 

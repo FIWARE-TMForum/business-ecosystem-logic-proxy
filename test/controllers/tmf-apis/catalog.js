@@ -49,6 +49,7 @@ const CATEGORIES_CANNOT_BE_CHECKED = 'It was impossible to check if the provided
 const CATEGORY_NAME_MISSING = 'Category name is mandatory';
 const CATALOG_CANNOT_BE_CHECKED = 'It was impossible to check if there is another catalog with the same name';
 const CATALOG_EXISTS = 'This catalog name is already taken';
+const CATALOG_INVALID_CHARS = 'Invalid format, these characters have been temporarily disabled';
 const RSS_CANNOT_BE_ACCESSED = 'An unexpected error in the RSS API prevented your request to be processed';
 const INVALID_PRODUCT_CLASS = 'The provided productClass does not specify a valid revenue sharing model';
 const MISSING_PRODUCT_SPEC = 'Product offerings must contain a productSpecification';
@@ -1946,6 +1947,36 @@ describe('Catalog API', function() {
         };
 
         testCreateCatalog(true, isOwnerFalse, { name: catalogName }, catalogRequest, 409, CATALOG_EXISTS, false, done);
+    });
+
+    it('should not allow to create catalog with < character in name', function(done) {
+        var catalogName = 'catalog<test';
+        testCreateCatalog(true, isOwnerTrue, { name: catalogName }, null, 400, CATALOG_INVALID_CHARS, false, done);
+    });
+
+    it('should not allow to create catalog with > character in name', function(done) {
+        var catalogName = 'catalog>test';
+        testCreateCatalog(true, isOwnerTrue, { name: catalogName }, null, 400, CATALOG_INVALID_CHARS, false, done);
+    });
+
+    it('should not allow to create catalog with % character in name', function(done) {
+        var catalogName = 'catalog%20test';
+        testCreateCatalog(true, isOwnerTrue, { name: catalogName }, null, 400, CATALOG_INVALID_CHARS, false, done);
+    });
+
+    it('should not allow to create catalog with " character in name', function(done) {
+        var catalogName = 'catalog"test';
+        testCreateCatalog(true, isOwnerTrue, { name: catalogName }, null, 400, CATALOG_INVALID_CHARS, false, done);
+    });
+
+    it('should not allow to create catalog with | character in name', function(done) {
+        var catalogName = 'catalog|test';
+        testCreateCatalog(true, isOwnerTrue, { name: catalogName }, null, 400, CATALOG_INVALID_CHARS, false, done);
+    });
+
+    it('should not allow to create catalog with multiple invalid characters in name', function(done) {
+        var catalogName = 'catalog<>%test';
+        testCreateCatalog(true, isOwnerTrue, { name: catalogName }, null, 400, CATALOG_INVALID_CHARS, false, done);
     });
 
     /// ///////////////////////////////////////////////////////////////////////////////////////////

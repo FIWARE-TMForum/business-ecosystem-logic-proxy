@@ -52,9 +52,18 @@ describe('Keycloak Strategy', () => {
             }
         };
 
+        const configMock = {
+            roles: {
+                seller: 'Seller',
+                customer: 'Buyer',
+                orgAdmin: 'orgAdmin'
+            }
+        };
+
         return proxyquire('../../../lib/strategies/keycloak', {
             'passport-keycloak-oauth2-oidc': passport,
-            '../party': partyClient
+            '../party': partyClient,
+            '../../config': configMock
         }).strategy;
     }
 
