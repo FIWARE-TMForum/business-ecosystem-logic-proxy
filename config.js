@@ -707,6 +707,9 @@ config.domeGuidelines = process.env.BAE_LP_DOME_GUIDELINES || config.domeGuideli
 config.quoteApi = '/quote/quoteManagement';
 config.quoteApi = process.env.BAE_LP_QUOTE_API || config.quoteApi;
 
+config.learUrl = '';
+config.learUrl = process.env.BAE_LP_LEAR_URL || config.learUrl;
+
 config.quoteEnabled = true;
 if (!!process.env.BAE_LP_QUOTE_ENABLED) {
     config.quoteEnabled = process.env.BAE_LP_QUOTE_ENABLED == 'true';

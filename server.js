@@ -419,7 +419,8 @@ app.get('/config', async (_, res) => {
         analytics: config.analytics,
         theme: config.theme,
         quotesEnabled: config.quoteEnabled,
-        tenderingEnabled: config.tenderingEnabled
+        tenderingEnabled: config.tenderingEnabled,
+        learUrl: config.learUrl
     })
 })
 
