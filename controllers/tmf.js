@@ -71,7 +71,7 @@ function tmf() {
 	apiControllers[config.endpoints.invoicing.path] = invoicing;
 	apiControllers[config.endpoints.search.path] = search;
 
-	const newApis = ['party', 'catalog', 'ordering', 'inventory', 'service', 'resource', 'account', 'serviceInventory', 'resourceInventory', 'usage', 'billing', 'quote', 'revenue', 'invoicing', 'search']
+	const newApis = ['party', 'catalog', 'ordering', 'inventory', 'service', 'resource', 'account', 'serviceInventory', 'resourceInventory', 'usage', 'billing', 'quote', 'revenue', 'invoicing', 'search-bck']
 
 	const getAPIName = function(apiUrl) {
 		return apiUrl.split('/')[1];
