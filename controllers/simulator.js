@@ -172,9 +172,9 @@ function simulator() {
             return res.status(400).send('Error retrieving parties');
         }
 
+        body.productOrder = order
         console.log(JSON.stringify(body))
 
-        body.productOrder = order
         axios({
             method: req.method,
             url: simUrl,
@@ -195,8 +195,39 @@ function simulator() {
         });
     }
 
+    const simulateRaw = async (req, res) => {
+        let targetUrl = config.billingEngineUrl;
+
+        if (!targetUrl) {
+            logger.error('TARGET_URL is not defined');
+            return res.status(500).send('Internal Server Error');
+        }
+
+        let simUrl = targetUrl;
+
+        axios({
+            method: req.method,
+            url: simUrl,
+            data: req.body,
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            res.status(response.status).send(response.data);
+        })
+        .catch(error => {
+            logger.error('Error making request to target service:', error);
+            if (error.response && error.response.data) {
+                return res.status(error.response.status).send(error.response.data);
+            }
+            res.status(500).send('Internal Server Error');
+        });
+    }
+
     return {
-        simulate: simulate
+        simulate: simulate,
+        simulateRaw: simulateRaw
     }
 }
 
