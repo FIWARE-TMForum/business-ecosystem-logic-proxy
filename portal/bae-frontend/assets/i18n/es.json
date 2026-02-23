@@ -166,7 +166,14 @@
         "_view_serv": "View services",
         "_close_menu": "Close menu",
         "_all_catalogs": "All catalogues",
-        "_categories_single": "Categories"
+        "_categories_single": "Categories",
+        "_ai_search_ph": "Ask AI about products and services...",
+        "_ai_search": "AI Search",
+        "_ai_answer": "AI Answer",
+        "_ai_thinking": "AI is thinking...",
+        "_relevant_products": "relevant products",
+        "_prev": "Previous",
+        "_next": "Next"
     },
     "FEATURED": {
         "_title": "Featured offerings",

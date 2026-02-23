@@ -292,6 +292,13 @@ config.endpoints = {
         apiPath: '',
         host: 'search-service-svc.billing.svc.cluster.local',
         port: '8080'
+    },
+    ai: {
+        path: 'ai',
+        apiPath: '',
+        host: 'dome.expertcustomers.ai',
+        port: '443',
+        appSsl: true
     }
 };
 
@@ -729,13 +736,40 @@ config.analytics = process.env.BAE_LP_ANALYTICS_URL || config.analytics;
 config.defaultId = '';
 
 // Purchase enabled
-config.purchaseEnabled = false;
+config.purchaseEnabled = true
 if (!!process.env.BAE_LP_PURCHASE_ENABLED) {
     config.purchaseEnabled = process.env.BAE_LP_PURCHASE_ENABLED == 'true';
 }
 
-config.operatorId = ''
+config.operatorId = '64322eda-41a7-44eb-946a-223fef6e3183'
 config.operatorId = process.env.BAE_LP_OPERATOR_ID || config.operatorId;
 
-config.partyLocation = 'https://raw.githubusercontent.com/Ficodes/tmf-schemas/refs/heads/main/schemas/relatedPartyRef.schema.json'
+//config.partyLocation = 'https://raw.githubusercontent.com/Ficodes/tmf-schemas/refs/heads/main/schemas/relatedPartyRef.schema.json'
+config.partyLocation = 'https://raw.githubusercontent.com/DOME-Marketplace/tmf-api/refs/heads/main/schemas/EngagedParty/RelatedParty.schema.json'
 config.partyLocation = process.env.BAE_LP_PARTY_LOCATION || config.partyLocation;
+
+
+
+// AI Search configuration
+config.aiEnabled = false;
+if (!!process.env.BAE_LP_AI_ENABLED) {
+    config.aiEnabled = process.env.BAE_LP_AI_ENABLED == 'true';
+}
+
+config.aiApiKey = '28791420a51be86495cab108f32221fa458469e29a04b33567b057c95878bd72'
+config.aiApiKey = process.env.BAE_LP_AI_API_KEY || config.aiApiKey;
+
+config.aiApiUrl = '/ai/rag/'
+config.aiApiUrl = process.env.BAE_LP_AI_API_PATH || config.aiApiUrl;
+
+config.aiSearchProfile = 'dome_prod'
+config.aiSearchProfile = process.env.BAE_LP_AI_SEARCH_PROFILE || config.aiSearchProfile;
+
+// Proxy redirect for AI service
+config.endpoints.ai.apiPath = process.env.BAE_LP_ENDPOINT_AI_PATH || config.endpoints.ai.apiPath;
+config.endpoints.ai.port = process.env.BAE_LP_ENDPOINT_AI_PORT || config.endpoints.ai.port;
+config.endpoints.ai.host = process.env.BAE_LP_ENDPOINT_AI_HOST || config.endpoints.ai.host;
+
+if (!!process.env.BAE_LP_ENDPOINT_AI_SECURED) {
+    config.endpoints.ai.appSsl = process.env.BAE_LP_ENDPOINT_AI_SECURED == 'true';
+}
