@@ -419,7 +419,8 @@ app.get('/config', async (_, res) => {
         analytics: config.analytics,
         theme: config.theme,
         quotesEnabled: config.quoteEnabled,
-        tenderingEnabled: config.tenderingEnabled
+        tenderingEnabled: config.tenderingEnabled,
+        learUrl: config.learUrl
     })
 })
 
@@ -554,6 +555,7 @@ for (var p in config.publicPaths) {
 //
 // BILLING ENGINE
 app.post('/billing/order', authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, simulator.simulate)
+app.post('/billing/orderRaw', authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, simulator.simulateRaw)
 
 //
 // Access to TMForum APIs

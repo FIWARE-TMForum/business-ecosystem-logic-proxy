@@ -71,7 +71,7 @@ function tmf() {
 	apiControllers[config.endpoints.invoicing.path] = invoicing;
 	apiControllers[config.endpoints.search.path] = search;
 
-	const newApis = ['party', 'catalog', 'ordering', 'inventory', 'service', 'resource', 'account', 'serviceInventory', 'resourceInventory', 'usage', 'billing', 'quote', 'revenue', 'invoicing', 'search']
+	const newApis = ['party', 'catalog', 'ordering', 'inventory', 'service', 'resource', 'account', 'serviceInventory', 'resourceInventory', 'usage', 'billing', 'quote', 'revenue', 'invoicing', 'search-bck']
 
 	const getAPIName = function(apiUrl) {
 		return apiUrl.split('/')[1];
@@ -285,7 +285,7 @@ function tmf() {
 				options.data = req.body;
 			}
 
-			if (url.indexOf('/media/') >= 0) {
+			if (url.indexOf('/media/') >= 0 || url.indexOf('/invoicing/') >= 0) {
 				options.responseType = 'arraybuffer'
 
 				// Dissable default browser cache headers

@@ -288,7 +288,7 @@ config.endpoints = {
         port: '8080'
     },
     search: {
-        path: 'search',
+        path: 'search-bck',
         apiPath: '',
         host: 'search-service-svc.billing.svc.cluster.local',
         port: '8080'
@@ -706,6 +706,9 @@ config.domeGuidelines = process.env.BAE_LP_DOME_GUIDELINES || config.domeGuideli
 
 config.quoteApi = '/quote/quoteManagement';
 config.quoteApi = process.env.BAE_LP_QUOTE_API || config.quoteApi;
+
+config.learUrl = '';
+config.learUrl = process.env.BAE_LP_LEAR_URL || config.learUrl;
 
 config.quoteEnabled = true;
 if (!!process.env.BAE_LP_QUOTE_ENABLED) {
