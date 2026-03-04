@@ -734,6 +734,11 @@ if (!!process.env.BAE_LP_PURCHASE_ENABLED) {
     config.purchaseEnabled = process.env.BAE_LP_PURCHASE_ENABLED == 'true';
 }
 
+config.dataSpaceEnabled = false;
+if (!!process.env.BAE_LP_DATASPACE_ENABLED) {
+    config.dataSpaceEnabled = process.env.BAE_LP_DATASPACE_ENABLED == 'true';
+}
+
 config.operatorId = ''
 config.operatorId = process.env.BAE_LP_OPERATOR_ID || config.operatorId;
 
