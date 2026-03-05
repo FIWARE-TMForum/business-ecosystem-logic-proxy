@@ -381,6 +381,12 @@ app.get('/config', async (_, res) => {
     config.defaultId = await fetchData()
 
     res.send({
+        ai: {
+            aiEnabled: config.aiEnabled ? config.aiEnabled : false,
+            aiApiKey: config.aiApiKey,
+            aiApiUrl: config.aiApiUrl,
+            aiSearchProfile: config.aiSearchProfile
+        },
         siop: {
             enabled: config.siop.enabled,
             isRedirection: config.siop.isRedirection,
