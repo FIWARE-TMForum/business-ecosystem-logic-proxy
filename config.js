@@ -741,7 +741,12 @@ if (!!process.env.BAE_LP_PURCHASE_ENABLED) {
     config.purchaseEnabled = process.env.BAE_LP_PURCHASE_ENABLED == 'true';
 }
 
-config.operatorId = '64322eda-41a7-44eb-946a-223fef6e3183'
+config.dataSpaceEnabled = false;
+if (!!process.env.BAE_LP_DATASPACE_ENABLED) {
+    config.dataSpaceEnabled = process.env.BAE_LP_DATASPACE_ENABLED == 'true';
+}
+
+config.operatorId = ''
 config.operatorId = process.env.BAE_LP_OPERATOR_ID || config.operatorId;
 
 //config.partyLocation = 'https://raw.githubusercontent.com/Ficodes/tmf-schemas/refs/heads/main/schemas/relatedPartyRef.schema.json'
