@@ -58,7 +58,6 @@ describe('VC Strategy', () => {
                     verifierTokenURL: config.verifierHost + config.verifierTokenPath,
                     verifierJWKSURL: config.verifierHost + config.verifierJWKSPath,
                     redirectURI: config.callbackURL,
-                    allowedRoles: config.allowedRoles,
                     clientID: config.clientID,
                     privateKey: config.privateKey,
                     isRedirection: false,
