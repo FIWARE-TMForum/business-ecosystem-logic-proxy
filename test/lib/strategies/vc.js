@@ -392,6 +392,85 @@ describe('VC Strategy', () => {
             }])
         })
 
+        it('should build a vc with a non LEAR credential type as LegalPersonCredential', () => {
+            const payload = {
+                "verifiableCredential": {
+                    "credentialSubject": {
+                      "email": "admin@test.com",
+                      "familyName": "User",
+                      "firstName": "Admin",
+                      "roles": [
+                        {
+                          "names": [
+                            "admin"
+                          ],
+                          "target": "did:web:keycloak.example.org"
+                        }
+                      ],
+                      "type": "gx:NaturalParticipant"
+                    },
+                    "issuer": "did:web:keycloak.example.org",
+                    "type": [
+                      "VerifiableCredential",
+                      "KeycloakCredential"
+                    ],
+                    "validFrom": "2024-01-09T10:12:54Z"
+                }
+            }
+
+            const credential = new VerifiableCredential(payload)
+            const profile = credential.getProfile()
+
+            expect(profile.id).toEqual('admin@test.com')
+            expect(profile.email).toEqual('admin@test.com')
+            expect(profile.username).toEqual('admin')
+            expect(profile.issuerDid).toEqual('did:web:keycloak.example.org')
+            expect(profile.idpId).toEqual('did:web:keycloak.example.org')
+            expect(profile.roles).toEqual([ { id: 'admin', name: 'admin' } ])
+            expect(profile.organizations).toEqual([{
+                id: 'did:web:keycloak.example.org',
+                name: 'did:web:keycloak.example.org',
+                roles: [
+                    { name: nodeConfig.roles.seller, id: nodeConfig.roles.seller },
+                    { name: nodeConfig.roles.customer, id: nodeConfig.roles.customer },
+                    { name: nodeConfig.roles.orgAdmin, id: nodeConfig.roles.orgAdmin }
+                ]
+            }])
+        })
+
+        it('should build a vc from verifiablePresentation with non LEAR credential type as LegalPersonCredential', () => {
+            const payload = {
+                "verifiablePresentation": [{
+                    "credentialSubject": {
+                      "email": "admin@test.com",
+                      "familyName": "User",
+                      "firstName": "Admin",
+                      "roles": [
+                        {
+                          "names": [
+                            "admin"
+                          ],
+                          "target": "did:web:keycloak.example.org"
+                        }
+                      ]
+                    },
+                    "issuer": "did:web:keycloak.example.org",
+                    "type": [
+                      "VerifiableCredential",
+                      "KeycloakCredential"
+                    ]
+                }]
+            }
+
+            const credential = new VerifiableCredential(payload)
+            const profile = credential.getProfile()
+
+            expect(profile.id).toEqual('admin@test.com')
+            expect(profile.email).toEqual('admin@test.com')
+            expect(profile.issuerDid).toEqual('did:web:keycloak.example.org')
+            expect(profile.roles).toEqual([ { id: 'admin', name: 'admin' } ])
+        })
+
         it('should build a vc with a LEARCredential', () => {
             const payload = {
                 "verifiableCredential": {
