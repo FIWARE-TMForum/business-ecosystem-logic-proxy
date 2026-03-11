@@ -530,7 +530,10 @@
         "_cancel_sub": "Are you sure you want to cancel this subscription?",
         "_cancel": "No, cancel",
         "_yes_sure": "Yes, I'm sure",
-        "_renew_sub": "Are you sure you want to renew this subscription?"
+        "_renew_sub": "Are you sure you want to renew this subscription?",
+        "_modify_chars": "Modify Characteristics",
+        "_select_billing": "Select a billing address",
+        "_confirm_modify": "Confirm Modification"
     },
     "BILLING": {
         "_title": "Title",
@@ -1257,6 +1260,11 @@
         "_as_provider": "As Provider",
         "_date": "Date",
         "_actions": "Actions",
+        "_items_action": "Items Action",
+        "_filter_action": "Filter by action",
+        "_action_add": "Add",
+        "_action_modify": "Modify",
+        "_action_delete": "Delete",
         "_order_details": "Order details:",
         "_customer_info": "Customer Info:",
         "_name": "Name",
