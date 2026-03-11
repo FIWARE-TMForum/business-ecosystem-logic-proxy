@@ -865,6 +865,13 @@ const catalog = (function() {
             }
         }
 
+        if (productSpec && productSpec.productSpecCharacteristic && !tmfUtils.validateCharacteristics(productSpec.productSpecCharacteristic)){
+            return callback({
+                    status: 422,
+                    message: "Invalid product spec characteristics"
+                });
+        }
+
         // Check if the product is a bundle
         if (!productSpec.isBundle) {
             return callback(null);
