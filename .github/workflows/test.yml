@@ -3,7 +3,7 @@ name: Tests
 on:
   push:
     branches:
-      - feat/dome-landing-v2
+      - master
 
   pull_request:
     branches:
@@ -58,8 +58,8 @@ jobs:
           context: .
           file: ./docker/Dockerfile
           tags: |
-            fiware/biz-ecosystem-logic-proxy:11.11.2-rc2
-          push: ${{ github.ref == 'refs/heads/feat/dome-landing-v2' }}
+            fiware/biz-ecosystem-logic-proxy:master
+          push: ${{ github.ref == 'refs/heads/master' }}
 
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
