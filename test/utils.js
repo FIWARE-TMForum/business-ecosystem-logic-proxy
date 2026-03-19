@@ -207,6 +207,7 @@ var defaultConfig = {
 		}
 	},
 	revenueModel: 30,
+	complianceServerUrl: 'https://compliance.com',
 	indexes: {
 		'engine': 'local', // 'elastic_indexes.js' if using elasticsearch
 		'elasticHost': 'http://imaginary-elastic.docker:9200/' // hostname:port

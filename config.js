@@ -699,6 +699,9 @@ config.ticketingUrl = process.env.BAE_LP_TICKETING_URL || config.ticketingUrl;
 config.searchUrl = '';
 config.searchUrl = process.env.BAE_LP_SEARCH_URL || config.searchUrl;
 
+config.complianceServerUrl = '';
+config.complianceServerUrl = process.env.BAE_LP_COMPLIANCE_SERVER_URL || config.complianceServerUrl;
+
 config.billingEngineUrl = '';
 config.billingEngineUrl = process.env.BAE_LP_BILLING_ENGINE_URL || config.billingEngineUrl;
 
