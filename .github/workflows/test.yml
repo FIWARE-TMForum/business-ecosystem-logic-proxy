@@ -58,7 +58,7 @@ jobs:
           context: .
           file: ./docker/Dockerfile
           tags: |
-            fiware/biz-ecosystem-logic-proxy:11.14.0-rc1
+            fiware/biz-ecosystem-logic-proxy:11.14.0-rc2
           push: ${{ github.ref == 'refs/heads/feat/compliance-api' }}
 
       - name: Image digest
