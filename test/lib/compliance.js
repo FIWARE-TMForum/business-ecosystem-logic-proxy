@@ -182,7 +182,7 @@ describe('Compliance client', function() {
             });
 
             expect(calledOptions.url).toBe(
-                'https://dome-certification.dome-marketplace.eu/api/v1/productoffering/certificate'
+                'https://dome-certification.dome-marketplace.eu/api/v1/product-offering/certificate'
             );
             expect(calledOptions.method).toBe('POST');
             expect(calledOptions.headers.Authorization).toBe('Bearer access-token');
