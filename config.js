@@ -753,6 +753,9 @@ config.operatorId = process.env.BAE_LP_OPERATOR_ID || config.operatorId;
 config.partyLocation = 'https://raw.githubusercontent.com/DOME-Marketplace/tmf-api/refs/heads/main/schemas/EngagedParty/RelatedParty.schema.json'
 config.partyLocation = process.env.BAE_LP_PARTY_LOCATION || config.partyLocation;
 
+config.extBillingAndParty = 'https://raw.githubusercontent.com/DOME-Marketplace/tmf-api/refs/heads/main/DOME/ExternallyBilled.schema.json'
+config.extBillingAndParty = process.env.BAE_LP_EXT_BILL_PARTY || config.extBillingAndParty;
+
 
 
 // AI Search configuration

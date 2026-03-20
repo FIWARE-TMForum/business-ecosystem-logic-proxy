@@ -391,10 +391,21 @@ const catalog = (function() {
             }
         }
 
+        if (newBody && previousBody) {
+            const hasPla = newBody.pricingLogicAlgorithm?.[0]?.plaSpecId;
+            const hadPla = previousBody.pricingLogicAlgorithm?.[0]?.plaSpecId;
+            /**
+             * If the external billing url is removed, it will remain as pricingAlgorithmLogic: [] (due to API limitations)
+             * So it is necessary to leave the schema location with the externalBilling schema.
+             */
+            if (hasPla || hadPla) {
+                newBody["@schemaLocation"] = config.extBillingAndParty;
+            }
+        }
+
         if(newBody && newBody['category']){
             const dict = {}
-            newBody['category'] = newBody
-            ['category'].filter((category) => { 
+            newBody['category'] = newBody['category'].filter((category) => {
                 if(dict[category.id]) return false
                 else{
                     dict[category.id] = 1
