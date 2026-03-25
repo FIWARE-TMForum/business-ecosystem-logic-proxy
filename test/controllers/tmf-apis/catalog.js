@@ -5056,6 +5056,10 @@ describe('Catalog API', function() {
             });
         };
 
+        const protocol = config.endpoints.catalog.appSsl ? 'https' : 'http';
+        const serverUrl = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
+        const defaultCatalogPath = '/api/catalog/' + config.defaultId;
+
         it('should properly order the response when quering by ID', (done) => {
             const req = {
                 method: 'GET',
@@ -5281,6 +5285,82 @@ describe('Catalog API', function() {
                     expect(storeMock.attachOffering).not.toHaveBeenCalled();
                     expect(storeMock.updateOffering).not.toHaveBeenCalled();
                     expect(storeMock.attachUpgradedProduct).not.toHaveBeenCalled();
+                },
+                done
+            );
+        });
+
+        it('should add root categories without parentId to the default catalog', function(done) {
+            const req = {
+                method: 'POST',
+                apiUrl: '/category',
+                body: {
+                    id: 'cat-1',
+                    href: 'http://example.com/category/cat-1',
+                    name: 'Category 1',
+                    isRoot: true
+                }
+            };
+
+            const existingCategory = {
+                id: 'existing-cat',
+                href: 'http://example.com/category/existing-cat',
+                name: 'Existing category'
+            };
+
+            let updatePayload = null;
+
+            const retrieveScope = nock(serverUrl)
+                .get(defaultCatalogPath)
+                .reply(200, { category: [existingCategory] });
+            const updateScope = nock(serverUrl)
+                .patch(defaultCatalogPath, (payload) => {
+                    updatePayload = payload;
+                    return true;
+                })
+                .reply(200, {});
+
+            testPostValidation(
+                req,
+                () => {
+                    expect(retrieveScope.isDone()).toBe(true);
+                    expect(updateScope.isDone()).toBe(true);
+                    expect(updatePayload).toEqual({
+                        category: [
+                            existingCategory,
+                            {
+                                id: 'cat-1',
+                                href: 'http://example.com/category/cat-1',
+                                name: 'Category 1'
+                            }
+                        ]
+                    });
+                },
+                done
+            );
+        });
+
+        it('should not add non-root categories to the default catalog', function(done) {
+            const req = {
+                method: 'POST',
+                apiUrl: '/category',
+                body: {
+                    id: 'cat-child',
+                    href: 'http://example.com/category/cat-child',
+                    name: 'Category child',
+                    isRoot: false,
+                    parentId: 'cat-parent'
+                }
+            };
+
+            const retrieveScope = nock(serverUrl)
+                .get(defaultCatalogPath)
+                .reply(200, { category: [] });
+
+            testPostValidation(
+                req,
+                () => {
+                    expect(retrieveScope.isDone()).toBe(false);
                 },
                 done
             );

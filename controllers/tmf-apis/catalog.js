@@ -1624,6 +1624,17 @@ const catalog = (function() {
             return callback(null)
         } else if (req.method == 'POST' && categoriesPattern.test(req.apiUrl)) {
             body = req.body
+            const hasParentId = !!body && Object.prototype.hasOwnProperty.call(body, 'parentId');
+            const parentIdEmpty =
+                !hasParentId ||
+                body.parentId == null ||
+                (typeof body.parentId === 'string' && body.parentId.trim() === '');
+            const shouldAttachToDefaultCatalog = !!body && body.isRoot === true && parentIdEmpty;
+
+            if (!shouldAttachToDefaultCatalog) {
+                return callback(null);
+            }
+
             retrieveAsset(`/catalog/${config.defaultId}`, function(err, result) {
             if (err) {
                 if (err.status == 404) {
