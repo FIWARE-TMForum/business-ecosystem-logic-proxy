@@ -168,6 +168,7 @@
       "title": "A secure federated marketplace",
       "subtitle": "EU-based compliance & data sovereignty framework with a growing ecosystem of B2B partners.",
       "services": "Verified services available across the ecosystem",
+      "sectors": "Industry sectors covered across the EU",
       "providers": "Registered and verified providers"
     },
     "_title": "DOME Marketplace is out! See what's new",
@@ -231,6 +232,329 @@
       "_title": "Best react libraries around the web",
       "_description": "Static websites are now used to bootstrap lots of websites and are becoming the basis for a variety of tools that even influence both web designers and developers.",
       "_more": "Read more"
+    }
+  },
+  "LANDINGPAGE": {
+    "providers": {
+      "badge": "For providers",
+      "titleLine1": "Scale Across Europe.",
+      "titleHighlight": "Sell with Trust",
+      "titleLine2": " Built In.",
+      "description": "Get discovered by organisations actively seeking sovereign, compliant, EU-based digital solutions — and give them the trust evidence they need to shortlist you faster.",
+      "primaryCta": "Start Provider onboarding",
+      "secondaryCta": "Request more info",
+      "trust": {
+        "titleStart": "Turn ",
+        "titleHighlight": "Trust & Sovereignty",
+        "titleLine2": "Into Competitive",
+        "titleLine3": "Advantage",
+        "description": "European buyers increasingly require trusted and compliant digital services. DOME helps providers turn these expectations into visible commercial advantages.",
+        "cards": {
+          "euBasedProviders": {
+            "title": "EU-Based Providers",
+            "description": "Position your services as a trusted European alternative."
+          },
+          "transparency": {
+            "title": "Transparency",
+            "description": "Security, Compliance & Trust: Make certifications and trust signals visible to buyers."
+          },
+          "trustedSourcing": {
+            "title": "Trusted sourcing",
+            "description": "Structured procurement ensuring trust, comparability, and transparency for buyers."
+          },
+          "dataSovereignty": {
+            "title": "Data Sovereignty",
+            "description": "Demonstrate where and how data is handled and protected."
+          }
+        }
+      },
+      "whyJoinDome": {
+        "title": "Why join DOME?",
+        "subtitle": "This is a first-mover opportunity in a federated European marketplace built around trust.",
+        "cards": {
+          "data": {
+            "title": "Data",
+            "highlight": "sovereignty",
+            "description": "Respond to growing customer demands around security, compliance and data sovereignty."
+          },
+          "trust": {
+            "title": "Trust",
+            "highlight": "visibility",
+            "description": "Present the evidence customers need to assess your service with confidence."
+          },
+          "easier": {
+            "title": "Easier",
+            "highlight": "evaluation",
+            "description": "Help customers understand, compare and shortlist your service."
+          },
+          "market": {
+            "title": "Market",
+            "highlight": "reach",
+            "description": "Connect with new customers and expand across multiple European markets."
+          }
+        }
+      },
+      "goodFit": {
+        "titleStart": "Are You a ",
+        "titleAccent": "Good Fit",
+        "titleEnd": "?",
+        "description": "If your value proposition includes compliance, transparency, EU data handling, or digital sovereignty — DOME strengthens it.",
+        "cards": {
+          "cloud": {
+            "title": "Cloud, Edge & Infrastructure Providers",
+            "desc": "IaaS, PaaS, sovereign cloud, edge computing, managed infrastructure services operating in Europe."
+          },
+          "saas": {
+            "title": "B2B SaaS & Software Providers",
+            "desc": "Enterprise and vertical SaaS, data, AI, cybersecurity, DevOps, and compliance-relevant software serving professional customers."
+          },
+          "deepTech": {
+            "title": "Deep-Tech Startups, Scale-ups & SMEs",
+            "desc": "European B2B technology providers (AI, data, edge, IoT, HPC) competing on quality, trust, and innovation."
+          },
+          "publicSector": {
+            "title": "Public-Sector & Regulated-Market Specialists",
+            "desc": "Vendors specialised in public administration, healthcare, finance, energy, telecom, transport, or critical infrastructure."
+          }
+        }
+      },
+      "procureSteps": {
+        "title": "Procure in a <span class='text-[#2D58A7]'>few steps</span>",
+        "subtitle": "A simple, structured journey from discovery to procurement — built for trust at every stage.",
+        "steps": {
+          "step1": "Create your provider profile",
+          "step2": "Verify your organisation",
+          "step3": "Publish your services",
+          "step4": "Start receiving requests"
+        }
+      },
+      "included": {
+        "title": "What's Included for Providers",
+        "cards": {
+          "onboarding": {
+            "title": "Qualified Onboarding",
+            "description": "Guided onboarding, organisation verification, and trust credentials."
+          },
+          "procurement": {
+            "title": "Procurement-ready listings",
+            "description": "Structured service listings built for instant procurement."
+          },
+          "trust": {
+            "title": "Trust Frameworks",
+            "description": "Standardised trust indicators (with supporting evidence) for security, certifications, and data-handling claims."
+          },
+          "performance": {
+            "title": "Performance insights",
+            "description": "Reporting and Analytics dashboard covering visibility, engagement, commercial and financial performance."
+          },
+          "advanced": {
+            "title": "Advanced procurement tools",
+            "description": "Tailored offer requests and structured tender-like sourcing flows."
+          },
+          "commercial": {
+            "title": "Commercial enablement",
+            "description": "Usage tracking, billing/invoicing support, and revenue-share calculation aligned with marketplace rules."
+          },
+          "operational": {
+            "title": "Operational support",
+            "description": "Customer Support, Knowledge base, training materials."
+          },
+          "marketing": {
+            "title": "Marketing support",
+            "description": "Marketplace-led promotion to increase visibility and demand."
+          },
+          "federated": {
+            "title": "Federated European reach",
+            "description": "Catalogue distribution across connected marketplaces via federation."
+          }
+        }
+      },
+      "faqs": {
+        "title": "FAQs",
+        "_items": {
+          "1": {
+            "question": "Am I eligible to become a DOME Marketplace provider?",
+            "answer": "To join the DOME Marketplace as a service provider, your organisation must meet the following criteria:<ul class='list-disc pl-6 mt-4 space-y-3'><li><strong>EU/EEA establishment:</strong> Your organisation must be a legally registered entity within the EU/EEA, or have a legal entity established in the EU/EEA (e.g., a subsidiary, branch, or other registered entity).</li><li><strong>Service ownership:</strong> You must offer cloud, edge, or digital services that your organisation owns and operates, not acting solely as a reseller of third-party services.</li><li><strong>B2B/B2G focus:</strong> Your target customers must be businesses, public organisations, or professionals, not individual consumers.</li></ul>"
+          },
+          "2": {
+            "question": "Are my services eligible to be listed on the DOME Marketplace?",
+            "answer": "Your services are eligible to be listed if they meet the mandatory compliance criteria defined by the DOME compliance framework.<br><br>DOME applies the following compliance profiles:<ul class='list-disc pl-6 mt-4 space-y-3'><li><strong>Baseline:</strong> Your offering can be listed with a Baseline status if it meets the mandatory criteria through self-attestation (self-assessed compliance), even if it does not have formal certifications.</li><li><strong>Professional / Professional+:</strong> Your offering may qualify for Professional or Professional+ if it is supported by certified compliance evidence (valid certifications). The level achieved depends on the type and number of valid certifications, in line with DOME requirements.</li><li><strong>Non-compliant:</strong> If your offering fails one or more mandatory compliance criteria—based on self-attestation and/or certification checks—it is classified as non-compliant and cannot be published in the official DOME catalogue.</li></ul><br>Services published on DOME must meet at least the <strong>Baseline</strong> compliance requirements.<br><br>More information on the compliance profiles and their criteria can be found <a href='https://knowledgebase.dome-marketplace.eu/books/dome-compliance-policy-v10' target='_blank' class='text-[#2D58A7] underline'>here</a>."
+          },
+          "3": {
+            "question": "Do I need to pay a fee to become a DOME Marketplace provider?",
+            "answer": "No. There is currently no upfront fee to join the DOME Marketplace.<br>DOME operates on a revenue-sharing model, meaning providers only pay a small fee when a service is successfully sold through the DOME marketplace.<br><br><em>Please note that DOME does not intervene in the commercial relationship or service delivery but only enables discovery, evaluation, and transactions between providers and customers.</em><br><br>You can find more information on the DOME pricing model <a href='https://knowledgebase.dome-marketplace.eu/books/dome-marketplace-pricing-for-providers' target='_blank' class='text-[#2D58A7] underline'>here</a>."
+          },
+          "4": {
+            "question": "What information and documentation are required to onboard DOME as a provider?",
+            "answer": "To onboard as a provider, you will be asked to provide basic organisational details, nominate key roles, and submit supporting documentation for verification.<br><br><strong>Required information</strong><ul class='list-disc pl-6 mt-4 space-y-3'><li><strong>Company information:</strong> Legal name, VAT number, country, city, registered office address, postal code</li><li><strong>Legal Representative information:</strong> Identification and contact details of the individual legally representing the company</li><li><strong>Account Administrator information:</strong> Identification and contact details of the individual responsible for managing the organisation’s account on DOME (this can also be the same person as the Legal Representative)</li></ul><br><strong>Required documentation</strong><br><br>You have to provide the Account Administrator Appointment form duly signed.<br><br>If the Appointment form is signed using an eIDAS for legal entity representatives certificate, nothing additional is required from your side. Otherwise, you have to additionally provide evidence of the existence of the company and the capacity to represent the company of the Legal Representative. Typically, this is achieved through the submission of a <strong>Certificate of Incorporation of the company</strong>, clearly indicating the legal representatives authorised to represent the company. If this information is not reflected in the incorporation document, an additional <strong>Power of Attorney</strong> (or equivalent document) must be provided. When the original documentation is not issued in English, you will have to submit an English translation of the said documents."
+          },
+          "5": {
+            "question": "What is the process for becoming a DOME Marketplace provider?",
+            "answer": "The onboarding process is straightforward and can be completed in <strong>two steps</strong>:<br><br><strong>Step 1 – Self-registration</strong><br>You can quickly create a company account and access the platform. Once you receive your verifiable credentials, you can browse the marketplace, review existing offerings, prices and commercial models, even procure services while starting drafting your own service listings. This step allows you to explore and prepare, but it does <strong>not</strong> allow you to publish services or sell through the marketplace.<br><br><strong>Step 2 – Full onboarding</strong><br>To publish services and start selling through the DOME Marketplace, you must complete the full onboarding process by submitting the required company and role information, along with the supporting documentation described above. Once verification is completed and your onboarding is approved, your organisation can publish its services and start selling on the DOME Marketplace."
+          },
+          "6": {
+            "question": "I am registered as a DOME marketplace provider. Can I also procure services?",
+            "answer": "<strong>Yes.</strong> If you are registered as a provider on the DOME Marketplace, your organisation can also procure services as a customer. The same company account can be used to browse, request offers, and purchase services from other providers on the platform."
+          }
+        }
+      },
+      "cta": {
+        "title": "Ready to <span class='text-[#10B7E8]'>grow your business</span> across Europe?",
+        "subtitle": "Join DOME Marketplace — built for trusted digital service procurement in Europe",
+        "primaryButton": "Start Provider onboarding",
+        "secondaryButton": "Request more info"
+      }
+    },
+    "customers": {
+      "faqs": {
+        "title": "FAQs",
+        "_items": {
+          "eligibility": {
+            "question": "Am I eligible to use the DOME Marketplace as a customer?",
+            "answer": "<p>The DOME Marketplace is designed for <strong>organisations or professionals worldwide looking to procure trusted digital services in a transparent environment.</strong></p><p>You can use the DOME Marketplace if you represent:</p><ul><li><strong>Businesses (B2B)</strong> seeking cloud, edge, AI, or digital services</li><li><strong>Public sector organisations (B2G)</strong> such as public administrations, agencies, or research institutions</li><li><strong>Professional organisations</strong> purchasing digital services for operational use</li></ul><p>Or you are an <strong>individual</strong> acting within his/her trade, business or professional activities. That is, an individual not acting as a consumer.</p>"
+          },
+          "trustworthiness": {
+            "question": "How does DOME ensure the trustworthiness of the services listed on the Marketplace?",
+            "answer": "<p>Services listed on the DOME Marketplace are evaluated against the <strong>DOME compliance framework</strong>, which helps customers understand the level of compliance and supporting evidence behind each offering.</p><p>Each service is assigned a <strong>compliance profile</strong>, such as:</p><ul><li><strong>Baseline</strong> – The service meets the mandatory compliance requirements through provider self-attestation.</li><li><strong>Professional / Professional+</strong> – The service is supported by verified certifications and compliance evidence.</li></ul><p>This structured approach allows customers to assess services more easily, compare offerings transparently, and select solutions that align with their compliance and governance requirements.</p><p>Services that do not meet at least the <strong>Baseline Compliance Criteria</strong> are <strong>not published</strong> in the DOME catalogue.</p><p>You can find more information on the DOME Compliance framework <a href=\"https://knowledgebase.dome-marketplace.eu/books/dome-compliance-policy-v10\" target=\"_blank\" rel=\"noopener noreferrer\">here</a></p>"
+          },
+          "fee": {
+            "question": "Do I need to pay a fee to become a DOME Marketplace customer?",
+            "answer": "<p><strong>No.</strong> There is no fee for organisations and professionals to join and use the DOME Marketplace as a customer.</p><p><em>Please note that DOME does not intervene in the commercial relationship or service delivery but only enables discovery, evaluation, and transactions between providers and customers.</em></p>"
+          },
+          "process": {
+            "question": "What is the process for becoming a DOME Marketplace customer?",
+            "answer": "<p>Customer onboarding is completed in a single step. You provide:</p><ul><li>Company information (legal name, VAT, address, country)</li><li>Company Representative information (information of the person acting on behalf of the organisation)</li></ul><p>Once submitted, you receive your verifiable credentials and gain full access to the DOME platform.</p><p>If you are a professional (freelancer):</p><p>You onboard as an organisation. In this case, the company/legal name should match your professional name (as registered for your professional activity).</p>"
+          },
+          "provider": {
+            "question": "I am registered as a DOME marketplace customer. Can I also be a service provider?",
+            "answer": "<p><strong>Yes.</strong> If you are already registered as a <strong>customer on the DOME Marketplace</strong>, you can also <strong>sell services</strong>. To do so, you simply need to <strong>complete the provider onboarding process</strong>.</p><p>Your existing company account remains the same. By completing the additional onboarding steps required for providers, such as submitting the necessary company information and documentation, you will gain the ability to <strong>publish and offer services on the marketplace</strong>.</p><p>Once the provider onboarding is completed and verified, your organisation will be able to <strong>both procure services and sell its own offerings on DOME</strong>. You can find more information <a href=\"landingpage/providers\" target=\"_blank\" rel=\"noopener noreferrer\">here</a> and onboard as a DOME marketplace provider.</p>"
+          },
+          "dispute": {
+            "question": "What happens in case of a dispute with a service provider?",
+            "answer": "<p>Contracts for services are established <strong>directly between the customer and the provider</strong>. Any dispute related to pricing, service delivery, or contractual terms is therefore handled between the contracting parties, in accordance with the terms of their agreement and the applicable law.</p><p>DOME facilitates discovery and engagement between customers and providers and is <strong>not a party to the service contract</strong>. As such, DOME does not adjudicate contractual disputes but may, where appropriate, facilitate communication between the parties.</p>"
+          }
+        }
+      },
+      "finalCta": {
+        "titleStart": "Make ",
+        "titleAccent": "procurement easier",
+        "titleEnd": ", without losing control",
+        "description": "Join the marketplace designed for transparent, sovereign digital service procurement across Europe.",
+        "primaryCta": "Start Your Customer Journey",
+        "secondaryCta": "Request more info"
+      },
+      "procureSteps": {
+        "_titleStart": "Procure in a ",
+        "_titleAccent": "few steps",
+        "_subtitle": "A simple, structured journey from discovery to procurement — built for trust at every stage.",
+        "items": {
+          "step1": {
+            "_title": "Create your customer profile"
+          },
+          "step2": {
+            "_title": "Search and compare verified services"
+          },
+          "step3": {
+            "_title": "Buy “off-the-shelf” or request a tailored offer"
+          },
+          "step4": {
+            "_title": "Engage providers and complete procurement"
+          }
+        }
+      },
+      "buyOptions": {
+        "_title": "Choose how you buy",
+        "_subtitle": "Europe’s digital procurement landscape is evolving.",
+        "cards": {
+          "offTheShelf": {
+            "_titleLine1": "Buy “off-the-shelf”",
+            "_titleLine2": "services",
+            "_description": "Select pre-defined offerings with clear specifications, pricing, and terms — contract directly with providers."
+          },
+          "tailored": {
+            "_badge": "Most popular",
+            "_titleLine1": "Request a tailored",
+            "_titleLine2": "offer",
+            "_description": "Define requirements upfront, centralise clarifications, and receive structured proposals."
+          },
+          "tender": {
+            "_titleLine1": "Run a structured",
+            "_titleLine2": "tender-like process",
+            "_description": "Publish sourcing requests, receive comparable responses, and support transparent internal decision-making."
+          }
+        }
+      },
+      "hero": {
+        "_badge": "For customers",
+        "_titleLine1": "Procure Across Europe.",
+        "_titleAccent": "Buy with Trust",
+        "_titleLine2": " Built In.",
+        "_desc": "Discover verified, sovereignty-ready digital services and use clear trust evidence to shortlist faster and procure with confidence.",
+        "_ctaPrimary": "Start your customer journey",
+        "_ctaSecondary": "Request more info"
+      },
+      "rightForYou": {
+        "_titleStart": "Is ",
+        "_titleAccent": "DOME",
+        "_titleEnd": " right for you?",
+        "_desc": "DOME is designed for organisations that prioritise trust, sovereignty, and structured supplier evaluation.",
+        "_regulatedIndustriesTitle": "Regulated Industries",
+        "_regulatedIndustriesDesc": "Finance, insurance, healthcare, energy, telecom, transport.",
+        "_enterprisesTitle": "Enterprises (EU-First or Risk-Aware Procurement)",
+        "_enterprisesDesc": "Medium and large organisations seeking stronger control and comparable supplier selection.",
+        "_publicSectorTitle": "Public Sector and Publicly Funded Buyers",
+        "_publicSectorDesc": "Institutions that need traceable, policy-aligned procurement pathways and transparent service documentation.",
+        "_complianceTeamsTitle": "Compliance, Risk, and Governance Functions",
+        "_complianceTeamsDesc": "Teams that need clearer supplier evidence, sovereignty indicators, and structured evaluation inputs.",
+        "_structuredProcurementTitle": "Buyers Needing Structured Digital Procurement",
+        "_structuredProcurementDesc": "Organisations moving from fragmented discovery toward a more standardised way to compare, shortlist, and procure digital services."
+      },
+      "whyJoin": {
+        "_title": "Why join DOME?",
+        "_subtitle": "Europe’s digital procurement landscape is evolving.",
+        "_dataTitleStart": "Data ",
+        "_dataTitleAccent": "control",
+        "_dataDesc": "Identify services aligned with European data sovereignty expectations.",
+        "_crossTitleStart": "Stronger ",
+        "_crossTitleAccent": "cross-border access",
+        "_crossDesc": "Engage providers across Europe through a trusted marketplace environment.",
+        "_riskTitleStart": "Lower ",
+        "_riskTitleAccent": "supplier",
+        "_riskTitleEnd": " risk",
+        "_riskDesc": "Access structured service information and documentation to assess trusted providers.",
+        "_actionTitleStart": "Turn discovery ",
+        "_actionTitleAccent": "into action",
+        "_actionDesc": "Move from exploring the market to requesting offers or directly purchasing services."
+      },
+      "trusted": {
+        "_titleStart": "Access Trusted ",
+        "_titleAccent": "Digital Services",
+        "_titleEnd": " — All in One Place",
+        "_desc": "DOME connects you to a growing ecosystem of European providers validated against EU regulation.",
+        "values": {
+          "trustStandardised": "Trust is standardised",
+          "evidenceVisible": "Evidence is visible",
+          "comparisonSimplified": "Comparison is simplified"
+        },
+        "cards": {
+          "verifiedServices": {
+            "title": "Verified services",
+            "desc": "A consolidated, searchable catalogue of verified services."
+          },
+          "trustIndicators": {
+            "title": "Trust indicators",
+            "desc": "Clear trust indicators for security, compliance, and data sovereignty."
+          },
+          "documentation": {
+            "title": "Documentation",
+            "desc": "Transparent documentation and structured service descriptions."
+          },
+          "crossBorderAccess": {
+            "title": "Cross-border access",
+            "desc": "Cross-border access through federated European marketplaces."
+          }
+        }
+      }
     }
   },
   "GALLERY": {
@@ -387,55 +711,55 @@
       "_custom": "Custom",
       "_free": "Free"
     },
-    "PRODUCT_INVENTORY":{
-        "_loading": "Loading...",
-        "_products": "Products",
-        "_services": "Services",
-        "_resources": "Resources",
-        "_orders": "Orders",
-        "_not_found": "No products found.",
-        "_no_resources": "No resources found.",
-        "_no_services": "No services found.",
-        "_search_criteria": "Search criteria",
-        "_prod_details": "Product details",
-        "_description": "Description",
-        "_pricing": "Product pricing",
-        "_chars": "Product characteristics",
-        "_res_details": "Resource details",
-        "_res_chars": "Resource characteristics",
-        "_serv_details": "Service details",
-        "_serv_chars": "Service characteristics",
-        "_start_date": "Start operating date",
-        "_order_id": "Order Id",
-        "_state": "State",
-        "_status": "Status",
-        "_priority": "Priority",
-        "_desc": "Description",
-        "_price": "Price",
-        "_bill": "Billing address",
-        "_inventory": "Inventory",
-        "_feasibility": "Feasibility Checked",
-        "_designed": "Designed",
-        "_reserved": "Reserved",
-        "_inactive": "Inactive",
-        "_active": "Active",
-        "_terminated": "Terminated",
-        "_id": "Id",
-        "_standby": "Standby",
-        "_alarm": "Alarm",
-        "_available": "Available",
-        "_suspended": "Suspended",
-        "_unknown": "Unknown",
-        "_created": "Created",
-        "_unsubscribe": "Unsubscribe",
-        "_close_modal": "Close modal",
-        "_cancel_sub": "Are you sure you want to cancel this subscription?",
-        "_cancel": "No, cancel",
-        "_yes_sure": "Yes, I'm sure",
-        "_renew_sub": "Are you sure you want to renew this subscription?",
-        "_modify_chars": "Modify Characteristics",
-        "_select_billing": "Select a billing address",
-        "_confirm_modify": "Confirm Modification"
+    "PRODUCT_INVENTORY": {
+      "_loading": "Loading...",
+      "_products": "Products",
+      "_services": "Services",
+      "_resources": "Resources",
+      "_orders": "Orders",
+      "_not_found": "No products found.",
+      "_no_resources": "No resources found.",
+      "_no_services": "No services found.",
+      "_search_criteria": "Search criteria",
+      "_prod_details": "Product details",
+      "_description": "Description",
+      "_pricing": "Product pricing",
+      "_chars": "Product characteristics",
+      "_res_details": "Resource details",
+      "_res_chars": "Resource characteristics",
+      "_serv_details": "Service details",
+      "_serv_chars": "Service characteristics",
+      "_start_date": "Start operating date",
+      "_order_id": "Order Id",
+      "_state": "State",
+      "_status": "Status",
+      "_priority": "Priority",
+      "_desc": "Description",
+      "_price": "Price",
+      "_bill": "Billing address",
+      "_inventory": "Inventory",
+      "_feasibility": "Feasibility Checked",
+      "_designed": "Designed",
+      "_reserved": "Reserved",
+      "_inactive": "Inactive",
+      "_active": "Active",
+      "_terminated": "Terminated",
+      "_id": "Id",
+      "_standby": "Standby",
+      "_alarm": "Alarm",
+      "_available": "Available",
+      "_suspended": "Suspended",
+      "_unknown": "Unknown",
+      "_created": "Created",
+      "_unsubscribe": "Unsubscribe",
+      "_close_modal": "Close modal",
+      "_cancel_sub": "Are you sure you want to cancel this subscription?",
+      "_cancel": "No, cancel",
+      "_yes_sure": "Yes, I'm sure",
+      "_renew_sub": "Are you sure you want to renew this subscription?",
+      "_modify_chars": "Modify Characteristics",
+      "_select_billing": "Select a billing address",
+      "_confirm_modify": "Confirm Modification"
     },
     "BILLING": {
       "_title": "Title",
@@ -1139,43 +1463,43 @@
       "_description": "Description"
     },
     "PRODUCT_ORDERS": {
-        "_orders": "Product Orders",
-        "_invoices": "Invoices",
-        "_no_orders": "No orders found.",
-        "_search_criteria": "Search criteria",
-        "_order_id": "Order Id",
-        "_status": "Choose a status",
-        "_priority": "Priority",
-        "_desc": "Description",
-        "_price": "Price",
-        "_bill": "Billing address",
-        "_filter_state": "Filter by status",
-        "_acknowledged": "Acknowledged",
-        "_in_progress": "In Progress",
-        "_partial": "Partial",
-        "_completed": "Completed",
-        "_failed": "Failed",
-        "_pending": "Pending",
-        "_cancelled": "Cancelled",
-        "_unchecked": "Unchecked",
-        "_as_customer": "As Customer",
-        "_as_provider": "As Provider",
-        "_date": "Date",
-        "_actions": "Actions",
-        "_items_action": "Items Action",
-        "_filter_action": "Filter by action",
-        "_action_add": "Add",
-        "_action_modify": "Modify",
-        "_action_delete": "Delete",
-        "_order_details": "Order details:",
-        "_customer_info": "Customer Info:",
-        "_name": "Name",
-        "_billing_address": "Billing address",
-        "_email": "Contact Email",
-        "_show_customer_details": "Show Customer Details",
-        "_img": "Img",
-        "_price_plan": "Price Plan",
-        "_state": "State"
+      "_orders": "Product Orders",
+      "_invoices": "Invoices",
+      "_no_orders": "No orders found.",
+      "_search_criteria": "Search criteria",
+      "_order_id": "Order Id",
+      "_status": "Choose a status",
+      "_priority": "Priority",
+      "_desc": "Description",
+      "_price": "Price",
+      "_bill": "Billing address",
+      "_filter_state": "Filter by status",
+      "_acknowledged": "Acknowledged",
+      "_in_progress": "In Progress",
+      "_partial": "Partial",
+      "_completed": "Completed",
+      "_failed": "Failed",
+      "_pending": "Pending",
+      "_cancelled": "Cancelled",
+      "_unchecked": "Unchecked",
+      "_as_customer": "As Customer",
+      "_as_provider": "As Provider",
+      "_date": "Date",
+      "_actions": "Actions",
+      "_items_action": "Items Action",
+      "_filter_action": "Filter by action",
+      "_action_add": "Add",
+      "_action_modify": "Modify",
+      "_action_delete": "Delete",
+      "_order_details": "Order details:",
+      "_customer_info": "Customer Info:",
+      "_name": "Name",
+      "_billing_address": "Billing address",
+      "_email": "Contact Email",
+      "_show_customer_details": "Show Customer Details",
+      "_img": "Img",
+      "_price_plan": "Price Plan",
+      "_state": "State"
     },
     "PROVIDERS": {
       "_title": "For providers",
