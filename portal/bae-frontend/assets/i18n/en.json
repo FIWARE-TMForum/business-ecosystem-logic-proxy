@@ -193,7 +193,30 @@
     "_view_serv": "View services",
     "_close_menu": "Close menu",
     "_all_catalogs": "All catalogues",
-    "_categories_single": "Categories"
+    "_categories_single": "Categories",
+    "_prev": "Previous",
+    "_next": "Next",
+    "footer": {
+      "aboutTitle": "About DOME",
+      "about": "About DOME",
+      "governance": "Governance",
+      "partners": "Partners",
+      "marketplaceTitle": "Marketplace",
+      "browse": "Browse",
+      "legalTitle": "Legal",
+      "terms": "Terms of use",
+      "privacy": "Privacy policy",
+      "cookies": "Cookies policy",
+      "resourcesTitle": "Resources",
+      "documentation": "Documentation",
+      "support": "Support",
+      "faqs": "FAQs",
+      "follow-us": "Follow us"
+    },
+    "nav": {
+      "forCustomers": "For Customers",
+      "forProviders": "For Providers"
+    }
   },
   "FEATURED": {
     "_title": "Featured offerings",
@@ -215,6 +238,23 @@
     "_explore": "Explore marketplace",
     "_add_your_service": "Add your service",
     "_no_products": "Sorry! There are no products available at this moment. Please check again later."
+  },
+  "HOWITWORKS": {
+    "_title": "How it works",
+    "_subtitle": "DOME helps customers and providers connect in a trusted European marketplace.",
+    "CUSTOMERS": {
+      "_title": "For customers",
+      "_subtitle": "Discover and buy trusted services",
+      "_description": "Search and compare verified offers, then procure the services that best fit your needs.",
+      "_contact": "Contact us"
+    },
+    "PROVIDERS": {
+      "_title": "For providers",
+      "_subtitle": "Publish and grow your services",
+      "_description_start": "Complete onboarding and service verification. You can find the process in the",
+      "_link": "onboarding guide",
+      "_description_end": "and then publish your services in the marketplace."
+    }
   },
   "PLATFORM": {
     "_title": "Platform benefits",
@@ -239,6 +279,10 @@
     "SUSTAINABLE": {
       "_title": "Sustainable",
       "_desc": "Embrace sustainability with services that prioritize enery efficiency and environmental responsability."
+    },
+    "TRANSPARENT": {
+      "_title": "Transparent",
+      "_desc": "Gain visibility into service scope, pricing, and terms so customers can make informed decisions."
     },
     "CATALOGS": {
       "_all_catalogs": "All catalogues",
@@ -1205,7 +1249,8 @@
     "_close": "Close menu",
     "_empty": "Empty cart",
     "_purchase": "Proceed to purchase",
-    "_subtotal": "Subtotal"
+    "_subtotal": "Subtotal",
+    "_provider": "Provider"
   },
   "FOOTER": {
     "_privacy": "Privacy Policy",
@@ -1332,6 +1377,7 @@
     "_bill": "Billing addresses",
     "_revenue": "Revenue sharing",
     "_payment_dashboard": "Payment dashboard",
+    "_lear_link": "VC Issuer",
     "_orders": "Orders",
     "_order_list": "My order list",
     "_update": "Update",
@@ -1349,6 +1395,7 @@
     "_birthdate": "Birthdate",
     "_date": "Date",
     "_country": "Country",
+    "_did": "DID",
     "_city": "City",
     "_mybills": "My billing addresses",
     "_user_id": "User id",
@@ -1407,6 +1454,9 @@
     "_description": "Description",
     "_pricing": "Product pricing",
     "_chars": "Product characteristics",
+    "_modify_chars": "Modify characteristics",
+    "_select_billing": "Select billing address",
+    "_confirm_modify": "Confirm changes",
     "_res_details": "Resource details",
     "_res_chars": "Resource characteristics",
     "_serv_details": "Service details",
@@ -1488,6 +1538,7 @@
     "_as_provider": "As Provider",
     "_invoice_details": "Invoice details:",
     "_applied_billing_rates": "Applied Billing Rates",
+    "_product_acbr_ref": "Product ACBR reference",
     "_no_billing_rates": "No billing rates found",
     "_period_coverage": "Period Coverage"
   },
@@ -1569,6 +1620,8 @@
     "_simple": "Simple",
     "_load_more": "Load more",
     "_add_comp": "3rd party certifications",
+    "_json_value": "JSON value",
+    "_add_json": "Add JSON",
     "_value": "Value",
     "_actions": "Actions",
     "_no_chars": "No characteristics included.",
@@ -1648,6 +1701,8 @@
     "_simple": "Simple",
     "_load_more": "Load more",
     "_add_comp": "3rd party certifications",
+    "_json_value": "JSON value",
+    "_add_json": "Add JSON",
     "_value": "Value",
     "_actions": "Actions",
     "_no_chars": "No characteristics included.",

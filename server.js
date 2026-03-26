@@ -28,6 +28,7 @@ const tmf = require('./controllers/tmf').tmf();
 const admin = require('./controllers/admin').admin();
 const stats = require('./controllers/stats').stats();
 const payment = require('./controllers/payment').payment();
+const compliance = require('./controllers/compliance').compliance;
 const url = require('url');
 const utils = require('./lib/utils');
 const authModule = require('./lib/auth');
@@ -579,6 +580,15 @@ app.post('/admin/defaultcatalog', authMiddleware.headerAuthentication, authMiddl
 app.get('/paymentInfo', authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, (req, res) => {
     payment.getPaymentInfo(req, res)
 })
+
+app.post(
+    '/compliance/certificate',
+    authMiddleware.headerAuthentication,
+    authMiddleware.checkOrganizations,
+    authMiddleware.setPartyObj,
+    failIfNotAuthenticated,
+    compliance.requestCertificate
+)
 
 const adminRegex = new RegExp(`^\/admin\/(.*)\/?$`)
 app.all(adminRegex, authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, (req, res) => {
