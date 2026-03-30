@@ -1051,10 +1051,10 @@ describe('TMF Utils', function() {
             }]);
         }
 
-        const testAttachNotSupported = async (api, path) => {
+        const testAttachNotSupported = async (api, path, expectedSchema) => {
             const newBody = await testAttachSupported(api, path, {})
 
-            expect(newBody['@schemaLocation']).toEqual('https://mylocation.com/schema.json')
+            expect(newBody['@schemaLocation']).toEqual(expectedSchema)
         }
 
         const testAttachSpec = async (api, path) => {
@@ -1077,7 +1077,7 @@ describe('TMF Utils', function() {
         });
 
         it('should attach related party to a product offering', async () => {
-            await testAttachNotSupported('catalog', '/productOffering')
+            await testAttachNotSupported('catalog', '/productOffering', 'https://mylocation.com/offering-schema.json')
         });
 
         it('should attach related party to a product offering with Buyer', async () => {
@@ -1115,7 +1115,7 @@ describe('TMF Utils', function() {
         });
 
         it('should attach related party to a product offering price', async () => {
-            await testAttachNotSupported('catalog', '/productOfferingPrice')
+            await testAttachNotSupported('catalog', '/productOfferingPrice', 'https://mylocation.com/price-schema.json')
         });
 
         it('should attach related party to a category', async () => {

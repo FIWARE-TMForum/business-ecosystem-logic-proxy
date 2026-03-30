@@ -214,7 +214,9 @@ var defaultConfig = {
 	},
     defaultId: 'dft',
 	operatorId: 'VAT-OP',
-	partyLocation: 'https://mylocation.com/schema.json'
+	partyLocation: 'https://mylocation.com/schema.json',
+	offeringSchema: 'https://mylocation.com/offering-schema.json',
+	priceCompSchema: 'https://mylocation.com/price-schema.json'
 };
 
 exports.getDefaultConfig = function() {
