@@ -705,6 +705,9 @@ config.complianceServerUrl = process.env.BAE_LP_COMPLIANCE_SERVER_URL || config.
 config.billingEngineUrl = '';
 config.billingEngineUrl = process.env.BAE_LP_BILLING_ENGINE_URL || config.billingEngineUrl;
 
+config.contactUsNotificationUrl = '';
+config.contactUsNotificationUrl = process.env.BAE_LP_CONTACT_US_NOTIFICATION_URL || config.contactUsNotificationUrl;
+
 config.domeRegistrationForm = '';
 config.domeRegistrationForm = process.env.BAE_LP_DOME_REGISTRATION_FORM || config.domeRegistrationForm;
 
