@@ -234,6 +234,66 @@
       "_more": "Read more"
     }
   },
+  "ContactUs": {
+    "hero": {
+      "titleStart": "Let’s get",
+      "titleAccent": "in touch",
+      "description": "We are glad you are interested in the DOME Marketplace! Please share your questions or thoughts with us and we'll get back to you shortly."
+    },
+    "form": {
+      "title": "Send us a message",
+      "subtitle": "Fill out the form and our team will be in touch as soon as possible."
+    },
+    "fields": {
+      "firstName": {
+        "label": "First name",
+        "placeholder": "Enter your first name"
+      },
+      "lastName": {
+        "label": "Last name",
+        "placeholder": "Enter your last name"
+      },
+      "email": {
+        "label": "Email",
+        "placeholder": "Enter your email"
+      },
+      "organization": {
+        "label": "Organization",
+        "placeholder": "Enter your organization"
+      },
+      "roleInOrganization": {
+        "label": "Role in organization",
+        "placeholder": "Enter your role"
+      },
+      "message": {
+        "label": "Message",
+        "placeholder": "Add product description"
+      }
+    },
+    "checkboxes": {
+      "privacy": {
+        "prefix": "I agree to the",
+        "privacyPolicy": "Privacy Policy",
+        "middle": "and",
+        "termsOfService": "Terms of Services",
+        "suffix": "*"
+      },
+      "marketing": "I agree to receive marketing and commercial communications from DOME Marketplace."
+    },
+    "cta": {
+      "submit": "Submit message"
+    },
+    "success": {
+      "title": "Thank you for contacting us.",
+      "description": "Our team has received your message and will get back to you as soon as possible.",
+      "cta": "Continue browsing"
+    },
+    "validation": {
+      "required": "This field is required.",
+      "email": "Please enter a valid email address.",
+      "privacyRequired": "You must accept the Privacy Policy and Terms of Services."
+    }
+  },
   "LANDINGPAGE": {
     "providers": {
       "badge": "For providers",
