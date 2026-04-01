@@ -28,6 +28,7 @@ const tmf = require('./controllers/tmf').tmf();
 const admin = require('./controllers/admin').admin();
 const stats = require('./controllers/stats').stats();
 const payment = require('./controllers/payment').payment();
+const contactUs = require('./controllers/contactUs').contactUs();
 const compliance = require('./controllers/compliance').compliance;
 const url = require('url');
 const utils = require('./lib/utils');
@@ -368,6 +369,8 @@ app.post('/feedback', async (req,res) => {
         res.status(500).send('Error indexing the feedback')
     }
 })
+
+app.post('/contact-us', contactUs.sendNotification);
 
 app.post('/domeblog', authMiddleware.headerAuthentication, failIfNotAuthenticated, domeBlog.create);
 app.get('/domeblog', domeBlog.listEntries);
