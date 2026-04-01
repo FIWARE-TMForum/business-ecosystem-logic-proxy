@@ -425,6 +425,7 @@ app.get('/config', async (_, res) => {
         domePublish: config.domePublish,
         purchaseEnabled: config.purchaseEnabled,
         dataSpaceEnabled: config.dataSpaceEnabled,
+        federationEnabled: config.federationEnabled,
         quoteApi: config.quoteApi,
         defaultId: config.defaultId,
         paymentGateway: config.paymentGateway,

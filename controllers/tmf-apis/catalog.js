@@ -1500,6 +1500,84 @@ const catalog = (function() {
         }
     }
 
+    const getCatalogIdFromPath = function(pathArray) {
+        if (
+            pathArray.length >= 5 &&
+            pathArray[1] === config.endpoints.catalog.path &&
+            pathArray[2] === 'catalog' &&
+            pathArray[4] === 'productOffering'
+        ) {
+            return pathArray[3];
+        }
+        return null;
+    };
+
+    const getResourcePath = function(pathArray) {
+        const pathLength = pathArray.length;
+        const pathModulo = pathLength % 2;
+
+        if (pathModulo === 1) {
+            return '/' + pathArray[pathLength - 1];
+        }
+
+        return '/' + pathArray[pathLength - 2] + '/' + pathArray[pathLength - 1];
+    };
+
+    const getCategoryIdsFromCatalog = function(catalogObject) {
+        if (!catalogObject || !Array.isArray(catalogObject.category)) {
+            return [];
+        }
+
+        return catalogObject.category.map((category) => category.id).filter((id) => !!id);
+    };
+
+    const mergeCategoryQuery = function(query, categoryIds) {
+        const params = new URLSearchParams(query || '');
+
+        if (!categoryIds.length) {
+            return params.toString();
+        }
+
+        if (!params.has('category')) {
+            params.set('category', categoryIds.join(','));
+            return params.toString();
+        }
+
+        const categoryParam = params.get('category') || '';
+        const queriedCategories = categoryParam.split(',').filter((id) => id.length > 0);
+        const categoryIntersection = queriedCategories.filter((id) => categoryIds.includes(id));
+
+        params.set('category', categoryIntersection.join(','));
+        return params.toString();
+    };
+
+    const processCatalogRequests = function(req, callback) {
+        if (!req.apiUrl) {
+            return callback(null);
+        }
+
+        const requestPath = req.path || req.originalUrl || req.apiUrl.split('?')[0];
+        const pathArray = requestPath.split('/');
+        const catalogId = getCatalogIdFromPath(pathArray);
+
+        if (!catalogId) {
+            return callback(null);
+        }
+
+        retrieveCatalog(catalogId, (err, response) => {
+            if (err) {
+                return callback(err);
+            }
+
+            const query = req.apiUrl.includes('?') ? req.apiUrl.split('?').slice(1).join('?') : '';
+            const queryPart = mergeCategoryQuery(query, getCategoryIdsFromCatalog(response.body));
+            const newApiUrl = `/${config.endpoints.catalog.path}${getResourcePath(pathArray)}`;
+
+            req.apiUrl = queryPart ? `${newApiUrl}?${queryPart}` : newApiUrl;
+            callback(null);
+        });
+    };
+
     const indexObject = (party, body, catalog) => {
         return indexes.indexDocument('offering', body.id, {
             relatedParty: party,
@@ -1542,7 +1620,7 @@ const catalog = (function() {
     //////////////////////////////////////////////////////////////////////////////////////////////
 
     const validators = {
-        GET: [validateAllowed, processQuery],
+        GET: [validateAllowed, processQuery, processCatalogRequests],
         POST: [utils.validateLoggedIn, validateCreation],
         PATCH: [utils.validateLoggedIn, validateUpdate],
         PUT: [utils.methodNotAllowed],

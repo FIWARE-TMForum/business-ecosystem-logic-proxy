@@ -134,6 +134,64 @@ describe('Catalog API', function() {
         });
     });
 
+    describe('Catalog scoped offering retrieval', function() {
+        const protocol = config.endpoints.catalog.appSsl ? 'https' : 'http';
+        const serverUrl = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
+        const getUtils = function() {
+            return {
+                getAPIURL: function(ssl, host, port, path) {
+                    return (ssl ? 'https' : 'http') + '://' + host + ':' + port + path;
+                }
+            };
+        };
+
+        it('should add catalog categories to scoped offering GET requests', function(done) {
+            const catalogApi = getCatalogApi({}, {}, getUtils());
+
+            nock(serverUrl)
+                .get(config.endpoints.catalog.apiPath + '/catalog/7')
+                .reply(200, {
+                    category: [{ id: 'cat-1' }, { id: 'cat-2' }]
+                });
+
+            const req = {
+                method: 'GET',
+                apiUrl: '/catalog/catalog/7/productOffering',
+                path: '/catalog/catalog/7/productOffering',
+                query: {}
+            };
+
+            catalogApi.checkPermissions(req, function(err) {
+                expect(err).toBe(null);
+                expect(req.apiUrl).toBe('/catalog/productOffering?category=cat-1%2Ccat-2');
+                done();
+            });
+        });
+
+        it('should intersect catalog categories with requested category filter', function(done) {
+            const catalogApi = getCatalogApi({}, {}, getUtils());
+
+            nock(serverUrl)
+                .get(config.endpoints.catalog.apiPath + '/catalog/7')
+                .reply(200, {
+                    category: [{ id: 'cat-1' }]
+                });
+
+            const req = {
+                method: 'GET',
+                apiUrl: '/catalog/catalog/7/productOffering?category=cat-1,cat-2',
+                path: '/catalog/catalog/7/productOffering',
+                query: {}
+            };
+
+            catalogApi.checkPermissions(req, function(err) {
+                expect(err).toBe(null);
+                expect(req.apiUrl).toBe('/catalog/productOffering?category=cat-1');
+                done();
+            });
+        });
+    });
+
     /// ///////////////////////////////////////////////////////////////////////////////////////////
     /// /////////////////////////////////// NOT AUTHENTICATED /////////////////////////////////////
     /// ///////////////////////////////////////////////////////////////////////////////////////////

@@ -105,128 +105,6 @@ function tmf() {
 		res.end();
 	};
 
-	// extracts the concrete resource from the path(e.g. the last part of the path)
-	// f.e.:
-	//   /catalog/some-id/productOffering/id -> /productOffering/id
-	//   /catalog/some-id/productOffering -> /productOffering
-	function getResourcePath(pathArray) {
-		pathLength = pathArray.length
-		pathModulo = pathLength % 2 
-		switch(pathModulo) {
-			case 1:
-				return "/" + pathArray[pathLength-1];
-			case 0: 
-				return "/" + pathArray[pathLength-2] + "/" + pathArray[pathLength-1];
-		}
-	}
-
-	function getCatalogIdFromPath(pathArray) {
-		if(pathArray.length >= 5 && pathArray[2] == 'catalog' && pathArray[4] == 'productOffering') {
-			return pathArray[3]
-		}
-	}
-
-	function getCategoryIdsFromCatalog(catalogObject) {
-		categoryIds = []
-		if (typeof catalogObject['category'] == 'undefined') {
-			return categoryIds
-		}
-		for(let i = 0; i < catalogObject['category'].length; i++) {
-			categoryIds.push(catalogObject['category'][i]['id']);
-		}
-		return categoryIds
-	}
-
-	function queryToParams(query) {
-		queryParts = query.split("&")
-		params = [] 
-		for(let i = 0; i < queryParts.length; i++) {
-			params.push(queryParts[i].split("="))
-		}
-		return params
-	}
-
-	function buildQuery(query, categoryIds) {
-		if(categoryIds.length > 0) {
-			categoryQuery = categoryIds.join(",")
-			if (query) {
-				queryParams = queryToParams(query)
-				categoryParam = queryParams.filter(qp => qp[0] == "category")
-				if (typeof categoryParam == 'undefined' || categoryParam.length == 0) {
-					return query + "&category=" + categoryQuery
-				} else {
-					queriedCategories = categoryParam[0][1].split(',')
-					let idIntersection;
-					if (queriedCategories.length > categoryIds.length) {
-						idIntersection = queriedCategories.filter(x => categoryIds.includes(x))
-					} else {
-						idIntersection = categoryIds.filter(x => queriedCategories.includes(x))
-					}
-					queryParams.splice(queryParams.indexOf(categoryParam), 1)
-					newQueryString = "category=" + idIntersection.join(",")
-					for (let i = 0; i<queryParams.length; i++) {
-						newQueryString = newQueryString + "&" + queryParams[i].join("=")
-					}
-					return newQueryString
-				}				
-			} else {
-				return "category=" + categoryQuery
-			}
-		}
-		return query
-	}
-
-	function buildCatalogUrl(req, categoryIds, pathArray) {
-		api = "catalog"
-		queryPart = ""
-		if (req.apiUrl.includes("?")) {
-			queryParts = req.apiUrl.split("?")
-			queryPart = buildQuery(queryParts[queryParts.length-1], categoryIds)
-		} else {
-			queryPart = buildQuery(null, categoryIds)
-		}
-		if (queryPart) {
-			return utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + utils.getAPIPath(api) + getResourcePath(pathArray) + "?" + queryPart
-		} else {
-			return utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + + utils.getAPIPath(api) + getResourcePath(pathArray)
-		}
-	}
-
-	
-	const handleCatalogRequests = function(req, res, api) {
-		pathArray = req.path.split("/")
-		catalogId = getCatalogIdFromPath(pathArray)
-
-		logger["info"]("Handling a catalog request with ID: " + catalogId)
-		if (typeof catalogId != 'undefined') {
-			logger["info"]("Handling a catalog offer endpoint request")
-
-			catalogUrl = utils.getAPIProtocol('catalog') + '://' + utils.getAPIHost('catalog') + ':' + utils.getAPIPort('catalog') + utils.getAPIPath('catalog') + '/catalog/' + catalogId
-
-			catalog.retrieveCatalog(catalogId, (err, response) => {
-				if (response.status == 200) {
-					const url = buildCatalogUrl(req, getCategoryIdsFromCatalog(response.body), pathArray)
-					logger["info"]("Making request with real endpoint: " + url)
-					buildOptions(req, url).then((options) => {
-						proxyRequest(req, res, api, options)
-					})
-				} else {
-					logger["warn"]("was not able to retrieve the catalog " + catalogId)
-					return null
-				}
-			})
-		} else {
-			// This is a normal catalog api request
-			logger["info"]("Handling a simple catalog API request")
-			const api = 'catalog'
-			const url = utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + utils.getAPIPath(api) + req.apiUrl.replace(`/${api}`, '');
-
-			buildOptions(req, url).then((options) => {
-				proxyRequest(req, res, api, options)
-			})
-		}
-	}
-
 	const redirectRequest = function(req, res) {
 
 		const api = getAPIName(req.apiUrl);
@@ -235,22 +113,17 @@ function tmf() {
 			utils.attachUserHeaders(req.headers, req.user);
 		}
 
-		// remove the catalog sub-address from the path of all requests to the product-catalog api, since they are not addressed as such in TMF v4
-		if (api == 'catalog') {
-			handleCatalogRequests(req, res, api)
+		if (newApis.indexOf(api) >= 0) {
+			url = utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + utils.getAPIPath(api) + req.apiUrl.replace(`/${api}`, '');
 		} else {
-			if (newApis.indexOf(api) >= 0) {
-				url = utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + utils.getAPIPath(api) + req.apiUrl.replace(`/${api}`, '');
-			} else {
-				url = utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + utils.getAPIPath(api) + req.apiUrl;
-			}
-			if (api == 'rss') {
-				url = url.replace('rss', 'charging')
-			}
-			buildOptions(req, url).then((options) => {
-				proxyRequest(req, res, api, options)
-			})
+			url = utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + utils.getAPIPath(api) + req.apiUrl;
 		}
+		if (api == 'rss') {
+			url = url.replace('rss', 'charging')
+		}
+		buildOptions(req, url).then((options) => {
+			proxyRequest(req, res, api, options)
+		})
 			
 	};
 
