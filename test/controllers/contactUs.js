@@ -38,7 +38,6 @@ describe('ContactUs Controller', () => {
         marketingAccepted: true
     };
     const formattedMessage = [
-        'New contact-us request',
         'First name: Fran',
         'Last name: asdsda',
         'Email: cosos@email.cm',
@@ -226,7 +225,6 @@ describe('ContactUs Controller', () => {
                 data: {
                     subject: 'New contact-us request',
                     message:
-                        'New contact-us request<br>' +
                         'First name: &lt;Fran&gt;<br>' +
                         'Last name: de la vega<br>' +
                         'Email: asdasd@asdas.com<br>' +
