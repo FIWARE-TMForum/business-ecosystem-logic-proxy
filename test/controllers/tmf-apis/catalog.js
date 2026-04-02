@@ -2320,13 +2320,15 @@ describe('Catalog API', function() {
                         startDateTime: nowStr
                     };
 
-                    if (uniqueCategories) {	
+                    if (uniqueCategories) {
                         expect(utils.updateBody).toHaveBeenCalledWith(req, {category: uniqueCategories, validFor: {
                             startDateTime: nowStr
-                        }});
-                    } 
-                    else
+                        }, '@schemaLocation': 'https://mylocation.com/offering-schema.json'});
+                    }
+                    else {
+                        expOff['@schemaLocation'] = 'https://mylocation.com/offering-schema.json';
                         expect(utils.updateBody).toHaveBeenCalledWith(req, expOff);
+                    }
 
                 } else {
                     expect(utils.updateBody).not.toHaveBeenCalled();

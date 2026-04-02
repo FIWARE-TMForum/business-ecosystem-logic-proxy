@@ -757,7 +757,12 @@ config.operatorId = process.env.BAE_LP_OPERATOR_ID || config.operatorId;
 
 //config.partyLocation = 'https://raw.githubusercontent.com/Ficodes/tmf-schemas/refs/heads/main/schemas/relatedPartyRef.schema.json'
 config.partyLocation = 'https://raw.githubusercontent.com/DOME-Marketplace/tmf-api/refs/heads/main/schemas/EngagedParty/RelatedParty.schema.json'
+config.priceCompSchema = 'https://raw.githubusercontent.com/DOME-Marketplace/tmf-api/refs/heads/main/DOME/PriceComponent.schema.json'
+config.offeringSchema = 'https://raw.githubusercontent.com/DOME-Marketplace/tmf-api/refs/heads/main/DOME/ExternallyBilled.schema.json'
+
 config.partyLocation = process.env.BAE_LP_PARTY_LOCATION || config.partyLocation;
+config.priceCompSchema = process.env.BAE_LP_PRICE_COMP_SCHEMA || config.priceCompSchema;
+config.offeringSchema = process.env.BAE_LP_OFFERING_SCHEMA || config.offeringSchema;
 
 
 
