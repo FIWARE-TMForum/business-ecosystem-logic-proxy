@@ -46,6 +46,7 @@ const logger = require('./../lib/logger').logger.getLogger('TMF')
 const axios = require('axios')
 const utils = require('./../lib/utils')
 const tmfUtils = require('./../lib/tmfUtils')
+const federation = require('./../lib/federation').federation
 
 const { log } = require('async')
 const { query } = require('express')
@@ -73,27 +74,14 @@ function tmf() {
 	apiControllers[config.endpoints.search.path] = search;
 	apiControllers[config.endpoints.ai.path] = ai;
 
-	const newApis = [
-		config.tmforum.party.path,
-		config.tmforum.catalog.path,
-		config.tmforum.ordering.path,
-		config.tmforum.inventory.path,
-		config.tmforum.service.path,
-		config.tmforum.resource.path,
-		config.tmforum.account.path,
-		config.tmforum.serviceInventory.path,
-		config.tmforum.resourceInventory.path,
-		config.tmforum.usage.path,
-		config.tmforum.billing.path,
-		config.endpoints.quote.path,
-		config.endpoints.revenue.path,
-		config.endpoints.invoicing.path,
-		config.endpoints.search.path,
-		config.endpoints.ai.path
-	]
+	const tmforumApis = Object.keys(config.tmforum).map((apiName) => config.tmforum[apiName].path);
 
 	const getAPIName = function(apiUrl) {
 		return apiUrl.split('/')[1];
+	};
+
+	const isTmforumApi = function(apiName) {
+		return tmforumApis.indexOf(apiName) >= 0;
 	};
 
 	const sendError = function(res, err) {
@@ -106,29 +94,29 @@ function tmf() {
 	};
 
 	const redirectRequest = function(req, res) {
-
-		const api = getAPIName(req.apiUrl);
+		let apiUrl = req.apiUrl;
+		let api = getAPIName(apiUrl);
 
 		if (req.user) {
 			utils.attachUserHeaders(req.headers, req.user);
 		}
 
-		if (newApis.indexOf(api) >= 0) {
-			url = utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + utils.getAPIPath(api) + req.apiUrl.replace(`/${api}`, '');
-		} else {
-			url = utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + utils.getAPIPath(api) + req.apiUrl;
+		if (config.federationEnabled && isTmforumApi(api)) {
+			apiUrl = federation.resolveTmforumApiUrl(req, apiUrl) || apiUrl;
 		}
+
+		const proxiedPath = apiUrl.replace(`/${api}`, '');
+		let url = utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + utils.getAPIPath(api) + proxiedPath;
 		if (api == 'rss') {
 			url = url.replace('rss', 'charging')
 		}
-		buildOptions(req, url).then((options) => {
+		buildOptions(req, res, url, api).then((options) => {
 			proxyRequest(req, res, api, options)
 		})
 			
 	};
 
-	async function buildOptions(req, url) {
-		const api = getAPIName(req.apiUrl)
+	async function buildOptions(req, res, url, api) {
 
 		// Attach the needed relatedParties if not provided already
 		if (req.method == 'POST') {
@@ -307,9 +295,9 @@ function tmf() {
 		}
 	};
 
-	var public = function(req, res) {
-		redirectRequest(req, res);
-	};
+		const public = function(req, res) {
+			redirectRequest(req, res);
+		};
 
 	return {
 		checkPermissions: checkPermissions,
