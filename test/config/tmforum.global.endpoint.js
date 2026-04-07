@@ -20,14 +20,33 @@
 describe('Config TMForum global endpoint overrides', () => {
     const CONFIG_PATH = '../../config';
     const CONFIG_RESOLVED_PATH = require.resolve(CONFIG_PATH);
-    const ENV_KEYS = [
+    const TMFORUM_GLOBAL_ENV_KEYS = [
         'BAE_LP_ENDPOINT_TMFORUM_HOST',
         'BAE_LP_ENDPOINT_TMFORUM_PORT',
-        'BAE_LP_ENDPOINT_TMFORUM_SECURED',
-        'BAE_LP_ENDPOINT_CATALOG_HOST',
-        'BAE_LP_ENDPOINT_CATALOG_PORT',
-        'BAE_LP_ENDPOINT_CATALOG_SECURED'
+        'BAE_LP_ENDPOINT_TMFORUM_SECURED'
     ];
+    const TMFORUM_API_ENV_PREFIXES = [
+        'CATALOG',
+        'RESOURCE',
+        'SERVICE',
+        'ORDERING',
+        'INVENTORY',
+        'SERVICE_INVENTORY',
+        'RESOURCE_INVENTORY',
+        'PARTY',
+        'BILLING',
+        'CUSTOMER',
+        'USAGE',
+        'CUSTOMER_BILL'
+    ];
+    const TMFORUM_API_ENV_SUFFIXES = ['PATH', 'PORT', 'HOST', 'SECURED'];
+    const ENV_KEYS = TMFORUM_GLOBAL_ENV_KEYS.concat(
+        TMFORUM_API_ENV_PREFIXES.flatMap((prefix) => {
+            return TMFORUM_API_ENV_SUFFIXES.map((suffix) => {
+                return `BAE_LP_ENDPOINT_${prefix}_${suffix}`;
+            });
+        })
+    );
     let originalEnv;
 
     const loadConfig = () => {

@@ -93,7 +93,7 @@ function tmf() {
 		res.end();
 	};
 
-	const redirectRequest = function(req, res) {
+	const redirectRequest = async function(req, res) {
 		let apiUrl = req.apiUrl;
 		let api = getAPIName(apiUrl);
 
@@ -101,18 +101,22 @@ function tmf() {
 			utils.attachUserHeaders(req.headers, req.user);
 		}
 
-		if (config.federationEnabled && isTmforumApi(api)) {
-			apiUrl = federation.resolveTmforumApiUrl(req, apiUrl) || apiUrl;
-		}
-
 		const proxiedPath = apiUrl.replace(`/${api}`, '');
 		let url = utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + utils.getAPIPath(api) + proxiedPath;
+
+		if (config.federationEnabled && isTmforumApi(api)) {
+			url = await federation.resolveTmforumApiUrl(req, apiUrl) || url;
+		}
+
 		if (api == 'rss') {
 			url = url.replace('rss', 'charging')
 		}
-		buildOptions(req, res, url, api).then((options) => {
-			proxyRequest(req, res, api, options)
-		})
+		const options = await buildOptions(req, res, url, api);
+		if (!options) {
+			return;
+		}
+
+		proxyRequest(req, res, api, options)
 			
 	};
 
@@ -287,16 +291,28 @@ function tmf() {
 				if (err) {
 					utils.log(logger, 'warn', req, basicLogMessage + err.message);
 					sendError(res, err);
-				} else {
-					utils.log(logger, 'info', req, basicLogMessage + 'OK');
-					redirectRequest(req, res);
-				}
-			});
-		}
-	};
+					} else {
+						utils.log(logger, 'info', req, basicLogMessage + 'OK');
+						redirectRequest(req, res).catch((err) => {
+							utils.log(logger, 'error', req, 'Proxy error: ' + err.message);
+							sendError(res, {
+								status: 500,
+								message: 'Error processing request'
+							});
+						});
+					}
+				});
+			}
+		};
 
 		const public = function(req, res) {
-			redirectRequest(req, res);
+			redirectRequest(req, res).catch((err) => {
+				utils.log(logger, 'error', req, 'Proxy error: ' + err.message);
+				sendError(res, {
+					status: 500,
+					message: 'Error processing request'
+				});
+			});
 		};
 
 	return {

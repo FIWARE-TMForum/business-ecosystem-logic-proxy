@@ -199,7 +199,9 @@ describe('TMF Controller', function() {
             });
 
             const federation = {
-                resolveTmforumApiUrl: jasmine.createSpy('resolveTmforumApiUrl').and.returnValue('/catalog/federated')
+                resolveTmforumApiUrl: jasmine
+                    .createSpy('resolveTmforumApiUrl')
+                    .and.returnValue('https://federated.example.com/tmf/catalog/federated')
             };
 
             const tmf = getTmfInstance(request, {}, null, null, null, federation);
@@ -220,7 +222,7 @@ describe('TMF Controller', function() {
             res.json.and.callFake(() => {
                 expect(federation.resolveTmforumApiUrl).toHaveBeenCalledWith(req, '/catalog/catalog');
                 expect(request.request).toHaveBeenCalledWith({
-                    url: protocol + '://' + utils.getAPIHost() + ':' + utils.getAPIPort() + utils.getAPIPath() + '/federated',
+                    url: 'https://federated.example.com/tmf/catalog/federated',
                     method: 'GET',
                     headers: utils.proxiedRequestHeaders(),
                     data: 'Example'
@@ -273,6 +275,60 @@ describe('TMF Controller', function() {
                 expect(federation.resolveTmforumApiUrl).not.toHaveBeenCalled();
                 expect(request.request).toHaveBeenCalledWith({
                     url: protocol + '://' + utils.getAPIHost() + ':' + utils.getAPIPort() + utils.getAPIPath() + '/quote',
+                    method: 'GET',
+                    headers: utils.proxiedRequestHeaders(),
+                    data: 'Example'
+                });
+                done();
+            });
+
+            tmf.public(req, res);
+        });
+
+        it('should use absolute URL returned by federation resolver for TMForum APIs', function(done) {
+            config.federationEnabled = true;
+
+            const protocol = 'http';
+            utils.getAPIProtocol = function() {
+                return protocol;
+            };
+            utils.getAPIPath = function() {
+                return '/api';
+            };
+
+            const request = getDefaultHttpClient({
+                status: 200,
+                data: { ok: true },
+                headers: {
+                    'content-type': 'application/json'
+                }
+            });
+
+            const federation = {
+                resolveTmforumApiUrl: jasmine
+                    .createSpy('resolveTmforumApiUrl')
+                    .and.returnValue('https://federated.example.com/tmf/catalog/catalog')
+            };
+
+            const tmf = getTmfInstance(request, {}, null, null, null, federation);
+
+            const req = {
+                apiUrl: '/catalog/catalog',
+                body: 'Example',
+                method: 'GET',
+                headers: {},
+                connection: { remoteAddress: '127.0.0.1' },
+                get: function() {
+                    return false;
+                }
+            };
+
+            const res = jasmine.createSpyObj('res', ['status', 'json', 'setHeader']);
+
+            res.json.and.callFake(() => {
+                expect(federation.resolveTmforumApiUrl).toHaveBeenCalledWith(req, '/catalog/catalog');
+                expect(request.request).toHaveBeenCalledWith({
+                    url: 'https://federated.example.com/tmf/catalog/catalog',
                     method: 'GET',
                     headers: utils.proxiedRequestHeaders(),
                     data: 'Example'
