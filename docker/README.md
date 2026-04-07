@@ -87,6 +87,9 @@ services:
             # ----- APIs Configuration -----
             # If provided, it supports configuring the contection to the different APIs managed by the logic proxy, by default
             # apis.docker, charging.docker and rss.docker domains are configured
+            # - BAE_LP_ENDPOINT_TMFORUM_HOST=apis.docker  # Global host override for all TMForum APIs
+            # - BAE_LP_ENDPOINT_TMFORUM_PORT=8080  # Global port override for all TMForum APIs
+            # - BAE_LP_ENDPOINT_TMFORUM_SECURED=false  # Global HTTPS flag override for all TMForum APIs
             # - BAE_LP_ENDPOINT_CATALOG_PATH=DSProductCatalog
             # - BAE_LP_ENDPOINT_CATALOG_PORT=8080
             # - BAE_LP_ENDPOINT_CATALOG_HOST=apis.docker

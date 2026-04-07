@@ -462,6 +462,30 @@ config.logOutPath = config.logOutPath || '/logout';
 // Endpoint config
 // =====
 
+// Global TMForum APIs endpoint override
+// It applies to all TMForum APIs and can still be overridden by API-specific vars below.
+const tmforumGlobalHost = process.env.BAE_LP_ENDPOINT_TMFORUM_HOST;
+const tmforumGlobalPort = process.env.BAE_LP_ENDPOINT_TMFORUM_PORT;
+const hasTmforumGlobalSecured = process.env.BAE_LP_ENDPOINT_TMFORUM_SECURED !== undefined;
+
+if (!!tmforumGlobalHost || !!tmforumGlobalPort || hasTmforumGlobalSecured) {
+    const tmforumGlobalSecured = process.env.BAE_LP_ENDPOINT_TMFORUM_SECURED == 'true';
+
+    Object.keys(config.tmforum).forEach((apiName) => {
+        if (!!tmforumGlobalHost) {
+            config.tmforum[apiName].host = tmforumGlobalHost;
+        }
+
+        if (!!tmforumGlobalPort) {
+            config.tmforum[apiName].port = tmforumGlobalPort;
+        }
+
+        if (hasTmforumGlobalSecured) {
+            config.tmforum[apiName].appSsl = tmforumGlobalSecured;
+        }
+    });
+}
+
 // Catalog
 config.tmforum.catalog.apiPath = process.env.BAE_LP_ENDPOINT_CATALOG_PATH || config.tmforum.catalog.apiPath;
 config.tmforum.catalog.port = process.env.BAE_LP_ENDPOINT_CATALOG_PORT || config.tmforum.catalog.port;
