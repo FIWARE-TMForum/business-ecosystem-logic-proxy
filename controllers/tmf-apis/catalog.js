@@ -64,10 +64,10 @@ const catalog = (function() {
         }
 
         const uri = utils.getAPIURL(
-            config.endpoints.catalog.appSsl,
-            config.endpoints.catalog.host,
-            config.endpoints.catalog.port,
-            `${config.endpoints.catalog.apiPath}${assetPath}`
+            config.tmforum.catalog.appSsl,
+            config.tmforum.catalog.host,
+            config.tmforum.catalog.port,
+            `${config.tmforum.catalog.apiPath}${assetPath}`
         );
 
         axios.get(uri).then((response) => {
@@ -144,10 +144,10 @@ const catalog = (function() {
 
     const createAsset = function(assetPath, body, callback) {
         const uri = utils.getAPIURL(
-            config.endpoints.catalog.appSsl,
-            config.endpoints.catalog.host,
-            config.endpoints.catalog.port,
-            `${config.endpoints.catalog.apiPath}${assetPath}`
+            config.tmforum.catalog.appSsl,
+            config.tmforum.catalog.host,
+            config.tmforum.catalog.port,
+            `${config.tmforum.catalog.apiPath}${assetPath}`
         );
         axios.post(uri, body).then((response) => {
             callback(null, {
@@ -170,10 +170,10 @@ const catalog = (function() {
 
     const updateAsset = function(assetPath, body, callback) {
         const uri = utils.getAPIURL(
-            config.endpoints.catalog.appSsl,
-            config.endpoints.catalog.host,
-            config.endpoints.catalog.port,
-            `${config.endpoints.catalog.apiPath}${assetPath}`
+            config.tmforum.catalog.appSsl,
+            config.tmforum.catalog.host,
+            config.tmforum.catalog.port,
+            `${config.tmforum.catalog.apiPath}${assetPath}`
         );
 
         axios.patch(uri, body).then((response) => {
@@ -696,7 +696,7 @@ const catalog = (function() {
                 function(callback){
                     servSpecCheck = (newBody.serviceSpecification)? newBody.serviceSpecification : prevBody.serviceSpecification
                     if (!!servSpecCheck && servSpecCheck.length > 0){
-                        getDependencySpecs(config.endpoints.service , 'serviceSpecification', servSpecCheck, 'lifecycleStatus',
+                        getDependencySpecs(config.tmforum.service , 'serviceSpecification', servSpecCheck, 'lifecycleStatus',
                             function (err, response){
                                 if (err){
                                     return callback({
@@ -724,7 +724,7 @@ const catalog = (function() {
                 function(callback){
                     resSpecCheck = (newBody.resourceSpecification)? newBody.resourceSpecification : prevBody.resourceSpecification
                     if(!!resSpecCheck && resSpecCheck.length >0){
-                        getDependencySpecs(config.endpoints.resource, 'resourceSpecification', resSpecCheck, 'lifecycleStatus',
+                        getDependencySpecs(config.tmforum.resource, 'resourceSpecification', resSpecCheck, 'lifecycleStatus',
                             function (err, response){
                                 if (err){
                                     return callback({
@@ -1285,7 +1285,7 @@ const catalog = (function() {
             const parsedBody = utils.emptyObject(req.body) ? null : JSON.parse(req.body);
 
             // Retrieve the resource to be updated or removed
-            let url = req.apiUrl.replace(`/${config.endpoints.catalog.path}`, '')
+            let url = req.apiUrl.replace(`/${config.tmforum.catalog.path}`, '')
             // THE URL for Offersa include a catalog
             if (offeringsPattern.test(req.apiUrl)) {
                 let parts = req.apiUrl.split('/')
@@ -1503,7 +1503,7 @@ const catalog = (function() {
     const getCatalogIdFromPath = function(pathArray) {
         if (
             pathArray.length >= 5 &&
-            pathArray[1] === config.endpoints.catalog.path &&
+            pathArray[1] === config.tmforum.catalog.path &&
             pathArray[2] === 'catalog' &&
             pathArray[4] === 'productOffering'
         ) {
@@ -1571,7 +1571,7 @@ const catalog = (function() {
 
             const query = req.apiUrl.includes('?') ? req.apiUrl.split('?').slice(1).join('?') : '';
             const queryPart = mergeCategoryQuery(query, getCategoryIdsFromCatalog(response.body));
-            const newApiUrl = `/${config.endpoints.catalog.path}${getResourcePath(pathArray)}`;
+            const newApiUrl = `/${config.tmforum.catalog.path}${getResourcePath(pathArray)}`;
 
             req.apiUrl = queryPart ? `${newApiUrl}?${queryPart}` : newApiUrl;
             callback(null);

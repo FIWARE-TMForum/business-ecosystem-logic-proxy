@@ -51,7 +51,7 @@ const party = (function() {
         }
    
         const individualsPattern = new RegExp(
-            '^/' + config.endpoints.party.path + '/(individual|organization)(/([^/]*))?$'
+            '^/' + config.tmforum.party.path + '/(individual|organization)(/([^/]*))?$'
         );
         const apiPath = url.parse(req.apiUrl).pathname;
 

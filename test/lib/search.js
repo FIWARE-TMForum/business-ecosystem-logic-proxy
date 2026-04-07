@@ -69,14 +69,14 @@ describe('Search client', () => {
 
     it('should search if categories are provided', (done) => {
         nock(catalogUrl, {
-        }).get(`${config.endpoints.catalog.apiPath}/category/1`, () => {
+        }).get(`${config.tmforum.catalog.apiPath}/category/1`, () => {
             return true;
         }).reply(200, JSON.stringify({
             name: 'cat1'
         }));
 
         nock(catalogUrl, {
-        }).get(`${config.endpoints.catalog.apiPath}/category/2`, () => {
+        }).get(`${config.tmforum.catalog.apiPath}/category/2`, () => {
             return true;
         }).reply(200, JSON.stringify({
             name: 'cat2'

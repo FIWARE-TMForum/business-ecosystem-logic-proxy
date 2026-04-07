@@ -135,8 +135,8 @@ describe('Catalog API', function() {
     });
 
     describe('Catalog scoped offering retrieval', function() {
-        const protocol = config.endpoints.catalog.appSsl ? 'https' : 'http';
-        const serverUrl = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
+        const protocol = config.tmforum.catalog.appSsl ? 'https' : 'http';
+        const serverUrl = protocol + '://' + config.tmforum.catalog.host + ':' + config.tmforum.catalog.port;
         const getUtils = function() {
             return {
                 getAPIURL: function(ssl, host, port, path) {
@@ -149,7 +149,7 @@ describe('Catalog API', function() {
             const catalogApi = getCatalogApi({}, {}, getUtils());
 
             nock(serverUrl)
-                .get(config.endpoints.catalog.apiPath + '/catalog/7')
+                .get(config.tmforum.catalog.apiPath + '/catalog/7')
                 .reply(200, {
                     category: [{ id: 'cat-1' }, { id: 'cat-2' }]
                 });
@@ -172,7 +172,7 @@ describe('Catalog API', function() {
             const catalogApi = getCatalogApi({}, {}, getUtils());
 
             nock(serverUrl)
-                .get(config.endpoints.catalog.apiPath + '/catalog/7')
+                .get(config.tmforum.catalog.apiPath + '/catalog/7')
                 .reply(200, {
                     category: [{ id: 'cat-1' }]
                 });
@@ -274,11 +274,11 @@ describe('Catalog API', function() {
     };
 
     var SERVER =
-        (config.endpoints.catalog.appSsl ? 'https' : 'http') +
+        (config.tmforum.catalog.appSsl ? 'https' : 'http') +
         '://' +
-        config.endpoints.catalog.host +
+        config.tmforum.catalog.host +
         ':' +
-        config.endpoints.catalog.port;
+        config.tmforum.catalog.port;
 
     var mockBundles = function(bundles) {
         var productPath = '/api/productSpecification/';
@@ -422,8 +422,8 @@ describe('Catalog API', function() {
         var userName = 'test';
         var catalogPath = '/api/catalog/7';
         var offeringPath = '/catalog/catalog/7/productOffering';
-        var protocol = config.endpoints.catalog.appSsl ? 'https' : 'http';
-        var serverUrl = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
+        var protocol = config.tmforum.catalog.appSsl ? 'https' : 'http';
+        var serverUrl = protocol + '://' + config.tmforum.catalog.host + ':' + config.tmforum.catalog.port;
         var productPath = '/api/productSpecification/7';
         var categoryPath = '/api/category';
 
@@ -1645,8 +1645,8 @@ describe('Catalog API', function() {
 
         // Basic properties
         const userName = 'test';
-        const protocol = config.endpoints.catalog.appSsl ? 'https' : 'http';
-        const url = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
+        const protocol = config.tmforum.catalog.appSsl ? 'https' : 'http';
+        const url = protocol + '://' + config.tmforum.catalog.host + ':' + config.tmforum.catalog.port;
         const apiPath = '/api';
         const catalogPath = '/category';
 
@@ -1841,8 +1841,8 @@ describe('Catalog API', function() {
 
         // Basic properties
         var userName = 'test';
-        var protocol = config.endpoints.catalog.appSsl ? 'https' : 'http';
-        var url = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
+        var protocol = config.tmforum.catalog.appSsl ? 'https' : 'http';
+        var url = protocol + '://' + config.tmforum.catalog.host + ':' + config.tmforum.catalog.port;
         var catalogPath = '/catalog';
         var categoryPath = '/category';
         const apiPath = '/api';
@@ -2043,8 +2043,8 @@ describe('Catalog API', function() {
 
     // OFFERING PRICE
     describe('Update offering price', function() {
-        const protocol = config.endpoints.catalog.appSsl ? 'https' : 'http';
-        const serverUrl = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
+        const protocol = config.tmforum.catalog.appSsl ? 'https' : 'http';
+        const serverUrl = protocol + '://' + config.tmforum.catalog.host + ':' + config.tmforum.catalog.port;
         const testUpdateOfferingPrice = function(
             offeringPrice,
             nockResponse,
@@ -2192,8 +2192,8 @@ describe('Catalog API', function() {
         var userName = 'test';
         var path = '/productSpecification/1';
         const backendPath = `/api${path}`
-        var protocol = config.endpoints.catalog.appSsl ? 'https' : 'http';
-        var url = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
+        var protocol = config.tmforum.catalog.appSsl ? 'https' : 'http';
+        var url = protocol + '://' + config.tmforum.catalog.host + ':' + config.tmforum.catalog.port;
         var role = 'Seller';
 
         // User information is send when the request does not fail
@@ -2259,7 +2259,7 @@ describe('Catalog API', function() {
         return {
             // the server will be avoided by the SW
             // The catalog server will be used instead
-            href: config.endpoints.catalog.host + ':' + config.endpoints.catalog.port + path,
+            href: config.tmforum.catalog.host + ':' + config.tmforum.catalog.port + path,
             id: (() => {
                 const spl = path.split('/')
                 return spl[spl.length-1]
@@ -2320,8 +2320,8 @@ describe('Catalog API', function() {
         const catalogPath = '/catalog/8';
         const offeringPath =  '/productOffering/1';
         const productPath = productRequestInfo.path || '/productSpecification/7';
-        const protocol = config.endpoints.catalog.appSsl ? 'https' : 'http';
-        const serverUrl = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
+        const protocol = config.tmforum.catalog.appSsl ? 'https' : 'http';
+        const serverUrl = protocol + '://' + config.tmforum.catalog.host + ':' + config.tmforum.catalog.port;
 
         // HTTP MOCK - OFFERING
         var bodyGetOffering = {
@@ -2673,10 +2673,10 @@ describe('Catalog API', function() {
         let resourceParam = null
         if (!!queryRef){
             tmfUtils.refsToQuery = () => queryRef
-            const serv_prt = config.endpoints.service.appSsl ? 'https' : 'http';
-            const serv_url = serv_prt+ '://' + config.endpoints.service.host + ':' + config.endpoints.service.port;
-            const res_prt = config.endpoints.resource.appSsl ? 'https' : 'http';
-            const res_url = res_prt+ '://' + config.endpoints.resource.host + ':' + config.endpoints.resource.port;
+            const serv_prt = config.tmforum.service.appSsl ? 'https' : 'http';
+            const serv_url = serv_prt+ '://' + config.tmforum.service.host + ':' + config.tmforum.service.port;
+            const res_prt = config.tmforum.resource.appSsl ? 'https' : 'http';
+            const res_url = res_prt+ '://' + config.tmforum.resource.host + ':' + config.tmforum.resource.port;
 
             const serviceStatus = (launchApiError !== serviceLaunchFail)? 200 : 500
             previousAssetBody.serviceSpecification.push(queryRef) //not important, but it needs to be filled with smth
@@ -2703,8 +2703,8 @@ describe('Catalog API', function() {
         
         // Basic properties
         var userName = 'test';
-        var protocol = config.endpoints.catalog.appSsl ? 'https' : 'http';
-        var serverUrl = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
+        var protocol = config.tmforum.catalog.appSsl ? 'https' : 'http';
+        var serverUrl = protocol + '://' + config.tmforum.catalog.host + ':' + config.tmforum.catalog.port;
         const apiPath = '/api';
         
         // The service will check that the user is the owner of the offering by making a request
@@ -4054,8 +4054,8 @@ describe('Catalog API', function() {
         const apiBase = '/api';
         const basicPath = '/category';
         const categoryResourcePath = basicPath + '/7';
-        const protocol = config.endpoints.catalog.appSsl ? 'https' : 'http';
-        const url = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
+        const protocol = config.tmforum.catalog.appSsl ? 'https' : 'http';
+        const url = protocol + '://' + config.tmforum.catalog.host + ':' + config.tmforum.catalog.port;
 
         // The mock server that will handle the request to retrieve the old state of the category
         if (oldStateRequest.body) {
@@ -5114,8 +5114,8 @@ describe('Catalog API', function() {
             });
         };
 
-        const protocol = config.endpoints.catalog.appSsl ? 'https' : 'http';
-        const serverUrl = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
+        const protocol = config.tmforum.catalog.appSsl ? 'https' : 'http';
+        const serverUrl = protocol + '://' + config.tmforum.catalog.host + ':' + config.tmforum.catalog.port;
         const defaultCatalogPath = '/api/catalog/' + config.defaultId;
 
         it('should properly order the response when quering by ID', (done) => {

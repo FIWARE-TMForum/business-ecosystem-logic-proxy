@@ -52,13 +52,13 @@ const usageManagement = (function() {
     };
 
     const retrieveAsset = function(path, callback) {
-        const resPath = path.replace(`/${config.endpoints.usage.path}/`, '')
+        const resPath = path.replace(`/${config.tmforum.usage.path}/`, '')
         
         const url = utils.getAPIURL(
-            config.endpoints.usage.appSsl,
-            config.endpoints.usage.host,
-            config.endpoints.usage.port,
-            `${config.endpoints.usage.apiPath}/${resPath}`
+            config.tmforum.usage.appSsl,
+            config.tmforum.usage.host,
+            config.tmforum.usage.port,
+            `${config.tmforum.usage.apiPath}/${resPath}`
         );
 
         axios.get(url).then((response) => {

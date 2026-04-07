@@ -51,18 +51,83 @@ var defaultConfig = {
 	},
 	billingAccountOwnerRole: 'owner',
 	endpoints: {
-		account: {
-			path: 'account',
-			apiPath: '/api',
-			host: 'host.docker.internal',
-			port: '8639',
-			appSsl: false
-		},
 		management: {
 			path: 'management',
 			apiPath: '',
 			host: 'localhost',
 			port: 7496,
+			appSsl: false
+		},
+		charging: {
+			path: 'charging',
+			apiPath: '',
+			host: 'charging.com',
+			port: 35,
+			appSsl: false
+		},
+		rss: {
+			path: 'rss',
+			apiPath: '',
+			host: 'charging.com',
+			port: 35,
+			appSsl: false
+		},
+		sla: {
+			path: 'SLAManagement',
+			apiPath: '',
+			host: 'localhost',
+			port: 80,
+			appSsl: false
+		},
+		reputation: {
+			path: 'REPManagement',
+			apiPath: '',
+			host: 'localhost',
+			port: 80,
+			appSsl: false
+		},
+		quote: {
+			path: 'quote',
+			apiPath: '/api',
+			host: 'quote.com',
+			port: '8637',
+			appSsl: false
+		},
+		revenue: {
+			path: 'revenue',
+			apiPath: '/revenue',
+			host: 'revenue.com',
+			port: '8637',
+			appSsl: false
+		},
+		invoicing: {
+			path: 'invoicing',
+			apiPath: '/invoicing',
+			host: 'invoicing.com',
+			port: '8637',
+			appSsl: false
+		},
+		search: {
+			path: 'search',
+			apiPath: '/search',
+			host: 'search.com',
+			port: '8637',
+			appSsl: false
+		},
+		ai: {
+			path: 'ai',
+			apiPath: '/ai',
+			host: 'ai.com',
+			port: '8637',
+			appSsl: false
+		}
+	},
+	tmforum: {
+		account: {
+			path: 'account',
+			apiPath: '/api',
+			host: 'host.docker.internal',
+			port: '8639',
 			appSsl: false
 		},
 		catalog: {
@@ -114,20 +179,6 @@ var defaultConfig = {
 			port: '8080',
 			appSsl: false
 		},
-		charging: {
-			path: 'charging',
-			apiPath: '',
-			host: 'charging.com',
-			port: 35,
-			appSsl: false
-		},
-		rss: {
-			path: 'rss',
-			apiPath: '',
-			host: 'charging.com',
-			port: 35,
-			appSsl: false
-		},
 		party: {
 			path: 'party',
 			apiPath: '/api',
@@ -154,55 +205,6 @@ var defaultConfig = {
 			apiPath: '/api',
 			host: 'usage.com',
 			port: 78,
-			appSsl: false
-		},
-		sla: {
-			path: 'SLAManagement',
-			apiPath: '',
-			host: 'localhost',
-			port: 80,
-			appSsl: false
-		},
-		reputation: {
-			path: 'REPManagement',
-			apiPath: '',
-			host: 'localhost',
-			port: 80,
-			appSsl: false
-		},
-		quote: {
-			path: 'quote',
-			apiPath: '/api',
-			host: 'quote.com',
-			port: '8637',
-			appSsl: false
-		},
-		revenue: {
-			path: 'revenue',
-			apiPath: '/revenue',
-			host: 'revenue.com',
-			port: '8637',
-			appSsl: false
-		},
-		invoicing: {
-			path: 'invoicing',
-			apiPath: '/invoicing',
-			host: 'invoicing.com',
-			port: '8637',
-			appSsl: false
-		},
-		search: {
-			path: 'search',
-			apiPath: '/search',
-			host: 'search.com',
-			port: '8637',
-			appSsl: false
-		},
-		ai: {
-			path: 'ai',
-			apiPath: '/ai',
-			host: 'ai.com',
-			port: '8637',
 			appSsl: false
 		}
 	},

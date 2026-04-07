@@ -140,7 +140,7 @@ describe('Party API', function() {
                 loggedIn = true;
 
                 var req = {
-                    apiUrl: '/' + config.endpoints.party.path + '/' + path + party,
+                    apiUrl: '/' + config.tmforum.party.path + '/' + path + party,
                     method: 'PATCH',
                     user: user
                 };
@@ -269,7 +269,7 @@ describe('Party API', function() {
 
                 var req = {
                     // OLD // Individual has been replaced by BAD_PATH in this path
-                    apiUrl: '/' + config.endpoints.party.path + '/organization/org',
+                    apiUrl: '/' + config.tmforum.party.path + '/organization/org',
                     method: 'PATCH',
                     user: user,
                     body: JSON.stringify({
@@ -292,7 +292,7 @@ describe('Party API', function() {
 
                 var req = {
                     // OLD // Individual has been replaced by BAD_PATH in this path
-                    apiUrl: '/' + config.endpoints.party.path + '/' + user,
+                    apiUrl: '/' + config.tmforum.party.path + '/' + user,
                     method: 'PATCH',
                     user: user
                 };

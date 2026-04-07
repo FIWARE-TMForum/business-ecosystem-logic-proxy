@@ -58,7 +58,7 @@ describe('Usage Management API', function() {
 
                 const req = {
                     method: method,
-                    apiUrl: `/${config.endpoints.usage.path}${path}`,
+                    apiUrl: `/${config.tmforum.usage.path}${path}`,
                     url: path
                 };
 

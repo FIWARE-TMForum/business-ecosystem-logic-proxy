@@ -140,15 +140,7 @@ config.mongoDb = {
     db: 'belp'
 };
 
-// Configure endpoints
-config.endpoints = {
-    management: {
-        path: 'management',
-        apiPath: '',
-        host: 'localhost',
-        port: config.port,
-        appSsl: config.https.enabled
-    },
+config.tmforum = {
     catalog: {
         path: 'catalog',
         apiPath: '',
@@ -187,32 +179,20 @@ config.endpoints = {
     serviceInventory: {
         path: 'serviceInventory',
         apiPath: '',
+        host: 'host.docker.internal',
+        port: '8651',
         //host: 'charging.docker',
-        host: 'bae-marketplace-biz-ecosystem-charging-backend.marketplace.svc.cluster.local',
-        port: '8006',
+        //host: 'bae-marketplace-biz-ecosystem-charging-backend.marketplace.svc.cluster.local',
+        //port: '8006',
         appSsl: false
     },
     resourceInventory: {
         path: 'resourceInventory',
         apiPath: '',
-        //host: 'host.docker.internal',
-        //port: '8641',
-        host: 'tmforum-tm-forum-api-resource-inventory',
-        port: '8080',
-        appSsl: false
-    },
-    charging: {
-        path: 'charging',
-        apiPath: '',
-        host: 'charging.docker',
-        port: '8006',
-        appSsl: false
-    },
-    rss: {
-        path: 'rss',
-        apiPath: '',
-        host: 'charging.docker',
-        port: '8006',
+        host: 'host.docker.internal',
+        port: '8641',
+        //host: 'tmforum-tm-forum-api-resource-inventory',
+        //port: '8080',
         appSsl: false
     },
     party: {
@@ -248,6 +228,31 @@ config.endpoints = {
         apiPath: '',
         host: 'host.docker.internal',
         port: '8640'
+    }
+}
+
+// Configure endpoints
+config.endpoints = {
+    management: {
+        path: 'management',
+        apiPath: '',
+        host: 'localhost',
+        port: config.port,
+        appSsl: config.https.enabled
+    },
+    charging: {
+        path: 'charging',
+        apiPath: '',
+        host: 'charging.docker',
+        port: '8006',
+        appSsl: false
+    },
+    rss: {
+        path: 'rss',
+        apiPath: '',
+        host: 'charging.docker',
+        port: '8006',
+        appSsl: false
     },
     sla: {
         path: 'SLAManagement',
@@ -273,8 +278,10 @@ config.endpoints = {
     quote: {
         path: 'quote',
         apiPath: '',
-        host: 'quote-management.marketplace.svc.cluster.local',
-        port: '8080'
+        //host: 'quote-management.marketplace.svc.cluster.local',
+        //port: '8080'
+        host: 'host.docker.internal',
+        port: '8787'
     },
     revenue: {
         path: 'revenue',
@@ -456,72 +463,72 @@ config.logOutPath = config.logOutPath || '/logout';
 // =====
 
 // Catalog
-config.endpoints.catalog.apiPath = process.env.BAE_LP_ENDPOINT_CATALOG_PATH || config.endpoints.catalog.apiPath;
-config.endpoints.catalog.port = process.env.BAE_LP_ENDPOINT_CATALOG_PORT || config.endpoints.catalog.port;
-config.endpoints.catalog.host = process.env.BAE_LP_ENDPOINT_CATALOG_HOST || config.endpoints.catalog.host;
+config.tmforum.catalog.apiPath = process.env.BAE_LP_ENDPOINT_CATALOG_PATH || config.tmforum.catalog.apiPath;
+config.tmforum.catalog.port = process.env.BAE_LP_ENDPOINT_CATALOG_PORT || config.tmforum.catalog.port;
+config.tmforum.catalog.host = process.env.BAE_LP_ENDPOINT_CATALOG_HOST || config.tmforum.catalog.host;
 
 if (!!process.env.BAE_LP_ENDPOINT_CATALOG_SECURED) {
-    config.endpoints.catalog.appSsl = process.env.BAE_LP_ENDPOINT_CATALOG_SECURED == 'true';
+    config.tmforum.catalog.appSsl = process.env.BAE_LP_ENDPOINT_CATALOG_SECURED == 'true';
 }
 
 // Resource Catalog
-config.endpoints.resource.apiPath = process.env.BAE_LP_ENDPOINT_RESOURCE_PATH || config.endpoints.resource.apiPath;
-config.endpoints.resource.port = process.env.BAE_LP_ENDPOINT_RESOURCE_PORT || config.endpoints.resource.port;
-config.endpoints.resource.host = process.env.BAE_LP_ENDPOINT_RESOURCE_HOST || config.endpoints.resource.host;
+config.tmforum.resource.apiPath = process.env.BAE_LP_ENDPOINT_RESOURCE_PATH || config.tmforum.resource.apiPath;
+config.tmforum.resource.port = process.env.BAE_LP_ENDPOINT_RESOURCE_PORT || config.tmforum.resource.port;
+config.tmforum.resource.host = process.env.BAE_LP_ENDPOINT_RESOURCE_HOST || config.tmforum.resource.host;
 
 if (!!process.env.BAE_LP_ENDPOINT_RESOURCE_SECURED) {
-    config.endpoints.resource.appSsl = process.env.BAE_LP_ENDPOINT_RESOURCE_SECURED == 'true';
+    config.tmforum.resource.appSsl = process.env.BAE_LP_ENDPOINT_RESOURCE_SECURED == 'true';
 }
 
 // Service Catalog
-config.endpoints.service.apiPath = process.env.BAE_LP_ENDPOINT_SERVICE_PATH || config.endpoints.service.apiPath;
-config.endpoints.service.port = process.env.BAE_LP_ENDPOINT_SERVICE_PORT || config.endpoints.service.port;
-config.endpoints.service.host = process.env.BAE_LP_ENDPOINT_SERVICE_HOST || config.endpoints.service.host;
+config.tmforum.service.apiPath = process.env.BAE_LP_ENDPOINT_SERVICE_PATH || config.tmforum.service.apiPath;
+config.tmforum.service.port = process.env.BAE_LP_ENDPOINT_SERVICE_PORT || config.tmforum.service.port;
+config.tmforum.service.host = process.env.BAE_LP_ENDPOINT_SERVICE_HOST || config.tmforum.service.host;
 
 if (!!process.env.BAE_LP_ENDPOINT_SERVICE_SECURED) {
-    config.endpoints.service.appSsl = process.env.BAE_LP_ENDPOINT_SERVICE_SECURED == 'true';
+    config.tmforum.service.appSsl = process.env.BAE_LP_ENDPOINT_SERVICE_SECURED == 'true';
 }
 
 // Ordering
-config.endpoints.ordering.apiPath = process.env.BAE_LP_ENDPOINT_ORDERING_PATH || config.endpoints.ordering.apiPath;
-config.endpoints.ordering.port = process.env.BAE_LP_ENDPOINT_ORDERING_PORT || config.endpoints.ordering.port;
-config.endpoints.ordering.host = process.env.BAE_LP_ENDPOINT_ORDERING_HOST || config.endpoints.ordering.host;
+config.tmforum.ordering.apiPath = process.env.BAE_LP_ENDPOINT_ORDERING_PATH || config.tmforum.ordering.apiPath;
+config.tmforum.ordering.port = process.env.BAE_LP_ENDPOINT_ORDERING_PORT || config.tmforum.ordering.port;
+config.tmforum.ordering.host = process.env.BAE_LP_ENDPOINT_ORDERING_HOST || config.tmforum.ordering.host;
 
 if (!!process.env.BAE_LP_ENDPOINT_ORDERING_SECURED) {
-    config.endpoints.ordering.appSsl = process.env.BAE_LP_ENDPOINT_ORDERING_SECURED == 'true';
+    config.tmforum.ordering.appSsl = process.env.BAE_LP_ENDPOINT_ORDERING_SECURED == 'true';
 }
 
 // Inventory
-config.endpoints.inventory.apiPath = process.env.BAE_LP_ENDPOINT_INVENTORY_PATH || config.endpoints.inventory.apiPath;
-config.endpoints.inventory.port = process.env.BAE_LP_ENDPOINT_INVENTORY_PORT || config.endpoints.inventory.port;
-config.endpoints.inventory.host = process.env.BAE_LP_ENDPOINT_INVENTORY_HOST || config.endpoints.inventory.host;
+config.tmforum.inventory.apiPath = process.env.BAE_LP_ENDPOINT_INVENTORY_PATH || config.tmforum.inventory.apiPath;
+config.tmforum.inventory.port = process.env.BAE_LP_ENDPOINT_INVENTORY_PORT || config.tmforum.inventory.port;
+config.tmforum.inventory.host = process.env.BAE_LP_ENDPOINT_INVENTORY_HOST || config.tmforum.inventory.host;
 
 if (!!process.env.BAE_LP_ENDPOINT_INVENTORY_SECURED) {
-    config.endpoints.inventory.appSsl = process.env.BAE_LP_ENDPOINT_INVENTORY_SECURED == 'true';
+    config.tmforum.inventory.appSsl = process.env.BAE_LP_ENDPOINT_INVENTORY_SECURED == 'true';
 }
 
 // Service Inventory
-config.endpoints.serviceInventory.apiPath =
-    process.env.BAE_LP_ENDPOINT_SERVICE_INVENTORY_PATH || config.endpoints.serviceInventory.apiPath;
-config.endpoints.serviceInventory.port =
-    process.env.BAE_LP_ENDPOINT_SERVICE_INVENTORY_PORT || config.endpoints.serviceInventory.port;
-config.endpoints.serviceInventory.host =
-    process.env.BAE_LP_ENDPOINT_SERVICE_INVENTORY_HOST || config.endpoints.serviceInventory.host;
+config.tmforum.serviceInventory.apiPath =
+    process.env.BAE_LP_ENDPOINT_SERVICE_INVENTORY_PATH || config.tmforum.serviceInventory.apiPath;
+config.tmforum.serviceInventory.port =
+    process.env.BAE_LP_ENDPOINT_SERVICE_INVENTORY_PORT || config.tmforum.serviceInventory.port;
+config.tmforum.serviceInventory.host =
+    process.env.BAE_LP_ENDPOINT_SERVICE_INVENTORY_HOST || config.tmforum.serviceInventory.host;
 
 if (!!process.env.BAE_LP_ENDPOINT_SERVICE_INVENTORY_SECURED) {
-    config.endpoints.serviceInventory.appSsl = process.env.BAE_LP_ENDPOINT_SERVICE_INVENTORY_SECURED == 'true';
+    config.tmforum.serviceInventory.appSsl = process.env.BAE_LP_ENDPOINT_SERVICE_INVENTORY_SECURED == 'true';
 }
 
 // Resource Intentory
-config.endpoints.resourceInventory.apiPath =
-    process.env.BAE_LP_ENDPOINT_RESOURCE_INVENTORY_PATH || config.endpoints.resourceInventory.apiPath;
-config.endpoints.resourceInventory.port =
-    process.env.BAE_LP_ENDPOINT_RESOURCE_INVENTORY_PORT || config.endpoints.resourceInventory.port;
-config.endpoints.resourceInventory.host =
-    process.env.BAE_LP_ENDPOINT_RESOURCE_INVENTORY_HOST || config.endpoints.resourceInventory.host;
+config.tmforum.resourceInventory.apiPath =
+    process.env.BAE_LP_ENDPOINT_RESOURCE_INVENTORY_PATH || config.tmforum.resourceInventory.apiPath;
+config.tmforum.resourceInventory.port =
+    process.env.BAE_LP_ENDPOINT_RESOURCE_INVENTORY_PORT || config.tmforum.resourceInventory.port;
+config.tmforum.resourceInventory.host =
+    process.env.BAE_LP_ENDPOINT_RESOURCE_INVENTORY_HOST || config.tmforum.resourceInventory.host;
 
 if (!!process.env.BAE_LP_ENDPOINT_RESOURCE_INVENTORY_SECURED) {
-    config.endpoints.resourceInventory.appSsl = process.env.BAE_LP_ENDPOINT_RESOURCE_INVENTORY_SECURED == 'true';
+    config.tmforum.resourceInventory.appSsl = process.env.BAE_LP_ENDPOINT_RESOURCE_INVENTORY_SECURED == 'true';
 }
 
 // Charging
@@ -543,48 +550,48 @@ if (!!process.env.BAE_LP_ENDPOINT_RSS_SECURED) {
 }
 
 // Party
-config.endpoints.party.apiPath = process.env.BAE_LP_ENDPOINT_PARTY_PATH || config.endpoints.party.apiPath;
-config.endpoints.party.port = process.env.BAE_LP_ENDPOINT_PARTY_PORT || config.endpoints.party.port;
-config.endpoints.party.host = process.env.BAE_LP_ENDPOINT_PARTY_HOST || config.endpoints.party.host;
+config.tmforum.party.apiPath = process.env.BAE_LP_ENDPOINT_PARTY_PATH || config.tmforum.party.apiPath;
+config.tmforum.party.port = process.env.BAE_LP_ENDPOINT_PARTY_PORT || config.tmforum.party.port;
+config.tmforum.party.host = process.env.BAE_LP_ENDPOINT_PARTY_HOST || config.tmforum.party.host;
 
 if (!!process.env.BAE_LP_ENDPOINT_PARTY_SECURED) {
-    config.endpoints.party.appSsl = process.env.BAE_LP_ENDPOINT_PARTY_SECURED == 'true';
+    config.tmforum.party.appSsl = process.env.BAE_LP_ENDPOINT_PARTY_SECURED == 'true';
 }
 
 // Billing
-config.endpoints.account.apiPath = process.env.BAE_LP_ENDPOINT_BILLING_PATH || config.endpoints.account.apiPath;
-config.endpoints.account.port = process.env.BAE_LP_ENDPOINT_BILLING_PORT || config.endpoints.account.port;
-config.endpoints.account.host = process.env.BAE_LP_ENDPOINT_BILLING_HOST || config.endpoints.account.host;
+config.tmforum.account.apiPath = process.env.BAE_LP_ENDPOINT_BILLING_PATH || config.tmforum.account.apiPath;
+config.tmforum.account.port = process.env.BAE_LP_ENDPOINT_BILLING_PORT || config.tmforum.account.port;
+config.tmforum.account.host = process.env.BAE_LP_ENDPOINT_BILLING_HOST || config.tmforum.account.host;
 
 if (!!process.env.BAE_LP_ENDPOINT_BILLING_SECURED) {
-    config.endpoints.account.appSsl = process.env.BAE_LP_ENDPOINT_BILLING_SECURED == 'true';
+    config.tmforum.account.appSsl = process.env.BAE_LP_ENDPOINT_BILLING_SECURED == 'true';
 }
 
 // Customer
-config.endpoints.customer.apiPath = process.env.BAE_LP_ENDPOINT_CUSTOMER_PATH || config.endpoints.customer.apiPath;
-config.endpoints.customer.port = process.env.BAE_LP_ENDPOINT_CUSTOMER_PORT || config.endpoints.customer.port;
-config.endpoints.customer.host = process.env.BAE_LP_ENDPOINT_CUSTOMER_HOST || config.endpoints.customer.host;
+config.tmforum.customer.apiPath = process.env.BAE_LP_ENDPOINT_CUSTOMER_PATH || config.tmforum.customer.apiPath;
+config.tmforum.customer.port = process.env.BAE_LP_ENDPOINT_CUSTOMER_PORT || config.tmforum.customer.port;
+config.tmforum.customer.host = process.env.BAE_LP_ENDPOINT_CUSTOMER_HOST || config.tmforum.customer.host;
 
 if (!!process.env.BAE_LP_ENDPOINT_CUSTOMER_SECURED) {
-    config.endpoints.customer.appSsl = process.env.BAE_LP_ENDPOINT_CUSTOMER_SECURED == 'true';
+    config.tmforum.customer.appSsl = process.env.BAE_LP_ENDPOINT_CUSTOMER_SECURED == 'true';
 }
 
 // Usage
-config.endpoints.usage.apiPath = process.env.BAE_LP_ENDPOINT_USAGE_PATH || config.endpoints.usage.apiPath;
-config.endpoints.usage.port = process.env.BAE_LP_ENDPOINT_USAGE_PORT || config.endpoints.usage.port;
-config.endpoints.usage.host = process.env.BAE_LP_ENDPOINT_USAGE_HOST || config.endpoints.usage.host;
+config.tmforum.usage.apiPath = process.env.BAE_LP_ENDPOINT_USAGE_PATH || config.tmforum.usage.apiPath;
+config.tmforum.usage.port = process.env.BAE_LP_ENDPOINT_USAGE_PORT || config.tmforum.usage.port;
+config.tmforum.usage.host = process.env.BAE_LP_ENDPOINT_USAGE_HOST || config.tmforum.usage.host;
 
 if (!!process.env.BAE_LP_ENDPOINT_USAGE_SECURED) {
-    config.endpoints.usage.appSsl = process.env.BAE_LP_ENDPOINT_USAGE_SECURED == 'true';
+    config.tmforum.usage.appSsl = process.env.BAE_LP_ENDPOINT_USAGE_SECURED == 'true';
 }
 
 // Customer Bill
-config.endpoints.billing.apiPath = process.env.BAE_LP_ENDPOINT_CUSTOMER_BILL_PATH || config.endpoints.billing.apiPath;
-config.endpoints.billing.port = process.env.BAE_LP_ENDPOINT_CUSTOMER_BILL_PORT || config.endpoints.billing.port;
-config.endpoints.billing.host = process.env.BAE_LP_ENDPOINT_CUSTOMER_BILL_HOST || config.endpoints.billing.host;
+config.tmforum.billing.apiPath = process.env.BAE_LP_ENDPOINT_CUSTOMER_BILL_PATH || config.tmforum.billing.apiPath;
+config.tmforum.billing.port = process.env.BAE_LP_ENDPOINT_CUSTOMER_BILL_PORT || config.tmforum.billing.port;
+config.tmforum.billing.host = process.env.BAE_LP_ENDPOINT_CUSTOMER_BILL_HOST || config.tmforum.billing.host;
 
 if (!!process.env.BAE_LP_ENDPOINT_CUSTOMER_BILL_SECURED) {
-    config.endpoints.billing.appSsl = process.env.BAE_LP_ENDPOINT_CUSTOMER_BILL_SECURED == 'true';
+    config.tmforum.billing.appSsl = process.env.BAE_LP_ENDPOINT_CUSTOMER_BILL_SECURED == 'true';
 }
 
 // Quote

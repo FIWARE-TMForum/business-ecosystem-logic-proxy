@@ -31,10 +31,10 @@ function simulator() {
     const checkBillAcc = async (billAccRef, userId) =>{
         if (billAccRef && billAccRef.id){
             const billAccURL = utils.getAPIURL(
-                config.endpoints.account.appSsl,
-                config.endpoints.account.host,
-                config.endpoints.account.port,
-                `${config.endpoints.account.apiPath}/billingAccount/${billAccRef.id}`)
+                config.tmforum.account.appSsl,
+                config.tmforum.account.host,
+                config.tmforum.account.port,
+                `${config.tmforum.account.apiPath}/billingAccount/${billAccRef.id}`)
 
             let billAcc;
 
@@ -54,10 +54,10 @@ function simulator() {
         }
         else { // get preferred billing account else returns null
             const billAccURL = utils.getAPIURL(
-                config.endpoints.account.appSsl,
-                config.endpoints.account.host,
-                config.endpoints.account.port,
-                `${config.endpoints.account.apiPath}/billingAccount?relatedParty.id=${userId}`)
+                config.tmforum.account.appSsl,
+                config.tmforum.account.host,
+                config.tmforum.account.port,
+                `${config.tmforum.account.apiPath}/billingAccount?relatedParty.id=${userId}`)
 
             try {
                 const resp = await axios.get(billAccURL);
@@ -135,10 +135,10 @@ function simulator() {
             const offeringRef = order.productOrderItem[0].productOffering.id
             // Get the offering
             const offeringUrl = utils.getAPIURL(
-                config.endpoints.catalog.appSsl,
-                config.endpoints.catalog.host,
-                config.endpoints.catalog.port,
-                `${config.endpoints.catalog.apiPath}/productOffering/${offeringRef}`)
+                config.tmforum.catalog.appSsl,
+                config.tmforum.catalog.host,
+                config.tmforum.catalog.port,
+                `${config.tmforum.catalog.apiPath}/productOffering/${offeringRef}`)
 
             let resp = await axios({
                 method: 'GET',
@@ -147,10 +147,10 @@ function simulator() {
 
             const prodRef = resp.data.productSpecification.id
             const productUrl = utils.getAPIURL(
-                config.endpoints.catalog.appSsl,
-                config.endpoints.catalog.host,
-                config.endpoints.catalog.port,
-                `${config.endpoints.catalog.apiPath}/productSpecification/${prodRef}`)
+                config.tmforum.catalog.appSsl,
+                config.tmforum.catalog.host,
+                config.tmforum.catalog.port,
+                `${config.tmforum.catalog.apiPath}/productSpecification/${prodRef}`)
 
             let prodResp = await axios({
                 method: 'GET',

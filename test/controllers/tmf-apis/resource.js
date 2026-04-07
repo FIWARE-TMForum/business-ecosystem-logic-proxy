@@ -26,11 +26,11 @@ describe('ResourceSpecification API', function() {
 
     const config = testUtils.getDefaultConfig();
     const SERVER =
-        (config.endpoints.resource.appSsl ? 'https' : 'http') +
+        (config.tmforum.resource.appSsl ? 'https' : 'http') +
         '://' +
-        config.endpoints.resource.host +
+        config.tmforum.resource.host +
         ':' +
-        config.endpoints.resource.port;
+        config.tmforum.resource.port;
 
     const getResourceSpecAPI = function(tmfUtils, utils) {
         return proxyquire('../../../controllers/tmf-apis/resource', {
@@ -49,9 +49,9 @@ describe('ResourceSpecification API', function() {
         roles: ['seller'],
         partyId: 'resourceSpec',
     }
-    const protocol = config.endpoints.catalog.appSsl ? 'https' : 'http';
-    const url = protocol + '://' + config.endpoints.resource.host + ':' + config.endpoints.resource.port; 
-    const prodSpecUrl = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
+    const protocol = config.tmforum.catalog.appSsl ? 'https' : 'http';
+    const url = protocol + '://' + config.tmforum.resource.host + ':' + config.tmforum.resource.port; 
+    const prodSpecUrl = protocol + '://' + config.tmforum.catalog.host + ':' + config.tmforum.catalog.port;
 
     beforeEach(function() {
         nock.cleanAll();
@@ -171,9 +171,9 @@ describe('ResourceSpecification API', function() {
                     user: UserInfo,
                     method: 'POST',
                     body: JSON.stringify(body),
-                    apiUrl: `/${config.endpoints.resource.path}${path}`,
+                    apiUrl: `/${config.tmforum.resource.path}${path}`,
                     url: path,
-                    hostname: config.endpoints.service.host,
+                    hostname: config.tmforum.service.host,
                     headers: {}
                 };
 
@@ -256,9 +256,9 @@ describe('ResourceSpecification API', function() {
                     user: seller,
                     method: 'POST',
                     body: invalidBody,
-                    apiUrl: `/${config.endpoints.resource.path}${path}`,
+                    apiUrl: `/${config.tmforum.resource.path}${path}`,
                     url: path,
-                    hostname: config.endpoints.service.host,
+                    hostname: config.tmforum.service.host,
                     headers: {}
                 };
 
@@ -299,9 +299,9 @@ describe('ResourceSpecification API', function() {
                     user: userInfo,
                     method: 'PATCH',
                     body: JSON.stringify(body),
-                    apiUrl: `/${config.endpoints.resource.path}${path}/${resId}`,
+                    apiUrl: `/${config.tmforum.resource.path}${path}/${resId}`,
                     url: `${path}/${resId}`,
-                    hostname: config.endpoints.service.host,
+                    hostname: config.tmforum.service.host,
                     headers: {}
                 }
 

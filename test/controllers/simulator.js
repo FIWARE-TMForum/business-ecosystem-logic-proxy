@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-const proxyquire = require('proxyquire');
+const proxyquire = require('proxyquire').noCallThru();
 
 describe('Simulator Controller', () => {
 
@@ -35,7 +35,7 @@ describe('Simulator Controller', () => {
             seller: 'Seller',
             customer: 'Buyer'
         },
-        endpoints: {
+        tmforum: {
             account: {
                 appSsl: false,
                 host: 'account.example.com',

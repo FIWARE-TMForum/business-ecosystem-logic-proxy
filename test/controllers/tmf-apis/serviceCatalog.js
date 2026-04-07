@@ -25,7 +25,7 @@ const RETIRE_ERROR = 'Cannot retire a service spec without retiring all service 
 describe('ServiceSpecification API', function() {
 
     const config = testUtils.getDefaultConfig();
-    const SERVER = (config.endpoints.service.appSsl ? 'https' : 'http') + '://' + config.endpoints.service.host + ':' + config.endpoints.service.port;
+    const SERVER = (config.tmforum.service.appSsl ? 'https' : 'http') + '://' + config.tmforum.service.host + ':' + config.tmforum.service.port;
 
     const getServiceSpecAPI = function(tmfUtils, utils) {
         return proxyquire('../../../controllers/tmf-apis/serviceCatalog', {
@@ -43,9 +43,9 @@ describe('ServiceSpecification API', function() {
         roles: ['seller'],
         partyId: 'testParty',
     }
-    const protocol = config.endpoints.service.appSsl ? 'https' : 'http';
-    const url = protocol + '://' + config.endpoints.service.host + ':' + config.endpoints.service.port;
-    const prodSpecUrl = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
+    const protocol = config.tmforum.service.appSsl ? 'https' : 'http';
+    const url = protocol + '://' + config.tmforum.service.host + ':' + config.tmforum.service.port;
+    const prodSpecUrl = protocol + '://' + config.tmforum.catalog.host + ':' + config.tmforum.catalog.port;
 
     beforeEach(function() {
         nock.cleanAll();
@@ -163,9 +163,9 @@ describe('ServiceSpecification API', function() {
                     user: UserInfo,
                     method: 'POST',
                     body: JSON.stringify(body),
-                    apiUrl: `/${config.endpoints.service.path}${path}`,
+                    apiUrl: `/${config.tmforum.service.path}${path}`,
                     url: path,
-                    hostname: config.endpoints.service.host,
+                    hostname: config.tmforum.service.host,
                     headers: {}
                 };
 
@@ -249,9 +249,9 @@ describe('ServiceSpecification API', function() {
                     user: seller,
                     method: 'POST',
                     body: invalidBody,
-                    apiUrl: `/${config.endpoints.service.path}${path}`,
+                    apiUrl: `/${config.tmforum.service.path}${path}`,
                     url: path,
-                    hostname: config.endpoints.service.host,
+                    hostname: config.tmforum.service.host,
                     headers: {}
                 };
 
@@ -292,9 +292,9 @@ describe('ServiceSpecification API', function() {
                     user: userInfo,
                     method: 'PATCH',
                     body: JSON.stringify(body),
-                    apiUrl: `/${config.endpoints.service.path}${path}/${serviceId}`,
+                    apiUrl: `/${config.tmforum.service.path}${path}/${serviceId}`,
                     url: `${path}/${serviceId}`,
-                    hostname: config.endpoints.service.host,
+                    hostname: config.tmforum.service.host,
                     headers: {}
                 }
 

@@ -40,7 +40,7 @@ describe('TMF Utils', function() {
             ':' +
             config.port +
             '/' +
-            config.endpoints.party.path +
+            config.tmforum.party.path +
             '/individual/' +
             userName
         );
@@ -586,7 +586,7 @@ describe('TMF Utils', function() {
             const tmfUtils = getTmfUtils(utils);
             tmfUtils.getIndividualURL(req);
 
-            let expectedPath = '/' + config.endpoints.party.path + '/individual/';
+            let expectedPath = '/' + config.tmforum.party.path + '/individual/';
 
             if (user) {
                 expectedPath += user;

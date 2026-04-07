@@ -54,19 +54,19 @@ const FormData = require('form-data')
 
 function tmf() {
 	const apiControllers = {};
-	apiControllers[config.endpoints.catalog.path] = catalog;
-	apiControllers[config.endpoints.ordering.path] = ordering;
-	apiControllers[config.endpoints.inventory.path] = inventory;
-	apiControllers[config.endpoints.serviceInventory.path] = serviceInventory;
-	apiControllers[config.endpoints.resourceInventory.path] = resourceInventory;
+	apiControllers[config.tmforum.catalog.path] = catalog;
+	apiControllers[config.tmforum.ordering.path] = ordering;
+	apiControllers[config.tmforum.inventory.path] = inventory;
+	apiControllers[config.tmforum.serviceInventory.path] = serviceInventory;
+	apiControllers[config.tmforum.resourceInventory.path] = resourceInventory;
 	apiControllers[config.endpoints.charging.path] = charging;
 	apiControllers[config.endpoints.rss.path] = rss;
-	apiControllers[config.endpoints.party.path] = party;
-	apiControllers[config.endpoints.usage.path] = usageManagement;
-	apiControllers[config.endpoints.account.path] = account;
-	apiControllers[config.endpoints.service.path] = serviceCatalog;
-	apiControllers[config.endpoints.resource.path] = resource;
-	apiControllers[config.endpoints.billing.path] = billing;
+	apiControllers[config.tmforum.party.path] = party;
+	apiControllers[config.tmforum.usage.path] = usageManagement;
+	apiControllers[config.tmforum.account.path] = account;
+	apiControllers[config.tmforum.service.path] = serviceCatalog;
+	apiControllers[config.tmforum.resource.path] = resource;
+	apiControllers[config.tmforum.billing.path] = billing;
 	apiControllers[config.endpoints.quote.path] = quote;
 	apiControllers[config.endpoints.revenue.path] = revenue;
 	apiControllers[config.endpoints.invoicing.path] = invoicing;
@@ -74,17 +74,17 @@ function tmf() {
 	apiControllers[config.endpoints.ai.path] = ai;
 
 	const newApis = [
-		config.endpoints.party.path,
-		config.endpoints.catalog.path,
-		config.endpoints.ordering.path,
-		config.endpoints.inventory.path,
-		config.endpoints.service.path,
-		config.endpoints.resource.path,
-		config.endpoints.account.path,
-		config.endpoints.serviceInventory.path,
-		config.endpoints.resourceInventory.path,
-		config.endpoints.usage.path,
-		config.endpoints.billing.path,
+		config.tmforum.party.path,
+		config.tmforum.catalog.path,
+		config.tmforum.ordering.path,
+		config.tmforum.inventory.path,
+		config.tmforum.service.path,
+		config.tmforum.resource.path,
+		config.tmforum.account.path,
+		config.tmforum.serviceInventory.path,
+		config.tmforum.resourceInventory.path,
+		config.tmforum.usage.path,
+		config.tmforum.billing.path,
 		config.endpoints.quote.path,
 		config.endpoints.revenue.path,
 		config.endpoints.invoicing.path,

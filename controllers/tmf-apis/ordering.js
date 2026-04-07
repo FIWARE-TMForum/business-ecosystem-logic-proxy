@@ -66,10 +66,10 @@ const ordering = (function() {
         const errorMessageProduct = 'The system fails to retrieve the product attached to the ordering item ' + item.id;
 
         const productUrl = utils.getAPIURL(
-            config.endpoints.catalog.appSsl,
-            config.endpoints.catalog.host,
-            config.endpoints.catalog.port,
-            `${config.endpoints.catalog.apiPath}/productSpecification/${offering.productSpecification.id}`
+            config.tmforum.catalog.appSsl,
+            config.tmforum.catalog.host,
+            config.tmforum.catalog.port,
+            `${config.tmforum.catalog.apiPath}/productSpecification/${offering.productSpecification.id}`
         );
 
         makeRequest(productUrl, errorMessageProduct, function(err, product) {
@@ -138,10 +138,10 @@ const ordering = (function() {
                     includeProductParty(offering, item, resolve, reject);
                 } else {
                     const offeringUrl = utils.getAPIURL(
-                        config.endpoints.catalog.appSsl,
-                        config.endpoints.catalog.host,
-                        config.endpoints.catalog.port,
-                        `${config.endpoints.catalog.apiPath}/productOffering/${offering.bundledProductOffering[0].id}`
+                        config.tmforum.catalog.appSsl,
+                        config.tmforum.catalog.host,
+                        config.tmforum.catalog.port,
+                        `${config.tmforum.catalog.apiPath}/productOffering/${offering.bundledProductOffering[0].id}`
                     );
                     includeOfferingParty(offeringUrl, item, resolve, reject, user);
                 }
@@ -193,10 +193,10 @@ const ordering = (function() {
             // Inject customer and seller related parties in the order items in order to make this info
             // available thought the inventory API
             const offeringUrl = utils.getAPIURL(
-                config.endpoints.catalog.appSsl,
-                config.endpoints.catalog.host,
-                config.endpoints.catalog.port,
-                `${config.endpoints.catalog.apiPath}/productOffering/${item.productOffering.id}`
+                config.tmforum.catalog.appSsl,
+                config.tmforum.catalog.host,
+                config.tmforum.catalog.port,
+                `${config.tmforum.catalog.apiPath}/productOffering/${item.productOffering.id}`
             );
 
             includeOfferingParty(offeringUrl, item, resolve, reject, user);
@@ -298,10 +298,10 @@ const ordering = (function() {
         }
 
          const billAccURL = utils.getAPIURL(
-                config.endpoints.account.appSsl,
-                config.endpoints.account.host,
-                config.endpoints.account.port,
-                `${config.endpoints.account.apiPath}/billingAccount/${body.billingAccount.id}`)
+                config.tmforum.account.appSsl,
+                config.tmforum.account.host,
+                config.tmforum.account.port,
+                `${config.tmforum.account.apiPath}/billingAccount/${body.billingAccount.id}`)
 
         let billAcc;
 
@@ -480,10 +480,10 @@ const ordering = (function() {
             const ordering = JSON.parse(req.body);
             const path = req.apiUrl.replace('/ordering', '');
             const orderingUrl = utils.getAPIURL(
-                config.endpoints.ordering.appSsl,
-                config.endpoints.ordering.host,
-                config.endpoints.ordering.port,
-                `${config.endpoints.ordering.apiPath}${path}`
+                config.tmforum.ordering.appSsl,
+                config.tmforum.ordering.host,
+                config.tmforum.ordering.port,
+                `${config.tmforum.ordering.apiPath}${path}`
             );
 
             makeRequest(orderingUrl, 'The requested ordering cannot be retrieved', (err, previousOrdering) => {

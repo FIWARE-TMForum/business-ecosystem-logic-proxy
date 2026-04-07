@@ -46,10 +46,10 @@ const billing = (function() {
 
         // Fetch customer bill
         const cbURL = utils.getAPIURL(
-            config.endpoints.billing.appSsl,
-            config.endpoints.billing.host,
-            config.endpoints.billing.port,
-            `${config.endpoints.billing.apiPath}/customerBill/${req.query['bill.id']}`
+            config.tmforum.billing.appSsl,
+            config.tmforum.billing.host,
+            config.tmforum.billing.port,
+            `${config.tmforum.billing.apiPath}/customerBill/${req.query['bill.id']}`
         );
 
         try {

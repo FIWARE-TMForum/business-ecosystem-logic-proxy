@@ -27,23 +27,23 @@ describe('Ordering API', function() {
     const config = testUtils.getDefaultConfig();
 
     const SERVER =
-        (config.endpoints.ordering.appSsl ? 'https' : 'http') +
+        (config.tmforum.ordering.appSsl ? 'https' : 'http') +
         '://' +
-        config.endpoints.ordering.host +
+        config.tmforum.ordering.host +
         ':' +
-        config.endpoints.ordering.port;
+        config.tmforum.ordering.port;
     const CATALOG_SERVER =
-        (config.endpoints.catalog.appSsl ? 'https' : 'http') +
+        (config.tmforum.catalog.appSsl ? 'https' : 'http') +
         '://' +
-        config.endpoints.catalog.host +
+        config.tmforum.catalog.host +
         ':' +
-        config.endpoints.catalog.port;
+        config.tmforum.catalog.port;
     const B_ACCOUNT_SERVER =
-        (config.endpoints.account.appSsl ? 'https' : 'http') +
+        (config.tmforum.account.appSsl ? 'https' : 'http') +
         '://' +
-        config.endpoints.account.host +
+        config.tmforum.account.host +
         ':' +
-        config.endpoints.account.port;
+        config.tmforum.account.port;
 
     // Errors
     const BILLING_ACCOUNT_REQUIRED = {

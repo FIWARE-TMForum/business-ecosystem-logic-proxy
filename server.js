@@ -601,7 +601,9 @@ app.all(adminRegex, authMiddleware.headerAuthentication, authMiddleware.checkOrg
     admin.checkPermissions(req, res)
 })
 
-const paths = Object.values(config.endpoints).map(endpoint => endpoint.path);
+const paths = Array.from(
+    new Set([...Object.values(config.tmforum), ...Object.values(config.endpoints)].map((endpoint) => endpoint.path))
+);
 const regexPattern = new RegExp(`^\/(${paths.join('|')})\/(.*)\/?$`);
 
 const upload = multer({

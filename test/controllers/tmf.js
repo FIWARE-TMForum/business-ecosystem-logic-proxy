@@ -204,9 +204,9 @@ describe('TMF Controller', function() {
             // TMF API. Only one API is set, the rest are set to null so we are sure the appropriate
             // one has been called
             const request = getDefaultHttpClient();
-            const catalogController = api.startsWith(config.endpoints.catalog.path) ? controller : null;
-            const orderingController = api.startsWith(config.endpoints.ordering.path) ? controller : null;
-            const inventoryController = api.startsWith(config.endpoints.inventory.path) ? controller : null;
+            const catalogController = api.startsWith(config.tmforum.catalog.path) ? controller : null;
+            const orderingController = api.startsWith(config.tmforum.ordering.path) ? controller : null;
+            const inventoryController = api.startsWith(config.tmforum.inventory.path) ? controller : null;
             const tmf = getTmfInstance(request, catalogController, orderingController, inventoryController);
 
             // Actual call
@@ -270,9 +270,9 @@ describe('TMF Controller', function() {
                 }
             });
             
-            const catalogController = api.startsWith(config.endpoints.catalog.path) ? controller : null;
-            const orderingController = api.startsWith(config.endpoints.ordering.path) ? controller : null;
-            const inventoryController = api.startsWith(config.endpoints.inventory.path) ? controller : null;
+            const catalogController = api.startsWith(config.tmforum.catalog.path) ? controller : null;
+            const orderingController = api.startsWith(config.tmforum.ordering.path) ? controller : null;
+            const inventoryController = api.startsWith(config.tmforum.inventory.path) ? controller : null;
             const tmf = getTmfInstance(request, catalogController, orderingController, inventoryController);
 
             // Actual call

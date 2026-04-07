@@ -42,13 +42,13 @@ const serviceCatalog = (function() {
     };
 
     const getResourceAPIUrl = function(path) {
-        const resPath = path.replace(`/${config.endpoints.service.path}/`, '')
+        const resPath = path.replace(`/${config.tmforum.service.path}/`, '')
 
         return utils.getAPIURL(
-            config.endpoints.service.appSsl,
-            config.endpoints.service.host,
-            config.endpoints.service.port,
-            `${config.endpoints.service.apiPath}/${resPath}`
+            config.tmforum.service.appSsl,
+            config.tmforum.service.host,
+            config.tmforum.service.port,
+            `${config.tmforum.service.apiPath}/${resPath}`
         );
     };
 
@@ -168,7 +168,7 @@ const serviceCatalog = (function() {
 
 
     const getServiceSpecs = function (ref, fields, callback){
-        const endpoint = config.endpoints.catalog
+        const endpoint = config.tmforum.catalog
         const specPath = `/productSpecification?serviceSpecification.id=${ref}&fields=${fields}`
         const uri = utils.getAPIURL(
             endpoint.appSsl,

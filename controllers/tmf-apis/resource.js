@@ -36,13 +36,13 @@ const resource = (function (){
     };
 
     const getResourceAPIUrl = function(path) {
-        const resPath = path.replace(`/${config.endpoints.resource.path}/`, '')
+        const resPath = path.replace(`/${config.tmforum.resource.path}/`, '')
 
         return utils.getAPIURL(
-            config.endpoints.resource.appSsl,
-            config.endpoints.resource.host,
-            config.endpoints.resource.port,
-            `${config.endpoints.resource.apiPath}/${resPath}`
+            config.tmforum.resource.appSsl,
+            config.tmforum.resource.host,
+            config.tmforum.resource.port,
+            `${config.tmforum.resource.apiPath}/${resPath}`
         );
     };
 
@@ -121,7 +121,7 @@ const resource = (function (){
     };
 
     const getProductSpecs = function (ref, fields, callback){
-        const endpoint = config.endpoints.catalog
+        const endpoint = config.tmforum.catalog
         const specPath = `/productSpecification?resourceSpecification.id=${ref}&fields=${fields}`
         const uri = utils.getAPIURL(
             endpoint.appSsl,

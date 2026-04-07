@@ -101,12 +101,12 @@ const account = (function() {
     const validateUpdate = function(req, callback) {
 
         const billingPattern = new RegExp('/billingAccount/[^/]+/?$');
-        const path = req.apiUrl.replace('/' + config.endpoints.account.path, '')
+        const path = req.apiUrl.replace('/' + config.tmforum.account.path, '')
         const uri = utils.getAPIURL(
-            config.endpoints.account.appSsl,
-            config.endpoints.account.host,
-            config.endpoints.account.port,
-            `${config.endpoints.account.apiPath}${path}`
+            config.tmforum.account.appSsl,
+            config.tmforum.account.host,
+            config.tmforum.account.port,
+            `${config.tmforum.account.apiPath}${path}`
         );
         axios.get(uri).then((response) => {
             if (!tmfUtils.isOwner(req, response.data)) {
@@ -139,7 +139,7 @@ const account = (function() {
 
     const checkPermissions = function(req, callback) {
         const pathRegExp = new RegExp(
-            '^/' + config.endpoints.account.path + '?(/(.*))?$'
+            '^/' + config.tmforum.account.path + '?(/(.*))?$'
         );
 
         const apiPath = url.parse(req.apiUrl).pathname;

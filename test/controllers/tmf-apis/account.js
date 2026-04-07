@@ -497,12 +497,12 @@ describe('Account API', () => {
         })
     })
     describe('Validate account update', () => {
-        const protocol = config.endpoints.account.appSsl ? 'https' : 'http';
-	    const url = protocol + '://' + config.endpoints.account.host + ':' + config.endpoints.account.port;
+        const protocol = config.tmforum.account.appSsl ? 'https' : 'http';
+	    const url = protocol + '://' + config.tmforum.account.host + ':' + config.tmforum.account.port;
 
         const req = {
             method: 'PATCH',
-            apiUrl: `/${config.endpoints.account.path}${path}`,
+            apiUrl: `/${config.tmforum.account.path}${path}`,
             user: {
                 partyId: userId
             },
@@ -572,8 +572,8 @@ describe('Account API', () => {
         })
     })
     describe('Validate billingAccount update', () => {
-        const protocol = config.endpoints.account.appSsl ? 'https' : 'http';
-	    const url = protocol + '://' + config.endpoints.account.host + ':' + config.endpoints.account.port;
+        const protocol = config.tmforum.account.appSsl ? 'https' : 'http';
+	    const url = protocol + '://' + config.tmforum.account.host + ':' + config.tmforum.account.port;
         const billingId = 1
 
         const req = {

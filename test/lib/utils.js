@@ -233,9 +233,13 @@ describe('Utils', function() {
     });
 
     describe('Get API Port', function() {
+        const getEndpoint = function(api) {
+            return config.tmforum[api] || config.endpoints[api];
+        };
+
         var testGetAPIPort = function(api) {
             var port = utils.getAPIPort(api);
-            expect(port).toBe(config.endpoints[api].port);
+            expect(port).toBe(getEndpoint(api).port);
         };
 
         it('should return correct port for catalog', function() {

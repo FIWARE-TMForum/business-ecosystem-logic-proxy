@@ -25,7 +25,7 @@ const testUtils = require('../utils');
 describe('Party lib', function() {
     const config = testUtils.getDefaultConfig();
 
-    const url = 'http://' + config.endpoints.party.host + ':' + config.endpoints.party.port;
+    const url = 'http://' + config.tmforum.party.host + ':' + config.tmforum.party.port;
 
     const partyClient = function(path) {
         return proxyquire('../../lib/party', {
