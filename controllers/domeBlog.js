@@ -7,7 +7,7 @@ const config = require('../config')
 const domeBlog = (function () {
 
   const create = async function (req, res) {
-    if (!utils.hasRole(req.user, config.oauth2.roles.admin)) {
+    if (!utils.hasRole(req.user, config.roles.admin)) {
       res.status(403).send('Only administrators can create entries')
     } else {
       try {
@@ -63,7 +63,7 @@ const domeBlog = (function () {
   };
 
   const deleteById = async function (req, res) {
-    if (!utils.hasRole(req.user, config.oauth2.roles.admin)) {
+    if (!utils.hasRole(req.user, config.roles.admin)) {
       res.status(403).send('Only administrators can delete entries')
     } else {
       try {
@@ -84,7 +84,7 @@ const domeBlog = (function () {
   };
 
   const updateById = async function (req, res) {
-    if (!utils.hasRole(req.user, config.oauth2.roles.admin)) {
+    if (!utils.hasRole(req.user, config.roles.admin)) {
       res.status(403).send('Only administrators can update entries')
     } else {
       try {
