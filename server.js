@@ -418,6 +418,7 @@ app.get('/config', async (_, res) => {
         domeTrust: config.domeTrust,
         domeAbout: config.domeAbout,
         domeRegister: config.domeRegister,
+        domeRegisterCustomer: config.domeRegisterCustomer,
         domeRegistrationForm: config.domeRegistrationForm,
         domeOnboardingGuidelines: config.domeOnboardingGuidelines,
         domeGuidelines: config.domeGuidelines,
