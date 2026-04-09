@@ -1090,6 +1090,32 @@ describe('TMF Utils', function() {
             const resolveTmforumEndpointByPartyId = jasmine.createSpy('resolveTmforumEndpointByPartyId').and.returnValue(
                 Promise.resolve('https://federated.example.com/tmf')
             );
+            const resolveFederatedOrganizationParty = jasmine.createSpy('resolveFederatedOrganizationParty').and.callFake(
+                async (_, __, externalReferenceName) => {
+                    if (externalReferenceName === 'VAT-ID1' || externalReferenceName === 'LOCAL-SESSION-ID') {
+                        return {
+                            id: 'urn:organization:remoteSellerId',
+                            href: 'urn:organization:remoteSellerId'
+                        };
+                    }
+
+                    if (externalReferenceName === 'VAT-ID2') {
+                        return {
+                            id: 'urn:organization:remoteBuyerId',
+                            href: 'urn:organization:remoteBuyerId'
+                        };
+                    }
+
+                    if (externalReferenceName === 'VAT-OP') {
+                        return {
+                            id: 'urn:organization:remoteOperatorId',
+                            href: 'urn:organization:remoteOperatorId'
+                        };
+                    }
+
+                    return null;
+                }
+            );
 
             const tmfUtils = proxyquire('../../lib/tmfUtils', {
                 './../config': config,
@@ -1107,7 +1133,8 @@ describe('TMF Utils', function() {
                 './federation': {
                     federation: {
                         resolveTmforumEndpoint: resolveTmforumEndpoint,
-                        resolveTmforumEndpointByPartyId: resolveTmforumEndpointByPartyId
+                        resolveTmforumEndpointByPartyId: resolveTmforumEndpointByPartyId,
+                        resolveFederatedOrganizationParty: resolveFederatedOrganizationParty
                     }
                 }
             });
@@ -1116,7 +1143,8 @@ describe('TMF Utils', function() {
                 tmfUtils: tmfUtils,
                 partyClient: partyClient,
                 resolveTmforumEndpoint: resolveTmforumEndpoint,
-                resolveTmforumEndpointByPartyId: resolveTmforumEndpointByPartyId
+                resolveTmforumEndpointByPartyId: resolveTmforumEndpointByPartyId,
+                resolveFederatedOrganizationParty: resolveFederatedOrganizationParty
             };
         };
 
@@ -1360,7 +1388,7 @@ describe('TMF Utils', function() {
             }]);
 
             expect(utilsObj.resolveTmforumEndpointByPartyId).toHaveBeenCalledWith('urn:organization:partyId');
-            expect(utilsObj.partyClient.getOrganizationsByQueryInApi.calls.count()).toBe(2);
+            expect(utilsObj.resolveFederatedOrganizationParty.calls.count()).toBe(2);
         });
 
         it('should resolve federated seller IDs using current user external reference', async () => {
@@ -1377,17 +1405,15 @@ describe('TMF Utils', function() {
                 };
             });
 
-            utilsObj.partyClient.getOrganizationsByQueryInApi.and.callFake(async (_, query) => {
-                if (query.includes('LOCAL-SESSION-ID')) {
+            utilsObj.resolveFederatedOrganizationParty.and.callFake(async (_, __, externalReferenceName) => {
+                if (externalReferenceName === 'LOCAL-SESSION-ID') {
                     return {
-                        body: [{
-                            id: 'urn:organization:remoteSellerId',
-                            href: 'urn:organization:remoteSellerId'
-                        }]
+                        id: 'urn:organization:remoteSellerId',
+                        href: 'urn:organization:remoteSellerId'
                     };
                 }
 
-                return { body: [] };
+                return null;
             });
 
             const req = {
@@ -1420,11 +1446,12 @@ describe('TMF Utils', function() {
                 "@referredType": "Organization"
             }]);
 
-            expect(utilsObj.partyClient.getOrganizationsByQueryInApi).toHaveBeenCalledWith(
+            expect(utilsObj.resolveFederatedOrganizationParty).toHaveBeenCalledWith(
                 'https://federated.example.com/tmf',
-                'externalReference.name=LOCAL-SESSION-ID'
+                'urn:organization:partyId',
+                'LOCAL-SESSION-ID'
             );
-            expect(utilsObj.partyClient.getOrganizationsByQueryInApi.calls.count()).toBe(1);
+            expect(utilsObj.resolveFederatedOrganizationParty.calls.count()).toBe(1);
         });
 
         it('should use seller as federation source for product orders when requester is not the seller', async () => {
@@ -1548,7 +1575,7 @@ describe('TMF Utils', function() {
             }]);
 
             expect(utilsObj.partyClient.getIndividualsByQueryInApi).not.toHaveBeenCalled();
-            expect(utilsObj.partyClient.getOrganizationsByQueryInApi.calls.count()).toBe(1);
+            expect(utilsObj.resolveFederatedOrganizationParty.calls.count()).toBe(1);
         });
 
         it('should skip federation resolution for individual users even with userId', async () => {
@@ -1572,7 +1599,7 @@ describe('TMF Utils', function() {
             await utilsObj.tmfUtils.attachRelatedParty(req, 'catalog');
 
             expect(utilsObj.resolveTmforumEndpointByPartyId).not.toHaveBeenCalled();
-            expect(utilsObj.partyClient.getOrganizationsByQueryInApi).not.toHaveBeenCalled();
+            expect(utilsObj.resolveFederatedOrganizationParty).not.toHaveBeenCalled();
         });
     })
 });

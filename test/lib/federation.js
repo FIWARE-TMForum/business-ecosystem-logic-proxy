@@ -279,14 +279,25 @@ describe('Federation library', function() {
 
     it('should fallback to seller external reference name when seller id is not resolvable', async function() {
         const partyClient = {
-            getOrganization: jasmine.createSpy('getOrganization').and.returnValue(
-                Promise.resolve({
+            getOrganization: jasmine.createSpy('getOrganization').and.callFake((partyId) => {
+                if (partyId === 'urn:organization:local-seller') {
+                    return Promise.resolve({
+                        body: {
+                            id: 'urn:organization:local-seller',
+                            partyCharacteristic: [
+                                { name: 'tmforumEndpoint', value: 'https://seller.example.com/tmf/' }
+                            ]
+                        }
+                    });
+                }
+
+                return Promise.resolve({
                     body: {
                         id: 'urn:organization:remote-seller',
                         partyCharacteristic: []
                     }
-                })
-            ),
+                });
+            }),
             getOrganizationsByQuery: jasmine.createSpy('getOrganizationsByQuery').and.returnValue(
                 Promise.resolve({
                     body: [{
@@ -322,6 +333,10 @@ describe('Federation library', function() {
         expect(resolved).toBe('https://seller.example.com/tmf/ordering/productOrder');
         expect(partyClient.getOrganization).toHaveBeenCalledWith('urn:organization:remote-seller');
         expect(partyClient.getOrganizationsByQuery).toHaveBeenCalledWith('externalReference.name=VATES-SELLER');
+
+        const resolvedFromCache = await federation.resolveTmforumApiUrl(req, '/ordering/productOrder');
+        expect(resolvedFromCache).toBe('https://seller.example.com/tmf/ordering/productOrder');
+        expect(partyClient.getOrganizationsByQuery.calls.count()).toBe(1);
     });
 
     it('should fail when seller is missing in product order creation', async function() {
@@ -460,4 +475,69 @@ describe('Federation library', function() {
 
         expect(resolved).toBe('https://federated.example.com/tmf/ordering/productOrder');
     });
+
+    it('should resolve federated organization by external reference and reuse cache by local party id', async function() {
+        const partyClient = {
+            getOrganizationsByQueryInApi: jasmine.createSpy('getOrganizationsByQueryInApi').and.returnValue(
+                Promise.resolve({
+                    body: [{
+                        id: 'urn:organization:remote-seller',
+                        href: 'urn:organization:remote-seller'
+                    }]
+                })
+            )
+        };
+        const federation = getFederation(partyClient);
+
+        const resolved1 = await federation.resolveFederatedOrganizationParty(
+            'https://federated.example.com/tmf',
+            'urn:organization:local-seller',
+            'VAT-SELLER'
+        );
+        const resolved2 = await federation.resolveFederatedOrganizationParty(
+            'https://federated.example.com/tmf',
+            'urn:organization:local-seller',
+            'VAT-SELLER'
+        );
+
+        expect(resolved1).toEqual({
+            id: 'urn:organization:remote-seller',
+            href: 'urn:organization:remote-seller'
+        });
+        expect(resolved2).toEqual({
+            id: 'urn:organization:remote-seller',
+            href: 'urn:organization:remote-seller'
+        });
+        expect(partyClient.getOrganizationsByQueryInApi.calls.count()).toBe(1);
+        expect(partyClient.getOrganizationsByQueryInApi).toHaveBeenCalledWith(
+            'https://federated.example.com/tmf',
+            'externalReference.name=VAT-SELLER'
+        );
+    });
+
+    it('should fail when federated organization lookup is not unique', async function() {
+        const partyClient = {
+            getOrganizationsByQueryInApi: jasmine.createSpy('getOrganizationsByQueryInApi').and.returnValue(
+                Promise.resolve({
+                    body: []
+                })
+            )
+        };
+        const federation = getFederation(partyClient);
+
+        try {
+            await federation.resolveFederatedOrganizationParty(
+                'https://federated.example.com/tmf',
+                'urn:organization:local-seller',
+                'VAT-SELLER'
+            );
+            fail('Expected federated organization lookup to fail with zero matches');
+        } catch (err) {
+            expect(err).toEqual({
+                status: 422,
+                message: 'Cannot resolve unique federated organization for externalReference.name=VAT-SELLER. matches=0'
+            });
+        }
+    });
+
 });
