@@ -105,7 +105,10 @@ function tmf() {
 		let url = utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + utils.getAPIPath(api) + proxiedPath;
 
 		if (config.federationEnabled && isTmforumApi(api)) {
-			url = await federation.resolveTmforumApiUrl(req, apiUrl) || url;
+			const federatedUrl = await federation.resolveTmforumApiUrl(req, url);
+			if (typeof federatedUrl === 'string' && /^https?:\/\//i.test(federatedUrl)) {
+				url = federatedUrl;
+			}
 		}
 
 		if (api == 'rss') {
@@ -117,7 +120,6 @@ function tmf() {
 		}
 
 		proxyRequest(req, res, api, options)
-			
 	};
 
 	async function buildOptions(req, res, url, api) {
@@ -249,12 +251,12 @@ function tmf() {
 				}
 			}
 
-			if (response.status < 400 && apiControllers[api] !== undefined
+			if (response.status < 400 && apiControllers[api] != null
 				&& apiControllers[api].executePostValidation) {
 
 				apiControllers[api].executePostValidation(result, handleValidation)
 
-			} else if (response.status >= 400 && apiControllers[api] !== undefined
+			} else if (response.status >= 400 && apiControllers[api] != null
 				&& apiControllers[api].handleAPIError) {
 
 				utils.log(logger, 'warn', req, 'Handling API error (' + api + ')');

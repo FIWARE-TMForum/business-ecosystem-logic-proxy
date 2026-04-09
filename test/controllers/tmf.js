@@ -54,17 +54,22 @@ describe('TMF Controller', function() {
     };
 
     // Function to get a custom tmf.js instance
-    const getTmfInstance = function(request, catalog, ordering, inventory, party, federationLib) {
+    const getTmfInstance = function(request, catalog, ordering, inventory, party, federationLib, tmfUtilsLib) {
         const federation = federationLib || {
             resolveTmforumApiUrl: function(req, apiUrl) {
                 return apiUrl;
             }
         };
 
+        const tmfUtils = tmfUtilsLib || {
+            attachRelatedParty: jasmine.createSpy('attachRelatedParty').and.returnValue(Promise.resolve())
+        };
+
         return proxyquire('../../controllers/tmf', {
             axios: request,
             './../config': config,
             './../lib/utils': utils,
+            './../lib/tmfUtils': tmfUtils,
             './../lib/federation': { federation: federation },
             './../lib/logger': testUtils.emptyLogger,
             './tmf-apis/catalog': { catalog: catalog },
@@ -204,7 +209,7 @@ describe('TMF Controller', function() {
                     .and.returnValue('https://federated.example.com/tmf/catalog/federated')
             };
 
-            const tmf = getTmfInstance(request, {}, null, null, null, federation);
+            const tmf = getTmfInstance(request, {}, {}, null, null, federation);
 
             const req = {
                 apiUrl: '/catalog/catalog',
@@ -220,7 +225,7 @@ describe('TMF Controller', function() {
             const res = jasmine.createSpyObj('res', ['status', 'json', 'setHeader']);
 
             res.json.and.callFake(() => {
-                expect(federation.resolveTmforumApiUrl).toHaveBeenCalledWith(req, '/catalog/catalog');
+                expect(federation.resolveTmforumApiUrl).toHaveBeenCalledWith(req, 'http://example.com:1234/api/catalog');
                 expect(request.request).toHaveBeenCalledWith({
                     url: 'https://federated.example.com/tmf/catalog/federated',
                     method: 'GET',
@@ -310,7 +315,7 @@ describe('TMF Controller', function() {
                     .and.returnValue('https://federated.example.com/tmf/catalog/catalog')
             };
 
-            const tmf = getTmfInstance(request, {}, null, null, null, federation);
+            const tmf = getTmfInstance(request, {}, {}, null, null, federation);
 
             const req = {
                 apiUrl: '/catalog/catalog',
@@ -326,12 +331,74 @@ describe('TMF Controller', function() {
             const res = jasmine.createSpyObj('res', ['status', 'json', 'setHeader']);
 
             res.json.and.callFake(() => {
-                expect(federation.resolveTmforumApiUrl).toHaveBeenCalledWith(req, '/catalog/catalog');
+                expect(federation.resolveTmforumApiUrl).toHaveBeenCalledWith(req, 'http://example.com:1234/api/catalog');
                 expect(request.request).toHaveBeenCalledWith({
                     url: 'https://federated.example.com/tmf/catalog/catalog',
                     method: 'GET',
                     headers: utils.proxiedRequestHeaders(),
                     data: 'Example'
+                });
+                done();
+            });
+
+            tmf.public(req, res);
+        });
+
+        it('should route product order creation using seller party federation endpoint', function(done) {
+            config.federationEnabled = true;
+
+            const protocol = 'http';
+            utils.getAPIProtocol = function() {
+                return protocol;
+            };
+            utils.getAPIPath = function() {
+                return '/api';
+            };
+
+            const request = getDefaultHttpClient({
+                status: 200,
+                data: { ok: true },
+                headers: {
+                    'content-type': 'application/json'
+                }
+            });
+
+            const federation = {
+                resolveTmforumApiUrl: jasmine
+                    .createSpy('resolveTmforumApiUrl')
+                    .and.returnValue('https://seller.example.com/tmf/ordering/productOrder')
+            };
+
+            const tmf = getTmfInstance(request, {}, {}, null, null, federation);
+
+            const req = {
+                apiUrl: '/ordering/productOrder',
+                body: JSON.stringify({
+                    relatedParty: [{
+                        id: 'urn:organization:sellerA',
+                        role: 'Seller'
+                    }, {
+                        id: 'urn:organization:buyerA',
+                        role: 'Customer'
+                    }]
+                }),
+                method: 'POST',
+                headers: {},
+                connection: { remoteAddress: '127.0.0.1' },
+                get: function() {
+                    return false;
+                }
+            };
+
+            const res = jasmine.createSpyObj('res', ['status', 'json', 'setHeader']);
+
+            res.json.and.callFake(() => {
+                expect(federation.resolveTmforumApiUrl).toHaveBeenCalledWith(req, 'http://example.com:1234/api/productOrder');
+                expect(request.request).toHaveBeenCalledWith({
+                    url: 'https://seller.example.com/tmf/ordering/productOrder',
+                    method: 'POST',
+                    headers: utils.proxiedRequestHeaders(),
+                    data: req.body
                 });
                 done();
             });

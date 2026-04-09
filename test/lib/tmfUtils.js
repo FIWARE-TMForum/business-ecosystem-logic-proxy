@@ -1085,6 +1085,9 @@ describe('TMF Utils', function() {
             const resolveTmforumEndpoint = jasmine.createSpy('resolveTmforumEndpoint').and.returnValue(
                 Promise.resolve('https://federated.example.com/tmf')
             );
+            const resolveTmforumEndpointByPartyId = jasmine.createSpy('resolveTmforumEndpointByPartyId').and.returnValue(
+                Promise.resolve('https://federated.example.com/tmf')
+            );
 
             const tmfUtils = proxyquire('../../lib/tmfUtils', {
                 './../config': config,
@@ -1101,7 +1104,8 @@ describe('TMF Utils', function() {
                 },
                 './federation': {
                     federation: {
-                        resolveTmforumEndpoint: resolveTmforumEndpoint
+                        resolveTmforumEndpoint: resolveTmforumEndpoint,
+                        resolveTmforumEndpointByPartyId: resolveTmforumEndpointByPartyId
                     }
                 }
             });
@@ -1109,7 +1113,8 @@ describe('TMF Utils', function() {
             return {
                 tmfUtils: tmfUtils,
                 partyClient: partyClient,
-                resolveTmforumEndpoint: resolveTmforumEndpoint
+                resolveTmforumEndpoint: resolveTmforumEndpoint,
+                resolveTmforumEndpointByPartyId: resolveTmforumEndpointByPartyId
             };
         };
 
@@ -1204,6 +1209,34 @@ describe('TMF Utils', function() {
                 "@referredType": "Organization"
             }])
 
+        });
+
+        it('should treat related party as organization when id includes organization even if referred type differs', async () => {
+            await testAttach('catalog', '/productOffering', {
+                relatedParty: [{
+                    id: 'urn:organization:buyerId',
+                    role: 'Buyer',
+                    "@referredType": "Individual"
+                }]
+            }, [{
+                id: 'urn:organization:buyerId',
+                href: 'urn:organization:buyerId',
+                name: 'VAT-ID2',
+                role: 'Buyer',
+                "@referredType": "Organization"
+            }, {
+                id: 'urn:organization:partyId',
+                href: 'urn:organization:partyId',
+                name: 'VAT-ID1',
+                role: 'Seller',
+                "@referredType": "Organization"
+            }, {
+                id: 'urn:organization:operatorId',
+                href: 'urn:organization:operatorId',
+                name: 'VAT-OP',
+                role: 'SellerOperator',
+                "@referredType": "Organization"
+            }])
         });
 
         it('should attach related party to a product offering price', async () => {
@@ -1324,30 +1357,155 @@ describe('TMF Utils', function() {
                 "@referredType": "Organization"
             }]);
 
-            expect(utilsObj.resolveTmforumEndpoint).toHaveBeenCalledWith(req);
+            expect(utilsObj.resolveTmforumEndpointByPartyId).toHaveBeenCalledWith('urn:organization:partyId');
             expect(utilsObj.partyClient.getOrganizationsByQueryInApi.calls.count()).toBe(2);
         });
 
-        it('should skip federation resolution for individual users', async () => {
+        it('should use seller as federation source for product orders when requester is not the seller', async () => {
+            const utilsObj = getFederatedOpTmfUtils();
+            const req = {
+                apiUrl: '/productOrder',
+                headers: {},
+                body: JSON.stringify({
+                    relatedParty: [{
+                        id: 'urn:organization:sellerId',
+                        role: 'Seller'
+                    }, {
+                        id: 'urn:organization:buyerId',
+                        role: 'Buyer'
+                    }]
+                }),
+                user: {
+                    id: 'VAT-ID2',
+                    userId: 'individual-user-2',
+                    partyId: 'urn:organization:buyerId'
+                }
+            };
+
+            await utilsObj.tmfUtils.attachRelatedParty(req, 'ordering');
+
+            const newBody = JSON.parse(req.body);
+            expect(newBody.relatedParty).toEqual([{
+                id: 'urn:organization:remoteSellerId',
+                href: 'urn:organization:remoteSellerId',
+                name: 'VAT-ID1',
+                role: 'Seller',
+                "@referredType": "Organization"
+            }, {
+                id: 'urn:organization:remoteSellerId',
+                href: 'urn:organization:remoteSellerId',
+                name: 'VAT-ID1',
+                role: 'SellerOperator',
+                "@referredType": "Organization"
+            }, {
+                id: 'urn:organization:remoteBuyerId',
+                href: 'urn:organization:remoteBuyerId',
+                name: 'VAT-ID2',
+                role: 'Buyer',
+                "@referredType": "Organization"
+            }, {
+                id: 'urn:organization:remoteSellerId',
+                href: 'urn:organization:remoteSellerId',
+                name: 'VAT-ID1',
+                role: 'BuyerOperator',
+                "@referredType": "Organization"
+            }]);
+
+            expect(utilsObj.resolveTmforumEndpointByPartyId).toHaveBeenCalledWith('urn:organization:sellerId');
+            expect(utilsObj.resolveTmforumEndpointByPartyId).not.toHaveBeenCalledWith('urn:organization:buyerId');
+        });
+
+        it('should skip federated lookup for individual related parties', async () => {
+            const utilsObj = getFederatedOpTmfUtils();
+            utilsObj.partyClient.getIndividual.and.returnValue(Promise.resolve({
+                body: {
+                    externalReference: [{
+                        externalReferenceType: 'idm_id',
+                        name: 'IND-ID1'
+                    }]
+                }
+            }));
+            utilsObj.partyClient.getIndividualsByQueryInApi.and.returnValue(Promise.resolve({
+                body: [{
+                    id: 'urn:individual:remoteBuyerId',
+                    href: 'urn:individual:remoteBuyerId'
+                }]
+            }));
+
+            const req = {
+                apiUrl: '/productOrder',
+                headers: {},
+                body: JSON.stringify({
+                    relatedParty: [{
+                        id: 'urn:organization:partyId',
+                        role: 'Seller'
+                    }, {
+                        id: 'urn:individual:buyerId',
+                        role: 'Buyer',
+                        '@referredType': 'Individual'
+                    }]
+                }),
+                user: {
+                    id: 'VAT-ID1',
+                    userId: 'individual-user-1',
+                    partyId: 'urn:organization:partyId'
+                }
+            };
+
+            await utilsObj.tmfUtils.attachRelatedParty(req, 'ordering');
+
+            const newBody = JSON.parse(req.body);
+            expect(newBody.relatedParty).toEqual([{
+                id: 'urn:organization:remoteSellerId',
+                href: 'urn:organization:remoteSellerId',
+                name: 'VAT-ID1',
+                role: 'Seller',
+                "@referredType": "Organization"
+            }, {
+                id: 'urn:organization:remoteSellerId',
+                href: 'urn:organization:remoteSellerId',
+                name: 'VAT-ID1',
+                role: 'SellerOperator',
+                "@referredType": "Organization"
+            }, {
+                id: 'urn:individual:buyerId',
+                href: 'urn:individual:buyerId',
+                name: 'IND-ID1',
+                role: 'Buyer',
+                "@referredType": "Individual"
+            }, {
+                id: 'urn:organization:remoteSellerId',
+                href: 'urn:organization:remoteSellerId',
+                name: 'VAT-ID1',
+                role: 'BuyerOperator',
+                "@referredType": "Organization"
+            }]);
+
+            expect(utilsObj.partyClient.getIndividualsByQueryInApi).not.toHaveBeenCalled();
+            expect(utilsObj.partyClient.getOrganizationsByQueryInApi.calls.count()).toBe(1);
+        });
+
+        it('should skip federation resolution for individual users even with userId', async () => {
             const utilsObj = getFederatedOpTmfUtils();
             const req = {
                 apiUrl: '/productSpecification',
                 headers: {},
                 body: JSON.stringify({
                     relatedParty: [{
-                        id: 'urn:organization:partyId',
+                        id: 'urn:individual:partyId',
                         role: 'Seller'
                     }]
                 }),
                 user: {
                     id: 'VAT-ID1',
-                    partyId: 'urn:organization:partyId'
+                    userId: 'individual-user-1',
+                    partyId: 'urn:individual:partyId'
                 }
             };
 
             await utilsObj.tmfUtils.attachRelatedParty(req, 'catalog');
 
-            expect(utilsObj.resolveTmforumEndpoint).not.toHaveBeenCalled();
+            expect(utilsObj.resolveTmforumEndpointByPartyId).not.toHaveBeenCalled();
             expect(utilsObj.partyClient.getOrganizationsByQueryInApi).not.toHaveBeenCalled();
         });
     })
