@@ -424,4 +424,45 @@ describe('Party lib', function() {
             });
         });
     });
+
+    describe('Federated party query URL', function() {
+        const remoteApiUrl = 'https://federated.example.com/tmf';
+        const query = 'externalReference.name=VAT-ID1';
+        const remoteResponse = [{ id: 'urn:organization:remoteSellerId' }];
+        let originalPartyApiPath;
+
+        beforeEach(function() {
+            originalPartyApiPath = config.tmforum.party.apiPath;
+        });
+
+        afterEach(function() {
+            config.tmforum.party.apiPath = originalPartyApiPath;
+        });
+
+        it('should build remote query URL without local party alias when apiPath is empty', function(done) {
+            config.tmforum.party.apiPath = '';
+
+            nock('https://federated.example.com', { reqheaders: headers })
+                .get('/tmf/organization/?' + query)
+                .reply(200, remoteResponse);
+
+            partyClient(orgPath).getOrganizationsByQueryInApi(remoteApiUrl, query).then((res) => {
+                expect(res.body).toEqual(remoteResponse);
+                done();
+            });
+        });
+
+        it('should include configured party apiPath in remote query URL', function(done) {
+            config.tmforum.party.apiPath = '/tmf-api/partyManagement/v4/';
+
+            nock('https://federated.example.com', { reqheaders: headers })
+                .get('/tmf/tmf-api/partyManagement/v4/organization/?' + query)
+                .reply(200, remoteResponse);
+
+            partyClient(orgPath).getOrganizationsByQueryInApi(remoteApiUrl, query).then((res) => {
+                expect(res.body).toEqual(remoteResponse);
+                done();
+            });
+        });
+    });
 });

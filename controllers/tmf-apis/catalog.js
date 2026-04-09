@@ -20,7 +20,6 @@
  */
 
 const async = require('async')
-const axios = require('axios')
 const config = require('./../../config')
 const deepcopy = require('deepcopy')
 const equal = require('deep-equal')
@@ -29,6 +28,7 @@ const logger = require('./../../lib/logger').logger.getLogger('TMF')
 const rssClient = require('./../../lib/rss').rssClient
 const storeClient = require('./../../lib/store').storeClient
 const tmfUtils = require('./../../lib/tmfUtils')
+const tmfApiHelpers = require('./../../lib/tmfApiHelpers').tmfApiHelpers
 const url = require('url')
 const utils = require('./../../lib/utils')
 const { parse } = require('path')
@@ -58,59 +58,16 @@ const catalog = (function() {
     const categoriesPattern = new RegExp('/category/?$');
     const catalogsPattern = new RegExp('/catalog/?$');
 
-    const retrieveAsset = function(assetPath, callback) {
-        if (!assetPath.startsWith('/')) {
-            assetPath = `/${assetPath}`;
-        }
-
-        const uri = utils.getAPIURL(
-            config.tmforum.catalog.appSsl,
-            config.tmforum.catalog.host,
-            config.tmforum.catalog.port,
-            `${config.tmforum.catalog.apiPath}${assetPath}`
-        );
-
-        axios.get(uri).then((response) => {
-            callback(null, {
-                status: response.status,
-                body: response.data
-            });
-
-        }).catch((err) => {
-            console.log(err)
-            let status = 400;
-            if (err.response && err.response.status) {
-                status = err.response.status;
-            }
-            callback({
-                status: status
-            });
-        })
+    const retrieveAsset = function(assetPath, callback, req) {
+        tmfApiHelpers.getAsset(config.tmforum.catalog, assetPath, callback, req);
     };
 
-    const getDependencySpecs = function (endpoint, path, refs, fields, callback){
-
+    const getDependencySpecs = function (endpoint, path, refs, fields, callback, req){
         const specPath = `/${path}?id=${tmfUtils.refsToQuery(refs)}&fields=${fields}`
-        const uri = utils.getAPIURL(
-            endpoint.appSsl,
-            endpoint.host,
-            endpoint.port,
-            `${endpoint.apiPath}${specPath}`
-        );
-        axios.get(uri).then((response) => {
-            callback(null, {
-                status: response.status,
-                body: response.data
-            });
-
-        }).catch((err) => {
-            callback({
-                status: err.status
-            });
-        })
+        tmfApiHelpers.getAsset(endpoint, specPath, callback, req);
     }
 
-    const retrieveCatalog = function(catalogId, callback) {
+    const retrieveCatalog = function(catalogId, callback, req) {
         const catalogPath = `/catalog/${catalogId}`
 
         retrieveAsset(catalogPath, (err, response) => {
@@ -122,11 +79,11 @@ const catalog = (function() {
             } else {
                 callback(err, response);
             }
-        });
+        }, req);
     }
 
     // Retrieves the product belonging to a given offering
-    const retrieveProduct = function(productId, callback) {
+    const retrieveProduct = function(productId, callback, req) {
 
         const productPath = `/productSpecification/${productId}`
 
@@ -139,59 +96,15 @@ const catalog = (function() {
             } else {
                 callback(err, response);
             }
-        });
+        }, req);
     };
 
-    const createAsset = function(assetPath, body, callback) {
-        const uri = utils.getAPIURL(
-            config.tmforum.catalog.appSsl,
-            config.tmforum.catalog.host,
-            config.tmforum.catalog.port,
-            `${config.tmforum.catalog.apiPath}${assetPath}`
-        );
-        axios.post(uri, body).then((response) => {
-            callback(null, {
-                status: response.status,
-                body: response.data
-            });
-
-        }).catch((err) => {
-            console.log(err)
-            let status = 400;
-            if (err.response && err.response.status) {
-                status = err.response.status;
-            }
-
-            callback({
-                status: status
-            });
-        })
+    const createAsset = function(assetPath, body, callback, req) {
+        tmfApiHelpers.createAsset(config.tmforum.catalog, assetPath, body, callback, req);
     };
 
-    const updateAsset = function(assetPath, body, callback) {
-        const uri = utils.getAPIURL(
-            config.tmforum.catalog.appSsl,
-            config.tmforum.catalog.host,
-            config.tmforum.catalog.port,
-            `${config.tmforum.catalog.apiPath}${assetPath}`
-        );
-
-        axios.patch(uri, body).then((response) => {
-            callback(null, {
-                status: response.status,
-                body: response.data
-            });
-
-        }).catch((err) => {
-            let status = 400;
-            if (err.response && err.response.status) {
-                status = err.response.status;
-            }
-
-            callback({
-                status: status
-            });
-        })
+    const updateAsset = function(assetPath, body, callback, req) {
+        tmfApiHelpers.updateAsset(config.tmforum.catalog, assetPath, body, callback, req);
     };
 
     const checkAssetStatus = function(assetBody, validStates) {
@@ -251,7 +164,7 @@ const catalog = (function() {
                     });
                 }
             }
-        });
+        }, req);
     };
 
     const validateAssetPermissions = function(
@@ -274,7 +187,7 @@ const catalog = (function() {
                     }
                  
                     hdlrCallback(isOwner);
-                });
+                }, req);
             } else {
                 hdlrCallback(tmfUtils.isOwner(req, asset));
             }
@@ -331,7 +244,7 @@ const catalog = (function() {
                 }
                 callback(null);
             }
-        })
+        }, req)
     }
 
     const validateOffering = function(req, offeringPath, previousBody, newBody, callback) {
@@ -488,7 +401,7 @@ const catalog = (function() {
                                             userNotAllowedMsg,
                                             taskCallback
                                         );
-                                    });
+                                    }, req);
 
                                 } catch(err){
                                     return taskCallback({
@@ -546,14 +459,14 @@ const catalog = (function() {
                                     lifecycleHandler
                                 );
                             }
-                        });
+                        }, req);
                     }
                 }
             }
         );
     };
 
-    const checkExistingCategoryById = function(categoryId, callback) {
+    const checkExistingCategoryById = function(categoryId, callback, req) {
         const categoryPath = '/category';
         retrieveAsset(`${categoryPath}/${categoryId}`, function(err, result) {
             if (err) {
@@ -571,10 +484,10 @@ const catalog = (function() {
             } else {
                 callback(null);
             }
-        });
+        }, req);
     };
 
-    const checkExistingCategory = function(categoryName, isRoot, parentId, callback) {
+    const checkExistingCategory = function(categoryName, isRoot, parentId, callback, req) {
         const categoryPath = '/category';
         let queryParams = '?lifecycleStatus=Launched&name=' + categoryName;
 
@@ -602,7 +515,7 @@ const catalog = (function() {
                     });
                 }
             }
-        });
+        }, req);
     };
 
     const validateCategory = function(req, updatedCategory, oldCategory, action, callback) {
@@ -666,13 +579,13 @@ const catalog = (function() {
                                     function(callback) {
                                         if (!isRoot) {
                                             // Check parent category
-                                            checkExistingCategoryById(parentId, callback);
+                                            checkExistingCategoryById(parentId, callback, req);
                                         } else {
                                             callback(null);
                                         }
                                     },
                                     function(callback) {
-                                        checkExistingCategory(categoryName, isRoot, parentId, callback);
+                                        checkExistingCategory(categoryName, isRoot, parentId, callback, req);
                                     }
                                 ],
                                 callback
@@ -688,7 +601,7 @@ const catalog = (function() {
         }
     };
 
-    const checkDependencySpecs = function(prevBody, newBody, callback){
+    const checkDependencySpecs = function(req, prevBody, newBody, callback){
         if (!!prevBody.lifecycleStatus && prevBody.lifecycleStatus.toLowerCase() !== 'launched' &&
             !!newBody.lifecycleStatus && newBody.lifecycleStatus.toLowerCase() === 'launched'
         ){
@@ -714,7 +627,8 @@ const catalog = (function() {
                                     }
                                     callback(null)
                                 }
-                            }
+                            },
+                            req
                         )
                     }
                     else {
@@ -742,7 +656,8 @@ const catalog = (function() {
                                     }
                                     callback(null)
                                 }
-                            }
+                            },
+                            req
                         )
                     }
                     else {
@@ -769,7 +684,7 @@ const catalog = (function() {
         }
         async.series([
             function(callback){
-                checkDependencySpecs(prevBody, newBody, callback)
+                checkDependencySpecs(req, prevBody, newBody, callback)
             },
             function(callback){
                 // Check upgrade problems if the product is a digital one
@@ -933,7 +848,7 @@ const catalog = (function() {
 
                             taskCallback(null);
                         }
-                    });
+                    }, req);
 
                 }
                 catch(err){
@@ -949,7 +864,7 @@ const catalog = (function() {
         );
     };
 
-    const checkExistingCatalog = function(catalogName, callback) {
+    const checkExistingCatalog = function(catalogName, callback, req) {
         const catalogPath = '/catalog';
         const queryParams = '?name=' + encodeURIComponent(catalogName);
         const invalidChars = /[<>%"\|]/;
@@ -977,7 +892,7 @@ const catalog = (function() {
                     });
                 }
             }
-        });
+        }, req);
     };
 
     const createCatalogCategories = function(req, catalogBody, callback) {
@@ -1001,7 +916,7 @@ const catalog = (function() {
                 utils.updateBody(req, catalogBody);
                 callback(null)
             }
-        })
+        }, req)
     }
 
     const validateCatalog = function(req, prevCatalog, catalog, callback) {
@@ -1033,7 +948,7 @@ const catalog = (function() {
         }
         // Check that the catalog name is not already taken
         if (catalog && (!prevCatalog || catalog.name)) {
-            checkExistingCatalog(catalog.name, callback);
+            checkExistingCatalog(catalog.name, callback, req);
         } else {
             callback(null);
         }
@@ -1193,7 +1108,7 @@ const catalog = (function() {
     /////////////////////////////////////////// UPDATE ///////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
 
-    const validateElemOfferings = function(newUrl, newLifeCycle, validatedStates, callback) {
+    const validateElemOfferings = function(newUrl, newLifeCycle, validatedStates, callback, req) {
         retrieveAsset(newUrl, function(err, result) {
             if (err) {
                 callback({
@@ -1220,10 +1135,10 @@ const catalog = (function() {
                     });
                 }
             }
-        });
+        }, req);
     }
 
-    const validateInvolvedOfferingsState = function(assertType, assetBody, offeringsPath, callback) {
+    const validateInvolvedOfferingsState = function(req, assertType, assetBody, offeringsPath, callback) {
         // For each state to be validated, this map contains the list of valid states of the offerings
         // attached to the asset whose state is going to be changed and the message to be returned
         // in case the asset cannot be updated
@@ -1261,13 +1176,13 @@ const catalog = (function() {
                     })
 
                     newUrl += ids.join(',')
-                    validateElemOfferings(newUrl, newLifeCycle, validatedStates, callback)
+                    validateElemOfferings(newUrl, newLifeCycle, validatedStates, callback, req)
                 })
 
         } else if (newLifeCycle in validatedStates && assertType == 'product') {
             let newUrl = offeringsPath.replace('/catalog/', '')
 
-            validateElemOfferings(newUrl, newLifeCycle, validatedStates, callback)
+            validateElemOfferings(newUrl, newLifeCycle, validatedStates, callback, req)
         } else {
             callback(null);
         }
@@ -1370,6 +1285,7 @@ const catalog = (function() {
                                                 var offeringsInCatalogPath = req.apiUrl + slash + 'productOffering';
 
                                                 validateInvolvedOfferingsState(
+                                                    req,
                                                     'catalog',
                                                     parsedBody,
                                                     offeringsInCatalogPath,
@@ -1401,6 +1317,7 @@ const catalog = (function() {
                                                     baseUrl + '/productOffering?productSpecification.id=' + productId;
 
                                                 validateInvolvedOfferingsState(
+                                                    req,
                                                     'product',
                                                     parsedBody,
                                                     offeringsContainProductPath,
@@ -1436,7 +1353,7 @@ const catalog = (function() {
                         }
                     }
                 }
-            });
+            }, req);
         } catch (e) {
             callback({
                 status: 400,
@@ -1575,7 +1492,7 @@ const catalog = (function() {
 
             req.apiUrl = queryPart ? `${newApiUrl}?${queryPart}` : newApiUrl;
             callback(null);
-        });
+        }, req);
     };
 
     const indexObject = (party, body, catalog) => {
@@ -1741,9 +1658,9 @@ const catalog = (function() {
                     } else{
                         callback(null)
                     }
-                })
+                }, req)
             }
-        })
+        }, req)
         } else if (req.method == 'POST' && productsPattern.test(req.apiUrl)) {
             body = req.body;
             storeClient.attachProduct(

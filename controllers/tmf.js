@@ -129,10 +129,12 @@ function tmf() {
 			try {
 				await tmfUtils.attachRelatedParty(req, api)
 			} catch (err) {
-				logger.error('Error attaching related parties: ' + err.message)
+				const errorMessage = err && err.message ? err.message : 'Error processing party information';
+				const errorStatus = err && err.status ? err.status : 400;
+				logger.error('Error attaching related parties: ' + errorMessage)
 				return sendError(res, {
-					status: 400,
-					message: 'Error processing party information'
+					status: errorStatus,
+					message: errorMessage
 				});
 			}
 		}

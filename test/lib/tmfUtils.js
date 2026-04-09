@@ -1009,12 +1009,14 @@ describe('TMF Utils', function() {
                 },
                 './party': {
                     partyClient: {
-                        getOrganization: async () => {
+                        getOrganization: async (partyId) => {
                             return {
                                 body: {
                                     externalReference: [{
                                         externalReferenceType: 'idm_id',
-                                        name: 'VAT-ID2'
+                                        name: partyId === 'urn:organization:partyId'
+                                            ? 'VAT-ID1'
+                                            : 'VAT-ID2'
                                 }]}
                             }
                         }
@@ -1359,6 +1361,70 @@ describe('TMF Utils', function() {
 
             expect(utilsObj.resolveTmforumEndpointByPartyId).toHaveBeenCalledWith('urn:organization:partyId');
             expect(utilsObj.partyClient.getOrganizationsByQueryInApi.calls.count()).toBe(2);
+        });
+
+        it('should resolve federated seller IDs using current user external reference', async () => {
+            const utilsObj = getFederatedOpTmfUtils();
+
+            utilsObj.partyClient.getOrganization.and.callFake(async () => {
+                return {
+                    body: {
+                        externalReference: [{
+                            externalReferenceType: 'idm_id',
+                            name: 'EORI-SELLER'
+                        }]
+                    }
+                };
+            });
+
+            utilsObj.partyClient.getOrganizationsByQueryInApi.and.callFake(async (_, query) => {
+                if (query.includes('LOCAL-SESSION-ID')) {
+                    return {
+                        body: [{
+                            id: 'urn:organization:remoteSellerId',
+                            href: 'urn:organization:remoteSellerId'
+                        }]
+                    };
+                }
+
+                return { body: [] };
+            });
+
+            const req = {
+                apiUrl: '/catalog',
+                headers: {},
+                body: JSON.stringify({
+                    relatedParty: []
+                }),
+                user: {
+                    id: 'LOCAL-SESSION-ID',
+                    userId: 'individual-user-1',
+                    partyId: 'urn:organization:partyId'
+                }
+            };
+
+            await utilsObj.tmfUtils.attachRelatedParty(req, 'catalog');
+
+            const newBody = JSON.parse(req.body);
+            expect(newBody.relatedParty).toEqual([{
+                id: 'urn:organization:remoteSellerId',
+                href: 'urn:organization:remoteSellerId',
+                name: 'LOCAL-SESSION-ID',
+                role: 'Seller',
+                "@referredType": "Organization"
+            }, {
+                id: 'urn:organization:remoteSellerId',
+                href: 'urn:organization:remoteSellerId',
+                name: 'LOCAL-SESSION-ID',
+                role: 'SellerOperator',
+                "@referredType": "Organization"
+            }]);
+
+            expect(utilsObj.partyClient.getOrganizationsByQueryInApi).toHaveBeenCalledWith(
+                'https://federated.example.com/tmf',
+                'externalReference.name=LOCAL-SESSION-ID'
+            );
+            expect(utilsObj.partyClient.getOrganizationsByQueryInApi.calls.count()).toBe(1);
         });
 
         it('should use seller as federation source for product orders when requester is not the seller', async () => {

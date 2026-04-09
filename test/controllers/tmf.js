@@ -406,6 +406,58 @@ describe('TMF Controller', function() {
             tmf.public(req, res);
         });
 
+        it('should return attachRelatedParty error details instead of generic message', function(done) {
+            const protocol = 'http';
+            utils.getAPIProtocol = function() {
+                return protocol;
+            };
+            utils.getAPIPath = function() {
+                return '/api';
+            };
+
+            const request = getDefaultHttpClient({
+                status: 200,
+                data: { ok: true },
+                headers: {
+                    'content-type': 'application/json'
+                }
+            });
+
+            const tmfUtils = {
+                attachRelatedParty: jasmine.createSpy('attachRelatedParty').and.returnValue(Promise.reject({
+                    status: 422,
+                    message: 'Missing idm_id external reference for organization urn:organization:partyId'
+                }))
+            };
+
+            const tmf = getTmfInstance(request, {}, {}, null, null, null, tmfUtils);
+
+            const req = {
+                apiUrl: '/catalog/catalog',
+                body: JSON.stringify({ relatedParty: [] }),
+                method: 'POST',
+                headers: {},
+                connection: { remoteAddress: '127.0.0.1' },
+                get: function() {
+                    return false;
+                }
+            };
+
+            const res = jasmine.createSpyObj('res', ['status', 'json', 'end', 'setHeader']);
+
+            res.end.and.callFake(() => {
+                expect(tmfUtils.attachRelatedParty).toHaveBeenCalledWith(req, 'catalog');
+                expect(res.status).toHaveBeenCalledWith(422);
+                expect(res.json).toHaveBeenCalledWith({
+                    error: 'Missing idm_id external reference for organization urn:organization:partyId'
+                });
+                expect(request.request).not.toHaveBeenCalled();
+                done();
+            });
+
+            tmf.public(req, res);
+        });
+
     });
 
     describe('check permissions', function() {
