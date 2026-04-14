@@ -540,4 +540,96 @@ describe('Federation library', function() {
         }
     });
 
+    it('should resolve remote party id from local party id and reuse cache', async function() {
+        const partyClient = {
+            getOrganization: jasmine.createSpy('getOrganization').and.returnValue(
+                Promise.resolve({
+                    body: {
+                        id: 'urn:organization:local-seller',
+                        partyCharacteristic: [
+                            { name: 'tmforumEndpoint', value: 'https://seller.example.com/tmf/' }
+                        ],
+                        externalReference: [{
+                            externalReferenceType: 'idm_id',
+                            name: 'VAT-SELLER'
+                        }]
+                    }
+                })
+            ),
+            getOrganizationsByQueryInApi: jasmine.createSpy('getOrganizationsByQueryInApi').and.returnValue(
+                Promise.resolve({
+                    body: [{
+                        id: 'urn:organization:remote-seller'
+                    }]
+                })
+            )
+        };
+        const federation = getFederation(partyClient);
+
+        const remoteId1 = await federation.resolveRemotePartyIdByLocalPartyId('urn:organization:local-seller');
+        const remoteId2 = await federation.resolveRemotePartyIdByLocalPartyId('urn:organization:local-seller');
+
+        expect(remoteId1).toBe('urn:organization:remote-seller');
+        expect(remoteId2).toBe('urn:organization:remote-seller');
+        expect(partyClient.getOrganization.calls.count()).toBe(1);
+        expect(partyClient.getOrganizationsByQueryInApi.calls.count()).toBe(1);
+        expect(partyClient.getOrganizationsByQueryInApi).toHaveBeenCalledWith(
+            'https://seller.example.com/tmf/',
+            'externalReference.name=VAT-SELLER'
+        );
+    });
+
+    it('should resolve remote party id directly from cache when already available', async function() {
+        const partyClient = {
+            getOrganization: jasmine.createSpy('getOrganization'),
+            getOrganizationsByQueryInApi: jasmine.createSpy('getOrganizationsByQueryInApi').and.returnValue(
+                Promise.resolve({
+                    body: [{
+                        id: 'urn:organization:remote-seller'
+                    }]
+                })
+            )
+        };
+        const federation = getFederation(partyClient);
+
+        await federation.resolveFederatedOrganizationParty(
+            'https://seller.example.com/tmf/',
+            'urn:organization:local-seller',
+            'VAT-SELLER'
+        );
+
+        const remoteId = await federation.resolveRemotePartyIdByLocalPartyId('urn:organization:local-seller');
+
+        expect(remoteId).toBe('urn:organization:remote-seller');
+        expect(partyClient.getOrganization).not.toHaveBeenCalled();
+        expect(partyClient.getOrganizationsByQueryInApi.calls.count()).toBe(1);
+    });
+
+    it('should fail resolving remote party id when local party has no idm_id external reference', async function() {
+        const partyClient = {
+            getOrganization: jasmine.createSpy('getOrganization').and.returnValue(
+                Promise.resolve({
+                    body: {
+                        id: 'urn:organization:local-seller',
+                        partyCharacteristic: [
+                            { name: 'tmforumEndpoint', value: 'https://seller.example.com/tmf/' }
+                        ],
+                        externalReference: []
+                    }
+                })
+            )
+        };
+        const federation = getFederation(partyClient);
+
+        try {
+            await federation.resolveRemotePartyIdByLocalPartyId('urn:organization:local-seller');
+            fail('Expected remote party resolution to fail without idm_id external reference');
+        } catch (err) {
+            expect(err).toEqual({
+                status: 422,
+                message: 'Missing idm_id external reference for local organization party urn:organization:local-seller'
+            });
+        }
+    });
+
 });

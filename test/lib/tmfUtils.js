@@ -1116,6 +1116,15 @@ describe('TMF Utils', function() {
                     return null;
                 }
             );
+            const resolveRemotePartyIdByLocalPartyId = jasmine.createSpy('resolveRemotePartyIdByLocalPartyId').and.callFake(
+                async (localPartyId) => {
+                    if (localPartyId === 'urn:organization:buyerId') {
+                        return 'urn:organization:remoteBuyerId';
+                    }
+
+                    return 'urn:organization:remoteSellerId';
+                }
+            );
 
             const tmfUtils = proxyquire('../../lib/tmfUtils', {
                 './../config': config,
@@ -1134,7 +1143,8 @@ describe('TMF Utils', function() {
                     federation: {
                         resolveTmforumEndpoint: resolveTmforumEndpoint,
                         resolveTmforumEndpointByPartyId: resolveTmforumEndpointByPartyId,
-                        resolveFederatedOrganizationParty: resolveFederatedOrganizationParty
+                        resolveFederatedOrganizationParty: resolveFederatedOrganizationParty,
+                        resolveRemotePartyIdByLocalPartyId: resolveRemotePartyIdByLocalPartyId
                     }
                 }
             });
@@ -1144,7 +1154,8 @@ describe('TMF Utils', function() {
                 partyClient: partyClient,
                 resolveTmforumEndpoint: resolveTmforumEndpoint,
                 resolveTmforumEndpointByPartyId: resolveTmforumEndpointByPartyId,
-                resolveFederatedOrganizationParty: resolveFederatedOrganizationParty
+                resolveFederatedOrganizationParty: resolveFederatedOrganizationParty,
+                resolveRemotePartyIdByLocalPartyId: resolveRemotePartyIdByLocalPartyId
             };
         };
 
@@ -1389,6 +1400,7 @@ describe('TMF Utils', function() {
 
             expect(utilsObj.resolveTmforumEndpointByPartyId).toHaveBeenCalledWith('urn:organization:partyId');
             expect(utilsObj.resolveFederatedOrganizationParty.calls.count()).toBe(2);
+            expect(utilsObj.resolveRemotePartyIdByLocalPartyId).not.toHaveBeenCalled();
         });
 
         it('should resolve federated seller IDs using current user external reference', async () => {
@@ -1403,17 +1415,6 @@ describe('TMF Utils', function() {
                         }]
                     }
                 };
-            });
-
-            utilsObj.resolveFederatedOrganizationParty.and.callFake(async (_, __, externalReferenceName) => {
-                if (externalReferenceName === 'LOCAL-SESSION-ID') {
-                    return {
-                        id: 'urn:organization:remoteSellerId',
-                        href: 'urn:organization:remoteSellerId'
-                    };
-                }
-
-                return null;
             });
 
             const req = {
@@ -1446,12 +1447,8 @@ describe('TMF Utils', function() {
                 "@referredType": "Organization"
             }]);
 
-            expect(utilsObj.resolveFederatedOrganizationParty).toHaveBeenCalledWith(
-                'https://federated.example.com/tmf',
-                'urn:organization:partyId',
-                'LOCAL-SESSION-ID'
-            );
-            expect(utilsObj.resolveFederatedOrganizationParty.calls.count()).toBe(1);
+            expect(utilsObj.resolveRemotePartyIdByLocalPartyId).toHaveBeenCalledWith('urn:organization:partyId');
+            expect(utilsObj.resolveFederatedOrganizationParty).not.toHaveBeenCalled();
         });
 
         it('should use seller as federation source for product orders when requester is not the seller', async () => {
@@ -1576,6 +1573,7 @@ describe('TMF Utils', function() {
 
             expect(utilsObj.partyClient.getIndividualsByQueryInApi).not.toHaveBeenCalled();
             expect(utilsObj.resolveFederatedOrganizationParty.calls.count()).toBe(1);
+            expect(utilsObj.resolveRemotePartyIdByLocalPartyId).not.toHaveBeenCalled();
         });
 
         it('should skip federation resolution for individual users even with userId', async () => {
@@ -1600,6 +1598,7 @@ describe('TMF Utils', function() {
 
             expect(utilsObj.resolveTmforumEndpointByPartyId).not.toHaveBeenCalled();
             expect(utilsObj.resolveFederatedOrganizationParty).not.toHaveBeenCalled();
+            expect(utilsObj.resolveRemotePartyIdByLocalPartyId).not.toHaveBeenCalled();
         });
     })
 });
