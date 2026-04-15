@@ -27,13 +27,19 @@ describe('ServiceSpecification API', function() {
     const config = testUtils.getDefaultConfig();
     const SERVER = (config.tmforum.service.appSsl ? 'https' : 'http') + '://' + config.tmforum.service.host + ':' + config.tmforum.service.port;
 
-    const getServiceSpecAPI = function(tmfUtils, utils) {
-        return proxyquire('../../../controllers/tmf-apis/serviceCatalog', {
+    const getServiceSpecAPI = function(tmfUtils, utils, tmfApiHelpers) {
+        const stubs = {
             './../../config': config,
             './../../lib/logger': testUtils.emptyLogger,
             './../../lib/tmfUtils': tmfUtils,
             './../../lib/utils': utils
-        }).serviceCatalog;
+        };
+
+        if (tmfApiHelpers) {
+            stubs['./../../lib/tmfApiHelpers'] = tmfApiHelpers;
+        }
+
+        return proxyquire('../../../controllers/tmf-apis/serviceCatalog', stubs).serviceCatalog;
     };
 
     const individual = '/party/individual/serviceSpec';
@@ -328,6 +334,59 @@ describe('ServiceSpecification API', function() {
                 }, {
                     'lifecycleStatus': 'Launched'
                 }, true, null, done)
+            })
+
+            it('should fetch previous version through tmfApiHelpers using normalized service path', (done) => {
+                const getAsset = jasmine.createSpy('getAsset').and.callFake((endpoint, assetPath, callback) => {
+                    expect(endpoint).toBe(config.tmforum.service);
+                    expect(assetPath).toBe('/serviceSpecification/urn:service-spec:1');
+                    callback(null, {
+                        status: 200,
+                        body: {
+                            id: 'urn:service-spec:1',
+                            lifecycleStatus: 'Active',
+                            relatedParty: [{
+                                id: 'test',
+                                role: 'Seller'
+                            }]
+                        }
+                    });
+                });
+                const checkRoleMethod = jasmine.createSpy('hasRole').and.returnValue(true);
+                const checkOwnerMethod = jasmine.createSpy('hasPartyRole').and.returnValue(true);
+                const serviceAPI = getServiceSpecAPI(
+                    {
+                        hasPartyRole: checkOwnerMethod,
+                        validateNameField: () => null,
+                        validateDescriptionField: () => null
+                    },
+                    {
+                        validateLoggedIn: (req, callback) => callback(null),
+                        hasRole: checkRoleMethod
+                    },
+                    {
+                        tmfApiHelpers: {
+                            getAsset: getAsset
+                        }
+                    }
+                );
+                const req = {
+                    user: seller,
+                    method: 'PATCH',
+                    body: JSON.stringify({
+                        lifecycleStatus: 'Launched'
+                    }),
+                    apiUrl: `/${config.tmforum.service.path}${path}/urn:service-spec:1`,
+                    url: `${path}/urn:service-spec:1`,
+                    hostname: config.tmforum.service.host,
+                    headers: {}
+                };
+
+                serviceAPI.checkPermissions(req, (err) => {
+                    expect(err).toBe(null);
+                    expect(getAsset).toHaveBeenCalled();
+                    done();
+                });
             })
 
             it('should allow to retire service specification', (done) => {

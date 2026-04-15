@@ -18,8 +18,8 @@
  */
 
 const async = require('async')
-const axios = require('axios')
 const config = require('./../../config')
+const tmfApiHelpers = require('./../../lib/tmfApiHelpers').tmfApiHelpers
 const utils = require('./../../lib/utils')
 const tmfUtils = require('./../../lib/tmfUtils')
 
@@ -41,43 +41,13 @@ const serviceCatalog = (function() {
         // validate if a service specification is returned only by the owner
     };
 
-    const getResourceAPIUrl = function(path) {
-        const resPath = path.replace(`/${config.tmforum.service.path}/`, '')
-
-        return utils.getAPIURL(
-            config.tmforum.service.appSsl,
-            config.tmforum.service.host,
-            config.tmforum.service.port,
-            `${config.tmforum.service.apiPath}/${resPath}`
-        );
+    const normalizeServiceAssetPath = function(path) {
+        const servicePath = String(path || '').replace(`/${config.tmforum.service.path}/`, '');
+        return servicePath.startsWith('/') ? servicePath : `/${servicePath}`;
     };
 
-    const retrieveAsset = function(path, callback) {
-        const uri = getResourceAPIUrl(path);
-
-        axios.get(uri).then((response) => {
-            if (response.status >= 400) {
-                callback({
-                    status: response.status
-                });
-            } else {
-                callback(null, {
-                    status: response.status,
-                    body: response.data
-                });
-            }
-        }).catch((err) => {
-            let errCb = {
-                status: err.status
-            }
-
-            if (err.response) {
-                errCb = {
-                    status: err.response.status
-                }
-            }
-            callback(errCb);
-        })
+    const retrieveAsset = function(path, callback, req) {
+        tmfApiHelpers.getAsset(config.tmforum.service, normalizeServiceAssetPath(path), callback, req);
     };
 
     const getPrevVersion = function(req, callback) {
@@ -98,7 +68,7 @@ const serviceCatalog = (function() {
                 req.prevBody = response.body
                 callback(null)
             }
-        });
+        }, req);
     }
 
     const parseBody = function (req, callback) {
@@ -167,26 +137,9 @@ const serviceCatalog = (function() {
     }
 
 
-    const getServiceSpecs = function (ref, fields, callback){
-        const endpoint = config.tmforum.catalog
-        const specPath = `/productSpecification?serviceSpecification.id=${ref}&fields=${fields}`
-        const uri = utils.getAPIURL(
-            endpoint.appSsl,
-            endpoint.host,
-            endpoint.port,
-            `${endpoint.apiPath}${specPath}`
-        );
-        axios.get(uri).then((response) => {
-            callback(null, {
-                status: response.status,
-                body: response.data
-            });
-
-        }).catch((err) => {
-            callback({
-                status: err.status
-            });
-        })
+    const getServiceSpecs = function (ref, fields, req, callback){
+        const specPath = `/productSpecification?serviceSpecification.id=${ref}&fields=${fields}`;
+        tmfApiHelpers.getAsset(config.tmforum.catalog, specPath, callback, req);
     }
 
     const validateUpdate = function(req, callback) {
@@ -204,7 +157,7 @@ const serviceCatalog = (function() {
         if (prevBody.lifecycleStatus && prevBody.lifecycleStatus.toLowerCase() !== 'retired' && 
             body.lifecycleStatus && body.lifecycleStatus.toLowerCase() === 'retired'){
 
-            getServiceSpecs(prevBody.id, 'lifecycleStatus', function (err, response){
+            getServiceSpecs(prevBody.id, 'lifecycleStatus', req, function (err, response){
                 if(err) {
                     callback(err)
                 } else {

@@ -164,6 +164,64 @@ describe('Federation library', function() {
         );
     });
 
+    it('should rewrite relatedParty query filters to remote party ids', async function() {
+        const partyClient = {
+            getOrganization: jasmine.createSpy('getOrganization').and.callFake((partyId) => {
+                if (partyId === 'urn:organization:local-seller') {
+                    return Promise.resolve({
+                        body: {
+                            id: partyId,
+                            partyCharacteristic: [
+                                { name: 'tmforumEndpoint', value: 'https://federated.example.com/tmf/' }
+                            ],
+                            externalReference: [{
+                                externalReferenceType: 'idm_id',
+                                name: 'VAT-SELLER'
+                            }]
+                        }
+                    });
+                }
+
+                return Promise.resolve({
+                    body: {
+                        id: partyId,
+                        partyCharacteristic: [
+                            { name: 'tmforumEndpoint', value: 'https://federated.example.com/tmf/' }
+                        ]
+                    }
+                });
+            }),
+            getOrganizationsByQueryInApi: jasmine.createSpy('getOrganizationsByQueryInApi').and.returnValue(
+                Promise.resolve({
+                    body: [{
+                        id: 'urn:organization:remote-seller'
+                    }]
+                })
+            )
+        };
+        const federation = getFederation(partyClient);
+
+        const req = {
+            apiUrl: '/catalog/productOffering?relatedParty.id=urn:organization:local-seller&relatedParty.href=urn:organization:local-seller&relatedParty=urn:organization:local-seller',
+            user: {
+                id: 'requester',
+                userId: 'individual-requester',
+                partyId: 'urn:organization:requester'
+            }
+        };
+
+        const resolved = await federation.resolveTmforumApiUrl(req, req.apiUrl);
+
+        expect(resolved).toBe(
+            'https://federated.example.com/tmf/catalog/productOffering?relatedParty.id=urn%3Aorganization%3Aremote-seller&relatedParty.href=urn%3Aorganization%3Aremote-seller&relatedParty=urn%3Aorganization%3Aremote-seller'
+        );
+        expect(partyClient.getOrganizationsByQueryInApi.calls.count()).toBe(1);
+        expect(partyClient.getOrganizationsByQueryInApi).toHaveBeenCalledWith(
+            'https://federated.example.com/tmf/',
+            'externalReference.name=VAT-SELLER'
+        );
+    });
+
     it('should keep API URL when organization party lookup fails', async function() {
         const partyClient = {
             getOrganization: jasmine.createSpy('getOrganization').and.returnValue(

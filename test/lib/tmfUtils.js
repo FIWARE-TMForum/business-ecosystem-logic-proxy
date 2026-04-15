@@ -1399,7 +1399,47 @@ describe('TMF Utils', function() {
             }]);
 
             expect(utilsObj.resolveTmforumEndpointByPartyId).toHaveBeenCalledWith('urn:organization:partyId');
-            expect(utilsObj.resolveFederatedOrganizationParty.calls.count()).toBe(2);
+            expect(utilsObj.resolveFederatedOrganizationParty.calls.count()).toBe(4);
+            expect(utilsObj.resolveRemotePartyIdByLocalPartyId).not.toHaveBeenCalled();
+        });
+
+        it('should fallback to local related parties when organization has no TMForum endpoint', async () => {
+            const utilsObj = getFederatedOpTmfUtils();
+            utilsObj.resolveTmforumEndpointByPartyId.and.returnValue(Promise.resolve(''));
+            const req = {
+                apiUrl: '/catalog',
+                headers: {},
+                body: JSON.stringify({
+                    relatedParty: []
+                }),
+                user: {
+                    id: 'LOCAL-SESSION-ID',
+                    userId: 'individual-user-1',
+                    partyId: 'urn:ngsi-ld:organization:d702d63e-3dd5-4030-949b-7910ee0398f1'
+                }
+            };
+
+            await utilsObj.tmfUtils.attachRelatedParty(req, 'catalog');
+
+            const newBody = JSON.parse(req.body);
+            expect(newBody.relatedParty).toEqual([{
+                id: 'urn:ngsi-ld:organization:d702d63e-3dd5-4030-949b-7910ee0398f1',
+                href: 'urn:ngsi-ld:organization:d702d63e-3dd5-4030-949b-7910ee0398f1',
+                name: 'LOCAL-SESSION-ID',
+                role: 'Seller',
+                "@referredType": "Organization"
+            }, {
+                id: 'urn:organization:operatorId',
+                href: 'urn:organization:operatorId',
+                name: 'VAT-OP',
+                role: 'SellerOperator',
+                "@referredType": "Organization"
+            }]);
+
+            expect(utilsObj.resolveTmforumEndpointByPartyId).toHaveBeenCalledWith(
+                'urn:ngsi-ld:organization:d702d63e-3dd5-4030-949b-7910ee0398f1'
+            );
+            expect(utilsObj.resolveFederatedOrganizationParty).not.toHaveBeenCalled();
             expect(utilsObj.resolveRemotePartyIdByLocalPartyId).not.toHaveBeenCalled();
         });
 
@@ -1572,7 +1612,7 @@ describe('TMF Utils', function() {
             }]);
 
             expect(utilsObj.partyClient.getIndividualsByQueryInApi).not.toHaveBeenCalled();
-            expect(utilsObj.resolveFederatedOrganizationParty.calls.count()).toBe(1);
+            expect(utilsObj.resolveFederatedOrganizationParty.calls.count()).toBe(3);
             expect(utilsObj.resolveRemotePartyIdByLocalPartyId).not.toHaveBeenCalled();
         });
 

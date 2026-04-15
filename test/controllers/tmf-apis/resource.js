@@ -32,13 +32,19 @@ describe('ResourceSpecification API', function() {
         ':' +
         config.tmforum.resource.port;
 
-    const getResourceSpecAPI = function(tmfUtils, utils) {
-        return proxyquire('../../../controllers/tmf-apis/resource', {
+    const getResourceSpecAPI = function(tmfUtils, utils, tmfApiHelpers) {
+        const stubs = {
             './../../config': config,
             './../../lib/logger': testUtils.emptyLogger,
             './../../lib/tmfUtils': tmfUtils,
             './../../lib/utils': utils
-        }).resource;
+        };
+
+        if (tmfApiHelpers) {
+            stubs['./../../lib/tmfApiHelpers'] = tmfApiHelpers;
+        }
+
+        return proxyquire('../../../controllers/tmf-apis/resource', stubs).resource;
     };
 
     const individual = '/party/individual/resourceSpec'
@@ -335,6 +341,59 @@ describe('ResourceSpecification API', function() {
                 }, {
                     'lifecycleStatus': 'Launched'
                 }, true, null, done)
+            })
+
+            it('should fetch previous version through tmfApiHelpers using normalized resource path', (done) => {
+                const getAsset = jasmine.createSpy('getAsset').and.callFake((endpoint, assetPath, callback) => {
+                    expect(endpoint).toBe(config.tmforum.resource);
+                    expect(assetPath).toBe('/resourceSpecification/urn:resource-spec:1');
+                    callback(null, {
+                        status: 200,
+                        body: {
+                            id: 'urn:resource-spec:1',
+                            lifecycleStatus: 'Active',
+                            relatedParty: [{
+                                id: 'test',
+                                role: 'Seller'
+                            }]
+                        }
+                    });
+                });
+                const checkRoleMethod = jasmine.createSpy('hasRole').and.returnValue(true);
+                const checkOwnerMethod = jasmine.createSpy('hasPartyRole').and.returnValue(true);
+                const resourceAPI = getResourceSpecAPI(
+                    {
+                        hasPartyRole: checkOwnerMethod,
+                        validateNameField: () => null,
+                        validateDescriptionField: () => null
+                    },
+                    {
+                        validateLoggedIn: (req, callback) => callback(null),
+                        hasRole: checkRoleMethod
+                    },
+                    {
+                        tmfApiHelpers: {
+                            getAsset: getAsset
+                        }
+                    }
+                );
+                const req = {
+                    user: seller,
+                    method: 'PATCH',
+                    body: JSON.stringify({
+                        lifecycleStatus: 'Launched'
+                    }),
+                    apiUrl: `/${config.tmforum.resource.path}${path}/urn:resource-spec:1`,
+                    url: `${path}/urn:resource-spec:1`,
+                    hostname: config.tmforum.service.host,
+                    headers: {}
+                };
+
+                resourceAPI.checkPermissions(req, (err) => {
+                    expect(err).toBe(null);
+                    expect(getAsset).toHaveBeenCalled();
+                    done();
+                });
             })
 
             it('should allow to retire a resource specification', (done) => {
