@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-const partyClient = require('./party').partyClient;
-const logger = require('./logger').logger.getLogger('Federation');
+const partyClient = require('../../lib/party').partyClient;
+const logger = require('../../lib/logger').logger.getLogger('Federation');
 const LRU = require('lru-cache');
 
 const federation = (() => {

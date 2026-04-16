@@ -46,7 +46,7 @@ const logger = require('./../lib/logger').logger.getLogger('TMF')
 const axios = require('axios')
 const utils = require('./../lib/utils')
 const tmfUtils = require('./../lib/tmfUtils')
-const federation = require('./../lib/federation').federation
+const federation = require('./../federation/lib/federation').federation
 
 const { log } = require('async')
 const { query } = require('express')

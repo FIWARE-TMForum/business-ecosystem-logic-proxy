@@ -1139,7 +1139,7 @@ describe('TMF Utils', function() {
                 './party': {
                     partyClient: partyClient
                 },
-                './federation': {
+                '../federation/lib/federation': {
                     federation: {
                         resolveTmforumEndpoint: resolveTmforumEndpoint,
                         resolveTmforumEndpointByPartyId: resolveTmforumEndpointByPartyId,

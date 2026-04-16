@@ -22,11 +22,11 @@ const testUtils = require('../utils');
 
 describe('Federation library', function() {
     const getFederation = function(partyClient) {
-        return proxyquire('../../lib/federation', {
-            './party': {
+        return proxyquire('../../federation/lib/federation', {
+            '../../lib/party': {
                 partyClient: partyClient
             },
-            './logger': testUtils.emptyLogger
+            '../../lib/logger': testUtils.emptyLogger
         }).federation;
     };
 

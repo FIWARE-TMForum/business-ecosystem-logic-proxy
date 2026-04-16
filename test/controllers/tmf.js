@@ -70,7 +70,7 @@ describe('TMF Controller', function() {
             './../config': config,
             './../lib/utils': utils,
             './../lib/tmfUtils': tmfUtils,
-            './../lib/federation': { federation: federation },
+            './../federation/lib/federation': { federation: federation },
             './../lib/logger': testUtils.emptyLogger,
             './tmf-apis/catalog': { catalog: catalog },
             './tmf-apis/ordering': { ordering: ordering },
