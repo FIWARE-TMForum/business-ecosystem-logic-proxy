@@ -1656,6 +1656,19 @@
     "forCustomers": "For Customers",
     "forProviders": "For Providers"
   },
+  "BROWSE": {
+    "heroTitle1": "Discover ",
+    "heroAccent1": "trusted European",
+    "heroTitle2": " cloud, edge & AI ",
+    "heroAccent2": "services",
+    "searchPlaceholder": "Search Cloud Services, Data Services, Providers...",
+    "categoriesTitle": "What are you looking for?",
+    "categoriesSubtitle": "Explore trusted digital services by category",
+    "showAll": "Show all",
+    "popularTitle": "Most popular services",
+    "popularSubtitle": "Discover services tailored to your needs",
+    "viewService": "View service"
+  },
   "HEADER": {
     "contactUs": "Contact us",
     "_browse_serv": "Browse services",
