@@ -613,6 +613,11 @@ const upload = multer({
   },
 });
 
+if (config.federationEnabled) {
+    const federationRouter = require('./federation/router').router;
+    app.use('/federation', federationRouter);
+}
+
 app.all(regexPattern, (req, res, next) => {
     // Process multipart if needed
     const contentType = req.headers['content-type'] || '';
