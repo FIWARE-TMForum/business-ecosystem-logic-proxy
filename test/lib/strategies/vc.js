@@ -342,6 +342,41 @@ describe('VC Strategy', () => {
             }])
         })
 
+        it('should prioritize token sub over credentialSubject id', () => {
+            const payload = {
+                "sub": "did:key:subject-from-token",
+                "verifiableCredential": {
+                    "credentialSubject": {
+                      "email": "admin@test.com",
+                      "familyName": "User",
+                      "firstName": "Admin",
+                      "id": "credential-subject-id",
+                      "roles": [
+                        {
+                          "names": [
+                            "admin"
+                          ],
+                          "target": "did:web:dome-marketplace.org"
+                        }
+                      ],
+                      "type": "gx:NaturalParticipant"
+                    },
+                    "issuer": "did:web:dome-marketplace.org",
+                    "type": [
+                      "VerifiableCredential",
+                      "LegalPersonCredential"
+                    ]
+                }
+            }
+
+            const credential = new VerifiableCredential(payload)
+            const profile = credential.getProfile()
+
+            expect(profile.id).toEqual('did:key:subject-from-token')
+            expect(profile.email).toEqual('admin@test.com')
+            expect(profile.username).toEqual('admin')
+        })
+
         it('should build a vc with a LegalPersonCredential with issuer', () => {
             const payload = {
                 "verifiableCredential": {
