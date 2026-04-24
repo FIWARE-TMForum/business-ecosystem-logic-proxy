@@ -4,7 +4,7 @@ const { indexes } = require('../lib/indexes');
 const utils = require('../lib/utils');
 const config = require('../config');
 
-const BLOG_EDITABLE_FIELDS = ['title', 'slug', 'featuredImage', 'metaDescription', 'excerpt', 'content', 'partyId', 'author'];
+const BLOG_EDITABLE_FIELDS = ['title', 'slug', 'featuredImage', 'metaDescription', 'excerpt', 'content', 'partyId', 'author', 'tags'];
 
 const domeBlog = (function () {
   const hasOwnProperty = function (obj, key) {
@@ -54,6 +54,36 @@ const domeBlog = (function () {
 
     const trimmedSlug = slug.trim();
     return trimmedSlug.length > 0 ? trimmedSlug : undefined;
+  };
+
+  const normalizeTags = function (tags) {
+    if (!Array.isArray(tags)) {
+      return [];
+    }
+
+    return tags
+      .map((tag) => tag.trim())
+      .filter((tag) => tag.length > 0);
+  };
+
+  const parseTags = function (tags) {
+    if (tags === undefined) {
+      return undefined;
+    }
+
+    if (!Array.isArray(tags)) {
+      const validationError = new Error('tags must be an array of strings');
+      validationError.statusCode = 400;
+      throw validationError;
+    }
+
+    if (!tags.every((tag) => typeof tag === 'string')) {
+      const validationError = new Error('tags must be an array of strings');
+      validationError.statusCode = 400;
+      throw validationError;
+    }
+
+    return normalizeTags(tags);
   };
 
   const buildSlugBase = function (title) {
@@ -149,6 +179,15 @@ const domeBlog = (function () {
     return blog;
   };
 
+  const ensureBlogTags = function (blog) {
+    if (!blog) {
+      return blog;
+    }
+
+    blog.tags = normalizeTags(blog.tags);
+    return blog;
+  };
+
   const create = async function (req, res) {
     if (!utils.hasRole(req.user, config.roles.admin)) {
       res.status(403).send('Only administrators can create entries');
@@ -159,6 +198,10 @@ const domeBlog = (function () {
 
         if (typeof mongoBlog.slug === 'string') {
           mongoBlog.slug = normalizeSlug(mongoBlog.slug);
+        }
+
+        if (hasOwnProperty(mongoBlog, 'tags')) {
+          mongoBlog.tags = parseTags(mongoBlog.tags);
         }
 
         if (!mongoBlog.slug) {
@@ -174,6 +217,7 @@ const domeBlog = (function () {
         });
 
         await blog.save();
+        ensureBlogTags(blog);
 
         indexes.indexDocument('blog', uuidv4(), mongoBlog);
 
@@ -190,6 +234,7 @@ const domeBlog = (function () {
 
       for (const blog of blogs) {
         await ensureBlogSlug(blog);
+        ensureBlogTags(blog);
       }
 
       res.json(blogs);
@@ -209,6 +254,7 @@ const domeBlog = (function () {
       }
 
       await ensureBlogSlug(blog);
+      ensureBlogTags(blog);
   
       res.json(blog);
     } catch (err) {
@@ -247,6 +293,10 @@ const domeBlog = (function () {
         const payload = parseRequestBody(req.body);
         const updates = pickEditableFields(payload);
 
+        if (hasOwnProperty(updates, 'tags')) {
+          updates.tags = parseTags(updates.tags);
+        }
+
         if (!updates || Object.keys(updates).length === 0) {
           return res.status(400).json({ error: 'No update fields provided' });
         }
@@ -280,6 +330,7 @@ const domeBlog = (function () {
 
         Object.assign(blog, updates);
         const patchedBlog = await blog.save();
+        ensureBlogTags(patchedBlog);
 
         res.json({ message: 'Blog entry patched successfully', patchedBlog });
       } catch (err) {

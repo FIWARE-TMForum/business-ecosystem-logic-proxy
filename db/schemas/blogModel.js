@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
 const SLUG_REGEX = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const MAX_TAG_LENGTH = 50;
 
 const normalizeOptionalString = function (value) {
   if (typeof value !== 'string') {
@@ -22,6 +23,16 @@ const isValidHttpUrl = function (value) {
   } catch (err) {
     return false;
   }
+};
+
+const normalizeTags = function (value) {
+  if (!Array.isArray(value)) {
+    return value;
+  }
+
+  return value
+    .map((tag) => typeof tag === 'string' ? tag.trim() : tag)
+    .filter((tag) => typeof tag === 'string' && tag.length > 0);
 };
 
 const blogSchema = new mongoose.Schema({
@@ -59,6 +70,15 @@ const blogSchema = new mongoose.Schema({
   },
   author: { type: String, trim: true, set: normalizeOptionalString },
   partyId: { type: String, trim: true, set: normalizeOptionalString },
+  tags: {
+    type: [{
+      type: String,
+      trim: true,
+      maxlength: [MAX_TAG_LENGTH, `each tag must be at most ${MAX_TAG_LENGTH} characters long`]
+    }],
+    default: [],
+    set: normalizeTags
+  },
   date: { type: Date, default: Date.now },
   content: { type: String, required: true, trim: true }
 });
