@@ -342,6 +342,41 @@ describe('VC Strategy', () => {
             }])
         })
 
+        it('should prioritize token sub over credentialSubject id', () => {
+            const payload = {
+                "sub": "did:key:subject-from-token",
+                "verifiableCredential": {
+                    "credentialSubject": {
+                      "email": "admin@test.com",
+                      "familyName": "User",
+                      "firstName": "Admin",
+                      "id": "credential-subject-id",
+                      "roles": [
+                        {
+                          "names": [
+                            "admin"
+                          ],
+                          "target": "did:web:dome-marketplace.org"
+                        }
+                      ],
+                      "type": "gx:NaturalParticipant"
+                    },
+                    "issuer": "did:web:dome-marketplace.org",
+                    "type": [
+                      "VerifiableCredential",
+                      "LegalPersonCredential"
+                    ]
+                }
+            }
+
+            const credential = new VerifiableCredential(payload)
+            const profile = credential.getProfile()
+
+            expect(profile.id).toEqual('did:key:subject-from-token')
+            expect(profile.email).toEqual('admin@test.com')
+            expect(profile.username).toEqual('admin')
+        })
+
         it('should build a vc with a LegalPersonCredential with issuer', () => {
             const payload = {
                 "verifiableCredential": {
@@ -788,8 +823,8 @@ describe('VC Strategy', () => {
         })
 
         it ('should build a VC with a LEARCredential V2 including certifier power', () => {
-          const payload = {
-              "vc": {
+            const payload = {
+                "vc": {
                 "@context": [
                   "https://www.w3.org/ns/credentials/v2",
                   "https://www.dome-marketplace.eu/2025/credentials/learcredentialemployee/v2"
@@ -884,19 +919,78 @@ describe('VC Strategy', () => {
               }
           }
 
-          const credential = new VerifiableCredential(payload)
-          const profile = credential.getProfile()
+            const credential = new VerifiableCredential(payload)
+            const profile = credential.getProfile()
 
-          expect(profile.organizations).toEqual([{
-              id: 'VATBG-123ABCC',
-              name: 'Mandator company',
-              roles: [
-                  { name: nodeConfig.roles.orgAdmin, id: nodeConfig.roles.orgAdmin },
-                  { name: nodeConfig.roles.seller, id: nodeConfig.roles.seller },
-                  { name: nodeConfig.roles.certifier, id: nodeConfig.roles.certifier }
-              ]
-          }])
-      })
+            expect(profile.organizations).toEqual([{
+                id: 'VATBG-123ABCC',
+                name: 'Mandator company',
+                roles: [
+                    { name: nodeConfig.roles.orgAdmin, id: nodeConfig.roles.orgAdmin },
+                    { name: nodeConfig.roles.seller, id: nodeConfig.roles.seller },
+                    { name: nodeConfig.roles.certifier, id: nodeConfig.roles.certifier }
+                ]
+            }])
+        })
+
+        it ('should build a VC with LEARCredential v3 using credentialSubject.id when mandatee.id is missing', () => {
+            const payload = {
+                "vc": {
+                    "@context": [
+                        "https://www.w3.org/ns/credentials/v2",
+                        "https://credentials.eudistack.eu/.well-known/credentials/lear_credential_employee/w3c/v3"
+                    ],
+                    "credentialSubject": {
+                        "id": "did:key:zDnaeqkvhj1aXEvbn8yTU8jaFU6T5XM9brP6tKhFtZvTxek59",
+                        "mandate": {
+                            "mandatee": {
+                                "email": "roger.miret@altia.es",
+                                "firstName": "Test",
+                                "lastName": "Internal Onb"
+                            },
+                            "mandator": {
+                                "commonName": "Nikolaos Zachariadis",
+                                "country": "GR",
+                                "email": "nzachariadis@lancom.gr",
+                                "id": "did:elsi:VATEL-998081209",
+                                "organization": "LAN COMMUNICATIONS LIMITED LIABILITY COMPANY",
+                                "organizationIdentifier": "VATEL-998081209",
+                                "serialNumber": "A00335693"
+                            },
+                            "power": [
+                                {
+                                    "action": [
+                                        "Execute"
+                                    ],
+                                    "domain": "DOME",
+                                    "function": "Onboarding",
+                                    "type": "domain"
+                                }
+                            ]
+                        }
+                    },
+                    "type": [
+                        "LEARCredentialEmployee",
+                        "VerifiableCredential"
+                    ]
+                }
+            }
+
+            const credential = new VerifiableCredential(payload)
+            const profile = credential.getProfile()
+
+            expect(profile.id).toEqual('did:key:zDnaeqkvhj1aXEvbn8yTU8jaFU6T5XM9brP6tKhFtZvTxek59')
+            expect(profile.email).toEqual('roger.miret@altia.es')
+            expect(profile.username).toEqual('roger.miret')
+            expect(profile.organizations).toEqual([{
+                id: 'VATEL-998081209',
+                name: 'LAN COMMUNICATIONS LIMITED LIABILITY COMPANY',
+                roles: [
+                    { name: nodeConfig.roles.orgAdmin, id: nodeConfig.roles.orgAdmin }
+                ],
+                country: 'GR'
+            }])
+        })
 
       it ('should build a VC with a LEARCredentialMachine including certifier power', () => {
             const payload = {

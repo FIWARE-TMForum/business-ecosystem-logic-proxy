@@ -753,6 +753,11 @@ if (!!process.env.BAE_LP_DATASPACE_ENABLED) {
     config.dataSpaceEnabled = process.env.BAE_LP_DATASPACE_ENABLED == 'true';
 }
 
+config.launchValidationEnabled = false;
+if (!!process.env.BAE_LP_LAUNCH_VALIDATION_ENABLED) {
+    config.launchValidationEnabled = process.env.BAE_LP_LAUNCH_VALIDATION_ENABLED == 'true';
+}
+
 config.operatorId = ''
 config.operatorId = process.env.BAE_LP_OPERATOR_ID || config.operatorId;
 
