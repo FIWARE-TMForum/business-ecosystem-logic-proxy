@@ -334,6 +334,10 @@ const catalog = (function() {
         })
     }
 
+    const canOfferingBeLaunched = function(offering, productSpec = null) {
+        return true;
+    };
+
     const validateOffering = function(req, offeringPath, previousBody, newBody, callback) {
         if(newBody && newBody.name !== null && newBody.name !== undefined){ // newBody.name === '' should enter here
             const errorMessage = tmfUtils.validateNameField(newBody.name, 'Product offering');
@@ -368,6 +372,13 @@ const catalog = (function() {
             validStates = [ACTIVE_STATE, LAUNCHED_STATE];
             errorMessageStateProduct = 'Offerings can only be attached to active or launched products';
             errorMessageStateCatalog = 'Offerings can only be created in a catalog that is active or launched';
+
+            if (config.launchValidationEnabled && newBody && newBody[LIFE_CYCLE] && newBody[LIFE_CYCLE].toLowerCase() === LAUNCHED_STATE && !canOfferingBeLaunched(newBody)) {
+                return callback({
+                    status: 403,
+                    message: 'The product offering does not meet the requirements to be launched'
+                });
+            }
         } else if (
             previousBody !== null &&
             newBody &&
@@ -378,6 +389,13 @@ const catalog = (function() {
             validStates = [LAUNCHED_STATE];
             errorMessageStateProduct = 'Offerings can only be launched when the attached product is also launched';
             errorMessageStateCatalog = 'Offerings can only be launched when the attached catalog is also launched';
+
+            if (config.launchValidationEnabled && !canOfferingBeLaunched(previousBody)) {
+                return callback({
+                    status: 403,
+                    message: 'The product offering does not meet the requirements to be launched'
+                });
+            }
         }
 
         if (newBody && previousBody) {
@@ -1732,11 +1750,23 @@ const catalog = (function() {
         }
     };
 
+    const checkOfferingLaunch = function(req, res) {
+        const offeringId = req.params.id;
+        retrieveAsset(`/productOffering/${offeringId}`, function(err, result) {
+            if (err) {
+                res.status(err.status || 500).json({ error: 'The product offering cannot be retrieved' });
+            } else {
+                res.json({ canBeLaunched: canOfferingBeLaunched(result.body) });
+            }
+        });
+    };
+
     return {
         checkPermissions: checkPermissions,
         executePostValidation: executePostValidation,
         handleAPIError: handleAPIError,
         retrieveCatalog: retrieveCatalog,
+        checkOfferingLaunch: checkOfferingLaunch,
     };
 })();
 

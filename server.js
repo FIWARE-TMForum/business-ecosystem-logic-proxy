@@ -22,6 +22,7 @@ const path = require('path');
 const session = require('express-session');
 const shoppingCart = require('./controllers/shoppingCart').shoppingCart;
 const domeBlog = require('./controllers/domeBlog').domeBlog;
+const catalog = require('./controllers/tmf-apis/catalog').catalog;
 const management = require('./controllers/management').management;
 const multer = require('multer');
 const tmf = require('./controllers/tmf').tmf();
@@ -432,11 +433,14 @@ app.get('/config', async (_, res) => {
         theme: config.theme,
         quotesEnabled: config.quoteEnabled,
         tenderingEnabled: config.tenderingEnabled,
-        learUrl: config.learUrl
+        learUrl: config.learUrl,
+        launchValidationEnabled: config.launchValidationEnabled
     })
 })
 
 app.get('/stats', stats.getStats)
+
+app.get('/offering/:id/launch', authMiddleware.headerAuthentication, failIfNotAuthenticated, catalog.checkOfferingLaunch);
 
 /////////////////////////////////////////////////////////////////////
 /////////////////////////// SHOPPING CART ///////////////////////////
