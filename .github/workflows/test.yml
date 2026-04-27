@@ -58,7 +58,7 @@ jobs:
           context: .
           file: ./docker/Dockerfile
           tags: |
-            fiware/biz-ecosystem-logic-proxy:11.18.0-RC1
+            fiware/biz-ecosystem-logic-proxy:11.19.0-RC1
           push: ${{ github.ref == 'refs/heads/feat/new-search-page' }}
 
       - name: Image digest
