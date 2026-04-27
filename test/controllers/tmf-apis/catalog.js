@@ -2552,6 +2552,29 @@ describe('Catalog API', function() {
         );
     });
 
+    it('should allow to launch an offering when launchValidationEnabled is true and conditions are met', function(done) {
+        config.launchValidationEnabled = true;
+
+        var offeringBody = JSON.stringify({
+            lifecycleStatus: 'launched'
+        });
+
+        var productRequestInfo = {
+            requestStatus: 200,
+            owner: true,
+            lifecycleStatus: 'launched'
+        };
+
+        var catalogRequestInfo = {
+            requestStatus: 200,
+            lifecycleStatus: 'launched'
+        };
+
+        testUpdateProductOffering(offeringBody, productRequestInfo, null, catalogRequestInfo, null, null, true, null, done);
+
+        config.launchValidationEnabled = false;
+    });
+
     // PRODUCTS & CATALOGS
 
     var previousProductBody = {
@@ -5517,5 +5540,63 @@ describe('Catalog API', function() {
         // 		done
         // 	);
         // });
+    });
+
+    describe('checkOfferingLaunch', function() {
+        const protocol = config.endpoints.catalog.appSsl ? 'https' : 'http';
+        const serverUrl = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
+        const apiBase = '/api';
+
+        var getCatalogApiSimple = function() {
+            return getCatalogApi({}, {}, {});
+        };
+
+        it('should return canBeLaunched true when the offering exists', function(done) {
+            var offeringId = 'urn:offering:42';
+            var offering = { id: offeringId, lifecycleStatus: 'active', name: 'Test Offering' };
+
+            nock(serverUrl)
+                .get(apiBase + '/productOffering/' + offeringId)
+                .reply(200, offering);
+
+            var catalogApi = getCatalogApiSimple();
+
+            var req = { params: { id: offeringId } };
+            var res = {
+                status: jasmine.createSpy('status').and.callFake(function() { return res; }),
+                json: jasmine.createSpy('json').and.callFake(function(body) {
+                    expect(res.status).not.toHaveBeenCalled();
+                    expect(body).toEqual({ canBeLaunched: true });
+                    done();
+                })
+            };
+
+            catalogApi.checkOfferingLaunch(req, res);
+        });
+
+        it('should return an error when the offering cannot be retrieved', function(done) {
+            var offeringId = 'urn:offering:notfound';
+
+            nock(serverUrl)
+                .get(apiBase + '/productOffering/' + offeringId)
+                .reply(404, {});
+
+            var catalogApi = getCatalogApiSimple();
+
+            var req = { params: { id: offeringId } };
+            var res = {
+                status: jasmine.createSpy('status').and.callFake(function(code) {
+                    expect(code).toBe(404);
+                    return res;
+                }),
+                json: jasmine.createSpy('json').and.callFake(function(body) {
+                    expect(res.status).toHaveBeenCalledWith(404);
+                    expect(body.error).toBeDefined();
+                    done();
+                })
+            };
+
+            catalogApi.checkOfferingLaunch(req, res);
+        });
     });
 });
