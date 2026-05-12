@@ -342,7 +342,7 @@ describe('VC Strategy', () => {
             }])
         })
 
-        it('should prioritize token sub over credentialSubject id', () => {
+        it('should prioritize credentialSubject-derived id over token sub', () => {
             const payload = {
                 "sub": "did:key:subject-from-token",
                 "verifiableCredential": {
@@ -372,9 +372,52 @@ describe('VC Strategy', () => {
             const credential = new VerifiableCredential(payload)
             const profile = credential.getProfile()
 
-            expect(profile.id).toEqual('did:key:subject-from-token')
+            expect(profile.id).toEqual('admin@test.com')
             expect(profile.email).toEqual('admin@test.com')
             expect(profile.username).toEqual('admin')
+        })
+
+        it('should fallback to token sub for LEARCredentialEmployee when mandatee.id and credentialSubject.id are missing', () => {
+            const payload = {
+                "sub": "did:key:fallback-from-token-sub",
+                "verifiableCredential": {
+                    "credentialSubject": {
+                        "mandate": {
+                            "mandatee": {
+                                "email": "admin@email.com",
+                                "first_name": "Admin",
+                                "last_name": "User"
+                            },
+                            "mandator": {
+                                "organization": "TestCompany, S.L.",
+                                "organizationIdentifier": "VATES-C12341234"
+                            },
+                            "power": [
+                                {
+                                    "tmf_action": "Execute",
+                                    "tmf_function": "Onboarding"
+                                }
+                            ]
+                        },
+                        "roles": []
+                    },
+                    "issuer": "did:web:example.org",
+                    "type": [
+                      "VerifiableCredential",
+                      "LEARCredentialEmployee"
+                    ]
+                }
+            }
+
+            const credential = new VerifiableCredential(payload)
+            const profile = credential.getProfile()
+
+            expect(profile.id).toEqual('did:key:fallback-from-token-sub')
+            expect(profile.organizations).toEqual([{
+                id: 'VATES-C12341234',
+                name: 'TestCompany, S.L.',
+                roles: [{ name: nodeConfig.roles.orgAdmin, id: nodeConfig.roles.orgAdmin }]
+            }])
         })
 
         it('should build a vc with a LegalPersonCredential with issuer', () => {
