@@ -5215,6 +5215,51 @@ describe('Catalog API', function() {
             );
         });
 
+        it('should not filter out ad-hoc offers when the user is the seller', (done) => {
+            const req = {
+                method: 'GET',
+                user: {
+                    partyId: 'seller-id'
+                },
+                apiUrl: '/productOffering',
+                body: [{
+                    id: 'id3',
+                    relatedParty: [{
+                        id: '1234',
+                        role: config.roles.customer
+                    }, {
+                        id: 'seller-id',
+                        role: config.roles.seller
+                    }]
+                }, {
+                    id: 'id1'
+                }, {
+                    id: 'id2'
+                }]
+            }
+
+            testPostValidation(
+                req,
+                () => {
+                    expect(req.body).toEqual([{
+                        id: 'id3',
+                        relatedParty: [{
+                            id: '1234',
+                            role: config.roles.customer
+                        }, {
+                            id: 'seller-id',
+                            role: config.roles.seller
+                        }]
+                    }, {
+                        id: 'id1'
+                    }, {
+                        id: 'id2'
+                    }])
+                },
+                done
+            );
+        });
+
         it('should call the store product attachment when a valid product creation request has been redirected', function(done) {
             var req = {
                 method: 'POST',

@@ -1545,11 +1545,25 @@ const catalog = (function() {
             req.body = body.filter((offering) => {
                 let filter = true;
                 if (offering.relatedParty && offering.relatedParty.length > 0) {
-                    const extBuyer = offering.relatedParty.find((party) => {
-                        return (party.role.toLowerCase() === config.roles.customer.toLowerCase())
-                            && (!req.user || party.id !== req.user.partyId)
+                    const userPartyId = req.user ? req.user.partyId : null;
+                    const hasBuyer = offering.relatedParty.some((party) => {
+                        return party.role && party.role.toLowerCase() === config.roles.customer.toLowerCase();
                     });
-                    filter = !extBuyer;
+
+                    if (hasBuyer) {
+                        const isBuyer = userPartyId != null && offering.relatedParty.some((party) => {
+                            return party.id === userPartyId
+                                && party.role
+                                && party.role.toLowerCase() === config.roles.customer.toLowerCase();
+                        });
+                        const isSeller = userPartyId != null && offering.relatedParty.some((party) => {
+                            return party.id === userPartyId
+                                && party.role
+                                && party.role.toLowerCase() === config.roles.seller.toLowerCase();
+                        });
+
+                        filter = isBuyer || isSeller;
+                    }
                 }
                 return filter
             })
