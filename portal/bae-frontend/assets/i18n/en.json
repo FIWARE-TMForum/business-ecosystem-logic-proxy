@@ -127,7 +127,7 @@
       "title": "Explore verified services",
       "subtitle": "Search across cloud, edge, AI, data and other digital services from trusted European providers.",
       "searchPlaceholder": "Search by keyword, category or provider…",
-      "browseFullCatalog": "Browse full catalog →",
+      "browseFullCatalog": "Browse full catalog",
       "viewService": "View service"
     },
     "ecosystem": {
@@ -158,7 +158,7 @@
       "_titleLine1Part1": "The Trusted",
       "_titleLine1Accent": "European",
       "_titleLine2": "Ecosystem for Cloud,",
-      "_titleLine3": "Edge & AI Services.",
+      "_titleLine3": "Edge & AI Services",
       "_subtitleLine1": "Connecting providers and customers to discover, deliver and scale sovereign digital",
       "_subtitleLine2": "services across Europe.",
       "_customerCta": "Start your customer journey",
