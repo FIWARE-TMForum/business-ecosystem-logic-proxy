@@ -5436,6 +5436,121 @@ describe('Catalog API', function() {
             );
         });
 
+        it('should remove categories from the default catalog when category status is retired', function(done) {
+            const req = {
+                method: 'PATCH',
+                apiUrl: '/category/cat-1',
+                body: {
+                    id: 'cat-1',
+                    lifecycleStatus: 'ReTiReD'
+                }
+            };
+
+            const existingCategory = {
+                id: 'existing-cat',
+                href: 'http://example.com/category/existing-cat',
+                name: 'Existing category'
+            };
+            const retiredCategory = {
+                id: 'cat-1',
+                href: 'http://example.com/category/cat-1',
+                name: 'Category 1'
+            };
+
+            let updatePayload = null;
+
+            const retrieveScope = nock(serverUrl)
+                .get(defaultCatalogPath)
+                .reply(200, { category: [existingCategory, retiredCategory] });
+            const updateScope = nock(serverUrl)
+                .patch(defaultCatalogPath, (payload) => {
+                    updatePayload = payload;
+                    return true;
+                })
+                .reply(200, {});
+
+            testPostValidation(
+                req,
+                () => {
+                    expect(retrieveScope.isDone()).toBe(true);
+                    expect(updateScope.isDone()).toBe(true);
+                    expect(updatePayload).toEqual({
+                        category: [existingCategory]
+                    });
+                },
+                done
+            );
+        });
+
+        it('should remove categories from the default catalog when category status is obsolete', function(done) {
+            const req = {
+                method: 'PATCH',
+                apiUrl: '/category/cat-1',
+                body: {
+                    id: 'cat-1',
+                    lifecycleStatus: 'ObSoLeTe'
+                }
+            };
+
+            const existingCategory = {
+                id: 'existing-cat',
+                href: 'http://example.com/category/existing-cat',
+                name: 'Existing category'
+            };
+            const obsoleteCategory = {
+                id: 'cat-1',
+                href: 'http://example.com/category/cat-1',
+                name: 'Category 1'
+            };
+
+            let updatePayload = null;
+
+            const retrieveScope = nock(serverUrl)
+                .get(defaultCatalogPath)
+                .reply(200, { category: [obsoleteCategory, existingCategory] });
+            const updateScope = nock(serverUrl)
+                .patch(defaultCatalogPath, (payload) => {
+                    updatePayload = payload;
+                    return true;
+                })
+                .reply(200, {});
+
+            testPostValidation(
+                req,
+                () => {
+                    expect(retrieveScope.isDone()).toBe(true);
+                    expect(updateScope.isDone()).toBe(true);
+                    expect(updatePayload).toEqual({
+                        category: [existingCategory]
+                    });
+                },
+                done
+            );
+        });
+
+        it('should not remove categories from the default catalog when category status is not retired or obsolete', function(done) {
+            const req = {
+                method: 'PATCH',
+                apiUrl: '/category/cat-1',
+                body: {
+                    id: 'cat-1',
+                    lifecycleStatus: 'active'
+                }
+            };
+
+            const retrieveScope = nock(serverUrl)
+                .get(defaultCatalogPath)
+                .reply(200, { category: [] });
+
+            testPostValidation(
+                req,
+                () => {
+                    expect(retrieveScope.isDone()).toBe(false);
+                },
+                done
+            );
+        });
+
         // it('should notify the store when a product upgrade has finished', function(done) {
         // 	var req = {
         // 		method: 'PATCH',
