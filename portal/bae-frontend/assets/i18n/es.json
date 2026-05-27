@@ -1469,7 +1469,11 @@
       "_smtpServer": "SMTP Server",
       "_smtpPort": "SMTP Port",
       "_emailUser": "Email User",
-      "_emailPass": "Email Password"
+      "_emailPass": "Email Password",
+      "_defaultCatalog": "Default catalog",
+      "_defaultCatalogId": "Default catalog ID",
+      "_noDefaultCatalogConfigured": "No default catalog is currently configured.",
+      "_saveDefaultCatalog": "Save default catalog"
     },
     "CATEGORIES": {
       "_categories": "Categories",
@@ -2540,7 +2544,11 @@
     "_smtpServer": "SMTP Server",
     "_smtpPort": "SMTP Port",
     "_emailUser": "Email User",
-    "_emailPass": "Email Password"
+    "_emailPass": "Email Password",
+    "_defaultCatalog": "Default catalog",
+    "_defaultCatalogId": "Default catalog ID",
+    "_noDefaultCatalogConfigured": "No default catalog is currently configured.",
+    "_saveDefaultCatalog": "Save default catalog"
   },
   "CATEGORIES": {
     "_categories": "Categories",
