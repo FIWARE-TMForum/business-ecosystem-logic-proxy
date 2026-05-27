@@ -42,6 +42,8 @@ const { indexes } = require('./lib/indexes')
 const operator = require('./lib/operator').operator
 
 const debug = !(process.env.NODE_ENV == 'production');
+const SEARCH_FILTERS_COLLECTION = 'config'
+const SEARCH_FILTERS_CONFIG_ID = 'search-filters'
 
 // OAuth2 Came From Field
 const OAUTH2_CAME_FROM_FIELD = 'came_from_path';
@@ -347,6 +349,28 @@ const fetchData = async () => {
     return (result.length === 0 || result.length > 1)? '' : result[0].default_id
 }
 
+const getDefaultSearchFilters = () => {
+    return {
+        primaryCategoriesMode: 'catalogFirstLevel',
+        primaryRootName: '',
+        filters: []
+    }
+}
+
+const fetchSearchFilters = async () => {
+    try {
+        const result = await indexes.search(SEARCH_FILTERS_COLLECTION, { id: SEARCH_FILTERS_CONFIG_ID, limit: 1 })
+
+        if (result.length === 0 || result[0].searchFilters == null || typeof result[0].searchFilters !== 'object') {
+            return getDefaultSearchFilters()
+        }
+
+        return result[0].searchFilters
+    } catch (e) {
+        return getDefaultSearchFilters()
+    }
+}
+
 //Remove failIfNotAuthenticated because they want non-logged users to also be able to give feedback
 app.use('/feedback', authMiddleware.headerAuthentication)
 app.post('/feedback', async (req,res) => {
@@ -384,6 +408,7 @@ config.defaultId = await fetchData()
 app.get('/config', async (_, res) => {
     // Reload the defaultId if it has been during the operation
     config.defaultId = await fetchData()
+    const searchFilters = await fetchSearchFilters()
 
     res.send({
         ai: {
@@ -434,7 +459,8 @@ app.get('/config', async (_, res) => {
         quotesEnabled: config.quoteEnabled,
         tenderingEnabled: config.tenderingEnabled,
         learUrl: config.learUrl,
-        launchValidationEnabled: config.launchValidationEnabled
+        launchValidationEnabled: config.launchValidationEnabled,
+        searchFilters: searchFilters
     })
 })
 
@@ -583,6 +609,10 @@ app.patch('/admin/uploadcertificate/:specId', authMiddleware.headerAuthenticatio
 
 app.post('/admin/defaultcatalog', authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, (req, res) => {
     admin.updateDefaultCatalog(req, res)
+})
+
+app.patch('/config/filters', authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, (req, res) => {
+    admin.updateSearchFiltersConfig(req, res)
 })
 
 app.get('/paymentInfo', authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, (req, res) => {

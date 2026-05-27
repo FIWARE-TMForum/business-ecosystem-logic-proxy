@@ -54,11 +54,22 @@ describe('Admin Controller', () => {
         }
     }
 
-    const getAdminInstance = function (axios, uuid) {
+    const getAdminInstance = function (axios, uuid, indexes) {
+        if (!indexes) {
+            indexes = {
+                indexes: {
+                    search: async () => [],
+                    updateDocument: async () => {},
+                    indexDocument: async () => {}
+                }
+            }
+        }
+
         let mocks = {
             'axios': axios,
             './../config': config,
-            './../lib/utils': utils
+            './../lib/utils': utils,
+            './../lib/indexes': indexes
         }
 
         if (uuid) {
@@ -517,5 +528,192 @@ describe('Admin Controller', () => {
             expect(axios.request).toHaveBeenCalled()
         }
         testCertificateError(axios, request, 404, "The product spec does not exists", validator, done)
+    })
+
+    it('should persist and return normalized search filters config in rooted mode', (done) => {
+        const searchMock = jasmine.createSpy('search').and.returnValue(Promise.resolve([]))
+        const updateMock = jasmine.createSpy('updateDocument').and.returnValue(Promise.resolve())
+        const indexMock = jasmine.createSpy('indexDocument').and.returnValue(Promise.resolve())
+
+        const indexes = {
+            indexes: {
+                search: searchMock,
+                updateDocument: updateMock,
+                indexDocument: indexMock
+            }
+        }
+
+        const request = {
+            user: {
+                partyId: '1234',
+                roles: [{
+                    name: config.roles.admin
+                }]
+            },
+            body: JSON.stringify({
+                primaryCategoriesMode: 'rooted',
+                primaryRootName: '  Main Root  ',
+                filters: [{
+                    name: '  Filter A  ',
+                    source: 'configured',
+                    children: [{
+                        name: '  Option 1  '
+                    }, {
+                        name: 'Option 2',
+                        label: 'Second option'
+                    }]
+                }, {
+                    name: 'Filter B',
+                    source: 'categoryRoot',
+                    rootName: '  Root B  ',
+                    children: []
+                }]
+            })
+        }
+
+        const expectedBody = {
+            primaryCategoriesMode: 'rooted',
+            primaryRootName: 'Main Root',
+            filters: [{
+                name: 'Filter A',
+                source: 'configured',
+                children: [{
+                    name: 'Option 1'
+                }, {
+                    name: 'Option 2',
+                    label: 'Second option'
+                }]
+            }, {
+                name: 'Filter B',
+                source: 'categoryRoot',
+                rootName: 'Root B'
+            }]
+        }
+
+        const response = jasmine.createSpyObj('res', ['status', 'json'])
+        let resPromise = new Promise((resolve, reject) => {
+            response.json.and.callFake(() => resolve())
+        })
+
+        const instance = getAdminInstance({}, null, indexes)
+        instance.updateSearchFiltersConfig(request, response)
+
+        resPromise.then(() => {
+            expect(searchMock).toHaveBeenCalledWith('config', { id: 'search-filters', limit: 1 })
+            expect(updateMock).not.toHaveBeenCalled()
+            expect(indexMock).toHaveBeenCalledWith('config', 'search-filters', {
+                searchFilters: expectedBody
+            })
+            expect(response.status).toHaveBeenCalledWith(200)
+            expect(response.json).toHaveBeenCalledWith(expectedBody)
+            done()
+        })
+    })
+
+    it('should normalize to empty rooted config in catalogFirstLevel mode', (done) => {
+        const searchMock = jasmine.createSpy('search').and.returnValue(Promise.resolve([{
+            id: 'doc-1',
+            searchFilters: {
+                primaryCategoriesMode: 'rooted'
+            }
+        }]))
+        const updateMock = jasmine.createSpy('updateDocument').and.returnValue(Promise.resolve())
+
+        const indexes = {
+            indexes: {
+                search: searchMock,
+                updateDocument: updateMock,
+                indexDocument: jasmine.createSpy('indexDocument').and.returnValue(Promise.resolve())
+            }
+        }
+
+        const request = {
+            user: {
+                partyId: '1234',
+                roles: [{
+                    name: config.roles.admin
+                }]
+            },
+            body: JSON.stringify({
+                primaryCategoriesMode: 'catalogFirstLevel',
+                primaryRootName: 'Should be ignored',
+                filters: [{
+                    name: 'Will be removed',
+                    source: 'configured'
+                }]
+            })
+        }
+
+        const expectedBody = {
+            primaryCategoriesMode: 'catalogFirstLevel',
+            primaryRootName: '',
+            filters: []
+        }
+
+        const response = jasmine.createSpyObj('res', ['status', 'json'])
+        let resPromise = new Promise((resolve, reject) => {
+            response.json.and.callFake(() => resolve())
+        })
+
+        const instance = getAdminInstance({}, null, indexes)
+        instance.updateSearchFiltersConfig(request, response)
+
+        resPromise.then(() => {
+            expect(updateMock).toHaveBeenCalledWith('config', 'doc-1', {
+                searchFilters: expectedBody
+            })
+            expect(response.status).toHaveBeenCalledWith(200)
+            expect(response.json).toHaveBeenCalledWith(expectedBody)
+            done()
+        })
+    })
+
+    it('should reject invalid search filters payload', (done) => {
+        const indexes = {
+            indexes: {
+                search: jasmine.createSpy('search').and.returnValue(Promise.resolve([])),
+                updateDocument: jasmine.createSpy('updateDocument').and.returnValue(Promise.resolve()),
+                indexDocument: jasmine.createSpy('indexDocument').and.returnValue(Promise.resolve())
+            }
+        }
+
+        const request = {
+            user: {
+                partyId: '1234',
+                roles: [{
+                    name: config.roles.admin
+                }]
+            },
+            body: JSON.stringify({
+                primaryCategoriesMode: 'rooted',
+                primaryRootName: 'Main root',
+                filters: [{
+                    name: 'Filter A',
+                    source: 'configured',
+                    children: [{
+                        name: 'Option 1',
+                        source: 'configured'
+                    }]
+                }]
+            })
+        }
+
+        const response = jasmine.createSpyObj('res', ['status', 'json'])
+        let resPromise = new Promise((resolve, reject) => {
+            response.json.and.callFake(() => resolve())
+        })
+
+        const instance = getAdminInstance({}, null, indexes)
+        instance.updateSearchFiltersConfig(request, response)
+
+        resPromise.then(() => {
+            expect(response.status).toHaveBeenCalledWith(400)
+            expect(response.json).toHaveBeenCalledWith({
+                error: 'Invalid search filters payload',
+                details: ['filters[0].children[0] must not include source']
+            })
+            expect(indexes.indexes.search).not.toHaveBeenCalled()
+            done()
+        })
     })
 })
