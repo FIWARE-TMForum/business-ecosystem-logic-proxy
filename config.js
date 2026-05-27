@@ -795,3 +795,7 @@ config.endpoints.ai.host = process.env.BAE_LP_ENDPOINT_AI_HOST || config.endpoin
 if (!!process.env.BAE_LP_ENDPOINT_AI_SECURED) {
     config.endpoints.ai.appSsl = process.env.BAE_LP_ENDPOINT_AI_SECURED == 'true';
 }
+
+if (!!process.env.BAE_LP_TENDER_DEV_BUTTON_ENABLED) {
+    config.tenderDevButtonsOpenCloseEnabled = process.env.BAE_LP_TENDER_DEV_BUTTON_ENABLED == 'true';
+}
