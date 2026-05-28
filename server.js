@@ -460,7 +460,8 @@ app.get('/config', async (_, res) => {
         tenderingEnabled: config.tenderingEnabled,
         learUrl: config.learUrl,
         launchValidationEnabled: config.launchValidationEnabled,
-        searchFilters: searchFilters
+        searchFilters: searchFilters,
+        tenderDevButtonsOpenCloseEnabled: config.tenderDevButtonsOpenCloseEnabled
     })
 })
 
