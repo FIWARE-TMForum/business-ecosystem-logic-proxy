@@ -1474,6 +1474,8 @@ const catalog = (function() {
     };
 
     const processQuery = async (req, callback) => {
+        const query = req.query || {}
+
         const returnQueryRes = (result) => {
             let newUrl = '/catalog/productOffering?href='
 
@@ -1493,19 +1495,22 @@ const catalog = (function() {
             callback(null)
         }
 
-        if (offeringsPattern.test(req.path) && req.query.keyword != null && config.searchUrl) {
+        const hasKeyword = query.keyword != null && String(query.keyword).trim().length > 0
+        const hasCategoryFilters = query['category.id'] != null && String(query['category.id']).trim().length > 0
+
+        if (offeringsPattern.test(req.path) && config.searchUrl && (hasKeyword || hasCategoryFilters)) {
             // Query to the external search engine
             let page = {}
 
-            if (req.query.offset != null) {
-                page.offset = req.query.offset
+            if (query.offset != null) {
+                page.offset = query.offset
             }
 
-            if (req.query.limit != null) {
-                page.pageSize = req.query.limit
+            if (query.limit != null) {
+                page.pageSize = query.limit
             }
 
-            searchEngine.search(req.query.keyword, req.query['category.id'], page)
+            searchEngine.search(query.keyword, query['category.id'], page)
                 .then(returnQueryRes)
                 .catch(() => {
                     callback({

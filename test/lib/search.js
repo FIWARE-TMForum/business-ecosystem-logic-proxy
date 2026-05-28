@@ -40,11 +40,11 @@ describe('Search client', () => {
         }).searchEngine;
     }
 
-    const testSearch = (keyword, categories, expBody, done) => {
+    const testSearch = (keyword, categories, expPath, expBody, done) => {
         let receivedBody;
 
         nock(searchUrl, {
-        }).post(`/api/SearchProduct/${keyword}`, (body) => {
+        }).post(expPath, (body) => {
             receivedBody = body;
             return true;
         }).reply(200, JSON.stringify([{
@@ -62,7 +62,7 @@ describe('Search client', () => {
     }
 
     it('should search if a keyword is provided', (done) => {
-        testSearch('test', null, {
+        testSearch('test', null, '/api/SearchProduct/test', {
             categories: []
         }, done)
     })
@@ -82,9 +82,44 @@ describe('Search client', () => {
             name: 'cat2'
         }));
 
-        testSearch('test', '1,2', {
+        testSearch('test', '1,2', '/api/SearchProduct/test', {
             categories: ['cat1', 'cat2']
         }, done)
+    })
+
+    it('should search without keyword when only filters are provided', (done) => {
+        testSearch(null, 'compliance_profile::B,compliance_profile::P', '/api/SearchProduct', {
+            categories: [],
+            compliance_profile: ['B', 'P']
+        }, done)
+    })
+
+    it('should include dynamic filters and category names in request body', (done) => {
+        nock(catalogUrl, {
+        }).get(`${config.endpoints.catalog.apiPath}/category/1`, () => {
+            return true;
+        }).reply(200, JSON.stringify({
+            name: 'cat1'
+        }));
+
+        nock(catalogUrl, {
+        }).get(`${config.endpoints.catalog.apiPath}/category/2`, () => {
+            return true;
+        }).reply(200, JSON.stringify({
+            name: 'cat2'
+        }));
+
+        testSearch(
+            'test',
+            '1,compliance_profile::B,2,compliance_profile::P,procurementType::Ready to Buy',
+            '/api/SearchProduct/test',
+            {
+                categories: ['cat1', 'cat2'],
+                compliance_profile: ['B', 'P'],
+                procurementType: ['Ready to Buy']
+            },
+            done
+        )
     })
 
     it('should search if keyword and paging is provided', (done) => {
@@ -101,6 +136,27 @@ describe('Search client', () => {
             expect(ids).toEqual([])
 
             let url = 'http://search.com/api/SearchProduct/test?page=1&size=10'
+            expect(axios).toHaveBeenCalledWith(url, {
+                categories: []
+            })
+            done()
+        })
+    })
+
+    it('should search without keyword if paging is provided', (done) => {
+        let axios = jasmine.createSpy()
+        axios.and.returnValue(Promise.resolve({
+            data: []
+        }))
+
+        const client = searchClient({
+            post: axios
+        })
+
+        client.search(null, '', {offset: 20, pageSize: 10}).then((ids) => {
+            expect(ids).toEqual([])
+
+            let url = 'http://search.com/api/SearchProduct?page=2&size=10'
             expect(axios).toHaveBeenCalledWith(url, {
                 categories: []
             })

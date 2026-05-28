@@ -86,7 +86,7 @@ describe('Catalog API', function() {
     const basepath = '/catalog'
     const serviceLaunchFail= 0
     const resourceLaunchFail= 1
-    var getCatalogApi = function(storeClient, tmfUtils, utils, rssClient, indexes, async) {
+    var getCatalogApi = function(storeClient, tmfUtils, utils, rssClient, indexes, async, searchEngine) {
         if (!rssClient) {
             rssClient = {};
         }
@@ -98,9 +98,8 @@ describe('Catalog API', function() {
         if (!async) {
             async = {};
         }
-        
-        // load config depending on utils
-        return proxyquire('../../../controllers/tmf-apis/catalog', {
+
+        const stubs = {
             './../../config': config,
             './../../lib/logger': testUtils.emptyLogger,
             './../../lib/store': storeClient,
@@ -109,7 +108,14 @@ describe('Catalog API', function() {
             './../../lib/utils': utils,
             './../../lib/indexes': {indexes},
             async: async
-        }).catalog;
+        }
+
+        if (searchEngine) {
+            stubs['../../lib/search'] = { searchEngine: searchEngine };
+        }
+
+        // load config depending on utils
+        return proxyquire('../../../controllers/tmf-apis/catalog', stubs).catalog;
     };
 
     beforeEach(function() {
@@ -130,6 +136,38 @@ describe('Catalog API', function() {
 
         catalogApi.checkPermissions(req, function() {
             // Callback function. It's called without arguments...
+            done();
+        });
+    });
+
+    it('should use external search on GET productOffering requests with filter-only category.id params', function(done) {
+        const previousSearchUrl = config.searchUrl;
+        config.searchUrl = 'http://search.com';
+
+        const searchMethod = jasmine.createSpy('search').and.returnValue(Promise.resolve([
+            { id: 'id-1' },
+            { id: 'id-2' }
+        ]));
+
+        var catalogApi = getCatalogApi({}, {}, {}, {}, {}, {}, { search: searchMethod });
+        var req = {
+            method: 'GET',
+            path: '/productOffering',
+            apiUrl: '/catalog/productOffering',
+            query: {
+                'category.id': 'compliance_profile::B,compliance_profile::P'
+            }
+        };
+
+        catalogApi.checkPermissions(req, function(err) {
+            config.searchUrl = previousSearchUrl;
+            expect(err).toBeNull();
+            expect(searchMethod).toHaveBeenCalledWith(
+                undefined,
+                'compliance_profile::B,compliance_profile::P',
+                {}
+            );
+            expect(req.apiUrl).toBe('/catalog/productOffering?href=id-1,id-2');
             done();
         });
     });
