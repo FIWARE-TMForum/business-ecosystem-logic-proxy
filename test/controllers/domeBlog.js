@@ -144,6 +144,27 @@ describe('DomeBlog Controller', () => {
         expect(res.json).toHaveBeenCalled();
     });
 
+    it('should create a post with a provided date', async () => {
+        const req = {
+            user: { roles: [{ name: 'provider' }] },
+            body: JSON.stringify({
+                title: 'Backdated Post',
+                content: '# Heading',
+                date: '2025-01-20T12:34:56.000Z'
+            })
+        };
+        const res = makeResponse();
+
+        await controller.create(req, res);
+
+        expect(BlogMock).toHaveBeenCalledWith(jasmine.objectContaining({
+            title: 'Backdated Post',
+            content: '# Heading',
+            date: '2025-01-20T12:34:56.000Z'
+        }));
+        expect(res.status).toHaveBeenCalledWith(201);
+    });
+
     it('should auto-generate slug when legacy payload does not include it', async () => {
         const req = {
             user: { roles: [{ name: 'provider' }] },
@@ -202,6 +223,26 @@ describe('DomeBlog Controller', () => {
         }));
     });
 
+    it('should return 400 when date is invalid on create', async () => {
+        const req = {
+            user: { roles: [{ name: 'provider' }] },
+            body: JSON.stringify({
+                title: 'Invalid date',
+                content: 'Body',
+                date: 'not-a-date'
+            })
+        };
+        const res = makeResponse();
+
+        await controller.create(req, res);
+
+        expect(BlogMock).not.toHaveBeenCalled();
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith({
+            error: 'date must be a valid date'
+        });
+    });
+
     it('should return 403 when a non-admin tries to update a post', async () => {
         utilsMock.hasRole.and.returnValue(false);
 
@@ -257,6 +298,35 @@ describe('DomeBlog Controller', () => {
         expect(existingBlog.metaDescription).toBe('Updated description');
         expect(existingBlog.excerpt).toBe('Updated excerpt');
         expect(existingBlog.author).toBe('Updated Author');
+        expect(existingBlog.save).toHaveBeenCalled();
+        expect(res.json).toHaveBeenCalledWith({
+            message: 'Blog entry patched successfully',
+            patchedBlog: existingBlog
+        });
+    });
+
+    it('should update the date through patch when provided', async () => {
+        const existingBlog = {
+            _id: 'blog-id-1',
+            title: 'Legacy title',
+            slug: 'legacy-title',
+            content: '# Existing',
+            save: jasmine.createSpy('save').and.callFake(async function() { return this; })
+        };
+        BlogMock.findById.and.returnValue(Promise.resolve(existingBlog));
+
+        const req = {
+            user: { roles: [{ name: 'provider' }] },
+            params: { id: 'blog-id-1' },
+            body: JSON.stringify({
+                date: '2024-12-31T23:59:59.000Z'
+            })
+        };
+        const res = makeResponse();
+
+        await controller.updateById(req, res);
+
+        expect(existingBlog.date).toBe('2024-12-31T23:59:59.000Z');
         expect(existingBlog.save).toHaveBeenCalled();
         expect(res.json).toHaveBeenCalledWith({
             message: 'Blog entry patched successfully',

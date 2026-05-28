@@ -4,7 +4,7 @@ const { indexes } = require('../lib/indexes');
 const utils = require('../lib/utils');
 const config = require('../config');
 
-const BLOG_EDITABLE_FIELDS = ['title', 'slug', 'featuredImage', 'metaDescription', 'excerpt', 'content', 'partyId', 'author', 'tags'];
+const BLOG_EDITABLE_FIELDS = ['title', 'slug', 'featuredImage', 'metaDescription', 'excerpt', 'content', 'partyId', 'author', 'tags', 'date'];
 
 const domeBlog = (function () {
   const hasOwnProperty = function (obj, key) {
@@ -84,6 +84,21 @@ const domeBlog = (function () {
     }
 
     return normalizeTags(tags);
+  };
+
+  const parseDate = function (date) {
+    if (date === undefined) {
+      return undefined;
+    }
+
+    const parsedDate = new Date(date);
+    if (Number.isNaN(parsedDate.getTime())) {
+      const validationError = new Error('date must be a valid date');
+      validationError.statusCode = 400;
+      throw validationError;
+    }
+
+    return parsedDate.toISOString();
   };
 
   const buildSlugBase = function (title) {
@@ -204,13 +219,19 @@ const domeBlog = (function () {
           mongoBlog.tags = parseTags(mongoBlog.tags);
         }
 
+        if (hasOwnProperty(mongoBlog, 'date')) {
+          mongoBlog.date = parseDate(mongoBlog.date);
+        }
+
         if (!mongoBlog.slug) {
           mongoBlog.slug = await generateUniqueSlug(mongoBlog.title);
         } else if (!(await isSlugAvailable(mongoBlog.slug))) {
           return res.status(409).json({ error: 'A blog entry with the same slug already exists' });
         }
 
-        mongoBlog.date = new Date().toISOString();
+        if (!hasOwnProperty(mongoBlog, 'date')) {
+          mongoBlog.date = new Date().toISOString();
+        }
 
         const blog = new Blog({
           ...mongoBlog
@@ -295,6 +316,10 @@ const domeBlog = (function () {
 
         if (hasOwnProperty(updates, 'tags')) {
           updates.tags = parseTags(updates.tags);
+        }
+
+        if (hasOwnProperty(updates, 'date')) {
+          updates.date = parseDate(updates.date);
         }
 
         if (!updates || Object.keys(updates).length === 0) {
