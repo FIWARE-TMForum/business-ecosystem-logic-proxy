@@ -434,7 +434,8 @@ app.get('/config', async (_, res) => {
         quotesEnabled: config.quoteEnabled,
         tenderingEnabled: config.tenderingEnabled,
         learUrl: config.learUrl,
-        launchValidationEnabled: config.launchValidationEnabled
+        launchValidationEnabled: config.launchValidationEnabled,
+        tenderDevButtonsOpenCloseEnabled: config.tenderDevButtonsOpenCloseEnabled
     })
 })
 
