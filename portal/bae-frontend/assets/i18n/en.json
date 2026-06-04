@@ -157,8 +157,8 @@
     "hero": {
       "_titleLine1Part1": "The Trusted",
       "_titleLine1Accent": "European",
-      "_titleLine2": "Ecosystem for Cloud,",
-      "_titleLine3": "Edge & AI Services",
+      "_titleLine1Part2": "Ecosystem",
+      "_titleLine2": "for Cloud, Edge & AI Services",
       "_subtitleLine1": "Connecting providers and customers to discover, deliver and scale sovereign digital",
       "_subtitleLine2": "services across Europe.",
       "_customerCta": "Start your customer journey",
@@ -386,7 +386,8 @@
           "step2": "Verify your organisation",
           "step3": "Publish your services",
           "step4": "Start receiving requests"
-        }
+        },
+        "ctaButton": "Start your onboarding journey"
       },
       "included": {
         "title": "What's Included for Providers",
