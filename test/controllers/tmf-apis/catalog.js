@@ -2378,13 +2378,15 @@ describe('Catalog API', function() {
                         startDateTime: nowStr
                     };
 
-                    if (uniqueCategories) {	
+                    if (uniqueCategories) {
                         expect(utils.updateBody).toHaveBeenCalledWith(req, {category: uniqueCategories, validFor: {
                             startDateTime: nowStr
-                        }});
-                    } 
-                    else
+                        }, '@schemaLocation': 'https://mylocation.com/offering-schema.json'});
+                    }
+                    else {
+                        expOff['@schemaLocation'] = 'https://mylocation.com/offering-schema.json';
                         expect(utils.updateBody).toHaveBeenCalledWith(req, expOff);
+                    }
 
                 } else {
                     expect(utils.updateBody).not.toHaveBeenCalled();
@@ -2606,6 +2608,29 @@ describe('Catalog API', function() {
             null,
             done
         );
+    });
+
+    it('should allow to launch an offering when launchValidationEnabled is true and conditions are met', function(done) {
+        config.launchValidationEnabled = true;
+
+        var offeringBody = JSON.stringify({
+            lifecycleStatus: 'launched'
+        });
+
+        var productRequestInfo = {
+            requestStatus: 200,
+            owner: true,
+            lifecycleStatus: 'launched'
+        };
+
+        var catalogRequestInfo = {
+            requestStatus: 200,
+            lifecycleStatus: 'launched'
+        };
+
+        testUpdateProductOffering(offeringBody, productRequestInfo, null, catalogRequestInfo, null, null, true, null, done);
+
+        config.launchValidationEnabled = false;
     });
 
     // PRODUCTS & CATALOGS
@@ -5248,6 +5273,51 @@ describe('Catalog API', function() {
             );
         });
 
+        it('should not filter out ad-hoc offers when the user is the seller', (done) => {
+            const req = {
+                method: 'GET',
+                user: {
+                    partyId: 'seller-id'
+                },
+                apiUrl: '/productOffering',
+                body: [{
+                    id: 'id3',
+                    relatedParty: [{
+                        id: '1234',
+                        role: config.roles.customer
+                    }, {
+                        id: 'seller-id',
+                        role: config.roles.seller
+                    }]
+                }, {
+                    id: 'id1'
+                }, {
+                    id: 'id2'
+                }]
+            }
+
+            testPostValidation(
+                req,
+                () => {
+                    expect(req.body).toEqual([{
+                        id: 'id3',
+                        relatedParty: [{
+                            id: '1234',
+                            role: config.roles.customer
+                        }, {
+                            id: 'seller-id',
+                            role: config.roles.seller
+                        }]
+                    }, {
+                        id: 'id1'
+                    }, {
+                        id: 'id2'
+                    }])
+                },
+                done
+            );
+        });
+
         it('should call the store product attachment when a valid product creation request has been redirected', function(done) {
             var req = {
                 method: 'POST',
@@ -5573,5 +5643,63 @@ describe('Catalog API', function() {
         // 		done
         // 	);
         // });
+    });
+
+    describe('checkOfferingLaunch', function() {
+        const protocol = config.endpoints.catalog.appSsl ? 'https' : 'http';
+        const serverUrl = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
+        const apiBase = '/api';
+
+        var getCatalogApiSimple = function() {
+            return getCatalogApi({}, {}, {});
+        };
+
+        it('should return canBeLaunched true when the offering exists', function(done) {
+            var offeringId = 'urn:offering:42';
+            var offering = { id: offeringId, lifecycleStatus: 'active', name: 'Test Offering' };
+
+            nock(serverUrl)
+                .get(apiBase + '/productOffering/' + offeringId)
+                .reply(200, offering);
+
+            var catalogApi = getCatalogApiSimple();
+
+            var req = { params: { id: offeringId } };
+            var res = {
+                status: jasmine.createSpy('status').and.callFake(function() { return res; }),
+                json: jasmine.createSpy('json').and.callFake(function(body) {
+                    expect(res.status).not.toHaveBeenCalled();
+                    expect(body).toEqual({ canBeLaunched: true });
+                    done();
+                })
+            };
+
+            catalogApi.checkOfferingLaunch(req, res);
+        });
+
+        it('should return an error when the offering cannot be retrieved', function(done) {
+            var offeringId = 'urn:offering:notfound';
+
+            nock(serverUrl)
+                .get(apiBase + '/productOffering/' + offeringId)
+                .reply(404, {});
+
+            var catalogApi = getCatalogApiSimple();
+
+            var req = { params: { id: offeringId } };
+            var res = {
+                status: jasmine.createSpy('status').and.callFake(function(code) {
+                    expect(code).toBe(404);
+                    return res;
+                }),
+                json: jasmine.createSpy('json').and.callFake(function(body) {
+                    expect(res.status).toHaveBeenCalledWith(404);
+                    expect(body.error).toBeDefined();
+                    done();
+                })
+            };
+
+            catalogApi.checkOfferingLaunch(req, res);
+        });
     });
 });

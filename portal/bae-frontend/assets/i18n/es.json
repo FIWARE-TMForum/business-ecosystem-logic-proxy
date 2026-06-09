@@ -127,7 +127,7 @@
       "title": "Explore verified services",
       "subtitle": "Search across cloud, edge, AI, data and other digital services from trusted European providers.",
       "searchPlaceholder": "Search by keyword, category or provider…",
-      "browseFullCatalog": "Browse full catalog →",
+      "browseFullCatalog": "Browse full catalog",
       "viewService": "View service"
     },
     "ecosystem": {
@@ -157,8 +157,8 @@
     "hero": {
       "_titleLine1Part1": "The Trusted",
       "_titleLine1Accent": "European",
-      "_titleLine2": "Ecosystem for Cloud,",
-      "_titleLine3": "Edge & AI Services.",
+      "_titleLine1Part2": "Ecosystem",
+      "_titleLine2": "for Cloud, Edge & AI Services",
       "_subtitleLine1": "Connecting providers and customers to discover, deliver and scale sovereign digital",
       "_subtitleLine2": "services across Europe.",
       "_customerCta": "Start your customer journey",
@@ -386,7 +386,8 @@
           "step2": "Verify your organisation",
           "step3": "Publish your services",
           "step4": "Start receiving requests"
-        }
+        },
+        "ctaButton": "Start your onboarding journey"
       },
       "included": {
         "title": "What's Included for Providers",
@@ -2273,6 +2274,9 @@
     "_name": "Name",
     "_description": "Description",
     "_version": "Version",
+    "_ext_billing": "Set external billing",
+    "_pla_spec_id": "External billing engine URL",
+    "_pla_spec_id_required": "External billing engine URL is required",
     "_preview": "Preview",
     "_show_preview": "Show preview",
     "_next": "Next",
@@ -2375,6 +2379,8 @@
     "_name": "Name",
     "_description": "Description",
     "_version": "Version",
+    "_ext_billing": "Set external billing",
+    "_pla_spec_id": "External billing engine URL",
     "_preview": "Preview",
     "_show_preview": "Show preview",
     "_next": "Next",

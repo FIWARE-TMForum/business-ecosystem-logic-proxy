@@ -784,9 +784,16 @@ if (!!process.env.BAE_LP_DATASPACE_ENABLED) {
     config.dataSpaceEnabled = process.env.BAE_LP_DATASPACE_ENABLED == 'true';
 }
 
+
 config.federationEnabled = false;
 if (!!process.env.BAE_LP_FEDERATION_ENABLED) {
     config.federationEnabled = process.env.BAE_LP_FEDERATION_ENABLED == 'true';
+}
+
+config.launchValidationEnabled = false;
+if (!!process.env.BAE_LP_LAUNCH_VALIDATION_ENABLED) {
+    config.launchValidationEnabled = process.env.BAE_LP_LAUNCH_VALIDATION_ENABLED == 'true';
+
 }
 
 config.operatorId = ''
@@ -794,7 +801,12 @@ config.operatorId = process.env.BAE_LP_OPERATOR_ID || config.operatorId;
 
 //config.partyLocation = 'https://raw.githubusercontent.com/Ficodes/tmf-schemas/refs/heads/main/schemas/relatedPartyRef.schema.json'
 config.partyLocation = 'https://raw.githubusercontent.com/DOME-Marketplace/tmf-api/refs/heads/main/schemas/EngagedParty/RelatedParty.schema.json'
+config.priceCompSchema = 'https://raw.githubusercontent.com/DOME-Marketplace/tmf-api/refs/heads/main/DOME/PriceComponent.schema.json'
+config.offeringSchema = 'https://raw.githubusercontent.com/DOME-Marketplace/tmf-api/refs/heads/main/DOME/ExternallyBilled.schema.json'
+
 config.partyLocation = process.env.BAE_LP_PARTY_LOCATION || config.partyLocation;
+config.priceCompSchema = process.env.BAE_LP_PRICE_COMP_SCHEMA || config.priceCompSchema;
+config.offeringSchema = process.env.BAE_LP_OFFERING_SCHEMA || config.offeringSchema;
 
 
 
@@ -820,4 +832,8 @@ config.endpoints.ai.host = process.env.BAE_LP_ENDPOINT_AI_HOST || config.endpoin
 
 if (!!process.env.BAE_LP_ENDPOINT_AI_SECURED) {
     config.endpoints.ai.appSsl = process.env.BAE_LP_ENDPOINT_AI_SECURED == 'true';
+}
+
+if (!!process.env.BAE_LP_TENDER_DEV_BUTTON_ENABLED) {
+    config.tenderDevButtonsOpenCloseEnabled = process.env.BAE_LP_TENDER_DEV_BUTTON_ENABLED == 'true';
 }

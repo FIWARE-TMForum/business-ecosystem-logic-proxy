@@ -247,6 +247,10 @@ const catalog = (function() {
         }, req)
     }
 
+    const canOfferingBeLaunched = function(offering, productSpec = null) {
+        return true;
+    };
+
     const validateOffering = function(req, offeringPath, previousBody, newBody, callback) {
         if(newBody && newBody.name !== null && newBody.name !== undefined){ // newBody.name === '' should enter here
             const errorMessage = tmfUtils.validateNameField(newBody.name, 'Product offering');
@@ -281,6 +285,13 @@ const catalog = (function() {
             validStates = [ACTIVE_STATE, LAUNCHED_STATE];
             errorMessageStateProduct = 'Offerings can only be attached to active or launched products';
             errorMessageStateCatalog = 'Offerings can only be created in a catalog that is active or launched';
+
+            if (config.launchValidationEnabled && newBody && newBody[LIFE_CYCLE] && newBody[LIFE_CYCLE].toLowerCase() === LAUNCHED_STATE && !canOfferingBeLaunched(newBody)) {
+                return callback({
+                    status: 403,
+                    message: 'The product offering does not meet the requirements to be launched'
+                });
+            }
         } else if (
             previousBody !== null &&
             newBody &&
@@ -291,6 +302,13 @@ const catalog = (function() {
             validStates = [LAUNCHED_STATE];
             errorMessageStateProduct = 'Offerings can only be launched when the attached product is also launched';
             errorMessageStateCatalog = 'Offerings can only be launched when the attached catalog is also launched';
+
+            if (config.launchValidationEnabled && !canOfferingBeLaunched(previousBody)) {
+                return callback({
+                    status: 403,
+                    message: 'The product offering does not meet the requirements to be launched'
+                });
+            }
         }
 
         if (newBody && previousBody) {
@@ -302,20 +320,23 @@ const catalog = (function() {
                     message: 'Field ' + modifiedField + ' cannot be modified'
                 });
             }
+            newBody["@schemaLocation"] = config.offeringSchema
         }
 
         if(newBody && newBody['category']){
             const dict = {}
-            newBody['category'] = newBody
-            ['category'].filter((category) => { 
+            newBody['category'] = newBody['category'].filter((category) => {
                 if(dict[category.id]) return false
                 else{
                     dict[category.id] = 1
                     return true
                 }
             })
+        }
+        if (newBody){
             utils.updateBody(req, newBody)
         }
+
         async.series(
             [],
                 function(err) {
@@ -1068,7 +1089,7 @@ const catalog = (function() {
                 });
             }
             else if(pricePattern.test(req.apiUrl)){
-                validateOfferingPrice(req, callback);
+                validateOfferingPrice(req, null, callback);
             }
             else {
                 callback(null);
@@ -1077,7 +1098,7 @@ const catalog = (function() {
         }
     };
 
-    const validateOfferingPrice = function (req, callback){
+    const validateOfferingPrice = function (req, previousBody, callback){
         const offerPrice = JSON.parse(req.body)
         // check if it is a valid percentage
         if (offerPrice && offerPrice.priceType && offerPrice.priceType.toLowerCase() === 'discount' && !tmfUtils.isValidDiscount(offerPrice)) {
@@ -1099,6 +1120,11 @@ const catalog = (function() {
                 status: 422,
                 message: 'Price must be either a number or a string representing a number between 0 and 1.000.000.000 and it must follow the ISO 4217 standard'
             })
+        }
+
+        if (previousBody && !previousBody.isBundle) { // price component PATCH
+            offerPrice["@schemaLocation"] = config.priceCompSchema
+            utils.updateBody(req, offerPrice)
         }
 
         callback(null)
@@ -1222,6 +1248,16 @@ const catalog = (function() {
                     }
                 } else {
                     const previousBody = result.body;
+                    // The related party field is sorted, since the order is not important
+                    const sortParty = (p1, p2) => {
+                        return p1.id > p2.id ? 1 : p2.id > p1.id ? -1 : 0;
+                    };
+                    if ( parsedBody != null && parsedBody.relatedParty && !equal( previousBody.relatedParty.sort(sortParty), parsedBody.relatedParty.sort(sortParty))) {
+                        return callback({
+                            status: 409,
+                            message: 'The field "relatedParty" can not be modified'
+                        });
+                    }
 
                     // Catalog stuff should include a validFor field
                     if (parsedBody && !previousBody.validFor && !parsedBody.validFor) {
@@ -1251,100 +1287,82 @@ const catalog = (function() {
                             }
                         });
                     } else if (pricePattern.test(req.apiUrl)) {
-                        validateOfferingPrice(req, callback);
+                        validateOfferingPrice(req, previousBody, callback);
                     } else {
                         if (tmfUtils.isOwner(req, previousBody)) {
-                            // The related party field is sorted, since the order is not important
-                            var sortParty = (p1, p2) => {
-                                return p1.id > p2.id ? 1 : p2.id > p1.id ? -1 : 0;
-                            };
+                            if (catalogsPattern.test(req.apiUrl)) {
+                                async.series(
+                                    [
+                                        function(callback) {
+                                            // Validate catalog new contents
+                                            validateCatalog(req, previousBody, parsedBody, callback);
+                                        },
+                                        function(callback) {
+                                            // Retrieve all the offerings contained in the catalog
+                                            var slash = req.apiUrl.endsWith('/') ? '' : '/';
+                                            var offeringsInCatalogPath = req.apiUrl + slash + 'productOffering';
 
-                            if (
-                                parsedBody != null &&
-                                parsedBody.relatedParty &&
-                                !equal(
-                                    previousBody.relatedParty.sort(sortParty),
-                                    parsedBody.relatedParty.sort(sortParty)
-                                )
-                            ) {
-                                callback({
-                                    status: 409,
-                                    message: 'The field "relatedParty" can not be modified'
-                                });
+                                            validateInvolvedOfferingsState(
+                                                req,
+                                                'catalog',
+                                                parsedBody,
+                                                offeringsInCatalogPath,
+                                                callback
+                                            );
+                                        }
+                                    ],
+                                    callback
+                                );
+                            } else if (productsPattern.test(req.apiUrl)) {
+                                async.series(
+                                    [
+                                        function(callback) {
+                                            var url = req.apiUrl;
+
+                                            if (url.endsWith('/')) {
+                                                url = url.slice(0, -1);
+                                            }
+
+                                            var urlParts = url.split('/');
+                                            var productId = urlParts[urlParts.length - 1];
+
+                                            var productSpecificationPos = req.apiUrl.indexOf(
+                                                '/productSpecification'
+                                            );
+                                            var baseUrl = req.apiUrl.substring(0, productSpecificationPos);
+
+                                            var offeringsContainProductPath =
+                                                baseUrl + '/productOffering?productSpecification.id=' + productId;
+
+                                            validateInvolvedOfferingsState(
+                                                req,
+                                                'product',
+                                                parsedBody,
+                                                offeringsContainProductPath,
+                                                callback
+                                            );
+                                        },
+                                        function(callback) {
+                                            if (parsedBody) {
+                                                validateProductUpdate(req, previousBody, parsedBody, callback);
+                                            } else {
+                                                callback(null);
+                                            }
+                                        },
+                                        function(callback) {
+                                            if (parsedBody) {
+                                                validateProduct(req, parsedBody, callback);
+                                            } else {
+                                                callback(null);
+                                            }
+                                        }
+                                    ],
+                                    callback
+                                );
                             } else {
-                                if (catalogsPattern.test(req.apiUrl)) {
-                                    async.series(
-                                        [
-                                            function(callback) {
-                                                // Validate catalog new contents
-                                                validateCatalog(req, previousBody, parsedBody, callback);
-                                            },
-                                            function(callback) {
-                                                // Retrieve all the offerings contained in the catalog
-                                                var slash = req.apiUrl.endsWith('/') ? '' : '/';
-                                                var offeringsInCatalogPath = req.apiUrl + slash + 'productOffering';
-
-                                                validateInvolvedOfferingsState(
-                                                    req,
-                                                    'catalog',
-                                                    parsedBody,
-                                                    offeringsInCatalogPath,
-                                                    callback
-                                                );
-                                            }
-                                        ],
-                                        callback
-                                    );
-                                } else if (productsPattern.test(req.apiUrl)) {
-                                    async.series(
-                                        [
-                                            function(callback) {
-                                                var url = req.apiUrl;
-
-                                                if (url.endsWith('/')) {
-                                                    url = url.slice(0, -1);
-                                                }
-
-                                                var urlParts = url.split('/');
-                                                var productId = urlParts[urlParts.length - 1];
-
-                                                var productSpecificationPos = req.apiUrl.indexOf(
-                                                    '/productSpecification'
-                                                );
-                                                var baseUrl = req.apiUrl.substring(0, productSpecificationPos);
-
-                                                var offeringsContainProductPath =
-                                                    baseUrl + '/productOffering?productSpecification.id=' + productId;
-
-                                                validateInvolvedOfferingsState(
-                                                    req,
-                                                    'product',
-                                                    parsedBody,
-                                                    offeringsContainProductPath,
-                                                    callback
-                                                );
-                                            },
-                                            function(callback) {
-                                                if (parsedBody) {
-                                                    validateProductUpdate(req, previousBody, parsedBody, callback);
-                                                } else {
-                                                    callback(null);
-                                                }
-                                            },
-                                            function(callback) {
-                                                if (parsedBody) {
-                                                    validateProduct(req, parsedBody, callback);
-                                                } else {
-                                                    callback(null);
-                                                }
-                                            }
-                                        ],
-                                        callback
-                                    );
-                                } else {
-                                    callback(null);
-                                }
+                                callback(null);
                             }
+
                         } else {
                             callback({
                                 status: 403,
@@ -1522,11 +1540,25 @@ const catalog = (function() {
             req.body = body.filter((offering) => {
                 let filter = true;
                 if (offering.relatedParty && offering.relatedParty.length > 0) {
-                    const extBuyer = offering.relatedParty.find((party) => {
-                        return (party.role.toLowerCase() === config.roles.customer.toLowerCase())
-                            && (!req.user || party.id !== req.user.partyId)
+                    const userPartyId = req.user ? req.user.partyId : null;
+                    const hasBuyer = offering.relatedParty.some((party) => {
+                        return party.role && party.role.toLowerCase() === config.roles.customer.toLowerCase();
                     });
-                    filter = !extBuyer;
+
+                    if (hasBuyer) {
+                        const isBuyer = userPartyId != null && offering.relatedParty.some((party) => {
+                            return party.id === userPartyId
+                                && party.role
+                                && party.role.toLowerCase() === config.roles.customer.toLowerCase();
+                        });
+                        const isSeller = userPartyId != null && offering.relatedParty.some((party) => {
+                            return party.id === userPartyId
+                                && party.role
+                                && party.role.toLowerCase() === config.roles.seller.toLowerCase();
+                        });
+
+                        filter = isBuyer || isSeller;
+                    }
                 }
                 return filter
             })
@@ -1727,11 +1759,23 @@ const catalog = (function() {
         }
     };
 
+    const checkOfferingLaunch = function(req, res) {
+        const offeringId = req.params.id;
+        retrieveAsset(`/productOffering/${offeringId}`, function(err, result) {
+            if (err) {
+                res.status(err.status || 500).json({ error: 'The product offering cannot be retrieved' });
+            } else {
+                res.json({ canBeLaunched: canOfferingBeLaunched(result.body) });
+            }
+        });
+    };
+
     return {
         checkPermissions: checkPermissions,
         executePostValidation: executePostValidation,
         handleAPIError: handleAPIError,
         retrieveCatalog: retrieveCatalog,
+        checkOfferingLaunch: checkOfferingLaunch,
     };
 })();
 
