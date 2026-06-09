@@ -36,6 +36,7 @@ describe('Store Client', function() {
     ASSETS_FUNCTION_MAPPING[PRODUCT_ASSET] = 'validateProduct';
 
     const config = testUtils.getDefaultConfig();
+    config.endpoints.charging.apiPath = '/charging';
 
     const storeClient = proxyquire('../../lib/store', {
         './../config': config,
