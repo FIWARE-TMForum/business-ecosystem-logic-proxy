@@ -17,6 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+const proxyquire = require('proxyquire').noCallThru();
 const responseRewriter = require('../../../federation/lib/responseRewriter').responseRewriter;
 
 describe('Federation response rewriter', function() {
@@ -31,6 +32,14 @@ describe('Federation response rewriter', function() {
             .replace(/\+/g, '-')
             .replace(/\//g, '_')
             .replace(/=+$/g, '');
+    };
+
+    const getResponseRewriter = function(federationEnabled) {
+        return proxyquire('../../../federation/lib/responseRewriter', {
+            '../../config': {
+                federationEnabled: federationEnabled
+            }
+        }).responseRewriter;
     };
 
     it('should rewrite nested reference ids and preserve root id', function() {
@@ -101,5 +110,19 @@ describe('Federation response rewriter', function() {
             id: 'urn:ngsi-ld:product-specification:1',
             sourceEndpoint: SOURCE_ENDPOINT
         });
+    });
+
+    it('should build federated reference id when federation is enabled', function() {
+        const rewriter = getResponseRewriter(true);
+
+        expect(rewriter.buildFederatedReferenceId(SOURCE_ENDPOINT, 'party-1')).toBe(
+            `federationRef::${getReferenceToken('party-1')}`
+        );
+    });
+
+    it('should keep id unchanged when building federated reference id and federation is disabled', function() {
+        const rewriter = getResponseRewriter(false);
+
+        expect(rewriter.buildFederatedReferenceId(SOURCE_ENDPOINT, 'party-1')).toBe('party-1');
     });
 });

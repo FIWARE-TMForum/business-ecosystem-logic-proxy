@@ -242,7 +242,7 @@ config.endpoints = {
     },
     charging: {
         path: 'charging',
-        apiPath: '',
+        apiPath: '/charging',
         host: 'charging.docker',
         port: '8006',
         appSsl: false

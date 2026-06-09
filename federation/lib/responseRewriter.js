@@ -17,6 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+const config = require('../../config');
+
 const responseRewriter = (() => {
     const FEDERATED_REFERENCE_PREFIX = 'federationRef::';
     const REFERENCE_PARENT_KEYS = new Set([
@@ -121,6 +123,14 @@ const responseRewriter = (() => {
         return `${FEDERATED_REFERENCE_PREFIX}${buildFederatedReferenceToken(normalizedSourceEndpoint, id)}`;
     };
 
+    const buildFederatedReferenceId = function(sourceEndpoint, id) {
+        if (!config.federationEnabled) {
+            return id;
+        }
+
+        return rewriteReferenceId(id, sourceEndpoint);
+    };
+
     const parseFederatedReferenceId = function(id) {
         if (!isFederatedReferenceId(id)) {
             return null;
@@ -179,6 +189,7 @@ const responseRewriter = (() => {
 
     return {
         rewriteResponsePayload: rewriteResponsePayload,
+        buildFederatedReferenceId: buildFederatedReferenceId,
         parseFederatedReferenceId: parseFederatedReferenceId
     };
 })();

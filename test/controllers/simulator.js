@@ -47,14 +47,49 @@ describe('Simulator Controller', () => {
                 host: 'catalog.example.com',
                 port: 8081,
                 apiPath: '/api/catalog'
+            },
+            party: {
+                appSsl: false,
+                host: 'party.example.com',
+                port: 8082,
+                apiPath: '/api/party'
             }
         }
     };
 
-    const getSimulatorInstance = function(axios) {
+    const getSimulatorInstance = function(axios, tmfApiHelpers, responseRewriter) {
+        const catalogHelpers = tmfApiHelpers || {
+            getAssetById: jasmine.createSpy('getAssetById').and.callFake((endpoint, entity) => {
+                if (entity === 'productOffering') {
+                    return Promise.resolve({
+                        body: { productSpecification: { id: 'spec123' } },
+                        sourceEndpoint: ''
+                    });
+                }
+
+                if (entity === 'productSpecification') {
+                    return Promise.resolve({
+                        body: { relatedParty: [{ id: 'seller123', role: config.roles.seller }] },
+                        sourceEndpoint: ''
+                    });
+                }
+
+                return Promise.reject({ status: 404, message: 'Not found' });
+            })
+        };
+        const federationResponseRewriter = responseRewriter || {
+            buildFederatedReferenceId: jasmine.createSpy('buildFederatedReferenceId').and.callFake((sourceEndpoint, id) => id)
+        };
+
         return proxyquire('../../controllers/simulator', {
             'axios': axios,
             './../config': config,
+            './../federation/lib/responseRewriter': {
+                responseRewriter: federationResponseRewriter
+            },
+            './../lib/tmfApiHelpers': {
+                tmfApiHelpers: catalogHelpers
+            },
             './../lib/utils': utils,
             './../lib/logger': {
                 logger: {
@@ -368,6 +403,96 @@ describe('Simulator Controller', () => {
 
             resPromise.then(() => {
                 expect(axios.get).not.toHaveBeenCalledWith(jasmine.stringMatching(/billingAccount/));
+                expect(response.status).toHaveBeenCalledWith(200);
+                done();
+            });
+        });
+
+        it('should resolve product specification using the offering source endpoint', (done) => {
+            const requestBody = {
+                productOrder: {
+                    productOrderItem: [{
+                        productOffering: {
+                            id: 'federated-offering'
+                        }
+                    }]
+                }
+            };
+            const request = {
+                method: 'POST',
+                body: JSON.stringify(requestBody),
+                user: { partyId: 'org:123:organization' }
+            };
+            const response = jasmine.createSpyObj('res', ['status', 'send']);
+            response.status.and.returnValue(response);
+
+            const axios = jasmine.createSpy('axios').and.callFake((resp) => {
+                if (resp.url.includes('/charging/api/orderManagement/orders/preview/')) {
+                    return Promise.resolve({
+                        status: 200,
+                        data: { price: '10.00' }
+                    });
+                }
+                return Promise.reject(new Error('Unknown URL'));
+            });
+            axios.get = jasmine.createSpy('get');
+
+            const tmfApiHelpers = {
+                getAssetById: jasmine.createSpy('getAssetById').and.callFake((endpoint, entity) => {
+                    if (entity === 'productOffering') {
+                        return Promise.resolve({
+                            body: { productSpecification: { id: 'remote-spec' } },
+                            sourceEndpoint: 'https://seller.example.com/tmf'
+                        });
+                    }
+
+                    return Promise.resolve({
+                        body: { relatedParty: [{ id: 'seller123', role: config.roles.seller }] },
+                        sourceEndpoint: 'https://seller.example.com/tmf'
+                    });
+                })
+            };
+            const responseRewriter = {
+                buildFederatedReferenceId: jasmine
+                    .createSpy('buildFederatedReferenceId')
+                    .and.callFake((sourceEndpoint, id) => `federationRef::${id}`)
+            };
+
+            const resPromise = new Promise((resolve) => {
+                response.send.and.callFake(() => resolve());
+            });
+
+            const instance = getSimulatorInstance(axios, tmfApiHelpers, responseRewriter);
+            instance.simulate(request, response);
+
+            resPromise.then(() => {
+                expect(tmfApiHelpers.getAssetById.calls.argsFor(0)[1]).toBe('productOffering');
+                expect(tmfApiHelpers.getAssetById.calls.argsFor(0)[2]).toBe('federated-offering');
+                expect(tmfApiHelpers.getAssetById.calls.argsFor(1)[1]).toBe('productSpecification');
+                expect(tmfApiHelpers.getAssetById.calls.argsFor(1)[2]).toBe('remote-spec');
+                expect(tmfApiHelpers.getAssetById.calls.argsFor(1)[4]).toEqual({
+                    sourceEndpoint: 'https://seller.example.com/tmf'
+                });
+                expect(responseRewriter.buildFederatedReferenceId).toHaveBeenCalledWith(
+                    'http://party.example.com:8082/api/party',
+                    'org:123:organization'
+                );
+                expect(responseRewriter.buildFederatedReferenceId).toHaveBeenCalledWith(
+                    'https://seller.example.com/tmf',
+                    'seller123'
+                );
+                expect(axios.calls.mostRecent().args[0].data.productOrder.relatedParty[0]).toEqual({
+                    id: 'federationRef::org:123:organization',
+                    role: config.roles.customer,
+                    href: 'federationRef::org:123:organization',
+                    '@referredType': 'organization'
+                });
+                expect(axios.calls.mostRecent().args[0].data.productOrder.relatedParty[1]).toEqual({
+                    id: 'federationRef::seller123',
+                    role: config.roles.seller,
+                    href: 'federationRef::seller123',
+                    '@referredType': 'organization'
+                });
                 expect(response.status).toHaveBeenCalledWith(200);
                 done();
             });

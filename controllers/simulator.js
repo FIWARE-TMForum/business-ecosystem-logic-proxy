@@ -19,6 +19,8 @@
 
 const axios = require('axios')
 const config = require('./../config')
+const responseRewriter = require('./../federation/lib/responseRewriter').responseRewriter
+const tmfApiHelpers = require('./../lib/tmfApiHelpers').tmfApiHelpers
 const utils = require('./../lib/utils')
 
 
@@ -27,6 +29,20 @@ const logger = require('./../lib/logger').logger.getLogger('TMF')
 function simulator() {
     const CUSTOMER = config.roles.customer;
     const SELLER = config.roles.seller;
+
+    const getLocalPartySourceEndpoint = function() {
+        const partyEndpoint = config.tmforum && config.tmforum.party;
+        if (!partyEndpoint) {
+            return '';
+        }
+
+        return utils.getAPIURL(
+            partyEndpoint.appSsl,
+            partyEndpoint.host,
+            partyEndpoint.port,
+            partyEndpoint.apiPath || ''
+        );
+    }
 
     const checkBillAcc = async (billAccRef, userId) =>{
         if (billAccRef && billAccRef.id){
@@ -88,12 +104,6 @@ function simulator() {
             return res.status(500).send('Internal Server Error');
         }
 
-        //if (!targetUrl.endsWith('/')) {
-        //    targetUrl += '/';
-        //}
-
-        //let simUrl = targetUrl + 'billing/previewPrice'
-        //let simUrl = targetUrl + 'charging/api/orderManagement/orders/preview/'
         let simUrl = targetUrl;
 
         // Related parties need to be included in the request body
@@ -111,10 +121,14 @@ function simulator() {
         order.relatedParty = [];
 
         try {
+            const customerId = responseRewriter.buildFederatedReferenceId(
+                getLocalPartySourceEndpoint(),
+                req.user.partyId
+            );
             order.relatedParty.push({
-                id: req.user.partyId,
+                id: customerId,
                 role: CUSTOMER,
-                href: req.user.partyId,
+                href: customerId,
                 '@referredType': 'organization'
             });
         }
@@ -133,36 +147,31 @@ function simulator() {
         // Only one item is supported in the billing preview
         try {
             const offeringRef = order.productOrderItem[0].productOffering.id
-            // Get the offering
-            const offeringUrl = utils.getAPIURL(
-                config.tmforum.catalog.appSsl,
-                config.tmforum.catalog.host,
-                config.tmforum.catalog.port,
-                `${config.tmforum.catalog.apiPath}/productOffering/${offeringRef}`)
+            const offeringResp = await tmfApiHelpers.getAssetById(
+                config.tmforum.catalog,
+                'productOffering',
+                offeringRef,
+                req
+            )
+            const prodRef = offeringResp.body.productSpecification.id
+            const prodResp = await tmfApiHelpers.getAssetById(
+                config.tmforum.catalog,
+                'productSpecification',
+                prodRef,
+                req,
+                {
+                    sourceEndpoint: offeringResp.sourceEndpoint
+                }
+            )
 
-            let resp = await axios({
-                method: 'GET',
-                url: offeringUrl
-            })
-
-            const prodRef = resp.data.productSpecification.id
-            const productUrl = utils.getAPIURL(
-                config.tmforum.catalog.appSsl,
-                config.tmforum.catalog.host,
-                config.tmforum.catalog.port,
-                `${config.tmforum.catalog.apiPath}/productSpecification/${prodRef}`)
-
-            let prodResp = await axios({
-                method: 'GET',
-                url: productUrl
-            })
-
-            prodResp.data.relatedParty.forEach(element => {
+            prodResp.body.relatedParty.forEach(element => {
                 if (element.role.toLowerCase() == SELLER.toLowerCase()) {
+                    const partySourceEndpoint = prodResp.sourceEndpoint || offeringResp.sourceEndpoint;
+                    const partyId = responseRewriter.buildFederatedReferenceId(partySourceEndpoint, element.id);
                     order.relatedParty.push({
-                        id: element.id,
+                        id: partyId,
                         role: SELLER,
-                        href: element.id,
+                        href: partyId,
                         '@referredType': 'organization'
                     })
                 }
