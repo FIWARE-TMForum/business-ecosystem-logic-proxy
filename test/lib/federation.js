@@ -317,6 +317,9 @@ describe('Federation library', function() {
         expect(resolved).toBe(
             'https://seller.example.com/tmf/tmf-api/accountManagement/v4/billingAccount?limit=1&offset=0'
         );
+        expect(req.federationContext).toEqual({
+            tmforumEndpoint: 'https://seller.example.com/tmf'
+        });
         expect(partyClient.getOrganization).not.toHaveBeenCalled();
     });
 

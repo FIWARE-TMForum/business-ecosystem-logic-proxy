@@ -1344,11 +1344,53 @@ describe('TMF Utils', function() {
             await testAttachSpec('account', '/billingAccount')
         });
 
+        it('should use request federation context when attaching parties to target endpoint requests', async () => {
+            const utilsObj = getFederatedOpTmfUtils();
+            const req = {
+                apiUrl: '/billingAccount?target=federationRef::abc',
+                headers: {},
+                federationContext: {
+                    tmforumEndpoint: 'https://provider.example.com/tmf'
+                },
+                body: JSON.stringify({
+                    relatedParty: []
+                }),
+                user: {
+                    id: 'VAT-ID1',
+                    userId: 'individual-user-1',
+                    partyId: 'urn:organization:partyId'
+                }
+            };
+
+            await utilsObj.tmfUtils.attachRelatedParty(req, 'account');
+
+            const newBody = JSON.parse(req.body);
+            expect(newBody.relatedParty).toEqual([{
+                id: 'urn:organization:remoteSellerId',
+                href: 'urn:organization:remoteSellerId',
+                name: 'VAT-ID1',
+                role: 'Seller',
+                "@referredType": "Organization"
+            }, {
+                id: 'urn:organization:remoteSellerId',
+                href: 'urn:organization:remoteSellerId',
+                name: 'VAT-ID1',
+                role: 'SellerOperator',
+                "@referredType": "Organization"
+            }]);
+            expect(utilsObj.resolveTmforumEndpointByPartyId).not.toHaveBeenCalled();
+            expect(utilsObj.resolveFederatedOrganizationParty).toHaveBeenCalledWith(
+                'https://provider.example.com/tmf',
+                'urn:organization:partyId',
+                'VAT-ID1'
+            );
+        });
+
         it('should attach related party to a usage spec', async () => {
             await testAttachSpec('usage', '/usageSpecification')
         });
 
-        it('should map related parties to remote IDs when federation endpoint is enabled', async () => {
+        it('should keep product order parties local when federation context is missing', async () => {
             const utilsObj = getFederatedOpTmfUtils();
             const req = {
                 apiUrl: '/productOrder',
@@ -1373,33 +1415,33 @@ describe('TMF Utils', function() {
 
             const newBody = JSON.parse(req.body);
             expect(newBody.relatedParty).toEqual([{
-                id: 'urn:organization:remoteSellerId',
-                href: 'urn:organization:remoteSellerId',
+                id: 'urn:organization:partyId',
+                href: 'urn:organization:partyId',
                 name: 'VAT-ID1',
                 role: 'Seller',
                 "@referredType": "Organization"
             }, {
-                id: 'urn:organization:remoteSellerId',
-                href: 'urn:organization:remoteSellerId',
-                name: 'VAT-ID1',
+                id: 'urn:organization:operatorId',
+                href: 'urn:organization:operatorId',
+                name: 'VAT-OP',
                 role: 'SellerOperator',
                 "@referredType": "Organization"
             }, {
-                id: 'urn:organization:remoteBuyerId',
-                href: 'urn:organization:remoteBuyerId',
+                id: 'urn:organization:buyerId',
+                href: 'urn:organization:buyerId',
                 name: 'VAT-ID2',
                 role: 'Buyer',
                 "@referredType": "Organization"
             }, {
-                id: 'urn:organization:remoteSellerId',
-                href: 'urn:organization:remoteSellerId',
-                name: 'VAT-ID1',
+                id: 'urn:organization:operatorId',
+                href: 'urn:organization:operatorId',
+                name: 'VAT-OP',
                 role: 'BuyerOperator',
                 "@referredType": "Organization"
             }]);
 
-            expect(utilsObj.resolveTmforumEndpointByPartyId).toHaveBeenCalledWith('urn:organization:partyId');
-            expect(utilsObj.resolveFederatedOrganizationParty.calls.count()).toBe(4);
+            expect(utilsObj.resolveTmforumEndpointByPartyId).not.toHaveBeenCalled();
+            expect(utilsObj.resolveFederatedOrganizationParty).not.toHaveBeenCalled();
             expect(utilsObj.resolveRemotePartyIdByLocalPartyId).not.toHaveBeenCalled();
         });
 
@@ -1436,14 +1478,12 @@ describe('TMF Utils', function() {
                 "@referredType": "Organization"
             }]);
 
-            expect(utilsObj.resolveTmforumEndpointByPartyId).toHaveBeenCalledWith(
-                'urn:ngsi-ld:organization:d702d63e-3dd5-4030-949b-7910ee0398f1'
-            );
+            expect(utilsObj.resolveTmforumEndpointByPartyId).not.toHaveBeenCalled();
             expect(utilsObj.resolveFederatedOrganizationParty).not.toHaveBeenCalled();
             expect(utilsObj.resolveRemotePartyIdByLocalPartyId).not.toHaveBeenCalled();
         });
 
-        it('should resolve federated seller IDs using current user external reference', async () => {
+        it('should keep catalog parties local when federation context is missing', async () => {
             const utilsObj = getFederatedOpTmfUtils();
 
             utilsObj.partyClient.getOrganization.and.callFake(async () => {
@@ -1474,24 +1514,25 @@ describe('TMF Utils', function() {
 
             const newBody = JSON.parse(req.body);
             expect(newBody.relatedParty).toEqual([{
-                id: 'urn:organization:remoteSellerId',
-                href: 'urn:organization:remoteSellerId',
+                id: 'urn:organization:partyId',
+                href: 'urn:organization:partyId',
                 name: 'LOCAL-SESSION-ID',
                 role: 'Seller',
                 "@referredType": "Organization"
             }, {
-                id: 'urn:organization:remoteSellerId',
-                href: 'urn:organization:remoteSellerId',
-                name: 'LOCAL-SESSION-ID',
+                id: 'urn:organization:operatorId',
+                href: 'urn:organization:operatorId',
+                name: 'VAT-OP',
                 role: 'SellerOperator',
                 "@referredType": "Organization"
             }]);
 
-            expect(utilsObj.resolveRemotePartyIdByLocalPartyId).toHaveBeenCalledWith('urn:organization:partyId');
+            expect(utilsObj.resolveTmforumEndpointByPartyId).not.toHaveBeenCalled();
+            expect(utilsObj.resolveRemotePartyIdByLocalPartyId).not.toHaveBeenCalled();
             expect(utilsObj.resolveFederatedOrganizationParty).not.toHaveBeenCalled();
         });
 
-        it('should use seller as federation source for product orders when requester is not the seller', async () => {
+        it('should keep product order parties local instead of using seller as implicit federation source', async () => {
             const utilsObj = getFederatedOpTmfUtils();
             const req = {
                 apiUrl: '/productOrder',
@@ -1516,32 +1557,32 @@ describe('TMF Utils', function() {
 
             const newBody = JSON.parse(req.body);
             expect(newBody.relatedParty).toEqual([{
-                id: 'urn:organization:remoteSellerId',
-                href: 'urn:organization:remoteSellerId',
+                id: 'urn:organization:sellerId',
+                href: 'urn:organization:sellerId',
                 name: 'VAT-ID1',
                 role: 'Seller',
                 "@referredType": "Organization"
             }, {
-                id: 'urn:organization:remoteSellerId',
-                href: 'urn:organization:remoteSellerId',
-                name: 'VAT-ID1',
+                id: 'urn:organization:operatorId',
+                href: 'urn:organization:operatorId',
+                name: 'VAT-OP',
                 role: 'SellerOperator',
                 "@referredType": "Organization"
             }, {
-                id: 'urn:organization:remoteBuyerId',
-                href: 'urn:organization:remoteBuyerId',
+                id: 'urn:organization:buyerId',
+                href: 'urn:organization:buyerId',
                 name: 'VAT-ID2',
                 role: 'Buyer',
                 "@referredType": "Organization"
             }, {
-                id: 'urn:organization:remoteSellerId',
-                href: 'urn:organization:remoteSellerId',
-                name: 'VAT-ID1',
+                id: 'urn:organization:operatorId',
+                href: 'urn:organization:operatorId',
+                name: 'VAT-OP',
                 role: 'BuyerOperator',
                 "@referredType": "Organization"
             }]);
 
-            expect(utilsObj.resolveTmforumEndpointByPartyId).toHaveBeenCalledWith('urn:organization:sellerId');
+            expect(utilsObj.resolveTmforumEndpointByPartyId).not.toHaveBeenCalledWith('urn:organization:sellerId');
             expect(utilsObj.resolveTmforumEndpointByPartyId).not.toHaveBeenCalledWith('urn:organization:buyerId');
         });
 
@@ -1586,15 +1627,15 @@ describe('TMF Utils', function() {
 
             const newBody = JSON.parse(req.body);
             expect(newBody.relatedParty).toEqual([{
-                id: 'urn:organization:remoteSellerId',
-                href: 'urn:organization:remoteSellerId',
+                id: 'urn:organization:partyId',
+                href: 'urn:organization:partyId',
                 name: 'VAT-ID1',
                 role: 'Seller',
                 "@referredType": "Organization"
             }, {
-                id: 'urn:organization:remoteSellerId',
-                href: 'urn:organization:remoteSellerId',
-                name: 'VAT-ID1',
+                id: 'urn:organization:operatorId',
+                href: 'urn:organization:operatorId',
+                name: 'VAT-OP',
                 role: 'SellerOperator',
                 "@referredType": "Organization"
             }, {
@@ -1604,15 +1645,15 @@ describe('TMF Utils', function() {
                 role: 'Buyer',
                 "@referredType": "Individual"
             }, {
-                id: 'urn:organization:remoteSellerId',
-                href: 'urn:organization:remoteSellerId',
-                name: 'VAT-ID1',
+                id: 'urn:organization:operatorId',
+                href: 'urn:organization:operatorId',
+                name: 'VAT-OP',
                 role: 'BuyerOperator',
                 "@referredType": "Organization"
             }]);
 
             expect(utilsObj.partyClient.getIndividualsByQueryInApi).not.toHaveBeenCalled();
-            expect(utilsObj.resolveFederatedOrganizationParty.calls.count()).toBe(3);
+            expect(utilsObj.resolveFederatedOrganizationParty).not.toHaveBeenCalled();
             expect(utilsObj.resolveRemotePartyIdByLocalPartyId).not.toHaveBeenCalled();
         });
 
