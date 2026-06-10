@@ -19,13 +19,19 @@
 
 const partyClient = require('../../lib/party').partyClient;
 const logger = require('../../lib/logger').logger.getLogger('Federation');
+const responseRewriter = require('./responseRewriter').responseRewriter;
 const LRU = require('lru-cache');
 
 const federation = (() => {
     const TMFORUM_ENDPOINT_CHARACTERISTIC = 'tmforumendpoint';
     const IDM_EXTERNAL_REFERENCE_TYPE = 'idm_id';
     const RELATED_PARTY_QUERY_KEYS = ['relatedParty.id', 'relatedParty.href', 'relatedParty'];
+    const ENDPOINT_CACHE_SEPARATOR = '||';
     const remotePartyCache = new LRU({
+        max: 500,
+        maxAge: 1000 * 60 * 120 // 2 hours
+    });
+    const remotePartyByEndpointCache = new LRU({
         max: 500,
         maxAge: 1000 * 60 * 120 // 2 hours
     });
@@ -135,20 +141,6 @@ const federation = (() => {
         return normalizedBaseUrl + '/' + normalizedApiPath.replace(/^\/+/, '');
     };
 
-    const isProductOrderCreationRequest = function(req, apiUrl) {
-        if (!req || req.method !== 'POST') {
-            return false;
-        }
-
-        const sourceApiUrl = typeof req.apiUrl === 'string' ? req.apiUrl : apiUrl;
-        if (typeof sourceApiUrl !== 'string') {
-            return false;
-        }
-
-        const normalizedPath = sourceApiUrl.split('?')[0];
-        return /\/ordering\/productOrder$/.test(normalizedPath);
-    };
-
     const isPartyApiRequest = function(req, apiUrl) {
         const sourceApiUrl = req && typeof req.apiUrl === 'string' ? req.apiUrl : apiUrl;
         if (typeof sourceApiUrl !== 'string') {
@@ -165,32 +157,6 @@ const federation = (() => {
         }
 
         return /^\/party(?:\/|$)/.test(path);
-    };
-
-    const getOrderSeller = function(body) {
-        let parsedBody = body;
-        if (typeof parsedBody === 'string') {
-            try {
-                parsedBody = JSON.parse(parsedBody);
-            } catch (_) {
-                return null;
-            }
-        }
-
-        if (!parsedBody || !Array.isArray(parsedBody.relatedParty)) {
-            return null;
-        }
-
-        const seller = parsedBody.relatedParty.find((partyRef) => {
-            return (
-                partyRef &&
-                typeof partyRef.id === 'string' &&
-                typeof partyRef.role === 'string' &&
-                partyRef.role.toLowerCase() === 'seller'
-            );
-        });
-
-        return seller || null;
     };
 
     const getQueryLocalOrganizationPartyId = function(queryValue) {
@@ -246,6 +212,54 @@ const federation = (() => {
         remotePartyCache.set(localPartyId, remotePartyId);
     };
 
+    const getRemotePartyEndpointCacheKey = function(tmforumEndpoint, localPartyId) {
+        if (
+            typeof tmforumEndpoint !== 'string' ||
+            tmforumEndpoint.trim().length === 0 ||
+            typeof localPartyId !== 'string' ||
+            localPartyId.length === 0
+        ) {
+            return '';
+        }
+
+        return `${tmforumEndpoint.trim().replace(/\/+$/, '')}${ENDPOINT_CACHE_SEPARATOR}${localPartyId}`;
+    };
+
+    const getLocalPartyIdFromRemotePartyCacheKey = function(cacheKey) {
+        if (typeof cacheKey !== 'string' || cacheKey.length === 0) {
+            return '';
+        }
+
+        const separatorIndex = cacheKey.indexOf(ENDPOINT_CACHE_SEPARATOR);
+        if (separatorIndex < 0) {
+            return cacheKey;
+        }
+
+        return cacheKey.substring(separatorIndex + ENDPOINT_CACHE_SEPARATOR.length);
+    };
+
+    const getCachedRemotePartyIdByLocalPartyIdInEndpoint = function(tmforumEndpoint, localPartyId) {
+        const cacheKey = getRemotePartyEndpointCacheKey(tmforumEndpoint, localPartyId);
+        if (!cacheKey) {
+            return '';
+        }
+
+        return remotePartyByEndpointCache.get(cacheKey) || '';
+    };
+
+    const setCachedRemotePartyIdByLocalPartyIdInEndpoint = function(tmforumEndpoint, localPartyId, remotePartyId) {
+        const cacheKey = getRemotePartyEndpointCacheKey(tmforumEndpoint, localPartyId);
+        if (
+            !cacheKey ||
+            typeof remotePartyId !== 'string' ||
+            remotePartyId.length === 0
+        ) {
+            return;
+        }
+
+        remotePartyByEndpointCache.set(cacheKey, remotePartyId);
+    };
+
     const getCachedLocalPartyIdByRemotePartyId = function(remotePartyId) {
         if (typeof remotePartyId !== 'string' || remotePartyId.length === 0) {
             return '';
@@ -257,34 +271,13 @@ const federation = (() => {
                 localPartyId = cachedLocalPartyId;
             }
         });
+        remotePartyByEndpointCache.forEach((cachedRemotePartyId, cacheKey) => {
+            if (!localPartyId && cachedRemotePartyId === remotePartyId) {
+                localPartyId = getLocalPartyIdFromRemotePartyCacheKey(cacheKey);
+            }
+        });
 
         return localPartyId;
-    };
-
-    const resolveOrganizationByExternalReferenceName = async function(externalReferenceName) {
-        if (typeof externalReferenceName !== 'string' || externalReferenceName.trim().length === 0) {
-            return null;
-        }
-
-        try {
-            const query = `externalReference.name=${encodeURIComponent(externalReferenceName.trim())}`;
-            const organizationsResponse = await partyClient.getOrganizationsByQuery(query);
-            const organizations = organizationsResponse && Array.isArray(organizationsResponse.body)
-                ? organizationsResponse.body
-                : [];
-
-            if (organizations.length !== 1) {
-                logger.warn(
-                    `Cannot resolve unique organization for externalReference.name=${externalReferenceName}. matches=${organizations.length}`
-                );
-                return null;
-            }
-
-            return organizations[0];
-        } catch (err) {
-            logger.warn(`Error resolving organization by externalReference.name=${externalReferenceName}: ${err.message}`);
-            return null;
-        }
     };
 
     const resolveFederatedOrganizationParty = async function(tmforumEndpoint, localPartyId, externalReferenceName) {
@@ -302,7 +295,7 @@ const federation = (() => {
             };
         }
 
-        const cachedRemotePartyId = getCachedRemotePartyIdByLocalPartyId(localPartyId);
+        const cachedRemotePartyId = getCachedRemotePartyIdByLocalPartyIdInEndpoint(tmforumEndpoint, localPartyId);
         if (cachedRemotePartyId) {
             return {
                 id: cachedRemotePartyId,
@@ -325,7 +318,7 @@ const federation = (() => {
 
         const organization = organizations[0];
         if (organization && organization.id) {
-            setCachedRemotePartyIdByLocalPartyId(localPartyId, organization.id);
+            setCachedRemotePartyIdByLocalPartyIdInEndpoint(tmforumEndpoint, localPartyId, organization.id);
         }
 
         return organization;
@@ -378,7 +371,45 @@ const federation = (() => {
         return remoteOrganization.id;
     };
 
-    const rewriteRelatedPartyQueryValues = async function(req, apiPath) {
+    const resolveRemotePartyIdByLocalPartyIdInEndpoint = async function(localPartyId, tmforumEndpoint) {
+        const cachedRemotePartyId = getCachedRemotePartyIdByLocalPartyIdInEndpoint(tmforumEndpoint, localPartyId);
+        if (cachedRemotePartyId) {
+            return cachedRemotePartyId;
+        }
+
+        const localOrganization = await getOrganizationPartyById(localPartyId);
+        if (!localOrganization) {
+            throw {
+                status: 422,
+                message: `Cannot resolve local organization party ${localPartyId}`
+            };
+        }
+
+        const externalReferenceName = getIdmExternalReferenceName(localOrganization);
+        if (!externalReferenceName) {
+            throw {
+                status: 422,
+                message: `Missing idm_id external reference for local organization party ${localPartyId}`
+            };
+        }
+
+        const remoteOrganization = await resolveFederatedOrganizationParty(
+            tmforumEndpoint,
+            localPartyId,
+            externalReferenceName
+        );
+
+        if (!remoteOrganization || !remoteOrganization.id) {
+            throw {
+                status: 422,
+                message: `Cannot resolve remote organization party for local organization ${localPartyId}`
+            };
+        }
+
+        return remoteOrganization.id;
+    };
+
+    const rewriteRelatedPartyQueryValues = async function(req, apiPath, tmforumEndpoint) {
         if (typeof apiPath !== 'string' || apiPath.indexOf('?') < 0) {
             return apiPath;
         }
@@ -408,12 +439,19 @@ const federation = (() => {
                 }
 
                 if (!remoteIdByLocalId[localPartyId]) {
-                    const sessionRemotePartyId = getSessionRemotePartyIdForLocalPartyId(req, localPartyId);
-                    if (sessionRemotePartyId) {
-                        remoteIdByLocalId[localPartyId] = sessionRemotePartyId;
-                        setCachedRemotePartyIdByLocalPartyId(localPartyId, sessionRemotePartyId);
+                    if (typeof tmforumEndpoint === 'string' && tmforumEndpoint.trim().length > 0) {
+                        remoteIdByLocalId[localPartyId] = await resolveRemotePartyIdByLocalPartyIdInEndpoint(
+                            localPartyId,
+                            tmforumEndpoint
+                        );
                     } else {
-                        remoteIdByLocalId[localPartyId] = await resolveRemotePartyIdByLocalPartyId(localPartyId);
+                        const sessionRemotePartyId = getSessionRemotePartyIdForLocalPartyId(req, localPartyId);
+                        if (sessionRemotePartyId) {
+                            remoteIdByLocalId[localPartyId] = sessionRemotePartyId;
+                            setCachedRemotePartyIdByLocalPartyId(localPartyId, sessionRemotePartyId);
+                        } else {
+                            remoteIdByLocalId[localPartyId] = await resolveRemotePartyIdByLocalPartyId(localPartyId);
+                        }
                     }
                 }
 
@@ -434,61 +472,38 @@ const federation = (() => {
         return `${parsedApiPath.pathname || ''}${parsedApiPath.search || ''}${parsedApiPath.hash || ''}`;
     };
 
-    const resolveProductOrderTmforumApiUrl = async function(req, apiUrl) {
-        const seller = getOrderSeller(req.body);
-        if (!seller || !seller.id) {
-            throw {
-                status: 422,
-                message: 'Product order federation requires a seller relatedParty'
-            };
-        }
-
-        let sellerEndpoint = '';
-        const cachedLocalSellerId = getCachedLocalPartyIdByRemotePartyId(seller.id);
-        if (cachedLocalSellerId) {
-            sellerEndpoint = await resolveTmforumEndpointByPartyId(cachedLocalSellerId);
-        }
-
-        if (!sellerEndpoint) {
-            sellerEndpoint = await resolveTmforumEndpointByPartyId(seller.id);
-        }
-
-        if (!sellerEndpoint) {
-            const localSellerOrganization = await resolveOrganizationByExternalReferenceName(seller.name);
-            if (localSellerOrganization) {
-                sellerEndpoint = getTmforumEndpoint(localSellerOrganization);
-                if (localSellerOrganization.id) {
-                    setCachedRemotePartyIdByLocalPartyId(localSellerOrganization.id, seller.id);
-                }
-            }
-        }
-
-        if (!sellerEndpoint) {
-            throw {
-                status: 422,
-                message: `Cannot resolve TMForum endpoint for seller ${seller.id}`
-            };
-        }
-
-        const rewrittenApiPath = await rewriteRelatedPartyQueryValues(req, apiUrl);
-        return buildApiUrl(sellerEndpoint, rewrittenApiPath);
-    };
-
     const resolveTmforumApiUrl = async function(req, apiUrl) {
-        // Party API must always use the local endpoint to avoid federated overrides.
+        const federatedPathReference = getFederatedPathReference(apiUrl);
+        if (federatedPathReference) {
+            const apiPath = stripTargetQueryParam(federatedPathReference.apiPath);
+            const rewrittenApiPath = await rewriteRelatedPartyQueryValues(
+                req,
+                apiPath,
+                federatedPathReference.sourceEndpoint
+            );
+            return buildApiUrl(federatedPathReference.sourceEndpoint, rewrittenApiPath);
+        }
+
+        // Party API remains local because these entities define federation configuration.
         if (isPartyApiRequest(req, apiUrl)) {
             return '';
         }
 
-        if (isProductOrderCreationRequest(req, apiUrl)) {
-            return resolveProductOrderTmforumApiUrl(req, apiUrl);
+        const targetReference = getTargetFederatedReference(apiUrl);
+        if (targetReference) {
+            const rewrittenApiPath = await rewriteRelatedPartyQueryValues(
+                req,
+                targetReference.apiPath,
+                targetReference.sourceEndpoint
+            );
+            return buildApiUrl(targetReference.sourceEndpoint, rewrittenApiPath);
         }
 
         const tmforumEndpoint = await resolveTmforumEndpoint(req);
         if (!tmforumEndpoint) {
             return apiUrl;
         }
-        const rewrittenApiPath = await rewriteRelatedPartyQueryValues(req, apiUrl);
+        const rewrittenApiPath = await rewriteRelatedPartyQueryValues(req, apiUrl, tmforumEndpoint);
         return buildApiUrl(tmforumEndpoint, rewrittenApiPath);
     };
 
@@ -517,6 +532,82 @@ const federation = (() => {
         }
 
         return getTmforumEndpoint(organizationParty);
+    };
+
+    const parseApiUrl = function(apiUrl) {
+        if (typeof apiUrl !== 'string') {
+            return null;
+        }
+
+        try {
+            return new URL(apiUrl, 'http://localhost');
+        } catch (_) {
+            return null;
+        }
+    };
+
+    const toApiPath = function(parsedApiUrl) {
+        if (!parsedApiUrl) {
+            return '';
+        }
+
+        return `${parsedApiUrl.pathname || ''}${parsedApiUrl.search || ''}${parsedApiUrl.hash || ''}`;
+    };
+
+    const getFederatedPathReference = function(apiUrl) {
+        const parsedApiUrl = parseApiUrl(apiUrl);
+        if (!parsedApiUrl) {
+            return null;
+        }
+
+        const pathSegments = (parsedApiUrl.pathname || '').split('/');
+        for (let i = 0; i < pathSegments.length; i++) {
+            const pathSegment = decodeURIComponent(pathSegments[i]);
+            const parsedReferenceId = responseRewriter.parseFederatedReferenceId(pathSegment);
+            if (parsedReferenceId && parsedReferenceId.sourceEndpoint && parsedReferenceId.id) {
+                pathSegments[i] = parsedReferenceId.id;
+                parsedApiUrl.pathname = pathSegments.join('/');
+
+                return {
+                    id: parsedReferenceId.id,
+                    sourceEndpoint: parsedReferenceId.sourceEndpoint,
+                    apiPath: toApiPath(parsedApiUrl)
+                };
+            }
+        }
+
+        return null;
+    };
+
+    const getTargetFederatedReference = function(apiUrl) {
+        const parsedApiUrl = parseApiUrl(apiUrl);
+        if (!parsedApiUrl) {
+            return null;
+        }
+
+        const targetValue = parsedApiUrl.searchParams.get('target');
+        const parsedReferenceId = responseRewriter.parseFederatedReferenceId(targetValue);
+        if (!parsedReferenceId || !parsedReferenceId.sourceEndpoint || !parsedReferenceId.id) {
+            return null;
+        }
+
+        parsedApiUrl.searchParams.delete('target');
+
+        return {
+            id: parsedReferenceId.id,
+            sourceEndpoint: parsedReferenceId.sourceEndpoint,
+            apiPath: toApiPath(parsedApiUrl)
+        };
+    };
+
+    const stripTargetQueryParam = function(apiUrl) {
+        const parsedApiUrl = parseApiUrl(apiUrl);
+        if (!parsedApiUrl) {
+            return apiUrl;
+        }
+
+        parsedApiUrl.searchParams.delete('target');
+        return toApiPath(parsedApiUrl);
     };
 
     const resolveLocalPartyIdByRemotePartyId = function(remotePartyId) {

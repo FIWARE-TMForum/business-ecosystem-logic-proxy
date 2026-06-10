@@ -21,6 +21,18 @@ const proxyquire = require('proxyquire');
 const testUtils = require('../utils');
 
 describe('Federation library', function() {
+    const getFederatedId = function(sourceEndpoint, id) {
+        const token = Buffer.from(JSON.stringify({
+            sourceEndpoint: sourceEndpoint,
+            id: id
+        })).toString('base64')
+            .replace(/\+/g, '-')
+            .replace(/\//g, '_')
+            .replace(/=+$/, '');
+
+        return `federationRef::${token}`;
+    };
+
     const getFederation = function(partyClient) {
         return proxyquire('../../federation/lib/federation', {
             '../../lib/party': {
@@ -244,82 +256,22 @@ describe('Federation library', function() {
         expect(resolved).toBe('/catalog/productOffering');
     });
 
-    it('should route product order creation using seller federation endpoint', async function() {
+    it('should resolve endpoint from federated ID in path and forward the raw ID', async function() {
         const partyClient = {
-            getOrganization: jasmine.createSpy('getOrganization').and.callFake((partyId) => {
-                if (partyId === 'urn:organization:seller') {
-                    return Promise.resolve({
-                        body: {
-                            id: 'urn:organization:seller',
-                            partyCharacteristic: [
-                                { name: 'tmforumEndpoint', value: 'https://seller.example.com/tmf/' }
-                            ]
-                        }
-                    });
-                }
-
-                return Promise.resolve({
-                    body: {
-                        id: 'urn:organization:buyer',
-                        partyCharacteristic: [
-                            { name: 'tmforumEndpoint', value: 'https://buyer.example.com/tmf/' }
-                        ]
-                    }
-                });
-            })
+            getOrganization: jasmine.createSpy('getOrganization')
         };
         const federation = getFederation(partyClient);
+        const federatedId = getFederatedId(
+            'https://seller.example.com/tmf',
+            'urn:ngsi-ld:billing-account:1'
+        );
+        const targetId = getFederatedId(
+            'https://ignored.example.com/tmf',
+            'urn:ngsi-ld:product-offering:1'
+        );
 
         const req = {
-            method: 'POST',
-            apiUrl: '/ordering/productOrder',
-            body: JSON.stringify({
-                relatedParty: [{
-                    id: 'urn:organization:seller',
-                    role: 'Seller'
-                }, {
-                    id: 'urn:organization:buyer',
-                    role: 'Customer'
-                }]
-            }),
-            user: {
-                id: 'buyer-user',
-                userId: 'individual-buyer',
-                partyId: 'urn:organization:buyer'
-            }
-        };
-
-        const resolved = await federation.resolveTmforumApiUrl(req, '/ordering/productOrder');
-
-        expect(resolved).toBe('https://seller.example.com/tmf/ordering/productOrder');
-        expect(partyClient.getOrganization).toHaveBeenCalledWith('urn:organization:seller');
-        expect(partyClient.getOrganization).not.toHaveBeenCalledWith('urn:organization:buyer');
-    });
-
-    it('should preserve backend product order path when apiUrl argument is absolute', async function() {
-        const partyClient = {
-            getOrganization: jasmine.createSpy('getOrganization').and.returnValue(
-                Promise.resolve({
-                    body: {
-                        id: 'urn:organization:seller',
-                        partyCharacteristic: [
-                            { name: 'tmforumEndpoint', value: 'https://seller.example.com/tmf/' }
-                        ]
-                    }
-                })
-            )
-        };
-        const federation = getFederation(partyClient);
-
-        const req = {
-            method: 'POST',
-            apiUrl: '/ordering/productOrder',
-            body: JSON.stringify({
-                relatedParty: [{
-                    id: 'urn:organization:seller',
-                    role: 'Seller'
-                }]
-            }),
+            apiUrl: `/account/billingAccount/${federatedId}?target=${targetId}&fields=name`,
             user: {
                 id: 'buyer-user',
                 userId: 'individual-buyer',
@@ -329,56 +281,27 @@ describe('Federation library', function() {
 
         const resolved = await federation.resolveTmforumApiUrl(
             req,
-            'http://local.example:1234/tmf-api/productOrderingManagement/v4/productOrder'
+            `http://local.example:1234/tmf-api/accountManagement/v4/billingAccount/${federatedId}?target=${targetId}&fields=name`
         );
 
-        expect(resolved).toBe('https://seller.example.com/tmf/tmf-api/productOrderingManagement/v4/productOrder');
+        expect(resolved).toBe(
+            'https://seller.example.com/tmf/tmf-api/accountManagement/v4/billingAccount/urn:ngsi-ld:billing-account:1?fields=name'
+        );
+        expect(partyClient.getOrganization).not.toHaveBeenCalled();
     });
 
-    it('should fallback to seller external reference name when seller id is not resolvable', async function() {
+    it('should resolve endpoint from federated target query param and strip target before forwarding', async function() {
         const partyClient = {
-            getOrganization: jasmine.createSpy('getOrganization').and.callFake((partyId) => {
-                if (partyId === 'urn:organization:local-seller') {
-                    return Promise.resolve({
-                        body: {
-                            id: 'urn:organization:local-seller',
-                            partyCharacteristic: [
-                                { name: 'tmforumEndpoint', value: 'https://seller.example.com/tmf/' }
-                            ]
-                        }
-                    });
-                }
-
-                return Promise.resolve({
-                    body: {
-                        id: 'urn:organization:remote-seller',
-                        partyCharacteristic: []
-                    }
-                });
-            }),
-            getOrganizationsByQuery: jasmine.createSpy('getOrganizationsByQuery').and.returnValue(
-                Promise.resolve({
-                    body: [{
-                        id: 'urn:organization:local-seller',
-                        partyCharacteristic: [
-                            { name: 'tmforumEndpoint', value: 'https://seller.example.com/tmf/' }
-                        ]
-                    }]
-                })
-            )
+            getOrganization: jasmine.createSpy('getOrganization')
         };
         const federation = getFederation(partyClient);
+        const targetId = getFederatedId(
+            'https://seller.example.com/tmf',
+            'urn:ngsi-ld:product-offering:1'
+        );
 
         const req = {
-            method: 'POST',
-            apiUrl: '/ordering/productOrder',
-            body: JSON.stringify({
-                relatedParty: [{
-                    id: 'urn:organization:remote-seller',
-                    role: 'Seller',
-                    name: 'VATES-SELLER'
-                }]
-            }),
+            apiUrl: `/account/billingAccount?limit=1&target=${targetId}&offset=0`,
             user: {
                 id: 'buyer-user',
                 userId: 'individual-buyer',
@@ -386,18 +309,125 @@ describe('Federation library', function() {
             }
         };
 
-        const resolved = await federation.resolveTmforumApiUrl(req, '/ordering/productOrder');
+        const resolved = await federation.resolveTmforumApiUrl(
+            req,
+            `http://local.example:1234/tmf-api/accountManagement/v4/billingAccount?limit=1&target=${targetId}&offset=0`
+        );
 
-        expect(resolved).toBe('https://seller.example.com/tmf/ordering/productOrder');
-        expect(partyClient.getOrganization).toHaveBeenCalledWith('urn:organization:remote-seller');
-        expect(partyClient.getOrganizationsByQuery).toHaveBeenCalledWith('externalReference.name=VATES-SELLER');
-
-        const resolvedFromCache = await federation.resolveTmforumApiUrl(req, '/ordering/productOrder');
-        expect(resolvedFromCache).toBe('https://seller.example.com/tmf/ordering/productOrder');
-        expect(partyClient.getOrganizationsByQuery.calls.count()).toBe(1);
+        expect(resolved).toBe(
+            'https://seller.example.com/tmf/tmf-api/accountManagement/v4/billingAccount?limit=1&offset=0'
+        );
+        expect(partyClient.getOrganization).not.toHaveBeenCalled();
     });
 
-    it('should fail when seller is missing in product order creation', async function() {
+    it('should rewrite relatedParty query filters using the target endpoint context', async function() {
+        const partyClient = {
+            getOrganization: jasmine.createSpy('getOrganization').and.returnValue(
+                Promise.resolve({
+                    body: {
+                        id: 'urn:organization:buyer',
+                        partyCharacteristic: [
+                            { name: 'tmforumEndpoint', value: 'https://buyer-own.example.com/tmf/' }
+                        ],
+                        externalReference: [{
+                            externalReferenceType: 'idm_id',
+                            name: 'VAT-BUYER'
+                        }]
+                    }
+                })
+            ),
+            getOrganizationsByQueryInApi: jasmine.createSpy('getOrganizationsByQueryInApi').and.returnValue(
+                Promise.resolve({
+                    body: [{
+                        id: 'urn:organization:buyer-in-provider'
+                    }]
+                })
+            )
+        };
+        const federation = getFederation(partyClient);
+        const targetId = getFederatedId(
+            'https://provider.example.com/tmf',
+            'urn:ngsi-ld:product-offering:1'
+        );
+
+        const req = {
+            apiUrl: `/account/billingAccount?target=${targetId}&relatedParty.id=urn:organization:buyer`,
+            user: {
+                id: 'buyer-user',
+                userId: 'individual-buyer',
+                partyId: 'urn:organization:buyer'
+            }
+        };
+
+        const resolved = await federation.resolveTmforumApiUrl(
+            req,
+            `http://local.example:1234/tmf-api/accountManagement/v4/billingAccount?target=${targetId}&relatedParty.id=urn:organization:buyer`
+        );
+
+        expect(resolved).toBe(
+            'https://provider.example.com/tmf/tmf-api/accountManagement/v4/billingAccount?relatedParty.id=urn%3Aorganization%3Abuyer-in-provider'
+        );
+        expect(partyClient.getOrganizationsByQueryInApi).toHaveBeenCalledWith(
+            'https://provider.example.com/tmf',
+            'externalReference.name=VAT-BUYER'
+        );
+        expect(partyClient.getOrganizationsByQueryInApi).not.toHaveBeenCalledWith(
+            'https://buyer-own.example.com/tmf/',
+            'externalReference.name=VAT-BUYER'
+        );
+    });
+
+    it('should keep party API local even when target query param is federated', async function() {
+        const partyClient = {
+            getOrganization: jasmine.createSpy('getOrganization')
+        };
+        const federation = getFederation(partyClient);
+        const targetId = getFederatedId(
+            'https://seller.example.com/tmf',
+            'urn:ngsi-ld:billing-account:1'
+        );
+
+        const req = {
+            apiUrl: `/party/organization?target=${targetId}`,
+            user: {
+                id: 'buyer-user',
+                userId: 'individual-buyer',
+                partyId: 'urn:organization:buyer'
+            }
+        };
+
+        const resolved = await federation.resolveTmforumApiUrl(req, req.apiUrl);
+
+        expect(resolved).toBe('');
+        expect(partyClient.getOrganization).not.toHaveBeenCalled();
+    });
+
+    it('should resolve party API from a federated ID in path', async function() {
+        const partyClient = {
+            getOrganization: jasmine.createSpy('getOrganization')
+        };
+        const federation = getFederation(partyClient);
+        const federatedId = getFederatedId(
+            'https://seller.example.com/tmf',
+            'urn:ngsi-ld:organization:remote-seller'
+        );
+
+        const req = {
+            apiUrl: `/party/organization/${federatedId}`,
+            user: {
+                id: 'buyer-user',
+                userId: 'individual-buyer',
+                partyId: 'urn:organization:buyer'
+            }
+        };
+
+        const resolved = await federation.resolveTmforumApiUrl(req, req.apiUrl);
+
+        expect(resolved).toBe('https://seller.example.com/tmf/party/organization/urn:ngsi-ld:organization:remote-seller');
+        expect(partyClient.getOrganization).not.toHaveBeenCalled();
+    });
+
+    it('should route product order creation through acting organization endpoint without generic context', async function() {
         const partyClient = {
             getOrganization: jasmine.createSpy('getOrganization').and.returnValue(
                 Promise.resolve({
@@ -406,48 +436,6 @@ describe('Federation library', function() {
                         partyCharacteristic: [
                             { name: 'tmforumEndpoint', value: 'https://buyer.example.com/tmf/' }
                         ]
-                    }
-                })
-            )
-        };
-        const federation = getFederation(partyClient);
-
-        const req = {
-            method: 'POST',
-            apiUrl: '/ordering/productOrder',
-            body: JSON.stringify({
-                relatedParty: [{
-                    id: 'urn:organization:buyer',
-                    role: 'Customer'
-                }]
-            }),
-            user: {
-                id: 'buyer-user',
-                userId: 'individual-buyer',
-                partyId: 'urn:organization:buyer'
-            }
-        };
-
-        try {
-            await federation.resolveTmforumApiUrl(req, '/ordering/productOrder');
-            fail('Expected resolveTmforumApiUrl to fail when seller is missing');
-        } catch (err) {
-            expect(err).toEqual({
-                status: 422,
-                message: 'Product order federation requires a seller relatedParty'
-            });
-        }
-
-        expect(partyClient.getOrganization).not.toHaveBeenCalled();
-    });
-
-    it('should fail when seller endpoint cannot be resolved in product order creation', async function() {
-        const partyClient = {
-            getOrganization: jasmine.createSpy('getOrganization').and.returnValue(
-                Promise.resolve({
-                    body: {
-                        id: 'urn:organization:seller',
-                        partyCharacteristic: []
                     }
                 })
             )
@@ -470,15 +458,10 @@ describe('Federation library', function() {
             }
         };
 
-        try {
-            await federation.resolveTmforumApiUrl(req, '/ordering/productOrder');
-            fail('Expected resolveTmforumApiUrl to fail when seller endpoint is missing');
-        } catch (err) {
-            expect(err).toEqual({
-                status: 422,
-                message: 'Cannot resolve TMForum endpoint for seller urn:organization:seller'
-            });
-        }
+        const resolved = await federation.resolveTmforumApiUrl(req, '/ordering/productOrder');
+
+        expect(resolved).toBe('https://buyer.example.com/tmf/ordering/productOrder');
+        expect(partyClient.getOrganization).toHaveBeenCalledWith('urn:organization:buyer');
     });
 
     it('should resolve TMForum endpoint by organization party id', async function() {
@@ -637,30 +620,44 @@ describe('Federation library', function() {
         );
     });
 
-    it('should resolve remote party id directly from cache when already available', async function() {
+    it('should keep federated organization cache isolated by endpoint', async function() {
         const partyClient = {
             getOrganization: jasmine.createSpy('getOrganization'),
-            getOrganizationsByQueryInApi: jasmine.createSpy('getOrganizationsByQueryInApi').and.returnValue(
-                Promise.resolve({
+            getOrganizationsByQueryInApi: jasmine.createSpy('getOrganizationsByQueryInApi').and.callFake((endpoint) => {
+                const remoteId = endpoint === 'https://provider-a.example.com/tmf'
+                    ? 'urn:organization:remote-seller-a'
+                    : 'urn:organization:remote-seller-b';
+
+                return Promise.resolve({
                     body: [{
-                        id: 'urn:organization:remote-seller'
+                        id: remoteId
                     }]
-                })
-            )
+                });
+            })
         };
         const federation = getFederation(partyClient);
 
-        await federation.resolveFederatedOrganizationParty(
-            'https://seller.example.com/tmf/',
+        const resolvedA1 = await federation.resolveFederatedOrganizationParty(
+            'https://provider-a.example.com/tmf',
+            'urn:organization:local-seller',
+            'VAT-SELLER'
+        );
+        const resolvedA2 = await federation.resolveFederatedOrganizationParty(
+            'https://provider-a.example.com/tmf',
+            'urn:organization:local-seller',
+            'VAT-SELLER'
+        );
+        const resolvedB = await federation.resolveFederatedOrganizationParty(
+            'https://provider-b.example.com/tmf',
             'urn:organization:local-seller',
             'VAT-SELLER'
         );
 
-        const remoteId = await federation.resolveRemotePartyIdByLocalPartyId('urn:organization:local-seller');
-
-        expect(remoteId).toBe('urn:organization:remote-seller');
+        expect(resolvedA1.id).toBe('urn:organization:remote-seller-a');
+        expect(resolvedA2.id).toBe('urn:organization:remote-seller-a');
+        expect(resolvedB.id).toBe('urn:organization:remote-seller-b');
         expect(partyClient.getOrganization).not.toHaveBeenCalled();
-        expect(partyClient.getOrganizationsByQueryInApi.calls.count()).toBe(1);
+        expect(partyClient.getOrganizationsByQueryInApi.calls.count()).toBe(2);
     });
 
     it('should fail resolving remote party id when local party has no idm_id external reference', async function() {
