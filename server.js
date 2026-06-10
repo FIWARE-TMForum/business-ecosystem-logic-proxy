@@ -26,6 +26,7 @@ const catalog = require('./controllers/tmf-apis/catalog').catalog;
 const management = require('./controllers/management').management;
 const multer = require('multer');
 const tmf = require('./controllers/tmf').tmf();
+const federationMiddleware = require('./federation/middleware').middleware;
 const admin = require('./controllers/admin').admin();
 const stats = require('./controllers/stats').stats();
 const payment = require('./controllers/payment').payment();
@@ -640,7 +641,9 @@ app.all(regexPattern, (req, res, next) => {
     // The API path is the actual path that should be used to access the resource
     // This path contains the query string!!
     req.apiUrl = url.parse(req.url).path.substring(config.proxyPrefix.length);
-    tmf.checkPermissions(req, res);
+    federationMiddleware.setRequestFederationContext(req, res, function() {
+        tmf.checkPermissions(req, res);
+    });
 });
 
 /////////////////////////////////////////////////////////////////////

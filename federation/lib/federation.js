@@ -482,42 +482,66 @@ const federation = (() => {
         };
     };
 
-    const resolveTmforumApiUrl = async function(req, apiUrl) {
+    const resolveRequestFederationInfo = async function(req, apiUrl) {
         const federatedPathReference = getFederatedPathReference(apiUrl);
         if (federatedPathReference) {
-            setRequestFederationContext(req, federatedPathReference.sourceEndpoint);
-            const apiPath = stripTargetQueryParam(federatedPathReference.apiPath);
-            const rewrittenApiPath = await rewriteRelatedPartyQueryValues(
-                req,
-                apiPath,
-                federatedPathReference.sourceEndpoint
-            );
-            return buildApiUrl(federatedPathReference.sourceEndpoint, rewrittenApiPath);
+            return {
+                apiPath: stripTargetQueryParam(federatedPathReference.apiPath),
+                tmforumEndpoint: federatedPathReference.sourceEndpoint
+            };
         }
 
         // Party API remains local because these entities define federation configuration.
         if (isPartyApiRequest(req, apiUrl)) {
-            return '';
+            return {
+                localApiUrl: ''
+            };
         }
 
         const targetReference = getTargetFederatedReference(apiUrl);
         if (targetReference) {
-            setRequestFederationContext(req, targetReference.sourceEndpoint);
-            const rewrittenApiPath = await rewriteRelatedPartyQueryValues(
-                req,
-                targetReference.apiPath,
-                targetReference.sourceEndpoint
-            );
-            return buildApiUrl(targetReference.sourceEndpoint, rewrittenApiPath);
+            return {
+                apiPath: targetReference.apiPath,
+                tmforumEndpoint: targetReference.sourceEndpoint
+            };
         }
 
         const tmforumEndpoint = await resolveTmforumEndpoint(req);
         if (!tmforumEndpoint) {
-            return apiUrl;
+            return {
+                localApiUrl: apiUrl
+            };
         }
-        setRequestFederationContext(req, tmforumEndpoint);
-        const rewrittenApiPath = await rewriteRelatedPartyQueryValues(req, apiUrl, tmforumEndpoint);
-        return buildApiUrl(tmforumEndpoint, rewrittenApiPath);
+
+        return {
+            apiPath: apiUrl,
+            tmforumEndpoint: tmforumEndpoint
+        };
+    };
+
+    const resolveTmforumApiUrl = async function(req, apiUrl) {
+        const federationInfo = await resolveRequestFederationInfo(req, apiUrl);
+        if (!federationInfo.tmforumEndpoint) {
+            return federationInfo.localApiUrl;
+        }
+
+        setRequestFederationContext(req, federationInfo.tmforumEndpoint);
+        const rewrittenApiPath = await rewriteRelatedPartyQueryValues(
+            req,
+            federationInfo.apiPath,
+            federationInfo.tmforumEndpoint
+        );
+        return buildApiUrl(federationInfo.tmforumEndpoint, rewrittenApiPath);
+    };
+
+    const setRequestFederationContextFromApiUrl = async function(req, apiUrl) {
+        const federationInfo = await resolveRequestFederationInfo(req, apiUrl);
+        if (!federationInfo.tmforumEndpoint) {
+            return null;
+        }
+
+        setRequestFederationContext(req, federationInfo.tmforumEndpoint);
+        return req && req.federationContext ? req.federationContext : null;
     };
 
     const resolveTmforumApiUrlByPartyId = async function(apiUrl, partyId) {
@@ -630,6 +654,7 @@ const federation = (() => {
     return {
         resolveTmforumEndpoint: resolveTmforumEndpoint,
         resolveTmforumApiUrl: resolveTmforumApiUrl,
+        setRequestFederationContextFromApiUrl: setRequestFederationContextFromApiUrl,
         resolveTmforumEndpointByPartyId: resolveTmforumEndpointByPartyId,
         resolveTmforumApiUrlByPartyId: resolveTmforumApiUrlByPartyId,
         resolveFederatedOrganizationParty: resolveFederatedOrganizationParty,

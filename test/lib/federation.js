@@ -323,6 +323,88 @@ describe('Federation library', function() {
         expect(partyClient.getOrganization).not.toHaveBeenCalled();
     });
 
+    it('should set request federation context from target without rewriting apiUrl', async function() {
+        const partyClient = {
+            getOrganization: jasmine.createSpy('getOrganization')
+        };
+        const federation = getFederation(partyClient);
+        const targetId = getFederatedId(
+            'https://seller.example.com/tmf',
+            'urn:ngsi-ld:product-offering:1'
+        );
+
+        const req = {
+            apiUrl: `/ordering/productOrder?target=${targetId}`,
+            user: {
+                id: 'buyer-user',
+                partyId: 'urn:individual:buyer'
+            }
+        };
+
+        const context = await federation.setRequestFederationContextFromApiUrl(req, req.apiUrl);
+
+        expect(context).toEqual({
+            tmforumEndpoint: 'https://seller.example.com/tmf'
+        });
+        expect(req.federationContext).toEqual(context);
+        expect(req.apiUrl).toBe(`/ordering/productOrder?target=${targetId}`);
+        expect(partyClient.getOrganization).not.toHaveBeenCalled();
+    });
+
+    it('should set request federation context from path reference without rewriting apiUrl', async function() {
+        const partyClient = {
+            getOrganization: jasmine.createSpy('getOrganization')
+        };
+        const federation = getFederation(partyClient);
+        const federatedId = getFederatedId(
+            'https://seller.example.com/tmf',
+            'urn:ngsi-ld:product-offering:1'
+        );
+
+        const req = {
+            apiUrl: `/catalog/productOffering/${federatedId}`,
+            user: {
+                id: 'buyer-user',
+                partyId: 'urn:individual:buyer'
+            }
+        };
+
+        const context = await federation.setRequestFederationContextFromApiUrl(req, req.apiUrl);
+
+        expect(context).toEqual({
+            tmforumEndpoint: 'https://seller.example.com/tmf'
+        });
+        expect(req.federationContext).toEqual(context);
+        expect(req.apiUrl).toBe(`/catalog/productOffering/${federatedId}`);
+        expect(partyClient.getOrganization).not.toHaveBeenCalled();
+    });
+
+    it('should not set request federation context for party API target requests', async function() {
+        const partyClient = {
+            getOrganization: jasmine.createSpy('getOrganization')
+        };
+        const federation = getFederation(partyClient);
+        const targetId = getFederatedId(
+            'https://seller.example.com/tmf',
+            'urn:ngsi-ld:billing-account:1'
+        );
+
+        const req = {
+            apiUrl: `/party/organization?target=${targetId}`,
+            user: {
+                id: 'buyer-user',
+                partyId: 'urn:individual:buyer'
+            }
+        };
+
+        const context = await federation.setRequestFederationContextFromApiUrl(req, req.apiUrl);
+
+        expect(context).toBe(null);
+        expect(req.federationContext).toBeUndefined();
+        expect(req.apiUrl).toBe(`/party/organization?target=${targetId}`);
+        expect(partyClient.getOrganization).not.toHaveBeenCalled();
+    });
+
     it('should rewrite relatedParty query filters using the target endpoint context', async function() {
         const partyClient = {
             getOrganization: jasmine.createSpy('getOrganization').and.returnValue(
