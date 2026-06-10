@@ -56,12 +56,21 @@ describe('Ordering API', function() {
         message: 'Billing Accounts must be the same for all the order items contained in the ordering'
     };
 
-    const getOrderingAPI = function(storeClient, tmfUtils, utils) {
+    const getTmfApiHelpers = function() {
+        return proxyquire('../../../lib/tmfApiHelpers', {
+            './../config': config
+        }).tmfApiHelpers;
+    };
+
+    const getOrderingAPI = function(storeClient, tmfUtils, utils, tmfApiHelpers) {
 
         return proxyquire('../../../controllers/tmf-apis/ordering', {
             './../../config': config,
             './../../lib/logger': testUtils.emptyLogger,
             './../../lib/store': storeClient,
+            './../../lib/tmfApiHelpers': {
+                tmfApiHelpers: tmfApiHelpers || getTmfApiHelpers()
+            },
             './../../lib/tmfUtils': tmfUtils,
             './../../lib/utils': utils
         }).ordering;
@@ -248,7 +257,8 @@ describe('Ordering API', function() {
                 hasPartyRole,
                 expectedRes,
                 done,
-                checkReq
+                checkReq,
+                reqOverrides
             ) {
                 config.customerRoleRequired = customerRoleRequired;
 
@@ -277,6 +287,7 @@ describe('Ordering API', function() {
                     body: body,
                     headers: {}
                 };
+                Object.assign(req, reqOverrides || {});
 
                 orderingApi.checkPermissions(req, function(err) {
                     expect(err).toEqual(expectedRes);
@@ -389,6 +400,84 @@ describe('Ordering API', function() {
 
             it('should call the callback after validating the request when the offering is a bundle', function(done) {
                 testValidOrdering(1, true, true, true, done);
+            });
+
+            it('should validate product order catalog references using the request federation context', function(done) {
+                const userName = 'example';
+                const ownerName = 'ownerUser';
+                const billingAccountPath = '/api/billingAccount/7';
+                const productOfferingPath = '/api/productOffering/1';
+                const productSpecPath = '/api/productSpecification/2';
+                const remoteCatalogServer = 'https://seller.example.com';
+
+                const user = {
+                    partyId: userName
+                };
+
+                const body = {
+                    relatedParty: [
+                        {
+                            id: userName,
+                            role: config.roles.customer
+                        }
+                    ],
+                    productOrderItem: [
+                        {
+                            product: {},
+                            productOffering: {
+                                id: 1,
+                                href: 'http://extexample.com' + productOfferingPath
+                            }
+                        }
+                    ],
+                    billingAccount: {
+                        id: 7,
+                        href: B_ACCOUNT_SERVER + billingAccountPath
+                    }
+                };
+
+                nock(remoteCatalogServer)
+                    .get('/tmf/api/productOffering/1')
+                    .reply(200, { productSpecification: { id: 2, href: remoteCatalogServer + '/tmf' + productSpecPath } });
+
+                nock(remoteCatalogServer)
+                    .get('/tmf/api/productSpecification/2')
+                    .reply(200, { relatedParty: [{ id: ownerName, role: config.roles.seller }] });
+
+                nock(remoteCatalogServer)
+                    .get('/tmf/api/billingAccount/7')
+                    .reply(200, { relatedParty: [{ id: userName, role: config.billingAccountOwnerRole }] });
+
+                testOrderCreation(
+                    user,
+                    JSON.stringify(body),
+                    true,
+                    true,
+                    true,
+                    null,
+                    done,
+                    function(req) {
+                        const newBody = JSON.parse(req.body);
+
+                        expect(newBody.productOrderItem[0].product.relatedParty).toEqual([
+                            {
+                                id: userName,
+                                role: config.roles.customer,
+                                href: getIndividualURL(userName)
+                            },
+                            {
+                                id: ownerName,
+                                role: config.roles.seller,
+                                href: ownerName
+                            }
+                        ]);
+                    },
+                    {
+                        federationContext: {
+                            tmforumEndpoint: remoteCatalogServer + '/tmf'
+                        }
+                    }
+                );
             });
 
             it('should fail if the order does not include a billing account', (done) => {
@@ -1008,7 +1097,8 @@ describe('Ordering API', function() {
                 refundError,
                 expectedError,
                 expectedBody,
-                done
+                done,
+                reqOverrides
             ) {
                 const user = {
                     partyId: 'fiware',
@@ -1043,11 +1133,21 @@ describe('Ordering API', function() {
                     body: JSON.stringify(body),
                     apiUrl: productOrderPath
                 };
+                Object.assign(req, reqOverrides || {});
 
                 const orderingRelatedParties = [{}, {}];
+                const federationEndpoint = req.federationContext && req.federationContext.tmforumEndpoint;
+                let orderingServer = SERVER;
+                let orderingPath = productOrderBackendPath;
 
-                nock(SERVER)
-                    .get(productOrderBackendPath)
+                if (federationEndpoint) {
+                    const parsedEndpoint = new URL(federationEndpoint);
+                    orderingServer = parsedEndpoint.origin;
+                    orderingPath = `${parsedEndpoint.pathname}/api/productOrder/7`.replace(/\/{2,}/g, '/');
+                }
+
+                nock(orderingServer)
+                    .get(orderingPath)
                     .reply(200, {
                         id: orderId,
                         state: previousState,
@@ -1090,6 +1190,25 @@ describe('Ordering API', function() {
                     null,
                     null,
                     done
+                );
+            });
+
+            it('should retrieve the previous ordering using the request federation context', function(done) {
+                testUpdate(
+                    [true, false],
+                    { description: 'New Description' },
+                    'Acknowledged',
+                    [],
+                    [],
+                    null,
+                    null,
+                    null,
+                    done,
+                    {
+                        federationContext: {
+                            tmforumEndpoint: 'https://seller.example.com/tmf'
+                        }
+                    }
                 );
             });
 

@@ -20,11 +20,11 @@
  */
 
 const async = require('async')
-const axios = require('axios')
 const config = require('./../../config')
 const equal = require('deep-equal')
 const moment = require('moment')
 const storeClient = require('./../../lib/store').storeClient
+const tmfApiHelpers = require('./../../lib/tmfApiHelpers').tmfApiHelpers
 const tmfUtils = require('./../../lib/tmfUtils')
 const url = require('url')
 const utils = require('./../../lib/utils')
@@ -37,17 +37,41 @@ const ordering = (function() {
     /////////////////////////////////////////// COMMON ///////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
 
-    const makeRequest = function(url, errMsg, callback) {
-        axios.get(url).then((response) => {
+    const makeTmfRequest = function(endpoint, req, assetPath, errMsg, callback, status) {
+        tmfApiHelpers.getAsset(endpoint, assetPath, function(err, result) {
+            if (err) {
+                callback({
+                    status: status || 400,
+                    message: errMsg
+                });
+            } else {
+                callback(null, result.body);
+            }
+        }, req);
+    };
 
-            callback(null, response.data);
-            
-        }).catch((err) => {
-            callback({
-                status: 400,
-                message: errMsg
-            });
-        })
+    const makeTmfRequestAsync = function(endpoint, req, assetPath, errMsg, status) {
+        return new Promise((resolve, reject) => {
+            makeTmfRequest(endpoint, req, assetPath, errMsg, function(err, result) {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(result);
+                }
+            }, status);
+        });
+    };
+
+    const makeCatalogRequest = function(req, assetPath, errMsg, callback) {
+        makeTmfRequest(config.tmforum.catalog, req, assetPath, errMsg, callback);
+    };
+
+    const makeOrderingRequest = function(req, assetPath, errMsg, callback) {
+        makeTmfRequest(config.tmforum.ordering, req, assetPath, errMsg, callback);
+    };
+
+    const makeAccountRequestAsync = function(req, assetPath, errMsg) {
+        return makeTmfRequestAsync(config.tmforum.account, req, assetPath, errMsg, 422);
     };
 
     //////////////////////////////////////////////////////////////////////////////////////////////
@@ -62,17 +86,11 @@ const ordering = (function() {
     ////////////////////////////////////////// CREATION //////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
 
-    const includeProductParty = function(offering, item, resolve, reject) {
+    const includeProductParty = function(req, offering, item, resolve, reject) {
         const errorMessageProduct = 'The system fails to retrieve the product attached to the ordering item ' + item.id;
+        const productPath = `/productSpecification/${offering.productSpecification.id}`;
 
-        const productUrl = utils.getAPIURL(
-            config.tmforum.catalog.appSsl,
-            config.tmforum.catalog.host,
-            config.tmforum.catalog.port,
-            `${config.tmforum.catalog.apiPath}/productSpecification/${offering.productSpecification.id}`
-        );
-
-        makeRequest(productUrl, errorMessageProduct, function(err, product) {
+        makeCatalogRequest(req, productPath, errorMessageProduct, function(err, product) {
             if (err) {
                 reject(err);
             } else {
@@ -100,10 +118,10 @@ const ordering = (function() {
         });
     };
 
-    const includeOfferingParty = function(offeringUrl, item, resolve, reject, user) {
+    const includeOfferingParty = function(req, offeringPath, item, resolve, reject, user) {
         const errorMessageOffer = 'The system fails to retrieve the offering attached to the ordering item ' + item.id;
 
-        makeRequest(offeringUrl, errorMessageOffer, function(err, offering) {
+        makeCatalogRequest(req, offeringPath, errorMessageOffer, function(err, offering) {
             if (err) {
                 reject(err);
             } else {
@@ -135,15 +153,10 @@ const ordering = (function() {
                 }
 
                 if (!offering.isBundle) {
-                    includeProductParty(offering, item, resolve, reject);
+                    includeProductParty(req, offering, item, resolve, reject);
                 } else {
-                    const offeringUrl = utils.getAPIURL(
-                        config.tmforum.catalog.appSsl,
-                        config.tmforum.catalog.host,
-                        config.tmforum.catalog.port,
-                        `${config.tmforum.catalog.apiPath}/productOffering/${offering.bundledProductOffering[0].id}`
-                    );
-                    includeOfferingParty(offeringUrl, item, resolve, reject, user);
+                    const offeringPath = `/productOffering/${offering.bundledProductOffering[0].id}`;
+                    includeOfferingParty(req, offeringPath, item, resolve, reject, user);
                 }
             }
         });
@@ -192,14 +205,8 @@ const ordering = (function() {
 
             // Inject customer and seller related parties in the order items in order to make this info
             // available thought the inventory API
-            const offeringUrl = utils.getAPIURL(
-                config.tmforum.catalog.appSsl,
-                config.tmforum.catalog.host,
-                config.tmforum.catalog.port,
-                `${config.tmforum.catalog.apiPath}/productOffering/${item.productOffering.id}`
-            );
-
-            includeOfferingParty(offeringUrl, item, resolve, reject, user);
+            const offeringPath = `/productOffering/${item.productOffering.id}`;
+            includeOfferingParty(req, offeringPath, item, resolve, reject, user);
         })
     };
 
@@ -297,22 +304,16 @@ const ordering = (function() {
             });
         }
 
-         const billAccURL = utils.getAPIURL(
-                config.tmforum.account.appSsl,
-                config.tmforum.account.host,
-                config.tmforum.account.port,
-                `${config.tmforum.account.apiPath}/billingAccount/${body.billingAccount.id}`)
-
         let billAcc;
 
         try {
-            const resp = await axios.get(billAccURL);
-            billAcc = resp.data;
-        } catch (_) {
-            return callback({
-                status: 422,
-                message: 'Invalid billing account id'
-            });
+            billAcc = await makeAccountRequestAsync(
+                req,
+                `/billingAccount/${body.billingAccount.id}`,
+                'Invalid billing account id'
+            );
+        } catch (err) {
+            return callback(err);
         }
 
         const matches =  billAcc.relatedParty.some(p => p?.id === req.user.partyId)
@@ -479,14 +480,8 @@ const ordering = (function() {
         try {
             const ordering = JSON.parse(req.body);
             const path = req.apiUrl.replace('/ordering', '');
-            const orderingUrl = utils.getAPIURL(
-                config.tmforum.ordering.appSsl,
-                config.tmforum.ordering.host,
-                config.tmforum.ordering.port,
-                `${config.tmforum.ordering.apiPath}${path}`
-            );
 
-            makeRequest(orderingUrl, 'The requested ordering cannot be retrieved', (err, previousOrdering) => {
+            makeOrderingRequest(req, path, 'The requested ordering cannot be retrieved', (err, previousOrdering) => {
                 if (err) {
                     console.log(err);
                     callback(err);
