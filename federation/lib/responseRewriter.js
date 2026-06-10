@@ -23,6 +23,7 @@ const responseRewriter = (() => {
     const FEDERATED_REFERENCE_PREFIX = 'federationRef::';
     const REFERENCE_PARENT_KEYS = new Set([
         'attachment',
+        'bundledPopRelationship',
         'bundledProductOffering',
         'bundledProductSpecification',
         'catalog',
@@ -153,7 +154,7 @@ const responseRewriter = (() => {
             return true;
         }
 
-        return parentKey.endsWith('Ref') || parentKey.endsWith('Refs');
+        return false;
     };
 
     const rewriteNode = function(node, sourceEndpoint, parentKey) {

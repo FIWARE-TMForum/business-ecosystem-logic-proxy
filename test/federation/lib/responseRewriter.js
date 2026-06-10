@@ -75,6 +75,38 @@ describe('Federation response rewriter', function() {
         expect(rewritten.attachment.href).toBe('https://external.example.com/file.pdf');
     });
 
+    it('should rewrite bundled product offering price relationship ids', function() {
+        const payload = {
+            id: 'price-1',
+            bundledPopRelationship: [{
+                id: 'component-price-1',
+                href: '/catalog/productOfferingPrice/component-price-1'
+            }]
+        };
+
+        const rewritten = responseRewriter.rewriteResponsePayload(payload, SOURCE_ENDPOINT);
+
+        expect(rewritten.bundledPopRelationship[0].id).toBe(
+            `federationRef::${getReferenceToken('component-price-1')}`
+        );
+        expect(rewritten.bundledPopRelationship[0].href).toBe(payload.bundledPopRelationship[0].href);
+    });
+
+    it('should not rewrite arbitrary Ref or Refs parent keys', function() {
+        const payload = {
+            customRef: {
+                id: 'custom-ref-1'
+            },
+            customRefs: [{
+                id: 'custom-ref-2'
+            }]
+        };
+
+        const rewritten = responseRewriter.rewriteResponsePayload(payload, SOURCE_ENDPOINT);
+
+        expect(rewritten).toEqual(payload);
+    });
+
     it('should skip ids that are already federated', function() {
         const payload = {
             productSpecification: {
