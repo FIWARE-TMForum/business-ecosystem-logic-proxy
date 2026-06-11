@@ -1081,6 +1081,9 @@ describe('TMF Utils', function() {
 
                     return { body: [] };
                 }),
+                getOrganizationInApi: jasmine.createSpy('getOrganizationInApi').and.callFake(() => {
+                    return Promise.reject({ status: 404, message: 'Not found' })
+                }),
                 getIndividualsByQueryInApi: jasmine.createSpy('getIndividualsByQueryInApi').and.returnValue(Promise.resolve({ body: [] }))
             };
 
@@ -1584,6 +1587,76 @@ describe('TMF Utils', function() {
 
             expect(utilsObj.resolveTmforumEndpointByPartyId).not.toHaveBeenCalledWith('urn:organization:sellerId');
             expect(utilsObj.resolveTmforumEndpointByPartyId).not.toHaveBeenCalledWith('urn:organization:buyerId');
+        });
+
+        it('should normalize already remote organization related parties from the federation target', async () => {
+            const utilsObj = getFederatedOpTmfUtils();
+            utilsObj.partyClient.getOrganization.and.callFake(async (partyId) => {
+                if (partyId === 'urn:organization:remoteSellerId') {
+                    throw {
+                        status: 404,
+                        message: 'Not found'
+                    };
+                }
+
+                return {
+                    body: {
+                        externalReference: [{
+                            externalReferenceType: 'idm_id',
+                            name: 'VAT-ID2'
+                        }]
+                    }
+                };
+            });
+            utilsObj.partyClient.getOrganizationInApi.and.returnValue(Promise.resolve({
+                body: {
+                    id: 'urn:organization:remoteSellerId',
+                    href: 'urn:organization:remoteSellerId',
+                    name: 'Remote Seller'
+                }
+            }));
+
+            const req = {
+                apiUrl: '/productOrder',
+                federationContext: {
+                    tmforumEndpoint: 'https://federated.example.com/tmf'
+                },
+                headers: {},
+                body: JSON.stringify({
+                    relatedParty: [{
+                        id: 'urn:organization:remoteSellerId',
+                        role: 'Seller'
+                    }, {
+                        id: 'urn:organization:buyerId',
+                        role: 'Buyer'
+                    }]
+                }),
+                user: {
+                    id: 'VAT-ID2',
+                    userId: 'individual-user-2',
+                    partyId: 'urn:organization:buyerId'
+                }
+            };
+
+            await utilsObj.tmfUtils.attachRelatedParty(req, 'ordering');
+
+            const newBody = JSON.parse(req.body);
+            expect(newBody.relatedParty[0]).toEqual({
+                id: 'urn:organization:remoteSellerId',
+                href: 'urn:organization:remoteSellerId',
+                name: 'Remote Seller',
+                role: 'Seller',
+                "@referredType": "Organization"
+            });
+            expect(utilsObj.partyClient.getOrganizationInApi).toHaveBeenCalledWith(
+                'https://federated.example.com/tmf',
+                'urn:organization:remoteSellerId'
+            );
+            expect(utilsObj.resolveFederatedOrganizationParty).toHaveBeenCalledWith(
+                'https://federated.example.com/tmf',
+                'urn:organization:buyerId',
+                'VAT-ID2'
+            );
         });
 
         it('should skip federated lookup for individual related parties', async () => {

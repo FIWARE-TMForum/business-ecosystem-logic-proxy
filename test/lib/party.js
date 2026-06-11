@@ -464,5 +464,21 @@ describe('Party lib', function() {
                 done();
             });
         });
+
+        it('should get an organization by id from a remote party API', function(done) {
+            config.tmforum.party.apiPath = '/tmf-api/partyManagement/v4/';
+            const remoteOrganization = {
+                id: 'urn:organization:remoteSellerId'
+            };
+
+            nock('https://federated.example.com', { reqheaders: headers })
+                .get('/tmf/tmf-api/partyManagement/v4/organization/urn:organization:remoteSellerId')
+                .reply(200, remoteOrganization);
+
+            partyClient(orgPath).getOrganizationInApi(remoteApiUrl, 'urn:organization:remoteSellerId').then((res) => {
+                expect(res.body).toEqual(remoteOrganization);
+                done();
+            });
+        });
     });
 });
