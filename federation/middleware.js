@@ -32,12 +32,48 @@ const middleware = (() => {
         });
     };
 
+    const isOrganizationPartyId = function(partyId) {
+        return typeof partyId === 'string' && partyId.toLowerCase().includes('organization');
+    };
+
+    const getRequestFederationTmforumEndpoint = function(req) {
+        if (
+            !req ||
+            !req.federationContext ||
+            typeof req.federationContext.tmforumEndpoint !== 'string'
+        ) {
+            return '';
+        }
+
+        return req.federationContext.tmforumEndpoint.trim();
+    };
+
     const sendError = function(res, err) {
         res.status(err.status || 500);
         res.json({
             error: err.message || 'Error processing federation context'
         });
         res.end();
+    };
+
+    const setRequestRemotePartyId = async function(req) {
+        const tmforumEndpoint = getRequestFederationTmforumEndpoint(req);
+        if (!tmforumEndpoint || !req || !req.user || !isOrganizationPartyId(req.user.partyId)) {
+            return;
+        }
+
+        req.user.remotePartyId = '';
+
+        try {
+            const remotePartyId = await federation.resolveRemotePartyIdByLocalPartyIdInEndpoint(
+                req.user.partyId,
+                tmforumEndpoint
+            );
+            req.user.remotePartyId = remotePartyId || '';
+        } catch (err) {
+            const message = err && err.message ? err.message : JSON.stringify(err);
+            logger.debug(`Unable to resolve request federation remotePartyId: ${message}`);
+        }
     };
 
     const setRequestFederationContext = function(req, res, next) {
@@ -48,6 +84,7 @@ const middleware = (() => {
         }
 
         federation.setRequestFederationContextFromApiUrl(req, req.apiUrl)
+            .then(() => setRequestRemotePartyId(req))
             .then(() => next())
             .catch((err) => {
                 logger.error(`Federation context error: ${err.message}`);

@@ -39,7 +39,10 @@ describe('Federation middleware', function() {
         federation = {
             setRequestFederationContextFromApiUrl: jasmine
                 .createSpy('setRequestFederationContextFromApiUrl')
-                .and.returnValue(Promise.resolve(null))
+                .and.returnValue(Promise.resolve(null)),
+            resolveRemotePartyIdByLocalPartyIdInEndpoint: jasmine
+                .createSpy('resolveRemotePartyIdByLocalPartyIdInEndpoint')
+                .and.returnValue(Promise.resolve('urn:ngsi-ld:organization:remote-seller'))
         };
     });
 
@@ -64,6 +67,94 @@ describe('Federation middleware', function() {
             expect(req.federationContext).toEqual({
                 tmforumEndpoint: 'https://seller.example.com/tmf'
             });
+            expect(res.status).not.toHaveBeenCalled();
+            done();
+        });
+    });
+
+    it('should set request remote party id from the federation context endpoint', function(done) {
+        config.federationEnabled = true;
+
+        federation.setRequestFederationContextFromApiUrl.and.callFake((req) => {
+            req.federationContext = {
+                tmforumEndpoint: 'https://seller.example.com/tmf'
+            };
+            return Promise.resolve(req.federationContext);
+        });
+
+        const middleware = getMiddleware();
+        const req = {
+            apiUrl: '/ordering/productOrder?target=federationRef::abc',
+            user: {
+                partyId: 'urn:ngsi-ld:organization:local-buyer',
+                remotePartyId: 'urn:ngsi-ld:organization:stale'
+            }
+        };
+        const res = jasmine.createSpyObj('res', ['status', 'json', 'end']);
+
+        middleware.setRequestFederationContext(req, res, function() {
+            expect(federation.resolveRemotePartyIdByLocalPartyIdInEndpoint).toHaveBeenCalledWith(
+                'urn:ngsi-ld:organization:local-buyer',
+                'https://seller.example.com/tmf'
+            );
+            expect(req.user.remotePartyId).toBe('urn:ngsi-ld:organization:remote-seller');
+            expect(res.status).not.toHaveBeenCalled();
+            done();
+        });
+    });
+
+    it('should clear stale request remote party id when endpoint scoped resolution fails', function(done) {
+        config.federationEnabled = true;
+
+        federation.setRequestFederationContextFromApiUrl.and.callFake((req) => {
+            req.federationContext = {
+                tmforumEndpoint: 'https://seller.example.com/tmf'
+            };
+            return Promise.resolve(req.federationContext);
+        });
+        federation.resolveRemotePartyIdByLocalPartyIdInEndpoint.and.returnValue(
+            Promise.reject(new Error('not found'))
+        );
+
+        const middleware = getMiddleware();
+        const req = {
+            apiUrl: '/ordering/productOrder?target=federationRef::abc',
+            user: {
+                partyId: 'urn:ngsi-ld:organization:local-buyer',
+                remotePartyId: 'urn:ngsi-ld:organization:stale'
+            }
+        };
+        const res = jasmine.createSpyObj('res', ['status', 'json', 'end']);
+
+        middleware.setRequestFederationContext(req, res, function() {
+            expect(req.user.remotePartyId).toBe('');
+            expect(res.status).not.toHaveBeenCalled();
+            done();
+        });
+    });
+
+    it('should not set remote party id for individual users', function(done) {
+        config.federationEnabled = true;
+
+        federation.setRequestFederationContextFromApiUrl.and.callFake((req) => {
+            req.federationContext = {
+                tmforumEndpoint: 'https://seller.example.com/tmf'
+            };
+            return Promise.resolve(req.federationContext);
+        });
+
+        const middleware = getMiddleware();
+        const req = {
+            apiUrl: '/ordering/productOrder?target=federationRef::abc',
+            user: {
+                partyId: 'urn:ngsi-ld:individual:local-buyer'
+            }
+        };
+        const res = jasmine.createSpyObj('res', ['status', 'json', 'end']);
+
+        middleware.setRequestFederationContext(req, res, function() {
+            expect(federation.resolveRemotePartyIdByLocalPartyIdInEndpoint).not.toHaveBeenCalled();
+            expect(req.user.remotePartyId).toBeUndefined();
             expect(res.status).not.toHaveBeenCalled();
             done();
         });

@@ -659,6 +659,7 @@ const federation = (() => {
         resolveTmforumApiUrlByPartyId: resolveTmforumApiUrlByPartyId,
         resolveFederatedOrganizationParty: resolveFederatedOrganizationParty,
         resolveRemotePartyIdByLocalPartyId: resolveRemotePartyIdByLocalPartyId,
+        resolveRemotePartyIdByLocalPartyIdInEndpoint: resolveRemotePartyIdByLocalPartyIdInEndpoint,
         resolveLocalPartyIdByRemotePartyId: resolveLocalPartyIdByRemotePartyId
     };
 })();

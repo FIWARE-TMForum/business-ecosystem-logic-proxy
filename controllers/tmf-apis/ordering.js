@@ -316,7 +316,7 @@ const ordering = (function() {
             return callback(err);
         }
 
-        const matches =  billAcc.relatedParty.some(p => p?.id === req.user.partyId)
+        const matches = tmfUtils.isRelatedParty(req, billAcc.relatedParty)
 
         if (!billAcc || !matches) {
             return callback({

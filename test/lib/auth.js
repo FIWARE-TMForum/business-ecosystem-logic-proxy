@@ -308,14 +308,15 @@ describe('Auth lib', function () {
         mw.setPartyObj(req, res, function () {
             next();
             try {
-            expect(next).toHaveBeenCalled();
-            expect(req.user.id).toBe('ORG-1');
-            expect(req.user.userPartyId).toBe('INDIV-5');
-            expect(req.user.displayName).toBe('Org One');
-            expect(req.user.roles).toEqual([{ name: 'ADMIN' }]);
-            done();
+                expect(next).toHaveBeenCalled();
+                expect(req.user.id).toBe('ORG-1');
+                expect(req.user.userPartyId).toBe('INDIV-5');
+                expect(req.user.displayName).toBe('Org One');
+                expect(req.user.roles).toEqual([{ name: 'ADMIN' }]);
+                expect(req.user.remotePartyId).toBe('');
+                done();
             } catch (e) {
-            done.fail(e);
+                done.fail(e);
             }
         });
         }).catch(done.fail);

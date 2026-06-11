@@ -745,6 +745,42 @@ describe('Federation library', function() {
         expect(partyClient.getOrganizationsByQueryInApi.calls.count()).toBe(2);
     });
 
+    it('should resolve remote party id from local party id in a specific endpoint', async function() {
+        const partyClient = {
+            getOrganization: jasmine.createSpy('getOrganization').and.returnValue(
+                Promise.resolve({
+                    body: {
+                        id: 'urn:organization:local-buyer',
+                        externalReference: [{
+                            externalReferenceType: 'idm_id',
+                            name: 'VAT-BUYER'
+                        }]
+                    }
+                })
+            ),
+            getOrganizationsByQueryInApi: jasmine.createSpy('getOrganizationsByQueryInApi').and.returnValue(
+                Promise.resolve({
+                    body: [{
+                        id: 'urn:organization:remote-buyer-in-target'
+                    }]
+                })
+            )
+        };
+        const federation = getFederation(partyClient);
+
+        const remoteId = await federation.resolveRemotePartyIdByLocalPartyIdInEndpoint(
+            'urn:organization:local-buyer',
+            'https://seller.example.com/tmf'
+        );
+
+        expect(remoteId).toBe('urn:organization:remote-buyer-in-target');
+        expect(partyClient.getOrganization).toHaveBeenCalledWith('urn:organization:local-buyer');
+        expect(partyClient.getOrganizationsByQueryInApi).toHaveBeenCalledWith(
+            'https://seller.example.com/tmf',
+            'externalReference.name=VAT-BUYER'
+        );
+    });
+
     it('should fail resolving remote party id when local party has no idm_id external reference', async function() {
         const partyClient = {
             getOrganization: jasmine.createSpy('getOrganization').and.returnValue(

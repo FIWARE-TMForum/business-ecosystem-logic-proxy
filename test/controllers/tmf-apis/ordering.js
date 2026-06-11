@@ -411,7 +411,8 @@ describe('Ordering API', function() {
                 const remoteCatalogServer = 'https://seller.example.com';
 
                 const user = {
-                    partyId: userName
+                    partyId: userName,
+                    remotePartyId: 'remote-example'
                 };
 
                 const body = {
@@ -446,7 +447,7 @@ describe('Ordering API', function() {
 
                 nock(remoteCatalogServer)
                     .get('/tmf/api/billingAccount/7')
-                    .reply(200, { relatedParty: [{ id: userName, role: config.billingAccountOwnerRole }] });
+                    .reply(200, { relatedParty: [{ id: 'remote-example', role: config.billingAccountOwnerRole }] });
 
                 testOrderCreation(
                     user,
