@@ -621,7 +621,15 @@ const upload = multer({
 
 if (config.federationEnabled) {
     const federationRouter = require('./federation/router').router;
-    app.use('/federation', federationRouter);
+    const federationMiddlewares = [
+        authMiddleware.headerAuthentication,
+        authMiddleware.checkOrganizations,
+        authMiddleware.setPartyObj,
+        federationRouter
+    ];
+
+    app.use('/federation', federationMiddlewares);
+    app.use('/federated', federationMiddlewares);
 }
 
 app.all(regexPattern, (req, res, next) => {

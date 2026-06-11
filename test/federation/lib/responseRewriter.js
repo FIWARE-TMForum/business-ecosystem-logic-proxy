@@ -92,6 +92,23 @@ describe('Federation response rewriter', function() {
         expect(rewritten.bundledPopRelationship[0].href).toBe(payload.bundledPopRelationship[0].href);
     });
 
+    it('should rewrite billing account ids', function() {
+        const payload = {
+            id: 'order-1',
+            billingAccount: {
+                id: 'billing-account-1',
+                href: '/accountManagement/billingAccount/billing-account-1'
+            }
+        };
+
+        const rewritten = responseRewriter.rewriteResponsePayload(payload, SOURCE_ENDPOINT);
+
+        expect(rewritten.billingAccount.id).toBe(
+            `federationRef::${getReferenceToken('billing-account-1')}`
+        );
+        expect(rewritten.billingAccount.href).toBe(payload.billingAccount.href);
+    });
+
     it('should not rewrite arbitrary Ref or Refs parent keys', function() {
         const payload = {
             customRef: {

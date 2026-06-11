@@ -23,6 +23,7 @@ const responseRewriter = (() => {
     const FEDERATED_REFERENCE_PREFIX = 'federationRef::';
     const REFERENCE_PARENT_KEYS = new Set([
         'attachment',
+        'billingAccount',
         'bundledPopRelationship',
         'bundledProductOffering',
         'bundledProductSpecification',

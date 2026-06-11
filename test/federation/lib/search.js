@@ -143,4 +143,42 @@ describe('Federation search client', () => {
         done();
     });
 
+    it('should search product orders using party external reference and role in the body', async (done) => {
+        let receivedBody;
+        nock(searchUrl)
+            .post('/api/SearchProductOrder', (body) => {
+                receivedBody = body;
+                return true;
+            })
+            .reply(200, [{ id: 9, sourceEndpoint: 'https://endpoint-a' }]);
+
+        const result = await searchClient().searchProductOrders('VAT-1', 'Customer', {});
+
+        expect(receivedBody).toEqual({
+            partyExternalRef: 'VAT-1',
+            role: 'Customer'
+        });
+        expect(result).toEqual([{ id: '9', sourceEndpoint: 'https://endpoint-a' }]);
+        done();
+    });
+
+    it('should include pagination for product order search', async (done) => {
+        let requestDone = false;
+        nock(searchUrl)
+            .post('/api/SearchProductOrder?page=3&size=20', (body) => {
+                expect(body).toEqual({
+                    partyExternalRef: 'VAT-2',
+                    role: 'Seller'
+                });
+                requestDone = true;
+                return true;
+            })
+            .reply(200, []);
+
+        await searchClient().searchProductOrders('VAT-2', 'Seller', { offset: 60, pageSize: 20 });
+
+        expect(requestDone).toBe(true);
+        done();
+    });
+
 });

@@ -20,12 +20,14 @@
 const express = require('express');
 const url = require('url');
 const catalogController = require('./controllers/catalog').catalog;
+const orderingController = require('./controllers/ordering').ordering;
 const getByIdController = require('./controllers/getById').getById;
 const federationProxy = require('./lib/proxy').proxy;
 
 const router = express.Router();
 
 const CATALOG_COLLECTION_ENTITIES = new Set(['productOffering', 'catalog']);
+const ORDERING_COLLECTION_ENTITIES = new Set(['productOrder']);
 
 const getPathSegments = function(req) {
     const apiUrl = req && typeof req.apiUrl === 'string' ? req.apiUrl : '';
@@ -41,6 +43,14 @@ const isCatalogCollectionRequest = function(pathSegments) {
     return pathSegments[0] === 'catalog' && CATALOG_COLLECTION_ENTITIES.has(pathSegments[pathSegments.length - 1]);
 };
 
+const isOrderingCollectionRequest = function(pathSegments) {
+    if (!Array.isArray(pathSegments) || pathSegments.length < 2) {
+        return false;
+    }
+
+    return pathSegments[0] === 'ordering' && ORDERING_COLLECTION_ENTITIES.has(pathSegments[pathSegments.length - 1]);
+};
+
 const proxyFederationRequest = async function(req, res) {
     req.apiUrl = url.parse(req.url).path;
 
@@ -49,6 +59,11 @@ const proxyFederationRequest = async function(req, res) {
         if (isCatalogCollectionRequest(pathSegments)) {
             const result = await catalogController.preprocessRequest(req);
             return await federationProxy.get(req, res, result.targets, result.entity);
+        }
+
+        if (isOrderingCollectionRequest(pathSegments)) {
+            const result = await orderingController.preprocessRequest(req);
+            return await federationProxy.get(req, res, result.targets, result.entity, result.api);
         }
 
         const byIdResult = await getByIdController.preprocessRequest(req);
@@ -70,6 +85,7 @@ const proxyFederationRequest = async function(req, res) {
 
 router.get('/catalog/:catalogObject', proxyFederationRequest);
 router.get('/catalog/:catalogObject/*', proxyFederationRequest);
+router.get('/ordering/:orderingObject', proxyFederationRequest);
 router.get('/:api/:entity/:id', proxyFederationRequest);
 
 exports.router = router;

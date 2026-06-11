@@ -23,7 +23,10 @@ const utils = require('../../lib/utils');
 const responseRewriter = require('./responseRewriter').responseRewriter;
 
 const proxy = (() => {
-    const SUPPORTED_COLLECTION_ENTITIES = new Set(['productOffering', 'catalog']);
+    const SUPPORTED_COLLECTION_ENTITIES = {
+        catalog: new Set(['productOffering', 'catalog']),
+        ordering: new Set(['productOrder'])
+    };
 
     const normalizePath = function(path) {
         const value = String(path || '').trim();
@@ -73,9 +76,9 @@ const proxy = (() => {
         return `${baseUrl.origin}${finalPath.replace(/\/{2,}/g, '/')}`;
     };
 
-    const buildEntityCollectionUrl = function(sourceEndpoint, entity, ids) {
+    const buildEntityCollectionUrl = function(sourceEndpoint, api, entity, ids) {
         const href = ids.map((id) => encodeURIComponent(id)).join(',');
-        const collectionBaseUrl = `${resolveApiBaseUrl(sourceEndpoint, 'catalog').replace(/\/+$/, '')}/${entity}`;
+        const collectionBaseUrl = `${resolveApiBaseUrl(sourceEndpoint, api).replace(/\/+$/, '')}/${entity}`;
         return `${collectionBaseUrl}?href=${href}`;
     };
 
@@ -119,7 +122,7 @@ const proxy = (() => {
         return [data];
     };
 
-    const fetchEntitiesBySearchTargets = async function(req, searchTargets, entity) {
+    const fetchEntitiesBySearchTargets = async function(req, searchTargets, api, entity) {
         if (!Array.isArray(searchTargets) || searchTargets.length === 0) {
             return [];
         }
@@ -134,7 +137,7 @@ const proxy = (() => {
 
         const responses = await Promise.all(groupedKeys.map((sourceEndpoint) => {
             const ids = groupedTargets[sourceEndpoint];
-            const url = buildEntityCollectionUrl(sourceEndpoint, entity, ids);
+            const url = buildEntityCollectionUrl(sourceEndpoint, api, entity, ids);
 
             return axios.request({
                 url: url,
@@ -171,7 +174,7 @@ const proxy = (() => {
         }).filter((offering) => !!offering);
     };
 
-    const get = async function(req, res, searchTargets, entity) {
+    const get = async function(req, res, searchTargets, entity, api = 'catalog') {
         if (!Array.isArray(searchTargets)) {
             throw {
                 status: 422,
@@ -179,14 +182,17 @@ const proxy = (() => {
             };
         }
 
-        if (!SUPPORTED_COLLECTION_ENTITIES.has(entity)) {
+        if (
+            !SUPPORTED_COLLECTION_ENTITIES[api] ||
+            !SUPPORTED_COLLECTION_ENTITIES[api].has(entity)
+        ) {
             throw {
                 status: 422,
                 message: 'Cannot resolve federation targets for this request'
             };
         }
 
-        const entities = await fetchEntitiesBySearchTargets(req, searchTargets, entity);
+        const entities = await fetchEntitiesBySearchTargets(req, searchTargets, api, entity);
         return res.status(200).json(entities);
     };
 

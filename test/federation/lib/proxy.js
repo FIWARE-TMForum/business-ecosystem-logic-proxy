@@ -191,6 +191,57 @@ describe('Federation proxy', function() {
         }]);
     });
 
+    it('should aggregate product orders from ordering search targets', async function() {
+        const req = {
+            apiUrl: '/ordering/productOrder',
+            headers: {},
+            connection: { remoteAddress: '127.0.0.1' }
+        };
+        const res = getResponseMock();
+        const proxy = getProxy();
+
+        nock('https://endpoint-ordering')
+            .get('/api/productOrder')
+            .query(function(queryObject) {
+                return queryObject.href === 'order-1,order-2';
+            })
+            .reply(200, [{
+                id: 'order-1',
+                relatedParty: [{
+                    id: 'buyer-1',
+                    role: 'Buyer'
+                }]
+            }, {
+                id: 'order-2',
+                productOrderItem: [{
+                    productOffering: {
+                        id: 'offer-1'
+                    }
+                }]
+            }]);
+
+        await proxy.get(req, res, [
+            { id: 'order-1', sourceEndpoint: 'https://endpoint-ordering' },
+            { id: 'order-2', sourceEndpoint: 'https://endpoint-ordering' }
+        ], 'productOrder', 'ordering');
+
+        expect(res.status).toHaveBeenCalledWith(200);
+        expect(res.json).toHaveBeenCalledWith([{
+            id: getFederatedRef('https://endpoint-ordering', 'order-1'),
+            relatedParty: [{
+                id: getFederatedRef('https://endpoint-ordering', 'buyer-1'),
+                role: 'Buyer'
+            }]
+        }, {
+            id: getFederatedRef('https://endpoint-ordering', 'order-2'),
+            productOrderItem: [{
+                productOffering: {
+                    id: getFederatedRef('https://endpoint-ordering', 'offer-1')
+                }
+            }]
+        }]);
+    });
+
     it('should rewrite catalog references with source endpoint context', async function() {
         const req = {
             apiUrl: '/catalog/productOffering',

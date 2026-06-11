@@ -23,6 +23,7 @@ const config = require('../../config');
 const searchEngine = (() => {
     const OFFERS_SEARCH_ENDPOINT_PATH = '/api/SearchProduct';
     const CATALOGS_SEARCH_ENDPOINT_PATH = '/api/SearchCatalog';
+    const PRODUCT_ORDERS_SEARCH_ENDPOINT_PATH = '/api/SearchProductOrder';
 
     const normalizeCategories = function(categories) {
         if (Array.isArray(categories)) {
@@ -65,16 +66,24 @@ const searchEngine = (() => {
         return path.replace(/\/+$/, '');
     };
 
-    const buildSearchUrl = function(endpointPath, keyword, page) {
-        const encodedKeyword = encodeURIComponent(String(keyword || ''));
-        let url = `${config.searchUrl}${normalizeEndpointPath(endpointPath)}/${encodedKeyword}`;
-
+    const appendPagingParams = function(url, page) {
         if (page && page.offset != null && page.pageSize != null) {
             const pageN = Math.floor(parseInt(page.offset, 10) / parseInt(page.pageSize, 10));
-            url = `${url}?page=${pageN}&size=${page.pageSize}`;
+            return `${url}?page=${pageN}&size=${page.pageSize}`;
         }
 
         return url;
+    };
+
+    const buildSearchUrl = function(endpointPath, keyword, page) {
+        const encodedKeyword = encodeURIComponent(String(keyword || ''));
+        const url = `${config.searchUrl}${normalizeEndpointPath(endpointPath)}/${encodedKeyword}`;
+        return appendPagingParams(url, page);
+    };
+
+    const buildBodySearchUrl = function(endpointPath, page) {
+        const url = `${config.searchUrl}${normalizeEndpointPath(endpointPath)}`;
+        return appendPagingParams(url, page);
     };
 
     const normalizeSearchResults = function(responseData) {
@@ -100,6 +109,18 @@ const searchEngine = (() => {
         return normalizeSearchResults(response.data);
     };
 
+    const executeBodySearch = async function(endpointPath, body = {}, page = {}) {
+        if (!config.searchUrl) {
+            throw {
+                status: 400,
+                message: 'Search URL is not configured'
+            };
+        }
+
+        const response = await axios.post(buildBodySearchUrl(endpointPath, page || {}), body || {});
+        return normalizeSearchResults(response.data);
+    };
+
     const searchOffers = async function(keyword, categories, page, options = {}) {
         const endpointPath = options.endpointPath || OFFERS_SEARCH_ENDPOINT_PATH;
         const body = buildOfferingSearchBody(categories, options);
@@ -111,9 +132,18 @@ const searchEngine = (() => {
         return executeSearch(endpointPath, keyword, {}, page);
     };
 
+    const searchProductOrders = async function(partyExternalRef, role, page, options = {}) {
+        const endpointPath = options.endpointPath || PRODUCT_ORDERS_SEARCH_ENDPOINT_PATH;
+        return executeBodySearch(endpointPath, {
+            partyExternalRef: String(partyExternalRef || ''),
+            role: String(role || '')
+        }, page);
+    };
+
     return {
         searchOffers: searchOffers,
-        searchCatalogs: searchCatalogs
+        searchCatalogs: searchCatalogs,
+        searchProductOrders: searchProductOrders
     };
 })();
 
