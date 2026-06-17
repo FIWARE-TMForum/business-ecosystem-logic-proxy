@@ -172,6 +172,44 @@ describe('Catalog API', function() {
         });
     });
 
+    it('should forward sort and paging to external search on GET productOffering requests', function(done) {
+        const previousSearchUrl = config.searchUrl;
+        config.searchUrl = 'http://search.com';
+
+        const searchMethod = jasmine.createSpy('search').and.returnValue(Promise.resolve([
+            { id: 'id-1' }
+        ]));
+
+        var catalogApi = getCatalogApi({}, {}, {}, {}, {}, {}, { search: searchMethod });
+        var req = {
+            method: 'GET',
+            path: '/productOffering',
+            apiUrl: '/catalog/productOffering',
+            query: {
+                keyword: 'testkey',
+                offset: '6',
+                limit: '6',
+                sort: 'name'
+            }
+        };
+
+        catalogApi.checkPermissions(req, function(err) {
+            config.searchUrl = previousSearchUrl;
+            expect(err).toBeNull();
+            expect(searchMethod).toHaveBeenCalledWith(
+                'testkey',
+                undefined,
+                {
+                    offset: '6',
+                    pageSize: '6',
+                    sort: 'name'
+                }
+            );
+            expect(req.apiUrl).toBe('/catalog/productOffering?href=id-1');
+            done();
+        });
+    });
+
     /// ///////////////////////////////////////////////////////////////////////////////////////////
     /// /////////////////////////////////// NOT AUTHENTICATED /////////////////////////////////////
     /// ///////////////////////////////////////////////////////////////////////////////////////////

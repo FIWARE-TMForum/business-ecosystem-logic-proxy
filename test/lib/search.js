@@ -163,4 +163,67 @@ describe('Search client', () => {
             done()
         })
     })
+
+    it('should search using name sort if provided', (done) => {
+        let axios = jasmine.createSpy()
+        axios.and.returnValue(Promise.resolve({
+            data: []
+        }))
+
+        const client = searchClient({
+            post: axios
+        })
+
+        client.search('testkey', '', {offset: 6, pageSize: 6, sort: 'name'}).then((ids) => {
+            expect(ids).toEqual([])
+
+            let url = 'http://search.com/api/SearchProduct/testkey?sort=productOfferingName,asc&page=1&size=6'
+            expect(axios).toHaveBeenCalledWith(url, {
+                categories: []
+            })
+            done()
+        })
+    })
+
+    it('should search using ascending last update sort if provided', (done) => {
+        let axios = jasmine.createSpy()
+        axios.and.returnValue(Promise.resolve({
+            data: []
+        }))
+
+        const client = searchClient({
+            post: axios
+        })
+
+        client.search('testkey', '', {offset: 0, pageSize: 6, sort: 'lastUpdate'}).then((ids) => {
+            expect(ids).toEqual([])
+
+            let url = 'http://search.com/api/SearchProduct/testkey?sort=productOfferingLastUpdate,asc&page=0&size=6'
+            expect(axios).toHaveBeenCalledWith(url, {
+                categories: []
+            })
+            done()
+        })
+    })
+
+    it('should search using descending last update sort if provided', (done) => {
+        let axios = jasmine.createSpy()
+        axios.and.returnValue(Promise.resolve({
+            data: []
+        }))
+
+        const client = searchClient({
+            post: axios
+        })
+
+        client.search('testkey', '', {offset: 0, pageSize: 6, sort: '-lastUpdate'}).then((ids) => {
+            expect(ids).toEqual([])
+
+            let url = 'http://search.com/api/SearchProduct/testkey?sort=productOfferingLastUpdate,desc&page=0&size=6'
+            expect(axios).toHaveBeenCalledWith(url, {
+                categories: []
+            })
+            done()
+        })
+    })
 })

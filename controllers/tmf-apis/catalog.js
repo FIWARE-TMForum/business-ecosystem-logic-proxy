@@ -1510,6 +1510,10 @@ const catalog = (function() {
                 page.pageSize = query.limit
             }
 
+            if (query.sort != null) {
+                page.sort = query.sort
+            }
+
             searchEngine.search(query.keyword, query['category.id'], page)
                 .then(returnQueryRes)
                 .catch(() => {
