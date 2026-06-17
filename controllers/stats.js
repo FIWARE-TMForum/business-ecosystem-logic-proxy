@@ -45,10 +45,23 @@ function stats() {
 
         while (!complete) {
             let productUrl = baseUrl + `&offset=${start}&limit=${limit}`
-            const response = await axios.request({
-                method: 'GET',
-                url: productUrl
-            })
+            let response
+
+            try {
+                response = await axios.request({
+                    method: 'GET',
+                    url: productUrl
+                })
+            } catch (err) {
+                const status = err.response?.status;
+                const reason = err.response?.data?.message || err.response?.statusText;
+                logger.error(
+                    `Error loading stats page ${productUrl}` +
+                    (status ? ` (HTTP ${status}${reason ? `: ${reason}` : ''})` : '') +
+                    `: ${err.message}`
+                );
+                return null
+            }
 
             if (response.data.length == 0) {
                 complete = true
@@ -72,6 +85,11 @@ function stats() {
 
             return off.name
         })
+
+        if (offers == null) {
+            logger.error('Stats refresh skipped: product offering pages could not be loaded');
+            return
+        }
 
         // The products array now has the list of product specifications launched
         // Get the list of product owners
@@ -109,6 +127,11 @@ function stats() {
                 name: part.tradingName
             }
         })
+
+        if (parties == null) {
+            logger.error('Stats refresh skipped: organization pages could not be loaded');
+            return
+        }
 
         // Filter only the parties that own launched products
         parties = parties.filter((part) => partyIds.has(part.id)).map((part) => part.name)
@@ -149,7 +172,6 @@ function stats() {
 
         return loadStats().catch((err) => {
             logger.error('Stats could not be loaded', err);
-            throw err; // <-- critical for retryAsync
         });
     }
 

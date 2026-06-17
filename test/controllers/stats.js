@@ -128,7 +128,8 @@ describe('Stats Controller', () => {
             data: []
         }))
 
-        const cron = jasmine.createSpyObj('node-cron', ['schedule'])
+        const cron = jasmine.createSpyObj('node-cron', ['schedule', 'getTasks'])
+        cron.getTasks.and.returnValue(new Map())
         const schema = jasmine.createSpyObj('node-cron', ['findOne'])
         const dbObject = {
             services: [],
@@ -197,5 +198,28 @@ describe('Stats Controller', () => {
             expect(dbObject.save).toHaveBeenCalled()
             done()
         })
+    })
+
+    it('should skip stats refresh without failing init when a paged request fails', (done) => {
+        const axios = jasmine.createSpyObj('axios', ['request'])
+        axios.request.and.returnValue(Promise.reject({
+            message: 'Request failed with status code 500',
+            response: {
+                status: 500,
+                statusText: 'Internal Server Error'
+            }
+        }))
+
+        const cron = jasmine.createSpyObj('node-cron', ['schedule', 'getTasks'])
+        cron.getTasks.and.returnValue(new Map())
+        const schema = jasmine.createSpyObj('statsSchema', ['findOne'])
+
+        const instance = getStatsInstance(axios, cron, schema)
+
+        instance.init().then(() => {
+            expect(axios.request).toHaveBeenCalledTimes(1)
+            expect(schema.findOne).not.toHaveBeenCalled()
+            done()
+        }).catch(done.fail)
     })
 })
