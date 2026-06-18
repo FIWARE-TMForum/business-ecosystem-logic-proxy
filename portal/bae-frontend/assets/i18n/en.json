@@ -734,6 +734,7 @@
       "_no_orders": "No orders found",
       "_organization": "Organization",
       "_medium_type": "Medium type",
+      "_contact_title": "Title",
       "_preferred": "Preferred",
       "_no_mediums": "There's no contact medium information.",
       "_contact_info": "Contact information",
@@ -753,6 +754,7 @@
       "_cancel": "No, cancel",
       "_invalid_phone": "Phone number is invalid!",
       "_invalid_email": "Email is invalid!",
+      "_invalid_contact_title": "Title is mandatory!",
       "_save": "Save",
       "_success": "Updated successfully",
       "_website": "Website",
@@ -1470,7 +1472,11 @@
       "_smtpServer": "SMTP Server",
       "_smtpPort": "SMTP Port",
       "_emailUser": "Email User",
-      "_emailPass": "Email Password"
+      "_emailPass": "Email Password",
+      "_defaultCatalog": "Default catalog",
+      "_defaultCatalogId": "Default catalog ID",
+      "_noDefaultCatalogConfigured": "No default catalog is currently configured.",
+      "_saveDefaultCatalog": "Save default catalog"
     },
     "CATEGORIES": {
       "_categories": "Categories",
@@ -1657,6 +1663,19 @@
     "forCustomers": "For Customers",
     "forProviders": "For Providers"
   },
+  "BROWSE": {
+    "heroTitle1": "Discover ",
+    "heroAccent1": "trusted European",
+    "heroTitle2": " cloud, edge & AI ",
+    "heroAccent2": "services",
+    "searchPlaceholder": "Search Cloud Services, Data Services, Providers...",
+    "categoriesTitle": "What are you looking for?",
+    "categoriesSubtitle": "Explore trusted digital services by category",
+    "showAll": "Show all",
+    "popularTitle": "Most popular services",
+    "popularSubtitle": "Discover services tailored to your needs",
+    "viewService": "View service"
+  },
   "HEADER": {
     "contactUs": "Contact us",
     "_browse_serv": "Browse services",
@@ -1787,6 +1806,7 @@
     "_no_orders": "No orders found",
     "_organization": "Organization",
     "_medium_type": "Medium type",
+    "_contact_title": "Title",
     "_preferred": "Preferred",
     "_no_mediums": "There's no contact medium information.",
     "_contact_info": "Contact information",
@@ -1806,6 +1826,7 @@
     "_cancel": "No, cancel",
     "_invalid_phone": "Phone number is invalid!",
     "_invalid_email": "Email is invalid!",
+    "_invalid_contact_title": "Title is mandatory!",
     "_save": "Save",
     "_success": "Updated successfully",
     "_website": "Website",
@@ -2528,7 +2549,11 @@
     "_smtpServer": "SMTP Server",
     "_smtpPort": "SMTP Port",
     "_emailUser": "Email User",
-    "_emailPass": "Email Password"
+    "_emailPass": "Email Password",
+    "_defaultCatalog": "Default catalog",
+    "_defaultCatalogId": "Default catalog ID",
+    "_noDefaultCatalogConfigured": "No default catalog is currently configured.",
+    "_saveDefaultCatalog": "Save default catalog"
   },
   "CATEGORIES": {
     "_categories": "Categories",

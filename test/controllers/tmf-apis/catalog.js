@@ -86,7 +86,7 @@ describe('Catalog API', function() {
     const basepath = '/catalog'
     const serviceLaunchFail= 0
     const resourceLaunchFail= 1
-    var getCatalogApi = function(storeClient, tmfUtils, utils, rssClient, indexes, async) {
+    var getCatalogApi = function(storeClient, tmfUtils, utils, rssClient, indexes, async, searchEngine) {
         if (!rssClient) {
             rssClient = {};
         }
@@ -98,9 +98,8 @@ describe('Catalog API', function() {
         if (!async) {
             async = {};
         }
-        
-        // load config depending on utils
-        return proxyquire('../../../controllers/tmf-apis/catalog', {
+
+        const stubs = {
             './../../config': config,
             './../../lib/logger': testUtils.emptyLogger,
             './../../lib/store': storeClient,
@@ -109,7 +108,14 @@ describe('Catalog API', function() {
             './../../lib/utils': utils,
             './../../lib/indexes': {indexes},
             async: async
-        }).catalog;
+        }
+
+        if (searchEngine) {
+            stubs['../../lib/search'] = { searchEngine: searchEngine };
+        }
+
+        // load config depending on utils
+        return proxyquire('../../../controllers/tmf-apis/catalog', stubs).catalog;
     };
 
     beforeEach(function() {
@@ -130,6 +136,76 @@ describe('Catalog API', function() {
 
         catalogApi.checkPermissions(req, function() {
             // Callback function. It's called without arguments...
+            done();
+        });
+    });
+
+    it('should use external search on GET productOffering requests with filter-only category.id params', function(done) {
+        const previousSearchUrl = config.searchUrl;
+        config.searchUrl = 'http://search.com';
+
+        const searchMethod = jasmine.createSpy('search').and.returnValue(Promise.resolve([
+            { id: 'id-1' },
+            { id: 'id-2' }
+        ]));
+
+        var catalogApi = getCatalogApi({}, {}, {}, {}, {}, {}, { search: searchMethod });
+        var req = {
+            method: 'GET',
+            path: '/productOffering',
+            apiUrl: '/catalog/productOffering',
+            query: {
+                'category.id': 'compliance_profile::B,compliance_profile::P'
+            }
+        };
+
+        catalogApi.checkPermissions(req, function(err) {
+            config.searchUrl = previousSearchUrl;
+            expect(err).toBeNull();
+            expect(searchMethod).toHaveBeenCalledWith(
+                undefined,
+                'compliance_profile::B,compliance_profile::P',
+                {}
+            );
+            expect(req.apiUrl).toBe('/catalog/productOffering?href=id-1,id-2');
+            done();
+        });
+    });
+
+    it('should forward sort and paging to external search on GET productOffering requests', function(done) {
+        const previousSearchUrl = config.searchUrl;
+        config.searchUrl = 'http://search.com';
+
+        const searchMethod = jasmine.createSpy('search').and.returnValue(Promise.resolve([
+            { id: 'id-1' }
+        ]));
+
+        var catalogApi = getCatalogApi({}, {}, {}, {}, {}, {}, { search: searchMethod });
+        var req = {
+            method: 'GET',
+            path: '/productOffering',
+            apiUrl: '/catalog/productOffering',
+            query: {
+                keyword: 'testkey',
+                offset: '6',
+                limit: '6',
+                sort: 'name'
+            }
+        };
+
+        catalogApi.checkPermissions(req, function(err) {
+            config.searchUrl = previousSearchUrl;
+            expect(err).toBeNull();
+            expect(searchMethod).toHaveBeenCalledWith(
+                'testkey',
+                undefined,
+                {
+                    offset: '6',
+                    pageSize: '6',
+                    sort: 'name'
+                }
+            );
+            expect(req.apiUrl).toBe('/catalog/productOffering?href=id-1');
             done();
         });
     });
@@ -5420,6 +5496,121 @@ describe('Catalog API', function() {
                     name: 'Category child',
                     isRoot: false,
                     parentId: 'cat-parent'
+                }
+            };
+
+            const retrieveScope = nock(serverUrl)
+                .get(defaultCatalogPath)
+                .reply(200, { category: [] });
+
+            testPostValidation(
+                req,
+                () => {
+                    expect(retrieveScope.isDone()).toBe(false);
+                },
+                done
+            );
+        });
+
+        it('should remove categories from the default catalog when category status is retired', function(done) {
+            const req = {
+                method: 'PATCH',
+                apiUrl: '/category/cat-1',
+                body: {
+                    id: 'cat-1',
+                    lifecycleStatus: 'ReTiReD'
+                }
+            };
+
+            const existingCategory = {
+                id: 'existing-cat',
+                href: 'http://example.com/category/existing-cat',
+                name: 'Existing category'
+            };
+            const retiredCategory = {
+                id: 'cat-1',
+                href: 'http://example.com/category/cat-1',
+                name: 'Category 1'
+            };
+
+            let updatePayload = null;
+
+            const retrieveScope = nock(serverUrl)
+                .get(defaultCatalogPath)
+                .reply(200, { category: [existingCategory, retiredCategory] });
+            const updateScope = nock(serverUrl)
+                .patch(defaultCatalogPath, (payload) => {
+                    updatePayload = payload;
+                    return true;
+                })
+                .reply(200, {});
+
+            testPostValidation(
+                req,
+                () => {
+                    expect(retrieveScope.isDone()).toBe(true);
+                    expect(updateScope.isDone()).toBe(true);
+                    expect(updatePayload).toEqual({
+                        category: [existingCategory]
+                    });
+                },
+                done
+            );
+        });
+
+        it('should remove categories from the default catalog when category status is obsolete', function(done) {
+            const req = {
+                method: 'PATCH',
+                apiUrl: '/category/cat-1',
+                body: {
+                    id: 'cat-1',
+                    lifecycleStatus: 'ObSoLeTe'
+                }
+            };
+
+            const existingCategory = {
+                id: 'existing-cat',
+                href: 'http://example.com/category/existing-cat',
+                name: 'Existing category'
+            };
+            const obsoleteCategory = {
+                id: 'cat-1',
+                href: 'http://example.com/category/cat-1',
+                name: 'Category 1'
+            };
+
+            let updatePayload = null;
+
+            const retrieveScope = nock(serverUrl)
+                .get(defaultCatalogPath)
+                .reply(200, { category: [obsoleteCategory, existingCategory] });
+            const updateScope = nock(serverUrl)
+                .patch(defaultCatalogPath, (payload) => {
+                    updatePayload = payload;
+                    return true;
+                })
+                .reply(200, {});
+
+            testPostValidation(
+                req,
+                () => {
+                    expect(retrieveScope.isDone()).toBe(true);
+                    expect(updateScope.isDone()).toBe(true);
+                    expect(updatePayload).toEqual({
+                        category: [existingCategory]
+                    });
+                },
+                done
+            );
+        });
+
+        it('should not remove categories from the default catalog when category status is not retired or obsolete', function(done) {
+            const req = {
+                method: 'PATCH',
+                apiUrl: '/category/cat-1',
+                body: {
+                    id: 'cat-1',
+                    lifecycleStatus: 'active'
                 }
             };
 

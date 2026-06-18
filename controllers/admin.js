@@ -25,7 +25,213 @@ const { indexes } = require('./../lib/indexes')
 
 const logger = require('./../lib/logger').logger.getLogger('Admin')
 
+const SEARCH_FILTERS_COLLECTION = 'config'
+const SEARCH_FILTERS_CONFIG_ID = 'search-filters'
+
 function admin() {
+    const parseBody = function(body) {
+        if (body == null) {
+            throw new Error('Invalid body')
+        }
+
+        if (typeof body === 'string') {
+            return JSON.parse(body)
+        }
+
+        if (typeof body === 'object' && !Array.isArray(body)) {
+            return body
+        }
+
+        throw new Error('Invalid body')
+    }
+
+    const normalizeNonEmptyString = function(value) {
+        if (typeof value !== 'string') {
+            return null
+        }
+
+        const normalized = value.trim()
+        return normalized.length > 0 ? normalized : null
+    }
+
+    const getDefaultSearchFilters = function() {
+        return {
+            primaryCategoriesMode: 'catalogFirstLevel',
+            primaryRootName: '',
+            filters: []
+        }
+    }
+
+    const validateOption = function(option, filterName, optionIndex, errors) {
+        if (option == null || typeof option !== 'object' || Array.isArray(option)) {
+            errors.push(`filters[${filterName}].children[${optionIndex}] must be an object`)
+            return null
+        }
+
+        if ('source' in option) {
+            errors.push(`filters[${filterName}].children[${optionIndex}] must not include source`)
+        }
+        if ('rootName' in option) {
+            errors.push(`filters[${filterName}].children[${optionIndex}] must not include rootName`)
+        }
+        if ('children' in option) {
+            errors.push(`filters[${filterName}].children[${optionIndex}] must not include nested children`)
+        }
+
+        const name = normalizeNonEmptyString(option.name)
+        if (name == null) {
+            errors.push(`filters[${filterName}].children[${optionIndex}].name is required and must be non-empty`)
+        }
+
+        if ('label' in option && typeof option.label !== 'string') {
+            errors.push(`filters[${filterName}].children[${optionIndex}].label must be a string`)
+        }
+
+        if (name == null) {
+            return null
+        }
+
+        const normalizedOption = {
+            name: name
+        }
+
+        if (typeof option.label === 'string') {
+            normalizedOption.label = option.label
+        }
+
+        return normalizedOption
+    }
+
+    const validateFilter = function(filter, index, errors) {
+        if (filter == null || typeof filter !== 'object' || Array.isArray(filter)) {
+            errors.push(`filters[${index}] must be an object`)
+            return null
+        }
+
+        const name = normalizeNonEmptyString(filter.name)
+        if (name == null) {
+            errors.push(`filters[${index}].name is required and must be non-empty`)
+        }
+
+        if ('label' in filter && typeof filter.label !== 'string') {
+            errors.push(`filters[${index}].label must be a string`)
+        }
+
+        const source = filter.source
+        if (source !== 'configured' && source !== 'categoryRoot') {
+            errors.push(`filters[${index}].source must be one of: configured, categoryRoot`)
+        }
+
+        let normalizedChildren = []
+        if (source === 'configured') {
+            if ('children' in filter && !Array.isArray(filter.children)) {
+                errors.push(`filters[${index}].children must be an array`)
+            } else if (Array.isArray(filter.children)) {
+                normalizedChildren = filter.children.map((option, optionIndex) => {
+                    return validateOption(option, index, optionIndex, errors)
+                }).filter((option) => option != null)
+            }
+        } else if (source === 'categoryRoot') {
+            const rootName = normalizeNonEmptyString(filter.rootName)
+
+            if (rootName == null) {
+                errors.push(`filters[${index}].rootName is required and must be non-empty when source is categoryRoot`)
+            }
+
+            if ('children' in filter) {
+                if (!Array.isArray(filter.children)) {
+                    errors.push(`filters[${index}].children must be an array when provided`)
+                } else if (filter.children.length > 0) {
+                    errors.push(`filters[${index}].children must be empty when source is categoryRoot`)
+                }
+            }
+        }
+
+        if (name == null || (source !== 'configured' && source !== 'categoryRoot')) {
+            return null
+        }
+
+        const normalizedFilter = {
+            name: name,
+            source: source
+        }
+
+        if (typeof filter.label === 'string') {
+            normalizedFilter.label = filter.label
+        }
+
+        if (source === 'configured') {
+            normalizedFilter.children = normalizedChildren
+        } else if (source === 'categoryRoot') {
+            normalizedFilter.rootName = filter.rootName.trim()
+        }
+
+        return normalizedFilter
+    }
+
+    const validateAndNormalizeSearchFilters = function(body) {
+        const errors = []
+
+        if (body == null || typeof body !== 'object' || Array.isArray(body)) {
+            return {
+                errors: ['Body must be a JSON object'],
+                value: null
+            }
+        }
+
+        if (!Object.prototype.hasOwnProperty.call(body, 'primaryCategoriesMode')) {
+            errors.push('primaryCategoriesMode is required')
+        }
+        if (!Object.prototype.hasOwnProperty.call(body, 'primaryRootName')) {
+            errors.push('primaryRootName is required')
+        }
+        if (!Object.prototype.hasOwnProperty.call(body, 'filters')) {
+            errors.push('filters is required')
+        }
+
+        const mode = body.primaryCategoriesMode
+        if (mode !== 'catalogFirstLevel' && mode !== 'rooted') {
+            errors.push('primaryCategoriesMode must be one of: catalogFirstLevel, rooted')
+        }
+
+        if (typeof body.primaryRootName !== 'string') {
+            errors.push('primaryRootName must be a string')
+        }
+
+        if (!Array.isArray(body.filters)) {
+            errors.push('filters must be an array')
+        }
+
+        if (errors.length > 0) {
+            return { errors: errors, value: null }
+        }
+
+        if (mode === 'catalogFirstLevel') {
+            return { errors: [], value: getDefaultSearchFilters() }
+        }
+
+        const primaryRootName = normalizeNonEmptyString(body.primaryRootName)
+        if (primaryRootName == null) {
+            errors.push('primaryRootName must be non-empty when primaryCategoriesMode is rooted')
+        }
+
+        const normalizedFilters = body.filters.map((filter, index) => {
+            return validateFilter(filter, index, errors)
+        }).filter((filter) => filter != null)
+
+        if (errors.length > 0) {
+            return { errors: errors, value: null }
+        }
+
+        return {
+            errors: [],
+            value: {
+                primaryCategoriesMode: 'rooted',
+                primaryRootName: primaryRootName,
+                filters: normalizedFilters
+            }
+        }
+    }
 
     const redirRequest = function(options, req, res) {
         console.log("Admin endpoint: Making request to the API")
@@ -225,10 +431,59 @@ function admin() {
         res.status(200).end()
     }
 
+    const updateSearchFiltersConfig = async function(req, res) {
+        if (!utils.isAdmin(req.user)) {
+            res.status(403)
+            res.json({ error: "You are not authorized to access admin endpoint" })
+            return
+        }
+
+        let reqBody
+        try {
+            reqBody = parseBody(req.body)
+        } catch (e) {
+            res.status(400)
+            res.json({ error: 'Invalid body' })
+            return
+        }
+
+        const validationResult = validateAndNormalizeSearchFilters(reqBody)
+        if (validationResult.errors.length > 0) {
+            res.status(400)
+            res.json({
+                error: 'Invalid search filters payload',
+                details: validationResult.errors
+            })
+            return
+        }
+
+        try {
+            const result = await indexes.search(SEARCH_FILTERS_COLLECTION, { id: SEARCH_FILTERS_CONFIG_ID, limit: 1 })
+
+            if (result.length > 0) {
+                await indexes.updateDocument(SEARCH_FILTERS_COLLECTION, result[0].id, {
+                    searchFilters: validationResult.value
+                })
+            } else {
+                await indexes.indexDocument(SEARCH_FILTERS_COLLECTION, SEARCH_FILTERS_CONFIG_ID, {
+                    searchFilters: validationResult.value
+                })
+            }
+        } catch (e) {
+            res.status(500)
+            res.json({ error: 'Error updating search filters config: ' + e.message })
+            return
+        }
+
+        res.status(200)
+        res.json(validationResult.value)
+    }
+
     return {
         checkPermissions: checkPermissions,
         uploadCertificate: uploadCertificate,
-        updateDefaultCatalog: updateDefaultCatalog
+        updateDefaultCatalog: updateDefaultCatalog,
+        updateSearchFiltersConfig: updateSearchFiltersConfig
     }
 }
 

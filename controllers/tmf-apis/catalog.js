@@ -1474,6 +1474,8 @@ const catalog = (function() {
     };
 
     const processQuery = async (req, callback) => {
+        const query = req.query || {}
+
         const returnQueryRes = (result) => {
             let newUrl = '/catalog/productOffering?href='
 
@@ -1493,19 +1495,26 @@ const catalog = (function() {
             callback(null)
         }
 
-        if (offeringsPattern.test(req.path) && req.query.keyword != null && config.searchUrl) {
+        const hasKeyword = query.keyword != null && String(query.keyword).trim().length > 0
+        const hasCategoryFilters = query['category.id'] != null && String(query['category.id']).trim().length > 0
+
+        if (offeringsPattern.test(req.path) && config.searchUrl && (hasKeyword || hasCategoryFilters)) {
             // Query to the external search engine
             let page = {}
 
-            if (req.query.offset != null) {
-                page.offset = req.query.offset
+            if (query.offset != null) {
+                page.offset = query.offset
             }
 
-            if (req.query.limit != null) {
-                page.pageSize = req.query.limit
+            if (query.limit != null) {
+                page.pageSize = query.limit
             }
 
-            searchEngine.search(req.query.keyword, req.query['category.id'], page)
+            if (query.sort != null) {
+                page.sort = query.sort
+            }
+
+            searchEngine.search(query.keyword, query['category.id'], page)
                 .then(returnQueryRes)
                 .catch(() => {
                     callback({
@@ -1698,6 +1707,54 @@ const catalog = (function() {
                 })
             }
         })
+        } else if (req.method == 'PATCH' && categoryPattern.test(req.apiUrl)) {
+            body = req.body
+            const lifecycleStatus =
+                !!body && !!body.lifecycleStatus && typeof body.lifecycleStatus === 'string'
+                    ? body.lifecycleStatus.toLowerCase()
+                    : null;
+            const shouldDetachFromDefaultCatalog =
+                lifecycleStatus === RETIRED_STATE || lifecycleStatus === OBSOLETE_STATE;
+            const categoryId = !!body && !!body.id ? body.id : null;
+
+            if (!shouldDetachFromDefaultCatalog || !categoryId) {
+                return callback(null);
+            }
+
+            retrieveAsset(`/catalog/${config.defaultId}`, function(err, result) {
+                if (err) {
+                    if (err.status == 404) {
+                        callback({
+                            status: 400,
+                            message: 'Missing default catalog in the system'
+                        });
+                    } else {
+                        callback({
+                            status: 500,
+                            message: 'Error with default catalog in the system'
+                        });
+                    }
+                } else {
+                    let dftCategory = result.body.category
+                    if (!Array.isArray(dftCategory)) {
+                        dftCategory = []
+                    }
+                    const updatedCategory = dftCategory.filter((category) => category.id !== categoryId)
+                    if (updatedCategory.length === dftCategory.length) {
+                        return callback(null)
+                    }
+                    updateAsset(`/catalog/${config.defaultId}`, {category: updatedCategory}, function(err){
+                        if (err){
+                            callback({
+                                status: 500,
+                                message: 'Error removing the category from default catalog'
+                            })
+                        } else{
+                            callback(null)
+                        }
+                    })
+                }
+            })
         } else if (req.method == 'POST' && productsPattern.test(req.apiUrl)) {
             body = req.body;
             storeClient.attachProduct(
