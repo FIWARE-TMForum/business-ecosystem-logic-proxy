@@ -740,6 +740,44 @@ config.paymentGateway = process.env.BAE_LP_PAYMENT_GATEWAY || config.paymentGate
 config.analytics = '';
 config.analytics = process.env.BAE_LP_ANALYTICS_URL || config.analytics;
 
+config.analyticsSupersetDomain = '';
+config.analyticsSupersetDomain = process.env.BAE_LP_ANALYTICS_SUPERSET_DOMAIN || config.analyticsSupersetDomain;
+
+config.analyticsDashboards = {
+    businessInsightsNonLear: '',
+    businessInsightsLear: '',
+    usageMonitor: ''
+};
+config.analyticsDashboards.businessInsightsNonLear =
+    process.env.BAE_LP_ANALYTICS_DASHBOARD_BUSINESS_INSIGHTS_NON_LEAR || config.analyticsDashboards.businessInsightsNonLear;
+config.analyticsDashboards.businessInsightsLear =
+    process.env.BAE_LP_ANALYTICS_DASHBOARD_BUSINESS_INSIGHTS_LEAR || config.analyticsDashboards.businessInsightsLear;
+config.analyticsDashboards.usageMonitor =
+    process.env.BAE_LP_ANALYTICS_DASHBOARD_USAGE_MONITOR || config.analyticsDashboards.usageMonitor;
+
+config.analyticsSuperset = {
+    url: '',
+    username: '',
+    password: '',
+    provider: 'db',
+    rls: {
+        businessInsightsNonLear: [],
+        businessInsightsLear: [],
+        usageMonitor: []
+    }
+};
+
+config.analyticsSuperset.url = process.env.BAE_LP_ANALYTICS_SUPERSET_URL || config.analyticsSupersetDomain;
+config.analyticsSuperset.username =
+    process.env.BAE_LP_ANALYTICS_SUPERSET_USERNAME || config.analyticsSuperset.username;
+config.analyticsSuperset.password =
+    process.env.BAE_LP_ANALYTICS_SUPERSET_PASSWORD || config.analyticsSuperset.password;
+config.analyticsSuperset.provider =
+    process.env.BAE_LP_ANALYTICS_SUPERSET_PROVIDER || config.analyticsSuperset.provider;
+if (process.env.BAE_LP_ANALYTICS_RLS) {
+    config.analyticsSuperset.rls = JSON.parse(process.env.BAE_LP_ANALYTICS_RLS);
+}
+
 config.defaultId = '';
 
 // Purchase enabled

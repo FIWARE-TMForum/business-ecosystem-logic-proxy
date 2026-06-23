@@ -28,6 +28,7 @@ const multer = require('multer');
 const tmf = require('./controllers/tmf').tmf();
 const admin = require('./controllers/admin').admin();
 const stats = require('./controllers/stats').stats();
+const analytics = require('./controllers/analytics').analytics();
 const payment = require('./controllers/payment').payment();
 const contactUs = require('./controllers/contactUs').contactUs();
 const compliance = require('./controllers/compliance').compliance;
@@ -455,6 +456,7 @@ app.get('/config', async (_, res) => {
         defaultId: config.defaultId,
         paymentGateway: config.paymentGateway,
         analytics: config.analytics,
+        analyticsSupersetDomain: config.analyticsSupersetDomain,
         theme: config.theme,
         quotesEnabled: config.quoteEnabled,
         tenderingEnabled: config.tenderingEnabled,
@@ -466,6 +468,8 @@ app.get('/config', async (_, res) => {
 })
 
 app.get('/stats', stats.getStats)
+
+app.post('/analytics/guest-token', authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, failIfNotAuthenticated, analytics.getGuestToken)
 
 app.get('/offering/:id/launch', authMiddleware.headerAuthentication, failIfNotAuthenticated, catalog.checkOfferingLaunch);
 
