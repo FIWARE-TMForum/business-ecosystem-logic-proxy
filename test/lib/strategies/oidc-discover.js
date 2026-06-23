@@ -308,6 +308,79 @@ describe('OIDC-Discover Strategy', () => {
 	    });
 	});
 
+	describe('refresh token', () => {
+	    let userStrategy;
+	    let mockRefresh;
+
+	    beforeEach(async () => {
+		mockRefresh = jasmine.createSpy('refresh');
+
+		const discoverWithRefresh = async function(uri) {
+		    const clientConstructor = function(opts) {
+			return {
+			    discovery_uri: uri,
+			    client_id: opts.client_id,
+			    client_secret: opts.client_secret,
+			    redirect_uris: opts.redirect_uris,
+			    token_endpoint_auth_method: opts.token_endpoint_auth_method,
+			    refresh: mockRefresh
+			};
+		    };
+		    return { Client: clientConstructor };
+		};
+
+		const passportMock = {
+		    Issuer: { discover: discoverWithRefresh },
+		    Strategy: MockStrategy
+		};
+
+		const config = {
+		    clientID: 'client_id',
+		    clientSecret: 'client_secret',
+		    callbackURL: 'http://market.com/callback',
+		    server: 'http://idp.com',
+		    oidcScopes: 'openid',
+		    oidcDiscoveryURI: 'http://idp.com/.well-known/openid-configuration',
+		    oidcTokenEndpointAuthMethod: 'client_secret_basic',
+		    defaultRole: 'seller',
+		    key: 'key'
+		};
+
+		const toTest = buildStrategyMock(passportMock);
+		const builderToTest = toTest(config);
+		userStrategy = await builderToTest.buildStrategy(() => {});
+	    });
+
+	    it('should call done with new tokens on successful refresh', async () => {
+		mockRefresh.and.returnValue(Promise.resolve({
+		    access_token: 'new-access-token',
+		    refresh_token: 'new-refresh-token'
+		}));
+
+		await new Promise((resolve) => {
+		    userStrategy.refresh('old-refresh-token', (err, accessToken, refreshToken) => {
+			expect(err).toBeNull();
+			expect(accessToken).toEqual('new-access-token');
+			expect(refreshToken).toEqual('new-refresh-token');
+			expect(mockRefresh).toHaveBeenCalledWith('old-refresh-token');
+			resolve();
+		    });
+		});
+	    });
+
+	    it('should call done with error on failed refresh', async () => {
+		const refreshError = new Error('token refresh failed');
+		mockRefresh.and.returnValue(Promise.reject(refreshError));
+
+		await new Promise((resolve) => {
+		    userStrategy.refresh('invalid-refresh-token', (err) => {
+			expect(err).toEqual(refreshError);
+			resolve();
+		    });
+		});
+	    });
+	});
+
 	it('should return specified scope', () => {
             const passportMock = {
 		Issuer: MockIssuer,
