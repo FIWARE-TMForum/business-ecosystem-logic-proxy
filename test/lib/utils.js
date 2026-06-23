@@ -257,6 +257,10 @@ describe('Utils', function() {
         it('should return correct port for rss', function() {
             testGetAPIPort('rss');
         });
+
+        it('should return correct port for document', function() {
+            testGetAPIPort('document');
+        });
     });
 
     describe('Get Auth Token', function() {
