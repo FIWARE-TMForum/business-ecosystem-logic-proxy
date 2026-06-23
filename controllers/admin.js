@@ -27,6 +27,17 @@ const logger = require('./../lib/logger').logger.getLogger('Admin')
 
 const SEARCH_FILTERS_COLLECTION = 'config'
 const SEARCH_FILTERS_CONFIG_ID = 'search-filters'
+const FEATURE_FLAGS_COLLECTION = 'config'
+const FEATURE_FLAGS_CONFIG_ID = 'feature-flags'
+const FEATURE_FLAGS = [
+    'purchaseEnabled',
+    'dataSpaceEnabled',
+    'quotesEnabled',
+    'tenderingEnabled',
+    'launchValidationEnabled',
+    'aiEnabled',
+    'tenderDevButtonsOpenCloseEnabled'
+]
 
 function admin() {
     const parseBody = function(body) {
@@ -59,6 +70,78 @@ function admin() {
             primaryCategoriesMode: 'catalogFirstLevel',
             primaryRootName: '',
             filters: []
+        }
+    }
+
+    const getDefaultFeatureFlags = function() {
+        return FEATURE_FLAGS.reduce((features, feature) => {
+            features[feature] = config[feature] === true
+            return features
+        }, {})
+    }
+
+    const normalizeFeatureFlagOverrides = function(features) {
+        if (features == null || typeof features !== 'object' || Array.isArray(features)) {
+            return {}
+        }
+
+        return FEATURE_FLAGS.reduce((overrides, feature) => {
+            if (typeof features[feature] === 'boolean') {
+                overrides[feature] = features[feature]
+            }
+            return overrides
+        }, {})
+    }
+
+    const getEffectiveFeatureFlags = function(overrides) {
+        return Object.assign(getDefaultFeatureFlags(), normalizeFeatureFlagOverrides(overrides))
+    }
+
+    const applyFeatureFlags = function(features) {
+        FEATURE_FLAGS.forEach((feature) => {
+            config[feature] = features[feature]
+        })
+
+        return features
+    }
+
+    const validateAndNormalizeFeatureFlags = function(body) {
+        const errors = []
+
+        if (body == null || typeof body !== 'object' || Array.isArray(body)) {
+            return {
+                errors: ['Body must be a JSON object'],
+                value: null
+            }
+        }
+
+        const keys = Object.keys(body)
+        if (keys.length === 0) {
+            errors.push('At least one feature flag is required')
+        }
+
+        const normalized = {}
+        keys.forEach((key) => {
+            if (FEATURE_FLAGS.indexOf(key) === -1) {
+                errors.push(`${key} is not a configurable feature flag`)
+                return
+            }
+
+            if (typeof body[key] !== 'boolean') {
+                errors.push(`${key} must be a boolean`)
+                return
+            }
+
+            normalized[key] = body[key]
+        })
+
+        if (errors.length > 0) {
+            return { errors: errors, value: null }
+        }
+
+        return {
+            errors: [],
+            value: normalized
         }
     }
 
@@ -479,11 +562,65 @@ function admin() {
         res.json(validationResult.value)
     }
 
+    const updateFeatureFlagsConfig = async function(req, res) {
+        if (!utils.isAdmin(req.user)) {
+            res.status(403)
+            res.json({ error: "You are not authorized to access admin endpoint" })
+            return
+        }
+
+        let reqBody
+        try {
+            reqBody = parseBody(req.body)
+        } catch (e) {
+            res.status(400)
+            res.json({ error: 'Invalid body' })
+            return
+        }
+
+        const validationResult = validateAndNormalizeFeatureFlags(reqBody)
+        if (validationResult.errors.length > 0) {
+            res.status(400)
+            res.json({
+                error: 'Invalid feature flags payload',
+                details: validationResult.errors
+            })
+            return
+        }
+
+        let effectiveFeatureFlags
+        try {
+            const result = await indexes.search(FEATURE_FLAGS_COLLECTION, { id: FEATURE_FLAGS_CONFIG_ID, limit: 1 })
+            const existingOverrides = result.length > 0 ? normalizeFeatureFlagOverrides(result[0].features) : {}
+            const updatedOverrides = Object.assign(existingOverrides, validationResult.value)
+
+            effectiveFeatureFlags = applyFeatureFlags(getEffectiveFeatureFlags(updatedOverrides))
+
+            if (result.length > 0) {
+                await indexes.updateDocument(FEATURE_FLAGS_COLLECTION, result[0].id, {
+                    features: updatedOverrides
+                })
+            } else {
+                await indexes.indexDocument(FEATURE_FLAGS_COLLECTION, FEATURE_FLAGS_CONFIG_ID, {
+                    features: updatedOverrides
+                })
+            }
+        } catch (e) {
+            res.status(500)
+            res.json({ error: 'Error updating feature flags config: ' + e.message })
+            return
+        }
+
+        res.status(200)
+        res.json(effectiveFeatureFlags)
+    }
+
     return {
         checkPermissions: checkPermissions,
         uploadCertificate: uploadCertificate,
         updateDefaultCatalog: updateDefaultCatalog,
-        updateSearchFiltersConfig: updateSearchFiltersConfig
+        updateSearchFiltersConfig: updateSearchFiltersConfig,
+        updateFeatureFlagsConfig: updateFeatureFlagsConfig
     }
 }
 

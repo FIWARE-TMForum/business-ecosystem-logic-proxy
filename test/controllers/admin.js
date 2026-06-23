@@ -716,4 +716,226 @@ describe('Admin Controller', () => {
             done()
         })
     })
+
+    const setFeatureFlagDefaults = () => {
+        config.purchaseEnabled = true
+        config.dataSpaceEnabled = true
+        config.quotesEnabled = true
+        config.tenderingEnabled = true
+        config.launchValidationEnabled = false
+        config.aiEnabled = false
+        config.tenderDevButtonsOpenCloseEnabled = false
+    }
+
+    it('should persist and return effective feature flags config', (done) => {
+        setFeatureFlagDefaults()
+
+        const searchMock = jasmine.createSpy('search').and.returnValue(Promise.resolve([]))
+        const updateMock = jasmine.createSpy('updateDocument').and.returnValue(Promise.resolve())
+        const indexMock = jasmine.createSpy('indexDocument').and.returnValue(Promise.resolve())
+
+        const indexes = {
+            indexes: {
+                search: searchMock,
+                updateDocument: updateMock,
+                indexDocument: indexMock
+            }
+        }
+
+        const request = {
+            user: {
+                partyId: '1234',
+                roles: [{
+                    name: config.roles.admin
+                }]
+            },
+            body: JSON.stringify({
+                purchaseEnabled: false,
+                quotesEnabled: false,
+                aiEnabled: true
+            })
+        }
+
+        const expectedResponse = {
+            purchaseEnabled: false,
+            dataSpaceEnabled: true,
+            quotesEnabled: false,
+            tenderingEnabled: true,
+            launchValidationEnabled: false,
+            aiEnabled: true,
+            tenderDevButtonsOpenCloseEnabled: false
+        }
+
+        const response = jasmine.createSpyObj('res', ['status', 'json'])
+        let resPromise = new Promise((resolve, reject) => {
+            response.json.and.callFake(() => resolve())
+        })
+
+        const instance = getAdminInstance({}, null, indexes)
+        instance.updateFeatureFlagsConfig(request, response)
+
+        resPromise.then(() => {
+            expect(searchMock).toHaveBeenCalledWith('config', { id: 'feature-flags', limit: 1 })
+            expect(updateMock).not.toHaveBeenCalled()
+            expect(indexMock).toHaveBeenCalledWith('config', 'feature-flags', {
+                features: {
+                    purchaseEnabled: false,
+                    quotesEnabled: false,
+                    aiEnabled: true
+                }
+            })
+            expect(response.status).toHaveBeenCalledWith(200)
+            expect(response.json).toHaveBeenCalledWith(expectedResponse)
+            expect(config.purchaseEnabled).toBe(false)
+            expect(config.aiEnabled).toBe(true)
+            done()
+        })
+    })
+
+    it('should merge feature flag updates with existing overrides', (done) => {
+        setFeatureFlagDefaults()
+
+        const searchMock = jasmine.createSpy('search').and.returnValue(Promise.resolve([{
+            id: 'doc-1',
+            features: {
+                purchaseEnabled: false,
+                aiEnabled: true
+            }
+        }]))
+        const updateMock = jasmine.createSpy('updateDocument').and.returnValue(Promise.resolve())
+
+        const indexes = {
+            indexes: {
+                search: searchMock,
+                updateDocument: updateMock,
+                indexDocument: jasmine.createSpy('indexDocument').and.returnValue(Promise.resolve())
+            }
+        }
+
+        const request = {
+            user: {
+                partyId: '1234',
+                roles: [{
+                    name: config.roles.admin
+                }]
+            },
+            body: JSON.stringify({
+                dataSpaceEnabled: false,
+                launchValidationEnabled: true
+            })
+        }
+
+        const expectedResponse = {
+            purchaseEnabled: false,
+            dataSpaceEnabled: false,
+            quotesEnabled: true,
+            tenderingEnabled: true,
+            launchValidationEnabled: true,
+            aiEnabled: true,
+            tenderDevButtonsOpenCloseEnabled: false
+        }
+
+        const response = jasmine.createSpyObj('res', ['status', 'json'])
+        let resPromise = new Promise((resolve, reject) => {
+            response.json.and.callFake(() => resolve())
+        })
+
+        const instance = getAdminInstance({}, null, indexes)
+        instance.updateFeatureFlagsConfig(request, response)
+
+        resPromise.then(() => {
+            expect(updateMock).toHaveBeenCalledWith('config', 'doc-1', {
+                features: {
+                    purchaseEnabled: false,
+                    aiEnabled: true,
+                    dataSpaceEnabled: false,
+                    launchValidationEnabled: true
+                }
+            })
+            expect(response.status).toHaveBeenCalledWith(200)
+            expect(response.json).toHaveBeenCalledWith(expectedResponse)
+            expect(config.launchValidationEnabled).toBe(true)
+            done()
+        })
+    })
+
+    it('should reject invalid feature flags payload', (done) => {
+        const indexes = {
+            indexes: {
+                search: jasmine.createSpy('search').and.returnValue(Promise.resolve([])),
+                updateDocument: jasmine.createSpy('updateDocument').and.returnValue(Promise.resolve()),
+                indexDocument: jasmine.createSpy('indexDocument').and.returnValue(Promise.resolve())
+            }
+        }
+
+        const request = {
+            user: {
+                partyId: '1234',
+                roles: [{
+                    name: config.roles.admin
+                }]
+            },
+            body: JSON.stringify({
+                purchaseEnabled: 'false',
+                httpsEnabled: false
+            })
+        }
+
+        const response = jasmine.createSpyObj('res', ['status', 'json'])
+        let resPromise = new Promise((resolve, reject) => {
+            response.json.and.callFake(() => resolve())
+        })
+
+        const instance = getAdminInstance({}, null, indexes)
+        instance.updateFeatureFlagsConfig(request, response)
+
+        resPromise.then(() => {
+            expect(response.status).toHaveBeenCalledWith(400)
+            expect(response.json).toHaveBeenCalledWith({
+                error: 'Invalid feature flags payload',
+                details: ['purchaseEnabled must be a boolean', 'httpsEnabled is not a configurable feature flag']
+            })
+            expect(indexes.indexes.search).not.toHaveBeenCalled()
+            done()
+        })
+    })
+
+    it('should reject feature flag updates from non-admin users', (done) => {
+        const indexes = {
+            indexes: {
+                search: jasmine.createSpy('search').and.returnValue(Promise.resolve([])),
+                updateDocument: jasmine.createSpy('updateDocument').and.returnValue(Promise.resolve()),
+                indexDocument: jasmine.createSpy('indexDocument').and.returnValue(Promise.resolve())
+            }
+        }
+
+        const request = {
+            user: {
+                partyId: '1234',
+                roles: [{
+                    name: 'Seller'
+                }]
+            },
+            body: JSON.stringify({
+                purchaseEnabled: false
+            })
+        }
+
+        const response = jasmine.createSpyObj('res', ['status', 'json'])
+        let resPromise = new Promise((resolve, reject) => {
+            response.json.and.callFake(() => resolve())
+        })
+
+        const instance = getAdminInstance({}, null, indexes)
+        instance.updateFeatureFlagsConfig(request, response)
+
+        resPromise.then(() => {
+            expect(response.status).toHaveBeenCalledWith(403)
+            expect(response.json).toHaveBeenCalledWith({
+                error: 'You are not authorized to access admin endpoint'
+            })
+            expect(indexes.indexes.search).not.toHaveBeenCalled()
+            done()
+        })
+    })
 })

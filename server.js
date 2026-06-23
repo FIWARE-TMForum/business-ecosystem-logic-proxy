@@ -45,6 +45,17 @@ const operator = require('./lib/operator').operator
 const debug = !(process.env.NODE_ENV == 'production');
 const SEARCH_FILTERS_COLLECTION = 'config'
 const SEARCH_FILTERS_CONFIG_ID = 'search-filters'
+const FEATURE_FLAGS_COLLECTION = 'config'
+const FEATURE_FLAGS_CONFIG_ID = 'feature-flags'
+const FEATURE_FLAGS = [
+    'purchaseEnabled',
+    'dataSpaceEnabled',
+    'quotesEnabled',
+    'tenderingEnabled',
+    'launchValidationEnabled',
+    'aiEnabled',
+    'tenderDevButtonsOpenCloseEnabled'
+]
 
 // OAuth2 Came From Field
 const OAUTH2_CAME_FROM_FIELD = 'came_from_path';
@@ -372,6 +383,50 @@ const fetchSearchFilters = async () => {
     }
 }
 
+const getDefaultFeatureFlags = () => {
+    return FEATURE_FLAGS.reduce((features, feature) => {
+        features[feature] = config[feature] === true
+        return features
+    }, {})
+}
+
+const normalizeFeatureFlagOverrides = (features) => {
+    if (features == null || typeof features !== 'object' || Array.isArray(features)) {
+        return {}
+    }
+
+    return FEATURE_FLAGS.reduce((overrides, feature) => {
+        if (typeof features[feature] === 'boolean') {
+            overrides[feature] = features[feature]
+        }
+        return overrides
+    }, {})
+}
+
+const applyFeatureFlags = (features) => {
+    FEATURE_FLAGS.forEach((feature) => {
+        config[feature] = features[feature]
+    })
+
+    return features
+}
+
+const fetchFeatureFlags = async () => {
+    const defaultFeatureFlags = getDefaultFeatureFlags()
+
+    try {
+        const result = await indexes.search(FEATURE_FLAGS_COLLECTION, { id: FEATURE_FLAGS_CONFIG_ID, limit: 1 })
+
+        if (result.length === 0 || result[0].features == null || typeof result[0].features !== 'object') {
+            return applyFeatureFlags(defaultFeatureFlags)
+        }
+
+        return applyFeatureFlags(Object.assign(defaultFeatureFlags, normalizeFeatureFlagOverrides(result[0].features)))
+    } catch (e) {
+        return applyFeatureFlags(defaultFeatureFlags)
+    }
+}
+
 //Remove failIfNotAuthenticated because they want non-logged users to also be able to give feedback
 app.use('/feedback', authMiddleware.headerAuthentication)
 app.post('/feedback', async (req,res) => {
@@ -406,14 +461,16 @@ app.delete('/domeblog/:id',  authMiddleware.headerAuthentication, failIfNotAuthe
 
 
 config.defaultId = await fetchData()
+await fetchFeatureFlags()
 app.get('/config', async (_, res) => {
     // Reload the defaultId if it has been during the operation
     config.defaultId = await fetchData()
     const searchFilters = await fetchSearchFilters()
+    const featureFlags = await fetchFeatureFlags()
 
     res.send({
         ai: {
-            aiEnabled: config.aiEnabled ? config.aiEnabled : false,
+            aiEnabled: featureFlags.aiEnabled,
             aiApiKey: config.aiApiKey,
             aiApiUrl: config.aiApiUrl,
             aiSearchProfile: config.aiSearchProfile
@@ -450,20 +507,20 @@ app.get('/config', async (_, res) => {
         domeOnboardingGuidelines: config.domeOnboardingGuidelines,
         domeGuidelines: config.domeGuidelines,
         domePublish: config.domePublish,
-        purchaseEnabled: config.purchaseEnabled,
-        dataSpaceEnabled: config.dataSpaceEnabled,
+        purchaseEnabled: featureFlags.purchaseEnabled,
+        dataSpaceEnabled: featureFlags.dataSpaceEnabled,
         quoteApi: config.quoteApi,
         defaultId: config.defaultId,
         paymentGateway: config.paymentGateway,
         analytics: config.analytics,
         analyticsSupersetDomain: config.analyticsSupersetDomain,
         theme: config.theme,
-        quotesEnabled: config.quoteEnabled,
-        tenderingEnabled: config.tenderingEnabled,
+        quotesEnabled: featureFlags.quotesEnabled,
+        tenderingEnabled: featureFlags.tenderingEnabled,
         learUrl: config.learUrl,
-        launchValidationEnabled: config.launchValidationEnabled,
+        launchValidationEnabled: featureFlags.launchValidationEnabled,
         searchFilters: searchFilters,
-        tenderDevButtonsOpenCloseEnabled: config.tenderDevButtonsOpenCloseEnabled
+        tenderDevButtonsOpenCloseEnabled: featureFlags.tenderDevButtonsOpenCloseEnabled
     })
 })
 
@@ -618,6 +675,10 @@ app.post('/admin/defaultcatalog', authMiddleware.headerAuthentication, authMiddl
 
 app.patch('/config/filters', authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, (req, res) => {
     admin.updateSearchFiltersConfig(req, res)
+})
+
+app.patch('/config/features', authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, (req, res) => {
+    admin.updateFeatureFlagsConfig(req, res)
 })
 
 app.get('/paymentInfo', authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, (req, res) => {
