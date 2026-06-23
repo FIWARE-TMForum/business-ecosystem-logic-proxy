@@ -740,7 +740,12 @@ config.paymentGateway = process.env.BAE_LP_PAYMENT_GATEWAY || config.paymentGate
 config.analytics = '';
 config.analytics = process.env.BAE_LP_ANALYTICS_URL || config.analytics;
 
-config.analyticsSupersetDomain = '';
+config.analyticsEnabled = true;
+if (!!process.env.BAE_LP_ANALYTICS_ENABLED) {
+    config.analyticsEnabled = process.env.BAE_LP_ANALYTICS_ENABLED == 'true';
+}
+
+config.analyticsSupersetDomain = 'https://dome-monitoring.eurodyn.com';
 config.analyticsSupersetDomain = process.env.BAE_LP_ANALYTICS_SUPERSET_DOMAIN || config.analyticsSupersetDomain;
 
 config.analyticsDashboards = {
@@ -766,7 +771,6 @@ config.analyticsSuperset = {
         usageMonitor: []
     }
 };
-
 config.analyticsSuperset.url = process.env.BAE_LP_ANALYTICS_SUPERSET_URL || config.analyticsSupersetDomain;
 config.analyticsSuperset.username =
     process.env.BAE_LP_ANALYTICS_SUPERSET_USERNAME || config.analyticsSuperset.username;

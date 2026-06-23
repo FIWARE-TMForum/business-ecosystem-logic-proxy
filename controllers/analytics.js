@@ -222,6 +222,13 @@ function analytics() {
     }
 
     const validateRequest = function(req) {
+        if (config.analyticsEnabled !== true) {
+            return {
+                status: 403,
+                error: 'Analytics is disabled'
+            }
+        }
+
         let body
         try {
             body = JSON.parse(req.body)

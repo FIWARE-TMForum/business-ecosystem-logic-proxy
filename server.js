@@ -462,11 +462,13 @@ app.delete('/domeblog/:id',  authMiddleware.headerAuthentication, failIfNotAuthe
 
 config.defaultId = await fetchData()
 await fetchFeatureFlags()
+await admin.loadAnalyticsConfig()
 app.get('/config', async (_, res) => {
     // Reload the defaultId if it has been during the operation
     config.defaultId = await fetchData()
     const searchFilters = await fetchSearchFilters()
     const featureFlags = await fetchFeatureFlags()
+    const analyticsConfig = await admin.loadAnalyticsConfig()
 
     res.send({
         ai: {
@@ -513,7 +515,8 @@ app.get('/config', async (_, res) => {
         defaultId: config.defaultId,
         paymentGateway: config.paymentGateway,
         analytics: config.analytics,
-        analyticsSupersetDomain: config.analyticsSupersetDomain,
+        analyticsEnabled: analyticsConfig.analyticsEnabled,
+        analyticsSupersetDomain: analyticsConfig.analyticsSupersetDomain,
         theme: config.theme,
         quotesEnabled: featureFlags.quotesEnabled,
         tenderingEnabled: featureFlags.tenderingEnabled,
@@ -526,7 +529,10 @@ app.get('/config', async (_, res) => {
 
 app.get('/stats', stats.getStats)
 
-app.post('/analytics/guest-token', authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, failIfNotAuthenticated, analytics.getGuestToken)
+app.post('/analytics/guest-token', authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, failIfNotAuthenticated, async (req, res, next) => {
+    await admin.loadAnalyticsConfig()
+    next()
+}, analytics.getGuestToken)
 
 app.get('/offering/:id/launch', authMiddleware.headerAuthentication, failIfNotAuthenticated, catalog.checkOfferingLaunch);
 
@@ -679,6 +685,14 @@ app.patch('/config/filters', authMiddleware.headerAuthentication, authMiddleware
 
 app.patch('/config/features', authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, (req, res) => {
     admin.updateFeatureFlagsConfig(req, res)
+})
+
+app.get('/config/analytics', authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, (req, res) => {
+    admin.getAnalyticsConfig(req, res)
+})
+
+app.patch('/config/analytics', authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, (req, res) => {
+    admin.updateAnalyticsConfig(req, res)
 })
 
 app.get('/paymentInfo', authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, (req, res) => {

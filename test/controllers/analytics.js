@@ -105,6 +105,7 @@ describe('Analytics Controller', () => {
                 seller: 'Seller',
                 orgAdmin: 'orgAdmin'
             },
+            analyticsEnabled: true,
             analyticsDashboards: {
                 businessInsightsNonLear: 'dashboard-business-non-lear',
                 businessInsightsLear: 'dashboard-business-lear',
@@ -150,6 +151,24 @@ describe('Analytics Controller', () => {
         }));
 
         controller = loadController();
+    });
+
+    it('returns 403 when analytics is disabled', (done) => {
+        configMock.analyticsEnabled = false;
+        const req = {
+            body: JSON.stringify({
+                tab: 'businessInsights'
+            }),
+            user: makeUser(configMock.roles.customer)
+        };
+        const res = makeResponse();
+
+        controller.getGuestToken(req, res).then(() => {
+            expect(res.status).toHaveBeenCalledWith(403);
+            expect(res.json).toHaveBeenCalledWith({ error: 'Analytics is disabled' });
+            expect(axiosMock.request).not.toHaveBeenCalled();
+            done();
+        });
     });
 
     it('returns 400 when the body is invalid', (done) => {

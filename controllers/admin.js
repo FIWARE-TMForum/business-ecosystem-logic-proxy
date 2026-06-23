@@ -29,6 +29,8 @@ const SEARCH_FILTERS_COLLECTION = 'config'
 const SEARCH_FILTERS_CONFIG_ID = 'search-filters'
 const FEATURE_FLAGS_COLLECTION = 'config'
 const FEATURE_FLAGS_CONFIG_ID = 'feature-flags'
+const ANALYTICS_CONFIG_COLLECTION = 'config'
+const ANALYTICS_CONFIG_ID = 'analytics'
 const FEATURE_FLAGS = [
     'purchaseEnabled',
     'dataSpaceEnabled',
@@ -103,6 +105,175 @@ function admin() {
         })
 
         return features
+    }
+
+    const clone = function(value) {
+        return JSON.parse(JSON.stringify(value))
+    }
+
+    const getAnalyticsConfigResponse = function() {
+        return {
+            analyticsEnabled: config.analyticsEnabled === true,
+            analyticsSupersetDomain: config.analyticsSupersetDomain,
+            analyticsDashboards: clone(config.analyticsDashboards),
+            analyticsSuperset: {
+                url: config.analyticsSuperset.url,
+                username: config.analyticsSuperset.username,
+                provider: config.analyticsSuperset.provider,
+                passwordConfigured: normalizeNonEmptyString(config.analyticsSuperset.password) != null,
+                rls: clone(config.analyticsSuperset.rls)
+            }
+        }
+    }
+
+    const applyAnalyticsConfig = function(analyticsConfig) {
+        config.analyticsEnabled = analyticsConfig.analyticsEnabled
+        config.analyticsSupersetDomain = analyticsConfig.analyticsSupersetDomain
+        config.analyticsDashboards = clone(analyticsConfig.analyticsDashboards)
+        config.analyticsSuperset = clone(analyticsConfig.analyticsSuperset)
+
+        return getAnalyticsConfigResponse()
+    }
+
+    const validateAnalyticsRlsRule = function(rule, path, errors) {
+        if (rule == null || typeof rule !== 'object' || Array.isArray(rule)) {
+            errors.push(`${path} must be an object`)
+            return null
+        }
+
+        if (!Array.isArray(rule.datasets) || rule.datasets.length === 0) {
+            errors.push(`${path}.datasets must be a non-empty array`)
+        }
+
+        const clauseTemplate = normalizeNonEmptyString(rule.clauseTemplate)
+        if (clauseTemplate == null) {
+            errors.push(`${path}.clauseTemplate is required and must be non-empty`)
+        }
+
+        if (!Array.isArray(rule.datasets) || clauseTemplate == null) {
+            return null
+        }
+
+        const datasets = rule.datasets.filter((dataset, index) => {
+            const isValid = Number.isInteger(dataset)
+            if (!isValid) {
+                errors.push(`${path}.datasets[${index}] must be an integer`)
+            }
+            return isValid
+        })
+
+        return {
+            datasets: datasets,
+            clauseTemplate: clauseTemplate
+        }
+    }
+
+    const validateAnalyticsRls = function(rls, errors) {
+        const requiredKeys = ['businessInsightsNonLear', 'businessInsightsLear', 'usageMonitor']
+
+        if (rls == null || typeof rls !== 'object' || Array.isArray(rls)) {
+            errors.push('analyticsSuperset.rls must be an object')
+            return null
+        }
+
+        const normalized = {}
+        requiredKeys.forEach((key) => {
+            if (!Array.isArray(rls[key])) {
+                errors.push(`analyticsSuperset.rls.${key} must be an array`)
+                return
+            }
+
+            normalized[key] = rls[key].map((rule, index) => {
+                return validateAnalyticsRlsRule(rule, `analyticsSuperset.rls.${key}[${index}]`, errors)
+            }).filter((rule) => rule != null)
+        })
+
+        return normalized
+    }
+
+    const validateAndNormalizeAnalyticsConfig = function(body, currentPassword) {
+        const errors = []
+
+        if (body == null || typeof body !== 'object' || Array.isArray(body)) {
+            return {
+                errors: ['Body must be a JSON object'],
+                value: null
+            }
+        }
+
+        if (typeof body.analyticsEnabled !== 'boolean') {
+            errors.push('analyticsEnabled is required and must be a boolean')
+        }
+
+        const analyticsSupersetDomain = normalizeNonEmptyString(body.analyticsSupersetDomain)
+        if (analyticsSupersetDomain == null) {
+            errors.push('analyticsSupersetDomain is required and must be non-empty')
+        }
+
+        if (body.analyticsDashboards == null || typeof body.analyticsDashboards !== 'object' || Array.isArray(body.analyticsDashboards)) {
+            errors.push('analyticsDashboards must be an object')
+        }
+
+        const dashboardKeys = ['businessInsightsNonLear', 'businessInsightsLear', 'usageMonitor']
+        const analyticsDashboards = {}
+        if (body.analyticsDashboards != null && typeof body.analyticsDashboards === 'object' && !Array.isArray(body.analyticsDashboards)) {
+            dashboardKeys.forEach((key) => {
+                const dashboardId = normalizeNonEmptyString(body.analyticsDashboards[key])
+                if (dashboardId == null) {
+                    errors.push(`analyticsDashboards.${key} is required and must be non-empty`)
+                } else {
+                    analyticsDashboards[key] = dashboardId
+                }
+            })
+        }
+
+        if (body.analyticsSuperset == null || typeof body.analyticsSuperset !== 'object' || Array.isArray(body.analyticsSuperset)) {
+            errors.push('analyticsSuperset must be an object')
+        }
+
+        let analyticsSuperset = null
+        if (body.analyticsSuperset != null && typeof body.analyticsSuperset === 'object' && !Array.isArray(body.analyticsSuperset)) {
+            const url = normalizeNonEmptyString(body.analyticsSuperset.url)
+            const username = normalizeNonEmptyString(body.analyticsSuperset.username)
+            const password = normalizeNonEmptyString(body.analyticsSuperset.password) || normalizeNonEmptyString(currentPassword)
+            const provider = normalizeNonEmptyString(body.analyticsSuperset.provider)
+            const rls = validateAnalyticsRls(body.analyticsSuperset.rls, errors)
+
+            if (url == null) {
+                errors.push('analyticsSuperset.url is required and must be non-empty')
+            }
+            if (username == null) {
+                errors.push('analyticsSuperset.username is required and must be non-empty')
+            }
+            if (password == null) {
+                errors.push('analyticsSuperset.password is required and must be non-empty')
+            }
+            if (provider == null) {
+                errors.push('analyticsSuperset.provider is required and must be non-empty')
+            }
+
+            analyticsSuperset = {
+                url: url,
+                username: username,
+                password: password,
+                provider: provider,
+                rls: rls
+            }
+        }
+
+        if (errors.length > 0) {
+            return { errors: errors, value: null }
+        }
+
+        return {
+            errors: [],
+            value: {
+                analyticsEnabled: body.analyticsEnabled,
+                analyticsSupersetDomain: analyticsSupersetDomain,
+                analyticsDashboards: analyticsDashboards,
+                analyticsSuperset: analyticsSuperset
+            }
+        }
     }
 
     const validateAndNormalizeFeatureFlags = function(body) {
@@ -615,12 +786,100 @@ function admin() {
         res.json(effectiveFeatureFlags)
     }
 
+    const loadAnalyticsConfig = async function() {
+        try {
+            const result = await indexes.search(ANALYTICS_CONFIG_COLLECTION, { id: ANALYTICS_CONFIG_ID, limit: 1 })
+
+            if (result.length === 0 || result[0].analytics == null) {
+                return getAnalyticsConfigResponse()
+            }
+
+            const validationResult = validateAndNormalizeAnalyticsConfig(result[0].analytics, config.analyticsSuperset.password)
+            if (validationResult.errors.length > 0) {
+                logger.error('Invalid analytics config stored in database: ' + validationResult.errors.join(', '))
+                return getAnalyticsConfigResponse()
+            }
+
+            return applyAnalyticsConfig(validationResult.value)
+        } catch (e) {
+            logger.error('Error loading analytics config: ' + e.message)
+            return getAnalyticsConfigResponse()
+        }
+    }
+
+    const updateAnalyticsConfig = async function(req, res) {
+        if (!utils.isAdmin(req.user)) {
+            res.status(403)
+            res.json({ error: "You are not authorized to access admin endpoint" })
+            return
+        }
+
+        let reqBody
+        try {
+            reqBody = parseBody(req.body)
+        } catch (e) {
+            res.status(400)
+            res.json({ error: 'Invalid body' })
+            return
+        }
+
+        const validationResult = validateAndNormalizeAnalyticsConfig(reqBody, config.analyticsSuperset.password)
+        if (validationResult.errors.length > 0) {
+            res.status(400)
+            res.json({
+                error: 'Invalid analytics config payload',
+                details: validationResult.errors
+            })
+            return
+        }
+
+        let responseBody
+        try {
+            const result = await indexes.search(ANALYTICS_CONFIG_COLLECTION, { id: ANALYTICS_CONFIG_ID, limit: 1 })
+
+            if (result.length > 0) {
+                await indexes.updateDocument(ANALYTICS_CONFIG_COLLECTION, result[0].id, {
+                    analytics: validationResult.value
+                })
+            } else {
+                await indexes.indexDocument(ANALYTICS_CONFIG_COLLECTION, ANALYTICS_CONFIG_ID, {
+                    analytics: validationResult.value
+                })
+            }
+
+            responseBody = applyAnalyticsConfig(validationResult.value)
+        } catch (e) {
+            res.status(500)
+            res.json({ error: 'Error updating analytics config: ' + e.message })
+            return
+        }
+
+        res.status(200)
+        res.json(responseBody)
+    }
+
+    const getAnalyticsConfig = async function(req, res) {
+        if (!utils.isAdmin(req.user)) {
+            res.status(403)
+            res.json({ error: "You are not authorized to access admin endpoint" })
+            return
+        }
+
+        const responseBody = await loadAnalyticsConfig()
+
+        res.status(200)
+        res.json(responseBody)
+    }
+
     return {
         checkPermissions: checkPermissions,
         uploadCertificate: uploadCertificate,
         updateDefaultCatalog: updateDefaultCatalog,
         updateSearchFiltersConfig: updateSearchFiltersConfig,
-        updateFeatureFlagsConfig: updateFeatureFlagsConfig
+        updateFeatureFlagsConfig: updateFeatureFlagsConfig,
+        getAnalyticsConfig: getAnalyticsConfig,
+        updateAnalyticsConfig: updateAnalyticsConfig,
+        loadAnalyticsConfig: loadAnalyticsConfig
     }
 }
 
