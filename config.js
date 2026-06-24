@@ -43,7 +43,8 @@ config.oauth2 = {
 	oidcDiscoveryURI: null,
 	oidcTokenEndpointAuthMethod: "client_secret_basic",
 	key: '281e126aa35c80f2',
-	defaultRole: null
+	defaultRole: null,
+    nonce: false
 };
 
 config.roles = {
@@ -410,6 +411,10 @@ config.oauth2.clientID = process.env.BAE_LP_OAUTH2_CLIENT_ID || config.oauth2.cl
 config.oauth2.clientSecret = process.env.BAE_LP_OAUTH2_CLIENT_SECRET || config.oauth2.clientSecret;
 config.oauth2.callbackURL = process.env.BAE_LP_OAUTH2_CALLBACK || config.oauth2.callbackURL;
 
+if (!!process.env.BAE_LP_OAUTH2_NONCE) {
+    config.oauth2.nonce = process.env.BAE_LP_OAUTH2_NONCE == 'true'
+}
+
 if (process.env.BAE_LP_OAUTH2_DEFAULT_ROLE) {
     config.oauth2.defaultRole = process.env.BAE_LP_OAUTH2_DEFAULT_ROLE;
 }
@@ -769,6 +774,10 @@ if (!!process.env.BAE_LP_DATASPACE_ENABLED) {
     config.dataSpaceEnabled = process.env.BAE_LP_DATASPACE_ENABLED == 'true';
 }
 
+config.dspEnabled = false
+if (!!process.env.BAE_LP_DSP_ENABLED) {
+    config.dspEnabled = process.env.BAE_LP_DSP_ENABLED == 'true';
+}
 config.launchValidationEnabled = false;
 if (!!process.env.BAE_LP_LAUNCH_VALIDATION_ENABLED) {
     config.launchValidationEnabled = process.env.BAE_LP_LAUNCH_VALIDATION_ENABLED == 'true';

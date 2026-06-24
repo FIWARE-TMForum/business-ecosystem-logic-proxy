@@ -64,7 +64,7 @@ const editParty = config.editParty == true;
 
 // Local auth method
 const auth = await authModule.auth(config.oauth2);
-    
+
 /////////////////////////////////////////////////////////////////////
 ////////////////////////// MONGOOSE CONFIG //////////////////////////
 /////////////////////////////////////////////////////////////////////
@@ -344,7 +344,7 @@ app.all(config.logOutPath, function(req, res) {
 });
 
 // Config endpoint
-const fetchData = async () => { 
+const fetchData = async () => {
     result = await indexes.search('defaultcatalog', {})
     return (result.length === 0 || result.length > 1)? '' : result[0].default_id
 }
@@ -451,6 +451,7 @@ app.get('/config', async (_, res) => {
         domePublish: config.domePublish,
         purchaseEnabled: config.purchaseEnabled,
         dataSpaceEnabled: config.dataSpaceEnabled,
+        dspEnabled: config.dspEnabled,
         quoteApi: config.quoteApi,
         defaultId: config.defaultId,
         paymentGateway: config.paymentGateway,

@@ -37,7 +37,13 @@ describe('OIDC-Discover Strategy', () => {
         done(this.userErr, this.profile);
     }
     MockStrategy.prototype.loginComplete = function() {
-        this.cb({access_token: this.token, refresh_token: this.refreshToken}, this.profile, 'cb');
+        const profile = this.profile;
+        const tokenSet = {
+            access_token: this.token,
+            refresh_token: this.refreshToken,
+            claims: () => profile
+        };
+        this.cb(tokenSet, 'cb');
     }
     MockStrategy.prototype.getClient = function () {
         return this.client;
@@ -126,6 +132,253 @@ describe('OIDC-Discover Strategy', () => {
 
             userStrategy.loginComplete();
 	    
+	});
+
+	describe('VerifiableCredential profiles', () => {
+
+	    let builderToTest;
+
+	    beforeEach(async () => {
+		const passportMock = {
+		    Issuer: MockIssuer,
+		    Strategy: MockStrategy
+		};
+		const config = {
+		    clientID: 'client_id',
+		    clientSecret: 'client_secret',
+		    callbackURL: 'http://market.com/callback',
+		    server: 'http://idp.com',
+		    oidcScopes: 'openid',
+		    oidcDiscoveryURI: 'http://idp.com/.well-known/openid-configuration',
+		    oidcTokenEndpointAuthMethod: 'client_secret_basic',
+		    defaultRole: 'seller',
+		    key: 'key'
+		};
+		const toTest = buildStrategyMock(passportMock);
+		builderToTest = toTest(config);
+	    });
+
+	    it('should build profile from plain VC credentialSubject', async () => {
+		const vcClaims = {
+		    type: ['VerifiableCredential'],
+		    issuer: 'did:example:issuer',
+		    credentialSubject: {
+			email: 'user@example.com',
+			firstName: 'John',
+			familyName: 'Doe',
+			roles: [{ names: ['seller'] }]
+		    }
+		};
+
+		const userStrategy = await builderToTest.buildStrategy((accessToken, refreshToken, profile, cbDone) => {
+		    expect(accessToken).toEqual('vc-token');
+		    expect(refreshToken).toEqual('vc-refresh');
+		    expect(profile.id).toEqual('user@example.com');
+		    expect(profile.email).toEqual('user@example.com');
+		    expect(profile.username).toEqual('user');
+		    expect(profile.displayName).toEqual('John Doe');
+		    expect(profile.roles).toEqual([{ id: 'seller', name: 'seller' }]);
+		    expect(profile.issuerDid).toEqual('did:example:issuer');
+		    expect(profile.idpId).toEqual('did:example:issuer');
+		    expect(profile._json).toEqual(vcClaims);
+		    expect(profile.organizations).toEqual([{
+			id: 'did:example:issuer',
+			name: 'did:example:issuer',
+			roles: [
+			    { name: 'Seller', id: 'Seller' },
+			    { name: 'Buyer', id: 'Buyer' },
+			    { name: 'orgAdmin', id: 'orgAdmin' }
+			]
+		    }]);
+		});
+
+		userStrategy.setProfileParams(null, vcClaims, 'vc-token', 'vc-refresh');
+		userStrategy.loginComplete();
+	    });
+
+	    it('should build profile from LEARCredentialEmployee vc field', async () => {
+		const vcClaims = {
+		    sub: 'did:user:123',
+		    vc: {
+			type: ['VerifiableCredential', 'LEARCredentialEmployee'],
+			issuer: 'did:issuer:123',
+			credentialSubject: {
+			    mandate: {
+				mandatee: {
+				    id: 'did:user:123',
+				    email: 'john.doe@example.com',
+				    first_name: 'John',
+				    last_name: 'Doe'
+				},
+				mandator: {
+				    organizationIdentifier: 'org-123',
+				    organization: 'Test Org'
+				},
+				power: [{
+				    tmf_function: 'productOffering',
+				    tmf_action: ['create', 'update']
+				}]
+			    }
+			}
+		    }
+		};
+
+		const userStrategy = await builderToTest.buildStrategy((accessToken, refreshToken, profile, cbDone) => {
+		    expect(accessToken).toEqual('lear-token');
+		    expect(refreshToken).toEqual('lear-refresh');
+		    expect(profile.id).toEqual('did:user:123');
+		    expect(profile.email).toEqual('john.doe@example.com');
+		    expect(profile.username).toEqual('john.doe');
+		    expect(profile.displayName).toEqual('John Doe');
+		    expect(profile.issuerDid).toEqual('did:issuer:123');
+		    expect(profile.idpId).toEqual('did:issuer:123');
+		    expect(profile._json).toEqual(vcClaims);
+		    expect(profile.organizations).toEqual([{
+			id: 'org-123',
+			name: 'Test Org',
+			roles: [{ id: 'Seller', name: 'Seller' }]
+		    }]);
+		});
+
+		userStrategy.setProfileParams(null, vcClaims, 'lear-token', 'lear-refresh');
+		userStrategy.loginComplete();
+	    });
+
+	    it('should build profile from LEARCredentialEmployee verifiableCredential field', async () => {
+		const vcClaims = {
+		    sub: 'did:user:456',
+		    verifiableCredential: {
+			type: ['VerifiableCredential', 'LEARCredentialEmployee'],
+			issuer: 'did:issuer:456',
+			credentialSubject: {
+			    mandate: {
+				mandatee: {
+				    id: 'did:user:456',
+				    email: 'jane.smith@example.com',
+				    first_name: 'Jane',
+				    last_name: 'Smith'
+				},
+				mandator: {
+				    organizationIdentifier: 'org-456',
+				    organization: 'Other Org'
+				},
+				power: [{
+				    tmf_function: 'Onboarding',
+				    tmf_action: 'execute'
+				}]
+			    }
+			}
+		    }
+		};
+
+		const userStrategy = await builderToTest.buildStrategy((accessToken, refreshToken, profile, cbDone) => {
+		    expect(profile.id).toEqual('did:user:456');
+		    expect(profile.email).toEqual('jane.smith@example.com');
+		    expect(profile.username).toEqual('jane.smith');
+		    expect(profile.displayName).toEqual('Jane Smith');
+		    expect(profile.issuerDid).toEqual('did:issuer:456');
+		    expect(profile.organizations).toEqual([{
+			id: 'org-456',
+			name: 'Other Org',
+			roles: [{ id: 'orgAdmin', name: 'orgAdmin' }]
+		    }]);
+		});
+
+		userStrategy.setProfileParams(null, vcClaims, 'lear-token-2', 'lear-refresh-2');
+		userStrategy.loginComplete();
+	    });
+
+	    it('should fall back to OIDC profile when claims have no VC structure', async () => {
+		const oidcClaims = {
+		    sub: 'user-sub-123',
+		    preferred_username: 'testuser',
+		    name: 'Test User'
+		};
+
+		const userStrategy = await builderToTest.buildStrategy((accessToken, refreshToken, profile, cbDone) => {
+		    expect(profile.id).toEqual('user-sub-123');
+		    expect(profile.username).toEqual('testuser');
+		    expect(profile.displayName).toEqual('Test User');
+		    expect(profile.roles).toEqual([{ name: 'seller', id: 'seller' }]);
+		    expect(profile.organizations).toEqual([]);
+		});
+
+		userStrategy.setProfileParams(null, oidcClaims, 'oidc-token', 'oidc-refresh');
+		userStrategy.loginComplete();
+	    });
+	});
+
+	describe('refresh token', () => {
+	    let userStrategy;
+	    let mockRefresh;
+
+	    beforeEach(async () => {
+		mockRefresh = jasmine.createSpy('refresh');
+
+		const discoverWithRefresh = async function(uri) {
+		    const clientConstructor = function(opts) {
+			return {
+			    discovery_uri: uri,
+			    client_id: opts.client_id,
+			    client_secret: opts.client_secret,
+			    redirect_uris: opts.redirect_uris,
+			    token_endpoint_auth_method: opts.token_endpoint_auth_method,
+			    refresh: mockRefresh
+			};
+		    };
+		    return { Client: clientConstructor };
+		};
+
+		const passportMock = {
+		    Issuer: { discover: discoverWithRefresh },
+		    Strategy: MockStrategy
+		};
+
+		const config = {
+		    clientID: 'client_id',
+		    clientSecret: 'client_secret',
+		    callbackURL: 'http://market.com/callback',
+		    server: 'http://idp.com',
+		    oidcScopes: 'openid',
+		    oidcDiscoveryURI: 'http://idp.com/.well-known/openid-configuration',
+		    oidcTokenEndpointAuthMethod: 'client_secret_basic',
+		    defaultRole: 'seller',
+		    key: 'key'
+		};
+
+		const toTest = buildStrategyMock(passportMock);
+		const builderToTest = toTest(config);
+		userStrategy = await builderToTest.buildStrategy(() => {});
+	    });
+
+	    it('should call done with new tokens on successful refresh', async () => {
+		mockRefresh.and.returnValue(Promise.resolve({
+		    access_token: 'new-access-token',
+		    refresh_token: 'new-refresh-token'
+		}));
+
+		await new Promise((resolve) => {
+		    userStrategy.refresh('old-refresh-token', (err, accessToken, refreshToken) => {
+			expect(err).toBeNull();
+			expect(accessToken).toEqual('new-access-token');
+			expect(refreshToken).toEqual('new-refresh-token');
+			expect(mockRefresh).toHaveBeenCalledWith('old-refresh-token');
+			resolve();
+		    });
+		});
+	    });
+
+	    it('should call done with error on failed refresh', async () => {
+		const refreshError = new Error('token refresh failed');
+		mockRefresh.and.returnValue(Promise.reject(refreshError));
+
+		await new Promise((resolve) => {
+		    userStrategy.refresh('invalid-refresh-token', (err) => {
+			expect(err).toEqual(refreshError);
+			resolve();
+		    });
+		});
+	    });
 	});
 
 	it('should return specified scope', () => {
