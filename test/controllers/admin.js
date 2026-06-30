@@ -941,15 +941,14 @@ describe('Admin Controller', () => {
 
     const getAnalyticsConfigPayload = () => {
         return {
+            analytics: 'https://dome-monitoring.eurodyn.com',
             analyticsEnabled: true,
-            analyticsSupersetDomain: 'https://dome-monitoring.eurodyn.com',
             analyticsDashboards: {
                 businessInsightsNonLear: '0cd86a99-2d3d-438f-84be-508c4725a5f5',
                 businessInsightsLear: '945ed89c-13ce-4553-afc9-12ec18d14064',
                 usageMonitor: '566cf4c8-e033-43ef-b8fb-24ae7067b416'
             },
             analyticsSuperset: {
-                url: 'https://dome-monitoring.eurodyn.com',
                 username: 'admin',
                 password: 'superset-service-password',
                 provider: 'db',
@@ -1005,11 +1004,10 @@ describe('Admin Controller', () => {
         }
 
         const expectedResponse = {
+            analytics: payload.analytics,
             analyticsEnabled: payload.analyticsEnabled,
-            analyticsSupersetDomain: payload.analyticsSupersetDomain,
             analyticsDashboards: payload.analyticsDashboards,
             analyticsSuperset: {
-                url: payload.analyticsSuperset.url,
                 username: payload.analyticsSuperset.username,
                 provider: payload.analyticsSuperset.provider,
                 passwordConfigured: true,
@@ -1033,8 +1031,9 @@ describe('Admin Controller', () => {
             })
             expect(response.status).toHaveBeenCalledWith(200)
             expect(response.json).toHaveBeenCalledWith(expectedResponse)
+            expect(config.analytics).toBe(payload.analytics)
             expect(config.analyticsEnabled).toBe(true)
-            expect(config.analyticsSupersetDomain).toBe(payload.analyticsSupersetDomain)
+            expect(config.analyticsSuperset.url).toBe(config.analytics)
             expect(config.analyticsSuperset.password).toBe(payload.analyticsSuperset.password)
             done()
         })
@@ -1116,11 +1115,10 @@ describe('Admin Controller', () => {
         }
 
         const expectedResponse = {
+            analytics: payload.analytics,
             analyticsEnabled: payload.analyticsEnabled,
-            analyticsSupersetDomain: payload.analyticsSupersetDomain,
             analyticsDashboards: payload.analyticsDashboards,
             analyticsSuperset: {
-                url: payload.analyticsSuperset.url,
                 username: payload.analyticsSuperset.username,
                 provider: payload.analyticsSuperset.provider,
                 passwordConfigured: true,
@@ -1147,10 +1145,11 @@ describe('Admin Controller', () => {
 
     it('should return config.js analytics config when no analytics config is stored', (done) => {
         const payload = getAnalyticsConfigPayload()
+        config.analytics = payload.analytics
         config.analyticsEnabled = payload.analyticsEnabled
-        config.analyticsSupersetDomain = payload.analyticsSupersetDomain
         config.analyticsDashboards = payload.analyticsDashboards
         config.analyticsSuperset = payload.analyticsSuperset
+        config.analyticsSuperset.url = config.analytics
 
         const searchMock = jasmine.createSpy('search').and.returnValue(Promise.resolve([]))
 
@@ -1172,11 +1171,10 @@ describe('Admin Controller', () => {
         }
 
         const expectedResponse = {
+            analytics: payload.analytics,
             analyticsEnabled: payload.analyticsEnabled,
-            analyticsSupersetDomain: payload.analyticsSupersetDomain,
             analyticsDashboards: payload.analyticsDashboards,
             analyticsSuperset: {
-                url: payload.analyticsSuperset.url,
                 username: payload.analyticsSuperset.username,
                 provider: payload.analyticsSuperset.provider,
                 passwordConfigured: true,
@@ -1210,6 +1208,7 @@ describe('Admin Controller', () => {
         }
 
         const payload = getAnalyticsConfigPayload()
+        delete payload.analytics
         delete payload.analyticsEnabled
         delete payload.analyticsSuperset.password
         payload.analyticsSuperset.rls.usageMonitor[0].datasets = ['115']
@@ -1238,6 +1237,7 @@ describe('Admin Controller', () => {
             expect(response.json).toHaveBeenCalledWith({
                 error: 'Invalid analytics config payload',
                 details: [
+                    'analytics is required and must be non-empty',
                     'analyticsEnabled is required and must be a boolean',
                     'analyticsSuperset.rls.usageMonitor[0].datasets[0] must be an integer',
                     'analyticsSuperset.password is required and must be non-empty'

@@ -113,11 +113,10 @@ function admin() {
 
     const getAnalyticsConfigResponse = function() {
         return {
+            analytics: config.analytics,
             analyticsEnabled: config.analyticsEnabled === true,
-            analyticsSupersetDomain: config.analyticsSupersetDomain,
             analyticsDashboards: clone(config.analyticsDashboards),
             analyticsSuperset: {
-                url: config.analyticsSuperset.url,
                 username: config.analyticsSuperset.username,
                 provider: config.analyticsSuperset.provider,
                 passwordConfigured: normalizeNonEmptyString(config.analyticsSuperset.password) != null,
@@ -127,10 +126,11 @@ function admin() {
     }
 
     const applyAnalyticsConfig = function(analyticsConfig) {
+        config.analytics = analyticsConfig.analytics
         config.analyticsEnabled = analyticsConfig.analyticsEnabled
-        config.analyticsSupersetDomain = analyticsConfig.analyticsSupersetDomain
         config.analyticsDashboards = clone(analyticsConfig.analyticsDashboards)
         config.analyticsSuperset = clone(analyticsConfig.analyticsSuperset)
+        config.analyticsSuperset.url = config.analytics
 
         return getAnalyticsConfigResponse()
     }
@@ -201,13 +201,13 @@ function admin() {
             }
         }
 
-        if (typeof body.analyticsEnabled !== 'boolean') {
-            errors.push('analyticsEnabled is required and must be a boolean')
+        const analytics = normalizeNonEmptyString(body.analytics)
+        if (analytics == null) {
+            errors.push('analytics is required and must be non-empty')
         }
 
-        const analyticsSupersetDomain = normalizeNonEmptyString(body.analyticsSupersetDomain)
-        if (analyticsSupersetDomain == null) {
-            errors.push('analyticsSupersetDomain is required and must be non-empty')
+        if (typeof body.analyticsEnabled !== 'boolean') {
+            errors.push('analyticsEnabled is required and must be a boolean')
         }
 
         if (body.analyticsDashboards == null || typeof body.analyticsDashboards !== 'object' || Array.isArray(body.analyticsDashboards)) {
@@ -233,15 +233,11 @@ function admin() {
 
         let analyticsSuperset = null
         if (body.analyticsSuperset != null && typeof body.analyticsSuperset === 'object' && !Array.isArray(body.analyticsSuperset)) {
-            const url = normalizeNonEmptyString(body.analyticsSuperset.url)
             const username = normalizeNonEmptyString(body.analyticsSuperset.username)
             const password = normalizeNonEmptyString(body.analyticsSuperset.password) || normalizeNonEmptyString(currentPassword)
             const provider = normalizeNonEmptyString(body.analyticsSuperset.provider)
             const rls = validateAnalyticsRls(body.analyticsSuperset.rls, errors)
 
-            if (url == null) {
-                errors.push('analyticsSuperset.url is required and must be non-empty')
-            }
             if (username == null) {
                 errors.push('analyticsSuperset.username is required and must be non-empty')
             }
@@ -253,7 +249,6 @@ function admin() {
             }
 
             analyticsSuperset = {
-                url: url,
                 username: username,
                 password: password,
                 provider: provider,
@@ -268,8 +263,8 @@ function admin() {
         return {
             errors: [],
             value: {
+                analytics: analytics,
                 analyticsEnabled: body.analyticsEnabled,
-                analyticsSupersetDomain: analyticsSupersetDomain,
                 analyticsDashboards: analyticsDashboards,
                 analyticsSuperset: analyticsSuperset
             }

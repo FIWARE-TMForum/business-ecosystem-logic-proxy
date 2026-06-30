@@ -745,9 +745,6 @@ if (!!process.env.BAE_LP_ANALYTICS_ENABLED) {
     config.analyticsEnabled = process.env.BAE_LP_ANALYTICS_ENABLED == 'true';
 }
 
-config.analyticsSupersetDomain = 'https://dome-monitoring.eurodyn.com';
-config.analyticsSupersetDomain = process.env.BAE_LP_ANALYTICS_SUPERSET_DOMAIN || config.analyticsSupersetDomain;
-
 config.analyticsDashboards = {
     businessInsightsNonLear: '',
     businessInsightsLear: '',
@@ -771,7 +768,7 @@ config.analyticsSuperset = {
         usageMonitor: []
     }
 };
-config.analyticsSuperset.url = process.env.BAE_LP_ANALYTICS_SUPERSET_URL || config.analyticsSupersetDomain;
+config.analyticsSuperset.url = config.analytics;
 config.analyticsSuperset.username =
     process.env.BAE_LP_ANALYTICS_SUPERSET_USERNAME || config.analyticsSuperset.username;
 config.analyticsSuperset.password =
