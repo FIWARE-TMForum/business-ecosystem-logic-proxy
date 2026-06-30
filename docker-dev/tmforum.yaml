@@ -40,3 +40,7 @@ apis:
     image: tmforum-usage-management
     port: 8092
     baeVar: BAE_LP_ENDPOINT_USAGE
+  - name: document-management
+    image: tmforum-document-management
+    port: 8093
+    baeVar: BAE_LP_ENDPOINT_DOCUMENT

@@ -276,6 +276,13 @@ config.endpoints = {
         host: 'quote-management.marketplace.svc.cluster.local',
         port: '8080'
     },
+    document: {
+        path: 'document',
+        apiPath: '',
+        host: 'tmforum-tm-forum-api-document-management',
+        port: '8080',
+        appSsl: false
+    },
     revenue: {
         path: 'revenue',
         apiPath: '/revenue',
@@ -594,6 +601,15 @@ config.endpoints.quote.host = process.env.BAE_LP_ENDPOINT_QUOTE_HOST || config.e
 
 if (!!process.env.BAE_LP_ENDPOINT_QUOTE_SECURED) {
     config.endpoints.quote.appSsl = process.env.BAE_LP_ENDPOINT_QUOTE_SECURED == 'true';
+}
+
+// Document Management
+config.endpoints.document.apiPath = process.env.BAE_LP_ENDPOINT_DOCUMENT_PATH || config.endpoints.document.apiPath;
+config.endpoints.document.port = process.env.BAE_LP_ENDPOINT_DOCUMENT_PORT || config.endpoints.document.port;
+config.endpoints.document.host = process.env.BAE_LP_ENDPOINT_DOCUMENT_HOST || config.endpoints.document.host;
+
+if (!!process.env.BAE_LP_ENDPOINT_DOCUMENT_SECURED) {
+    config.endpoints.document.appSsl = process.env.BAE_LP_ENDPOINT_DOCUMENT_SECURED == 'true';
 }
 
 // Revenue

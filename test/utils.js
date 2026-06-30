@@ -177,6 +177,13 @@ var defaultConfig = {
 			port: '8637',
 			appSsl: false
 		},
+		document: {
+			path: 'document',
+			apiPath: '/api',
+			host: 'document.com',
+			port: '8637',
+			appSsl: false
+		},
 		revenue: {
 			path: 'revenue',
 			apiPath: '/revenue',

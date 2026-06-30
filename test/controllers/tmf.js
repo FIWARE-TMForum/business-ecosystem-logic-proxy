@@ -54,7 +54,7 @@ describe('TMF Controller', function() {
     };
 
     // Function to get a custom tmf.js instance
-    const getTmfInstance = function(request, catalog, ordering, inventory, party) {
+    const getTmfInstance = function(request, catalog, ordering, inventory, party, document) {
         return proxyquire('../../controllers/tmf', {
             axios: request,
             './../config': config,
@@ -63,7 +63,8 @@ describe('TMF Controller', function() {
             './tmf-apis/catalog': { catalog: catalog },
             './tmf-apis/ordering': { ordering: ordering },
             './tmf-apis/inventory': { inventory: inventory },
-            './tnf-apis/party': { party: party }
+            './tnf-apis/party': { party: party },
+            './tmf-apis/document': { document: document }
         }).tmf();
     };
 
@@ -207,7 +208,15 @@ describe('TMF Controller', function() {
             const catalogController = api.startsWith(config.endpoints.catalog.path) ? controller : null;
             const orderingController = api.startsWith(config.endpoints.ordering.path) ? controller : null;
             const inventoryController = api.startsWith(config.endpoints.inventory.path) ? controller : null;
-            const tmf = getTmfInstance(request, catalogController, orderingController, inventoryController);
+            const documentController = api.startsWith(config.endpoints.document.path) ? controller : null;
+            const tmf = getTmfInstance(
+                request,
+                catalogController,
+                orderingController,
+                inventoryController,
+                null,
+                documentController
+            );
 
             // Actual call
             const req = { apiUrl: '/' + api, headers: {}, connection: { remoteAddress: '127.0.0.1' } };
@@ -238,6 +247,10 @@ describe('TMF Controller', function() {
 
         it('should not redirect the request to the actual inventory API when controller rejects it', function(done) {
             testApiReturnsError('inventory', done);
+        });
+
+        it('should not redirect the request to the actual document API when controller rejects it', function(done) {
+            testApiReturnsError('document', done);
         });
 
         const testApiOk = function(api, path, done, opts) {
@@ -277,7 +290,15 @@ describe('TMF Controller', function() {
             const catalogController = api.startsWith(config.endpoints.catalog.path) ? controller : null;
             const orderingController = api.startsWith(config.endpoints.ordering.path) ? controller : null;
             const inventoryController = api.startsWith(config.endpoints.inventory.path) ? controller : null;
-            const tmf = getTmfInstance(request, catalogController, orderingController, inventoryController);
+            const documentController = api.startsWith(config.endpoints.document.path) ? controller : null;
+            const tmf = getTmfInstance(
+                request,
+                catalogController,
+                orderingController,
+                inventoryController,
+                null,
+                documentController
+            );
 
             // Actual call
             const req = {
@@ -346,6 +367,10 @@ describe('TMF Controller', function() {
             testApiOk('inventory', '', done);
         });
 
+        it('should redirect the request to the actual document API when controller does not reject it (root)', function(done) {
+            testApiOk('document', '', done);
+        });
+
         it('should redirect the request to the actual catalog API when controller does not reject it (non root)', function(done) {
             testApiOk('catalog', '/complex?a=b', done, { 'catalogResponse': {'status': 200, 'body':{'category':[{'id': 'cat'}]}}});
         });
@@ -356,6 +381,10 @@ describe('TMF Controller', function() {
 
         it('should redirect the request to the actual inventory API when controller does not reject it (non root)', function(done) {
             testApiOk('inventory', '/complex?a=b', done);
+        });
+
+        it('should redirect the request to the actual document API when controller does not reject it (non root)', function(done) {
+            testApiOk('document', '/document/123?a=b', done, { expectedPath: '/document/123?a=b' });
         });
     });
 
