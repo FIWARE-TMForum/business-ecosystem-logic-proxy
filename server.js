@@ -500,6 +500,7 @@ app.get('/config', async (_, res) => {
         ticketingUrl: config.ticketingUrl,
         matomoId: config.matomoId,
         matomoUrl: config.matomoUrl,
+        googleTagManagerId: config.googleTagManagerId,
         searchEnabled: config.searchUrl != '',
         domeTrust: config.domeTrust,
         domeAbout: config.domeAbout,
