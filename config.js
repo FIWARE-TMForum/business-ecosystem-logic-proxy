@@ -707,6 +707,10 @@ config.matomoId = process.env.BAE_LP_MATOMO_ID || config.matomoId;
 config.matomoUrl = '';
 config.matomoUrl = process.env.BAE_LP_MATOMO_URL || config.matomoUrl;
 
+// Google Tag Manager
+config.googleTagManagerId = '';
+config.googleTagManagerId = process.env.BAE_LP_GOOGLE_TAG_MANAGER_ID || config.googleTagManagerId;
+
 config.knowledgeUrl = '';
 config.knowledgeUrl = process.env.BAE_LP_KNOWLEDGE_BASE_URL || config.knowledgeUrl;
 
