@@ -1682,7 +1682,7 @@
     "_marketplace": "DOME MARKETPLACE",
     "_open_menu": "Open main menu",
     "_home": "Home",
-    "_catalogs": "Providers catalog",
+    "_catalogs": "Providers catalogues",
     "_search": "Search",
     "_browse": "Browse",
     "_cloud": "Cloud Services",
@@ -1736,7 +1736,7 @@
     "_service_spec": "This offering includes the following service specifications",
     "_resource_spec": "This offering includes the following resource specifications",
     "_self_attestation": "You can find the self attestation document here.",
-    "_product_pricing": "Product pricing",
+    "_product_pricing": "Pricing plans",
     "_product_chars": "Product characteristics",
     "_product_att": "Product attachments",
     "_product_rels": "Product relationships"
