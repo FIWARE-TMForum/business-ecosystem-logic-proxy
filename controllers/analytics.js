@@ -20,7 +20,6 @@
 const axios = require('axios')
 const config = require('../config')
 const utils = require('../lib/utils')
-const partyClient = require('../lib/party').partyClient
 
 const logger = require('./../lib/logger').logger.getLogger('Analytics')
 
@@ -36,186 +35,29 @@ function analytics() {
         return normalized.length > 0 ? normalized : null
     }
 
-    const collectCookies = function(cookieStore, response) {
-        const setCookie = response.headers ? response.headers['set-cookie'] : null
-        if (!Array.isArray(setCookie)) {
-            return
-        }
-
-        setCookie.forEach((cookie) => {
-            const cookiePair = cookie.split(';')[0]
-            const separator = cookiePair.indexOf('=')
-            if (separator > 0) {
-                cookieStore[cookiePair.substring(0, separator)] = cookiePair.substring(separator + 1)
-            }
-        })
-    }
-
-    const buildCookieHeader = function(cookieStore) {
-        return Object.keys(cookieStore).map((name) => {
-            return `${name}=${cookieStore[name]}`
-        }).join('; ')
-    }
-
-    const makeSupersetRequest = async function(method, path, data, headers, cookieStore) {
-        const requestHeaders = Object.assign({}, headers)
-        const cookieHeader = buildCookieHeader(cookieStore)
-        if (cookieHeader.length > 0) {
-            requestHeaders.Cookie = cookieHeader
-        }
-
+    const makeSupersetRequest = async function(method, path, data, headers) {
+        const requestPath = path.charAt(0) === '/' ? path : `/${path}`
         const response = await axios.request({
             method: method,
-            url: `${config.analyticsSuperset.url.replace(/\/+$/, '')}${path}`,
+            url: `${config.analyticsSuperset.url.replace(/\/+$/, '')}${requestPath}`,
             data: data,
-            headers: requestHeaders
+            headers: headers
         })
 
-        collectCookies(cookieStore, response)
         return response
     }
 
-    const getAccessToken = async function(cookieStore) {
+    const createGuestToken = async function(req, dashboardId) {
         const response = await makeSupersetRequest(
             'POST',
-            '/api/v1/security/login',
+            config.analyticsSuperset.guestTokenPath,
             {
-                username: config.analyticsSuperset.username,
-                password: config.analyticsSuperset.password,
-                provider: config.analyticsSuperset.provider
+                dashboard: dashboardId
             },
-            {
-                'Content-Type': 'application/json'
-            },
-            cookieStore
-        )
-
-        return response.data.access_token
-    }
-
-    const getCsrfToken = async function(accessToken, cookieStore) {
-        const response = await makeSupersetRequest(
-            'GET',
-            '/api/v1/security/csrf_token/',
-            null,
             {
                 'Content-Type': 'application/json',
-                Authorization: `Bearer ${accessToken}`
-            },
-            cookieStore
-        )
-
-        return response.data.result
-    }
-
-    const getOrganizationVat = function(organization) {
-        const externalReference = (organization.externalReference || []).find((ref) => {
-            return (ref.externalReferenceType || '').toLowerCase() === 'idm_id'
-        })
-
-        if (externalReference) {
-            return externalReference.name
-        }
-
-        const organizationIdentification = (organization.organizationIdentification || []).find((identifier) => {
-            return identifier.identificationId
-        })
-
-        if (organizationIdentification) {
-            return organizationIdentification.identificationId
-        }
-
-        return ''
-    }
-
-    const resolveOrganizationVat = async function(req) {
-        if (!req.user.userId || !req.user.partyId) {
-            throw {
-                status: 403,
-                message: 'An organization must be selected to access analytics dashboards'
+                Authorization: `Bearer ${req.user.accessToken}`
             }
-        }
-
-        let organization
-        try {
-            organization = (await partyClient.getOrganization(req.user.partyId)).body
-        } catch (err) {
-            throw {
-                status: 403,
-                message: 'It was not possible to resolve the selected organization'
-            }
-        }
-
-        const vat = normalizeNonEmptyString(getOrganizationVat(organization))
-        if (!vat) {
-            throw {
-                status: 403,
-                message: 'The selected organization does not have a VAT identifier'
-            }
-        }
-
-        return vat
-    }
-
-    const renderTemplate = function(template, vat) {
-        return template.replace(/\{\{\s*vat\s*\}\}/g, vat.replace(/'/g, "''"))
-    }
-
-    const buildRlsRules = async function(req, rlsKey) {
-        const rules = config.analyticsSuperset.rls[rlsKey]
-        const vat = await resolveOrganizationVat(req)
-
-        return rules.reduce((result, rule) => {
-            rule.datasets.forEach((dataset) => {
-                result.push({
-                    dataset: dataset,
-                    clause: renderTemplate(rule.clauseTemplate, vat)
-                })
-            })
-
-            return result
-        }, [])
-    }
-
-    const createGuestToken = async function(req, dashboardId, rlsKey) {
-        const rlsRules = await buildRlsRules(req, rlsKey)
-        const cookieStore = {}
-        const accessToken = await getAccessToken(cookieStore)
-
-        if (!accessToken) {
-            throw new Error('Superset access token not found in login response')
-        }
-
-        const csrfToken = await getCsrfToken(accessToken, cookieStore)
-
-        if (!csrfToken) {
-            throw new Error('Superset CSRF token not found in response')
-        }
-
-        const payload = {
-            user: {
-                username: 'embedded.user'
-            },
-            resources: [
-                {
-                    type: 'dashboard',
-                    id: dashboardId
-                }
-            ],
-            rls: rlsRules
-        }
-
-        const response = await makeSupersetRequest(
-            'POST',
-            '/api/v1/security/guest_token/',
-            payload,
-            {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${accessToken}`,
-                'X-CSRFToken': csrfToken,
-                Referer: config.analyticsSuperset.url.replace(/\/+$/, '')
-            },
-            cookieStore
         )
 
         return response.data.token
@@ -273,9 +115,7 @@ function analytics() {
 
         if (
             !normalizeNonEmptyString(config.analyticsSuperset.url) ||
-            !normalizeNonEmptyString(config.analyticsSuperset.username) ||
-            !normalizeNonEmptyString(config.analyticsSuperset.password) ||
-            !normalizeNonEmptyString(config.analyticsSuperset.provider)
+            !normalizeNonEmptyString(config.analyticsSuperset.guestTokenPath)
         ) {
             return {
                 status: 500,
@@ -284,8 +124,7 @@ function analytics() {
         }
 
         return {
-            dashboardId: dashboardId,
-            rlsKey: dashboardKey
+            dashboardId: dashboardId
         }
     }
 
@@ -297,7 +136,7 @@ function analytics() {
         }
 
         try {
-            const token = await createGuestToken(req, validation.dashboardId, validation.rlsKey)
+            const token = await createGuestToken(req, validation.dashboardId)
 
             if (!token) {
                 return res.status(502).json({ error: 'Superset guest token not found in response' })
