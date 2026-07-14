@@ -117,10 +117,7 @@ function admin() {
             analyticsEnabled: config.analyticsEnabled === true,
             analyticsDashboards: clone(config.analyticsDashboards),
             analyticsSuperset: {
-                username: config.analyticsSuperset.username,
-                provider: config.analyticsSuperset.provider,
-                passwordConfigured: normalizeNonEmptyString(config.analyticsSuperset.password) != null,
-                rls: clone(config.analyticsSuperset.rls)
+                guestTokenPath: config.analyticsSuperset.guestTokenPath
             }
         }
     }
@@ -135,63 +132,7 @@ function admin() {
         return getAnalyticsConfigResponse()
     }
 
-    const validateAnalyticsRlsRule = function(rule, path, errors) {
-        if (rule == null || typeof rule !== 'object' || Array.isArray(rule)) {
-            errors.push(`${path} must be an object`)
-            return null
-        }
-
-        if (!Array.isArray(rule.datasets) || rule.datasets.length === 0) {
-            errors.push(`${path}.datasets must be a non-empty array`)
-        }
-
-        const clauseTemplate = normalizeNonEmptyString(rule.clauseTemplate)
-        if (clauseTemplate == null) {
-            errors.push(`${path}.clauseTemplate is required and must be non-empty`)
-        }
-
-        if (!Array.isArray(rule.datasets) || clauseTemplate == null) {
-            return null
-        }
-
-        const datasets = rule.datasets.filter((dataset, index) => {
-            const isValid = Number.isInteger(dataset)
-            if (!isValid) {
-                errors.push(`${path}.datasets[${index}] must be an integer`)
-            }
-            return isValid
-        })
-
-        return {
-            datasets: datasets,
-            clauseTemplate: clauseTemplate
-        }
-    }
-
-    const validateAnalyticsRls = function(rls, errors) {
-        const requiredKeys = ['businessInsightsNonLear', 'businessInsightsLear', 'usageMonitor']
-
-        if (rls == null || typeof rls !== 'object' || Array.isArray(rls)) {
-            errors.push('analyticsSuperset.rls must be an object')
-            return null
-        }
-
-        const normalized = {}
-        requiredKeys.forEach((key) => {
-            if (!Array.isArray(rls[key])) {
-                errors.push(`analyticsSuperset.rls.${key} must be an array`)
-                return
-            }
-
-            normalized[key] = rls[key].map((rule, index) => {
-                return validateAnalyticsRlsRule(rule, `analyticsSuperset.rls.${key}[${index}]`, errors)
-            }).filter((rule) => rule != null)
-        })
-
-        return normalized
-    }
-
-    const validateAndNormalizeAnalyticsConfig = function(body, currentPassword) {
+    const validateAndNormalizeAnalyticsConfig = function(body) {
         const errors = []
 
         if (body == null || typeof body !== 'object' || Array.isArray(body)) {
@@ -233,26 +174,14 @@ function admin() {
 
         let analyticsSuperset = null
         if (body.analyticsSuperset != null && typeof body.analyticsSuperset === 'object' && !Array.isArray(body.analyticsSuperset)) {
-            const username = normalizeNonEmptyString(body.analyticsSuperset.username)
-            const password = normalizeNonEmptyString(body.analyticsSuperset.password) || normalizeNonEmptyString(currentPassword)
-            const provider = normalizeNonEmptyString(body.analyticsSuperset.provider)
-            const rls = validateAnalyticsRls(body.analyticsSuperset.rls, errors)
+            const guestTokenPath = normalizeNonEmptyString(body.analyticsSuperset.guestTokenPath)
 
-            if (username == null) {
-                errors.push('analyticsSuperset.username is required and must be non-empty')
-            }
-            if (password == null) {
-                errors.push('analyticsSuperset.password is required and must be non-empty')
-            }
-            if (provider == null) {
-                errors.push('analyticsSuperset.provider is required and must be non-empty')
+            if (guestTokenPath == null) {
+                errors.push('analyticsSuperset.guestTokenPath is required and must be non-empty')
             }
 
             analyticsSuperset = {
-                username: username,
-                password: password,
-                provider: provider,
-                rls: rls
+                guestTokenPath: guestTokenPath
             }
         }
 
@@ -789,7 +718,7 @@ function admin() {
                 return getAnalyticsConfigResponse()
             }
 
-            const validationResult = validateAndNormalizeAnalyticsConfig(result[0].analytics, config.analyticsSuperset.password)
+            const validationResult = validateAndNormalizeAnalyticsConfig(result[0].analytics)
             if (validationResult.errors.length > 0) {
                 logger.error('Invalid analytics config stored in database: ' + validationResult.errors.join(', '))
                 return getAnalyticsConfigResponse()
@@ -818,7 +747,7 @@ function admin() {
             return
         }
 
-        const validationResult = validateAndNormalizeAnalyticsConfig(reqBody, config.analyticsSuperset.password)
+        const validationResult = validateAndNormalizeAnalyticsConfig(reqBody)
         if (validationResult.errors.length > 0) {
             res.status(400)
             res.json({

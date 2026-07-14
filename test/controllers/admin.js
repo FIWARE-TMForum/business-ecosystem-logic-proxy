@@ -949,32 +949,7 @@ describe('Admin Controller', () => {
                 usageMonitor: '566cf4c8-e033-43ef-b8fb-24ae7067b416'
             },
             analyticsSuperset: {
-                username: 'admin',
-                password: 'superset-service-password',
-                provider: 'db',
-                rls: {
-                    businessInsightsNonLear: [{
-                        datasets: [75, 81, 83, 67, 82, 79, 84, 88],
-                        clauseTemplate: "vat = '{{vat}}' OR brand = 'Dome Marketplace Overall'"
-                    }, {
-                        datasets: [76],
-                        clauseTemplate: "'{{vat}}' = ANY(all_vats)"
-                    }],
-                    businessInsightsLear: [{
-                        datasets: [75, 81, 83, 67, 82, 79, 84, 88],
-                        clauseTemplate: "vat = '{{vat}}' OR brand = 'Dome Marketplace Overall'"
-                    }, {
-                        datasets: [76],
-                        clauseTemplate: "'{{vat}}' = ANY(all_vats)"
-                    }, {
-                        datasets: [110, 108, 113, 112, 114],
-                        clauseTemplate: "vat = '{{vat}}'"
-                    }],
-                    usageMonitor: [{
-                        datasets: [115],
-                        clauseTemplate: "vat = '{{vat}}'"
-                    }]
-                }
+                guestTokenPath: '/api/v1/dome/guest_token/'
             }
         }
     }
@@ -1008,10 +983,7 @@ describe('Admin Controller', () => {
             analyticsEnabled: payload.analyticsEnabled,
             analyticsDashboards: payload.analyticsDashboards,
             analyticsSuperset: {
-                username: payload.analyticsSuperset.username,
-                provider: payload.analyticsSuperset.provider,
-                passwordConfigured: true,
-                rls: payload.analyticsSuperset.rls
+                guestTokenPath: payload.analyticsSuperset.guestTokenPath
             }
         }
 
@@ -1034,18 +1006,14 @@ describe('Admin Controller', () => {
             expect(config.analytics).toBe(payload.analytics)
             expect(config.analyticsEnabled).toBe(true)
             expect(config.analyticsSuperset.url).toBe(config.analytics)
-            expect(config.analyticsSuperset.password).toBe(payload.analyticsSuperset.password)
+            expect(config.analyticsSuperset.guestTokenPath).toBe(payload.analyticsSuperset.guestTokenPath)
             done()
         })
     })
 
-    it('should retain the configured analytics password when patch payload omits it', (done) => {
+    it('should update the configured Superset guest token path', (done) => {
         const payload = getAnalyticsConfigPayload()
-        delete payload.analyticsSuperset.password
-        config.analyticsSuperset.password = 'existing-superset-password'
-
-        const storedPayload = JSON.parse(JSON.stringify(payload))
-        storedPayload.analyticsSuperset.password = 'existing-superset-password'
+        payload.analyticsSuperset.guestTokenPath = '/custom/dome/guest_token/'
 
         const searchMock = jasmine.createSpy('search').and.returnValue(Promise.resolve([{
             id: 'analytics-doc',
@@ -1081,11 +1049,11 @@ describe('Admin Controller', () => {
 
         resPromise.then(() => {
             expect(updateMock).toHaveBeenCalledWith('config', 'analytics-doc', {
-                analytics: storedPayload
+                analytics: payload
             })
             expect(response.status).toHaveBeenCalledWith(200)
-            expect(response.json.calls.mostRecent().args[0].analyticsSuperset.password).toBeUndefined()
-            expect(config.analyticsSuperset.password).toBe('existing-superset-password')
+            expect(response.json.calls.mostRecent().args[0].analyticsSuperset.guestTokenPath).toBe('/custom/dome/guest_token/')
+            expect(config.analyticsSuperset.guestTokenPath).toBe('/custom/dome/guest_token/')
             done()
         })
     })
@@ -1119,10 +1087,7 @@ describe('Admin Controller', () => {
             analyticsEnabled: payload.analyticsEnabled,
             analyticsDashboards: payload.analyticsDashboards,
             analyticsSuperset: {
-                username: payload.analyticsSuperset.username,
-                provider: payload.analyticsSuperset.provider,
-                passwordConfigured: true,
-                rls: payload.analyticsSuperset.rls
+                guestTokenPath: payload.analyticsSuperset.guestTokenPath
             }
         }
 
@@ -1138,7 +1103,6 @@ describe('Admin Controller', () => {
             expect(searchMock).toHaveBeenCalledWith('config', { id: 'analytics', limit: 1 })
             expect(response.status).toHaveBeenCalledWith(200)
             expect(response.json).toHaveBeenCalledWith(expectedResponse)
-            expect(response.json.calls.mostRecent().args[0].analyticsSuperset.password).toBeUndefined()
             done()
         })
     })
@@ -1175,10 +1139,7 @@ describe('Admin Controller', () => {
             analyticsEnabled: payload.analyticsEnabled,
             analyticsDashboards: payload.analyticsDashboards,
             analyticsSuperset: {
-                username: payload.analyticsSuperset.username,
-                provider: payload.analyticsSuperset.provider,
-                passwordConfigured: true,
-                rls: payload.analyticsSuperset.rls
+                guestTokenPath: payload.analyticsSuperset.guestTokenPath
             }
         }
 
@@ -1210,9 +1171,7 @@ describe('Admin Controller', () => {
         const payload = getAnalyticsConfigPayload()
         delete payload.analytics
         delete payload.analyticsEnabled
-        delete payload.analyticsSuperset.password
-        payload.analyticsSuperset.rls.usageMonitor[0].datasets = ['115']
-        config.analyticsSuperset.password = ''
+        payload.analyticsSuperset.guestTokenPath = ''
 
         const request = {
             user: {
@@ -1239,8 +1198,7 @@ describe('Admin Controller', () => {
                 details: [
                     'analytics is required and must be non-empty',
                     'analyticsEnabled is required and must be a boolean',
-                    'analyticsSuperset.rls.usageMonitor[0].datasets[0] must be an integer',
-                    'analyticsSuperset.password is required and must be non-empty'
+                    'analyticsSuperset.guestTokenPath is required and must be non-empty'
                 ]
             })
             expect(indexes.indexes.search).not.toHaveBeenCalled()

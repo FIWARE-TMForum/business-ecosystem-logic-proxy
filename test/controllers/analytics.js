@@ -26,7 +26,6 @@ describe('Analytics Controller', () => {
     let configMock;
     let controller;
     let loggerErrorSpy;
-    let partyClientMock;
 
     const loadController = () => {
         return proxyquire('../../controllers/analytics', {
@@ -38,9 +37,6 @@ describe('Analytics Controller', () => {
                         return role.name.toLowerCase() === roleName.toLowerCase()
                     })
                 }
-            },
-            '../lib/party': {
-                partyClient: partyClientMock
             },
             './../lib/logger': {
                 logger: {
@@ -62,40 +58,22 @@ describe('Analytics Controller', () => {
         return {
             userId: 'individual-user-1',
             partyId: 'urn:party:organization:1',
+            accessToken: 'dome-verifier-access-token',
             roles: roles.map((roleName) => ({ name: roleName }))
         }
     };
 
     const mockSupersetSuccess = () => {
-        axiosMock.request.and.returnValues(
-            Promise.resolve({
-                headers: {
-                    'set-cookie': ['session=login-cookie; Path=/']
-                },
-                data: {
-                    access_token: 'superset-access-token'
-                }
-            }),
-            Promise.resolve({
-                headers: {
-                    'set-cookie': ['csrf=csrf-cookie; Path=/']
-                },
-                data: {
-                    result: 'csrf-token'
-                }
-            }),
-            Promise.resolve({
-                headers: {},
-                data: {
-                    token: 'guest-token'
-                }
-            })
-        );
+        axiosMock.request.and.returnValue(Promise.resolve({
+            headers: {},
+            data: {
+                token: 'guest-token'
+            }
+        }));
     };
 
     beforeEach(() => {
         axiosMock = jasmine.createSpyObj('axios', ['request']);
-        partyClientMock = jasmine.createSpyObj('partyClient', ['getOrganization']);
         loggerErrorSpy = jasmine.createSpy('logger.error');
 
         configMock = {
@@ -113,42 +91,9 @@ describe('Analytics Controller', () => {
             },
             analyticsSuperset: {
                 url: 'https://superset.example.com/',
-                username: 'svc-user',
-                password: 'svc-password',
-                provider: 'db',
-                rls: {
-                    businessInsightsNonLear: [
-                        {
-                            datasets: [75, 81],
-                            clauseTemplate: "vat = '{{vat}}'"
-                        }
-                    ],
-                    businessInsightsLear: [
-                        {
-                            datasets: [110, 108],
-                            clauseTemplate: "vat = '{{vat}}'"
-                        }
-                    ],
-                    usageMonitor: [
-                        {
-                            datasets: [115],
-                            clauseTemplate: "vat = '{{vat}}'"
-                        }
-                    ]
-                }
+                guestTokenPath: '/api/v1/dome/guest_token/'
             }
         };
-
-        partyClientMock.getOrganization.and.returnValue(Promise.resolve({
-            body: {
-                externalReference: [
-                    {
-                        externalReferenceType: 'idm_id',
-                        name: 'VATDE-350750734'
-                    }
-                ]
-            }
-        }));
 
         controller = loadController();
     });
@@ -232,60 +177,16 @@ describe('Analytics Controller', () => {
         mockSupersetSuccess();
 
         controller.getGuestToken(req, res).then(() => {
-            expect(axiosMock.request.calls.count()).toBe(3);
-            expect(partyClientMock.getOrganization).toHaveBeenCalledWith('urn:party:organization:1');
+            expect(axiosMock.request.calls.count()).toBe(1);
             expect(axiosMock.request.calls.argsFor(0)[0]).toEqual({
                 method: 'POST',
-                url: 'https://superset.example.com/api/v1/security/login',
+                url: 'https://superset.example.com/api/v1/dome/guest_token/',
                 data: {
-                    username: 'svc-user',
-                    password: 'svc-password',
-                    provider: 'db'
-                },
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-            expect(axiosMock.request.calls.argsFor(1)[0]).toEqual({
-                method: 'GET',
-                url: 'https://superset.example.com/api/v1/security/csrf_token/',
-                data: null,
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: 'Bearer superset-access-token',
-                    Cookie: 'session=login-cookie'
-                }
-            });
-            expect(axiosMock.request.calls.argsFor(2)[0]).toEqual({
-                method: 'POST',
-                url: 'https://superset.example.com/api/v1/security/guest_token/',
-                data: {
-                    user: {
-                        username: 'embedded.user'
-                    },
-                    resources: [
-                        {
-                            type: 'dashboard',
-                            id: 'dashboard-business-non-lear'
-                        }
-                    ],
-                    rls: [
-                        {
-                            dataset: 75,
-                            clause: "vat = 'VATDE-350750734'"
-                        },
-                        {
-                            dataset: 81,
-                            clause: "vat = 'VATDE-350750734'"
-                        }
-                    ]
+                    dashboard: 'dashboard-business-non-lear'
                 },
                 headers: {
                     'Content-Type': 'application/json',
-                    Authorization: 'Bearer superset-access-token',
-                    'X-CSRFToken': 'csrf-token',
-                    Referer: 'https://superset.example.com',
-                    Cookie: 'session=login-cookie; csrf=csrf-cookie'
+                    Authorization: 'Bearer dome-verifier-access-token'
                 }
             });
             expect(res.status).toHaveBeenCalledWith(200);
@@ -309,22 +210,10 @@ describe('Analytics Controller', () => {
         mockSupersetSuccess();
 
         controller.getGuestToken(req, res).then(() => {
-            expect(axiosMock.request.calls.argsFor(2)[0].data.resources).toEqual([
-                {
-                    type: 'dashboard',
-                    id: 'dashboard-business-lear'
-                }
-            ]);
-            expect(axiosMock.request.calls.argsFor(2)[0].data.rls).toEqual([
-                {
-                    dataset: 110,
-                    clause: "vat = 'VATDE-350750734'"
-                },
-                {
-                    dataset: 108,
-                    clause: "vat = 'VATDE-350750734'"
-                }
-            ]);
+            expect(axiosMock.request.calls.count()).toBe(1);
+            expect(axiosMock.request.calls.argsFor(0)[0].data).toEqual({
+                dashboard: 'dashboard-business-lear'
+            });
             expect(res.status).toHaveBeenCalledWith(200);
             expect(res.json).toHaveBeenCalledWith({
                 dashboardId: 'dashboard-business-lear',
@@ -346,18 +235,10 @@ describe('Analytics Controller', () => {
         mockSupersetSuccess();
 
         controller.getGuestToken(req, res).then(() => {
-            expect(axiosMock.request.calls.argsFor(2)[0].data.resources).toEqual([
-                {
-                    type: 'dashboard',
-                    id: 'dashboard-usage'
-                }
-            ]);
-            expect(axiosMock.request.calls.argsFor(2)[0].data.rls).toEqual([
-                {
-                    dataset: 115,
-                    clause: "vat = 'VATDE-350750734'"
-                }
-            ]);
+            expect(axiosMock.request.calls.count()).toBe(1);
+            expect(axiosMock.request.calls.argsFor(0)[0].data).toEqual({
+                dashboard: 'dashboard-usage'
+            });
             expect(res.status).toHaveBeenCalledWith(200);
             expect(res.json).toHaveBeenCalledWith({
                 dashboardId: 'dashboard-usage',
@@ -367,23 +248,20 @@ describe('Analytics Controller', () => {
         });
     });
 
-    it('returns 403 when there is no selected organization for dynamic RLS', (done) => {
-        const user = makeUser(configMock.roles.seller);
-        delete user.userId;
-
+    it('uses the configured Superset guest-token path without requiring a leading slash', (done) => {
+        configMock.analyticsSuperset.guestTokenPath = 'custom/dome/guest_token/'
         const req = {
             body: JSON.stringify({
                 tab: 'businessInsights'
             }),
-            user: user
+            user: makeUser(configMock.roles.seller)
         };
         const res = makeResponse();
+        mockSupersetSuccess();
 
         controller.getGuestToken(req, res).then(() => {
-            expect(res.status).toHaveBeenCalledWith(403);
-            expect(res.json).toHaveBeenCalledWith({ error: 'An organization must be selected to access analytics dashboards' });
-            expect(partyClientMock.getOrganization).not.toHaveBeenCalled();
-            expect(axiosMock.request).not.toHaveBeenCalled();
+            expect(axiosMock.request.calls.argsFor(0)[0].url).toBe('https://superset.example.com/custom/dome/guest_token/');
+            expect(res.status).toHaveBeenCalledWith(200);
             done();
         });
     });

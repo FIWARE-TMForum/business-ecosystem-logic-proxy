@@ -759,25 +759,11 @@ config.analyticsDashboards.usageMonitor =
 
 config.analyticsSuperset = {
     url: '',
-    username: '',
-    password: '',
-    provider: 'db',
-    rls: {
-        businessInsightsNonLear: [],
-        businessInsightsLear: [],
-        usageMonitor: []
-    }
+    guestTokenPath: '/api/v1/dome/guest_token/'
 };
 config.analyticsSuperset.url = config.analytics;
-config.analyticsSuperset.username =
-    process.env.BAE_LP_ANALYTICS_SUPERSET_USERNAME || config.analyticsSuperset.username;
-config.analyticsSuperset.password =
-    process.env.BAE_LP_ANALYTICS_SUPERSET_PASSWORD || config.analyticsSuperset.password;
-config.analyticsSuperset.provider =
-    process.env.BAE_LP_ANALYTICS_SUPERSET_PROVIDER || config.analyticsSuperset.provider;
-if (process.env.BAE_LP_ANALYTICS_RLS) {
-    config.analyticsSuperset.rls = JSON.parse(process.env.BAE_LP_ANALYTICS_RLS);
-}
+config.analyticsSuperset.guestTokenPath =
+    process.env.BAE_LP_ANALYTICS_SUPERSET_GUEST_TOKEN_PATH || config.analyticsSuperset.guestTokenPath;
 
 config.defaultId = '';
 
