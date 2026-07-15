@@ -720,6 +720,7 @@ describe('Admin Controller', () => {
     const setFeatureFlagDefaults = () => {
         config.purchaseEnabled = true
         config.dataSpaceEnabled = true
+        config.catalogManagementEnabled = true
         config.quotesEnabled = true
         config.tenderingEnabled = true
         config.launchValidationEnabled = false
@@ -751,6 +752,7 @@ describe('Admin Controller', () => {
             },
             body: JSON.stringify({
                 purchaseEnabled: false,
+                catalogManagementEnabled: false,
                 quotesEnabled: false,
                 aiEnabled: true
             })
@@ -759,6 +761,7 @@ describe('Admin Controller', () => {
         const expectedResponse = {
             purchaseEnabled: false,
             dataSpaceEnabled: true,
+            catalogManagementEnabled: false,
             quotesEnabled: false,
             tenderingEnabled: true,
             launchValidationEnabled: false,
@@ -780,6 +783,7 @@ describe('Admin Controller', () => {
             expect(indexMock).toHaveBeenCalledWith('config', 'feature-flags', {
                 features: {
                     purchaseEnabled: false,
+                    catalogManagementEnabled: false,
                     quotesEnabled: false,
                     aiEnabled: true
                 }
@@ -787,6 +791,7 @@ describe('Admin Controller', () => {
             expect(response.status).toHaveBeenCalledWith(200)
             expect(response.json).toHaveBeenCalledWith(expectedResponse)
             expect(config.purchaseEnabled).toBe(false)
+            expect(config.catalogManagementEnabled).toBe(false)
             expect(config.aiEnabled).toBe(true)
             done()
         })
@@ -821,6 +826,7 @@ describe('Admin Controller', () => {
             },
             body: JSON.stringify({
                 dataSpaceEnabled: false,
+                catalogManagementEnabled: false,
                 launchValidationEnabled: true
             })
         }
@@ -828,6 +834,7 @@ describe('Admin Controller', () => {
         const expectedResponse = {
             purchaseEnabled: false,
             dataSpaceEnabled: false,
+            catalogManagementEnabled: false,
             quotesEnabled: true,
             tenderingEnabled: true,
             launchValidationEnabled: true,
@@ -849,12 +856,14 @@ describe('Admin Controller', () => {
                     purchaseEnabled: false,
                     aiEnabled: true,
                     dataSpaceEnabled: false,
+                    catalogManagementEnabled: false,
                     launchValidationEnabled: true
                 }
             })
             expect(response.status).toHaveBeenCalledWith(200)
             expect(response.json).toHaveBeenCalledWith(expectedResponse)
             expect(config.launchValidationEnabled).toBe(true)
+            expect(config.catalogManagementEnabled).toBe(false)
             done()
         })
     })
