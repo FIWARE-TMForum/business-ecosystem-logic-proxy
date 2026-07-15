@@ -31,6 +31,7 @@ const FEATURE_FLAGS_COLLECTION = 'config'
 const FEATURE_FLAGS_CONFIG_ID = 'feature-flags'
 const ANALYTICS_CONFIG_COLLECTION = 'config'
 const ANALYTICS_CONFIG_ID = 'analytics'
+const OFFER_FORM_PLACEMENTS = ['none', 'generalInfo', 'categorySection']
 const FEATURE_FLAGS = [
     'purchaseEnabled',
     'dataSpaceEnabled',
@@ -301,6 +302,13 @@ function admin() {
             errors.push(`filters[${index}].source must be one of: configured, categoryRoot`)
         }
 
+        const offerFormPlacement = Object.prototype.hasOwnProperty.call(filter, 'offerFormPlacement') ? filter.offerFormPlacement : 'none'
+        if (!OFFER_FORM_PLACEMENTS.includes(offerFormPlacement)) {
+            errors.push(`filters[${index}].offerFormPlacement must be one of: none, generalInfo, categorySection`)
+        } else if (source === 'configured' && offerFormPlacement !== 'none') {
+            errors.push(`filters[${index}].offerFormPlacement must be none when source is configured`)
+        }
+
         let normalizedChildren = []
         if (source === 'configured') {
             if ('children' in filter && !Array.isArray(filter.children)) {
@@ -342,6 +350,7 @@ function admin() {
         if (source === 'configured') {
             normalizedFilter.children = normalizedChildren
         } else if (source === 'categoryRoot') {
+            normalizedFilter.offerFormPlacement = offerFormPlacement
             normalizedFilter.rootName = filter.rootName.trim()
         }
 
@@ -397,6 +406,11 @@ function admin() {
         const normalizedFilters = body.filters.map((filter, index) => {
             return validateFilter(filter, index, errors)
         }).filter((filter) => filter != null)
+
+        const generalInfoFilters = normalizedFilters.filter((filter) => filter.offerFormPlacement === 'generalInfo')
+        if (generalInfoFilters.length > 1) {
+            errors.push('Only one filter may use offerFormPlacement generalInfo')
+        }
 
         if (errors.length > 0) {
             return { errors: errors, value: null }

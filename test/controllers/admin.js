@@ -586,6 +586,7 @@ describe('Admin Controller', () => {
             }, {
                 name: 'Filter B',
                 source: 'categoryRoot',
+                offerFormPlacement: 'none',
                 rootName: 'Root B'
             }]
         }
@@ -713,6 +714,325 @@ describe('Admin Controller', () => {
                 details: ['filters[0].children[0] must not include source']
             })
             expect(indexes.indexes.search).not.toHaveBeenCalled()
+            done()
+        })
+    })
+
+    it('should accept one category root search filter placed in general info', (done) => {
+        const indexMock = jasmine.createSpy('indexDocument').and.returnValue(Promise.resolve())
+        const indexes = {
+            indexes: {
+                search: jasmine.createSpy('search').and.returnValue(Promise.resolve([])),
+                updateDocument: jasmine.createSpy('updateDocument').and.returnValue(Promise.resolve()),
+                indexDocument: indexMock
+            }
+        }
+
+        const request = {
+            user: {
+                partyId: '1234',
+                roles: [{
+                    name: config.roles.admin
+                }]
+            },
+            body: JSON.stringify({
+                primaryCategoriesMode: 'rooted',
+                primaryRootName: 'Main root',
+                filters: [{
+                    name: 'Business domain',
+                    source: 'categoryRoot',
+                    rootName: 'Domains',
+                    offerFormPlacement: 'generalInfo'
+                }]
+            })
+        }
+
+        const expectedBody = {
+            primaryCategoriesMode: 'rooted',
+            primaryRootName: 'Main root',
+            filters: [{
+                name: 'Business domain',
+                source: 'categoryRoot',
+                offerFormPlacement: 'generalInfo',
+                rootName: 'Domains'
+            }]
+        }
+
+        const response = jasmine.createSpyObj('res', ['status', 'json'])
+        let resPromise = new Promise((resolve, reject) => {
+            response.json.and.callFake(() => resolve())
+        })
+
+        const instance = getAdminInstance({}, null, indexes)
+        instance.updateSearchFiltersConfig(request, response)
+
+        resPromise.then(() => {
+            expect(indexMock).toHaveBeenCalledWith('config', 'search-filters', {
+                searchFilters: expectedBody
+            })
+            expect(response.status).toHaveBeenCalledWith(200)
+            expect(response.json).toHaveBeenCalledWith(expectedBody)
+            done()
+        })
+    })
+
+    it('should accept multiple category root search filters placed in category section', (done) => {
+        const indexMock = jasmine.createSpy('indexDocument').and.returnValue(Promise.resolve())
+        const indexes = {
+            indexes: {
+                search: jasmine.createSpy('search').and.returnValue(Promise.resolve([])),
+                updateDocument: jasmine.createSpy('updateDocument').and.returnValue(Promise.resolve()),
+                indexDocument: indexMock
+            }
+        }
+
+        const request = {
+            user: {
+                partyId: '1234',
+                roles: [{
+                    name: config.roles.admin
+                }]
+            },
+            body: JSON.stringify({
+                primaryCategoriesMode: 'rooted',
+                primaryRootName: 'Main root',
+                filters: [{
+                    name: 'Domain',
+                    source: 'categoryRoot',
+                    rootName: 'Domains',
+                    offerFormPlacement: 'categorySection'
+                }, {
+                    name: 'Technology',
+                    source: 'categoryRoot',
+                    rootName: 'Technologies',
+                    offerFormPlacement: 'categorySection'
+                }]
+            })
+        }
+
+        const expectedBody = {
+            primaryCategoriesMode: 'rooted',
+            primaryRootName: 'Main root',
+            filters: [{
+                name: 'Domain',
+                source: 'categoryRoot',
+                offerFormPlacement: 'categorySection',
+                rootName: 'Domains'
+            }, {
+                name: 'Technology',
+                source: 'categoryRoot',
+                offerFormPlacement: 'categorySection',
+                rootName: 'Technologies'
+            }]
+        }
+
+        const response = jasmine.createSpyObj('res', ['status', 'json'])
+        let resPromise = new Promise((resolve, reject) => {
+            response.json.and.callFake(() => resolve())
+        })
+
+        const instance = getAdminInstance({}, null, indexes)
+        instance.updateSearchFiltersConfig(request, response)
+
+        resPromise.then(() => {
+            expect(indexMock).toHaveBeenCalledWith('config', 'search-filters', {
+                searchFilters: expectedBody
+            })
+            expect(response.status).toHaveBeenCalledWith(200)
+            expect(response.json).toHaveBeenCalledWith(expectedBody)
+            done()
+        })
+    })
+
+    it('should reject more than one general info search filter placement', (done) => {
+        const indexes = {
+            indexes: {
+                search: jasmine.createSpy('search').and.returnValue(Promise.resolve([])),
+                updateDocument: jasmine.createSpy('updateDocument').and.returnValue(Promise.resolve()),
+                indexDocument: jasmine.createSpy('indexDocument').and.returnValue(Promise.resolve())
+            }
+        }
+
+        const request = {
+            user: {
+                partyId: '1234',
+                roles: [{
+                    name: config.roles.admin
+                }]
+            },
+            body: JSON.stringify({
+                primaryCategoriesMode: 'rooted',
+                primaryRootName: 'Main root',
+                filters: [{
+                    name: 'Domain',
+                    source: 'categoryRoot',
+                    rootName: 'Domains',
+                    offerFormPlacement: 'generalInfo'
+                }, {
+                    name: 'Technology',
+                    source: 'categoryRoot',
+                    rootName: 'Technologies',
+                    offerFormPlacement: 'generalInfo'
+                }]
+            })
+        }
+
+        const response = jasmine.createSpyObj('res', ['status', 'json'])
+        let resPromise = new Promise((resolve, reject) => {
+            response.json.and.callFake(() => resolve())
+        })
+
+        const instance = getAdminInstance({}, null, indexes)
+        instance.updateSearchFiltersConfig(request, response)
+
+        resPromise.then(() => {
+            expect(response.status).toHaveBeenCalledWith(400)
+            expect(response.json).toHaveBeenCalledWith({
+                error: 'Invalid search filters payload',
+                details: ['Only one filter may use offerFormPlacement generalInfo']
+            })
+            expect(indexes.indexes.search).not.toHaveBeenCalled()
+            done()
+        })
+    })
+
+    it('should reject offer form placements other than none on configured filters', (done) => {
+        const indexes = {
+            indexes: {
+                search: jasmine.createSpy('search').and.returnValue(Promise.resolve([])),
+                updateDocument: jasmine.createSpy('updateDocument').and.returnValue(Promise.resolve()),
+                indexDocument: jasmine.createSpy('indexDocument').and.returnValue(Promise.resolve())
+            }
+        }
+
+        const request = {
+            user: {
+                partyId: '1234',
+                roles: [{
+                    name: config.roles.admin
+                }]
+            },
+            body: JSON.stringify({
+                primaryCategoriesMode: 'rooted',
+                primaryRootName: 'Main root',
+                filters: [{
+                    name: 'Configured general info',
+                    source: 'configured',
+                    offerFormPlacement: 'generalInfo',
+                    children: []
+                }, {
+                    name: 'Configured category section',
+                    source: 'configured',
+                    offerFormPlacement: 'categorySection',
+                    children: []
+                }]
+            })
+        }
+
+        const response = jasmine.createSpyObj('res', ['status', 'json'])
+        let resPromise = new Promise((resolve, reject) => {
+            response.json.and.callFake(() => resolve())
+        })
+
+        const instance = getAdminInstance({}, null, indexes)
+        instance.updateSearchFiltersConfig(request, response)
+
+        resPromise.then(() => {
+            expect(response.status).toHaveBeenCalledWith(400)
+            expect(response.json).toHaveBeenCalledWith({
+                error: 'Invalid search filters payload',
+                details: [
+                    'filters[0].offerFormPlacement must be none when source is configured',
+                    'filters[1].offerFormPlacement must be none when source is configured'
+                ]
+            })
+            expect(indexes.indexes.search).not.toHaveBeenCalled()
+            done()
+        })
+    })
+
+    it('should preserve offer form placement through search filters update persistence', (done) => {
+        const updateMock = jasmine.createSpy('updateDocument').and.returnValue(Promise.resolve())
+        const indexes = {
+            indexes: {
+                search: jasmine.createSpy('search').and.returnValue(Promise.resolve([{
+                    id: 'doc-1',
+                    searchFilters: {
+                        primaryCategoriesMode: 'rooted'
+                    }
+                }])),
+                updateDocument: updateMock,
+                indexDocument: jasmine.createSpy('indexDocument').and.returnValue(Promise.resolve())
+            }
+        }
+
+        const request = {
+            user: {
+                partyId: '1234',
+                roles: [{
+                    name: config.roles.admin
+                }]
+            },
+            body: JSON.stringify({
+                primaryCategoriesMode: 'rooted',
+                primaryRootName: 'Main root',
+                filters: [{
+                    name: 'Domain',
+                    source: 'categoryRoot',
+                    rootName: 'Domains',
+                    offerFormPlacement: 'generalInfo'
+                }, {
+                    name: 'Technology',
+                    source: 'categoryRoot',
+                    rootName: 'Technologies',
+                    offerFormPlacement: 'categorySection'
+                }, {
+                    name: 'Commercial model',
+                    source: 'configured',
+                    offerFormPlacement: 'none',
+                    children: [{
+                        name: 'Free'
+                    }]
+                }]
+            })
+        }
+
+        const expectedBody = {
+            primaryCategoriesMode: 'rooted',
+            primaryRootName: 'Main root',
+            filters: [{
+                name: 'Domain',
+                source: 'categoryRoot',
+                offerFormPlacement: 'generalInfo',
+                rootName: 'Domains'
+            }, {
+                name: 'Technology',
+                source: 'categoryRoot',
+                offerFormPlacement: 'categorySection',
+                rootName: 'Technologies'
+            }, {
+                name: 'Commercial model',
+                source: 'configured',
+                children: [{
+                    name: 'Free'
+                }]
+            }]
+        }
+
+        const response = jasmine.createSpyObj('res', ['status', 'json'])
+        let resPromise = new Promise((resolve, reject) => {
+            response.json.and.callFake(() => resolve())
+        })
+
+        const instance = getAdminInstance({}, null, indexes)
+        instance.updateSearchFiltersConfig(request, response)
+
+        resPromise.then(() => {
+            expect(updateMock).toHaveBeenCalledWith('config', 'doc-1', {
+                searchFilters: expectedBody
+            })
+            expect(response.status).toHaveBeenCalledWith(200)
+            expect(response.json).toHaveBeenCalledWith(expectedBody)
             done()
         })
     })

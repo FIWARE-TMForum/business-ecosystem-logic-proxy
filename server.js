@@ -370,6 +370,32 @@ const getDefaultSearchFilters = () => {
     }
 }
 
+const normalizeSearchFilterDefaults = (searchFilters) => {
+    const normalized = Object.assign({}, searchFilters)
+
+    if (Array.isArray(searchFilters.filters)) {
+        normalized.filters = searchFilters.filters.map((filter) => {
+            if (filter == null || typeof filter !== 'object' || Array.isArray(filter)) {
+                return filter
+            }
+
+            if (filter.source !== 'categoryRoot') {
+                return filter
+            }
+
+            if (Object.prototype.hasOwnProperty.call(filter, 'offerFormPlacement')) {
+                return filter
+            }
+
+            return Object.assign({}, filter, {
+                offerFormPlacement: 'none'
+            })
+        })
+    }
+
+    return normalized
+}
+
 const fetchSearchFilters = async () => {
     try {
         const result = await indexes.search(SEARCH_FILTERS_COLLECTION, { id: SEARCH_FILTERS_CONFIG_ID, limit: 1 })
@@ -378,7 +404,7 @@ const fetchSearchFilters = async () => {
             return getDefaultSearchFilters()
         }
 
-        return result[0].searchFilters
+        return normalizeSearchFilterDefaults(result[0].searchFilters)
     } catch (e) {
         return getDefaultSearchFilters()
     }
