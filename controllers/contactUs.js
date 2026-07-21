@@ -83,7 +83,8 @@ function contactUs() {
                 url: getNotificationUrl(),
                 data: {
                     subject: "New contact-us request",
-                    message: message
+                    message: message,
+                    supportType: body.supportType
                 },
                 headers: {
                     'Content-Type': 'application/json'
