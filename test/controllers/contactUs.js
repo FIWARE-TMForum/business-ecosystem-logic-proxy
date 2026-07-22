@@ -148,6 +148,29 @@ describe('ContactUs Controller', () => {
         expect(res.send).toHaveBeenCalledWith({ ok: true });
     });
 
+    it('should include support type when provided in the request payload', async () => {
+        const req = {
+            body: JSON.stringify(Object.assign({}, contactPayload, {
+                supportType: 'technical'
+            }))
+        };
+        const res = makeResponse();
+
+        axiosMock.and.returnValue(Promise.resolve({ status: 200, data: { ok: true } }));
+
+        await controller.sendNotification(req, res);
+
+        expect(axiosMock).toHaveBeenCalledWith(
+            jasmine.objectContaining({
+                data: {
+                    subject: 'New contact-us request',
+                    message: formattedMessage,
+                    supportType: 'technical'
+                }
+            })
+        );
+    });
+
     it('should return 400 when request body is not valid JSON', async () => {
         const req = {
             body: '{invalid-json}'
