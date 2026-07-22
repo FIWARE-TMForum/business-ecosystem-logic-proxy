@@ -245,6 +245,16 @@
       "subtitle": "Fill out the form and our team will be in touch as soon as possible."
     },
     "fields": {
+      "supportType": {
+        "label": "How can we help?",
+        "placeholder": "Select the type of support you need",
+        "options": {
+          "general": "General inquiries",
+          "technical": "Technical support",
+          "onboarding": "Onboarding support",
+          "legal": "Legal support"
+        }
+      },
       "firstName": {
         "label": "First name",
         "placeholder": "Enter your first name"
@@ -521,7 +531,8 @@
           "step4": {
             "_title": "Engage providers and complete procurement"
           }
-        }
+        },
+        "_ctaButton": "Start your onboarding journey"
       },
       "buyOptions": {
         "_title": "Choose how you buy",
@@ -1469,10 +1480,18 @@
       "_add": "Add",
       "_revenue": "Revenue sharing",
       "_email": "Email",
+      "_sourceEmail": "Source email",
       "_smtpServer": "SMTP Server",
       "_smtpPort": "SMTP Port",
       "_emailUser": "Email User",
       "_emailPass": "Email Password",
+      "_contactUsDestinations": "Contact us destination emails",
+      "_contactUsGeneralEmail": "General inquiries destination email",
+      "_contactUsTechnicalEmail": "Technical support destination email",
+      "_contactUsOnboardingEmail": "Onboarding support destination email",
+      "_contactUsLegalEmail": "Legal support destination email",
+      "_updateSuccessTitle": "Update success",
+      "_emailConfigUpdated": "Email configuration updated successfully.",
       "_defaultCatalog": "Default catalog",
       "_defaultCatalogId": "Default catalog ID",
       "_noDefaultCatalogConfigured": "No default catalog is currently configured.",
@@ -2546,10 +2565,18 @@
     "_add": "Add",
     "_revenue": "Revenue sharing",
     "_email": "Email",
+    "_sourceEmail": "Source email",
     "_smtpServer": "SMTP Server",
     "_smtpPort": "SMTP Port",
     "_emailUser": "Email User",
     "_emailPass": "Email Password",
+    "_contactUsDestinations": "Contact us destination emails",
+    "_contactUsGeneralEmail": "General inquiries destination email",
+    "_contactUsTechnicalEmail": "Technical support destination email",
+    "_contactUsOnboardingEmail": "Onboarding support destination email",
+    "_contactUsLegalEmail": "Legal support destination email",
+    "_updateSuccessTitle": "Update success",
+    "_emailConfigUpdated": "Email configuration updated successfully.",
     "_defaultCatalog": "Default catalog",
     "_defaultCatalogId": "Default catalog ID",
     "_noDefaultCatalogConfigured": "No default catalog is currently configured.",
