@@ -77,14 +77,20 @@ function contactUs() {
             messageText
         ].join('<br>');
 
+        const notification = {
+            subject: "New contact-us request",
+            message: message
+        };
+
+        if (body.supportType != null) {
+            notification.supportType = body.supportType;
+        }
+
         try {
             const response = await axios({
                 method: 'POST',
                 url: getNotificationUrl(),
-                data: {
-                    subject: "New contact-us request",
-                    message: message
-                },
+                data: notification,
                 headers: {
                     'Content-Type': 'application/json'
                 }
