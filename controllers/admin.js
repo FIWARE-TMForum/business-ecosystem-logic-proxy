@@ -34,6 +34,7 @@ const ANALYTICS_CONFIG_ID = 'analytics'
 const FEATURE_FLAGS = [
     'purchaseEnabled',
     'dataSpaceEnabled',
+    'dspEnabled',
     'quotesEnabled',
     'tenderingEnabled',
     'launchValidationEnabled',

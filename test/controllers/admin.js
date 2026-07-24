@@ -720,6 +720,7 @@ describe('Admin Controller', () => {
     const setFeatureFlagDefaults = () => {
         config.purchaseEnabled = true
         config.dataSpaceEnabled = true
+        config.dspEnabled = false
         config.quotesEnabled = true
         config.tenderingEnabled = true
         config.launchValidationEnabled = false
@@ -751,6 +752,7 @@ describe('Admin Controller', () => {
             },
             body: JSON.stringify({
                 purchaseEnabled: false,
+                dspEnabled: true,
                 quotesEnabled: false,
                 aiEnabled: true
             })
@@ -759,6 +761,7 @@ describe('Admin Controller', () => {
         const expectedResponse = {
             purchaseEnabled: false,
             dataSpaceEnabled: true,
+            dspEnabled: true,
             quotesEnabled: false,
             tenderingEnabled: true,
             launchValidationEnabled: false,
@@ -780,6 +783,7 @@ describe('Admin Controller', () => {
             expect(indexMock).toHaveBeenCalledWith('config', 'feature-flags', {
                 features: {
                     purchaseEnabled: false,
+                    dspEnabled: true,
                     quotesEnabled: false,
                     aiEnabled: true
                 }
@@ -787,6 +791,7 @@ describe('Admin Controller', () => {
             expect(response.status).toHaveBeenCalledWith(200)
             expect(response.json).toHaveBeenCalledWith(expectedResponse)
             expect(config.purchaseEnabled).toBe(false)
+            expect(config.dspEnabled).toBe(true)
             expect(config.aiEnabled).toBe(true)
             done()
         })
@@ -828,6 +833,7 @@ describe('Admin Controller', () => {
         const expectedResponse = {
             purchaseEnabled: false,
             dataSpaceEnabled: false,
+            dspEnabled: false,
             quotesEnabled: true,
             tenderingEnabled: true,
             launchValidationEnabled: true,

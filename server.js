@@ -50,6 +50,7 @@ const FEATURE_FLAGS_CONFIG_ID = 'feature-flags'
 const FEATURE_FLAGS = [
     'purchaseEnabled',
     'dataSpaceEnabled',
+    'dspEnabled',
     'quotesEnabled',
     'tenderingEnabled',
     'launchValidationEnabled',
@@ -512,7 +513,7 @@ app.get('/config', async (_, res) => {
         domePublish: config.domePublish,
         purchaseEnabled: featureFlags.purchaseEnabled,
         dataSpaceEnabled: featureFlags.dataSpaceEnabled,
-        dspEnabled: config.dspEnabled,
+        dspEnabled: featureFlags.dspEnabled,
         quoteApi: config.quoteApi,
         defaultId: config.defaultId,
         paymentGateway: config.paymentGateway,
