@@ -749,9 +749,9 @@ config.quoteApi = process.env.BAE_LP_QUOTE_API || config.quoteApi;
 config.learUrl = '';
 config.learUrl = process.env.BAE_LP_LEAR_URL || config.learUrl;
 
-config.quoteEnabled = true;
+config.quotesEnabled = true;
 if (!!process.env.BAE_LP_QUOTE_ENABLED) {
-    config.quoteEnabled = process.env.BAE_LP_QUOTE_ENABLED == 'true';
+    config.quotesEnabled = process.env.BAE_LP_QUOTE_ENABLED == 'true';
 }
 
 config.tenderingEnabled = true;
@@ -764,6 +764,31 @@ config.paymentGateway = process.env.BAE_LP_PAYMENT_GATEWAY || config.paymentGate
 
 config.analytics = '';
 config.analytics = process.env.BAE_LP_ANALYTICS_URL || config.analytics;
+
+config.analyticsEnabled = true;
+if (!!process.env.BAE_LP_ANALYTICS_ENABLED) {
+    config.analyticsEnabled = process.env.BAE_LP_ANALYTICS_ENABLED == 'true';
+}
+
+config.analyticsDashboards = {
+    businessInsightsNonLear: '',
+    businessInsightsLear: '',
+    usageMonitor: ''
+};
+config.analyticsDashboards.businessInsightsNonLear =
+    process.env.BAE_LP_ANALYTICS_DASHBOARD_BUSINESS_INSIGHTS_NON_LEAR || config.analyticsDashboards.businessInsightsNonLear;
+config.analyticsDashboards.businessInsightsLear =
+    process.env.BAE_LP_ANALYTICS_DASHBOARD_BUSINESS_INSIGHTS_LEAR || config.analyticsDashboards.businessInsightsLear;
+config.analyticsDashboards.usageMonitor =
+    process.env.BAE_LP_ANALYTICS_DASHBOARD_USAGE_MONITOR || config.analyticsDashboards.usageMonitor;
+
+config.analyticsSuperset = {
+    url: '',
+    guestTokenPath: '/api/v1/dome/guest_token/'
+};
+config.analyticsSuperset.url = config.analytics;
+config.analyticsSuperset.guestTokenPath =
+    process.env.BAE_LP_ANALYTICS_SUPERSET_GUEST_TOKEN_PATH || config.analyticsSuperset.guestTokenPath;
 
 config.defaultId = '';
 
