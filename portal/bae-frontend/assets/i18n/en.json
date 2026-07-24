@@ -2086,7 +2086,14 @@
     "_self_attestation": "Self Attestation:",
     "_close_modal": "Close modal",
     "_cancel": "Cancel",
-    "_upload": "Upload"
+    "_upload": "Upload",
+    "_dsp_endpoint_name": "Name",
+    "_dsp_endpoint_name_placeholder": "Endpoint name",
+    "_dsp_endpoint_url": "Endpoint URL",
+    "_dsp_endpoint_url_placeholder": "https://example.com/endpoint",
+    "_dsp_endpoint_description": "Description",
+    "_dsp_endpoint_description_placeholder": "Describe this endpoint...",
+    "_dsp_add_endpoint": "Add Endpoint"
   },
   "UPDATE_PROD_SPEC": {
     "_back": "Back",
