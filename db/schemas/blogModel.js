@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 const SLUG_REGEX = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const MAX_TAG_LENGTH = 50;
+const BLOG_TYPES = ['blog', 'news', 'faq'];
 
 const normalizeOptionalString = function (value) {
   if (typeof value !== 'string') {
@@ -37,6 +38,15 @@ const normalizeTags = function (value) {
 
 const blogSchema = new mongoose.Schema({
   title: { type: String, required: true, trim: true },
+  type: {
+    type: String,
+    required: true,
+    enum: {
+      values: BLOG_TYPES,
+      message: 'type must be one of: blog, news, faq'
+    },
+    default: 'blog'
+  },
   slug: {
     type: String,
     trim: true,

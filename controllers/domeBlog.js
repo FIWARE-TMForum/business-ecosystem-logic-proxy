@@ -4,7 +4,8 @@ const { indexes } = require('../lib/indexes');
 const utils = require('../lib/utils');
 const config = require('../config');
 
-const BLOG_EDITABLE_FIELDS = ['title', 'slug', 'featuredImage', 'metaDescription', 'excerpt', 'content', 'partyId', 'author', 'tags', 'date'];
+const BLOG_TYPES = ['blog', 'news', 'faq'];
+const BLOG_EDITABLE_FIELDS = ['title', 'slug', 'featuredImage', 'metaDescription', 'excerpt', 'content', 'partyId', 'author', 'tags', 'date', 'type'];
 
 const domeBlog = (function () {
   const hasOwnProperty = function (obj, key) {
@@ -99,6 +100,20 @@ const domeBlog = (function () {
     }
 
     return parsedDate.toISOString();
+  };
+
+  const parseType = function (type) {
+    if (type === undefined) {
+      return undefined;
+    }
+
+    if (typeof type !== 'string' || !BLOG_TYPES.includes(type)) {
+      const validationError = new Error(`type must be one of: ${BLOG_TYPES.join(', ')}`);
+      validationError.statusCode = 400;
+      throw validationError;
+    }
+
+    return type;
   };
 
   const buildSlugBase = function (title) {
@@ -203,6 +218,18 @@ const domeBlog = (function () {
     return blog;
   };
 
+  const ensureBlogType = function (blog) {
+    if (!blog) {
+      return blog;
+    }
+
+    if (!blog.type) {
+      blog.type = 'blog';
+    }
+
+    return blog;
+  };
+
   const create = async function (req, res) {
     if (!utils.hasRole(req.user, config.roles.admin)) {
       res.status(403).send('Only administrators can create entries');
@@ -223,6 +250,10 @@ const domeBlog = (function () {
           mongoBlog.date = parseDate(mongoBlog.date);
         }
 
+        if (hasOwnProperty(mongoBlog, 'type')) {
+          mongoBlog.type = parseType(mongoBlog.type);
+        }
+
         if (!mongoBlog.slug) {
           mongoBlog.slug = await generateUniqueSlug(mongoBlog.title);
         } else if (!(await isSlugAvailable(mongoBlog.slug))) {
@@ -233,12 +264,17 @@ const domeBlog = (function () {
           mongoBlog.date = new Date().toISOString();
         }
 
+        if (!hasOwnProperty(mongoBlog, 'type')) {
+          mongoBlog.type = 'blog';
+        }
+
         const blog = new Blog({
           ...mongoBlog
         });
 
         await blog.save();
         ensureBlogTags(blog);
+        ensureBlogType(blog);
 
         indexes.indexDocument('blog', uuidv4(), mongoBlog);
 
@@ -256,6 +292,7 @@ const domeBlog = (function () {
       for (const blog of blogs) {
         await ensureBlogSlug(blog);
         ensureBlogTags(blog);
+        ensureBlogType(blog);
       }
 
       res.json(blogs);
@@ -276,6 +313,7 @@ const domeBlog = (function () {
 
       await ensureBlogSlug(blog);
       ensureBlogTags(blog);
+      ensureBlogType(blog);
   
       res.json(blog);
     } catch (err) {
@@ -322,6 +360,10 @@ const domeBlog = (function () {
           updates.date = parseDate(updates.date);
         }
 
+        if (hasOwnProperty(updates, 'type')) {
+          updates.type = parseType(updates.type);
+        }
+
         if (!updates || Object.keys(updates).length === 0) {
           return res.status(400).json({ error: 'No update fields provided' });
         }
@@ -356,6 +398,7 @@ const domeBlog = (function () {
         Object.assign(blog, updates);
         const patchedBlog = await blog.save();
         ensureBlogTags(patchedBlog);
+        ensureBlogType(patchedBlog);
 
         res.json({ message: 'Blog entry patched successfully', patchedBlog });
       } catch (err) {
