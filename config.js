@@ -43,7 +43,8 @@ config.oauth2 = {
 	oidcDiscoveryURI: null,
 	oidcTokenEndpointAuthMethod: "client_secret_basic",
 	key: '281e126aa35c80f2',
-	defaultRole: null
+	defaultRole: null,
+    nonce: false
 };
 
 config.roles = {
@@ -276,6 +277,13 @@ config.endpoints = {
         host: 'quote-management.marketplace.svc.cluster.local',
         port: '8080'
     },
+    document: {
+        path: 'document',
+        apiPath: '',
+        host: 'tmforum-tm-forum-api-document-management',
+        port: '8080',
+        appSsl: false
+    },
     revenue: {
         path: 'revenue',
         apiPath: '/revenue',
@@ -402,6 +410,10 @@ config.oauth2.server = process.env.BAE_LP_OAUTH2_SERVER || config.oauth2.server;
 config.oauth2.clientID = process.env.BAE_LP_OAUTH2_CLIENT_ID || config.oauth2.clientID;
 config.oauth2.clientSecret = process.env.BAE_LP_OAUTH2_CLIENT_SECRET || config.oauth2.clientSecret;
 config.oauth2.callbackURL = process.env.BAE_LP_OAUTH2_CALLBACK || config.oauth2.callbackURL;
+
+if (!!process.env.BAE_LP_OAUTH2_NONCE) {
+    config.oauth2.nonce = process.env.BAE_LP_OAUTH2_NONCE == 'true'
+}
 
 if (process.env.BAE_LP_OAUTH2_DEFAULT_ROLE) {
     config.oauth2.defaultRole = process.env.BAE_LP_OAUTH2_DEFAULT_ROLE;
@@ -596,6 +608,15 @@ if (!!process.env.BAE_LP_ENDPOINT_QUOTE_SECURED) {
     config.endpoints.quote.appSsl = process.env.BAE_LP_ENDPOINT_QUOTE_SECURED == 'true';
 }
 
+// Document Management
+config.endpoints.document.apiPath = process.env.BAE_LP_ENDPOINT_DOCUMENT_PATH || config.endpoints.document.apiPath;
+config.endpoints.document.port = process.env.BAE_LP_ENDPOINT_DOCUMENT_PORT || config.endpoints.document.port;
+config.endpoints.document.host = process.env.BAE_LP_ENDPOINT_DOCUMENT_HOST || config.endpoints.document.host;
+
+if (!!process.env.BAE_LP_ENDPOINT_DOCUMENT_SECURED) {
+    config.endpoints.document.appSsl = process.env.BAE_LP_ENDPOINT_DOCUMENT_SECURED == 'true';
+}
+
 // Revenue
 config.endpoints.revenue.apiPath = process.env.BAE_LP_ENDPOINT_REVENUE_PATH || config.endpoints.revenue.apiPath;
 config.endpoints.revenue.port = process.env.BAE_LP_ENDPOINT_REVENUE_PORT || config.endpoints.revenue.port;
@@ -691,6 +712,10 @@ config.matomoId = process.env.BAE_LP_MATOMO_ID || config.matomoId;
 config.matomoUrl = '';
 config.matomoUrl = process.env.BAE_LP_MATOMO_URL || config.matomoUrl;
 
+// Google Tag Manager
+config.googleTagManagerId = '';
+config.googleTagManagerId = process.env.BAE_LP_GOOGLE_TAG_MANAGER_ID || config.googleTagManagerId;
+
 config.knowledgeUrl = '';
 config.knowledgeUrl = process.env.BAE_LP_KNOWLEDGE_BASE_URL || config.knowledgeUrl;
 
@@ -778,6 +803,10 @@ if (!!process.env.BAE_LP_DATASPACE_ENABLED) {
     config.dataSpaceEnabled = process.env.BAE_LP_DATASPACE_ENABLED == 'true';
 }
 
+config.dspEnabled = false
+if (!!process.env.BAE_LP_DSP_ENABLED) {
+    config.dspEnabled = process.env.BAE_LP_DSP_ENABLED == 'true';
+}
 config.launchValidationEnabled = false;
 if (!!process.env.BAE_LP_LAUNCH_VALIDATION_ENABLED) {
     config.launchValidationEnabled = process.env.BAE_LP_LAUNCH_VALIDATION_ENABLED == 'true';

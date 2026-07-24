@@ -35,6 +35,7 @@ const account = require('./tmf-apis/account').account
 const serviceCatalog = require('./tmf-apis/serviceCatalog').serviceCatalog
 const resource = require('./tmf-apis/resource').resource
 const { quote } = require('./tmf-apis/quote')
+const { document } = require('./tmf-apis/document')
 const { billing } = require('./tmf-apis/billing')
 const { revenue } = require('./tmf-apis/revenue')
 const { invoicing } = require('./tmf-apis/invoicing')
@@ -68,6 +69,7 @@ function tmf() {
 	apiControllers[config.endpoints.resource.path] = resource;
 	apiControllers[config.endpoints.billing.path] = billing;
 	apiControllers[config.endpoints.quote.path] = quote;
+	apiControllers[config.endpoints.document.path] = document;
 	apiControllers[config.endpoints.revenue.path] = revenue;
 	apiControllers[config.endpoints.invoicing.path] = invoicing;
 	apiControllers[config.endpoints.search.path] = search;
@@ -86,6 +88,7 @@ function tmf() {
 		config.endpoints.usage.path,
 		config.endpoints.billing.path,
 		config.endpoints.quote.path,
+		config.endpoints.document.path,
 		config.endpoints.revenue.path,
 		config.endpoints.invoicing.path,
 		config.endpoints.search.path,
