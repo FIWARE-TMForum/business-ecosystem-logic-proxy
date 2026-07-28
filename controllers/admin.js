@@ -27,6 +27,20 @@ const logger = require('./../lib/logger').logger.getLogger('Admin')
 
 const SEARCH_FILTERS_COLLECTION = 'config'
 const SEARCH_FILTERS_CONFIG_ID = 'search-filters'
+const FEATURE_FLAGS_COLLECTION = 'config'
+const FEATURE_FLAGS_CONFIG_ID = 'feature-flags'
+const ANALYTICS_CONFIG_COLLECTION = 'config'
+const ANALYTICS_CONFIG_ID = 'analytics'
+const FEATURE_FLAGS = [
+    'purchaseEnabled',
+    'dataSpaceEnabled',
+    'dspEnabled',
+    'quotesEnabled',
+    'tenderingEnabled',
+    'launchValidationEnabled',
+    'aiEnabled',
+    'tenderDevButtonsOpenCloseEnabled'
+]
 
 function admin() {
     const parseBody = function(body) {
@@ -59,6 +73,171 @@ function admin() {
             primaryCategoriesMode: 'catalogFirstLevel',
             primaryRootName: '',
             filters: []
+        }
+    }
+
+    const getDefaultFeatureFlags = function() {
+        return FEATURE_FLAGS.reduce((features, feature) => {
+            features[feature] = config[feature] === true
+            return features
+        }, {})
+    }
+
+    const normalizeFeatureFlagOverrides = function(features) {
+        if (features == null || typeof features !== 'object' || Array.isArray(features)) {
+            return {}
+        }
+
+        return FEATURE_FLAGS.reduce((overrides, feature) => {
+            if (typeof features[feature] === 'boolean') {
+                overrides[feature] = features[feature]
+            }
+            return overrides
+        }, {})
+    }
+
+    const getEffectiveFeatureFlags = function(overrides) {
+        return Object.assign(getDefaultFeatureFlags(), normalizeFeatureFlagOverrides(overrides))
+    }
+
+    const applyFeatureFlags = function(features) {
+        FEATURE_FLAGS.forEach((feature) => {
+            config[feature] = features[feature]
+        })
+
+        return features
+    }
+
+    const clone = function(value) {
+        return JSON.parse(JSON.stringify(value))
+    }
+
+    const getAnalyticsConfigResponse = function() {
+        return {
+            analytics: config.analytics,
+            analyticsEnabled: config.analyticsEnabled === true,
+            analyticsDashboards: clone(config.analyticsDashboards),
+            analyticsSuperset: {
+                guestTokenPath: config.analyticsSuperset.guestTokenPath
+            }
+        }
+    }
+
+    const applyAnalyticsConfig = function(analyticsConfig) {
+        config.analytics = analyticsConfig.analytics
+        config.analyticsEnabled = analyticsConfig.analyticsEnabled
+        config.analyticsDashboards = clone(analyticsConfig.analyticsDashboards)
+        config.analyticsSuperset = clone(analyticsConfig.analyticsSuperset)
+        config.analyticsSuperset.url = config.analytics
+
+        return getAnalyticsConfigResponse()
+    }
+
+    const validateAndNormalizeAnalyticsConfig = function(body) {
+        const errors = []
+
+        if (body == null || typeof body !== 'object' || Array.isArray(body)) {
+            return {
+                errors: ['Body must be a JSON object'],
+                value: null
+            }
+        }
+
+        const analytics = normalizeNonEmptyString(body.analytics)
+        if (analytics == null) {
+            errors.push('analytics is required and must be non-empty')
+        }
+
+        if (typeof body.analyticsEnabled !== 'boolean') {
+            errors.push('analyticsEnabled is required and must be a boolean')
+        }
+
+        if (body.analyticsDashboards == null || typeof body.analyticsDashboards !== 'object' || Array.isArray(body.analyticsDashboards)) {
+            errors.push('analyticsDashboards must be an object')
+        }
+
+        const dashboardKeys = ['businessInsightsNonLear', 'businessInsightsLear', 'usageMonitor']
+        const analyticsDashboards = {}
+        if (body.analyticsDashboards != null && typeof body.analyticsDashboards === 'object' && !Array.isArray(body.analyticsDashboards)) {
+            dashboardKeys.forEach((key) => {
+                const dashboardId = normalizeNonEmptyString(body.analyticsDashboards[key])
+                if (dashboardId == null) {
+                    errors.push(`analyticsDashboards.${key} is required and must be non-empty`)
+                } else {
+                    analyticsDashboards[key] = dashboardId
+                }
+            })
+        }
+
+        if (body.analyticsSuperset == null || typeof body.analyticsSuperset !== 'object' || Array.isArray(body.analyticsSuperset)) {
+            errors.push('analyticsSuperset must be an object')
+        }
+
+        let analyticsSuperset = null
+        if (body.analyticsSuperset != null && typeof body.analyticsSuperset === 'object' && !Array.isArray(body.analyticsSuperset)) {
+            const guestTokenPath = normalizeNonEmptyString(body.analyticsSuperset.guestTokenPath)
+
+            if (guestTokenPath == null) {
+                errors.push('analyticsSuperset.guestTokenPath is required and must be non-empty')
+            }
+
+            analyticsSuperset = {
+                guestTokenPath: guestTokenPath
+            }
+        }
+
+        if (errors.length > 0) {
+            return { errors: errors, value: null }
+        }
+
+        return {
+            errors: [],
+            value: {
+                analytics: analytics,
+                analyticsEnabled: body.analyticsEnabled,
+                analyticsDashboards: analyticsDashboards,
+                analyticsSuperset: analyticsSuperset
+            }
+        }
+    }
+
+    const validateAndNormalizeFeatureFlags = function(body) {
+        const errors = []
+
+        if (body == null || typeof body !== 'object' || Array.isArray(body)) {
+            return {
+                errors: ['Body must be a JSON object'],
+                value: null
+            }
+        }
+
+        const keys = Object.keys(body)
+        if (keys.length === 0) {
+            errors.push('At least one feature flag is required')
+        }
+
+        const normalized = {}
+        keys.forEach((key) => {
+            if (FEATURE_FLAGS.indexOf(key) === -1) {
+                errors.push(`${key} is not a configurable feature flag`)
+                return
+            }
+
+            if (typeof body[key] !== 'boolean') {
+                errors.push(`${key} must be a boolean`)
+                return
+            }
+
+            normalized[key] = body[key]
+        })
+
+        if (errors.length > 0) {
+            return { errors: errors, value: null }
+        }
+
+        return {
+            errors: [],
+            value: normalized
         }
     }
 
@@ -479,11 +658,153 @@ function admin() {
         res.json(validationResult.value)
     }
 
+    const updateFeatureFlagsConfig = async function(req, res) {
+        if (!utils.isAdmin(req.user)) {
+            res.status(403)
+            res.json({ error: "You are not authorized to access admin endpoint" })
+            return
+        }
+
+        let reqBody
+        try {
+            reqBody = parseBody(req.body)
+        } catch (e) {
+            res.status(400)
+            res.json({ error: 'Invalid body' })
+            return
+        }
+
+        const validationResult = validateAndNormalizeFeatureFlags(reqBody)
+        if (validationResult.errors.length > 0) {
+            res.status(400)
+            res.json({
+                error: 'Invalid feature flags payload',
+                details: validationResult.errors
+            })
+            return
+        }
+
+        let effectiveFeatureFlags
+        try {
+            const result = await indexes.search(FEATURE_FLAGS_COLLECTION, { id: FEATURE_FLAGS_CONFIG_ID, limit: 1 })
+            const existingOverrides = result.length > 0 ? normalizeFeatureFlagOverrides(result[0].features) : {}
+            const updatedOverrides = Object.assign(existingOverrides, validationResult.value)
+
+            effectiveFeatureFlags = applyFeatureFlags(getEffectiveFeatureFlags(updatedOverrides))
+
+            if (result.length > 0) {
+                await indexes.updateDocument(FEATURE_FLAGS_COLLECTION, result[0].id, {
+                    features: updatedOverrides
+                })
+            } else {
+                await indexes.indexDocument(FEATURE_FLAGS_COLLECTION, FEATURE_FLAGS_CONFIG_ID, {
+                    features: updatedOverrides
+                })
+            }
+        } catch (e) {
+            res.status(500)
+            res.json({ error: 'Error updating feature flags config: ' + e.message })
+            return
+        }
+
+        res.status(200)
+        res.json(effectiveFeatureFlags)
+    }
+
+    const loadAnalyticsConfig = async function() {
+        try {
+            const result = await indexes.search(ANALYTICS_CONFIG_COLLECTION, { id: ANALYTICS_CONFIG_ID, limit: 1 })
+
+            if (result.length === 0 || result[0].analytics == null) {
+                return getAnalyticsConfigResponse()
+            }
+
+            const validationResult = validateAndNormalizeAnalyticsConfig(result[0].analytics)
+            if (validationResult.errors.length > 0) {
+                logger.error('Invalid analytics config stored in database: ' + validationResult.errors.join(', '))
+                return getAnalyticsConfigResponse()
+            }
+
+            return applyAnalyticsConfig(validationResult.value)
+        } catch (e) {
+            logger.error('Error loading analytics config: ' + e.message)
+            return getAnalyticsConfigResponse()
+        }
+    }
+
+    const updateAnalyticsConfig = async function(req, res) {
+        if (!utils.isAdmin(req.user)) {
+            res.status(403)
+            res.json({ error: "You are not authorized to access admin endpoint" })
+            return
+        }
+
+        let reqBody
+        try {
+            reqBody = parseBody(req.body)
+        } catch (e) {
+            res.status(400)
+            res.json({ error: 'Invalid body' })
+            return
+        }
+
+        const validationResult = validateAndNormalizeAnalyticsConfig(reqBody)
+        if (validationResult.errors.length > 0) {
+            res.status(400)
+            res.json({
+                error: 'Invalid analytics config payload',
+                details: validationResult.errors
+            })
+            return
+        }
+
+        let responseBody
+        try {
+            const result = await indexes.search(ANALYTICS_CONFIG_COLLECTION, { id: ANALYTICS_CONFIG_ID, limit: 1 })
+
+            if (result.length > 0) {
+                await indexes.updateDocument(ANALYTICS_CONFIG_COLLECTION, result[0].id, {
+                    analytics: validationResult.value
+                })
+            } else {
+                await indexes.indexDocument(ANALYTICS_CONFIG_COLLECTION, ANALYTICS_CONFIG_ID, {
+                    analytics: validationResult.value
+                })
+            }
+
+            responseBody = applyAnalyticsConfig(validationResult.value)
+        } catch (e) {
+            res.status(500)
+            res.json({ error: 'Error updating analytics config: ' + e.message })
+            return
+        }
+
+        res.status(200)
+        res.json(responseBody)
+    }
+
+    const getAnalyticsConfig = async function(req, res) {
+        if (!utils.isAdmin(req.user)) {
+            res.status(403)
+            res.json({ error: "You are not authorized to access admin endpoint" })
+            return
+        }
+
+        const responseBody = await loadAnalyticsConfig()
+
+        res.status(200)
+        res.json(responseBody)
+    }
+
     return {
         checkPermissions: checkPermissions,
         uploadCertificate: uploadCertificate,
         updateDefaultCatalog: updateDefaultCatalog,
-        updateSearchFiltersConfig: updateSearchFiltersConfig
+        updateSearchFiltersConfig: updateSearchFiltersConfig,
+        updateFeatureFlagsConfig: updateFeatureFlagsConfig,
+        getAnalyticsConfig: getAnalyticsConfig,
+        updateAnalyticsConfig: updateAnalyticsConfig,
+        loadAnalyticsConfig: loadAnalyticsConfig
     }
 }
 

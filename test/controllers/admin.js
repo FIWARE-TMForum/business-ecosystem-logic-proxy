@@ -716,4 +716,572 @@ describe('Admin Controller', () => {
             done()
         })
     })
+
+    const setFeatureFlagDefaults = () => {
+        config.purchaseEnabled = true
+        config.dataSpaceEnabled = true
+        config.dspEnabled = false
+        config.quotesEnabled = true
+        config.tenderingEnabled = true
+        config.launchValidationEnabled = false
+        config.aiEnabled = false
+        config.tenderDevButtonsOpenCloseEnabled = false
+    }
+
+    it('should persist and return effective feature flags config', (done) => {
+        setFeatureFlagDefaults()
+
+        const searchMock = jasmine.createSpy('search').and.returnValue(Promise.resolve([]))
+        const updateMock = jasmine.createSpy('updateDocument').and.returnValue(Promise.resolve())
+        const indexMock = jasmine.createSpy('indexDocument').and.returnValue(Promise.resolve())
+
+        const indexes = {
+            indexes: {
+                search: searchMock,
+                updateDocument: updateMock,
+                indexDocument: indexMock
+            }
+        }
+
+        const request = {
+            user: {
+                partyId: '1234',
+                roles: [{
+                    name: config.roles.admin
+                }]
+            },
+            body: JSON.stringify({
+                purchaseEnabled: false,
+                dspEnabled: true,
+                quotesEnabled: false,
+                aiEnabled: true
+            })
+        }
+
+        const expectedResponse = {
+            purchaseEnabled: false,
+            dataSpaceEnabled: true,
+            dspEnabled: true,
+            quotesEnabled: false,
+            tenderingEnabled: true,
+            launchValidationEnabled: false,
+            aiEnabled: true,
+            tenderDevButtonsOpenCloseEnabled: false
+        }
+
+        const response = jasmine.createSpyObj('res', ['status', 'json'])
+        let resPromise = new Promise((resolve, reject) => {
+            response.json.and.callFake(() => resolve())
+        })
+
+        const instance = getAdminInstance({}, null, indexes)
+        instance.updateFeatureFlagsConfig(request, response)
+
+        resPromise.then(() => {
+            expect(searchMock).toHaveBeenCalledWith('config', { id: 'feature-flags', limit: 1 })
+            expect(updateMock).not.toHaveBeenCalled()
+            expect(indexMock).toHaveBeenCalledWith('config', 'feature-flags', {
+                features: {
+                    purchaseEnabled: false,
+                    dspEnabled: true,
+                    quotesEnabled: false,
+                    aiEnabled: true
+                }
+            })
+            expect(response.status).toHaveBeenCalledWith(200)
+            expect(response.json).toHaveBeenCalledWith(expectedResponse)
+            expect(config.purchaseEnabled).toBe(false)
+            expect(config.dspEnabled).toBe(true)
+            expect(config.aiEnabled).toBe(true)
+            done()
+        })
+    })
+
+    it('should merge feature flag updates with existing overrides', (done) => {
+        setFeatureFlagDefaults()
+
+        const searchMock = jasmine.createSpy('search').and.returnValue(Promise.resolve([{
+            id: 'doc-1',
+            features: {
+                purchaseEnabled: false,
+                aiEnabled: true
+            }
+        }]))
+        const updateMock = jasmine.createSpy('updateDocument').and.returnValue(Promise.resolve())
+
+        const indexes = {
+            indexes: {
+                search: searchMock,
+                updateDocument: updateMock,
+                indexDocument: jasmine.createSpy('indexDocument').and.returnValue(Promise.resolve())
+            }
+        }
+
+        const request = {
+            user: {
+                partyId: '1234',
+                roles: [{
+                    name: config.roles.admin
+                }]
+            },
+            body: JSON.stringify({
+                dataSpaceEnabled: false,
+                launchValidationEnabled: true
+            })
+        }
+
+        const expectedResponse = {
+            purchaseEnabled: false,
+            dataSpaceEnabled: false,
+            dspEnabled: false,
+            quotesEnabled: true,
+            tenderingEnabled: true,
+            launchValidationEnabled: true,
+            aiEnabled: true,
+            tenderDevButtonsOpenCloseEnabled: false
+        }
+
+        const response = jasmine.createSpyObj('res', ['status', 'json'])
+        let resPromise = new Promise((resolve, reject) => {
+            response.json.and.callFake(() => resolve())
+        })
+
+        const instance = getAdminInstance({}, null, indexes)
+        instance.updateFeatureFlagsConfig(request, response)
+
+        resPromise.then(() => {
+            expect(updateMock).toHaveBeenCalledWith('config', 'doc-1', {
+                features: {
+                    purchaseEnabled: false,
+                    aiEnabled: true,
+                    dataSpaceEnabled: false,
+                    launchValidationEnabled: true
+                }
+            })
+            expect(response.status).toHaveBeenCalledWith(200)
+            expect(response.json).toHaveBeenCalledWith(expectedResponse)
+            expect(config.launchValidationEnabled).toBe(true)
+            done()
+        })
+    })
+
+    it('should reject invalid feature flags payload', (done) => {
+        const indexes = {
+            indexes: {
+                search: jasmine.createSpy('search').and.returnValue(Promise.resolve([])),
+                updateDocument: jasmine.createSpy('updateDocument').and.returnValue(Promise.resolve()),
+                indexDocument: jasmine.createSpy('indexDocument').and.returnValue(Promise.resolve())
+            }
+        }
+
+        const request = {
+            user: {
+                partyId: '1234',
+                roles: [{
+                    name: config.roles.admin
+                }]
+            },
+            body: JSON.stringify({
+                purchaseEnabled: 'false',
+                httpsEnabled: false
+            })
+        }
+
+        const response = jasmine.createSpyObj('res', ['status', 'json'])
+        let resPromise = new Promise((resolve, reject) => {
+            response.json.and.callFake(() => resolve())
+        })
+
+        const instance = getAdminInstance({}, null, indexes)
+        instance.updateFeatureFlagsConfig(request, response)
+
+        resPromise.then(() => {
+            expect(response.status).toHaveBeenCalledWith(400)
+            expect(response.json).toHaveBeenCalledWith({
+                error: 'Invalid feature flags payload',
+                details: ['purchaseEnabled must be a boolean', 'httpsEnabled is not a configurable feature flag']
+            })
+            expect(indexes.indexes.search).not.toHaveBeenCalled()
+            done()
+        })
+    })
+
+    it('should reject feature flag updates from non-admin users', (done) => {
+        const indexes = {
+            indexes: {
+                search: jasmine.createSpy('search').and.returnValue(Promise.resolve([])),
+                updateDocument: jasmine.createSpy('updateDocument').and.returnValue(Promise.resolve()),
+                indexDocument: jasmine.createSpy('indexDocument').and.returnValue(Promise.resolve())
+            }
+        }
+
+        const request = {
+            user: {
+                partyId: '1234',
+                roles: [{
+                    name: 'Seller'
+                }]
+            },
+            body: JSON.stringify({
+                purchaseEnabled: false
+            })
+        }
+
+        const response = jasmine.createSpyObj('res', ['status', 'json'])
+        let resPromise = new Promise((resolve, reject) => {
+            response.json.and.callFake(() => resolve())
+        })
+
+        const instance = getAdminInstance({}, null, indexes)
+        instance.updateFeatureFlagsConfig(request, response)
+
+        resPromise.then(() => {
+            expect(response.status).toHaveBeenCalledWith(403)
+            expect(response.json).toHaveBeenCalledWith({
+                error: 'You are not authorized to access admin endpoint'
+            })
+            expect(indexes.indexes.search).not.toHaveBeenCalled()
+            done()
+        })
+    })
+
+    const getAnalyticsConfigPayload = () => {
+        return {
+            analytics: 'https://dome-monitoring.eurodyn.com',
+            analyticsEnabled: true,
+            analyticsDashboards: {
+                businessInsightsNonLear: '0cd86a99-2d3d-438f-84be-508c4725a5f5',
+                businessInsightsLear: '945ed89c-13ce-4553-afc9-12ec18d14064',
+                usageMonitor: '566cf4c8-e033-43ef-b8fb-24ae7067b416'
+            },
+            analyticsSuperset: {
+                guestTokenPath: '/api/v1/dome/guest_token/'
+            }
+        }
+    }
+
+    it('should persist and return sanitized analytics config', (done) => {
+        const searchMock = jasmine.createSpy('search').and.returnValue(Promise.resolve([]))
+        const updateMock = jasmine.createSpy('updateDocument').and.returnValue(Promise.resolve())
+        const indexMock = jasmine.createSpy('indexDocument').and.returnValue(Promise.resolve())
+
+        const indexes = {
+            indexes: {
+                search: searchMock,
+                updateDocument: updateMock,
+                indexDocument: indexMock
+            }
+        }
+
+        const payload = getAnalyticsConfigPayload()
+        const request = {
+            user: {
+                partyId: '1234',
+                roles: [{
+                    name: config.roles.admin
+                }]
+            },
+            body: JSON.stringify(payload)
+        }
+
+        const expectedResponse = {
+            analytics: payload.analytics,
+            analyticsEnabled: payload.analyticsEnabled,
+            analyticsDashboards: payload.analyticsDashboards,
+            analyticsSuperset: {
+                guestTokenPath: payload.analyticsSuperset.guestTokenPath
+            }
+        }
+
+        const response = jasmine.createSpyObj('res', ['status', 'json'])
+        let resPromise = new Promise((resolve, reject) => {
+            response.json.and.callFake(() => resolve())
+        })
+
+        const instance = getAdminInstance({}, null, indexes)
+        instance.updateAnalyticsConfig(request, response)
+
+        resPromise.then(() => {
+            expect(searchMock).toHaveBeenCalledWith('config', { id: 'analytics', limit: 1 })
+            expect(updateMock).not.toHaveBeenCalled()
+            expect(indexMock).toHaveBeenCalledWith('config', 'analytics', {
+                analytics: payload
+            })
+            expect(response.status).toHaveBeenCalledWith(200)
+            expect(response.json).toHaveBeenCalledWith(expectedResponse)
+            expect(config.analytics).toBe(payload.analytics)
+            expect(config.analyticsEnabled).toBe(true)
+            expect(config.analyticsSuperset.url).toBe(config.analytics)
+            expect(config.analyticsSuperset.guestTokenPath).toBe(payload.analyticsSuperset.guestTokenPath)
+            done()
+        })
+    })
+
+    it('should update the configured Superset guest token path', (done) => {
+        const payload = getAnalyticsConfigPayload()
+        payload.analyticsSuperset.guestTokenPath = '/custom/dome/guest_token/'
+
+        const searchMock = jasmine.createSpy('search').and.returnValue(Promise.resolve([{
+            id: 'analytics-doc',
+            analytics: getAnalyticsConfigPayload()
+        }]))
+        const updateMock = jasmine.createSpy('updateDocument').and.returnValue(Promise.resolve())
+
+        const indexes = {
+            indexes: {
+                search: searchMock,
+                updateDocument: updateMock,
+                indexDocument: jasmine.createSpy('indexDocument').and.returnValue(Promise.resolve())
+            }
+        }
+
+        const request = {
+            user: {
+                partyId: '1234',
+                roles: [{
+                    name: config.roles.admin
+                }]
+            },
+            body: JSON.stringify(payload)
+        }
+
+        const response = jasmine.createSpyObj('res', ['status', 'json'])
+        let resPromise = new Promise((resolve, reject) => {
+            response.json.and.callFake(() => resolve())
+        })
+
+        const instance = getAdminInstance({}, null, indexes)
+        instance.updateAnalyticsConfig(request, response)
+
+        resPromise.then(() => {
+            expect(updateMock).toHaveBeenCalledWith('config', 'analytics-doc', {
+                analytics: payload
+            })
+            expect(response.status).toHaveBeenCalledWith(200)
+            expect(response.json.calls.mostRecent().args[0].analyticsSuperset.guestTokenPath).toBe('/custom/dome/guest_token/')
+            expect(config.analyticsSuperset.guestTokenPath).toBe('/custom/dome/guest_token/')
+            done()
+        })
+    })
+
+    it('should return sanitized analytics config', (done) => {
+        const payload = getAnalyticsConfigPayload()
+        const searchMock = jasmine.createSpy('search').and.returnValue(Promise.resolve([{
+            id: 'analytics',
+            analytics: payload
+        }]))
+
+        const indexes = {
+            indexes: {
+                search: searchMock,
+                updateDocument: jasmine.createSpy('updateDocument').and.returnValue(Promise.resolve()),
+                indexDocument: jasmine.createSpy('indexDocument').and.returnValue(Promise.resolve())
+            }
+        }
+
+        const request = {
+            user: {
+                partyId: '1234',
+                roles: [{
+                    name: config.roles.admin
+                }]
+            }
+        }
+
+        const expectedResponse = {
+            analytics: payload.analytics,
+            analyticsEnabled: payload.analyticsEnabled,
+            analyticsDashboards: payload.analyticsDashboards,
+            analyticsSuperset: {
+                guestTokenPath: payload.analyticsSuperset.guestTokenPath
+            }
+        }
+
+        const response = jasmine.createSpyObj('res', ['status', 'json'])
+        let resPromise = new Promise((resolve, reject) => {
+            response.json.and.callFake(() => resolve())
+        })
+
+        const instance = getAdminInstance({}, null, indexes)
+        instance.getAnalyticsConfig(request, response)
+
+        resPromise.then(() => {
+            expect(searchMock).toHaveBeenCalledWith('config', { id: 'analytics', limit: 1 })
+            expect(response.status).toHaveBeenCalledWith(200)
+            expect(response.json).toHaveBeenCalledWith(expectedResponse)
+            done()
+        })
+    })
+
+    it('should return config.js analytics config when no analytics config is stored', (done) => {
+        const payload = getAnalyticsConfigPayload()
+        config.analytics = payload.analytics
+        config.analyticsEnabled = payload.analyticsEnabled
+        config.analyticsDashboards = payload.analyticsDashboards
+        config.analyticsSuperset = payload.analyticsSuperset
+        config.analyticsSuperset.url = config.analytics
+
+        const searchMock = jasmine.createSpy('search').and.returnValue(Promise.resolve([]))
+
+        const indexes = {
+            indexes: {
+                search: searchMock,
+                updateDocument: jasmine.createSpy('updateDocument').and.returnValue(Promise.resolve()),
+                indexDocument: jasmine.createSpy('indexDocument').and.returnValue(Promise.resolve())
+            }
+        }
+
+        const request = {
+            user: {
+                partyId: '1234',
+                roles: [{
+                    name: config.roles.admin
+                }]
+            }
+        }
+
+        const expectedResponse = {
+            analytics: payload.analytics,
+            analyticsEnabled: payload.analyticsEnabled,
+            analyticsDashboards: payload.analyticsDashboards,
+            analyticsSuperset: {
+                guestTokenPath: payload.analyticsSuperset.guestTokenPath
+            }
+        }
+
+        const response = jasmine.createSpyObj('res', ['status', 'json'])
+        let resPromise = new Promise((resolve, reject) => {
+            response.json.and.callFake(() => resolve())
+        })
+
+        const instance = getAdminInstance({}, null, indexes)
+        instance.getAnalyticsConfig(request, response)
+
+        resPromise.then(() => {
+            expect(searchMock).toHaveBeenCalledWith('config', { id: 'analytics', limit: 1 })
+            expect(response.status).toHaveBeenCalledWith(200)
+            expect(response.json).toHaveBeenCalledWith(expectedResponse)
+            done()
+        })
+    })
+
+    it('should reject invalid analytics config payload', (done) => {
+        const indexes = {
+            indexes: {
+                search: jasmine.createSpy('search').and.returnValue(Promise.resolve([])),
+                updateDocument: jasmine.createSpy('updateDocument').and.returnValue(Promise.resolve()),
+                indexDocument: jasmine.createSpy('indexDocument').and.returnValue(Promise.resolve())
+            }
+        }
+
+        const payload = getAnalyticsConfigPayload()
+        delete payload.analytics
+        delete payload.analyticsEnabled
+        payload.analyticsSuperset.guestTokenPath = ''
+
+        const request = {
+            user: {
+                partyId: '1234',
+                roles: [{
+                    name: config.roles.admin
+                }]
+            },
+            body: JSON.stringify(payload)
+        }
+
+        const response = jasmine.createSpyObj('res', ['status', 'json'])
+        let resPromise = new Promise((resolve, reject) => {
+            response.json.and.callFake(() => resolve())
+        })
+
+        const instance = getAdminInstance({}, null, indexes)
+        instance.updateAnalyticsConfig(request, response)
+
+        resPromise.then(() => {
+            expect(response.status).toHaveBeenCalledWith(400)
+            expect(response.json).toHaveBeenCalledWith({
+                error: 'Invalid analytics config payload',
+                details: [
+                    'analytics is required and must be non-empty',
+                    'analyticsEnabled is required and must be a boolean',
+                    'analyticsSuperset.guestTokenPath is required and must be non-empty'
+                ]
+            })
+            expect(indexes.indexes.search).not.toHaveBeenCalled()
+            done()
+        })
+    })
+
+    it('should reject analytics config reads from non-admin users', (done) => {
+        const indexes = {
+            indexes: {
+                search: jasmine.createSpy('search').and.returnValue(Promise.resolve([])),
+                updateDocument: jasmine.createSpy('updateDocument').and.returnValue(Promise.resolve()),
+                indexDocument: jasmine.createSpy('indexDocument').and.returnValue(Promise.resolve())
+            }
+        }
+
+        const request = {
+            user: {
+                partyId: '1234',
+                roles: [{
+                    name: 'Seller'
+                }]
+            }
+        }
+
+        const response = jasmine.createSpyObj('res', ['status', 'json'])
+        let resPromise = new Promise((resolve, reject) => {
+            response.json.and.callFake(() => resolve())
+        })
+
+        const instance = getAdminInstance({}, null, indexes)
+        instance.getAnalyticsConfig(request, response)
+
+        resPromise.then(() => {
+            expect(response.status).toHaveBeenCalledWith(403)
+            expect(response.json).toHaveBeenCalledWith({
+                error: 'You are not authorized to access admin endpoint'
+            })
+            expect(indexes.indexes.search).not.toHaveBeenCalled()
+            done()
+        })
+    })
+
+    it('should reject analytics config updates from non-admin users', (done) => {
+        const indexes = {
+            indexes: {
+                search: jasmine.createSpy('search').and.returnValue(Promise.resolve([])),
+                updateDocument: jasmine.createSpy('updateDocument').and.returnValue(Promise.resolve()),
+                indexDocument: jasmine.createSpy('indexDocument').and.returnValue(Promise.resolve())
+            }
+        }
+
+        const request = {
+            user: {
+                partyId: '1234',
+                roles: [{
+                    name: 'Seller'
+                }]
+            },
+            body: JSON.stringify(getAnalyticsConfigPayload())
+        }
+
+        const response = jasmine.createSpyObj('res', ['status', 'json'])
+        let resPromise = new Promise((resolve, reject) => {
+            response.json.and.callFake(() => resolve())
+        })
+
+        const instance = getAdminInstance({}, null, indexes)
+        instance.updateAnalyticsConfig(request, response)
+
+        resPromise.then(() => {
+            expect(response.status).toHaveBeenCalledWith(403)
+            expect(response.json).toHaveBeenCalledWith({
+                error: 'You are not authorized to access admin endpoint'
+            })
+            expect(indexes.indexes.search).not.toHaveBeenCalled()
+            done()
+        })
+    })
 })
