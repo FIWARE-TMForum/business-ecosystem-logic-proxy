@@ -1736,6 +1736,7 @@
     "legalTitle": "Legal",
     "resourcesTitle": "Resources",
     "documentation": "Documentation",
+    "news": "News & Events",
     "support": "Support",
     "faqs": "FAQs",
     "follow-us": "Follow us",
@@ -2202,6 +2203,7 @@
     "_close_modal": "Close modal",
     "_cancel": "Cancel",
     "_upload": "Upload",
+<<<<<<< HEAD
     "_name": "Name",
     "_description": "Description",
     "_general_info_desc": "Provide the basic identification details for your product, including its name, a brief overview, and visual assets.",
@@ -2352,6 +2354,15 @@
     "_validate_requires_all": "Complete all required steps before validating",
     "_update_title": "Update product specification",
     "_save_changes": "Save changes"
+=======
+    "_dsp_endpoint_name": "Name",
+    "_dsp_endpoint_name_placeholder": "Endpoint name",
+    "_dsp_endpoint_url": "Endpoint URL",
+    "_dsp_endpoint_url_placeholder": "https://example.com/endpoint",
+    "_dsp_endpoint_description": "Description",
+    "_dsp_endpoint_description_placeholder": "Describe this endpoint...",
+    "_dsp_add_endpoint": "Add Endpoint"
+>>>>>>> master
   },
   "UPDATE_PROD_SPEC": {
     "_back": "Back",

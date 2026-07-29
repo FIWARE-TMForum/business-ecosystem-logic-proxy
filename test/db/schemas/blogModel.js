@@ -46,6 +46,7 @@ describe('Blog Model', () => {
         expect(blog.author).toBe('Author name');
         expect(blog.partyId).toBe('party-123');
         expect(blog.tags).toEqual([]);
+        expect(blog.contentType).toBe('blog');
     });
 
     it('should trim tags and remove empty values', () => {
@@ -118,5 +119,38 @@ describe('Blog Model', () => {
         expect(validationError).toBeDefined();
         expect(validationError.errors.metaDescription).toBeDefined();
         expect(validationError.errors.excerpt).toBeDefined();
+    });
+
+    it('should validate contentType values', () => {
+        const blog = new Blog({
+            ...basePayload,
+            contentType: 'news'
+        });
+
+        const validationError = blog.validateSync();
+
+        expect(validationError).toBeUndefined();
+        expect(blog.contentType).toBe('news');
+    });
+
+    it('should reject invalid contentType values', () => {
+        const blog = new Blog({
+            ...basePayload,
+            contentType: 'case-study'
+        });
+
+        const validationError = blog.validateSync();
+
+        expect(validationError).toBeDefined();
+        expect(validationError.errors.contentType).toBeDefined();
+    });
+
+    it('should hydrate legacy type as contentType', () => {
+        const blog = Blog.hydrate({
+            ...basePayload,
+            type: 'faq'
+        });
+
+        expect(blog.contentType).toBe('faq');
     });
 });

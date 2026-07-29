@@ -1041,6 +1041,7 @@ describe('Admin Controller', () => {
         config.purchaseEnabled = true
         config.dataSpaceEnabled = true
         config.catalogManagementEnabled = true
+        config.dspEnabled = false
         config.quotesEnabled = true
         config.tenderingEnabled = true
         config.launchValidationEnabled = false
@@ -1073,6 +1074,7 @@ describe('Admin Controller', () => {
             body: JSON.stringify({
                 purchaseEnabled: false,
                 catalogManagementEnabled: false,
+                dspEnabled: true,
                 quotesEnabled: false,
                 aiEnabled: true
             })
@@ -1082,6 +1084,7 @@ describe('Admin Controller', () => {
             purchaseEnabled: false,
             dataSpaceEnabled: true,
             catalogManagementEnabled: false,
+            dspEnabled: true,
             quotesEnabled: false,
             tenderingEnabled: true,
             launchValidationEnabled: false,
@@ -1104,6 +1107,7 @@ describe('Admin Controller', () => {
                 features: {
                     purchaseEnabled: false,
                     catalogManagementEnabled: false,
+                    dspEnabled: true,
                     quotesEnabled: false,
                     aiEnabled: true
                 }
@@ -1112,6 +1116,7 @@ describe('Admin Controller', () => {
             expect(response.json).toHaveBeenCalledWith(expectedResponse)
             expect(config.purchaseEnabled).toBe(false)
             expect(config.catalogManagementEnabled).toBe(false)
+            expect(config.dspEnabled).toBe(true)
             expect(config.aiEnabled).toBe(true)
             done()
         })
@@ -1155,6 +1160,7 @@ describe('Admin Controller', () => {
             purchaseEnabled: false,
             dataSpaceEnabled: false,
             catalogManagementEnabled: false,
+            dspEnabled: false,
             quotesEnabled: true,
             tenderingEnabled: true,
             launchValidationEnabled: true,
@@ -1184,6 +1190,7 @@ describe('Admin Controller', () => {
             expect(response.json).toHaveBeenCalledWith(expectedResponse)
             expect(config.launchValidationEnabled).toBe(true)
             expect(config.catalogManagementEnabled).toBe(false)
+            expect(config.dspEnabled).toBe(false)
             done()
         })
     })

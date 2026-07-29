@@ -31,11 +31,13 @@ const FEATURE_FLAGS_COLLECTION = 'config'
 const FEATURE_FLAGS_CONFIG_ID = 'feature-flags'
 const ANALYTICS_CONFIG_COLLECTION = 'config'
 const ANALYTICS_CONFIG_ID = 'analytics'
+
 const OFFER_FORM_PLACEMENTS = ['none', 'generalInfo', 'categorySection']
 const FEATURE_FLAGS = [
     'purchaseEnabled',
     'dataSpaceEnabled',
     'catalogManagementEnabled',
+    'dspEnabled',
     'quotesEnabled',
     'tenderingEnabled',
     'launchValidationEnabled',
