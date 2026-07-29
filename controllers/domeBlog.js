@@ -4,8 +4,8 @@ const { indexes } = require('../lib/indexes');
 const utils = require('../lib/utils');
 const config = require('../config');
 
-const BLOG_TYPES = ['blog', 'news', 'faq'];
-const BLOG_EDITABLE_FIELDS = ['title', 'slug', 'featuredImage', 'metaDescription', 'excerpt', 'content', 'partyId', 'author', 'tags', 'date', 'type'];
+const CONTENT_TYPES = ['blog', 'news', 'faq'];
+const BLOG_EDITABLE_FIELDS = ['title', 'slug', 'featuredImage', 'metaDescription', 'excerpt', 'content', 'partyId', 'author', 'tags', 'date', 'contentType'];
 
 const domeBlog = (function () {
   const hasOwnProperty = function (obj, key) {
@@ -102,18 +102,18 @@ const domeBlog = (function () {
     return parsedDate.toISOString();
   };
 
-  const parseType = function (type) {
-    if (type === undefined) {
+  const parseContentType = function (contentType) {
+    if (contentType === undefined) {
       return undefined;
     }
 
-    if (typeof type !== 'string' || !BLOG_TYPES.includes(type)) {
-      const validationError = new Error(`type must be one of: ${BLOG_TYPES.join(', ')}`);
+    if (typeof contentType !== 'string' || !CONTENT_TYPES.includes(contentType)) {
+      const validationError = new Error(`contentType must be one of: ${CONTENT_TYPES.join(', ')}`);
       validationError.statusCode = 400;
       throw validationError;
     }
 
-    return type;
+    return contentType;
   };
 
   const buildSlugBase = function (title) {
@@ -218,13 +218,21 @@ const domeBlog = (function () {
     return blog;
   };
 
-  const ensureBlogType = function (blog) {
+  const ensureBlogContentType = function (blog) {
     if (!blog) {
       return blog;
     }
 
-    if (!blog.type) {
-      blog.type = 'blog';
+    if (!blog.contentType && blog.type) {
+      blog.contentType = blog.type;
+    }
+
+    if (!blog.contentType) {
+      blog.contentType = 'blog';
+    }
+
+    if (hasOwnProperty(blog, 'type')) {
+      delete blog.type;
     }
 
     return blog;
@@ -250,8 +258,8 @@ const domeBlog = (function () {
           mongoBlog.date = parseDate(mongoBlog.date);
         }
 
-        if (hasOwnProperty(mongoBlog, 'type')) {
-          mongoBlog.type = parseType(mongoBlog.type);
+        if (hasOwnProperty(mongoBlog, 'contentType')) {
+          mongoBlog.contentType = parseContentType(mongoBlog.contentType);
         }
 
         if (!mongoBlog.slug) {
@@ -264,8 +272,8 @@ const domeBlog = (function () {
           mongoBlog.date = new Date().toISOString();
         }
 
-        if (!hasOwnProperty(mongoBlog, 'type')) {
-          mongoBlog.type = 'blog';
+        if (!hasOwnProperty(mongoBlog, 'contentType')) {
+          mongoBlog.contentType = 'blog';
         }
 
         const blog = new Blog({
@@ -274,7 +282,7 @@ const domeBlog = (function () {
 
         await blog.save();
         ensureBlogTags(blog);
-        ensureBlogType(blog);
+        ensureBlogContentType(blog);
 
         indexes.indexDocument('blog', uuidv4(), mongoBlog);
 
@@ -292,7 +300,7 @@ const domeBlog = (function () {
       for (const blog of blogs) {
         await ensureBlogSlug(blog);
         ensureBlogTags(blog);
-        ensureBlogType(blog);
+        ensureBlogContentType(blog);
       }
 
       res.json(blogs);
@@ -313,7 +321,7 @@ const domeBlog = (function () {
 
       await ensureBlogSlug(blog);
       ensureBlogTags(blog);
-      ensureBlogType(blog);
+      ensureBlogContentType(blog);
   
       res.json(blog);
     } catch (err) {
@@ -360,8 +368,8 @@ const domeBlog = (function () {
           updates.date = parseDate(updates.date);
         }
 
-        if (hasOwnProperty(updates, 'type')) {
-          updates.type = parseType(updates.type);
+        if (hasOwnProperty(updates, 'contentType')) {
+          updates.contentType = parseContentType(updates.contentType);
         }
 
         if (!updates || Object.keys(updates).length === 0) {
@@ -398,7 +406,7 @@ const domeBlog = (function () {
         Object.assign(blog, updates);
         const patchedBlog = await blog.save();
         ensureBlogTags(patchedBlog);
-        ensureBlogType(patchedBlog);
+        ensureBlogContentType(patchedBlog);
 
         res.json({ message: 'Blog entry patched successfully', patchedBlog });
       } catch (err) {

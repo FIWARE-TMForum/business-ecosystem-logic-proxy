@@ -110,7 +110,7 @@ describe('DomeBlog Controller', () => {
                 partyId: 'party-1',
                 author: 'Admin',
                 tags: ['  Data   Space  ', 'AI', '', '  '],
-                type: 'news'
+                contentType: 'news'
             })
         };
         const res = makeResponse();
@@ -129,7 +129,7 @@ describe('DomeBlog Controller', () => {
             partyId: 'party-1',
             author: 'Admin',
             tags: ['Data   Space', 'AI'],
-            type: 'news'
+            contentType: 'news'
         }));
         expect(indexesMock.indexDocument).toHaveBeenCalledWith(
             'blog',
@@ -140,7 +140,7 @@ describe('DomeBlog Controller', () => {
                 metaDescription: 'Small description',
                 excerpt: 'Small excerpt',
                 tags: ['Data   Space', 'AI'],
-                type: 'news'
+                contentType: 'news'
             })
         );
         expect(res.status).toHaveBeenCalledWith(201);
@@ -186,7 +186,7 @@ describe('DomeBlog Controller', () => {
             title: 'Legacy Post Title',
             slug: 'legacy-post-title',
             content: 'Body',
-            type: 'blog'
+            contentType: 'blog'
         }));
         expect(res.status).toHaveBeenCalledWith(201);
     });
@@ -247,13 +247,13 @@ describe('DomeBlog Controller', () => {
         });
     });
 
-    it('should return 400 when type is invalid on create', async () => {
+    it('should return 400 when contentType is invalid on create', async () => {
         const req = {
             user: { roles: [{ name: 'provider' }] },
             body: JSON.stringify({
-                title: 'Invalid type',
+                title: 'Invalid content type',
                 content: 'Body',
-                type: 'case-study'
+                contentType: 'case-study'
             })
         };
         const res = makeResponse();
@@ -263,7 +263,7 @@ describe('DomeBlog Controller', () => {
         expect(BlogMock).not.toHaveBeenCalled();
         expect(res.status).toHaveBeenCalledWith(400);
         expect(res.json).toHaveBeenCalledWith({
-            error: 'type must be one of: blog, news, faq'
+            error: 'contentType must be one of: blog, news, faq'
         });
     });
 
@@ -306,7 +306,7 @@ describe('DomeBlog Controller', () => {
                 metaDescription: 'Updated description',
                 excerpt: 'Updated excerpt',
                 author: 'Updated Author',
-                type: 'faq'
+                contentType: 'faq'
             })
         };
         const res = makeResponse();
@@ -323,7 +323,7 @@ describe('DomeBlog Controller', () => {
         expect(existingBlog.metaDescription).toBe('Updated description');
         expect(existingBlog.excerpt).toBe('Updated excerpt');
         expect(existingBlog.author).toBe('Updated Author');
-        expect(existingBlog.type).toBe('faq');
+        expect(existingBlog.contentType).toBe('faq');
         expect(existingBlog.save).toHaveBeenCalled();
         expect(res.json).toHaveBeenCalledWith({
             message: 'Blog entry patched successfully',
@@ -565,12 +565,12 @@ describe('DomeBlog Controller', () => {
         }));
     });
 
-    it('should return 400 when type is invalid on patch', async () => {
+    it('should return 400 when contentType is invalid on patch', async () => {
         const existingBlog = {
             _id: 'blog-id-1',
             title: 'Legacy title',
             slug: 'legacy-title',
-            type: 'blog',
+            contentType: 'blog',
             content: '# Existing',
             save: jasmine.createSpy('save').and.callFake(async function() { return this; })
         };
@@ -580,7 +580,7 @@ describe('DomeBlog Controller', () => {
             user: { roles: [{ name: 'provider' }] },
             params: { id: 'blog-id-1' },
             body: JSON.stringify({
-                type: 'guide'
+                contentType: 'guide'
             })
         };
         const res = makeResponse();
@@ -591,7 +591,7 @@ describe('DomeBlog Controller', () => {
         expect(existingBlog.save).not.toHaveBeenCalled();
         expect(res.status).toHaveBeenCalledWith(400);
         expect(res.json).toHaveBeenCalledWith({
-            error: 'type must be one of: blog, news, faq'
+            error: 'contentType must be one of: blog, news, faq'
         });
     });
 
@@ -613,7 +613,7 @@ describe('DomeBlog Controller', () => {
         expect(blogs[0].save).toHaveBeenCalled();
         const responsePayload = res.json.calls.mostRecent().args[0];
         expect(responsePayload[0].tags).toEqual([]);
-        expect(responsePayload[0].type).toBe('blog');
+        expect(responsePayload[0].contentType).toBe('blog');
     });
 
     it('should return 409 when slug already exists (case-insensitive)', async () => {
@@ -647,7 +647,7 @@ describe('DomeBlog Controller', () => {
             featuredImage: 'https://example.com/image.png',
             metaDescription: 'SEO description',
             excerpt: 'Summary',
-            type: 'faq',
+            contentType: 'faq',
             content: '# Content',
             save: jasmine.createSpy('save')
         }];
@@ -664,7 +664,7 @@ describe('DomeBlog Controller', () => {
         expect(responsePayload[0].metaDescription).toBe('SEO description');
         expect(responsePayload[0].excerpt).toBe('Summary');
         expect(responsePayload[0].tags).toEqual([]);
-        expect(responsePayload[0].type).toBe('faq');
+        expect(responsePayload[0].contentType).toBe('faq');
     });
 
     it('should return 500 when listing blog entries fails', async () => {
