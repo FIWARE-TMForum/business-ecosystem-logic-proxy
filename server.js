@@ -170,6 +170,9 @@ app.use(function(req, res, next) {
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Methods', 'HEAD, POST, GET, PATCH, PUT, OPTIONS, DELETE');
     res.header('Access-Control-Allow-Headers', 'origin, content-type, X-Auth-Token, Tenant-ID, Authorization, X-Organization, x-terms-accepted');
+    if (config.corsExposeRedirect) {
+        res.header('Access-Control-Expose-Headers', 'X-Redirect-URL');
+    }
 
     if (req.method == 'OPTIONS') {
         utils.log(logger, 'debug', req, 'CORS request');
