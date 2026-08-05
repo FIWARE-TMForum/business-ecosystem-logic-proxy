@@ -761,6 +761,8 @@ if (!!process.env.BAE_LP_TENDERING_ENABLED) {
 
 config.paymentGateway = 'https://dpas-sbx.egroup.hu';
 config.paymentGateway = process.env.BAE_LP_PAYMENT_GATEWAY || config.paymentGateway;
+config.paymentProvider = '';
+config.paymentProvider = process.env.BAE_LP_PAYMENT_PROVIDER || config.paymentProvider;
 
 config.analytics = '';
 config.analytics = process.env.BAE_LP_ANALYTICS_URL || config.analytics;
