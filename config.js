@@ -29,6 +29,7 @@ config.logInPath = '/login';
 config.logOutPath = '/logOut';
 config.sessionSecret = 'keyboard cat';
 config.theme = '';
+config.corsExposeRedirect = process.env.BAE_LP_CORS_EXPOSE_REDIRECT === 'true';
 
 // OAuth2 configuration
 //'server': 'http://34.213.26.168:8000/',
