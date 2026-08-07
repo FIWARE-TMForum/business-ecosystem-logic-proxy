@@ -47,6 +47,7 @@ const logger = require('./../lib/logger').logger.getLogger('TMF')
 const axios = require('axios')
 const utils = require('./../lib/utils')
 const tmfUtils = require('./../lib/tmfUtils')
+const { filteredPagination } = require('./../lib/filteredPagination')
 
 const { log } = require('async')
 const { query } = require('express')
@@ -108,126 +109,18 @@ function tmf() {
 		res.end();
 	};
 
-	// extracts the concrete resource from the path(e.g. the last part of the path)
-	// f.e.:
-	//   /catalog/some-id/productOffering/id -> /productOffering/id
-	//   /catalog/some-id/productOffering -> /productOffering
-	function getResourcePath(pathArray) {
-		pathLength = pathArray.length
-		pathModulo = pathLength % 2 
-		switch(pathModulo) {
-			case 1:
-				return "/" + pathArray[pathLength-1];
-			case 0: 
-				return "/" + pathArray[pathLength-2] + "/" + pathArray[pathLength-1];
-		}
-	}
+	const buildRequestUrl = function(req, api, callback) {
+		let url
 
-	function getCatalogIdFromPath(pathArray) {
-		if(pathArray.length >= 5 && pathArray[2] == 'catalog' && pathArray[4] == 'productOffering') {
-			return pathArray[3]
-		}
-	}
-
-	function getCategoryIdsFromCatalog(catalogObject) {
-		categoryIds = []
-		if (typeof catalogObject['category'] == 'undefined') {
-			return categoryIds
-		}
-		for(let i = 0; i < catalogObject['category'].length; i++) {
-			categoryIds.push(catalogObject['category'][i]['id']);
-		}
-		return categoryIds
-	}
-
-	function queryToParams(query) {
-		queryParts = query.split("&")
-		params = [] 
-		for(let i = 0; i < queryParts.length; i++) {
-			params.push(queryParts[i].split("="))
-		}
-		return params
-	}
-
-	function buildQuery(query, categoryIds) {
-		if(categoryIds.length > 0) {
-			categoryQuery = categoryIds.join(",")
-			if (query) {
-				queryParams = queryToParams(query)
-				categoryParam = queryParams.filter(qp => qp[0] == "category")
-				if (typeof categoryParam == 'undefined' || categoryParam.length == 0) {
-					return query + "&category=" + categoryQuery
-				} else {
-					queriedCategories = categoryParam[0][1].split(',')
-					let idIntersection;
-					if (queriedCategories.length > categoryIds.length) {
-						idIntersection = queriedCategories.filter(x => categoryIds.includes(x))
-					} else {
-						idIntersection = categoryIds.filter(x => queriedCategories.includes(x))
-					}
-					queryParams.splice(queryParams.indexOf(categoryParam), 1)
-					newQueryString = "category=" + idIntersection.join(",")
-					for (let i = 0; i<queryParams.length; i++) {
-						newQueryString = newQueryString + "&" + queryParams[i].join("=")
-					}
-					return newQueryString
-				}				
-			} else {
-				return "category=" + categoryQuery
-			}
-		}
-		return query
-	}
-
-	function buildCatalogUrl(req, categoryIds, pathArray) {
-		api = "catalog"
-		queryPart = ""
-		if (req.apiUrl.includes("?")) {
-			queryParts = req.apiUrl.split("?")
-			queryPart = buildQuery(queryParts[queryParts.length-1], categoryIds)
+		if (newApis.indexOf(api) >= 0) {
+			url = utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + utils.getAPIPath(api) + req.apiUrl.replace(`/${api}`, '');
 		} else {
-			queryPart = buildQuery(null, categoryIds)
+			url = utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + utils.getAPIPath(api) + req.apiUrl;
 		}
-		if (queryPart) {
-			return utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + utils.getAPIPath(api) + getResourcePath(pathArray) + "?" + queryPart
-		} else {
-			return utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + + utils.getAPIPath(api) + getResourcePath(pathArray)
+		if (api == 'rss') {
+			url = url.replace('rss', 'charging')
 		}
-	}
-
-	
-	const handleCatalogRequests = function(req, res, api) {
-		pathArray = req.path.split("/")
-		catalogId = getCatalogIdFromPath(pathArray)
-
-		logger["info"]("Handling a catalog request with ID: " + catalogId)
-		if (typeof catalogId != 'undefined') {
-			logger["info"]("Handling a catalog offer endpoint request")
-
-			catalogUrl = utils.getAPIProtocol('catalog') + '://' + utils.getAPIHost('catalog') + ':' + utils.getAPIPort('catalog') + utils.getAPIPath('catalog') + '/catalog/' + catalogId
-
-			catalog.retrieveCatalog(catalogId, (err, response) => {
-				if (response.status == 200) {
-					const url = buildCatalogUrl(req, getCategoryIdsFromCatalog(response.body), pathArray)
-					logger["info"]("Making request with real endpoint: " + url)
-					buildOptions(req, url).then((options) => {
-						proxyRequest(req, res, api, options)
-					})
-				} else {
-					logger["warn"]("was not able to retrieve the catalog " + catalogId)
-					return null
-				}
-			})
-		} else {
-			// This is a normal catalog api request
-			logger["info"]("Handling a simple catalog API request")
-			const api = 'catalog'
-			const url = utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + utils.getAPIPath(api) + req.apiUrl.replace(`/${api}`, '');
-
-			buildOptions(req, url).then((options) => {
-				proxyRequest(req, res, api, options)
-			})
-		}
+		callback(null, url)
 	}
 
 	const redirectRequest = function(req, res) {
@@ -238,22 +131,23 @@ function tmf() {
 			utils.attachUserHeaders(req.headers, req.user);
 		}
 
-		// remove the catalog sub-address from the path of all requests to the product-catalog api, since they are not addressed as such in TMF v4
-		if (api == 'catalog') {
-			handleCatalogRequests(req, res, api)
-		} else {
-			if (newApis.indexOf(api) >= 0) {
-				url = utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + utils.getAPIPath(api) + req.apiUrl.replace(`/${api}`, '');
-			} else {
-				url = utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + utils.getAPIPath(api) + req.apiUrl;
+		const paginationConfig = getFilteredPaginationConfig(req, api)
+
+		if (paginationConfig) {
+			handleFilteredPaginationRequest(req, res, api, paginationConfig)
+			return
+		}
+
+		buildRequestUrl(req, api, (err, url) => {
+			if (err) {
+				sendError(res, err)
+				return
 			}
-			if (api == 'rss') {
-				url = url.replace('rss', 'charging')
-			}
+
 			buildOptions(req, url).then((options) => {
 				proxyRequest(req, res, api, options)
 			})
-		}
+		})
 			
 	};
 
@@ -330,76 +224,89 @@ function tmf() {
 		return options
 	}
 
+	const buildResult = function(req, response) {
+		const result = {
+			status: response.status,
+			headers: response.headers,
+			hostname: req.hostname,
+			secure: req.secure,
+			body: response.data,
+			user: req.user,
+			method: req.method,
+			url: req.url,
+			id: req.id,
+			apiUrl: req.apiUrl,
+			connection: req.connection,
+			reqBody: req.body,
+			query: req.query
+		};
+
+		if (req.extraData) {
+			result.extraData = req.extraData;
+		}
+
+		const header = req.get('X-Terms-Accepted');
+
+		if (result.user != null && header != null) {
+			result.user.agreedOnTerms = header.toLowerCase() === 'true';
+		}
+
+		return result
+	}
+
+	const completeRequest = function(res, resp) {
+		res.status(resp.status);
+		
+		for (let header in resp.headers) {
+			res.setHeader(header, resp.headers[header]);
+		}
+
+		if (resp.headers['content-type'].toLowerCase().indexOf('application/json') >= 0 || resp.headers['content-type'].toLowerCase().indexOf('application/ld+json') >= 0) {
+			res.json(resp.body)
+		} else {
+			res.write(resp.body);
+			res.end();
+		}
+	};
+
+	const runPostValidation = function(req, res, api, result) {
+		const handleValidation = (err) => {
+			const basicLogMessage = 'Post-Validation (' + api + '): ';
+
+			if (err) {
+				utils.log(logger, 'warn', req, basicLogMessage + err.message);
+				res.status(err.status).json({ error: err.message });
+			} else {
+				utils.log(logger, 'info', req, basicLogMessage + 'OK');
+				completeRequest(res, result);
+			}
+		}
+
+		if (result.status < 400 && apiControllers[api] !== undefined
+			&& apiControllers[api].executePostValidation) {
+
+			apiControllers[api].executePostValidation(result, handleValidation)
+
+		} else if (result.status >= 400 && apiControllers[api] !== undefined
+			&& apiControllers[api].handleAPIError) {
+
+			utils.log(logger, 'warn', req, 'Handling API error (' + api + ')');
+			apiControllers[api].handleAPIError(result, handleValidation)
+		} else {
+			completeRequest(res, result);
+		}
+	}
+
+	const executeUpstreamRequest = function(req, options) {
+		return axios.request(options).then((response) => {
+			return buildResult(req, response)
+		})
+	}
+
 	const proxyRequest = function(req, res, api, options) {
 		// PROXY THE REQUEST
-		axios.request(options).then((response) => {
-
-			const completeRequest = function(resp) {
-				res.status(resp.status);
-				
-				for (let header in resp.headers) {
-					res.setHeader(header, resp.headers[header]);
-				}
-
-				if (resp.headers['content-type'].toLowerCase().indexOf('application/json') >= 0 || resp.headers['content-type'].toLowerCase().indexOf('application/ld+json') >= 0) {
-					res.json(resp.body)
-				} else {
-					res.write(resp.body);
-					res.end();
-				}
-			};
-
-			const result = {
-				status: response.status,
-				headers: response.headers,
-				hostname: req.hostname,
-				secure: req.secure,
-				body: response.data,
-				user: req.user,
-				method: req.method,
-				url: req.url,
-				id: req.id,
-				apiUrl: req.apiUrl,
-				connection: req.connection,
-				reqBody: req.body,
-				query: req.query
-			};
-
-			if (req.extraData) {
-				result.extraData = req.extraData;
-			}
-
-			const header = req.get('X-Terms-Accepted');
-
-			if (result.user != null && header != null) {
-				result.user.agreedOnTerms = header.toLowerCase() === 'true';
-			}
-
-			const handleValidation = (err) => {
-				const basicLogMessage = 'Post-Validation (' + api + '): ';
-
-				if (err) {
-					utils.log(logger, 'warn', req, basicLogMessage + err.message);
-					res.status(err.status).json({ error: err.message });
-				} else {
-					utils.log(logger, 'info', req, basicLogMessage + 'OK');
-					completeRequest(result);
-				}
-			}
-
-			if (response.status < 400 && apiControllers[api] !== undefined
-				&& apiControllers[api].executePostValidation) {
-
-				apiControllers[api].executePostValidation(result, handleValidation)
-
-			} else if (response.status >= 400 && apiControllers[api] !== undefined
-				&& apiControllers[api].handleAPIError) {
-
-				utils.log(logger, 'warn', req, 'Handling API error (' + api + ')');
-				apiControllers[api].handleAPIError(result, handleValidation)
-			} else {
-				completeRequest(result);
-			}
+		executeUpstreamRequest(req, options).then((result) => {
+			runPostValidation(req, res, api, result)
 		}).catch((err) => {
 			console.log(err)
 			utils.log(logger, 'error', req, 'Proxy error: ' + err.message);
@@ -409,6 +316,173 @@ function tmf() {
             } else {
                 res.status(504).json({ error: 'Service unreachable' })
             }
+		})
+	}
+
+	const getQueryParam = function(req, name) {
+		if (req.query && req.query[name] != null) {
+			return req.query[name]
+		}
+
+		const queryStart = req.apiUrl.indexOf('?')
+
+		if (queryStart < 0) {
+			return null
+		}
+
+		const params = new URLSearchParams(req.apiUrl.substring(queryStart + 1))
+
+		return params.get(name)
+	}
+
+	const getFilteredPaginationConfig = function(req, api) {
+		if (req.method !== 'GET') {
+			return null
+		}
+
+		const controller = apiControllers[api]
+
+		if (!controller || typeof controller.getFilteredPaginationConfig !== 'function') {
+			return null
+		}
+
+		const limit = parseInt(getQueryParam(req, 'limit'), 10)
+
+		if (isNaN(limit) || limit <= 0) {
+			return null
+		}
+
+		const paginationConfig = controller.getFilteredPaginationConfig(req)
+
+		if (!paginationConfig || typeof paginationConfig.predicate !== 'function') {
+			return null
+		}
+
+		utils.log(logger, 'info', req, 'Filtered pagination enabled for API ' + api + ' and URL ' + req.apiUrl)
+		return paginationConfig
+	}
+
+	const buildPagedApiUrl = function(apiUrl, offset, limit) {
+		const urlParts = apiUrl.split('?')
+		const path = urlParts[0]
+		const query = urlParts.length > 1 ? urlParts.slice(1).join('?') : ''
+		const params = new URLSearchParams(query)
+
+		params.set('offset', offset)
+		params.set('limit', limit)
+
+		return path + '?' + params.toString()
+	}
+
+	const cloneRequestForPage = function(req, offset, limit) {
+		const pageReq = Object.create(req)
+
+		pageReq.apiUrl = buildPagedApiUrl(req.apiUrl, offset, limit)
+
+		return pageReq
+	}
+
+	const handleFilteredPaginationRequest = function(req, res, api, paginationConfig) {
+		let lastResult = null
+		const limit = getQueryParam(req, 'limit')
+		const offset = getQueryParam(req, 'offset')
+		const token = filteredPagination.getTokenFromHeaders(req.headers)
+
+		utils.log(
+			logger,
+			'info',
+			req,
+			'Starting filtered pagination for API ' + api + ', limit=' + limit + ', offset=' + offset + ', token=' + (token ? 'present' : 'absent')
+		)
+
+		const fetchPage = async function(upstreamOffset, pageLimit) {
+			const pageReq = cloneRequestForPage(req, upstreamOffset, pageLimit)
+			const requestUrl = await new Promise((resolve, reject) => {
+				buildRequestUrl(pageReq, api, (err, url) => {
+					if (err) {
+						reject(err)
+					} else {
+						resolve(url)
+					}
+				})
+			})
+
+			utils.log(
+				logger,
+				'debug',
+				req,
+				'Filtered pagination upstream request for API ' + api + ': offset=' + upstreamOffset + ', limit=' + pageLimit + ', url=' + requestUrl
+			)
+
+			const options = await buildOptions(pageReq, requestUrl)
+			const result = await executeUpstreamRequest(pageReq, options)
+
+			lastResult = result
+
+			utils.log(
+				logger,
+				'debug',
+				req,
+				'Filtered pagination upstream response for API ' + api + ': status=' + result.status + ', items=' + (Array.isArray(result.body) ? result.body.length : 'non-list')
+			)
+
+			if (result.status >= 400) {
+				utils.log(logger, 'warn', req, 'Filtered pagination upstream request failed for API ' + api + ': status=' + result.status)
+				throw {
+					filteredPaginationResult: result
+				}
+			}
+
+			if (!Array.isArray(result.body)) {
+				utils.log(logger, 'warn', req, 'Filtered pagination received a non-list response for API ' + api)
+				throw {
+					status: 400,
+					message: 'Filtered pagination can only be applied to list responses'
+				}
+			}
+
+			return result.body
+		}
+
+		filteredPagination.paginate({
+			limit: limit,
+			offset: offset,
+			token: token,
+			fetchPage: fetchPage,
+			predicate: function(item) {
+				return paginationConfig.predicate(item, req)
+			}
+		}).then((page) => {
+			const result = Object.assign({}, lastResult)
+
+			result.body = page.body
+			result.apiUrl = req.apiUrl
+			result.query = req.query
+
+			if (page.token) {
+				result.headers[filteredPagination.TOKEN_HEADER] = page.token
+			}
+
+			utils.log(
+				logger,
+				'info',
+				req,
+				'Filtered pagination completed for API ' + api + ': returned=' + page.body.length + ', token=' + (page.token ? 'present' : 'absent')
+			)
+
+			runPostValidation(req, res, api, result)
+		}).catch((err) => {
+			utils.log(logger, 'warn', req, 'Filtered pagination failed for API ' + api + ': ' + (err.message || err.status || 'upstream error'))
+
+			if (err.filteredPaginationResult) {
+				runPostValidation(req, res, api, err.filteredPaginationResult)
+			} else if (err.response) {
+				res.status(err.response.status).json(err.response.data)
+			} else {
+				const status = err.status || 504
+				const message = err.message || 'Service unreachable'
+				res.status(status).json({ error: message })
+			}
 		})
 	}
 

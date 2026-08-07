@@ -210,6 +210,194 @@ describe('Catalog API', function() {
         });
     });
 
+    const catalogGetUtils = {
+        getAPIURL: function(appSsl, host, port, path) {
+            return (appSsl ? 'https' : 'http') + '://' + host + ':' + port + path;
+        }
+    };
+
+    it('should rewrite GET catalog productOffering requests using the catalog categories', function(done) {
+        const catalogApi = getCatalogApi({}, {}, catalogGetUtils);
+
+        nock(SERVER)
+            .get('/api/catalog/catalog-1')
+            .reply(200, {
+                category: [{ id: 'cat-1' }, { id: 'cat-2' }]
+            });
+
+        const req = {
+            method: 'GET',
+            path: '/catalog/catalog/catalog-1/productOffering',
+            apiUrl: '/catalog/catalog/catalog-1/productOffering',
+            query: {}
+        };
+
+        catalogApi.checkPermissions(req, function(err) {
+            expect(err).toBeNull();
+            expect(req.apiUrl).toBe('/catalog/productOffering?category=cat-1,cat-2');
+            done();
+        });
+    });
+
+    it('should intersect existing category filters when rewriting GET catalog productOffering requests', function(done) {
+        const catalogApi = getCatalogApi({}, {}, catalogGetUtils);
+
+        nock(SERVER)
+            .get('/api/catalog/catalog-1')
+            .reply(200, {
+                category: [{ id: 'cat-1' }, { id: 'cat-2' }]
+            });
+
+        const req = {
+            method: 'GET',
+            path: '/catalog/catalog/catalog-1/productOffering',
+            apiUrl: '/catalog/catalog/catalog-1/productOffering?category=cat-1,cat-3&sort=name',
+            query: {
+                category: 'cat-1,cat-3',
+                sort: 'name'
+            }
+        };
+
+        catalogApi.checkPermissions(req, function(err) {
+            expect(err).toBeNull();
+            expect(req.apiUrl).toBe('/catalog/productOffering?category=cat-1&sort=name');
+            done();
+        });
+    });
+
+    it('should preserve external search rewrites when adding catalog category filters', function(done) {
+        const previousSearchUrl = config.searchUrl;
+        config.searchUrl = 'http://search.com';
+
+        const searchMethod = jasmine.createSpy('search').and.returnValue(Promise.resolve([
+            { id: 'id-1' }
+        ]));
+
+        const catalogApi = getCatalogApi({}, {}, catalogGetUtils, {}, {}, {}, { search: searchMethod });
+
+        nock(SERVER)
+            .get('/api/catalog/catalog-1')
+            .reply(200, {
+                category: [{ id: 'cat-1' }]
+            });
+
+        const req = {
+            method: 'GET',
+            path: '/catalog/catalog/catalog-1/productOffering',
+            apiUrl: '/catalog/catalog/catalog-1/productOffering',
+            query: {
+                keyword: 'testkey'
+            }
+        };
+
+        catalogApi.checkPermissions(req, function(err) {
+            config.searchUrl = previousSearchUrl;
+            expect(err).toBeNull();
+            expect(searchMethod).toHaveBeenCalledWith('testkey', undefined, {});
+            expect(req.apiUrl).toBe('/catalog/productOffering?href=id-1&category=cat-1');
+            done();
+        });
+    });
+
+    it('should enable filtered pagination for launched catalog list requests without related party filters', function(done) {
+        const catalogApi = getCatalogApi({}, {}, catalogGetUtils);
+        const req = {
+            method: 'GET',
+            path: '/catalog/catalog',
+            apiUrl: '/catalog/catalog?lifecycleStatus=Launched&limit=2',
+            query: {
+                lifecycleStatus: 'Launched',
+                limit: '2'
+            }
+        };
+
+        const paginationConfig = catalogApi.getFilteredPaginationConfig(req);
+
+        expect(paginationConfig).not.toBeNull();
+
+        nock(SERVER)
+            .get('/api/productOffering')
+            .query({
+                category: 'cat-1,cat-2',
+                lifecycleStatus: 'Launched',
+                limit: '1'
+            })
+            .reply(200, [{ id: 'offering-1' }]);
+
+        paginationConfig.predicate({
+            id: 'catalog-1',
+            category: [{ id: 'cat-1' }, { id: 'cat-2' }]
+        }).then((result) => {
+            expect(result).toBe(true);
+            done();
+        }).catch(done.fail);
+    });
+
+    it('should reject catalogs without offers in launched catalog filtered pagination', function(done) {
+        const catalogApi = getCatalogApi({}, {}, catalogGetUtils);
+        const req = {
+            method: 'GET',
+            path: '/catalog/catalog',
+            apiUrl: '/catalog/catalog?lifecycleStatus=Launched&limit=2',
+            query: {
+                lifecycleStatus: 'Launched',
+                limit: '2'
+            }
+        };
+
+        const paginationConfig = catalogApi.getFilteredPaginationConfig(req);
+
+        expect(paginationConfig).not.toBeNull();
+
+        nock(SERVER)
+            .get('/api/productOffering')
+            .query({
+                category: 'cat-1',
+                lifecycleStatus: 'Launched',
+                limit: '1'
+            })
+            .reply(200, []);
+
+        paginationConfig.predicate({
+            id: 'catalog-1',
+            category: [{ id: 'cat-1' }]
+        }).then((result) => {
+            expect(result).toBe(false);
+            done();
+        }).catch(done.fail);
+    });
+
+    it('should not enable filtered pagination for launched catalog list requests with related party filters', function() {
+        const catalogApi = getCatalogApi({}, {}, catalogGetUtils);
+        const req = {
+            method: 'GET',
+            path: '/catalog/catalog',
+            apiUrl: '/catalog/catalog?lifecycleStatus=Launched&relatedParty.id=party-1&limit=2',
+            query: {
+                lifecycleStatus: 'Launched',
+                'relatedParty.id': 'party-1',
+                limit: '2'
+            }
+        };
+
+        expect(catalogApi.getFilteredPaginationConfig(req)).toBeNull();
+    });
+
+    it('should not enable filtered pagination for catalog list requests that do not only query launched status', function() {
+        const catalogApi = getCatalogApi({}, {}, catalogGetUtils);
+        const req = {
+            method: 'GET',
+            path: '/catalog/catalog',
+            apiUrl: '/catalog/catalog?lifecycleStatus=Active&limit=2',
+            query: {
+                lifecycleStatus: 'Active',
+                limit: '2'
+            }
+        };
+
+        expect(catalogApi.getFilteredPaginationConfig(req)).toBeNull();
+    });
+
     /// ///////////////////////////////////////////////////////////////////////////////////////////
     /// /////////////////////////////////// NOT AUTHENTICATED /////////////////////////////////////
     /// ///////////////////////////////////////////////////////////////////////////////////////////

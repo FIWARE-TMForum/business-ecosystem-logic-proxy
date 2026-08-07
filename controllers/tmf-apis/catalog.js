@@ -125,6 +125,155 @@ const catalog = (function() {
         });
     }
 
+    const getCatalogOfferingPathInfo = function(req) {
+        if (!req.apiUrl && !req.path) {
+            return null
+        }
+
+        const requestPath = req.path || req.apiUrl.split('?')[0]
+        const pathParts = requestPath.split('/')
+
+        if (
+            pathParts.length >= 5 &&
+            pathParts[1] === config.endpoints.catalog.path &&
+            pathParts[2] === 'catalog' &&
+            pathParts[4] === 'productOffering'
+        ) {
+            return {
+                catalogId: pathParts[3],
+                resourcePath: '/' + pathParts.slice(4).join('/')
+            }
+        }
+
+        return null
+    }
+
+    const getCategoryIds = function(catalog) {
+        if (!catalog.category) {
+            return []
+        }
+
+        return catalog.category.map((category) => {
+            return category.id
+        })
+    }
+
+    const getQueryString = function(apiUrl) {
+        const queryStart = apiUrl.indexOf('?')
+
+        if (queryStart < 0) {
+            return ''
+        }
+
+        return apiUrl.substring(queryStart + 1)
+    }
+
+    const addCategoryFilter = function(queryString, categoryIds) {
+        if (categoryIds.length === 0) {
+            return queryString
+        }
+
+        const categoryFilter = categoryIds.join(',')
+
+        if (!queryString) {
+            return 'category=' + categoryFilter
+        }
+
+        const queryParts = queryString.split('&').filter((part) => {
+            return part.length > 0
+        })
+        const remainingParts = []
+        let categoryPart = null
+
+        queryParts.forEach((part) => {
+            const keyValue = part.split('=')
+
+            if (keyValue[0] === 'category') {
+                categoryPart = part
+            } else {
+                remainingParts.push(part)
+            }
+        })
+
+        if (categoryPart == null) {
+            return queryString + '&category=' + categoryFilter
+        }
+
+        const requestedCategories = categoryPart.split('=')[1].split(',')
+        const categoryIntersection = requestedCategories.filter((categoryId) => {
+            return categoryIds.indexOf(categoryId) >= 0
+        })
+
+        return ['category=' + categoryIntersection.join(',')].concat(remainingParts).join('&')
+    }
+
+    const rewriteCatalogOfferingQuery = function(req, callback) {
+        const pathInfo = getCatalogOfferingPathInfo(req)
+
+        if (pathInfo == null) {
+            return callback(null)
+        }
+
+        retrieveCatalog(pathInfo.catalogId, (err, response) => {
+            if (err) {
+                return callback(err)
+            }
+
+            const queryString = addCategoryFilter(getQueryString(req.apiUrl), getCategoryIds(response.body))
+            req.apiUrl = '/catalog' + pathInfo.resourcePath + (queryString ? '?' + queryString : '')
+            callback(null)
+        })
+    }
+
+    const isCatalogListRequest = function(req) {
+        return catalogsPattern.test(req.path) || catalogsPattern.test(req.apiUrl)
+    }
+
+    const hasRelatedPartyFilter = function(req) {
+        const query = req.query || {}
+
+        for (const key of Object.keys(query)) {
+            if (key.indexOf('relatedParty') === 0) {
+                return true
+            }
+        }
+
+        return false
+    }
+
+    const isLaunchedCatalogQuery = function(req) {
+        const query = req.query || {}
+        const lifecycleStatus = query[LIFE_CYCLE]
+
+        return lifecycleStatus != null && String(lifecycleStatus).toLowerCase() === LAUNCHED_STATE
+    }
+
+    const hasCatalogOffers = function(catalog) {
+        const categoryIds = getCategoryIds(catalog)
+        const catalogId = catalog.id || catalog.href || 'unknown'
+
+        if (categoryIds.length === 0) {
+            logger.debug('Catalog launched-offer filter rejected catalog ' + catalogId + ': no categories')
+            return Promise.resolve(false)
+        }
+
+        const offersPath = '/productOffering?category=' + categoryIds.join(',') + '&lifecycleStatus=Launched&limit=1'
+        logger.debug('Catalog launched-offer filter checking catalog ' + catalogId + ' with URL ' + offersPath)
+
+        return new Promise((resolve, reject) => {
+            retrieveAsset(offersPath, (err, result) => {
+                if (err) {
+                    logger.warn('Catalog launched-offer filter failed checking catalog ' + catalogId + ': status=' + (err.status || 'unknown'))
+                    reject(err)
+                } else {
+                    const hasOffers = Array.isArray(result.body) && result.body.length > 0
+                    logger.debug('Catalog launched-offer filter ' + (hasOffers ? 'accepted' : 'rejected') + ' catalog ' + catalogId + ': launchedOffers=' + (Array.isArray(result.body) ? result.body.length : 'non-list'))
+                    resolve(hasOffers)
+                }
+            })
+        })
+    }
+
     // Retrieves the product belonging to a given offering
     const retrieveProduct = function(productId, callback) {
 
@@ -1583,7 +1732,7 @@ const catalog = (function() {
     //////////////////////////////////////////////////////////////////////////////////////////////
 
     const validators = {
-        GET: [validateAllowed, processQuery],
+        GET: [validateAllowed, processQuery, rewriteCatalogOfferingQuery],
         POST: [utils.validateLoggedIn, validateCreation],
         PATCH: [utils.validateLoggedIn, validateUpdate],
         PUT: [utils.methodNotAllowed],
@@ -1599,6 +1748,35 @@ const catalog = (function() {
 
         async.series(reqValidators, callback);
     };
+
+    const getFilteredPaginationConfig = function(req) {
+        const isGet = req.method === 'GET'
+        const isCatalogList = isCatalogListRequest(req)
+        const isLaunchedQuery = isLaunchedCatalogQuery(req)
+        const hasRelatedParty = hasRelatedPartyFilter(req)
+
+        if (
+            !isGet ||
+            !isCatalogList ||
+            !isLaunchedQuery ||
+            hasRelatedParty
+        ) {
+            logger.debug(
+                'Catalog launched-offer filtered pagination disabled for URL ' + req.apiUrl +
+                ': isGet=' + isGet +
+                ', isCatalogList=' + isCatalogList +
+                ', isLaunchedQuery=' + isLaunchedQuery +
+                ', hasRelatedPartyFilter=' + hasRelatedParty
+            )
+            return null
+        }
+
+        logger.info('Catalog launched-offer filtered pagination enabled for URL ' + req.apiUrl)
+
+        return {
+            predicate: hasCatalogOffers
+        }
+    }
 
     const handleUpgradePostAction = function(req, body, storeMethod, callback) {
         var getURLId = function(apiUrl) {
@@ -1835,6 +2013,7 @@ const catalog = (function() {
     return {
         checkPermissions: checkPermissions,
         executePostValidation: executePostValidation,
+        getFilteredPaginationConfig: getFilteredPaginationConfig,
         handleAPIError: handleAPIError,
         retrieveCatalog: retrieveCatalog,
         checkOfferingLaunch: checkOfferingLaunch,
