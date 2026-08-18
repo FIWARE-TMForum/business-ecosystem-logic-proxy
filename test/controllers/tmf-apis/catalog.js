@@ -24,6 +24,7 @@ const nock = require('nock');
 const proxyquire = require('proxyquire');
 const md5 = require('blueimp-md5');
 const testUtils = require('../../utils');
+const realTmfUtils = require('../../../lib/tmfUtils');
 
 // ERRORS
 const INVALID_METHOD = 'The HTTP method DELETE is not allowed in the accessed API';
@@ -86,7 +87,18 @@ describe('Catalog API', function() {
     const basepath = '/catalog'
     const serviceLaunchFail= 0
     const resourceLaunchFail= 1
-    var getCatalogApi = function(storeClient, tmfUtils, utils, rssClient, indexes, async, searchEngine) {
+    var getCatalogApi = function(
+        storeClient,
+        tmfUtils,
+        utils,
+        rssClient,
+        indexes,
+        async,
+        searchEngine,
+        partyClient,
+        jwt,
+        jwksClient
+    ) {
         if (!rssClient) {
             rssClient = {};
         }
@@ -113,9 +125,61 @@ describe('Catalog API', function() {
         if (searchEngine) {
             stubs['../../lib/search'] = { searchEngine: searchEngine };
         }
+        if (partyClient) {
+            stubs['./../../lib/party'] = { partyClient: partyClient };
+        }
+        if (jwt) {
+            stubs.jsonwebtoken = jwt;
+        }
+        if (jwksClient) {
+            stubs['jwks-rsa'] = jwksClient;
+        }
 
         // load config depending on utils
         return proxyquire('../../../controllers/tmf-apis/catalog', stubs).catalog;
+    };
+
+    const buildComplianceVerifier = function(productSpecId, options) {
+        options = options || {};
+        const credentialSubject = {
+            id: options.subjectId || productSpecId
+        };
+        if (!options.missingLabel) {
+            credentialSubject['gx:labelLevel'] = options.label || 'BL';
+        }
+
+        const credential = {
+            type: options.types || ['gx:LabelCredential', 'VerifiableCredential'],
+            credentialSubject: credentialSubject
+        };
+        const payload = {};
+        payload[options.credentialProperty || 'vc'] = credential;
+
+        const jwt = {
+            decode: jasmine.createSpy('decodeComplianceCredential').and.returnValue(
+                options.decoded === undefined ? { header: { kid: 'compliance-key' } } : options.decoded
+            ),
+            verify: jasmine.createSpy('verifyComplianceCredential')
+        };
+        if (options.verifyError) {
+            jwt.verify.and.throwError(options.verifyError);
+        } else {
+            jwt.verify.and.returnValue(payload);
+        }
+
+        const signingKey = {
+            getPublicKey: jasmine.createSpy('getCompliancePublicKey').and.returnValue('public-key')
+        };
+        const keySet = {
+            getSigningKey: jasmine.createSpy('getComplianceSigningKey').and.returnValue(Promise.resolve(signingKey))
+        };
+        const jwksClient = jasmine.createSpy('complianceJWKSClient').and.returnValue(keySet);
+
+        return {
+            jwt: jwt,
+            jwksClient: jwksClient,
+            keySet: keySet
+        };
     };
 
     beforeEach(function() {
@@ -2482,7 +2546,10 @@ describe('Catalog API', function() {
         expectedErrorMsg,
         updated,
         uniqueCategories,
-        done
+        done,
+        partyClient,
+        jwt,
+        jwksClient
     ) {
         var checkRoleMethod = jasmine.createSpy();
         checkRoleMethod.and.returnValue(true);
@@ -2491,6 +2558,7 @@ describe('Catalog API', function() {
 
         var tmfUtils = {
             isOwner: productRequestInfo.owner ? isOwnerTrue : isOwnerFalse,
+            hasOrganizationCountry: realTmfUtils.hasOrganizationCountry,
             isValidStatusTransition: function(firstSt, nextSt) {
                 return true;
             }
@@ -2518,7 +2586,18 @@ describe('Catalog API', function() {
             }
         };
 
-        var catalogApi = getCatalogApi({}, tmfUtils, utils, rssClient);
+        var catalogApi = getCatalogApi(
+            {},
+            tmfUtils,
+            utils,
+            rssClient,
+            null,
+            null,
+            null,
+            partyClient,
+            jwt,
+            jwksClient
+        );
 
         // Basic properties
         const userName = 'test';
@@ -2533,6 +2612,9 @@ describe('Catalog API', function() {
         var bodyGetOffering = {
             productSpecification: getProductSpecification(productPath)
         };
+        if (productRequestInfo.offeringRelatedParty) {
+            bodyGetOffering.relatedParty = productRequestInfo.offeringRelatedParty;
+        }
 
         nock(serverUrl)
             .get(apiBase + offeringPath)
@@ -2541,13 +2623,17 @@ describe('Catalog API', function() {
         // The mock server that will handle the request when the product is requested
         var role = 'Seller';
         var bodyOk = {
-            relatedParty: [{ id: userName, role: role }],
-            lifecycleStatus: productRequestInfo.lifecycleStatus
+            id: productRequestInfo.id || getProductSpecification(productPath).id,
+            relatedParty: productRequestInfo.relatedParty || [{ id: userName, role: role }],
+            lifecycleStatus: productRequestInfo.lifecycleStatus,
+            attachment: productRequestInfo.attachment || [],
+            productSpecCharacteristic: productRequestInfo.productSpecCharacteristic || []
         };
         var bodyGetProduct = productRequestInfo.requestStatus === 200 ? bodyOk : defaultErrorMessage;
 
         nock(serverUrl)
             .get(apiBase + productPath)
+            .times(productRequestInfo.requestCount || 1)
             .reply(productRequestInfo.requestStatus, bodyGetProduct);
 
         // The mock server that will handle the request when the catalog is requested
@@ -2818,6 +2904,11 @@ describe('Catalog API', function() {
 
     it('should allow to launch an offering when launchValidationEnabled is true and conditions are met', function(done) {
         config.launchValidationEnabled = true;
+        const previousComplianceJWKSUrl = config.complianceJWKSUrl;
+        config.complianceJWKSUrl = 'https://compliance.example/.well-known/jwks.json';
+        const organizationId = 'urn:ngsi-ld:organization:launch-ready';
+        const productSpecId = '7';
+        const complianceVerifier = buildComplianceVerifier(productSpecId);
 
         var offeringBody = JSON.stringify({
             lifecycleStatus: 'launched'
@@ -2825,8 +2916,16 @@ describe('Catalog API', function() {
 
         var productRequestInfo = {
             requestStatus: 200,
+            requestCount: 2,
+            id: productSpecId,
             owner: true,
-            lifecycleStatus: 'launched'
+            lifecycleStatus: 'launched',
+            offeringRelatedParty: [{ id: organizationId, role: 'Seller', '@referredType': 'Organization' }],
+            attachment: [{ name: 'Profile Picture', attachmentType: 'image/png', url: 'https://example.com/image.png' }],
+            productSpecCharacteristic: [{
+                name: 'Compliance:VC',
+                productSpecCharacteristicValue: [{ value: 'signed-compliance-credential' }]
+            }]
         };
 
         var catalogRequestInfo = {
@@ -2834,9 +2933,76 @@ describe('Catalog API', function() {
             lifecycleStatus: 'launched'
         };
 
-        testUpdateProductOffering(offeringBody, productRequestInfo, null, catalogRequestInfo, null, null, true, null, done);
+        const getOrganization = jasmine.createSpy('getOrganization').and.returnValue(Promise.resolve({
+            body: {
+                status: 'validated',
+                partyCharacteristic: [{ name: 'country', value: 'BE' }]
+            }
+        }));
 
-        config.launchValidationEnabled = false;
+        testUpdateProductOffering(
+            offeringBody,
+            productRequestInfo,
+            null,
+            catalogRequestInfo,
+            null,
+            null,
+            true,
+            null,
+            function() {
+                expect(getOrganization).toHaveBeenCalledWith(organizationId);
+                expect(complianceVerifier.jwt.verify).toHaveBeenCalledWith(
+                    'signed-compliance-credential',
+                    'public-key',
+                    { algorithms: ['RS256'] }
+                );
+                config.launchValidationEnabled = false;
+                config.complianceJWKSUrl = previousComplianceJWKSUrl;
+                done();
+            },
+            { getOrganization: getOrganization },
+            complianceVerifier.jwt,
+            complianceVerifier.jwksClient
+        );
+    });
+
+    it('should reject launching an offering created by an initialized organization', function(done) {
+        config.launchValidationEnabled = true;
+        const organizationId = 'urn:ngsi-ld:organization:initialized';
+        var offeringBody = JSON.stringify({ lifecycleStatus: 'launched' });
+        var productRequestInfo = {
+            requestStatus: 200,
+            owner: true,
+            lifecycleStatus: 'launched',
+            offeringRelatedParty: [{ id: organizationId, role: 'Seller', '@referredType': 'Organization' }],
+            attachment: [{ name: 'Profile Picture', attachmentType: 'image/png', url: 'https://example.com/image.png' }]
+        };
+        var catalogRequestInfo = {
+            requestStatus: 200,
+            lifecycleStatus: 'launched'
+        };
+        const getOrganization = jasmine.createSpy('getOrganization').and.returnValue(Promise.resolve({
+            body: {
+                status: 'Initialized',
+                partyCharacteristic: [{ name: 'country', value: 'BE' }]
+            }
+        }));
+
+        testUpdateProductOffering(
+            offeringBody,
+            productRequestInfo,
+            null,
+            catalogRequestInfo,
+            403,
+            'The product offering does not meet the requirements to be launched',
+            false,
+            null,
+            function() {
+                config.launchValidationEnabled = false;
+                done();
+            },
+            { getOrganization: getOrganization }
+        );
     });
 
     // PRODUCTS & CATALOGS
@@ -5971,31 +6137,293 @@ describe('Catalog API', function() {
         const serverUrl = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
         const apiBase = '/api';
 
-        var getCatalogApiSimple = function() {
-            return getCatalogApi({}, {}, {});
+        const productSpecId = 'urn:ngsi-ld:product-specification:launch-check';
+        const organizationId = 'urn:ngsi-ld:organization:launch-check';
+
+        var getCatalogApiSimple = function(partyClient, jwt, jwksClient) {
+            return getCatalogApi(
+                {},
+                { hasOrganizationCountry: realTmfUtils.hasOrganizationCountry },
+                {},
+                null,
+                null,
+                null,
+                null,
+                partyClient,
+                jwt,
+                jwksClient
+            );
         };
 
-        it('should return canBeLaunched true when the offering exists', function(done) {
-            var offeringId = 'urn:offering:42';
-            var offering = { id: offeringId, lifecycleStatus: 'active', name: 'Test Offering' };
+        const buildOffering = function(offeringId) {
+            return {
+                id: offeringId,
+                lifecycleStatus: 'active',
+                name: 'Test Offering',
+                productSpecification: { id: productSpecId },
+                relatedParty: [{
+                    id: organizationId,
+                    role: 'Seller',
+                    '@referredType': 'Organization'
+                }]
+            };
+        };
+
+        const buildProductSpec = function(options) {
+            options = options || {};
+            const productSpec = {
+                id: productSpecId,
+                attachment: [{
+                    name: 'Profile Picture',
+                    attachmentType: 'image/png',
+                    url: 'https://example.com/image.png'
+                }]
+            };
+            if (!options.withoutComplianceCredential) {
+                productSpec.productSpecCharacteristic = [{
+                    name: 'Compliance:VC',
+                    productSpecCharacteristicValue: [{
+                        value: options.complianceToken || 'signed-compliance-credential'
+                    }]
+                }];
+                if (options.additionalToken) {
+                    productSpec.productSpecCharacteristic[0].productSpecCharacteristicValue.push({
+                        value: options.additionalToken
+                    });
+                }
+            }
+            return productSpec;
+        };
+
+        const buildOrganization = function(status) {
+            const organization = {
+                partyCharacteristic: [{ name: 'country', value: 'BE' }]
+            };
+            if (status !== undefined) {
+                organization.status = status;
+            }
+            return organization;
+        };
+
+        const testLaunchCheck = function(
+            offering,
+            productSpec,
+            organization,
+            expectedResult,
+            done,
+            verifierOptions
+        ) {
+            verifierOptions = verifierOptions || {};
+            const previousComplianceJWKSUrl = config.complianceJWKSUrl;
+            const complianceVerifier = buildComplianceVerifier(productSpecId, verifierOptions);
+            const jwksUrl = 'https://compliance.example/keys';
+            config.complianceJWKSUrl = jwksUrl;
 
             nock(serverUrl)
-                .get(apiBase + '/productOffering/' + offeringId)
+                .get(apiBase + '/productOffering/' + offering.id)
                 .reply(200, offering);
+            nock(serverUrl)
+                .get(apiBase + '/productSpecification/' + productSpecId)
+                .reply(200, productSpec);
 
-            var catalogApi = getCatalogApiSimple();
-
-            var req = { params: { id: offeringId } };
-            var res = {
+            const getOrganization = jasmine.createSpy('getOrganization').and.returnValue(Promise.resolve({
+                body: organization
+            }));
+            const catalogApi = getCatalogApiSimple(
+                { getOrganization: getOrganization },
+                complianceVerifier.jwt,
+                complianceVerifier.jwksClient
+            );
+            const req = { params: { id: offering.id } };
+            const res = {
                 status: jasmine.createSpy('status').and.callFake(function() { return res; }),
                 json: jasmine.createSpy('json').and.callFake(function(body) {
                     expect(res.status).not.toHaveBeenCalled();
-                    expect(body).toEqual({ canBeLaunched: true });
+                    expect(body).toEqual({ canBeLaunched: expectedResult });
+                    if (verifierOptions.assertVerifier) {
+                        verifierOptions.assertVerifier(complianceVerifier, jwksUrl);
+                    }
+                    config.complianceJWKSUrl = previousComplianceJWKSUrl;
                     done();
                 })
             };
 
             catalogApi.checkOfferingLaunch(req, res);
+        };
+
+        it('should return canBeLaunched true when all launch requirements are met', function(done) {
+            var offeringId = 'urn:offering:42';
+            testLaunchCheck(
+                buildOffering(offeringId),
+                buildProductSpec(),
+                buildOrganization('validated'),
+                true,
+                done,
+                {
+                    assertVerifier: function(complianceVerifier, jwksUrl) {
+                        expect(complianceVerifier.jwksClient).toHaveBeenCalledWith({ jwksUri: jwksUrl });
+                    }
+                }
+            );
+        });
+
+        it('should accept gx:labelLevel and the verifiableCredential JWT property', function(done) {
+            var offeringId = 'urn:offering:gx-label-level';
+            testLaunchCheck(
+                buildOffering(offeringId),
+                buildProductSpec(),
+                buildOrganization('validated'),
+                true,
+                done,
+                {
+                    credentialProperty: 'verifiableCredential',
+                    label: 'PP'
+                }
+            );
+        });
+
+        it('should accept an organization without status when the seller is defined in the offering', function(done) {
+            var offeringId = 'urn:offering:no-org-status';
+            testLaunchCheck(buildOffering(offeringId), buildProductSpec(), buildOrganization(undefined), true, done);
+        });
+
+        it('should ignore a product specification seller when the offering has no seller', function(done) {
+            var offeringId = 'urn:offering:no-offering-seller';
+            const offering = buildOffering(offeringId);
+            delete offering.relatedParty;
+            const productSpec = buildProductSpec();
+            productSpec.relatedParty = [{
+                id: organizationId,
+                role: 'Seller',
+                '@referredType': 'Organization'
+            }];
+            testLaunchCheck(offering, productSpec, buildOrganization('validated'), false, done);
+        });
+
+        it('should ignore a seller that is not an organization', function(done) {
+            var offeringId = 'urn:offering:individual-seller';
+            const offering = buildOffering(offeringId);
+            offering.relatedParty = [{
+                id: 'urn:ngsi-ld:individual:seller',
+                role: 'Seller',
+                '@referredType': 'Individual'
+            }];
+            testLaunchCheck(offering, buildProductSpec(), buildOrganization('validated'), false, done);
+        });
+
+        it('should return canBeLaunched false when the product specification has no image', function(done) {
+            var offeringId = 'urn:offering:no-image';
+            const productSpec = buildProductSpec();
+            productSpec.attachment = [{ attachmentType: 'application/pdf', url: 'https://example.com/manual.pdf' }];
+            testLaunchCheck(buildOffering(offeringId), productSpec, buildOrganization('validated'), false, done);
+        });
+
+        it('should return canBeLaunched false when the profile picture has no attachment type', function(done) {
+            var offeringId = 'urn:offering:image-without-type';
+            const productSpec = buildProductSpec();
+            delete productSpec.attachment[0].attachmentType;
+            testLaunchCheck(buildOffering(offeringId), productSpec, buildOrganization('validated'), false, done);
+        });
+
+        it('should return canBeLaunched false when the profile picture has no URL', function(done) {
+            var offeringId = 'urn:offering:image-without-url';
+            const productSpec = buildProductSpec();
+            delete productSpec.attachment[0].url;
+            testLaunchCheck(buildOffering(offeringId), productSpec, buildOrganization('validated'), false, done);
+        });
+
+        it('should return canBeLaunched false when the organization has no country', function(done) {
+            var offeringId = 'urn:offering:no-country';
+            const organization = buildOrganization('validated');
+            organization.partyCharacteristic = [{ name: 'country', value: '  ' }];
+            testLaunchCheck(buildOffering(offeringId), buildProductSpec(), organization, false, done);
+        });
+
+        it('should return canBeLaunched false when the organization is initialized', function(done) {
+            var offeringId = 'urn:offering:initialized-org';
+            testLaunchCheck(buildOffering(offeringId), buildProductSpec(), buildOrganization(' Initialized '), false, done);
+        });
+
+        it('should return canBeLaunched false when Compliance:VC is missing', function(done) {
+            var offeringId = 'urn:offering:no-compliance-vc';
+            testLaunchCheck(
+                buildOffering(offeringId),
+                buildProductSpec({ withoutComplianceCredential: true }),
+                buildOrganization('validated'),
+                false,
+                done
+            );
+        });
+
+        it('should return canBeLaunched false when Compliance:VC contains more than one token', function(done) {
+            var offeringId = 'urn:offering:multiple-compliance-vcs';
+            testLaunchCheck(
+                buildOffering(offeringId),
+                buildProductSpec({ additionalToken: 'another-signed-compliance-credential' }),
+                buildOrganization('validated'),
+                false,
+                done
+            );
+        });
+
+        it('should return canBeLaunched false when the compliance JWT signature is invalid', function(done) {
+            var offeringId = 'urn:offering:invalid-compliance-signature';
+            testLaunchCheck(
+                buildOffering(offeringId),
+                buildProductSpec(),
+                buildOrganization('validated'),
+                false,
+                done,
+                { verifyError: 'Invalid signature' }
+            );
+        });
+
+        it('should return canBeLaunched false when the compliance credential references another product', function(done) {
+            var offeringId = 'urn:offering:wrong-compliance-subject';
+            testLaunchCheck(
+                buildOffering(offeringId),
+                buildProductSpec(),
+                buildOrganization('validated'),
+                false,
+                done,
+                { subjectId: 'urn:ngsi-ld:product-specification:other' }
+            );
+        });
+
+        it('should return canBeLaunched false when the compliance label is not allowed', function(done) {
+            var offeringId = 'urn:offering:invalid-compliance-label';
+            testLaunchCheck(
+                buildOffering(offeringId),
+                buildProductSpec(),
+                buildOrganization('validated'),
+                false,
+                done,
+                { label: 'L3' }
+            );
+        });
+
+        it('should return canBeLaunched false when the compliance label is missing', function(done) {
+            var offeringId = 'urn:offering:missing-compliance-label';
+            testLaunchCheck(
+                buildOffering(offeringId),
+                buildProductSpec(),
+                buildOrganization('validated'),
+                false,
+                done,
+                { missingLabel: true }
+            );
+        });
+
+        it('should return canBeLaunched false when the VC is not a label credential', function(done) {
+            var offeringId = 'urn:offering:wrong-compliance-type';
+            testLaunchCheck(
+                buildOffering(offeringId),
+                buildProductSpec(),
+                buildOrganization('validated'),
+                false,
+                done,
+                { types: ['VerifiableCredential'] }
+            );
         });
 
         it('should return an error when the offering cannot be retrieved', function(done) {
