@@ -25,7 +25,10 @@ const config = require('./../../config')
 const deepcopy = require('deepcopy')
 const equal = require('deep-equal')
 const { indexes } = require('./../../lib/indexes')
+const jwt = require('jsonwebtoken')
+const jwksClient = require('jwks-rsa')
 const logger = require('./../../lib/logger').logger.getLogger('TMF')
+const partyClient = require('./../../lib/party').partyClient
 const rssClient = require('./../../lib/rss').rssClient
 const storeClient = require('./../../lib/store').storeClient
 const tmfUtils = require('./../../lib/tmfUtils')
@@ -57,6 +60,8 @@ const catalog = (function() {
     const categoryPattern = new RegExp('/category/[^/]+/?$');
     const categoriesPattern = new RegExp('/category/?$');
     const catalogsPattern = new RegExp('/catalog/?$');
+    const allowedComplianceLabels = ['BL', 'P', 'PP'];
+    let complianceVerifier = null;
 
     const retrieveAsset = function(assetPath, callback) {
         if (!assetPath.startsWith('/')) {
@@ -483,11 +488,189 @@ const catalog = (function() {
         })
     }
 
-    const canOfferingBeLaunched = function(offering, productSpec = null) {
-        return true;
+    const hasProductImage = function(productSpec) {
+        if (!productSpec || !Array.isArray(productSpec.attachment)) {
+            return false;
+        }
+
+        return productSpec.attachment.some((attachment) => {
+            if (!attachment ||
+                typeof attachment.name !== 'string' ||
+                typeof attachment.attachmentType !== 'string' ||
+                typeof attachment.url !== 'string') {
+                return false;
+            }
+
+            return attachment.name.trim().toLowerCase() === 'profile picture' &&
+                attachment.attachmentType.trim().length > 0 &&
+                attachment.url.trim().length > 0;
+        });
     };
 
-    const validateOffering = function(req, offeringPath, previousBody, newBody, callback) {
+    const getSellerOrganizationId = function(offering) {
+        const relatedParties = offering && Array.isArray(offering.relatedParty)
+            ? offering.relatedParty
+            : [];
+        const sellerRole = String(config.roles.seller || 'seller').toLowerCase();
+        const organizationSeller = relatedParties.find((party) => {
+            if (!party || !party.id || typeof party.role !== 'string' || party.role.toLowerCase() !== sellerRole) {
+                return false;
+            }
+
+            const referredType = typeof party['@referredType'] === 'string'
+                ? party['@referredType'].toLowerCase()
+                : '';
+            return referredType === 'organization' || String(party.id).toLowerCase().includes('organization');
+        });
+
+        return organizationSeller ? organizationSeller.id : null;
+    };
+
+    const getComplianceCredentialToken = function(productSpec) {
+        if (!productSpec || !Array.isArray(productSpec.productSpecCharacteristic)) {
+            return null;
+        }
+
+        const complianceCharacteristics = productSpec.productSpecCharacteristic.filter((characteristic) => {
+            return characteristic &&
+                typeof characteristic.name === 'string' &&
+                characteristic.name.trim().toLowerCase() === 'compliance:vc';
+        });
+        if (complianceCharacteristics.length !== 1) {
+            return null;
+        }
+
+        const characteristicValues = complianceCharacteristics[0].productSpecCharacteristicValue;
+        if (!Array.isArray(characteristicValues) || characteristicValues.length !== 1) {
+            return null;
+        }
+
+        const complianceToken = characteristicValues[0] && characteristicValues[0].value;
+        return typeof complianceToken === 'string' && complianceToken.trim().length > 0
+            ? complianceToken.trim()
+            : null;
+    };
+
+    const getComplianceVerifier = function() {
+        const jwksUri = typeof config.complianceJWKSUrl === 'string'
+            ? config.complianceJWKSUrl.trim()
+            : '';
+
+        if (!jwksUri) {
+            throw new Error('The compliance credential verifier is not configured');
+        }
+        if (complianceVerifier) {
+            return complianceVerifier;
+        }
+
+        complianceVerifier = jwksClient({ jwksUri: jwksUri });
+        return complianceVerifier;
+    };
+
+    const hasValidComplianceCredential = async function(productSpec) {
+        const complianceToken = getComplianceCredentialToken(productSpec);
+        if (!complianceToken || !productSpec.id) {
+            return false;
+        }
+
+        let verifier;
+        try {
+            verifier = getComplianceVerifier();
+        } catch (err) {
+            return false;
+        }
+
+        try {
+            const decoded = jwt.decode(complianceToken, { complete: true });
+            if (!decoded ||
+                !decoded.header ||
+                typeof decoded.header.kid !== 'string' ||
+                decoded.header.kid.trim().length === 0) {
+                return false;
+            }
+
+            const signingKey = await verifier.getSigningKey(decoded.header.kid);
+            const payload = jwt.verify(complianceToken, signingKey.getPublicKey(), {
+                algorithms: ['RS256']
+            });
+            const credential = payload && (payload.verifiableCredential || payload.vc);
+            if (!credential || !credential.credentialSubject) {
+                return false;
+            }
+
+            const credentialTypes = Array.isArray(credential.type)
+                ? credential.type
+                : [credential.type];
+            if (!credentialTypes.includes('gx:LabelCredential')) {
+                return false;
+            }
+
+            const credentialSubject = credential.credentialSubject;
+            if (credentialSubject.id !== productSpec.id) {
+                return false;
+            }
+
+            const labelLevel = credentialSubject['gx:labelLevel'];
+            return typeof labelLevel === 'string' &&
+                allowedComplianceLabels.includes(labelLevel.trim().toUpperCase());
+        } catch (err) {
+            return false;
+        }
+    };
+
+    const canOfferingBeLaunched = async function(offering, productSpec = null) {
+        try {
+            if (!offering || offering.isBundle) {
+                return false;
+            }
+
+            const productSpecId = offering && offering.productSpecification && offering.productSpecification.id;
+            let resolvedProductSpec = productSpec;
+            if (!resolvedProductSpec) {
+                if (!productSpecId) {
+                    return false;
+                }
+
+                resolvedProductSpec = await new Promise((resolve, reject) => {
+                    retrieveProduct(productSpecId, function(err, result) {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve(result.body);
+                        }
+                    });
+                });
+            }
+            if (!hasProductImage(resolvedProductSpec)) {
+                return false;
+            }
+
+            const organizationId = getSellerOrganizationId(offering);
+            if (!organizationId) {
+                return false;
+            }
+
+            const organizationResult = await partyClient.getOrganization(organizationId);
+            const organization = organizationResult && organizationResult.body;
+            if (!tmfUtils.hasOrganizationCountry(organization)) {
+                return false;
+            }
+
+            const organizationStatus = organization.status == null
+                ? ''
+                : String(organization.status).trim().toLowerCase();
+            if (organizationStatus === 'initialized') {
+                return false;
+            }
+
+            return await hasValidComplianceCredential(resolvedProductSpec);
+        } catch (err) {
+            logger.warn('The offering launch requirements could not be evaluated');
+            return false;
+        }
+    };
+
+    const validateOffering = async function(req, offeringPath, previousBody, newBody, callback) {
         if(newBody && newBody.name !== null && newBody.name !== undefined){ // newBody.name === '' should enter here
             const errorMessage = tmfUtils.validateNameField(newBody.name, 'Product offering');
             if (errorMessage) {
@@ -522,7 +705,7 @@ const catalog = (function() {
             errorMessageStateProduct = 'Offerings can only be attached to active or launched products';
             errorMessageStateCatalog = 'Offerings can only be created in a catalog that is active or launched';
 
-            if (config.launchValidationEnabled && newBody && newBody[LIFE_CYCLE] && newBody[LIFE_CYCLE].toLowerCase() === LAUNCHED_STATE && !canOfferingBeLaunched(newBody)) {
+            if (config.launchValidationEnabled && newBody && newBody[LIFE_CYCLE] && newBody[LIFE_CYCLE].toLowerCase() === LAUNCHED_STATE && !(await canOfferingBeLaunched(newBody))) {
                 return callback({
                     status: 403,
                     message: 'The product offering does not meet the requirements to be launched'
@@ -539,7 +722,7 @@ const catalog = (function() {
             errorMessageStateProduct = 'Offerings can only be launched when the attached product is also launched';
             errorMessageStateCatalog = 'Offerings can only be launched when the attached catalog is also launched';
 
-            if (config.launchValidationEnabled && !canOfferingBeLaunched(previousBody)) {
+            if (config.launchValidationEnabled && !(await canOfferingBeLaunched(previousBody))) {
                 return callback({
                     status: 403,
                     message: 'The product offering does not meet the requirements to be launched'
@@ -2005,7 +2188,11 @@ const catalog = (function() {
             if (err) {
                 res.status(err.status || 500).json({ error: 'The product offering cannot be retrieved' });
             } else {
-                res.json({ canBeLaunched: canOfferingBeLaunched(result.body) });
+                canOfferingBeLaunched(result.body).then((canBeLaunched) => {
+                    res.json({
+                        canBeLaunched: canBeLaunched
+                    });
+                });
             }
         });
     };

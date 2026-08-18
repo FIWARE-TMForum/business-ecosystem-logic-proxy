@@ -579,6 +579,41 @@ describe('TMF Utils', function() {
         });
     });
 
+    describe('Has Organization Country', function() {
+        it('should return true when the organization has a country with a value', function() {
+            const tmfUtils = getTmfUtils();
+            const organization = {
+                partyCharacteristic: [{ name: ' Country ', value: 'BE' }]
+            };
+
+            expect(tmfUtils.hasOrganizationCountry(organization)).toBe(true);
+        });
+
+        it('should return false when the country value is empty', function() {
+            const tmfUtils = getTmfUtils();
+            const organization = {
+                partyCharacteristic: [{ name: 'country', value: '  ' }]
+            };
+
+            expect(tmfUtils.hasOrganizationCountry(organization)).toBe(false);
+        });
+
+        it('should return false when the country value is null', function() {
+            const tmfUtils = getTmfUtils();
+            const organization = {
+                partyCharacteristic: [{ name: 'country', value: null }]
+            };
+
+            expect(tmfUtils.hasOrganizationCountry(organization)).toBe(false);
+        });
+
+        it('should return false when party characteristics are missing', function() {
+            const tmfUtils = getTmfUtils();
+
+            expect(tmfUtils.hasOrganizationCountry({})).toBe(false);
+        });
+    });
+
     describe('Get Party Individuals Collection URL', function() {
         const testGetIndividualsCollectionURL = function(req, user) {
             const utils = jasmine.createSpyObj('utils', ['getAPIURL']);
