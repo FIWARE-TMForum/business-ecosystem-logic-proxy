@@ -97,6 +97,15 @@ describe('Filtered pagination helper', function() {
         }).catch(done.fail)
     })
 
+    it('should read the token from lowercase headers', function() {
+        const token = filteredPagination.encodeToken(5)
+        const headers = {}
+
+        headers[filteredPagination.TOKEN_HEADER_LOWER] = token
+
+        expect(filteredPagination.getTokenFromHeaders(headers)).toBe(token)
+    })
+
     it('should return no token when upstream is exhausted', function(done) {
         const fetchPage = jasmine.createSpy('fetchPage').and.returnValue(Promise.resolve([
             { id: '1', valid: false }
