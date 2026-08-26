@@ -22,6 +22,7 @@
 const async = require('async')
 const axios = require('axios')
 const config = require('./../../config')
+const { X509Certificate } = require('crypto')
 const deepcopy = require('deepcopy')
 const equal = require('deep-equal')
 const { indexes } = require('./../../lib/indexes')
@@ -63,6 +64,7 @@ const catalog = (function() {
     const categoriesPattern = new RegExp('/category/?$');
     const catalogsPattern = new RegExp('/catalog/?$');
     const allowedComplianceLabels = ['BL', 'P', 'PP'];
+    const complianceIssuerPrefix = 'did:elsi:';
 
     const retrieveAsset = function(assetPath, callback) {
         if (!assetPath.startsWith('/')) {
@@ -579,6 +581,38 @@ const catalog = (function() {
             '\n-----END CERTIFICATE-----';
     };
 
+    const getCertificateOrganizationIdentifier = function(certificate) {
+        const legacyCertificate = certificate.toLegacyObject();
+        const subject = legacyCertificate && legacyCertificate.subject;
+        if (!subject || typeof subject !== 'object') {
+            return null;
+        }
+
+        const organizationIdentifier = subject.organizationIdentifier ||
+            subject['2.5.4.97'] ||
+            subject['OID.2.5.4.97'];
+        const values = Array.isArray(organizationIdentifier)
+            ? organizationIdentifier
+            : [organizationIdentifier];
+        if (values.length !== 1 || typeof values[0] !== 'string') {
+            return null;
+        }
+
+        const normalizedIdentifier = values[0].trim();
+        return normalizedIdentifier || null;
+    };
+
+    const hasMatchingComplianceIssuer = function(payload, certificate) {
+        if (!payload || typeof payload.iss !== 'string') {
+            return false;
+        }
+
+        const parsedCertificate = new X509Certificate(certificate);
+        const organizationIdentifier = getCertificateOrganizationIdentifier(parsedCertificate);
+        return organizationIdentifier !== null &&
+            payload.iss === complianceIssuerPrefix + organizationIdentifier;
+    };
+
     const hasValidComplianceCredential = async function(productSpec) {
         const complianceToken = getComplianceCredentialToken(productSpec);
         if (!complianceToken || !productSpec.id) {
@@ -595,6 +629,10 @@ const catalog = (function() {
             const payload = jwt.verify(complianceToken, certificate, {
                 algorithms: ['RS256']
             });
+            if (!hasMatchingComplianceIssuer(payload, certificate)) {
+                return false;
+            }
+
             const credential = payload && (payload.verifiableCredential || payload.vc);
             if (!credential || !credential.credentialSubject) {
                 return false;

@@ -85,6 +85,8 @@ const COMPLIANCE_CERTIFICATE = 'Y2VydGlmaWNhdGU=';
 const COMPLIANCE_CERTIFICATE_PEM = '-----BEGIN CERTIFICATE-----\n' +
     COMPLIANCE_CERTIFICATE +
     '\n-----END CERTIFICATE-----';
+const COMPLIANCE_ORGANIZATION_IDENTIFIER = 'VATES-B60645900';
+const COMPLIANCE_ISSUER = 'did:elsi:' + COMPLIANCE_ORGANIZATION_IDENTIFIER;
 
 describe('Catalog API', function() {
     var config = testUtils.getDefaultConfig();
@@ -100,7 +102,8 @@ describe('Catalog API', function() {
         async,
         searchEngine,
         partyClient,
-        jwt
+        jwt,
+        x509Certificate
     ) {
         if (!rssClient) {
             rssClient = {};
@@ -134,6 +137,9 @@ describe('Catalog API', function() {
         if (jwt) {
             stubs.jsonwebtoken = jwt;
         }
+        if (x509Certificate) {
+            stubs.crypto = { X509Certificate: x509Certificate };
+        }
 
         // load config depending on utils
         return proxyquire('../../../controllers/tmf-apis/catalog', stubs).catalog;
@@ -154,6 +160,23 @@ describe('Catalog API', function() {
         };
         const payload = {};
         payload[options.credentialProperty || 'vc'] = credential;
+        if (!options.missingIssuer) {
+            payload.iss = options.issuer === undefined ? COMPLIANCE_ISSUER : options.issuer;
+        }
+
+        const certificateSubject = {};
+        if (!options.missingOrganizationIdentifier) {
+            certificateSubject.organizationIdentifier = options.organizationIdentifier === undefined
+                ? COMPLIANCE_ORGANIZATION_IDENTIFIER
+                : options.organizationIdentifier;
+        }
+        const x509Certificate = jasmine.createSpy('X509Certificate').and.callFake(function() {
+            return {
+                toLegacyObject: function() {
+                    return { subject: certificateSubject };
+                }
+            };
+        });
 
         const jwt = {
             decode: jasmine.createSpy('decodeComplianceCredential').and.returnValue(
@@ -170,7 +193,8 @@ describe('Catalog API', function() {
         }
 
         return {
-            jwt: jwt
+            jwt: jwt,
+            x509Certificate: x509Certificate
         };
     };
 
@@ -2992,7 +3016,8 @@ describe('Catalog API', function() {
         uniqueCategories,
         done,
         partyClient,
-        jwt
+        jwt,
+        x509Certificate
     ) {
         var checkRoleMethod = jasmine.createSpy();
         checkRoleMethod.and.returnValue(true);
@@ -3038,7 +3063,8 @@ describe('Catalog API', function() {
             null,
             null,
             partyClient,
-            jwt
+            jwt,
+            x509Certificate
         );
 
         // Basic properties
@@ -3400,7 +3426,8 @@ describe('Catalog API', function() {
                 done();
             },
             { getOrganization: getOrganization },
-            complianceVerifier.jwt
+            complianceVerifier.jwt,
+            complianceVerifier.x509Certificate
         );
     });
 
@@ -6578,7 +6605,7 @@ describe('Catalog API', function() {
         const productSpecId = 'urn:ngsi-ld:product-specification:launch-check';
         const organizationId = 'urn:ngsi-ld:organization:launch-check';
 
-        var getCatalogApiSimple = function(partyClient, jwt) {
+        var getCatalogApiSimple = function(partyClient, jwt, x509Certificate) {
             return getCatalogApi(
                 {},
                 { hasOrganizationCountry: realTmfUtils.hasOrganizationCountry },
@@ -6588,7 +6615,8 @@ describe('Catalog API', function() {
                 null,
                 null,
                 partyClient,
-                jwt
+                jwt,
+                x509Certificate
             );
         };
 
@@ -6665,7 +6693,8 @@ describe('Catalog API', function() {
             }));
             const catalogApi = getCatalogApiSimple(
                 { getOrganization: getOrganization },
-                complianceVerifier.jwt
+                complianceVerifier.jwt,
+                complianceVerifier.x509Certificate
             );
             const req = { params: { id: offering.id } };
             const res = {
@@ -6697,6 +6726,9 @@ describe('Catalog API', function() {
                             'signed-compliance-credential',
                             COMPLIANCE_CERTIFICATE_PEM,
                             { algorithms: ['RS256'] }
+                        );
+                        expect(complianceVerifier.x509Certificate).toHaveBeenCalledWith(
+                            COMPLIANCE_CERTIFICATE_PEM
                         );
                     }
                 }
@@ -6823,6 +6855,42 @@ describe('Catalog API', function() {
                 false,
                 done,
                 { decoded: { header: { alg: 'RS256' } } }
+            );
+        });
+
+        it('should return canBeLaunched false when the compliance issuer does not match x5c', function(done) {
+            var offeringId = 'urn:offering:wrong-compliance-issuer';
+            testLaunchCheck(
+                buildOffering(offeringId),
+                buildProductSpec(),
+                buildOrganization('validated'),
+                false,
+                done,
+                { issuer: 'did:elsi:VATES-B00000000' }
+            );
+        });
+
+        it('should return canBeLaunched false when the compliance issuer is missing', function(done) {
+            var offeringId = 'urn:offering:missing-compliance-issuer';
+            testLaunchCheck(
+                buildOffering(offeringId),
+                buildProductSpec(),
+                buildOrganization('validated'),
+                false,
+                done,
+                { missingIssuer: true }
+            );
+        });
+
+        it('should return canBeLaunched false when x5c has no organizationIdentifier', function(done) {
+            var offeringId = 'urn:offering:missing-certificate-organization-identifier';
+            testLaunchCheck(
+                buildOffering(offeringId),
+                buildProductSpec(),
+                buildOrganization('validated'),
+                false,
+                done,
+                { missingOrganizationIdentifier: true }
             );
         });
 
