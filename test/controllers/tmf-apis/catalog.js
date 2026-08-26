@@ -81,6 +81,10 @@ const INVALID_S_LAUNCH = 'It is not allowed to launch a product spec without lau
 const INVALID_R_LAUNCH = 'It is not allowed to launch a product spec without launching resource spec previously'
 const INVALID_S_API = 'Error getting service specification through the API'
 const INVALID_R_API = 'Error getting resource specification through the API'
+const COMPLIANCE_CERTIFICATE = 'Y2VydGlmaWNhdGU=';
+const COMPLIANCE_CERTIFICATE_PEM = '-----BEGIN CERTIFICATE-----\n' +
+    COMPLIANCE_CERTIFICATE +
+    '\n-----END CERTIFICATE-----';
 
 describe('Catalog API', function() {
     var config = testUtils.getDefaultConfig();
@@ -96,8 +100,7 @@ describe('Catalog API', function() {
         async,
         searchEngine,
         partyClient,
-        jwt,
-        jwksClient
+        jwt
     ) {
         if (!rssClient) {
             rssClient = {};
@@ -131,9 +134,6 @@ describe('Catalog API', function() {
         if (jwt) {
             stubs.jsonwebtoken = jwt;
         }
-        if (jwksClient) {
-            stubs['jwks-rsa'] = jwksClient;
-        }
 
         // load config depending on utils
         return proxyquire('../../../controllers/tmf-apis/catalog', stubs).catalog;
@@ -157,7 +157,9 @@ describe('Catalog API', function() {
 
         const jwt = {
             decode: jasmine.createSpy('decodeComplianceCredential').and.returnValue(
-                options.decoded === undefined ? { header: { kid: 'compliance-key' } } : options.decoded
+                options.decoded === undefined
+                    ? { header: { alg: 'RS256', x5c: [COMPLIANCE_CERTIFICATE] } }
+                    : options.decoded
             ),
             verify: jasmine.createSpy('verifyComplianceCredential')
         };
@@ -167,18 +169,8 @@ describe('Catalog API', function() {
             jwt.verify.and.returnValue(payload);
         }
 
-        const signingKey = {
-            getPublicKey: jasmine.createSpy('getCompliancePublicKey').and.returnValue('public-key')
-        };
-        const keySet = {
-            getSigningKey: jasmine.createSpy('getComplianceSigningKey').and.returnValue(Promise.resolve(signingKey))
-        };
-        const jwksClient = jasmine.createSpy('complianceJWKSClient').and.returnValue(keySet);
-
         return {
-            jwt: jwt,
-            jwksClient: jwksClient,
-            keySet: keySet
+            jwt: jwt
         };
     };
 
@@ -3000,8 +2992,7 @@ describe('Catalog API', function() {
         uniqueCategories,
         done,
         partyClient,
-        jwt,
-        jwksClient
+        jwt
     ) {
         var checkRoleMethod = jasmine.createSpy();
         checkRoleMethod.and.returnValue(true);
@@ -3047,8 +3038,7 @@ describe('Catalog API', function() {
             null,
             null,
             partyClient,
-            jwt,
-            jwksClient
+            jwt
         );
 
         // Basic properties
@@ -3356,8 +3346,6 @@ describe('Catalog API', function() {
 
     it('should allow to launch an offering when launchValidationEnabled is true and conditions are met', function(done) {
         config.launchValidationEnabled = true;
-        const previousComplianceJWKSUrl = config.complianceJWKSUrl;
-        config.complianceJWKSUrl = 'https://compliance.example/.well-known/jwks.json';
         const organizationId = 'urn:ngsi-ld:organization:launch-ready';
         const productSpecId = '7';
         const complianceVerifier = buildComplianceVerifier(productSpecId);
@@ -3405,16 +3393,14 @@ describe('Catalog API', function() {
                 expect(getOrganization).toHaveBeenCalledWith(organizationId);
                 expect(complianceVerifier.jwt.verify).toHaveBeenCalledWith(
                     'signed-compliance-credential',
-                    'public-key',
+                    COMPLIANCE_CERTIFICATE_PEM,
                     { algorithms: ['RS256'] }
                 );
                 config.launchValidationEnabled = false;
-                config.complianceJWKSUrl = previousComplianceJWKSUrl;
                 done();
             },
             { getOrganization: getOrganization },
-            complianceVerifier.jwt,
-            complianceVerifier.jwksClient
+            complianceVerifier.jwt
         );
     });
 
@@ -6592,7 +6578,7 @@ describe('Catalog API', function() {
         const productSpecId = 'urn:ngsi-ld:product-specification:launch-check';
         const organizationId = 'urn:ngsi-ld:organization:launch-check';
 
-        var getCatalogApiSimple = function(partyClient, jwt, jwksClient) {
+        var getCatalogApiSimple = function(partyClient, jwt) {
             return getCatalogApi(
                 {},
                 { hasOrganizationCountry: realTmfUtils.hasOrganizationCountry },
@@ -6602,8 +6588,7 @@ describe('Catalog API', function() {
                 null,
                 null,
                 partyClient,
-                jwt,
-                jwksClient
+                jwt
             );
         };
 
@@ -6666,10 +6651,7 @@ describe('Catalog API', function() {
             verifierOptions
         ) {
             verifierOptions = verifierOptions || {};
-            const previousComplianceJWKSUrl = config.complianceJWKSUrl;
             const complianceVerifier = buildComplianceVerifier(productSpecId, verifierOptions);
-            const jwksUrl = 'https://compliance.example/keys';
-            config.complianceJWKSUrl = jwksUrl;
 
             nock(serverUrl)
                 .get(apiBase + '/productOffering/' + offering.id)
@@ -6683,8 +6665,7 @@ describe('Catalog API', function() {
             }));
             const catalogApi = getCatalogApiSimple(
                 { getOrganization: getOrganization },
-                complianceVerifier.jwt,
-                complianceVerifier.jwksClient
+                complianceVerifier.jwt
             );
             const req = { params: { id: offering.id } };
             const res = {
@@ -6693,9 +6674,8 @@ describe('Catalog API', function() {
                     expect(res.status).not.toHaveBeenCalled();
                     expect(body).toEqual({ canBeLaunched: expectedResult });
                     if (verifierOptions.assertVerifier) {
-                        verifierOptions.assertVerifier(complianceVerifier, jwksUrl);
+                        verifierOptions.assertVerifier(complianceVerifier);
                     }
-                    config.complianceJWKSUrl = previousComplianceJWKSUrl;
                     done();
                 })
             };
@@ -6712,8 +6692,12 @@ describe('Catalog API', function() {
                 true,
                 done,
                 {
-                    assertVerifier: function(complianceVerifier, jwksUrl) {
-                        expect(complianceVerifier.jwksClient).toHaveBeenCalledWith({ jwksUri: jwksUrl });
+                    assertVerifier: function(complianceVerifier) {
+                        expect(complianceVerifier.jwt.verify).toHaveBeenCalledWith(
+                            'signed-compliance-credential',
+                            COMPLIANCE_CERTIFICATE_PEM,
+                            { algorithms: ['RS256'] }
+                        );
                     }
                 }
             );
@@ -6827,6 +6811,18 @@ describe('Catalog API', function() {
                 false,
                 done,
                 { verifyError: 'Invalid signature' }
+            );
+        });
+
+        it('should return canBeLaunched false when the compliance JWT has no x5c certificate', function(done) {
+            var offeringId = 'urn:offering:missing-compliance-certificate';
+            testLaunchCheck(
+                buildOffering(offeringId),
+                buildProductSpec(),
+                buildOrganization('validated'),
+                false,
+                done,
+                { decoded: { header: { alg: 'RS256' } } }
             );
         });
 

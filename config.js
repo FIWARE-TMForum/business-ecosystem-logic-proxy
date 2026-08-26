@@ -728,9 +728,6 @@ config.searchUrl = process.env.BAE_LP_SEARCH_URL || config.searchUrl;
 config.complianceServerUrl = '';
 config.complianceServerUrl = process.env.BAE_LP_COMPLIANCE_SERVER_URL || config.complianceServerUrl;
 
-config.complianceJWKSUrl = '';
-config.complianceJWKSUrl = process.env.BAE_LP_COMPLIANCE_JWKS_URL || config.complianceJWKSUrl;
-
 config.billingEngineUrl = '';
 config.billingEngineUrl = process.env.BAE_LP_BILLING_ENGINE_URL || config.billingEngineUrl;
 

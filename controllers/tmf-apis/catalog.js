@@ -26,7 +26,6 @@ const deepcopy = require('deepcopy')
 const equal = require('deep-equal')
 const { indexes } = require('./../../lib/indexes')
 const jwt = require('jsonwebtoken')
-const jwksClient = require('jwks-rsa')
 const logger = require('./../../lib/logger').logger.getLogger('TMF')
 const partyClient = require('./../../lib/party').partyClient
 const rssClient = require('./../../lib/rss').rssClient
@@ -64,7 +63,6 @@ const catalog = (function() {
     const categoriesPattern = new RegExp('/category/?$');
     const catalogsPattern = new RegExp('/catalog/?$');
     const allowedComplianceLabels = ['BL', 'P', 'PP'];
-    let complianceVerifier = null;
 
     const retrieveAsset = function(assetPath, callback) {
         if (!assetPath.startsWith('/')) {
@@ -565,20 +563,20 @@ const catalog = (function() {
             : null;
     };
 
-    const getComplianceVerifier = function() {
-        const jwksUri = typeof config.complianceJWKSUrl === 'string'
-            ? config.complianceJWKSUrl.trim()
-            : '';
-
-        if (!jwksUri) {
-            throw new Error('The compliance credential verifier is not configured');
-        }
-        if (complianceVerifier) {
-            return complianceVerifier;
+    const getComplianceCertificate = function(decoded) {
+        const certificateChain = decoded && decoded.header && decoded.header.x5c;
+        if (!Array.isArray(certificateChain) || typeof certificateChain[0] !== 'string') {
+            return null;
         }
 
-        complianceVerifier = jwksClient({ jwksUri: jwksUri });
-        return complianceVerifier;
+        const certificate = certificateChain[0].replace(/\s/g, '');
+        if (!certificate) {
+            return null;
+        }
+
+        return '-----BEGIN CERTIFICATE-----\n' +
+            certificate.match(/.{1,64}/g).join('\n') +
+            '\n-----END CERTIFICATE-----';
     };
 
     const hasValidComplianceCredential = async function(productSpec) {
@@ -587,24 +585,14 @@ const catalog = (function() {
             return false;
         }
 
-        let verifier;
-        try {
-            verifier = getComplianceVerifier();
-        } catch (err) {
-            return false;
-        }
-
         try {
             const decoded = jwt.decode(complianceToken, { complete: true });
-            if (!decoded ||
-                !decoded.header ||
-                typeof decoded.header.kid !== 'string' ||
-                decoded.header.kid.trim().length === 0) {
+            const certificate = getComplianceCertificate(decoded);
+            if (!certificate) {
                 return false;
             }
 
-            const signingKey = await verifier.getSigningKey(decoded.header.kid);
-            const payload = jwt.verify(complianceToken, signingKey.getPublicKey(), {
+            const payload = jwt.verify(complianceToken, certificate, {
                 algorithms: ['RS256']
             });
             const credential = payload && (payload.verifiableCredential || payload.vc);
