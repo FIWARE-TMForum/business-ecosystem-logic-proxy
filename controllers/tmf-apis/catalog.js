@@ -22,11 +22,11 @@
 const async = require('async')
 const axios = require('axios')
 const config = require('./../../config')
+const { X509Certificate } = require('crypto')
 const deepcopy = require('deepcopy')
 const equal = require('deep-equal')
 const { indexes } = require('./../../lib/indexes')
 const jwt = require('jsonwebtoken')
-const jwksClient = require('jwks-rsa')
 const logger = require('./../../lib/logger').logger.getLogger('TMF')
 const partyClient = require('./../../lib/party').partyClient
 const rssClient = require('./../../lib/rss').rssClient
@@ -43,6 +43,9 @@ var ACTIVE_STATE = 'active';
 var LAUNCHED_STATE = 'launched';
 var RETIRED_STATE = 'retired';
 var OBSOLETE_STATE = 'obsolete';
+const PRICE_COMPONENT_QUERY_BATCH_SIZE = 10;
+const PRICE_PLAN_QUERY_PAGE_SIZE = 100;
+const CONSTRAINT_PRICE_TYPE = 'constraint';
 
 // Validator to check user permissions for accessing TMForum resources
 const catalog = (function() {
@@ -61,7 +64,7 @@ const catalog = (function() {
     const categoriesPattern = new RegExp('/category/?$');
     const catalogsPattern = new RegExp('/catalog/?$');
     const allowedComplianceLabels = ['BL', 'P', 'PP'];
-    let complianceVerifier = null;
+    const complianceIssuerPrefix = 'did:elsi:';
 
     const retrieveAsset = function(assetPath, callback) {
         if (!assetPath.startsWith('/')) {
@@ -91,6 +94,17 @@ const catalog = (function() {
                 status: status
             });
         })
+    };
+
+    const retrieveAssetAsync = function(assetPath) {
+        return new Promise((resolve, reject) => {
+            retrieveAsset(assetPath, function(err, result) {
+                if (err) {
+                    return reject(err);
+                }
+                resolve(result);
+            });
+        });
     };
 
     const getDependencySpecs = function (endpoint, path, refs, fields, callback){
@@ -551,20 +565,52 @@ const catalog = (function() {
             : null;
     };
 
-    const getComplianceVerifier = function() {
-        const jwksUri = typeof config.complianceJWKSUrl === 'string'
-            ? config.complianceJWKSUrl.trim()
-            : '';
-
-        if (!jwksUri) {
-            throw new Error('The compliance credential verifier is not configured');
-        }
-        if (complianceVerifier) {
-            return complianceVerifier;
+    const getComplianceCertificate = function(decoded) {
+        const certificateChain = decoded && decoded.header && decoded.header.x5c;
+        if (!Array.isArray(certificateChain) || typeof certificateChain[0] !== 'string') {
+            return null;
         }
 
-        complianceVerifier = jwksClient({ jwksUri: jwksUri });
-        return complianceVerifier;
+        const certificate = certificateChain[0].replace(/\s/g, '');
+        if (!certificate) {
+            return null;
+        }
+
+        return '-----BEGIN CERTIFICATE-----\n' +
+            certificate.match(/.{1,64}/g).join('\n') +
+            '\n-----END CERTIFICATE-----';
+    };
+
+    const getCertificateOrganizationIdentifier = function(certificate) {
+        const legacyCertificate = certificate.toLegacyObject();
+        const subject = legacyCertificate && legacyCertificate.subject;
+        if (!subject || typeof subject !== 'object') {
+            return null;
+        }
+
+        const organizationIdentifier = subject.organizationIdentifier ||
+            subject['2.5.4.97'] ||
+            subject['OID.2.5.4.97'];
+        const values = Array.isArray(organizationIdentifier)
+            ? organizationIdentifier
+            : [organizationIdentifier];
+        if (values.length !== 1 || typeof values[0] !== 'string') {
+            return null;
+        }
+
+        const normalizedIdentifier = values[0].trim();
+        return normalizedIdentifier || null;
+    };
+
+    const hasMatchingComplianceIssuer = function(payload, certificate) {
+        if (!payload || typeof payload.iss !== 'string') {
+            return false;
+        }
+
+        const parsedCertificate = new X509Certificate(certificate);
+        const organizationIdentifier = getCertificateOrganizationIdentifier(parsedCertificate);
+        return organizationIdentifier !== null &&
+            payload.iss === complianceIssuerPrefix + organizationIdentifier;
     };
 
     const hasValidComplianceCredential = async function(productSpec) {
@@ -573,26 +619,20 @@ const catalog = (function() {
             return false;
         }
 
-        let verifier;
-        try {
-            verifier = getComplianceVerifier();
-        } catch (err) {
-            return false;
-        }
-
         try {
             const decoded = jwt.decode(complianceToken, { complete: true });
-            if (!decoded ||
-                !decoded.header ||
-                typeof decoded.header.kid !== 'string' ||
-                decoded.header.kid.trim().length === 0) {
+            const certificate = getComplianceCertificate(decoded);
+            if (!certificate) {
                 return false;
             }
 
-            const signingKey = await verifier.getSigningKey(decoded.header.kid);
-            const payload = jwt.verify(complianceToken, signingKey.getPublicKey(), {
+            const payload = jwt.verify(complianceToken, certificate, {
                 algorithms: ['RS256']
             });
+            if (!hasMatchingComplianceIssuer(payload, certificate)) {
+                return false;
+            }
+
             const credential = payload && (payload.verifiableCredential || payload.vc);
             if (!credential || !credential.credentialSubject) {
                 return false;
@@ -1515,7 +1555,334 @@ const catalog = (function() {
         }
     };
 
-    const validateOfferingPrice = function (req, previousBody, callback){
+    const getEffectiveField = function(body, previousBody, field) {
+        return body[field] !== undefined ? body[field] : previousBody && previousBody[field];
+    }
+
+    const getUniqueConstraintRef = function(pricePlan, previousBody) {
+        const relationships = getEffectiveField(pricePlan, previousBody, 'popRelationship');
+        const constraintRefs = (Array.isArray(relationships) ? relationships : []).filter((relationship) =>
+            relationship && String(relationship.relationshipType || '').toLowerCase() === CONSTRAINT_PRICE_TYPE
+        );
+
+        if (constraintRefs.length > 1) {
+            return {
+                error: {
+                    status: 422,
+                    message: 'The price plan can only reference one constraint price'
+                }
+            };
+        }
+
+        if (constraintRefs.length === 1 && !constraintRefs[0].id) {
+            return {
+                error: {
+                    status: 422,
+                    message: 'The price plan contains a constraint reference without an id'
+                }
+            };
+        }
+
+        return { result: constraintRefs[0] || null };
+    }
+
+    const retrievePricesTMF = async function(ids, errorMessage) {
+        const pricesMap = new Map();
+        const uniqueIds = Array.from(new Set(ids));
+
+        for (let i = 0; i < uniqueIds.length; i += PRICE_COMPONENT_QUERY_BATCH_SIZE) {
+            const batch = uniqueIds.slice(i, i + PRICE_COMPONENT_QUERY_BATCH_SIZE);
+            let response;
+            try {
+                response = await retrieveAssetAsync(
+                    `/productOfferingPrice?id=${batch.join(',')}&limit=${batch.length}`
+                );
+            } catch (err) {
+                return {
+                    error: {
+                        status: 422,
+                        message: errorMessage
+                    }
+                };
+            }
+
+            const prices = Array.isArray(response.body) ? response.body : [];
+            for (const price of prices) {
+                pricesMap.set(price.id, price);
+            }
+        }
+
+        return { result: pricesMap };
+    }
+
+    const getCharValueUseNames = function(price) {
+        const characteristicNames = new Set();
+        const characteristics = Array.isArray(price && price.prodSpecCharValueUse)
+            ? price.prodSpecCharValueUse
+            : [];
+
+        for (const characteristic of characteristics) {
+            if (characteristic && characteristic.name) {
+                characteristicNames.add(characteristic.name);
+            }
+        }
+
+        return characteristicNames;
+    }
+
+    const getPPConstraintNames = async function(pricePlan, previousBody) {
+        const constraintRef = getUniqueConstraintRef(pricePlan, previousBody);
+        if (constraintRef.error) {
+            return constraintRef;
+        }
+        if (!constraintRef.result) {
+            return { constraintCharNames: new Set() };
+        }
+
+        const constraintPriceId = constraintRef.result.id;
+
+        const constraintMap = await retrievePricesTMF(
+            [constraintPriceId],
+            'The constraint referenced by the price plan cannot be retrieved'
+        );
+        if (constraintMap.error) {
+            return constraintMap;
+        }
+
+        const constraintPrice = constraintMap.result.get(constraintPriceId);
+        if (!constraintPrice) {
+            return {
+                error: {
+                    status: 422,
+                    message: `The constraint ${constraintPriceId} referenced by the price plan cannot be accessed or does not exist`
+                }
+            };
+        }
+
+        if (constraintPrice.isBundle !== false ||
+            String(constraintPrice.priceType || '').toLowerCase() !== CONSTRAINT_PRICE_TYPE) {
+            return {
+                error: {
+                    status: 422,
+                    message: 'The constraint relationship must reference a non-bundled ProductOfferingPrice with priceType constraint'
+                }
+            };
+        }
+
+        return { constraintCharNames: getCharValueUseNames(constraintPrice) };
+    }
+
+    const validatePricePlanComponents = async function(priceComponentRefs, forbiddenCharacteristicNames) {
+        if (!Array.isArray(priceComponentRefs) || priceComponentRefs.length === 0) {
+            return null;
+        }
+
+        const priceComponentIds = [];
+        for (const priceComponentRef of priceComponentRefs) {
+            if (!priceComponentRef || !priceComponentRef.id) {
+                return {
+                    status: 422,
+                    message: 'The price plan contains a price component reference without an id'
+                };
+            }
+            priceComponentIds.push(priceComponentRef.id);
+        }
+
+        const priceComponentMap = await retrievePricesTMF(
+            priceComponentIds,
+            'The price components referenced by the price plan cannot be retrieved'
+        );
+        if (priceComponentMap.error) {
+            return priceComponentMap.error;
+        }
+
+        for (const priceComponentRef of priceComponentRefs) {
+            const priceComponent = priceComponentMap.result.get(priceComponentRef.id);
+            if (!priceComponent) {
+                return {
+                    status: 422,
+                    message: `The price component ${priceComponentRef.id} referenced by the price plan cannot be accessed or does not exist`
+                };
+            }
+
+            if (priceComponent.isBundle !== false) {
+                return {
+                    status: 422,
+                    message: 'The price plan can only contain price components with isBundle set to false'
+                };
+            }
+
+            if (String(priceComponent.priceType || '').toLowerCase() === CONSTRAINT_PRICE_TYPE) {
+                return {
+                    status: 422,
+                    message: 'A constraint price cannot be included as a price component of a price plan'
+                };
+            }
+
+            for (const characteristicName of getCharValueUseNames(priceComponent)) {
+                if (forbiddenCharacteristicNames.has(characteristicName)) {
+                    return {
+                        status: 422,
+                        message: 'The price plan contains a price component that uses a forbidden characteristic'
+                    };
+                }
+            }
+        }
+
+        return null;
+    }
+
+    const validatePricePlan = async function(offerPrice, previousBody) {
+        if (!previousBody || offerPrice.bundledPopRelationship !== undefined || offerPrice.popRelationship !== undefined) {
+            const constraintResult = await getPPConstraintNames(offerPrice, previousBody);
+            if (constraintResult.error) {
+                return constraintResult.error;
+            }
+
+            const priceComponentRefs = getEffectiveField(offerPrice, previousBody, 'bundledPopRelationship');
+            const validationError = await validatePricePlanComponents(priceComponentRefs, constraintResult.constraintCharNames);
+            if (validationError) {
+                return validationError;
+            }
+        }
+
+        return null;
+    }
+
+    const validatePriceComponent = async function(offerPrice, previousBody) {
+        if (!previousBody || offerPrice.prodSpecCharValueUse === undefined) {
+            return null;
+        }
+
+        const compnCharValueUseNames = getCharValueUseNames(offerPrice);
+        if (compnCharValueUseNames.size === 0) {
+            return null;
+        }
+
+        let offset = 0;
+        let pricePlans;
+        do {
+            let result;
+            try {
+                result = await retrieveAssetAsync(
+                    `/productOfferingPrice?bundledPopRelationship.id=${encodeURIComponent(previousBody.id)}` +
+                    `&limit=${PRICE_PLAN_QUERY_PAGE_SIZE}&offset=${offset}`
+                );
+            } catch (err) {
+                return {
+                    status: 422,
+                    message: 'The price plans referencing the price component cannot be retrieved'
+                };
+            }
+
+            pricePlans = Array.isArray(result.body) ? result.body : [];
+            const constraintPriceRefs = [];
+            const constraintPriceIds = [];
+            for (const pricePlan of pricePlans) {
+                const constraintRef = getUniqueConstraintRef(pricePlan);
+                if (constraintRef.error) {
+                    return constraintRef.error;
+                }
+                if (constraintRef.result) {
+                    constraintPriceRefs.push(constraintRef.result);
+                    constraintPriceIds.push(constraintRef.result.id);
+                }
+            }
+
+            const constraintMap = await retrievePricesTMF(
+                constraintPriceIds,
+                'The constraints referenced by the price plans cannot be retrieved'
+            );
+            if (constraintMap.error) {
+                return constraintMap.error;
+            }
+
+            for (const constraintPriceRef of constraintPriceRefs) {
+                const constraintPrice = constraintMap.result.get(constraintPriceRef.id);
+                if (!constraintPrice || constraintPrice.isBundle !== false || String(constraintPrice.priceType || '').toLowerCase() !== CONSTRAINT_PRICE_TYPE) {
+                    return {
+                        status: 422,
+                        message: 'A price plan references an invalid constraint price'
+                    };
+                }
+
+                for (const forbiddenCharValueUseName of getCharValueUseNames(constraintPrice)) {
+                    if (compnCharValueUseNames.has(forbiddenCharValueUseName)) {
+                        return {
+                            status: 422,
+                            message: 'The price component uses a characteristic forbidden by one of its price plans'
+                        };
+                    }
+                }
+            }
+
+            offset += pricePlans.length;
+        } while (pricePlans.length === PRICE_PLAN_QUERY_PAGE_SIZE);
+
+        return null;
+    }
+
+    const validateConstraintPrice = async function(offerPrice, previousBody) {
+        if (!previousBody) {
+            return null;
+        }
+
+        const forbiddenCharacteristicNames = getCharValueUseNames(offerPrice);
+        if (forbiddenCharacteristicNames.size === 0) {
+            return null;
+        }
+
+        let offset = 0;
+        let referencedPricePlans;
+        do {
+            let result;
+            try {
+                result = await retrieveAssetAsync(
+                    `/productOfferingPrice?popRelationship.id=${encodeURIComponent(previousBody.id)}` +
+                    `&limit=${PRICE_PLAN_QUERY_PAGE_SIZE}&offset=${offset}`
+                );
+            } catch (err) {
+                return {
+                    status: 422,
+                    message: 'The price plans referencing the constraint cannot be retrieved'
+                };
+            }
+
+            referencedPricePlans = Array.isArray(result.body) ? result.body : [];
+            const priceComponentRefs = [];
+            for (const pricePlan of referencedPricePlans) {
+                if (pricePlan.isBundle !== true) {
+                    continue;
+                }
+                const constraintRef = getUniqueConstraintRef(pricePlan);
+                if (constraintRef.error) {
+                    return constraintRef.error;
+                }
+                if (!constraintRef.result || constraintRef.result.id !== previousBody.id) {
+                    continue;
+                }
+
+                const planComponentRefs = Array.isArray(pricePlan.bundledPopRelationship)
+                    ? pricePlan.bundledPopRelationship
+                    : [];
+                priceComponentRefs.push(...planComponentRefs);
+            }
+
+            const validationError = await validatePricePlanComponents(
+                priceComponentRefs,
+                forbiddenCharacteristicNames
+            );
+            if (validationError) {
+                return validationError;
+            }
+
+            offset += referencedPricePlans.length;
+        } while (referencedPricePlans.length === PRICE_PLAN_QUERY_PAGE_SIZE);
+
+        return null;
+    }
+
+    const validateOfferingPrice = async function (req, previousBody, callback){
         const offerPrice = JSON.parse(req.body)
         // check if it is a valid percentage
         if (offerPrice && offerPrice.priceType && offerPrice.priceType.toLowerCase() === 'discount' && !tmfUtils.isValidDiscount(offerPrice)) {
@@ -1539,11 +1906,32 @@ const catalog = (function() {
             })
         }
 
-        if (previousBody && !previousBody.isBundle) { // price component PATCH
+        if (previousBody && offerPrice.isBundle !== undefined && offerPrice.isBundle !== previousBody.isBundle) {
+            return callback({
+                status: 403,
+                message: 'Field isBundle cannot be modified'
+            });
+        }
+
+        if (previousBody && !previousBody.isBundle) { // price component or constraint PATCH
             offerPrice["@schemaLocation"] = config.priceCompSchema
             utils.updateBody(req, offerPrice)
         }
 
+        let validationError = null;
+        const isPricePlan = previousBody ? previousBody.isBundle : offerPrice.isBundle;
+        const effectivePriceTypeValue = offerPrice.priceType !== undefined ? offerPrice.priceType : previousBody ? previousBody.priceType : '';
+        if (isPricePlan) {
+            validationError = await validatePricePlan(offerPrice, previousBody);
+        } else if (String(effectivePriceTypeValue || '').toLowerCase() === CONSTRAINT_PRICE_TYPE) {
+            validationError = await validateConstraintPrice(offerPrice, previousBody);
+        } else if (previousBody && offerPrice.prodSpecCharValueUse !== undefined) {
+            validationError = await validatePriceComponent(offerPrice, previousBody);
+        }
+
+        if (validationError) {
+            return callback(validationError);
+        }
         callback(null)
     }
 

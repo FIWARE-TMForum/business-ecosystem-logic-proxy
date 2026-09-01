@@ -81,6 +81,12 @@ const INVALID_S_LAUNCH = 'It is not allowed to launch a product spec without lau
 const INVALID_R_LAUNCH = 'It is not allowed to launch a product spec without launching resource spec previously'
 const INVALID_S_API = 'Error getting service specification through the API'
 const INVALID_R_API = 'Error getting resource specification through the API'
+const COMPLIANCE_CERTIFICATE = 'Y2VydGlmaWNhdGU=';
+const COMPLIANCE_CERTIFICATE_PEM = '-----BEGIN CERTIFICATE-----\n' +
+    COMPLIANCE_CERTIFICATE +
+    '\n-----END CERTIFICATE-----';
+const COMPLIANCE_ORGANIZATION_IDENTIFIER = 'VATES-B60645900';
+const COMPLIANCE_ISSUER = 'did:elsi:' + COMPLIANCE_ORGANIZATION_IDENTIFIER;
 
 describe('Catalog API', function() {
     var config = testUtils.getDefaultConfig();
@@ -97,7 +103,7 @@ describe('Catalog API', function() {
         searchEngine,
         partyClient,
         jwt,
-        jwksClient
+        x509Certificate
     ) {
         if (!rssClient) {
             rssClient = {};
@@ -131,8 +137,8 @@ describe('Catalog API', function() {
         if (jwt) {
             stubs.jsonwebtoken = jwt;
         }
-        if (jwksClient) {
-            stubs['jwks-rsa'] = jwksClient;
+        if (x509Certificate) {
+            stubs.crypto = { X509Certificate: x509Certificate };
         }
 
         // load config depending on utils
@@ -154,10 +160,29 @@ describe('Catalog API', function() {
         };
         const payload = {};
         payload[options.credentialProperty || 'vc'] = credential;
+        if (!options.missingIssuer) {
+            payload.iss = options.issuer === undefined ? COMPLIANCE_ISSUER : options.issuer;
+        }
+
+        const certificateSubject = {};
+        if (!options.missingOrganizationIdentifier) {
+            certificateSubject.organizationIdentifier = options.organizationIdentifier === undefined
+                ? COMPLIANCE_ORGANIZATION_IDENTIFIER
+                : options.organizationIdentifier;
+        }
+        const x509Certificate = jasmine.createSpy('X509Certificate').and.callFake(function() {
+            return {
+                toLegacyObject: function() {
+                    return { subject: certificateSubject };
+                }
+            };
+        });
 
         const jwt = {
             decode: jasmine.createSpy('decodeComplianceCredential').and.returnValue(
-                options.decoded === undefined ? { header: { kid: 'compliance-key' } } : options.decoded
+                options.decoded === undefined
+                    ? { header: { alg: 'RS256', x5c: [COMPLIANCE_CERTIFICATE] } }
+                    : options.decoded
             ),
             verify: jasmine.createSpy('verifyComplianceCredential')
         };
@@ -167,18 +192,9 @@ describe('Catalog API', function() {
             jwt.verify.and.returnValue(payload);
         }
 
-        const signingKey = {
-            getPublicKey: jasmine.createSpy('getCompliancePublicKey').and.returnValue('public-key')
-        };
-        const keySet = {
-            getSigningKey: jasmine.createSpy('getComplianceSigningKey').and.returnValue(Promise.resolve(signingKey))
-        };
-        const jwksClient = jasmine.createSpy('complianceJWKSClient').and.returnValue(keySet);
-
         return {
             jwt: jwt,
-            jwksClient: jwksClient,
-            keySet: keySet
+            x509Certificate: x509Certificate
         };
     };
 
@@ -1784,6 +1800,7 @@ describe('Catalog API', function() {
             const req = {
                 method: 'POST',
                 apiUrl: '/catalog/productOfferingPrice',
+                headers: {},
                 user: {
                     id: 'test',
                     roles: [{ name: config.roles.seller }]
@@ -1822,6 +1839,209 @@ describe('Catalog API', function() {
 
             validateOfferingPrice(true, true, true, offeringPrice, null, null, done);
 
+        });
+
+        it('should not run discount validation for a constraint price', function(done) {
+            const offeringPrice = {
+                name: 'constraint',
+                isBundle: false,
+                priceType: 'constraint',
+                prodSpecCharValueUse: [{ id: 'characteristic-1', name: 'country' }]
+            };
+
+            validateOfferingPrice(false, true, true, offeringPrice, null, null, done);
+        });
+
+        it('should allow to create a price plan without a constraint relationship', function(done) {
+            const offeringPrice = {
+                name: 'test plan',
+                isBundle: true,
+                bundledPopRelationship: [{
+                    id: 'component-1',
+                    href: 'component-1'
+                }]
+            };
+            const componentRequest = nock(SERVER)
+                .get('/api/productOfferingPrice')
+                .query({ id: 'component-1', limit: '1' })
+                .reply(200, [{ id: 'component-1', isBundle: false }]);
+
+            validateOfferingPrice(true, true, true, offeringPrice, null, null, function() {
+                expect(componentRequest.isDone()).toBe(true);
+                done();
+            });
+        });
+
+        it('should allow price components that do not use a characteristic forbidden by the related constraint', function(done) {
+            const offeringPrice = {
+                name: 'test plan',
+                isBundle: true,
+                popRelationship: [{
+                    id: 'constraint-1',
+                    href: 'constraint-1',
+                    relationshipType: 'constraint'
+                }],
+                bundledPopRelationship: [{
+                    id: 'component-1',
+                    href: 'component-1'
+                }, {
+                    id: 'component-2',
+                    href: 'component-2'
+                }]
+            };
+            const priceRequests = nock(SERVER)
+                .get('/api/productOfferingPrice')
+                .query({ id: 'constraint-1', limit: '1' })
+                .reply(200, [{
+                    id: 'constraint-1',
+                    isBundle: false,
+                    priceType: 'constraint',
+                    prodSpecCharValueUse: [{ id: 'characteristic-1', name: 'country' }]
+                }])
+                .get('/api/productOfferingPrice')
+                .query({ id: 'component-1,component-2', limit: '2' })
+                .reply(200, [
+                    {
+                        id: 'component-1',
+                        isBundle: false,
+                        prodSpecCharValueUse: [{ id: 'characteristic-2', name: 'size' }]
+                    }, {
+                        id: 'component-2',
+                        isBundle: false
+                    }
+                ]);
+
+            validateOfferingPrice(true, true, true, offeringPrice, null, null, function() {
+                expect(priceRequests.isDone()).toBe(true);
+                done();
+            });
+        });
+
+        it('should reject a price component that uses a characteristic forbidden by the related constraint', function(done) {
+            const offeringPrice = {
+                name: 'test plan',
+                isBundle: true,
+                popRelationship: [{
+                    id: 'constraint-1',
+                    href: 'constraint-1',
+                    relationshipType: 'constraint'
+                }],
+                bundledPopRelationship: [{
+                    id: 'component-1',
+                    href: 'component-1'
+                }]
+            };
+            const priceRequests = nock(SERVER)
+                .get('/api/productOfferingPrice')
+                .query({ id: 'constraint-1', limit: '1' })
+                .reply(200, [{
+                    id: 'constraint-1',
+                    isBundle: false,
+                    priceType: 'constraint',
+                    prodSpecCharValueUse: [{ id: 'characteristic-1', name: 'country' }]
+                }])
+                .get('/api/productOfferingPrice')
+                .query({ id: 'component-1', limit: '1' })
+                .reply(200, [{
+                    id: 'component-1',
+                    isBundle: false,
+                    prodSpecCharValueUse: [
+                        { id: 'characteristic-2', name: 'size' },
+                        { id: 'legacy-characteristic-id', name: 'country' }
+                    ]
+                }]);
+
+            validateOfferingPrice(
+                true,
+                true,
+                true,
+                offeringPrice,
+                422,
+                'The price plan contains a price component that uses a forbidden characteristic',
+                function() {
+                    expect(priceRequests.isDone()).toBe(true);
+                    done();
+                }
+            );
+        });
+
+        it('should reject a price plan that references another price plan', function(done) {
+            const offeringPrice = {
+                name: 'test plan',
+                isBundle: true,
+                bundledPopRelationship: [{ id: 'plan-1', href: 'plan-1' }]
+            };
+            const componentRequest = nock(SERVER)
+                .get('/api/productOfferingPrice')
+                .query({ id: 'plan-1', limit: '1' })
+                .reply(200, [{ id: 'plan-1', isBundle: true }]);
+
+            validateOfferingPrice(
+                true,
+                true,
+                true,
+                offeringPrice,
+                422,
+                'The price plan can only contain price components with isBundle set to false',
+                function() {
+                    expect(componentRequest.isDone()).toBe(true);
+                    done();
+                }
+            );
+        });
+
+        it('should reject a constraint price included as a bundled price component', function(done) {
+            const offeringPrice = {
+                name: 'test plan',
+                isBundle: true,
+                bundledPopRelationship: [{ id: 'constraint-1', href: 'constraint-1' }]
+            };
+            const componentRequest = nock(SERVER)
+                .get('/api/productOfferingPrice')
+                .query({ id: 'constraint-1', limit: '1' })
+                .reply(200, [{
+                    id: 'constraint-1',
+                    isBundle: false,
+                    priceType: 'constraint'
+                }]);
+
+            validateOfferingPrice(
+                true,
+                true,
+                true,
+                offeringPrice,
+                422,
+                'A constraint price cannot be included as a price component of a price plan',
+                function() {
+                    expect(componentRequest.isDone()).toBe(true);
+                    done();
+                }
+            );
+        });
+
+        it('should reject a price plan when a referenced price component does not exist', function(done) {
+            const offeringPrice = {
+                name: 'test plan',
+                isBundle: true,
+                bundledPopRelationship: [{ id: 'component-1', href: 'component-1' }]
+            };
+            const componentRequest = nock(SERVER)
+                .get('/api/productOfferingPrice')
+                .query({ id: 'component-1', limit: '1' })
+                .reply(200, []);
+
+            validateOfferingPrice(
+                true,
+                true,
+                true,
+                offeringPrice,
+                422,
+                'The price component component-1 referenced by the price plan cannot be accessed or does not exist',
+                function() {
+                    expect(componentRequest.isDone()).toBe(true);
+                    done();
+                }
+            );
         });
 
         it('should not allow to create offering price with invalid percentage', function(done) {
@@ -2323,7 +2543,8 @@ describe('Catalog API', function() {
             isValidPrice,
             expectedErrorStatus,
             expectedErrorMsg,
-            done
+            done,
+            expectedSchema
         ) {
             const updateBody = jasmine.createSpy();
             var utils = {
@@ -2364,6 +2585,11 @@ describe('Catalog API', function() {
                     // verify nock url has been requested
                     expect(nock.isDone()).toBe(true);
                 }
+                if (expectedSchema) {
+                    expect(updateBody).toHaveBeenCalledWith(req, jasmine.objectContaining({
+                        '@schemaLocation': expectedSchema
+                    }));
+                }
                 done()
             }
             );
@@ -2377,7 +2603,249 @@ describe('Catalog API', function() {
                 id: '1'
             });
 
-            testUpdateOfferingPrice(offeringPrice, nockMock, true, true, true, null, null, done);
+            testUpdateOfferingPrice(
+                offeringPrice,
+                nockMock,
+                true,
+                true,
+                true,
+                null,
+                null,
+                done,
+                config.priceCompSchema
+            );
+        });
+
+        it('should reject changing isBundle when updating an offering price', function(done) {
+            const offeringPrice = {
+                isBundle: true
+            };
+            const nockMock = nock(serverUrl).get('/api/productOfferingPrice/1').reply(200, {
+                id: '1',
+                isBundle: false
+            });
+
+            testUpdateOfferingPrice(
+                offeringPrice,
+                nockMock,
+                true,
+                true,
+                true,
+                403,
+                'Field isBundle cannot be modified',
+                done
+            );
+        });
+
+        it('should reject a constraint update that forbids a characteristic used by an existing component', function(done) {
+            const offeringPrice = {
+                prodSpecCharValueUse: [{ id: 'characteristic-1', name: 'country' }]
+            };
+            const nockMock = nock(serverUrl)
+                .get('/api/productOfferingPrice/1')
+                .reply(200, {
+                    id: '1',
+                    isBundle: false,
+                    priceType: 'constraint'
+                })
+                .get('/api/productOfferingPrice')
+                .query({
+                    'popRelationship.id': '1',
+                    limit: '100',
+                    offset: '0'
+                })
+                .reply(200, [{
+                    id: 'plan-1',
+                    isBundle: true,
+                    popRelationship: [{ id: '1', relationshipType: 'constraint' }],
+                    bundledPopRelationship: [{ id: 'component-1', href: 'component-1' }]
+                }])
+                .get('/api/productOfferingPrice')
+                .query({ id: 'component-1', limit: '1' })
+                .reply(200, [{
+                    id: 'component-1',
+                    isBundle: false,
+                    priceType: 'recurring',
+                    prodSpecCharValueUse: [{ id: 'legacy-characteristic-id', name: 'country' }]
+                }]);
+
+            testUpdateOfferingPrice(
+                offeringPrice,
+                nockMock,
+                true,
+                true,
+                true,
+                422,
+                'The price plan contains a price component that uses a forbidden characteristic',
+                done
+            );
+        });
+
+        it('should reject a new price component that uses a characteristic forbidden by the plan constraint', function(done) {
+            const offeringPrice = {
+                bundledPopRelationship: [{ id: 'component-1', href: 'component-1' }]
+            };
+            const nockMock = nock(serverUrl)
+                .get('/api/productOfferingPrice/1')
+                .reply(200, {
+                    id: '1',
+                    isBundle: true,
+                    popRelationship: [{
+                        id: 'constraint-1',
+                        href: 'constraint-1',
+                        relationshipType: 'constraint'
+                    }]
+                })
+                .get('/api/productOfferingPrice')
+                .query({ id: 'constraint-1', limit: '1' })
+                .reply(200, [{
+                    id: 'constraint-1',
+                    isBundle: false,
+                    priceType: 'constraint',
+                    prodSpecCharValueUse: [{ id: 'characteristic-1', name: 'country' }]
+                }])
+                .get('/api/productOfferingPrice')
+                .query({ id: 'component-1', limit: '1' })
+                .reply(200, [{
+                    id: 'component-1',
+                    isBundle: false,
+                    priceType: 'recurring',
+                    prodSpecCharValueUse: [{ id: 'legacy-characteristic-id', name: 'country' }]
+                }]);
+
+            testUpdateOfferingPrice(
+                offeringPrice,
+                nockMock,
+                true,
+                true,
+                true,
+                422,
+                'The price plan contains a price component that uses a forbidden characteristic',
+                done
+            );
+        });
+
+        it('should allow a price component characteristic not forbidden by its price plans', function(done) {
+            const offeringPrice = {
+                prodSpecCharValueUse: [{ id: 'characteristic-2', name: 'size' }]
+            };
+            const nockMock = nock(serverUrl)
+                .get('/api/productOfferingPrice/1')
+                .reply(200, {
+                    id: '1',
+                    isBundle: false
+                })
+                .get('/api/productOfferingPrice')
+                .query({
+                    'bundledPopRelationship.id': '1',
+                    limit: '100',
+                    offset: '0'
+                })
+                .reply(200, [{
+                    id: 'plan-1',
+                    isBundle: true,
+                    popRelationship: [{ id: 'constraint-1', relationshipType: 'constraint' }]
+                }])
+                .get('/api/productOfferingPrice')
+                .query({ id: 'constraint-1', limit: '1' })
+                .reply(200, [{
+                    id: 'constraint-1',
+                    isBundle: false,
+                    priceType: 'constraint',
+                    prodSpecCharValueUse: [{ id: 'characteristic-1', name: 'country' }]
+                }]);
+
+            testUpdateOfferingPrice(
+                offeringPrice,
+                nockMock,
+                true,
+                true,
+                true,
+                null,
+                null,
+                done
+            );
+        });
+
+        it('should reject a price component characteristic forbidden by any of its price plans', function(done) {
+            const offeringPrice = {
+                prodSpecCharValueUse: [{ id: 'legacy-characteristic-id', name: 'country' }]
+            };
+            const nockMock = nock(serverUrl)
+                .get('/api/productOfferingPrice/1')
+                .reply(200, {
+                    id: '1',
+                    isBundle: false
+                })
+                .get('/api/productOfferingPrice')
+                .query({
+                    'bundledPopRelationship.id': '1',
+                    limit: '100',
+                    offset: '0'
+                })
+                .reply(200, [{
+                    id: 'plan-1',
+                    isBundle: true,
+                    popRelationship: [{ id: 'constraint-1', relationshipType: 'constraint' }]
+                }, {
+                    id: 'plan-2',
+                    isBundle: true,
+                    popRelationship: [{ id: 'constraint-2', relationshipType: 'constraint' }]
+                }])
+                .get('/api/productOfferingPrice')
+                .query({ id: 'constraint-1,constraint-2', limit: '2' })
+                .reply(200, [{
+                    id: 'constraint-1',
+                    isBundle: false,
+                    priceType: 'constraint',
+                    prodSpecCharValueUse: [{ id: 'characteristic-2', name: 'size' }]
+                }, {
+                    id: 'constraint-2',
+                    isBundle: false,
+                    priceType: 'constraint',
+                    prodSpecCharValueUse: [{ id: 'characteristic-1', name: 'country' }]
+                }]);
+
+            testUpdateOfferingPrice(
+                offeringPrice,
+                nockMock,
+                true,
+                true,
+                true,
+                422,
+                'The price component uses a characteristic forbidden by one of its price plans',
+                done
+            );
+        });
+
+        it('should reject a price component update when its price plans cannot be retrieved', function(done) {
+            const offeringPrice = {
+                prodSpecCharValueUse: [{ id: 'characteristic-1', name: 'country' }]
+            };
+            const nockMock = nock(serverUrl)
+                .get('/api/productOfferingPrice/1')
+                .reply(200, {
+                    id: '1',
+                    isBundle: false
+                })
+                .get('/api/productOfferingPrice')
+                .query({
+                    'bundledPopRelationship.id': '1',
+                    limit: '100',
+                    offset: '0'
+                })
+                .reply(500);
+
+            testUpdateOfferingPrice(
+                offeringPrice,
+                nockMock,
+                true,
+                true,
+                true,
+                422,
+                'The price plans referencing the price component cannot be retrieved',
+                done
+            );
         });
 
         it('should not allow to update offering price when offering price cannot be retrieved', function(done) {
@@ -2549,7 +3017,7 @@ describe('Catalog API', function() {
         done,
         partyClient,
         jwt,
-        jwksClient
+        x509Certificate
     ) {
         var checkRoleMethod = jasmine.createSpy();
         checkRoleMethod.and.returnValue(true);
@@ -2596,7 +3064,7 @@ describe('Catalog API', function() {
             null,
             partyClient,
             jwt,
-            jwksClient
+            x509Certificate
         );
 
         // Basic properties
@@ -2904,8 +3372,6 @@ describe('Catalog API', function() {
 
     it('should allow to launch an offering when launchValidationEnabled is true and conditions are met', function(done) {
         config.launchValidationEnabled = true;
-        const previousComplianceJWKSUrl = config.complianceJWKSUrl;
-        config.complianceJWKSUrl = 'https://compliance.example/.well-known/jwks.json';
         const organizationId = 'urn:ngsi-ld:organization:launch-ready';
         const productSpecId = '7';
         const complianceVerifier = buildComplianceVerifier(productSpecId);
@@ -2953,16 +3419,15 @@ describe('Catalog API', function() {
                 expect(getOrganization).toHaveBeenCalledWith(organizationId);
                 expect(complianceVerifier.jwt.verify).toHaveBeenCalledWith(
                     'signed-compliance-credential',
-                    'public-key',
+                    COMPLIANCE_CERTIFICATE_PEM,
                     { algorithms: ['RS256'] }
                 );
                 config.launchValidationEnabled = false;
-                config.complianceJWKSUrl = previousComplianceJWKSUrl;
                 done();
             },
             { getOrganization: getOrganization },
             complianceVerifier.jwt,
-            complianceVerifier.jwksClient
+            complianceVerifier.x509Certificate
         );
     });
 
@@ -6140,7 +6605,7 @@ describe('Catalog API', function() {
         const productSpecId = 'urn:ngsi-ld:product-specification:launch-check';
         const organizationId = 'urn:ngsi-ld:organization:launch-check';
 
-        var getCatalogApiSimple = function(partyClient, jwt, jwksClient) {
+        var getCatalogApiSimple = function(partyClient, jwt, x509Certificate) {
             return getCatalogApi(
                 {},
                 { hasOrganizationCountry: realTmfUtils.hasOrganizationCountry },
@@ -6151,7 +6616,7 @@ describe('Catalog API', function() {
                 null,
                 partyClient,
                 jwt,
-                jwksClient
+                x509Certificate
             );
         };
 
@@ -6214,10 +6679,7 @@ describe('Catalog API', function() {
             verifierOptions
         ) {
             verifierOptions = verifierOptions || {};
-            const previousComplianceJWKSUrl = config.complianceJWKSUrl;
             const complianceVerifier = buildComplianceVerifier(productSpecId, verifierOptions);
-            const jwksUrl = 'https://compliance.example/keys';
-            config.complianceJWKSUrl = jwksUrl;
 
             nock(serverUrl)
                 .get(apiBase + '/productOffering/' + offering.id)
@@ -6232,7 +6694,7 @@ describe('Catalog API', function() {
             const catalogApi = getCatalogApiSimple(
                 { getOrganization: getOrganization },
                 complianceVerifier.jwt,
-                complianceVerifier.jwksClient
+                complianceVerifier.x509Certificate
             );
             const req = { params: { id: offering.id } };
             const res = {
@@ -6241,9 +6703,8 @@ describe('Catalog API', function() {
                     expect(res.status).not.toHaveBeenCalled();
                     expect(body).toEqual({ canBeLaunched: expectedResult });
                     if (verifierOptions.assertVerifier) {
-                        verifierOptions.assertVerifier(complianceVerifier, jwksUrl);
+                        verifierOptions.assertVerifier(complianceVerifier);
                     }
-                    config.complianceJWKSUrl = previousComplianceJWKSUrl;
                     done();
                 })
             };
@@ -6260,8 +6721,15 @@ describe('Catalog API', function() {
                 true,
                 done,
                 {
-                    assertVerifier: function(complianceVerifier, jwksUrl) {
-                        expect(complianceVerifier.jwksClient).toHaveBeenCalledWith({ jwksUri: jwksUrl });
+                    assertVerifier: function(complianceVerifier) {
+                        expect(complianceVerifier.jwt.verify).toHaveBeenCalledWith(
+                            'signed-compliance-credential',
+                            COMPLIANCE_CERTIFICATE_PEM,
+                            { algorithms: ['RS256'] }
+                        );
+                        expect(complianceVerifier.x509Certificate).toHaveBeenCalledWith(
+                            COMPLIANCE_CERTIFICATE_PEM
+                        );
                     }
                 }
             );
@@ -6375,6 +6843,54 @@ describe('Catalog API', function() {
                 false,
                 done,
                 { verifyError: 'Invalid signature' }
+            );
+        });
+
+        it('should return canBeLaunched false when the compliance JWT has no x5c certificate', function(done) {
+            var offeringId = 'urn:offering:missing-compliance-certificate';
+            testLaunchCheck(
+                buildOffering(offeringId),
+                buildProductSpec(),
+                buildOrganization('validated'),
+                false,
+                done,
+                { decoded: { header: { alg: 'RS256' } } }
+            );
+        });
+
+        it('should return canBeLaunched false when the compliance issuer does not match x5c', function(done) {
+            var offeringId = 'urn:offering:wrong-compliance-issuer';
+            testLaunchCheck(
+                buildOffering(offeringId),
+                buildProductSpec(),
+                buildOrganization('validated'),
+                false,
+                done,
+                { issuer: 'did:elsi:VATES-B00000000' }
+            );
+        });
+
+        it('should return canBeLaunched false when the compliance issuer is missing', function(done) {
+            var offeringId = 'urn:offering:missing-compliance-issuer';
+            testLaunchCheck(
+                buildOffering(offeringId),
+                buildProductSpec(),
+                buildOrganization('validated'),
+                false,
+                done,
+                { missingIssuer: true }
+            );
+        });
+
+        it('should return canBeLaunched false when x5c has no organizationIdentifier', function(done) {
+            var offeringId = 'urn:offering:missing-certificate-organization-identifier';
+            testLaunchCheck(
+                buildOffering(offeringId),
+                buildProductSpec(),
+                buildOrganization('validated'),
+                false,
+                done,
+                { missingOrganizationIdentifier: true }
             );
         });
 
