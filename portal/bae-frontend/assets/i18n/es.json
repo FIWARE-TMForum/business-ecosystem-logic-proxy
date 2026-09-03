@@ -8,7 +8,8 @@
     "_error": "Error"
   },
   "ERRORS": {
-    "_error_prefix": "Error: {{message}}"
+    "_error_prefix": "Error: {{message}}",
+    "_reason": "Reason: {{reason}}"
   },
   "europeTrademark": "Distributed Open Marketplace for Europe (DOME) Project has received funding from European Union’s Digital Europe Programme under the Grant Agreement No 101084071.",
   "DASHBOARD": {
@@ -1792,7 +1793,11 @@
     "_forCustomers": "For Customers",
     "_forProviders": "For Providers",
     "_marketplaceH": "Marketplace",
-    "_resources": "Resources"
+    "_resources": "Resources",
+    "_theme": "Theme",
+    "_theme_light": "Light",
+    "_theme_dark": "Dark",
+    "_theme_system": "System"
   },
   "PRODUCT_DETAILS": {
     "_back": "Back",
@@ -2334,6 +2339,7 @@
     "_create_success": "Product specification successfully created",
     "_update_success": "Product specification successfully updated",
     "_validate_success": "Product specification successfully validated",
+    "_validate_error": "There was an error while validating the product!",
     "_save_error": "There was an error while saving the product!",
     "_image_upload_error": "There was an error while uploading the image!",
     "_file_upload_error": "There was an error while uploading the file!",
@@ -2839,6 +2845,15 @@
     "_no_configurations_yet": "No configuration options defined yet.",
     "_set_configuration_profile": "Set configuration profile",
     "_set_configuration_profile_subtitle": "Select a value for each configuration option defined earlier during the product specification setup.",
+    "_price_plan_characteristics": "Product characteristics",
+    "_price_plan_characteristics_hint": "{{allowed}} of {{total}} characteristics are available to this price plan.",
+    "_choose_characteristics": "Choose characteristics",
+    "_choose_characteristics_subtitle": "Turn off the product characteristics that must not be used by this price plan or its price components.",
+    "_no_price_plan_characteristics": "There are no product characteristics available.",
+    "_characteristic_allowed": "Allowed",
+    "_characteristic_forbidden": "Not allowed",
+    "_characteristic_in_use": "This characteristic is already used by a price component.",
+    "_save_characteristics": "Save characteristics",
     "_price_components": "Price components",
     "_price_components_currency_hint": "Set the currency that must be used in all the price components of this price plan",
     "_currency": "Currency",
@@ -3152,7 +3167,7 @@
     "_filters": "Filters",
     "_publish_incomplete_error": "Cannot publish: the offer is incomplete. Please fill in all required fields first.",
     "_offer_publish_success": "Product offer successfully published",
-    "_offer_publish_error": "Could not publish this product offer.",
+    "_offer_publish_error": "The product offer does not meet the necessary requirements to be published.",
     "_offer_unpublish_success": "Product offer unpublished",
     "_offer_unpublish_error": "Could not unpublish this product offer.",
     "_offer_duplicate_success": "Product offer duplicated",
