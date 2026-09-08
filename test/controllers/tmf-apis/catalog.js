@@ -1872,7 +1872,7 @@ describe('Catalog API', function() {
             });
         });
 
-        it('should allow price components that do not use a characteristic forbidden by the related constraint', function(done) {
+        it('should allow price component values not forbidden by the related partial constraint', function(done) {
             const offeringPrice = {
                 name: 'test plan',
                 isBundle: true,
@@ -1896,7 +1896,19 @@ describe('Catalog API', function() {
                     id: 'constraint-1',
                     isBundle: false,
                     priceType: 'constraint',
-                    prodSpecCharValueUse: [{ id: 'characteristic-1', name: 'country' }]
+                    prodSpecCharValueUse: [{
+                        id: 'characteristic-1',
+                        name: 'vCores',
+                        productSpecCharacteristicValue: [{ valueFrom: 4, valueTo: 10 }]
+                    }, {
+                        id: 'characteristic-1',
+                        name: 'vCores',
+                        productSpecCharacteristicValue: [{ valueFrom: 100, valueTo: 386 }]
+                    }, {
+                        id: 'characteristic-2',
+                        name: 'region',
+                        productSpecCharacteristicValue: [{ value: 'EU' }, { value: 'US' }]
+                    }]
                 }])
                 .get('/api/productOfferingPrice')
                 .query({ id: 'component-1,component-2', limit: '2' })
@@ -1904,10 +1916,19 @@ describe('Catalog API', function() {
                     {
                         id: 'component-1',
                         isBundle: false,
-                        prodSpecCharValueUse: [{ id: 'characteristic-2', name: 'size' }]
+                        prodSpecCharValueUse: [{
+                            id: 'characteristic-1',
+                            name: 'vCores',
+                            productSpecCharacteristicValue: [{ valueFrom: 18, valueTo: 64 }]
+                        }]
                     }, {
                         id: 'component-2',
-                        isBundle: false
+                        isBundle: false,
+                        prodSpecCharValueUse: [{
+                            id: 'characteristic-2',
+                            name: 'region',
+                            productSpecCharacteristicValue: [{ value: 'APAC' }]
+                        }]
                     }
                 ]);
 
@@ -1915,6 +1936,108 @@ describe('Catalog API', function() {
                 expect(priceRequests.isDone()).toBe(true);
                 done();
             });
+        });
+
+        it('should reject a price component range overlapping any related partial constraint', function(done) {
+            const offeringPrice = {
+                name: 'test plan',
+                isBundle: true,
+                popRelationship: [{
+                    id: 'constraint-1',
+                    relationshipType: 'constraint'
+                }],
+                bundledPopRelationship: [{ id: 'component-1' }]
+            };
+            const priceRequests = nock(SERVER)
+                .get('/api/productOfferingPrice')
+                .query({ id: 'constraint-1', limit: '1' })
+                .reply(200, [{
+                    id: 'constraint-1',
+                    isBundle: false,
+                    priceType: 'constraint',
+                    prodSpecCharValueUse: [{
+                        id: 'characteristic-1',
+                        name: 'vCores',
+                        productSpecCharacteristicValue: [{ valueFrom: 100, valueTo: 386 }]
+                    }, {
+                        id: 'characteristic-1',
+                        name: 'vCores',
+                        productSpecCharacteristicValue: [{ valueFrom: 4, valueTo: 10 }]
+                    }]
+                }])
+                .get('/api/productOfferingPrice')
+                .query({ id: 'component-1', limit: '1' })
+                .reply(200, [{
+                    id: 'component-1',
+                    isBundle: false,
+                    prodSpecCharValueUse: [{
+                        id: 'characteristic-1',
+                        name: 'vCores',
+                        productSpecCharacteristicValue: [{ valueFrom: 1, valueTo: 18 }]
+                    }]
+                }]);
+
+            validateOfferingPrice(
+                true,
+                true,
+                true,
+                offeringPrice,
+                422,
+                'The price plan contains a price component that uses a forbidden characteristic',
+                function() {
+                    expect(priceRequests.isDone()).toBe(true);
+                    done();
+                }
+            );
+        });
+
+        it('should not compare a discrete value with a range constraint', function(done) {
+            const offeringPrice = {
+                name: 'test plan',
+                isBundle: true,
+                popRelationship: [{
+                    id: 'constraint-1',
+                    relationshipType: 'constraint'
+                }],
+                bundledPopRelationship: [{ id: 'component-1' }]
+            };
+            const priceRequests = nock(SERVER)
+                .get('/api/productOfferingPrice')
+                .query({ id: 'constraint-1', limit: '1' })
+                .reply(200, [{
+                    id: 'constraint-1',
+                    isBundle: false,
+                    priceType: 'constraint',
+                    prodSpecCharValueUse: [{
+                        id: 'characteristic-1',
+                        name: 'vCores',
+                        productSpecCharacteristicValue: [{ valueFrom: 4, valueTo: 386 }]
+                    }]
+                }])
+                .get('/api/productOfferingPrice')
+                .query({ id: 'component-1', limit: '1' })
+                .reply(200, [{
+                    id: 'component-1',
+                    isBundle: false,
+                    prodSpecCharValueUse: [{
+                        id: 'characteristic-1',
+                        name: 'vCores',
+                        productSpecCharacteristicValue: [{ value: 18 }]
+                    }]
+                }]);
+
+            validateOfferingPrice(
+                true,
+                true,
+                true,
+                offeringPrice,
+                null,
+                null,
+                function() {
+                    expect(priceRequests.isDone()).toBe(true);
+                    done();
+                }
+            );
         });
 
         it('should reject a price component that uses a characteristic forbidden by the related constraint', function(done) {
@@ -2637,9 +2760,13 @@ describe('Catalog API', function() {
             );
         });
 
-        it('should reject a constraint update that forbids a characteristic used by an existing component', function(done) {
+        it('should reject a partial constraint update that forbids an existing component value', function(done) {
             const offeringPrice = {
-                prodSpecCharValueUse: [{ id: 'characteristic-1', name: 'country' }]
+                prodSpecCharValueUse: [{
+                    id: 'characteristic-1',
+                    name: 'country',
+                    productSpecCharacteristicValue: [{ value: 'ES' }, { value: 'DE' }]
+                }]
             };
             const nockMock = nock(serverUrl)
                 .get('/api/productOfferingPrice/1')
@@ -2666,7 +2793,11 @@ describe('Catalog API', function() {
                     id: 'component-1',
                     isBundle: false,
                     priceType: 'recurring',
-                    prodSpecCharValueUse: [{ id: 'legacy-characteristic-id', name: 'country' }]
+                    prodSpecCharValueUse: [{
+                        id: 'legacy-characteristic-id',
+                        name: 'country',
+                        productSpecCharacteristicValue: [{ value: 'DE' }]
+                    }]
                 }]);
 
             testUpdateOfferingPrice(
@@ -2725,9 +2856,13 @@ describe('Catalog API', function() {
             );
         });
 
-        it('should allow a price component characteristic not forbidden by its price plans', function(done) {
+        it('should allow a price component update that does not overlap its price plan partial constraint', function(done) {
             const offeringPrice = {
-                prodSpecCharValueUse: [{ id: 'characteristic-2', name: 'size' }]
+                prodSpecCharValueUse: [{
+                    id: 'characteristic-1',
+                    name: 'vCores',
+                    productSpecCharacteristicValue: [{ valueFrom: 18, valueTo: 64 }]
+                }]
             };
             const nockMock = nock(serverUrl)
                 .get('/api/productOfferingPrice/1')
@@ -2752,7 +2887,11 @@ describe('Catalog API', function() {
                     id: 'constraint-1',
                     isBundle: false,
                     priceType: 'constraint',
-                    prodSpecCharValueUse: [{ id: 'characteristic-1', name: 'country' }]
+                    prodSpecCharValueUse: [{
+                        id: 'characteristic-1',
+                        name: 'vCores',
+                        productSpecCharacteristicValue: [{ valueFrom: 100, valueTo: 386 }]
+                    }]
                 }]);
 
             testUpdateOfferingPrice(
@@ -2767,9 +2906,13 @@ describe('Catalog API', function() {
             );
         });
 
-        it('should reject a price component characteristic forbidden by any of its price plans', function(done) {
+        it('should reject a price component update that overlaps any price plan partial constraint', function(done) {
             const offeringPrice = {
-                prodSpecCharValueUse: [{ id: 'legacy-characteristic-id', name: 'country' }]
+                prodSpecCharValueUse: [{
+                    id: 'characteristic-1',
+                    name: 'vCores',
+                    productSpecCharacteristicValue: [{ valueFrom: 1, valueTo: 18 }]
+                }]
             };
             const nockMock = nock(serverUrl)
                 .get('/api/productOfferingPrice/1')
@@ -2803,7 +2946,11 @@ describe('Catalog API', function() {
                     id: 'constraint-2',
                     isBundle: false,
                     priceType: 'constraint',
-                    prodSpecCharValueUse: [{ id: 'characteristic-1', name: 'country' }]
+                    prodSpecCharValueUse: [{
+                        id: 'characteristic-1',
+                        name: 'vCores',
+                        productSpecCharacteristicValue: [{ valueFrom: 4, valueTo: 386 }]
+                    }]
                 }]);
 
             testUpdateOfferingPrice(

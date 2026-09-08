@@ -1615,28 +1615,75 @@ const catalog = (function() {
         return { result: pricesMap };
     }
 
-    const getCharValueUseNames = function(price) {
-        const characteristicNames = new Set();
-        const characteristics = Array.isArray(price && price.prodSpecCharValueUse)
+    const getCharValueUses = function(price) {
+        return Array.isArray(price && price.prodSpecCharValueUse)
             ? price.prodSpecCharValueUse
             : [];
+    }
 
-        for (const characteristic of characteristics) {
-            if (characteristic && characteristic.name) {
-                characteristicNames.add(characteristic.name);
+    const isPriceAllowedByConstraint = function(price, constraintValueUses) {
+        for (const priceValueUse of getCharValueUses(price)) {
+            if (!priceValueUse || !priceValueUse.name) {
+                continue;
+            }
+            const matchingConstraintValueUses = constraintValueUses.filter((valueUse) =>
+                valueUse && valueUse.name === priceValueUse.name
+            );
+
+            for (const constraintValueUse of matchingConstraintValueUses) {
+                const constraintValues = Array.isArray(constraintValueUse.productSpecCharacteristicValue)
+                    ? constraintValueUse.productSpecCharacteristicValue
+                    : [];
+                if (constraintValues.length === 0) {
+                    return false;
+                }
+
+                const priceValues = Array.isArray(priceValueUse.productSpecCharacteristicValue)
+                    ? priceValueUse.productSpecCharacteristicValue
+                    : [];
+                if (priceValues.length === 0) {
+                    return false;
+                }
+
+                for (const priceValue of priceValues) {
+                    const valueIsForbidden = constraintValues.some((constraintValue) => {
+                        const priceIsRange = priceValue && priceValue.valueFrom !== undefined &&
+                            priceValue.valueTo !== undefined;
+                        const constraintIsRange = constraintValue && constraintValue.valueFrom !== undefined &&
+                            constraintValue.valueTo !== undefined;
+
+                        if (priceIsRange && constraintIsRange) {
+                            const priceFrom = Number(priceValue.valueFrom);
+                            const priceTo = Number(priceValue.valueTo);
+                            const constraintFrom = Number(constraintValue.valueFrom);
+                            const constraintTo = Number(constraintValue.valueTo);
+                            return Number.isFinite(priceFrom) && Number.isFinite(priceTo) &&
+                                Number.isFinite(constraintFrom) && Number.isFinite(constraintTo) &&
+                                priceFrom <= priceTo && constraintFrom <= constraintTo &&
+                                priceFrom <= constraintTo && priceTo >= constraintFrom;
+                        }
+
+                        return priceValue && constraintValue && priceValue.value !== undefined &&
+                            constraintValue.value !== undefined && equal(priceValue.value, constraintValue.value);
+                    });
+
+                    if (valueIsForbidden) {
+                        return false;
+                    }
+                }
             }
         }
 
-        return characteristicNames;
+        return true;
     }
 
-    const getPPConstraintNames = async function(pricePlan, previousBody) {
+    const getPPConstraintValueUses = async function(pricePlan, previousBody) {
         const constraintRef = getUniqueConstraintRef(pricePlan, previousBody);
         if (constraintRef.error) {
             return constraintRef;
         }
         if (!constraintRef.result) {
-            return { constraintCharNames: new Set() };
+            return { constraintValueUses: [] };
         }
 
         const constraintPriceId = constraintRef.result.id;
@@ -1669,10 +1716,10 @@ const catalog = (function() {
             };
         }
 
-        return { constraintCharNames: getCharValueUseNames(constraintPrice) };
+        return { constraintValueUses: getCharValueUses(constraintPrice) };
     }
 
-    const validatePricePlanComponents = async function(priceComponentRefs, forbiddenCharacteristicNames) {
+    const validatePricePlanComponents = async function(priceComponentRefs, constraintValueUses) {
         if (!Array.isArray(priceComponentRefs) || priceComponentRefs.length === 0) {
             return null;
         }
@@ -1719,13 +1766,11 @@ const catalog = (function() {
                 };
             }
 
-            for (const characteristicName of getCharValueUseNames(priceComponent)) {
-                if (forbiddenCharacteristicNames.has(characteristicName)) {
-                    return {
-                        status: 422,
-                        message: 'The price plan contains a price component that uses a forbidden characteristic'
-                    };
-                }
+            if (!isPriceAllowedByConstraint(priceComponent, constraintValueUses)) {
+                return {
+                    status: 422,
+                    message: 'The price plan contains a price component that uses a forbidden characteristic'
+                };
             }
         }
 
@@ -1734,13 +1779,16 @@ const catalog = (function() {
 
     const validatePricePlan = async function(offerPrice, previousBody) {
         if (!previousBody || offerPrice.bundledPopRelationship !== undefined || offerPrice.popRelationship !== undefined) {
-            const constraintResult = await getPPConstraintNames(offerPrice, previousBody);
+            const constraintResult = await getPPConstraintValueUses(offerPrice, previousBody);
             if (constraintResult.error) {
                 return constraintResult.error;
             }
 
             const priceComponentRefs = getEffectiveField(offerPrice, previousBody, 'bundledPopRelationship');
-            const validationError = await validatePricePlanComponents(priceComponentRefs, constraintResult.constraintCharNames);
+            const validationError = await validatePricePlanComponents(
+                priceComponentRefs,
+                constraintResult.constraintValueUses
+            );
             if (validationError) {
                 return validationError;
             }
@@ -1754,8 +1802,7 @@ const catalog = (function() {
             return null;
         }
 
-        const compnCharValueUseNames = getCharValueUseNames(offerPrice);
-        if (compnCharValueUseNames.size === 0) {
+        if (getCharValueUses(offerPrice).length === 0) {
             return null;
         }
 
@@ -1806,13 +1853,15 @@ const catalog = (function() {
                     };
                 }
 
-                for (const forbiddenCharValueUseName of getCharValueUseNames(constraintPrice)) {
-                    if (compnCharValueUseNames.has(forbiddenCharValueUseName)) {
-                        return {
-                            status: 422,
-                            message: 'The price component uses a characteristic forbidden by one of its price plans'
-                        };
-                    }
+                const priceIsAllowed = isPriceAllowedByConstraint(
+                    offerPrice,
+                    getCharValueUses(constraintPrice)
+                );
+                if (!priceIsAllowed) {
+                    return {
+                        status: 422,
+                        message: 'The price component uses a characteristic forbidden by one of its price plans'
+                    };
                 }
             }
 
@@ -1827,8 +1876,8 @@ const catalog = (function() {
             return null;
         }
 
-        const forbiddenCharacteristicNames = getCharValueUseNames(offerPrice);
-        if (forbiddenCharacteristicNames.size === 0) {
+        const constraintValueUses = getCharValueUses(offerPrice);
+        if (constraintValueUses.length === 0) {
             return null;
         }
 
@@ -1870,7 +1919,7 @@ const catalog = (function() {
 
             const validationError = await validatePricePlanComponents(
                 priceComponentRefs,
-                forbiddenCharacteristicNames
+                constraintValueUses
             );
             if (validationError) {
                 return validationError;
@@ -1925,7 +1974,7 @@ const catalog = (function() {
             validationError = await validatePricePlan(offerPrice, previousBody);
         } else if (String(effectivePriceTypeValue || '').toLowerCase() === CONSTRAINT_PRICE_TYPE) {
             validationError = await validateConstraintPrice(offerPrice, previousBody);
-        } else if (previousBody && offerPrice.prodSpecCharValueUse !== undefined) {
+        } else if (previousBody && offerPrice.prodSpecCharValueUse !== undefined) { // since price discount doesn't have "prodSpecCharValueUse" it will not enter in this condition
             validationError = await validatePriceComponent(offerPrice, previousBody);
         }
 
