@@ -1150,6 +1150,39 @@ const catalog = (function() {
     }
 
     const validateProductUpdate = function(req, prevBody, newBody, callback) {
+        const newCharacteristics = Array.isArray(newBody.productSpecCharacteristic)
+            ? newBody.productSpecCharacteristic
+            : null;
+        const previousCharacteristics = Array.isArray(prevBody.productSpecCharacteristic)
+            ? prevBody.productSpecCharacteristic
+            : [];
+        const newCharacteristicIds = new Set(
+            (newCharacteristics || []).filter((characteristic) => characteristic && characteristic.id)
+                .map((characteristic) => characteristic.id)
+        );
+        const removedCharacteristicIds = newCharacteristics
+            ? previousCharacteristics
+                .filter((characteristic) =>
+                    characteristic && characteristic.id && !newCharacteristicIds.has(characteristic.id)
+                )
+                .map((characteristic) => characteristic.id)
+            : [];
+
+        if (removedCharacteristicIds.length > 0) {
+            if (String(prevBody.lifecycleStatus || '').toLowerCase() !== ACTIVE_STATE) {
+                return callback({
+                    status: 422,
+                    message: 'Product specification characteristics can only be removed from active product specifications'
+                });
+            }
+
+            if (!req.extraData) {
+                req.extraData = {};
+            }
+            req.extraData.productSpecificationId = prevBody.id;
+            req.extraData.removedProductSpecCharacteristicIds = removedCharacteristicIds;
+        }
+
         if (
             (!!newBody.isBundle || !!newBody.bundledProductSpecification) &&
             prevBody.lifecycleStatus.toLowerCase() != 'active'
@@ -1621,6 +1654,98 @@ const catalog = (function() {
             : [];
     }
 
+    const removeDeletedCharacteristicsFromPrices = async function(productSpecificationId, removedCharacteristicIds) {
+        const cleanupError = {
+            status: 500,
+            message: 'The references to the removed product specification characteristics could not be updated'
+        };
+        const pricePlanIds = [];
+        let offset = 0;
+        let offerings;
+
+        do {
+            let response;
+            try {
+                response = await retrieveAssetAsync(
+                    `/productOffering?productSpecification.id=${encodeURIComponent(productSpecificationId)}` +
+                    `&limit=${PRICE_PLAN_QUERY_PAGE_SIZE}&offset=${offset}`
+                );
+            } catch (err) {
+                throw cleanupError;
+            }
+
+            offerings = Array.isArray(response.body) ? response.body : [];
+            for (const offering of offerings) {
+                const pricePlans = Array.isArray(offering.productOfferingPrice)
+                    ? offering.productOfferingPrice
+                    : offering.productOfferingPrice ? [offering.productOfferingPrice] : [];
+                for (const pricePlan of pricePlans) {
+                    if (pricePlan && pricePlan.id) {
+                        pricePlanIds.push(pricePlan.id);
+                    }
+                }
+            }
+            offset += offerings.length;
+        } while (offerings.length === PRICE_PLAN_QUERY_PAGE_SIZE);
+
+        const pricePlanMap = await retrievePricesTMF(pricePlanIds, cleanupError.message);
+        if (pricePlanMap.error) {
+            throw cleanupError;
+        }
+
+        const relatedPriceIds = [];
+        for (const pricePlan of pricePlanMap.result.values()) {
+            const priceComponents = Array.isArray(pricePlan.bundledPopRelationship)
+                ? pricePlan.bundledPopRelationship
+                : pricePlan.bundledPopRelationship ? [pricePlan.bundledPopRelationship] : [];
+            for (const priceComponent of priceComponents) {
+                if (priceComponent && priceComponent.id) {
+                    relatedPriceIds.push(priceComponent.id);
+                }
+            }
+
+            const relationships = Array.isArray(pricePlan.popRelationship)
+                ? pricePlan.popRelationship
+                : pricePlan.popRelationship ? [pricePlan.popRelationship] : [];
+            for (const relationship of relationships) {
+                if (
+                    relationship && relationship.id &&
+                    String(relationship.relationshipType || '').toLowerCase() === CONSTRAINT_PRICE_TYPE
+                ) {
+                    relatedPriceIds.push(relationship.id);
+                }
+            }
+        }
+
+        const relatedPriceMap = await retrievePricesTMF(relatedPriceIds, cleanupError.message);
+        if (relatedPriceMap.error) {
+            throw cleanupError;
+        }
+
+        const removedIds = new Set(removedCharacteristicIds);
+        for (const price of relatedPriceMap.result.values()) {
+            const currentValueUses = getCharValueUses(price);
+            const updatedValueUses = currentValueUses.filter((valueUse) =>
+                !valueUse || !removedIds.has(valueUse.id)
+            );
+            if (updatedValueUses.length === currentValueUses.length) {
+                continue;
+            }
+
+            await new Promise((resolve, reject) => {
+                updateAsset(`/productOfferingPrice/${encodeURIComponent(price.id)}`, {
+                    prodSpecCharValueUse: updatedValueUses
+                }, function(err) {
+                    if (err) {
+                        reject(cleanupError);
+                    } else {
+                        resolve();
+                    }
+                });
+            });
+        }
+    }
+
     const isPriceAllowedByConstraint = function(price, constraintValueUses) {
         for (const priceValueUse of getCharValueUses(price)) {
             if (!priceValueUse || !priceValueUse.name) {
@@ -1778,6 +1903,19 @@ const catalog = (function() {
     }
 
     const validatePricePlan = async function(offerPrice, previousBody) {
+        const constraintRef = getUniqueConstraintRef(offerPrice, previousBody);
+        if (constraintRef.error) {
+            return constraintRef.error;
+        }
+
+        const valueUses = getEffectiveField(offerPrice, previousBody, 'prodSpecCharValueUse');
+        if (constraintRef.result && Array.isArray(valueUses) && valueUses.length > 0) {
+            return {
+                status: 422,
+                message: 'A price plan with prodSpecCharValueUse cannot reference a constraint'
+            };
+        }
+
         if (!previousBody || offerPrice.bundledPopRelationship !== undefined || offerPrice.popRelationship !== undefined) {
             const constraintResult = await getPPConstraintValueUses(offerPrice, previousBody);
             if (constraintResult.error) {
@@ -2590,13 +2728,28 @@ const catalog = (function() {
             })
         } else if (req.method == 'PATCH' && productPattern.test(req.apiUrl)) {
             body = req.reqBody;
+            const removedCharacteristicIds = req.extraData && req.extraData.removedProductSpecCharacteristicIds;
+            const productSpecificationId = req.extraData && req.extraData.productSpecificationId;
 
-            handleUpgradePostAction(
-                req,
-                body,
-                storeClient.attachUpgradedProduct,
-                callback
-            );
+            if (productSpecificationId && Array.isArray(removedCharacteristicIds) && removedCharacteristicIds.length > 0) {
+                removeDeletedCharacteristicsFromPrices(productSpecificationId, removedCharacteristicIds)
+                    .then(() => {
+                        handleUpgradePostAction(
+                            req,
+                            body,
+                            storeClient.attachUpgradedProduct,
+                            callback
+                        );
+                    })
+                    .catch(callback);
+            } else {
+                handleUpgradePostAction(
+                    req,
+                    body,
+                    storeClient.attachUpgradedProduct,
+                    callback
+                );
+            }
         } else {
             callback(null)
         }

@@ -81,6 +81,8 @@ const INVALID_S_LAUNCH = 'It is not allowed to launch a product spec without lau
 const INVALID_R_LAUNCH = 'It is not allowed to launch a product spec without launching resource spec previously'
 const INVALID_S_API = 'Error getting service specification through the API'
 const INVALID_R_API = 'Error getting resource specification through the API'
+const INVALID_CHARACTERISTIC_REMOVAL = 'Product specification characteristics can only be removed from active product specifications'
+const INVALID_PRICE_PLAN_CONSTRAINT_PROFILE = 'A price plan with prodSpecCharValueUse cannot reference a constraint';
 const COMPLIANCE_CERTIFICATE = 'Y2VydGlmaWNhdGU=';
 const COMPLIANCE_CERTIFICATE_PEM = '-----BEGIN CERTIFICATE-----\n' +
     COMPLIANCE_CERTIFICATE +
@@ -1811,8 +1813,7 @@ describe('Catalog API', function() {
                 if (!ErrorStatus && !ErrorMsg) {
                     expect(err).toBe(null);
                 } else {
-                    expect(err.status).toBe(ErrorStatus);
-                    expect(err.message).toBe(ErrorMsg);
+                    expect(err).toEqual(jasmine.objectContaining({ status: ErrorStatus, message: ErrorMsg }));
                 }
                 done();
             });
@@ -1869,6 +1870,52 @@ describe('Catalog API', function() {
             validateOfferingPrice(true, true, true, offeringPrice, null, null, function() {
                 expect(componentRequest.isDone()).toBe(true);
                 done();
+            });
+        });
+
+        describe('price plan value uses and constraints', function() {
+            const valueUses = [{
+                id: 'characteristic-1',
+                name: 'country',
+                productSpecCharacteristicValue: [{ value: 'ES' }]
+            }];
+            const relationships = [{ id: 'constraint-1', relationshipType: 'constraint' }];
+
+            it('should reject a plan with its own value uses even when the constraint forbids nothing', function(done) {
+                nock(SERVER).get('/api/productOfferingPrice')
+                    .query({ id: 'constraint-1', limit: '1' })
+                    .reply(200, [{ id: 'constraint-1', isBundle: false, priceType: 'constraint', prodSpecCharValueUse: [] }]);
+
+                validateOfferingPrice(true, true, true, {
+                    isBundle: true,
+                    prodSpecCharValueUse: valueUses,
+                    popRelationship: relationships
+                }, 422, INVALID_PRICE_PLAN_CONSTRAINT_PROFILE, done);
+            });
+
+            it('should allow a plan with its own value uses and only a discount relationship', function(done) {
+                validateOfferingPrice(true, true, true, {
+                    isBundle: true,
+                    prodSpecCharValueUse: valueUses,
+                    popRelationship: [{ id: 'discount-1', relationshipType: 'discount' }]
+                }, null, null, done);
+            });
+
+            [undefined, [], null].forEach(function(emptyValueUses) {
+                it('should allow a constraint when plan value uses are ' + JSON.stringify(emptyValueUses), function(done) {
+                    const constraintRequest = nock(SERVER).get('/api/productOfferingPrice')
+                        .query({ id: 'constraint-1', limit: '1' })
+                        .reply(200, [{ id: 'constraint-1', isBundle: false, priceType: 'constraint' }]);
+
+                    validateOfferingPrice(true, true, true, {
+                        isBundle: true,
+                        prodSpecCharValueUse: emptyValueUses,
+                        popRelationship: relationships
+                    }, null, null, function() {
+                        expect(constraintRequest.isDone()).toBe(true);
+                        done();
+                    });
+                });
             });
         });
 
@@ -2701,8 +2748,7 @@ describe('Catalog API', function() {
                 if (!expectedErrorStatus && !expectedErrorMsg) {
                     expect(err).toBe(null);
                 } else {
-                    expect(err.status).toBe(expectedErrorStatus);
-                    expect(err.message).toBe(expectedErrorMsg);
+                    expect(err).toEqual(jasmine.objectContaining({ status: expectedErrorStatus, message: expectedErrorMsg }));
                 }
                 if(nockResponse){
                     // verify nock url has been requested
@@ -2758,6 +2804,87 @@ describe('Catalog API', function() {
                 'Field isBundle cannot be modified',
                 done
             );
+        });
+
+        describe('price plan value uses and constraints', function() {
+            const valueUses = [{
+                id: 'characteristic-1',
+                name: 'country',
+                productSpecCharacteristicValue: [{ value: 'ES' }]
+            }];
+            const relationships = [{ id: 'constraint-1', relationshipType: 'constraint' }];
+
+            [
+                {
+                    description: 'linking a constraint to a plan that already has value uses',
+                    previous: { prodSpecCharValueUse: valueUses },
+                    patch: { popRelationship: relationships }
+                },
+                {
+                    description: 'adding value uses to a plan that already has a constraint',
+                    previous: { popRelationship: relationships },
+                    patch: { prodSpecCharValueUse: valueUses }
+                },
+                {
+                    description: 'adding both value uses and a constraint in one patch',
+                    previous: {},
+                    patch: { prodSpecCharValueUse: valueUses, popRelationship: relationships }
+                },
+                {
+                    description: 'keeping an existing conflicting configuration in an unrelated patch',
+                    previous: { prodSpecCharValueUse: valueUses, popRelationship: relationships },
+                    patch: { description: 'Updated description' }
+                }
+            ].forEach(function(testCase) {
+                it('should reject ' + testCase.description, function(done) {
+                    const priceRequest = nock(serverUrl).get('/api/productOfferingPrice/1')
+                        .reply(200, { id: '1', isBundle: true, ...testCase.previous });
+                    nock(serverUrl).get('/api/productOfferingPrice')
+                        .query({ id: 'constraint-1', limit: '1' })
+                        .reply(200, [{ id: 'constraint-1', isBundle: false, priceType: 'constraint' }]);
+
+                    testUpdateOfferingPrice(testCase.patch, null, true, true, true,
+                        422, INVALID_PRICE_PLAN_CONSTRAINT_PROFILE, function() {
+                            expect(priceRequest.isDone()).toBe(true);
+                            done();
+                        });
+                });
+            });
+
+            [
+                {
+                    description: 'clearing value uses while linking a constraint',
+                    previous: { prodSpecCharValueUse: valueUses },
+                    patch: { prodSpecCharValueUse: [], popRelationship: relationships }
+                },
+                {
+                    description: 'removing the constraint while setting value uses',
+                    previous: { popRelationship: relationships },
+                    patch: { prodSpecCharValueUse: valueUses, popRelationship: [] }
+                },
+                {
+                    description: 'fixing an existing conflict by clearing value uses',
+                    previous: { prodSpecCharValueUse: valueUses, popRelationship: relationships },
+                    patch: { prodSpecCharValueUse: [] }
+                },
+                {
+                    description: 'fixing an existing conflict by removing the constraint',
+                    previous: { prodSpecCharValueUse: valueUses, popRelationship: relationships },
+                    patch: { popRelationship: [] }
+                }
+            ].forEach(function(testCase) {
+                it('should allow ' + testCase.description, function(done) {
+                    const priceRequests = nock(serverUrl).get('/api/productOfferingPrice/1')
+                        .reply(200, { id: '1', isBundle: true, ...testCase.previous });
+                    if (testCase.patch.popRelationship && testCase.patch.popRelationship.length > 0) {
+                        priceRequests.get('/api/productOfferingPrice')
+                            .query({ id: 'constraint-1', limit: '1' })
+                            .reply(200, [{ id: 'constraint-1', isBundle: false, priceType: 'constraint' }]);
+                    }
+
+                    testUpdateOfferingPrice(testCase.patch, priceRequests, true, true, true, null, null, done);
+                });
+            });
         });
 
         it('should reject a partial constraint update that forbids an existing component value', function(done) {
@@ -3783,11 +3910,16 @@ describe('Catalog API', function() {
         }
 
         var prevBody = {
+            id: productId,
             lifecycleStatus: bodyStatus,
             relatedParty: previousProductBody.relatedParty,
             validFor: {},
             serviceSpecification: [],
-            resourceSpecification: []
+            resourceSpecification: [],
+            productSpecCharacteristic: [{
+                id: 'characteristic-1',
+                name: 'Existing characteristic'
+            }]
         };
         testChangeProductSpec(
             productPath,
@@ -3828,6 +3960,32 @@ describe('Catalog API', function() {
         };
 
         testUpdateProductSpec(productBody, offeringsInfo, null, null, done);
+    });
+
+    it('should allow to remove product characteristics from an active product specification', function(done) {
+        var productBody = JSON.stringify({
+            productSpecCharacteristic: []
+        });
+
+        var offeringsInfo = {
+            requestStatus: 200,
+            offerings: []
+        };
+
+        testUpdateProductSpec(productBody, offeringsInfo, null, null, done);
+    });
+
+    it('should not allow to remove product characteristics from a launched product specification', function(done) {
+        var productBody = JSON.stringify({
+            productSpecCharacteristic: []
+        });
+
+        var offeringsInfo = {
+            requestStatus: 200,
+            offerings: []
+        };
+
+        testUpdateProductSpec(productBody, offeringsInfo, 422, INVALID_CHARACTERISTIC_REMOVAL, done, 'Launched');
     });
 
     it('should not allow to update a product if the tmfUtils returns a errorMessage when name is set', function(done) {
@@ -6639,6 +6797,92 @@ describe('Catalog API', function() {
                     expect(storeMock.attachOffering).not.toHaveBeenCalled();
                     expect(storeMock.updateOffering).not.toHaveBeenCalled();
                     expect(storeMock.attachUpgradedProduct).not.toHaveBeenCalled();
+                },
+                done
+            );
+        });
+
+        it('should remove deleted product characteristics from related price components and constraints', function(done) {
+            const removedCharacteristic = {
+                id: 'characteristic-1',
+                name: 'Removed characteristic'
+            };
+            const remainingCharacteristic = {
+                id: 'characteristic-2',
+                name: 'Remaining characteristic'
+            };
+            const req = {
+                method: 'PATCH',
+                apiUrl: '/productSpecification/product-1',
+                reqBody: {},
+                body: {
+                    id: 'product-1'
+                },
+                user: user,
+                extraData: {
+                    productSpecificationId: 'product-1',
+                    removedProductSpecCharacteristicIds: [removedCharacteristic.id]
+                }
+            };
+
+            const offeringsScope = nock(serverUrl)
+                .get('/api/productOffering')
+                .query({
+                    'productSpecification.id': 'product-1',
+                    limit: '100',
+                    offset: '0'
+                })
+                .reply(200, [{
+                    productOfferingPrice: [{ id: 'plan-1' }, { id: 'plan-2' }]
+                }]);
+            const pricePlansScope = nock(serverUrl)
+                .get('/api/productOfferingPrice')
+                .query({ id: 'plan-1,plan-2', limit: '2' })
+                .reply(200, [{
+                    id: 'plan-1',
+                    bundledPopRelationship: [{ id: 'component-1' }, { id: 'component-2' }],
+                    popRelationship: [{ id: 'constraint-1', relationshipType: 'constraint' }, {
+                        id: 'discount-1',
+                        relationshipType: 'discount'
+                    }]
+                }, {
+                    id: 'plan-2',
+                    bundledPopRelationship: [{ id: 'component-1' }],
+                    popRelationship: [{ id: 'constraint-1', relationshipType: 'constraint' }]
+                }]);
+            const relatedPricesScope = nock(serverUrl)
+                .get('/api/productOfferingPrice')
+                .query({ id: 'component-1,component-2,constraint-1', limit: '3' })
+                .reply(200, [{
+                    id: 'component-1',
+                    prodSpecCharValueUse: [removedCharacteristic, remainingCharacteristic]
+                }, {
+                    id: 'component-2',
+                    prodSpecCharValueUse: [remainingCharacteristic]
+                }, {
+                    id: 'constraint-1',
+                    priceType: 'constraint',
+                    prodSpecCharValueUse: [removedCharacteristic]
+                }]);
+            const componentUpdateScope = nock(serverUrl)
+                .patch('/api/productOfferingPrice/component-1', {
+                    prodSpecCharValueUse: [remainingCharacteristic]
+                })
+                .reply(200, {});
+            const constraintUpdateScope = nock(serverUrl)
+                .patch('/api/productOfferingPrice/constraint-1', {
+                    prodSpecCharValueUse: []
+                })
+                .reply(200, {});
+
+            testPostValidation(
+                req,
+                () => {
+                    expect(offeringsScope.isDone()).toBe(true);
+                    expect(pricePlansScope.isDone()).toBe(true);
+                    expect(relatedPricesScope.isDone()).toBe(true);
+                    expect(componentUpdateScope.isDone()).toBe(true);
+                    expect(constraintUpdateScope.isDone()).toBe(true);
                 },
                 done
             );
