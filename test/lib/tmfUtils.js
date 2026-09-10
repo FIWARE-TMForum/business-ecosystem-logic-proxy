@@ -770,6 +770,16 @@ describe('TMF Utils', function() {
             expect(result).toBe(false)
         })
 
+        it('should return false if there are duplicate characteristic ids', function(){
+            const tmfUtils = getTmfUtils();
+            const chars = [
+                { id: 'characteristic-1', name: 'Color', value: 'Red' },
+                { id: 'characteristic-1', name: 'Size', value: 'Large' }
+            ]
+            const result = tmfUtils.validateCharacteristics(chars)
+            expect(result).toBe(false)
+        })
+
         it('should return true for an empty array', function(){
             const tmfUtils = getTmfUtils();
             const chars = []
