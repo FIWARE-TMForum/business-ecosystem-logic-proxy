@@ -41,7 +41,6 @@ const buildRequestJWT = require('./lib/strategies/vc').buildRequestJWT
 const simulator = require('./controllers/simulator').simulator();
 const { indexes } = require('./lib/indexes')
 const operator = require('./lib/operator').operator
-const { filteredPagination } = require('./lib/filteredPagination')
 
 const debug = !(process.env.NODE_ENV == 'production');
 const SEARCH_FILTERS_COLLECTION = 'config'
@@ -51,7 +50,6 @@ const FEATURE_FLAGS_CONFIG_ID = 'feature-flags'
 const FEATURE_FLAGS = [
     'purchaseEnabled',
     'dataSpaceEnabled',
-    'catalogManagementEnabled',
     'dspEnabled',
     'quotesEnabled',
     'tenderingEnabled',
@@ -171,8 +169,7 @@ app.use(function(req, res, next) {
     'use strict';
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Methods', 'HEAD, POST, GET, PATCH, PUT, OPTIONS, DELETE');
-    res.header('Access-Control-Allow-Headers', 'origin, content-type, X-Auth-Token, Tenant-ID, Authorization, X-Organization, x-terms-accepted, ' + filteredPagination.TOKEN_HEADER_LOWER);
-    res.header('Access-Control-Expose-Headers', filteredPagination.TOKEN_HEADER_LOWER);
+    res.header('Access-Control-Allow-Headers', 'origin, content-type, X-Auth-Token, Tenant-ID, Authorization, X-Organization, x-terms-accepted');
     if (config.corsExposeRedirect) {
         res.header('Access-Control-Expose-Headers', 'X-Redirect-URL');
     }
@@ -376,32 +373,6 @@ const getDefaultSearchFilters = () => {
     }
 }
 
-const normalizeSearchFilterDefaults = (searchFilters) => {
-    const normalized = Object.assign({}, searchFilters)
-
-    if (Array.isArray(searchFilters.filters)) {
-        normalized.filters = searchFilters.filters.map((filter) => {
-            if (filter == null || typeof filter !== 'object' || Array.isArray(filter)) {
-                return filter
-            }
-
-            if (filter.source !== 'categoryRoot') {
-                return filter
-            }
-
-            if (Object.prototype.hasOwnProperty.call(filter, 'offerFormPlacement')) {
-                return filter
-            }
-
-            return Object.assign({}, filter, {
-                offerFormPlacement: 'none'
-            })
-        })
-    }
-
-    return normalized
-}
-
 const fetchSearchFilters = async () => {
     try {
         const result = await indexes.search(SEARCH_FILTERS_COLLECTION, { id: SEARCH_FILTERS_CONFIG_ID, limit: 1 })
@@ -410,7 +381,7 @@ const fetchSearchFilters = async () => {
             return getDefaultSearchFilters()
         }
 
-        return normalizeSearchFilterDefaults(result[0].searchFilters)
+        return result[0].searchFilters
     } catch (e) {
         return getDefaultSearchFilters()
     }
@@ -545,7 +516,6 @@ app.get('/config', async (_, res) => {
         domePublish: config.domePublish,
         purchaseEnabled: featureFlags.purchaseEnabled,
         dataSpaceEnabled: featureFlags.dataSpaceEnabled,
-        catalogManagementEnabled: featureFlags.catalogManagementEnabled,
         dspEnabled: featureFlags.dspEnabled,
         quoteApi: config.quoteApi,
         defaultId: config.defaultId,

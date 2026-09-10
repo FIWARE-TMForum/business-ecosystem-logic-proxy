@@ -24,7 +24,6 @@ const nock = require('nock');
 const proxyquire = require('proxyquire');
 const md5 = require('blueimp-md5');
 const testUtils = require('../../utils');
-const realTmfUtils = require('../../../lib/tmfUtils');
 
 // ERRORS
 const INVALID_METHOD = 'The HTTP method DELETE is not allowed in the accessed API';
@@ -81,32 +80,13 @@ const INVALID_S_LAUNCH = 'It is not allowed to launch a product spec without lau
 const INVALID_R_LAUNCH = 'It is not allowed to launch a product spec without launching resource spec previously'
 const INVALID_S_API = 'Error getting service specification through the API'
 const INVALID_R_API = 'Error getting resource specification through the API'
-const INVALID_CHARACTERISTIC_REMOVAL = 'Product specification characteristics can only be removed from active product specifications'
-const INVALID_PRICE_PLAN_CONSTRAINT_PROFILE = 'A price plan with prodSpecCharValueUse cannot reference a constraint';
-const COMPLIANCE_CERTIFICATE = 'Y2VydGlmaWNhdGU=';
-const COMPLIANCE_CERTIFICATE_PEM = '-----BEGIN CERTIFICATE-----\n' +
-    COMPLIANCE_CERTIFICATE +
-    '\n-----END CERTIFICATE-----';
-const COMPLIANCE_ORGANIZATION_IDENTIFIER = 'VATES-B60645900';
-const COMPLIANCE_ISSUER = 'did:elsi:' + COMPLIANCE_ORGANIZATION_IDENTIFIER;
 
 describe('Catalog API', function() {
     var config = testUtils.getDefaultConfig();
     const basepath = '/catalog'
     const serviceLaunchFail= 0
     const resourceLaunchFail= 1
-    var getCatalogApi = function(
-        storeClient,
-        tmfUtils,
-        utils,
-        rssClient,
-        indexes,
-        async,
-        searchEngine,
-        partyClient,
-        jwt,
-        x509Certificate
-    ) {
+    var getCatalogApi = function(storeClient, tmfUtils, utils, rssClient, indexes, async, searchEngine) {
         if (!rssClient) {
             rssClient = {};
         }
@@ -133,71 +113,9 @@ describe('Catalog API', function() {
         if (searchEngine) {
             stubs['../../lib/search'] = { searchEngine: searchEngine };
         }
-        if (partyClient) {
-            stubs['./../../lib/party'] = { partyClient: partyClient };
-        }
-        if (jwt) {
-            stubs.jsonwebtoken = jwt;
-        }
-        if (x509Certificate) {
-            stubs.crypto = { X509Certificate: x509Certificate };
-        }
 
         // load config depending on utils
         return proxyquire('../../../controllers/tmf-apis/catalog', stubs).catalog;
-    };
-
-    const buildComplianceVerifier = function(productSpecId, options) {
-        options = options || {};
-        const credentialSubject = {
-            id: options.subjectId || productSpecId
-        };
-        if (!options.missingLabel) {
-            credentialSubject['gx:labelLevel'] = options.label || 'BL';
-        }
-
-        const credential = {
-            type: options.types || ['gx:LabelCredential', 'VerifiableCredential'],
-            credentialSubject: credentialSubject
-        };
-        const payload = {};
-        payload[options.credentialProperty || 'vc'] = credential;
-        if (!options.missingIssuer) {
-            payload.iss = options.issuer === undefined ? COMPLIANCE_ISSUER : options.issuer;
-        }
-
-        const certificateSubject = {};
-        if (!options.missingOrganizationIdentifier) {
-            certificateSubject.organizationIdentifier = options.organizationIdentifier === undefined
-                ? COMPLIANCE_ORGANIZATION_IDENTIFIER
-                : options.organizationIdentifier;
-        }
-        const x509Certificate = jasmine.createSpy('X509Certificate').and.callFake(function() {
-            return {
-                toLegacyObject: function() {
-                    return { subject: certificateSubject };
-                }
-            };
-        });
-
-        const jwt = {
-            decode: jasmine.createSpy('decodeComplianceCredential').and.returnValue(
-                options.decoded === undefined
-                    ? { header: { alg: 'RS256', x5c: [COMPLIANCE_CERTIFICATE] } }
-                    : options.decoded
-            ),
-            verify: jasmine.createSpy('verifyComplianceCredential')
-        };
-        if (options.verifyError) {
-            jwt.verify.and.throwError(options.verifyError);
-        } else {
-            jwt.verify.and.returnValue(payload);
-        }
-
-        return {
-            jwt: jwt,
-            x509Certificate: x509Certificate
-        };
     };
 
     beforeEach(function() {
@@ -290,194 +208,6 @@ describe('Catalog API', function() {
             expect(req.apiUrl).toBe('/catalog/productOffering?href=id-1');
             done();
         });
-    });
-
-    const catalogGetUtils = {
-        getAPIURL: function(appSsl, host, port, path) {
-            return (appSsl ? 'https' : 'http') + '://' + host + ':' + port + path;
-        }
-    };
-
-    it('should rewrite GET catalog productOffering requests using the catalog categories', function(done) {
-        const catalogApi = getCatalogApi({}, {}, catalogGetUtils);
-
-        nock(SERVER)
-            .get('/api/catalog/catalog-1')
-            .reply(200, {
-                category: [{ id: 'cat-1' }, { id: 'cat-2' }]
-            });
-
-        const req = {
-            method: 'GET',
-            path: '/catalog/catalog/catalog-1/productOffering',
-            apiUrl: '/catalog/catalog/catalog-1/productOffering',
-            query: {}
-        };
-
-        catalogApi.checkPermissions(req, function(err) {
-            expect(err).toBeNull();
-            expect(req.apiUrl).toBe('/catalog/productOffering?category=cat-1,cat-2');
-            done();
-        });
-    });
-
-    it('should intersect existing category filters when rewriting GET catalog productOffering requests', function(done) {
-        const catalogApi = getCatalogApi({}, {}, catalogGetUtils);
-
-        nock(SERVER)
-            .get('/api/catalog/catalog-1')
-            .reply(200, {
-                category: [{ id: 'cat-1' }, { id: 'cat-2' }]
-            });
-
-        const req = {
-            method: 'GET',
-            path: '/catalog/catalog/catalog-1/productOffering',
-            apiUrl: '/catalog/catalog/catalog-1/productOffering?category=cat-1,cat-3&sort=name',
-            query: {
-                category: 'cat-1,cat-3',
-                sort: 'name'
-            }
-        };
-
-        catalogApi.checkPermissions(req, function(err) {
-            expect(err).toBeNull();
-            expect(req.apiUrl).toBe('/catalog/productOffering?category=cat-1&sort=name');
-            done();
-        });
-    });
-
-    it('should preserve external search rewrites when adding catalog category filters', function(done) {
-        const previousSearchUrl = config.searchUrl;
-        config.searchUrl = 'http://search.com';
-
-        const searchMethod = jasmine.createSpy('search').and.returnValue(Promise.resolve([
-            { id: 'id-1' }
-        ]));
-
-        const catalogApi = getCatalogApi({}, {}, catalogGetUtils, {}, {}, {}, { search: searchMethod });
-
-        nock(SERVER)
-            .get('/api/catalog/catalog-1')
-            .reply(200, {
-                category: [{ id: 'cat-1' }]
-            });
-
-        const req = {
-            method: 'GET',
-            path: '/catalog/catalog/catalog-1/productOffering',
-            apiUrl: '/catalog/catalog/catalog-1/productOffering',
-            query: {
-                keyword: 'testkey'
-            }
-        };
-
-        catalogApi.checkPermissions(req, function(err) {
-            config.searchUrl = previousSearchUrl;
-            expect(err).toBeNull();
-            expect(searchMethod).toHaveBeenCalledWith('testkey', undefined, {});
-            expect(req.apiUrl).toBe('/catalog/productOffering?href=id-1&category=cat-1');
-            done();
-        });
-    });
-
-    it('should enable filtered pagination for launched catalog list requests without related party filters', function(done) {
-        const catalogApi = getCatalogApi({}, {}, catalogGetUtils);
-        const req = {
-            method: 'GET',
-            path: '/catalog/catalog',
-            apiUrl: '/catalog/catalog?lifecycleStatus=Launched&limit=2',
-            query: {
-                lifecycleStatus: 'Launched',
-                limit: '2'
-            }
-        };
-
-        const paginationConfig = catalogApi.getFilteredPaginationConfig(req);
-
-        expect(paginationConfig).not.toBeNull();
-
-        nock(SERVER)
-            .get('/api/productOffering')
-            .query({
-                category: 'cat-1,cat-2',
-                lifecycleStatus: 'Launched',
-                limit: '1'
-            })
-            .reply(200, [{ id: 'offering-1' }]);
-
-        paginationConfig.predicate({
-            id: 'catalog-1',
-            category: [{ id: 'cat-1' }, { id: 'cat-2' }]
-        }).then((result) => {
-            expect(result).toBe(true);
-            done();
-        }).catch(done.fail);
-    });
-
-    it('should reject catalogs without offers in launched catalog filtered pagination', function(done) {
-        const catalogApi = getCatalogApi({}, {}, catalogGetUtils);
-        const req = {
-            method: 'GET',
-            path: '/catalog/catalog',
-            apiUrl: '/catalog/catalog?lifecycleStatus=Launched&limit=2',
-            query: {
-                lifecycleStatus: 'Launched',
-                limit: '2'
-            }
-        };
-
-        const paginationConfig = catalogApi.getFilteredPaginationConfig(req);
-
-        expect(paginationConfig).not.toBeNull();
-
-        nock(SERVER)
-            .get('/api/productOffering')
-            .query({
-                category: 'cat-1',
-                lifecycleStatus: 'Launched',
-                limit: '1'
-            })
-            .reply(200, []);
-
-        paginationConfig.predicate({
-            id: 'catalog-1',
-            category: [{ id: 'cat-1' }]
-        }).then((result) => {
-            expect(result).toBe(false);
-            done();
-        }).catch(done.fail);
-    });
-
-    it('should not enable filtered pagination for launched catalog list requests with related party filters', function() {
-        const catalogApi = getCatalogApi({}, {}, catalogGetUtils);
-        const req = {
-            method: 'GET',
-            path: '/catalog/catalog',
-            apiUrl: '/catalog/catalog?lifecycleStatus=Launched&relatedParty.id=party-1&limit=2',
-            query: {
-                lifecycleStatus: 'Launched',
-                'relatedParty.id': 'party-1',
-                limit: '2'
-            }
-        };
-
-        expect(catalogApi.getFilteredPaginationConfig(req)).toBeNull();
-    });
-
-    it('should not enable filtered pagination for catalog list requests that do not only query launched status', function() {
-        const catalogApi = getCatalogApi({}, {}, catalogGetUtils);
-        const req = {
-            method: 'GET',
-            path: '/catalog/catalog',
-            apiUrl: '/catalog/catalog?lifecycleStatus=Active&limit=2',
-            query: {
-                lifecycleStatus: 'Active',
-                limit: '2'
-            }
-        };
-
-        expect(catalogApi.getFilteredPaginationConfig(req)).toBeNull();
     });
 
     /// ///////////////////////////////////////////////////////////////////////////////////////////
@@ -1802,7 +1532,6 @@ describe('Catalog API', function() {
             const req = {
                 method: 'POST',
                 apiUrl: '/catalog/productOfferingPrice',
-                headers: {},
                 user: {
                     id: 'test',
                     roles: [{ name: config.roles.seller }]
@@ -1813,7 +1542,8 @@ describe('Catalog API', function() {
                 if (!ErrorStatus && !ErrorMsg) {
                     expect(err).toBe(null);
                 } else {
-                    expect(err).toEqual(jasmine.objectContaining({ status: ErrorStatus, message: ErrorMsg }));
+                    expect(err.status).toBe(ErrorStatus);
+                    expect(err.message).toBe(ErrorMsg);
                 }
                 done();
             });
@@ -1840,378 +1570,6 @@ describe('Catalog API', function() {
 
             validateOfferingPrice(true, true, true, offeringPrice, null, null, done);
 
-        });
-
-        it('should not run discount validation for a constraint price', function(done) {
-            const offeringPrice = {
-                name: 'constraint',
-                isBundle: false,
-                priceType: 'constraint',
-                prodSpecCharValueUse: [{ id: 'characteristic-1', name: 'country' }]
-            };
-
-            validateOfferingPrice(false, true, true, offeringPrice, null, null, done);
-        });
-
-        it('should allow to create a price plan without a constraint relationship', function(done) {
-            const offeringPrice = {
-                name: 'test plan',
-                isBundle: true,
-                bundledPopRelationship: [{
-                    id: 'component-1',
-                    href: 'component-1'
-                }]
-            };
-            const componentRequest = nock(SERVER)
-                .get('/api/productOfferingPrice')
-                .query({ id: 'component-1', limit: '1' })
-                .reply(200, [{ id: 'component-1', isBundle: false }]);
-
-            validateOfferingPrice(true, true, true, offeringPrice, null, null, function() {
-                expect(componentRequest.isDone()).toBe(true);
-                done();
-            });
-        });
-
-        describe('price plan value uses and constraints', function() {
-            const valueUses = [{
-                id: 'characteristic-1',
-                name: 'country',
-                productSpecCharacteristicValue: [{ value: 'ES' }]
-            }];
-            const relationships = [{ id: 'constraint-1', relationshipType: 'constraint' }];
-
-            it('should reject a plan with its own value uses even when the constraint forbids nothing', function(done) {
-                nock(SERVER).get('/api/productOfferingPrice')
-                    .query({ id: 'constraint-1', limit: '1' })
-                    .reply(200, [{ id: 'constraint-1', isBundle: false, priceType: 'constraint', prodSpecCharValueUse: [] }]);
-
-                validateOfferingPrice(true, true, true, {
-                    isBundle: true,
-                    prodSpecCharValueUse: valueUses,
-                    popRelationship: relationships
-                }, 422, INVALID_PRICE_PLAN_CONSTRAINT_PROFILE, done);
-            });
-
-            it('should allow a plan with its own value uses and only a discount relationship', function(done) {
-                validateOfferingPrice(true, true, true, {
-                    isBundle: true,
-                    prodSpecCharValueUse: valueUses,
-                    popRelationship: [{ id: 'discount-1', relationshipType: 'discount' }]
-                }, null, null, done);
-            });
-
-            [undefined, [], null].forEach(function(emptyValueUses) {
-                it('should allow a constraint when plan value uses are ' + JSON.stringify(emptyValueUses), function(done) {
-                    const constraintRequest = nock(SERVER).get('/api/productOfferingPrice')
-                        .query({ id: 'constraint-1', limit: '1' })
-                        .reply(200, [{ id: 'constraint-1', isBundle: false, priceType: 'constraint' }]);
-
-                    validateOfferingPrice(true, true, true, {
-                        isBundle: true,
-                        prodSpecCharValueUse: emptyValueUses,
-                        popRelationship: relationships
-                    }, null, null, function() {
-                        expect(constraintRequest.isDone()).toBe(true);
-                        done();
-                    });
-                });
-            });
-        });
-
-        it('should allow price component values not forbidden by the related partial constraint', function(done) {
-            const offeringPrice = {
-                name: 'test plan',
-                isBundle: true,
-                popRelationship: [{
-                    id: 'constraint-1',
-                    href: 'constraint-1',
-                    relationshipType: 'constraint'
-                }],
-                bundledPopRelationship: [{
-                    id: 'component-1',
-                    href: 'component-1'
-                }, {
-                    id: 'component-2',
-                    href: 'component-2'
-                }]
-            };
-            const priceRequests = nock(SERVER)
-                .get('/api/productOfferingPrice')
-                .query({ id: 'constraint-1', limit: '1' })
-                .reply(200, [{
-                    id: 'constraint-1',
-                    isBundle: false,
-                    priceType: 'constraint',
-                    prodSpecCharValueUse: [{
-                        id: 'characteristic-1',
-                        name: 'vCores',
-                        productSpecCharacteristicValue: [{ valueFrom: 4, valueTo: 10 }]
-                    }, {
-                        id: 'characteristic-1',
-                        name: 'vCores',
-                        productSpecCharacteristicValue: [{ valueFrom: 100, valueTo: 386 }]
-                    }, {
-                        id: 'characteristic-2',
-                        name: 'region',
-                        productSpecCharacteristicValue: [{ value: 'EU' }, { value: 'US' }]
-                    }]
-                }])
-                .get('/api/productOfferingPrice')
-                .query({ id: 'component-1,component-2', limit: '2' })
-                .reply(200, [
-                    {
-                        id: 'component-1',
-                        isBundle: false,
-                        prodSpecCharValueUse: [{
-                            id: 'characteristic-1',
-                            name: 'vCores',
-                            productSpecCharacteristicValue: [{ valueFrom: 18, valueTo: 64 }]
-                        }]
-                    }, {
-                        id: 'component-2',
-                        isBundle: false,
-                        prodSpecCharValueUse: [{
-                            id: 'characteristic-2',
-                            name: 'region',
-                            productSpecCharacteristicValue: [{ value: 'APAC' }]
-                        }]
-                    }
-                ]);
-
-            validateOfferingPrice(true, true, true, offeringPrice, null, null, function() {
-                expect(priceRequests.isDone()).toBe(true);
-                done();
-            });
-        });
-
-        it('should reject a price component range overlapping any related partial constraint', function(done) {
-            const offeringPrice = {
-                name: 'test plan',
-                isBundle: true,
-                popRelationship: [{
-                    id: 'constraint-1',
-                    relationshipType: 'constraint'
-                }],
-                bundledPopRelationship: [{ id: 'component-1' }]
-            };
-            const priceRequests = nock(SERVER)
-                .get('/api/productOfferingPrice')
-                .query({ id: 'constraint-1', limit: '1' })
-                .reply(200, [{
-                    id: 'constraint-1',
-                    isBundle: false,
-                    priceType: 'constraint',
-                    prodSpecCharValueUse: [{
-                        id: 'characteristic-1',
-                        name: 'vCores',
-                        productSpecCharacteristicValue: [{ valueFrom: 100, valueTo: 386 }]
-                    }, {
-                        id: 'characteristic-1',
-                        name: 'vCores',
-                        productSpecCharacteristicValue: [{ valueFrom: 4, valueTo: 10 }]
-                    }]
-                }])
-                .get('/api/productOfferingPrice')
-                .query({ id: 'component-1', limit: '1' })
-                .reply(200, [{
-                    id: 'component-1',
-                    isBundle: false,
-                    prodSpecCharValueUse: [{
-                        id: 'characteristic-1',
-                        name: 'vCores',
-                        productSpecCharacteristicValue: [{ valueFrom: 1, valueTo: 18 }]
-                    }]
-                }]);
-
-            validateOfferingPrice(
-                true,
-                true,
-                true,
-                offeringPrice,
-                422,
-                'The price plan contains a price component that uses a forbidden characteristic',
-                function() {
-                    expect(priceRequests.isDone()).toBe(true);
-                    done();
-                }
-            );
-        });
-
-        it('should not compare a discrete value with a range constraint', function(done) {
-            const offeringPrice = {
-                name: 'test plan',
-                isBundle: true,
-                popRelationship: [{
-                    id: 'constraint-1',
-                    relationshipType: 'constraint'
-                }],
-                bundledPopRelationship: [{ id: 'component-1' }]
-            };
-            const priceRequests = nock(SERVER)
-                .get('/api/productOfferingPrice')
-                .query({ id: 'constraint-1', limit: '1' })
-                .reply(200, [{
-                    id: 'constraint-1',
-                    isBundle: false,
-                    priceType: 'constraint',
-                    prodSpecCharValueUse: [{
-                        id: 'characteristic-1',
-                        name: 'vCores',
-                        productSpecCharacteristicValue: [{ valueFrom: 4, valueTo: 386 }]
-                    }]
-                }])
-                .get('/api/productOfferingPrice')
-                .query({ id: 'component-1', limit: '1' })
-                .reply(200, [{
-                    id: 'component-1',
-                    isBundle: false,
-                    prodSpecCharValueUse: [{
-                        id: 'characteristic-1',
-                        name: 'vCores',
-                        productSpecCharacteristicValue: [{ value: 18 }]
-                    }]
-                }]);
-
-            validateOfferingPrice(
-                true,
-                true,
-                true,
-                offeringPrice,
-                null,
-                null,
-                function() {
-                    expect(priceRequests.isDone()).toBe(true);
-                    done();
-                }
-            );
-        });
-
-        it('should reject a price component that uses a characteristic forbidden by the related constraint', function(done) {
-            const offeringPrice = {
-                name: 'test plan',
-                isBundle: true,
-                popRelationship: [{
-                    id: 'constraint-1',
-                    href: 'constraint-1',
-                    relationshipType: 'constraint'
-                }],
-                bundledPopRelationship: [{
-                    id: 'component-1',
-                    href: 'component-1'
-                }]
-            };
-            const priceRequests = nock(SERVER)
-                .get('/api/productOfferingPrice')
-                .query({ id: 'constraint-1', limit: '1' })
-                .reply(200, [{
-                    id: 'constraint-1',
-                    isBundle: false,
-                    priceType: 'constraint',
-                    prodSpecCharValueUse: [{ id: 'characteristic-1', name: 'country' }]
-                }])
-                .get('/api/productOfferingPrice')
-                .query({ id: 'component-1', limit: '1' })
-                .reply(200, [{
-                    id: 'component-1',
-                    isBundle: false,
-                    prodSpecCharValueUse: [
-                        { id: 'characteristic-2', name: 'size' },
-                        { id: 'legacy-characteristic-id', name: 'country' }
-                    ]
-                }]);
-
-            validateOfferingPrice(
-                true,
-                true,
-                true,
-                offeringPrice,
-                422,
-                'The price plan contains a price component that uses a forbidden characteristic',
-                function() {
-                    expect(priceRequests.isDone()).toBe(true);
-                    done();
-                }
-            );
-        });
-
-        it('should reject a price plan that references another price plan', function(done) {
-            const offeringPrice = {
-                name: 'test plan',
-                isBundle: true,
-                bundledPopRelationship: [{ id: 'plan-1', href: 'plan-1' }]
-            };
-            const componentRequest = nock(SERVER)
-                .get('/api/productOfferingPrice')
-                .query({ id: 'plan-1', limit: '1' })
-                .reply(200, [{ id: 'plan-1', isBundle: true }]);
-
-            validateOfferingPrice(
-                true,
-                true,
-                true,
-                offeringPrice,
-                422,
-                'The price plan can only contain price components with isBundle set to false',
-                function() {
-                    expect(componentRequest.isDone()).toBe(true);
-                    done();
-                }
-            );
-        });
-
-        it('should reject a constraint price included as a bundled price component', function(done) {
-            const offeringPrice = {
-                name: 'test plan',
-                isBundle: true,
-                bundledPopRelationship: [{ id: 'constraint-1', href: 'constraint-1' }]
-            };
-            const componentRequest = nock(SERVER)
-                .get('/api/productOfferingPrice')
-                .query({ id: 'constraint-1', limit: '1' })
-                .reply(200, [{
-                    id: 'constraint-1',
-                    isBundle: false,
-                    priceType: 'constraint'
-                }]);
-
-            validateOfferingPrice(
-                true,
-                true,
-                true,
-                offeringPrice,
-                422,
-                'A constraint price cannot be included as a price component of a price plan',
-                function() {
-                    expect(componentRequest.isDone()).toBe(true);
-                    done();
-                }
-            );
-        });
-
-        it('should reject a price plan when a referenced price component does not exist', function(done) {
-            const offeringPrice = {
-                name: 'test plan',
-                isBundle: true,
-                bundledPopRelationship: [{ id: 'component-1', href: 'component-1' }]
-            };
-            const componentRequest = nock(SERVER)
-                .get('/api/productOfferingPrice')
-                .query({ id: 'component-1', limit: '1' })
-                .reply(200, []);
-
-            validateOfferingPrice(
-                true,
-                true,
-                true,
-                offeringPrice,
-                422,
-                'The price component component-1 referenced by the price plan cannot be accessed or does not exist',
-                function() {
-                    expect(componentRequest.isDone()).toBe(true);
-                    done();
-                }
-            );
         });
 
         it('should not allow to create offering price with invalid percentage', function(done) {
@@ -2713,8 +2071,7 @@ describe('Catalog API', function() {
             isValidPrice,
             expectedErrorStatus,
             expectedErrorMsg,
-            done,
-            expectedSchema
+            done
         ) {
             const updateBody = jasmine.createSpy();
             var utils = {
@@ -2748,16 +2105,12 @@ describe('Catalog API', function() {
                 if (!expectedErrorStatus && !expectedErrorMsg) {
                     expect(err).toBe(null);
                 } else {
-                    expect(err).toEqual(jasmine.objectContaining({ status: expectedErrorStatus, message: expectedErrorMsg }));
+                    expect(err.status).toBe(expectedErrorStatus);
+                    expect(err.message).toBe(expectedErrorMsg);
                 }
                 if(nockResponse){
                     // verify nock url has been requested
                     expect(nock.isDone()).toBe(true);
-                }
-                if (expectedSchema) {
-                    expect(updateBody).toHaveBeenCalledWith(req, jasmine.objectContaining({
-                        '@schemaLocation': expectedSchema
-                    }));
                 }
                 done()
             }
@@ -2772,354 +2125,7 @@ describe('Catalog API', function() {
                 id: '1'
             });
 
-            testUpdateOfferingPrice(
-                offeringPrice,
-                nockMock,
-                true,
-                true,
-                true,
-                null,
-                null,
-                done,
-                config.priceCompSchema
-            );
-        });
-
-        it('should reject changing isBundle when updating an offering price', function(done) {
-            const offeringPrice = {
-                isBundle: true
-            };
-            const nockMock = nock(serverUrl).get('/api/productOfferingPrice/1').reply(200, {
-                id: '1',
-                isBundle: false
-            });
-
-            testUpdateOfferingPrice(
-                offeringPrice,
-                nockMock,
-                true,
-                true,
-                true,
-                403,
-                'Field isBundle cannot be modified',
-                done
-            );
-        });
-
-        describe('price plan value uses and constraints', function() {
-            const valueUses = [{
-                id: 'characteristic-1',
-                name: 'country',
-                productSpecCharacteristicValue: [{ value: 'ES' }]
-            }];
-            const relationships = [{ id: 'constraint-1', relationshipType: 'constraint' }];
-
-            [
-                {
-                    description: 'linking a constraint to a plan that already has value uses',
-                    previous: { prodSpecCharValueUse: valueUses },
-                    patch: { popRelationship: relationships }
-                },
-                {
-                    description: 'adding value uses to a plan that already has a constraint',
-                    previous: { popRelationship: relationships },
-                    patch: { prodSpecCharValueUse: valueUses }
-                },
-                {
-                    description: 'adding both value uses and a constraint in one patch',
-                    previous: {},
-                    patch: { prodSpecCharValueUse: valueUses, popRelationship: relationships }
-                },
-                {
-                    description: 'keeping an existing conflicting configuration in an unrelated patch',
-                    previous: { prodSpecCharValueUse: valueUses, popRelationship: relationships },
-                    patch: { description: 'Updated description' }
-                }
-            ].forEach(function(testCase) {
-                it('should reject ' + testCase.description, function(done) {
-                    const priceRequest = nock(serverUrl).get('/api/productOfferingPrice/1')
-                        .reply(200, { id: '1', isBundle: true, ...testCase.previous });
-                    nock(serverUrl).get('/api/productOfferingPrice')
-                        .query({ id: 'constraint-1', limit: '1' })
-                        .reply(200, [{ id: 'constraint-1', isBundle: false, priceType: 'constraint' }]);
-
-                    testUpdateOfferingPrice(testCase.patch, null, true, true, true,
-                        422, INVALID_PRICE_PLAN_CONSTRAINT_PROFILE, function() {
-                            expect(priceRequest.isDone()).toBe(true);
-                            done();
-                        });
-                });
-            });
-
-            [
-                {
-                    description: 'clearing value uses while linking a constraint',
-                    previous: { prodSpecCharValueUse: valueUses },
-                    patch: { prodSpecCharValueUse: [], popRelationship: relationships }
-                },
-                {
-                    description: 'removing the constraint while setting value uses',
-                    previous: { popRelationship: relationships },
-                    patch: { prodSpecCharValueUse: valueUses, popRelationship: [] }
-                },
-                {
-                    description: 'fixing an existing conflict by clearing value uses',
-                    previous: { prodSpecCharValueUse: valueUses, popRelationship: relationships },
-                    patch: { prodSpecCharValueUse: [] }
-                },
-                {
-                    description: 'fixing an existing conflict by removing the constraint',
-                    previous: { prodSpecCharValueUse: valueUses, popRelationship: relationships },
-                    patch: { popRelationship: [] }
-                }
-            ].forEach(function(testCase) {
-                it('should allow ' + testCase.description, function(done) {
-                    const priceRequests = nock(serverUrl).get('/api/productOfferingPrice/1')
-                        .reply(200, { id: '1', isBundle: true, ...testCase.previous });
-                    if (testCase.patch.popRelationship && testCase.patch.popRelationship.length > 0) {
-                        priceRequests.get('/api/productOfferingPrice')
-                            .query({ id: 'constraint-1', limit: '1' })
-                            .reply(200, [{ id: 'constraint-1', isBundle: false, priceType: 'constraint' }]);
-                    }
-
-                    testUpdateOfferingPrice(testCase.patch, priceRequests, true, true, true, null, null, done);
-                });
-            });
-        });
-
-        it('should reject a partial constraint update that forbids an existing component value', function(done) {
-            const offeringPrice = {
-                prodSpecCharValueUse: [{
-                    id: 'characteristic-1',
-                    name: 'country',
-                    productSpecCharacteristicValue: [{ value: 'ES' }, { value: 'DE' }]
-                }]
-            };
-            const nockMock = nock(serverUrl)
-                .get('/api/productOfferingPrice/1')
-                .reply(200, {
-                    id: '1',
-                    isBundle: false,
-                    priceType: 'constraint'
-                })
-                .get('/api/productOfferingPrice')
-                .query({
-                    'popRelationship.id': '1',
-                    limit: '100',
-                    offset: '0'
-                })
-                .reply(200, [{
-                    id: 'plan-1',
-                    isBundle: true,
-                    popRelationship: [{ id: '1', relationshipType: 'constraint' }],
-                    bundledPopRelationship: [{ id: 'component-1', href: 'component-1' }]
-                }])
-                .get('/api/productOfferingPrice')
-                .query({ id: 'component-1', limit: '1' })
-                .reply(200, [{
-                    id: 'component-1',
-                    isBundle: false,
-                    priceType: 'recurring',
-                    prodSpecCharValueUse: [{
-                        id: 'legacy-characteristic-id',
-                        name: 'country',
-                        productSpecCharacteristicValue: [{ value: 'DE' }]
-                    }]
-                }]);
-
-            testUpdateOfferingPrice(
-                offeringPrice,
-                nockMock,
-                true,
-                true,
-                true,
-                422,
-                'The price plan contains a price component that uses a forbidden characteristic',
-                done
-            );
-        });
-
-        it('should reject a new price component that uses a characteristic forbidden by the plan constraint', function(done) {
-            const offeringPrice = {
-                bundledPopRelationship: [{ id: 'component-1', href: 'component-1' }]
-            };
-            const nockMock = nock(serverUrl)
-                .get('/api/productOfferingPrice/1')
-                .reply(200, {
-                    id: '1',
-                    isBundle: true,
-                    popRelationship: [{
-                        id: 'constraint-1',
-                        href: 'constraint-1',
-                        relationshipType: 'constraint'
-                    }]
-                })
-                .get('/api/productOfferingPrice')
-                .query({ id: 'constraint-1', limit: '1' })
-                .reply(200, [{
-                    id: 'constraint-1',
-                    isBundle: false,
-                    priceType: 'constraint',
-                    prodSpecCharValueUse: [{ id: 'characteristic-1', name: 'country' }]
-                }])
-                .get('/api/productOfferingPrice')
-                .query({ id: 'component-1', limit: '1' })
-                .reply(200, [{
-                    id: 'component-1',
-                    isBundle: false,
-                    priceType: 'recurring',
-                    prodSpecCharValueUse: [{ id: 'legacy-characteristic-id', name: 'country' }]
-                }]);
-
-            testUpdateOfferingPrice(
-                offeringPrice,
-                nockMock,
-                true,
-                true,
-                true,
-                422,
-                'The price plan contains a price component that uses a forbidden characteristic',
-                done
-            );
-        });
-
-        it('should allow a price component update that does not overlap its price plan partial constraint', function(done) {
-            const offeringPrice = {
-                prodSpecCharValueUse: [{
-                    id: 'characteristic-1',
-                    name: 'vCores',
-                    productSpecCharacteristicValue: [{ valueFrom: 18, valueTo: 64 }]
-                }]
-            };
-            const nockMock = nock(serverUrl)
-                .get('/api/productOfferingPrice/1')
-                .reply(200, {
-                    id: '1',
-                    isBundle: false
-                })
-                .get('/api/productOfferingPrice')
-                .query({
-                    'bundledPopRelationship.id': '1',
-                    limit: '100',
-                    offset: '0'
-                })
-                .reply(200, [{
-                    id: 'plan-1',
-                    isBundle: true,
-                    popRelationship: [{ id: 'constraint-1', relationshipType: 'constraint' }]
-                }])
-                .get('/api/productOfferingPrice')
-                .query({ id: 'constraint-1', limit: '1' })
-                .reply(200, [{
-                    id: 'constraint-1',
-                    isBundle: false,
-                    priceType: 'constraint',
-                    prodSpecCharValueUse: [{
-                        id: 'characteristic-1',
-                        name: 'vCores',
-                        productSpecCharacteristicValue: [{ valueFrom: 100, valueTo: 386 }]
-                    }]
-                }]);
-
-            testUpdateOfferingPrice(
-                offeringPrice,
-                nockMock,
-                true,
-                true,
-                true,
-                null,
-                null,
-                done
-            );
-        });
-
-        it('should reject a price component update that overlaps any price plan partial constraint', function(done) {
-            const offeringPrice = {
-                prodSpecCharValueUse: [{
-                    id: 'characteristic-1',
-                    name: 'vCores',
-                    productSpecCharacteristicValue: [{ valueFrom: 1, valueTo: 18 }]
-                }]
-            };
-            const nockMock = nock(serverUrl)
-                .get('/api/productOfferingPrice/1')
-                .reply(200, {
-                    id: '1',
-                    isBundle: false
-                })
-                .get('/api/productOfferingPrice')
-                .query({
-                    'bundledPopRelationship.id': '1',
-                    limit: '100',
-                    offset: '0'
-                })
-                .reply(200, [{
-                    id: 'plan-1',
-                    isBundle: true,
-                    popRelationship: [{ id: 'constraint-1', relationshipType: 'constraint' }]
-                }, {
-                    id: 'plan-2',
-                    isBundle: true,
-                    popRelationship: [{ id: 'constraint-2', relationshipType: 'constraint' }]
-                }])
-                .get('/api/productOfferingPrice')
-                .query({ id: 'constraint-1,constraint-2', limit: '2' })
-                .reply(200, [{
-                    id: 'constraint-1',
-                    isBundle: false,
-                    priceType: 'constraint',
-                    prodSpecCharValueUse: [{ id: 'characteristic-2', name: 'size' }]
-                }, {
-                    id: 'constraint-2',
-                    isBundle: false,
-                    priceType: 'constraint',
-                    prodSpecCharValueUse: [{
-                        id: 'characteristic-1',
-                        name: 'vCores',
-                        productSpecCharacteristicValue: [{ valueFrom: 4, valueTo: 386 }]
-                    }]
-                }]);
-
-            testUpdateOfferingPrice(
-                offeringPrice,
-                nockMock,
-                true,
-                true,
-                true,
-                422,
-                'The price component uses a characteristic forbidden by one of its price plans',
-                done
-            );
-        });
-
-        it('should reject a price component update when its price plans cannot be retrieved', function(done) {
-            const offeringPrice = {
-                prodSpecCharValueUse: [{ id: 'characteristic-1', name: 'country' }]
-            };
-            const nockMock = nock(serverUrl)
-                .get('/api/productOfferingPrice/1')
-                .reply(200, {
-                    id: '1',
-                    isBundle: false
-                })
-                .get('/api/productOfferingPrice')
-                .query({
-                    'bundledPopRelationship.id': '1',
-                    limit: '100',
-                    offset: '0'
-                })
-                .reply(500);
-
-            testUpdateOfferingPrice(
-                offeringPrice,
-                nockMock,
-                true,
-                true,
-                true,
-                422,
-                'The price plans referencing the price component cannot be retrieved',
-                done
-            );
+            testUpdateOfferingPrice(offeringPrice, nockMock, true, true, true, null, null, done);
         });
 
         it('should not allow to update offering price when offering price cannot be retrieved', function(done) {
@@ -3288,10 +2294,7 @@ describe('Catalog API', function() {
         expectedErrorMsg,
         updated,
         uniqueCategories,
-        done,
-        partyClient,
-        jwt,
-        x509Certificate
+        done
     ) {
         var checkRoleMethod = jasmine.createSpy();
         checkRoleMethod.and.returnValue(true);
@@ -3300,7 +2303,6 @@ describe('Catalog API', function() {
 
         var tmfUtils = {
             isOwner: productRequestInfo.owner ? isOwnerTrue : isOwnerFalse,
-            hasOrganizationCountry: realTmfUtils.hasOrganizationCountry,
             isValidStatusTransition: function(firstSt, nextSt) {
                 return true;
             }
@@ -3328,18 +2330,7 @@ describe('Catalog API', function() {
             }
         };
 
-        var catalogApi = getCatalogApi(
-            {},
-            tmfUtils,
-            utils,
-            rssClient,
-            null,
-            null,
-            null,
-            partyClient,
-            jwt,
-            x509Certificate
-        );
+        var catalogApi = getCatalogApi({}, tmfUtils, utils, rssClient);
 
         // Basic properties
         const userName = 'test';
@@ -3354,9 +2345,6 @@ describe('Catalog API', function() {
         var bodyGetOffering = {
             productSpecification: getProductSpecification(productPath)
         };
-        if (productRequestInfo.offeringRelatedParty) {
-            bodyGetOffering.relatedParty = productRequestInfo.offeringRelatedParty;
-        }
 
         nock(serverUrl)
             .get(apiBase + offeringPath)
@@ -3365,17 +2353,13 @@ describe('Catalog API', function() {
         // The mock server that will handle the request when the product is requested
         var role = 'Seller';
         var bodyOk = {
-            id: productRequestInfo.id || getProductSpecification(productPath).id,
-            relatedParty: productRequestInfo.relatedParty || [{ id: userName, role: role }],
-            lifecycleStatus: productRequestInfo.lifecycleStatus,
-            attachment: productRequestInfo.attachment || [],
-            productSpecCharacteristic: productRequestInfo.productSpecCharacteristic || []
+            relatedParty: [{ id: userName, role: role }],
+            lifecycleStatus: productRequestInfo.lifecycleStatus
         };
         var bodyGetProduct = productRequestInfo.requestStatus === 200 ? bodyOk : defaultErrorMessage;
 
         nock(serverUrl)
             .get(apiBase + productPath)
-            .times(productRequestInfo.requestCount || 1)
             .reply(productRequestInfo.requestStatus, bodyGetProduct);
 
         // The mock server that will handle the request when the catalog is requested
@@ -3646,9 +2630,6 @@ describe('Catalog API', function() {
 
     it('should allow to launch an offering when launchValidationEnabled is true and conditions are met', function(done) {
         config.launchValidationEnabled = true;
-        const organizationId = 'urn:ngsi-ld:organization:launch-ready';
-        const productSpecId = '7';
-        const complianceVerifier = buildComplianceVerifier(productSpecId);
 
         var offeringBody = JSON.stringify({
             lifecycleStatus: 'launched'
@@ -3656,16 +2637,8 @@ describe('Catalog API', function() {
 
         var productRequestInfo = {
             requestStatus: 200,
-            requestCount: 2,
-            id: productSpecId,
             owner: true,
-            lifecycleStatus: 'launched',
-            offeringRelatedParty: [{ id: organizationId, role: 'Seller', '@referredType': 'Organization' }],
-            attachment: [{ name: 'Profile Picture', attachmentType: 'image/png', url: 'https://example.com/image.png' }],
-            productSpecCharacteristic: [{
-                name: 'Compliance:VC',
-                productSpecCharacteristicValue: [{ value: 'signed-compliance-credential' }]
-            }]
+            lifecycleStatus: 'launched'
         };
 
         var catalogRequestInfo = {
@@ -3673,75 +2646,9 @@ describe('Catalog API', function() {
             lifecycleStatus: 'launched'
         };
 
-        const getOrganization = jasmine.createSpy('getOrganization').and.returnValue(Promise.resolve({
-            body: {
-                status: 'validated',
-                partyCharacteristic: [{ name: 'country', value: 'BE' }]
-            }
-        }));
+        testUpdateProductOffering(offeringBody, productRequestInfo, null, catalogRequestInfo, null, null, true, null, done);
 
-        testUpdateProductOffering(
-            offeringBody,
-            productRequestInfo,
-            null,
-            catalogRequestInfo,
-            null,
-            null,
-            true,
-            null,
-            function() {
-                expect(getOrganization).toHaveBeenCalledWith(organizationId);
-                expect(complianceVerifier.jwt.verify).toHaveBeenCalledWith(
-                    'signed-compliance-credential',
-                    COMPLIANCE_CERTIFICATE_PEM,
-                    { algorithms: ['RS256'] }
-                );
-                config.launchValidationEnabled = false;
-                done();
-            },
-            { getOrganization: getOrganization },
-            complianceVerifier.jwt,
-            complianceVerifier.x509Certificate
-        );
-    });
-
-    it('should reject launching an offering created by an initialized organization', function(done) {
-        config.launchValidationEnabled = true;
-        const organizationId = 'urn:ngsi-ld:organization:initialized';
-        var offeringBody = JSON.stringify({ lifecycleStatus: 'launched' });
-        var productRequestInfo = {
-            requestStatus: 200,
-            owner: true,
-            lifecycleStatus: 'launched',
-            offeringRelatedParty: [{ id: organizationId, role: 'Seller', '@referredType': 'Organization' }],
-            attachment: [{ name: 'Profile Picture', attachmentType: 'image/png', url: 'https://example.com/image.png' }]
-        };
-        var catalogRequestInfo = {
-            requestStatus: 200,
-            lifecycleStatus: 'launched'
-        };
-        const getOrganization = jasmine.createSpy('getOrganization').and.returnValue(Promise.resolve({
-            body: {
-                status: 'Initialized',
-                partyCharacteristic: [{ name: 'country', value: 'BE' }]
-            }
-        }));
-
-        testUpdateProductOffering(
-            offeringBody,
-            productRequestInfo,
-            null,
-            catalogRequestInfo,
-            403,
-            'The product offering does not meet the requirements to be launched',
-            false,
-            null,
-            function() {
-                config.launchValidationEnabled = false;
-                done();
-            },
-            { getOrganization: getOrganization }
-        );
+        config.launchValidationEnabled = false;
     });
 
     // PRODUCTS & CATALOGS
@@ -3910,16 +2817,11 @@ describe('Catalog API', function() {
         }
 
         var prevBody = {
-            id: productId,
             lifecycleStatus: bodyStatus,
             relatedParty: previousProductBody.relatedParty,
             validFor: {},
             serviceSpecification: [],
-            resourceSpecification: [],
-            productSpecCharacteristic: [{
-                id: 'characteristic-1',
-                name: 'Existing characteristic'
-            }]
+            resourceSpecification: []
         };
         testChangeProductSpec(
             productPath,
@@ -3960,32 +2862,6 @@ describe('Catalog API', function() {
         };
 
         testUpdateProductSpec(productBody, offeringsInfo, null, null, done);
-    });
-
-    it('should allow to remove product characteristics from an active product specification', function(done) {
-        var productBody = JSON.stringify({
-            productSpecCharacteristic: []
-        });
-
-        var offeringsInfo = {
-            requestStatus: 200,
-            offerings: []
-        };
-
-        testUpdateProductSpec(productBody, offeringsInfo, null, null, done);
-    });
-
-    it('should not allow to remove product characteristics from a launched product specification', function(done) {
-        var productBody = JSON.stringify({
-            productSpecCharacteristic: []
-        });
-
-        var offeringsInfo = {
-            requestStatus: 200,
-            offerings: []
-        };
-
-        testUpdateProductSpec(productBody, offeringsInfo, 422, INVALID_CHARACTERISTIC_REMOVAL, done, 'Launched');
     });
 
     it('should not allow to update a product if the tmfUtils returns a errorMessage when name is set', function(done) {
@@ -6801,92 +5677,6 @@ describe('Catalog API', function() {
                 done
             );
         });
-
-        it('should remove deleted product characteristics from related price components and constraints', function(done) {
-            const removedCharacteristic = {
-                id: 'characteristic-1',
-                name: 'Removed characteristic'
-            };
-            const remainingCharacteristic = {
-                id: 'characteristic-2',
-                name: 'Remaining characteristic'
-            };
-            const req = {
-                method: 'PATCH',
-                apiUrl: '/productSpecification/product-1',
-                reqBody: {},
-                body: {
-                    id: 'product-1'
-                },
-                user: user,
-                extraData: {
-                    productSpecificationId: 'product-1',
-                    removedProductSpecCharacteristicIds: [removedCharacteristic.id]
-                }
-            };
-
-            const offeringsScope = nock(serverUrl)
-                .get('/api/productOffering')
-                .query({
-                    'productSpecification.id': 'product-1',
-                    limit: '100',
-                    offset: '0'
-                })
-                .reply(200, [{
-                    productOfferingPrice: [{ id: 'plan-1' }, { id: 'plan-2' }]
-                }]);
-            const pricePlansScope = nock(serverUrl)
-                .get('/api/productOfferingPrice')
-                .query({ id: 'plan-1,plan-2', limit: '2' })
-                .reply(200, [{
-                    id: 'plan-1',
-                    bundledPopRelationship: [{ id: 'component-1' }, { id: 'component-2' }],
-                    popRelationship: [{ id: 'constraint-1', relationshipType: 'constraint' }, {
-                        id: 'discount-1',
-                        relationshipType: 'discount'
-                    }]
-                }, {
-                    id: 'plan-2',
-                    bundledPopRelationship: [{ id: 'component-1' }],
-                    popRelationship: [{ id: 'constraint-1', relationshipType: 'constraint' }]
-                }]);
-            const relatedPricesScope = nock(serverUrl)
-                .get('/api/productOfferingPrice')
-                .query({ id: 'component-1,component-2,constraint-1', limit: '3' })
-                .reply(200, [{
-                    id: 'component-1',
-                    prodSpecCharValueUse: [removedCharacteristic, remainingCharacteristic]
-                }, {
-                    id: 'component-2',
-                    prodSpecCharValueUse: [remainingCharacteristic]
-                }, {
-                    id: 'constraint-1',
-                    priceType: 'constraint',
-                    prodSpecCharValueUse: [removedCharacteristic]
-                }]);
-            const componentUpdateScope = nock(serverUrl)
-                .patch('/api/productOfferingPrice/component-1', {
-                    prodSpecCharValueUse: [remainingCharacteristic]
-                })
-                .reply(200, {});
-            const constraintUpdateScope = nock(serverUrl)
-                .patch('/api/productOfferingPrice/constraint-1', {
-                    prodSpecCharValueUse: []
-                })
-                .reply(200, {});
-
-            testPostValidation(
-                req,
-                () => {
-                    expect(offeringsScope.isDone()).toBe(true);
-                    expect(pricePlansScope.isDone()).toBe(true);
-                    expect(relatedPricesScope.isDone()).toBe(true);
-                    expect(componentUpdateScope.isDone()).toBe(true);
-                    expect(constraintUpdateScope.isDone()).toBe(true);
-                },
-                done
-            );
-        });
     });
 
     describe('API Error handler', function() {
@@ -6993,344 +5783,31 @@ describe('Catalog API', function() {
         const serverUrl = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
         const apiBase = '/api';
 
-        const productSpecId = 'urn:ngsi-ld:product-specification:launch-check';
-        const organizationId = 'urn:ngsi-ld:organization:launch-check';
-
-        var getCatalogApiSimple = function(partyClient, jwt, x509Certificate) {
-            return getCatalogApi(
-                {},
-                { hasOrganizationCountry: realTmfUtils.hasOrganizationCountry },
-                {},
-                null,
-                null,
-                null,
-                null,
-                partyClient,
-                jwt,
-                x509Certificate
-            );
+        var getCatalogApiSimple = function() {
+            return getCatalogApi({}, {}, {});
         };
 
-        const buildOffering = function(offeringId) {
-            return {
-                id: offeringId,
-                lifecycleStatus: 'active',
-                name: 'Test Offering',
-                productSpecification: { id: productSpecId },
-                relatedParty: [{
-                    id: organizationId,
-                    role: 'Seller',
-                    '@referredType': 'Organization'
-                }]
-            };
-        };
-
-        const buildProductSpec = function(options) {
-            options = options || {};
-            const productSpec = {
-                id: productSpecId,
-                attachment: [{
-                    name: 'Profile Picture',
-                    attachmentType: 'image/png',
-                    url: 'https://example.com/image.png'
-                }]
-            };
-            if (!options.withoutComplianceCredential) {
-                productSpec.productSpecCharacteristic = [{
-                    name: 'Compliance:VC',
-                    productSpecCharacteristicValue: [{
-                        value: options.complianceToken || 'signed-compliance-credential'
-                    }]
-                }];
-                if (options.additionalToken) {
-                    productSpec.productSpecCharacteristic[0].productSpecCharacteristicValue.push({
-                        value: options.additionalToken
-                    });
-                }
-            }
-            return productSpec;
-        };
-
-        const buildOrganization = function(status) {
-            const organization = {
-                partyCharacteristic: [{ name: 'country', value: 'BE' }]
-            };
-            if (status !== undefined) {
-                organization.status = status;
-            }
-            return organization;
-        };
-
-        const testLaunchCheck = function(
-            offering,
-            productSpec,
-            organization,
-            expectedResult,
-            done,
-            verifierOptions
-        ) {
-            verifierOptions = verifierOptions || {};
-            const complianceVerifier = buildComplianceVerifier(productSpecId, verifierOptions);
+        it('should return canBeLaunched true when the offering exists', function(done) {
+            var offeringId = 'urn:offering:42';
+            var offering = { id: offeringId, lifecycleStatus: 'active', name: 'Test Offering' };
 
             nock(serverUrl)
-                .get(apiBase + '/productOffering/' + offering.id)
+                .get(apiBase + '/productOffering/' + offeringId)
                 .reply(200, offering);
-            nock(serverUrl)
-                .get(apiBase + '/productSpecification/' + productSpecId)
-                .reply(200, productSpec);
 
-            const getOrganization = jasmine.createSpy('getOrganization').and.returnValue(Promise.resolve({
-                body: organization
-            }));
-            const catalogApi = getCatalogApiSimple(
-                { getOrganization: getOrganization },
-                complianceVerifier.jwt,
-                complianceVerifier.x509Certificate
-            );
-            const req = { params: { id: offering.id } };
-            const res = {
+            var catalogApi = getCatalogApiSimple();
+
+            var req = { params: { id: offeringId } };
+            var res = {
                 status: jasmine.createSpy('status').and.callFake(function() { return res; }),
                 json: jasmine.createSpy('json').and.callFake(function(body) {
                     expect(res.status).not.toHaveBeenCalled();
-                    expect(body).toEqual({ canBeLaunched: expectedResult });
-                    if (verifierOptions.assertVerifier) {
-                        verifierOptions.assertVerifier(complianceVerifier);
-                    }
+                    expect(body).toEqual({ canBeLaunched: true });
                     done();
                 })
             };
 
             catalogApi.checkOfferingLaunch(req, res);
-        };
-
-        it('should return canBeLaunched true when all launch requirements are met', function(done) {
-            var offeringId = 'urn:offering:42';
-            testLaunchCheck(
-                buildOffering(offeringId),
-                buildProductSpec(),
-                buildOrganization('validated'),
-                true,
-                done,
-                {
-                    assertVerifier: function(complianceVerifier) {
-                        expect(complianceVerifier.jwt.verify).toHaveBeenCalledWith(
-                            'signed-compliance-credential',
-                            COMPLIANCE_CERTIFICATE_PEM,
-                            { algorithms: ['RS256'] }
-                        );
-                        expect(complianceVerifier.x509Certificate).toHaveBeenCalledWith(
-                            COMPLIANCE_CERTIFICATE_PEM
-                        );
-                    }
-                }
-            );
-        });
-
-        it('should accept gx:labelLevel and the verifiableCredential JWT property', function(done) {
-            var offeringId = 'urn:offering:gx-label-level';
-            testLaunchCheck(
-                buildOffering(offeringId),
-                buildProductSpec(),
-                buildOrganization('validated'),
-                true,
-                done,
-                {
-                    credentialProperty: 'verifiableCredential',
-                    label: 'PP'
-                }
-            );
-        });
-
-        it('should accept an organization without status when the seller is defined in the offering', function(done) {
-            var offeringId = 'urn:offering:no-org-status';
-            testLaunchCheck(buildOffering(offeringId), buildProductSpec(), buildOrganization(undefined), true, done);
-        });
-
-        it('should ignore a product specification seller when the offering has no seller', function(done) {
-            var offeringId = 'urn:offering:no-offering-seller';
-            const offering = buildOffering(offeringId);
-            delete offering.relatedParty;
-            const productSpec = buildProductSpec();
-            productSpec.relatedParty = [{
-                id: organizationId,
-                role: 'Seller',
-                '@referredType': 'Organization'
-            }];
-            testLaunchCheck(offering, productSpec, buildOrganization('validated'), false, done);
-        });
-
-        it('should ignore a seller that is not an organization', function(done) {
-            var offeringId = 'urn:offering:individual-seller';
-            const offering = buildOffering(offeringId);
-            offering.relatedParty = [{
-                id: 'urn:ngsi-ld:individual:seller',
-                role: 'Seller',
-                '@referredType': 'Individual'
-            }];
-            testLaunchCheck(offering, buildProductSpec(), buildOrganization('validated'), false, done);
-        });
-
-        it('should return canBeLaunched false when the product specification has no image', function(done) {
-            var offeringId = 'urn:offering:no-image';
-            const productSpec = buildProductSpec();
-            productSpec.attachment = [{ attachmentType: 'application/pdf', url: 'https://example.com/manual.pdf' }];
-            testLaunchCheck(buildOffering(offeringId), productSpec, buildOrganization('validated'), false, done);
-        });
-
-        it('should return canBeLaunched false when the profile picture has no attachment type', function(done) {
-            var offeringId = 'urn:offering:image-without-type';
-            const productSpec = buildProductSpec();
-            delete productSpec.attachment[0].attachmentType;
-            testLaunchCheck(buildOffering(offeringId), productSpec, buildOrganization('validated'), false, done);
-        });
-
-        it('should return canBeLaunched false when the profile picture has no URL', function(done) {
-            var offeringId = 'urn:offering:image-without-url';
-            const productSpec = buildProductSpec();
-            delete productSpec.attachment[0].url;
-            testLaunchCheck(buildOffering(offeringId), productSpec, buildOrganization('validated'), false, done);
-        });
-
-        it('should return canBeLaunched false when the organization has no country', function(done) {
-            var offeringId = 'urn:offering:no-country';
-            const organization = buildOrganization('validated');
-            organization.partyCharacteristic = [{ name: 'country', value: '  ' }];
-            testLaunchCheck(buildOffering(offeringId), buildProductSpec(), organization, false, done);
-        });
-
-        it('should return canBeLaunched false when the organization is initialized', function(done) {
-            var offeringId = 'urn:offering:initialized-org';
-            testLaunchCheck(buildOffering(offeringId), buildProductSpec(), buildOrganization(' Initialized '), false, done);
-        });
-
-        it('should return canBeLaunched false when Compliance:VC is missing', function(done) {
-            var offeringId = 'urn:offering:no-compliance-vc';
-            testLaunchCheck(
-                buildOffering(offeringId),
-                buildProductSpec({ withoutComplianceCredential: true }),
-                buildOrganization('validated'),
-                false,
-                done
-            );
-        });
-
-        it('should return canBeLaunched false when Compliance:VC contains more than one token', function(done) {
-            var offeringId = 'urn:offering:multiple-compliance-vcs';
-            testLaunchCheck(
-                buildOffering(offeringId),
-                buildProductSpec({ additionalToken: 'another-signed-compliance-credential' }),
-                buildOrganization('validated'),
-                false,
-                done
-            );
-        });
-
-        it('should return canBeLaunched false when the compliance JWT signature is invalid', function(done) {
-            var offeringId = 'urn:offering:invalid-compliance-signature';
-            testLaunchCheck(
-                buildOffering(offeringId),
-                buildProductSpec(),
-                buildOrganization('validated'),
-                false,
-                done,
-                { verifyError: 'Invalid signature' }
-            );
-        });
-
-        it('should return canBeLaunched false when the compliance JWT has no x5c certificate', function(done) {
-            var offeringId = 'urn:offering:missing-compliance-certificate';
-            testLaunchCheck(
-                buildOffering(offeringId),
-                buildProductSpec(),
-                buildOrganization('validated'),
-                false,
-                done,
-                { decoded: { header: { alg: 'RS256' } } }
-            );
-        });
-
-        it('should return canBeLaunched false when the compliance issuer does not match x5c', function(done) {
-            var offeringId = 'urn:offering:wrong-compliance-issuer';
-            testLaunchCheck(
-                buildOffering(offeringId),
-                buildProductSpec(),
-                buildOrganization('validated'),
-                false,
-                done,
-                { issuer: 'did:elsi:VATES-B00000000' }
-            );
-        });
-
-        it('should return canBeLaunched false when the compliance issuer is missing', function(done) {
-            var offeringId = 'urn:offering:missing-compliance-issuer';
-            testLaunchCheck(
-                buildOffering(offeringId),
-                buildProductSpec(),
-                buildOrganization('validated'),
-                false,
-                done,
-                { missingIssuer: true }
-            );
-        });
-
-        it('should return canBeLaunched false when x5c has no organizationIdentifier', function(done) {
-            var offeringId = 'urn:offering:missing-certificate-organization-identifier';
-            testLaunchCheck(
-                buildOffering(offeringId),
-                buildProductSpec(),
-                buildOrganization('validated'),
-                false,
-                done,
-                { missingOrganizationIdentifier: true }
-            );
-        });
-
-        it('should return canBeLaunched false when the compliance credential references another product', function(done) {
-            var offeringId = 'urn:offering:wrong-compliance-subject';
-            testLaunchCheck(
-                buildOffering(offeringId),
-                buildProductSpec(),
-                buildOrganization('validated'),
-                false,
-                done,
-                { subjectId: 'urn:ngsi-ld:product-specification:other' }
-            );
-        });
-
-        it('should return canBeLaunched false when the compliance label is not allowed', function(done) {
-            var offeringId = 'urn:offering:invalid-compliance-label';
-            testLaunchCheck(
-                buildOffering(offeringId),
-                buildProductSpec(),
-                buildOrganization('validated'),
-                false,
-                done,
-                { label: 'L3' }
-            );
-        });
-
-        it('should return canBeLaunched false when the compliance label is missing', function(done) {
-            var offeringId = 'urn:offering:missing-compliance-label';
-            testLaunchCheck(
-                buildOffering(offeringId),
-                buildProductSpec(),
-                buildOrganization('validated'),
-                false,
-                done,
-                { missingLabel: true }
-            );
-        });
-
-        it('should return canBeLaunched false when the VC is not a label credential', function(done) {
-            var offeringId = 'urn:offering:wrong-compliance-type';
-            testLaunchCheck(
-                buildOffering(offeringId),
-                buildProductSpec(),
-                buildOrganization('validated'),
-                false,
-                done,
-                { types: ['VerifiableCredential'] }
-            );
         });
 
         it('should return an error when the offering cannot be retrieved', function(done) {

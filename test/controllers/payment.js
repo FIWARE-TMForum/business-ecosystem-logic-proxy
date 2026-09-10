@@ -54,8 +54,7 @@ describe('payment controller: getPaymentInfo', () => {
     errorSpy = jasmine.createSpy('logger.error');
 
     cfg = {
-      paymentGateway: 'https://pay.example.com',
-      paymentProvider: 'dpas'
+      paymentGateway: 'https://pay.example.com'
     };
 
     payment = loadModule();
@@ -155,91 +154,6 @@ describe('payment controller: getPaymentInfo', () => {
     expect(res.json).toHaveBeenCalledWith({
       gatewaysCount: 2,
       providerUrl: 'https://pay.example.com/provider-admin/#/login?productProviderId=prov-xyz'
-    });
-  });
-
-  it('returns one gateway for paypal without calling DPAS', async () => {
-    cfg.paymentProvider = 'paypal';
-    const { req, res } = makeReqRes('paypal-provider');
-
-    await payment.getPaymentInfo(req, res);
-
-    expect(axiosMock.get).not.toHaveBeenCalled();
-    expect(axiosMock.request).not.toHaveBeenCalled();
-    expect(res.json).toHaveBeenCalledWith({
-      gatewaysCount: 1,
-      providerUrl: null
-    });
-  });
-
-  it('returns one gateway for stripe without calling DPAS', async () => {
-    cfg.paymentProvider = 'stripe';
-    const { req, res } = makeReqRes('stripe-provider');
-
-    await payment.getPaymentInfo(req, res);
-
-    expect(axiosMock.get).not.toHaveBeenCalled();
-    expect(axiosMock.request).not.toHaveBeenCalled();
-    expect(res.json).toHaveBeenCalledWith({
-      gatewaysCount: 1,
-      providerUrl: null
-    });
-  });
-
-  it('returns one gateway for none without calling DPAS', async () => {
-    cfg.paymentProvider = 'None';
-    const { req, res } = makeReqRes('none-provider');
-
-    await payment.getPaymentInfo(req, res);
-
-    expect(axiosMock.get).not.toHaveBeenCalled();
-    expect(axiosMock.request).not.toHaveBeenCalled();
-    expect(res.json).toHaveBeenCalledWith({
-      gatewaysCount: 1,
-      providerUrl: null
-    });
-  });
-
-  it('uses no-payment mode when paymentProvider is empty', async () => {
-    cfg.paymentProvider = '';
-    const { req, res } = makeReqRes('empty-provider');
-
-    await payment.getPaymentInfo(req, res);
-
-    expect(axiosMock.get).not.toHaveBeenCalled();
-    expect(axiosMock.request).not.toHaveBeenCalled();
-    expect(res.json).toHaveBeenCalledWith({
-      gatewaysCount: 1,
-      providerUrl: null
-    });
-  });
-
-  it('uses no-payment mode when paymentProvider is not configured', async () => {
-    delete cfg.paymentProvider;
-    const { req, res } = makeReqRes('default-provider');
-
-    await payment.getPaymentInfo(req, res);
-
-    expect(axiosMock.get).not.toHaveBeenCalled();
-    expect(axiosMock.request).not.toHaveBeenCalled();
-    expect(res.json).toHaveBeenCalledWith({
-      gatewaysCount: 1,
-      providerUrl: null
-    });
-  });
-
-  it('returns zero gateways for unsupported providers without calling DPAS', async () => {
-    cfg.paymentProvider = 'unknown';
-    const { req, res } = makeReqRes('unknown-provider');
-
-    await payment.getPaymentInfo(req, res);
-
-    expect(axiosMock.get).not.toHaveBeenCalled();
-    expect(axiosMock.request).not.toHaveBeenCalled();
-    expect(errorSpy).toHaveBeenCalledWith('%s: %s', 'Unsupported payment provider', 'unknown');
-    expect(res.json).toHaveBeenCalledWith({
-      gatewaysCount: 0,
-      providerUrl: null
     });
   });
 });
