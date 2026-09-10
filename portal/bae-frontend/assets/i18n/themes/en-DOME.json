@@ -1,0 +1,20 @@
+{
+  "PLATFORM": {
+    "CATALOGS": {
+      "_hero_title_1": "Find the ",
+      "_hero_title_accent": "right provider",
+      "_hero_title_2": " for your needs.",
+      "_hero_subtitle": "Discover verified providers offering innovative digital services and solutions across industries.",
+      "_all_providers": "All providers",
+      "_bc_current": "Providers catalog"
+    }
+  },
+  "CATALOGS": {
+    "_hero_title_1": "Find the ",
+    "_hero_title_accent": "right provider",
+    "_hero_title_2": " for your needs.",
+    "_hero_subtitle": "Discover verified providers offering innovative digital services and solutions across industries.",
+    "_all_providers": "All providers",
+    "_bc_current": "Providers catalog"
+  }
+}

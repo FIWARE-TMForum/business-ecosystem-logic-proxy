@@ -22,10 +22,13 @@
 const async = require('async')
 const axios = require('axios')
 const config = require('./../../config')
+const { X509Certificate } = require('crypto')
 const deepcopy = require('deepcopy')
 const equal = require('deep-equal')
 const { indexes } = require('./../../lib/indexes')
+const jwt = require('jsonwebtoken')
 const logger = require('./../../lib/logger').logger.getLogger('TMF')
+const partyClient = require('./../../lib/party').partyClient
 const rssClient = require('./../../lib/rss').rssClient
 const storeClient = require('./../../lib/store').storeClient
 const tmfUtils = require('./../../lib/tmfUtils')
@@ -40,6 +43,9 @@ var ACTIVE_STATE = 'active';
 var LAUNCHED_STATE = 'launched';
 var RETIRED_STATE = 'retired';
 var OBSOLETE_STATE = 'obsolete';
+const PRICE_COMPONENT_QUERY_BATCH_SIZE = 10;
+const PRICE_PLAN_QUERY_PAGE_SIZE = 100;
+const CONSTRAINT_PRICE_TYPE = 'constraint';
 
 // Validator to check user permissions for accessing TMForum resources
 const catalog = (function() {
@@ -57,6 +63,8 @@ const catalog = (function() {
     const categoryPattern = new RegExp('/category/[^/]+/?$');
     const categoriesPattern = new RegExp('/category/?$');
     const catalogsPattern = new RegExp('/catalog/?$');
+    const allowedComplianceLabels = ['BL', 'P', 'PP'];
+    const complianceIssuerPrefix = 'did:elsi:';
 
     const retrieveAsset = function(assetPath, callback) {
         if (!assetPath.startsWith('/')) {
@@ -86,6 +94,17 @@ const catalog = (function() {
                 status: status
             });
         })
+    };
+
+    const retrieveAssetAsync = function(assetPath) {
+        return new Promise((resolve, reject) => {
+            retrieveAsset(assetPath, function(err, result) {
+                if (err) {
+                    return reject(err);
+                }
+                resolve(result);
+            });
+        });
     };
 
     const getDependencySpecs = function (endpoint, path, refs, fields, callback){
@@ -123,6 +142,155 @@ const catalog = (function() {
                 callback(err, response);
             }
         });
+    }
+
+    const getCatalogOfferingPathInfo = function(req) {
+        if (!req.apiUrl && !req.path) {
+            return null
+        }
+
+        const requestPath = req.path || req.apiUrl.split('?')[0]
+        const pathParts = requestPath.split('/')
+
+        if (
+            pathParts.length >= 5 &&
+            pathParts[1] === config.endpoints.catalog.path &&
+            pathParts[2] === 'catalog' &&
+            pathParts[4] === 'productOffering'
+        ) {
+            return {
+                catalogId: pathParts[3],
+                resourcePath: '/' + pathParts.slice(4).join('/')
+            }
+        }
+
+        return null
+    }
+
+    const getCategoryIds = function(catalog) {
+        if (!catalog.category) {
+            return []
+        }
+
+        return catalog.category.map((category) => {
+            return category.id
+        })
+    }
+
+    const getQueryString = function(apiUrl) {
+        const queryStart = apiUrl.indexOf('?')
+
+        if (queryStart < 0) {
+            return ''
+        }
+
+        return apiUrl.substring(queryStart + 1)
+    }
+
+    const addCategoryFilter = function(queryString, categoryIds) {
+        if (categoryIds.length === 0) {
+            return queryString
+        }
+
+        const categoryFilter = categoryIds.join(',')
+
+        if (!queryString) {
+            return 'category=' + categoryFilter
+        }
+
+        const queryParts = queryString.split('&').filter((part) => {
+            return part.length > 0
+        })
+        const remainingParts = []
+        let categoryPart = null
+
+        queryParts.forEach((part) => {
+            const keyValue = part.split('=')
+
+            if (keyValue[0] === 'category') {
+                categoryPart = part
+            } else {
+                remainingParts.push(part)
+            }
+        })
+
+        if (categoryPart == null) {
+            return queryString + '&category=' + categoryFilter
+        }
+
+        const requestedCategories = categoryPart.split('=')[1].split(',')
+        const categoryIntersection = requestedCategories.filter((categoryId) => {
+            return categoryIds.indexOf(categoryId) >= 0
+        })
+
+        return ['category=' + categoryIntersection.join(',')].concat(remainingParts).join('&')
+    }
+
+    const rewriteCatalogOfferingQuery = function(req, callback) {
+        const pathInfo = getCatalogOfferingPathInfo(req)
+
+        if (pathInfo == null) {
+            return callback(null)
+        }
+
+        retrieveCatalog(pathInfo.catalogId, (err, response) => {
+            if (err) {
+                return callback(err)
+            }
+
+            const queryString = addCategoryFilter(getQueryString(req.apiUrl), getCategoryIds(response.body))
+            req.apiUrl = '/catalog' + pathInfo.resourcePath + (queryString ? '?' + queryString : '')
+            callback(null)
+        })
+    }
+
+    const isCatalogListRequest = function(req) {
+        return catalogsPattern.test(req.path) || catalogsPattern.test(req.apiUrl)
+    }
+
+    const hasRelatedPartyFilter = function(req) {
+        const query = req.query || {}
+
+        for (const key of Object.keys(query)) {
+            if (key.indexOf('relatedParty') === 0) {
+                return true
+            }
+        }
+
+        return false
+    }
+
+    const isLaunchedCatalogQuery = function(req) {
+        const query = req.query || {}
+        const lifecycleStatus = query[LIFE_CYCLE]
+
+        return lifecycleStatus != null && String(lifecycleStatus).toLowerCase() === LAUNCHED_STATE
+    }
+
+    const hasCatalogOffers = function(catalog) {
+        const categoryIds = getCategoryIds(catalog)
+        const catalogId = catalog.id || catalog.href || 'unknown'
+
+        if (categoryIds.length === 0) {
+            logger.debug('Catalog launched-offer filter rejected catalog ' + catalogId + ': no categories')
+            return Promise.resolve(false)
+        }
+
+        const offersPath = '/productOffering?category=' + categoryIds.join(',') + '&lifecycleStatus=Launched&limit=1'
+        logger.debug('Catalog launched-offer filter checking catalog ' + catalogId + ' with URL ' + offersPath)
+
+        return new Promise((resolve, reject) => {
+            retrieveAsset(offersPath, (err, result) => {
+                if (err) {
+                    logger.warn('Catalog launched-offer filter failed checking catalog ' + catalogId + ': status=' + (err.status || 'unknown'))
+                    reject(err)
+                } else {
+                    const hasOffers = Array.isArray(result.body) && result.body.length > 0
+                    logger.debug('Catalog launched-offer filter ' + (hasOffers ? 'accepted' : 'rejected') + ' catalog ' + catalogId + ': launchedOffers=' + (Array.isArray(result.body) ? result.body.length : 'non-list'))
+                    resolve(hasOffers)
+                }
+            })
+        })
     }
 
     // Retrieves the product belonging to a given offering
@@ -334,11 +502,215 @@ const catalog = (function() {
         })
     }
 
-    const canOfferingBeLaunched = function(offering, productSpec = null) {
-        return true;
+    const hasProductImage = function(productSpec) {
+        if (!productSpec || !Array.isArray(productSpec.attachment)) {
+            return false;
+        }
+
+        return productSpec.attachment.some((attachment) => {
+            if (!attachment ||
+                typeof attachment.name !== 'string' ||
+                typeof attachment.attachmentType !== 'string' ||
+                typeof attachment.url !== 'string') {
+                return false;
+            }
+
+            return attachment.name.trim().toLowerCase() === 'profile picture' &&
+                attachment.attachmentType.trim().length > 0 &&
+                attachment.url.trim().length > 0;
+        });
     };
 
-    const validateOffering = function(req, offeringPath, previousBody, newBody, callback) {
+    const getSellerOrganizationId = function(offering) {
+        const relatedParties = offering && Array.isArray(offering.relatedParty)
+            ? offering.relatedParty
+            : [];
+        const sellerRole = String(config.roles.seller || 'seller').toLowerCase();
+        const organizationSeller = relatedParties.find((party) => {
+            if (!party || !party.id || typeof party.role !== 'string' || party.role.toLowerCase() !== sellerRole) {
+                return false;
+            }
+
+            const referredType = typeof party['@referredType'] === 'string'
+                ? party['@referredType'].toLowerCase()
+                : '';
+            return referredType === 'organization' || String(party.id).toLowerCase().includes('organization');
+        });
+
+        return organizationSeller ? organizationSeller.id : null;
+    };
+
+    const getComplianceCredentialToken = function(productSpec) {
+        if (!productSpec || !Array.isArray(productSpec.productSpecCharacteristic)) {
+            return null;
+        }
+
+        const complianceCharacteristics = productSpec.productSpecCharacteristic.filter((characteristic) => {
+            return characteristic &&
+                typeof characteristic.name === 'string' &&
+                characteristic.name.trim().toLowerCase() === 'compliance:vc';
+        });
+        if (complianceCharacteristics.length !== 1) {
+            return null;
+        }
+
+        const characteristicValues = complianceCharacteristics[0].productSpecCharacteristicValue;
+        if (!Array.isArray(characteristicValues) || characteristicValues.length !== 1) {
+            return null;
+        }
+
+        const complianceToken = characteristicValues[0] && characteristicValues[0].value;
+        return typeof complianceToken === 'string' && complianceToken.trim().length > 0
+            ? complianceToken.trim()
+            : null;
+    };
+
+    const getComplianceCertificate = function(decoded) {
+        const certificateChain = decoded && decoded.header && decoded.header.x5c;
+        if (!Array.isArray(certificateChain) || typeof certificateChain[0] !== 'string') {
+            return null;
+        }
+
+        const certificate = certificateChain[0].replace(/\s/g, '');
+        if (!certificate) {
+            return null;
+        }
+
+        return '-----BEGIN CERTIFICATE-----\n' +
+            certificate.match(/.{1,64}/g).join('\n') +
+            '\n-----END CERTIFICATE-----';
+    };
+
+    const getCertificateOrganizationIdentifier = function(certificate) {
+        const legacyCertificate = certificate.toLegacyObject();
+        const subject = legacyCertificate && legacyCertificate.subject;
+        if (!subject || typeof subject !== 'object') {
+            return null;
+        }
+
+        const organizationIdentifier = subject.organizationIdentifier ||
+            subject['2.5.4.97'] ||
+            subject['OID.2.5.4.97'];
+        const values = Array.isArray(organizationIdentifier)
+            ? organizationIdentifier
+            : [organizationIdentifier];
+        if (values.length !== 1 || typeof values[0] !== 'string') {
+            return null;
+        }
+
+        const normalizedIdentifier = values[0].trim();
+        return normalizedIdentifier || null;
+    };
+
+    const hasMatchingComplianceIssuer = function(payload, certificate) {
+        if (!payload || typeof payload.iss !== 'string') {
+            return false;
+        }
+
+        const parsedCertificate = new X509Certificate(certificate);
+        const organizationIdentifier = getCertificateOrganizationIdentifier(parsedCertificate);
+        return organizationIdentifier !== null &&
+            payload.iss === complianceIssuerPrefix + organizationIdentifier;
+    };
+
+    const hasValidComplianceCredential = async function(productSpec) {
+        const complianceToken = getComplianceCredentialToken(productSpec);
+        if (!complianceToken || !productSpec.id) {
+            return false;
+        }
+
+        try {
+            const decoded = jwt.decode(complianceToken, { complete: true });
+            const certificate = getComplianceCertificate(decoded);
+            if (!certificate) {
+                return false;
+            }
+
+            const payload = jwt.verify(complianceToken, certificate, {
+                algorithms: ['RS256']
+            });
+            if (!hasMatchingComplianceIssuer(payload, certificate)) {
+                return false;
+            }
+
+            const credential = payload && (payload.verifiableCredential || payload.vc);
+            if (!credential || !credential.credentialSubject) {
+                return false;
+            }
+
+            const credentialTypes = Array.isArray(credential.type)
+                ? credential.type
+                : [credential.type];
+            if (!credentialTypes.includes('gx:LabelCredential')) {
+                return false;
+            }
+
+            const credentialSubject = credential.credentialSubject;
+            if (credentialSubject.id !== productSpec.id) {
+                return false;
+            }
+
+            const labelLevel = credentialSubject['gx:labelLevel'];
+            return typeof labelLevel === 'string' &&
+                allowedComplianceLabels.includes(labelLevel.trim().toUpperCase());
+        } catch (err) {
+            return false;
+        }
+    };
+
+    const canOfferingBeLaunched = async function(offering, productSpec = null) {
+        try {
+            if (!offering || offering.isBundle) {
+                return false;
+            }
+
+            const productSpecId = offering && offering.productSpecification && offering.productSpecification.id;
+            let resolvedProductSpec = productSpec;
+            if (!resolvedProductSpec) {
+                if (!productSpecId) {
+                    return false;
+                }
+
+                resolvedProductSpec = await new Promise((resolve, reject) => {
+                    retrieveProduct(productSpecId, function(err, result) {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve(result.body);
+                        }
+                    });
+                });
+            }
+            if (!hasProductImage(resolvedProductSpec)) {
+                return false;
+            }
+
+            const organizationId = getSellerOrganizationId(offering);
+            if (!organizationId) {
+                return false;
+            }
+
+            const organizationResult = await partyClient.getOrganization(organizationId);
+            const organization = organizationResult && organizationResult.body;
+            if (!tmfUtils.hasOrganizationCountry(organization)) {
+                return false;
+            }
+
+            const organizationStatus = organization.status == null
+                ? ''
+                : String(organization.status).trim().toLowerCase();
+            if (organizationStatus === 'initialized') {
+                return false;
+            }
+
+            return await hasValidComplianceCredential(resolvedProductSpec);
+        } catch (err) {
+            logger.warn('The offering launch requirements could not be evaluated');
+            return false;
+        }
+    };
+
+    const validateOffering = async function(req, offeringPath, previousBody, newBody, callback) {
         if(newBody && newBody.name !== null && newBody.name !== undefined){ // newBody.name === '' should enter here
             const errorMessage = tmfUtils.validateNameField(newBody.name, 'Product offering');
             if (errorMessage) {
@@ -373,7 +745,7 @@ const catalog = (function() {
             errorMessageStateProduct = 'Offerings can only be attached to active or launched products';
             errorMessageStateCatalog = 'Offerings can only be created in a catalog that is active or launched';
 
-            if (config.launchValidationEnabled && newBody && newBody[LIFE_CYCLE] && newBody[LIFE_CYCLE].toLowerCase() === LAUNCHED_STATE && !canOfferingBeLaunched(newBody)) {
+            if (config.launchValidationEnabled && newBody && newBody[LIFE_CYCLE] && newBody[LIFE_CYCLE].toLowerCase() === LAUNCHED_STATE && !(await canOfferingBeLaunched(newBody))) {
                 return callback({
                     status: 403,
                     message: 'The product offering does not meet the requirements to be launched'
@@ -390,7 +762,7 @@ const catalog = (function() {
             errorMessageStateProduct = 'Offerings can only be launched when the attached product is also launched';
             errorMessageStateCatalog = 'Offerings can only be launched when the attached catalog is also launched';
 
-            if (config.launchValidationEnabled && !canOfferingBeLaunched(previousBody)) {
+            if (config.launchValidationEnabled && !(await canOfferingBeLaunched(previousBody))) {
                 return callback({
                     status: 403,
                     message: 'The product offering does not meet the requirements to be launched'
@@ -778,6 +1150,39 @@ const catalog = (function() {
     }
 
     const validateProductUpdate = function(req, prevBody, newBody, callback) {
+        const newCharacteristics = Array.isArray(newBody.productSpecCharacteristic)
+            ? newBody.productSpecCharacteristic
+            : null;
+        const previousCharacteristics = Array.isArray(prevBody.productSpecCharacteristic)
+            ? prevBody.productSpecCharacteristic
+            : [];
+        const newCharacteristicIds = new Set(
+            (newCharacteristics || []).filter((characteristic) => characteristic && characteristic.id)
+                .map((characteristic) => characteristic.id)
+        );
+        const removedCharacteristicIds = newCharacteristics
+            ? previousCharacteristics
+                .filter((characteristic) =>
+                    characteristic && characteristic.id && !newCharacteristicIds.has(characteristic.id)
+                )
+                .map((characteristic) => characteristic.id)
+            : [];
+
+        if (removedCharacteristicIds.length > 0) {
+            if (String(prevBody.lifecycleStatus || '').toLowerCase() !== ACTIVE_STATE) {
+                return callback({
+                    status: 422,
+                    message: 'Product specification characteristics can only be removed from active product specifications'
+                });
+            }
+
+            if (!req.extraData) {
+                req.extraData = {};
+            }
+            req.extraData.productSpecificationId = prevBody.id;
+            req.extraData.removedProductSpecCharacteristicIds = removedCharacteristicIds;
+        }
+
         if (
             (!!newBody.isBundle || !!newBody.bundledProductSpecification) &&
             prevBody.lifecycleStatus.toLowerCase() != 'active'
@@ -1183,7 +1588,488 @@ const catalog = (function() {
         }
     };
 
-    const validateOfferingPrice = function (req, previousBody, callback){
+    const getEffectiveField = function(body, previousBody, field) {
+        return body[field] !== undefined ? body[field] : previousBody && previousBody[field];
+    }
+
+    const getUniqueConstraintRef = function(pricePlan, previousBody) {
+        const relationships = getEffectiveField(pricePlan, previousBody, 'popRelationship');
+        const constraintRefs = (Array.isArray(relationships) ? relationships : []).filter((relationship) =>
+            relationship && String(relationship.relationshipType || '').toLowerCase() === CONSTRAINT_PRICE_TYPE
+        );
+
+        if (constraintRefs.length > 1) {
+            return {
+                error: {
+                    status: 422,
+                    message: 'The price plan can only reference one constraint price'
+                }
+            };
+        }
+
+        if (constraintRefs.length === 1 && !constraintRefs[0].id) {
+            return {
+                error: {
+                    status: 422,
+                    message: 'The price plan contains a constraint reference without an id'
+                }
+            };
+        }
+
+        return { result: constraintRefs[0] || null };
+    }
+
+    const retrievePricesTMF = async function(ids, errorMessage) {
+        const pricesMap = new Map();
+        const uniqueIds = Array.from(new Set(ids));
+
+        for (let i = 0; i < uniqueIds.length; i += PRICE_COMPONENT_QUERY_BATCH_SIZE) {
+            const batch = uniqueIds.slice(i, i + PRICE_COMPONENT_QUERY_BATCH_SIZE);
+            let response;
+            try {
+                response = await retrieveAssetAsync(
+                    `/productOfferingPrice?id=${batch.join(',')}&limit=${batch.length}`
+                );
+            } catch (err) {
+                return {
+                    error: {
+                        status: 422,
+                        message: errorMessage
+                    }
+                };
+            }
+
+            const prices = Array.isArray(response.body) ? response.body : [];
+            for (const price of prices) {
+                pricesMap.set(price.id, price);
+            }
+        }
+
+        return { result: pricesMap };
+    }
+
+    const getCharValueUses = function(price) {
+        return Array.isArray(price && price.prodSpecCharValueUse)
+            ? price.prodSpecCharValueUse
+            : [];
+    }
+
+    const removeDeletedCharacteristicsFromPrices = async function(productSpecificationId, removedCharacteristicIds) {
+        const cleanupError = {
+            status: 500,
+            message: 'The references to the removed product specification characteristics could not be updated'
+        };
+        const pricePlanIds = [];
+        let offset = 0;
+        let offerings;
+
+        do {
+            let response;
+            try {
+                response = await retrieveAssetAsync(
+                    `/productOffering?productSpecification.id=${encodeURIComponent(productSpecificationId)}` +
+                    `&limit=${PRICE_PLAN_QUERY_PAGE_SIZE}&offset=${offset}`
+                );
+            } catch (err) {
+                throw cleanupError;
+            }
+
+            offerings = Array.isArray(response.body) ? response.body : [];
+            for (const offering of offerings) {
+                const pricePlans = Array.isArray(offering.productOfferingPrice)
+                    ? offering.productOfferingPrice
+                    : offering.productOfferingPrice ? [offering.productOfferingPrice] : [];
+                for (const pricePlan of pricePlans) {
+                    if (pricePlan && pricePlan.id) {
+                        pricePlanIds.push(pricePlan.id);
+                    }
+                }
+            }
+            offset += offerings.length;
+        } while (offerings.length === PRICE_PLAN_QUERY_PAGE_SIZE);
+
+        const pricePlanMap = await retrievePricesTMF(pricePlanIds, cleanupError.message);
+        if (pricePlanMap.error) {
+            throw cleanupError;
+        }
+
+        const relatedPriceIds = [];
+        for (const pricePlan of pricePlanMap.result.values()) {
+            const priceComponents = Array.isArray(pricePlan.bundledPopRelationship)
+                ? pricePlan.bundledPopRelationship
+                : pricePlan.bundledPopRelationship ? [pricePlan.bundledPopRelationship] : [];
+            for (const priceComponent of priceComponents) {
+                if (priceComponent && priceComponent.id) {
+                    relatedPriceIds.push(priceComponent.id);
+                }
+            }
+
+            const relationships = Array.isArray(pricePlan.popRelationship)
+                ? pricePlan.popRelationship
+                : pricePlan.popRelationship ? [pricePlan.popRelationship] : [];
+            for (const relationship of relationships) {
+                if (
+                    relationship && relationship.id &&
+                    String(relationship.relationshipType || '').toLowerCase() === CONSTRAINT_PRICE_TYPE
+                ) {
+                    relatedPriceIds.push(relationship.id);
+                }
+            }
+        }
+
+        const relatedPriceMap = await retrievePricesTMF(relatedPriceIds, cleanupError.message);
+        if (relatedPriceMap.error) {
+            throw cleanupError;
+        }
+
+        const removedIds = new Set(removedCharacteristicIds);
+        for (const price of relatedPriceMap.result.values()) {
+            const currentValueUses = getCharValueUses(price);
+            const updatedValueUses = currentValueUses.filter((valueUse) =>
+                !valueUse || !removedIds.has(valueUse.id)
+            );
+            if (updatedValueUses.length === currentValueUses.length) {
+                continue;
+            }
+
+            await new Promise((resolve, reject) => {
+                updateAsset(`/productOfferingPrice/${encodeURIComponent(price.id)}`, {
+                    prodSpecCharValueUse: updatedValueUses
+                }, function(err) {
+                    if (err) {
+                        reject(cleanupError);
+                    } else {
+                        resolve();
+                    }
+                });
+            });
+        }
+    }
+
+    const isPriceAllowedByConstraint = function(price, constraintValueUses) {
+        for (const priceValueUse of getCharValueUses(price)) {
+            if (!priceValueUse || !priceValueUse.name) {
+                continue;
+            }
+            const matchingConstraintValueUses = constraintValueUses.filter((valueUse) =>
+                valueUse && valueUse.name === priceValueUse.name
+            );
+
+            for (const constraintValueUse of matchingConstraintValueUses) {
+                const constraintValues = Array.isArray(constraintValueUse.productSpecCharacteristicValue)
+                    ? constraintValueUse.productSpecCharacteristicValue
+                    : [];
+                if (constraintValues.length === 0) {
+                    return false;
+                }
+
+                const priceValues = Array.isArray(priceValueUse.productSpecCharacteristicValue)
+                    ? priceValueUse.productSpecCharacteristicValue
+                    : [];
+                if (priceValues.length === 0) {
+                    return false;
+                }
+
+                for (const priceValue of priceValues) {
+                    const valueIsForbidden = constraintValues.some((constraintValue) => {
+                        const priceIsRange = priceValue && priceValue.valueFrom !== undefined &&
+                            priceValue.valueTo !== undefined;
+                        const constraintIsRange = constraintValue && constraintValue.valueFrom !== undefined &&
+                            constraintValue.valueTo !== undefined;
+
+                        if (priceIsRange && constraintIsRange) {
+                            const priceFrom = Number(priceValue.valueFrom);
+                            const priceTo = Number(priceValue.valueTo);
+                            const constraintFrom = Number(constraintValue.valueFrom);
+                            const constraintTo = Number(constraintValue.valueTo);
+                            return Number.isFinite(priceFrom) && Number.isFinite(priceTo) &&
+                                Number.isFinite(constraintFrom) && Number.isFinite(constraintTo) &&
+                                priceFrom <= priceTo && constraintFrom <= constraintTo &&
+                                priceFrom <= constraintTo && priceTo >= constraintFrom;
+                        }
+
+                        return priceValue && constraintValue && priceValue.value !== undefined &&
+                            constraintValue.value !== undefined && equal(priceValue.value, constraintValue.value);
+                    });
+
+                    if (valueIsForbidden) {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
+
+    const getPPConstraintValueUses = async function(pricePlan, previousBody) {
+        const constraintRef = getUniqueConstraintRef(pricePlan, previousBody);
+        if (constraintRef.error) {
+            return constraintRef;
+        }
+        if (!constraintRef.result) {
+            return { constraintValueUses: [] };
+        }
+
+        const constraintPriceId = constraintRef.result.id;
+
+        const constraintMap = await retrievePricesTMF(
+            [constraintPriceId],
+            'The constraint referenced by the price plan cannot be retrieved'
+        );
+        if (constraintMap.error) {
+            return constraintMap;
+        }
+
+        const constraintPrice = constraintMap.result.get(constraintPriceId);
+        if (!constraintPrice) {
+            return {
+                error: {
+                    status: 422,
+                    message: `The constraint ${constraintPriceId} referenced by the price plan cannot be accessed or does not exist`
+                }
+            };
+        }
+
+        if (constraintPrice.isBundle !== false ||
+            String(constraintPrice.priceType || '').toLowerCase() !== CONSTRAINT_PRICE_TYPE) {
+            return {
+                error: {
+                    status: 422,
+                    message: 'The constraint relationship must reference a non-bundled ProductOfferingPrice with priceType constraint'
+                }
+            };
+        }
+
+        return { constraintValueUses: getCharValueUses(constraintPrice) };
+    }
+
+    const validatePricePlanComponents = async function(priceComponentRefs, constraintValueUses) {
+        if (!Array.isArray(priceComponentRefs) || priceComponentRefs.length === 0) {
+            return null;
+        }
+
+        const priceComponentIds = [];
+        for (const priceComponentRef of priceComponentRefs) {
+            if (!priceComponentRef || !priceComponentRef.id) {
+                return {
+                    status: 422,
+                    message: 'The price plan contains a price component reference without an id'
+                };
+            }
+            priceComponentIds.push(priceComponentRef.id);
+        }
+
+        const priceComponentMap = await retrievePricesTMF(
+            priceComponentIds,
+            'The price components referenced by the price plan cannot be retrieved'
+        );
+        if (priceComponentMap.error) {
+            return priceComponentMap.error;
+        }
+
+        for (const priceComponentRef of priceComponentRefs) {
+            const priceComponent = priceComponentMap.result.get(priceComponentRef.id);
+            if (!priceComponent) {
+                return {
+                    status: 422,
+                    message: `The price component ${priceComponentRef.id} referenced by the price plan cannot be accessed or does not exist`
+                };
+            }
+
+            if (priceComponent.isBundle !== false) {
+                return {
+                    status: 422,
+                    message: 'The price plan can only contain price components with isBundle set to false'
+                };
+            }
+
+            if (String(priceComponent.priceType || '').toLowerCase() === CONSTRAINT_PRICE_TYPE) {
+                return {
+                    status: 422,
+                    message: 'A constraint price cannot be included as a price component of a price plan'
+                };
+            }
+
+            if (!isPriceAllowedByConstraint(priceComponent, constraintValueUses)) {
+                return {
+                    status: 422,
+                    message: 'The price plan contains a price component that uses a forbidden characteristic'
+                };
+            }
+        }
+
+        return null;
+    }
+
+    const validatePricePlan = async function(offerPrice, previousBody) {
+        const constraintRef = getUniqueConstraintRef(offerPrice, previousBody);
+        if (constraintRef.error) {
+            return constraintRef.error;
+        }
+
+        const valueUses = getEffectiveField(offerPrice, previousBody, 'prodSpecCharValueUse');
+        if (constraintRef.result && Array.isArray(valueUses) && valueUses.length > 0) {
+            return {
+                status: 422,
+                message: 'A price plan with prodSpecCharValueUse cannot reference a constraint'
+            };
+        }
+
+        if (!previousBody || offerPrice.bundledPopRelationship !== undefined || offerPrice.popRelationship !== undefined) {
+            const constraintResult = await getPPConstraintValueUses(offerPrice, previousBody);
+            if (constraintResult.error) {
+                return constraintResult.error;
+            }
+
+            const priceComponentRefs = getEffectiveField(offerPrice, previousBody, 'bundledPopRelationship');
+            const validationError = await validatePricePlanComponents(
+                priceComponentRefs,
+                constraintResult.constraintValueUses
+            );
+            if (validationError) {
+                return validationError;
+            }
+        }
+
+        return null;
+    }
+
+    const validatePriceComponent = async function(offerPrice, previousBody) {
+        if (!previousBody || offerPrice.prodSpecCharValueUse === undefined) {
+            return null;
+        }
+
+        if (getCharValueUses(offerPrice).length === 0) {
+            return null;
+        }
+
+        let offset = 0;
+        let pricePlans;
+        do {
+            let result;
+            try {
+                result = await retrieveAssetAsync(
+                    `/productOfferingPrice?bundledPopRelationship.id=${encodeURIComponent(previousBody.id)}` +
+                    `&limit=${PRICE_PLAN_QUERY_PAGE_SIZE}&offset=${offset}`
+                );
+            } catch (err) {
+                return {
+                    status: 422,
+                    message: 'The price plans referencing the price component cannot be retrieved'
+                };
+            }
+
+            pricePlans = Array.isArray(result.body) ? result.body : [];
+            const constraintPriceRefs = [];
+            const constraintPriceIds = [];
+            for (const pricePlan of pricePlans) {
+                const constraintRef = getUniqueConstraintRef(pricePlan);
+                if (constraintRef.error) {
+                    return constraintRef.error;
+                }
+                if (constraintRef.result) {
+                    constraintPriceRefs.push(constraintRef.result);
+                    constraintPriceIds.push(constraintRef.result.id);
+                }
+            }
+
+            const constraintMap = await retrievePricesTMF(
+                constraintPriceIds,
+                'The constraints referenced by the price plans cannot be retrieved'
+            );
+            if (constraintMap.error) {
+                return constraintMap.error;
+            }
+
+            for (const constraintPriceRef of constraintPriceRefs) {
+                const constraintPrice = constraintMap.result.get(constraintPriceRef.id);
+                if (!constraintPrice || constraintPrice.isBundle !== false || String(constraintPrice.priceType || '').toLowerCase() !== CONSTRAINT_PRICE_TYPE) {
+                    return {
+                        status: 422,
+                        message: 'A price plan references an invalid constraint price'
+                    };
+                }
+
+                const priceIsAllowed = isPriceAllowedByConstraint(
+                    offerPrice,
+                    getCharValueUses(constraintPrice)
+                );
+                if (!priceIsAllowed) {
+                    return {
+                        status: 422,
+                        message: 'The price component uses a characteristic forbidden by one of its price plans'
+                    };
+                }
+            }
+
+            offset += pricePlans.length;
+        } while (pricePlans.length === PRICE_PLAN_QUERY_PAGE_SIZE);
+
+        return null;
+    }
+
+    const validateConstraintPrice = async function(offerPrice, previousBody) {
+        if (!previousBody) {
+            return null;
+        }
+
+        const constraintValueUses = getCharValueUses(offerPrice);
+        if (constraintValueUses.length === 0) {
+            return null;
+        }
+
+        let offset = 0;
+        let referencedPricePlans;
+        do {
+            let result;
+            try {
+                result = await retrieveAssetAsync(
+                    `/productOfferingPrice?popRelationship.id=${encodeURIComponent(previousBody.id)}` +
+                    `&limit=${PRICE_PLAN_QUERY_PAGE_SIZE}&offset=${offset}`
+                );
+            } catch (err) {
+                return {
+                    status: 422,
+                    message: 'The price plans referencing the constraint cannot be retrieved'
+                };
+            }
+
+            referencedPricePlans = Array.isArray(result.body) ? result.body : [];
+            const priceComponentRefs = [];
+            for (const pricePlan of referencedPricePlans) {
+                if (pricePlan.isBundle !== true) {
+                    continue;
+                }
+                const constraintRef = getUniqueConstraintRef(pricePlan);
+                if (constraintRef.error) {
+                    return constraintRef.error;
+                }
+                if (!constraintRef.result || constraintRef.result.id !== previousBody.id) {
+                    continue;
+                }
+
+                const planComponentRefs = Array.isArray(pricePlan.bundledPopRelationship)
+                    ? pricePlan.bundledPopRelationship
+                    : [];
+                priceComponentRefs.push(...planComponentRefs);
+            }
+
+            const validationError = await validatePricePlanComponents(
+                priceComponentRefs,
+                constraintValueUses
+            );
+            if (validationError) {
+                return validationError;
+            }
+
+            offset += referencedPricePlans.length;
+        } while (referencedPricePlans.length === PRICE_PLAN_QUERY_PAGE_SIZE);
+
+        return null;
+    }
+
+    const validateOfferingPrice = async function (req, previousBody, callback){
         const offerPrice = JSON.parse(req.body)
         // check if it is a valid percentage
         if (offerPrice && offerPrice.priceType && offerPrice.priceType.toLowerCase() === 'discount' && !tmfUtils.isValidDiscount(offerPrice)) {
@@ -1207,11 +2093,32 @@ const catalog = (function() {
             })
         }
 
-        if (previousBody && !previousBody.isBundle) { // price component PATCH
+        if (previousBody && offerPrice.isBundle !== undefined && offerPrice.isBundle !== previousBody.isBundle) {
+            return callback({
+                status: 403,
+                message: 'Field isBundle cannot be modified'
+            });
+        }
+
+        if (previousBody && !previousBody.isBundle) { // price component or constraint PATCH
             offerPrice["@schemaLocation"] = config.priceCompSchema
             utils.updateBody(req, offerPrice)
         }
 
+        let validationError = null;
+        const isPricePlan = previousBody ? previousBody.isBundle : offerPrice.isBundle;
+        const effectivePriceTypeValue = offerPrice.priceType !== undefined ? offerPrice.priceType : previousBody ? previousBody.priceType : '';
+        if (isPricePlan) {
+            validationError = await validatePricePlan(offerPrice, previousBody);
+        } else if (String(effectivePriceTypeValue || '').toLowerCase() === CONSTRAINT_PRICE_TYPE) {
+            validationError = await validateConstraintPrice(offerPrice, previousBody);
+        } else if (previousBody && offerPrice.prodSpecCharValueUse !== undefined) { // since price discount doesn't have "prodSpecCharValueUse" it will not enter in this condition
+            validationError = await validatePriceComponent(offerPrice, previousBody);
+        }
+
+        if (validationError) {
+            return callback(validationError);
+        }
         callback(null)
     }
 
@@ -1583,7 +2490,7 @@ const catalog = (function() {
     //////////////////////////////////////////////////////////////////////////////////////////////
 
     const validators = {
-        GET: [validateAllowed, processQuery],
+        GET: [validateAllowed, processQuery, rewriteCatalogOfferingQuery],
         POST: [utils.validateLoggedIn, validateCreation],
         PATCH: [utils.validateLoggedIn, validateUpdate],
         PUT: [utils.methodNotAllowed],
@@ -1599,6 +2506,35 @@ const catalog = (function() {
 
         async.series(reqValidators, callback);
     };
+
+    const getFilteredPaginationConfig = function(req) {
+        const isGet = req.method === 'GET'
+        const isCatalogList = isCatalogListRequest(req)
+        const isLaunchedQuery = isLaunchedCatalogQuery(req)
+        const hasRelatedParty = hasRelatedPartyFilter(req)
+
+        if (
+            !isGet ||
+            !isCatalogList ||
+            !isLaunchedQuery ||
+            hasRelatedParty
+        ) {
+            logger.debug(
+                'Catalog launched-offer filtered pagination disabled for URL ' + req.apiUrl +
+                ': isGet=' + isGet +
+                ', isCatalogList=' + isCatalogList +
+                ', isLaunchedQuery=' + isLaunchedQuery +
+                ', hasRelatedPartyFilter=' + hasRelatedParty
+            )
+            return null
+        }
+
+        logger.info('Catalog launched-offer filtered pagination enabled for URL ' + req.apiUrl)
+
+        return {
+            predicate: hasCatalogOffers
+        }
+    }
 
     const handleUpgradePostAction = function(req, body, storeMethod, callback) {
         var getURLId = function(apiUrl) {
@@ -1792,13 +2728,28 @@ const catalog = (function() {
             })
         } else if (req.method == 'PATCH' && productPattern.test(req.apiUrl)) {
             body = req.reqBody;
+            const removedCharacteristicIds = req.extraData && req.extraData.removedProductSpecCharacteristicIds;
+            const productSpecificationId = req.extraData && req.extraData.productSpecificationId;
 
-            handleUpgradePostAction(
-                req,
-                body,
-                storeClient.attachUpgradedProduct,
-                callback
-            );
+            if (productSpecificationId && Array.isArray(removedCharacteristicIds) && removedCharacteristicIds.length > 0) {
+                removeDeletedCharacteristicsFromPrices(productSpecificationId, removedCharacteristicIds)
+                    .then(() => {
+                        handleUpgradePostAction(
+                            req,
+                            body,
+                            storeClient.attachUpgradedProduct,
+                            callback
+                        );
+                    })
+                    .catch(callback);
+            } else {
+                handleUpgradePostAction(
+                    req,
+                    body,
+                    storeClient.attachUpgradedProduct,
+                    callback
+                );
+            }
         } else {
             callback(null)
         }
@@ -1827,7 +2778,11 @@ const catalog = (function() {
             if (err) {
                 res.status(err.status || 500).json({ error: 'The product offering cannot be retrieved' });
             } else {
-                res.json({ canBeLaunched: canOfferingBeLaunched(result.body) });
+                canOfferingBeLaunched(result.body).then((canBeLaunched) => {
+                    res.json({
+                        canBeLaunched: canBeLaunched
+                    });
+                });
             }
         });
     };
@@ -1835,6 +2790,7 @@ const catalog = (function() {
     return {
         checkPermissions: checkPermissions,
         executePostValidation: executePostValidation,
+        getFilteredPaginationConfig: getFilteredPaginationConfig,
         handleAPIError: handleAPIError,
         retrieveCatalog: retrieveCatalog,
         checkOfferingLaunch: checkOfferingLaunch,
