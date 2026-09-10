@@ -1150,6 +1150,39 @@ const catalog = (function() {
     }
 
     const validateProductUpdate = function(req, prevBody, newBody, callback) {
+        const newCharacteristics = Array.isArray(newBody.productSpecCharacteristic)
+            ? newBody.productSpecCharacteristic
+            : null;
+        const previousCharacteristics = Array.isArray(prevBody.productSpecCharacteristic)
+            ? prevBody.productSpecCharacteristic
+            : [];
+        const newCharacteristicIds = new Set(
+            (newCharacteristics || []).filter((characteristic) => characteristic && characteristic.id)
+                .map((characteristic) => characteristic.id)
+        );
+        const removedCharacteristicIds = newCharacteristics
+            ? previousCharacteristics
+                .filter((characteristic) =>
+                    characteristic && characteristic.id && !newCharacteristicIds.has(characteristic.id)
+                )
+                .map((characteristic) => characteristic.id)
+            : [];
+
+        if (removedCharacteristicIds.length > 0) {
+            if (String(prevBody.lifecycleStatus || '').toLowerCase() !== ACTIVE_STATE) {
+                return callback({
+                    status: 422,
+                    message: 'Product specification characteristics can only be removed from active product specifications'
+                });
+            }
+
+            if (!req.extraData) {
+                req.extraData = {};
+            }
+            req.extraData.productSpecificationId = prevBody.id;
+            req.extraData.removedProductSpecCharacteristicIds = removedCharacteristicIds;
+        }
+
         if (
             (!!newBody.isBundle || !!newBody.bundledProductSpecification) &&
             prevBody.lifecycleStatus.toLowerCase() != 'active'
@@ -1615,28 +1648,167 @@ const catalog = (function() {
         return { result: pricesMap };
     }
 
-    const getCharValueUseNames = function(price) {
-        const characteristicNames = new Set();
-        const characteristics = Array.isArray(price && price.prodSpecCharValueUse)
+    const getCharValueUses = function(price) {
+        return Array.isArray(price && price.prodSpecCharValueUse)
             ? price.prodSpecCharValueUse
             : [];
+    }
 
-        for (const characteristic of characteristics) {
-            if (characteristic && characteristic.name) {
-                characteristicNames.add(characteristic.name);
+    const removeDeletedCharacteristicsFromPrices = async function(productSpecificationId, removedCharacteristicIds) {
+        const cleanupError = {
+            status: 500,
+            message: 'The references to the removed product specification characteristics could not be updated'
+        };
+        const pricePlanIds = [];
+        let offset = 0;
+        let offerings;
+
+        do {
+            let response;
+            try {
+                response = await retrieveAssetAsync(
+                    `/productOffering?productSpecification.id=${encodeURIComponent(productSpecificationId)}` +
+                    `&limit=${PRICE_PLAN_QUERY_PAGE_SIZE}&offset=${offset}`
+                );
+            } catch (err) {
+                throw cleanupError;
+            }
+
+            offerings = Array.isArray(response.body) ? response.body : [];
+            for (const offering of offerings) {
+                const pricePlans = Array.isArray(offering.productOfferingPrice)
+                    ? offering.productOfferingPrice
+                    : offering.productOfferingPrice ? [offering.productOfferingPrice] : [];
+                for (const pricePlan of pricePlans) {
+                    if (pricePlan && pricePlan.id) {
+                        pricePlanIds.push(pricePlan.id);
+                    }
+                }
+            }
+            offset += offerings.length;
+        } while (offerings.length === PRICE_PLAN_QUERY_PAGE_SIZE);
+
+        const pricePlanMap = await retrievePricesTMF(pricePlanIds, cleanupError.message);
+        if (pricePlanMap.error) {
+            throw cleanupError;
+        }
+
+        const relatedPriceIds = [];
+        for (const pricePlan of pricePlanMap.result.values()) {
+            const priceComponents = Array.isArray(pricePlan.bundledPopRelationship)
+                ? pricePlan.bundledPopRelationship
+                : pricePlan.bundledPopRelationship ? [pricePlan.bundledPopRelationship] : [];
+            for (const priceComponent of priceComponents) {
+                if (priceComponent && priceComponent.id) {
+                    relatedPriceIds.push(priceComponent.id);
+                }
+            }
+
+            const relationships = Array.isArray(pricePlan.popRelationship)
+                ? pricePlan.popRelationship
+                : pricePlan.popRelationship ? [pricePlan.popRelationship] : [];
+            for (const relationship of relationships) {
+                if (
+                    relationship && relationship.id &&
+                    String(relationship.relationshipType || '').toLowerCase() === CONSTRAINT_PRICE_TYPE
+                ) {
+                    relatedPriceIds.push(relationship.id);
+                }
             }
         }
 
-        return characteristicNames;
+        const relatedPriceMap = await retrievePricesTMF(relatedPriceIds, cleanupError.message);
+        if (relatedPriceMap.error) {
+            throw cleanupError;
+        }
+
+        const removedIds = new Set(removedCharacteristicIds);
+        for (const price of relatedPriceMap.result.values()) {
+            const currentValueUses = getCharValueUses(price);
+            const updatedValueUses = currentValueUses.filter((valueUse) =>
+                !valueUse || !removedIds.has(valueUse.id)
+            );
+            if (updatedValueUses.length === currentValueUses.length) {
+                continue;
+            }
+
+            await new Promise((resolve, reject) => {
+                updateAsset(`/productOfferingPrice/${encodeURIComponent(price.id)}`, {
+                    prodSpecCharValueUse: updatedValueUses
+                }, function(err) {
+                    if (err) {
+                        reject(cleanupError);
+                    } else {
+                        resolve();
+                    }
+                });
+            });
+        }
     }
 
-    const getPPConstraintNames = async function(pricePlan, previousBody) {
+    const isPriceAllowedByConstraint = function(price, constraintValueUses) {
+        for (const priceValueUse of getCharValueUses(price)) {
+            if (!priceValueUse || !priceValueUse.name) {
+                continue;
+            }
+            const matchingConstraintValueUses = constraintValueUses.filter((valueUse) =>
+                valueUse && valueUse.name === priceValueUse.name
+            );
+
+            for (const constraintValueUse of matchingConstraintValueUses) {
+                const constraintValues = Array.isArray(constraintValueUse.productSpecCharacteristicValue)
+                    ? constraintValueUse.productSpecCharacteristicValue
+                    : [];
+                if (constraintValues.length === 0) {
+                    return false;
+                }
+
+                const priceValues = Array.isArray(priceValueUse.productSpecCharacteristicValue)
+                    ? priceValueUse.productSpecCharacteristicValue
+                    : [];
+                if (priceValues.length === 0) {
+                    return false;
+                }
+
+                for (const priceValue of priceValues) {
+                    const valueIsForbidden = constraintValues.some((constraintValue) => {
+                        const priceIsRange = priceValue && priceValue.valueFrom !== undefined &&
+                            priceValue.valueTo !== undefined;
+                        const constraintIsRange = constraintValue && constraintValue.valueFrom !== undefined &&
+                            constraintValue.valueTo !== undefined;
+
+                        if (priceIsRange && constraintIsRange) {
+                            const priceFrom = Number(priceValue.valueFrom);
+                            const priceTo = Number(priceValue.valueTo);
+                            const constraintFrom = Number(constraintValue.valueFrom);
+                            const constraintTo = Number(constraintValue.valueTo);
+                            return Number.isFinite(priceFrom) && Number.isFinite(priceTo) &&
+                                Number.isFinite(constraintFrom) && Number.isFinite(constraintTo) &&
+                                priceFrom <= priceTo && constraintFrom <= constraintTo &&
+                                priceFrom <= constraintTo && priceTo >= constraintFrom;
+                        }
+
+                        return priceValue && constraintValue && priceValue.value !== undefined &&
+                            constraintValue.value !== undefined && equal(priceValue.value, constraintValue.value);
+                    });
+
+                    if (valueIsForbidden) {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
+
+    const getPPConstraintValueUses = async function(pricePlan, previousBody) {
         const constraintRef = getUniqueConstraintRef(pricePlan, previousBody);
         if (constraintRef.error) {
             return constraintRef;
         }
         if (!constraintRef.result) {
-            return { constraintCharNames: new Set() };
+            return { constraintValueUses: [] };
         }
 
         const constraintPriceId = constraintRef.result.id;
@@ -1669,10 +1841,10 @@ const catalog = (function() {
             };
         }
 
-        return { constraintCharNames: getCharValueUseNames(constraintPrice) };
+        return { constraintValueUses: getCharValueUses(constraintPrice) };
     }
 
-    const validatePricePlanComponents = async function(priceComponentRefs, forbiddenCharacteristicNames) {
+    const validatePricePlanComponents = async function(priceComponentRefs, constraintValueUses) {
         if (!Array.isArray(priceComponentRefs) || priceComponentRefs.length === 0) {
             return null;
         }
@@ -1719,13 +1891,11 @@ const catalog = (function() {
                 };
             }
 
-            for (const characteristicName of getCharValueUseNames(priceComponent)) {
-                if (forbiddenCharacteristicNames.has(characteristicName)) {
-                    return {
-                        status: 422,
-                        message: 'The price plan contains a price component that uses a forbidden characteristic'
-                    };
-                }
+            if (!isPriceAllowedByConstraint(priceComponent, constraintValueUses)) {
+                return {
+                    status: 422,
+                    message: 'The price plan contains a price component that uses a forbidden characteristic'
+                };
             }
         }
 
@@ -1733,14 +1903,30 @@ const catalog = (function() {
     }
 
     const validatePricePlan = async function(offerPrice, previousBody) {
+        const constraintRef = getUniqueConstraintRef(offerPrice, previousBody);
+        if (constraintRef.error) {
+            return constraintRef.error;
+        }
+
+        const valueUses = getEffectiveField(offerPrice, previousBody, 'prodSpecCharValueUse');
+        if (constraintRef.result && Array.isArray(valueUses) && valueUses.length > 0) {
+            return {
+                status: 422,
+                message: 'A price plan with prodSpecCharValueUse cannot reference a constraint'
+            };
+        }
+
         if (!previousBody || offerPrice.bundledPopRelationship !== undefined || offerPrice.popRelationship !== undefined) {
-            const constraintResult = await getPPConstraintNames(offerPrice, previousBody);
+            const constraintResult = await getPPConstraintValueUses(offerPrice, previousBody);
             if (constraintResult.error) {
                 return constraintResult.error;
             }
 
             const priceComponentRefs = getEffectiveField(offerPrice, previousBody, 'bundledPopRelationship');
-            const validationError = await validatePricePlanComponents(priceComponentRefs, constraintResult.constraintCharNames);
+            const validationError = await validatePricePlanComponents(
+                priceComponentRefs,
+                constraintResult.constraintValueUses
+            );
             if (validationError) {
                 return validationError;
             }
@@ -1754,8 +1940,7 @@ const catalog = (function() {
             return null;
         }
 
-        const compnCharValueUseNames = getCharValueUseNames(offerPrice);
-        if (compnCharValueUseNames.size === 0) {
+        if (getCharValueUses(offerPrice).length === 0) {
             return null;
         }
 
@@ -1806,13 +1991,15 @@ const catalog = (function() {
                     };
                 }
 
-                for (const forbiddenCharValueUseName of getCharValueUseNames(constraintPrice)) {
-                    if (compnCharValueUseNames.has(forbiddenCharValueUseName)) {
-                        return {
-                            status: 422,
-                            message: 'The price component uses a characteristic forbidden by one of its price plans'
-                        };
-                    }
+                const priceIsAllowed = isPriceAllowedByConstraint(
+                    offerPrice,
+                    getCharValueUses(constraintPrice)
+                );
+                if (!priceIsAllowed) {
+                    return {
+                        status: 422,
+                        message: 'The price component uses a characteristic forbidden by one of its price plans'
+                    };
                 }
             }
 
@@ -1827,8 +2014,8 @@ const catalog = (function() {
             return null;
         }
 
-        const forbiddenCharacteristicNames = getCharValueUseNames(offerPrice);
-        if (forbiddenCharacteristicNames.size === 0) {
+        const constraintValueUses = getCharValueUses(offerPrice);
+        if (constraintValueUses.length === 0) {
             return null;
         }
 
@@ -1870,7 +2057,7 @@ const catalog = (function() {
 
             const validationError = await validatePricePlanComponents(
                 priceComponentRefs,
-                forbiddenCharacteristicNames
+                constraintValueUses
             );
             if (validationError) {
                 return validationError;
@@ -1925,7 +2112,7 @@ const catalog = (function() {
             validationError = await validatePricePlan(offerPrice, previousBody);
         } else if (String(effectivePriceTypeValue || '').toLowerCase() === CONSTRAINT_PRICE_TYPE) {
             validationError = await validateConstraintPrice(offerPrice, previousBody);
-        } else if (previousBody && offerPrice.prodSpecCharValueUse !== undefined) {
+        } else if (previousBody && offerPrice.prodSpecCharValueUse !== undefined) { // since price discount doesn't have "prodSpecCharValueUse" it will not enter in this condition
             validationError = await validatePriceComponent(offerPrice, previousBody);
         }
 
@@ -2541,13 +2728,28 @@ const catalog = (function() {
             })
         } else if (req.method == 'PATCH' && productPattern.test(req.apiUrl)) {
             body = req.reqBody;
+            const removedCharacteristicIds = req.extraData && req.extraData.removedProductSpecCharacteristicIds;
+            const productSpecificationId = req.extraData && req.extraData.productSpecificationId;
 
-            handleUpgradePostAction(
-                req,
-                body,
-                storeClient.attachUpgradedProduct,
-                callback
-            );
+            if (productSpecificationId && Array.isArray(removedCharacteristicIds) && removedCharacteristicIds.length > 0) {
+                removeDeletedCharacteristicsFromPrices(productSpecificationId, removedCharacteristicIds)
+                    .then(() => {
+                        handleUpgradePostAction(
+                            req,
+                            body,
+                            storeClient.attachUpgradedProduct,
+                            callback
+                        );
+                    })
+                    .catch(callback);
+            } else {
+                handleUpgradePostAction(
+                    req,
+                    body,
+                    storeClient.attachUpgradedProduct,
+                    callback
+                );
+            }
         } else {
             callback(null)
         }
