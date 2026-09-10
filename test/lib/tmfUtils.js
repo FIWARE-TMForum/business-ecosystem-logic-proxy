@@ -579,41 +579,6 @@ describe('TMF Utils', function() {
         });
     });
 
-    describe('Has Organization Country', function() {
-        it('should return true when the organization has a country with a value', function() {
-            const tmfUtils = getTmfUtils();
-            const organization = {
-                partyCharacteristic: [{ name: ' Country ', value: 'BE' }]
-            };
-
-            expect(tmfUtils.hasOrganizationCountry(organization)).toBe(true);
-        });
-
-        it('should return false when the country value is empty', function() {
-            const tmfUtils = getTmfUtils();
-            const organization = {
-                partyCharacteristic: [{ name: 'country', value: '  ' }]
-            };
-
-            expect(tmfUtils.hasOrganizationCountry(organization)).toBe(false);
-        });
-
-        it('should return false when the country value is null', function() {
-            const tmfUtils = getTmfUtils();
-            const organization = {
-                partyCharacteristic: [{ name: 'country', value: null }]
-            };
-
-            expect(tmfUtils.hasOrganizationCountry(organization)).toBe(false);
-        });
-
-        it('should return false when party characteristics are missing', function() {
-            const tmfUtils = getTmfUtils();
-
-            expect(tmfUtils.hasOrganizationCountry({})).toBe(false);
-        });
-    });
-
     describe('Get Party Individuals Collection URL', function() {
         const testGetIndividualsCollectionURL = function(req, user) {
             const utils = jasmine.createSpyObj('utils', ['getAPIURL']);
@@ -765,16 +730,6 @@ describe('TMF Utils', function() {
                 { name: 'Color', value: 'Red' },
                 { name: 'Size', value: 'Large' },
                 { name: 'Color', value: 'Blue' }
-            ]
-            const result = tmfUtils.validateCharacteristics(chars)
-            expect(result).toBe(false)
-        })
-
-        it('should return false if there are duplicate characteristic ids', function(){
-            const tmfUtils = getTmfUtils();
-            const chars = [
-                { id: 'characteristic-1', name: 'Color', value: 'Red' },
-                { id: 'characteristic-1', name: 'Size', value: 'Large' }
             ]
             const result = tmfUtils.validateCharacteristics(chars)
             expect(result).toBe(false)

@@ -3,7 +3,7 @@ name: Tests
 on:
   push:
     branches:
-      - task/dev-merge
+      - master
 
   pull_request:
     branches:
@@ -58,8 +58,8 @@ jobs:
           context: .
           file: ./docker/Dockerfile
           tags: |
-            fiware/biz-ecosystem-logic-proxy:11.25.0-RC3
-          push: ${{ github.ref == 'refs/heads/task/dev-merge' }}
+            fiware/biz-ecosystem-logic-proxy:master
+          push: ${{ github.ref == 'refs/heads/master' }}
 
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
