@@ -2010,11 +2010,23 @@ const catalog = (function() {
     }
 
     const validateConstraintPrice = async function(offerPrice, previousBody) {
+        const constraintValueUses = getCharValueUses(offerPrice);
+        if (constraintValueUses.some((valueUse) =>
+            String(valueUse?.name || '')
+                .trim()
+                .toLowerCase()
+                .startsWith('compliance:')
+        )) {
+            return {
+                status: 422,
+                message: 'Compliance characteristics cannot be used in price constraints'
+            };
+        }
+
         if (!previousBody) {
             return null;
         }
 
-        const constraintValueUses = getCharValueUses(offerPrice);
         if (constraintValueUses.length === 0) {
             return null;
         }
