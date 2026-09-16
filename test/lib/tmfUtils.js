@@ -889,6 +889,46 @@ describe('TMF Utils', function() {
             const result = tmfUtils.validateCharacteristics(chars)
             expect(result).toBe(true)
         })
+
+        it('should return false when a new product contains Compliance:VC', function(){
+            const tmfUtils = getTmfUtils();
+            const chars = [{
+                name: '  compliance:Vc ',
+                productSpecCharacteristicValue: [{ value: 'forged-token' }]
+            }]
+
+            const result = tmfUtils.validateCharacteristics(chars)
+            expect(result).toBe(false)
+        })
+
+        it('should return true when an existing Compliance:VC is unchanged', function(){
+            const tmfUtils = getTmfUtils();
+            const credential = {
+                id: 'compliance-characteristic',
+                name: 'Compliance:VC',
+                productSpecCharacteristicValue: [{ value: 'issued-token' }]
+            }
+
+            const result = tmfUtils.validateCharacteristics([credential], [credential])
+            expect(result).toBe(true)
+        })
+
+        it('should return false when Compliance:VC is added, modified, or removed', function(){
+            const tmfUtils = getTmfUtils();
+            const credential = {
+                id: 'compliance-characteristic',
+                name: 'Compliance:VC',
+                productSpecCharacteristicValue: [{ value: 'issued-token' }]
+            }
+            const modifiedCredential = {
+                ...credential,
+                productSpecCharacteristicValue: [{ value: 'forged-token' }]
+            }
+
+            expect(tmfUtils.validateCharacteristics([credential], [])).toBe(false)
+            expect(tmfUtils.validateCharacteristics([modifiedCredential], [credential])).toBe(false)
+            expect(tmfUtils.validateCharacteristics([], [credential])).toBe(false)
+        })
     })
     
     describe('Methods: hasValidPhoneNumber', function(){
