@@ -700,6 +700,13 @@ describe('TMF Utils', function() {
     })
 
     describe('Method: isValidStatusTransition', function() {
+        it('should allow an active draft to be archived directly', function() {
+            const tmfUtils = getTmfUtils();
+
+            expect(tmfUtils.isValidStatusTransition('Active', 'Obsolete')).toBe(true);
+            expect(tmfUtils.isValidStatusTransition('Active', 'Retired')).toBe(false);
+        });
+
         it('should allow the second-to-last lifecycle status to move one step backward', function() {
             const tmfUtils = getTmfUtils();
 
