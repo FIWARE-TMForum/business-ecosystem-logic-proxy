@@ -1265,7 +1265,7 @@ const catalog = (function() {
         ], callback)
     };
 
-    const validateProduct = function(req, productSpec, callback) {
+    const validateProduct = function(req, productSpec, previousProductSpec, callback) {
 
         if(productSpec && productSpec.name!==null && productSpec.name!==undefined){ // productSpec.name === '' should enter here
             const errorMessage = tmfUtils.validateNameField(productSpec.name, 'Product spec');
@@ -1291,7 +1291,14 @@ const catalog = (function() {
             }
         }
 
-        if (productSpec && productSpec.productSpecCharacteristic && !tmfUtils.validateCharacteristics(productSpec.productSpecCharacteristic)){
+        const previousCharacteristics = previousProductSpec && Array.isArray(previousProductSpec.productSpecCharacteristic)
+            ? previousProductSpec.productSpecCharacteristic
+            : null;
+        if (
+            productSpec &&
+            productSpec.productSpecCharacteristic &&
+            !tmfUtils.validateCharacteristics(productSpec.productSpecCharacteristic, previousCharacteristics)
+        ){
             return callback({
                     status: 422,
                     message: "Invalid product spec characteristics"
@@ -1554,7 +1561,7 @@ const catalog = (function() {
                         return callback(err);
                     }
 
-                    validateProduct(req, body, function(err) {
+                    validateProduct(req, body, null, function(err) {
                         if (err) {
                             callback(err);
                         } else {
@@ -2010,11 +2017,23 @@ const catalog = (function() {
     }
 
     const validateConstraintPrice = async function(offerPrice, previousBody) {
+        const constraintValueUses = getCharValueUses(offerPrice);
+        if (constraintValueUses.some((valueUse) =>
+            String(valueUse?.name || '')
+                .trim()
+                .toLowerCase()
+                .startsWith('compliance:')
+        )) {
+            return {
+                status: 422,
+                message: 'Compliance characteristics cannot be used in price constraints'
+            };
+        }
+
         if (!previousBody) {
             return null;
         }
 
-        const constraintValueUses = getCharValueUses(offerPrice);
         if (constraintValueUses.length === 0) {
             return null;
         }
@@ -2341,7 +2360,7 @@ const catalog = (function() {
                                         },
                                         function(callback) {
                                             if (parsedBody) {
-                                                validateProduct(req, parsedBody, callback);
+                                                validateProduct(req, parsedBody, previousBody, callback);
                                             } else {
                                                 callback(null);
                                             }
