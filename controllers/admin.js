@@ -19,6 +19,7 @@
 
 const axios = require('axios')
 const config = require('./../config')
+const tmfUtils = require('./../lib/tmfUtils')
 const utils = require('./../lib/utils')
 const uuidv4 = require('uuid').v4
 const { indexes } = require('./../lib/indexes')
@@ -241,6 +242,56 @@ function admin() {
         return {
             errors: [],
             value: normalized
+        }
+    }
+
+    const getCatalogApiUrl = function(path) {
+        return `${utils.getAPIProtocol('catalog')}://${utils.getAPIHost('catalog')}:${utils.getAPIPort('catalog')}${utils.getAPIPath('catalog')}${path}`
+    }
+
+    const saveDefaultCatalogId = async function(catalogId) {
+        const result = await indexes.search('defaultcatalog', {})
+        const mongoFb = {
+            default_id: catalogId
+        }
+        if (result.length > 0) {
+            await indexes.updateDocument('defaultcatalog', result[0].id, mongoFb)
+        } else {
+            await indexes.indexDocument('defaultcatalog', uuidv4(), mongoFb)
+        }
+    }
+
+    const validateAndNormalizeDefaultCatalog = function(body) {
+        if (body == null || typeof body !== 'object' || Array.isArray(body)) {
+            return {
+                error: 'Body must be a JSON object',
+                value: null
+            }
+        }
+
+        const name = normalizeNonEmptyString(body.name)
+        if (name == null) {
+            return {
+                error: 'name is required and must be non-empty',
+                value: null
+            }
+        }
+
+        const description = normalizeNonEmptyString(body.description)
+        if (description == null) {
+            return {
+                error: 'description is required and must be non-empty',
+                value: null
+            }
+        }
+
+        return {
+            error: null,
+            value: {
+                name: name,
+                description: description,
+                lifecycleStatus: 'Launched'
+            }
         }
     }
 
@@ -606,17 +657,7 @@ function admin() {
 
         // Update the default catalog
         try {
-            const result = await indexes.search('defaultcatalog', {})
-            const mongoFb = {
-                default_id: catalogId
-            }
-            if (result.length > 0) {
-                // Update the existing document
-                await indexes.updateDocument('defaultcatalog', result[0].id, mongoFb)
-            } else {
-                // Create a new document
-                await indexes.indexDocument('defaultcatalog', uuidv4(), mongoFb)
-            }
+            await saveDefaultCatalogId(catalogId)
         } catch (e) {
             res.status(500)
             res.json({ error: 'Error updating default catalog: ' + e.message })
@@ -624,6 +665,89 @@ function admin() {
         }
 
         res.status(200).end()
+    }
+
+    const createDefaultCatalog = async function(req, res) {
+        if (!utils.isAdmin(req.user)) {
+            res.status(403)
+            res.json({ error: "You are not authorized to access admin endpoint" })
+            return
+        }
+
+        let reqBody
+        try {
+            reqBody = parseBody(req.body)
+        } catch (e) {
+            res.status(400)
+            res.json({ error: 'Invalid body' })
+            return
+        }
+
+        const validationResult = validateAndNormalizeDefaultCatalog(reqBody)
+        if (validationResult.error != null) {
+            res.status(400)
+            res.json({
+                error: validationResult.error
+            })
+            return
+        }
+
+        const catalogBody = validationResult.value
+        try {
+            await tmfUtils.attachRelatedPartyObj('operatorCatalog', catalogBody, req.user)
+        } catch (e) {
+            res.status(400)
+            res.json({ error: 'Error processing party information: ' + e.message })
+            return
+        }
+
+        if (!req.headers) {
+            req.headers = {}
+        }
+        utils.attachUserHeaders(req.headers, req.user)
+
+        const options = {
+            url: getCatalogApiUrl('/catalog'),
+            method: 'POST',
+            headers: Object.assign(utils.proxiedRequestHeaders(req), {
+                'content-type': 'application/json'
+            }),
+            data: catalogBody
+        }
+
+        let catalogCreated
+        let status
+        try {
+            const response = await axios.request(options)
+            catalogCreated = response.data
+            status = response.status
+        } catch (e) {
+            if (e.response) {
+                res.status(e.response.status)
+                res.json(e.response.data)
+            } else {
+                res.status(504)
+                res.json({ error: 'Service unreachable' })
+            }
+            return
+        }
+
+        if (!catalogCreated || !catalogCreated.id) {
+            res.status(502)
+            res.json({ error: 'Catalog API did not return a catalog id' })
+            return
+        }
+
+        try {
+            await saveDefaultCatalogId(catalogCreated.id)
+        } catch (e) {
+            res.status(500)
+            res.json({ error: 'Error updating default catalog: ' + e.message })
+            return
+        }
+
+        res.status(status)
+        res.json(catalogCreated)
     }
 
     const updateSearchFiltersConfig = async function(req, res) {
@@ -816,6 +940,7 @@ function admin() {
         checkPermissions: checkPermissions,
         uploadCertificate: uploadCertificate,
         updateDefaultCatalog: updateDefaultCatalog,
+        createDefaultCatalog: createDefaultCatalog,
         updateSearchFiltersConfig: updateSearchFiltersConfig,
         updateFeatureFlagsConfig: updateFeatureFlagsConfig,
         getAnalyticsConfig: getAnalyticsConfig,

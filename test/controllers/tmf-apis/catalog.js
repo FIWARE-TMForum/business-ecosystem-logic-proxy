@@ -2519,6 +2519,28 @@ describe('Catalog API', function() {
             validateDescriptionField: vDescrF ? ()=> vDescrF : ()=> null,
             isValidStatusTransition: function(firstSt, nextSt) {
                 return true;
+            },
+            attachRelatedPartyObj: async function(type, entity, currentUser) {
+                expect(currentUser).toBeDefined();
+                expect(currentUser.id).toBeDefined();
+                expect(currentUser.partyId).toBeDefined();
+                if (type === 'catalogCategory') {
+                    entity.relatedParty = deepcopy(entity.relatedParty || []);
+                    entity.relatedParty.push({
+                        id: currentUser.partyId,
+                        href: currentUser.partyId,
+                        name: currentUser.id,
+                        role: config.roles.seller,
+                        '@referredType': currentUser.partyId.includes('organization') ? 'Organization' : 'Individual'
+                    });
+                    entity.relatedParty.push({
+                        id: 'urn:operator',
+                        href: 'urn:operator',
+                        name: 'operator',
+                        role: config.roles.sellerOperator,
+                        '@referredType': 'Organization'
+                    });
+                }
             }
         };
 
@@ -2526,6 +2548,7 @@ describe('Catalog API', function() {
 
         // Basic properties
         var userName = 'test';
+        var userId = 'test-user-id';
         var protocol = config.endpoints.catalog.appSsl ? 'https' : 'http';
         var url = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
         var catalogPath = '/catalog';
@@ -2537,6 +2560,7 @@ describe('Catalog API', function() {
             method: 'POST',
             apiUrl: catalogPath,
             user: {
+                id: userId,
                 partyId: userName,
                 roles: [{ name: config.roles.seller }]
             },
@@ -2549,8 +2573,12 @@ describe('Catalog API', function() {
             href: 'urn:test_category',
             name: 'test_category'
         }
+        let categoryCreationPayload = null;
         nock(url)
-            .post(apiPath + categoryPath)
+            .post(apiPath + categoryPath, (payload) => {
+                categoryCreationPayload = payload;
+                return true;
+            })
             .reply(201, test_category)
 
         // Mock server used by the proxy to check if there is another catalog with the same name
@@ -2566,11 +2594,25 @@ describe('Catalog API', function() {
                 if (updated) {
                     // Valid for field should have been injected
                     var expCat = JSON.parse(JSON.stringify(catalog));
+                    const expectedCategoryRelatedParty = [{
+                        id: userName,
+                        href: userName,
+                        name: userId,
+                        role: config.roles.seller,
+                        '@referredType': userName.includes('organization') ? 'Organization' : 'Individual'
+                    }, {
+                        id: 'urn:operator',
+                        href: 'urn:operator',
+                        name: 'operator',
+                        role: config.roles.sellerOperator,
+                        '@referredType': 'Organization'
+                    }];
                     expCat.validFor = {
                         startDateTime: nowStr
                     };
                     expCat.category = [test_category]
                     expect(utils.updateBody).toHaveBeenCalledWith(req, expCat);
+                    expect(categoryCreationPayload.relatedParty).toEqual(expectedCategoryRelatedParty);
                 }
             } else {
                 expect(err.status).toBe(errorStatus);
@@ -2591,6 +2633,26 @@ describe('Catalog API', function() {
         };
 
         testCreateCatalog(true, isOwnerTrue, { name: catalogName }, catalogRequest, null, null, true, done);
+    });
+
+    it('should create the catalog category with the current user related party', function(done) {
+        const catalogName = 'example';
+        const catalogRequest = {
+            query: '?name=' + catalogName,
+            status: 200,
+            body: []
+        };
+
+        testCreateCatalog(true, isOwnerTrue, {
+            name: catalogName,
+            relatedParty: [{
+                id: 'urn:organization:seller',
+                href: 'urn:organization:seller',
+                name: 'Seller',
+                role: config.roles.seller,
+                '@referredType': 'Organization'
+            }]
+        }, catalogRequest, null, null, true, done);
     });
 
     it('should allow to create an owned catalog providing the validFor field', function(done) {

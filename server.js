@@ -714,6 +714,10 @@ app.post('/admin/defaultcatalog', authMiddleware.headerAuthentication, authMiddl
     admin.updateDefaultCatalog(req, res)
 })
 
+app.post('/admin/defaultcatalog/create', authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, (req, res) => {
+    admin.createDefaultCatalog(req, res)
+})
+
 app.patch('/config/filters', authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, (req, res) => {
     admin.updateSearchFiltersConfig(req, res)
 })

@@ -34,6 +34,9 @@ describe('Admin Controller', () => {
             });
         },
         log: function() {},
+        getAPIProtocol: function() {
+            return 'http';
+        },
         getAPIPort: function() {
             return 1234;
         },
@@ -54,7 +57,7 @@ describe('Admin Controller', () => {
         }
     }
 
-    const getAdminInstance = function (axios, uuid, indexes) {
+    const getAdminInstance = function (axios, uuid, indexes, tmfUtils) {
         if (!indexes) {
             indexes = {
                 indexes: {
@@ -65,11 +68,32 @@ describe('Admin Controller', () => {
             }
         }
 
+        if (!tmfUtils) {
+            tmfUtils = {
+                attachRelatedPartyObj: async (type, entity) => {
+                    entity.relatedParty = [{
+                        id: 'urn:organization:operator',
+                        href: 'urn:organization:operator',
+                        name: config.operatorId,
+                        role: config.roles.seller,
+                        '@referredType': 'Organization'
+                    }, {
+                        id: 'urn:organization:operator',
+                        href: 'urn:organization:operator',
+                        name: config.operatorId,
+                        role: config.roles.sellerOperator,
+                        '@referredType': 'Organization'
+                    }]
+                }
+            }
+        }
+
         let mocks = {
             'axios': axios,
             './../config': config,
             './../lib/utils': utils,
-            './../lib/indexes': indexes
+            './../lib/indexes': indexes,
+            './../lib/tmfUtils': tmfUtils
         }
 
         if (uuid) {
@@ -528,6 +552,256 @@ describe('Admin Controller', () => {
             expect(axios.request).toHaveBeenCalled()
         }
         testCertificateError(axios, request, 404, "The product spec does not exists", validator, done)
+    })
+
+    it('should create a default catalog owned by the operator and persist it as default', (done) => {
+        const createdCatalog = {
+            id: 'catalog-1',
+            name: 'Default Catalog',
+            description: 'Main marketplace catalog'
+        }
+        const searchMock = jasmine.createSpy('search').and.returnValue(Promise.resolve([]))
+        const indexMock = jasmine.createSpy('indexDocument').and.returnValue(Promise.resolve())
+        const indexes = {
+            indexes: {
+                search: searchMock,
+                updateDocument: jasmine.createSpy('updateDocument').and.returnValue(Promise.resolve()),
+                indexDocument: indexMock
+            }
+        }
+
+        const relatedParty = [{
+            id: 'urn:organization:operator',
+            href: 'urn:organization:operator',
+            name: config.operatorId,
+            role: config.roles.seller,
+            '@referredType': 'Organization'
+        }, {
+            id: 'urn:organization:operator',
+            href: 'urn:organization:operator',
+            name: config.operatorId,
+            role: config.roles.sellerOperator,
+            '@referredType': 'Organization'
+        }]
+        const attachRelatedPartyObj = jasmine.createSpy('attachRelatedPartyObj').and.callFake(async (type, entity) => {
+            entity.relatedParty = relatedParty
+        })
+        const tmfUtils = {
+            attachRelatedPartyObj: attachRelatedPartyObj
+        }
+
+        const axios = jasmine.createSpyObj('axios', ['request'])
+        axios.request.and.returnValue(Promise.resolve({
+            status: 201,
+            data: createdCatalog
+        }))
+
+        const request = {
+            headers: {},
+            user: {
+                id: 'admin-user',
+                partyId: 'urn:individual:admin',
+                roles: [{
+                    name: config.roles.admin
+                }]
+            },
+            body: JSON.stringify({
+                name: ' Default Catalog ',
+                description: ' Main marketplace catalog '
+            })
+        }
+
+        const response = jasmine.createSpyObj('res', ['status', 'json'])
+        let resPromise = new Promise((resolve, reject) => {
+            response.json.and.callFake(() => resolve())
+        })
+
+        const instance = getAdminInstance(axios, { v4: () => 'default-doc-id' }, indexes, tmfUtils)
+        instance.createDefaultCatalog(request, response)
+
+        resPromise.then(() => {
+            expect(attachRelatedPartyObj).toHaveBeenCalledWith('operatorCatalog', {
+                name: 'Default Catalog',
+                description: 'Main marketplace catalog',
+                lifecycleStatus: 'Launched',
+                relatedParty: relatedParty
+            }, request.user)
+            expect(axios.request).toHaveBeenCalledWith({
+                url: 'http://example.com:1234/catalog',
+                method: 'POST',
+                headers: {
+                    Authorization: 'Bearer EXAMPLE',
+                    Accept: 'application/json',
+                    'content-type': 'application/json'
+                },
+                data: {
+                    name: 'Default Catalog',
+                    description: 'Main marketplace catalog',
+                    lifecycleStatus: 'Launched',
+                    relatedParty: relatedParty
+                }
+            })
+            expect(searchMock).toHaveBeenCalledWith('defaultcatalog', {})
+            expect(indexMock).toHaveBeenCalledWith('defaultcatalog', 'default-doc-id', {
+                default_id: 'catalog-1'
+            })
+            expect(response.status).toHaveBeenCalledWith(201)
+            expect(response.json).toHaveBeenCalledWith(createdCatalog)
+            done()
+        })
+    })
+
+    it('should reject invalid default catalog creation payloads', (done) => {
+        const indexes = {
+            indexes: {
+                search: jasmine.createSpy('search').and.returnValue(Promise.resolve([])),
+                updateDocument: jasmine.createSpy('updateDocument').and.returnValue(Promise.resolve()),
+                indexDocument: jasmine.createSpy('indexDocument').and.returnValue(Promise.resolve())
+            }
+        }
+        const axios = jasmine.createSpyObj('axios', ['request'])
+
+        const request = {
+            user: {
+                partyId: '1234',
+                roles: [{
+                    name: config.roles.admin
+                }]
+            },
+            body: JSON.stringify({
+                name: ' ',
+                description: ''
+            })
+        }
+
+        const response = jasmine.createSpyObj('res', ['status', 'json'])
+        let resPromise = new Promise((resolve, reject) => {
+            response.json.and.callFake(() => resolve())
+        })
+
+        const instance = getAdminInstance(axios, null, indexes)
+        instance.createDefaultCatalog(request, response)
+
+        resPromise.then(() => {
+            expect(response.status).toHaveBeenCalledWith(400)
+            expect(response.json).toHaveBeenCalledWith({
+                error: 'name is required and must be non-empty'
+            })
+            expect(axios.request).not.toHaveBeenCalled()
+            expect(indexes.indexes.search).not.toHaveBeenCalled()
+            done()
+        })
+    })
+
+    it('should reject default catalog creation from non-admin users', (done) => {
+        const indexes = {
+            indexes: {
+                search: jasmine.createSpy('search').and.returnValue(Promise.resolve([])),
+                updateDocument: jasmine.createSpy('updateDocument').and.returnValue(Promise.resolve()),
+                indexDocument: jasmine.createSpy('indexDocument').and.returnValue(Promise.resolve())
+            }
+        }
+        const axios = jasmine.createSpyObj('axios', ['request'])
+
+        const request = {
+            user: {
+                partyId: '1234',
+                roles: [{
+                    name: config.roles.seller
+                }]
+            },
+            body: JSON.stringify({
+                name: 'Default Catalog',
+                description: 'Main marketplace catalog'
+            })
+        }
+
+        const response = jasmine.createSpyObj('res', ['status', 'json'])
+        let resPromise = new Promise((resolve, reject) => {
+            response.json.and.callFake(() => resolve())
+        })
+
+        const instance = getAdminInstance(axios, null, indexes)
+        instance.createDefaultCatalog(request, response)
+
+        resPromise.then(() => {
+            expect(response.status).toHaveBeenCalledWith(403)
+            expect(response.json).toHaveBeenCalledWith({
+                error: 'You are not authorized to access admin endpoint'
+            })
+            expect(axios.request).not.toHaveBeenCalled()
+            expect(indexes.indexes.search).not.toHaveBeenCalled()
+            done()
+        })
+    })
+
+    it('should create a default catalog without related party when the operator is not configured', (done) => {
+        const createdCatalog = {
+            id: 'catalog-without-operator',
+            name: 'Default Catalog',
+            description: 'Main marketplace catalog'
+        }
+        const indexes = {
+            indexes: {
+                search: jasmine.createSpy('search').and.returnValue(Promise.resolve([])),
+                updateDocument: jasmine.createSpy('updateDocument').and.returnValue(Promise.resolve()),
+                indexDocument: jasmine.createSpy('indexDocument').and.returnValue(Promise.resolve())
+            }
+        }
+        const tmfUtils = {
+            attachRelatedPartyObj: jasmine.createSpy('attachRelatedPartyObj').and.returnValue(Promise.resolve())
+        }
+        const axios = jasmine.createSpyObj('axios', ['request'])
+        axios.request.and.returnValue(Promise.resolve({
+            status: 201,
+            data: createdCatalog
+        }))
+
+        const request = {
+            headers: {},
+            user: {
+                id: 'admin-user',
+                partyId: 'urn:individual:admin',
+                roles: [{
+                    name: config.roles.admin
+                }]
+            },
+            body: JSON.stringify({
+                name: 'Default Catalog',
+                description: 'Main marketplace catalog'
+            })
+        }
+
+        const response = jasmine.createSpyObj('res', ['status', 'json'])
+        let resPromise = new Promise((resolve, reject) => {
+            response.json.and.callFake(() => resolve())
+        })
+
+        const instance = getAdminInstance(axios, { v4: () => 'default-doc-id' }, indexes, tmfUtils)
+        instance.createDefaultCatalog(request, response)
+
+        resPromise.then(() => {
+            expect(axios.request).toHaveBeenCalledWith({
+                url: 'http://example.com:1234/catalog',
+                method: 'POST',
+                headers: {
+                    Authorization: 'Bearer EXAMPLE',
+                    Accept: 'application/json',
+                    'content-type': 'application/json'
+                },
+                data: {
+                    name: 'Default Catalog',
+                    description: 'Main marketplace catalog',
+                    lifecycleStatus: 'Launched'
+                }
+            })
+            expect(indexes.indexes.indexDocument).toHaveBeenCalledWith('defaultcatalog', 'default-doc-id', {
+                default_id: 'catalog-without-operator'
+            })
+            expect(response.status).toHaveBeenCalledWith(201)
+            expect(response.json).toHaveBeenCalledWith(createdCatalog)
+            done()
+        })
     })
 
     it('should persist and return normalized search filters config in rooted mode', (done) => {
