@@ -1385,7 +1385,7 @@ const catalog = (function() {
     const checkExistingCatalog = function(catalogName, callback) {
         const catalogPath = '/catalog';
         const queryParams = '?name=' + encodeURIComponent(catalogName);
-        const invalidChars = /[<>%"\|]/;
+        const invalidChars = /[<>%'"\|]/;
         if(invalidChars.test(catalogName)){
             return callback({
                 status: 400,

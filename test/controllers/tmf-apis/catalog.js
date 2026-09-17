@@ -2779,6 +2779,11 @@ describe('Catalog API', function() {
         testCreateCatalog(true, isOwnerTrue, { name: catalogName }, null, 400, CATALOG_INVALID_CHARS, false, done);
     });
 
+    it("should not allow to create catalog with ' character in name", function(done) {
+        var catalogName = "catalog'test";
+        testCreateCatalog(true, isOwnerTrue, { name: catalogName }, null, 400, CATALOG_INVALID_CHARS, false, done);
+    });
+
     it('should not allow to create catalog with multiple invalid characters in name', function(done) {
         var catalogName = 'catalog<>%test';
         testCreateCatalog(true, isOwnerTrue, { name: catalogName }, null, 400, CATALOG_INVALID_CHARS, false, done);
