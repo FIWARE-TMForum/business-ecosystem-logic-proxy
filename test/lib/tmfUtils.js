@@ -1168,6 +1168,12 @@ describe('TMF Utils', function() {
                 id: 'urn:organization:operatorId',
                 href: 'urn:organization:operatorId',
                 name: 'VAT-OP',
+                role: 'Seller',
+                "@referredType": "Organization"
+            }, {
+                id: 'urn:organization:operatorId',
+                href: 'urn:organization:operatorId',
+                name: 'VAT-OP',
                 role: 'SellerOperator',
                 "@referredType": "Organization"
             }]);
