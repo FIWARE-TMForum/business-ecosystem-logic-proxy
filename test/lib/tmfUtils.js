@@ -699,6 +699,28 @@ describe('TMF Utils', function() {
 
     })
 
+    describe('Method: isValidStatusTransition', function() {
+        it('should allow an active draft to be archived directly', function() {
+            const tmfUtils = getTmfUtils();
+
+            expect(tmfUtils.isValidStatusTransition('Active', 'Obsolete')).toBe(true);
+            expect(tmfUtils.isValidStatusTransition('Active', 'Retired')).toBe(false);
+        });
+
+        it('should allow the second-to-last lifecycle status to move one step backward', function() {
+            const tmfUtils = getTmfUtils();
+
+            expect(tmfUtils.isValidStatusTransition('Retired', 'Launched')).toBe(true);
+        });
+
+        it('should reject other backward transitions', function() {
+            const tmfUtils = getTmfUtils();
+
+            expect(tmfUtils.isValidStatusTransition('Obsolete', 'Retired')).toBe(false);
+            expect(tmfUtils.isValidStatusTransition('Launched', 'Active')).toBe(false);
+        });
+    });
+
     describe('Method: refsToQuery', function(){
         it('should parse an array of refs to query structure string', function(){
             const tmfUtils = getTmfUtils();
