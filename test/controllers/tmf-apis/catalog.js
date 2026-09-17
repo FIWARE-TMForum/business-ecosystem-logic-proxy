@@ -83,6 +83,7 @@ const INVALID_S_API = 'Error getting service specification through the API'
 const INVALID_R_API = 'Error getting resource specification through the API'
 const INVALID_CHARACTERISTIC_REMOVAL = 'Product specification characteristics can only be removed from active product specifications'
 const INVALID_PRICE_PLAN_CONSTRAINT_PROFILE = 'A price plan with prodSpecCharValueUse cannot reference a constraint';
+const INVALID_PRODUCT_CHARACTERISTICS = 'Invalid product spec characteristics';
 const COMPLIANCE_CERTIFICATE = 'Y2VydGlmaWNhdGU=';
 const COMPLIANCE_CERTIFICATE_PEM = '-----BEGIN CERTIFICATE-----\n' +
     COMPLIANCE_CERTIFICATE +
@@ -1631,6 +1632,30 @@ describe('Catalog API', function() {
             // Actual call
             // isOwner does not matter when productRequestFails is set to true
             testCreateProduct(storeValidatorErr, storeErrorStatus, storeErrorMessage, true, null, null, done);
+        });
+
+        it('should not allow sellers to create products with Compliance:VC', function(done) {
+            const catalogApi = mockCatalogAPI(isOwnerTrue, storeValidatorOk);
+            const body = {
+                name: 'Product with forged compliance credential',
+                description: 'test',
+                isBundle: false,
+                relatedParty: [{ id: 'test', role: 'Seller' }],
+                validFor: { startDateTime: '2010-04-12' },
+                productSpecCharacteristic: [{
+                    id: 'compliance-characteristic',
+                    name: 'Compliance:VC',
+                    productSpecCharacteristicValue: [{ value: 'forged-token' }]
+                }]
+            };
+
+            checkProductCreationResult(
+                catalogApi,
+                buildProductRequest(body),
+                422,
+                INVALID_PRODUCT_CHARACTERISTICS,
+                done
+            );
         });
 
         it('should not allow to create products with number type name', function(done) {
@@ -4001,6 +4026,63 @@ describe('Catalog API', function() {
             vDescrF
         );
     };
+
+    const testComplianceCredentialUpdate = function(previousCharacteristics, newCharacteristics, errorStatus, errorMsg, done) {
+        const productId = '7';
+        const productPath = '/productSpecification/' + productId;
+        const offeringsPath = '/productOffering?productSpecification.id=' + productId;
+        const previousBody = {
+            id: productId,
+            lifecycleStatus: 'Active',
+            relatedParty: previousProductBody.relatedParty,
+            validFor: {},
+            serviceSpecification: [],
+            resourceSpecification: [],
+            productSpecCharacteristic: previousCharacteristics
+        };
+
+        testChangeProductSpec(
+            productPath,
+            offeringsPath,
+            previousBody,
+            JSON.stringify({ productSpecCharacteristic: newCharacteristics }),
+            { requestStatus: 200, offerings: [] },
+            errorStatus,
+            errorMsg,
+            done
+        );
+    };
+
+    it('should not allow sellers to add Compliance:VC to a product specification', function(done) {
+        const existingCharacteristic = { id: 'characteristic-1', name: 'Existing characteristic' };
+        testComplianceCredentialUpdate(
+            [existingCharacteristic],
+            [existingCharacteristic, {
+                id: 'compliance-characteristic',
+                name: 'Compliance:VC',
+                productSpecCharacteristicValue: [{ value: 'forged-token' }]
+            }],
+            422,
+            INVALID_PRODUCT_CHARACTERISTICS,
+            done
+        );
+    });
+
+    it('should allow sellers to preserve an existing Compliance:VC unchanged', function(done) {
+        const existingCredential = {
+            id: 'compliance-characteristic',
+            name: 'Compliance:VC',
+            productSpecCharacteristicValue: [{ value: 'issued-token' }]
+        };
+
+        testComplianceCredentialUpdate(
+            [existingCredential],
+            [existingCredential],
+            null,
+            null,
+            done
+        );
+    });
 
     it('should not allow to retire a product when the body is invalid', function(done) {
         var productBody = "{'lifecycleStatus': retired}";
