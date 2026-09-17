@@ -1406,9 +1406,25 @@ const catalog = (function() {
         });
     };
 
-    const createCatalogCategories = function(req, catalogBody, callback) {
+    const createCatalogCategories = async function(req, catalogBody, callback) {
         logger.info('Attaching a category to the new catalog');
-        createAsset('/category', {isRoot: true, name: catalogBody.name, lifecycleStatus: 'Launched'}, function(err, result) {
+        const categoryBody = {
+            isRoot: true,
+            name: catalogBody.name,
+            lifecycleStatus: 'Launched'
+        }
+
+        try {
+            await tmfUtils.attachRelatedPartyObj('catalogCategory', categoryBody, req.user)
+        } catch (err) {
+            logger.error('Error attaching related parties to the associated category');
+            return callback({
+                status: 500,
+                message: 'Error creating the associated category'
+            })
+        }
+
+        createAsset('/category', categoryBody, function(err, result) {
             if (err){
                 console.log(err)
                 logger.error('Error creating the associated category');

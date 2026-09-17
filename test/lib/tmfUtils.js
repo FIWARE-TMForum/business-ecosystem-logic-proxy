@@ -1181,6 +1181,70 @@ describe('TMF Utils', function() {
             expect(newBody['@schemaLocation']).toEqual('https://mylocation.com/schema.json')
         });
 
+        it('should attach related party to an object with explicit current user', async () => {
+            const tmfUtils = getOpTmfUtils();
+            const entity = {};
+
+            await tmfUtils.attachRelatedPartyObj('catalogCategory', entity, {
+                id: 'VAT-ID1',
+                partyId: 'urn:organization:partyId'
+            });
+
+            expect(entity.relatedParty).toEqual([{
+                id: 'urn:organization:partyId',
+                href: 'urn:organization:partyId',
+                name: 'VAT-ID1',
+                role: 'Seller',
+                "@referredType": "Organization"
+            }, {
+                id: 'urn:organization:operatorId',
+                href: 'urn:organization:operatorId',
+                name: 'VAT-OP',
+                role: 'SellerOperator',
+                "@referredType": "Organization"
+            }]);
+            expect(entity['@schemaLocation']).toEqual('https://mylocation.com/offering-schema.json')
+        });
+
+        it('should attach an individual current user to a catalog category', async () => {
+            const tmfUtils = getOpTmfUtils();
+            const entity = {};
+
+            await tmfUtils.attachRelatedPartyObj('catalogCategory', entity, {
+                id: 'user-id',
+                partyId: 'urn:individual:partyId'
+            });
+
+            expect(entity.relatedParty).toEqual([{
+                id: 'urn:individual:partyId',
+                href: 'urn:individual:partyId',
+                name: 'user-id',
+                role: 'Seller',
+                "@referredType": "Individual"
+            }, {
+                id: 'urn:organization:operatorId',
+                href: 'urn:organization:operatorId',
+                name: 'VAT-OP',
+                role: 'SellerOperator',
+                "@referredType": "Organization"
+            }]);
+            expect(entity['@schemaLocation']).toEqual('https://mylocation.com/offering-schema.json')
+        });
+
+        it('should fail to attach related party to an object without current user', async () => {
+            const tmfUtils = getOpTmfUtils();
+            let error;
+
+            try {
+                await tmfUtils.attachRelatedPartyObj('catalogCategory', {})
+            } catch (err) {
+                error = err;
+            }
+
+            expect(error).toBeDefined();
+            expect(error.message).toEqual('currentUser is required to attach relatedParty');
+        });
+
         it('should attach related party to a service spec', async () => {
             await testAttachSpec('service', '/serviceSpecification')
         });
