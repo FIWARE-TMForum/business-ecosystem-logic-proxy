@@ -1221,6 +1221,31 @@ describe('TMF Utils', function() {
             expect(newBody['@schemaLocation']).toEqual('https://mylocation.com/schema.json')
         });
 
+        it('should attach operator seller related party to an operator catalog object', async () => {
+            const tmfUtils = getOpTmfUtils();
+            const entity = {};
+
+            await tmfUtils.attachRelatedPartyObj('operatorCatalog', entity, {
+                id: 'VAT-ID1',
+                partyId: 'urn:organization:partyId'
+            });
+
+            expect(entity.relatedParty).toEqual([{
+                id: 'urn:organization:operatorId',
+                href: 'urn:organization:operatorId',
+                name: 'VAT-OP',
+                role: 'Seller',
+                "@referredType": "Organization"
+            }, {
+                id: 'urn:organization:operatorId',
+                href: 'urn:organization:operatorId',
+                name: 'VAT-OP',
+                role: 'SellerOperator',
+                "@referredType": "Organization"
+            }]);
+            expect(entity['@schemaLocation']).not.toBeDefined()
+        });
+
         it('should attach related party to an object with explicit current user', async () => {
             const tmfUtils = getOpTmfUtils();
             const entity = {};
