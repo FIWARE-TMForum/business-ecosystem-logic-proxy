@@ -226,4 +226,46 @@ describe('Search client', () => {
             done()
         })
     })
+
+    it('should search catalogs using keyword and paging', (done) => {
+        let axios = jasmine.createSpy()
+        axios.and.returnValue(Promise.resolve({
+            data: [{
+                id: 'catalog-1'
+            }]
+        }))
+
+        const client = searchClient({
+            post: axios
+        })
+
+        client.searchCatalog('testkey', {offset: 12, pageSize: 6}).then((ids) => {
+            expect(ids).toEqual([{
+                id: 'catalog-1'
+            }])
+
+            let url = 'http://search.com/api/SearchCatalog/testkey?page=2&size=6'
+            expect(axios).toHaveBeenCalledWith(url, {})
+            done()
+        })
+    })
+
+    it('should map non-array catalog search responses to an empty result', (done) => {
+        let axios = jasmine.createSpy()
+        axios.and.returnValue(Promise.resolve({
+            data: {}
+        }))
+
+        const client = searchClient({
+            post: axios
+        })
+
+        client.searchCatalog('testkey', {}).then((ids) => {
+            expect(ids).toEqual([])
+
+            let url = 'http://search.com/api/SearchCatalog/testkey'
+            expect(axios).toHaveBeenCalledWith(url, {})
+            done()
+        })
+    })
 })
