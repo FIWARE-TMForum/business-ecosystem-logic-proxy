@@ -250,7 +250,11 @@ describe('Catalog API', function() {
                 'compliance_profile::B,compliance_profile::P',
                 {}
             );
-            expect(req.apiUrl).toBe('/catalog/productOffering?href=id-1,id-2');
+            expect(req.apiUrl).toBe('/catalog/productOffering?href=id-1,id-2&limit=2');
+            expect(req.query).toEqual({
+                href: 'id-1,id-2',
+                limit: '2'
+            });
             done();
         });
     });
@@ -288,7 +292,81 @@ describe('Catalog API', function() {
                     sort: 'name'
                 }
             );
-            expect(req.apiUrl).toBe('/catalog/productOffering?href=id-1');
+            expect(req.apiUrl).toBe('/catalog/productOffering?href=id-1&limit=6');
+            expect(req.query).toEqual({
+                href: 'id-1',
+                limit: '6'
+            });
+            done();
+        });
+    });
+
+    it('should use external search on GET catalog requests with keyword params', function(done) {
+        const previousSearchUrl = config.searchUrl;
+        config.searchUrl = 'http://search.com';
+
+        const searchCatalogMethod = jasmine.createSpy('searchCatalog').and.returnValue(Promise.resolve([
+            { id: 'catalog-1' },
+            { id: 'catalog-2' }
+        ]));
+
+        var catalogApi = getCatalogApi({}, {}, {}, {}, {}, {}, { searchCatalog: searchCatalogMethod });
+        var req = {
+            method: 'GET',
+            path: '/catalog/catalog',
+            apiUrl: '/catalog/catalog',
+            query: {
+                keyword: 'testkey',
+                offset: '12',
+                limit: '6',
+                lifecycleStatus: 'Launched'
+            }
+        };
+
+        catalogApi.checkPermissions(req, function(err) {
+            config.searchUrl = previousSearchUrl;
+            expect(err).toBeNull();
+            expect(searchCatalogMethod).toHaveBeenCalledWith(
+                'testkey',
+                {
+                    offset: '12',
+                    pageSize: '6'
+                }
+            );
+            expect(req.apiUrl).toBe('/catalog/catalog?href=catalog-1,catalog-2&limit=6');
+            expect(req.query).toEqual({
+                href: 'catalog-1,catalog-2',
+                limit: '6'
+            });
+            expect(catalogApi.getFilteredPaginationConfig(req)).toBeNull();
+            done();
+        });
+    });
+
+    it('should rewrite GET catalog keyword searches to href null when there are no search results', function(done) {
+        const previousSearchUrl = config.searchUrl;
+        config.searchUrl = 'http://search.com';
+
+        const searchCatalogMethod = jasmine.createSpy('searchCatalog').and.returnValue(Promise.resolve([]));
+
+        var catalogApi = getCatalogApi({}, {}, {}, {}, {}, {}, { searchCatalog: searchCatalogMethod });
+        var req = {
+            method: 'GET',
+            path: '/catalog/catalog',
+            apiUrl: '/catalog/catalog',
+            query: {
+                keyword: 'testkey'
+            }
+        };
+
+        catalogApi.checkPermissions(req, function(err) {
+            config.searchUrl = previousSearchUrl;
+            expect(err).toBeNull();
+            expect(searchCatalogMethod).toHaveBeenCalledWith('testkey', {});
+            expect(req.apiUrl).toBe('/catalog/catalog?href=null');
+            expect(req.query).toEqual({
+                href: 'null'
+            });
             done();
         });
     });
@@ -377,7 +455,7 @@ describe('Catalog API', function() {
             config.searchUrl = previousSearchUrl;
             expect(err).toBeNull();
             expect(searchMethod).toHaveBeenCalledWith('testkey', undefined, {});
-            expect(req.apiUrl).toBe('/catalog/productOffering?href=id-1&category=cat-1');
+            expect(req.apiUrl).toBe('/catalog/productOffering?href=id-1&limit=1&category=cat-1');
             done();
         });
     });
@@ -6456,6 +6534,58 @@ describe('Catalog API', function() {
                         id: 'id2'
                     }, {
                         id: 'id3'
+                    }])
+                },
+                done
+            );
+        });
+
+        it('should properly order catalog search responses when quering by ID', (done) => {
+            const req = {
+                method: 'GET',
+                apiUrl: '/catalog/catalog?href=catalog-1,catalog-2,catalog-3&limit=3&sttrs=id',
+                body: [{
+                    id: 'catalog-3'
+                }, {
+                    id: 'catalog-1'
+                }, {
+                    id: 'catalog-2'
+                }]
+            }
+
+            testPostValidation(
+                req,
+                () => {
+                    expect(req.body).toEqual([{
+                        id: 'catalog-1'
+                    }, {
+                        id: 'catalog-2'
+                    }, {
+                        id: 'catalog-3'
+                    }])
+                },
+                done
+            );
+        });
+
+        it('should omit missing catalog href matches when ordering responses by ID', (done) => {
+            const req = {
+                method: 'GET',
+                apiUrl: '/catalog/catalog?href=catalog-1,catalog-2,catalog-3&limit=3&sttrs=id',
+                body: [{
+                    id: 'catalog-3'
+                }, {
+                    id: 'catalog-1'
+                }]
+            }
+
+            testPostValidation(
+                req,
+                () => {
+                    expect(req.body).toEqual([{
+                        id: 'catalog-1'
+                    }, {
+                        id: 'catalog-3'
                     }])
                 },
                 done

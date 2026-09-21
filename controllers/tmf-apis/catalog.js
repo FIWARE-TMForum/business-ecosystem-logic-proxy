@@ -2418,17 +2418,21 @@ const catalog = (function() {
     const processQuery = async (req, callback) => {
         const query = req.query || {}
 
-        const returnQueryRes = (result) => {
-            let newUrl = '/catalog/productOffering?href='
+        const rewriteToHrefQuery = (resourcePath, result) => {
+            const ids = result.map((hit) => {
+                return hit.id
+            })
+            const href = ids.length > 0 ? ids.join(',') : 'null'
+            const limit = query.limit != null ? query.limit : (ids.length > 0 ? String(ids.length) : null)
+            let newUrl = resourcePath + '?href=' + href
 
-            if (result.length > 0) {
-                let ids = result.map((hit) => {
-                    return hit.id
-                })
+            req.query = {
+                href: href
+            }
 
-                newUrl += ids.join(',')
-            } else {
-                newUrl += 'null'
+            if (limit != null) {
+                req.query.limit = String(limit)
+                newUrl += '&limit=' + req.query.limit
             }
 
             req.apiUrl = newUrl
@@ -2437,11 +2441,15 @@ const catalog = (function() {
             callback(null)
         }
 
-        const hasKeyword = query.keyword != null && String(query.keyword).trim().length > 0
-        const hasCategoryFilters = query['category.id'] != null && String(query['category.id']).trim().length > 0
+        const returnQueryRes = (result) => {
+            rewriteToHrefQuery('/catalog/productOffering', result)
+        }
 
-        if (offeringsPattern.test(req.path) && config.searchUrl && (hasKeyword || hasCategoryFilters)) {
-            // Query to the external search engine
+        const returnCatalogQueryRes = (result) => {
+            rewriteToHrefQuery('/catalog/catalog', result)
+        }
+
+        const buildSearchPage = () => {
             let page = {}
 
             if (query.offset != null) {
@@ -2451,6 +2459,28 @@ const catalog = (function() {
             if (query.limit != null) {
                 page.pageSize = query.limit
             }
+
+            return page
+        }
+
+        const hasKeyword = query.keyword != null && String(query.keyword).trim().length > 0
+        const hasCategoryFilters = query['category.id'] != null && String(query['category.id']).trim().length > 0
+
+        if (catalogsPattern.test(req.path) && config.searchUrl && hasKeyword) {
+            // Query to the external search engine
+            let page = buildSearchPage()
+
+            searchEngine.searchCatalog(query.keyword, page)
+                .then(returnCatalogQueryRes)
+                .catch(() => {
+                    callback({
+                        status: 400,
+                        message: 'Error accessing search indexes'
+                    })
+                })
+        } else if (offeringsPattern.test(req.path) && config.searchUrl && (hasKeyword || hasCategoryFilters)) {
+            // Query to the external search engine
+            let page = buildSearchPage()
 
             if (query.sort != null) {
                 page.sort = query.sort
@@ -2518,6 +2548,42 @@ const catalog = (function() {
                 }
                 return filter
             })
+        }
+    }
+
+    const sortHrefResponse = (req, resourceName) => {
+        // Ensure that the response is in the same order as in the query string
+        if (req.apiUrl.indexOf('href=') < 0 || !Array.isArray(req.body)) {
+            return
+        }
+
+        try {
+            const query = req.apiUrl.split('?')[1]
+            const queryParts = query.split('&')
+
+            let refs = []
+
+            logger.debug(`Request ids in order: ${query}`);
+
+            queryParts.forEach((part) => {
+                const keyValue = part.split('=')
+                if (keyValue[0] === 'href') {
+                    refs = keyValue[1].split(',')
+                }
+            })
+
+            let sortedBody = []
+            refs.forEach((itemId) => {
+                let item = req.body.find((it) => it && it.id === itemId)
+
+                if (item != null) {
+                    sortedBody.push(item)
+                }
+            })
+
+            req.body = sortedBody
+        } catch (e) {
+            logger.error('Error parsing query string for ' + resourceName + ' retrieval');
         }
     }
     //////////////////////////////////////////////////////////////////////////////////////////////
@@ -2601,37 +2667,12 @@ const catalog = (function() {
         let body;
 
         if (req.method == 'GET' && req.apiUrl.indexOf('/productOffering') > -1) {
-            // Process sort of responses if needed
-            if (req.apiUrl.indexOf('href=') > -1) {
-                // Ensure that the response is in the same order as in the query string
-                try {
-                    const query = req.apiUrl.split('?')[1]
-                    const queryParts = query.split('&')
-
-                    let refs = []
-
-                    logger.debug(`Request ids in order: ${query}`);
-
-                    queryParts.forEach((part) => {
-                        const keyValue = part.split('=')
-                        if (keyValue[0] === 'href') {
-                            refs = keyValue[1].split(',')
-                        }
-                    })
-
-                    let sortedBody = []
-                    refs.forEach((itemId) => {
-                        let item = req.body.find((it) => it.id === itemId)
-                        sortedBody.push(item)
-                    })
-
-                    req.body = sortedBody
-                } catch (e) {
-                    logger.error('Error parsing query string for offering retrieval');
-                }
-            }
-
+            sortHrefResponse(req, 'offering')
             filterAdhocOffers(req);
+
+            return callback(null)
+        } else if (req.method == 'GET' && catalogsPattern.test(req.apiUrl.split('?')[0])) {
+            sortHrefResponse(req, 'catalog')
 
             return callback(null)
         } else if (req.method == 'POST' && categoriesPattern.test(req.apiUrl)) {
