@@ -84,6 +84,7 @@ const INVALID_R_API = 'Error getting resource specification through the API'
 const INVALID_CHARACTERISTIC_REMOVAL = 'Product specification characteristics can only be removed from active product specifications'
 const INVALID_PRICE_PLAN_CONSTRAINT_PROFILE = 'A price plan with prodSpecCharValueUse cannot reference a constraint';
 const INVALID_PRODUCT_CHARACTERISTICS = 'Invalid product spec characteristics';
+const INVALID_PRODUCT_IMAGE_TYPE = 'Product profile picture must use a valid image format (SVG, PNG, JPEG or GIF)';
 const COMPLIANCE_CERTIFICATE = 'Y2VydGlmaWNhdGU=';
 const COMPLIANCE_CERTIFICATE_PEM = '-----BEGIN CERTIFICATE-----\n' +
     COMPLIANCE_CERTIFICATE +
@@ -1693,6 +1694,55 @@ describe('Catalog API', function() {
 
         it('should allow to create owned products', function(done) {
             testCreateProduct(storeValidatorOk, null, null, true, null, null, done);
+        });
+
+        it('should allow supported profile pictures and non-image attachments', function(done) {
+            const catalogApi = mockCatalogAPI(isOwnerTrue, storeValidatorOk);
+            const body = {
+                name: 'Product with attachments',
+                description: 'test',
+                isBundle: false,
+                relatedParty: [{ id: 'test', role: 'Seller' }],
+                validFor: { startDateTime: '2010-04-12' },
+                attachment: [
+                    {
+                        name: 'Profile Picture',
+                        attachmentType: 'image/png',
+                        url: 'https://example.com/image.png'
+                    },
+                    {
+                        name: 'Manual',
+                        attachmentType: 'application/pdf',
+                        url: 'https://example.com/manual.pdf'
+                    }
+                ]
+            };
+
+            checkProductCreationResult(catalogApi, buildProductRequest(body), null, null, done);
+        });
+
+        it('should reject a PDF used as the product profile picture', function(done) {
+            const catalogApi = mockCatalogAPI(isOwnerTrue, storeValidatorOk);
+            const body = {
+                name: 'Product with invalid image',
+                description: 'test',
+                isBundle: false,
+                relatedParty: [{ id: 'test', role: 'Seller' }],
+                validFor: { startDateTime: '2010-04-12' },
+                attachment: [{
+                    name: 'Profile Picture',
+                    attachmentType: 'application/pdf',
+                    url: 'https://example.com/document.pdf'
+                }]
+            };
+
+            checkProductCreationResult(
+                catalogApi,
+                buildProductRequest(body),
+                422,
+                INVALID_PRODUCT_IMAGE_TYPE,
+                done
+            );
         });
 
         it('should not allow to create non-owned products', function(done) {

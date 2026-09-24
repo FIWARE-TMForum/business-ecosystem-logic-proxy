@@ -65,6 +65,23 @@ const catalog = (function() {
     const catalogsPattern = new RegExp('/catalog/?$');
     const allowedComplianceLabels = ['BL', 'P', 'PP'];
     const complianceIssuerPrefix = 'did:elsi:';
+    const allowedProductImageTypes = new Set([
+        'image/svg+xml',
+        'image/png',
+        'image/jpeg',
+        'image/gif'
+    ]);
+
+    const isProductProfilePicture = function(attachment) {
+        return attachment &&
+            typeof attachment.name === 'string' &&
+            attachment.name.trim().toLowerCase() === 'profile picture';
+    };
+
+    const hasAllowedProductImageType = function(attachment) {
+        return typeof attachment.attachmentType === 'string' &&
+            allowedProductImageTypes.has(attachment.attachmentType.trim().toLowerCase());
+    };
 
     const retrieveAsset = function(assetPath, callback) {
         if (!assetPath.startsWith('/')) {
@@ -508,15 +525,12 @@ const catalog = (function() {
         }
 
         return productSpec.attachment.some((attachment) => {
-            if (!attachment ||
-                typeof attachment.name !== 'string' ||
-                typeof attachment.attachmentType !== 'string' ||
+            if (!isProductProfilePicture(attachment) ||
                 typeof attachment.url !== 'string') {
                 return false;
             }
 
-            return attachment.name.trim().toLowerCase() === 'profile picture' &&
-                attachment.attachmentType.trim().length > 0 &&
+            return hasAllowedProductImageType(attachment) &&
                 attachment.url.trim().length > 0;
         });
     };
@@ -1289,6 +1303,18 @@ const catalog = (function() {
                     message: errorMessage
                 });
             }
+        }
+
+        const hasInvalidProductImage = productSpec &&
+            Array.isArray(productSpec.attachment) &&
+            productSpec.attachment.some((attachment) =>
+                isProductProfilePicture(attachment) && !hasAllowedProductImageType(attachment)
+            );
+        if (hasInvalidProductImage) {
+            return callback({
+                status: 422,
+                message: 'Product profile picture must use a valid image format (SVG, PNG, JPEG or GIF)'
+            });
         }
 
         const previousCharacteristics = previousProductSpec && Array.isArray(previousProductSpec.productSpecCharacteristic)
