@@ -32,6 +32,8 @@ const FEATURE_FLAGS_COLLECTION = 'config'
 const FEATURE_FLAGS_CONFIG_ID = 'feature-flags'
 const ANALYTICS_CONFIG_COLLECTION = 'config'
 const ANALYTICS_CONFIG_ID = 'analytics'
+const SEARCH_CONFIG_COLLECTION = 'config'
+const SEARCH_CONFIG_ID = 'search'
 
 const OFFER_FORM_PLACEMENTS = ['none', 'generalInfo', 'categorySection']
 const FEATURE_FLAGS = [
@@ -135,6 +137,63 @@ function admin() {
         config.analyticsSuperset.url = config.analytics
 
         return getAnalyticsConfigResponse()
+    }
+
+    const getDefaultSearchConfig = function() {
+        return {
+            searchUrl: typeof config.searchUrl === 'string' ? config.searchUrl : '',
+            useQueryKeyword: false
+        }
+    }
+
+    const getSearchConfigResponse = function() {
+        return {
+            searchUrl: typeof config.searchUrl === 'string' ? config.searchUrl : '',
+            useQueryKeyword: config.useQueryKeyword === true
+        }
+    }
+
+    const applySearchConfig = function(searchConfig) {
+        config.searchUrl = searchConfig.searchUrl
+        config.useQueryKeyword = searchConfig.useQueryKeyword === true
+
+        return getSearchConfigResponse()
+    }
+
+    const validateAndNormalizeSearchConfig = function(body, requireUseQueryKeyword) {
+        const errors = []
+
+        if (body == null || typeof body !== 'object' || Array.isArray(body)) {
+            return {
+                errors: ['Body must be a JSON object'],
+                value: null
+            }
+        }
+
+        let searchUrl = null
+        if (typeof body.searchUrl !== 'string') {
+            errors.push('searchUrl is required and must be a string')
+        } else {
+            searchUrl = body.searchUrl.trim()
+        }
+
+        if (typeof body.useQueryKeyword !== 'boolean' && requireUseQueryKeyword) {
+            errors.push('useQueryKeyword is required and must be a boolean')
+        } else if (body.useQueryKeyword != null && typeof body.useQueryKeyword !== 'boolean') {
+            errors.push('useQueryKeyword must be a boolean')
+        }
+
+        if (errors.length > 0) {
+            return { errors: errors, value: null }
+        }
+
+        return {
+            errors: [],
+            value: {
+                searchUrl: searchUrl,
+                useQueryKeyword: body.useQueryKeyword === true
+            }
+        }
     }
 
     const validateAndNormalizeAnalyticsConfig = function(body) {
@@ -872,6 +931,98 @@ function admin() {
         }
     }
 
+    const loadSearchConfig = async function() {
+        try {
+            const result = await indexes.search(SEARCH_CONFIG_COLLECTION, { id: SEARCH_CONFIG_ID, limit: 1 })
+
+            if (result.length === 0) {
+                return applySearchConfig(getDefaultSearchConfig())
+            }
+
+            if (result[0].search == null) {
+                return applySearchConfig({
+                    searchUrl: '',
+                    useQueryKeyword: false
+                })
+            }
+
+            const validationResult = validateAndNormalizeSearchConfig(result[0].search, false)
+            if (validationResult.errors.length > 0) {
+                logger.error('Invalid search config stored in database: ' + validationResult.errors.join(', '))
+                return applySearchConfig(getDefaultSearchConfig())
+            }
+
+            return applySearchConfig(validationResult.value)
+        } catch (e) {
+            logger.error('Error loading search config: ' + e.message)
+            return getSearchConfigResponse()
+        }
+    }
+
+    const updateSearchConfig = async function(req, res) {
+        if (!utils.isAdmin(req.user)) {
+            res.status(403)
+            res.json({ error: "You are not authorized to access admin endpoint" })
+            return
+        }
+
+        let reqBody
+        try {
+            reqBody = parseBody(req.body)
+        } catch (e) {
+            res.status(400)
+            res.json({ error: 'Invalid body' })
+            return
+        }
+
+        const validationResult = validateAndNormalizeSearchConfig(reqBody, true)
+        if (validationResult.errors.length > 0) {
+            res.status(400)
+            res.json({
+                error: 'Invalid search config payload',
+                details: validationResult.errors
+            })
+            return
+        }
+
+        let responseBody
+        try {
+            const result = await indexes.search(SEARCH_CONFIG_COLLECTION, { id: SEARCH_CONFIG_ID, limit: 1 })
+
+            if (result.length > 0) {
+                await indexes.updateDocument(SEARCH_CONFIG_COLLECTION, result[0].id, {
+                    search: validationResult.value
+                })
+            } else {
+                await indexes.indexDocument(SEARCH_CONFIG_COLLECTION, SEARCH_CONFIG_ID, {
+                    search: validationResult.value
+                })
+            }
+
+            responseBody = applySearchConfig(validationResult.value)
+        } catch (e) {
+            res.status(500)
+            res.json({ error: 'Error updating search config: ' + e.message })
+            return
+        }
+
+        res.status(200)
+        res.json(responseBody)
+    }
+
+    const getSearchConfig = async function(req, res) {
+        if (!utils.isAdmin(req.user)) {
+            res.status(403)
+            res.json({ error: "You are not authorized to access admin endpoint" })
+            return
+        }
+
+        const responseBody = await loadSearchConfig()
+
+        res.status(200)
+        res.json(responseBody)
+    }
+
     const updateAnalyticsConfig = async function(req, res) {
         if (!utils.isAdmin(req.user)) {
             res.status(403)
@@ -943,6 +1094,9 @@ function admin() {
         createDefaultCatalog: createDefaultCatalog,
         updateSearchFiltersConfig: updateSearchFiltersConfig,
         updateFeatureFlagsConfig: updateFeatureFlagsConfig,
+        getSearchConfig: getSearchConfig,
+        updateSearchConfig: updateSearchConfig,
+        loadSearchConfig: loadSearchConfig,
         getAnalyticsConfig: getAnalyticsConfig,
         updateAnalyticsConfig: updateAnalyticsConfig,
         loadAnalyticsConfig: loadAnalyticsConfig

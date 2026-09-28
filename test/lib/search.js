@@ -185,6 +185,56 @@ describe('Search client', () => {
         })
     })
 
+    it('should use the current search URL from config at request time', (done) => {
+        let axios = jasmine.createSpy()
+        axios.and.returnValue(Promise.resolve({
+            data: []
+        }))
+
+        const client = searchClient({
+            post: axios
+        })
+
+        config.searchUrl = 'http://updated-search.com'
+
+        client.search('testkey', '', {}).then((ids) => {
+            expect(ids).toEqual([])
+
+            let url = 'http://updated-search.com/api/SearchProduct/testkey'
+            expect(axios).toHaveBeenCalledWith(url, {
+                categories: []
+            })
+
+            config.searchUrl = searchUrl
+            done()
+        })
+    })
+
+    it('should send keyword as a query parameter when configured', (done) => {
+        let axios = jasmine.createSpy()
+        axios.and.returnValue(Promise.resolve({
+            data: []
+        }))
+
+        const client = searchClient({
+            post: axios
+        })
+
+        config.useQueryKeyword = true
+
+        client.search('testkey', '', {offset: 6, pageSize: 6, sort: 'name'}).then((ids) => {
+            expect(ids).toEqual([])
+
+            let url = 'http://search.com/api/SearchProduct?query=testkey&sort=productOfferingName,asc&page=1&size=6'
+            expect(axios).toHaveBeenCalledWith(url, {
+                categories: []
+            })
+
+            config.useQueryKeyword = false
+            done()
+        })
+    })
+
     it('should search using ascending last update sort if provided', (done) => {
         let axios = jasmine.createSpy()
         axios.and.returnValue(Promise.resolve({
@@ -265,6 +315,29 @@ describe('Search client', () => {
 
             let url = 'http://search.com/api/SearchCatalog/testkey'
             expect(axios).toHaveBeenCalledWith(url, {})
+            done()
+        })
+    })
+
+    it('should send catalog keyword as a query parameter when configured', (done) => {
+        let axios = jasmine.createSpy()
+        axios.and.returnValue(Promise.resolve({
+            data: []
+        }))
+
+        const client = searchClient({
+            post: axios
+        })
+
+        config.useQueryKeyword = true
+
+        client.searchCatalog('testkey', {offset: 12, pageSize: 6}).then((ids) => {
+            expect(ids).toEqual([])
+
+            let url = 'http://search.com/api/SearchCatalog?query=testkey&page=2&size=6'
+            expect(axios).toHaveBeenCalledWith(url, {})
+
+            config.useQueryKeyword = false
             done()
         })
     })

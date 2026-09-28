@@ -1549,6 +1549,430 @@ describe('Admin Controller', () => {
         })
     })
 
+    const getSearchConfigPayload = () => {
+        return {
+            searchUrl: 'https://example-search-engine',
+            useQueryKeyword: false
+        }
+    }
+
+    it('should persist and return sanitized search config', (done) => {
+        const searchMock = jasmine.createSpy('search').and.returnValue(Promise.resolve([]))
+        const updateMock = jasmine.createSpy('updateDocument').and.returnValue(Promise.resolve())
+        const indexMock = jasmine.createSpy('indexDocument').and.returnValue(Promise.resolve())
+
+        const indexes = {
+            indexes: {
+                search: searchMock,
+                updateDocument: updateMock,
+                indexDocument: indexMock
+            }
+        }
+
+        const payload = getSearchConfigPayload()
+        payload.searchUrl = '  https://example-search-engine  '
+        payload.useQueryKeyword = true
+
+        const request = {
+            user: {
+                partyId: '1234',
+                roles: [{
+                    name: config.roles.admin
+                }]
+            },
+            body: JSON.stringify(payload)
+        }
+
+        const expectedResponse = {
+            searchUrl: 'https://example-search-engine',
+            useQueryKeyword: true
+        }
+
+        const response = jasmine.createSpyObj('res', ['status', 'json'])
+        let resPromise = new Promise((resolve, reject) => {
+            response.json.and.callFake(() => resolve())
+        })
+
+        const instance = getAdminInstance({}, null, indexes)
+        instance.updateSearchConfig(request, response)
+
+        resPromise.then(() => {
+            expect(searchMock).toHaveBeenCalledWith('config', { id: 'search', limit: 1 })
+            expect(updateMock).not.toHaveBeenCalled()
+            expect(indexMock).toHaveBeenCalledWith('config', 'search', {
+                search: expectedResponse
+            })
+            expect(response.status).toHaveBeenCalledWith(200)
+            expect(response.json).toHaveBeenCalledWith(expectedResponse)
+            expect(config.searchUrl).toBe(expectedResponse.searchUrl)
+            expect(config.useQueryKeyword).toBe(true)
+            done()
+        })
+    })
+
+    it('should update existing search config', (done) => {
+        const searchMock = jasmine.createSpy('search').and.returnValue(Promise.resolve([{
+            id: 'search-doc',
+            search: getSearchConfigPayload()
+        }]))
+        const updateMock = jasmine.createSpy('updateDocument').and.returnValue(Promise.resolve())
+
+        const indexes = {
+            indexes: {
+                search: searchMock,
+                updateDocument: updateMock,
+                indexDocument: jasmine.createSpy('indexDocument').and.returnValue(Promise.resolve())
+            }
+        }
+
+        const payload = {
+            searchUrl: 'https://new-search-engine',
+            useQueryKeyword: false
+        }
+
+        const request = {
+            user: {
+                partyId: '1234',
+                roles: [{
+                    name: config.roles.admin
+                }]
+            },
+            body: JSON.stringify(payload)
+        }
+
+        const response = jasmine.createSpyObj('res', ['status', 'json'])
+        let resPromise = new Promise((resolve, reject) => {
+            response.json.and.callFake(() => resolve())
+        })
+
+        const instance = getAdminInstance({}, null, indexes)
+        instance.updateSearchConfig(request, response)
+
+        resPromise.then(() => {
+            expect(updateMock).toHaveBeenCalledWith('config', 'search-doc', {
+                search: payload
+            })
+            expect(response.status).toHaveBeenCalledWith(200)
+            expect(response.json).toHaveBeenCalledWith(payload)
+            expect(config.searchUrl).toBe(payload.searchUrl)
+            expect(config.useQueryKeyword).toBe(false)
+            done()
+        })
+    })
+
+    it('should allow an empty stored search URL to disable search', (done) => {
+        config.searchUrl = 'https://default-search-engine'
+
+        const searchMock = jasmine.createSpy('search').and.returnValue(Promise.resolve([{
+            id: 'search-doc',
+            search: getSearchConfigPayload()
+        }]))
+        const updateMock = jasmine.createSpy('updateDocument').and.returnValue(Promise.resolve())
+
+        const indexes = {
+            indexes: {
+                search: searchMock,
+                updateDocument: updateMock,
+                indexDocument: jasmine.createSpy('indexDocument').and.returnValue(Promise.resolve())
+            }
+        }
+
+        const payload = {
+            searchUrl: '   ',
+            useQueryKeyword: false
+        }
+
+        const expectedResponse = {
+            searchUrl: '',
+            useQueryKeyword: false
+        }
+
+        const request = {
+            user: {
+                partyId: '1234',
+                roles: [{
+                    name: config.roles.admin
+                }]
+            },
+            body: JSON.stringify(payload)
+        }
+
+        const response = jasmine.createSpyObj('res', ['status', 'json'])
+        let resPromise = new Promise((resolve, reject) => {
+            response.json.and.callFake(() => resolve())
+        })
+
+        const instance = getAdminInstance({}, null, indexes)
+        instance.updateSearchConfig(request, response)
+
+        resPromise.then(() => {
+            expect(updateMock).toHaveBeenCalledWith('config', 'search-doc', {
+                search: expectedResponse
+            })
+            expect(response.status).toHaveBeenCalledWith(200)
+            expect(response.json).toHaveBeenCalledWith(expectedResponse)
+            expect(config.searchUrl).toBe('')
+            done()
+        })
+    })
+
+    it('should return stored search config and default useQueryKeyword to false', (done) => {
+        const searchMock = jasmine.createSpy('search').and.returnValue(Promise.resolve([{
+            id: 'search-doc',
+            search: {
+                searchUrl: 'https://example-search-engine'
+            }
+        }]))
+
+        const indexes = {
+            indexes: {
+                search: searchMock,
+                updateDocument: jasmine.createSpy('updateDocument').and.returnValue(Promise.resolve()),
+                indexDocument: jasmine.createSpy('indexDocument').and.returnValue(Promise.resolve())
+            }
+        }
+
+        const request = {
+            user: {
+                partyId: '1234',
+                roles: [{
+                    name: config.roles.admin
+                }]
+            }
+        }
+
+        const expectedResponse = {
+            searchUrl: 'https://example-search-engine',
+            useQueryKeyword: false
+        }
+
+        const response = jasmine.createSpyObj('res', ['status', 'json'])
+        let resPromise = new Promise((resolve, reject) => {
+            response.json.and.callFake(() => resolve())
+        })
+
+        const instance = getAdminInstance({}, null, indexes)
+        instance.getSearchConfig(request, response)
+
+        resPromise.then(() => {
+            expect(searchMock).toHaveBeenCalledWith('config', { id: 'search', limit: 1 })
+            expect(response.status).toHaveBeenCalledWith(200)
+            expect(response.json).toHaveBeenCalledWith(expectedResponse)
+            expect(config.searchUrl).toBe(expectedResponse.searchUrl)
+            expect(config.useQueryKeyword).toBe(false)
+            done()
+        })
+    })
+
+    it('should return config.js search URL when no search config is stored', (done) => {
+        config.searchUrl = 'https://default-search-engine'
+        config.useQueryKeyword = true
+
+        const searchMock = jasmine.createSpy('search').and.returnValue(Promise.resolve([]))
+
+        const indexes = {
+            indexes: {
+                search: searchMock,
+                updateDocument: jasmine.createSpy('updateDocument').and.returnValue(Promise.resolve()),
+                indexDocument: jasmine.createSpy('indexDocument').and.returnValue(Promise.resolve())
+            }
+        }
+
+        const request = {
+            user: {
+                partyId: '1234',
+                roles: [{
+                    name: config.roles.admin
+                }]
+            }
+        }
+
+        const expectedResponse = {
+            searchUrl: 'https://default-search-engine',
+            useQueryKeyword: false
+        }
+
+        const response = jasmine.createSpyObj('res', ['status', 'json'])
+        let resPromise = new Promise((resolve, reject) => {
+            response.json.and.callFake(() => resolve())
+        })
+
+        const instance = getAdminInstance({}, null, indexes)
+        instance.getSearchConfig(request, response)
+
+        resPromise.then(() => {
+            expect(searchMock).toHaveBeenCalledWith('config', { id: 'search', limit: 1 })
+            expect(response.status).toHaveBeenCalledWith(200)
+            expect(response.json).toHaveBeenCalledWith(expectedResponse)
+            done()
+        })
+    })
+
+    it('should return empty search defaults when an existing search config document has no search section', (done) => {
+        config.searchUrl = 'https://default-search-engine'
+        config.useQueryKeyword = true
+
+        const searchMock = jasmine.createSpy('search').and.returnValue(Promise.resolve([{
+            id: 'search-doc'
+        }]))
+
+        const indexes = {
+            indexes: {
+                search: searchMock,
+                updateDocument: jasmine.createSpy('updateDocument').and.returnValue(Promise.resolve()),
+                indexDocument: jasmine.createSpy('indexDocument').and.returnValue(Promise.resolve())
+            }
+        }
+
+        const request = {
+            user: {
+                partyId: '1234',
+                roles: [{
+                    name: config.roles.admin
+                }]
+            }
+        }
+
+        const expectedResponse = {
+            searchUrl: '',
+            useQueryKeyword: false
+        }
+
+        const response = jasmine.createSpyObj('res', ['status', 'json'])
+        let resPromise = new Promise((resolve, reject) => {
+            response.json.and.callFake(() => resolve())
+        })
+
+        const instance = getAdminInstance({}, null, indexes)
+        instance.getSearchConfig(request, response)
+
+        resPromise.then(() => {
+            expect(searchMock).toHaveBeenCalledWith('config', { id: 'search', limit: 1 })
+            expect(response.status).toHaveBeenCalledWith(200)
+            expect(response.json).toHaveBeenCalledWith(expectedResponse)
+            expect(config.searchUrl).toBe('')
+            expect(config.useQueryKeyword).toBe(false)
+            done()
+        })
+    })
+
+    it('should reject invalid search config payload', (done) => {
+        const indexes = {
+            indexes: {
+                search: jasmine.createSpy('search').and.returnValue(Promise.resolve([])),
+                updateDocument: jasmine.createSpy('updateDocument').and.returnValue(Promise.resolve()),
+                indexDocument: jasmine.createSpy('indexDocument').and.returnValue(Promise.resolve())
+            }
+        }
+
+        const request = {
+            user: {
+                partyId: '1234',
+                roles: [{
+                    name: config.roles.admin
+                }]
+            },
+            body: JSON.stringify({
+                searchUrl: 42,
+                useQueryKeyword: 'false'
+            })
+        }
+
+        const response = jasmine.createSpyObj('res', ['status', 'json'])
+        let resPromise = new Promise((resolve, reject) => {
+            response.json.and.callFake(() => resolve())
+        })
+
+        const instance = getAdminInstance({}, null, indexes)
+        instance.updateSearchConfig(request, response)
+
+        resPromise.then(() => {
+            expect(response.status).toHaveBeenCalledWith(400)
+            expect(response.json).toHaveBeenCalledWith({
+                error: 'Invalid search config payload',
+                details: [
+                    'searchUrl is required and must be a string',
+                    'useQueryKeyword is required and must be a boolean'
+                ]
+            })
+            expect(indexes.indexes.search).not.toHaveBeenCalled()
+            done()
+        })
+    })
+
+    it('should reject search config reads from non-admin users', (done) => {
+        const indexes = {
+            indexes: {
+                search: jasmine.createSpy('search').and.returnValue(Promise.resolve([])),
+                updateDocument: jasmine.createSpy('updateDocument').and.returnValue(Promise.resolve()),
+                indexDocument: jasmine.createSpy('indexDocument').and.returnValue(Promise.resolve())
+            }
+        }
+
+        const request = {
+            user: {
+                partyId: '1234',
+                roles: [{
+                    name: 'Seller'
+                }]
+            }
+        }
+
+        const response = jasmine.createSpyObj('res', ['status', 'json'])
+        let resPromise = new Promise((resolve, reject) => {
+            response.json.and.callFake(() => resolve())
+        })
+
+        const instance = getAdminInstance({}, null, indexes)
+        instance.getSearchConfig(request, response)
+
+        resPromise.then(() => {
+            expect(response.status).toHaveBeenCalledWith(403)
+            expect(response.json).toHaveBeenCalledWith({
+                error: 'You are not authorized to access admin endpoint'
+            })
+            expect(indexes.indexes.search).not.toHaveBeenCalled()
+            done()
+        })
+    })
+
+    it('should reject search config updates from non-admin users', (done) => {
+        const indexes = {
+            indexes: {
+                search: jasmine.createSpy('search').and.returnValue(Promise.resolve([])),
+                updateDocument: jasmine.createSpy('updateDocument').and.returnValue(Promise.resolve()),
+                indexDocument: jasmine.createSpy('indexDocument').and.returnValue(Promise.resolve())
+            }
+        }
+
+        const request = {
+            user: {
+                partyId: '1234',
+                roles: [{
+                    name: 'Seller'
+                }]
+            },
+            body: JSON.stringify(getSearchConfigPayload())
+        }
+
+        const response = jasmine.createSpyObj('res', ['status', 'json'])
+        let resPromise = new Promise((resolve, reject) => {
+            response.json.and.callFake(() => resolve())
+        })
+
+        const instance = getAdminInstance({}, null, indexes)
+        instance.updateSearchConfig(request, response)
+
+        resPromise.then(() => {
+            expect(response.status).toHaveBeenCalledWith(403)
+            expect(response.json).toHaveBeenCalledWith({
+                error: 'You are not authorized to access admin endpoint'
+            })
+            expect(indexes.indexes.search).not.toHaveBeenCalled()
+            done()
+        })
+    })
+
     const getAnalyticsConfigPayload = () => {
         return {
             analytics: 'https://dome-monitoring.eurodyn.com',

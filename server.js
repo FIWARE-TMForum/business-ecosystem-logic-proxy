@@ -496,12 +496,14 @@ app.delete('/domeblog/:id',  authMiddleware.headerAuthentication, failIfNotAuthe
 config.defaultId = await fetchData()
 await fetchFeatureFlags()
 await admin.loadAnalyticsConfig()
+await admin.loadSearchConfig()
 app.get('/config', async (_, res) => {
     // Reload the defaultId if it has been during the operation
     config.defaultId = await fetchData()
     const searchFilters = await fetchSearchFilters()
     const featureFlags = await fetchFeatureFlags()
     const analyticsConfig = await admin.loadAnalyticsConfig()
+    const searchConfig = await admin.loadSearchConfig()
 
     res.send({
         ai: {
@@ -534,7 +536,7 @@ app.get('/config', async (_, res) => {
         matomoId: config.matomoId,
         matomoUrl: config.matomoUrl,
         googleTagManagerId: config.googleTagManagerId,
-        searchEnabled: config.searchUrl != '',
+        searchEnabled: searchConfig.searchUrl !== '',
         domeTrust: config.domeTrust,
         domeAbout: config.domeAbout,
         domeRegister: config.domeRegister,
@@ -724,6 +726,14 @@ app.patch('/config/filters', authMiddleware.headerAuthentication, authMiddleware
 
 app.patch('/config/features', authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, (req, res) => {
     admin.updateFeatureFlagsConfig(req, res)
+})
+
+app.get('/config/search', authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, (req, res) => {
+    admin.getSearchConfig(req, res)
+})
+
+app.patch('/config/search', authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, (req, res) => {
+    admin.updateSearchConfig(req, res)
 })
 
 app.get('/config/analytics', authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, (req, res) => {
