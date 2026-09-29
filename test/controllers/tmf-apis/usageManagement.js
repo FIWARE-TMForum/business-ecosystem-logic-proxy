@@ -286,9 +286,12 @@ describe('Usage Management API', function() {
                 return utils;
             };
 
-            const buildTmfUtils = function() {
-                const tmfUtils = jasmine.createSpyObj('tmfUtils', ['hasPartyRole']);
+            const buildTmfUtils = function(isValidStatusTransition) {
+                const tmfUtils = jasmine.createSpyObj('tmfUtils', ['hasPartyRole', 'isValidStatusTransition']);
                 tmfUtils.hasPartyRole.and.returnValue(true);
+                tmfUtils.isValidStatusTransition.and.callFake(isValidStatusTransition || function() {
+                    return true;
+                });
 
                 return tmfUtils;
             };
@@ -362,6 +365,87 @@ describe('Usage Management API', function() {
                     const parsedBody = JSON.parse(req.body);
                     expect(parsedBody.description).toEqual(body.description);
                     expectValidLastUpdate(parsedBody.lastUpdate);
+
+                    done();
+                });
+            });
+
+            it('should allow valid lifecycle updates for usage specifications', function(done) {
+                const axios = jasmine.createSpyObj('axios', ['get']);
+                axios.get.and.returnValue(Promise.resolve({
+                    status: 200,
+                    data: {
+                        lifecycleStatus: 'Active',
+                        relatedParty: [{
+                            id: DEFAULT_USER_ID,
+                            role: config.roles.seller
+                        }]
+                    }
+                }));
+
+                const req = {
+                    method: 'PATCH',
+                    apiUrl: `/${config.endpoints.usage.path}/usageSpecification/spec-id`,
+                    url: '/usageSpecification/spec-id',
+                    user: {
+                        partyId: DEFAULT_USER_ID
+                    },
+                    headers: {},
+                    body: JSON.stringify({
+                        lifecycleStatus: 'Retired'
+                    })
+                };
+
+                const usageManagementAPI = getUsageManagementAPI({}, {}, buildUtils(), buildTmfUtils(), axios);
+
+                usageManagementAPI.checkPermissions(req, function(err) {
+                    expect(err).toBeNull();
+
+                    const parsedBody = JSON.parse(req.body);
+                    expect(parsedBody.lifecycleStatus).toEqual('Retired');
+                    expectValidLastUpdate(parsedBody.lastUpdate);
+
+                    done();
+                });
+            });
+
+            it('should reject invalid lifecycle updates for usage specifications', function(done) {
+                const axios = jasmine.createSpyObj('axios', ['get']);
+                axios.get.and.returnValue(Promise.resolve({
+                    status: 200,
+                    data: {
+                        lifecycleStatus: 'Launched',
+                        relatedParty: [{
+                            id: DEFAULT_USER_ID,
+                            role: config.roles.seller
+                        }]
+                    }
+                }));
+
+                const req = {
+                    method: 'PATCH',
+                    apiUrl: `/${config.endpoints.usage.path}/usageSpecification/spec-id`,
+                    url: '/usageSpecification/spec-id',
+                    user: {
+                        partyId: DEFAULT_USER_ID
+                    },
+                    headers: {},
+                    body: JSON.stringify({
+                        lifecycleStatus: 'Active'
+                    })
+                };
+
+                const tmfUtils = buildTmfUtils(function() {
+                    return false;
+                });
+                const usageManagementAPI = getUsageManagementAPI({}, {}, buildUtils(), tmfUtils, axios);
+
+                usageManagementAPI.checkPermissions(req, function(err) {
+                    expect(tmfUtils.isValidStatusTransition).toHaveBeenCalledWith('Launched', 'Active');
+                    expect(err).toEqual({
+                        status: 400,
+                        message: 'Cannot transition from lifecycle status Launched to Active'
+                    });
 
                     done();
                 });

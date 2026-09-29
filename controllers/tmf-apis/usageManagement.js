@@ -127,6 +127,24 @@ const usageManagement = (function() {
         return validateOwner(req, req.prevBody, callback);
     }
 
+    const validateUpdate = function(req, callback) {
+        const body = req.parsedBody;
+        const prevBody = req.prevBody;
+
+        if (!isUsageSpecificationRequest(req)) {
+            return callback(null);
+        }
+
+        if (body.lifecycleStatus != null && !tmfUtils.isValidStatusTransition(prevBody.lifecycleStatus, body.lifecycleStatus)) {
+            return callback({
+                status: 400,
+                message: `Cannot transition from lifecycle status ${prevBody.lifecycleStatus} to ${body.lifecycleStatus}`
+            });
+        }
+
+        callback(null);
+    }
+
     const isUsageSpecificationRequest = function(req) {
         return /\/usageSpecification(?:\/|\?|$)/.test(req.apiUrl || req.url || '');
     }
@@ -182,7 +200,7 @@ const usageManagement = (function() {
     const validators = {
         GET: [utils.validateLoggedIn, tmfUtils.filterRelatedPartyFields, checkRelatedParty],
         POST: [utils.validateLoggedIn, parseBody, validateOwnerCreate, setUsageSpecLastUpdate],
-        PATCH: [utils.validateLoggedIn, parseBody, getPrevVersion, validateOwnerUpdate, setUsageSpecLastUpdate],
+        PATCH: [utils.validateLoggedIn, parseBody, getPrevVersion, validateUpdate, validateOwnerUpdate, setUsageSpecLastUpdate],
         PUT: [utils.methodNotAllowed],
         DELETE: [utils.methodNotAllowed]
     };
