@@ -583,6 +583,12 @@ describe('Admin Controller', () => {
             role: config.roles.sellerOperator,
             '@referredType': 'Organization'
         }]
+        const expectedCatalogBody = {
+            name: 'Default Catalog',
+            description: 'Main marketplace catalog',
+            lifecycleStatus: 'Launched',
+            relatedParty: relatedParty
+        }
         const attachRelatedPartyObj = jasmine.createSpy('attachRelatedPartyObj').and.callFake(async (type, entity) => {
             entity.relatedParty = relatedParty
         })
@@ -620,26 +626,17 @@ describe('Admin Controller', () => {
         instance.createDefaultCatalog(request, response)
 
         resPromise.then(() => {
-            expect(attachRelatedPartyObj).toHaveBeenCalledWith('operatorCatalog', {
-                name: 'Default Catalog',
-                description: 'Main marketplace catalog',
-                lifecycleStatus: 'Launched',
-                relatedParty: relatedParty
-            }, request.user)
+            expect(attachRelatedPartyObj).toHaveBeenCalledWith('operatorCatalog', expectedCatalogBody, request.user)
             expect(axios.request).toHaveBeenCalledWith({
                 url: 'http://example.com:1234/catalog',
                 method: 'POST',
                 headers: {
                     Authorization: 'Bearer EXAMPLE',
                     Accept: 'application/json',
-                    'content-type': 'application/json'
+                    'content-type': 'application/json',
+                    'content-length': Buffer.byteLength(JSON.stringify(expectedCatalogBody)).toString()
                 },
-                data: {
-                    name: 'Default Catalog',
-                    description: 'Main marketplace catalog',
-                    lifecycleStatus: 'Launched',
-                    relatedParty: relatedParty
-                }
+                data: expectedCatalogBody
             })
             expect(searchMock).toHaveBeenCalledWith('defaultcatalog', {})
             expect(indexMock).toHaveBeenCalledWith('defaultcatalog', 'default-doc-id', {
@@ -741,6 +738,11 @@ describe('Admin Controller', () => {
             name: 'Default Catalog',
             description: 'Main marketplace catalog'
         }
+        const expectedCatalogBody = {
+            name: 'Default Catalog',
+            description: 'Main marketplace catalog',
+            lifecycleStatus: 'Launched'
+        }
         const indexes = {
             indexes: {
                 search: jasmine.createSpy('search').and.returnValue(Promise.resolve([])),
@@ -787,13 +789,10 @@ describe('Admin Controller', () => {
                 headers: {
                     Authorization: 'Bearer EXAMPLE',
                     Accept: 'application/json',
-                    'content-type': 'application/json'
+                    'content-type': 'application/json',
+                    'content-length': Buffer.byteLength(JSON.stringify(expectedCatalogBody)).toString()
                 },
-                data: {
-                    name: 'Default Catalog',
-                    description: 'Main marketplace catalog',
-                    lifecycleStatus: 'Launched'
-                }
+                data: expectedCatalogBody
             })
             expect(indexes.indexes.indexDocument).toHaveBeenCalledWith('defaultcatalog', 'default-doc-id', {
                 default_id: 'catalog-without-operator'
