@@ -24,14 +24,20 @@ describe('Usage Management API', function() {
     const config = testUtils.getDefaultConfig();
     const DEFAULT_USER_ID = 'userId';
 
-    const getUsageManagementAPI = function(accountingService, storeClient, utils, tmfUtils) {
-        return proxyquire('../../../controllers/tmf-apis/usageManagement', {
+    const getUsageManagementAPI = function(accountingService, storeClient, utils, tmfUtils, axios) {
+        const dependencies = {
             './../../db/schemas/accountingService': accountingService,
             './../../config': config,
             './../../lib/store': storeClient,
             './../../lib/utils': utils,
             './../../lib/tmfUtils': tmfUtils
-        }).usageManagement;
+        };
+
+        if (axios) {
+            dependencies.axios = axios;
+        }
+
+        return proxyquire('../../../controllers/tmf-apis/usageManagement', dependencies).usageManagement;
     };
 
     describe('Check Permissions', function() {
@@ -261,6 +267,106 @@ describe('Usage Management API', function() {
         /// ///////////////////////////////////////////////////////////////////////////////////////////
 
         describe('Creation', function() {
+            const buildUtils = function() {
+                const utils = jasmine.createSpyObj('utils', ['validateLoggedIn', 'updateBody', 'getAPIURL']);
+
+                utils.validateLoggedIn.and.callFake(function(req, callback) {
+                    return callback();
+                });
+
+                utils.getAPIURL.and.callFake(function(ssl, host, port, path) {
+                    return `${ssl ? 'https' : 'http'}://${host}:${port}${path}`;
+                });
+
+                utils.updateBody.and.callFake(function(req, newBody) {
+                    req.body = JSON.stringify(newBody);
+                    req.headers['content-length'] = Buffer.byteLength(req.body);
+                });
+
+                return utils;
+            };
+
+            const buildTmfUtils = function() {
+                const tmfUtils = jasmine.createSpyObj('tmfUtils', ['hasPartyRole']);
+                tmfUtils.hasPartyRole.and.returnValue(true);
+
+                return tmfUtils;
+            };
+
+            const expectValidLastUpdate = function(value) {
+                expect(value).toEqual(jasmine.any(String));
+                expect(new Date(value).toISOString()).toEqual(value);
+            };
+
+            it('should set lastUpdate when creating a usage specification', function(done) {
+                const body = {
+                    name: 'Usage Spec',
+                    relatedParty: [{
+                        id: DEFAULT_USER_ID,
+                        role: config.roles.seller
+                    }]
+                };
+
+                const req = {
+                    method: 'POST',
+                    apiUrl: `/${config.endpoints.usage.path}/usageSpecification`,
+                    headers: {},
+                    body: JSON.stringify(body)
+                };
+
+                const usageManagementAPI = getUsageManagementAPI({}, {}, buildUtils(), buildTmfUtils());
+
+                usageManagementAPI.checkPermissions(req, function(err) {
+                    expect(err).toBeNull();
+
+                    const parsedBody = JSON.parse(req.body);
+                    expect(parsedBody.name).toEqual(body.name);
+                    expectValidLastUpdate(parsedBody.lastUpdate);
+
+                    done();
+                });
+            });
+
+            it('should set lastUpdate when updating a usage specification', function(done) {
+                const body = {
+                    description: 'Updated usage spec'
+                };
+
+                const axios = jasmine.createSpyObj('axios', ['get']);
+                axios.get.and.returnValue(Promise.resolve({
+                    status: 200,
+                    data: {
+                        relatedParty: [{
+                            id: DEFAULT_USER_ID,
+                            role: config.roles.seller
+                        }]
+                    }
+                }));
+
+                const req = {
+                    method: 'PATCH',
+                    apiUrl: `/${config.endpoints.usage.path}/usageSpecification/spec-id`,
+                    url: '/usageSpecification/spec-id',
+                    user: {
+                        partyId: DEFAULT_USER_ID
+                    },
+                    headers: {},
+                    body: JSON.stringify(body)
+                };
+
+                const usageManagementAPI = getUsageManagementAPI({}, {}, buildUtils(), buildTmfUtils(), axios);
+
+                usageManagementAPI.checkPermissions(req, function(err) {
+                    expect(err).toBeNull();
+
+                    const parsedBody = JSON.parse(req.body);
+                    expect(parsedBody.description).toEqual(body.description);
+                    expectValidLastUpdate(parsedBody.lastUpdate);
+
+                    done();
+                });
+            });
+
             const testValidateApiKey = function(findOne, headers, expectedErr, done) {
                 const accountingService = jasmine.createSpyObj('accountingService', ['findOne']);
                 accountingService.findOne.and.callFake(findOne);

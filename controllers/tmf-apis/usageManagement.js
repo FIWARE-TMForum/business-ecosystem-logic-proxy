@@ -127,6 +127,19 @@ const usageManagement = (function() {
         return validateOwner(req, req.prevBody, callback);
     }
 
+    const isUsageSpecificationRequest = function(req) {
+        return /\/usageSpecification(?:\/|\?|$)/.test(req.apiUrl || req.url || '');
+    }
+
+    const setUsageSpecLastUpdate = function(req, callback) {
+        if (isUsageSpecificationRequest(req)) {
+            req.parsedBody.lastUpdate = new Date().toISOString();
+            utils.updateBody(req, req.parsedBody);
+        }
+
+        callback(null);
+    }
+
     const getPrevVersion = function(req, callback) {
         retrieveAsset(req.apiUrl, (err, response) => {
             if (err) {
@@ -168,8 +181,8 @@ const usageManagement = (function() {
 
     const validators = {
         GET: [utils.validateLoggedIn, tmfUtils.filterRelatedPartyFields, checkRelatedParty],
-        POST: [utils.validateLoggedIn, parseBody, validateOwnerCreate],
-        PATCH: [utils.validateLoggedIn, parseBody, getPrevVersion, validateOwnerUpdate],
+        POST: [utils.validateLoggedIn, parseBody, validateOwnerCreate, setUsageSpecLastUpdate],
+        PATCH: [utils.validateLoggedIn, parseBody, getPrevVersion, validateOwnerUpdate, setUsageSpecLastUpdate],
         PUT: [utils.methodNotAllowed],
         DELETE: [utils.methodNotAllowed]
     };
