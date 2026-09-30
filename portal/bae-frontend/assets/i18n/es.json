@@ -164,6 +164,16 @@
       "_ctaCustomers": "For customers",
       "_ctaProviders": "For providers"
     },
+    "news": {
+      "_title": "Latest News & Updates",
+      "_subtitle": "Announcements, releases and stories from across the DOME ecosystem.",
+      "_viewAll": "View all",
+      "_readMore": "Read more",
+      "_previous": "Previous news",
+      "_next": "Next news",
+      "_goTo": "Go to news {{index}} of {{total}}",
+      "_slideLabel": "News {{index}} of {{total}}"
+    },
     "hero": {
       "_titleLine1Part1": "The Trusted",
       "_titleLine1Accent": "European",
@@ -2839,6 +2849,7 @@
     "_product_spec_change_title": "Change product specification?",
     "_product_spec_change_warning": "Changing the product specification will remove all price plans from this offer. This change will only be applied when you save the offer.",
     "_product_spec_change_accept": "Accept",
+    "_product_spec_update_locked": "The product specification cannot be changed after the offer has been created.",
     "_draft_saved": "Draft saved",
     "_draft_save_error": "Failed to save draft",
     "_draft_catalogue_unavailable": "Could not save draft: provider catalogue is unavailable.",
@@ -2968,8 +2979,6 @@
     "_tags_placeholder": "Type a tag and press Enter",
     "_tags_hint": "tags added (max 5)",
     "_tags_max": "Maximum of 5 tags reached",
-    "_cant_find_cat_title": "Can't find the right category?",
-    "_cant_find_cat_text": "Contact our support team at <strong>support&#64;dome-marketplace.eu</strong> and we'll help you classify your service correctly.",
     "_leave_title": "Are you sure you want to leave this product offer creation?",
     "_leave_text": "You can continue editing, discard your changes, or save a draft if the required fields are complete.",
     "_continue_editing": "Continue editing",
@@ -3224,12 +3233,16 @@
     "_delete_service_spec_desc": "This will mark \"{{ name }}\" as deleted and remove it from active service specifications.",
     "_delete_resource_spec_title": "Delete resource specification?",
     "_delete_resource_spec_desc": "This will mark \"{{ name }}\" as deleted and remove it from active resource specifications.",
+    "_delete_usage_spec_title": "Delete pay per use metric?",
+    "_delete_usage_spec_desc": "This will mark \"{{ name }}\" as deleted and remove it from active pay per use metrics.",
     "_product_spec_delete_success": "Product specification deleted",
     "_product_spec_delete_error": "Could not delete this product specification.",
     "_service_spec_delete_success": "Service specification deleted",
     "_service_spec_delete_error": "Could not delete this service specification.",
     "_resource_spec_delete_success": "Resource specification deleted",
-    "_resource_spec_delete_error": "Could not delete this resource specification."
+    "_resource_spec_delete_error": "Could not delete this resource specification.",
+    "_usage_spec_delete_success": "Pay per use metric deleted",
+    "_usage_spec_delete_error": "Could not delete this pay per use metric."
   },
   "ADMIN": {
     "_admin": "Administration",
@@ -3531,11 +3544,15 @@
     "_name_placeholder": "Enter a name",
     "_metrics": "Metrics",
     "_metrics_desc": "Define the metrics collected for this pay per use metric.",
+    "_metrics_required": "At least one metric is required.",
     "_add_metric_desc": "Add a new metric to start collecting data",
     "_metric_name_placeholder": "Enter a metric name",
     "_metric_description_placeholder": "Describe this metric",
     "_summary": "Summary",
     "_summary_desc": "Review the details before saving.",
+    "_unique": "Name must be unique for this provider.",
+    "_validate_success": "Pay per use metric successfully validated",
+    "_validate_error": "There was an error while validating the pay per use metric!",
     "_cancel": "Cancel"
   },
   "ABOUT_DOME": {
