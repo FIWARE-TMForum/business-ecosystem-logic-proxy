@@ -30,6 +30,11 @@ const axios = require('axios');
 
 
 const usageManagement = (function() {
+    const RETIRED_STATE = 'retired';
+    const OBSOLETE_STATE = 'obsolete';
+    const LAUNCHED_STATE = 'launched';
+    const CATALOG_QUERY_PAGE_SIZE = 100;
+    const USAGE_SPEC_IN_ACTIVE_OFFER_ERROR = 'The usage spec cannot be deleted because it is being used by active or launched product offers';
 
     const checkFilters = function(req, callback) {
         // If retrieving the usage of a particular product
@@ -86,6 +91,127 @@ const usageManagement = (function() {
         })
     };
 
+    const retrieveCatalogAsset = function(path) {
+        const reqPath = path.startsWith('/') ? path : `/${path}`;
+        const assetUrl = utils.getAPIURL(
+            config.endpoints.catalog.appSsl,
+            config.endpoints.catalog.host,
+            config.endpoints.catalog.port,
+            `${config.endpoints.catalog.apiPath}${reqPath}`
+        );
+
+        return axios.get(assetUrl).then((response) => {
+            if (response.status >= 400) {
+                throw {
+                    status: response.status
+                };
+            }
+
+            return {
+                status: response.status,
+                body: response.data
+            };
+        }).catch((err) => {
+            if (err.response) {
+                throw {
+                    status: err.response.status
+                };
+            }
+
+            throw {
+                status: err.status
+            };
+        });
+    }
+
+    const asArray = function(value) {
+        if (Array.isArray(value)) {
+            return value;
+        }
+
+        return value ? [value] : [];
+    }
+
+    const addPagination = function(path, offset) {
+        const separator = path.indexOf('?') >= 0 ? '&' : '?';
+
+        return `${path}${separator}limit=${CATALOG_QUERY_PAGE_SIZE}&offset=${offset}`;
+    }
+
+    const retrieveAllCatalogAssets = async function(path) {
+        const assets = [];
+        let offset = 0;
+        let page;
+
+        do {
+            const result = await retrieveCatalogAsset(addPagination(path, offset));
+            page = asArray(result.body);
+            assets.push(...page);
+            offset += page.length;
+        } while (page.length === CATALOG_QUERY_PAGE_SIZE);
+
+        return assets;
+    }
+
+    const isLaunchedToRetiredUpdate = function(prevBody, body) {
+        return !!prevBody.lifecycleStatus &&
+            !!body.lifecycleStatus &&
+            prevBody.lifecycleStatus.toLowerCase() === LAUNCHED_STATE &&
+            body.lifecycleStatus.toLowerCase() === RETIRED_STATE;
+    }
+
+    const getUsageSpecPricePlans = async function(usageSpecId) {
+        const usagePrices = await retrieveAllCatalogAssets(
+            `/productOfferingPrice?usageSpecId=${encodeURIComponent(usageSpecId)}`
+        );
+        const pricePlanIds = new Set();
+
+        for (const usagePrice of usagePrices) {
+            if (usagePrice.isBundle === true) {
+                pricePlanIds.add(usagePrice.id);
+            } else {
+                const pricePlans = await retrieveAllCatalogAssets(
+                    `/productOfferingPrice?bundledPopRelationship.id=${encodeURIComponent(usagePrice.id)}`
+                );
+                pricePlans
+                    .filter((pricePlan) => pricePlan.isBundle === true)
+                    .forEach((pricePlan) => pricePlanIds.add(pricePlan.id));
+            }
+        }
+
+        return Array.from(pricePlanIds);
+    }
+
+    const getOfferingsForPricePlans = async function(pricePlanIds) {
+        if (pricePlanIds.length === 0) {
+            return [];
+        }
+
+        return retrieveAllCatalogAssets(
+            `/productOffering?productOfferingPrice.id=${pricePlanIds.map(encodeURIComponent).join(',')}`
+        );
+    }
+
+    const validateUsageSpecRetirement = async function(prevBody) {
+        const pricePlanIds = await getUsageSpecPricePlans(prevBody.id);
+        const offerings = await getOfferingsForPricePlans(pricePlanIds);
+
+        const hasActiveOffering = offerings.some((offering) => {
+            const status = String(offering.lifecycleStatus || '').toLowerCase();
+
+            return status !== RETIRED_STATE && status !== OBSOLETE_STATE;
+        });
+
+        if (hasActiveOffering) {
+            return {
+                status: 409,
+                message: USAGE_SPEC_IN_ACTIVE_OFFER_ERROR
+            };
+        }
+
+        return null;
+    }
+
     const checkRelatedParty = function(req, callback){
         if (!req.query['relatedParty.id'] || req.user.partyId != req.query['relatedParty.id']){
             return callback({ status: 403, message: 'invalid request'})
@@ -125,6 +251,48 @@ const usageManagement = (function() {
 
     const validateOwnerUpdate = function(req, callback) {
         return validateOwner(req, req.prevBody, callback);
+    }
+
+    const validateUpdate = function(req, callback) {
+        const body = req.parsedBody;
+        const prevBody = req.prevBody;
+
+        if (!isUsageSpecificationRequest(req)) {
+            return callback(null);
+        }
+
+        if (body.lifecycleStatus != null && !tmfUtils.isValidStatusTransition(prevBody.lifecycleStatus, body.lifecycleStatus)) {
+            return callback({
+                status: 400,
+                message: `Cannot transition from lifecycle status ${prevBody.lifecycleStatus} to ${body.lifecycleStatus}`
+            });
+        }
+
+        if (!isLaunchedToRetiredUpdate(prevBody, body)) {
+            return callback(null);
+        }
+
+        validateUsageSpecRetirement(prevBody).then((err) => {
+            callback(err);
+        }).catch(() => {
+            callback({
+                status: 500,
+                message: 'The product offers using the usage spec cannot be retrieved'
+            });
+        });
+    }
+
+    const isUsageSpecificationRequest = function(req) {
+        return /\/usageSpecification(?:\/|\?|$)/.test(req.apiUrl || req.url || '');
+    }
+
+    const setUsageSpecLastUpdate = function(req, callback) {
+        if (isUsageSpecificationRequest(req)) {
+            req.parsedBody.lastUpdate = new Date().toISOString();
+            utils.updateBody(req, req.parsedBody);
+        }
+
+        callback(null);
     }
 
     const getPrevVersion = function(req, callback) {
@@ -168,8 +336,8 @@ const usageManagement = (function() {
 
     const validators = {
         GET: [utils.validateLoggedIn, tmfUtils.filterRelatedPartyFields, checkRelatedParty],
-        POST: [utils.validateLoggedIn, parseBody, validateOwnerCreate],
-        PATCH: [utils.validateLoggedIn, parseBody, getPrevVersion, validateOwnerUpdate],
+        POST: [utils.validateLoggedIn, parseBody, validateOwnerCreate, setUsageSpecLastUpdate],
+        PATCH: [utils.validateLoggedIn, parseBody, getPrevVersion, validateUpdate, validateOwnerUpdate, setUsageSpecLastUpdate],
         PUT: [utils.methodNotAllowed],
         DELETE: [utils.methodNotAllowed]
     };
