@@ -769,7 +769,8 @@ function admin() {
             url: getCatalogApiUrl('/catalog'),
             method: 'POST',
             headers: Object.assign(utils.proxiedRequestHeaders(req), {
-                'content-type': 'application/json'
+                'content-type': 'application/json',
+                'content-length': Buffer.byteLength(JSON.stringify(catalogBody)).toString()
             }),
             data: catalogBody
         }
