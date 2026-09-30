@@ -1037,7 +1037,13 @@
       "_self_attestation": "Self Attestation:",
       "_close_modal": "Close modal",
       "_cancel": "Cancel",
-      "_upload": "Upload"
+      "_upload": "Upload",
+      "_leave_title": "Are you sure you want to leave this product specification creation?",
+      "_leave_text": "You can continue editing, discard your changes, or save a draft if the required fields are complete.",
+      "_continue_editing": "Stay and continue editing",
+      "_leave_discard": "Discard changes",
+      "_leave_save_draft": "Leave and save draft",
+      "_draft_missing_required": "Complete the required general info and product details before saving a draft."
     },
     "UPDATE_PROD_SPEC": {
       "_back": "Back",
@@ -2395,6 +2401,12 @@
     "_ready_title": "Your product specification is ready",
     "_ready_desc": "You can validate this product specification to make it live immediately or save your progress to finish it later.",
     "_save_draft": "Save as draft",
+    "_leave_title": "Are you sure you want to leave this product specification creation?",
+    "_leave_text": "You can continue editing, discard your changes, or save a draft if the required fields are complete.",
+    "_continue_editing": "Stay and continue editing",
+    "_leave_discard": "Discard changes",
+    "_leave_save_draft": "Leave and save draft",
+    "_draft_missing_required": "Complete the required general info and product details before saving a draft.",
     "_validate_prod": "Validate product specification",
     "_validate_requires_all": "Complete all required steps before validating",
     "_update_title": "Update product specification",
