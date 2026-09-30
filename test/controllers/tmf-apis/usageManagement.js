@@ -409,6 +409,186 @@ describe('Usage Management API', function() {
                 });
             });
 
+            it('should reject retiring a launched usage specification used by active or launched offers', function(done) {
+                const axios = jasmine.createSpyObj('axios', ['get']);
+                const responses = [
+                    {
+                        id: 'usage-spec-id',
+                        lifecycleStatus: 'Launched',
+                        relatedParty: [{
+                            id: DEFAULT_USER_ID,
+                            role: config.roles.seller
+                        }]
+                    },
+                    [{
+                        id: 'usage-price-id',
+                        isBundle: false
+                    }],
+                    [{
+                        id: 'price-plan-id',
+                        isBundle: true
+                    }],
+                    [{
+                        id: 'offer-id',
+                        lifecycleStatus: 'Launched'
+                    }]
+                ];
+                axios.get.and.callFake(function() {
+                    return Promise.resolve({
+                        status: 200,
+                        data: responses.shift()
+                    });
+                });
+
+                const req = {
+                    method: 'PATCH',
+                    apiUrl: `/${config.endpoints.usage.path}/usageSpecification/usage-spec-id`,
+                    url: '/usageSpecification/usage-spec-id',
+                    user: {
+                        partyId: DEFAULT_USER_ID
+                    },
+                    headers: {},
+                    body: JSON.stringify({
+                        lifecycleStatus: 'Retired'
+                    })
+                };
+
+                const usageManagementAPI = getUsageManagementAPI({}, {}, buildUtils(), buildTmfUtils(), axios);
+
+                usageManagementAPI.checkPermissions(req, function(err) {
+                    expect(err).toEqual({
+                        status: 409,
+                        message: 'The usage spec cannot be deleted because it is being used by active or launched product offers'
+                    });
+                    expect(axios.get.calls.argsFor(1)[0]).toContain('/productOfferingPrice?usageSpecId=usage-spec-id');
+                    expect(axios.get.calls.argsFor(2)[0]).toContain('/productOfferingPrice?bundledPopRelationship.id=usage-price-id');
+                    expect(axios.get.calls.argsFor(3)[0]).toContain('/productOffering?productOfferingPrice.id=price-plan-id');
+
+                    done();
+                });
+            });
+
+            it('should allow retiring a launched usage specification when linked offers are retired or obsolete', function(done) {
+                const axios = jasmine.createSpyObj('axios', ['get']);
+                const responses = [
+                    {
+                        id: 'usage-spec-id',
+                        lifecycleStatus: 'Launched',
+                        relatedParty: [{
+                            id: DEFAULT_USER_ID,
+                            role: config.roles.seller
+                        }]
+                    },
+                    [{
+                        id: 'usage-price-id',
+                        isBundle: false
+                    }],
+                    [{
+                        id: 'price-plan-id',
+                        isBundle: true
+                    }],
+                    [{
+                        id: 'retired-offer-id',
+                        lifecycleStatus: 'Retired'
+                    }, {
+                        id: 'obsolete-offer-id',
+                        lifecycleStatus: 'Obsolete'
+                    }]
+                ];
+                axios.get.and.callFake(function() {
+                    return Promise.resolve({
+                        status: 200,
+                        data: responses.shift()
+                    });
+                });
+
+                const req = {
+                    method: 'PATCH',
+                    apiUrl: `/${config.endpoints.usage.path}/usageSpecification/usage-spec-id`,
+                    url: '/usageSpecification/usage-spec-id',
+                    user: {
+                        partyId: DEFAULT_USER_ID
+                    },
+                    headers: {},
+                    body: JSON.stringify({
+                        lifecycleStatus: 'Retired'
+                    })
+                };
+
+                const usageManagementAPI = getUsageManagementAPI({}, {}, buildUtils(), buildTmfUtils(), axios);
+
+                usageManagementAPI.checkPermissions(req, function(err) {
+                    expect(err).toBeNull();
+
+                    const parsedBody = JSON.parse(req.body);
+                    expect(parsedBody.lifecycleStatus).toEqual('Retired');
+                    expectValidLastUpdate(parsedBody.lastUpdate);
+
+                    done();
+                });
+            });
+
+            it('should paginate linked offers before retiring a launched usage specification', function(done) {
+                const axios = jasmine.createSpyObj('axios', ['get']);
+                const firstOfferPage = Array.from({ length: 100 }, function(_, index) {
+                    return {
+                        id: `retired-offer-${index}`,
+                        lifecycleStatus: 'Retired'
+                    };
+                });
+                const responses = [
+                    {
+                        id: 'usage-spec-id',
+                        lifecycleStatus: 'Launched',
+                        relatedParty: [{
+                            id: DEFAULT_USER_ID,
+                            role: config.roles.seller
+                        }]
+                    },
+                    [{
+                        id: 'price-plan-id',
+                        isBundle: true
+                    }],
+                    firstOfferPage,
+                    [{
+                        id: 'launched-offer-id',
+                        lifecycleStatus: 'Launched'
+                    }]
+                ];
+                axios.get.and.callFake(function() {
+                    return Promise.resolve({
+                        status: 200,
+                        data: responses.shift()
+                    });
+                });
+
+                const req = {
+                    method: 'PATCH',
+                    apiUrl: `/${config.endpoints.usage.path}/usageSpecification/usage-spec-id`,
+                    url: '/usageSpecification/usage-spec-id',
+                    user: {
+                        partyId: DEFAULT_USER_ID
+                    },
+                    headers: {},
+                    body: JSON.stringify({
+                        lifecycleStatus: 'Retired'
+                    })
+                };
+
+                const usageManagementAPI = getUsageManagementAPI({}, {}, buildUtils(), buildTmfUtils(), axios);
+
+                usageManagementAPI.checkPermissions(req, function(err) {
+                    expect(err).toEqual({
+                        status: 409,
+                        message: 'The usage spec cannot be deleted because it is being used by active or launched product offers'
+                    });
+                    expect(axios.get.calls.argsFor(2)[0]).toContain('limit=100&offset=0');
+                    expect(axios.get.calls.argsFor(3)[0]).toContain('limit=100&offset=100');
+
+                    done();
+                });
+            });
+
             it('should reject invalid lifecycle updates for usage specifications', function(done) {
                 const axios = jasmine.createSpyObj('axios', ['get']);
                 axios.get.and.returnValue(Promise.resolve({
