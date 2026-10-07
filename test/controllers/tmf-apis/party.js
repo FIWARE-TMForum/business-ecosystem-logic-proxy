@@ -168,14 +168,14 @@ describe('Party API', function() {
                     nock(catalogServer)
                         .get(config.endpoints.catalog.apiPath + '/productOffering')
                         .query({
-                            'relatedParty.id': 'org-1',
+                            'relatedParty.id': 'org-accept',
                             lifecycleStatus: 'Launched',
                             limit: '1'
                         })
                         .reply(200, [{ id: 'offering-1' }]);
 
                     paginationConfig.predicate({
-                        id: 'org-1'
+                        id: 'org-accept'
                     }).then(function(result) {
                         expect(result).toBe(true);
                         done();
@@ -200,16 +200,92 @@ describe('Party API', function() {
                     nock(catalogServer)
                         .get(config.endpoints.catalog.apiPath + '/productOffering')
                         .query({
-                            'relatedParty.id': 'org-1',
+                            'relatedParty.id': 'org-reject',
                             lifecycleStatus: 'Launched',
                             limit: '1'
                         })
                         .reply(200, []);
 
                     paginationConfig.predicate({
-                        id: 'org-1'
+                        id: 'org-reject'
                     }).then(function(result) {
                         expect(result).toBe(false);
+                        done();
+                    }).catch(done.fail);
+                });
+            });
+
+            it('should cache accepted organization offer checks', function(done) {
+                var req = {
+                    method: 'GET',
+                    apiUrl: '/party/organization?lifecycleStatus=Launched&limit=2',
+                    query: {
+                        lifecycleStatus: 'Launched',
+                        limit: '2'
+                    }
+                };
+
+                partyAPI.checkPermissions(req, function(err) {
+                    expect(err).toBe(null);
+                    const paginationConfig = partyAPI.getFilteredPaginationConfig(req);
+
+                    const scope = nock(catalogServer)
+                        .get(config.endpoints.catalog.apiPath + '/productOffering')
+                        .query({
+                            'relatedParty.id': 'org-cache-accept',
+                            lifecycleStatus: 'Launched',
+                            limit: '1'
+                        })
+                        .reply(200, [{ id: 'offering-1' }]);
+
+                    paginationConfig.predicate({
+                        id: 'org-cache-accept'
+                    }).then(function(firstResult) {
+                        expect(firstResult).toBe(true);
+                        return paginationConfig.predicate({
+                            id: 'org-cache-accept'
+                        });
+                    }).then(function(secondResult) {
+                        expect(secondResult).toBe(true);
+                        expect(scope.isDone()).toBe(true);
+                        done();
+                    }).catch(done.fail);
+                });
+            });
+
+            it('should cache rejected organization offer checks', function(done) {
+                var req = {
+                    method: 'GET',
+                    apiUrl: '/party/organization?lifecycleStatus=Launched&limit=2',
+                    query: {
+                        lifecycleStatus: 'Launched',
+                        limit: '2'
+                    }
+                };
+
+                partyAPI.checkPermissions(req, function(err) {
+                    expect(err).toBe(null);
+                    const paginationConfig = partyAPI.getFilteredPaginationConfig(req);
+
+                    const scope = nock(catalogServer)
+                        .get(config.endpoints.catalog.apiPath + '/productOffering')
+                        .query({
+                            'relatedParty.id': 'org-cache-reject',
+                            lifecycleStatus: 'Launched',
+                            limit: '1'
+                        })
+                        .reply(200, []);
+
+                    paginationConfig.predicate({
+                        id: 'org-cache-reject'
+                    }).then(function(firstResult) {
+                        expect(firstResult).toBe(false);
+                        return paginationConfig.predicate({
+                            id: 'org-cache-reject'
+                        });
+                    }).then(function(secondResult) {
+                        expect(secondResult).toBe(false);
+                        expect(scope.isDone()).toBe(true);
                         done();
                     }).catch(done.fail);
                 });
