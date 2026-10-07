@@ -28,6 +28,7 @@ const utils = require('./../../lib/utils')
 const logger = require('./../../lib/logger').logger.getLogger('TMF')
 const tmfUtils = require('./../../lib/tmfUtils')
 const partyClient = require('./../../lib/party').partyClient
+const operatorClient = require('./../../lib/operator').operator
 
 
 const party = (function() {
@@ -104,6 +105,12 @@ const party = (function() {
 
         if (!organizationId) {
             logger.debug('Organization launched-offer filter rejected organization: missing id')
+            return Promise.resolve(false)
+        }
+
+        const operatorId = operatorClient.getOperatorId()
+        if (operatorId && organizationId === operatorId) {
+            logger.debug('Organization launched-offer filter rejected organization: marketplace operator')
             return Promise.resolve(false)
         }
 
