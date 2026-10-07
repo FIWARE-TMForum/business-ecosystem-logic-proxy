@@ -565,6 +565,7 @@ app.get('/config', async (_, res) => {
 })
 
 app.get('/stats', stats.getStats)
+app.get('/stats/provider/:organizationId', stats.getProviderStats)
 
 app.post('/analytics/guest-token', authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, failIfNotAuthenticated, async (req, res, next) => {
     await admin.loadAnalyticsConfig()

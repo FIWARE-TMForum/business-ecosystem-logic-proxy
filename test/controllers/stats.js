@@ -222,4 +222,212 @@ describe('Stats Controller', () => {
             done()
         }).catch(done.fail)
     })
+
+    it('should load provider stats grouped by lifecycle status', (done) => {
+        const axios = jasmine.createSpyObj('axios', ['request'])
+        axios.request.and.callFake((options) => {
+            if (options.url.indexOf('offset=50') >= 0) {
+                return Promise.resolve({
+                    data: []
+                })
+            }
+
+            if (options.url.indexOf('/productOffering') >= 0) {
+                return Promise.resolve({
+                    data: [
+                        { lifecycleStatus: 'Active' },
+                        { lifecycleStatus: 'Launched' },
+                        { lifecycleStatus: 'launched' },
+                        { lifecycleStatus: 'Retired' },
+                        { lifecycleStatus: 'Obsolete' },
+                        { lifecycleStatus: 'Unknown' },
+                        {}
+                    ]
+                })
+            }
+
+            if (options.url.indexOf('/catalog') >= 0) {
+                return Promise.resolve({
+                    data: [
+                        { lifecycleStatus: 'Unknown' }
+                    ]
+                })
+            }
+
+            if (options.url.indexOf('/productSpecification') >= 0) {
+                return Promise.resolve({
+                    data: [
+                        { lifecycleStatus: 'Active' },
+                        { lifecycleStatus: 'Active' }
+                    ]
+                })
+            }
+
+            if (options.url.indexOf('/serviceSpecification') >= 0) {
+                return Promise.resolve({
+                    data: [
+                        { lifecycleStatus: 'retired' },
+                        { lifecycleStatus: 'OBSOLETE' }
+                    ]
+                })
+            }
+
+            if (options.url.indexOf('/resourceSpecification') >= 0) {
+                return Promise.resolve({
+                    data: [
+                        { lifecycleStatus: 'Launched' }
+                    ]
+                })
+            }
+
+            return Promise.resolve({
+                data: [
+                    { lifecycleStatus: 'Active' },
+                    { lifecycleStatus: 'Launched' },
+                    { lifecycleStatus: 'Retired' },
+                    { lifecycleStatus: 'Obsolete' }
+                ]
+            })
+        })
+
+        const cron = jasmine.createSpyObj('node-cron', ['schedule', 'getTasks'])
+        const schema = jasmine.createSpyObj('statsSchema', ['findOne'])
+        const instance = getStatsInstance(axios, cron, schema)
+        const res = jasmine.createSpyObj('res', ['send', 'status'])
+        res.status.and.returnValue(res)
+
+        instance.getProviderStats({
+            params: {
+                organizationId: 'org 1'
+            }
+        }, res).then(() => {
+            expect(axios.request).toHaveBeenCalledTimes(12)
+            expect(axios.request.calls.argsFor(0)).toEqual([{
+                url: 'https://example.com:1234/productOffering?relatedParty.id=org%201&fields=lifecycleStatus&offset=0&limit=50',
+                method: 'GET'
+            }])
+            expect(axios.request.calls.argsFor(1)).toEqual([{
+                url: 'https://example.com:1234/catalog?relatedParty.id=org%201&fields=lifecycleStatus&offset=0&limit=50',
+                method: 'GET'
+            }])
+            expect(axios.request.calls.argsFor(2)).toEqual([{
+                url: 'https://example.com:1234/productSpecification?relatedParty.id=org%201&fields=lifecycleStatus&offset=0&limit=50',
+                method: 'GET'
+            }])
+            expect(axios.request.calls.argsFor(3)).toEqual([{
+                url: 'https://example.com:1234/serviceSpecification?relatedParty.id=org%201&fields=lifecycleStatus&offset=0&limit=50',
+                method: 'GET'
+            }])
+            expect(axios.request.calls.argsFor(4)).toEqual([{
+                url: 'https://example.com:1234/resourceSpecification?relatedParty.id=org%201&fields=lifecycleStatus&offset=0&limit=50',
+                method: 'GET'
+            }])
+            expect(axios.request.calls.argsFor(5)).toEqual([{
+                url: 'https://example.com:1234/usageSpecification?relatedParty.id=org%201&fields=lifecycleStatus&offset=0&limit=50',
+                method: 'GET'
+            }])
+            expect(axios.request.calls.argsFor(6)).toEqual([{
+                url: 'https://example.com:1234/productOffering?relatedParty.id=org%201&fields=lifecycleStatus&offset=50&limit=50',
+                method: 'GET'
+            }])
+            expect(axios.request.calls.argsFor(7)).toEqual([{
+                url: 'https://example.com:1234/catalog?relatedParty.id=org%201&fields=lifecycleStatus&offset=50&limit=50',
+                method: 'GET'
+            }])
+            expect(axios.request.calls.argsFor(8)).toEqual([{
+                url: 'https://example.com:1234/productSpecification?relatedParty.id=org%201&fields=lifecycleStatus&offset=50&limit=50',
+                method: 'GET'
+            }])
+            expect(axios.request.calls.argsFor(9)).toEqual([{
+                url: 'https://example.com:1234/serviceSpecification?relatedParty.id=org%201&fields=lifecycleStatus&offset=50&limit=50',
+                method: 'GET'
+            }])
+            expect(axios.request.calls.argsFor(10)).toEqual([{
+                url: 'https://example.com:1234/resourceSpecification?relatedParty.id=org%201&fields=lifecycleStatus&offset=50&limit=50',
+                method: 'GET'
+            }])
+            expect(axios.request.calls.argsFor(11)).toEqual([{
+                url: 'https://example.com:1234/usageSpecification?relatedParty.id=org%201&fields=lifecycleStatus&offset=50&limit=50',
+                method: 'GET'
+            }])
+
+            expect(res.send).toHaveBeenCalledWith({
+                productOffering: {
+                    Active: 1,
+                    Launched: 2,
+                    Retired: 1,
+                    Obsolete: 1
+                },
+                catalog: {
+                    Active: 0,
+                    Launched: 0,
+                    Retired: 0,
+                    Obsolete: 0
+                },
+                productSpecification: {
+                    Active: 2,
+                    Launched: 0,
+                    Retired: 0,
+                    Obsolete: 0
+                },
+                serviceSpecification: {
+                    Active: 0,
+                    Launched: 0,
+                    Retired: 1,
+                    Obsolete: 1
+                },
+                resourceSpecification: {
+                    Active: 0,
+                    Launched: 1,
+                    Retired: 0,
+                    Obsolete: 0
+                },
+                usageSpecification: {
+                    Active: 1,
+                    Launched: 1,
+                    Retired: 1,
+                    Obsolete: 1
+                }
+            })
+            expect(res.status).not.toHaveBeenCalled()
+            done()
+        }).catch(done.fail)
+    })
+
+    it('should return an error when provider stats cannot be loaded', (done) => {
+        const axios = jasmine.createSpyObj('axios', ['request'])
+        axios.request.and.callFake((options) => {
+            if (options.url.indexOf('/serviceSpecification') >= 0) {
+                return Promise.reject({
+                    message: 'Request failed with status code 500',
+                    response: {
+                        status: 500,
+                        statusText: 'Internal Server Error'
+                    }
+                })
+            }
+
+            return Promise.resolve({
+                data: []
+            })
+        })
+
+        const cron = jasmine.createSpyObj('node-cron', ['schedule', 'getTasks'])
+        const schema = jasmine.createSpyObj('statsSchema', ['findOne'])
+        const instance = getStatsInstance(axios, cron, schema)
+        const res = jasmine.createSpyObj('res', ['send', 'status'])
+        res.status.and.returnValue(res)
+
+        instance.getProviderStats({
+            params: {
+                organizationId: 'org-1'
+            }
+        }, res).then(() => {
+            expect(res.status).toHaveBeenCalledWith(500)
+            expect(res.send).toHaveBeenCalledWith({
+                message: 'Provider stats could not be loaded'
+            })
+            done()
+        }).catch(done.fail)
+    })
 })

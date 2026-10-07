@@ -25,8 +25,49 @@ const config = require('../config')
 
 const logger = require('./../lib/logger').logger.getLogger('TMF')
 
+const LIFECYCLE_STATUSES = ['Active', 'Launched', 'Retired', 'Obsolete']
+const PROVIDER_STATS_RESOURCES = [
+    { key: 'productOffering', api: 'catalog', path: '/productOffering' },
+    { key: 'catalog', api: 'catalog', path: '/catalog' },
+    { key: 'productSpecification', api: 'catalog', path: '/productSpecification' },
+    { key: 'serviceSpecification', api: 'service', path: '/serviceSpecification' },
+    { key: 'resourceSpecification', api: 'resource', path: '/resourceSpecification' },
+    { key: 'usageSpecification', api: 'usage', path: '/usageSpecification' }
+]
+
 
 function stats() {
+
+    const getAPIBaseUrl = function(api) {
+        return utils.getAPIProtocol(api) + '://' + utils.getAPIHost(api) + ':' + utils.getAPIPort(api) + utils.getAPIPath(api)
+    }
+
+    const getProviderStatsUrl = function(resource, organizationId) {
+        return getAPIBaseUrl(resource.api) + resource.path + '?relatedParty.id=' + encodeURIComponent(organizationId) + '&fields=lifecycleStatus'
+    }
+
+    const getEmptyLifecycleStats = function() {
+        return LIFECYCLE_STATUSES.reduce((stats, status) => {
+            stats[status] = 0
+            return stats
+        }, {})
+    }
+
+    const countLifecycleStatuses = function(items) {
+        const result = getEmptyLifecycleStats()
+
+        items.forEach((item) => {
+            const status = LIFECYCLE_STATUSES.find((validStatus) => {
+                return String(item.lifecycleStatus || '').toLowerCase() === validStatus.toLowerCase()
+            })
+
+            if (status != null) {
+                result[status] += 1
+            }
+        })
+
+        return result
+    }
 
     const getItem = async function (url) {
         const response = await axios.request({
@@ -157,6 +198,44 @@ function stats() {
         })
     }
 
+    const getProviderStats = async function(req, res) {
+        const organizationId = req.params.organizationId
+
+        try {
+            const results = await Promise.all(PROVIDER_STATS_RESOURCES.map(async (resource) => {
+                const items = await pageData(getProviderStatsUrl(resource, organizationId), (item) => item)
+
+                if (items == null) {
+                    throw new Error(`Provider stats resource ${resource.key} could not be loaded`)
+                }
+
+                return {
+                    key: resource.key,
+                    stats: countLifecycleStatuses(items)
+                }
+            }))
+
+            const responseBody = results.reduce((stats, result) => {
+                stats[result.key] = result.stats
+                return stats
+            }, {})
+
+            res.send(responseBody)
+        } catch (err) {
+            const status = err.response?.status;
+            const reason = err.response?.data?.message || err.response?.statusText;
+            logger.error(
+                `Error loading provider stats for organization ${organizationId}` +
+                (status ? ` (HTTP ${status}${reason ? `: ${reason}` : ''})` : '') +
+                `: ${err.message}`
+            );
+
+            res.status(500).send({
+                message: 'Provider stats could not be loaded'
+            })
+        }
+    }
+
     const setupCron = function() {
         const scheduledTasks = cron.getTasks();
 
@@ -177,6 +256,7 @@ function stats() {
 
     return {
         getStats: getStats,
+        getProviderStats: getProviderStats,
         init: init
     }
 }
