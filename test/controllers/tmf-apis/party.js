@@ -19,7 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var proxyquire = require('proxyquire');
+var proxyquire = require('proxyquire').noPreserveCache();
 var nock = require('nock');
 
 var testUtils = require('../../utils');
@@ -63,6 +63,7 @@ describe('Party API', function() {
 
     var loggedIn;
     var config = testUtils.getDefaultConfig();
+    config.searchUrl = '';
     const catalogServer = (config.endpoints.catalog.appSsl ? 'https' : 'http') +
         '://' +
         config.endpoints.catalog.host +
@@ -79,7 +80,7 @@ describe('Party API', function() {
         updateBody: function(req, body) {return ;}
     };
 
-    const buildPartyAPI = (conf, phone, operatorId) => {
+    const buildPartyAPI = (conf, phone, operatorId, search) => {
         const tmfUtils = {
             isValidPhoneNumber: function(_) {
                 return phone;
@@ -92,12 +93,20 @@ describe('Party API', function() {
                 }
             }
         };
+        const searchStub = search || {
+            searchEngine: {
+                searchOrganizations: function() {
+                    return Promise.resolve([]);
+                }
+            }
+        };
         return proxyquire('../../../controllers/tmf-apis/party', {
             './../../config': conf,
             './../../lib/logger': testUtils.emptyLogger,
             './../../lib/utils': utils,
             './../../lib/tmfUtils': tmfUtils,
-            './../../lib/operator': operator
+            './../../lib/operator': operator,
+            './../../lib/search': searchStub
         }).party;
     }
 
@@ -155,6 +164,107 @@ describe('Party API', function() {
                     const paginationConfig = partyAPI.getFilteredPaginationConfig(req);
                     expect(paginationConfig).not.toBeNull();
                     expect(typeof paginationConfig.predicate).toBe('function');
+                    done();
+                });
+            });
+
+            it('should use organization search instead of filtered pagination when search is enabled', function(done) {
+                const searchConfig = Object.assign({}, config, {
+                    searchUrl: 'http://search.com'
+                });
+                const searchOrganizations = jasmine.createSpy('searchOrganizations').and.returnValue(Promise.resolve([
+                    { id: 'org-1' },
+                    { id: 'org-2' }
+                ]));
+                const partyLib = buildPartyAPI(searchConfig, true, null, {
+                    searchEngine: {
+                        searchOrganizations: searchOrganizations
+                    }
+                });
+                var req = {
+                    method: 'GET',
+                    apiUrl: '/party/organization?lifecycleStatus=Launched&offset=10&limit=2&fields=tradingName',
+                    query: {
+                        lifecycleStatus: 'Launched',
+                        offset: '10',
+                        limit: '2',
+                        fields: 'tradingName'
+                    }
+                };
+
+                partyLib.checkPermissions(req, function(err) {
+                    expect(err).toBe(null);
+                    expect(searchOrganizations).toHaveBeenCalledWith({}, {
+                        offset: '10',
+                        pageSize: '2'
+                    }, false);
+                    expect(req.apiUrl).toBe('/party/organization?id=org-1,org-2&limit=2&fields=tradingName');
+                    expect(req.query).toEqual({
+                        id: 'org-1,org-2',
+                        limit: '2',
+                        fields: 'tradingName'
+                    });
+                    expect(partyLib.getFilteredPaginationConfig(req)).toBeNull();
+                    done();
+                });
+            });
+
+            it('should rewrite launched organization list to empty id query when search has no results', function(done) {
+                const searchConfig = Object.assign({}, config, {
+                    searchUrl: 'http://search.com'
+                });
+                const searchOrganizations = jasmine.createSpy('searchOrganizations').and.returnValue(Promise.resolve([]));
+                const partyLib = buildPartyAPI(searchConfig, true, null, {
+                    searchEngine: {
+                        searchOrganizations: searchOrganizations
+                    }
+                });
+                var req = {
+                    method: 'GET',
+                    apiUrl: '/party/organization?lifecycleStatus=Launched&limit=2',
+                    query: {
+                        lifecycleStatus: 'Launched',
+                        limit: '2'
+                    }
+                };
+
+                partyLib.checkPermissions(req, function(err) {
+                    expect(err).toBe(null);
+                    expect(req.apiUrl).toBe('/party/organization?id=null&limit=2');
+                    expect(req.query).toEqual({
+                        id: 'null',
+                        limit: '2'
+                    });
+                    expect(partyLib.getFilteredPaginationConfig(req)).toBeNull();
+                    done();
+                });
+            });
+
+            it('should fail launched organization list requests when enabled search cannot be reached', function(done) {
+                const searchConfig = Object.assign({}, config, {
+                    searchUrl: 'http://search.com'
+                });
+                const partyLib = buildPartyAPI(searchConfig, true, null, {
+                    searchEngine: {
+                        searchOrganizations: function() {
+                            return Promise.reject(new Error('search unavailable'));
+                        }
+                    }
+                });
+                var req = {
+                    method: 'GET',
+                    apiUrl: '/party/organization?lifecycleStatus=Launched&limit=2',
+                    query: {
+                        lifecycleStatus: 'Launched',
+                        limit: '2'
+                    }
+                };
+
+                partyLib.checkPermissions(req, function(err) {
+                    expect(err).toEqual({
+                        status: 400,
+                        message: 'Error accessing search indexes'
+                    });
                     done();
                 });
             });

@@ -29,6 +29,7 @@ const logger = require('./../../lib/logger').logger.getLogger('TMF')
 const tmfUtils = require('./../../lib/tmfUtils')
 const partyClient = require('./../../lib/party').partyClient
 const operatorClient = require('./../../lib/operator').operator
+const searchEngine = require('./../../lib/search').searchEngine
 
 
 const party = (function() {
@@ -73,6 +74,52 @@ const party = (function() {
         if (req.query) {
             delete req.query[LIFE_CYCLE]
         }
+    }
+
+    const buildSearchPage = function(req) {
+        const page = {}
+        const offset = getQueryParam(req, 'offset')
+        const limit = getQueryParam(req, 'limit')
+
+        if (offset != null) {
+            page.offset = offset
+        }
+
+        if (limit != null) {
+            page.pageSize = limit
+        }
+
+        return page
+    }
+
+    const rewriteOrganizationQueryFromSearch = function(req, result) {
+        const ids = result.map((hit) => {
+            return hit.id
+        }).filter((id) => {
+            return id != null
+        })
+        const id = ids.length > 0 ? ids.join(',') : 'null'
+        const limit = getQueryParam(req, 'limit') != null ? getQueryParam(req, 'limit') : (ids.length > 0 ? String(ids.length) : null)
+        const fields = getQueryParam(req, 'fields')
+        const query = {
+            id: id
+        }
+        const params = new URLSearchParams()
+
+        params.set('id', id)
+
+        if (limit != null) {
+            query.limit = String(limit)
+            params.set('limit', query.limit)
+        }
+
+        if (fields != null) {
+            query.fields = fields
+            params.set('fields', fields)
+        }
+
+        req.query = query
+        req.apiUrl = '/' + config.endpoints.party.path + '/organization?' + params.toString().replace(/%2C/g, ',')
     }
 
     const normalizeCatalogError = function(err) {
@@ -154,6 +201,21 @@ const party = (function() {
 
     const validateAllowed = function(req, callback) {
         if (isOrganizationListRequest(req) && isLaunchedQuery(req)) {
+            if (config.searchUrl) {
+                searchEngine.searchOrganizations({}, buildSearchPage(req), false)
+                    .then((result) => {
+                        rewriteOrganizationQueryFromSearch(req, result)
+                        callback(null)
+                    })
+                    .catch(() => {
+                        callback({
+                            status: 400,
+                            message: 'Error accessing search indexes'
+                        })
+                    })
+                return
+            }
+
             req[launchedOrganizationOfferFilter] = true
             removeLifecycleStatusQuery(req)
         }
