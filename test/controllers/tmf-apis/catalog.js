@@ -302,6 +302,47 @@ describe('Catalog API', function() {
         });
     });
 
+    it('should preserve relatedParty.id when rewriting productOffering search results', function(done) {
+        const previousSearchUrl = config.searchUrl;
+        config.searchUrl = 'http://search.com';
+
+        const searchMethod = jasmine.createSpy('search').and.returnValue(Promise.resolve([
+            { id: 'id-1' },
+            { id: 'id-2' }
+        ]));
+
+        var catalogApi = getCatalogApi({}, {}, {}, {}, {}, {}, { search: searchMethod });
+        var req = {
+            method: 'GET',
+            path: '/productOffering',
+            apiUrl: '/catalog/productOffering',
+            query: {
+                keyword: 'testkey',
+                limit: '100',
+                'relatedParty.id': 'urn:ngsi-ld:organization:provider'
+            }
+        };
+
+        catalogApi.checkPermissions(req, function(err) {
+            config.searchUrl = previousSearchUrl;
+            expect(err).toBeNull();
+            expect(searchMethod).toHaveBeenCalledWith(
+                'testkey',
+                undefined,
+                {
+                    pageSize: '100'
+                }
+            );
+            expect(req.apiUrl).toBe('/catalog/productOffering?href=id-1,id-2&limit=100&relatedParty.id=urn:ngsi-ld:organization:provider');
+            expect(req.query).toEqual({
+                href: 'id-1,id-2',
+                limit: '100',
+                'relatedParty.id': 'urn:ngsi-ld:organization:provider'
+            });
+            done();
+        });
+    });
+
     it('should use external search on GET catalog requests with keyword params', function(done) {
         const previousSearchUrl = config.searchUrl;
         config.searchUrl = 'http://search.com';
