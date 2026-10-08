@@ -341,4 +341,108 @@ describe('Search client', () => {
             done()
         })
     })
+
+    it('should search organizations with published offerings by default', (done) => {
+        let axios = jasmine.createSpy()
+        axios.and.returnValue(Promise.resolve({
+            data: [{
+                id: 'org-1'
+            }]
+        }))
+
+        const client = searchClient({
+            post: axios
+        })
+
+        client.searchOrganizations({
+            categories: ['IaaS'],
+            countries: ['ES'],
+            complianceLevels: ['Baseline']
+        }, {offset: 12, pageSize: 6}).then((ids) => {
+            expect(ids).toEqual([{
+                id: 'org-1'
+            }])
+
+            let url = 'http://search.com/api/searchOrganizations?page=2&size=6&considerAllOrgs=false'
+            expect(axios).toHaveBeenCalledWith(url, {
+                categories: ['IaaS'],
+                countries: ['ES'],
+                complianceLevels: ['Baseline']
+            })
+            done()
+        })
+    })
+
+    it('should search all indexed organizations when requested', (done) => {
+        let axios = jasmine.createSpy()
+        axios.and.returnValue(Promise.resolve({
+            data: []
+        }))
+
+        const client = searchClient({
+            post: axios
+        })
+
+        client.searchOrganizations({}, {}, true).then((ids) => {
+            expect(ids).toEqual([])
+
+            let url = 'http://search.com/api/searchOrganizations?considerAllOrgs=true'
+            expect(axios).toHaveBeenCalledWith(url, {
+                categories: [],
+                countries: [],
+                complianceLevels: []
+            })
+            done()
+        })
+    })
+
+    it('should ignore organization keyword mode since searchOrganizations has no keyword parameter', (done) => {
+        let axios = jasmine.createSpy()
+        axios.and.returnValue(Promise.resolve({
+            data: []
+        }))
+
+        const client = searchClient({
+            post: axios
+        })
+
+        config.useQueryKeyword = true
+
+        client.searchOrganizations(null, {offset: 12, pageSize: 6}).then((ids) => {
+            expect(ids).toEqual([])
+
+            let url = 'http://search.com/api/searchOrganizations?page=2&size=6&considerAllOrgs=false'
+            expect(axios).toHaveBeenCalledWith(url, {
+                categories: [],
+                countries: [],
+                complianceLevels: []
+            })
+
+            config.useQueryKeyword = false
+            done()
+        })
+    })
+
+    it('should map non-array organization search responses to an empty result', (done) => {
+        let axios = jasmine.createSpy()
+        axios.and.returnValue(Promise.resolve({
+            data: {}
+        }))
+
+        const client = searchClient({
+            post: axios
+        })
+
+        client.searchOrganizations(null, {}).then((ids) => {
+            expect(ids).toEqual([])
+
+            let url = 'http://search.com/api/searchOrganizations?considerAllOrgs=false'
+            expect(axios).toHaveBeenCalledWith(url, {
+                categories: [],
+                countries: [],
+                complianceLevels: []
+            })
+            done()
+        })
+    })
 })
