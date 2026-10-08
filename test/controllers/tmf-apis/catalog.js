@@ -162,10 +162,17 @@ describe('Catalog API', function() {
             type: options.types || ['gx:LabelCredential', 'VerifiableCredential'],
             credentialSubject: credentialSubject
         };
-        const payload = {};
-        payload[options.credentialProperty || 'vc'] = credential;
+        const payload = options.directCredentialPayload ? credential : {};
+        if (!options.directCredentialPayload) {
+            payload[options.credentialProperty || 'vc'] = credential;
+        }
         if (!options.missingIssuer) {
-            payload.iss = options.issuer === undefined ? COMPLIANCE_ISSUER : options.issuer;
+            const issuer = options.issuer === undefined ? COMPLIANCE_ISSUER : options.issuer;
+            if (options.directCredentialPayload || options.credentialIssuer) {
+                credential.issuer = options.credentialIssuer || { id: issuer };
+            } else {
+                payload.iss = issuer;
+            }
         }
 
         const certificateSubject = {};
@@ -7507,6 +7514,21 @@ describe('Catalog API', function() {
                 {
                     credentialProperty: 'verifiableCredential',
                     label: 'PP'
+                }
+            );
+        });
+
+        it('should accept the compliance credential directly in the JWT payload', function(done) {
+            var offeringId = 'urn:offering:direct-compliance-payload';
+            testLaunchCheck(
+                buildOffering(offeringId),
+                buildProductSpec(),
+                buildOrganization('validated'),
+                true,
+                done,
+                {
+                    directCredentialPayload: true,
+                    types: ['VerifiableCredential', 'gx.labelcredential.w3c.2']
                 }
             );
         });

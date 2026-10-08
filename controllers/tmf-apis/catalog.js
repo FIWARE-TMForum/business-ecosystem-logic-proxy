@@ -64,6 +64,10 @@ const catalog = (function() {
     const categoriesPattern = new RegExp('/category/?$');
     const catalogsPattern = new RegExp('/catalog/?$');
     const allowedComplianceLabels = ['BL', 'P', 'PP'];
+    const allowedComplianceCredentialTypes = new Set([
+        'gx:labelcredential',
+        'gx.labelcredential.w3c.2'
+    ]);
     const complianceIssuerPrefix = 'did:elsi:';
     const allowedProductImageTypes = new Set([
         'image/svg+xml',
@@ -616,15 +620,51 @@ const catalog = (function() {
         return normalizedIdentifier || null;
     };
 
-    const hasMatchingComplianceIssuer = function(payload, certificate) {
-        if (!payload || typeof payload.iss !== 'string') {
+    const getComplianceCredential = function(payload) {
+        if (!payload || typeof payload !== 'object') {
+            return null;
+        }
+
+        const credential = payload.verifiableCredential || payload.vc || payload;
+        return credential && credential.credentialSubject ? credential : null;
+    };
+
+    const getIssuerIdentifier = function(payload, credential) {
+        const issuerCandidates = [
+            payload && payload.iss,
+            credential && credential.issuer
+        ];
+
+        for (const issuer of issuerCandidates) {
+            if (typeof issuer === 'string' && issuer.trim()) {
+                return issuer.trim();
+            }
+
+            if (issuer && typeof issuer.id === 'string' && issuer.id.trim()) {
+                return issuer.id.trim();
+            }
+        }
+
+        return null;
+    };
+
+    const hasAllowedComplianceCredentialType = function(credentialTypes) {
+        return credentialTypes.some((credentialType) => {
+            return typeof credentialType === 'string' &&
+                allowedComplianceCredentialTypes.has(credentialType.trim().toLowerCase());
+        });
+    };
+
+    const hasMatchingComplianceIssuer = function(payload, credential, certificate) {
+        const issuerIdentifier = getIssuerIdentifier(payload, credential);
+        if (!issuerIdentifier) {
             return false;
         }
 
         const parsedCertificate = new X509Certificate(certificate);
         const organizationIdentifier = getCertificateOrganizationIdentifier(parsedCertificate);
         return organizationIdentifier !== null &&
-            payload.iss === complianceIssuerPrefix + organizationIdentifier;
+            issuerIdentifier === complianceIssuerPrefix + organizationIdentifier;
     };
 
     const hasValidComplianceCredential = async function(productSpec) {
@@ -643,19 +683,19 @@ const catalog = (function() {
             const payload = jwt.verify(complianceToken, certificate, {
                 algorithms: ['RS256']
             });
-            if (!hasMatchingComplianceIssuer(payload, certificate)) {
+            const credential = getComplianceCredential(payload);
+            if (!credential || !credential.credentialSubject) {
                 return false;
             }
 
-            const credential = payload && (payload.verifiableCredential || payload.vc);
-            if (!credential || !credential.credentialSubject) {
+            if (!hasMatchingComplianceIssuer(payload, credential, certificate)) {
                 return false;
             }
 
             const credentialTypes = Array.isArray(credential.type)
                 ? credential.type
                 : [credential.type];
-            if (!credentialTypes.includes('gx:LabelCredential')) {
+            if (!hasAllowedComplianceCredentialType(credentialTypes)) {
                 return false;
             }
 
