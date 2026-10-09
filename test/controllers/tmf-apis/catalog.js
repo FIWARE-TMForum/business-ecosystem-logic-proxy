@@ -256,7 +256,8 @@ describe('Catalog API', function() {
             expect(searchMethod).toHaveBeenCalledWith(
                 undefined,
                 'compliance_profile::B,compliance_profile::P',
-                {}
+                {},
+                null
             );
             expect(req.apiUrl).toBe('/catalog/productOffering?href=id-1,id-2&limit=2');
             expect(req.query).toEqual({
@@ -298,7 +299,8 @@ describe('Catalog API', function() {
                     offset: '6',
                     pageSize: '6',
                     sort: 'name'
-                }
+                },
+                null
             );
             expect(req.apiUrl).toBe('/catalog/productOffering?href=id-1&limit=6');
             expect(req.query).toEqual({
@@ -309,7 +311,7 @@ describe('Catalog API', function() {
         });
     });
 
-    it('should preserve relatedParty.id when rewriting productOffering search results', function(done) {
+    it('should forward relatedParty.id to external productOffering search', function(done) {
         const previousSearchUrl = config.searchUrl;
         config.searchUrl = 'http://search.com';
 
@@ -338,14 +340,72 @@ describe('Catalog API', function() {
                 undefined,
                 {
                     pageSize: '100'
-                }
+                },
+                'urn:ngsi-ld:organization:provider'
             );
-            expect(req.apiUrl).toBe('/catalog/productOffering?href=id-1,id-2&limit=100&relatedParty.id=urn:ngsi-ld:organization:provider');
+            expect(req.apiUrl).toBe('/catalog/productOffering?href=id-1,id-2&limit=100');
             expect(req.query).toEqual({
                 href: 'id-1,id-2',
-                limit: '100',
+                limit: '100'
+            });
+            done();
+        });
+    });
+
+    it('should not use external productOffering search when only relatedParty.id is provided', function(done) {
+        const previousSearchUrl = config.searchUrl;
+        config.searchUrl = 'http://search.com';
+
+        const searchMethod = jasmine.createSpy('search').and.returnValue(Promise.resolve([]));
+
+        var catalogApi = getCatalogApi({}, {}, {}, {}, {}, {}, { search: searchMethod });
+        var req = {
+            method: 'GET',
+            path: '/productOffering',
+            apiUrl: '/catalog/productOffering?relatedParty.id=urn:ngsi-ld:organization:provider&limit=50',
+            query: {
+                limit: '50',
+                'relatedParty.id': 'urn:ngsi-ld:organization:provider'
+            }
+        };
+
+        catalogApi.checkPermissions(req, function(err) {
+            config.searchUrl = previousSearchUrl;
+            expect(err).toBeNull();
+            expect(searchMethod).not.toHaveBeenCalled();
+            expect(req.apiUrl).toBe('/catalog/productOffering?relatedParty.id=urn:ngsi-ld:organization:provider&limit=50');
+            expect(req.query).toEqual({
+                limit: '50',
                 'relatedParty.id': 'urn:ngsi-ld:organization:provider'
             });
+            done();
+        });
+    });
+
+    it('should not forward blank relatedParty.id to external productOffering search', function(done) {
+        const previousSearchUrl = config.searchUrl;
+        config.searchUrl = 'http://search.com';
+
+        const searchMethod = jasmine.createSpy('search').and.returnValue(Promise.resolve([
+            { id: 'id-1' }
+        ]));
+
+        var catalogApi = getCatalogApi({}, {}, {}, {}, {}, {}, { search: searchMethod });
+        var req = {
+            method: 'GET',
+            path: '/productOffering',
+            apiUrl: '/catalog/productOffering',
+            query: {
+                keyword: 'testkey',
+                'relatedParty.id': '   '
+            }
+        };
+
+        catalogApi.checkPermissions(req, function(err) {
+            config.searchUrl = previousSearchUrl;
+            expect(err).toBeNull();
+            expect(searchMethod).toHaveBeenCalledWith('testkey', undefined, {}, null);
+            expect(req.apiUrl).toBe('/catalog/productOffering?href=id-1&limit=1');
             done();
         });
     });
@@ -503,7 +563,7 @@ describe('Catalog API', function() {
         catalogApi.checkPermissions(req, function(err) {
             config.searchUrl = previousSearchUrl;
             expect(err).toBeNull();
-            expect(searchMethod).toHaveBeenCalledWith('testkey', undefined, {});
+            expect(searchMethod).toHaveBeenCalledWith('testkey', undefined, {}, null);
             expect(req.apiUrl).toBe('/catalog/productOffering?href=id-1&limit=1&category=cat-1');
             done();
         });

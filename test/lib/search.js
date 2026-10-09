@@ -122,6 +122,48 @@ describe('Search client', () => {
         )
     })
 
+    it('should include organizationId in product search request body when provided', (done) => {
+        let axios = jasmine.createSpy()
+        axios.and.returnValue(Promise.resolve({
+            data: []
+        }))
+
+        const client = searchClient({
+            post: axios
+        })
+
+        client.search('testkey', '', {}, 'urn:ngsi-ld:organization:provider').then((ids) => {
+            expect(ids).toEqual([])
+
+            expect(axios).toHaveBeenCalledWith('http://search.com/api/SearchProduct/testkey', {
+                categories: [],
+                organizationId: 'urn:ngsi-ld:organization:provider'
+            })
+            done()
+        })
+    })
+
+    it('should search products by organizationId without keyword when provided', (done) => {
+        let axios = jasmine.createSpy()
+        axios.and.returnValue(Promise.resolve({
+            data: []
+        }))
+
+        const client = searchClient({
+            post: axios
+        })
+
+        client.search(null, '', {}, 'urn:ngsi-ld:organization:provider').then((ids) => {
+            expect(ids).toEqual([])
+
+            expect(axios).toHaveBeenCalledWith('http://search.com/api/SearchProduct', {
+                categories: [],
+                organizationId: 'urn:ngsi-ld:organization:provider'
+            })
+            done()
+        })
+    })
+
     it('should search if keyword and paging is provided', (done) => {
         let axios = jasmine.createSpy()
         axios.and.returnValue(Promise.resolve({
