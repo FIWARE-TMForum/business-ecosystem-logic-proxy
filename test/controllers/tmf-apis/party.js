@@ -197,7 +197,7 @@ describe('Party API', function() {
                     expect(searchOrganizations).toHaveBeenCalledWith({}, {
                         offset: '10',
                         pageSize: '2'
-                    }, false);
+                    }, false, null);
                     expect(req.apiUrl).toBe('/party/organization?id=org-1,org-2&limit=2&fields=tradingName');
                     expect(req.query).toEqual({
                         id: 'org-1,org-2',
@@ -205,6 +205,82 @@ describe('Party API', function() {
                         fields: 'tradingName'
                     });
                     expect(partyLib.getFilteredPaginationConfig(req)).toBeNull();
+                    done();
+                });
+            });
+
+            it('should use organization search when keyword is provided and search is enabled', function(done) {
+                const searchConfig = Object.assign({}, config, {
+                    searchUrl: 'http://search.com'
+                });
+                const searchOrganizations = jasmine.createSpy('searchOrganizations').and.returnValue(Promise.resolve([
+                    { id: 'org-1' }
+                ]));
+                const partyLib = buildPartyAPI(searchConfig, true, null, {
+                    searchEngine: {
+                        searchOrganizations: searchOrganizations
+                    }
+                });
+                var req = {
+                    method: 'GET',
+                    apiUrl: '/party/organization?keyword=acme&offset=10&limit=2&fields=tradingName',
+                    query: {
+                        keyword: 'acme',
+                        offset: '10',
+                        limit: '2',
+                        fields: 'tradingName'
+                    }
+                };
+
+                partyLib.checkPermissions(req, function(err) {
+                    expect(err).toBe(null);
+                    expect(searchOrganizations).toHaveBeenCalledWith({}, {
+                        offset: '10',
+                        pageSize: '2'
+                    }, false, 'acme');
+                    expect(req.apiUrl).toBe('/party/organization?id=org-1&limit=2&fields=tradingName');
+                    expect(req.query).toEqual({
+                        id: 'org-1',
+                        limit: '2',
+                        fields: 'tradingName'
+                    });
+                    expect(partyLib.getFilteredPaginationConfig(req)).toBeNull();
+                    done();
+                });
+            });
+
+            it('should keep launched organization keyword search scoped to organizations with offers', function(done) {
+                const searchConfig = Object.assign({}, config, {
+                    searchUrl: 'http://search.com'
+                });
+                const searchOrganizations = jasmine.createSpy('searchOrganizations').and.returnValue(Promise.resolve([
+                    { id: 'org-1' }
+                ]));
+                const partyLib = buildPartyAPI(searchConfig, true, null, {
+                    searchEngine: {
+                        searchOrganizations: searchOrganizations
+                    }
+                });
+                var req = {
+                    method: 'GET',
+                    apiUrl: '/party/organization?keyword=acme&lifecycleStatus=Launched&limit=2',
+                    query: {
+                        keyword: 'acme',
+                        lifecycleStatus: 'Launched',
+                        limit: '2'
+                    }
+                };
+
+                partyLib.checkPermissions(req, function(err) {
+                    expect(err).toBe(null);
+                    expect(searchOrganizations).toHaveBeenCalledWith({}, {
+                        pageSize: '2'
+                    }, false, 'acme');
+                    expect(req.apiUrl).toBe('/party/organization?id=org-1&limit=2');
+                    expect(req.query).toEqual({
+                        id: 'org-1',
+                        limit: '2'
+                    });
                     done();
                 });
             });
