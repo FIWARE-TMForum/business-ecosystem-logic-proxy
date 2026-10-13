@@ -35,6 +35,9 @@ const usageManagement = (function() {
     const LAUNCHED_STATE = 'launched';
     const CATALOG_QUERY_PAGE_SIZE = 100;
     const USAGE_SPEC_IN_ACTIVE_OFFER_ERROR = 'The usage spec cannot be deleted because it is being used by active or launched product offers';
+    const LIFE_CYCLE = 'lifecycleStatus';
+    const usageSpecLifecycleStatusFilter = '_usageSpecLifecycleStatusFilter';
+    const usageSpecLifecycleStatusFingerprint = '_usageSpecLifecycleStatusFingerprint';
 
     const checkFilters = function(req, callback) {
         // If retrieving the usage of a particular product
@@ -286,6 +289,78 @@ const usageManagement = (function() {
         return /\/usageSpecification(?:\/|\?|$)/.test(req.apiUrl || req.url || '');
     }
 
+    const getQueryParam = function(req, name) {
+        if (req.query && req.query[name] != null) {
+            return req.query[name];
+        }
+
+        return url.parse(req.apiUrl || '', true).query[name];
+    }
+
+    const normalizeStatusList = function(value) {
+        if (Array.isArray(value)) {
+            value = value.join(',');
+        }
+
+        return String(value || '')
+            .split(',')
+            .map((status) => status.trim().toLowerCase())
+            .filter((status) => status.length > 0);
+    }
+
+    const removeLifecycleStatusQuery = function(req) {
+        const parsedUrl = url.parse(req.apiUrl || req.url || '');
+        const params = new URLSearchParams(parsedUrl.query || '');
+
+        params.delete(LIFE_CYCLE);
+
+        const queryString = params.toString();
+        req.apiUrl = parsedUrl.pathname + (queryString ? '?' + queryString : '');
+
+        if (req.query) {
+            delete req.query[LIFE_CYCLE];
+        }
+    }
+
+    const buildFilteredPaginationFingerprint = function(req, statuses) {
+        const parsedUrl = url.parse(req.apiUrl || req.url || '');
+        const params = new URLSearchParams(parsedUrl.query || '');
+
+        params.delete('offset');
+        params.delete('limit');
+
+        const queryString = params.toString();
+        return [
+            parsedUrl.pathname,
+            queryString,
+            statuses.slice().sort().join(',')
+        ].join('|');
+    }
+
+    const prepareUsageSpecLifecycleStatusFilter = function(req, callback) {
+        const lifecycleStatus = getQueryParam(req, LIFE_CYCLE);
+        const statuses = normalizeStatusList(lifecycleStatus);
+
+        if (
+            req.method === 'GET' &&
+            isUsageSpecificationRequest(req) &&
+            statuses.length > 1
+        ) {
+            removeLifecycleStatusQuery(req);
+            req[usageSpecLifecycleStatusFilter] = statuses;
+            req[usageSpecLifecycleStatusFingerprint] = buildFilteredPaginationFingerprint(req, statuses);
+        }
+
+        callback(null);
+    }
+
+    const matchesUsageSpecLifecycleStatus = function(item, req) {
+        const statuses = req[usageSpecLifecycleStatusFilter] || [];
+        const lifecycleStatus = String(item && item.lifecycleStatus || '').toLowerCase();
+
+        return statuses.indexOf(lifecycleStatus) >= 0;
+    }
+
     const setUsageSpecLastUpdate = function(req, callback) {
         if (isUsageSpecificationRequest(req)) {
             req.parsedBody.lastUpdate = new Date().toISOString();
@@ -335,7 +410,7 @@ const usageManagement = (function() {
     //////////////////////////////////////////////////////////////////////////////////////////////
 
     const validators = {
-        GET: [utils.validateLoggedIn, tmfUtils.filterRelatedPartyFields, checkRelatedParty],
+        GET: [utils.validateLoggedIn, tmfUtils.filterRelatedPartyFields, checkRelatedParty, prepareUsageSpecLifecycleStatusFilter],
         POST: [utils.validateLoggedIn, parseBody, validateOwnerCreate, setUsageSpecLastUpdate],
         PATCH: [utils.validateLoggedIn, parseBody, getPrevVersion, validateUpdate, validateOwnerUpdate, setUsageSpecLastUpdate],
         PUT: [utils.methodNotAllowed],
@@ -352,9 +427,21 @@ const usageManagement = (function() {
         async.series(reqValidators, callback);
     };
 
+    const getFilteredPaginationConfig = function(req) {
+        if (req.method !== 'GET' || !req[usageSpecLifecycleStatusFilter]) {
+            return null;
+        }
+
+        return {
+            fingerprint: req[usageSpecLifecycleStatusFingerprint],
+            predicate: matchesUsageSpecLifecycleStatus
+        };
+    }
+
     return {
         checkPermissions: checkPermissions,
-        executePostValidation: executePostValidation
+        executePostValidation: executePostValidation,
+        getFilteredPaginationConfig: getFilteredPaginationConfig
     };
 })();
 

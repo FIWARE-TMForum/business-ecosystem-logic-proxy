@@ -237,6 +237,82 @@ describe('Usage Management API', function() {
                     done();
                 });
             });
+
+            it('should enable filtered pagination for usage specification lifecycle OR queries', function(done) {
+                const utils = jasmine.createSpyObj('utils', ['validateLoggedIn']);
+                utils.validateLoggedIn.and.callFake(function(req, callback) {
+                    return callback();
+                });
+
+                const tmfUtils = jasmine.createSpyObj('tmfUtils', ['filterRelatedPartyFields']);
+                tmfUtils.filterRelatedPartyFields.and.callFake(function(req, callback) {
+                    return callback();
+                });
+
+                const req = {
+                    method: 'GET',
+                    user: { partyId: DEFAULT_USER_ID },
+                    apiUrl: `/${config.endpoints.usage.path}/usageSpecification?lifecycleStatus=Retired,Obsolete&relatedParty.id=${DEFAULT_USER_ID}&limit=6`,
+                    query: {
+                        lifecycleStatus: 'Retired,Obsolete',
+                        'relatedParty.id': DEFAULT_USER_ID,
+                        limit: '6'
+                    }
+                };
+
+                const usageManagementAPI = getUsageManagementAPI({}, {}, utils, tmfUtils);
+
+                usageManagementAPI.checkPermissions(req, function(err) {
+                    expect(err).toBeNull();
+                    expect(req.apiUrl).toBe(`/${config.endpoints.usage.path}/usageSpecification?relatedParty.id=${DEFAULT_USER_ID}&limit=6`);
+                    expect(req.query.lifecycleStatus).toBeUndefined();
+
+                    const paginationConfig = usageManagementAPI.getFilteredPaginationConfig(req);
+                    expect(paginationConfig).not.toBeNull();
+                    expect(paginationConfig.fingerprint).toBe(`/${config.endpoints.usage.path}/usageSpecification|relatedParty.id=${DEFAULT_USER_ID}|obsolete,retired`);
+                    expect(paginationConfig.predicate({
+                        lifecycleStatus: 'Retired'
+                    }, req)).toBe(true);
+                    expect(paginationConfig.predicate({
+                        lifecycleStatus: 'Launched'
+                    }, req)).toBe(false);
+
+                    done();
+                });
+            });
+
+            it('should keep normal proxy behavior for usage specification single lifecycle queries', function(done) {
+                const utils = jasmine.createSpyObj('utils', ['validateLoggedIn']);
+                utils.validateLoggedIn.and.callFake(function(req, callback) {
+                    return callback();
+                });
+
+                const tmfUtils = jasmine.createSpyObj('tmfUtils', ['filterRelatedPartyFields']);
+                tmfUtils.filterRelatedPartyFields.and.callFake(function(req, callback) {
+                    return callback();
+                });
+
+                const req = {
+                    method: 'GET',
+                    user: { partyId: DEFAULT_USER_ID },
+                    apiUrl: `/${config.endpoints.usage.path}/usageSpecification?lifecycleStatus=Retired&relatedParty.id=${DEFAULT_USER_ID}&limit=6`,
+                    query: {
+                        lifecycleStatus: 'Retired',
+                        'relatedParty.id': DEFAULT_USER_ID,
+                        limit: '6'
+                    }
+                };
+
+                const usageManagementAPI = getUsageManagementAPI({}, {}, utils, tmfUtils);
+
+                usageManagementAPI.checkPermissions(req, function(err) {
+                    expect(err).toBeNull();
+                    expect(req.apiUrl).toBe(`/${config.endpoints.usage.path}/usageSpecification?lifecycleStatus=Retired&relatedParty.id=${DEFAULT_USER_ID}&limit=6`);
+                    expect(usageManagementAPI.getFilteredPaginationConfig(req)).toBeNull();
+
+                    done();
+                });
+            });
             it('should call callback with error when the user partyId does not match with the relatedparty.id of each usage document', function(done) {
                 const error = {
                     status: 403,

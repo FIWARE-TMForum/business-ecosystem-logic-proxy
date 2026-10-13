@@ -97,6 +97,44 @@ describe('Filtered pagination helper', function() {
         }).catch(done.fail)
     })
 
+    it('should preserve the pagination fingerprint in generated tokens', function(done) {
+        const fetchPage = jasmine.createSpy('fetchPage').and.returnValue(Promise.resolve([
+            { id: '1' }
+        ]))
+
+        filteredPagination.paginate({
+            limit: 1,
+            offset: 0,
+            fingerprint: 'usageSpecification|Retired,Obsolete',
+            fetchPage: fetchPage,
+            predicate: () => true
+        }).then((page) => {
+            expect(filteredPagination.decodeToken(page.token)).toEqual({
+                offset: 1,
+                fingerprint: 'usageSpecification|Retired,Obsolete'
+            })
+            done()
+        }).catch(done.fail)
+    })
+
+    it('should reject a token created for a different pagination fingerprint', function(done) {
+        const token = filteredPagination.encodeToken(5, 'first-filter')
+
+        filteredPagination.paginate({
+            limit: 1,
+            token: token,
+            fingerprint: 'second-filter',
+            fetchPage: () => Promise.resolve([]),
+            predicate: () => true
+        }).then(() => {
+            done.fail('Expected mismatched fingerprint to fail')
+        }).catch((err) => {
+            expect(err.status).toBe(400)
+            expect(err.message).toBe('Invalid filtered pagination token')
+            done()
+        })
+    })
+
     it('should read the token from lowercase headers', function() {
         const token = filteredPagination.encodeToken(5)
         const headers = {}

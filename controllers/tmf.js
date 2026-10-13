@@ -448,6 +448,7 @@ function tmf() {
 			limit: limit,
 			offset: offset,
 			token: token,
+			fingerprint: paginationConfig.fingerprint,
 			fetchPage: fetchPage,
 			predicate: function(item) {
 				return paginationConfig.predicate(item, req)
