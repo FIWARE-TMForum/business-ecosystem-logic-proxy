@@ -15,6 +15,7 @@
  * [Introduction](#introduction)
  * [GEi Overall Description](#gei-overall-description)
  * [Installation](#installation)
+ * [Customizing the Marketplace Theme](#customizing-the-marketplace-theme)
  * [API Reference](#api-reference)
  * [Testing](#testing)
  * [Advanced Topics](#advanced-topics)
@@ -40,6 +41,15 @@ The Business Ecosystem Logic Proxy is installed as part of the Business API Ecos
 
 * Using a [Docker Container](https://hub.docker.com/r/fiware/biz-ecosystem-logic-proxy/) (recommended)
 * Manually
+
+# Customizing the Marketplace Theme
+
+The web portal served by the Logic Proxy (`portal/bae-frontend`) is the compiled build of the
+[BAE Frontend](https://github.com/Ficodes/BAE-Frontend). If you want to create your own theme for the
+Marketplace (colors, logos, navigation links, texts, etc.), refer to the BAE Frontend repository: its
+README explains how to create a new theme and how to build a Logic Proxy image that includes it.
+
+The theme to be used is selected at runtime with the `BAE_LP_THEME` environment variable.
 
 # API Reference
 
